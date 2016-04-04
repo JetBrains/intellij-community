@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,14 +17,17 @@ package com.intellij.lexer;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * User: avokin
- * Date: 14/03/14
- */
 public interface EmbeddedTokenTypesProvider {
   ExtensionPointName<EmbeddedTokenTypesProvider> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.embeddedTokenTypesProvider");
 
+  /**
+   * @return name of provider, doesn't related to language name.
+   */
+  @NotNull
   String getName();
+
+  @NotNull
   IElementType getElementType();
 }

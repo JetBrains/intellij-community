@@ -4,9 +4,18 @@ Reports subtraction in
 <b>compareTo()</b> methods and methods implementing <b>java.util.Comparator.compare()</b>. While it is a common idiom to
 use the results of integer subtraction as the result of a <b>compareTo()</b>
 method, this construct may cause subtle and difficult bugs in cases of integer overflow.
-Comparing the integer values directly and returning -1, 0, or 1 is better practice in almost
-all cases.
+Comparing the integer values directly and returning <b>-1</b>, <b>0</b>, or <b>1</b> is better practice in most cases.
+<p>
+However subtraction will never overflow when both operands are <b>byte</b> or <b>short</b> values,
+because the result will always fit inside an <b>int</b>.
+Additionally subtraction on <b>int</b> numbers greater than or equal to <b>0</b> will never overflow.
+Therefore this inspection tries not to warn in those cases.
+Methods that always return zero or greater can be specified in this inspection's settings.
+<p>
 <!-- tooltip end -->
+<p>
+Use the table below to specify methods which are safe to use inside a subtraction.
+Methods are safe when they return an <b>int</b> value that is always greater than or equal to <b>0</b>.
 <p>
 
 </body>

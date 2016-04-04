@@ -56,7 +56,7 @@ public abstract class BaseTestNGInspectionsTest extends JavaCodeInsightFixtureTe
         break;
       }
     }
-    Assert.assertNotNull(resultAction);
+    Assert.assertNotNull(resultAction, "action isn't found");
     myFixture.launchAction(resultAction);
     myFixture.checkResultByFile(AFTER + testName + ".java");
   }

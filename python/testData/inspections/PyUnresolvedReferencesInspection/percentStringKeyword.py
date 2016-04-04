@@ -1,0 +1,1 @@
+v = "first is %(<warning descr="Unresolved reference 'fst'">fst</warning>)s" % {"snd": 2}

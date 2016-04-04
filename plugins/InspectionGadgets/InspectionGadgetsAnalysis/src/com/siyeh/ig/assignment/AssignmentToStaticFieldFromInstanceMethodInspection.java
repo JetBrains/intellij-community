@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,21 +42,22 @@ public class AssignmentToStaticFieldFromInstanceMethodInspection
 
   @Override
   public BaseInspectionVisitor buildVisitor() {
-    return new AssignmentToStaticFieldFromInstanceMethod();
+    return new AssignmentToStaticFieldFromInstanceMethodVisitor();
   }
 
-  private static class AssignmentToStaticFieldFromInstanceMethod
+  private static class AssignmentToStaticFieldFromInstanceMethodVisitor
     extends BaseInspectionVisitor {
 
     @Override
     public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
+      super.visitAssignmentExpression(expression);
       final PsiExpression lhs = expression.getLExpression();
       checkForStaticFieldAccess(lhs);
     }
 
     @Override
-    public void visitPrefixExpression(
-      @NotNull PsiPrefixExpression expression) {
+    public void visitPrefixExpression(@NotNull PsiPrefixExpression expression) {
+      super.visitPrefixExpression(expression);
       final IElementType tokenType = expression.getOperationTokenType();
       if (!tokenType.equals(JavaTokenType.PLUSPLUS) &&
           !tokenType.equals(JavaTokenType.MINUSMINUS)) {
@@ -67,8 +68,8 @@ public class AssignmentToStaticFieldFromInstanceMethodInspection
     }
 
     @Override
-    public void visitPostfixExpression(
-      @NotNull PsiPostfixExpression expression) {
+    public void visitPostfixExpression(@NotNull PsiPostfixExpression expression) {
+      super.visitPostfixExpression(expression);
       final IElementType tokenType = expression.getOperationTokenType();
       if (!tokenType.equals(JavaTokenType.PLUSPLUS) &&
           !tokenType.equals(JavaTokenType.MINUSMINUS)) {

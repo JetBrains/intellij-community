@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2011 Bas Leijdekkers
+ * Copyright 2006-2015 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,6 +59,59 @@ public class ManualArrayToCollectionCopyInspection extends BaseInspection {
   @Override
   public InspectionGadgetsFix buildFix(Object... infos) {
     return new ManualArrayToCollectionCopyFix();
+  }
+
+  private static PsiArrayAccessExpression getArrayAccessExpression(PsiForStatement forStatement) {
+    final PsiStatement body = getBody(forStatement);
+    if (body == null) {
+      return null;
+    }
+    final PsiExpression arrayAccessExpression;
+    if (body instanceof PsiExpressionStatement) {
+      final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)body;
+      final PsiExpression expression = expressionStatement.getExpression();
+      if (!(expression instanceof PsiMethodCallExpression)) {
+        return null;
+      }
+      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
+      final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
+      PsiExpression[] expressions = argumentList.getExpressions();
+      arrayAccessExpression = expressions.length == 0 ? null : expressions[0];
+    }
+    else if (body instanceof PsiDeclarationStatement) {
+      final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)body;
+      final PsiElement[] declaredElements = declarationStatement.getDeclaredElements();
+      if (declaredElements.length != 1) {
+        return null;
+      }
+      final PsiElement declaredElement = declaredElements[0];
+      if (!(declaredElement instanceof PsiVariable)) {
+        return null;
+      }
+      final PsiVariable variable = (PsiVariable)declaredElement;
+      arrayAccessExpression = variable.getInitializer();
+    }
+    else {
+      return null;
+    }
+    final PsiExpression deparenthesizedArgument = ParenthesesUtils.stripParentheses(arrayAccessExpression);
+    if (!(deparenthesizedArgument instanceof PsiArrayAccessExpression)) {
+      return null;
+    }
+    return (PsiArrayAccessExpression)deparenthesizedArgument;
+  }
+
+  @Nullable
+  private static PsiStatement getBody(PsiLoopStatement forStatement) {
+    PsiStatement body = forStatement.getBody();
+    while (body instanceof PsiBlockStatement) {
+      final PsiBlockStatement blockStatement =
+        (PsiBlockStatement)body;
+      final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
+      final PsiStatement[] statements = codeBlock.getStatements();
+      body = statements.length == 0 ? null : statements[0];
+    }
+    return body;
   }
 
   private static class ManualArrayToCollectionCopyFix
@@ -210,16 +263,8 @@ public class ManualArrayToCollectionCopyInspection extends BaseInspection {
       if (toOffsetText == null) {
         return null;
       }
-      if (fromOffsetText.equals("0") &&
-          toOffsetText.equals(arrayText + ".length") &&
-          PsiUtil.isLanguageLevel5OrHigher(forStatement)) {
-        @NonNls final StringBuilder buffer =
-          new StringBuilder("java.util.Collections.addAll(");
-        buffer.append(collectionText);
-        buffer.append(',');
-        buffer.append(arrayText);
-        buffer.append(");");
-        return buffer.toString();
+      if (fromOffsetText.equals("0") && toOffsetText.equals(arrayText + ".length") && PsiUtil.isLanguageLevel5OrHigher(forStatement)) {
+        return "java.util.Collections.addAll(" + collectionText + ',' + arrayText + ");";
       }
       else {
         @NonNls final StringBuilder buffer = new StringBuilder();
@@ -239,54 +284,6 @@ public class ManualArrayToCollectionCopyInspection extends BaseInspection {
         buffer.append(");");
         return buffer.toString();
       }
-    }
-
-    private static PsiArrayAccessExpression getArrayAccessExpression(
-      PsiForStatement forStatement) {
-      final PsiStatement body = getBody(forStatement);
-      if (body == null) {
-        return null;
-      }
-      final PsiExpression arrayAccessExpression;
-      if (body instanceof PsiExpressionStatement) {
-        final PsiExpressionStatement expressionStatement =
-          (PsiExpressionStatement)body;
-        final PsiExpression expression =
-          expressionStatement.getExpression();
-        if (!(expression instanceof PsiMethodCallExpression)) {
-          return null;
-        }
-        final PsiMethodCallExpression methodCallExpression =
-          (PsiMethodCallExpression)expression;
-        final PsiExpressionList argumentList =
-          methodCallExpression.getArgumentList();
-        arrayAccessExpression = argumentList.getExpressions()[0];
-      }
-      else if (body instanceof PsiDeclarationStatement) {
-        final PsiDeclarationStatement declarationStatement =
-          (PsiDeclarationStatement)body;
-        final PsiElement[] declaredElements =
-          declarationStatement.getDeclaredElements();
-        if (declaredElements.length != 1) {
-          return null;
-        }
-        final PsiElement declaredElement = declaredElements[0];
-        if (!(declaredElement instanceof PsiVariable)) {
-          return null;
-        }
-        final PsiVariable variable = (PsiVariable)declaredElement;
-        arrayAccessExpression = variable.getInitializer();
-      }
-      else {
-        return null;
-      }
-      final PsiExpression deparenthesizedArgument =
-        ParenthesesUtils.stripParentheses(arrayAccessExpression);
-      if (!(deparenthesizedArgument instanceof
-              PsiArrayAccessExpression)) {
-        return null;
-      }
-      return (PsiArrayAccessExpression)deparenthesizedArgument;
     }
 
     public static String buildCollectionText(PsiForStatement forStatement) {
@@ -418,19 +415,6 @@ public class ManualArrayToCollectionCopyInspection extends BaseInspection {
         return expressionText;
       }
     }
-
-    @Nullable
-    private static PsiStatement getBody(PsiLoopStatement forStatement) {
-      PsiStatement body = forStatement.getBody();
-      while (body instanceof PsiBlockStatement) {
-        final PsiBlockStatement blockStatement =
-          (PsiBlockStatement)body;
-        final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
-        final PsiStatement[] statements = codeBlock.getStatements();
-        body = statements[0];
-      }
-      return body;
-    }
   }
 
   @Override
@@ -438,21 +422,17 @@ public class ManualArrayToCollectionCopyInspection extends BaseInspection {
     return new ManualArrayToCollectionCopyVisitor();
   }
 
-  private static class ManualArrayToCollectionCopyVisitor
-    extends BaseInspectionVisitor {
+  private static class ManualArrayToCollectionCopyVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitForStatement(
-      @NotNull PsiForStatement statement) {
+    public void visitForStatement(@NotNull PsiForStatement statement) {
       super.visitForStatement(statement);
       final PsiStatement initialization = statement.getInitialization();
       if (!(initialization instanceof PsiDeclarationStatement)) {
         return;
       }
-      final PsiDeclarationStatement declaration =
-        (PsiDeclarationStatement)initialization;
-      final PsiElement[] declaredElements =
-        declaration.getDeclaredElements();
+      final PsiDeclarationStatement declaration = (PsiDeclarationStatement)initialization;
+      final PsiElement[] declaredElements = declaration.getDeclaredElements();
       if (declaredElements.length != 1) {
         return;
       }
@@ -466,12 +446,20 @@ public class ManualArrayToCollectionCopyInspection extends BaseInspection {
         return;
       }
       final PsiExpression condition = statement.getCondition();
-      if (!ExpressionUtils.isVariableLessThanComparison(condition,
-                                                        variable)) {
+      if (!ExpressionUtils.isVariableLessThanComparison(condition, variable)) {
         return;
       }
       final PsiStatement update = statement.getUpdate();
       if (!VariableAccessUtils.variableIsIncremented(variable, update)) {
+        return;
+      }
+      final PsiArrayAccessExpression arrayAccessExpression = getArrayAccessExpression(statement);
+      if (arrayAccessExpression == null) {
+        return;
+      }
+      final PsiExpression arrayExpression = arrayAccessExpression.getArrayExpression();
+      final PsiType type = arrayExpression.getType();
+      if (!(type instanceof PsiArrayType) || type.getDeepComponentType() instanceof PsiPrimitiveType) {
         return;
       }
       final PsiStatement body = statement.getBody();
@@ -506,9 +494,7 @@ public class ManualArrayToCollectionCopyInspection extends BaseInspection {
       registerStatementError(statement);
     }
 
-    private static boolean bodyIsArrayToCollectionCopy(
-      PsiStatement body, PsiVariable variable,
-      boolean shouldBeOffsetArrayAccess) {
+    private static boolean bodyIsArrayToCollectionCopy(PsiStatement body, PsiVariable variable, boolean shouldBeOffsetArrayAccess) {
       if (body instanceof PsiExpressionStatement) {
         final PsiExpressionStatement expressionStatement =
           (PsiExpressionStatement)body;

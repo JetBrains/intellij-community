@@ -18,6 +18,7 @@ package com.intellij.compiler.impl;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -172,16 +173,17 @@ public class CompilerUtil {
   }
 
   public static <T extends Throwable> void runInContext(CompileContext context, String title, ThrowableRunnable<T> action) throws T {
+    ProgressIndicator indicator = context.getProgressIndicator();
     if (title != null) {
-      context.getProgressIndicator().pushState();
-      context.getProgressIndicator().setText(title);
+      indicator.pushState();
+      indicator.setText(title);
     }
     try {
       action.run();
     }
     finally {
       if (title != null) {
-        context.getProgressIndicator().popState();
+        indicator.popState();
       }
     }
   }

@@ -812,4 +812,25 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
       "}"
     );
   }
+  
+  public void test_AlignSubsequentOneLineMethods() {
+    getSettings().KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
+    getSettings().ALIGN_SUBSEQUENT_SIMPLE_METHODS = true;
+    doTextTest(
+      "public class Test {\n" +
+      "\n" +
+      "    public void testSuperDuperFuckerMother() { System.out.println(\"AAA\"); }\n" +
+      "\n" +
+      "    public void testCounterMounter() { System.out.println(\"XXXX\"); }\n" +
+      "\n" +
+      "}",
+      "public class Test {\n" +
+      "\n" +
+      "    public void testSuperDuperFuckerMother() { System.out.println(\"AAA\"); }\n" +
+      "\n" +
+      "    public void testCounterMounter()         { System.out.println(\"XXXX\"); }\n" +
+      "\n" +
+      "}"
+    );
+  }
 }

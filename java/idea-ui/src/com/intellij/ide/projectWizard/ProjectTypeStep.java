@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.projectWizard;
 
-import com.intellij.CommonBundle;
 import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.frameworkSupport.FrameworkRole;
@@ -23,6 +22,7 @@ import com.intellij.ide.util.frameworkSupport.FrameworkSupportUtil;
 import com.intellij.ide.util.newProjectWizard.AddSupportForFrameworksPanel;
 import com.intellij.ide.util.newProjectWizard.FrameworkSupportNode;
 import com.intellij.ide.util.newProjectWizard.TemplatesGroup;
+import com.intellij.ide.util.newProjectWizard.WizardDelegate;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
 import com.intellij.ide.util.newProjectWizard.modes.CreateFromTemplateMode;
 import com.intellij.ide.util.projectWizard.*;
@@ -37,12 +37,10 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
@@ -407,6 +405,12 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
         for (FrameworkSupportInModuleProvider provider : filtered) {
           for (FrameworkSupportInModuleProvider.FrameworkDependency depId : provider.getDependenciesFrameworkIds()) {
             FrameworkSupportInModuleProvider dependency = map.get(depId.getFrameworkId());
+            if (dependency == null) {
+              if (!depId.isOptional()) {
+                LOG.error("Cannot find provider '" + depId.getFrameworkId() + "' which is required for '" + provider.getId() + "'");
+              }
+              continue;
+            }
             set.add(dependency);
           }
         }
@@ -517,14 +521,9 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
 
   public void onWizardFinished() throws CommitStepException {
     if (isFrameworksMode()) {
-      boolean ok = myFrameworksPanel.downloadLibraries();
+      boolean ok = myFrameworksPanel.downloadLibraries(myWizard.getContentComponent());
       if (!ok) {
-        int answer = Messages.showYesNoDialog(getComponent(),
-                                              ProjectBundle.message("warning.message.some.required.libraries.wasn.t.downloaded"),
-                                              CommonBundle.getWarningTitle(), Messages.getWarningIcon());
-        if (answer != Messages.YES) {
-          throw new CommitStepException(null);
-        }
+        throw new CommitStepException(null);
       }
     }
   }
@@ -553,7 +552,13 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
       if (!mySettingsStep.validate()) return false;
     }
     ModuleWizardStep step = getCustomStep();
-    return step != null ? step.validate() : super.validate();
+    if (step != null && !step.validate()) {
+      return false;
+    }
+    if (isFrameworksMode() && !myFrameworksPanel.validate()) {
+      return false;
+    }
+    return super.validate();
   }
 
   @Override
@@ -598,39 +603,39 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
   }
 
   void loadRemoteTemplates(final ChooseTemplateStep chooseTemplateStep) {
+    myTemplatesList.setPaintBusy(true);
+    chooseTemplateStep.getTemplateList().setPaintBusy(true);
     ProgressManager.getInstance().run(new Task.Backgroundable(myContext.getProject(), "Loading Templates") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        try {
-          myTemplatesList.setPaintBusy(true);
-          chooseTemplateStep.getTemplateList().setPaintBusy(true);
-          RemoteTemplatesFactory factory = new RemoteTemplatesFactory();
-          for (String group : factory.getGroups()) {
-            ProjectTemplate[] templates = factory.createTemplates(group, myContext);
-            for (ProjectTemplate template : templates) {
-              String id = ((ArchivedProjectTemplate)template).getCategory();
-              for (TemplatesGroup templatesGroup : myTemplatesMap.keySet()) {
-                if (Comparing.equal(id, templatesGroup.getId()) || Comparing.equal(group, templatesGroup.getName())) {
-                  myTemplatesMap.putValue(templatesGroup, template);
-                }
+        RemoteTemplatesFactory factory = new RemoteTemplatesFactory();
+        for (String group : factory.getGroups()) {
+          ProjectTemplate[] templates = factory.createTemplates(group, myContext);
+          for (ProjectTemplate template : templates) {
+            String id = ((ArchivedProjectTemplate)template).getCategory();
+            for (TemplatesGroup templatesGroup : myTemplatesMap.keySet()) {
+              if (Comparing.equal(id, templatesGroup.getId()) || Comparing.equal(group, templatesGroup.getName())) {
+                myTemplatesMap.putValue(templatesGroup, template);
               }
             }
           }
-          //noinspection SSBasedInspection
-          SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-              TemplatesGroup group = getSelectedGroup();
-              if (group == null) return;
-              Collection<ProjectTemplate> templates = myTemplatesMap.get(group);
-              setTemplatesList(group, templates, true);
-              chooseTemplateStep.updateStep();
-            }
-          });
         }
-        finally {
-          myTemplatesList.setPaintBusy(false);
-          chooseTemplateStep.getTemplateList().setPaintBusy(false);
-        }
+      }
+
+      @Override
+      public void onSuccess() {
+        super.onSuccess();
+        TemplatesGroup group = getSelectedGroup();
+        if (group == null) return;
+        Collection<ProjectTemplate> templates = myTemplatesMap.get(group);
+        setTemplatesList(group, templates, true);
+        chooseTemplateStep.updateStep();
+      }
+
+      @Override
+      public void onFinished() {
+        myTemplatesList.setPaintBusy(false);
+        chooseTemplateStep.getTemplateList().setPaintBusy(false);
       }
     });
   }
@@ -646,6 +651,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
     if (builder != null) {
       myWizard.getSequence().setType(builder.getBuilderId());
     }
+    myWizard.setDelegate(builder instanceof WizardDelegate ? (WizardDelegate)builder : null);
   }
 
   @TestOnly

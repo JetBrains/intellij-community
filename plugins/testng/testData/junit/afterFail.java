@@ -1,17 +1,17 @@
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-public class <caret>Testt {
+public class Testt {
   @Test
   public void test() {
-      Assert.assertEquals("description", "2", "1");
-      assert "" != null;
-      assert !(false);
-      assert true : "true";
-      Assert.assertNotSame("2", "1", "not same");
-      assert null == null;
-      assert null == null : "description";
-      Assert.assertSame("2", "1", "description");
-      assert false : "fail";
+    Assert.assertEquals("description", "2", "1");
+    Assert.assertNotNull("");
+    Assert.assertFalse(false);
+    Assert.assertTrue(true, "true");
+    Assert.assertNotSame("2", "1", "not same");
+    Assert.assertNull(null);
+    Assert.assertNull(null, "description");
+    Assert.assertSame("2", "1", "description");
+    Assert.fail("fail");
   }
 }

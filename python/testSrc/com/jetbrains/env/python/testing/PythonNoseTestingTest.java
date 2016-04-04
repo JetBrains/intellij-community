@@ -1,17 +1,25 @@
 package com.jetbrains.env.python.testing;
 
 import com.jetbrains.env.EnvTestTagsRequired;
-import com.jetbrains.env.PyProcessWithConsoleTestTask;
 import com.jetbrains.env.PyEnvTestCase;
+import com.jetbrains.env.PyProcessWithConsoleTestTask;
 import com.jetbrains.env.ut.PyNoseTestProcessRunner;
 import com.jetbrains.python.sdkTools.SdkCreationType;
+import com.jetbrains.python.testing.PythonTestConfigurationsModel;
+import com.jetbrains.python.testing.nosetest.PythonNoseTestConfigurationProducer;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * User : catherine
  */
 @EnvTestTagsRequired(tags = "nose")
-public class PythonNoseTestingTest extends PyEnvTestCase {
+public final class PythonNoseTestingTest extends PyEnvTestCase {
+
+
+  public void testConfigurationProducer() throws Exception {
+    runPythonTest(
+      new CreateConfigurationTestTask(PythonNoseTestConfigurationProducer.class, PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME));
+  }
 
   public void testNoseRunner() {
 

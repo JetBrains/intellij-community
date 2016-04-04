@@ -35,6 +35,7 @@ import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.DefaultExternalDependencyId;
 import org.jetbrains.plugins.gradle.model.*;
 import org.objenesis.strategy.StdInstantiatorStrategy;
 
@@ -137,6 +138,56 @@ public class ExternalProjectSerializer {
 
     myKryo.register(ExternalSystemSourceType.class, new DefaultSerializers.EnumSerializer(ExternalSystemSourceType.class));
 
+    myKryo.register(
+      DefaultExternalProjectDependency.class,
+      new FieldSerializer<DefaultExternalProjectDependency>(myKryo, DefaultExternalProjectDependency.class) {
+        @Override
+        protected DefaultExternalProjectDependency create(Kryo kryo, Input input, Class<DefaultExternalProjectDependency> type) {
+          return new DefaultExternalProjectDependency();
+        }
+      }
+    );
+
+    myKryo.register(
+      DefaultFileCollectionDependency.class,
+      new FieldSerializer<DefaultFileCollectionDependency>(myKryo, DefaultFileCollectionDependency.class) {
+        @Override
+        protected DefaultFileCollectionDependency create(Kryo kryo, Input input, Class<DefaultFileCollectionDependency> type) {
+          return new DefaultFileCollectionDependency();
+        }
+      }
+    );
+
+    myKryo.register(
+      DefaultExternalLibraryDependency.class,
+      new FieldSerializer<DefaultExternalLibraryDependency>(myKryo, DefaultExternalLibraryDependency.class) {
+        @Override
+        protected DefaultExternalLibraryDependency create(Kryo kryo, Input input, Class<DefaultExternalLibraryDependency> type) {
+          return new DefaultExternalLibraryDependency();
+        }
+      }
+    );
+
+    myKryo.register(
+      DefaultUnresolvedExternalDependency.class,
+      new FieldSerializer<DefaultUnresolvedExternalDependency>(myKryo, DefaultUnresolvedExternalDependency.class) {
+        @Override
+        protected DefaultUnresolvedExternalDependency create(Kryo kryo, Input input, Class<DefaultUnresolvedExternalDependency> type) {
+          return new DefaultUnresolvedExternalDependency();
+        }
+      }
+    );
+
+    myKryo.register(
+      DefaultExternalDependencyId.class,
+      new FieldSerializer<DefaultExternalDependencyId>(myKryo, DefaultExternalDependencyId.class) {
+        @Override
+        protected DefaultExternalDependencyId create(Kryo kryo, Input input, Class<DefaultExternalDependencyId> type) {
+          return new DefaultExternalDependencyId();
+        }
+      }
+    );
+
     myKryo.register(LinkedHashSet.class, new CollectionSerializer() {
       @Override
       protected Collection create(Kryo kryo, Input input, Class<Collection> type) {
@@ -195,21 +246,21 @@ public class ExternalProjectSerializer {
   public ExternalProject load(@NotNull ProjectSystemId externalSystemId, File externalProjectPath) {
     LOG.debug("Attempt to load project data from: " + externalProjectPath);
     ExternalProject externalProject = null;
-    Input input = null;
     try {
       final File configurationFile = getProjectConfigurationFile(externalSystemId, externalProjectPath);
-      if (configurationFile.isFile()) {
-        input = new Input(new FileInputStream(configurationFile));
+      if (!configurationFile.isFile()) return null;
+
+      Input input = new Input(new FileInputStream(configurationFile));
+      try {
         externalProject = myKryo.readObject(input, DefaultExternalProject.class);
+      }
+      finally {
+        StreamUtil.closeStream(input);
       }
     }
     catch (Exception e) {
-      LOG.error(e);
+      LOG.debug(e);
     }
-    finally {
-      StreamUtil.closeStream(input);
-    }
-
     if (externalProject != null) {
       LOG.debug("Loaded project: " + externalProject.getProjectDir());
     }

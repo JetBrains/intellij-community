@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,7 +78,7 @@ import java.util.concurrent.TimeoutException;
 @State(
   name = "TaskManager",
   storages = {
-    @Storage(file = StoragePathMacros.WORKSPACE_FILE)
+    @Storage(StoragePathMacros.WORKSPACE_FILE)
   }
 )
 public class TaskManagerImpl extends TaskManager implements ProjectComponent, PersistentStateComponent<TaskManagerImpl.Config>,
@@ -497,7 +497,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     if (task.isIssue()) {
       StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new Runnable() {
         public void run() {
-          ProgressManager.getInstance().run(new com.intellij.openapi.progress.Task.Backgroundable(myProject, "Updating " + task.getId()) {
+          ProgressManager.getInstance().run(new com.intellij.openapi.progress.Task.Backgroundable(myProject, "Updating " + task.getPresentableId()) {
 
             public void run(@NotNull ProgressIndicator indicator) {
               updateIssue(task.getId());
@@ -998,18 +998,19 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     return StringUtil.shortenTextWithEllipsis(name, 100, 0);
   }
 
-  public String suggestBranchName(Task task) {
-    if (task.isIssue()) {
-      return TaskUtil.formatTask(task, myConfig.branchNameFormat).replace(' ', '-');
-    }
-    else {
-      String summary = task.getSummary();
-      List<String> words = StringUtil.getWordsIn(summary);
-      String[] strings = ArrayUtil.toStringArray(words);
-      return StringUtil.join(strings, 0, Math.min(2, strings.length), "-");
-    }
+  @NotNull
+  public String suggestBranchName(@NotNull Task task) {
+    String name = constructDefaultBranchName(task);
+    if (task.isIssue()) return name.replace(' ', '-');
+    List<String> words = StringUtil.getWordsIn(name);
+    String[] strings = ArrayUtil.toStringArray(words);
+    return StringUtil.join(strings, 0, Math.min(2, strings.length), "-");
   }
 
+  @NotNull
+  public String constructDefaultBranchName(@NotNull Task task) {
+    return task.isIssue() ? TaskUtil.formatTask(task, myConfig.branchNameFormat) : task.getSummary();
+  }
 
   @TestOnly
   public ChangeListAdapter getChangeListListener() {

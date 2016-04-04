@@ -18,6 +18,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.lang.Language;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.filters.AndFilter;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.OrFilter;
@@ -25,6 +26,7 @@ import com.intellij.psi.filters.TextContainFilter;
 import com.intellij.psi.filters.getters.HtmlAttributeValueGetter;
 import com.intellij.psi.filters.getters.XmlAttributeValueGetter;
 import com.intellij.psi.filters.position.XmlTokenTypeFilter;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
@@ -136,7 +138,8 @@ public class HtmlCompletionData extends XmlCompletionData {
       @Override
       public boolean isAcceptable(Object element, PsiElement context) {
         if (isStyleAttributeContext(context)) return false;
-        if ( isScriptContext((PsiElement)element) ) return false;
+        if (isScriptContext((PsiElement)element)) return false;
+        if (hasCaseSensitiveFileReferences(context)) return false;
         return true;
       }
 
@@ -145,6 +148,13 @@ public class HtmlCompletionData extends XmlCompletionData {
         return true;
       }
     };
+  }
+
+  private static boolean hasCaseSensitiveFileReferences(PsiElement context) {
+    for (PsiReference reference : context.getReferences()) {
+      if (reference instanceof FileReference && ((FileReference)reference).getFileReferenceSet().isCaseSensitive()) return true;
+    }
+    return false;
   }
 
   private static boolean isScriptContext(PsiElement element) {

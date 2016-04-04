@@ -233,7 +233,22 @@ public class DataNode<T> implements Serializable, UserDataHolderEx {
     return null;
   }
 
+  @SuppressWarnings("unchecked")
+  @Nullable
+  public <P> DataNode<P> getParent(@NotNull Class<P> dataClass) {
+    if (dataClass.isInstance(myData)) {
+      return (DataNode<P>)this;
+    }
+    for (DataNode<?> p = myParent; p != null; p = p.myParent) {
+      if (dataClass.isInstance(p.myData)) {
+        return (DataNode<P>)p;
+      }
+    }
+    return null;
+  }
+
   public void addChild(@NotNull DataNode<?> child) {
+    child.myParent = this;
     myChildren.add(child);
   }
 

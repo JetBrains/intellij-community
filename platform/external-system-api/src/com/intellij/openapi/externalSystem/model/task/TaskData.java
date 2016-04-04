@@ -35,6 +35,7 @@ public class TaskData extends AbstractExternalEntityData implements ExternalConf
   @Nullable private final String myDescription;
   @NotNull private final String myLinkedExternalProjectPath;
   @Nullable private String myGroup;
+  @Nullable private String myType;
   private boolean myInherited;
 
   public TaskData(@NotNull ProjectSystemId owner, @NotNull String name, @NotNull String path, @Nullable String description) {
@@ -66,6 +67,15 @@ public class TaskData extends AbstractExternalEntityData implements ExternalConf
 
   public void setGroup(@Nullable String group) {
     myGroup = group;
+  }
+
+  @Nullable
+  public String getType() {
+    return myType;
+  }
+
+  public void setType(@Nullable String type) {
+    myType = type;
   }
 
   public boolean isInherited() {

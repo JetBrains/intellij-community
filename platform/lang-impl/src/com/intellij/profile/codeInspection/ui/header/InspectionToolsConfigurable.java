@@ -203,14 +203,11 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
       @Override
       public void customize(final JList list, final Profile value, final int index, final boolean selected, final boolean hasFocus) {
         final SingleInspectionProfilePanel singleInspectionProfilePanel = getProfilePanel(value);
-        LOG.assertTrue(singleInspectionProfilePanel != null,
-                       String.format("No panel for profile (name = %s, manager class = %s, is modified = %s) found",
-                                     value.getName(),
-                                     value.getProfileManager().getClass(),
-                                     ((InspectionProfileImpl) value).isChanged()));
-        final boolean isShared = singleInspectionProfilePanel.isProjectLevel();
-        setIcon(isShared ? AllIcons.General.ProjectSettings : AllIcons.General.Settings);
-        setText(singleInspectionProfilePanel.getCurrentProfileName());
+        if (singleInspectionProfilePanel != null) {
+          final boolean isShared = singleInspectionProfilePanel.isProjectLevel();
+          setIcon(isShared ? AllIcons.General.ProjectSettings : AllIcons.General.Settings);
+          setText(singleInspectionProfilePanel.getCurrentProfileName());
+        }
       }
     }) {
       @Override

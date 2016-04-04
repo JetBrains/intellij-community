@@ -28,6 +28,7 @@ import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.MethodProcessorSetupFailedException;
@@ -130,6 +131,13 @@ public class PsiScopesUtil {
     else if (type instanceof PsiDisjunctionType) {
       final PsiType lub = ((PsiDisjunctionType)type).getLeastUpperBound();
       processTypeDeclarations(lub, place, processor);
+    }
+    else if (type instanceof PsiCapturedWildcardType) {
+      final PsiType upperBound =
+        PsiClassImplUtil.correctType(((PsiCapturedWildcardType)type).getUpperBound(), place.getResolveScope());
+      if (upperBound != null) {
+        processTypeDeclarations(PsiUtil.captureToplevelWildcards(upperBound, place), place, processor);
+      }
     }
     else {
       final JavaResolveResult result = PsiUtil.resolveGenericsClassInType(type);
@@ -355,6 +363,13 @@ public class PsiScopesUtil {
           }
           else if (type instanceof PsiDisjunctionType) {
             processQualifierType(((PsiDisjunctionType)type).getLeastUpperBound(), processor, manager, methodCall);
+          }
+          else if (type instanceof PsiCapturedWildcardType) {
+            final PsiType upperBound =
+              PsiClassImplUtil.correctType(((PsiCapturedWildcardType)type).getUpperBound(), methodCall.getResolveScope());
+            if (upperBound != null) {
+              processQualifierType(PsiUtil.captureToplevelWildcards(upperBound, methodCall), processor, manager, methodCall);
+            }
           }
           else {
             processQualifierType(type, processor, manager, methodCall);

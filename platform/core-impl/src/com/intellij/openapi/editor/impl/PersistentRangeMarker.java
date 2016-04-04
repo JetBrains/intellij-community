@@ -20,8 +20,8 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.Segment;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
@@ -41,18 +41,17 @@ class PersistentRangeMarker extends RangeMarkerImpl {
 
   PersistentRangeMarker(DocumentEx document, int startOffset, int endOffset, boolean register) {
     super(document, startOffset, endOffset, register);
-    myLinesCols = ObjectUtils.assertNotNull(storeLinesAndCols(this, document));
+    myLinesCols = ObjectUtils.assertNotNull(storeLinesAndCols(document, getStartOffset(), getEndOffset()));
   }
 
   @Nullable
-  static LinesCols storeLinesAndCols(Segment range, Document myDocument) {
+  static LinesCols storeLinesAndCols(Document myDocument, int startOffset, int endOffset) {
     int myStartLine;
     int myStartColumn;
     int myEndLine;
     int myEndColumn;
 
     // document might have been changed already
-    int startOffset = range.getStartOffset();
     if (startOffset <= myDocument.getTextLength()) {
       myStartLine = myDocument.getLineNumber(startOffset);
       myStartColumn = startOffset - myDocument.getLineStartOffset(myStartLine);
@@ -63,7 +62,6 @@ class PersistentRangeMarker extends RangeMarkerImpl {
     else {
       return null;
     }
-    int endOffset = range.getEndOffset();
     if (endOffset <= myDocument.getTextLength()) {
       myEndLine = myDocument.getLineNumber(endOffset);
       myEndColumn = endOffset - myDocument.getLineStartOffset(myEndLine);
@@ -79,7 +77,7 @@ class PersistentRangeMarker extends RangeMarkerImpl {
   }
 
   @Nullable
-  private static Pair<ProperTextRange, LinesCols> translateViaDiff(final DocumentEventImpl event, LinesCols linesCols) {
+  static Pair<TextRange, LinesCols> translateViaDiff(@NotNull final DocumentEventImpl event, @NotNull LinesCols linesCols) {
     try {
       int myStartLine = event.translateLineViaDiffStrict(linesCols.myStartLine);
       Document document = event.getDocument();
@@ -98,7 +96,14 @@ class PersistentRangeMarker extends RangeMarkerImpl {
       int end = document.getLineStartOffset(myEndLine) + linesCols.myEndColumn;
       if (end > document.getTextLength() || end < start) return null;
 
-      return Pair.create(new ProperTextRange(start, end), new LinesCols(myStartLine, linesCols.myStartColumn, myEndLine, linesCols.myEndColumn));
+      if (end > event.getDocument().getTextLength() ||
+          myEndLine < myStartLine ||
+          myStartLine == myEndLine && linesCols.myEndColumn < linesCols.myStartColumn ||
+          event.getDocument().getLineCount() < myEndLine) {
+        return null;
+      }
+
+      return Pair.create(new TextRange(start, end), new LinesCols(myStartLine, linesCols.myStartColumn, myEndLine, linesCols.myEndColumn));
     }
     catch (FilesTooBigForDiffException e) {
       return null;
@@ -109,7 +114,7 @@ class PersistentRangeMarker extends RangeMarkerImpl {
   protected void changedUpdateImpl(@NotNull DocumentEvent e) {
     if (!isValid()) return;
 
-    Pair<ProperTextRange, LinesCols> pair =
+    Pair<TextRange, LinesCols> pair =
       applyChange(e, this, intervalStart(), intervalEnd(), isGreedyToLeft(), isGreedyToRight(), myLinesCols);
     if (pair == null) {
       invalidate(e);
@@ -122,28 +127,21 @@ class PersistentRangeMarker extends RangeMarkerImpl {
   }
 
   @Nullable
-  static Pair<ProperTextRange, LinesCols> applyChange(DocumentEvent event, Segment range, int intervalStart, int intervalEnd, boolean greedyLeft, boolean greedyRight, LinesCols linesCols) {
-    final boolean shouldTranslateViaDiff = PersistentRangeMarkerUtil.shouldTranslateViaDiff(event, range);
-    Pair<ProperTextRange, LinesCols> translated = null;
+  private static Pair<TextRange, LinesCols> applyChange(DocumentEvent event, Segment range, int intervalStart, int intervalEnd, boolean greedyLeft, boolean greedyRight, LinesCols linesCols) {
+    final boolean shouldTranslateViaDiff = PersistentRangeMarkerUtil.shouldTranslateViaDiff(event, range.getStartOffset(), range.getEndOffset());
+    Pair<TextRange, LinesCols> translated = null;
     if (shouldTranslateViaDiff) {
       translated = translateViaDiff((DocumentEventImpl)event, linesCols);
     }
     if (translated == null) {
-      ProperTextRange fallback = applyChange(event, intervalStart, intervalEnd, greedyLeft, greedyRight);
+      TextRange fallback = applyChange(event, intervalStart, intervalEnd, greedyLeft, greedyRight);
       if (fallback == null) return null;
 
-      LinesCols lc = storeLinesAndCols(fallback, event.getDocument());
+      LinesCols lc = storeLinesAndCols(event.getDocument(), fallback.getStartOffset(), fallback.getEndOffset());
       if (lc == null) return null;
 
       translated = Pair.create(fallback, lc);
     }
-    if (translated.first.getEndOffset() > event.getDocument().getTextLength() ||
-        translated.second.myEndLine < translated.second.myStartLine ||
-        translated.second.myStartLine == translated.second.myEndLine && translated.second.myEndColumn < translated.second.myStartColumn ||
-        event.getDocument().getLineCount() < translated.second.myEndLine) {
-      return null;
-    }
-
     return translated;
   }
 

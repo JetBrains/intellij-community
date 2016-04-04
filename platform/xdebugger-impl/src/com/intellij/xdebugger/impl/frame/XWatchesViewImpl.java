@@ -475,6 +475,9 @@ public class XWatchesViewImpl extends XDebugView implements DnDNativeTarget, XWa
       if (XWatchesView.DATA_KEY.is(dataId)) {
         return XWatchesViewImpl.this;
       }
+      else if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
+        return getCurrentFile(getTree());
+      }
       return null;
     }
   }

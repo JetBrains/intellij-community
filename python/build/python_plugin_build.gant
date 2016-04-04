@@ -34,8 +34,6 @@ setProperty("zipname", "python-community-${pluginRevision}.zip")
 
 setProperty("srcDir", "${pluginHome}/src")
 
-setProperty("resourcesDir", "${pluginHome}/resources")
-
 setProperty("classesRootDir", "${outDir}/classes")
 setProperty("classesDir", "${classesRootDir}/python")
 
@@ -98,10 +96,10 @@ target(name: "compile", description: "Compile module python") {
 
   ant.path(id: "sourcepath") {
     dirset(dir: "${pluginHome}") {
-      include(name: "resources")
       include(name: "src")
       include(name: "gen")
-      include(name: "pluginSrc")
+      include(name: "pluginCore")
+      include(name: "pluginJava")
       include(name: "pydevSrc")
       include(name: "openapi/src")
       include(name: "psi-api/src")
@@ -134,7 +132,11 @@ target(name: "compile", description: "Compile module python") {
 
   //copy resources
   ant.copy(todir: "${classesDir}") {
-    fileset(dir: "${resourcesDir}") {
+    fileset(dir: "${pluginHome}/resources") {
+      patternset(refid: "resources.pt")
+      type(type: "file")
+    }
+    fileset(dir: "${pluginHome}/python-community-ide-resources/resources") {
       patternset(refid: "resources.pt")
       type(type: "file")
     }
@@ -153,10 +155,6 @@ target(name: "compile", description: "Compile module python") {
     fileset(dir: "${pluginHome}/IntelliLang-python/src") {
       include(name: "resources/*.xml")
     }
-    fileset(dir: "${pluginHome}/resources") {
-      patternset(refid: "resources.pt")
-      type(type: "file")
-    }
     fileset(dir: "${home}/colorSchemes/src")
     fileset(dir: "${pluginHome}/ipnb/resources") {
       patternset(refid: "resources.pt")
@@ -167,13 +165,14 @@ target(name: "compile", description: "Compile module python") {
   //copy plugin.xml
   ant.mkdir(dir: "${classesDir}/META-INF")
   ant.copy(todir: "${classesDir}/META-INF") {
-    fileset(file: "${pluginHome}/pluginSrc/META-INF/python-plugin-core.xml")
-    fileset(file: "${pluginHome}/pluginResources/META-INF/*.xml")
+    fileset(file: "${pluginHome}/pluginCore/META-INF/python-community-plugin-core.xml")
+    fileset(file: "${pluginHome}/pluginJava/META-INF/python-community-plugin-java.xml")
+    fileset(file: "${pluginHome}/pluginResources/META-INF/plugin.xml")
     fileset(file: "${pluginHome}/build/python-plugin-dependencies.xml")
   }
 
   // set version to PyCharm current version from ApplicationInfo.xml
-  ant.loadfile(property: "appInfo", srcFile: "${pluginHome}/resources/idea/PyCharmCoreApplicationInfo.xml") {
+  ant.loadfile(property: "appInfo", srcFile: "${pluginHome}/python-community-ide-resources/resources/idea/PyCharmCoreApplicationInfo.xml") {
   }
 
   major = ("${appInfo}" =~ /major\s*=\s*\"([^"])\"/)[0][1]

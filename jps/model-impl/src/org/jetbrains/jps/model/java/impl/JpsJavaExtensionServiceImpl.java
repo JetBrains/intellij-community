@@ -21,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.impl.runConfiguration.JpsApplicationRunConfigurationPropertiesImpl;
 import org.jetbrains.jps.model.java.runConfiguration.JpsApplicationRunConfigurationProperties;
 import org.jetbrains.jps.model.java.runConfiguration.JpsApplicationRunConfigurationState;
+import org.jetbrains.jps.model.module.impl.JpsTestModulePropertiesImpl;
 import org.jetbrains.jps.util.JpsPathUtil;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsGlobal;
@@ -161,6 +162,17 @@ public class JpsJavaExtensionServiceImpl extends JpsJavaExtensionService {
       configuration = project.getContainer().setChild(JpsJavaCompilerConfigurationImpl.ROLE, new JpsJavaCompilerConfigurationImpl());
     }
     return configuration;
+  }
+
+  @Nullable
+  @Override
+  public JpsTestModuleProperties getTestModuleProperties(@NotNull JpsModule module) {
+    return module.getContainer().getChild(JpsTestModulePropertiesImpl.ROLE);
+  }
+
+  @Override
+  public void setTestModuleProperties(@NotNull JpsModule module, @NotNull JpsModuleReference productionModuleReference) {
+    module.getContainer().setChild(JpsTestModulePropertiesImpl.ROLE, new JpsTestModulePropertiesImpl(productionModuleReference));
   }
 
   @NotNull

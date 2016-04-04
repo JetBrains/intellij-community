@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import com.sun.jdi.ThreadReference;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 public class ThreadGroupReferenceProxyImpl extends ObjectReferenceProxyImpl implements ThreadGroupReferenceProxy{
@@ -75,10 +74,9 @@ public class ThreadGroupReferenceProxyImpl extends ObjectReferenceProxyImpl impl
 
   public List<ThreadReferenceProxyImpl> threads() {
     List<ThreadReference> list = getThreadGroupReference().threads();
-    List<ThreadReferenceProxyImpl> proxies = new ArrayList<ThreadReferenceProxyImpl>(list.size());
+    List<ThreadReferenceProxyImpl> proxies = new ArrayList<>(list.size());
 
-    for (Iterator<ThreadReference> iterator = list.iterator(); iterator.hasNext();) {
-      ThreadReference threadReference = iterator.next();
+    for (ThreadReference threadReference : list) {
       proxies.add(getVirtualMachineProxy().getThreadReferenceProxy(threadReference));
     }
     return proxies;
@@ -86,10 +84,9 @@ public class ThreadGroupReferenceProxyImpl extends ObjectReferenceProxyImpl impl
 
   public List<ThreadGroupReferenceProxyImpl> threadGroups() {
     List<ThreadGroupReference> list = getThreadGroupReference().threadGroups();
-    List<ThreadGroupReferenceProxyImpl> proxies = new ArrayList<ThreadGroupReferenceProxyImpl>(list.size());
+    List<ThreadGroupReferenceProxyImpl> proxies = new ArrayList<>(list.size());
 
-    for (Iterator<ThreadGroupReference> iterator = list.iterator(); iterator.hasNext();) {
-      ThreadGroupReference threadGroupReference = iterator.next();
+    for (ThreadGroupReference threadGroupReference : list) {
       proxies.add(getVirtualMachineProxy().getThreadGroupReferenceProxy(threadGroupReference));
     }
     return proxies;

@@ -17,6 +17,8 @@
 package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.codeInsight.navigation.NavigationUtil;
+import com.intellij.ide.bookmarks.Bookmark;
+import com.intellij.ide.bookmarks.BookmarkManager;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ProjectViewNodeDecorator;
@@ -34,12 +36,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
+import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.StatePreservingNavigatable;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.ui.LayeredIcon;
+import com.intellij.ui.RowIcon;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -157,11 +163,11 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
         catch (IndexNotReadyException ignored) {
         }
         updateImpl(data);
+        data.setIcon(patchIcon(myProject, data.getIcon(true), getVirtualFile()));
+        
         for (ProjectViewNodeDecorator decorator : Extensions.getExtensions(ProjectViewNodeDecorator.EP_NAME, myProject)) {
           decorator.decorate(AbstractPsiBasedNode.this, data);
         }
-
-        Iconable.LastComputedIcon.put(value, data.getIcon(false), flags);
       }
     });
   }
@@ -175,6 +181,31 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
     return flags;
   }
 
+  @Nullable
+  public static Icon patchIcon(@NotNull Project project, @Nullable Icon original, @Nullable VirtualFile file) {
+    if (file == null || original == null) return original;
+    
+    Icon icon = original;
+
+    final Bookmark bookmarkAtFile = BookmarkManager.getInstance(project).findFileBookmark(file);
+    if (bookmarkAtFile != null) {
+      final RowIcon composite = new RowIcon(2, RowIcon.Alignment.CENTER);
+      composite.setIcon(icon, 0);
+      composite.setIcon(bookmarkAtFile.getIcon(), 1);
+      icon = composite;
+    }
+
+    if (!file.isWritable()) {
+      icon = LayeredIcon.create(icon, PlatformIcons.LOCKED_ICON);
+    }
+
+    if (file.is(VFileProperty.SYMLINK)) {
+      icon = LayeredIcon.create(icon, PlatformIcons.SYMLINK_ICON);
+    }
+
+    return icon;
+  }
+  
   protected boolean isDeprecated() {
     return false;
   }

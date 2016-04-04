@@ -22,7 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class DirectoryContentImpl implements DiffContent, DirectoryContent {
+public class DirectoryContentImpl extends DiffContentBase implements DirectoryContent {
   @NotNull private final VirtualFile myFile;
   @Nullable private final Project myProject;
 
@@ -35,7 +35,7 @@ public class DirectoryContentImpl implements DiffContent, DirectoryContent {
   @Nullable
   @Override
   public OpenFileDescriptor getOpenFileDescriptor() {
-    if (myProject == null || myProject.isDefault()) return null;
+    if (myProject == null || myProject.isDefault() || !myFile.isValid()) return null;
     return new OpenFileDescriptor(myProject, myFile);
   }
 
@@ -49,9 +49,5 @@ public class DirectoryContentImpl implements DiffContent, DirectoryContent {
   @Override
   public FileType getContentType() {
     return null;
-  }
-
-  @Override
-  public void onAssigned(boolean isAssigned) {
   }
 }

@@ -9,6 +9,6 @@ class NegatedConditionalExpression {
       System.out.println(!(myClass.myField2 != null));
       System.out.println(myField2 != null ? !myField2.equals(myClass.myField2) : myClass.myField2 != null);
       final boolean b = myField1 != null ;
-      return !(myField2 != null ? !myField2.equals(myClass.myField2) : myClass.myField2 != null);
+      return <warning descr="Negating conditional expression">!</warning>(myField2 != null ? !myField2.equals(myClass.myField2) : myClass.myField2 != null);
     }
 }

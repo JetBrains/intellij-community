@@ -1,7 +1,7 @@
 # encoding: utf-8
 # module __builtin__
 # from (built-in)
-# by generator 1.136
+# by generator 1.138
 from __future__ import print_function
 """
 Built-in functions, exceptions, and other objects.
@@ -343,7 +343,7 @@ def len(p_object): # real signature unknown; restored from __doc__
     """
     len(object) -> integer
     
-    Return the number of items of a sequence or mapping.
+    Return the number of items of a sequence or collection.
     """
     return 0
 
@@ -663,6 +663,7 @@ class __method(object):
 
         self.__func__ = None
         self.__self__ = None
+
 
 
 class __namedtuple(tuple):
@@ -1823,7 +1824,7 @@ class str(basestring):
         """
         return 0
 
-    def format(*args, **kwargs): # known special case of str.format
+    def format(self, *args, **kwargs): # known special case of str.format
         """
         S.format(*args, **kwargs) -> string
         
@@ -4451,10 +4452,6 @@ class tuple(object):
         """ x.__rmul__(n) <==> n*x """
         pass
 
-    def __sizeof__(self): # real signature unknown; restored from __doc__
-        """ T.__sizeof__() -- size of T in memory, in bytes """
-        pass
-
 
 class type(object):
     """
@@ -4662,7 +4659,7 @@ class unicode(basestring):
         """
         return 0
 
-    def format(*args, **kwargs): # known special case of unicode.format
+    def format(self, *args, **kwargs): # known special case of unicode.format
         """
         S.format(*args, **kwargs) -> unicode
         

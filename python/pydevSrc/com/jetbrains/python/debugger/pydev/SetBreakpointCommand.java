@@ -12,7 +12,7 @@ public class SetBreakpointCommand extends LineBreakpointCommand {
   public SetBreakpointCommand(@NotNull final RemoteDebugger debugger,
                               @NotNull final String type,
                               @NotNull final String file,
-                              @NotNull final int line) {
+                              final int line) {
     this(debugger, type, file, line, null, null, null);
   }
 
@@ -20,7 +20,7 @@ public class SetBreakpointCommand extends LineBreakpointCommand {
   public SetBreakpointCommand(@NotNull final RemoteDebugger debugger,
                               @NotNull final String type,
                               @NotNull final String file,
-                              @NotNull final int line,
+                              final int line,
                               @Nullable final String condition,
                               @Nullable final String logExpression) {
     super(debugger, type, SET_BREAKPOINT, file, line);
@@ -32,7 +32,7 @@ public class SetBreakpointCommand extends LineBreakpointCommand {
   public SetBreakpointCommand(@NotNull final RemoteDebugger debugger,
                               @NotNull final String type,
                               @NotNull final String file,
-                              @NotNull final int line,
+                              final int line,
                               @Nullable final String condition,
                               @Nullable final String logExpression,
                               @Nullable final String funcName) {

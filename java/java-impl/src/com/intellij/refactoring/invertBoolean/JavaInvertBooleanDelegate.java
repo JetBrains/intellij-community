@@ -28,6 +28,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Query;
 import com.intellij.util.containers.HashSet;
@@ -66,13 +67,22 @@ public class JavaInvertBooleanDelegate extends InvertBooleanDelegate {
         return null;
       }
 
-      if (var instanceof PsiParameter && ((PsiParameter)var).getDeclarationScope() instanceof PsiMethod) {
-        final PsiMethod method = (PsiMethod)((PsiParameter)var).getDeclarationScope();
-        final PsiMethod superMethod = SuperMethodWarningUtil.checkSuperMethod(method, RefactoringBundle.message("to.refactor"));
-        if (superMethod == null) {
+      if (var instanceof PsiParameter) {
+        final PsiElement declarationScope = ((PsiParameter)var).getDeclarationScope();
+        if (declarationScope instanceof PsiMethod) {
+          final PsiMethod method = (PsiMethod)declarationScope;
+          final PsiMethod superMethod = SuperMethodWarningUtil.checkSuperMethod(method, RefactoringBundle.message("to.refactor"));
+          if (superMethod == null) {
+            return null;
+          }
+          var = superMethod.getParameterList().getParameters()[method.getParameterList().getParameterIndex((PsiParameter)var)];
+        }
+        else if (declarationScope instanceof PsiForeachStatement) {
+          CommonRefactoringUtil.showErrorHint(project, editor,
+                                              RefactoringBundle.message("invert.boolean.foreach"),
+                                              InvertBooleanHandler.REFACTORING_NAME, InvertBooleanHandler.INVERT_BOOLEAN_HELP_ID);
           return null;
         }
-        var = superMethod.getParameterList().getParameters()[method.getParameterList().getParameterIndex((PsiParameter)var)];
       }
       return var;
     }
@@ -159,14 +169,20 @@ public class JavaInvertBooleanDelegate extends InvertBooleanDelegate {
       expression = expression.getParent();
     }
 
-    if (!(expression.getParent() instanceof PsiExpressionStatement)) {
+    if (expression instanceof PsiMethodReferenceExpression) {
+      final PsiExpression callExpression = LambdaRefactoringUtil.convertToMethodCallInLambdaBody((PsiMethodReferenceExpression)expression);
+      if (callExpression instanceof PsiCallExpression) {
+        callExpression.replace(CodeInsightServicesUtil.invertCondition(callExpression));
+      }
+    }
+    else if (!(expression.getParent() instanceof PsiExpressionStatement)) {
       expression.replace(CodeInsightServicesUtil.invertCondition((PsiExpression)expression));
     }
   }
 
   @Override
   public void invertElementInitializer(final PsiElement element) {
-    if (element instanceof PsiField && ((PsiField)element).getInitializer() == null) {
+    if (element instanceof PsiField && ((PsiField)element).getInitializer() == null && !((PsiField)element).hasModifierProperty(PsiModifier.FINAL)) {
       ((PsiField)element).setInitializer(JavaPsiFacade.getElementFactory(element.getProject()).createExpressionFromText("true", element));
     } else if (element instanceof PsiVariable) {
       final PsiExpression initializer = ((PsiVariable)element).getInitializer();
@@ -257,7 +273,7 @@ public class JavaInvertBooleanDelegate extends InvertBooleanDelegate {
     for (UsageInfo info : usageInfos) {
       final PsiElement element = info.getElement();
       if (element instanceof PsiMethodReferenceExpression) {
-        conflicts.putValue(element, "Method is used in method reference expression");
+        conflicts.putValue(element, RefactoringBundle.message("expand.method.reference.warning"));
       }
     }
   }

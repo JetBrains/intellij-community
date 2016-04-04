@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.Function;
 import com.intellij.util.PlatformIcons;
 import com.jetbrains.python.PyNames;
@@ -31,7 +32,6 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,17 +59,17 @@ public class CompletionVariantsProcessor extends VariantsProcessor {
     mySuppressParentheses = true;
   }
 
-  protected LookupElementBuilder setupItem(LookupElementBuilder item) {
-    final Object object = item.getObject();
+  private LookupElementBuilder setupItem(LookupElementBuilder item) {
+    final PsiElement element = item.getPsiElement();
     if (!myPlainNamesOnly) {
       if (!mySuppressParentheses &&
-          object instanceof PyFunction && ((PyFunction)object).getProperty() == null &&
-          !PyUtil.hasCustomDecorators((PyFunction)object) &&
-          !isSingleArgDecoratorCall(myContext, (PyFunction)object)) {
-        final Project project = ((PyFunction)object).getProject();
+          element instanceof PyFunction && ((PyFunction)element).getProperty() == null &&
+          !PyUtil.hasCustomDecorators((PyFunction)element) &&
+          !isSingleArgDecoratorCall(myContext, (PyFunction)element)) {
+        final Project project = element.getProject();
         item = item.withInsertHandler(PyFunctionInsertHandler.INSTANCE);
         final TypeEvalContext context = TypeEvalContext.codeCompletion(project, myContext != null ? myContext.getContainingFile() : null);
-        final List<PyParameter> parameters = PyUtil.getParameters((PyFunction)object, context);
+        final List<PyParameter> parameters = PyUtil.getParameters((PyFunction)element, context);
         final String params = StringUtil.join(parameters, new Function<PyParameter, String>() {
           @Override
           public String fun(PyParameter pyParameter) {
@@ -78,13 +78,12 @@ public class CompletionVariantsProcessor extends VariantsProcessor {
         }, ", ");
         item = item.withTailText("(" + params + ")");
       }
-      else if (object instanceof PyClass) {
+      else if (element instanceof PyClass) {
         item = item.withInsertHandler(PyClassInsertHandler.INSTANCE);
       }
     }
     String source = null;
-    if (object instanceof PsiElement) {
-      final PsiElement element = (PsiElement)object;
+    if (element != null) {
       PyClass cls = null;
 
       if (element instanceof PyFunction) {
@@ -158,14 +157,15 @@ public class CompletionVariantsProcessor extends VariantsProcessor {
     if (PyUtil.isClassPrivateName(name) && !PyUtil.inSameFile(element, myContext)) {
       return;
     }
-    myVariants.put(name, setupItem(LookupElementBuilder.create(element, name).withIcon(element.getIcon(0))));
+    myVariants.put(name, setupItem(LookupElementBuilder.createWithSmartPointer(name, element).withIcon(element.getIcon(0))));
   }
 
-  protected void addImportedElement(String referencedName, NameDefiner definer, PyElement expr) {
+  @Override
+  protected void addImportedElement(String referencedName, PyElement expr) {
     Icon icon = expr.getIcon(0);
     // things like PyTargetExpression cannot have a general icon, but here we only have variables
     if (icon == null) icon = PlatformIcons.VARIABLE_ICON;
-    LookupElementBuilder lookupItem = setupItem(LookupElementBuilder.create(expr, referencedName).withIcon(icon));
+    LookupElementBuilder lookupItem = setupItem(LookupElementBuilder.createWithSmartPointer(referencedName, expr).withIcon(icon));
     myVariants.put(referencedName, lookupItem);
   }
 }

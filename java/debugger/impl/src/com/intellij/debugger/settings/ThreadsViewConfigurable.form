@@ -3,7 +3,7 @@
   <grid id="a2574" binding="myPanel" layout-manager="GridLayoutManager" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="126" y="76" width="271" height="203"/>
+      <xy x="126" y="76" width="271" height="217"/>
     </constraints>
     <properties/>
     <border type="none"/>
@@ -43,7 +43,7 @@
           </component>
         </children>
       </grid>
-      <grid id="f4cba" layout-manager="GridLayoutManager" row-count="4" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="0">
+      <grid id="f4cba" layout-manager="GridLayoutManager" row-count="5" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="0">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="1" fill="1" indent="0" use-parent-layout="false"/>
@@ -82,6 +82,14 @@
             </constraints>
             <properties>
               <text resource-bundle="messages/DebuggerBundle" key="label.threads.view.configurable.show.package"/>
+            </properties>
+          </component>
+          <component id="9be9b" class="javax.swing.JCheckBox" binding="myArgsTypesCheckBox">
+            <constraints>
+              <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text resource-bundle="messages/DebuggerBundle" key="label.threads.view.configurable.show.prams.types"/>
             </properties>
           </component>
         </children>

@@ -52,6 +52,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
+import com.intellij.psi.NavigatablePsiElement
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiJavaFile
@@ -197,17 +198,6 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
     """)
     type 'e'
     assertTrue lookup.focused
-  }
-
-  public void testNoLookupFocusInJavaVariable() {
-    myFixture.configureByText("a.java", """
-      class Foo {
-        String foo(String st<caret>) {
-        }
-      }
-    """)
-    type 'r'
-    assertFalse lookup.focused
   }
 
   public void testNoStupidNameSuggestions() {
@@ -450,7 +440,7 @@ class Foo {
     }
     """)
     type 'o.'
-    assert myFixture.file.text.contains("ooo.")
+    assert myFixture.editor.document.text.contains("ooo.")
     assert lookup
   }
 
@@ -461,7 +451,7 @@ class Foo {
     }
     """)
     type 'tos.'
-    assert myFixture.file.text.contains("toString().")
+    assert myFixture.editor.document.text.contains("toString().")
     assert lookup
   }
 
@@ -472,7 +462,7 @@ class Foo {
     }
     """)
     type 'AIOO.'
-    assert myFixture.file.text.contains("ArrayIndexOutOfBoundsException.")
+    assert myFixture.editor.document.text.contains("ArrayIndexOutOfBoundsException.")
     assert lookup
   }
 
@@ -487,7 +477,7 @@ class Foo {
     assert !lookup
   }
 
-  void testArrows(String toType, int indexDown, int indexUp) {
+  void testArrows(String toType, LookupImpl.FocusDegree focusDegree, int indexDown, int indexUp) {
     Closure checkArrow = { String action, int expectedIndex ->
       myFixture.configureByText("a.java", """
       class A {
@@ -500,7 +490,7 @@ class Foo {
 
       type toType
       assert lookup
-      assert !lookup.focused
+      lookup.focusDegree = focusDegree
 
       edt { myFixture.performEditorAction(action) }
       if (lookup) {
@@ -520,11 +510,11 @@ class Foo {
 
   public void "test vertical arrows in non-focused lookup"() {
     String toType = "ArrayIndexOutOfBoundsException ind"
-    testArrows toType, 0, 1
+    testArrows toType, LookupImpl.FocusDegree.UNFOCUSED, 0, 1
 
     UISettings.instance.CYCLE_SCROLLING = false
     try {
-      testArrows toType, 0, -1
+      testArrows toType, LookupImpl.FocusDegree.UNFOCUSED, 0, -1
     }
     finally {
       UISettings.instance.CYCLE_SCROLLING = true
@@ -536,11 +526,11 @@ class Foo {
     UISettings.getInstance().SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY = true
 
     String toType = "fo"
-    testArrows toType, 2, 0
+    testArrows toType, LookupImpl.FocusDegree.SEMI_FOCUSED, 2, 0
 
     UISettings.instance.CYCLE_SCROLLING = false
     try {
-      testArrows toType, 2, 0
+      testArrows toType, LookupImpl.FocusDegree.SEMI_FOCUSED, 2, 0
     }
     finally {
       UISettings.instance.CYCLE_SCROLLING = true
@@ -1101,7 +1091,7 @@ class Foo {
     type '\n.'
     assert lookup
     assert 'hashCode' in myFixture.lookupElementStrings
-    assert myFixture.file.text.contains('asdf.')
+    assert myFixture.editor.document.text.contains('asdf.')
   }
 
   public void testNoWordCompletionAutoPopup() {
@@ -1411,7 +1401,7 @@ class Foo extends Abcdefg <caret>'''
 }}
 '''
     type 'FIS:'
-    assert myFixture.file.text.contains('FIS:')
+    assert myFixture.editor.document.text.contains('FIS:')
   }
 
   public void testSoutvTemplate() {
@@ -1581,21 +1571,6 @@ class Foo {
 '''
   }
 
-  public void "test no focus in variable name"() {
-    myFixture.configureByText 'a.java', '''
-class FooBar {
-  void foo() {
-    FooBar <caret>
-  }
-}
-'''
-    type 'f'
-    assert lookup
-    assert !lookup.focused
-    type '\n'
-    assert !myFixture.editor.document.text.contains('fooBar')
-  }
-
   public void "test middle matching and overwrite"() {
     myFixture.configureByText 'a.java', '''
 class ListConfigKey {
@@ -1740,7 +1715,7 @@ class Cls {
 
     def docProvider = new LiveTemplateDocumentationProvider()
     def docElement = docProvider.getDocumentationElementForLookupItem(myFixture.psiManager, lookup.currentItem, null)
-    assert docElement.presentation.presentableText == 'sout'
+    assert (docElement as NavigatablePsiElement).presentation.presentableText == 'sout'
     assert docProvider.generateDoc(docElement, docElement).contains('System.out')
   }
 

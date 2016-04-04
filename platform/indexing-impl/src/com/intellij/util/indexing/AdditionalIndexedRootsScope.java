@@ -31,7 +31,7 @@ public class AdditionalIndexedRootsScope extends GlobalSearchScope {
     this(baseScope, new AdditionalIndexableFileSet());
   }
 
-  public AdditionalIndexedRootsScope(GlobalSearchScope baseScope, Class<? extends IndexedRootsProvider> providerClass) {
+  public AdditionalIndexedRootsScope(GlobalSearchScope baseScope, Class<? extends IndexableSetContributor> providerClass) {
     this(baseScope, new AdditionalIndexableFileSet(IndexableSetContributor.EP_NAME.findExtension(providerClass)));
   }
 

@@ -164,6 +164,8 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider {
   private Editor createEditor(){
     Editor editor = EditorFactory.getInstance().createEditor(myDocument, myProject);
     ((EditorMarkupModel) editor.getMarkupModel()).setErrorStripeVisible(true);
+    ((EditorEx) editor).getGutterComponentEx().setForceShowRightFreePaintersArea(true);
+
     EditorHighlighter highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(myFile, EditorColorsManager.getInstance().getGlobalScheme(), myProject);
     ((EditorEx) editor).setHighlighter(highlighter);
     ((EditorEx) editor).setFile(myFile);
@@ -261,7 +263,7 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider {
   @Override
   public Object getData(final String dataId) {
     final Editor e = validateCurrentEditor();
-    if (e == null) return null;
+    if (e == null || e.isDisposed()) return null;
 
     // There's no FileEditorManager for default project (which is used in diff command-line application)
     if (!myProject.isDisposed() && !myProject.isDefault()) {

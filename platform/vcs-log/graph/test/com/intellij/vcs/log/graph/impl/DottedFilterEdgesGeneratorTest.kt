@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,19 +26,19 @@ import com.intellij.vcs.log.graph.utils.UnsignedBitSet
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-public class DottedFilterEdgesGeneratorTest {
+class DottedFilterEdgesGeneratorTest {
 
   fun LinearGraph.assert(upIndex: Int = 0, downIndex: Int = nodesCount() - 1, result: TestGraphBuilder.() -> Unit) {
     val nodesVisibility = UnsignedBitSet()
     for (nodeIndex in 0..nodesCount() - 1) {
       val graphNode = getGraphNode(nodeIndex)
-      nodesVisibility.set(getNodeId(nodeIndex), graphNode.getType() == GraphNodeType.USUAL)
+      nodesVisibility.set(getNodeId(nodeIndex), graphNode.type == GraphNodeType.USUAL)
     }
     val collapsedGraph = CollapsedGraph.newInstance(this, nodesVisibility)
     DottedFilterEdgesGenerator.update(collapsedGraph, upIndex, downIndex)
 
     val expectedResultGraph = graph(result)
-    val actualResultGraph = collapsedGraph.getCompiledGraph()
+    val actualResultGraph = collapsedGraph.compiledGraph
 
     assertEquals(expectedResultGraph.asTestGraphString(true), actualResultGraph.asTestGraphString(true))
   }

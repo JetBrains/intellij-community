@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,12 +61,12 @@ public class CompilingEvaluatorImpl extends CompilingEvaluator {
         return ModuleUtilCore.findModuleForPsiElement(myPsiContext);
       }
     });
-    final List<String> options = new ArrayList<String>();
+    final List<String> options = new ArrayList<>();
     options.add("-proc:none"); // for our purposes annotation processing is not needed
     options.add("-encoding");
     options.add("UTF-8");
-    final List<File> platformClasspath = new ArrayList<File>();
-    final List<File> classpath = new ArrayList<File>();
+    final List<File> platformClasspath = new ArrayList<>();
+    final List<File> classpath = new ArrayList<>();
     if (module != null) {
       final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
       for (String s : rootManager.orderEntries().compileOnly().recursively().exportedOnly().withoutSdk().getPathsList().getPathList()) {
@@ -125,12 +125,9 @@ public class CompilingEvaluatorImpl extends CompilingEvaluator {
   }
 
   private File generateTempSourceFile(File workingDir) throws IOException {
-    final Pair<String, String> fileData = ApplicationManager.getApplication().runReadAction(new Computable<Pair<String, String>>() {
-      @Override
-      public Pair<String, String> compute() {
-        final PsiFile file = myData.getGeneratedInnerClass().getContainingFile();
-        return Pair.create(file.getName(), file.getText());
-      }
+    final Pair<String, String> fileData = ApplicationManager.getApplication().runReadAction((Computable<Pair<String, String>>)() -> {
+      PsiFile file = myData.getGeneratedInnerClass().getContainingFile();
+      return Pair.create(file.getName(), file.getText());
     });
     if (fileData.first == null) {
       throw new IOException("Class file name not specified");

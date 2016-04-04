@@ -3,18 +3,6 @@
 Reports any attempt to instantiate a new <b>Collection</b> object without specifying
 an initial capacity. If no initial capacity is specified, a default capacity is used, which will rarely be optimal. Failing
 to specify initial capacities for collections may result in performance issues, if space needs to be reallocated and
-memory copied when capacity is exceeded. This inspection checks allocations of the following classes:
-<ul>
-<li><b>java.util.ArrayList</b>
-<li><b>java.util.BitSet</b>
-<li><b>java.util.HashMap</b>
-<li><b>java.util.HashSet</b>
-<li><b>java.util.Hashtable</b>
-<li><b>java.util.Vector</b>
-<li><b>java.util.WeakHashMap</b>
-</ul>
-<!-- tooltip end -->
-<p>
-
+memory copied when capacity is exceeded. This inspection checks allocations of the classes which are listed in inspection settings.
 </body>
 </html>

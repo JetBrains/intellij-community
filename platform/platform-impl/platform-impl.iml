@@ -29,7 +29,7 @@
     <orderEntry type="module" module-name="indexing-impl" />
     <orderEntry type="module" module-name="projectModel-impl" />
     <orderEntry type="library" name="Snappy-Java" level="project" />
-    <orderEntry type="library" name="Netty" level="project" />
+    <orderEntry type="library" exported="" name="Netty" level="project" />
     <orderEntry type="library" name="Sanselan" level="project" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module" module-name="jps-model-impl" />
@@ -45,5 +45,6 @@
     <orderEntry type="library" exported="" name="KotlinJavaRuntime" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="Slf4j" level="project" />
     <orderEntry type="module" module-name="configuration-store-impl" scope="RUNTIME" />
+    <orderEntry type="library" name="com.twelvemonkeys.imageio:imageio-tiff:3.2.1" level="project" />
   </component>
 </module>

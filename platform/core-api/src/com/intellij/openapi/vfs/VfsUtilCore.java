@@ -114,13 +114,7 @@ public class VfsUtilCore {
   }
 
   public static boolean isAncestor(@NotNull File ancestor, @NotNull File file, boolean strict) {
-    File parent = strict ? file.getParentFile() : file;
-    while (parent != null) {
-      if (parent.equals(ancestor)) return true;
-      parent = parent.getParentFile();
-    }
-
-    return false;
+    return FileUtil.isAncestor(ancestor, file, strict);
   }
 
   @Nullable
@@ -521,8 +515,8 @@ public class VfsUtilCore {
 
   @NotNull
   public static String fixIDEAUrl(@NotNull String ideaUrl ) {
-    final String schemeSeparator = URLUtil.SCHEME_SEPARATOR;
-    int idx = ideaUrl.indexOf(schemeSeparator);
+    final String ideaProtocolMarker = "://";
+    int idx = ideaUrl.indexOf(ideaProtocolMarker);
     if( idx >= 0 ) {
       String s = ideaUrl.substring(0, idx);
 
@@ -530,7 +524,7 @@ public class VfsUtilCore {
         //noinspection HardCodedStringLiteral
         s = "jar:file";
       }
-      final String urlWithoutProtocol = ideaUrl.substring(idx + schemeSeparator.length());
+      final String urlWithoutProtocol = ideaUrl.substring(idx + ideaProtocolMarker.length());
       ideaUrl = s + ":" + (urlWithoutProtocol.startsWith("/") ? "" : "/") + urlWithoutProtocol;
     }
 
@@ -556,9 +550,7 @@ public class VfsUtilCore {
       uri = uri.substring("file:/".length());
       if (!SystemInfo.isWindows) uri = "/" + uri;
     }
-    else if (uri.startsWith("file:")) {
-      uri = uri.substring("file:".length());
-    }
+    else uri = StringUtil.trimStart(uri, "file:");
 
     VirtualFile file = null;
 

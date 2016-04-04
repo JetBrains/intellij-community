@@ -68,22 +68,29 @@ public class TypeEqualityConstraint implements ConstraintFormula {
     }
 
     if (myT instanceof PsiWildcardType || myS instanceof PsiWildcardType) {
+      session.registerIncompatibleErrorMessage("Incompatible equality constraint: " + session.getPresentableText(myT) + " and " + session.getPresentableText(myS));
       return false;
     }
 
     if (session.isProperType(myT) && session.isProperType(myS)) {
-      if (myT == null || myT == PsiType.NULL) return myS == null || myS == PsiType.NULL || myS.equalsToText(CommonClassNames.JAVA_LANG_OBJECT);
-      if (myS == null || myS == PsiType.NULL) return true;
-      return Comparing.equal(myT, myS);
+      final boolean equal = Comparing.equal(myT, myS);
+      if (!equal) {
+        session.registerIncompatibleErrorMessage("Incompatible equality constraint: " + session.getPresentableText(myT) + " and " + session.getPresentableText(myS));
+      }
+      return equal;
     }
+
+    if (myT == null || myT == PsiType.NULL) return false;
+    if (myS == null || myS == PsiType.NULL) return false;
+
     InferenceVariable inferenceVariable = session.getInferenceVariable(myS);
-    if (inferenceVariable != null) {
-      inferenceVariable.addBound(myT, InferenceBound.EQ);
+    if (inferenceVariable != null && !(myT instanceof PsiPrimitiveType)) {
+      inferenceVariable.addBound(myT, InferenceBound.EQ, session.myIncorporationPhase);
       return true;
     }
     inferenceVariable = session.getInferenceVariable(myT);
-    if (inferenceVariable != null) {
-      inferenceVariable.addBound(myS, InferenceBound.EQ);
+    if (inferenceVariable != null && !(myS instanceof PsiPrimitiveType)) {
+      inferenceVariable.addBound(myS, InferenceBound.EQ, session.myIncorporationPhase);
       return true;
     }
     if (myT instanceof PsiClassType && myS instanceof PsiClassType) {
@@ -96,9 +103,13 @@ public class TypeEqualityConstraint implements ConstraintFormula {
         final PsiSubstitutor sSubstitutor = sResult.getSubstitutor();
         for (PsiTypeParameter typeParameter : tClass.getTypeParameters()) {
           final PsiType tSubstituted = tSubstitutor.substitute(typeParameter);
-          final PsiType sSubstituted = sSubstitutor.substituteWithBoundsPromotion(typeParameter);
+          final PsiType sSubstituted = sSubstitutor.substitute(typeParameter);
           if (tSubstituted != null && sSubstituted != null) {
             constraints.add(new TypeEqualityConstraint(tSubstituted, sSubstituted));
+          }
+          if (tSubstituted == null ^ sSubstituted == null) {
+            session.registerIncompatibleErrorMessage("Incompatible equality constraint: " + session.getPresentableText(myT) + " and " + session.getPresentableText(myS));
+            return false;
           }
         }
         return true;
@@ -109,6 +120,7 @@ public class TypeEqualityConstraint implements ConstraintFormula {
       return true;
     }
 
+    session.registerIncompatibleErrorMessage(session.getInferenceVariables(), session.getPresentableText(myS) + " conforms to " + session.getPresentableText(myT));
     return false;
   }
 

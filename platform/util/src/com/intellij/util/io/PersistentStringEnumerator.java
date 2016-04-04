@@ -81,9 +81,4 @@ public class PersistentStringEnumerator extends PersistentEnumeratorDelegate<Str
     super.close();
     if (myCache != null) myCache.close();
   }
-
-  @Override
-  public void markCorrupted() {
-    myEnumerator.markCorrupted();
-  }
 }

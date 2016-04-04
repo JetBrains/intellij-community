@@ -21,6 +21,7 @@ package com.intellij.util.messages.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.SmartFMap;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.MessageHandler;
@@ -77,7 +78,7 @@ public class MessageBusConnectionImpl implements MessageBusConnection {
   }
 
   @Override
-  public void disconnect() {
+  public void dispose() {
     Queue<Message> jobs = myPendingMessages.get();
     myPendingMessages.remove();
     myBus.notifyConnectionTerminated(this);
@@ -87,8 +88,8 @@ public class MessageBusConnectionImpl implements MessageBusConnection {
   }
 
   @Override
-  public void dispose() {
-    disconnect();
+  public void disconnect() {
+    Disposer.dispose(this);
   }
 
   @Override

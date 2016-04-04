@@ -40,7 +40,7 @@ class Bar3 {
         System.out.println(first.hashCode());
       }
       if (first == null) {
-        System.out.println(<warning descr="Method invocation 'first.hashCode()' may produce 'java.lang.NullPointerException'">first.hashCode()</warning>);
+        System.out.println(first.<warning descr="Method invocation 'hashCode' may produce 'java.lang.NullPointerException'">hashCode</warning>());
       }
     }
   }

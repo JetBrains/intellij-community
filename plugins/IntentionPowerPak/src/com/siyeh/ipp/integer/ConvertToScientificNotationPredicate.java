@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.siyeh.ipp.integer;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiType;
@@ -39,9 +40,7 @@ class ConvertToScientificNotationPredicate implements PsiElementPredicate {
       return false;
     }
     text = text.toLowerCase();
-    if (text.startsWith("-")) {
-      text = text.substring(1);
-    }
+    text = StringUtil.trimStart(text, "-");
     if (!text.contains(".") && text.startsWith("0")) {
       return false; //Octal integer
     }

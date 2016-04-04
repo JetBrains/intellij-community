@@ -176,7 +176,7 @@ public class FileStatusMap implements Disposable {
 
   private void assertAllowModifications() {
     try {
-      assert myAllowDirt;
+      assert myAllowDirt : "PSI/document/model changes are not allowed during highlighting";
     }
     finally {
       myAllowDirt = true; //give next test a chance
@@ -344,7 +344,7 @@ public class FileStatusMap implements Disposable {
 
     @Override
     public <T> T getUserData(@NotNull Key<T> key) {
-      throw new UnsupportedOperationException();
+      return null;
     }
 
     @Override

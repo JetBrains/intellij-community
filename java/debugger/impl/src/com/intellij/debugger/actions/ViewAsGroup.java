@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,7 +77,7 @@ public class ViewAsGroup extends ActionGroup implements DumbAware {
       final List<JavaValue> values = getSelectedValues(e);
       final List<XValueNodeImpl> selectedNodes = XDebuggerTreeActionBase.getSelectedNodes(e.getDataContext());
 
-      LOG.assertTrue(debuggerContext != null && !values.isEmpty());
+      LOG.assertTrue(!values.isEmpty());
 
       DebugProcessImpl process = debuggerContext.getDebugProcess();
       if (process == null) {
@@ -104,7 +104,7 @@ public class ViewAsGroup extends ActionGroup implements DumbAware {
   }
 
   private static AnAction [] calcChildren(List<JavaValue> values) {
-    List<AnAction> renderers = new ArrayList<AnAction>();
+    List<AnAction> renderers = new ArrayList<>();
 
     List<NodeRenderer> allRenderers = NodeRendererSettings.getInstance().getAllRenderers();
 
@@ -134,7 +134,7 @@ public class ViewAsGroup extends ActionGroup implements DumbAware {
       }
     }
 
-    List<AnAction> children = new ArrayList<AnAction>();
+    List<AnAction> children = new ArrayList<>();
     AnAction[] viewAsActions = ((DefaultActionGroup) ActionManager.getInstance().getAction(DebuggerActions.REPRESENTATION_LIST)).getChildren(null);
     for (AnAction viewAsAction : viewAsActions) {
       if (viewAsAction instanceof AutoRendererAction) {
@@ -187,7 +187,7 @@ public class ViewAsGroup extends ActionGroup implements DumbAware {
     List<XValueNodeImpl> selectedNodes = XDebuggerTreeActionBase.getSelectedNodes(event.getDataContext());
     if (selectedNodes.isEmpty()) return Collections.emptyList();
 
-    List<JavaValue> res = new ArrayList<JavaValue>(selectedNodes.size());
+    List<JavaValue> res = new ArrayList<>(selectedNodes.size());
     for (XValueNodeImpl node : selectedNodes) {
       XValue container = node.getValueContainer();
       if (container instanceof JavaValue) {

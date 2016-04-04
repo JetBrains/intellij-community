@@ -37,7 +37,6 @@ class GroovyAutoPopupTest extends CompletionAutoPopupTestCase {
 
   @Override
   protected void tearDown() {
-    CodeInsightSettings.instance.AUTOPOPUP_FOCUS_POLICY = CodeInsightSettings.SMART
     CodeInsightSettings.instance.SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = false
     CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.FIRST_LETTER
     super.tearDown()
@@ -60,12 +59,6 @@ class GroovyAutoPopupTest extends CompletionAutoPopupTestCase {
     assert lookup.focused
   }
 
-  public void testNoLookupFocusInVariable() {
-    myFixture.configureByText("a.groovy", """StringBuffer st<caret>""")
-    type 'r'
-    assert !lookup.focused
-  }
-
   public void testNoLookupFocusOnUnresolvedQualifier() {
     myFixture.configureByText("a.groovy", """xxx.<caret>""")
     type 'h' //hashCode
@@ -79,19 +72,6 @@ class GroovyAutoPopupTest extends CompletionAutoPopupTestCase {
       }""")
     type 'h'
     assert !lookup
-  }
-
-  public void testPossibleClosureParameter() {
-    myFixture.configureByText("a.groovy", "{ <caret> }")
-    type 'h'
-    assert !lookup.focused
-  }
-
-  public void testPossibleClosureParameter2() {
-    CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE
-    myFixture.configureByText("a.groovy", "{ a, <caret> }")
-    type 'h'
-    assert !lookup.focused
   }
 
   public void testImpossibleClosureParameter() {
@@ -121,13 +101,7 @@ class GroovyAutoPopupTest extends CompletionAutoPopupTestCase {
   }
 
 
-  private def setFocusLookup() {
-    CodeInsightSettings.instance.AUTOPOPUP_FOCUS_POLICY = CodeInsightSettings.ALWAYS
-  }
-
   public void testPopupAfterDotAfterPackage() {
-    setFocusLookup()
-
     myFixture.configureByText 'a.groovy', '<caret>'
     type 'import jav'
     assert lookup
@@ -163,38 +137,11 @@ class GroovyAutoPopupTest extends CompletionAutoPopupTestCase {
     myFixture.checkResult '2..<caret>'
   }
 
-  public void testInsideBuilderMethod() {
-    myFixture.configureByText 'a.groovy', 'html { body {}; <caret> }'
-    type 'h'
-    assert lookup
-    assert !lookup.focused
-  }
-
   public void testInsideClosure() {
     myFixture.configureByText 'a.groovy', 'def cl = { foo(); <caret> }'
     type 'h'
     assert lookup
     assert lookup.focused
-  }
-
-  public void testForVariableNoFocus() {
-    myFixture.configureByText 'a.groovy', 'def fl, cl = []; for(<caret>)'
-    type 'f'
-    assert !lookup.focused
-    type 'inal '
-    assert !lookup
-    type 'c'
-    assert !lookup.focused
-    assert 'char' in myFixture.lookupElementStrings
-    assert myFixture.editor.document.text.contains('for(final c)')
-    type ' in c'
-    assert lookup.focused
-  }
-
-  public void testForVariableNoFocus2() {
-    myFixture.configureByText 'a.groovy', 'for (<caret>args) {}'
-    type 'a'
-    assert !lookup.focused
   }
 
   public void testNonImportedClass() {
@@ -247,7 +194,7 @@ Abcdefg <caret>'''
   public void testEnteringLabel() {
     myFixture.configureByText 'a.groovy', '<caret>'
     type 'FIS:'
-    assert myFixture.file.text == 'FIS:'
+    assert myFixture.editor.document.text == 'FIS:'
   }
 
   public void testEnteringNamedArg() {
@@ -289,18 +236,6 @@ foo(new <caret>)
     myFixture.assertPreferredCompletionItems 0, 'File', 'File', 'FileInputStream'
     type '('
     assert myFixture.editor.document.text.contains('new File()')
-  }
-
-  public void testSecondClosureParameterName() {
-    myFixture.configureByText("a.groovy", "{ String a, Object <caret> }")
-    type 'o'
-    assert !lookup.focused
-  }
-
-  public void testSecondClosureParameterName2() {
-    myFixture.configureByText("a.groovy", "{ String a, Object <caret>String beanName -> println 'hi' }")
-    type 'o'
-    assert !lookup.focused
   }
 
   public void testNoAutopopupAfterDef() {

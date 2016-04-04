@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorLastActionTracker;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.containers.HashSet;
@@ -56,7 +57,8 @@ public class CloneCaretActionHandler extends EditorActionHandler {
 
   @Override
   public boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
-    return editor.getCaretModel().supportsMultipleCarets();
+    return editor.getCaretModel().supportsMultipleCarets() && (!ModifierKeyDoubleClickHandler.getInstance().isRunningAction() ||
+                                                               EditorSettingsExternalizable.getInstance().addCaretsOnDoubleCtrl());
   }
 
   @Override

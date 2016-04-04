@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -628,7 +628,13 @@ public class SrcRepositoryUseTest extends PsiTestCase{
     PsiClass aClass = myJavaFacade.findClass("pack.MyClass2", GlobalSearchScope.allScope(myProject));
     assertNotNull(aClass);
 
-    aClass.getNameIdentifier().replace(myJavaFacade.getElementFactory().createIdentifier("NewName"));
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        aClass.getNameIdentifier().replace(myJavaFacade.getElementFactory().createIdentifier("NewName"));
+      }
+    });
+
     assertEquals("pack.NewName", aClass.getQualifiedName());
   }
 
@@ -637,13 +643,25 @@ public class SrcRepositoryUseTest extends PsiTestCase{
     assertNotNull(aClass);
 
     PsiField field = aClass.getFields()[0];
-    aClass.getNameIdentifier().replace(myJavaFacade.getElementFactory().createIdentifier("NewName"));
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        aClass.getNameIdentifier().replace(myJavaFacade.getElementFactory().createIdentifier("NewName"));
+      }
+    });
+
     assertTrue(field.isValid());
   }
 
   public void testModification2() throws Exception {
     PsiClass aClass = myJavaFacade.findClass("pack.MyClass2", GlobalSearchScope.allScope(myProject));
-    PsiUtil.setModifierProperty(aClass, PsiModifier.FINAL, true);
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        PsiUtil.setModifierProperty(aClass, PsiModifier.FINAL, true);
+      }
+    });
+
 
     PsiClass aClass2 = myJavaFacade.findClass("pack.MyClass2", GlobalSearchScope.allScope(myProject));
     assertEquals(aClass, aClass2);
@@ -656,9 +674,21 @@ public class SrcRepositoryUseTest extends PsiTestCase{
 
     BlockSupport blockSupport = ServiceManager.getService(myProject, BlockSupport.class);
     final PsiFile psiFile = aClass.getContainingFile();
-    blockSupport.reparseRange(psiFile, classRange.getStartOffset(), classRange.getEndOffset(), "");
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        blockSupport.reparseRange(psiFile, classRange.getStartOffset(), classRange.getEndOffset(), "");
+      }
+    });
+
     LOG.assertTrue(!aClass.isValid());
-    blockSupport.reparseRange(psiFile, classRange.getStartOffset(), classRange.getStartOffset(), text);
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        blockSupport.reparseRange(psiFile, classRange.getStartOffset(), classRange.getStartOffset(), text);
+      }
+    });
+
 
     aClass = myJavaFacade.findClass("pack.MyInterface1", GlobalSearchScope.allScope(myProject));
     PsiElement[] children = aClass.getChildren();
@@ -751,7 +781,12 @@ public class SrcRepositoryUseTest extends PsiTestCase{
     PsiMethod[] methods = nonAnonClass.getMethods();
     assertEquals(1, methods.length);
     PsiTypeElement newType = myJavaFacade.getElementFactory().createTypeElement(PsiType.FLOAT);
-    methods[0].getReturnTypeElement().replace(newType);
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        methods[0].getReturnTypeElement().replace(newType);
+      }
+    });
   }
 
   public void testParentIdAssertOnExternalChange() throws Exception {

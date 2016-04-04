@@ -181,15 +181,17 @@ public class Splash extends JDialog implements StartupProgress {
         final String licensedToMessage = provider.getLicensedToMessage();
         final List<String> licenseRestrictionsMessages = provider.getLicenseRestrictionsMessages();
         int offsetX = uiScale(15);
+        int offsetY = 30;
         if (Registry.is("ide.new.about")) {
           ApplicationInfo info = getAppInfo();
           if (info instanceof ApplicationInfoImpl) {
-            offsetX = ((ApplicationInfoImpl)info).getProgressX();
+            offsetX = Math.max(offsetX, ((ApplicationInfoImpl)info).getProgressX());
+            offsetY = ((ApplicationInfoImpl)info).getLicenseOffsetY();
           } else {
             return false;
           }
         }
-        int offsetY = Registry.is("ide.new.about") ? 85 : 30;
+
         g.drawString(licensedToMessage, x + offsetX, y + height - uiScale(offsetY));
         if (licenseRestrictionsMessages.size() > 0) {
           g.drawString(licenseRestrictionsMessages.get(0), x + offsetX, y + height - uiScale(offsetY - 16));
@@ -199,7 +201,6 @@ public class Splash extends JDialog implements StartupProgress {
     }
     return false;
   }
-
   private static ApplicationInfo getAppInfo() {
     return ApplicationManager.getApplication() == null ? ApplicationInfoImpl.getShadowInstance() : ApplicationInfo.getInstance();
   }

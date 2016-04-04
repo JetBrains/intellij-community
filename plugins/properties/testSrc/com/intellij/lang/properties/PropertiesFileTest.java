@@ -39,7 +39,7 @@ public class PropertiesFileTest extends LightPlatformCodeInsightFixtureTestCase 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myPropertyToAdd = (Property)PropertiesElementFactory.createProperty(getProject(), "kkk", "vvv");
+    myPropertyToAdd = (Property)PropertiesElementFactory.createProperty(getProject(), "kkk", "vvv", null);
   }
 
   public void testAddPropertyAfterComment() throws Exception {
@@ -182,12 +182,11 @@ public class PropertiesFileTest extends LightPlatformCodeInsightFixtureTestCase 
 
   public void testNonDefaultKeyValueDelimiter() {
     final PropertiesCodeStyleSettings codeStyleSettings = PropertiesCodeStyleSettings.getInstance(getProject());
-    codeStyleSettings.KEY_VALUE_DELIMITER = ':';
-    final PropertyImpl property = (PropertyImpl)PropertiesElementFactory.createProperty(getProject(), "xxx", "yyy");
-    final Character delimiter = property.getKeyValueDelimiter();
-    assertNotNull(delimiter);
-    assertEquals(':', (char)delimiter);
+    codeStyleSettings.KEY_VALUE_DELIMITER_CODE = 1;
+    final PropertyImpl property = (PropertyImpl)PropertiesElementFactory.createProperty(getProject(), "xxx", "yyy", null);
+    final char delimiter = property.getKeyValueDelimiter();
+    assertEquals(':', delimiter);
     assertEquals("xxx:yyy", property.getPsiElement().getText());
-    codeStyleSettings.KEY_VALUE_DELIMITER = PropertiesCodeStyleSettings.DEFAULT_KEY_VALUE_DELIMITER;
+    codeStyleSettings.KEY_VALUE_DELIMITER_CODE = 0;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,9 +21,9 @@ import com.intellij.history.integration.ui.models.DirectoryHistoryDialogModel;
 
 public class DirectoryHistoryDialogPatchCreationTest extends PatchingTestCase {
   public void testPatchCreation() throws Exception {
-    myRoot.createChildData(null, "f1.txt");
-    myRoot.createChildData(null, "f2.txt");
-    myRoot.createChildData(null, "f3.txt");
+    createChildData(myRoot, "f1.txt");
+    createChildData(myRoot, "f2.txt");
+    createChildData(myRoot, "f3.txt");
 
     DirectoryHistoryDialogModel m = new DirectoryHistoryDialogModel(myProject, myGateway, getVcs(), myRoot);
     assertSize(3, m.getRevisions());

@@ -1,12 +1,9 @@
 package org.jetbrains.plugins.ipnb.psi;
 
 import com.google.common.collect.Lists;
-import com.intellij.codeInsight.completion.CompletionUtil;
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.ResolveResult;
 import com.jetbrains.python.psi.PyQualifiedExpression;
@@ -48,18 +45,7 @@ public class IpnbPyReference extends PyReferenceImpl {
         if (psiFile == null) continue;
         final CompletionVariantsProcessor processor = new CompletionVariantsProcessor(myElement);
         PyResolveUtil.scopeCrawlUp(processor, psiFile, null, null);
-
-        for (LookupElement e : processor.getResultList()) {
-          final Object o = e.getObject();
-          if (o instanceof PsiElement) {
-            final PsiElement original = CompletionUtil.getOriginalElement((PsiElement)o);
-            if (original == null) {
-              continue;
-            }
-          }
-          variants.add(e);
-        }
-
+        variants.addAll(getOriginalElements(processor));
       }
     }
     return variants.toArray();
@@ -83,7 +69,7 @@ public class IpnbPyReference extends PyReferenceImpl {
           final Editor editor = ((IpnbCodePanel)editablePanel).getEditor();
           final IpnbPyFragment psiFile = (IpnbPyFragment)PsiDocumentManager.getInstance(myElement.getProject()).getPsiFile(editor.getDocument());
           if (psiFile == null) continue;
-          ResolveProcessor processor = new ResolveProcessor(referencedName);
+          final PyResolveProcessor processor = new PyResolveProcessor(referencedName);
 
           PyResolveUtil.scopeCrawlUp(processor, psiFile, referencedName, psiFile);
           final List<RatedResolveResult> resultList = getResultsFromProcessor(referencedName, processor, psiFile, psiFile);

@@ -44,7 +44,7 @@ internal class ReaderRoot<R>(val type: Class<R>, private val typeToTypeHandler: 
       }
 
       //noinspection SuspiciousMethodCalls
-      var typeWriter: TypeWriter<*>? = typeToTypeHandler.getRaw(returnType)
+      var typeWriter: TypeWriter<*>? = typeToTypeHandler.get(returnType as Any?)
       if (typeWriter == null) {
         typeWriter = createHandler(typeToTypeHandler, m.returnType)
       }

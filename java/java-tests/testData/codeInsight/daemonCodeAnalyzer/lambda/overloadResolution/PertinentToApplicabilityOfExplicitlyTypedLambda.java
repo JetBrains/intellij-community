@@ -12,6 +12,6 @@ abstract class PertinentToApplicabilityOfExplicitlyTypedLambdaTest {
   abstract void foo(B b);
 
   {
-    <error descr="Cannot resolve method 'foo(<lambda expression>)'">foo</error>(x -> y -> 42);
+    <error descr="Ambiguous method call: both 'PertinentToApplicabilityOfExplicitlyTypedLambdaTest.foo(A)' and 'PertinentToApplicabilityOfExplicitlyTypedLambdaTest.foo(B)' match">foo</error>(x -> y -> 42);
   }
 }

@@ -234,6 +234,17 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
           PsiReferenceExpressionImpl expression = (PsiReferenceExpressionImpl)element;
           qualifiers.add(resolveCache.resolveWithCaching(expression, INSTANCE, false, false, containingFile));
         }
+
+        // walk only qualifiers, not their argument and other associated stuff
+
+        @Override
+        public void visitExpressionList(PsiExpressionList list) { }
+
+        @Override
+        public void visitLambdaExpression(PsiLambdaExpression expression) { }
+
+        @Override
+        public void visitClass(PsiClass aClass) { }
       });
       return qualifiers;
     }

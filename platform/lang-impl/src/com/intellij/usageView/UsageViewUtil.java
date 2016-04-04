@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,18 +76,12 @@ public class UsageViewUtil {
   }
 
   public static boolean hasUsagesInGeneratedCode(UsageInfo[] usages, Project project) {
-    GeneratedSourcesFilter[] filters = GeneratedSourcesFilter.EP_NAME.getExtensions();
     for (UsageInfo usage : usages) {
       VirtualFile file = usage.getVirtualFile();
-      if (file != null) {
-        for (GeneratedSourcesFilter filter : filters) {
-          if (filter.isGeneratedSource(file, project)) {
-            return true;
-          }
-        }
+      if (file != null && GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(file, project)) {
+        return true;
       }
     }
-
     return false;
   }
 
@@ -190,8 +184,9 @@ public class UsageViewUtil {
     if (hasNonCodeUsages(usages) || inGeneratedCode) {
       StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
       if (statusBar != null) {
-        statusBar.setInfo(inGeneratedCode ? RefactoringBundle.message("occurrences.found.in.comments.strings.non.java.files.and.generated.code")
-                                          : RefactoringBundle.message("occurrences.found.in.comments.strings.and.non.java.files"));
+        statusBar.setInfo(RefactoringBundle.message(inGeneratedCode
+                                                    ? "occurrences.found.in.comments.strings.non.java.files.and.generated.code"
+                                                    : "occurrences.found.in.comments.strings.and.non.java.files"));
       }
       return true;
     }

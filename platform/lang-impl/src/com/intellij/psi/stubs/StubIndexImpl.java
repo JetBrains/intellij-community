@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +64,7 @@ import java.util.concurrent.locks.Lock;
 
 @State(
   name = "FileBasedIndex",
-  storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/stubIndex.xml", roamingType = RoamingType.DISABLED)}
+  storages = {@Storage(value = "stubIndex.xml", roamingType = RoamingType.DISABLED)}
 )
 public class StubIndexImpl extends StubIndex implements ApplicationComponent, PersistentStateComponent<StubIndexState> {
   private static final AtomicReference<Boolean> ourForcedClean = new AtomicReference<Boolean>(null);
@@ -73,6 +73,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
   private final TObjectIntHashMap<ID<?, ?>> myIndexIdToVersionMap = new TObjectIntHashMap<ID<?, ?>>();
 
   private final StubProcessingHelper myStubProcessingHelper;
+  private final IndexAccessValidator myAccessValidator = new IndexAccessValidator();
 
   private StubIndexState myPreviouslyRegistered;
 
@@ -244,14 +245,20 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     final MyIndex<Key> index = (MyIndex<Key>)myIndices.get(indexKey);
 
     try {
+      myAccessValidator.checkAccessingIndexDuringOtherIndexProcessing(indexKey);
+
       try {
         // disable up-to-date check to avoid locks on attempt to acquire index write lock while holding at the same time the readLock for this index
         FileBasedIndexImpl.disableUpToDateCheckForCurrentThread();
+
         index.getReadLock().lock();
+
+        myAccessValidator.startedProcessingActivityForIndex(indexKey);
 
         return index.getData(key).forEach(action);
       }
       finally {
+        myAccessValidator.stoppedProcessingActivityForIndex(indexKey);
         index.getReadLock().unlock();
         FileBasedIndexImpl.enableUpToDateCheckForCurrentThread();
       }

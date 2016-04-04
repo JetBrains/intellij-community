@@ -41,6 +41,8 @@ import com.intellij.refactoring.typeMigration.TypeMigrationRules;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.ui.EditorComboBox;
+import com.intellij.util.Function;
+import com.intellij.util.Functions;
 import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,51 +58,21 @@ import java.util.List;
  * @author anna
  * Date: 25-Mar-2008
  */
-public class TypeMigrationDialog extends RefactoringDialog {
+public abstract class TypeMigrationDialog extends RefactoringDialog {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.typeMigration.ui.TypeMigrationDialog");
 
   public static final String REFACTORING_NAME = "Type Migration";
 
-  private final EditorComboBox myToTypeEditor;
-  private final PsiElement myRoot;
+  protected final PsiElement[] myRoots;
   private TypeMigrationRules myRules;
-  private final PsiTypeCodeFragment myTypeCodeFragment;
   private final ScopeChooserCombo myScopeChooserCombo;
 
-  public TypeMigrationDialog(@NotNull Project project, PsiElement root, TypeMigrationRules rules) {
+  public TypeMigrationDialog(@NotNull Project project,
+                             PsiElement roots[],
+                             TypeMigrationRules rules) {
     super(project, false);
-    myRoot = root;
+    myRoots = roots;
     myRules = rules;
-
-    final PsiType migrationRootType = rules != null ? rules.getMigrationRootType() : null;
-    final PsiType rootType = getRootType();
-    final String text = migrationRootType != null ? migrationRootType.getCanonicalText(true) :
-                        rootType != null ? rootType.getCanonicalText(true) : "";
-    int flags = 0;
-    if (root instanceof PsiParameter) {
-      final PsiElement scope = ((PsiParameter)root).getDeclarationScope();
-      if (scope instanceof PsiMethod) {
-        flags |= JavaCodeFragmentFactory.ALLOW_ELLIPSIS;
-      }
-      else if (scope instanceof PsiCatchSection && PsiUtil.getLanguageLevel(root).isAtLeast(LanguageLevel.JDK_1_7)) {
-        flags |= JavaCodeFragmentFactory.ALLOW_DISJUNCTION;
-      }
-    }
-    myTypeCodeFragment = JavaCodeFragmentFactory.getInstance(project).createTypeCodeFragment(text, root, true, flags);
-
-    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-    final Document document = documentManager.getDocument(myTypeCodeFragment);
-    assert document != null;
-    myToTypeEditor = new EditorComboBox(document, project, StdFileTypes.JAVA);
-    final String[] types = getValidTypes(project, root);
-    myToTypeEditor.setHistory(types != null ? types : new String[]{document.getText()});
-    document.addDocumentListener(new DocumentAdapter() {
-      @Override
-      public void documentChanged(final DocumentEvent e) {
-        documentManager.commitDocument(document);
-        validateButtons();
-      }
-    });
 
     myScopeChooserCombo = new ScopeChooserCombo(project, false, true, FindSettings.getInstance().getDefaultScopeName());
     Disposer.register(myDisposable, myScopeChooserCombo);
@@ -109,115 +81,29 @@ public class TypeMigrationDialog extends RefactoringDialog {
         validateButtons();
       }
     });
-    init();
     setTitle(REFACTORING_NAME);
-  }
-
-  public PsiElement getRoot() {
-    return myRoot;
-  }
-
-  @Nullable
-  public PsiType getMigrationType() {
-    try {
-      return myTypeCodeFragment.getType();
-    }
-    catch (PsiTypeCodeFragment.TypeSyntaxException e) {
-      LOG.info(e);
-      return null;
-    }
-    catch (PsiTypeCodeFragment.NoTypeException e) {
-      LOG.info(e);
-      return null;
-    }
-  }
-
-  @Nullable
-  private String[] getValidTypes(final Project project, final PsiElement root) {
-    if (root instanceof PsiField || root instanceof PsiMethod) {
-      final PsiModifierList modifierList = ((PsiModifierListOwner)root).getModifierList();
-      if (VisibilityUtil.compare(VisibilityUtil.getVisibilityModifier(modifierList), PsiModifier.PRIVATE) < 0) return null;
-    }
-
-    final List<PsiExpression> expressions = new ArrayList<PsiExpression>();
-    for (PsiReference reference : ReferencesSearch.search(root, GlobalSearchScope.fileScope(root.getContainingFile()))) {
-      final PsiElement element = reference.getElement();
-      final PsiExpression expr = PsiTreeUtil.getParentOfType(element, PsiExpression.class, false);
-      if (expr != null) {
-        expressions.add(expr);
-      }
-    }
-    try {
-      final PsiExpression[] occurrences = expressions.toArray(new PsiExpression[expressions.size()]);
-      final PsiType[] psiTypes = new TypeSelectorManagerImpl(project, myTypeCodeFragment.getType(), occurrences).getTypesForAll();
-      if (psiTypes.length > 0) {
-        final String[] history = new String[psiTypes.length];
-        for (int i = 0; i < psiTypes.length; i++) {
-          PsiType psiType = psiTypes[i];
-          history[i] = psiType.getCanonicalText(true);
-        }
-        return history;
-      }
-    }
-    catch (PsiTypeCodeFragment.TypeSyntaxException e) {
-      LOG.info(e);
-      return null;
-    }
-    catch (PsiTypeCodeFragment.NoTypeException e) {
-      LOG.info(e);
-      return null;
-    }
-    return null;
   }
 
   @Override
   protected void canRun() throws ConfigurationException {
-    if (!checkType(getMigrationType())) throw new ConfigurationException("\'" + myTypeCodeFragment.getText() + "\' is invalid type");
     if (myScopeChooserCombo.getSelectedScope() == null) throw new ConfigurationException("Scope is not chosen");
-  }
-
-  private static boolean checkType(final PsiType type) {
-    if (type == null) return false;
-    if (!type.isValid()) return false;
-    if (type instanceof PsiClassType){
-      final PsiClassType psiClassType = (PsiClassType)type;
-      if (psiClassType.resolve() == null) return false;
-      final PsiType[] types = psiClassType.getParameters();
-      for (PsiType paramType : types) {
-        if (paramType instanceof PsiPrimitiveType ||
-            (paramType instanceof PsiWildcardType && ((PsiWildcardType)paramType).getBound() instanceof PsiPrimitiveType)) return false;
-        if (!checkType(paramType)) return false;
-      }
-    }
-    if (type instanceof PsiArrayType) {
-      return checkType(type.getDeepComponentType());
-    }
-    return true;
   }
 
   @Override
   protected void doAction() {
     FindSettings.getInstance().setDefaultScopeName(myScopeChooserCombo.getSelectedScopeName());
-
-    final PsiType rootType = getRootType();
-    final PsiType migrationType = getMigrationType();
-
-    if (migrationType == null || ChangeSignatureUtil.deepTypeEqual(rootType, migrationType)) {
-      close(DialogWrapper.OK_EXIT_CODE);
-      return;
-    }
-
     if (myRules == null) {
-      myRules = new TypeMigrationRules(rootType);
-      myRules.setMigrationRootType(migrationType);
+      myRules = new TypeMigrationRules();
       myRules.setBoundScope(myScopeChooserCombo.getSelectedScope());
     }
-    invokeRefactoring(new TypeMigrationProcessor(myProject, myRoot, myRules));
+    invokeRefactoring(new TypeMigrationProcessor(myProject, myRoots, getMigrationTypeFunction(), myRules));
   }
 
-  @Nullable
-  private PsiType getRootType() {
-    return TypeMigrationLabeler.getElementType(myRoot);
+  @NotNull
+  protected abstract Function<PsiElement, PsiType> getMigrationTypeFunction();
+
+  protected void appendMigrationTypeEditor(JPanel panel, GridBagConstraints cs) {
+
   }
 
   @Override
@@ -225,11 +111,7 @@ public class TypeMigrationDialog extends RefactoringDialog {
     final JPanel panel = new JPanel(new GridBagLayout());
     final GridBagConstraints gc = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 0, GridBagConstraints.NORTHWEST,
                                                          GridBagConstraints.HORIZONTAL, new Insets(5, 5, 0, 0), 0, 0);
-    final PsiType type = getRootType();
-    final String typeText = type != null ? type.getPresentableText() : "<unknown>";
-    panel.add(new JLabel("Migrate " + getElementPresentation(myRoot) + " \"" + typeText + "\" to"), gc);
-    panel.add(myToTypeEditor, gc);
-
+    appendMigrationTypeEditor(panel, gc);
     LabeledComponent<ScopeChooserCombo> scopeChooserComponent = new LabeledComponent<ScopeChooserCombo>();
     scopeChooserComponent.setComponent(myScopeChooserCombo);
     scopeChooserComponent.setText("Choose scope where change signature may occur");
@@ -239,42 +121,215 @@ public class TypeMigrationDialog extends RefactoringDialog {
 
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return myToTypeEditor;
-  }
-
-  private static String getElementPresentation(PsiElement element) {
-    if (element instanceof PsiMethod) {
-      return "return type of method " + ((PsiMethod)element).getName();
-    }
-
-    if (element instanceof PsiField) {
-      return "type of field " + ((PsiField)element).getName();
-    }
-
-    if (element instanceof PsiLocalVariable) {
-      return "type of variable " + ((PsiLocalVariable)element).getName();
-    }
-
-    if (element instanceof PsiReferenceParameterList) {
-      return "class type arguments ";
-    }
-
-    if (element instanceof PsiParameter) {
-      final PsiParameter param = (PsiParameter)element;
-      String result = "type of parameter " + param.getName();
-      if (param.getParent() instanceof PsiParameterList) {
-        final PsiMethod method = PsiTreeUtil.getParentOfType(param, PsiMethod.class);
-        assert method != null;
-        result  += " of method " + method.getName();
-      }
-      return result;
-    }
-
-    return element.toString();
+    return myScopeChooserCombo;
   }
 
   @Override
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp("reference.typeMigrationDialog");
   }
+
+  public static class MultipleElements extends TypeMigrationDialog {
+    private final Function<PsiElement, PsiType> myMigrationTypeFunction;
+
+    public MultipleElements(@NotNull Project project, PsiElement[] roots, Function<PsiElement, PsiType> migrationTypeFunction, TypeMigrationRules rules) {
+      super(project, roots, rules);
+      myMigrationTypeFunction = migrationTypeFunction;
+      init();
+    }
+
+    @NotNull
+    @Override
+    protected Function<PsiElement, PsiType> getMigrationTypeFunction() {
+      return myMigrationTypeFunction;
+    }
+  }
+
+  public static class SingleElement extends TypeMigrationDialog {
+    private final PsiTypeCodeFragment myTypeCodeFragment;
+    private final EditorComboBox myToTypeEditor;
+
+    public SingleElement(@NotNull Project project,
+                         PsiElement root,
+                         PsiType migrationType,
+                         TypeMigrationRules rules) {
+      super(project, new PsiElement[]{root}, rules);
+      final PsiType rootType = getRootType();
+      final String text = migrationType != null ? migrationType.getCanonicalText(true) :
+                          rootType != null ? rootType.getCanonicalText(true) : "";
+      int flags = 0;
+      if (root instanceof PsiParameter) {
+        final PsiElement scope = ((PsiParameter)root).getDeclarationScope();
+        if (scope instanceof PsiMethod) {
+          flags |= JavaCodeFragmentFactory.ALLOW_ELLIPSIS;
+        }
+        else if (scope instanceof PsiCatchSection && PsiUtil.getLanguageLevel(root).isAtLeast(LanguageLevel.JDK_1_7)) {
+          flags |= JavaCodeFragmentFactory.ALLOW_DISJUNCTION;
+        }
+      }
+      myTypeCodeFragment = JavaCodeFragmentFactory.getInstance(project).createTypeCodeFragment(text, root, true, flags);
+
+      final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+      final Document document = documentManager.getDocument(myTypeCodeFragment);
+      assert document != null;
+      myToTypeEditor = new EditorComboBox(document, project, StdFileTypes.JAVA);
+      final String[] types = getValidTypes(project, root);
+      myToTypeEditor.setHistory(types != null ? types : new String[]{document.getText()});
+      document.addDocumentListener(new DocumentAdapter() {
+        @Override
+        public void documentChanged(final DocumentEvent e) {
+          documentManager.commitDocument(document);
+          validateButtons();
+        }
+      });
+      init();
+    }
+
+    @Override
+    protected void canRun() throws ConfigurationException {
+      super.canRun();
+      if (!checkType(getMigrationType())) throw new ConfigurationException("\'" + myTypeCodeFragment.getText() + "\' is invalid type");
+    }
+
+    @Override
+    public JComponent getPreferredFocusedComponent() {
+      return myToTypeEditor;
+    }
+
+    protected void appendMigrationTypeEditor(JPanel panel, GridBagConstraints gc) {
+      final PsiType type = getRootType();
+      final String typeText = type != null ? type.getPresentableText() : "<unknown>";
+      panel.add(new JLabel("Migrate " + getElementPresentation(myRoots[0]) + " \"" + typeText + "\" to"), gc);
+      panel.add(myToTypeEditor, gc);
+    }
+
+    @Nullable
+    private String[] getValidTypes(final Project project, final PsiElement root) {
+      if (root instanceof PsiField || root instanceof PsiMethod) {
+        final PsiModifierList modifierList = ((PsiModifierListOwner)root).getModifierList();
+        if (VisibilityUtil.compare(VisibilityUtil.getVisibilityModifier(modifierList), PsiModifier.PRIVATE) < 0) return null;
+      }
+
+      final List<PsiExpression> expressions = new ArrayList<PsiExpression>();
+      for (PsiReference reference : ReferencesSearch.search(root, GlobalSearchScope.fileScope(root.getContainingFile()))) {
+        final PsiElement element = reference.getElement();
+        final PsiExpression expr = PsiTreeUtil.getParentOfType(element, PsiExpression.class, false);
+        if (expr != null) {
+          expressions.add(expr);
+        }
+      }
+      try {
+        final PsiExpression[] occurrences = expressions.toArray(new PsiExpression[expressions.size()]);
+        final PsiType[] psiTypes = new TypeSelectorManagerImpl(project, myTypeCodeFragment.getType(), occurrences).getTypesForAll();
+        if (psiTypes.length > 0) {
+          final String[] history = new String[psiTypes.length];
+          for (int i = 0; i < psiTypes.length; i++) {
+            PsiType psiType = psiTypes[i];
+            history[i] = psiType.getCanonicalText(true);
+          }
+          return history;
+        }
+      }
+      catch (PsiTypeCodeFragment.TypeSyntaxException e) {
+        LOG.info(e);
+        return null;
+      }
+      catch (PsiTypeCodeFragment.NoTypeException e) {
+        LOG.info(e);
+        return null;
+      }
+      return null;
+    }
+
+    @Override
+    protected void doAction() {
+      final PsiType rootType = getRootType();
+      final PsiType migrationType = getMigrationType();
+      if (migrationType == null || ChangeSignatureUtil.deepTypeEqual(rootType, migrationType)) {
+        close(DialogWrapper.OK_EXIT_CODE);
+        return;
+      }
+      super.doAction();
+    }
+
+    @NotNull
+    @Override
+    protected Function<PsiElement, PsiType> getMigrationTypeFunction() {
+      return Functions.constant(getMigrationType());
+    }
+
+    @Nullable
+    public PsiType getMigrationType() {
+      try {
+        return myTypeCodeFragment.getType();
+      }
+      catch (PsiTypeCodeFragment.TypeSyntaxException e) {
+        LOG.info(e);
+        return null;
+      }
+      catch (PsiTypeCodeFragment.NoTypeException e) {
+        LOG.info(e);
+        return null;
+      }
+    }
+
+    @Nullable
+    private PsiType getRootType() {
+      return TypeMigrationLabeler.getElementType(myRoots[0]);
+    }
+
+    private static String getElementPresentation(PsiElement element) {
+      if (element instanceof PsiMethod) {
+        return "return type of method " + ((PsiMethod)element).getName();
+      }
+
+      if (element instanceof PsiField) {
+        return "type of field " + ((PsiField)element).getName();
+      }
+
+      if (element instanceof PsiLocalVariable) {
+        return "type of variable " + ((PsiLocalVariable)element).getName();
+      }
+
+      if (element instanceof PsiReferenceParameterList) {
+        return "class type arguments ";
+      }
+
+      if (element instanceof PsiParameter) {
+        final PsiParameter param = (PsiParameter)element;
+        String result = "type of parameter " + param.getName();
+        if (param.getParent() instanceof PsiParameterList) {
+          final PsiMethod method = PsiTreeUtil.getParentOfType(param, PsiMethod.class);
+          assert method != null;
+          result  += " of method " + method.getName();
+        }
+        return result;
+      }
+
+      return element.toString();
+    }
+    private static boolean checkType(final PsiType type) {
+      if (type == null) return false;
+      if (!type.isValid()) return false;
+      if (type instanceof PsiClassType){
+        final PsiClassType psiClassType = (PsiClassType)type;
+        if (psiClassType.resolve() == null) return false;
+        final PsiType[] types = psiClassType.getParameters();
+        for (PsiType paramType : types) {
+          if (paramType instanceof PsiPrimitiveType ||
+              (paramType instanceof PsiWildcardType && ((PsiWildcardType)paramType).getBound() instanceof PsiPrimitiveType)) {
+            return false;
+          }
+          if (!checkType(paramType)) return false;
+        }
+      }
+      if (type instanceof PsiArrayType) {
+        return checkType(type.getDeepComponentType());
+      }
+      return true;
+    }
+  }
+
+
+
 }

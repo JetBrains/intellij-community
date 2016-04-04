@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgFileRevision;
+import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.command.HgLogCommand;
@@ -109,16 +110,27 @@ public class HgHistoryProvider implements VcsHistoryProvider {
     };
   }
 
-  private static List<HgFileRevision> getHistory(FilePath filePath, VirtualFile vcsRoot, Project project) {
+  public static List<HgFileRevision> getHistory(@NotNull FilePath filePath,
+                                                @NotNull VirtualFile vcsRoot,
+                                                @NotNull Project project) {
     VcsConfiguration vcsConfiguration = VcsConfiguration.getInstance(project);
-    int limit = vcsConfiguration.LIMIT_HISTORY ? vcsConfiguration.MAXIMUM_HISTORY_ROWS : -1;
+    return getHistory(filePath, vcsRoot, project, null, vcsConfiguration.LIMIT_HISTORY ? vcsConfiguration.MAXIMUM_HISTORY_ROWS : -1);
+  }
 
+  public static List<HgFileRevision> getHistory(@NotNull FilePath filePath,
+                                                @NotNull VirtualFile vcsRoot,
+                                                @NotNull Project project,
+                                                @Nullable HgRevisionNumber revisionNumber, int limit) {
     final HgLogCommand logCommand = new HgLogCommand(project);
-    logCommand
-      .setFollowCopies(!filePath.isDirectory());
+    logCommand.setFollowCopies(!filePath.isDirectory());
     logCommand.setIncludeRemoved(true);
+    List<String> args = new ArrayList<String>();
+    String revNumberAsArg = revisionNumber == null ? "." : revisionNumber.getChangeset();
+    args.add("--rev");
+    args.add("reverse(0::" + revNumberAsArg + ")"); // without --follow was 0:tip by default without --rev;
+    // reverse needed because of mercurial default order problem -r revset with and without -f option
     try {
-      return logCommand.execute(new HgFile(vcsRoot, filePath), limit, false);
+      return logCommand.execute(new HgFile(vcsRoot, filePath), limit, false, args);
     }
     catch (HgCommandException e) {
       new HgCommandResultNotifier(project).notifyError(null, HgVcsMessages.message("hg4idea.error.log.command.execution"), e.getMessage());

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,9 +65,13 @@ public class UpdateStrategy {
     BuildInfo newBuild = null;
     List<UpdateChannel> activeChannels = getActiveChannels(product);
     for (UpdateChannel channel : activeChannels) {
-      if (hasNewVersion(channel)) {
+      BuildInfo latestBuild = channel.getLatestBuild(myCurrentBuild.getBaselineVersion());
+      if (latestBuild == null || latestBuild.getNumber().compareTo(myCurrentBuild) <= 0) {
+        latestBuild = channel.getLatestBuild();
+      }
+      if (isNewVersion(latestBuild)) {
         updatedChannel = channel;
-        newBuild = updatedChannel.getLatestBuild();
+        newBuild = latestBuild;
         break;
       }
     }
@@ -88,7 +92,7 @@ public class UpdateStrategy {
       if (!myUpdateSettings.getKnownChannelsIds().contains(channel.getId()) &&
           channel.getMajorVersion() >= myMajorVersion &&
           channel.getStatus().compareTo(myChannelStatus) >= 0 &&
-          hasNewVersion(channel) &&
+          isNewVersion(channel.getLatestBuild()) &&
           (channelToPropose == null || isBetter(channelToPropose, channel))) {
         channelToPropose = channel;
       }
@@ -102,8 +106,7 @@ public class UpdateStrategy {
     List<UpdateChannel> result = new ArrayList<UpdateChannel>();
 
     for (UpdateChannel channel : product.getChannels()) {
-
-      // Check if we can only offer the same channel as selected
+      // Android Studio: Check if we can only offer the same channel as selected
       if (myStrategyCustomization.useOnlyCurrentChannel() && !channel.getStatus().equals(myChannelStatus)) {
         continue;
       }
@@ -126,10 +129,8 @@ public class UpdateStrategy {
     return result;
   }
 
-  private boolean hasNewVersion(@NotNull UpdateChannel channel) {
-    BuildInfo latestBuild = channel.getLatestBuild();
+  private boolean isNewVersion(BuildInfo latestBuild) {
     return latestBuild != null &&
-           latestBuild.getNumber() != null &&
            !myUpdateSettings.getIgnoredBuildNumbers().contains(latestBuild.getNumber().asStringWithoutProductCode()) &&
            myCurrentBuild.compareTo(latestBuild.getNumber()) < 0;
   }

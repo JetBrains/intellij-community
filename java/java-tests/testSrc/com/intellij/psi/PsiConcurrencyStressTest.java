@@ -21,7 +21,6 @@ package com.intellij.psi;
 
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
-import com.intellij.codeInsight.daemon.impl.DefaultHighlightVisitor;
 import com.intellij.codeInsight.daemon.impl.HighlightVisitor;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.openapi.application.ApplicationManager;
@@ -29,6 +28,7 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
@@ -38,8 +38,11 @@ import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.Timings;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -75,7 +78,7 @@ public class PsiConcurrencyStressTest extends DaemonAnalyzerTestCase {
 
     final CountDownLatch reads = new CountDownLatch(numOfThreads);
     final Random random = new Random();
-    for (int i = 0; i < numOfThreads; i++) {
+    List<Thread> threads = ContainerUtil.map(Collections.nCopies(numOfThreads, ""), i ->
       new Thread(() -> {
         for (int i1 = 0; i1 < readIterations; i1++) {
           if (myPsiManager == null) return;
@@ -86,8 +89,8 @@ public class PsiConcurrencyStressTest extends DaemonAnalyzerTestCase {
         }
 
         reads.countDown();
-      }, "stress thread" + i).start();
-    }
+      }, "stress thread" + i));
+    threads.forEach(Thread::start);
 
     final Document document = documentManager.getDocument(myFile);
 
@@ -107,6 +110,9 @@ public class PsiConcurrencyStressTest extends DaemonAnalyzerTestCase {
     }
 
     assertTrue("Timed out", reads.await(5, TimeUnit.MINUTES));
+    for (Thread thread : threads) {
+      thread.join();
+    }
   }
 
   private static void mark(final String s) {
@@ -163,8 +169,10 @@ public class PsiConcurrencyStressTest extends DaemonAnalyzerTestCase {
             super.visitElement(element);
 
             final HighlightInfoHolder infoHolder = new HighlightInfoHolder(myFile);
-            final HighlightVisitor visitor = new DefaultHighlightVisitor(getProject());
-            visitor.analyze(myFile, true, infoHolder, () -> visitor.visit(element));
+            for (HighlightVisitor visitor : Extensions.getExtensions(HighlightVisitor.EP_HIGHLIGHT_VISITOR, getProject())) {
+              HighlightVisitor v = visitor.clone(); // to avoid race for com.intellij.codeInsight.daemon.impl.DefaultHighlightVisitor.myAnnotationHolder
+              v.analyze(myFile, true, infoHolder, () -> v.visit(element));
+            }
           }
         });
         break;

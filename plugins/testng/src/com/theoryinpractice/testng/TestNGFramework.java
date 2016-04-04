@@ -36,8 +36,16 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.swing.*;
+import java.util.Arrays;
+import java.util.List;
 
 public class TestNGFramework extends JavaTestFramework {
+  private final static List<String> SECONDARY_BEFORE_ANNOTATIONS = Arrays.asList("org.testng.annotations.BeforeTest",
+                                                                                 "org.testng.annotations.BeforeClass",
+                                                                                 "org.testng.annotations.BeforeSuite",
+                                                                                 "org.testng.annotations.BeforeGroups"
+                                                                                 );
+  
   @NotNull
   public String getName() {
     return "TestNG";
@@ -97,6 +105,9 @@ public class TestNGFramework extends JavaTestFramework {
     PsiMethod patternMethod = createSetUpPatternMethod(factory);
     PsiMethod inClass = clazz.findMethodBySignature(patternMethod, false);
     if (inClass != null) {
+      if (AnnotationUtil.isAnnotated(inClass, SECONDARY_BEFORE_ANNOTATIONS, false)) {
+        return inClass;
+      }
       int exit = ApplicationManager.getApplication().isUnitTestMode() ?
                  Messages.YES :
                  Messages.showYesNoDialog(manager.getProject(), "Method \'" + setUpName + "\' already exist but is not annotated as @BeforeMethod.",

@@ -15,7 +15,7 @@
  */
 package org.zmlx.hg4idea.action;
 
-import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.Hash;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.repo.HgRepository;
 
@@ -23,8 +23,8 @@ import java.util.Collections;
 
 public class HgCreateTagFromLogAction extends HgLogSingleCommitAction {
   @Override
-  protected void actionPerformed(@NotNull HgRepository repository, @NotNull VcsFullCommitDetails commit) {
-    String revisionHash = commit.getId().asString();
+  protected void actionPerformed(@NotNull HgRepository repository, @NotNull Hash commit) {
+    String revisionHash = commit.asString();
     new HgCreateTagAction().execute(repository.getProject(), Collections.singleton(repository), repository, revisionHash);
   }
 }

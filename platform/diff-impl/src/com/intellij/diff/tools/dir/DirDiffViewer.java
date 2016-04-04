@@ -42,6 +42,7 @@ import com.intellij.openapi.diff.impl.dir.DirDiffWindow;
 import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -199,7 +200,6 @@ class DirDiffViewer implements FrameDiffTool.DiffViewer {
           return EMPTY_ARRAY;
         }
 
-        @Nullable
         @Override
         public byte[] getContent() throws IOException {
           return null;

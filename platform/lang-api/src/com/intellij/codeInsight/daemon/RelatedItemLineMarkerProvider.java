@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,11 +24,12 @@ import java.util.List;
 
 /**
  * Override this class and register the implementation as {@code codeInsight.lineMarkerProvider} extension to provide both line marker and
- * 'Go to related file' targets
+ * 'Go to related symbol' targets.
  *
  * @author nik
  */
-public abstract class RelatedItemLineMarkerProvider implements LineMarkerProvider {
+public abstract class RelatedItemLineMarkerProvider extends LineMarkerProviderDescriptor {
+
   @Override
   public RelatedItemLineMarkerInfo getLineMarkerInfo(@NotNull PsiElement element) {
     return null;
@@ -56,5 +57,10 @@ public abstract class RelatedItemLineMarkerProvider implements LineMarkerProvide
   }
 
   protected void collectNavigationMarkers(@NotNull PsiElement element, Collection<? super RelatedItemLineMarkerInfo> result) {
+  }
+
+  @Override
+  public String getName() {
+    return null;
   }
 }

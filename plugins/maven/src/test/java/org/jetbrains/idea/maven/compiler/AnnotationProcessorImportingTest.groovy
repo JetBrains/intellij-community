@@ -26,7 +26,7 @@ import org.jetbrains.idea.maven.importing.configurers.MavenAnnotationProcessorCo
 @SuppressWarnings("GroovyPointlessBoolean")
 class AnnotationProcessorImportingTest extends MavenImportingTestCase {
 
-  public void testSettingTargetLevel() throws Exception {
+  public void testImportAnnotationProcessorProfiles() throws Exception {
     createModulePom("module1", """
 <groupId>test</groupId>
 <artifactId>module1</artifactId>
@@ -126,10 +126,15 @@ class AnnotationProcessorImportingTest extends MavenImportingTestCase {
 
     def compilerConfiguration = ((CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject))
 
-    assert compilerConfiguration.findModuleProcessorProfile(MavenAnnotationProcessorConfigurer.MAVEN_DEFAULT_ANNOTATION_PROFILE).getModuleNames() == new HashSet<String>(["module1"])
-    assert compilerConfiguration.findModuleProcessorProfile(MavenAnnotationProcessorConfigurer.PROFILE_PREFIX + 'module2').getProcessors() == new HashSet<String>(["com.test.SourceCodeGeneratingAnnotationProcessor2"])
+    assert compilerConfiguration.findModuleProcessorProfile(MavenAnnotationProcessorConfigurer.MAVEN_DEFAULT_ANNOTATION_PROFILE).getModuleNames() == new HashSet<String>(["module1", "module4"])
+    assert compilerConfiguration.findModuleProcessorProfile(MavenAnnotationProcessorConfigurer.MAVEN_BSC_DEFAULT_ANNOTATION_PROFILE) == null
+
+    def projectProfile = compilerConfiguration.findModuleProcessorProfile(MavenAnnotationProcessorConfigurer.PROFILE_PREFIX + 'project')
+    assert projectProfile.getModuleNames() == new HashSet<String>(["module2"])
+    assert projectProfile.getProcessors() == new HashSet<String>(["com.test.SourceCodeGeneratingAnnotationProcessor2"])
     assert compilerConfiguration.findModuleProcessorProfile(MavenAnnotationProcessorConfigurer.PROFILE_PREFIX + 'module3') == null
     assert compilerConfiguration.findModuleProcessorProfile(MavenAnnotationProcessorConfigurer.PROFILE_PREFIX + 'module3_1') == null
+    assert compilerConfiguration.moduleProcessorProfiles.size() == 2
   }
 
   public void testOverrideGeneratedOutputDir() {
@@ -217,6 +222,12 @@ class AnnotationProcessorImportingTest extends MavenImportingTestCase {
                         <phase>generate-sources</phase>
                         <configuration>
                             <outputDirectory>target/metamodel</outputDirectory>
+                            <!-- STANDARD WAY -->
+                            <compilerArguments>-Amyoption1=TRUE</compilerArguments>
+                            <!-- NEW FEATURE FROM VERSION 2.0.4-->
+                            <options>
+                                <myoption2>TRUE</myoption2>
+                            </options>
                         </configuration>
                     </execution>
                     <execution>
@@ -241,6 +252,7 @@ class AnnotationProcessorImportingTest extends MavenImportingTestCase {
     def profile = compilerConfiguration.findModuleProcessorProfile(MavenAnnotationProcessorConfigurer.PROFILE_PREFIX + "project")
     assert profile.getGeneratedSourcesDirectoryName(false).replace('\\', '/').endsWith("target/metamodel")
     assert profile.getGeneratedSourcesDirectoryName(true).replace('\\', '/').endsWith("target/metamodelTest")
+    assert new HashMap(profile.getProcessorOptions()) == ['myoption1' : 'TRUE', 'myoption2' : 'TRUE']
   }
 
   public void testMavenProcessorPluginDefault() {

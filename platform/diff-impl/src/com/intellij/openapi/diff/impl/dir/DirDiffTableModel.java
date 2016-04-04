@@ -18,6 +18,7 @@ package com.intellij.openapi.diff.impl.dir;
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.diff.*;
+import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
@@ -86,6 +87,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   private volatile boolean myDisposed;
 
   public DirDiffTableModel(@NotNull Project project, DiffElement src, DiffElement trg, DirDiffSettings settings) {
+    UsageTrigger.trigger("diff.DirDiffTableModel");
     myProject = project;
     mySettings = settings;
     mySrc = src;

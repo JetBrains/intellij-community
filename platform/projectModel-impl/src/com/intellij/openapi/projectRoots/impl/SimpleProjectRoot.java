@@ -17,6 +17,7 @@
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.projectRoots.ex.ProjectRoot;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -58,9 +59,7 @@ public class SimpleProjectRoot implements ProjectRoot {
   @NotNull
   public String getPresentableString() {
     String path = VirtualFileManager.extractPath(myUrl);
-    if (path.endsWith(URLUtil.JAR_SEPARATOR)) {
-      path = path.substring(0, path.length() - URLUtil.JAR_SEPARATOR.length());
-    }
+    path = StringUtil.trimEnd(path, URLUtil.JAR_SEPARATOR);
     return path.replace('/', File.separatorChar);
   }
 

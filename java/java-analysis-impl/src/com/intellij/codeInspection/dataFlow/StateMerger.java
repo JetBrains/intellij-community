@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,11 +32,11 @@ import java.util.*;
  * @author peter
  */
 class StateMerger {
-  private final Map<DfaMemoryStateImpl, LinkedHashSet<Fact>> myFacts = ContainerUtil.newIdentityHashMap();
+  private final Map<DfaMemoryStateImpl, Set<Fact>> myFacts = ContainerUtil.newIdentityHashMap();
   private final Map<DfaMemoryState, Map<DfaVariableValue, DfaMemoryStateImpl>> myCopyCache = ContainerUtil.newIdentityHashMap();
 
   @Nullable
-  List<DfaMemoryStateImpl> mergeByFacts(List<DfaMemoryStateImpl> states) {
+  List<DfaMemoryStateImpl> mergeByFacts(@NotNull List<DfaMemoryStateImpl> states) {
     MultiMap<Fact, DfaMemoryStateImpl> statesByFact = MultiMap.createLinked();
     for (DfaMemoryStateImpl state : states) {
       ProgressManager.checkCanceled();
@@ -84,8 +84,8 @@ class StateMerger {
   }
 
   @NotNull
-  private MultiMap<Set<Fact>, DfaMemoryStateImpl> mapByUnrelatedFacts(Fact fact,
-                                                                      Collection<DfaMemoryStateImpl> states1) {
+  private MultiMap<Set<Fact>, DfaMemoryStateImpl> mapByUnrelatedFacts(@NotNull Fact fact,
+                                                                      @NotNull Collection<DfaMemoryStateImpl> states1) {
     MultiMap<Set<Fact>, DfaMemoryStateImpl> statesByUnrelatedFacts1 = MultiMap.createLinked();
     for (DfaMemoryStateImpl state : states1) {
       statesByUnrelatedFacts1.putValue(getUnrelatedFacts(fact, state), state);
@@ -93,7 +93,8 @@ class StateMerger {
     return statesByUnrelatedFacts1;
   }
 
-  private LinkedHashSet<Fact> getUnrelatedFacts(final Fact fact, DfaMemoryStateImpl state) {
+  @NotNull
+  private LinkedHashSet<Fact> getUnrelatedFacts(@NotNull final Fact fact, @NotNull DfaMemoryStateImpl state) {
     return new LinkedHashSet<Fact>(ContainerUtil.filter(getFacts(state), new Condition<Fact>() {
       @Override
       public boolean value(Fact another) {
@@ -102,10 +103,10 @@ class StateMerger {
     }));
   }
 
-  private void restoreOtherInequalities(Fact removedFact, Collection<DfaMemoryStateImpl> mergedGroup, DfaMemoryStateImpl state) {
+  private void restoreOtherInequalities(@NotNull Fact removedFact, @NotNull Collection<DfaMemoryStateImpl> mergedGroup, @NotNull DfaMemoryStateImpl state) {
     Set<DfaConstValue> inequalitiesToRestore = null;
     for (DfaMemoryStateImpl member : mergedGroup) {
-      LinkedHashSet<Fact> memberFacts = getFacts(member);
+      Set<Fact> memberFacts = getFacts(member);
       if (memberFacts.contains(removedFact)) {
         Set<DfaConstValue> otherInequalities = getOtherInequalities(removedFact, memberFacts, member);
         if (inequalitiesToRestore == null) {
@@ -123,7 +124,8 @@ class StateMerger {
     }
   }
 
-  private static Set<DfaConstValue> getOtherInequalities(Fact removedFact, LinkedHashSet<Fact> memberFacts, DfaMemoryStateImpl state) {
+  @NotNull
+  private static Set<DfaConstValue> getOtherInequalities(@NotNull Fact removedFact, @NotNull Set<Fact> memberFacts, @NotNull DfaMemoryStateImpl state) {
     Set<DfaConstValue> otherInequalities = ContainerUtil.newLinkedHashSet();
     Set<DfaValue> eqValues = ContainerUtil.newHashSet(state.getEquivalentValues((DfaValue)removedFact.myArg));
     for (Fact candidate : memberFacts) {
@@ -136,7 +138,8 @@ class StateMerger {
     return otherInequalities;
   }
 
-  private static Set<DfaVariableValue> getAllUnknownVariables(Collection<DfaMemoryStateImpl> complementary) {
+  @NotNull
+  private static Set<DfaVariableValue> getAllUnknownVariables(@NotNull Collection<DfaMemoryStateImpl> complementary) {
     final Set<DfaVariableValue> toFlush = ContainerUtil.newLinkedHashSet();
     for (DfaMemoryStateImpl removedState : complementary) {
       toFlush.addAll(removedState.getUnknownVariables());
@@ -144,7 +147,8 @@ class StateMerger {
     return toFlush;
   }
 
-  private static DfaMemoryStateImpl withUnknownVariables(DfaMemoryStateImpl original, Set<DfaVariableValue> toFlush) {
+  @NotNull
+  private static DfaMemoryStateImpl withUnknownVariables(@NotNull DfaMemoryStateImpl original, @NotNull Set<DfaVariableValue> toFlush) {
     DfaMemoryStateImpl copy = original.createCopy();
     for (DfaVariableValue value : toFlush) {
       copy.doFlush(value, true);
@@ -153,7 +157,7 @@ class StateMerger {
   }
 
   @Nullable
-  public List<DfaMemoryStateImpl> mergeByUnknowns(List<DfaMemoryStateImpl> states) {
+  List<DfaMemoryStateImpl> mergeByUnknowns(@NotNull List<DfaMemoryStateImpl> states) {
     MultiMap<Integer, DfaMemoryStateImpl> byHash = new MultiMap<Integer, DfaMemoryStateImpl>();
     for (DfaMemoryStateImpl state : states) {
       ProgressManager.checkCanceled();
@@ -181,7 +185,7 @@ class StateMerger {
   }
   
   @Nullable
-  public List<DfaMemoryStateImpl> mergeByNullability(List<DfaMemoryStateImpl> states) {
+  List<DfaMemoryStateImpl> mergeByNullability(List<DfaMemoryStateImpl> states) {
     MultiMap<Integer, DfaMemoryStateImpl> byHash = new MultiMap<Integer, DfaMemoryStateImpl>();
     for (DfaMemoryStateImpl state : states) {
       ProgressManager.checkCanceled();
@@ -217,7 +221,7 @@ class StateMerger {
     return replacements.getMergeResult();
   }
 
-  private static boolean mergeUnknowns(Replacements replacements, List<DfaMemoryStateImpl> complementary) {
+  private static boolean mergeUnknowns(@NotNull Replacements replacements, @NotNull List<DfaMemoryStateImpl> complementary) {
     if (complementary.size() < 2) return false;
 
     final Set<DfaVariableValue> toFlush = getAllUnknownVariables(complementary);
@@ -231,13 +235,14 @@ class StateMerger {
     });
   }
 
-  private boolean areEquivalentModuloVar(DfaMemoryStateImpl state1, DfaMemoryStateImpl state2, DfaVariableValue var) {
+  private boolean areEquivalentModuloVar(@NotNull DfaMemoryStateImpl state1, @NotNull DfaMemoryStateImpl state2, @NotNull DfaVariableValue var) {
     DfaMemoryStateImpl copy1 = copyWithoutVar(state1, var);
     DfaMemoryStateImpl copy2 = copyWithoutVar(state2, var);
     return copy2.equalsByRelations(copy1) && copy2.equalsByVariableStates(copy1);
   }
 
-  private DfaMemoryStateImpl copyWithoutVar(DfaMemoryStateImpl state, DfaVariableValue var) {
+  @NotNull
+  private DfaMemoryStateImpl copyWithoutVar(@NotNull DfaMemoryStateImpl state, @NotNull DfaVariableValue var) {
     Map<DfaVariableValue, DfaMemoryStateImpl> map = myCopyCache.get(state);
     if (map == null) {
       myCopyCache.put(state, map = ContainerUtil.newIdentityHashMap());
@@ -251,12 +256,13 @@ class StateMerger {
     return copy;
   }
 
-  private static boolean areVarStatesEqualModuloNullability(DfaMemoryStateImpl state1, DfaMemoryStateImpl state2, DfaVariableValue var) {
+  private static boolean areVarStatesEqualModuloNullability(@NotNull DfaMemoryStateImpl state1, @NotNull DfaMemoryStateImpl state2, @NotNull DfaVariableValue var) {
     return state1.getVariableState(var).withNullability(Nullness.UNKNOWN).equals(state2.getVariableState(var).withNullability(Nullness.UNKNOWN));
   }
 
-  private LinkedHashSet<Fact> getFacts(DfaMemoryStateImpl state) {
-    LinkedHashSet<Fact> result = myFacts.get(state);
+  @NotNull
+  private Set<Fact> getFacts(@NotNull DfaMemoryStateImpl state) {
+    Set<Fact> result = myFacts.get(state);
     if (result != null) {
       return result;
     }
@@ -317,12 +323,13 @@ class StateMerger {
   private enum FactType { equality, instanceOf }
 
   private static class Fact {
-    final FactType myType;
-    final DfaVariableValue myVar;
-    final boolean myPositive;
-    final Object myArg; // DfaValue for equality fact, DfaPsiType for instanceOf fact
+    @NotNull final FactType myType;
+    @NotNull private final DfaVariableValue myVar;
+    private final boolean myPositive;
+    @NotNull
+    private final Object myArg; // DfaValue for equality fact, DfaPsiType for instanceOf fact
 
-    private Fact(FactType type, DfaVariableValue var, boolean positive, Object arg) {
+    private Fact(@NotNull FactType type, @NotNull DfaVariableValue var, boolean positive, @NotNull Object arg) {
       myType = type;
       myVar = var;
       myPositive = positive;
@@ -358,18 +365,20 @@ class StateMerger {
       return myVar + " " + (myPositive ? "" : "!") + myType + " " + myArg;
     }
 
-    static Fact createEqualityFact(DfaVariableValue var, DfaValue val, boolean equal) {
+    @NotNull
+    private static Fact createEqualityFact(@NotNull DfaVariableValue var, @NotNull DfaValue val, boolean equal) {
       if (val instanceof DfaVariableValue && val.getID() < var.getID()) {
         return new Fact(FactType.equality, (DfaVariableValue)val, equal, var);
       }
       return new Fact(FactType.equality, var, equal, val);
     }
 
-    Fact getPositiveCounterpart() {
+    @NotNull
+    private Fact getPositiveCounterpart() {
       return new Fact(myType, myVar, true, myArg);
     }
 
-    boolean invalidatesFact(Fact another) {
+    boolean invalidatesFact(@NotNull Fact another) {
       if (another.myType != myType) return false;
       if (myType == FactType.equality) {
         return aboutSame(myVar, another.myVar) || aboutSame(myVar, another.myArg);
@@ -377,18 +386,18 @@ class StateMerger {
       return aboutSame(myVar, another.myVar) && aboutSame(myArg, another.myArg);
     }
     
-    static boolean aboutSame(Object v1, Object v2) {
+    private static boolean aboutSame(Object v1, Object v2) {
       return normalize(v1) == normalize(v2);
     }
 
-    static Object normalize(Object value) {
+    private static Object normalize(Object value) {
       if (value instanceof DfaVariableValue && ((DfaVariableValue)value).isNegated()) {
         return ((DfaVariableValue)value).createNegated();
       }
       return value;
     }
 
-    void removeFromState(DfaMemoryStateImpl state) {
+    void removeFromState(@NotNull DfaMemoryStateImpl state) {
       DfaVariableState varState = state.getVariableState(myVar);
       if (myType == FactType.equality) {
         state.flushVariable(myVar);
@@ -400,18 +409,18 @@ class StateMerger {
   }
 
   private static class Replacements {
-    private final List<DfaMemoryStateImpl> myAllStates;
+    @NotNull private final List<DfaMemoryStateImpl> myAllStates;
     private final Set<DfaMemoryStateImpl> myRemovedStates = ContainerUtil.newIdentityTroveSet();
     private final List<DfaMemoryStateImpl> myMerged = ContainerUtil.newArrayList();
 
-    Replacements(List<DfaMemoryStateImpl> allStates) {
+    private Replacements(@NotNull List<DfaMemoryStateImpl> allStates) {
       myAllStates = allStates;
     }
 
-    boolean hasMerges() { return !myMerged.isEmpty(); }
+    private boolean hasMerges() { return !myMerged.isEmpty(); }
 
     @Nullable
-    List<DfaMemoryStateImpl> getMergeResult() {
+    private List<DfaMemoryStateImpl> getMergeResult() {
       if (hasMerges()) {
         List<DfaMemoryStateImpl> result = ContainerUtil.newArrayList(myMerged);
         for (DfaMemoryStateImpl state : myAllStates) {
@@ -424,15 +433,15 @@ class StateMerger {
       return null;
     }
 
-    boolean stripAndMerge(Collection<DfaMemoryStateImpl> group,
-                               Function<DfaMemoryStateImpl, DfaMemoryStateImpl> stripper) {
+    private boolean stripAndMerge(@NotNull Collection<DfaMemoryStateImpl> group,
+                                  @NotNull Function<DfaMemoryStateImpl, DfaMemoryStateImpl> stripper) {
       if (group.size() <= 1) return false;
 
-      boolean hasMerges = false;
       MultiMap<DfaMemoryStateImpl, DfaMemoryStateImpl> strippedToOriginals = MultiMap.create();
       for (DfaMemoryStateImpl original : group) {
         strippedToOriginals.putValue(stripper.fun(original), original);
       }
+      boolean hasMerges = false;
       for (Map.Entry<DfaMemoryStateImpl, Collection<DfaMemoryStateImpl>> entry : strippedToOriginals.entrySet()) {
         Collection<DfaMemoryStateImpl> merged = entry.getValue();
         if (merged.size() > 1) {

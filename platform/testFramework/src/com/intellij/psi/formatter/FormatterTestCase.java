@@ -140,13 +140,17 @@ public abstract class FormatterTestCase extends LightPlatformTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    if (myFile != null) {
-      ((UndoManagerImpl)UndoManager.getInstance(getProject())).clearUndoRedoQueueInTests(myFile.getVirtualFile());
-      FileEditorManager.getInstance(getProject()).closeFile(myFile.getVirtualFile());
+    try {
+      if (myFile != null) {
+        ((UndoManagerImpl)UndoManager.getInstance(getProject())).clearUndoRedoQueueInTests(myFile.getVirtualFile());
+        FileEditorManager.getInstance(getProject()).closeFile(myFile.getVirtualFile());
+      }
     }
-    myEditor = null;
-    myFile = null;
-    super.tearDown();
+    finally {
+      myEditor = null;
+      myFile = null;
+      super.tearDown();
+    }
   }
 
   @SuppressWarnings({"UNUSED_SYMBOL"})

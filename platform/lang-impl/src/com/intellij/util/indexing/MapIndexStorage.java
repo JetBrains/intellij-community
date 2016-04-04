@@ -53,7 +53,7 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
   private PersistentBTreeEnumerator<int[]> myKeyHashToVirtualFileMapping;
   private SLRUCache<Key, ChangeTrackingValueContainer<Value>> myCache;
   private volatile int myLastScannedId;
-  private final File myStorageFile;
+  private final File myBaseStorageFile;
   private final KeyDescriptor<Key> myKeyDescriptor;
   private final int myCacheSize;
 
@@ -75,7 +75,7 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
                          final int cacheSize,
                          boolean keyIsUniqueForIndexedFile,
                          boolean buildKeyHashToVirtualFileMapping) throws IOException {
-    myStorageFile = storageFile;
+    myBaseStorageFile = storageFile;
     myKeyDescriptor = keyDescriptor;
     myCacheSize = cacheSize;
     myDataExternalizer = valueExternalizer;
@@ -95,7 +95,7 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
     final ValueContainerMap<Key, Value> map;
     PersistentHashMapValueStorage.CreationTimeOptions.EXCEPTIONAL_IO_CANCELLATION.set(ourProgressManagerCheckCancelledIOCanceller);
     try {
-      map = new ValueContainerMap<Key, Value>(myStorageFile, myKeyDescriptor, myDataExternalizer, myKeyIsUniqueForIndexedFile);
+      map = new ValueContainerMap<Key, Value>(getStorageFile(), myKeyDescriptor, myDataExternalizer, myKeyIsUniqueForIndexedFile);
     } finally {
       PersistentHashMapValueStorage.CreationTimeOptions.EXCEPTIONAL_IO_CANCELLATION.set(null);
     }
@@ -147,8 +147,13 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
   }
 
   @NotNull
+  private File getStorageFile() {
+    return new File(myBaseStorageFile.getPath() + ".storage");
+  }
+
+  @NotNull
   private File getProjectFile() {
-    return new File(myStorageFile.getPath() + ".project");
+    return new File(myBaseStorageFile.getPath() + ".project");
   }
 
   @Override
@@ -198,7 +203,7 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
       LOG.error(e);
     }
     try {
-      FileUtil.delete(myStorageFile);
+      IOUtil.deleteAllFilesStartingWith(getStorageFile());
       if (myKeyHashToVirtualFileMapping != null) IOUtil.deleteAllFilesStartingWith(getProjectFile());
       initMapAndCache();
     }
@@ -262,7 +267,7 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
         }
 
         if (LOG.isDebugEnabled()) {
-          LOG.debug("Scanned keyHashToVirtualFileMapping of " + myStorageFile + " for " + (System.currentTimeMillis() - l));
+          LOG.debug("Scanned keyHashToVirtualFileMapping of " + myBaseStorageFile + " for " + (System.currentTimeMillis() - l));
         }
         final TIntHashSet finalHashMaskSet = hashMaskSet;
         return myMap.processKeys(new Processor<Key>() {
@@ -356,7 +361,7 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
   private File getSavedProjectFileValueIds(int id, @NotNull GlobalSearchScope scope) {
     Project project = scope.getProject();
     if (project == null) return null;
-    return new File(myStorageFile.getPath() + ".project."+project.hashCode() + "."+id + "." + scope.isSearchInLibraries());
+    return new File(getProjectFile().getPath() + "." + project.hashCode() + "." + id + "." + scope.isSearchInLibraries());
   }
 
   @NotNull

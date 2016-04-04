@@ -43,8 +43,8 @@ public class SelectionCalculatorTest extends LocalHistoryTestCase {
     Block b0 = c.getSelectionFor(rr.get(0), new NullProgress());
     Block b1 = c.getSelectionFor(rr.get(1), new NullProgress());
 
-    assertBlock(0, 2, "abc1\ndef1\nghi1", b0);
-    assertBlock(0, 2, "abc\ndef\nghi", b1);
+    assertBlock(0, 3, "abc1\ndef1\nghi1", b0);
+    assertBlock(0, 3, "abc\ndef\nghi", b1);
   }
 
   @Test
@@ -55,8 +55,8 @@ public class SelectionCalculatorTest extends LocalHistoryTestCase {
     Block b0 = c.getSelectionFor(rr.get(0), new NullProgress());
     Block b1 = c.getSelectionFor(rr.get(1), new NullProgress());
 
-    assertBlock(0, 1, "def\nghi", b0);
-    assertBlock(1, 2, "def\nghi", b1);
+    assertBlock(0, 2, "def\nghi", b0);
+    assertBlock(1, 3, "def\nghi", b1);
   }
 
   @Test
@@ -68,9 +68,9 @@ public class SelectionCalculatorTest extends LocalHistoryTestCase {
     Block b1 = c.getSelectionFor(rr.get(1), new NullProgress());
     Block b0 = c.getSelectionFor(rr.get(0), new NullProgress());
 
-    assertBlock(0, 1, "abc\ndef", b0);
-    assertBlock(0, 2, "abc\nghi\ndef", b1);
-    assertBlock(1, 2, "abc\ndef", b2);
+    assertBlock(0, 2, "abc\ndef", b0);
+    assertBlock(0, 3, "abc\nghi\ndef", b1);
+    assertBlock(1, 3, "abc\ndef", b2);
   }
 
   @Test
@@ -81,8 +81,8 @@ public class SelectionCalculatorTest extends LocalHistoryTestCase {
     Block b0 = c.getSelectionFor(rr.get(0), new NullProgress());
     Block b1 = c.getSelectionFor(rr.get(1), new NullProgress());
 
-    assertBlock(0, 1, "abc\ndef", b0);
-    assertBlock(0, 1, "abc\ndef", b1);
+    assertBlock(0, 2, "abc\ndef", b0);
+    assertBlock(0, 2, "abc\ndef", b1);
   }
 
   @Test

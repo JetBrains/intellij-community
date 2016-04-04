@@ -19,6 +19,7 @@ import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NonNls;
@@ -73,14 +74,13 @@ public class EqualsWhichDoesntCheckParameterClassInspection extends BaseInspecti
     }
 
     private static boolean isParameterCheckNotNeeded(PsiCodeBlock body, PsiParameter parameter) {
-      final PsiStatement[] statements = body.getStatements();
-      if (statements.length == 0) {
+      if (ControlFlowUtils.isEmptyCodeBlock(body)) {
         return true; // incomplete code
       }
-      if (statements.length != 1) {
+      final PsiStatement statement = ControlFlowUtils.getOnlyStatementInBlock(body);
+      if (statement == null) {
         return false;
       }
-      final PsiStatement statement = statements[0];
       if (!(statement instanceof PsiReturnStatement)) {
         return true; // incomplete code
       }

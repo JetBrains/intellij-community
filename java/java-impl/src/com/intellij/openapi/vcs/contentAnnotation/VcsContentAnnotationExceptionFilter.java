@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,8 @@ import com.intellij.execution.filters.FilterMixin;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffColors;
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -71,13 +71,14 @@ public class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin 
       super(start, end);
     }
 
+    @NotNull
     @Override
     public TextAttributes getTextAttributes(@Nullable TextAttributes source) {
       EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
       final TextAttributes changedColor = globalScheme.getAttributes(DiffColors.DIFF_MODIFIED);
       if (source == null) {
         TextAttributes attrs =
-          globalScheme.getAttributes(CodeInsightColors.CLASS_NAME_ATTRIBUTES).clone();
+          globalScheme.getAttributes(DefaultLanguageHighlighterColors.CLASS_NAME).clone();
         attrs.setBackgroundColor(changedColor.getBackgroundColor());
         return attrs;
       }
@@ -93,10 +94,10 @@ public class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin 
   }
 
   @Override
-  public void applyHeavyFilter(final Document copiedFragment,
+  public void applyHeavyFilter(@NotNull final Document copiedFragment,
                                int startOffset,
                                int startLineNumber,
-                               Consumer<AdditionalHighlight> consumer) {
+                               @NotNull Consumer<AdditionalHighlight> consumer) {
     VcsContentAnnotation vcsContentAnnotation = VcsContentAnnotationImpl.getInstance(myProject);
     final LocalChangesCorrector localChangesCorrector = new LocalChangesCorrector(myProject);
     Trinity<PsiClass, PsiFile, String> previousLineResult = null;
@@ -168,6 +169,7 @@ public class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin 
     }
   }
 
+  @NotNull
   @Override
   public String getUpdateMessage() {
     return "Checking recent changes...";

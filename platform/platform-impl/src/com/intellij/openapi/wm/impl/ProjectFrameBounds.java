@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.WindowManager;
 
@@ -25,11 +24,7 @@ import java.awt.*;
 /**
  * @author yole
  */
-@State(
-        name = "ProjectFrameBounds",
-        storages = { @Storage(
-                file = StoragePathMacros.WORKSPACE_FILE) }
-)
+@State(name = "ProjectFrameBounds", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class ProjectFrameBounds implements PersistentStateComponent<Rectangle> {
   public static ProjectFrameBounds getInstance(Project project) {
     return ServiceManager.getService(project, ProjectFrameBounds.class);

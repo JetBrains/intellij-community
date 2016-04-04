@@ -63,6 +63,7 @@ import java.io.File
 import java.io.IOException
 import java.net.URISyntaxException
 import java.net.URL
+import java.nio.charset.Charset
 import java.util.*
 
 /**
@@ -96,6 +97,9 @@ object UpdateChecker {
 
   private val patchesUrl: String
     get() = System.getProperty("idea.patches.url") ?: PATCHES_URL
+
+  @JvmStatic
+  private val UTF8_BOM = byteArrayOf(0xEF.toByte(), 0xBB.toByte(), 0xBF.toByte())
 
   /**
    * For scheduled update checks.
@@ -168,8 +172,8 @@ object UpdateChecker {
       externalUpdates = null
     }
     else {
-      val apiVersion: BuildNumber? = result.updatedChannel?.latestBuild?.apiVersion
-      val buildNumber: BuildNumber? = result.updatedChannel?.latestBuild?.number
+      val apiVersion: BuildNumber? = result.newBuildInSelectedChannel?.apiVersion
+      val buildNumber: BuildNumber? = result.newBuildInSelectedChannel?.number
 
       incompatiblePlugins = if (buildNumber != null) HashSet<IdeaPluginDescriptor>() else null
       try {
@@ -185,7 +189,7 @@ object UpdateChecker {
     // show result
 
     ApplicationManager.getApplication().invokeLater({
-      showUpdateResult(project, result, updateSettings, updatedPlugins, incompatiblePlugins, externalUpdates, !fromSettings, manualCheck);
+      showUpdateResult(project, result, updateSettings, updatedPlugins, incompatiblePlugins, externalUpdates, !fromSettings, manualCheck)
       callback?.setDone()
     }, if (fromSettings) ModalityState.any() else ModalityState.NON_MODAL)
   }
@@ -231,6 +235,7 @@ object UpdateChecker {
       // See http://b.android.com/149270 for more.
       return CheckForUpdateResult(UpdateStrategy.State.CONNECTION_ERROR, RuntimeException(e))
     }
+
     if (updateInfo == null) {
       return CheckForUpdateResult(UpdateStrategy.State.NOTHING_LOADED, null)
     }
@@ -296,10 +301,10 @@ object UpdateChecker {
   private fun collectUpdateablePlugins(): MutableMap<PluginId, IdeaPluginDescriptor> {
     val updateable = ContainerUtil.newTroveMap<PluginId, IdeaPluginDescriptor>()
 
-    updateable += PluginManagerCore.getPlugins().filter { !it.isBundled }.toMapBy { it.pluginId }
+    updateable += PluginManagerCore.getPlugins().filter { !it.isBundled }.associateBy { it.pluginId }
 
-    val onceInstalled = File(PathManager.getConfigPath(), PluginManager.INSTALLED_TXT)
-    if (onceInstalled.isFile) {
+    val onceInstalled = PluginManager.getOnceInstalledIfExists()
+    if (onceInstalled != null) {
       try {
         for (line in FileUtil.loadLines(onceInstalled)) {
           val id = PluginId.getId(line.trim { it <= ' ' })
@@ -405,7 +410,7 @@ object UpdateChecker {
         descriptor = oldDownloader.descriptor
       }
 
-      if (descriptor != null && !PluginManagerCore.isIncompatible(descriptor, downloader.buildNumber) && !state.wasUpdated(descriptor.pluginId)) {
+      if (descriptor != null && PluginManagerCore.isCompatible(descriptor, downloader.buildNumber) && !state.wasUpdated(descriptor.pluginId)) {
         toUpdate.put(PluginId.getId(pluginId), downloader)
       }
     }
@@ -427,7 +432,7 @@ object UpdateChecker {
 
   @Contract("null -> false")
   private fun newChannelReady(channelToPropose: UpdateChannel?): Boolean {
-    return channelToPropose != null && channelToPropose.latestBuild != null
+    return channelToPropose?.getLatestBuild() != null
   }
 
   private fun showUpdateResult(project: Project?,
@@ -441,15 +446,13 @@ object UpdateChecker {
     val channelToPropose = checkForUpdateResult.channelToPropose
     val updatedChannel = checkForUpdateResult.updatedChannel
     var foundUpdate: Boolean = false
+    val latestBuild = checkForUpdateResult.newBuildInSelectedChannel
 
-    if (updatedChannel != null) {
+    if (updatedChannel != null && latestBuild != null) {
       foundUpdate = true
       val runnable = {
-        UpdateInfoDialog(updatedChannel,
-                         enableLink,
-                         updateSettings.canUseSecureConnection(),
-                         updatedPlugins,
-                         incompatiblePlugins).show()
+        val forceHttps = updateSettings.canUseSecureConnection()
+        UpdateInfoDialog(updatedChannel, latestBuild, enableLink, forceHttps, updatedPlugins, incompatiblePlugins).show()
       }
 
       if (alwaysShowResults) {
@@ -511,7 +514,7 @@ object UpdateChecker {
         }
         else {
           val updates = StringUtil.join(components, ", ")
-          val message = IdeBundle.message("updates.external.ready.message", components.size(), updates)
+          val message = IdeBundle.message("updates.external.ready.message", components.size, updates)
           showNotification(project, message, runnable, NotificationUniqueType.PLUGINS_UPDATE) // TODO: Which type to use?
         }
       }
@@ -521,22 +524,14 @@ object UpdateChecker {
     }
   }
 
-  private fun showNotification(project: Project?,
-                               message: String,
-                               runnable: (() -> Unit)?,
-                               notificationType: NotificationUniqueType?) {
-    if (notificationType != null) {
-      if (!ourShownNotificationTypes.add(notificationType)) {
-        return
-      }
+  private fun showNotification(project: Project?, message: String, action: (() -> Unit), notificationType: NotificationUniqueType) {
+    if (!ourShownNotificationTypes.add(notificationType)) {
+      return
     }
 
-    var listener: NotificationListener? = null
-    if (runnable != null) {
-      listener = NotificationListener { notification, event ->
-        notification.expire()
-        runnable.invoke()
-      }
+    var listener = NotificationListener { notification, event ->
+      notification.expire()
+      action.invoke()
     }
 
     val title = IdeBundle.message("update.notifications.title")
@@ -641,7 +636,9 @@ object UpdateChecker {
         val permanentIdFile = File(jetBrainsDir, "PermanentUserId")
         try {
           if (permanentIdFile.exists()) {
-            return FileUtil.loadFile(permanentIdFile).trim { it <= ' ' }
+            val bytes = FileUtil.loadFileBytes(permanentIdFile);
+            val offset = skipUtf8BOM(bytes)
+            return String(bytes, offset, bytes.size - offset, Charset.forName("utf-8"))
           }
 
           var uuid = propertiesComponent.getValue(INSTALLATION_UID)
@@ -658,6 +655,19 @@ object UpdateChecker {
     }
 
     return null
+  }
+
+  @JvmStatic
+  private fun skipUtf8BOM(bytes: ByteArray): Int {
+    if (bytes.size < UTF8_BOM.size) {
+      return 0
+    }
+    for (idx in UTF8_BOM.indices) {
+      if (bytes[idx] != UTF8_BOM[idx]) {
+        return 0
+      }
+    }
+    return UTF8_BOM.size
   }
 
   private fun generateUUID(): String =
@@ -681,8 +691,8 @@ object UpdateChecker {
 
     var bundledJdk = ""
     val jdkRedist = System.getProperty("idea.java.redist")
-    if (jdkRedist != null && jdkRedist.lastIndexOf("jdk-bundled") >= 0) {
-      bundledJdk = if ("jdk-bundled" == jdkRedist) "-jdk-bundled" else "-custom-jdk-bundled"
+    if (jdkRedist != null && jdkRedist.lastIndexOf("NoJavaDistribution") >= 0) {
+      bundledJdk = "-no-jdk"
     }
 
     val osSuffix = "-" + patch.osSuffix
@@ -766,12 +776,14 @@ object UpdateChecker {
 
   @JvmStatic
   fun checkForUpdate(event: IdeaLoggingEvent) {
-    if (!ourHasFailedPlugins && UpdateSettings.getInstance().isCheckNeeded) {
-      val throwable = event.throwable
-      val pluginDescriptor = PluginManager.getPlugin(IdeErrorsDialog.findPluginId(throwable))
-      if (pluginDescriptor != null && !pluginDescriptor.isBundled) {
-        ourHasFailedPlugins = true
-        updateAndShowResult()
+    if (!ourHasFailedPlugins) {
+      val settings = UpdateSettings.getInstance()
+      if (settings != null && settings.isCheckNeeded) {
+        val pluginDescriptor = PluginManager.getPlugin(IdeErrorsDialog.findPluginId(event.throwable))
+        if (pluginDescriptor != null && !pluginDescriptor.isBundled) {
+          ourHasFailedPlugins = true
+          updateAndShowResult()
+        }
       }
     }
   }

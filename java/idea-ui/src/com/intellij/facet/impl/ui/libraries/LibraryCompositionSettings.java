@@ -154,6 +154,10 @@ public class LibraryCompositionSettings implements Disposable {
     return true;
   }
 
+  public boolean isLibraryConfigured() {
+    return myDownloadLibraries || myNewLibraryEditor != null || mySelectedLibrary != null || myLibraryProvider != null;
+  }
+
   @Nullable
   private Library createLibrary(final ModifiableRootModel rootModel, @Nullable LibrariesContainer additionalContainer) {
     if (myNewLibraryEditor != null) {

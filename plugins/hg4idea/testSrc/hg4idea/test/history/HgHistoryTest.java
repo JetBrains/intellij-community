@@ -16,13 +16,16 @@
 package hg4idea.test.history;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsUtil;
 import hg4idea.test.HgPlatformTest;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgFileRevision;
 import org.zmlx.hg4idea.command.HgLogCommand;
 import org.zmlx.hg4idea.execution.HgCommandException;
+import org.zmlx.hg4idea.provider.HgHistoryProvider;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import java.io.File;
@@ -119,5 +122,22 @@ public class HgHistoryTest extends HgPlatformTest {
       assertEquals(hgFile.getRelativePath(),
                    targetFileName.getRelativePath());
     }
+  }
+
+  public void testUncommittedRenamedFileHistory() throws HgCommandException {
+    cd(myRepository);
+    VirtualFile subDir = myRepository.findFileByRelativePath(subDirName);
+    assert subDir != null;
+    cd(subDir);
+    int namesSize = names.length;
+    String beforeName = names[namesSize - 1];
+    VirtualFile before = subDir.findFileByRelativePath(beforeName);
+    assert before != null;
+    FilePath filePath = VcsUtil.getFilePath(VfsUtilCore.virtualToIoFile(before));
+    final String renamed = "renamed";
+    hg("mv " + beforeName + " " + renamed);
+    myRepository.refresh(false, true);
+    List<HgFileRevision> revisions = HgHistoryProvider.getHistory((filePath), myRepository, myProject);
+    assertEquals(3, revisions.size());
   }
 }

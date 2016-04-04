@@ -1,9 +1,9 @@
 <html>
 <body>
-Reports return statements with <b>null</b> values.
+Reports return statements with <b>null</b> return values.
 While occasionally useful, this construct may make the code more prone
 to failing with a <b>NullPointerException</b>, and often indicates that the
-developer doesn't really understand the class's intended semantics.
+developer doesn't really understand the class' intended semantics.
 <!-- tooltip end -->
 <p>
 Use the first checkbox below to let this inspection ignore private methods.
@@ -11,6 +11,7 @@ Use the first checkbox below to let this inspection ignore private methods.
 Use the bottom three checkboxes to specify whether
 <b>null</b> values on array returns, collection
 object returns, plain object returns, or a combination of the three should be reported.
+Return of <b>null</b> in methods with return type <b>java.util.Optional</b> are always reported.
 <p>
 
 </body>

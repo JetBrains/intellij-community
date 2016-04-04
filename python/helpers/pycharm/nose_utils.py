@@ -7,8 +7,10 @@ from tcmessages import TeamcityServiceMessages
 from tcunittest import strclass
 from tcunittest import TeamcityTestResult
 
+_ERROR_TEST_NAME = "ERROR"
 
 try:
+  from nose.failure import Failure
   from nose.util import isclass # backwards compat
   from nose.config import Config
   from nose.result import TextTestResult
@@ -17,7 +19,7 @@ try:
 except (Exception, ):
   e = sys.exc_info()[1]
   raise NameError(
-    "Something went wrong, do you have nosetest installed? I got this error: %s" % e)
+          "Something went wrong, do you have nosetest installed? I got this error: %s" % e)
 
 class TeamcityPlugin(ErrorClassPlugin, TextTestResult, TeamcityTestResult):
   """
@@ -39,11 +41,11 @@ class TeamcityPlugin(ErrorClassPlugin, TextTestResult, TeamcityTestResult):
     self.config = config
     self.output = stream
     self.messages = TeamcityServiceMessages(self.output,
-      prepend_linebreak=True)
+                                            prepend_linebreak=True)
     self.messages.testMatrixEntered()
     self.current_suite = None
     TextTestResult.__init__(self, stream, descriptions, verbosity, config,
-      errorClasses)
+                            errorClasses)
     TeamcityTestResult.__init__(self, stream)
 
   def configure(self, options, conf):
@@ -52,13 +54,20 @@ class TeamcityPlugin(ErrorClassPlugin, TextTestResult, TeamcityTestResult):
     self.conf = conf
 
 
+  def _is_failure(self, test):
+    return isinstance(test.test, Failure)
+
   def addError(self, test, err):
     exctype, value, tb = err
     err = self.formatErr(err)
+    if self._is_failure(test):
+        self.messages.testError(_ERROR_TEST_NAME, message='Error', details=err, duration=self.__getDuration(test))
+        return
+
     if exctype == SkipTest:
-        self.messages.testIgnored(self.getTestName(test), message='Skip')
+      self.messages.testIgnored(self.getTestName(test), message='Skip')
     else:
-        self.messages.testError(self.getTestName(test), message='Error', details=err, duration=self.__getDuration(test))
+      self.messages.testError(self.getTestName(test), message='Error', details=err, duration=self.__getDuration(test))
 
   def formatErr(self, err):
     exctype, value, tb = err
@@ -93,7 +102,7 @@ class TeamcityPlugin(ErrorClassPlugin, TextTestResult, TeamcityTestResult):
     err = self.formatErr(err)
 
     self.messages.testFailed(self.getTestName(test),
-      message='Failure', details=err)
+                             message='Failure', details=err)
 
 
   def addSkip(self, test, reason):
@@ -117,14 +126,14 @@ class TeamcityPlugin(ErrorClassPlugin, TextTestResult, TeamcityTestResult):
 
         if hasattr(test.test, "descriptor") and test.test.descriptor:
           suite_location = "file://" + self.test_address(
-            test.test.descriptor)
+                  test.test.descriptor)
           location = suite_location + ":" + str(
-            func_lineno(test.test.descriptor))
+                  func_lineno(test.test.descriptor))
         else:
           suite_location = "file://" + self.test_address(
-            test.test.test)
+                  test.test.test)
           location = "file://" + self.test_address(
-            test.test.test) + ":" + str(func_lineno(test.test.test))
+                  test.test.test) + ":" + str(func_lineno(test.test.test))
       except:
         test_id = test.id()
         suite_id = test_id[:test_id.rfind(".")]
@@ -173,21 +182,26 @@ class TeamcityPlugin(ErrorClassPlugin, TextTestResult, TeamcityTestResult):
 
   def startTest(self, test):
     location, suite_location = self._getSuite(test)
+    if self._is_failure(test):
+      self.messages.testStarted(_ERROR_TEST_NAME, location=suite_location)
+      return
     suite = self.getSuiteName(test)
     if suite != self.current_suite:
       if self.current_suite:
         self.messages.testSuiteFinished(self.current_suite)
       self.current_suite = suite
       self.messages.testSuiteStarted(self.current_suite,
-        location=suite_location)
+                                     location=suite_location)
     setattr(test, "startTime", datetime.datetime.now())
     self.messages.testStarted(self.getTestName(test), location=location)
 
 
   def stopTest(self, test):
     duration = self.__getDuration(test)
+    if self._is_failure(test):
+      return  # Finish reported by testError
     self.messages.testFinished(self.getTestName(test),
-      duration=int(duration))
+                               duration=int(duration))
 
   def __getDuration(self, test):
     start = getattr(test, "startTime", datetime.datetime.now())
@@ -216,9 +230,9 @@ class TeamcityNoseRunner(unittest.TextTestRunner):
 
   def _makeResult(self):
     return TeamcityPlugin(self.stream,
-      self.descriptions,
-      self.verbosity,
-      self.config)
+                          self.descriptions,
+                          self.verbosity,
+                          self.config)
 
   def run(self, test):
     """Overrides to provide plugin hooks and defer all output to

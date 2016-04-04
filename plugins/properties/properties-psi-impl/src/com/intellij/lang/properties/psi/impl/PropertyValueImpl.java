@@ -44,6 +44,6 @@ public class PropertyValueImpl extends LeafPsiElement {
 
   @NonNls
   public String toString() {
-    return "Property value: " + getText();
+    return "PropertyValueImpl: " + getText();
   }
 }

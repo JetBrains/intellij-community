@@ -17,16 +17,18 @@ package com.intellij.diff.tools.simple;
 
 import com.intellij.diff.DiffContext;
 import com.intellij.diff.comparison.ByLine;
-import com.intellij.diff.comparison.ComparisonMergeUtil;
 import com.intellij.diff.comparison.ComparisonPolicy;
 import com.intellij.diff.comparison.DiffTooBigException;
-import com.intellij.diff.comparison.iterables.FairDiffIterable;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.fragments.MergeLineFragment;
+import com.intellij.diff.fragments.MergeLineFragmentImpl;
+import com.intellij.diff.fragments.MergeWordFragment;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
+import com.intellij.diff.tools.simple.ThreesideDiffChangeBase.ConflictType;
 import com.intellij.diff.tools.util.DiffNotifications;
+import com.intellij.diff.tools.util.base.HighlightPolicy;
 import com.intellij.diff.tools.util.base.IgnorePolicy;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.diff.tools.util.side.ThreesideTextDiffViewer;
@@ -49,6 +51,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
@@ -67,16 +70,16 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
     List<AnAction> group = new ArrayList<AnAction>();
 
     group.add(new MyIgnorePolicySettingAction());
-    //group.add(new MyHighlightPolicySettingAction()); // TODO
+    group.add(new MyHighlightPolicySettingAction());
     group.add(new MyToggleExpandByDefaultAction());
     group.add(new MyToggleAutoScrollAction());
     group.add(new MyEditorReadOnlyLockAction());
     group.add(myEditorSettingsAction);
 
     group.add(Separator.getInstance());
-    group.add(new ShowLeftBasePartialDiffAction());
-    group.add(new ShowBaseRightPartialDiffAction());
-    group.add(new ShowLeftRightPartialDiffAction());
+    group.add(new TextShowPartialDiffAction(PartialDiffMode.LEFT_BASE));
+    group.add(new TextShowPartialDiffAction(PartialDiffMode.BASE_RIGHT));
+    group.add(new TextShowPartialDiffAction(PartialDiffMode.LEFT_RIGHT));
 
     group.add(Separator.getInstance());
     group.addAll(super.createToolbarActions());
@@ -137,12 +140,38 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
         }
       });
 
-      ComparisonPolicy comparisonPolicy = getIgnorePolicy().getComparisonPolicy();
-      FairDiffIterable fragments1 = ByLine.compareTwoStepFair(sequences[1], sequences[0], comparisonPolicy, indicator);
-      FairDiffIterable fragments2 = ByLine.compareTwoStepFair(sequences[1], sequences[2], comparisonPolicy, indicator);
-      List<MergeLineFragment> mergeFragments = ComparisonMergeUtil.buildFair(fragments1, fragments2, indicator);
+      final ComparisonPolicy comparisonPolicy = getIgnorePolicy().getComparisonPolicy();
+      List<MergeLineFragment> lineFragments = ByLine.compareTwoStep(sequences[0], sequences[1], sequences[2],
+                                                                    comparisonPolicy, indicator);
 
-      return apply(mergeFragments, comparisonPolicy);
+      if (getHighlightPolicy().isFineFragments()) {
+        List<MergeLineFragment> fineLineFragments = new ArrayList<MergeLineFragment>(lineFragments.size());
+
+        for (final MergeLineFragment fragment : lineFragments) {
+          CharSequence[] chunks = ApplicationManager.getApplication().runReadAction(new Computable<CharSequence[]>() {
+            @Override
+            public CharSequence[] compute() {
+              indicator.checkCanceled();
+              CharSequence[] chunks = new CharSequence[3];
+              chunks[0] = getChunkContent(fragment, documents, ThreeSide.LEFT);
+              chunks[1] = getChunkContent(fragment, documents, ThreeSide.BASE);
+              chunks[2] = getChunkContent(fragment, documents, ThreeSide.RIGHT);
+
+              ConflictType type = ThreesideDiffChangeBase.calcType(fragment, Arrays.asList(documents), comparisonPolicy);
+              if (!type.isChange(Side.LEFT)) chunks[0] = null;
+              if (!type.isChange(Side.RIGHT)) chunks[2] = null;
+              return chunks;
+            }
+          });
+
+          List<MergeWordFragment> wordFragments = DiffUtil.compareThreesideInner(chunks, comparisonPolicy, indicator);
+          fineLineFragments.add(new MergeLineFragmentImpl(fragment, wordFragments));
+        }
+
+        lineFragments = fineLineFragments;
+      }
+
+      return apply(lineFragments, comparisonPolicy);
     }
     catch (DiffTooBigException e) {
       return applyNotification(DiffNotifications.createDiffTooBig());
@@ -154,6 +183,13 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
       LOG.error(e);
       return applyNotification(DiffNotifications.createError());
     }
+  }
+
+  @Nullable
+  private static CharSequence getChunkContent(@NotNull MergeLineFragment fragment, @NotNull Document[] documents, @NotNull ThreeSide side) {
+    int startLine = fragment.getStartLine(side);
+    int endLine = fragment.getEndLine(side);
+    return startLine != endLine ? DiffUtil.getLinesContent(side.select(documents), startLine, endLine) : null;
   }
 
   @NotNull
@@ -182,6 +218,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
     };
   }
 
+  @Override
   protected void destroyChangedBlocks() {
     super.destroyChangedBlocks();
     for (SimpleThreesideDiffChange change : myDiffChanges) {
@@ -238,11 +275,20 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
     return policy;
   }
 
+  @NotNull
+  private HighlightPolicy getHighlightPolicy() {
+    HighlightPolicy policy = getTextSettings().getHighlightPolicy();
+    if (policy == HighlightPolicy.BY_WORD_SPLIT) return HighlightPolicy.BY_WORD;
+    if (policy == HighlightPolicy.DO_NOT_HIGHLIGHT) return HighlightPolicy.BY_LINE;
+    return policy;
+  }
+
   //
   // Getters
   //
 
   @NotNull
+  @Override
   public List<SimpleThreesideDiffChange> getChanges() {
     return myDiffChanges;
   }
@@ -283,6 +329,29 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
       ArrayList<IgnorePolicy> settings = ContainerUtil.newArrayList(IgnorePolicy.values());
       settings.remove(IgnorePolicy.IGNORE_WHITESPACES_CHUNKS);
       return settings;
+    }
+
+    @Override
+    protected void onSettingsChanged() {
+      rediff();
+    }
+  }
+
+  private class MyHighlightPolicySettingAction extends TextDiffViewerUtil.HighlightPolicySettingAction {
+    public MyHighlightPolicySettingAction() {
+      super(getTextSettings());
+    }
+
+    @NotNull
+    @Override
+    protected HighlightPolicy getCurrentSetting() {
+      return getHighlightPolicy();
+    }
+
+    @NotNull
+    @Override
+    protected List<HighlightPolicy> getAvailableSettings() {
+      return ContainerUtil.list(HighlightPolicy.BY_LINE, HighlightPolicy.BY_WORD);
     }
 
     @Override

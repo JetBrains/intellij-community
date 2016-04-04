@@ -44,6 +44,12 @@ public class MockGitRepository implements GitRepository {
 
   @NotNull
   @Override
+  public GitRepositoryFiles getRepositoryFiles() {
+    throw new UnsupportedOperationException();
+  }
+
+  @NotNull
+  @Override
   public GitUntrackedFilesHolder getUntrackedFilesHolder() {
     throw new UnsupportedOperationException();
   }
@@ -118,10 +124,10 @@ public class MockGitRepository implements GitRepository {
     throw new UnsupportedOperationException();
   }
 
-  @Nullable
+  @NotNull
   @Override
   public AbstractVcs getVcs() {
-    return null;
+    throw new UnsupportedOperationException();
   }
 
   @Nullable

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -180,7 +180,7 @@ public class GroovyExpectedTypesProvider {
       }
 
       final GrClosableBlock[] closureArgs = methodCall.getClosureArguments();
-      if (ArrayUtil.contains(myExpression, closureArgs)) {
+      if (ArrayUtil.contains(myExpression, (Object[])closureArgs)) {
         final GrArgumentList argumentList = methodCall.getArgumentList();
         final GrNamedArgument[] namedArgs = argumentList.getNamedArguments();
         final GrExpression[] expressionArgs = argumentList.getExpressionArguments();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.FactoryMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -41,7 +42,7 @@ public abstract class EnhancerProcessHandlerBase extends BaseOSProcessHandler {
     }
   };
 
-  public EnhancerProcessHandlerBase(Process process, String commandLine, Charset charset) {
+  public EnhancerProcessHandlerBase(Process process, @NotNull String commandLine, Charset charset) {
     super(process, commandLine, charset);
     addProcessListener(new ProcessAdapter() {
       @Override

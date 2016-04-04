@@ -178,7 +178,7 @@ public class XPathEvalAction extends XPathAction {
 
         InputExpressionDialog.Context input;
         XmlElement contextNode = null;
-        final Config cfg = myComponent.getConfig();
+        final Config cfg = XPathAppComponent.getInstance().getConfig();
         do {
             RangeHighlighter contextHighlighter = null;
             if (cfg.isUseContextAtCursor()) {
@@ -278,7 +278,7 @@ public class XPathEvalAction extends XPathAction {
         final MyUsageTarget usageTarget = new MyUsageTarget(xPath.toString(), contextNode);
 
         showUsageView(project, usageTarget, searcherFactory, new EditExpressionAction() {
-            final Config config = myComponent.getConfig();
+            final Config config = XPathAppComponent.getInstance().getConfig();
 
             @Override
             protected void execute() {
@@ -349,7 +349,7 @@ public class XPathEvalAction extends XPathAction {
         // get expression history from project component
         final HistoryElement[] history = pc.getHistory();
 
-        final EvalExpressionDialog dialog = new EvalExpressionDialog(project, myComponent.getConfig(), history);
+        final EvalExpressionDialog dialog = new EvalExpressionDialog(project, XPathAppComponent.getInstance().getConfig(), history);
         if (!dialog.show(contextNode)) {
             // cancel
             LOG.debug("Input canceled");
@@ -375,7 +375,7 @@ public class XPathEvalAction extends XPathAction {
      */
     private void highlightResult(XmlElement contextNode, @NotNull final Editor editor, final List<?> list) {
 
-        final Config cfg = myComponent.getConfig();
+        final Config cfg = XPathAppComponent.getInstance().getConfig();
         int lowestOffset = Integer.MAX_VALUE;
 
         for (final Object o : list) {

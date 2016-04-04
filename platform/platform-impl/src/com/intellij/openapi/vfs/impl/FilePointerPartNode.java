@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,25 +24,30 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 // all file pointers we store in the tree with nodes corresponding to the file structure on disk
 class FilePointerPartNode {
   private static final FilePointerPartNode[] EMPTY_ARRAY = new FilePointerPartNode[0];
   @NotNull private String part; // common prefix of all file pointers beneath
-  @NotNull private FilePointerPartNode[] children;
-  private FilePointerPartNode parent;
-  VirtualFilePointerImpl leaf;  // file pointer for this exact path (e.g. concatenation of all "part" fields down from the root)
+  @NotNull FilePointerPartNode[] children;
+  FilePointerPartNode parent;
+  // file pointers for this exact path (e.g. concatenation of all "part" fields down from the root).
+  // Either VirtualFilePointerImpl or VirtualFilePointerImpl[] (when it so happened that several pointers merged into one node - e.g. after file rename onto existing pointer)
+  private Object leaves;
+
   // in case there is file pointer exists for this part, its info is saved here
   volatile Pair<VirtualFile, String> myFileAndUrl; // must not be both null
   private volatile long myLastUpdated = -1;
   volatile int useCount;
 
-  private int pointersUnder = 1;   // number of alive pointers in this node plus all nodes beneath
+  int pointersUnder;   // number of alive pointers in this node plus all nodes beneath
   private static final VirtualFileManager ourFileManager = VirtualFileManager.getInstance();
   private static final ManagingFS ourManagingFS = ManagingFS.getInstance();
 
@@ -59,11 +64,11 @@ class FilePointerPartNode {
   }
 
   // returns the node and length of matched characters in that node, or null if there is no match
-  int position(@Nullable VirtualFile parent,
-               @Nullable CharSequence parentName,
-               boolean separator,
-               @NotNull CharSequence childName,
-               @NotNull FilePointerPartNode[] outNode) {
+  private int position(@Nullable VirtualFile parent,
+                       @Nullable CharSequence parentName,
+                       boolean separator,
+                       @NotNull CharSequence childName,
+                       @NotNull FilePointerPartNode[] outNode) {
     checkConsistency();
 
     int partStart;
@@ -107,7 +112,7 @@ class FilePointerPartNode {
   }
 
   // appends to "out" all nodes under this node whose path (beginning from this node) starts in prefix.subSequence(start), then parent.getPath(), then childName
-  void getPointersUnder(@Nullable VirtualFile parent,
+  void addPointersUnder(@Nullable VirtualFile parent,
                         boolean separator,
                         @NotNull CharSequence childName,
                         @NotNull List<FilePointerPartNode> out) {
@@ -121,31 +126,12 @@ class FilePointerPartNode {
   }
 
   private static void addAllPointersUnder(@NotNull FilePointerPartNode node, @NotNull List<FilePointerPartNode> out) {
-    if (node.leaf != null) out.add(node);
+    if (node.leaves != null) {
+      out.add(node);
+    }
     for (FilePointerPartNode child : node.children) {
       addAllPointersUnder(child, out);
     }
-  }
-
-  @TestOnly
-  boolean getPointersUnder(@NotNull String path, int start, @NotNull List<FilePointerPartNode> out) {
-    checkConsistency();
-    if (pointersUnder == 0) return false;
-    // invariant: upper nodes are matched
-    int index = indexOfFirstDifferentChar(path, start);
-    if (index - start == part.length() // part matched entirely, check children
-       || index == path.length() // query matched entirely, add all children to matches
-    ) {
-      if (index == path.length() && leaf != null) {
-        out.add(this);
-      }
-
-      for (FilePointerPartNode child : children) {
-        child.getPointersUnder(path, index, out);
-      }
-    }
-    // else there is no match
-    return false;
   }
 
   private static final boolean UNIT_TEST = ApplicationManager.getApplication().isUnitTestMode();
@@ -162,19 +148,23 @@ class FilePointerPartNode {
       child.doCheckConsistency();
       assert child.parent == this;
     }
-    if (leaf != null) childSum++;
-    assert (useCount == 0) == (leaf == null) : useCount + " - " +leaf;
+    childSum += leavesNumber();
+    assert (useCount == 0) == (leaves == null) : useCount + " - " + (leaves instanceof VirtualFilePointerImpl ? leaves : Arrays.toString((VirtualFilePointerImpl[])leaves));
     assert pointersUnder == childSum : "expected: "+pointersUnder+"; actual: "+childSum;
   }
 
   @NotNull
-  FilePointerPartNode findPointerOrCreate(@NotNull String path, int start, @NotNull Pair<VirtualFile, String> fileAndUrl) {
+  FilePointerPartNode findPointerOrCreate(@NotNull String path,
+                                          int start,
+                                          @NotNull Pair<VirtualFile, String> fileAndUrl,
+                                          int pointersToStore) {
     // invariant: upper nodes are matched
     int index = indexOfFirstDifferentChar(path, start);
     if (index == path.length() // query matched entirely
-      && index - start == part.length()
-      )  {
-      if (leaf == null) pointersUnder++;
+      && index - start == part.length()) {
+      if (leaves == null) {
+        pointersUnder+=pointersToStore; // the pointer is going to be written here
+      }
       return this;
     }
     if (index - start == part.length() // part matched entirely, check children
@@ -183,16 +173,19 @@ class FilePointerPartNode {
         // find the right child (its part should start with ours)
         int i = child.indexOfFirstDifferentChar(path, index);
         if (i != index && (i > index+1 || path.charAt(index) != '/' || index == 0)) {
-          FilePointerPartNode node = child.findPointerOrCreate(path, index, fileAndUrl);
-          if (node.leaf == null) pointersUnder++; // the new node's been created
+          FilePointerPartNode node = child.findPointerOrCreate(path, index, fileAndUrl, pointersToStore);
+          if (node.leaves == null) {
+            pointersUnder+=pointersToStore; // the new node's been created
+          }
           return node;
         }
       }
       // cannot insert to children, create child node manually
       String pathRest = path.substring(index);
       FilePointerPartNode newNode = new FilePointerPartNode(pathRest, this, fileAndUrl);
+      newNode.pointersUnder+=pointersToStore;
       children = ArrayUtil.append(children, newNode);
-      pointersUnder++;
+      pointersUnder+=pointersToStore;
       return newNode;
     }
     // else there is no match
@@ -201,6 +194,9 @@ class FilePointerPartNode {
     if (index > start + 1 && index != path.length() && path.charAt(index - 1) == '/') index--;
     String pathRest = path.substring(index);
     FilePointerPartNode newNode = pathRest.isEmpty() ? this : new FilePointerPartNode(pathRest, this, fileAndUrl);
+    if (newNode != this) {
+      newNode.pointersUnder = pointersToStore;
+    }
     String commonPredecessor = StringUtil.first(part, index - start, false);
     FilePointerPartNode splittedAway = new FilePointerPartNode(part.substring(index - start), this, myFileAndUrl);
     splittedAway.children = children;
@@ -209,30 +205,31 @@ class FilePointerPartNode {
     }
     splittedAway.pointersUnder = pointersUnder;
     splittedAway.useCount = useCount;
-    splittedAway.associate(leaf, myFileAndUrl);
+    splittedAway.associate(leaves, myFileAndUrl);
     associate(null, null);
     useCount = 0;
     part = commonPredecessor;
     children = newNode == this ? new FilePointerPartNode[]{splittedAway} : new FilePointerPartNode[]{splittedAway, newNode};
-    pointersUnder++;
+    pointersUnder+=pointersToStore;
     return newNode;
   }
 
-  // return true if the root node must be deleted also
-  boolean remove() {
-    assert leaf != null : toString();
+  // returns root node
+  @NotNull
+  FilePointerPartNode remove() {
+    int pointersNumber = leavesNumber();
+    assert leaves != null : toString();
     associate(null, null);
     useCount = 0;
     myLastUpdated = -1;
     FilePointerPartNode node;
     for (node = this; node.parent != null; node = node.parent) {
-      node.pointersUnder--;
+      node.pointersUnder-=pointersNumber;
     }
-    if (--node.pointersUnder == 0) {
+    if ((node.pointersUnder-=pointersNumber) == 0) {
       node.children = EMPTY_ARRAY; // clear root node, especially in tests
-      return true;
     }
-    return false;
+    return node;
   }
 
   private int indexOfFirstDifferentChar(@NotNull CharSequence path, int start) {
@@ -305,11 +302,18 @@ class FilePointerPartNode {
     return start1;
   }
 
-  void associate(VirtualFilePointerImpl pointer, Pair<VirtualFile, String> fileAndUrl) {
-    if (pointer != null) {
-      pointer.myNode = this;
+  void associate(Object leaves, Pair<VirtualFile, String> fileAndUrl) {
+    if (leaves != null) {
+      if (leaves instanceof VirtualFilePointerImpl) {
+        ((VirtualFilePointerImpl)leaves).myNode = this;
+      }
+      else {
+        for (VirtualFilePointerImpl pointer : (VirtualFilePointerImpl[])leaves) {
+          pointer.myNode = this;
+        }
+      }
     }
-    leaf = pointer;
+    this.leaves = leaves;
     myFileAndUrl = fileAndUrl;
     myLastUpdated = -1;
   }
@@ -318,7 +322,30 @@ class FilePointerPartNode {
     return useCount+=delta;
   }
 
-  int getPointersUnder() {
+  int numberOfPointersUnder() {
     return pointersUnder;
+  }
+
+  VirtualFilePointerImpl getAnyPointer() {
+    Object leaves = this.leaves;
+    return leaves == null ? null : leaves instanceof VirtualFilePointerImpl ? (VirtualFilePointerImpl)leaves : ((VirtualFilePointerImpl[])leaves)[0];
+  }
+
+  private int leavesNumber() {
+    Object leaves = this.leaves;
+    return leaves == null ? 0 : leaves instanceof VirtualFilePointerImpl ? 1 : ((VirtualFilePointerImpl[])leaves).length;
+  }
+
+  void addAllPointersTo(@NotNull Collection<? super VirtualFilePointerImpl> outList) {
+    Object leaves = this.leaves;
+    if (leaves == null) {
+      return;
+    }
+    if (leaves instanceof VirtualFilePointerImpl) {
+      outList.add((VirtualFilePointerImpl)leaves);
+    }
+    else {
+      ContainerUtil.addAll(outList, (VirtualFilePointerImpl[])leaves);
+    }
   }
 }

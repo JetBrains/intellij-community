@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,16 @@
  */
 package com.intellij.debugger.settings;
 
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 
 @State(
   name="ThreadsViewSettings",
   storages= {
-    @Storage(
-      file = StoragePathMacros.APP_CONFIG + "/debugger.threadsview.xml"
-    )}
+    @Storage("debugger.threadsview.xml")}
 )
 public class ThreadsViewSettings implements PersistentStateComponent<ThreadsViewSettings> {
   public boolean SHOW_THREAD_GROUPS = false;
@@ -33,6 +34,7 @@ public class ThreadsViewSettings implements PersistentStateComponent<ThreadsView
   public boolean SHOW_SOURCE_NAME = false;
   public boolean SHOW_SYNTHETIC_FRAMES = true;
   public boolean SHOW_CURRENT_THREAD = true;
+  public boolean SHOW_ARGUMENTS_TYPES = false;
 
   public static ThreadsViewSettings getInstance() {
     return ServiceManager.getService(ThreadsViewSettings.class);

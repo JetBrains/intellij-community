@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,13 +26,17 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.options.*;
+import com.intellij.openapi.keymap.impl.KeymapManagerImpl;
+import com.intellij.openapi.options.CompositeConfigurable;
+import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.util.Collection;
 import java.util.List;
 
@@ -65,6 +69,7 @@ public class EditorSmartKeysConfigurable extends CompositeConfigurable<UnnamedCo
   private JCheckBox myCbSurroundSelectionOnTyping;
   private JCheckBox myCbReformatBlockOnTypingRBrace;
   private JComboBox mySmartBackspaceCombo;
+  private JCheckBox myCbEnableAddingCaretsOnDoubleCtrlArrows;
   private boolean myAddonsInitialized = false;
 
   private static final String NO_REFORMAT = ApplicationBundle.message("combobox.paste.reformat.none");
@@ -87,6 +92,10 @@ public class EditorSmartKeysConfigurable extends CompositeConfigurable<UnnamedCo
     mySmartBackspaceCombo.addItem(SMART);
 
     myCbInsertJavadocStubOnEnter.setVisible(hasAnyDocAwareCommenters());
+    
+    myCbEnableAddingCaretsOnDoubleCtrlArrows.setText(
+      ApplicationBundle.message("checkbox.enable.double.ctrl",
+                                KeyEvent.getKeyText(KeymapManagerImpl.getMultiCaretActionModifier())));
   }
 
   private static boolean hasAnyDocAwareCommenters() {
@@ -169,6 +178,8 @@ public class EditorSmartKeysConfigurable extends CompositeConfigurable<UnnamedCo
     myCbCamelWords.setSelected(editorSettings.isCamelWords());
 
     myCbSurroundSelectionOnTyping.setSelected(codeInsightSettings.SURROUND_SELECTION_ON_QUOTE_TYPED);
+    
+    myCbEnableAddingCaretsOnDoubleCtrlArrows.setSelected(editorSettings.addCaretsOnDoubleCtrl());
 
     SmartBackspaceMode backspaceMode = codeInsightSettings.getBackspaceMode();
     switch (backspaceMode) {
@@ -205,7 +216,8 @@ public class EditorSmartKeysConfigurable extends CompositeConfigurable<UnnamedCo
     editorSettings.setCamelWords(myCbCamelWords.isSelected());
     codeInsightSettings.REFORMAT_ON_PASTE = getReformatPastedBlockValue();
     codeInsightSettings.setBackspaceMode(getSmartBackspaceModeValue());
-
+    editorSettings.setAddCaretsOnDoubleCtrl(myCbEnableAddingCaretsOnDoubleCtrlArrows.isSelected());
+    
     super.apply();
   }
 
@@ -229,6 +241,8 @@ public class EditorSmartKeysConfigurable extends CompositeConfigurable<UnnamedCo
     isModified |= isModified(myCbCamelWords, editorSettings.isCamelWords());
 
     isModified |= isModified(myCbSurroundSelectionOnTyping, codeInsightSettings.SURROUND_SELECTION_ON_QUOTE_TYPED);
+    
+    isModified |= isModified(myCbEnableAddingCaretsOnDoubleCtrlArrows, editorSettings.addCaretsOnDoubleCtrl());
 
     isModified |= (getSmartBackspaceModeValue() != codeInsightSettings.getBackspaceMode());
 

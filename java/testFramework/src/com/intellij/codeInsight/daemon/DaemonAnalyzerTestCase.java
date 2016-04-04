@@ -96,11 +96,6 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
   private VirtualFileFilter myVirtualFileFilter = new FileTreeAccessFilter();
 
   @Override
-  protected boolean isRunInWriteAction() {
-    return false;
-  }
-
-  @Override
   protected void setUp() throws Exception {
     super.setUp();
 
@@ -221,7 +216,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
       public HighlightTestInfo doTest() {
         try { configureByFiles(projectRoot, filePaths); }
         catch (Exception e) { throw new RuntimeException(e); }
-        ExpectedHighlightingData data = new ExpectedHighlightingData(myEditor.getDocument(), checkWarnings, checkWeakWarnings, checkInfos, myFile);
+        ExpectedHighlightingData data = new JavaExpectedHighlightingData(myEditor.getDocument(), checkWarnings, checkWeakWarnings, checkInfos, myFile);
         if (checkSymbolNames) data.checkSymbolNames();
         checkHighlighting(data);
         return this;

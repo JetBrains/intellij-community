@@ -53,6 +53,7 @@ import com.intellij.util.continuation.TaskDescriptor;
 import com.intellij.util.continuation.Where;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.conflict.TreeConflictDescription;
@@ -243,8 +244,10 @@ public class MergeFromTheirsResolver {
     }
 
     @Override
-    public void apply(MultiMap<VirtualFile, TextFilePatchInProgress> patchGroups, LocalChangeList localList, String fileName,
-                      TransparentlyFailedValueI<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo) {
+    public void apply(@NotNull MultiMap<VirtualFile, TextFilePatchInProgress> patchGroups,
+                      @Nullable LocalChangeList localList,
+                      @Nullable String fileName,
+                      @Nullable TransparentlyFailedValueI<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo) {
       final List<FilePatch> patches;
       try {
         patches = ApplyPatchSaveToFileExecutor.patchGroupsToOneGroup(patchGroups, myBaseDir);

@@ -30,7 +30,6 @@ import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import org.jetbrains.annotations.NotNull;
@@ -107,7 +106,7 @@ public class MarkTreeConflictResolvedAction extends AnAction implements DumbAwar
                                                 Messages.getQuestionIcon());
     if (result == Messages.YES) {
       final Ref<VcsException> exception = new Ref<VcsException>();
-      ProgressManager.getInstance().run(new Task.Backgroundable(checker.getProject(), markText, true, BackgroundFromStartOption.getInstance()) {
+      ProgressManager.getInstance().run(new Task.Backgroundable(checker.getProject(), markText, true) {
         public void run(@NotNull ProgressIndicator indicator) {
           final ConflictedSvnChange change = checker.getChange();
           final FilePath path = change.getTreeConflictMarkHolder();

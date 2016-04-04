@@ -1,6 +1,7 @@
 package org.jetbrains.idea.svn.difftool.properties;
 
 import com.intellij.diff.contents.DiffContent;
+import com.intellij.diff.contents.DiffContentBase;
 import com.intellij.diff.contents.EmptyContent;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -65,7 +66,7 @@ public class SvnPropertiesDiffRequest extends ContentDiffRequest {
     return myContents;
   }
 
-  public static class PropertyContent implements DiffContent {
+  public static class PropertyContent extends DiffContentBase {
     @NotNull private final List<PropertyData> myProperties;
 
     public PropertyContent(@NotNull List<PropertyData> properties) {
@@ -81,16 +82,6 @@ public class SvnPropertiesDiffRequest extends ContentDiffRequest {
     @Override
     public FileType getContentType() {
       return null;
-    }
-
-    @Nullable
-    @Override
-    public OpenFileDescriptor getOpenFileDescriptor() {
-      return null;
-    }
-
-    @Override
-    public void onAssigned(boolean isAssigned) {
     }
   }
 }

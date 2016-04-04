@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ internal class Reset(manager: GitRepositoryManager, indicator: ProgressIndicator
     val mergeResult = if (refToMerge == null) null else merge(refToMerge, mergeStrategy, forceMerge = true, commitMessage = commitMessage)
     val firstMergeResult = mergeResult?.result
 
-    if (mergeResult?.status == MergeResult.MergeStatus.FAST_FORWARD && firstMergeResult!!.changed.isNotEmpty()) {
+    if (!toTheirs && mergeResult?.status == MergeResult.MergeStatus.FAST_FORWARD && firstMergeResult!!.changed.isNotEmpty()) {
       // we specify forceMerge, so if we get FAST_FORWARD it means that our repo doesn't have HEAD (empty) and we must delete all local files to revert all remote updates
       repository.deleteAllFiles()
       result.deleted.addAll(firstMergeResult.changed)
@@ -55,7 +55,7 @@ internal class Reset(manager: GitRepositoryManager, indicator: ProgressIndicator
         val fetchRefSpecs = remoteConfig.fetchRefSpecs
         assert(fetchRefSpecs.size == 1)
 
-        val latestUpstreamCommit = repository.getRef(fetchRefSpecs[0].destination!!)
+        val latestUpstreamCommit = repository.findRef(fetchRefSpecs[0].destination!!)
         if (latestUpstreamCommit == null) {
           if (toTheirs) {
             repository.deleteAllFiles(result.deleted)

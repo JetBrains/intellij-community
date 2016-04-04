@@ -48,6 +48,13 @@ public class URLUtil {
   private URLUtil() { }
 
   /**
+   * @return if false, then the line contains no URL; if true, then more heavy {@link #URL_PATTERN} check should be used.
+   */
+  public static boolean canContainUrl(@NotNull String line) {
+    return line.contains("mailto:") || line.contains("://") || line.contains("www.");
+  }
+
+  /**
    * Opens a url stream. The semantics is the sames as {@link URL#openStream()}. The
    * separate method is needed, since jar URLs open jars via JarFactory and thus keep them
    * mapped into memory.

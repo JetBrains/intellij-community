@@ -115,7 +115,7 @@ public class ClassLoadingUtils {
   }
 
   private static ArrayReference createURLArray(EvaluationContext context)
-    throws EvaluateException, InvocationException, InvalidTypeException, ClassNotLoadedException, IncompatibleThreadStateException {
+    throws EvaluateException, InvalidTypeException, ClassNotLoadedException {
     DebugProcess process = context.getDebugProcess();
     ArrayType arrayType = (ArrayType)process.findClass(context, "java.net.URL[]", context.getClassLoader());
     ArrayReference arrayRef = arrayType.newInstance(1);

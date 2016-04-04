@@ -17,20 +17,23 @@ package com.intellij.psi.util.proximity;
 
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PlatformPatterns;
-import com.intellij.patterns.PsiElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.ProximityLocation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.psi.util.proximity.ReferenceListWeigher.ReferenceListApplicability.*;
+
 /**
  * @author peter
  */
 public class ReferenceListWeigher extends ProximityWeigher {
+  public static final ReferenceListWeigher INSTANCE = new ReferenceListWeigher();
 
-  private static final PsiElementPattern.Capture<PsiElement> INSIDE_REFERENCE_LIST =
+  public static final ElementPattern<PsiElement> INSIDE_REFERENCE_LIST =
     PlatformPatterns.psiElement().withParents(PsiJavaCodeReferenceElement.class, PsiReferenceList.class);
 
   protected enum Preference {
@@ -38,10 +41,8 @@ public class ReferenceListWeigher extends ProximityWeigher {
   }
 
   @Nullable
-  protected Preference getPreferredCondition(@NotNull ProximityLocation location) {
-    PsiElement position = location.getPosition();
+  protected Preference getPreferredCondition(@NotNull final PsiElement position) {
     if (INSIDE_REFERENCE_LIST.accepts(position)) {
-      assert position != null;
       PsiReferenceList list = (PsiReferenceList)position.getParent().getParent();
       PsiReferenceList.Role role = list.getRole();
       if (shouldContainInterfaces(list, role)) {
@@ -69,25 +70,39 @@ public class ReferenceListWeigher extends ProximityWeigher {
     return false;
   }
 
-  @Override
-  public Integer weigh(@NotNull PsiElement element, @NotNull ProximityLocation location) {
-    if (element instanceof PsiClass) {
-      Preference condition = getPreferredCondition(location);
-      PsiClass aClass = (PsiClass)element;
-      if (condition == Preference.Interfaces) return aClass.isInterface() ? 1 : -1;
-      if (condition == Preference.Classes) {
-        if (aClass.isInterface()) return -1;
-        if (aClass.getName().endsWith("TestCase")) {
-          VirtualFile vFile = aClass.getContainingFile().getVirtualFile();
-          if (vFile != null && ProjectFileIndex.SERVICE.getInstance(location.getProject()).isInTestSourceContent(vFile)) {
-            return 2;
-          }
-        }
-        return 1;
-      }
-      if (condition == Preference.Exceptions) return InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_LANG_THROWABLE) ? 1 : -1;
-    }
+  public enum ReferenceListApplicability {
+    inapplicable,
+    unknown,
+    applicableByKind,
+    applicableByName
+  }
 
-    return 0;
+  @Override
+  public ReferenceListApplicability weigh(@NotNull PsiElement element, @NotNull ProximityLocation location) {
+    if (element instanceof PsiClass && location.getPosition() != null) {
+      return getApplicability((PsiClass)element, location.getPosition());
+    }
+    return unknown;
+  }
+
+  @NotNull
+  public ReferenceListApplicability getApplicability(@NotNull PsiClass aClass, @NotNull PsiElement position) {
+    Preference condition = getPreferredCondition(position);
+    if (condition == Preference.Interfaces) return aClass.isInterface() ? applicableByKind : inapplicable;
+    if (condition == Preference.Classes) {
+      if (aClass.isInterface()) return inapplicable;
+      String name = aClass.getName();
+      if (name != null && name.endsWith("TestCase")) {
+        VirtualFile vFile = aClass.getContainingFile().getVirtualFile();
+        if (vFile != null && ProjectFileIndex.SERVICE.getInstance(aClass.getProject()).isInTestSourceContent(vFile)) {
+          return applicableByName;
+        }
+      }
+      return applicableByKind;
+    }
+    if (condition == Preference.Exceptions) {
+      return InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_LANG_THROWABLE) ? applicableByKind : inapplicable;
+    }
+    return unknown;
   }
 }

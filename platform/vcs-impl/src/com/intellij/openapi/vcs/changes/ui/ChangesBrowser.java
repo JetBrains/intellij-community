@@ -279,7 +279,7 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
 
     if (changes.size() < 2) {
       List<Change> allChanges = myViewer.getChanges();
-      if (allChanges.size() > 1) {
+      if (allChanges.size() > 1 || changes.isEmpty()) {
         changes = allChanges;
       }
     }

@@ -12,6 +12,10 @@ class FooWithComments {
     }
   }
 
+  boolean checkValueOf(String name) {
+    return <warning descr="Condition 'AnEnum.valueOf(name) != null' is always 'true'">AnEnum.valueOf(name) != null</warning>;
+  }
+
   private native void anotherMethod(String name);
 
   @Nullable

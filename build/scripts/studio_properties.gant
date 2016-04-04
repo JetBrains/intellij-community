@@ -30,7 +30,7 @@ def getProperties(String home, String buildNumber) {
 
   def enableUITests = System.getProperty("studio.ui.tests") ? !System.getProperty("studio.ui.tests").isEmpty() : false
 
-  return new ProductProperties() {
+  return new org.jetbrains.intellij.build.ProductProperties() {
     {
       prefix = "studio"
       code = "AI"

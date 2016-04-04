@@ -26,11 +26,14 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.html.HtmlTag;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.util.XmlTagUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Dmitry Avdeev
@@ -64,6 +67,17 @@ public class XmlElementFactoryImpl extends XmlElementFactory {
   @Override
   @NotNull
   public XmlAttribute createXmlAttribute(@NotNull String name, @NotNull String value) throws IncorrectOperationException {
+    return createAttribute(name, value, XmlFileType.INSTANCE);
+  }
+
+  @NotNull
+  @Override
+  public XmlAttribute createAttribute(@NotNull @NonNls String name, @NotNull String value, @Nullable PsiElement context) throws IncorrectOperationException {
+    return createAttribute(name, value, PsiTreeUtil.getParentOfType(context, XmlTag.class, false) instanceof HtmlTag ? HtmlFileType.INSTANCE : XmlFileType.INSTANCE);
+  }
+
+  @NotNull
+  private XmlAttribute createAttribute(@NotNull String name, @NotNull String value, @NotNull FileType fileType) {
     final char quoteChar;
     if (!value.contains("\"")) {
       quoteChar = '"';
@@ -73,8 +87,7 @@ public class XmlElementFactoryImpl extends XmlElementFactory {
       quoteChar = '"';
       value = StringUtil.replace(value, "\"", "&quot;");
     }
-    final XmlDocument document = createXmlDocument("<tag " + name + "=" + quoteChar + value + quoteChar + "/>", "dummy.xml",
-                                                   XmlFileType.INSTANCE);
+    final XmlDocument document = createXmlDocument("<tag " + name + "=" + quoteChar + value + quoteChar + "/>", "dummy.xml", fileType);
     XmlTag tag = document.getRootTag();
     assert tag != null;
     XmlAttribute[] attributes = tag.getAttributes();

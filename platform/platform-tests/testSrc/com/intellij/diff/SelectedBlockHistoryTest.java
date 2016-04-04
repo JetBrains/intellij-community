@@ -182,13 +182,24 @@ public class SelectedBlockHistoryTest extends TestCase {
     );
   }
 
+  public void test15() throws FilesTooBigForDiffException {
+    doTest(
+      new String[]{"1"},
+      new String[]{"0"},
+      new String[]{"3"},
+
+      new String[]{"1", "4"},
+      new String[]{"5", "0"},
+      new String[]{"3"}
+    );
+  }
 
   public void testContent(){
-    Block block = new Block("0\n1\n2\n3\n4\n5\n6", 3, 6);
+    Block block = new Block("0\n1\n2\n3\n4\n5\n6", 3, 7);
     String blockContent = block.getBlockContent();
     assertEquals("3\n4\n5\n6", blockContent);
 
-    block = new Block("0\n1\n2\n3\n4\n5\n6\n", 3, 6);
+    block = new Block("0\n1\n2\n3\n4\n5\n6\n", 3, 7);
     blockContent = block.getBlockContent();
     assertEquals("3\n4\n5\n6", blockContent);
 
@@ -204,11 +215,9 @@ public class SelectedBlockHistoryTest extends TestCase {
 
     String[] prevVersion = composeVersion(beforePrevBlock, prevBlock, afterPrevBlock);
     String[] currentVersion = composeVersion(beforeBlock, block, afterBlock);
-    FindBlock findBlock = new FindBlock(prevVersion,
-        new Block(currentVersion, beforeBlock.length, beforeBlock.length + block.length - 1));
 
-    Block actualBlock = findBlock.getBlockInThePrevVersion();
-    Block expectedBlock = new Block(prevVersion,beforePrevBlock.length, beforePrevBlock.length + prevBlock.length - 1);
+    Block actualBlock = new Block(currentVersion, beforeBlock.length, beforeBlock.length + block.length).createPreviousBlock(prevVersion);
+    Block expectedBlock = new Block(prevVersion,beforePrevBlock.length, beforePrevBlock.length + prevBlock.length);
 
     assertEquals(expectedBlock, actualBlock);
 

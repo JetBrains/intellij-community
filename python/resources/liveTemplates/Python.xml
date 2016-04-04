@@ -4,61 +4,19 @@
     <variable name="method" expression="pyFunctionName()" defaultValue="" alwaysStopAt="false" />
     <variable name="end" expression="" defaultValue="" alwaysStopAt="true" />
     <context>
-      <option name="HTML_TEXT" value="false" />
-      <option name="HTML" value="false" />
-      <option name="XSL_TEXT" value="false" />
-      <option name="XML" value="false" />
-      <option name="Python" value="true" />
-      <option name="Django" value="false" />
-      <option name="CSS_PROPERTY_VALUE" value="false" />
-      <option name="CSS_DECLARATION_BLOCK" value="false" />
-      <option name="CSS_RULESET_LIST" value="false" />
-      <option name="CSS" value="false" />
-      <option name="JAVA_SCRIPT" value="false" />
-      <option name="TypeScript" value="false" />
-      <option name="SQL" value="false" />
-      <option name="CoffeeScript" value="false" />
-      <option name="OTHER" value="false" />
+      <option name="Python_Class" value="true" />
     </context>
   </template>
   <template name="main" value="if __name__ == '__main__':&#10;    $END$" description="if __name__ == '__main__'" toReformat="false" toShortenFQNames="true">
     <context>
-      <option name="HTML_TEXT" value="false" />
-      <option name="HTML" value="false" />
-      <option name="XSL_TEXT" value="false" />
-      <option name="XML" value="false" />
       <option name="Python" value="true" />
-      <option name="Django" value="false" />
-      <option name="CSS_PROPERTY_VALUE" value="false" />
-      <option name="CSS_DECLARATION_BLOCK" value="false" />
-      <option name="CSS_RULESET_LIST" value="false" />
-      <option name="CSS" value="false" />
-      <option name="JAVA_SCRIPT" value="false" />
-      <option name="TypeScript" value="false" />
-      <option name="SQL" value="false" />
-      <option name="CoffeeScript" value="false" />
-      <option name="OTHER" value="false" />
     </context>
   </template>
   <template name="iter" value="for $VAR$ in $ITERABLE$:&#10;    $END$" description="Iterate (for ... in ...)" toReformat="false" toShortenFQNames="true">
     <variable name="ITERABLE" expression="pyIterableVariable()" defaultValue="" alwaysStopAt="true" />
     <variable name="VAR" expression="collectionElementName(ITERABLE)" defaultValue="" alwaysStopAt="true" />
     <context>
-      <option name="HTML_TEXT" value="false" />
-      <option name="HTML" value="false" />
-      <option name="XSL_TEXT" value="false" />
-      <option name="XML" value="false" />
       <option name="Python" value="true" />
-      <option name="Django" value="false" />
-      <option name="CSS_PROPERTY_VALUE" value="false" />
-      <option name="CSS_DECLARATION_BLOCK" value="false" />
-      <option name="CSS_RULESET_LIST" value="false" />
-      <option name="CSS" value="false" />
-      <option name="JAVA_SCRIPT" value="false" />
-      <option name="TypeScript" value="false" />
-      <option name="SQL" value="false" />
-      <option name="CoffeeScript" value="false" />
-      <option name="OTHER" value="false" />
     </context>
   </template>
   <template name="itere" value="for $INDEX$, $VAR$ in enumerate($ITERABLE$):&#10;    $END$" description="Iterate (for ... in enumerate)" toReformat="false" toShortenFQNames="true">
@@ -66,21 +24,7 @@
     <variable name="VAR" expression="collectionElementName(ITERABLE)" defaultValue="" alwaysStopAt="true" />
     <variable name="INDEX" expression="" defaultValue="&quot;i&quot;" alwaysStopAt="true" />
     <context>
-      <option name="HTML_TEXT" value="false" />
-      <option name="HTML" value="false" />
-      <option name="XSL_TEXT" value="false" />
-      <option name="XML" value="false" />
       <option name="Python" value="true" />
-      <option name="Django" value="false" />
-      <option name="CSS_PROPERTY_VALUE" value="false" />
-      <option name="CSS_DECLARATION_BLOCK" value="false" />
-      <option name="CSS_RULESET_LIST" value="false" />
-      <option name="CSS" value="false" />
-      <option name="JAVA_SCRIPT" value="false" />
-      <option name="TypeScript" value="false" />
-      <option name="SQL" value="false" />
-      <option name="CoffeeScript" value="false" />
-      <option name="OTHER" value="false" />
     </context>
   </template>
   <template name="compl" value="[$VAR_EXPR$ for $VAR$ in $ITERABLE$]" description="List comprehension" toReformat="false" toShortenFQNames="true">
@@ -88,21 +32,7 @@
     <variable name="VAR" expression="collectionElementName(ITERABLE)" defaultValue="" alwaysStopAt="true" />
     <variable name="VAR_EXPR" expression="" defaultValue="VAR" alwaysStopAt="true" />
     <context>
-      <option name="HTML_TEXT" value="false" />
-      <option name="HTML" value="false" />
-      <option name="XSL_TEXT" value="false" />
-      <option name="XML" value="false" />
       <option name="Python" value="true" />
-      <option name="Django" value="false" />
-      <option name="CSS_PROPERTY_VALUE" value="false" />
-      <option name="CSS_DECLARATION_BLOCK" value="false" />
-      <option name="CSS_RULESET_LIST" value="false" />
-      <option name="CSS" value="false" />
-      <option name="JAVA_SCRIPT" value="false" />
-      <option name="TypeScript" value="false" />
-      <option name="SQL" value="false" />
-      <option name="CoffeeScript" value="false" />
-      <option name="OTHER" value="false" />
     </context>
   </template>
   <template name="compli" value="[$VAR_EXPR$ for $VAR$ in $ITERABLE$ if $VAR_EXPR_IF$]" description="List comprehension with 'if'" toReformat="false" toShortenFQNames="true">
@@ -111,21 +41,7 @@
     <variable name="VAR_EXPR" expression="" defaultValue="VAR" alwaysStopAt="true" />
     <variable name="VAR_EXPR_IF" expression="" defaultValue="VAR" alwaysStopAt="true" />
     <context>
-      <option name="HTML_TEXT" value="false" />
-      <option name="HTML" value="false" />
-      <option name="XSL_TEXT" value="false" />
-      <option name="XML" value="false" />
       <option name="Python" value="true" />
-      <option name="Django" value="false" />
-      <option name="CSS_PROPERTY_VALUE" value="false" />
-      <option name="CSS_DECLARATION_BLOCK" value="false" />
-      <option name="CSS_RULESET_LIST" value="false" />
-      <option name="CSS" value="false" />
-      <option name="JAVA_SCRIPT" value="false" />
-      <option name="TypeScript" value="false" />
-      <option name="SQL" value="false" />
-      <option name="CoffeeScript" value="false" />
-      <option name="OTHER" value="false" />
     </context>
   </template>
   <template name="compg" value="($VAR_EXPR$ for $VAR$ in $ITERABLE$)" description="Generator comprehension" toReformat="false" toShortenFQNames="true">
@@ -133,21 +49,7 @@
     <variable name="VAR" expression="collectionElementName(ITERABLE)" defaultValue="" alwaysStopAt="true" />
     <variable name="VAR_EXPR" expression="" defaultValue="VAR" alwaysStopAt="true" />
     <context>
-      <option name="HTML_TEXT" value="false" />
-      <option name="HTML" value="false" />
-      <option name="XSL_TEXT" value="false" />
-      <option name="XML" value="false" />
       <option name="Python" value="true" />
-      <option name="Django" value="false" />
-      <option name="CSS_PROPERTY_VALUE" value="false" />
-      <option name="CSS_DECLARATION_BLOCK" value="false" />
-      <option name="CSS_RULESET_LIST" value="false" />
-      <option name="CSS" value="false" />
-      <option name="JAVA_SCRIPT" value="false" />
-      <option name="TypeScript" value="false" />
-      <option name="SQL" value="false" />
-      <option name="CoffeeScript" value="false" />
-      <option name="OTHER" value="false" />
     </context>
   </template>
   <template name="compgi" value="($VAR_EXPR$ for $VAR$ in $ITERABLE$ if $VAR_EXPR_IF$)" description="Generator comprehension with 'if'" toReformat="false" toShortenFQNames="true">
@@ -156,21 +58,7 @@
     <variable name="VAR_EXPR" expression="" defaultValue="VAR" alwaysStopAt="true" />
     <variable name="VAR_EXPR_IF" expression="" defaultValue="VAR" alwaysStopAt="true" />
     <context>
-      <option name="HTML_TEXT" value="false" />
-      <option name="HTML" value="false" />
-      <option name="XSL_TEXT" value="false" />
-      <option name="XML" value="false" />
       <option name="Python" value="true" />
-      <option name="Django" value="false" />
-      <option name="CSS_PROPERTY_VALUE" value="false" />
-      <option name="CSS_DECLARATION_BLOCK" value="false" />
-      <option name="CSS_RULESET_LIST" value="false" />
-      <option name="CSS" value="false" />
-      <option name="JAVA_SCRIPT" value="false" />
-      <option name="TypeScript" value="false" />
-      <option name="SQL" value="false" />
-      <option name="CoffeeScript" value="false" />
-      <option name="OTHER" value="false" />
     </context>
   </template>
   <template name="comps" value="{$VAR_EXPR$ for $VAR$ in $ITERABLE$}" description="Set comprehension" toReformat="false" toShortenFQNames="true">
@@ -178,21 +66,7 @@
     <variable name="VAR" expression="collectionElementName(ITERABLE)" defaultValue="" alwaysStopAt="true" />
     <variable name="VAR_EXPR" expression="" defaultValue="VAR" alwaysStopAt="true" />
     <context>
-      <option name="HTML_TEXT" value="false" />
-      <option name="HTML" value="false" />
-      <option name="XSL_TEXT" value="false" />
-      <option name="XML" value="false" />
       <option name="Python" value="true" />
-      <option name="Django" value="false" />
-      <option name="CSS_PROPERTY_VALUE" value="false" />
-      <option name="CSS_DECLARATION_BLOCK" value="false" />
-      <option name="CSS_RULESET_LIST" value="false" />
-      <option name="CSS" value="false" />
-      <option name="JAVA_SCRIPT" value="false" />
-      <option name="TypeScript" value="false" />
-      <option name="SQL" value="false" />
-      <option name="CoffeeScript" value="false" />
-      <option name="OTHER" value="false" />
     </context>
   </template>
   <template name="compsi" value="{$VAR_EXPR$ for $VAR$ in $ITERABLE$ if $VAR_EXPR_IF$}" description="Set comprehension with 'if'" toReformat="false" toShortenFQNames="true">
@@ -201,21 +75,7 @@
     <variable name="VAR_EXPR" expression="" defaultValue="VAR" alwaysStopAt="true" />
     <variable name="VAR_EXPR_IF" expression="" defaultValue="VAR" alwaysStopAt="true" />
     <context>
-      <option name="HTML_TEXT" value="false" />
-      <option name="HTML" value="false" />
-      <option name="XSL_TEXT" value="false" />
-      <option name="XML" value="false" />
       <option name="Python" value="true" />
-      <option name="Django" value="false" />
-      <option name="CSS_PROPERTY_VALUE" value="false" />
-      <option name="CSS_DECLARATION_BLOCK" value="false" />
-      <option name="CSS_RULESET_LIST" value="false" />
-      <option name="CSS" value="false" />
-      <option name="JAVA_SCRIPT" value="false" />
-      <option name="TypeScript" value="false" />
-      <option name="SQL" value="false" />
-      <option name="CoffeeScript" value="false" />
-      <option name="OTHER" value="false" />
     </context>
   </template>
   <template name="compd" value="{$KEY_EXPR$: $VAL_EXPR$ for $VAR$ in $ITERABLE$}" description="Dict comprehension" toReformat="false" toShortenFQNames="true">
@@ -224,21 +84,7 @@
     <variable name="KEY_EXPR" expression="" defaultValue="VAR" alwaysStopAt="true" />
     <variable name="VAL_EXPR" expression="" defaultValue="VAR" alwaysStopAt="true" />
     <context>
-      <option name="HTML_TEXT" value="false" />
-      <option name="HTML" value="false" />
-      <option name="XSL_TEXT" value="false" />
-      <option name="XML" value="false" />
       <option name="Python" value="true" />
-      <option name="Django" value="false" />
-      <option name="CSS_PROPERTY_VALUE" value="false" />
-      <option name="CSS_DECLARATION_BLOCK" value="false" />
-      <option name="CSS_RULESET_LIST" value="false" />
-      <option name="CSS" value="false" />
-      <option name="JAVA_SCRIPT" value="false" />
-      <option name="TypeScript" value="false" />
-      <option name="SQL" value="false" />
-      <option name="CoffeeScript" value="false" />
-      <option name="OTHER" value="false" />
     </context>
   </template>
   <template name="compdi" value="{$KEY_EXPR$: $VAL_EXPR$ for $VAR$ in $ITERABLE$ if $VAR_EXPR_IF$}" description="Dict comprehension with 'if'" toReformat="false" toShortenFQNames="true">
@@ -248,81 +94,25 @@
     <variable name="VAL_EXPR" expression="" defaultValue="VAR" alwaysStopAt="true" />
     <variable name="VAR_EXPR_IF" expression="" defaultValue="VAR" alwaysStopAt="true" />
     <context>
-      <option name="HTML_TEXT" value="false" />
-      <option name="HTML" value="false" />
-      <option name="XSL_TEXT" value="false" />
-      <option name="XML" value="false" />
       <option name="Python" value="true" />
-      <option name="Django" value="false" />
-      <option name="CSS_PROPERTY_VALUE" value="false" />
-      <option name="CSS_DECLARATION_BLOCK" value="false" />
-      <option name="CSS_RULESET_LIST" value="false" />
-      <option name="CSS" value="false" />
-      <option name="JAVA_SCRIPT" value="false" />
-      <option name="TypeScript" value="false" />
-      <option name="SQL" value="false" />
-      <option name="CoffeeScript" value="false" />
-      <option name="OTHER" value="false" />
     </context>
   </template>
   <template name="prop" value="@property&#10;def $NAME$(self):&#10;    return $END$" description="Property getter" toReformat="false" toShortenFQNames="true">
     <variable name="NAME" expression="" defaultValue="" alwaysStopAt="true" />
     <context>
-      <option name="HTML_TEXT" value="false" />
-      <option name="HTML" value="false" />
-      <option name="XSL_TEXT" value="false" />
-      <option name="XML" value="false" />
-      <option name="Python" value="true" />
-      <option name="Django" value="false" />
-      <option name="CSS_PROPERTY_VALUE" value="false" />
-      <option name="CSS_DECLARATION_BLOCK" value="false" />
-      <option name="CSS_RULESET_LIST" value="false" />
-      <option name="CSS" value="false" />
-      <option name="JAVA_SCRIPT" value="false" />
-      <option name="TypeScript" value="false" />
-      <option name="SQL" value="false" />
-      <option name="CoffeeScript" value="false" />
-      <option name="OTHER" value="false" />
+      <option name="Python_Class" value="true" />
     </context>
   </template>
   <template name="props" value="@property&#10;def $NAME$(self):&#10;    return $END$&#10;&#10;@$NAME$.setter&#10;def $NAME$(self, value):&#10;    pass" description="Property getter/setter" toReformat="false" toShortenFQNames="true">
     <variable name="NAME" expression="" defaultValue="" alwaysStopAt="true" />
     <context>
-      <option name="HTML_TEXT" value="false" />
-      <option name="HTML" value="false" />
-      <option name="XSL_TEXT" value="false" />
-      <option name="XML" value="false" />
-      <option name="Python" value="true" />
-      <option name="Django" value="false" />
-      <option name="CSS_PROPERTY_VALUE" value="false" />
-      <option name="CSS_DECLARATION_BLOCK" value="false" />
-      <option name="CSS_RULESET_LIST" value="false" />
-      <option name="CSS" value="false" />
-      <option name="JAVA_SCRIPT" value="false" />
-      <option name="TypeScript" value="false" />
-      <option name="SQL" value="false" />
-      <option name="CoffeeScript" value="false" />
-      <option name="OTHER" value="false" />
+      <option name="Python_Class" value="true" />
     </context>
   </template>
   <template name="propsd" value="@property&#10;def $NAME$(self):&#10;    return $END$&#10;&#10;@$NAME$.setter&#10;def $NAME$(self, value):&#10;    pass&#10;&#10;@$NAME$.deleter&#10;def $NAME$(self):&#10;    pass" description="Property getter/setter/deleter" toReformat="false" toShortenFQNames="true">
     <variable name="NAME" expression="" defaultValue="" alwaysStopAt="true" />
     <context>
-      <option name="HTML_TEXT" value="false" />
-      <option name="HTML" value="false" />
-      <option name="XSL_TEXT" value="false" />
-      <option name="XML" value="false" />
-      <option name="Python" value="true" />
-      <option name="Django" value="false" />
-      <option name="CSS_PROPERTY_VALUE" value="false" />
-      <option name="CSS_DECLARATION_BLOCK" value="false" />
-      <option name="CSS_RULESET_LIST" value="false" />
-      <option name="CSS" value="false" />
-      <option name="JAVA_SCRIPT" value="false" />
-      <option name="TypeScript" value="false" />
-      <option name="SQL" value="false" />
-      <option name="CoffeeScript" value="false" />
-      <option name="OTHER" value="false" />
+      <option name="Python_Class" value="true" />
     </context>
   </template>
 </templateSet>

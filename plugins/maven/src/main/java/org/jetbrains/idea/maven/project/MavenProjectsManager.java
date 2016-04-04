@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,9 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileTask;
 import com.intellij.openapi.compiler.CompilerManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.SettingsSavingComponent;
+import com.intellij.openapi.components.State;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
@@ -71,7 +73,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-@State(name = "MavenProjectsManager", storages = {@Storage(file = StoragePathMacros.PROJECT_FILE)})
+@State(name = "MavenProjectsManager")
 public class MavenProjectsManager extends MavenSimpleProjectComponent
   implements PersistentStateComponent<MavenProjectsManagerState>, SettingsSavingComponent {
   private static final int IMPORT_DELAY = 1000;
@@ -728,9 +730,15 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   @Nullable
-  public MavenProject findAggregator(@NotNull MavenProject module) {
+  public MavenProject findAggregator(@NotNull MavenProject mavenProject) {
     if (!isInitialized()) return null;
-    return myProjectsTree.findAggregator(module);
+    return myProjectsTree.findAggregator(mavenProject);
+  }
+
+  @Nullable
+  public MavenProject findRootProject(@NotNull MavenProject mavenProject) {
+    if (!isInitialized()) return null;
+    return myProjectsTree.findRootProject(mavenProject);
   }
 
   @NotNull
@@ -850,25 +858,33 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
           toResolve = new LinkedHashSet<MavenProject>(myProjectsToResolve);
           myProjectsToResolve.clear();
         }
+        if(toResolve.isEmpty()) return;
+
         final ResolveContext context = new ResolveContext();
-
-        Iterator<MavenProject> it = toResolve.iterator();
-        while (it.hasNext()) {
-          MavenProject each = it.next();
-          Runnable onCompletion = it.hasNext() ? null : new Runnable() {
-            @Override
-            public void run() {
-              if (hasScheduledProjects()) {
-                scheduleImport().processed(result);
-              }
-              else {
-                result.setResult(Collections.<Module>emptyList());
-              }
+        Runnable onCompletion = new Runnable() {
+          @Override
+          public void run() {
+            if (hasScheduledProjects()) {
+              scheduleImport().processed(result);
             }
-          };
+            else {
+              result.setResult(Collections.<Module>emptyList());
+            }
+          }
+        };
 
+        final boolean useSinglePomResolver = Boolean.getBoolean("idea.maven.use.single.pom.resolver");
+        if (useSinglePomResolver) {
+          Iterator<MavenProject> it = toResolve.iterator();
+          while (it.hasNext()) {
+            MavenProject each = it.next();
+            myResolvingProcessor.scheduleTask(new MavenProjectsProcessorResolvingTask(
+              Collections.singleton(each), myProjectsTree, getGeneralSettings(), it.hasNext() ? null : onCompletion, context));
+          }
+        }
+        else {
           myResolvingProcessor.scheduleTask(
-            new MavenProjectsProcessorResolvingTask(each, myProjectsTree, getGeneralSettings(), onCompletion, context));
+            new MavenProjectsProcessorResolvingTask(toResolve, myProjectsTree, getGeneralSettings(), onCompletion, context));
         }
       }
     });
@@ -1047,7 +1063,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     if (!isInitialized()) return;
     runWhenFullyOpen(new Runnable() {
       public void run() {
-        myImportingQueue.flush(false);
+        myImportingQueue.flush();
       }
     });
   }

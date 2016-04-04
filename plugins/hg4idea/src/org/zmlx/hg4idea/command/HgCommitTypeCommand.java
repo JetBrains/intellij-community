@@ -90,7 +90,7 @@ public abstract class HgCommitTypeCommand {
           return file.getRelativePath();
         }
       });
-      List<List<String>> chunkedCommits = VcsFileUtil.chunkRelativePaths(relativePaths);
+      List<List<String>> chunkedCommits = VcsFileUtil.chunkArguments(relativePaths);
       executeChunked(chunkedCommits);
     }
     myRepository.update();

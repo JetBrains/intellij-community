@@ -18,7 +18,6 @@ package com.intellij.openapi.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.DocumentAdapter;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,11 +56,7 @@ public abstract class NamedConfigurable<T> implements Configurable {
         }
       });
     }
-    if (Registry.is("ide.new.project.settings")) {
-      myNamePanel.setBorder(new EmptyBorder(10, 10, 6, 10));
-    } else {
-      myNamePanel.setBorder(new EmptyBorder(0,0,0,0));
-    }
+    myNamePanel.setBorder(new EmptyBorder(10, 10, 6, 10));
   }
 
   public boolean isNameEditable() {

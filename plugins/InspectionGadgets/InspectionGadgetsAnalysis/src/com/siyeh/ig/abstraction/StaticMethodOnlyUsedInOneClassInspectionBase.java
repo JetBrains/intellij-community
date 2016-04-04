@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,15 @@
  */
 package com.siyeh.ig.abstraction;
 
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
@@ -35,8 +38,15 @@ import javax.swing.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class StaticMethodOnlyUsedInOneClassInspectionBase extends BaseInspection {
+
   @SuppressWarnings("PublicField")
   public boolean ignoreTestClasses = false;
+
+  @SuppressWarnings("PublicField")
+  public boolean ignoreAnonymousClasses = true;
+
+  @SuppressWarnings("PublicField")
+  public boolean ignoreOnConflicts = true;
 
   @Override
   @NotNull
@@ -61,8 +71,12 @@ public class StaticMethodOnlyUsedInOneClassInspectionBase extends BaseInspection
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("static.method.only.used.in.one.class.ignore.test.option"),
-                                          this, "ignoreTestClasses");
+    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
+    panel.addCheckbox(InspectionGadgetsBundle.message("static.method.only.used.in.one.class.ignore.test.option"), "ignoreTestClasses");
+    panel.addCheckbox(InspectionGadgetsBundle.message("static.method.only.used.in.one.class.ignore.anonymous.option"),
+                      "ignoreAnonymousClasses");
+    panel.addCheckbox(InspectionGadgetsBundle.message("static.method.only.used.in.one.class.ignore.on.conflicts"), "ignoreOnConflicts");
+    return panel;
   }
 
   @Override
@@ -99,7 +113,7 @@ public class StaticMethodOnlyUsedInOneClassInspectionBase extends BaseInspection
       final ProgressManager progressManager = ProgressManager.getInstance();
       final PsiSearchHelper searchHelper = PsiSearchHelper.SERVICE.getInstance(method.getProject());
       final String name = method.getName();
-      final GlobalSearchScope scope = GlobalSearchScope.allScope(method.getProject());
+      final GlobalSearchScope scope = GlobalSearchScope.projectScope(method.getProject());
       if (searchHelper.isCheapEnoughToSearch(name, scope, null, progressManager.getProgressIndicator())
           == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES) {
         return null;
@@ -120,7 +134,7 @@ public class StaticMethodOnlyUsedInOneClassInspectionBase extends BaseInspection
   private class StaticMethodOnlyUsedInOneClassVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethod(PsiMethod method) {
+    public void visitMethod(final PsiMethod method) {
       super.visitMethod(method);
       if (!method.hasModifierProperty(PsiModifier.STATIC)) {
         return;
@@ -136,13 +150,25 @@ public class StaticMethodOnlyUsedInOneClassInspectionBase extends BaseInspection
       if (usageClass == null) {
         return;
       }
-      if (usageClass.equals(method.getContainingClass())) {
+      final PsiClass containingClass = method.getContainingClass();
+      if (usageClass.equals(containingClass)) {
         return;
+      }
+      if (ignoreOnConflicts) {
+        if (usageClass.findMethodsBySignature(method, true).length > 0 || !areReferenceTargetsAccessible(method, usageClass)) {
+          return;
+        }
       }
       if (ignoreTestClasses && TestUtils.isInTestCode(usageClass)) {
         return;
       }
       if (usageClass instanceof PsiAnonymousClass) {
+        if (ignoreAnonymousClasses) {
+          return;
+        }
+        if (PsiTreeUtil.isAncestor(containingClass, usageClass, true)) {
+          return;
+        }
         final PsiClass[] interfaces = usageClass.getInterfaces();
         final PsiClass superClass;
         if (interfaces.length == 1) {
@@ -161,5 +187,25 @@ public class StaticMethodOnlyUsedInOneClassInspectionBase extends BaseInspection
         registerMethodError(method, usageClass);
       }
     }
+  }
+
+  private static boolean areReferenceTargetsAccessible(final PsiElement elementToCheck, final PsiElement place) {
+    return PsiTreeUtil.processElements(elementToCheck, new PsiElementProcessor() {
+      @Override
+      public boolean execute(@NotNull PsiElement element) {
+        if (!(element instanceof PsiJavaCodeReferenceElement)) {
+          return true;
+        }
+        final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)element;
+        final PsiElement target = referenceElement.resolve();
+        if (target == null) {
+          return false; // broken code
+        }
+        if (PsiTreeUtil.isAncestor(elementToCheck, target, false)) {
+          return true; // internal reference
+        }
+        return target instanceof PsiMember && PsiUtil.isAccessible((PsiMember)target, place, null);
+      }
+    });
   }
 }

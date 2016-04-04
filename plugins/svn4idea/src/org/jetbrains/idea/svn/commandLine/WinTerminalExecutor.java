@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,14 +49,14 @@ public class WinTerminalExecutor extends TerminalExecutor {
   @Nullable private File myRedirectFile;
   @Nullable private FileInputStream myRedirectStream;
 
-  public WinTerminalExecutor(@NotNull @NonNls String exePath, @NotNull String locale, @NotNull Command command) {
-    super(exePath, locale, command);
+  public WinTerminalExecutor(@NotNull @NonNls String exePath, @NotNull Command command) {
+    super(exePath, command);
   }
 
   @NotNull
   @Override
   protected SvnProcessHandler createProcessHandler() {
-    return new WinTerminalProcessHandler(myProcess, needsUtf8Output(), needsBinaryOutput());
+    return new WinTerminalProcessHandler(myProcess, myCommandLine.getCommandLineString(), needsUtf8Output(), needsBinaryOutput());
   }
 
   @Override

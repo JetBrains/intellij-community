@@ -17,6 +17,7 @@ package com.intellij.appengine.facet.impl;
 
 import com.intellij.appengine.facet.AppEngineWebIntegration;
 import com.intellij.appengine.sdk.AppEngineSdk;
+import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -107,5 +108,11 @@ public class AppEngineCommunityWebIntegration extends AppEngineWebIntegration {
   @Override
   public void addDescriptor(@NotNull Artifact artifact, @NotNull Project project, @NotNull VirtualFile descriptor) {
     ArtifactManager.getInstance(project).addElementsToDirectory(artifact, "WEB-INF", PackagingElementFactory.getInstance().createFileCopy(descriptor.getPath(), null));
+  }
+
+  @Override
+  @NotNull
+  public List<FrameworkSupportInModuleProvider.FrameworkDependency> getAppEngineFrameworkDependencies() {
+    return Collections.emptyList();
   }
 }

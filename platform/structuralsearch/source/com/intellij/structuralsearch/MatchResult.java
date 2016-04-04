@@ -10,8 +10,8 @@ import java.util.List;
  * Class describing the match result
  */
 public abstract class MatchResult {
-  @NonNls public static final String LINE_MATCH = "line";
-  @NonNls public static final String MULTI_LINE_MATCH = "context";
+  @NonNls public static final String LINE_MATCH = "__line__";
+  @NonNls public static final String MULTI_LINE_MATCH = "__multi_line__";
 
   public abstract String getMatchImage();
 
@@ -26,4 +26,5 @@ public abstract class MatchResult {
   public abstract boolean hasSons();
   public abstract boolean isScopeMatch();
   public abstract boolean isMultipleMatch();
+  public abstract boolean isTarget();
 }

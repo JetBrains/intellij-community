@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
  * @author spleaner
  */
 public abstract class FileLookupInfoProvider {
-  public static ExtensionPointName<FileLookupInfoProvider> EP_NAME = ExtensionPointName.create("com.intellij.fileLookupInfoProvider");
+  public static final ExtensionPointName<FileLookupInfoProvider> EP_NAME = ExtensionPointName.create("com.intellij.fileLookupInfoProvider");
 
   @NotNull
   public abstract FileType[] getFileTypes();

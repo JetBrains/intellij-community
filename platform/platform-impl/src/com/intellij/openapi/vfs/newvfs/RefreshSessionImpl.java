@@ -77,7 +77,7 @@ public class RefreshSessionImpl extends RefreshSession {
       myStartTrace = null;
     }
     else {
-      myDumbModePermission = DumbServiceImpl.getExplicitPermission(modalityState);
+      myDumbModePermission = DumbServiceImpl.getExplicitPermission();
       myStartTrace = new Throwable(); // please report exceptions here to peter
     }
   }

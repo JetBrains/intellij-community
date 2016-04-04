@@ -25,8 +25,6 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.UnknownFileType;
-import com.intellij.openapi.project.DumbModePermission;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.ui.Messages;
@@ -160,12 +158,7 @@ public class CreateDirectoryOrPackageHandler implements InputValidatorEx {
       return false;
     }
 
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
-      @Override
-      public void run() {
-        doCreateElement(subDirName, createFile);
-      }
-    });
+    doCreateElement(subDirName, createFile);
 
     return myCreatedElement != null;
   }

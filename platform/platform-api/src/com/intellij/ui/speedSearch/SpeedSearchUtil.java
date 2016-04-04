@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,10 +62,10 @@ public final class SpeedSearchUtil {
       if (!range.intersectsStrict(offset, endOffset)) continue;
       SimpleTextAttributes attributes = coloredIterator.getTextAttributes();
       SimpleTextAttributes highlighted = new SimpleTextAttributes(bg, attributes.getFgColor(), null, attributes.getStyle() | SimpleTextAttributes.STYLE_SEARCH_MATCH);
-      if (range.getStartOffset() > offset) {
-        offset = coloredIterator.split(range.getStartOffset() - offset, attributes);
-      }
       do {
+        if (range.getStartOffset() > offset) {
+          offset = coloredIterator.split(range.getStartOffset() - offset, attributes);
+        }
         if (range.getEndOffset() <= endOffset) {
           offset = coloredIterator.split(range.getEndOffset() - offset, highlighted);
           if (rangesIterator.hasNext()) {

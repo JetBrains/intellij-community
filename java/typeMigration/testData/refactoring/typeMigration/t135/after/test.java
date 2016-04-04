@@ -2,7 +2,7 @@ class Test {
   private int foo;
     private long bar;
   
-  public long getFoo() {
+  public int getFoo() {
     return foo;
   }
   

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ public class FileUtilPerformanceTest {
           assert canonicalPath != null && canonicalPath.length() == 18 : canonicalPath;
         }
       }
-    }).cpuBound().assertTiming();
+    }).cpuBound().useLegacyScaling().assertTiming();
   }
 
   @Test
@@ -54,7 +54,7 @@ public class FileUtilPerformanceTest {
           assert canonicalPath != null && canonicalPath.length() == 8 : canonicalPath;
         }
       }
-    }).cpuBound().assertTiming();
+    }).cpuBound().useLegacyScaling().assertTiming();
   }
 
   @Test
@@ -69,6 +69,6 @@ public class FileUtilPerformanceTest {
           assert !FileUtil.isAncestor(myTestPath, myCanonicalPath, true);
         }
       }
-    }).cpuBound().assertTiming();
+    }).cpuBound().useLegacyScaling().assertTiming();
   }
 }

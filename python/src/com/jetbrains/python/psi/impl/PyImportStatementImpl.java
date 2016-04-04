@@ -15,21 +15,28 @@
  */
 package com.jetbrains.python.psi.impl;
 
+import com.google.common.collect.ImmutableList;
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PyElementTypes;
-import com.jetbrains.python.psi.PyElementVisitor;
-import com.jetbrains.python.psi.PyImportElement;
-import com.jetbrains.python.psi.PyImportStatement;
+import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.resolve.RatedResolveResult;
+import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.stubs.PyImportStatementStub;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+
+import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
  * @author yole
@@ -95,5 +102,51 @@ public class PyImportStatementImpl extends PyBaseElementImpl<PyImportStatementSt
       }
     }
     return result;
+  }
+
+  @NotNull
+  @Override
+  public Iterable<PyElement> iterateNames() {
+    final PyElement resolved = as(resolveImplicitSubModule(), PyElement.class);
+    return resolved != null ? ImmutableList.<PyElement>of(resolved) : Collections.<PyElement>emptyList();
+  }
+
+  @NotNull
+  @Override
+  public List<RatedResolveResult> multiResolveName(@NotNull String name) {
+    final PyImportElement[] elements = getImportElements();
+    if (elements.length == 1) {
+      final PyImportElement element = elements[0];
+      final QualifiedName importedQName = element.getImportedQName();
+      if (importedQName != null && importedQName.getComponentCount() > 1 && name.equals(importedQName.getLastComponent())) {
+        return ResolveResultList.to(resolveImplicitSubModule());
+      }
+    }
+    return Collections.emptyList();
+  }
+
+  /**
+   * The statement 'import pkg1.m1' makes 'm1' available as a local name in the package 'pkg1'.
+   *
+   * http://stackoverflow.com/questions/6048786/from-module-import-in-init-py-makes-module-name-visible
+   */
+  @Nullable
+  private PsiElement resolveImplicitSubModule() {
+    final PyImportElement[] elements = getImportElements();
+    if (elements.length == 1) {
+      final PyImportElement element = elements[0];
+      final QualifiedName importedQName = element.getImportedQName();
+      final PsiFile file = element.getContainingFile();
+      if (file != null) {
+        if (importedQName != null && importedQName.getComponentCount() > 1 && PyUtil.isPackage(file)) {
+          final QualifiedName packageQName = importedQName.removeLastComponent();
+          final PsiElement resolvedImport = PyUtil.turnDirIntoInit(ResolveImportUtil.resolveImportElement(element, packageQName));
+          if (resolvedImport == file) {
+            return element.resolve();
+          }
+        }
+      }
+    }
+    return null;
   }
 }

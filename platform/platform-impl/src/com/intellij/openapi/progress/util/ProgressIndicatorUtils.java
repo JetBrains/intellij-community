@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,9 +24,11 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.ui.EdtInvocationManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.util.concurrent.Executor;
@@ -34,9 +36,9 @@ import java.util.concurrent.Executor;
 /**
  * Methods in this class are used to equip long background processes which take read actions with a special listener
  * that fires when a write action is about to begin, and cancels corresponding progress indicators to avoid blocking the UI.
- * These processes should be ready to get {@link com.intellij.openapi.progress.ProcessCanceledException} at any moment.
+ * These processes should be ready to get {@link ProcessCanceledException} at any moment.
  * Processes may want to react on cancellation event by restarting the activity, see
- * {@link com.intellij.openapi.progress.util.ReadTask#onCanceled(com.intellij.openapi.progress.ProgressIndicator)} for that.
+ * {@link ReadTask#onCanceled(ProgressIndicator)} for that.
  *
  * @author gregsh
  */
@@ -66,8 +68,25 @@ public class ProgressIndicatorUtils {
   }
 
   /**
+   * Same as {@link #runInReadActionWithWriteActionPriority(Runnable)}, optionally allowing to pass a {@link ProgressIndicatorUtils}
+   * instance, which can be used to cancel action externally.
+   */
+  public static boolean runInReadActionWithWriteActionPriority(@NotNull final Runnable action, 
+                                                               @Nullable ProgressIndicator progressIndicator) {
+    final Ref<Boolean> result = new Ref<Boolean>(Boolean.FALSE);
+    runWithWriteActionPriority(new Runnable() {
+      @Override
+      public void run() {
+        result.set(ApplicationManagerEx.getApplicationEx().tryRunReadAction(action));
+      }
+    }, progressIndicator == null ? new ProgressIndicatorBase() : progressIndicator);
+    return result.get();
+  }
+
+  /**
    * This method attempts to run provided action synchronously in a read action, so that, if possible, it wouldn't impact any pending, 
-   * executing or future write actions. 
+   * executing or future write actions (for this to work effectively the action should invoke {@link ProgressManager#checkCanceled()} or 
+   * {@link ProgressIndicator#checkCanceled()} often enough). 
    * It returns <code>true</code> if action was executed successfully. It returns <code>false</code> if the action was not
    * executed successfully, i.e. if:
    * <ul>
@@ -80,18 +99,7 @@ public class ProgressIndicatorUtils {
    * 100% CPU usage.
    */
   public static boolean runInReadActionWithWriteActionPriority(@NotNull final Runnable action) {
-    final Ref<Boolean> result = new Ref<Boolean>(Boolean.FALSE);
-    runWithWriteActionPriority(new Runnable() {
-      @Override
-      public void run() {
-        result.set(ApplicationManagerEx.getApplicationEx().tryRunReadAction(action));
-      }
-    });
-    return result.get();
-  }
-
-  public static boolean runWithWriteActionPriority(@NotNull final Runnable action) {
-    return runWithWriteActionPriority(action, new ProgressIndicatorBase());
+    return runInReadActionWithWriteActionPriority(action, null);
   }
 
   public static boolean runWithWriteActionPriority(@NotNull final Runnable action,
@@ -161,7 +169,6 @@ public class ProgressIndicatorUtils {
       @Override
       public void run() {
         if (application.isDisposed()) return;
-        application.assertIsDispatchThread();
         final ApplicationAdapter listener = new ApplicationAdapter() {
           @Override
           public void beforeWriteActionStart(Object action) {
@@ -176,11 +183,26 @@ public class ProgressIndicatorUtils {
           executor.execute(new Runnable() {
             @Override
             public void run() {
+              boolean continued = false;
               try {
-                runUnderProgress(progressIndicator, readTask);
+                final ReadTask.Continuation continuation = runUnderProgress(progressIndicator, readTask);
+                continued = continuation != null;
+                if (continuation != null) {
+                  application.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                      application.removeApplicationListener(listener);
+                      if (!progressIndicator.isCanceled()) {
+                        continuation.getAction().run();
+                      }
+                    }
+                  }, continuation.getModalityState());
+                }
               }
               finally {
-                application.removeApplicationListener(listener);
+                if (!continued) {
+                  application.removeApplicationListener(listener);
+                }
               }
             }
           });
@@ -197,14 +219,15 @@ public class ProgressIndicatorUtils {
     });
   }
 
-  private static void runUnderProgress(@NotNull final ProgressIndicator progressIndicator, @NotNull final ReadTask task) {
-    ProgressManager.getInstance().runProcess(new Runnable() {
+  private static ReadTask.Continuation runUnderProgress(@NotNull final ProgressIndicator progressIndicator, @NotNull final ReadTask task) {
+    return ProgressManager.getInstance().runProcess(new Computable<ReadTask.Continuation>() {
       @Override
-      public void run() {
+      public ReadTask.Continuation compute() {
         try {
-          task.runBackgroundProcess(progressIndicator);
+          return task.runBackgroundProcess(progressIndicator);
         }
         catch (ProcessCanceledException ignore) {
+          return null;
         }
       }
     }, progressIndicator);

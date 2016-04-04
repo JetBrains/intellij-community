@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -141,14 +141,11 @@ public class DebuggerTreeNodeExpression {
 
   private static boolean isSuperMethod(PsiMethod superMethod, PsiMethod overridingMethod) {
     PsiMethod[] superMethods = overridingMethod.findSuperMethods();
-      for (int i = 0; i < superMethods.length; i++) {
-        if (superMethods[i] == superMethod) {
-          return true;
-        }
-        else if (isSuperMethod(superMethod, superMethods[i])) {
-          return true;
-        }
+    for (PsiMethod method : superMethods) {
+      if (method == superMethod || isSuperMethod(superMethod, method)) {
+        return true;
       }
+    }
       return false;
     }
 
@@ -233,7 +230,7 @@ public class DebuggerTreeNodeExpression {
       ((PsiTypeCastExpression)parenthExpression.getExpression()).getOperand().replace(expression);
       Set<String> imports = expression.getUserData(ADDITIONAL_IMPORTS_KEY);
       if (imports == null) {
-        imports = new SmartHashSet<String>();
+        imports = new SmartHashSet<>();
       }
       imports.add(typeName);
       parenthExpression.putUserData(ADDITIONAL_IMPORTS_KEY, imports);

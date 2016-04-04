@@ -20,7 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import org.jetbrains.annotations.NotNull;
 
-class StandardDiffFromHistoryHandler implements DiffFromHistoryHandler {
+public class StandardDiffFromHistoryHandler implements DiffFromHistoryHandler {
 
   @Override
   public void showDiffForOne(@NotNull AnActionEvent e, @NotNull Project project, @NotNull FilePath filePath,

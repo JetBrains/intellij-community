@@ -18,11 +18,9 @@ package org.jetbrains.plugins.gradle.tooling.builder
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.file.FileVisitDetails
-import org.gradle.api.file.FileVisitor
 import org.gradle.api.java.archives.Manifest
 import org.gradle.api.plugins.WarPlugin
 import org.gradle.api.tasks.bundling.War
-import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.gradle.model.web.WebConfiguration
@@ -68,70 +66,27 @@ class WarModelBuilderImpl implements ModelBuilderService {
         final List<WebConfiguration.WebResource> webResources = []
         final War warTask = task as War
         warModel.webXml = warTask.webXml
-        warTask.rootSpec.setIncludeEmptyDirs(true)
-
         try {
-          warTask.rootSpec.walk({ def resolver ->
-            // def resolver ->
-            //      in Gradle v1.x - org.gradle.api.internal.file.copy.CopySpecInternal
-            //      in Gradle v2.x - org.gradle.api.internal.file.copy.CopySpecResolver
-
-            if (resolver.metaClass.respondsTo(resolver, 'setIncludeEmptyDirs', boolean)) {
-              resolver.setIncludeEmptyDirs(true)
-            }
-            if (!resolver.metaClass.respondsTo(resolver, 'getDestPath') ||
-                !resolver.metaClass.respondsTo(resolver, 'getSource')) {
-              throw new RuntimeException("${GradleVersion.current()} is not supported by web artifact importer")
+          CopySpecWalker.walk(warTask.rootSpec, new CopySpecWalker.Visitor() {
+            @Override
+            void visitSourcePath(String relativePath, String path) {
+              def file = new File(path)
+              addPath(webResources, relativePath, "", file.absolute ? file : new File(warTask.project.projectDir, path))
             }
 
-            final String relativePath = resolver.destPath.pathString
-            def sourcePaths
-
-            if (resolver.metaClass.respondsTo(resolver, 'getSourcePaths')) {
-              sourcePaths = resolver.getSourcePaths()
-            } else if (resolver.hasProperty('sourcePaths')) {
-              sourcePaths = resolver.sourcePaths
-            } else if (resolver.hasProperty('this$0') && resolver.this$0.metaClass.respondsTo(resolver, 'getSourcePaths')) {
-              sourcePaths = resolver.this$0.getSourcePaths()
-            } else if (resolver.hasProperty('this$0') && resolver.this$0.hasProperty('sourcePaths')) {
-              sourcePaths = resolver.this$0.sourcePaths
-            } /*else {
-              throw new RuntimeException("${GradleVersion.current()} is not supported by web artifact importer")
-            }*/
-
-            if(sourcePaths) {
-              (sourcePaths.flatten() as List).each { def path ->
-                if (path instanceof String) {
-                  def file = new File(path)
-                  addPath(webResources, relativePath, "", file.absolute ? file : new File(warTask.project.projectDir, path))
-                }
-              }
+            @Override
+            void visitDir(String relativePath, FileVisitDetails dirDetails) {
+              addPath(webResources, relativePath, dirDetails.path, dirDetails.file)
             }
 
-            resolver.source.visit(new FileVisitor() {
-              @Override
-              public void visitDir(FileVisitDetails dirDetails) {
-                try {
-                  addPath(webResources, relativePath, dirDetails.path, dirDetails.file)
-                }
-                catch (Exception ignore) {
-                }
+            @Override
+            void visitFile(String relativePath, FileVisitDetails fileDetails) {
+              if (warTask.webXml == null ||
+                  !fileDetails.file.canonicalPath.equals(warTask.webXml.canonicalPath)) {
+                addPath(webResources, relativePath, fileDetails.path, fileDetails.file)
               }
-
-              @Override
-              public void visitFile(FileVisitDetails fileDetails) {
-                try {
-                  if (warTask.webXml == null ||
-                      !fileDetails.file.canonicalPath.equals(warTask.webXml.canonicalPath)) {
-                    addPath(webResources, relativePath, fileDetails.path, fileDetails.file)
-                  }
-                }
-                catch (Exception ignore) {
-                }
-              }
-            })
+            }
           })
-
           warModel.classpath = warTask.classpath.files
         }
         catch (Exception ignore) {
@@ -158,7 +113,7 @@ class WarModelBuilderImpl implements ModelBuilderService {
   @Override
   public ErrorMessageBuilder getErrorMessageBuilder(@NotNull Project project, @NotNull Exception e) {
     ErrorMessageBuilder.create(
-      project, e, "Web project import errors"
+      project, e, "JEE project import errors"
     ).withDescription("Web Facets/Artifacts will not be configured properly")
   }
 

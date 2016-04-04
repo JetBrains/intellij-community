@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -241,9 +241,7 @@ public abstract class AbstractPythonTestRunConfiguration extends AbstractPythonR
         return getTitle() + " " + myClassName + "." + myMethodName;
       case TEST_SCRIPT:
         String name = new File(getScriptName()).getName();
-        if (name.endsWith(".py")) {
-          name = name.substring(0, name.length() - 3);
-        }
+        name = StringUtil.trimEnd(name, ".py");
         return getPluralTitle() + " in " + name;
       case TEST_FOLDER:
         String folderName = new File(myFolderName).getName();

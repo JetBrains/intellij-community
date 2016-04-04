@@ -124,7 +124,7 @@ public class ExecutionPointHighlighter {
   }
 
   public void navigateTo() {
-    if (myOpenFileDescriptor != null) {
+    if (myOpenFileDescriptor != null && myOpenFileDescriptor.getFile().isValid()) {
       myOpenFileDescriptor.navigateInEditor(myProject, true);
     }
   }

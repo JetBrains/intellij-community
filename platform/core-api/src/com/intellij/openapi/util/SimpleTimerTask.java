@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,54 +15,8 @@
  */
 package com.intellij.openapi.util;
 
-import org.jetbrains.annotations.NonNls;
+public interface SimpleTimerTask {
+  void cancel();
 
-public class SimpleTimerTask {
-
-  private final long myTargetTime;
-  private final Runnable myRunnable;
-
-  private boolean myCancelled;
-
-  private final Object LOCK = new Object();
-  private final SimpleTimer myTimer;
-
-  public SimpleTimerTask(final long targetTime, Runnable runnable, SimpleTimer timer) {
-    myTargetTime = targetTime;
-    myRunnable = runnable;
-    myTimer = timer;
-  }
-
-  public void cancel() {
-    synchronized (LOCK) {
-      myCancelled = true;
-      myTimer.onCancelled(this);
-    }
-  }
-
-  public boolean isCancelled() {
-    synchronized (LOCK) {
-      return myCancelled;
-    }
-  }
-
-  public void run() {
-    synchronized (LOCK) {
-      if (!myCancelled) {
-        myRunnable.run();
-      }
-    }
-  }
-
-  long getTargetTime() {
-    return myTargetTime;
-  }
-
-  @NonNls
-  @Override
-  public String toString() {
-    synchronized (LOCK) {
-      return "targetTime=" + myTargetTime + " cancelled=" + myCancelled + " runnable=" + myRunnable;
-    }
-  }
+  boolean isCancelled();
 }

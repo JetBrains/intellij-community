@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,7 @@ import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.EventObject;
 import java.util.List;
 
 import static java.awt.event.KeyEvent.*;
@@ -143,6 +144,14 @@ public abstract class JBListTable {
     }
 
     @Override
+    public boolean isCellEditable(EventObject e) {
+      if (e instanceof MouseEvent && UIUtil.isSelectionButtonDown((MouseEvent)e)) {
+        return false;
+      }
+      return super.isCellEditable(e);
+    }
+
+    @Override
     public Component getTableCellEditorComponent(final JTable table, Object value, boolean isSelected, final int row, int column) {
       final JPanel p = new JPanel(new BorderLayout()) {
         @Override
@@ -214,7 +223,7 @@ public abstract class JBListTable {
     private static final int RESIZE_AMOUNT_PER_STEP = 5;
 
     private final TIntObjectHashMap<RowAnimationState> myRowAnimationStates = new TIntObjectHashMap<RowAnimationState>();
-    private final Timer myAnimationTimer = new Timer(ANIMATION_STEP_MILLIS, this);
+    private final Timer myAnimationTimer = UIUtil.createNamedTimer("JBListTableTimer",ANIMATION_STEP_MILLIS, this);
     private final JTable myTable;
 
     public RowResizeAnimator(JTable table) {

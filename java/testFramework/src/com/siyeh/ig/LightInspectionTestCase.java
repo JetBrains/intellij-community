@@ -16,6 +16,7 @@
 package com.siyeh.ig;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.util.ArrayUtil;
 import org.intellij.lang.annotations.Language;
@@ -107,9 +108,7 @@ public abstract class LightInspectionTestCase extends LightCodeInsightFixtureTes
       basePath.append(word).append('/');
     }
     String lastWord = words[lastWordIndex];
-    if (lastWord.endsWith("Inspection")) {
-      lastWord = lastWord.substring(0, lastWord.length() - 10);
-    }
+    lastWord = StringUtil.trimEnd(lastWord, "Inspection");
     final int length = lastWord.length();
     boolean upperCase = false;
     for (int i = 0; i < length; i++) {

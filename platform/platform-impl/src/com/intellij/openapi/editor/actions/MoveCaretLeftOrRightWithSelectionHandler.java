@@ -20,6 +20,9 @@ import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 class MoveCaretLeftOrRightWithSelectionHandler extends EditorActionHandler {
@@ -28,6 +31,12 @@ class MoveCaretLeftOrRightWithSelectionHandler extends EditorActionHandler {
   MoveCaretLeftOrRightWithSelectionHandler(boolean moveRight) {
     super(true);
     myMoveRight = moveRight;
+  }
+
+  @Override
+  protected boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
+    return !ModifierKeyDoubleClickHandler.getInstance().isRunningAction() ||
+           EditorSettingsExternalizable.getInstance().addCaretsOnDoubleCtrl();
   }
 
   @Override

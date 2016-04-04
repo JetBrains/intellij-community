@@ -23,6 +23,7 @@ import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.ui.impl.watch.ArgumentValueDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.FieldDescriptorImpl;
+import com.intellij.debugger.ui.impl.watch.MethodReturnValueDescriptorImpl;
 import com.intellij.debugger.ui.tree.FieldDescriptor;
 import com.intellij.debugger.ui.tree.LocalVariableDescriptor;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
@@ -61,14 +62,20 @@ public class DefaultSourcePositionProvider extends SourcePositionProvider {
         return getSourcePositionForLocalVariable(names.iterator().next(), project, context, nearest);
       }
     }
+    else if (descriptor instanceof MethodReturnValueDescriptorImpl) {
+      DebugProcessImpl debugProcess = context.getDebugProcess();
+      if (debugProcess != null) {
+        return debugProcess.getPositionManager().getSourcePosition(((MethodReturnValueDescriptorImpl)descriptor).getMethod().location());
+      }
+    }
     return null;
   }
 
   @Nullable
-  protected SourcePosition getSourcePositionForField(@NotNull FieldDescriptor descriptor,
-                                                     @NotNull Project project,
-                                                     @NotNull DebuggerContextImpl context,
-                                                     boolean nearest) {
+  private SourcePosition getSourcePositionForField(@NotNull FieldDescriptor descriptor,
+                                                   @NotNull Project project,
+                                                   @NotNull DebuggerContextImpl context,
+                                                   boolean nearest) {
     final ReferenceType type = descriptor.getField().declaringType();
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
     final String fieldName = descriptor.getField().name();
@@ -134,10 +141,10 @@ public class DefaultSourcePositionProvider extends SourcePositionProvider {
   }
 
   @Nullable
-  protected SourcePosition getSourcePositionForLocalVariable(String name,
-                                                             @NotNull Project project,
-                                                             @NotNull DebuggerContextImpl context,
-                                                             boolean nearest) {
+  private SourcePosition getSourcePositionForLocalVariable(String name,
+                                                           @NotNull Project project,
+                                                           @NotNull DebuggerContextImpl context,
+                                                           boolean nearest) {
     PsiElement place = PositionUtil.getContextElement(context);
     if (place == null) return null;
 

@@ -212,6 +212,7 @@ public class StringPattern extends ObjectPattern<String, StringPattern> {
 
   @NotNull
   public static CharSequence newBombedCharSequence(@NotNull CharSequence sequence) {
+    if (sequence instanceof StringUtil.BombedCharSequence) return sequence;
     return new StringUtil.BombedCharSequence(sequence) {
       @Override
       protected void checkCanceled() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,10 @@ public class HtmlTextCompletionConfidence extends CompletionConfidence {
   @NotNull
   @Override
   public ThreeState shouldSkipAutopopup(@NotNull PsiElement contextElement, @NotNull PsiFile psiFile, int offset) {
+    return shouldSkipAutopopupInHtml(contextElement, offset) ? ThreeState.YES : ThreeState.UNSURE;
+  }
+
+  public static boolean shouldSkipAutopopupInHtml(@NotNull PsiElement contextElement, int offset) {
     ASTNode node = contextElement.getNode();
     if (node != null && node.getElementType() == XmlTokenType.XML_DATA_CHARACTERS) {
       PsiElement parent = contextElement.getParent();
@@ -36,11 +40,9 @@ public class HtmlTextCompletionConfidence extends CompletionConfidence {
         String contextElementText = contextElement.getText();
         int endOffset = offset - contextElement.getTextRange().getStartOffset();
         String prefix = contextElementText.substring(0, Math.min(contextElementText.length(), endOffset));
-        if (!StringUtil.startsWithChar(prefix, '<') && !StringUtil.startsWithChar(prefix, '&')) {
-          return ThreeState.YES;
-        }
+        return !StringUtil.startsWithChar(prefix, '<') && !StringUtil.startsWithChar(prefix, '&');
       }
     }
-    return ThreeState.UNSURE;
+    return false;
   }
 }

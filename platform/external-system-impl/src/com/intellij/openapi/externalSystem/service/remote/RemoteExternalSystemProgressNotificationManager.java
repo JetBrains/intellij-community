@@ -1,8 +1,8 @@
 package com.intellij.openapi.externalSystem.service.remote;
 
-import org.jetbrains.annotations.NotNull;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent;
+import org.jetbrains.annotations.NotNull;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;
@@ -19,7 +19,7 @@ public interface RemoteExternalSystemProgressNotificationManager extends Remote 
 
   RemoteExternalSystemProgressNotificationManager NULL_OBJECT = new RemoteExternalSystemProgressNotificationManager() {
     @Override
-    public void onQueued(@NotNull ExternalSystemTaskId id) throws RemoteException {
+    public void onQueued(@NotNull ExternalSystemTaskId id, @NotNull String projectPath) throws RemoteException {
     }
 
     @Override
@@ -45,9 +45,17 @@ public interface RemoteExternalSystemProgressNotificationManager extends Remote 
     @Override
     public void onFailure(@NotNull ExternalSystemTaskId id, @NotNull Exception e) throws RemoteException {
     }
+
+    @Override
+    public void beforeCancel(@NotNull ExternalSystemTaskId id) throws RemoteException {
+    }
+
+    @Override
+    public void onCancel(ExternalSystemTaskId id) throws RemoteException {
+    }
   };
 
-  void onQueued(@NotNull ExternalSystemTaskId id) throws RemoteException;
+  void onQueued(@NotNull ExternalSystemTaskId id, @NotNull String projectPath) throws RemoteException;
 
   void onStart(@NotNull ExternalSystemTaskId id) throws RemoteException;
 
@@ -60,4 +68,8 @@ public interface RemoteExternalSystemProgressNotificationManager extends Remote 
   void onSuccess(@NotNull ExternalSystemTaskId id) throws RemoteException;
 
   void onFailure(@NotNull ExternalSystemTaskId id, @NotNull Exception e) throws RemoteException;
+
+  void beforeCancel(@NotNull ExternalSystemTaskId id) throws RemoteException;
+
+  void onCancel(ExternalSystemTaskId id) throws RemoteException;
 }

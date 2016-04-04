@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,16 +28,16 @@ import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState;
  * @author ven
  */
 public class GroovyResolveResultImpl implements GroovyResolveResult {
-  private final PsiElement myElement;
+  private final @NotNull PsiElement myElement;
   private final boolean myIsAccessible;
   private final boolean myIsStaticsOK;
   private final boolean myIsApplicable;
 
-  private final PsiSubstitutor mySubstitutor;
+  private final @NotNull PsiSubstitutor mySubstitutor;
   private final boolean myIsInvokedOnProperty;
 
-  private final PsiElement myCurrentFileResolveContext;
-  private final SpreadState mySpreadState;
+  private final @Nullable PsiElement myCurrentFileResolveContext;
+  private final @Nullable SpreadState mySpreadState;
 
   public GroovyResolveResultImpl(@NotNull PsiElement element, boolean isAccessible) {
     this(element, null, null, PsiSubstitutor.EMPTY, isAccessible, true, false, true);
@@ -92,7 +92,7 @@ public class GroovyResolveResultImpl implements GroovyResolveResult {
   }
 
   @Override
-  @Nullable
+  @NotNull
   public PsiElement getElement() {
     return myElement;
   }
@@ -102,6 +102,7 @@ public class GroovyResolveResultImpl implements GroovyResolveResult {
     return isAccessible() && isApplicable() && isStaticsOK();
   }
 
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -112,6 +113,7 @@ public class GroovyResolveResultImpl implements GroovyResolveResult {
            myElement.getManager().areElementsEquivalent(myElement, that.myElement);
   }
 
+  @Override
   public int hashCode() {
     int result = 0;
     if (myElement instanceof PsiNamedElement) {
@@ -135,6 +137,7 @@ public class GroovyResolveResultImpl implements GroovyResolveResult {
     return myIsInvokedOnProperty;
   }
 
+  @Nullable
   @Override
   public SpreadState getSpreadState() {
     return mySpreadState;

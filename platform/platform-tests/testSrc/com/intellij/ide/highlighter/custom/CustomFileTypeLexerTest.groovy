@@ -411,7 +411,7 @@ R_PARENTH (')')
     
     CharSequence bombed = new SlowCharSequence(text)
     ThrowableRunnable cl = { LexerTestCase.printTokens(bombed, 0, new CustomFileTypeLexer(table)) } as ThrowableRunnable
-    PlatformTestUtil.startPerformanceTest("slow", 10000, cl).cpuBound().assertTiming()
+    PlatformTestUtil.startPerformanceTest("slow", 10000, cl).cpuBound().useLegacyScaling().assertTiming()
   }
 
 

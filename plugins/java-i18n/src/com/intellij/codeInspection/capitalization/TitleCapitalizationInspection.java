@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -184,10 +184,10 @@ public class TitleCapitalizationInspection extends BaseJavaLocalInspectionTool {
   private static boolean checkSentenceCapitalization(@NotNull String value) {
     String[] words = value.split(" ");
     if (words.length == 0) return true;
-    if (!StringUtil.isCapitalized(words[0])) return false;
+    if (!isCapitalizedWord(words[0])) return false;
     for (int i = 1; i < words.length; i++) {
       String word = words[i];
-      if (StringUtil.isCapitalized(word)) {
+      if (isCapitalizedWord(word)) {
         // check for abbreviations like SQL or I18n
         if (word.length() == 1 || !Character.isLowerCase(word.charAt(1)))
           continue;
@@ -195,6 +195,10 @@ public class TitleCapitalizationInspection extends BaseJavaLocalInspectionTool {
       }
     }
     return true;
+  }
+
+  private static boolean isCapitalizedWord(@Nullable String word) {
+    return StringUtil.isNotEmpty(word) && (!Character.isLetter(word.charAt(0)) || StringUtil.isCapitalized(word));
   }
 
   private static class TitleCapitalizationFix implements LocalQuickFix {

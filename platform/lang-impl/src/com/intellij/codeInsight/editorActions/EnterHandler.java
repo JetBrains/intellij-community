@@ -278,8 +278,8 @@ public class EnterHandler extends BaseEnterHandler {
    */
   private static boolean isInvalidPsi(@NotNull PsiElement base) {
     for (PsiElement current = base.getNextSibling(); current != null; current = current.getNextSibling()) {
-      if (current.getTextLength() != 0) {
-        return current instanceof PsiErrorElement;
+      if (current instanceof PsiErrorElement) {
+        return true;
       }
     }
     return false;

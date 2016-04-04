@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.util.io.tar;
 
 import java.io.IOException;
@@ -5,21 +20,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
 
-/**
- * The TarBuffer class implements the tar archive concept
- * of a buffered input stream. This concept goes back to the
- * days of blocked tape drives and special io devices. In the
- * Java universe, the only real function that this class
- * performs is to ensure that files have the correct "block"
- * size, or other tars will complain.
- * <p>
- * You should never have a need to access this class directly.
- * TarBuffers are created by Tar IO Streams.
- *
- */
-
-// Copy-pasted from org.apache.tools.tar.TarBuffer
-public class TarBuffer {
+/** @deprecated use bundled commons-compress library (to be removed in IDEA 17) */
+class TarBuffer {
 
   /** Default record size */
   public static final int DEFAULT_RCDSIZE = (512);

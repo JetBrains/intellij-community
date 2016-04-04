@@ -232,6 +232,9 @@ if __name__ == "__main__":
 
     command_args = list(filter(None, sys.argv[1:]))
     if command_args:
+        if "--junit" in command_args:
+            raise Exception("--junit report type for Behave is unsupported in PyCharm. \n "
+            "See: https://youtrack.jetbrains.com/issue/PY-14219")
         _bdd_utils.fix_win_drive(command_args[0])
     (base_dir, scenario_names, what_to_run) = _bdd_utils.get_what_to_run_by_env(os.environ)
 

@@ -51,7 +51,7 @@ public class TaskDocumentationProvider extends AbstractDocumentationProvider imp
     final Task task = ((TaskPsiElement)element).getTask();
     final StringBuilder builder = new StringBuilder();
     builder.append("<b>Summary:</b> ").append(task.getSummary()).append("<br>");
-    builder.append("<b>Id:</b> ").append(task.getId()).append("<br>");
+    builder.append("<b>Id:</b> ").append(task.getPresentableId()).append("<br>");
     if (task.getCreated() != null) {
       builder.append("<b>Created at:</b> ").append(task.getCreated()).append("<br>");
     }

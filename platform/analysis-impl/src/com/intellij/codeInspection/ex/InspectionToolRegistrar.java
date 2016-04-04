@@ -52,7 +52,9 @@ public class InspectionToolRegistrar {
       ContainerUtil.addAll(providers, Extensions.getExtensions(InspectionToolProvider.EXTENSION_POINT_NAME));
       List<Factory<InspectionToolWrapper>> factories = new ArrayList<Factory<InspectionToolWrapper>>();
       registerTools(providers, factories);
+      final boolean isInternal = ApplicationManager.getApplication().isInternal();
       for (final LocalInspectionEP ep : Extensions.getExtensions(LocalInspectionEP.LOCAL_INSPECTION)) {
+        if (!isInternal && ep.isInternal) continue;
         factories.add(new Factory<InspectionToolWrapper>() {
           @Override
           public InspectionToolWrapper create() {
@@ -61,6 +63,7 @@ public class InspectionToolRegistrar {
         });
       }
       for (final InspectionEP ep : Extensions.getExtensions(InspectionEP.GLOBAL_INSPECTION)) {
+        if (!isInternal && ep.isInternal) continue;
         factories.add(new Factory<InspectionToolWrapper>() {
           @Override
           public InspectionToolWrapper create() {

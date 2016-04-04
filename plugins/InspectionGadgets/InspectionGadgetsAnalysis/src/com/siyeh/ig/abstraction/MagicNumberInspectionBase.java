@@ -93,7 +93,7 @@ public class MagicNumberInspectionBase extends BaseInspection {
         return;
       }
       final PsiField field = PsiTreeUtil.getParentOfType(expression, PsiField.class);
-      if (field != null && PsiUtil.isCompileTimeConstant(field)) {
+      if (field != null && PsiUtil.isCompileTimeConstant((PsiVariable)field)) {
         return;
       }
       final PsiElement parent = expression.getParent();

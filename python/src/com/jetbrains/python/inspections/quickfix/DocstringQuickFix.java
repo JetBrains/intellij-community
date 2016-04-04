@@ -17,12 +17,7 @@ package com.jetbrains.python.inspections.quickfix;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -73,20 +68,6 @@ public class DocstringQuickFix implements LocalQuickFix {
     return "Fix docstring";
   }
 
-  @Nullable
-  private static Editor getEditor(@NotNull PsiElement element) {
-    Document document = PsiDocumentManager.getInstance(element.getProject()).getDocument(element.getContainingFile());
-    if (document != null) {
-      final EditorFactory instance = EditorFactory.getInstance();
-      if (instance == null) return null;
-      Editor[] editors = instance.getEditors(document);
-      if (editors.length > 0) {
-        return editors[0];
-      }
-    }
-    return null;
-  }
-
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PyDocStringOwner docStringOwner = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PyDocStringOwner.class);
     if (docStringOwner == null) return;
@@ -113,7 +94,7 @@ public class DocstringQuickFix implements LocalQuickFix {
   private static void addEmptyDocstring(@NotNull PyDocStringOwner docStringOwner) {
     if (docStringOwner instanceof PyFunction ||
         docStringOwner instanceof PyClass && ((PyClass)docStringOwner).findInitOrNew(false, null) != null) {
-      PyGenerateDocstringIntention.generateDocstring(docStringOwner, getEditor(docStringOwner));
+      PyGenerateDocstringIntention.generateDocstring(docStringOwner, PyQuickFixUtil.getEditor(docStringOwner));
     }
   }
 }

@@ -28,12 +28,14 @@ import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.resolve.JavaResolveCache;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
+import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -158,8 +160,27 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
       PsiType theOnly = null;
       final JavaResolveResult[] results = methodExpression.multiResolve(false);
       LanguageLevel languageLevel = PsiUtil.getLanguageLevel(call);
+
+      final PsiExpressionList parentArgList;
+      if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
+        final PsiElement callParent = PsiUtil.skipParenthesizedExprUp(call.getParent());
+        parentArgList = callParent instanceof PsiConditionalExpression && !PsiPolyExpressionUtil.isPolyExpression((PsiExpression)callParent)
+                        ? null : PsiTreeUtil.getParentOfType(call, PsiExpressionList.class);
+      }
+      else {
+        parentArgList = null;
+      }
+      final MethodCandidateInfo.CurrentCandidateProperties properties = MethodCandidateInfo.getCurrentMethod(parentArgList);
+      final boolean genericMethodCall = properties != null && properties.getInfo().isToInferApplicability();
+      
       for (int i = 0; i < results.length; i++) {
-        final PsiType type = getResultType(call, methodExpression, results[i], languageLevel);
+        final JavaResolveResult candidateInfo = results[i];
+
+        if (genericMethodCall && PsiPolyExpressionUtil.isMethodCallPolyExpression(call, (PsiMethod)candidateInfo.getElement())) {
+          LOG.error("poly expression evaluation during overload resolution");
+        }
+
+        final PsiType type = getResultType(call, methodExpression, candidateInfo, languageLevel);
         if (type == null) {
           return null;
         }
@@ -247,7 +268,10 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
         return returnTypeErasure;
       }
     }
-    return PsiImplUtil.normalizeWildcardTypeByPosition(substitutedReturnType, call);
+    if (!languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
+      return PsiImplUtil.normalizeWildcardTypeByPosition(substitutedReturnType, call);
+    }
+    return PsiUtil.captureToplevelWildcards(substitutedReturnType, call);
   }
 }
 

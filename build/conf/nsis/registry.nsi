@@ -10,11 +10,11 @@ Function ${un}OMDeleteRegKey
   StrCmp $0 "HKLM" hklm
   StrCmp $0 "HKCR" hkcr
   hkcu:
-	DeleteRegKey HKCU $1		
-	goto done
+    DeleteRegKey HKCU $1
+    goto done
   hklm:  
     DeleteRegKey HKLM $1
-	goto done
+    goto done
   hkcr:	
     DeleteRegKey HKCR $1
 done:
@@ -87,7 +87,7 @@ FunctionEnd
 ; OMEnumRegKey
 ; $0 - root_key ("HKCU" | "HKLM" | "HKCR")
 ; $1 - subkey
-; $4 - value name
+; $4 - index
 ; $3 - result
 Function ${un}OMEnumRegKey
   ClearErrors
@@ -95,13 +95,35 @@ Function ${un}OMEnumRegKey
   StrCmp $0 "HKLM" hklm
   StrCmp $0 "HKCR" hkcr
   hkcu:
-	EnumRegKey $3 HKCU $1 $4
-	goto done
+    EnumRegKey $3 HKCU $1 $4
+    goto done
   hklm:  
-	EnumRegKey $3 HKLM $1 $4
+    EnumRegKey $3 HKLM $1 $4
     goto done
   hkcr:  
     EnumRegKey $3 HKCR $1 $4
+done:
+FunctionEnd
+
+; -----------------------------------------------------------------------------
+; OMEnumRegValue
+; $0 - root_key ("HKCU" | "HKLM" | "HKCR")
+; $1 - subkey
+; $4 - index
+; $3 - result
+Function ${un}OMEnumRegValue
+  ClearErrors
+  StrCmp $0 "HKCU" hkcu
+  StrCmp $0 "HKLM" hklm
+  StrCmp $0 "HKCR" hkcr
+  hkcu:
+    EnumRegValue $3 HKCU $1 $4
+    goto done
+  hklm:
+    EnumRegValue $3 HKLM $1 $4
+    goto done
+  hkcr:
+    EnumRegValue $3 HKCR $1 $4
 done:
 FunctionEnd
 
@@ -117,13 +139,13 @@ Function ${un}OMWriteRegStr
   StrCmp $0 "HKLM" hklm
   StrCmp $0 "HKCR" hkcr
   hkcu:
-	WriteRegStr HKCU $1 $2 $3
-	goto done
+    WriteRegStr HKCU $1 $2 $3
+    goto done
   hklm:  
-	WriteRegStr HKLM $1 $2 $3
-	goto done
+    WriteRegStr HKLM $1 $2 $3
+    goto done
   hkcr:	
-	WriteRegStr HKCR $1 $2 $3
+    WriteRegStr HKCR $1 $2 $3
 done:
 FunctionEnd
 

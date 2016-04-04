@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,11 +53,11 @@ public class IconUtil {
     Boolean was = project.getUserData(PROJECT_WAS_EVER_INITIALIZED);
     if (was == null) {
       if (project.isInitialized()) {
-        was = Boolean.valueOf(true);
+        was = true;
         project.putUserData(PROJECT_WAS_EVER_INITIALIZED, was);
       }
       else {
-        was = Boolean.valueOf(false);
+        was = false;
       }
     }
 
@@ -94,7 +94,8 @@ public class IconUtil {
     return new ImageIcon(img);
   }
 
-  public static Icon cropIcon(@NotNull Icon icon, Rectangle area) {
+  @NotNull
+  public static Icon cropIcon(@NotNull Icon icon, @NotNull Rectangle area) {
     if (!new Rectangle(icon.getIconWidth(), icon.getIconHeight()).contains(area)) {
       return icon;
     }
@@ -150,15 +151,16 @@ public class IconUtil {
           continue;
         }
 
-        icon = patcher.patchIcon(icon, file, flags, project);
+        // render without locked icon patch since we are going to apply it later anyway
+        icon = patcher.patchIcon(icon, file, flags & ~Iconable.ICON_FLAG_READ_STATUS, project);
       }
 
-      if ((flags & Iconable.ICON_FLAG_READ_STATUS) != 0 &&
-          (!file.isWritable() || !WritingAccessProvider.isPotentiallyWritable(file, project))) {
-        icon = new LayeredIcon(icon, PlatformIcons.LOCKED_ICON);
-      }
       if (file.is(VFileProperty.SYMLINK)) {
         icon = new LayeredIcon(icon, PlatformIcons.SYMLINK_ICON);
+      }
+      if (BitUtil.isSet(flags, Iconable.ICON_FLAG_READ_STATUS) &&
+          (!file.isWritable() || !WritingAccessProvider.isPotentiallyWritable(file, project))) {
+        icon = new LayeredIcon(icon, PlatformIcons.LOCKED_ICON);
       }
 
       Iconable.LastComputedIcon.put(file, icon, flags);
@@ -234,72 +236,88 @@ public class IconUtil {
     }
   }
 
+  @NotNull
   public static Icon getAddIcon() {
     return getToolbarDecoratorIcon("add.png");
   }
 
+  @NotNull
   public static Icon getRemoveIcon() {
     return getToolbarDecoratorIcon("remove.png");
   }
 
+  @NotNull
   public static Icon getMoveUpIcon() {
     return getToolbarDecoratorIcon("moveUp.png");
   }
 
+  @NotNull
   public static Icon getMoveDownIcon() {
     return getToolbarDecoratorIcon("moveDown.png");
   }
 
+  @NotNull
   public static Icon getEditIcon() {
     return getToolbarDecoratorIcon("edit.png");
   }
 
+  @NotNull
   public static Icon getAddClassIcon() {
     return getToolbarDecoratorIcon("addClass.png");
   }
 
+  @NotNull
   public static Icon getAddPatternIcon() {
     return getToolbarDecoratorIcon("addPattern.png");
   }
 
+  @NotNull
   public static Icon getAddJiraPatternIcon() {
     return getToolbarDecoratorIcon("addJira.png");
   }
 
+  @NotNull
   public static Icon getAddYouTrackPatternIcon() {
     return getToolbarDecoratorIcon("addYouTrack.png");
   }
 
+  @NotNull
   public static Icon getAddBlankLineIcon() {
     return getToolbarDecoratorIcon("addBlankLine.png");
   }
 
+  @NotNull
   public static Icon getAddPackageIcon() {
     return getToolbarDecoratorIcon("addPackage.png");
   }
 
+  @NotNull
   public static Icon getAddLinkIcon() {
     return getToolbarDecoratorIcon("addLink.png");
   }
 
+  @NotNull
   public static Icon getAddFolderIcon() {
     return getToolbarDecoratorIcon("addFolder.png");
   }
 
+  @NotNull
   public static Icon getAnalyzeIcon() {
     return getToolbarDecoratorIcon("analyze.png");
   }
 
-  public static void paintInCenterOf(@NotNull Component c, Graphics g, Icon icon) {
+  public static void paintInCenterOf(@NotNull Component c, @NotNull Graphics g, @NotNull Icon icon) {
     final int x = (c.getWidth() - icon.getIconWidth()) / 2;
     final int y = (c.getHeight() - icon.getIconHeight()) / 2;
     icon.paintIcon(c, g, x, y);
   }
 
-  public static Icon getToolbarDecoratorIcon(String name) {
+  @NotNull
+  private static Icon getToolbarDecoratorIcon(@NotNull String name) {
     return IconLoader.getIcon(getToolbarDecoratorIconsFolder() + name);
   }
 
+  @NotNull
   private static String getToolbarDecoratorIconsFolder() {
     return "/toolbarDecorator/" + (SystemInfo.isMac ? "mac/" : "");
   }
@@ -322,6 +340,7 @@ public class IconUtil {
     return result;
   }
 
+  @NotNull
   public static Icon toSize(@NotNull Icon icon, int width, int height) {
     return new IconSizeWrapper(icon, width, height);
   }
@@ -359,7 +378,7 @@ public class IconUtil {
     private final Icon mySrc;
     private final Rectangle myCrop;
 
-    private CropIcon(@NotNull Icon src, Rectangle crop) {
+    private CropIcon(@NotNull Icon src, @NotNull Rectangle crop) {
       mySrc = src;
       myCrop = crop;
     }
@@ -380,12 +399,14 @@ public class IconUtil {
     }
   }
 
+  @NotNull
   public static Icon scale(@NotNull final Icon source, double _scale) {
     final int hiDPIscale;
     if (source instanceof ImageIcon) {
       Image image = ((ImageIcon)source).getImage();
       hiDPIscale = RetinaImage.isAppleHiDPIScaledImage(image) || image instanceof JBHiDPIScaledImage ? 2 : 1;
-    } else {
+    }
+    else {
       hiDPIscale = 1;
     }
     final double scale = Math.min(32, Math.max(.1, _scale));
@@ -400,7 +421,8 @@ public class IconUtil {
           g2d.setTransform(transform);
           g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
           source.paintIcon(c, g2d, 0, 0);
-        } finally {
+        }
+        finally {
           g2d.dispose();
         }
       }
@@ -415,38 +437,75 @@ public class IconUtil {
         return (int)(source.getIconHeight() * scale) / hiDPIscale;
       }
     };
-
   }
 
   @NotNull
-  public static Icon colorize(@NotNull final Icon source, @NotNull Color color) {
+  public static Icon colorize(@NotNull Icon source, @NotNull Color color) {
     return colorize(source, color, false);
   }
 
   @NotNull
-  public static Icon colorize(@NotNull final Icon source, @NotNull Color color, boolean keepGray) {
-    float[] base = Color.RGBtoHSB(color.getRed(), color.getGreen(), color.getBlue(), null);
+  public static Icon colorize(@NotNull Icon source, @NotNull Color color, boolean keepGray) {
+    return filterIcon(source, new ColorFilter(color, keepGray));
+  }
 
-    final BufferedImage image = UIUtil.createImage(source.getIconWidth(), source.getIconHeight(), Transparency.TRANSLUCENT);
-    final Graphics2D g = image.createGraphics();
+  @NotNull
+  public static Icon desaturate(@NotNull Icon source) {
+    return filterIcon(source, new DesaturationFilter());
+  }
+
+  @NotNull
+  private static Icon filterIcon(@NotNull Icon source, @NotNull Filter filter) {
+    BufferedImage src = UIUtil.createImage(source.getIconWidth(), source.getIconHeight(), Transparency.TRANSLUCENT);
+    Graphics2D g = src.createGraphics();
     source.paintIcon(null, g, 0, 0);
     g.dispose();
-
-    final BufferedImage img = UIUtil.createImage(source.getIconWidth(), source.getIconHeight(), Transparency.TRANSLUCENT);
+    BufferedImage img = UIUtil.createImage(source.getIconWidth(), source.getIconHeight(), Transparency.TRANSLUCENT);
     int[] rgba = new int[4];
-    float[] hsb = new float[3];
-    for (int y = 0; y < image.getRaster().getHeight(); y++) {
-      for (int x = 0; x < image.getRaster().getWidth(); x++) {
-        image.getRaster().getPixel(x, y, rgba);
+    for (int y = 0; y < src.getRaster().getHeight(); y++) {
+      for (int x = 0; x < src.getRaster().getWidth(); x++) {
+        src.getRaster().getPixel(x, y, rgba);
         if (rgba[3] != 0) {
-          Color.RGBtoHSB(rgba[0], rgba[1], rgba[2], hsb);
-          int rgb = Color.HSBtoRGB(base[0], base[1] * (keepGray ? hsb[1] : 1f), base[2] * hsb[2]);
-          img.getRaster().setPixel(x, y, new int[]{rgb >> 16 & 0xff, rgb >> 8 & 0xff, rgb & 0xff, rgba[3]});
+          img.getRaster().setPixel(x, y, filter.convert(rgba));
         }
       }
     }
-
     return createImageIcon(img);
+  }
+  
+  private static abstract class Filter {
+    @NotNull
+    abstract int[] convert(@NotNull int[] rgba);
+  }
+
+  private static class ColorFilter extends Filter {
+    private final float[] myBase;
+    private final boolean myKeepGray;
+
+    private ColorFilter(@NotNull Color color, boolean keepGray) {
+      myKeepGray = keepGray;
+      myBase = Color.RGBtoHSB(color.getRed(), color.getGreen(), color.getBlue(), null);
+    }
+
+    @NotNull
+    @Override
+    int[] convert(@NotNull int[] rgba) {
+      float[] hsb = new float[3];
+      Color.RGBtoHSB(rgba[0], rgba[1], rgba[2], hsb);
+      int rgb = Color.HSBtoRGB(myBase[0], myBase[1] * (myKeepGray ? hsb[1] : 1f), myBase[2] * hsb[2]);
+      return new int[]{rgb >> 16 & 0xff, rgb >> 8 & 0xff, rgb & 0xff, rgba[3]};
+    }
+  }
+  
+  private static class DesaturationFilter extends Filter {
+    @NotNull
+    @Override
+    int[] convert(@NotNull int[] rgba) {
+      int min = Math.min(Math.min(rgba[0], rgba[1]), rgba[2]);
+      int max = Math.max(Math.max(rgba[0], rgba[1]), rgba[2]);
+      int grey = (max + min) / 2;
+      return new int[]{grey, grey, grey, rgba[3]};
+    }
   }
 
   @NotNull
@@ -465,7 +524,7 @@ public class IconUtil {
   }
 
   @NotNull
-  public static Icon textToIcon(final String text, final Component component, final float fontSize) {
+  public static Icon textToIcon(@NotNull final String text, @NotNull final Component component, final float fontSize) {
     final Font font = JBFont.create(JBUI.Fonts.label().deriveFont(fontSize));
     FontMetrics metrics = component.getFontMetrics(font);
     final int width = metrics.stringWidth(text) + JBUI.scale(4);
@@ -479,7 +538,8 @@ public class IconUtil {
           GraphicsUtil.setupAntialiasing(g);
           g.setFont(font);
           UIUtil.drawStringWithHighlighting(g, text, x + JBUI.scale(2), y + height - JBUI.scale(1), JBColor.foreground(), JBColor.background());
-        } finally {
+        }
+        finally {
           g.dispose();
         }
       }
@@ -496,6 +556,7 @@ public class IconUtil {
     };
   }
 
+  @NotNull
   public static Icon addText(@NotNull Icon base, @NotNull String text) {
     LayeredIcon icon = new LayeredIcon(2);
     icon.setIcon(base, 0);

@@ -21,9 +21,9 @@ import java.util.List;
 
 /**
  */
-public interface PermanentGraphBuilder<CommitId> {
+public interface PermanentGraphBuilder<Id> {
 
   @NotNull
-  PermanentGraph<CommitId> build(@NotNull List<GraphCommit<CommitId>> commits);
+  PermanentGraph<Id> build(@NotNull List<GraphCommit<Id>> commits);
 
 }

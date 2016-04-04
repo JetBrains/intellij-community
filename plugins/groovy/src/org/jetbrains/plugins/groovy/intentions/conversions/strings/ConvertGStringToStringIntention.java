@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.intentions.conversions.strings;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
@@ -138,17 +139,13 @@ public class ConvertGStringToStringIntention extends Intention {
       if (text.startsWith("\"\"\"")) {
         text = text.substring(3);
       }
-      else if (text.startsWith("\"")) {
-        text = text.substring(1);
-      }
+      else text = StringUtil.trimStart(text, "\"");
     }
     if (isLast) {
       if (text.endsWith("\"\"\"")) {
         text = text.substring(0, text.length() - 3);
       }
-      else if (text.endsWith("\"")) {
-        text = text.substring(0, text.length() - 1);
-      }
+      else text = StringUtil.trimEnd(text, "\"");
     }
     if (isBeforeInjection) {
       text = text.substring(0, text.length() - 1);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,6 @@
 package com.intellij.javaee;
 
 import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -26,7 +24,7 @@ import java.util.Map;
 /**
  * @author Dmitry Avdeev
  */
-@State(name = "ProjectResources", storages = {@Storage(file = StoragePathMacros.PROJECT_FILE)})
+@State(name = "ProjectResources")
 public class ProjectResources extends ExternalResourceManagerExImpl {
   @NotNull
   @Override

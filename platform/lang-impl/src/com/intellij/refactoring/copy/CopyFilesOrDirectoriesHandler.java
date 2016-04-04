@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,8 @@ import com.intellij.ide.CopyPasteDelegator;
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.ide.util.PlatformPackageUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -42,11 +43,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
 public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
-
   private static Logger LOG = Logger.getInstance("com.intellij.refactoring.copy.CopyFilesOrDirectoriesHandler");
 
   @Override
@@ -210,60 +211,55 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
       throw new IllegalArgumentException("no new name should be set; number of elements is: " + elements.length);
     }
 
-    final Project project = targetDirectory.getProject();
-    Runnable command = new Runnable() {
-      @Override
-      public void run() {
-        final Runnable action = new Runnable() {
-          @Override
-          public void run() {
-            try {
-              PsiFile firstFile = null;
-              final int[] choice = elements.length > 1 || elements[0] instanceof PsiDirectory ? new int[]{-1} : null;
-              for (PsiElement element : elements) {
-                PsiFile f = copyToDirectory((PsiFileSystemItem)element, newName, targetDirectory, choice);
-                if (firstFile == null) {
-                  firstFile = f;
-                }
-              }
+    if (!CommonRefactoringUtil.checkReadOnlyStatus(targetDirectory.getProject(), Collections.singleton(targetDirectory), false)) {
+      return;
+    }
 
-              if (firstFile != null && openInEditor) {
-                CopyHandler.updateSelectionInActiveProjectView(firstFile, project, doClone);
-                if (!(firstFile instanceof PsiBinaryFile)) {
-                  EditorHelper.openInEditor(firstFile);
-                  ApplicationManager.getApplication().invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                      ToolWindowManager.getInstance(project).activateEditorComponent();
-                    }
-                  });
-                }
-              }
+    String title = RefactoringBundle.message(doClone ? "copy,handler.clone.files.directories" : "copy.handler.copy.files.directories");
+    new WriteCommandAction(targetDirectory.getProject(), title) {
+      @Override
+      protected void run(@NotNull Result result) {
+        try {
+          PsiFile firstFile = null;
+          final int[] choice = elements.length > 1 || elements[0] instanceof PsiDirectory ? new int[]{-1} : null;
+          for (PsiElement element : elements) {
+            PsiFile f = copyToDirectory((PsiFileSystemItem)element, newName, targetDirectory, choice);
+            if (firstFile == null) {
+              firstFile = f;
             }
-            catch (final IncorrectOperationException ex) {
+          }
+
+          if (firstFile != null && openInEditor) {
+            CopyHandler.updateSelectionInActiveProjectView(firstFile, getProject(), doClone);
+            if (!(firstFile instanceof PsiBinaryFile)) {
+              EditorHelper.openInEditor(firstFile);
               ApplicationManager.getApplication().invokeLater(new Runnable() {
                 @Override
                 public void run() {
-                  Messages.showErrorDialog(project, ex.getMessage(), RefactoringBundle.message("error.title"));
-                }
-              });
-            }
-            catch (final IOException ex) {
-              ApplicationManager.getApplication().invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                  Messages.showErrorDialog(project, ex.getMessage(), RefactoringBundle.message("error.title"));
+                  ToolWindowManager.getInstance(getProject()).activateEditorComponent();
                 }
               });
             }
           }
-        };
-        ApplicationManager.getApplication().runWriteAction(action);
+        }
+        catch (final IncorrectOperationException ex) {
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              Messages.showErrorDialog(getProject(), ex.getMessage(), RefactoringBundle.message("error.title"));
+            }
+          });
+        }
+        catch (final IOException ex) {
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              Messages.showErrorDialog(getProject(), ex.getMessage(), RefactoringBundle.message("error.title"));
+            }
+          });
+        }
       }
-    };
-
-    String title = RefactoringBundle.message(doClone ? "copy,handler.clone.files.directories" : "copy.handler.copy.files.directories");
-    CommandProcessor.getInstance().executeCommand(project, command, title, null);
+    }.execute();
   }
 
   /**

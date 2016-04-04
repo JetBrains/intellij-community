@@ -46,7 +46,6 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import java.util.*;
 
 public class ClassWriter {
-
   private final ClassReference14Processor ref14processor;
   private final PoolInterceptor interceptor;
 
@@ -154,15 +153,6 @@ public class ClassWriter {
     DecompilerContext.getLogger().endWriteClass();
   }
 
-  private static void addTracer(StructClass cls, StructMethod method, BytecodeMappingTracer tracer) {
-    StructLineNumberTableAttribute lineNumberTable =
-      (StructLineNumberTableAttribute)method.getAttributes().getWithKey(StructGeneralAttribute.ATTRIBUTE_LINE_NUMBER_TABLE);
-    tracer.setLineNumberTable(lineNumberTable);
-    DecompilerContext.getBytecodeSourceMapper().addTracer(cls.qualifiedName,
-                                                          InterpreterUtil.makeUniqueKey(method.getName(), method.getDescriptor()),
-                                                          tracer);
-  }
-
   public void classToJava(ClassNode node, TextBuffer buffer, int indent, BytecodeMappingTracer tracer) {
     ClassNode outerNode = (ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_NODE);
     DecompilerContext.setProperty(DecompilerContext.CURRENT_CLASS_NODE, node);
@@ -183,12 +173,7 @@ public class ClassWriter {
       int start_class_def = buffer.length();
       writeClassDefinition(node, buffer, indent);
 
-//      // count lines in class definition the easiest way
-//      startLine = buffer.substring(start_class_def).toString().split(lineSeparator, -1).length - 1;
-
       boolean hasContent = false;
-
-      // fields
       boolean enumFields = false;
 
       dummy_tracer.incrementCurrentSourceLine(buffer.countLines(start_class_def));
@@ -285,6 +270,13 @@ public class ClassWriter {
     }
 
     DecompilerContext.getLogger().endWriteClass();
+  }
+
+  private static void addTracer(StructClass cls, StructMethod method, BytecodeMappingTracer tracer) {
+    StructLineNumberTableAttribute table = (StructLineNumberTableAttribute)method.getAttributes().getWithKey(StructGeneralAttribute.ATTRIBUTE_LINE_NUMBER_TABLE);
+    tracer.setLineNumberTable(table);
+    String key = InterpreterUtil.makeUniqueKey(method.getName(), method.getDescriptor());
+    DecompilerContext.getBytecodeSourceMapper().addTracer(cls.qualifiedName, key, tracer);
   }
 
   private void writeClassDefinition(ClassNode node, TextBuffer buffer, int indent) {
@@ -567,7 +559,7 @@ public class ClassWriter {
     }
   }
 
-  public static String toValidJavaIdentifier(String name) {
+  private static String toValidJavaIdentifier(String name) {
     if (name == null || name.isEmpty()) return name;
 
     boolean changed = false;
@@ -833,11 +825,6 @@ public class ClassWriter {
         }
 
         // We do not have line information for method start, lets have it here for now
-        StructLineNumberTableAttribute lineNumberTable =
-          (StructLineNumberTableAttribute)mt.getAttributes().getWithKey(StructGeneralAttribute.ATTRIBUTE_LINE_NUMBER_TABLE);
-        if (lineNumberTable != null && DecompilerContext.getOption(IFernflowerPreferences.USE_DEBUG_LINE_NUMBERS)) {
-          buffer.setCurrentLine(lineNumberTable.getFirstLine() - 1);
-        }
         buffer.append('{').appendLineSeparator();
         tracer.incrementCurrentSourceLine();
 
@@ -845,15 +832,9 @@ public class ClassWriter {
 
         if (root != null && !methodWrapper.decompiledWithErrors) { // check for existence
           try {
-            int startLine = tracer.getCurrentSourceLine();
-
             TextBuffer code = root.toJava(indent + 1, tracer);
 
             hideMethod = (clinit || dinit || hideConstructor(wrapper, init, throwsExceptions, paramCount)) && code.length() == 0;
-
-            if (!hideMethod && lineNumberTable != null && DecompilerContext.getOption(IFernflowerPreferences.USE_DEBUG_LINE_NUMBERS)) {
-              mapLines(code, lineNumberTable, tracer, startLine);
-            }
 
             buffer.append(code);
           }
@@ -886,38 +867,6 @@ public class ClassWriter {
     //tracer.setCurrentSourceLine(buffer.countLines(start_index_method));
 
     return !hideMethod;
-  }
-
-  private static void mapLines(TextBuffer code, StructLineNumberTableAttribute table, BytecodeMappingTracer tracer, int startLine) {
-    // build line start offsets map
-    HashMap<Integer, Set<Integer>> lineStartOffsets = new HashMap<Integer, Set<Integer>>();
-    for (Map.Entry<Integer, Integer> entry : tracer.getMapping().entrySet()) {
-      Integer lineNumber = entry.getValue() - startLine;
-      Set<Integer> curr = lineStartOffsets.get(lineNumber);
-      if (curr == null) {
-        curr = new TreeSet<Integer>(); // requires natural sorting!
-      }
-      curr.add(entry.getKey());
-      lineStartOffsets.put(lineNumber, curr);
-    }
-    String lineSeparator = DecompilerContext.getNewLineSeparator();
-    StringBuilder text = code.getOriginalText();
-    int pos = text.indexOf(lineSeparator);
-    int lineNumber = 0;
-    while (pos != -1) {
-      Set<Integer> startOffsets = lineStartOffsets.get(lineNumber);
-      if (startOffsets != null) {
-        for (Integer offset : startOffsets) {
-          int number = table.findLineNumber(offset);
-          if (number >= 0) {
-            code.setLineMapping(number, pos);
-            break;
-          }
-        }
-      }
-      pos = text.indexOf(lineSeparator, pos+1);
-      lineNumber++;
-    }
   }
 
   private static boolean hideConstructor(ClassWrapper wrapper, boolean init, boolean throwsExceptions, int paramCount) {
@@ -999,7 +948,6 @@ public class ClassWriter {
     StructGeneralAttribute.ATTRIBUTE_RUNTIME_VISIBLE_ANNOTATIONS, StructGeneralAttribute.ATTRIBUTE_RUNTIME_INVISIBLE_ANNOTATIONS};
 
   private static void appendAnnotations(TextBuffer buffer, StructMember mb, int indent) {
-
     BytecodeMappingTracer tracer_dummy = new BytecodeMappingTracer(); // FIXME: replace with a real one
 
     for (String name : ANNOTATION_ATTRIBUTES) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -260,8 +261,14 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
   }
 
   private class MyDocumentChangeAdapter extends DocumentAdapter {
-    private final @NonNls String PASTE_COMMAND_NAME = EditorBundle.message("paste.command.name");
-    private final @NonNls String TYPING_COMMAND_NAME = EditorBundle.message("typing.in.editor.command.name");
+    private final @NonNls String [] COMMANDS = {
+      EditorBundle.message("paste.command.name"), 
+      EditorBundle.message("typing.in.editor.command.name"),
+      ActionsBundle.message("action.MoveElementLeft.text"),
+      ActionsBundle.message("action.MoveElementRight.text"),
+      "Cut",
+      LanguageChangeSignatureDetector.MOVE_PARAMETER
+    };
 
     private String myInitialText;
     private String myInitialName;
@@ -327,13 +334,8 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
           final CommandProcessor processor = CommandProcessor.getInstance();
           final String currentCommandName = processor.getCurrentCommandName();
 
-          if (!Comparing.strEqual(TYPING_COMMAND_NAME, currentCommandName) &&
-              !Comparing.strEqual(PASTE_COMMAND_NAME, currentCommandName) &&
-              !Comparing.strEqual("Cut", currentCommandName) &&
-              !Comparing.strEqual(LanguageChangeSignatureDetector.MOVE_PARAMETER, currentCommandName) &&
-              !Comparing.equal(EditorActionUtil.DELETE_COMMAND_GROUP, processor.getCurrentCommandGroupId())) {
-            return;
-          }
+          if (!isPredefinedCommand(processor, currentCommandName)) return;
+
           final PsiFile file = documentManager.getPsiFile(document);
           if (file != null) {
             final PsiElement element = file.findElementAt(e.getOffset());
@@ -353,6 +355,19 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
           }
         }
       }
+    }
+
+    private boolean isPredefinedCommand(CommandProcessor processor, String currentCommandName) {
+      if (Comparing.equal(EditorActionUtil.DELETE_COMMAND_GROUP, processor.getCurrentCommandGroupId())) {
+        return true;
+      }
+
+      for (String commandName : COMMANDS) {
+        if (Comparing.strEqual(commandName, currentCommandName)){
+          return true;
+        }
+      }
+      return false;
     }
 
     public ChangeInfo getInitialChangeInfo() {

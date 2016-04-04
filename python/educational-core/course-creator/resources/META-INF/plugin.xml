@@ -1,0 +1,100 @@
+<idea-plugin version="2">
+  <id>com.jetbrains.edu.coursecreator</id>
+  <name>Course Creator Plugin</name>
+  <version>2.0.3</version>
+  <idea-version since-build="143.403"/>
+  <description><![CDATA[
+      Language independent part for creating courses.
+    ]]></description>
+  <vendor>JetBrains</vendor>
+
+  <change-notes><![CDATA[
+    ]]>
+  </change-notes>
+  <!-- please see https://confluence.jetbrains.com/display/IDEADEV/Build+Number+Ranges for description -->
+
+  <!-- please see https://confluence.jetbrains.com/display/IDEADEV/Plugin+Compatibility+with+IntelliJ+Platform+Products
+       on how to target different products -->
+  <!-- uncomment to enable plugin in all products
+  <depends>com.intellij.modules.lang</depends>
+  -->
+  <depends>com.intellij.modules.platform</depends>
+  <depends>com.jetbrains.edu.core</depends>
+  <depends>com.jetbrains.edu.interactivelearning</depends>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceImplementation="com.jetbrains.edu.coursecreator.CCProjectService"/>
+    <treeStructureProvider implementation="com.jetbrains.edu.coursecreator.projectView.CCTreeStructureProvider"/>
+    <refactoring.elementListenerProvider implementation="com.jetbrains.edu.coursecreator.CCRefactoringElementListenerProvider"/>
+    <renameHandler implementation="com.jetbrains.edu.coursecreator.CCRenameHandler"/>
+    <renameInputValidator implementation="com.jetbrains.edu.coursecreator.CCRenameInputValidator"/>
+    <refactoring.moveHandler implementation="com.jetbrains.edu.coursecreator.CCLessonMoveHandlerDelegate" order="first"/>
+    <refactoring.moveHandler implementation="com.jetbrains.edu.coursecreator.CCTaskMoveHandlerDelegate" order="first"/>
+  </extensions>
+
+  <application-components>
+    <!-- Add your application components here -->
+  </application-components>
+
+  <project-components>
+    <!-- Add your project components here -->
+    <component>
+      <implementation-class>com.jetbrains.edu.coursecreator.CCProjectComponent</implementation-class>
+    </component>
+  </project-components>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="Edu.CCLanguageManager" beanClass="com.intellij.lang.LanguageExtensionPoint">
+    </extensionPoint>
+  </extensionPoints>
+
+  <actions>
+    <action id="CreateLesson" class="com.jetbrains.edu.coursecreator.actions.CCCreateLesson">
+      <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFile"/>
+    </action>
+    <action id="ChangeCourseInfo" class="com.jetbrains.edu.coursecreator.actions.CCChangeCourseInfo">
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="before" relative-to-action="PackCourse"/>
+    </action>
+    <action id="CreateTask" class="com.jetbrains.edu.coursecreator.actions.CCCreateTask">
+      <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFile"/>
+    </action>
+    <action id="CreateTaskFile" class="com.jetbrains.edu.coursecreator.actions.CCCreateTaskFile">
+      <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFile"/>
+    </action>
+    <action id="AddTaskFile" class="com.jetbrains.edu.coursecreator.actions.CCAddAsTaskFile" text="Add As Task File">
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="first"/>
+    </action>
+    <action id="AddTaskWindow" class="com.jetbrains.edu.coursecreator.actions.CCAddAnswerPlaceholder">
+      <add-to-group group-id="EditorPopupMenu" anchor="before" relative-to-action="CopyReference"/>
+    </action>
+    <action id="ShowTaskWindowDetails" class="com.jetbrains.edu.coursecreator.actions.CCShowAnswerPlaceholderDetails">
+      <add-to-group group-id="EditorPopupMenu" anchor="before" relative-to-action="CopyReference"/>
+    </action>
+    <action id="DeleteTaskWindow" class="com.jetbrains.edu.coursecreator.actions.CCDeleteAnswerPlaceholder">
+      <add-to-group group-id="EditorPopupMenu" anchor="before" relative-to-action="CopyReference"/>
+    </action>
+    <action id="ShowPreview" class="com.jetbrains.edu.coursecreator.actions.CCShowPreview">
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="first"/>
+      <add-to-group group-id="EditorTabPopupMenu"/>
+    </action>
+    <action id="PackCourse" class="com.jetbrains.edu.coursecreator.actions.CCCreateCourseArchive">
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="before" relative-to-action="CutCopyPasteGroup"/>
+      <add-to-group group-id="FileMenu" relative-to-action="FileMainSettingsGroup" anchor="before"/>
+    </action>
+    <action id="UnpackCourse" class="com.jetbrains.edu.coursecreator.actions.CCFromCourseArchive"/>
+    <action id="PushLesson" class="com.jetbrains.edu.coursecreator.actions.CCPushLesson">
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="before" relative-to-action="CutCopyPasteGroup"/>
+      <add-to-group group-id="FileMenu" relative-to-action="FileMainSettingsGroup" anchor="before"/>
+    </action>
+    <action id="PushCourse" class="com.jetbrains.edu.coursecreator.actions.CCPushCourse">
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="before" relative-to-action="CutCopyPasteGroup"/>
+      <add-to-group group-id="FileMenu" relative-to-action="FileMainSettingsGroup" anchor="before"/>
+    </action>
+
+    <action id="DeleteAllPlaceholders" class="com.jetbrains.edu.coursecreator.actions.CCDeleteAllAnswerPlaceholdersAction">
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="before" relative-to-action="CutCopyPasteGroup"/>
+      <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="DeleteTaskWindow"/>
+    </action>
+  </actions>
+
+</idea-plugin>

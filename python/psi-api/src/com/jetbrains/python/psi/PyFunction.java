@@ -33,11 +33,9 @@ import java.util.List;
  *
  * @author yole
  */
-public interface PyFunction
-extends
-  PsiNamedElement, StubBasedPsiElement<PyFunctionStub>,
-  PsiNameIdentifierOwner, PyStatement, PyCallable, NameDefiner, PyDocStringOwner, ScopeOwner, PyDecoratable, PyTypedElement,
-  PyStatementListContainer, PyPossibleClassMember{
+public interface PyFunction extends PsiNamedElement, StubBasedPsiElement<PyFunctionStub>, PsiNameIdentifierOwner, PyStatement, PyCallable,
+                                    PyDocStringOwner, ScopeOwner, PyDecoratable, PyTypedElement, PyStatementListContainer,
+                                    PyPossibleClassMember, PyTypeCommentOwner {
 
   PyFunction[] EMPTY_ARRAY = new PyFunction[0];
   ArrayFactory<PyFunction> ARRAY_FACTORY = new ArrayFactory<PyFunction>() {
@@ -102,7 +100,6 @@ extends
 
   @Nullable
   PyAnnotation getAnnotation();
-
 
   /**
    * Searches for function attributes.

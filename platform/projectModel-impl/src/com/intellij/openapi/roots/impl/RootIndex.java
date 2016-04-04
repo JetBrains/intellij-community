@@ -34,7 +34,7 @@ import com.intellij.util.CollectionQuery;
 import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.containers.SynchronizedSLRUCache;
+import com.intellij.util.containers.SLRUMap;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -181,10 +181,10 @@ public class RootIndex {
 
     private static class Edge {
       Module myKey;
-      OrderEntry myOrderEntry; // Order entry from myKey -> the node containing the edge
+      ModuleOrderEntry myOrderEntry; // Order entry from myKey -> the node containing the edge
       boolean myRecursive; // Whether this edge should be descended into during graph walk
 
-      public Edge(Module key, OrderEntry orderEntry, boolean recursive) {
+      public Edge(Module key, ModuleOrderEntry orderEntry, boolean recursive) {
         myKey = key;
         myOrderEntry = orderEntry;
         myRecursive = recursive;
@@ -239,10 +239,10 @@ public class RootIndex {
       Graph graph = new Graph();
 
       MultiMap<VirtualFile, Node> roots = MultiMap.createSmart();
-      Map<Module, List<OrderEnumerationHandler>> handlersMap = ContainerUtil.newHashMap();
 
       for (final Module module : ModuleManager.getInstance(myProject).getModules()) {
         final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
+        List<OrderEnumerationHandler> handlers = OrderEnumeratorBase.getCustomHandlers(module);
         for (OrderEntry orderEntry : moduleRootManager.getOrderEntries()) {
           if (orderEntry instanceof ModuleOrderEntry) {
             ModuleOrderEntry moduleOrderEntry = (ModuleOrderEntry)orderEntry;
@@ -265,13 +265,8 @@ public class RootIndex {
                   roots.putValue(sourceRoot, node);
                 }
               }
-              List<OrderEnumerationHandler> handlers = handlersMap.get(depModule);
-              if (handlers == null) {
-                handlers = en.getCustomHandlers(depModule);
-                handlersMap.put(depModule, handlers);
-              }
               boolean shouldRecurse = en.shouldRecurse(moduleOrderEntry, handlers);
-              node.myEdges.add(new Edge(module, orderEntry, shouldRecurse));
+              node.myEdges.add(new Edge(module, moduleOrderEntry, shouldRecurse));
             }
           }
         }
@@ -693,5 +688,37 @@ public class RootIndex {
     DirectoryInfo getCachedInfo(@NotNull VirtualFile dir);
 
     void cacheInfo(@NotNull VirtualFile dir, @NotNull DirectoryInfo info);
+  }
+
+  /**
+   * An LRU cache with synchronization around the primary cache operations (get() and insertion
+   * of a newly created value). Other map operations are not synchronized.
+   */
+  abstract static class SynchronizedSLRUCache<K, V> extends SLRUMap<K,V> {
+    protected final Object myLock = new Object();
+
+    protected SynchronizedSLRUCache(final int protectedQueueSize, final int probationalQueueSize) {
+      super(protectedQueueSize, probationalQueueSize);
+    }
+
+    @NotNull
+    public abstract V createValue(K key);
+
+    @Override
+    @NotNull
+    public V get(K key) {
+      V value;
+      synchronized (myLock) {
+        value = super.get(key);
+        if (value != null) {
+          return value;
+        }
+      }
+      value = createValue(key);
+      synchronized (myLock) {
+        put(key, value);
+      }
+      return value;
+    }
   }
 }

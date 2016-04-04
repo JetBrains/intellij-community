@@ -40,7 +40,7 @@ abstract class TextChunk {
   }
 
   @NotNull
-  public CharSequence getText() {
+  public CharSequence getOriginalText() {
     return myText;
   }
 

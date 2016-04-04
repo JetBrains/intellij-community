@@ -42,17 +42,6 @@ public class TextBuffer {
     myStringBuilder = new StringBuilder(text);
   }
 
-  public void setCurrentLine(int line) {
-    setLineMapping(line, myStringBuilder.length()+1);
-  }
-
-  public void setLineMapping(int line, int offset) {
-    if (line >= 0) {
-      checkMapCreated();
-      myLineToOffsetMapping.put(line, offset);
-    }
-  }
-
   public TextBuffer append(String str) {
     myStringBuilder.append(str);
     return this;
@@ -301,15 +290,12 @@ public class TextBuffer {
     return res;
   }
 
-  public StringBuilder getOriginalText() {
-    return myStringBuilder;
-  }
-
   private Map<Integer, Set<Integer>> myLineMapping = null; // new to original
+
   public void dumpOriginalLineNumbers(int[] lineMapping) {
     if (lineMapping.length > 0) {
       myLineMapping = new HashMap<Integer, Set<Integer>>();
-      for (int i = 0; i < lineMapping.length; i+=2) {
+      for (int i = 0; i < lineMapping.length; i += 2) {
         int key = lineMapping[i + 1];
         Set<Integer> existing = myLineMapping.get(key);
         if (existing == null) {

@@ -12,9 +12,14 @@ are not reported, as the wrapped resource will be closed by the wrapping resourc
 <p>
 Use the table below to specify which I/O resources should be ignored by this inspection.
 Specify I/O resource classes here which do not need to be closed.
-Use the checkbox below to specify if a I/O resource is allowed to be opened inside a try
-block. This style is less desirable because it is more verbose than opening a resource in front of a try
+<p>
+Use the first checkbox below to specify if an I/O resource is allowed to be opened <i>inside</i> a <b>try</b>
+block. This style is less desirable because it is more verbose than opening a resource <i>in front of</i> a <b>try</b>
 block.
+<p>
+Use the second checkbox below to specify that the inspection should not warn if an I/O resource is passed as a method call argument.
+If enabled the inspection assumes the resource is closed in the called method.
+Method calls inside a <b>finally</b> block with <i>close</i> in the name and an I/O resource argument will not be ignored.
 <p>
 
 </body>

@@ -755,7 +755,11 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     }
 
     if (myRole2 == ChildRole.TRY_BLOCK) {
-      myResult = getSpaceBeforeLBrace(myChild2, mySettings.SPACE_BEFORE_TRY_LBRACE, null);
+      TextRange dependentRange = null;
+      if (myChild1 instanceof PsiResourceList && mySettings.BRACE_STYLE == CommonCodeStyleSettings.NEXT_LINE_IF_WRAPPED) {
+          dependentRange = myChild1.getTextRange();
+      }
+      myResult = getSpaceBeforeLBrace(myChild2, mySettings.SPACE_BEFORE_TRY_LBRACE, dependentRange);
     }
     else if (myRole2 == ChildRole.FINALLY_BLOCK) {
       myResult = getSpaceBeforeLBrace(myChild2, mySettings.SPACE_BEFORE_FINALLY_LBRACE, null);
@@ -906,9 +910,16 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     if (block.getParent() instanceof PsiMethod) {
       return shouldHandleAsSimpleMethod((PsiMethod)block.getParent());
     }
+    else if (block.getParent() instanceof PsiLambdaExpression) {
+      return shouldHandleAsSimpleLambda((PsiLambdaExpression)block.getParent());
+    }
     else {
       return shouldHandleAsSimpleBlock(block.getNode());
-   }
+    }
+  }
+
+  private boolean shouldHandleAsSimpleLambda(PsiLambdaExpression lambda) {
+    return mySettings.KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE && !lambda.textContains('\n');
   }
 
   @Override
@@ -1117,6 +1128,11 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     else if (myRole1 == ChildRole.MODIFIER_LIST && myRole2 == ChildRole.PACKAGE_KEYWORD) {
       myResult = Spacing.createSpacing(1, 1, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
     }
+    else if (myRole2 == ChildRole.TYPE 
+             && myChild1.getLastChildNode() != null 
+             && myChild1.getLastChildNode().getElementType() == JavaElementType.ANNOTATION) {
+      createSpaceProperty(true, mySettings.KEEP_LINE_BREAKS, 0);
+    }
     else {
       createSpaceProperty(true, false, 0);
     }
@@ -1303,7 +1319,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
         createParenthSpace(mySettings.FOR_STATEMENT_LPAREN_ON_NEXT_LINE, mySettings.SPACE_WITHIN_FOR_PARENTHESES,
                            new TextRange(myChild1.getTextRange().getStartOffset(), rparenth.getTextRange().getEndOffset()));
         if (myChild2.getElementType() == JavaElementType.EMPTY_STATEMENT) {
-          createSpaceInCode(mySettings.SPACE_BEFORE_SEMICOLON);
+          createSpaceInCode(mySettings.SPACE_BEFORE_SEMICOLON || mySettings.SPACE_WITHIN_FOR_PARENTHESES);
         }
       }
     }

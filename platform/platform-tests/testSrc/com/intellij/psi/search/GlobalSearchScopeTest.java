@@ -24,7 +24,7 @@ public class GlobalSearchScopeTest extends PlatformTestCase {
   public void testUniteDirectorySearchScopeDoesNotSOE() throws Exception {
     VirtualFile genRoot = getVirtualFile(createTempDir("genSrcRoot"));
     VirtualFile srcRoot = getVirtualFile(createTempDir("srcRoot"));
-    VirtualFile child = srcRoot.createChildDirectory(this, "child");
+    VirtualFile child = createChildDirectory(srcRoot, "child");
     GlobalSearchScope childScope = GlobalSearchScopesCore.directoryScope(getProject(), child, true);
 
     GlobalSearchScope directoryScope = GlobalSearchScopesCore.directoryScope(getProject(), srcRoot, true);
@@ -40,7 +40,7 @@ public class GlobalSearchScopeTest extends PlatformTestCase {
     int N = 1000;
     VirtualFile[] d = new VirtualFile[N];
     for (int i=0; i< N;i++) {
-      d[i] = srcRoot.createChildDirectory(this, "d"+i);
+      d[i] = createChildDirectory(srcRoot, "d"+i);
       GlobalSearchScope united = s.uniteWith(GlobalSearchScopesCore.directoryScope(getProject(), d[i], true));
       assertNotSame(s, united);
       s = united;

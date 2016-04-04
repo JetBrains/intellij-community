@@ -20,6 +20,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.OrderEnumerator;
@@ -39,7 +40,6 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
@@ -49,7 +49,8 @@ import java.util.ArrayList;
 import java.util.Set;
 
 public class VfsRootAccess {
-  public static boolean SHOULD_PERFORM_ACCESS_CHECK = System.getenv("NO_FS_ROOTS_ACCESS_CHECK") == null;
+  private static final boolean SHOULD_PERFORM_ACCESS_CHECK = System.getenv("NO_FS_ROOTS_ACCESS_CHECK") == null;
+
   // we don't want test subclasses to accidentally remove allowed files, added by base classes
   private static final Set<String> ourAdditionalRoots = new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
   private static boolean insideGettingRoots;
@@ -60,7 +61,9 @@ public class VfsRootAccess {
     if (SHOULD_PERFORM_ACCESS_CHECK &&
         application.isUnitTestMode() &&
         application instanceof ApplicationImpl &&
-        ((ApplicationImpl)application).isComponentsCreated()) {
+        ((ApplicationImpl)application).isComponentsCreated() &&
+        !ApplicationInfoImpl.isInPerformanceTest()) {
+
       if (delegate != LocalFileSystem.getInstance() && delegate != JarFileSystem.getInstance()) {
         return;
       }
@@ -103,8 +106,6 @@ public class VfsRootAccess {
   }
 
   // null means we were unable to get roots, so do not check access
-  @Nullable
-  @TestOnly
   private static Set<String> allowedRoots() {
     if (insideGettingRoots) return null;
 
@@ -160,7 +161,6 @@ public class VfsRootAccess {
     return allowed;
   }
 
-  @TestOnly
   private static VirtualFile[] getAllRoots(@NotNull Project project) {
     insideGettingRoots = true;
     final Set<VirtualFile> roots = new THashSet<VirtualFile>();
@@ -174,22 +174,22 @@ public class VfsRootAccess {
   }
 
   @TestOnly
-  public static void allowRootAccess(@NotNull String... roots) {
-    for (String root : roots) {
-      ourAdditionalRoots.add(FileUtil.toSystemIndependentName(root));
-    }
-  }
-  @TestOnly
-  public static void allowRootAccessTemporarily(@NotNull Disposable disposable, @NotNull final String... roots) {
-    for (String root : roots) {
-      ourAdditionalRoots.add(FileUtil.toSystemIndependentName(root));
-    }
+  public static void allowRootAccess(@NotNull Disposable disposable, @NotNull final String... roots) {
+    if (roots.length == 0) return;
+    allowRootAccess(roots);
     Disposer.register(disposable, new Disposable() {
       @Override
       public void dispose() {
         disallowRootAccess(roots);
       }
     });
+  }
+
+  @TestOnly
+  public static void allowRootAccess(@NotNull String... roots) {
+    for (String root : roots) {
+      ourAdditionalRoots.add(FileUtil.toSystemIndependentName(root));
+    }
   }
 
   @TestOnly

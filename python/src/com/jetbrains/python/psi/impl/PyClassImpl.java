@@ -1104,7 +1104,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     if (containingFile instanceof PyFile && ((PyFile)containingFile).getLanguageLevel().isPy3K()) {
       return true;
     }
-    final PyClass objClass = PyBuiltinCache.getInstance(this).getClass("object");
+    final PyClass objClass = PyBuiltinCache.getInstance(this).getClass(PyNames.OBJECT);
     if (this == objClass) return true; // a rare but possible case
     if (hasNewStyleMetaClass(this)) return true;
     TypeEvalContext contextToUse = (context != null ? context : TypeEvalContext.codeInsightFallback(getProject()));
@@ -1205,19 +1205,6 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
 
   public String toString() {
     return "PyClass: " + getName();
-  }
-
-  @NotNull
-  public Iterable<PyElement> iterateNames() {
-    return Collections.<PyElement>singleton(this);
-  }
-
-  public PyElement getElementNamed(final String the_name) {
-    return the_name.equals(getName()) ? this : null;
-  }
-
-  public boolean mustResolveOutside() {
-    return false;
   }
 
   public void subtreeChanged() {

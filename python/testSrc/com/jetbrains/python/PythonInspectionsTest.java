@@ -61,6 +61,14 @@ public class PythonInspectionsTest extends PyTestCase {
     doHighlightingTest(PyMethodParametersInspection.class);
   }
 
+  public void testPyMethodParametersInspectionMetacls() {
+    PyMethodParametersInspection inspection = new PyMethodParametersInspection();
+    inspection.MCS = "metacls";
+    myFixture.configureByFile("inspections/" + getTestName(false) + "/test.py");
+    myFixture.enableInspections(inspection);
+    myFixture.checkHighlighting(true, false, true);
+  }
+
   public void testPyNestedDecoratorsInspection() {
     LocalInspectionTool inspection = new PyNestedDecoratorsInspection();
     doTest(getTestName(false), inspection);
@@ -68,11 +76,6 @@ public class PythonInspectionsTest extends PyTestCase {
 
   public void testPyRedeclarationInspection() {
     doHighlightingTest(PyRedeclarationInspection.class);
-  }
-
-  public void testPyStringFormatInspection() {
-    LocalInspectionTool inspection = new PyStringFormatInspection();
-    doTest(getTestName(false), inspection);
   }
 
   public void testPyTrailingSemicolonInspection() {
@@ -265,6 +268,14 @@ public class PythonInspectionsTest extends PyTestCase {
     doHighlightingTest(PyChainedComparisonsInspection.class);
   }
 
+  public void testPyChainedComparisonsInspectionWithConstantInTheMiddle() {
+    myFixture.configureByFile("inspections/" + getTestName(false) + "/test.py");
+    PyChainedComparisonsInspection inspection = new PyChainedComparisonsInspection();
+    myFixture.enableInspections(inspection);
+    inspection.ignoreConstantInTheMiddle = true;
+    myFixture.checkHighlighting(true, false, true);
+  }
+
   public void testPyBroadExceptionInspection() {
     doHighlightingTest(PyBroadExceptionInspection.class);
   }
@@ -285,14 +296,6 @@ public class PythonInspectionsTest extends PyTestCase {
 
   public void testPyListCreationInspection() {         //PY-2823
     doHighlightingTest(PyListCreationInspection.class);
-  }
-
-  public void testPyStringFormatInspection1() {    //PY-2836
-    doHighlightingTest(PyStringFormatInspection.class);
-  }
-
-  public void testPyStringFormatInspectionSlice() {    //PY-6756
-    doHighlightingTest(PyStringFormatInspection.class);
   }
 
   public void testPyUnnecessaryBackslashInspection() {    //PY-2952

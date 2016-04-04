@@ -73,6 +73,9 @@
     <component>
       <implementation-class>com.intellij.diagnostic.PerformanceWatcher</implementation-class>
     </component>
+    <component>
+      <implementation-class>com.intellij.openapi.application.Preloader</implementation-class>
+    </component>
 
     <component>
       <interface-class>com.intellij.notification.NotificationsConfiguration</interface-class>

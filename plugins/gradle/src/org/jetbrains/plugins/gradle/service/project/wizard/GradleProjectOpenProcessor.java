@@ -35,7 +35,8 @@ import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
-import static  org.jetbrains.plugins.gradle.util.GradleEnvironment.Headless.*;
+
+import static org.jetbrains.plugins.gradle.util.GradleEnvironment.Headless.*;
 
 /**
  * @author Denis Zhdanov
@@ -73,11 +74,19 @@ public class GradleProjectOpenProcessor extends ProjectOpenProcessorBase<GradleP
     final GradleProjectImportProvider projectImportProvider = new GradleProjectImportProvider(getBuilder());
     getBuilder().setFileToImport(file.getPath());
     getBuilder().prepare(wizardContext);
-    getBuilder().getControl(null).setLinkedProjectPath(file.getPath());
+
+    final String pathToUse;
+    if (!file.isDirectory() && file.getParent() != null) {
+      pathToUse = file.getParent().getPath();
+    }
+    else {
+      pathToUse = file.getPath();
+    }
+    getBuilder().getControl(null).setLinkedProjectPath(pathToUse);
 
     final boolean result;
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      result = setupGradleProjectSettingsInHeadlessMode(file, projectImportProvider, wizardContext);
+      result = setupGradleProjectSettingsInHeadlessMode(projectImportProvider, wizardContext);
     }
     else {
       AddModuleWizard dialog = new AddModuleWizard(null, file.getPath(), projectImportProvider);
@@ -96,8 +105,7 @@ public class GradleProjectOpenProcessor extends ProjectOpenProcessorBase<GradleP
     return result;
   }
 
-  private boolean setupGradleProjectSettingsInHeadlessMode(VirtualFile file,
-                                                           GradleProjectImportProvider projectImportProvider,
+  private boolean setupGradleProjectSettingsInHeadlessMode(GradleProjectImportProvider projectImportProvider,
                                                            WizardContext wizardContext) {
     final ModuleWizardStep[] wizardSteps = projectImportProvider.createSteps(wizardContext);
     if (wizardSteps.length > 0 && wizardSteps[0] instanceof SelectExternalProjectStep) {

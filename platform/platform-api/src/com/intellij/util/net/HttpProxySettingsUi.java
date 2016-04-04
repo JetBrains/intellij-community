@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
-import java.net.HttpURLConnection;
 import java.util.concurrent.atomic.AtomicReference;
 
 class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
@@ -178,15 +177,7 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
               //noinspection ConstantConditions
               HttpRequests.request(answer)
                 .readTimeout(3 * 1000)
-                .connect(new HttpRequests.RequestProcessor<Void>() {
-                  @Override
-                  public Void process(@NotNull HttpRequests.Request request) throws IOException {
-                    if (!request.isSuccessful()) {
-                      exceptionReference.set(new IOException("Error code: " + ((HttpURLConnection)request.getConnection()).getResponseCode()));
-                    }
-                    return null;
-                  }
-                });
+                .tryConnect();
             }
             catch (IOException e) {
               exceptionReference.set(e);

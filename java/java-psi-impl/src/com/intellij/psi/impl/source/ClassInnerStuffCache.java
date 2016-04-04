@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -233,7 +233,12 @@ public class ClassInnerStuffCache {
   private PsiMethod getSyntheticMethod(String text) {
     PsiElementFactory factory = JavaPsiFacade.getInstance(myClass.getProject()).getElementFactory();
     PsiMethod method = factory.createMethodFromText(text, myClass);
-    return new LightMethod(myClass.getManager(), method, myClass);
+    return new LightMethod(myClass.getManager(), method, myClass) {
+      @Override
+      public int getTextOffset() {
+        return myClass.getTextOffset();
+      }
+    };
   }
 
   public void dropCaches() {

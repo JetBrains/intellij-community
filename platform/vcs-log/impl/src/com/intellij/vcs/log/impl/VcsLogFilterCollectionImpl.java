@@ -24,6 +24,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class VcsLogFilterCollectionImpl implements VcsLogFilterCollection {
+  @NotNull public static final VcsLogFilterCollection EMPTY = new VcsLogFilterCollectionImpl(null, null, null, null, null, null, null);
 
   @Nullable private final VcsLogBranchFilter myBranchFilter;
   @Nullable private final VcsLogUserFilter myUserFilter;

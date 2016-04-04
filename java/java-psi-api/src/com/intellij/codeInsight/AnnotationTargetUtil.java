@@ -147,4 +147,65 @@ public class AnnotationTargetUtil {
     }
     return null;
   }
+
+  /**
+   * Returns {@code true} if the annotation resolves to a class having {@link TargetType#TYPE_USE} in it's targets.
+   */
+  public static boolean isTypeAnnotation(@NotNull PsiAnnotation element) {
+    return findAnnotationTarget(element, TargetType.TYPE_USE) == TargetType.TYPE_USE;
+  }
+
+  /**
+   * From given targets, returns first where the annotation may be applied. Returns {@code null} when the annotation is not applicable
+   * at any of the targets, or {@linkplain TargetType#UNKNOWN} if the annotation does not resolve to a valid annotation type.
+   */
+  @Nullable
+  public static TargetType findAnnotationTarget(@NotNull PsiAnnotation annotation, @NotNull TargetType... types) {
+    if (types.length != 0) {
+      PsiJavaCodeReferenceElement ref = annotation.getNameReferenceElement();
+      if (ref != null) {
+        PsiElement annotationType = ref.resolve();
+        if (annotationType instanceof PsiClass) {
+          return findAnnotationTarget((PsiClass)annotationType, types);
+        }
+      }
+    }
+
+    return TargetType.UNKNOWN;
+  }
+
+  /**
+   * From given targets, returns first where the annotation may be applied. Returns {@code null} when the annotation is not applicable
+   * at any of the targets, or {@linkplain TargetType#UNKNOWN} if the type is not a valid annotation (e.g. cannot be resolved).
+   */
+  @Nullable
+  public static TargetType findAnnotationTarget(@NotNull PsiClass annotationType, @NotNull TargetType... types) {
+    if (types.length != 0) {
+      Set<TargetType> targets = getAnnotationTargets(annotationType);
+      if (targets != null) {
+        for (TargetType type : types) {
+          if (type != TargetType.UNKNOWN && targets.contains(type)) {
+            return type;
+          }
+        }
+        return null;
+      }
+    }
+
+    return TargetType.UNKNOWN;
+  }
+
+  /**
+   * Returns a set of targets where the given annotation may be applied, or {@code null} when the type is not a valid annotation.
+   */
+  @Nullable
+  public static Set<TargetType> getAnnotationTargets(@NotNull PsiClass annotationType) {
+    if (!annotationType.isAnnotationType()) return null;
+    PsiModifierList modifierList = annotationType.getModifierList();
+    if (modifierList == null) return null;
+    PsiAnnotation target = modifierList.findAnnotation(CommonClassNames.JAVA_LANG_ANNOTATION_TARGET);
+    if (target == null) return DEFAULT_TARGETS;  // if omitted it is applicable to all but Java 8 TYPE_USE/TYPE_PARAMETERS targets
+
+    return extractRequiredAnnotationTargets(target.findAttributeValue(null));
+  }
 }

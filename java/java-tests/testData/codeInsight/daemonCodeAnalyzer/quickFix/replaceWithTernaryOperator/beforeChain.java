@@ -5,6 +5,6 @@ import java.lang.Integer;
 class A{
   void test(){
     Integer integer = null;
-    int i = in<caret>teger.toString().length();
+    int i = integer.to<caret>String().length();
   }
 }

@@ -38,7 +38,7 @@ import static com.intellij.patterns.PlatformPatterns.psiElement;
 
 /**
  * User: catherine
- *
+ * <p/>
  * Complete known keys for dictionaries
  */
 public class PyDictKeyNamesCompletionContributor extends CompletionContributor {
@@ -58,23 +58,21 @@ public class PyDictKeyNamesCompletionContributor extends CompletionContributor {
           PySubscriptionExpression subscription = PsiTreeUtil.getParentOfType(original, PySubscriptionExpression.class);
           if (subscription == null) return;
           PsiElement operand = subscription.getOperand();
-          if (operand != null) {
-            PsiReference reference = operand.getReference();
-            if (reference != null) {
-              PsiElement resolvedElement = reference.resolve();
-              if (resolvedElement instanceof PyTargetExpression) {
-                PyDictLiteralExpression dict = PsiTreeUtil.getNextSiblingOfType(resolvedElement, PyDictLiteralExpression.class);
-                if (dict != null) {
-                  addDictLiteralKeys(dict, dictCompletion);
-                  PsiFile file = parameters.getOriginalFile();
-                  addAdditionalKeys(file, operand, dictCompletion);
-                }
-                PyCallExpression dictConstructor = PsiTreeUtil.getNextSiblingOfType(resolvedElement, PyCallExpression.class);
-                if (dictConstructor != null) {
-                  addDictConstructorKeys(dictConstructor, dictCompletion);
-                  PsiFile file = parameters.getOriginalFile();
-                  addAdditionalKeys(file, operand, dictCompletion);
-                }
+          PsiReference reference = operand.getReference();
+          if (reference != null) {
+            PsiElement resolvedElement = reference.resolve();
+            if (resolvedElement instanceof PyTargetExpression) {
+              PyDictLiteralExpression dict = PsiTreeUtil.getNextSiblingOfType(resolvedElement, PyDictLiteralExpression.class);
+              if (dict != null) {
+                addDictLiteralKeys(dict, dictCompletion);
+                PsiFile file = parameters.getOriginalFile();
+                addAdditionalKeys(file, operand, dictCompletion);
+              }
+              PyCallExpression dictConstructor = PsiTreeUtil.getNextSiblingOfType(resolvedElement, PyCallExpression.class);
+              if (dictConstructor != null) {
+                addDictConstructorKeys(dictConstructor, dictCompletion);
+                PsiFile file = parameters.getOriginalFile();
+                addAdditionalKeys(file, operand, dictCompletion);
               }
             }
           }
@@ -87,33 +85,39 @@ public class PyDictKeyNamesCompletionContributor extends CompletionContributor {
    * create completion result with prefix matcher if needed
    *
    * @param original is original element
-   * @param result is initial completion result
+   * @param result   is initial completion result
    * @param offset
    * @return
    */
-  private static CompletionResultSet createResult(@NotNull final PsiElement original, @NotNull final CompletionResultSet result, final int offset) {
+  private static CompletionResultSet createResult(@NotNull final PsiElement original,
+                                                  @NotNull final CompletionResultSet result,
+                                                  final int offset) {
     PyStringLiteralExpression prevElement = PsiTreeUtil.getPrevSiblingOfType(original, PyStringLiteralExpression.class);
     if (prevElement != null) {
       ASTNode prevNode = prevElement.getNode();
       if (prevNode != null) {
-        if (prevNode.getElementType() != PyTokenTypes.LBRACKET)
+        if (prevNode.getElementType() != PyTokenTypes.LBRACKET) {
           return result.withPrefixMatcher(findPrefix(prevElement, offset));
+        }
       }
     }
     final PsiElement parentElement = original.getParent();
     if (parentElement != null) {
-      if (parentElement instanceof PyStringLiteralExpression)
+      if (parentElement instanceof PyStringLiteralExpression) {
         return result.withPrefixMatcher(findPrefix((PyElement)parentElement, offset));
+      }
     }
     final PyNumericLiteralExpression number = PsiTreeUtil.findElementOfClassAtOffset(original.getContainingFile(),
-                                                                               offset - 1, PyNumericLiteralExpression.class, false);
-    if (number != null)
+                                                                                     offset - 1, PyNumericLiteralExpression.class, false);
+    if (number != null) {
       return result.withPrefixMatcher(findPrefix(number, offset));
+    }
     return result;
   }
 
   /**
    * finds prefix. For *'str'* returns just *'str*.
+   *
    * @param element to find prefix of
    * @return prefix
    */
@@ -147,9 +151,10 @@ public class PyDictKeyNamesCompletionContributor extends CompletionContributor {
   /**
    * add keys from assignment statements
    * For instance, dictionary['b']=b
-   * @param file to get additional keys
+   *
+   * @param file    to get additional keys
    * @param operand is operand of origin element
-   * @param result is completion result set
+   * @param result  is completion result set
    */
   private static void addAdditionalKeys(final PsiFile file, final PsiElement operand, final CompletionResultSet result) {
     PySubscriptionExpression[] subscriptionExpressions = PyUtil.getAllChildrenOfType(file, PySubscriptionExpression.class);
@@ -161,7 +166,8 @@ public class PyDictKeyNamesCompletionContributor extends CompletionContributor {
             PyExpression key = expr.getIndexExpression();
             if (key != null) {
               boolean addHandler = PsiTreeUtil.findElementOfClassAtRange(file, key.getTextRange().getStartOffset(),
-                                                           key.getTextRange().getEndOffset(), PyStringLiteralExpression.class) != null;
+                                                                         key.getTextRange().getEndOffset(),
+                                                                         PyStringLiteralExpression.class) != null;
               result.addElement(createElement(key.getText(), addHandler));
             }
           }
@@ -173,11 +179,12 @@ public class PyDictKeyNamesCompletionContributor extends CompletionContributor {
   /**
    * add keys from dict literal expression
    */
-  private static void addDictLiteralKeys(final PyDictLiteralExpression dict, final CompletionResultSet result) {
+  public static void addDictLiteralKeys(final PyDictLiteralExpression dict, final CompletionResultSet result) {
     PyKeyValueExpression[] keyValues = dict.getElements();
     for (PyKeyValueExpression expression : keyValues) {
       boolean addHandler = PsiTreeUtil.findElementOfClassAtRange(dict.getContainingFile(), expression.getTextRange().getStartOffset(),
-                                                           expression.getTextRange().getEndOffset(), PyStringLiteralExpression.class) != null;
+                                                                 expression.getTextRange().getEndOffset(),
+                                                                 PyStringLiteralExpression.class) != null;
       result.addElement(createElement(expression.getKey().getText(), addHandler));
     }
   }
@@ -193,7 +200,7 @@ public class PyDictKeyNamesCompletionContributor extends CompletionContributor {
       .withTypeText("dict key")
       .withIcon(PlatformIcons.PARAMETER_ICON);
 
-    if (addHandler)
+    if (addHandler) {
       item = item.withInsertHandler(new InsertHandler<LookupElement>() {
         @Override
         public void handleInsert(final InsertionContext context, final LookupElement item) {
@@ -217,7 +224,7 @@ public class PyDictKeyNamesCompletionContributor extends CompletionContributor {
           }
         }
       });
+    }
     return item;
   }
-
 }

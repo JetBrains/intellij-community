@@ -57,6 +57,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.WeakHashMap;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -801,6 +802,10 @@ public class PopupFactoryImpl extends JBPopupFactory {
     @Override
     public String getTooltipTextFor(ActionItem value) {
       return value.getDescription();
+    }
+
+    @Override
+    public void setEmptyText(@NotNull StatusText emptyText) {
     }
 
     @Override

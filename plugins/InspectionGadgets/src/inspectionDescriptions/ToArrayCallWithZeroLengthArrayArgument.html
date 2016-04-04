@@ -4,7 +4,7 @@ Reports any call to <b>toArray()</b>
 on an object of type or subtype <b>java.util.Collection</b>
 with a zero-length array argument. When passing in an array of too small size, the 
 <b>toArray()</b> method has to construct a new array of
-the right size using reflection. This has significantly worse performance than passing
+the right size using reflection. On older JVMs this has worse performance than passing
 in an array of at least the size of the collection itself.
 <!-- tooltip end -->
 <p>

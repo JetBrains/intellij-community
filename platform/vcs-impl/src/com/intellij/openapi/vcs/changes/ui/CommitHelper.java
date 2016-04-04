@@ -19,9 +19,9 @@ package com.intellij.openapi.vcs.changes.ui;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.util.DelegatingProgressIndicator;
-import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -40,7 +40,6 @@ import com.intellij.openapi.vcs.changes.actions.MoveChangesToAnotherListAction;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
-import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
@@ -49,6 +48,7 @@ import com.intellij.util.NullableFunction;
 import com.intellij.util.WaitForProgressToShow;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.ConfirmationDialog;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -116,47 +116,30 @@ public class CommitHelper {
   }
 
   private boolean doCommit(final GeneralCommitProcessor processor) {
+    Task.Backgroundable task = new Task.Backgroundable(myProject, myActionName, true, myConfiguration.getCommitOption()) {
+      public void run(@NotNull final ProgressIndicator indicator) {
+        final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
+        vcsManager.startBackgroundVcsOperation();
+        try {
+          delegateCommitToVcsThread(processor);
+        }
+        finally {
+          vcsManager.stopBackgroundVcsOperation();
+        }
+      }
 
-    final Runnable action = new Runnable() {
-      public void run() {
-        delegateCommitToVcsThread(processor);
+      @Override
+      public boolean shouldStartInBackground() {
+        return !myForceSyncCommit && super.shouldStartInBackground();
+      }
+
+      @Override
+      public boolean isConditionalModal() {
+        return myForceSyncCommit;
       }
     };
-
-    if (myForceSyncCommit) {
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(action, myActionName, true, myProject);
-      boolean success = doesntContainErrors(processor.getVcsExceptions());
-      if (success) {
-        reportResult(processor);
-      }
-      return success;
-    }
-    else {
-      Task.Backgroundable task =
-        new Task.Backgroundable(myProject, myActionName, true, myConfiguration.getCommitOption()) {
-          public void run(@NotNull final ProgressIndicator indicator) {
-            final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
-            vcsManager.startBackgroundVcsOperation();
-            try {
-              action.run();
-            }
-            finally {
-              vcsManager.stopBackgroundVcsOperation();
-            }
-          }
-
-          @Override
-          public NotificationInfo notifyFinished() {
-            if (myCustomResultHandler == null) {
-              String text = reportResult(processor);
-              return new NotificationInfo("VCS Commit", "VCS Commit Finished", text, true);
-            }
-            return null;
-          }
-        };
-      ProgressManager.getInstance().run(task);
-      return false;
-    }
+    ProgressManager.getInstance().run(task);
+    return doesntContainErrors(processor.getVcsExceptions());
   }
 
   private void delegateCommitToVcsThread(final GeneralCommitProcessor processor) {
@@ -190,31 +173,58 @@ public class CommitHelper {
     }
   }
 
-  private String reportResult(GeneralCommitProcessor processor) {
-    final List<Change> changesFailedToCommit = processor.getChangesFailedToCommit();
+  private void reportResult(@NotNull GeneralCommitProcessor processor) {
+    List<VcsException> errors = collectErrors(processor.getVcsExceptions());
+    int errorsSize = errors.size();
+    int warningsSize = processor.getVcsExceptions().size() - errorsSize;
 
-    int failed = changesFailedToCommit.size();
-    int committed = myIncludedChanges.size() - failed;
-
-    String text = committed + " " + StringUtil.pluralize("file", committed) + " committed";
-    if (failed > 0) {
-      text += ", " + failed + " " + StringUtil.pluralize("file", failed) + " failed to commit";
+    VcsNotifier notifier = VcsNotifier.getInstance(myProject);
+    String message = getCommitSummary(processor);
+    if (errorsSize > 0) {
+      String title = StringUtil.pluralize(VcsBundle.message("message.text.commit.failed.with.error"), errorsSize);
+      notifier.notifyError(title, message);
     }
-    StringBuilder content = new StringBuilder(StringUtil.isEmpty(myCommitMessage) ? text : text + ": " + escape(myCommitMessage));
-    for (String s : myFeedback) {
-      content.append("\n");
-      content.append(s);
+    else if (warningsSize > 0) {
+      String title = StringUtil.pluralize(VcsBundle.message("message.text.commit.finished.with.warning"), warningsSize);
+      notifier.notifyImportantWarning(title, message);
     }
-    NotificationType notificationType = resolveNotificationType(processor);
-    VcsBalloonProblemNotifier.NOTIFICATION_GROUP.createNotification(content.toString(), notificationType).notify(myProject);
-    return text;
+    else {
+      notifier.notifySuccess(message);
+    }
   }
 
-  private static NotificationType resolveNotificationType(@NotNull GeneralCommitProcessor processor) {
-    boolean hasExceptions = !processor.getVcsExceptions().isEmpty();
-    boolean hasOnlyWarnings = doesntContainErrors(processor.getVcsExceptions());
+  @NotNull
+  private String getCommitSummary(@NotNull GeneralCommitProcessor processor) {
+    StringBuilder content = new StringBuilder(getFileSummaryReport(processor.getChangesFailedToCommit()));
+    if (!StringUtil.isEmpty(myCommitMessage)) {
+      content.append(": ").append(escape(myCommitMessage));
+    }
+    if (!myFeedback.isEmpty()) {
+      content.append("<br/>");
+      content.append(StringUtil.join(myFeedback, "<br/>"));
+    }
+    List<VcsException> exceptions = processor.getVcsExceptions();
+    if (!doesntContainErrors(exceptions)) {
+      content.append("<br/>");
+      content.append(StringUtil.join(exceptions, new Function<VcsException, String>() {
+        @Override
+        public String fun(VcsException e) {
+          return e.getMessage();
+        }
+      }, "<br/>"));
+    }
+    return content.toString();
+  }
 
-    return hasExceptions ? (hasOnlyWarnings ? NotificationType.WARNING : NotificationType.ERROR) : NotificationType.INFORMATION;
+  @NotNull
+  private String getFileSummaryReport(@NotNull List<Change> changesFailedToCommit) {
+    int failed = changesFailedToCommit.size();
+    int committed = myIncludedChanges.size() - failed;
+    String fileSummary = committed + " " + StringUtil.pluralize("file", committed) + " committed";
+    if (failed > 0) {
+      fileSummary += ", " + failed + " " + StringUtil.pluralize("file", failed) + " failed to commit";
+    }
+    return fileSummary;
   }
 
   /*
@@ -256,8 +266,6 @@ public class CommitHelper {
       }
 
       processor.doBeforeRefresh();
-
-      AbstractVcsHelper.getInstance(myProject).showErrors(processor.getVcsExceptions(), myActionName);
     }
     catch (ProcessCanceledException pce) {
       throw pce;
@@ -430,8 +438,13 @@ public class CommitHelper {
     }
 
     public void afterFailedCheckIn() {
-      moveToFailedList(myChangeList, myCommitMessage, getChangesFailedToCommit(),
-                       VcsBundle.message("commit.dialog.failed.commit.template", myChangeList.getName()), myProject);
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          moveToFailedList(myChangeList, myCommitMessage, getChangesFailedToCommit(),
+                           VcsBundle.message("commit.dialog.failed.commit.template", myChangeList.getName()), myProject);
+        }
+      }, ModalityState.defaultModalityState(), myProject.getDisposed());
     }
 
     public void doBeforeRefresh() {
@@ -591,6 +604,10 @@ public class CommitHelper {
       }
     }
 
+    if (myCustomResultHandler == null) {
+      reportResult(processor);
+    }
+
     if ((errorsSize == 0) && (warningsSize == 0)) {
       final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
       if (indicator != null) {
@@ -599,7 +616,9 @@ public class CommitHelper {
     }
     else {
       if (myCustomResultHandler == null) {
-        showErrorDialogAndMoveToAnotherList(processor, errorsSize, warningsSize, errors);
+        if (errorsSize > 0) {
+          processor.afterFailedCheckIn();
+        }
       }
       else {
         myCustomResultHandler.onFailure();
@@ -607,36 +626,7 @@ public class CommitHelper {
     }
   }
 
-  private void showErrorDialogAndMoveToAnotherList(final GeneralCommitProcessor processor, final int errorsSize, final int warningsSize,
-                                                   @NotNull final List<VcsException> errors) {
-    WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
-      public void run() {
-        String message;
-        if (errorsSize > 0 && warningsSize > 0) {
-          message = VcsBundle.message("message.text.commit.failed.with.errors.and.warnings");
-        }
-        else if (errorsSize > 0) {
-          message = StringUtil.pluralize(VcsBundle.message("message.text.commit.failed.with.error"), errorsSize);
-        }
-        else {
-          message = StringUtil.pluralize(VcsBundle.message("message.text.commit.finished.with.warning"), warningsSize);
-        }
-        message += ":\n" + StringUtil.join(errors, new Function<VcsException, String>() {
-          @Override
-          public String fun(VcsException e) {
-            return e.getMessage();
-          }
-        }, "\n");
-        //new VcsBalloonProblemNotifier(myProject, message, MessageType.ERROR).run();
-        Messages.showErrorDialog(message, VcsBundle.message("message.title.commit"));
-
-        if (errorsSize > 0) {
-          processor.afterFailedCheckIn();
-        }
-      }
-    }, null, myProject);
-  }
-
+  @CalledInAwt
   public static void moveToFailedList(final ChangeList changeList,
                                       final String commitMessage,
                                       final List<Change> failedChanges,

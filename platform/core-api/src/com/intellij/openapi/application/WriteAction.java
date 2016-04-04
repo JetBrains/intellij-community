@@ -16,8 +16,9 @@
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public abstract class WriteAction<T> extends BaseActionRunnable<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.application.WriteAction");
@@ -42,12 +43,13 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
     application.invokeAndWait(new Runnable() {
       @Override
       public void run() {
-        application.runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            result.run();
-          }
-        });
+        AccessToken token = application.acquireWriteActionLock(WriteAction.this.getClass());
+        try {
+          result.run();
+        }
+        finally {
+          token.finish();
+        }
       }
     }, ModalityState.defaultModalityState());
 
@@ -57,11 +59,13 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
 
   @NotNull
   public static AccessToken start() {
-    return start(null);
+    // get useful information about the write action
+    Class aClass = ObjectUtils.notNull(ReflectionUtil.getGrandCallerClass(), WriteAction.class);
+    return start(aClass);
   }
 
   @NotNull
-  public static AccessToken start(@Nullable Class clazz) {
+  public static AccessToken start(@NotNull Class clazz) {
     return ApplicationManager.getApplication().acquireWriteActionLock(clazz);
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,11 +47,20 @@ import java.util.Locale;
  */
 public class HtmlDocumentationProvider implements DocumentationProvider {
   private DocumentationProvider myStyleProvider = null;
+  private final boolean myUseStyleProvider;
   private static DocumentationProvider ourScriptProvider;
 
   @NonNls public static final String ELEMENT_ELEMENT_NAME = "element";
   @NonNls public static final String NBSP = ":&nbsp;";
   @NonNls public static final String BR = "<br>";
+
+  public HtmlDocumentationProvider() {
+    this(true);
+  }
+
+  public HtmlDocumentationProvider(boolean useStyleProvider) {
+    myUseStyleProvider = useStyleProvider;
+  }
 
   @Override
   @Nullable
@@ -335,6 +344,7 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
   
   @Nullable
   private DocumentationProvider getStyleProvider() {
+    if (!myUseStyleProvider) return null;
     if (myStyleProvider == null) {
       Language cssLanguage = Language.findLanguageByID("CSS");
       if (cssLanguage != null) {

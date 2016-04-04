@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakStringInterner;
@@ -274,7 +275,7 @@ public class UrlClassLoader extends ClassLoader {
   @Nullable
   private Resource _getResource(final String name) {
     String n = name;
-    if (n.startsWith("/")) n = n.substring(1);
+    n = StringUtil.trimStart(n, "/");
     return getClassPath().getResource(n, true);
   }
 

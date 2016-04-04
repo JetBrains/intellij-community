@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -33,13 +32,10 @@ public class TerminalOptionsConfigurable implements SearchableConfigurable, Conf
   public static final String TERMINAL_SETTINGS_HELP_REFERENCE = "reference.settings.terminal";
 
   private TerminalSettingsPanel myPanel;
-
   private final TerminalOptionsProvider myOptionsProvider;
-  private Project myProject;
 
-  public TerminalOptionsConfigurable(Project project) {
+  public TerminalOptionsConfigurable() {
     myOptionsProvider = TerminalOptionsProvider.getInstance();
-    myProject = project;
   }
 
   @NotNull
@@ -52,7 +48,6 @@ public class TerminalOptionsConfigurable implements SearchableConfigurable, Conf
   public Runnable enableSearch(String option) {
     return null;
   }
-
 
   @Nls
   @Override
@@ -68,7 +63,6 @@ public class TerminalOptionsConfigurable implements SearchableConfigurable, Conf
   @Override
   public JComponent createComponent() {
     myPanel = new TerminalSettingsPanel();
-
     return myPanel.createPanel(myOptionsProvider);
   }
 
@@ -81,7 +75,6 @@ public class TerminalOptionsConfigurable implements SearchableConfigurable, Conf
   public void apply() throws ConfigurationException {
     myPanel.apply();
   }
-
 
   @Override
   public void reset() {

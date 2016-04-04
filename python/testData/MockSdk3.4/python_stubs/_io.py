@@ -1,7 +1,7 @@
 # encoding: utf-8
 # module _io calls itself io
 # from (built-in)
-# by generator 1.135
+# by generator 1.138
 """
 The io module provides the Python interfaces to stream handling. The
 builtin open function is defined in this module.
@@ -173,15 +173,11 @@ def open(name, mode=None, buffering=None): # known case of _io.open
 
 # classes
 
-from .OSError import OSError
-
 class BlockingIOError(OSError):
     """ I/O operation would block. """
     def __init__(self, *args, **kwargs): # real signature unknown
         pass
 
-
-from .object import object
 
 class _IOBase(object):
     """
@@ -370,8 +366,6 @@ class _IOBase(object):
     __dict__ = None # (!) real value is ''
 
 
-from ._IOBase import _IOBase
-
 class _BufferedIOBase(_IOBase):
     """
     Base class for buffered IO objects.
@@ -446,8 +440,6 @@ class _BufferedIOBase(_IOBase):
     def __init__(self, *args, **kwargs): # real signature unknown
         pass
 
-
-from ._BufferedIOBase import _BufferedIOBase
 
 class BufferedRandom(_BufferedIOBase):
     """
@@ -545,8 +537,6 @@ class BufferedRandom(_BufferedIOBase):
 
 
 
-from ._BufferedIOBase import _BufferedIOBase
-
 class BufferedReader(_BufferedIOBase):
     """ Create a new buffered reader using the given readable raw IO object. """
     def close(self, *args, **kwargs): # real signature unknown
@@ -634,8 +624,6 @@ class BufferedReader(_BufferedIOBase):
 
 
 
-from ._BufferedIOBase import _BufferedIOBase
-
 class BufferedRWPair(_BufferedIOBase):
     """
     A buffered reader and writer object together.
@@ -692,8 +680,6 @@ class BufferedRWPair(_BufferedIOBase):
     closed = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
 
 
-
-from ._BufferedIOBase import _BufferedIOBase
 
 class BufferedWriter(_BufferedIOBase):
     """
@@ -771,8 +757,6 @@ class BufferedWriter(_BufferedIOBase):
     _finalizing = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
 
 
-
-from ._BufferedIOBase import _BufferedIOBase
 
 class BytesIO(_BufferedIOBase):
     """
@@ -946,8 +930,6 @@ class BytesIO(_BufferedIOBase):
 
 
 
-from ._IOBase import _IOBase
-
 class _RawIOBase(_IOBase):
     """ Base class for raw binary I/O. """
     def read(self, *args, **kwargs): # real signature unknown
@@ -960,8 +942,6 @@ class _RawIOBase(_IOBase):
     def __init__(self, *args, **kwargs): # real signature unknown
         pass
 
-
-from ._RawIOBase import _RawIOBase
 
 class FileIO(_RawIOBase):
     """
@@ -1104,8 +1084,6 @@ class FileIO(_RawIOBase):
 
 
 
-from .object import object
-
 class IncrementalNewlineDecoder(object):
     """
     Codec used when reading a file in universal newlines mode.  It wraps
@@ -1139,8 +1117,6 @@ class IncrementalNewlineDecoder(object):
     newlines = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
 
 
-
-from ._IOBase import _IOBase
 
 class _TextIOBase(_IOBase):
     """
@@ -1208,8 +1184,6 @@ Subclasses should override.
 """
 
 
-
-from ._TextIOBase import _TextIOBase
 
 class StringIO(_TextIOBase):
     """
@@ -1320,8 +1294,6 @@ class StringIO(_TextIOBase):
     newlines = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
 
 
-
-from ._TextIOBase import _TextIOBase
 
 class TextIOWrapper(_TextIOBase):
     """
@@ -1435,10 +1407,6 @@ class TextIOWrapper(_TextIOBase):
 
 
 
-from .ValueError import ValueError
-
-from .OSError import OSError
-
 class UnsupportedOperation(ValueError, OSError):
     # no doc
     def __init__(self, *args, **kwargs): # real signature unknown
@@ -1448,8 +1416,6 @@ class UnsupportedOperation(ValueError, OSError):
     """list of weak references to the object (if defined)"""
 
 
-
-from .object import object
 
 class __loader__(object):
     """

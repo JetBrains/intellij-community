@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.openapi.util.io;
 import com.intellij.openapi.diagnostic.LoggerRt;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,10 +31,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Queue;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
@@ -63,7 +61,6 @@ public class FileUtilRt {
   };
 
   protected static final ThreadLocal<byte[]> BUFFER = new ThreadLocal<byte[]>() {
-    @Override
     protected byte[] initialValue() {
       return new byte[1024 * 20];
     }
@@ -99,7 +96,6 @@ public class FileUtilRt {
         ourFilesDeleteIfExistsMethod = filesClass.getMethod("deleteIfExists", pathClass);
         final Object Result_Continue = Class.forName("java.nio.file.FileVisitResult").getDeclaredField("CONTINUE").get(null);
         ourDeletionVisitor = Proxy.newProxyInstance(FileUtilRt.class.getClassLoader(), new Class[]{visitorClass}, new InvocationHandler() {
-          @Override
           public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
             if (args.length == 2) {
               final Object second = args[1];
@@ -315,7 +311,7 @@ public class FileUtilRt {
   }
 
   private static class FilesToDeleteHolder {
-    public static final Queue<String> ourFilesToDelete = createFilesToDelete();
+    private static final Queue<String> ourFilesToDelete = createFilesToDelete();
 
     private static Queue<String> createFilesToDelete() {
       final ConcurrentLinkedQueue<String> queue = new ConcurrentLinkedQueue<String>();
@@ -387,62 +383,49 @@ public class FileUtilRt {
       prefix = (prefix + "___").substring(0, 3);
     }
     if (suffix == null) {
-      suffix = ".tmp";
+      suffix = "";
     }
+    // normalize and use only the file name from the prefix
+    prefix = new File(prefix).getName();
 
     int exceptionsCount = 0;
+    int i = 0;
     while (true) {
       try {
-        // If there was an IOException, there's no reason to do sequential search - fallback to random
-        final File temp = createTemp(prefix, suffix, dir, isDirectory, exceptionsCount > 0);
-        return normalizeFile(temp);
+        File f = calcName(dir, prefix, suffix, i);
+
+        boolean success = isDirectory ? f.mkdir() : f.createNewFile();
+        if (!success) {
+          List<String> list = Arrays.asList(f.getParentFile().list());
+          throw new IOException("Unable to create temporary file " + f + "\nDirectory '" + f.getParentFile() +
+                                "' list ("+list.size()+" children): " + list);
+        }
+
+        return normalizeFile(f);
       }
       catch (IOException e) { // Win32 createFileExclusively access denied
         if (++exceptionsCount >= 100) {
           throw e;
         }
       }
+      i++; // for some reason the file1 can't be created (previous file1 was deleted but got locked by anti-virus?). try file2.
+      if (i > 2) {
+        i = 2 + (int)(System.nanoTime() % 998); // generate random suffix if too many failures
+      }
     }
   }
 
   @NotNull
-  private static File createTemp(@NotNull String prefix,
-                                 @NotNull String suffix,
-                                 @NotNull File directory,
-                                 boolean isDirectory,
-                                 boolean randomName) throws IOException {
-    // Fallback to the original File.createTempFile
-    if (randomName) {
-      @SuppressWarnings("SSBasedInspection")
-      File res = File.createTempFile(prefix, suffix, directory);
-      if (isDirectory) {
-        if (!res.delete() || !res.mkdir()) {
-          throw new IOException("Cannot create directory: " + res);
-        }
-      }
-      return res;
+  private static File calcName(@NotNull File dir, @NotNull String prefix, @NotNull String suffix, int i) throws IOException {
+    prefix += i == 0 ? "" : i;
+    if (prefix.endsWith(".") && suffix.startsWith(".")) {
+      prefix = prefix.substring(0, prefix.length() - 1);
     }
-
-    // normalize and use only the file name from the prefix
-    prefix = new File(prefix).getName();
-
-    File f;
-    int i = 0;
-    do {
-      String name = prefix + i + suffix;
-      f = new File(directory, name);
-      if (!name.equals(f.getName())) {
-        throw new IOException("Unable to create temporary file " + f + " for name " + name);
-      }
-      i++;
+    String name = prefix + suffix;
+    File f = new File(dir, name);
+    if (!name.equals(f.getName())) {
+      throw new IOException("Unable to create temporary file " + f + " for name " + name);
     }
-    while (f.exists());
-
-    boolean success = isDirectory ? f.mkdir() : f.createNewFile();
-    if (!success) {
-      throw new IOException("Unable to create temporary file " + f);
-    }
-
     return f;
   }
 
@@ -500,10 +483,14 @@ public class FileUtilRt {
    * @throws IOException if there is a problem with setting the flag
    */
   public static void setExecutableAttribute(@NotNull String path, boolean executableFlag) throws IOException {
-    final File file = new File(path);
-    if (!file.setExecutable(executableFlag) && file.canExecute() != executableFlag) {
-      logger().warn("Can't set executable attribute of '" + path + "' to " + executableFlag);
+    try {
+      File file = new File(path);
+      //noinspection Since15
+      if (!file.setExecutable(executableFlag) && file.canExecute() != executableFlag) {
+        logger().warn("Can't set executable attribute of '" + path + "' to " + executableFlag);
+      }
     }
+    catch (LinkageError ignored) { }
   }
 
   @NotNull
@@ -631,6 +618,9 @@ public class FileUtilRt {
 
   @NotNull
   public static byte[] loadBytes(@NotNull InputStream stream, int length) throws IOException {
+    if (length == 0) {
+      return ArrayUtilRt.EMPTY_BYTE_ARRAY;
+    }
     byte[] bytes = new byte[length];
     int count = 0;
     while (count < length) {
@@ -867,13 +857,11 @@ public class FileUtilRt {
 
   private interface CharComparingStrategy {
     CharComparingStrategy IDENTITY = new CharComparingStrategy() {
-      @Override
       public boolean charsEqual(char ch1, char ch2) {
         return ch1 == ch2;
       }
     };
     CharComparingStrategy CASE_INSENSITIVE = new CharComparingStrategy() {
-      @Override
       public boolean charsEqual(char ch1, char ch2) {
         return StringUtilRt.charsEqualIgnoreCase(ch1, ch2);
       }

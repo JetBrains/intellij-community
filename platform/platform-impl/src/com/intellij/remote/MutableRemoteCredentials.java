@@ -25,6 +25,8 @@ public interface MutableRemoteCredentials extends RemoteCredentials {
 
   void setPort(int port);
 
+  void setLiteralPort(String portText);
+
   void setUserName(String userName);
 
   void setPassword(@Nullable String password);

@@ -1,0 +1,445 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import org.jetbrains.jps.LayoutInfo
+
+setProperty("home", getHome())
+includeTargets << new File("$home/community/build/scripts/utils.gant")
+includeTargets << new File("$home/community/build/scripts/libLicenses.gant")
+includeTargets << new File("$home/build/scripts/ultimate_utils.gant")
+
+requireProperty("buildNumber", requireProperty("build.number", snapshot))
+setProperty("buildName", "EDU-$buildNumber")
+setProperty("ch", "$home/community")
+setProperty("pythonCommunityHome", "$ch/python")
+setProperty("pythonEduHome", "$ch/python/educational-python")
+
+// load ApplicationInfo.xml properties
+ant.xmlproperty(file: "$pythonEduHome/resources/idea/PyCharmEduApplicationInfo.xml", collapseAttributes: "true")
+setProperty("system_selector", "PyCharmEdu${p("component.version.major")}0")
+setProperty("dryRun", false)
+setProperty("jdk16", guessJdk())
+
+//modules to compile
+setProperty("pluginFilter", new File("$pythonEduHome/build/plugin-list.txt").readLines())
+
+private String getHome(){
+  // current file is supposed to be at build/scripts/*.gant path
+  String uri = this["gant.file"]
+  return new File(new URI(uri).getSchemeSpecificPart()).getParentFile().getParentFile().getParentFile().getParentFile().getParentFile()
+}
+
+private List<String> pycharmPlatformApiModules() {
+  return [platformApiModules, "dom-openapi"].flatten()
+}
+
+
+private List pycharmImplementationModules() {   //modules to put into pycharm.jar
+  return [platformImplementationModules, "dom-impl", "python-community", "python-community-ide-resources",
+    "python-ide-community", "python-community-configure", "educational-python", "python-openapi", "python-psi-api", "platform-main"].flatten()
+}
+
+private List modules() {
+  return [
+    "python-pydev", "colorSchemes", pycharmPlatformApiModules(), pycharmImplementationModules(), pluginFilter
+  ].flatten()
+}
+
+private List approvedJars() {
+  def normalizedHome = ch.replace('\\', '/')
+  def normalizedPythonHome = pythonCommunityHome.replace('\\', '/')
+  return ["$normalizedHome/lib/", "$normalizedPythonHome/lib/", "$normalizedHome/xml/relaxng/lib/"]
+}
+
+class Paths {
+  final sandbox
+  final distAll
+  final distWin
+  final distMac
+  final distUnix
+  final artifacts
+  final ideaSystem
+  final ideaConfig
+
+  def Paths(String home) {
+    sandbox = "$home/out/pycharmEDU"
+
+    distAll = "$sandbox/layout"
+    distWin = "$sandbox/win"
+    distMac = "$sandbox/mac"
+    distUnix = "$sandbox/unix"
+    artifacts = "$sandbox/artifacts"
+
+    ideaSystem = "$sandbox/system"
+    ideaConfig = "$sandbox/config"
+  }
+}
+
+setProperty("paths", new Paths(home))
+
+target('default': "Build artifacts") {
+
+  loadProject()
+
+  projectBuilder.stage("Cleaning up sandbox folder")
+
+  projectBuilder.targetFolder = "${paths.sandbox}/classes"
+  projectBuilder.dryRun = dryRun
+
+  if (!dryRun) {
+    forceDelete(paths.sandbox)
+    ant.mkdir(dir: paths.sandbox)
+    //Use EDU versions of IdeTipsAndTricks.xml and icon-robots.txt.
+    ant.delete(file: "${pythonCommunityHome}/src/META-INF/IdeTipsAndTricks.xml")
+    ant.delete(file: "${pythonCommunityHome}/resources/icon-robots.txt")
+  }
+
+  ant.tstamp() {
+    format(property: "todayYear", pattern: "yyyy")
+  }
+
+  bundledJDKs()
+
+  ant.patternset(id: "resources.included") {
+    include(name: "**/*.properties")
+    include(name: "fileTemplates/**/*")
+    include(name: "inspectionDescriptions/**/*")
+    include(name: "intentionDescriptions/**/*")
+    include(name: "tips/**/*")
+    include(name: "search/**/*")
+  }
+
+  ant.patternset(id: "resources.excluded") {
+    exclude(name: "**/*.properties")
+    exclude(name: "fileTemplates/**/*")
+    exclude(name: "fileTemplates")
+    exclude(name: "inspectionDescriptions/**/*")
+    exclude(name: "inspectionDescriptions")
+    exclude(name: "intentionDescriptions/**/*")
+    exclude(name: "intentionDescriptions")
+    exclude(name: "tips/**/*")
+    exclude(name: "tips")
+    exclude(name: "courses")
+    exclude(name: "courses/*")
+  }
+
+  zipSources(home, paths.artifacts)
+
+  def usedJars = buildModulesAndCollectUsedJars(modules(), approvedJars(), ["/ant/"])
+
+  layoutEducational("${paths.sandbox}/classes/production", usedJars)
+
+  def extraArgs = ["build.code": "pycharm${buildName}", "build.number": "PE-$buildNumber", "artifacts.path": "${paths.artifacts}"]
+  def sitFileName = "pycharm${buildName}"
+  ant.copy(file: "${paths.artifacts}/pycharm${buildName}.mac.zip", tofile: "${paths.artifacts}/${sitFileName}-no-jdk.sit")
+
+  signMacZip("pycharm", extraArgs + ["sitFileName": "${sitFileName}-no-jdk"])
+  notifyArtifactBuilt("${paths.artifacts}/${sitFileName}-no-jdk.sit")
+  buildDmg("pycharm", "${pythonEduHome}/build/DMG_background.png", extraArgs + ["sitFileName": "${sitFileName}-no-jdk"])
+
+  if (p("jdk.mac") != "false" && new File(macCustomJDK).exists()) {
+    ant.copy(file: "${paths.artifacts}/pycharm${buildName}.mac.zip", tofile: "${paths.artifacts}/${sitFileName}.sit")
+    signMacZip("pycharm", extraArgs + ["sitFileName": "${sitFileName}", "jdk_archive_name": macCustomJDK])
+    buildDmg("pycharm", "${pythonEduHome}/build/DMG_background.png", extraArgs + ["sitFileName": "${sitFileName}"])
+  }
+
+  ant.delete(file: "${paths.artifacts}/pycharm${buildName}.mac.zip")
+}
+
+public layoutEducational(String classesPath, Set usedJars) {
+  setProperty("pluginFilter", new File("$pythonEduHome/build/plugin-list.txt").readLines())
+
+  if (usedJars == null) {
+    usedJars = collectUsedJars(modules(), approvedJars(), ["/ant/"], null)
+  }
+
+  def paths = new Paths(home)
+  buildSearchableOptions("${projectBuilder.moduleOutput(findModule("platform-resources"))}/search", [], {
+    projectBuilder.moduleRuntimeClasspath(findModule("main_pycharm_edu"), false).each {
+      ant.pathelement(location: it)
+    }
+  }, "-Didea.platform.prefix=PyCharmEdu")
+
+  def appInfo = appInfoFile()
+  if (!dryRun) {
+    wireBuildDate("PE-${buildNumber}", appInfo)
+  }
+
+  Map args = [
+    buildNumber: "PE-${buildNumber}",
+    system_selector: system_selector,
+    ide_jvm_args: "-Didea.platform.prefix=PyCharmEdu"]
+
+  LayoutInfo layoutInfo = layoutFull(args, paths.distAll, usedJars)
+  generateLicensesTable("$paths.artifacts/third-party-libraries.txt", layoutInfo.usedModules);
+
+  layoutWin(args, paths.distWin)
+  layoutUnix(args, paths.distUnix)
+  layoutMac(args, paths.distMac)
+
+  ant.echo(message: "PE-${buildNumber}", file: "${paths.distAll}/build.txt")
+
+  def launcher = "${paths.distWin}/bin/pycharm.exe"
+  List resourcePaths = ["$ch/community-resources/src",
+    "$ch/platform/icons/src",
+    "$pythonCommunityHome/python-community-ide-resources/resources",
+    "$pythonCommunityHome/resources",
+    "$pythonEduHome/resources"]
+  buildWinLauncher(ch, "$ch/bin/WinLauncher/WinLauncher.exe", launcher,
+                   appInfo, "$pythonEduHome/build/pycharm_edu_launcher.properties", system_selector, resourcePaths)
+  signExecutableFiles("${paths.distWin}/bin")
+
+  buildWinZip("${paths.artifacts}/pycharm${buildName}.zip", [paths.distAll, paths.distWin, "${paths.sandbox}/jdk.win"])
+
+  //EDU installation with a custom page dialog
+  ant.copy(file: "$ch/python/educational-python/build/desktop.ini", tofile: "${paths.sandbox}/nsiconf/desktop.ini", overwrite: "true")
+  ant.copy(file: "$ch/python/educational-python/build/customInstallActions.nsi", tofile: "${paths.sandbox}/nsiconf/customInstallActions.nsi", overwrite: "true")
+  buildNSIS([paths.distAll, paths.distWin],
+            "$pythonEduHome/build/strings.nsi", "$pythonEduHome/build/paths.nsi",
+            "pycharmEDU-", false, true, system_selector)
+
+  String tarRoot = isEap() ? "pycharm-edu-$buildNumber" : "pycharm-edu-${p("component.version.major")}.${p("component.version.minor")}"
+  buildTarGz(tarRoot, "$paths.artifacts/pycharm${buildName}-no-jdk.tar", [paths.distAll, paths.distUnix])
+  if (p("jdk.linux") != "false") {
+    buildTarGz(tarRoot, "$paths.artifacts/pycharm${buildName}.tar", [paths.distAll, paths.distUnix, "${paths.sandbox}/jdk.linux"], ["jre/jre/bin/*"])
+  }
+
+
+  String macAppRoot = isEap() ? "PyCharm Edu ${p("component.version.major")}.${p("component.version.minor")} EAP.app/Contents" : "PyCharm Edu.app/Contents"
+  buildMacZip(macAppRoot, "${paths.artifacts}/pycharm${buildName}.mac.zip", [paths.distAll], paths.distMac)
+}
+
+private layoutPlugins(layouts) {
+  dir("plugins") {
+    layouts.layoutPlugin("student")
+    layouts.layoutPlugin("student-python") {
+      dir("courses") {
+        fileset(dir: "$pythonEduHome/student-python/resources/courses")
+      }
+    }
+    layouts.layoutPlugin("course-creator")
+    layouts.layoutPlugin("course-creator-python")
+    layouts.layoutPlugin("ipnb") {
+      fileset(dir: "$pythonCommunityHome/ipnb/lib")
+    }
+  }
+
+  layouts.layoutCommunityPlugins(ch)
+}
+
+private String appInfoFile() {
+  return "$home/out/pycharmEDU/classes/production/educational-python/idea/PyCharmEduApplicationInfo.xml"
+}
+
+private layoutFull(Map args, String target, Set usedJars) {
+  def openapiModules = pycharmPlatformApiModules()
+  def superLayouts = includeFile("$ch/build/scripts/layouts.gant")
+
+  reassignAltClickToMultipleCarets("$ch")
+  
+  def result = layout(target) {
+    dir("lib") {
+      jar("util.jar") {
+        module("util")
+        module("util-rt")
+      }
+
+      jar("openapi.jar") {
+        openapiModules.each { module it }
+      }
+
+      jar("annotations.jar") {
+        module("annotations-common")
+        module("annotations")
+      }
+      jar("extensions.jar") { module("extensions") }
+
+      jar([name: "pycharm.jar", duplicate: "preserve"]) {
+        pycharmImplementationModules().each {
+          module(it) {
+            exclude(name: "**/tips/**")
+          }
+        }
+      }
+
+      jar("educational-core.jar") {
+        module("educational-core")
+      }
+
+      jar("pycharm-pydev.jar") {
+        module("python-pydev")
+      }
+
+      jar("bootstrap.jar") { module("bootstrap") }
+      jar("resources.jar") {
+        module("platform-resources")
+        module("colorSchemes")
+      }
+
+      jar("forms_rt.jar") {
+        module("forms_rt")
+      }
+
+      //noinspection GroovyAssignabilityCheck
+      jar([name: "resources_en.jar", duplicate: "preserve"]) {
+        // custom resources should go first
+        module("python-community-ide-resources") {
+          ant.patternset {
+            include(name: "**/tips/**")
+          }
+        }
+        module("platform-resources-en") {
+          ant.patternset {
+            exclude(name: "tips/images/switcher.png")
+            exclude(name: "tips/images/navigateToFilePath.gif")
+          }
+        }
+      }
+
+      jar("icons.jar") { module("icons") }
+      jar("boot.jar") { module("boot") }
+
+      usedJars.each {
+        fileset(file: it)
+      }
+
+      fileset(dir: "$ch/build/kotlinc/lib") {
+        include(name: "kotlin-runtime.jar")
+        include(name: "kotlin-reflect.jar")
+      }
+
+      dir("libpty") {
+        fileset(dir: "$ch/lib/libpty") {
+          exclude(name: "*.txt")
+        }
+      }
+
+      dir("ext") {
+        fileset(dir: "$ch/lib") {
+          include(name: "cglib*.jar")
+        }
+      }
+
+      dir("src") {
+        fileset(dir: "$ch/lib/src") {
+          include(name: "trove4j_changes.txt")
+          include(name: "trove4j_src.jar")
+        }
+
+        jar("pycharm-pydev-src.zip") {
+          fileset(dir: "$pythonCommunityHome/pydevSrc")
+        }
+        jar("pycharm-openapi-src.zip") {
+          fileset(dir: "$pythonCommunityHome/openapi/src")
+          fileset(dir: "$pythonCommunityHome/psi-api/src")
+        }
+      }
+    }
+
+    dir("help") {
+      fileset(dir: "$home/python/help") {
+        include(name: "*.pdf")
+      }
+    }
+
+    dir("helpers") {
+      fileset(dir: "$pythonCommunityHome/helpers")
+    }
+
+    dir("license") {
+      fileset(dir: "$ch/license")
+      fileset(dir: "$ch") {
+        include(name: "LICENSE.txt")
+        include(name: "NOTICE.txt")
+      }
+    }
+
+    layoutPlugins(superLayouts)
+
+    dir("bin") {
+      fileset(dir: "$ch/bin") {
+        exclude(name: "appletviewer.policy")
+        include(name: "*.*")
+      }
+    }
+  }
+  patchPropertiesFile(target, args + [appendices: ["$home/build/conf/ideaJNC.properties"]])
+  return result
+}
+
+private layoutWin(Map args, String target) {
+  layout(target) {
+    dir("bin") {
+      fileset(dir: "$ch/bin/win") {
+        exclude(name: "breakgen*")
+      }
+    }
+
+    dir("skeletons") {
+      fileset(dir: "$pythonCommunityHome/skeletons") {
+        include(name: "skeletons-win*.zip")
+      }
+    }
+  }
+
+  winScripts(target, ch, "pycharm.bat", args)
+  winVMOptions(target, null, "pycharm.exe")
+
+  ant.copy(file: "$home/python/help/pycharm-eduhelp.jar", todir: "$target/help", failonerror: false)
+}
+
+private layoutUnix(Map args, String target) {
+  layout(target) {
+    dir("bin") {
+      fileset(dir: "$ch/bin/linux") {
+        exclude(name: "libbreakgen*")
+      }
+    }
+  }
+
+  ant.copy(file: "$pythonCommunityHome/resources/PyCharmCore128.png", tofile: "$target/bin/pycharm.png")
+
+  unixScripts(target, ch, "pycharm.sh", args)
+  unixVMOptions(target, "pycharm")
+
+  ant.copy(file: "$home/python/help/pycharm-eduhelp.jar", todir: "$target/help", failonerror: false)
+}
+
+private layoutMac(Map _args, String target) {
+  layout(target) {
+    dir("bin") {
+      fileset(dir: "$home/bin") {
+        include(name: "*.jnilib")
+      }
+    }
+
+    dir("skeletons") {
+      fileset(dir: "$pythonCommunityHome/skeletons") {
+        include(name: "skeletons-mac*.zip")
+      }
+    }
+  }
+
+  Map args = new HashMap(_args)
+  args.icns = "$pythonCommunityHome/educational-python/resources/PyCharmEdu.icns"
+  args.bundleIdentifier = "com.jetbrains.pycharm"
+  args.platform_prefix = "PyCharmEdu"
+  args.help_id = "PE"
+  args."idea.properties.path" = "${paths.distAll}/bin/idea.properties"
+  args."idea.properties" = ["ide.mac.useNativeClipboard": "false"];
+  args.executable = "pycharm"
+  layoutMacApp(target, ch, args)
+}

@@ -13,7 +13,7 @@ class Foo<R> {
 
     public void foo() {
         reduce(Moo::new);
-        <error descr="Inferred type 'Foo<R>.AMoo' for type parameter 'S' is not within its bound; should implement 'Foo.ASink<java.lang.Object,Foo<R>.AMoo>'">reduce(AMoo::new)</error>;
+        reduce(<error descr="Bad return type in method reference: cannot convert Foo<R>.AMoo to S">AMoo::new</error>);
         reduce(AAMoo::new);
         reduce(AAAMoo::new);
     }

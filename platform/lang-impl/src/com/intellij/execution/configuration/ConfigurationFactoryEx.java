@@ -23,14 +23,14 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author nik
  */
-public abstract class ConfigurationFactoryEx extends ConfigurationFactory {
+public abstract class ConfigurationFactoryEx<T extends RunConfiguration> extends ConfigurationFactory {
   protected ConfigurationFactoryEx(@NotNull ConfigurationType type) {
     super(type);
   }
 
-  public void onNewConfigurationCreated(@NotNull RunConfiguration configuration) {
+  public void onNewConfigurationCreated(@NotNull T configuration) {
   }
 
-  public void onConfigurationCopied(@NotNull RunConfiguration configuration) {
+  public void onConfigurationCopied(@NotNull T configuration) {
   }
 }

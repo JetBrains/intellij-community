@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,10 @@ package com.jetbrains.python.packaging;
 
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.execution.process.ProcessOutput;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -36,11 +39,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.*;
 
-@State(name = "PyCondaPackageService",
-       storages = {
-           @Storage(file = StoragePathMacros.APP_CONFIG + "/conda_packages.xml")
-       }
-)
+@State(name = "PyCondaPackageService", storages = @Storage("conda_packages.xml"))
 public class PyCondaPackageService implements PersistentStateComponent<PyCondaPackageService> {
   public Map<String, String> CONDA_PACKAGES = ContainerUtil.newConcurrentMap();
   public Map<String, List<String>> PACKAGES_TO_RELEASES = new HashMap<String, List<String>>();

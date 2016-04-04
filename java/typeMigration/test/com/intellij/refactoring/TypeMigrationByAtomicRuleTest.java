@@ -18,7 +18,7 @@ public class TypeMigrationByAtomicRuleTest extends TypeMigrationTestBase{
   }
 
   private void doTestDirectMigration() throws Exception {
-    doTestFieldType("i", PsiType.INT, myJavaFacade.getElementFactory().createTypeFromText("java.util.concurrent.atomic.AtomicInteger", null));
+    doTestFieldType("i", myJavaFacade.getElementFactory().createTypeFromText("java.util.concurrent.atomic.AtomicInteger", null));
   }
 
 
@@ -31,36 +31,42 @@ public class TypeMigrationByAtomicRuleTest extends TypeMigrationTestBase{
   }
 
   public void testDirectConditions() throws Exception {
-    doTestFieldType("b", PsiType.BOOLEAN, myJavaFacade.getElementFactory().createTypeFromText("java.util.concurrent.atomic.AtomicBoolean", null));
+    doTestFieldType("b", myJavaFacade.getElementFactory().createTypeFromText("java.util.concurrent.atomic.AtomicBoolean", null));
+  }
+
+  public void testDirectConditionalExpression() throws Exception {
+    doTestFieldType("s",
+                    myJavaFacade.getElementFactory().createTypeFromText("java.util.concurrent.atomic.AtomicReference<java.lang.String>", null));
   }
 
 
   public void testDirectByte() throws Exception {
-    doTestFieldType("b", PsiType.BYTE, myJavaFacade.getElementFactory().createTypeFromText("java.util.concurrent.atomic.AtomicReference<java.lang.Byte>", null));
+    doTestFieldType("b",
+                    myJavaFacade.getElementFactory().createTypeFromText("java.util.concurrent.atomic.AtomicReference<java.lang.Byte>", null));
   }
 
   public void testDirectString() throws Exception {
-    doTestFieldType("s", myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null),
+    doTestFieldType("s",
                     myJavaFacade.getElementFactory().createTypeFromText("java.util.concurrent.atomic.AtomicReference<java.lang.String>", null));
   }
 
   public void testDirectForeach() throws Exception {
-    doTestFieldType("lst", myJavaFacade.getElementFactory().createTypeFromText("java.util.List<java.lang.String>", null),
+    doTestFieldType("lst",
                     myJavaFacade.getElementFactory().createTypeFromText("java.util.concurrent.atomic.AtomicReference<java.util.List<java.lang.String>>", null));
   }
 
   public void testDirectStringArray() throws Exception {
-    doTestFieldType("s", myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null).createArrayType(),
+    doTestFieldType("s",
                     myJavaFacade.getElementFactory().createTypeFromText(AtomicReferenceArray.class.getName() + "<java.lang.String>", null));
   }
 
   public void testDirectIntArray() throws Exception {
-    doTestFieldType("a", PsiType.INT.createArrayType(),
+    doTestFieldType("a",
                     myJavaFacade.getElementFactory().createTypeFromText(AtomicIntegerArray.class.getName(), null));
   }
 
   private void doTestReverseMigration() throws Exception {
-    doTestFieldType("i", myJavaFacade.getElementFactory().createTypeFromText("java.util.concurrent.atomic.AtomicInteger", null), PsiType.INT);
+    doTestFieldType("i", PsiType.INT);
   }
 
 
@@ -73,28 +79,25 @@ public class TypeMigrationByAtomicRuleTest extends TypeMigrationTestBase{
   }
 
   public void testReverseConditions() throws Exception {
-    doTestFieldType("b", myJavaFacade.getElementFactory().createTypeFromText("java.util.concurrent.atomic.AtomicBoolean", null), PsiType.BOOLEAN);
+    doTestFieldType("b", PsiType.BOOLEAN);
   }
 
   public void testReverseByte() throws Exception {
-    doTestFieldType("b", myJavaFacade.getElementFactory().createTypeFromText("java.util.concurrent.atomic.AtomicReference<java.lang.Byte>", null), PsiType.BYTE);
+    doTestFieldType("b", PsiType.BYTE);
   }
 
    public void testReverseString() throws Exception {
     doTestFieldType("s",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.util.concurrent.atomic.AtomicReference<java.lang.String>", null),
                     myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null));
   }
 
    public void testReverseStringArray() throws Exception {
     doTestFieldType("s",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.util.concurrent.atomic.AtomicReferenceArray<java.lang.String>", null),
                     myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null).createArrayType());
   }
 
   public void testReverseIntArray() throws Exception {
     doTestFieldType("a",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.util.concurrent.atomic.AtomicIntegerArray", null),
                     PsiType.INT.createArrayType());
   }
 }

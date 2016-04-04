@@ -91,7 +91,7 @@ public class ChangesUtil {
     @NotNull private final Set<String> myDuplicatesControlSet = new HashSet<String>();
 
     public void add(@NotNull FilePath file) {
-      final String path = file.getIOFile().getAbsolutePath();
+      final String path = file.getPath();
       if (! myDuplicatesControlSet.contains(path)) {
         myResult.add(file);
         myDuplicatesControlSet.add(path);

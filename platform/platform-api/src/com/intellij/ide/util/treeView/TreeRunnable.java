@@ -16,6 +16,7 @@
 package com.intellij.ide.util.treeView;
 
 import com.intellij.openapi.util.NamedRunnable;
+import com.intellij.util.Consumer;
 
 /**
  * @author Sergey.Malenkov
@@ -32,5 +33,16 @@ abstract class TreeRunnable extends NamedRunnable {
     debug("started");
     perform();
     debug("finished");
+  }
+
+  abstract static class TreeConsumer<T> extends TreeRunnable implements Consumer<T> {
+    protected TreeConsumer(String name) {
+      super(name);
+    }
+
+    @Override
+    public final void consume(T t) {
+      run();
+    }
   }
 }

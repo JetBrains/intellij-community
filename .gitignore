@@ -6,6 +6,7 @@
 .DS_Store
 /test-system
 /test-config
+*.pyc
 .jps-build-data
 /bin/build-log.xml
 /bin/build.log

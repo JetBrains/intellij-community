@@ -93,13 +93,13 @@ public class DummyHolder extends PsiFileImpl {
 
   @Override
   public PsiElement getContext() {
-    return myContext;
+    return myContext != null && myContext.isValid() ? myContext : super.getContext();
   }
 
   @Override
   public boolean isValid() {
     if (myExplicitlyValid != null) return myExplicitlyValid.booleanValue();
-    return super.isValid() && !(myContext != null && !myContext.isValid());
+    return super.isValid();
   }
 
   @Override
@@ -115,8 +115,9 @@ public class DummyHolder extends PsiFileImpl {
   @Override
   @NotNull
   public FileType getFileType() {
-    if (myContext != null) {
-      PsiFile containingFile = myContext.getContainingFile();
+    PsiElement context = getContext();
+    if (context != null) {
+      PsiFile containingFile = context.getContainingFile();
       if (containingFile != null) return containingFile.getFileType();
     }
     final LanguageFileType fileType = myLanguage.getAssociatedFileType();

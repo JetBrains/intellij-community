@@ -27,6 +27,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -158,11 +159,9 @@ public abstract class TailType {
       int textLength = document.getTextLength();
       CharSequence chars = document.getCharsSequence();
 
-      if (tailOffset < textLength - 1 && chars.charAt(tailOffset) == ' ' && chars.charAt(tailOffset + 1) == ':') {
-        return moveCaret(editor, tailOffset, 2);
-      }
-      if (tailOffset < textLength && chars.charAt(tailOffset) == ':') {
-        return moveCaret(editor, tailOffset, 1);
+      int afterWhitespace = CharArrayUtil.shiftForward(chars, tailOffset, " \n\t");
+      if (afterWhitespace < textLength && chars.charAt(afterWhitespace) == ':') {
+        return moveCaret(editor, tailOffset, afterWhitespace - tailOffset + 1);
       }
       document.insertString(tailOffset, " : ");
       return moveCaret(editor, tailOffset, 3);

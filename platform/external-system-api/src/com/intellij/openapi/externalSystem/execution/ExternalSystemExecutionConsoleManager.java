@@ -33,7 +33,10 @@ import org.jetbrains.annotations.NotNull;
  * @author Vladislav.Soroka
  * @since 2/18/14
  */
-public interface ExternalSystemExecutionConsoleManager<ExternalSystemRunConfiguration extends RunConfiguration> {
+public interface ExternalSystemExecutionConsoleManager<
+  ExternalSystemRunConfiguration extends RunConfiguration,
+  ExternalSystemExecutionConsole extends ExecutionConsole,
+  ExternalSystemProcessHandler extends ProcessHandler> {
   ExtensionPointName<ExternalSystemExecutionConsoleManager> EP_NAME
     = ExtensionPointName.create("com.intellij.externalSystemExecutionConsoleManager");
 
@@ -41,16 +44,19 @@ public interface ExternalSystemExecutionConsoleManager<ExternalSystemRunConfigur
   ProjectSystemId getExternalSystemId();
 
   @NotNull
-  ExecutionConsole attachExecutionConsole(@NotNull ExternalSystemTask task,
-                                          @NotNull Project project,
-                                          @NotNull ExternalSystemRunConfiguration configuration,
-                                          @NotNull Executor executor,
-                                          @NotNull ExecutionEnvironment env,
-                                          @NotNull ProcessHandler processHandler) throws ExecutionException;
+  ExternalSystemExecutionConsole attachExecutionConsole(@NotNull ExternalSystemTask task,
+                                                        @NotNull Project project,
+                                                        @NotNull ExternalSystemRunConfiguration configuration,
+                                                        @NotNull Executor executor,
+                                                        @NotNull ExecutionEnvironment env,
+                                                        @NotNull ExternalSystemProcessHandler processHandler) throws ExecutionException;
 
-  void onOutput(@NotNull String text, @NotNull Key processOutputType);
+  void onOutput(@NotNull ExternalSystemExecutionConsole executionConsole,
+                @NotNull ExternalSystemProcessHandler processHandler,
+                @NotNull String text,
+                @NotNull Key processOutputType);
 
   boolean isApplicableFor(@NotNull ExternalSystemTask task);
 
-  AnAction[] getRestartActions();
+  AnAction[] getRestartActions(@NotNull ExternalSystemExecutionConsole consoleView);
 }

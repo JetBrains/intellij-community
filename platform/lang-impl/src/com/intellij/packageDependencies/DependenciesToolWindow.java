@@ -24,6 +24,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 
@@ -49,6 +50,7 @@ public class DependenciesToolWindow {
                                                                      true,
                                                                      ToolWindowAnchor.BOTTOM,
                                                                      project);
+        toolWindow.getComponent().putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true");
         myContentManager = toolWindow.getContentManager();
 
         toolWindow.setIcon(AllIcons.Toolwindows.ToolWindowInspection);

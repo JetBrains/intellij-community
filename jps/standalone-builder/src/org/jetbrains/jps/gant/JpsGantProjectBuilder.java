@@ -26,6 +26,7 @@ import org.apache.tools.ant.Project;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.api.GlobalOptions;
 import org.jetbrains.jps.build.Standalone;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
@@ -171,6 +172,9 @@ public class JpsGantProjectBuilder {
         }
       }
     }
+    if (myDataStorageRoot != null) {
+      FileUtil.delete(myDataStorageRoot);
+    }
 
     myBuildInfoPrinter.printStatisticsMessage(this, "Cleaning output time, ms",
                                               String.valueOf(System.currentTimeMillis() - cleanOutputStart));
@@ -234,6 +238,7 @@ public class JpsGantProjectBuilder {
 
   private void runBuild(final Set<String> modulesSet, final boolean allModules, boolean includeTests) {
     if (!myDryRun) {
+      System.setProperty(GlobalOptions.USE_DEFAULT_FILE_LOGGING_OPTION, "false");
       final AntMessageHandler messageHandler = new AntMessageHandler();
       //noinspection AssignmentToStaticFieldFromInstanceMethod
       AntLoggerFactory.ourMessageHandler = new AntMessageHandler();

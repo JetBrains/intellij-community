@@ -62,6 +62,10 @@ public class NewMethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest(true);
   }
 
+  public void testUncheckedWarningWithRawSecondSearchAndMethodFromSuper() throws Exception {
+    doTest(true);
+  }
+
   public void testWildcardReturns() throws Exception {
     doTest(false);
   }
@@ -455,6 +459,46 @@ public class NewMethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
   }
 
   public void testIDEA147873() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA148553() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA148093() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA148841() throws Exception {
+    doTest();
+  }
+
+  public void testCapturedTypesOfImplicitParameterTypes() throws Exception {
+    doTest();
+  }
+
+  public void testApplicabilityConflictMessage() throws Exception {
+    doTest();
+  }
+
+  public void testQualifierOfCapturedWildcardType() throws Exception {
+    doTest();
+  }
+
+  public void testCapturedWildcardInReceiverPosition() throws Exception {
+    doTest();
+  }
+
+  public void testGetClassReturnTypeInMethodReference() throws Exception {
+    doTest();
+  }
+
+  public void testCaptureTypeOfNewArrayExpression() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA152659() throws Exception {
     doTest();
   }
 

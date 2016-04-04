@@ -92,6 +92,8 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
         getLogger().warn("Unknown class loader: " + loader.getClass().getName());
       }
     }
+
+    // todo[r.sh] drop after migration to Java 9
     for (URLClassLoader loader : loaders) {
       if ("sun.misc.Launcher$ExtClassLoader".equals(loader.getClass().getName())) {
         // The java.ext.dirs system property is deprecated in JDK8 and gone in JDK9. It was used to specify "system" jars and native

@@ -185,12 +185,13 @@ public class PyDocstringGenerator {
   }
 
   /**
-   * @param alwaysAddReturn by default return declaration is added only if function body contains return statement. Sometimes it's not
-   *                        possible, e.g. in  {@link com.jetbrains.python.editor.PythonEnterHandler} where unclosed docstring literal
-   *                        "captures" whole function body including return statements.
+   * @param addReturn by default return declaration is added only if function body contains return statement. Sometimes it's not
+   *                  possible, e.g. in  {@link com.jetbrains.python.editor.PythonEnterHandler} where unclosed docstring literal
+   *                  "captures" whole function body including return statements. Keep in mind that declaration for the return value
+   *                  won't be added if containing function is <tt>__init__</tt> or <tt>__new__</tt> method.
    */
   @NotNull
-  public PyDocstringGenerator withInferredParameters(boolean alwaysAddReturn) {
+  public PyDocstringGenerator withInferredParameters(boolean addReturn) {
     if (myDocStringOwner instanceof PyFunction) {
       for (PyParameter param : ((PyFunction)myDocStringOwner).getParameterList().getParameters()) {
         if (param.getAsNamed() == null) {
@@ -206,15 +207,17 @@ public class PyDocstringGenerator {
       final RaiseVisitor visitor = new RaiseVisitor();
       final PyStatementList statementList = ((PyFunction)myDocStringOwner).getStatementList();
       statementList.accept(visitor);
-      if (visitor.myHasReturn || alwaysAddReturn) {
+      if (!isConstructor((PyFunction)myDocStringOwner) && (visitor.myHasReturn || addReturn)) {
         // will add :return: placeholder in Sphinx/Epydoc docstrings
-        myAddedParams.add(new DocstringParam("", null, true));
-        if (PyCodeInsightSettings.getInstance().INSERT_TYPE_DOCSTUB) {
-          withReturnValue("");
-        }
+        withReturnValue(null);
       }
     }
     return this;
+  }
+
+  private static boolean isConstructor(@NotNull PyFunction function) {
+    final String funcName = function.getName();
+    return PyNames.INIT.equals(funcName) && function.getContainingClass() != null;
   }
 
   @NotNull
@@ -268,7 +271,9 @@ public class PyDocstringGenerator {
         String type = paramTypes.get(paramCoordinates);
         if (type == null && PyCodeInsightSettings.getInstance().INSERT_TYPE_DOCSTUB) {
           if (signature != null) {
-            type = StringUtil.notNullize(signature.getArgTypeQualifiedName(param.getName()));
+            type = StringUtil.notNullize(param.isReturnValue() ? 
+                                         signature.getReturnTypeQualifiedName() :
+                                         signature.getArgTypeQualifiedName(param.getName()));
           }
           else {
             type = "";

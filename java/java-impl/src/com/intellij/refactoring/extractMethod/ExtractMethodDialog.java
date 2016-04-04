@@ -20,6 +20,7 @@ import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.text.StringUtil;
@@ -256,7 +257,7 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
     };
     mySelector = manager.getTypeSelector();
     final JComponent component = mySelector.getComponent();
-    if (component instanceof JComboBox) {
+    if (component instanceof ComboBox) {
       if (isVoidReturn()) {
         mySelector.selectType(PsiType.VOID);
       }
@@ -268,20 +269,32 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
       ((JComboBox)component).addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
+          final PsiType selectedType = mySelector.getSelectedType();
           if (myGenerateAnnotations != null) {
-            final PsiType selectedType = mySelector.getSelectedType();
             final boolean enabled = PsiUtil.resolveClassInType(selectedType) != null;
             if (!enabled) {
               myGenerateAnnotations.setSelected(false);
             }
             myGenerateAnnotations.setEnabled(enabled);
           }
+          resizeReturnCombo(component, selectedType);
+          returnTypePanel.revalidate();
+          returnTypePanel.repaint();
           updateSignature();
         }
       });
+      resizeReturnCombo(component, mySelector.getSelectedType());
       return returnTypePanel;
     }
     return null;
+  }
+
+  private static void resizeReturnCombo(JComponent component, PsiType selectedType) {
+    if (selectedType != null) {
+      final String presentableText = selectedType.getPresentableText();
+      final int presentableTextWidth = component.getFontMetrics(component.getFont()).stringWidth(presentableText);
+      ((ComboBox)component).setMinimumAndPreferredWidth(presentableTextWidth);
+    }
   }
 
   protected PsiExpression[] findOccurrences() {

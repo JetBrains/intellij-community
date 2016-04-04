@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -333,7 +333,7 @@ public class GitTask {
   }
 
   /**
-   * Does the work which is common for BackgrounableTask and ModalTask.
+   * Does the work which is common for BackgroundableTask and ModalTask.
    * Actually - starts a timer which checks if current progress indicator is cancelled.
    * If yes, kills the GitHandler.
    */
@@ -353,7 +353,7 @@ public class GitTask {
 
     public void run(ProgressIndicator indicator) {
       myIndicator = indicator;
-      myTimer = new Timer();
+      myTimer = new Timer("Git task delegate");
       myTimer.schedule(new TimerTask() {
         @Override
         public void run() {

@@ -236,6 +236,54 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testIDEA136325() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA127215() throws Exception {
+    doTest();
+  }
+
+  public void testGroundTargetTypeForExpectedReturnTypeOfLambdaExpression() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA149224() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA149670() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA149709() throws Exception {
+    doTest();
+  }
+
+  public void testResolveOrderShouldTakeIntoAccountDependenciesOfAlreadyResolvedVars() throws Exception {
+    doTest();
+  }
+
+  public void testCodeBlockLambdaWithIsValueCompatibleChecks() throws Exception {
+    doTest();
+  }
+
+  public void testCodeBlockLambdaWithoutParamsIsValueCompatibleChecks() throws Exception {
+    doTest();
+  }
+
+  public void testInferenceFromReturnLambdaStatementWhereContainingMethodNonGeneric() throws Exception {
+    doTest();
+  }
+
+  public void testCLikeArrayDeclarationInLambdaWithExplicitTypes() throws Exception {
+    doTest();
+  }
+
+  public void testAdditionalConstraintsOrderWhenOutputVariablesAlreadyHaveProperEqualBound() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }

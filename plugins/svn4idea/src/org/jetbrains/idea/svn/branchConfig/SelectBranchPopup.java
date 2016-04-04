@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.NullableFunction;
 import com.intellij.util.continuation.ModalityIgnorantBackgroundableTask;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
@@ -96,6 +97,11 @@ public class SelectBranchPopup {
   
   private static String getTrunkString(final SvnBranchConfigurationNew configuration) {
     return configuration.getTrunkUrl() + " (trunk)";
+  }
+
+  @NotNull
+  private static String getBranchName(@NotNull SvnBranchItem branch) {
+    return SVNPathUtil.tail(branch.getUrl());
   }
 
   private static class BranchBasesPopupStep extends BaseListPopupStep<String> {
@@ -253,6 +259,13 @@ public class SelectBranchPopup {
             }
           }
         })
+        .setFilteringEnabled(new NullableFunction<Object, String>() {
+          @Nullable
+          @Override
+          public String fun(Object item) {
+            return item instanceof SvnBranchItem ? getBranchName((SvnBranchItem)item) : null;
+          }
+        })
         .createPopup();
       showPopupAt(popup);
     }
@@ -300,7 +313,7 @@ public class SelectBranchPopup {
         myDateLabel.setText("");
       } else {
         SvnBranchItem item = (SvnBranchItem) value;
-        myUrlLabel.setText(SVNPathUtil.tail(item.getUrl()));
+        myUrlLabel.setText(getBranchName(item));
         final long creationMillis = item.getCreationDateMillis();
         myDateLabel.setText((creationMillis > 0) ? DateFormatUtil.formatDate(creationMillis) : "");
       }

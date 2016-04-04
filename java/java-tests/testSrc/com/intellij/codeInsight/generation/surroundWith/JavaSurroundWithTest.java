@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.lang.LanguageSurrounders;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.surroundWith.SurroundDescriptor;
 import com.intellij.lang.surroundWith.Surrounder;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -216,14 +217,26 @@ public class JavaSurroundWithTest extends LightCodeInsightTestCase {
     PsiElement[] elements = item.getElementsToSurround(getFile(), selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
     assertTrue(surrounder.isApplicable(elements));
 
-    SurroundWithHandler.invoke(getProject(), getEditor(), getFile(), surrounder);
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        SurroundWithHandler.invoke(getProject(), getEditor(), getFile(), surrounder);
+      }
+    });
+
     checkResultByFile(BASE_PATH + fileName + "_after.java");
   }
 
   private void doTestWithTemplateFinish(@NotNull String fileName, Surrounder surrounder, @Nullable String textToType) {
     TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
     configureByFile(BASE_PATH + fileName + ".java");
-    SurroundWithHandler.invoke(getProject(), getEditor(), getFile(), surrounder);
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        SurroundWithHandler.invoke(getProject(), getEditor(), getFile(), surrounder);
+      }
+    });
+
     if (textToType != null) {
       type(textToType);
     }

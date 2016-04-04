@@ -3,6 +3,6 @@
   <problem>
     <file>Npe.java</file>
     <line>6</line>
-    <description>Method invocation &lt;code&gt;((SomeInterfaceImpl)x).bar()&lt;/code&gt; may produce &lt;code&gt;java.lang.NullPointerException&lt;/code&gt;</description>
+    <description>Method invocation &lt;code&gt;bar&lt;/code&gt; may produce &lt;code&gt;java.lang.NullPointerException&lt;/code&gt;</description>
   </problem>
 </problems>

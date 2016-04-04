@@ -37,7 +37,6 @@ import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.intellij.openapi.editor.colors.CodeInsightColors.*;
 import static com.intellij.openapi.editor.colors.TextAttributesKey.createTextAttributesKey;
 
 /**
@@ -46,26 +45,26 @@ import static com.intellij.openapi.editor.colors.TextAttributesKey.createTextAtt
 public class GroovySyntaxHighlighter extends SyntaxHighlighterBase {
 
   public static final TextAttributesKey LINE_COMMENT = createTextAttributesKey("Line comment", DefaultLanguageHighlighterColors.LINE_COMMENT);
-  public static final TextAttributesKey ANNOTATION = createTextAttributesKey("Annotation", ANNOTATION_NAME_ATTRIBUTES);
-  public static final TextAttributesKey LOCAL_VARIABLE = createTextAttributesKey("Groovy var", LOCAL_VARIABLE_ATTRIBUTES);
-  public static final TextAttributesKey REASSIGNED_LOCAL_VARIABLE = createTextAttributesKey("Groovy reassigned var", REASSIGNED_LOCAL_VARIABLE_ATTRIBUTES);
-  public static final TextAttributesKey PARAMETER = createTextAttributesKey("Groovy parameter", PARAMETER_ATTRIBUTES);
-  public static final TextAttributesKey REASSIGNED_PARAMETER = createTextAttributesKey("Groovy reassigned parameter", REASSIGNED_PARAMETER_ATTRIBUTES);
-  public static final TextAttributesKey METHOD_DECLARATION = createTextAttributesKey("Groovy method declaration", METHOD_DECLARATION_ATTRIBUTES);
-  public static final TextAttributesKey CONSTRUCTOR_DECLARATION = createTextAttributesKey("Groovy constructor declaration", CONSTRUCTOR_DECLARATION_ATTRIBUTES);
-  public static final TextAttributesKey INSTANCE_FIELD = createTextAttributesKey("Instance field", INSTANCE_FIELD_ATTRIBUTES);
-  public static final TextAttributesKey METHOD_CALL = createTextAttributesKey("Method call", METHOD_CALL_ATTRIBUTES);
-  public static final TextAttributesKey CONSTRUCTOR_CALL = createTextAttributesKey("Groovy constructor call", CONSTRUCTOR_CALL_ATTRIBUTES);
-  public static final TextAttributesKey STATIC_FIELD = createTextAttributesKey("Static field", STATIC_FINAL_FIELD_ATTRIBUTES);
-  public static final TextAttributesKey STATIC_METHOD_ACCESS = createTextAttributesKey("Static method access", STATIC_METHOD_ATTRIBUTES);
+  public static final TextAttributesKey ANNOTATION = createTextAttributesKey("Annotation", JavaHighlightingColors.ANNOTATION_NAME_ATTRIBUTES);
+  public static final TextAttributesKey LOCAL_VARIABLE = createTextAttributesKey("Groovy var", JavaHighlightingColors.LOCAL_VARIABLE_ATTRIBUTES);
+  public static final TextAttributesKey REASSIGNED_LOCAL_VARIABLE = createTextAttributesKey("Groovy reassigned var", JavaHighlightingColors.REASSIGNED_LOCAL_VARIABLE_ATTRIBUTES);
+  public static final TextAttributesKey PARAMETER = createTextAttributesKey("Groovy parameter", JavaHighlightingColors.PARAMETER_ATTRIBUTES);
+  public static final TextAttributesKey REASSIGNED_PARAMETER = createTextAttributesKey("Groovy reassigned parameter", JavaHighlightingColors.REASSIGNED_PARAMETER_ATTRIBUTES);
+  public static final TextAttributesKey METHOD_DECLARATION = createTextAttributesKey("Groovy method declaration", JavaHighlightingColors.METHOD_DECLARATION_ATTRIBUTES);
+  public static final TextAttributesKey CONSTRUCTOR_DECLARATION = createTextAttributesKey("Groovy constructor declaration", JavaHighlightingColors.CONSTRUCTOR_DECLARATION_ATTRIBUTES);
+  public static final TextAttributesKey INSTANCE_FIELD = createTextAttributesKey("Instance field", JavaHighlightingColors.INSTANCE_FIELD_ATTRIBUTES);
+  public static final TextAttributesKey METHOD_CALL = createTextAttributesKey("Method call", JavaHighlightingColors.METHOD_CALL_ATTRIBUTES);
+  public static final TextAttributesKey CONSTRUCTOR_CALL = createTextAttributesKey("Groovy constructor call", JavaHighlightingColors.CONSTRUCTOR_CALL_ATTRIBUTES);
+  public static final TextAttributesKey STATIC_FIELD = createTextAttributesKey("Static field", JavaHighlightingColors.STATIC_FINAL_FIELD_ATTRIBUTES);
+  public static final TextAttributesKey STATIC_METHOD_ACCESS = createTextAttributesKey("Static method access", JavaHighlightingColors.STATIC_METHOD_ATTRIBUTES);
   public static final TextAttributesKey BLOCK_COMMENT = createTextAttributesKey("Block comment", JavaHighlightingColors.JAVA_BLOCK_COMMENT);
   public static final TextAttributesKey DOC_COMMENT_CONTENT = createTextAttributesKey("Groovydoc comment", JavaHighlightingColors.DOC_COMMENT);
   public static final TextAttributesKey DOC_COMMENT_TAG = createTextAttributesKey("Groovydoc tag", JavaHighlightingColors.DOC_COMMENT_TAG);
   public static final TextAttributesKey CLASS_REFERENCE = createTextAttributesKey("Class", DefaultLanguageHighlighterColors.CLASS_REFERENCE);
-  public static final TextAttributesKey TYPE_PARAMETER = createTextAttributesKey("Type parameter", TYPE_PARAMETER_NAME_ATTRIBUTES);
+  public static final TextAttributesKey TYPE_PARAMETER = createTextAttributesKey("Type parameter", JavaHighlightingColors.TYPE_PARAMETER_NAME_ATTRIBUTES);
 
-  public static final TextAttributesKey INSTANCE_PROPERTY_REFERENCE = createTextAttributesKey("Instance property reference ID", INSTANCE_FIELD_ATTRIBUTES);
-  public static final TextAttributesKey STATIC_PROPERTY_REFERENCE = createTextAttributesKey("Static property reference ID", STATIC_FINAL_FIELD_ATTRIBUTES);
+  public static final TextAttributesKey INSTANCE_PROPERTY_REFERENCE = createTextAttributesKey("Instance property reference ID", JavaHighlightingColors.INSTANCE_FIELD_ATTRIBUTES);
+  public static final TextAttributesKey STATIC_PROPERTY_REFERENCE = createTextAttributesKey("Static property reference ID", JavaHighlightingColors.STATIC_FINAL_FIELD_ATTRIBUTES);
 
   public static final TextAttributesKey KEYWORD = createTextAttributesKey("GROOVY_KEYWORD", JavaHighlightingColors.KEYWORD);
   public static final TextAttributesKey NUMBER = createTextAttributesKey("Number", JavaHighlightingColors.NUMBER);

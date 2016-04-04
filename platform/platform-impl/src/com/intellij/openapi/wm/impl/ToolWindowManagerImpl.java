@@ -497,10 +497,12 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
   private void checkConditionInReadAction(@NotNull final ToolWindowEP bean, @NotNull final Condition<Project> condition) {
     ProgressIndicatorUtils.scheduleWithWriteActionPriority(new ReadTask() {
+
+      @Nullable
       @Override
-      public void computeInReadAction(@NotNull ProgressIndicator indicator) throws ProcessCanceledException {
+      public Continuation performInReadAction(@NotNull ProgressIndicator indicator) throws ProcessCanceledException {
         if (!myProject.isDisposed() && condition.value(myProject)) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
+          return new Continuation(new Runnable() {
             @Override
             public void run() {
               if (!myProject.isDisposed() && getToolWindow(bean.id) == null) {
@@ -509,6 +511,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
             }
           });
         }
+        return null;
       }
 
       @Override
@@ -1046,14 +1049,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
             focusToolWinowByDefault(id);
           }
         }
-      }
-    }
-    //todo[kb] it's just a temporary solution due a number of focus issues in JDK 7
-    if (SystemInfo.isJavaVersionAtLeast("1.7") && moveFocus) {
-      if (hasOpenEditorFiles()) {
-        activateEditorComponentImpl(commandList, false);
-      } else {
-        focusToolWinowByDefault(id);
       }
     }
 

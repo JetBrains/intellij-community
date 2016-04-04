@@ -58,6 +58,8 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.JBDimension;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NonNls;
@@ -119,12 +121,14 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private static class Context {
     private final SmartPsiElementPointer element;
     private final String text;
+    private final String externalUrl;
     private final Rectangle viewRect;
     private final int highlightedLink;
 
-    public Context(SmartPsiElementPointer element, String text, Rectangle viewRect, int highlightedLink) {
+    public Context(SmartPsiElementPointer element, String text, String externalUrl, Rectangle viewRect, int highlightedLink) {
       this.element = element;
       this.text = text;
+      this.externalUrl = externalUrl;
       this.viewRect = viewRect;
       this.highlightedLink = highlightedLink;
     }
@@ -326,6 +330,17 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       public Dimension getPreferredSize() {
         Dimension editorPaneSize = myEditorPane.getPreferredScrollableViewportSize();
         Dimension controlPanelSize = myControlPanel.getPreferredSize();
+        return getSize(editorPaneSize, controlPanelSize);
+      }
+
+      @Override
+      public Dimension getMinimumSize() {
+        Dimension editorPaneSize = new JBDimension(20, 20);
+        Dimension controlPanelSize = myControlPanel.getMinimumSize();
+        return getSize(editorPaneSize, controlPanelSize);
+      }
+
+      private Dimension getSize(Dimension editorPaneSize, Dimension controlPanelSize) {
         return new Dimension(Math.max(editorPaneSize.width, controlPanelSize.width), editorPaneSize.height + controlPanelSize.height);
       }
     };
@@ -572,11 +587,11 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   }
   
   public void setData(PsiElement _element, String text, final boolean clearHistory, String effectiveExternalUrl, String ref) {
-    myEffectiveExternalUrl = effectiveExternalUrl;
     if (myElement != null) {
       myBackStack.push(saveContext());
       myForwardStack.clear();
     }
+    myEffectiveExternalUrl = effectiveExternalUrl;
 
     final SmartPsiElementPointer element = _element != null && _element.isValid()
                                            ? SmartPointerManager.getInstance(_element.getProject()).createSmartPsiElementPointer(_element)
@@ -634,7 +649,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
     EditorColorsManager colorsManager = EditorColorsManager.getInstance();
     EditorColorsScheme scheme = colorsManager.getGlobalScheme();
-    StyleConstants.setFontSize(myFontSizeStyle, scheme.getQuickDocFontSize().getSize());
+    StyleConstants.setFontSize(myFontSizeStyle, JBUI.scale(scheme.getQuickDocFontSize().getSize()));
     if (Registry.is("documentation.component.editor.font")) {
       StyleConstants.setFontFamily(myFontSizeStyle, scheme.getEditorFontName());
     }
@@ -665,11 +680,12 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private Context saveContext() {
     Rectangle rect = myScrollPane.getViewport().getViewRect();
-    return new Context(myElement, myText, rect, myHighlightedLink);
+    return new Context(myElement, myText, myEffectiveExternalUrl, rect, myHighlightedLink);
   }
 
   private void restoreContext(Context context) {
     setDataInternal(context.element, context.text, context.viewRect, null);
+    myEffectiveExternalUrl = context.externalUrl;
     if (myNavigateCallback != null) {
       final PsiElement element = context.element.getElement();
       if (element != null) {

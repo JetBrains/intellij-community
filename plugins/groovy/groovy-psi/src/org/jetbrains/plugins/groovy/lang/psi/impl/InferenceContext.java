@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiType;
@@ -129,7 +130,14 @@ public interface InferenceContext {
       return _getCachedValue(ref.getElement(), new Computable<GroovyResolveResult[]>() {
         @Override
         public GroovyResolveResult[] compute() {
-          return (GroovyResolveResult[])resolver.resolve(ref, incomplete);
+          final Pair<T, Boolean> key = Pair.create(ref, incomplete);
+          final GroovyResolveResult[] results = RecursionManager.doPreventingRecursion(key, true, new Computable<GroovyResolveResult[]>() {
+            @Override
+            public GroovyResolveResult[] compute() {
+              return (GroovyResolveResult[])resolver.resolve(ref, incomplete);
+            }
+          });
+          return results == null ? GroovyResolveResult.EMPTY_ARRAY : results;
         }
       }, Pair.create(incomplete, resolver.getClass()));
     }
@@ -145,5 +153,4 @@ public interface InferenceContext {
       }, "type");
     }
   }
-
 }

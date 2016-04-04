@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,12 +34,7 @@ import java.io.File;
 import java.util.Map;
 import java.util.Set;
 
-@State(
-  name = "PostfixTemplatesSettings",
-  storages = {
-    @Storage(file = StoragePathMacros.APP_CONFIG + "/postfixTemplates.xml")
-  }
-)
+@State(name = "PostfixTemplatesSettings", storages = @Storage("postfixTemplates.xml"))
 public class PostfixTemplatesSettings implements PersistentStateComponent<Element>, ExportableComponent {
 
   public static final Factory<Set<String>> SET_FACTORY = new Factory<Set<String>>() {

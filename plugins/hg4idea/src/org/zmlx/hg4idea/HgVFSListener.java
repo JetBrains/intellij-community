@@ -107,7 +107,7 @@ public class HgVFSListener extends VcsVFSListener {
           catch (final VcsException ex) {
             UIUtil.invokeLaterIfNeeded(new Runnable() {
               public void run() {
-                ((HgVcs)myVcs).showMessageInConsole(ex.getMessage(), ConsoleViewContentType.ERROR_OUTPUT.getAttributes());
+                ((HgVcs)myVcs).showMessageInConsole(ex.getMessage(), ConsoleViewContentType.ERROR_OUTPUT);
               }
             });
           }

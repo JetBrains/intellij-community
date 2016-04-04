@@ -88,7 +88,7 @@ public class DomExtensionsRegistrarImpl implements DomExtensionsRegistrar {
   @Override
   @NotNull
   public DomExtension registerCustomChildrenExtension(@NotNull final Type type) {
-    return registerCustomChildrenExtension(type, CustomDomChildrenDescription.TagNameDescriptor.EMPTY);
+    return registerCustomChildrenExtension(type, CustomDomChildrenDescription.AttributeDescriptor.EMPTY);
   }
 
   @NotNull

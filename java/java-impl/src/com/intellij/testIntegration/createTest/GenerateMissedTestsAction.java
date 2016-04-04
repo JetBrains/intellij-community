@@ -97,7 +97,7 @@ public class GenerateMissedTestsAction extends PsiElementBaseIntentionAction {
       .createPopup().showInBestPositionFor(editor);
   }
 
-  private static void generateMissedTests(final PsiClass testClass, PsiClass srcClass, Editor srcEditor) {
+  private static void generateMissedTests(final PsiClass testClass, final PsiClass srcClass, Editor srcEditor) {
     if (testClass != null) {
       final TestFramework framework = TestFrameworks.detectFramework(testClass);
       if (framework != null) {
@@ -109,7 +109,7 @@ public class GenerateMissedTestsAction extends PsiElementBaseIntentionAction {
           WriteCommandAction.runWriteCommandAction(project, new Runnable() {
             @Override
             public void run() {
-              JavaTestGenerator.addTestMethods(editor, testClass, framework, dialog.getSelectedMethods(), false, false);
+              JavaTestGenerator.addTestMethods(editor, testClass, srcClass, framework, dialog.getSelectedMethods(), false, false);
             }
           });
         }

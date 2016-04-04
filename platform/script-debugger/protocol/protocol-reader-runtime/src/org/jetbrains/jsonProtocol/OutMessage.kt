@@ -29,7 +29,6 @@ import java.io.IOException
 
 open class OutMessage() {
   val buffer: ByteBuf = ByteBufAllocator.DEFAULT.heapBuffer()
-  @JvmField
   val writer = JsonWriter(ByteBufUtf8Writer(buffer))
 
   private var finalized: Boolean = false
@@ -38,12 +37,7 @@ open class OutMessage() {
     writer.beginObject()
   }
 
-  @Throws(IOException::class)
-  protected open fun beginArguments() {
-  }
-
-  internal fun _beginArguments() {
-    beginArguments()
+  open fun beginArguments() {
   }
 
   fun writeMap(name: String, value: Map<String, String>? = null) {
@@ -210,11 +204,6 @@ open class OutMessage() {
     writer.name(name).value(value!!.toString())
   }
 
-  fun writeInt(name: String, value: Int) {
-    beginArguments()
-    writer.name(name).value(value.toLong())
-  }
-
   companion object {
     @Throws(IOException::class)
     fun prepareWriteRaw(message: OutMessage, name: String) {
@@ -236,7 +225,7 @@ fun OutMessage.writeEnum(name: String, value: Enum<*>?, defaultValue: Enum<*>?) 
 }
 
 fun OutMessage.writeEnum(name: String, value: Enum<*>) {
-  _beginArguments()
+  beginArguments()
   writer.name(name).value(value.toString())
 }
 
@@ -247,7 +236,7 @@ fun OutMessage.writeString(name: String, value: CharSequence?, defaultValue: Cha
 }
 
 fun OutMessage.writeString(name: String, value: CharSequence) {
-  _beginArguments()
+  beginArguments()
   OutMessage.prepareWriteRaw(this, name)
   JsonUtil.escape(value, buffer)
 }
@@ -259,7 +248,7 @@ fun OutMessage.writeInt(name: String, value: Int, defaultValue: Int) {
 }
 
 fun OutMessage.writeInt(name: String, value: Int) {
-  _beginArguments()
+  beginArguments()
   writer.name(name).value(value.toLong())
 }
 
@@ -270,7 +259,7 @@ fun OutMessage.writeBoolean(name: String, value: Boolean, defaultValue: Boolean)
 }
 
 fun OutMessage.writeBoolean(name: String, value: Boolean) {
-  _beginArguments()
+  beginArguments()
   writer.name(name).value(value)
 }
 
@@ -281,6 +270,6 @@ fun OutMessage.writeDouble(name: String, value: Double, defaultValue: Double) {
 }
 
 fun OutMessage.writeDouble(name: String, value: Double) {
-  _beginArguments()
+  beginArguments()
   writer.name(name).value(value)
 }

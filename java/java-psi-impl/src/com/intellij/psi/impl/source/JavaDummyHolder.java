@@ -60,8 +60,9 @@ public class JavaDummyHolder extends DummyHolder implements PsiImportHolder {
 
   @Override
   public boolean importClass(PsiClass aClass) {
-    if (myContext != null) {
-      final PsiClass resolved = JavaPsiFacade.getInstance(getProject()).getResolveHelper().resolveReferencedClass(aClass.getName(), myContext);
+    PsiElement context = getContext();
+    if (context != null) {
+      final PsiClass resolved = JavaPsiFacade.getInstance(getProject()).getResolveHelper().resolveReferencedClass(aClass.getName(), context);
       if (resolved != null) {
         return getManager().areElementsEquivalent(aClass, resolved);
       }
@@ -100,7 +101,7 @@ public class JavaDummyHolder extends DummyHolder implements PsiImportHolder {
         }
       }
 
-      if (myContext == null) {
+      if (getContext() == null) {
         if (!JavaResolveUtil.processImplicitlyImportedPackages(processor, state, place, getManager())) return false;
       }
     }
@@ -108,8 +109,9 @@ public class JavaDummyHolder extends DummyHolder implements PsiImportHolder {
   }
 
   public boolean isSamePackage(PsiElement other) {
+    PsiElement myContext = getContext();
     if (other instanceof DummyHolder) {
-      final PsiElement otherContext = ((DummyHolder)other).myContext;
+      final PsiElement otherContext = other.getContext();
       if (myContext == null) return otherContext == null;
       return JavaPsiFacade.getInstance(myContext.getProject()).arePackagesTheSame(myContext, otherContext);
     }
@@ -122,6 +124,7 @@ public class JavaDummyHolder extends DummyHolder implements PsiImportHolder {
   }
 
   public boolean isInPackage(PsiPackage aPackage) {
+    PsiElement myContext = getContext();
     if (myContext != null) return JavaPsiFacade.getInstance(myContext.getProject()).isInPackage(myContext, aPackage);
     return aPackage == null || aPackage.getQualifiedName().isEmpty();
   }

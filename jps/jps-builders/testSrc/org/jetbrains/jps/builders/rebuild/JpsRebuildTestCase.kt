@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import java.util.*
 /**
  * @author nik
  */
-public abstract class JpsRebuildTestCase: JpsBuildTestCase() {
+abstract class JpsRebuildTestCase: JpsBuildTestCase() {
   protected val myOutputDirectory: File by lazy {
     FileUtil.createTempDirectory("jps-build-output", "")
   }
@@ -44,7 +44,7 @@ public abstract class JpsRebuildTestCase: JpsBuildTestCase() {
 
   fun doTest(projectPath: String, pathVariables: Map<String, String>, expectedOutput: TestFileSystemItem) {
     loadAndRebuild(projectPath, pathVariables);
-    assertOutput(myOutputDirectory.getAbsolutePath(), expectedOutput);
+    assertOutput(myOutputDirectory.absolutePath, expectedOutput);
   }
 
   fun assertOutput(targetFolder: String, expectedOutput: TestFileSystemItem) {
@@ -57,16 +57,15 @@ public abstract class JpsRebuildTestCase: JpsBuildTestCase() {
   }
 
   fun rebuild() {
-    JpsJavaExtensionService.getInstance()!!.getOrCreateProjectExtension(myProject)
-      .setOutputUrl(JpsPathUtil.pathToUrl(FileUtil.toSystemIndependentName(myOutputDirectory.getAbsolutePath())));
+    JpsJavaExtensionService.getInstance()!!.getOrCreateProjectExtension(myProject).outputUrl = JpsPathUtil.pathToUrl(FileUtil.toSystemIndependentName(myOutputDirectory.absolutePath));
     rebuildAll();
   }
 
   override fun getAdditionalPathVariables(): MutableMap<String, String> =
-    hashMapOf("ARTIFACTS_OUT" to FileUtil.toSystemIndependentName(myOutputDirectory.getAbsolutePath()) + "/artifacts")
+    hashMapOf("ARTIFACTS_OUT" to FileUtil.toSystemIndependentName(myOutputDirectory.absolutePath) + "/artifacts")
 
-  protected override fun getTestDataRootPath(): String {
-    return PathManagerEx.findFileUnderCommunityHome("jps/jps-builders/testData/output")!!.getAbsolutePath();
+  override fun getTestDataRootPath(): String {
+    return PathManagerEx.findFileUnderCommunityHome("jps/jps-builders/testData/output")!!.absolutePath;
   }
 }
 

@@ -40,6 +40,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
   private PsiSubstitutor myQualifierSubstitutor = PsiSubstitutor.EMPTY;
   private PsiSubstitutor myInferenceSubstitutor = PsiSubstitutor.EMPTY;
   private boolean myMayNeedExplicitTypeParameters;
+  private String myForcedQualifier = "";
 
   public JavaMethodCallElement(@NotNull PsiMethod method) {
     this(method, method.getName());
@@ -65,6 +66,11 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
         }
       }
     }
+  }
+
+  void setForcedQualifier(@NotNull String forcedQualifier) {
+    myForcedQualifier = forcedQualifier;
+    setLookupString(forcedQualifier + getLookupString());
   }
 
   @Override
@@ -255,6 +261,9 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
 
     MemberLookupHelper helper = myHelper != null ? myHelper : new MemberLookupHelper(myMethod, myContainingClass, false, false);
     helper.renderElement(presentation, myHelper != null, myHelper != null && !myHelper.willBeImported(), getSubstitutor());
+    if (!myForcedQualifier.isEmpty()) {
+      presentation.setItemText(myForcedQualifier + presentation.getItemText());
+    }
 
     if (shouldInsertTypeParameters()) {
       String typeParamsText = getTypeParamsText(true);

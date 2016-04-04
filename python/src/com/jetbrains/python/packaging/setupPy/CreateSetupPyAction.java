@@ -76,7 +76,7 @@ public class CreateSetupPyAction extends CreateFromTemplateAction {
       defaults.add("Package_name", project.getName());
       final PropertiesComponent properties = PropertiesComponent.getInstance();
       defaults.add("Author", properties.getOrInit(AUTHOR_PROPERTY, SystemProperties.getUserName()));
-      defaults.add("Author_Email", properties.getOrInit(EMAIL_PROPERTY, ""));
+      defaults.add("Author_email", properties.getOrInit(EMAIL_PROPERTY, ""));
       defaults.addPredefined("PackageList", getPackageList(dataContext));
       defaults.addPredefined("PackageDirs", getPackageDirs(dataContext));
     }
@@ -129,7 +129,7 @@ public class CreateSetupPyAction extends CreateFromTemplateAction {
     if (author != null) {
       propertiesComponent.setValue(AUTHOR_PROPERTY, author);
     }
-    final String authorEmail = properties.getProperty("Author_Email");
+    final String authorEmail = properties.getProperty("Author_email");
     if (authorEmail != null) {
       propertiesComponent.setValue(EMAIL_PROPERTY, authorEmail);
     }

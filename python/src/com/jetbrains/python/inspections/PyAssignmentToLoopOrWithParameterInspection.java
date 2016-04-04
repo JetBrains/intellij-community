@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.inspections;
 
+import com.google.common.collect.Lists;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.util.Condition;
@@ -27,6 +28,9 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collections;
+import java.util.List;
 
 //TODO: Try to share logic with AssignmentToForLoopParameterInspection
 
@@ -75,8 +79,8 @@ public class PyAssignmentToLoopOrWithParameterInspection extends PyInspection {
      * Finds first parent of specific type (See {@link #isRequiredStatement(com.intellij.psi.PsiElement)})
      * that declares one of names, declared in this statement
      */
-    private void checkNotReDeclaringUpperLoopOrStatement(@NotNull final NameDefiner statement) {
-      for (final PsiElement declaredVar : statement.iterateNames()) {
+    private void checkNotReDeclaringUpperLoopOrStatement(@NotNull final PsiElement statement) {
+      for (final PsiElement declaredVar : getNamedElementsOfForAndWithStatements(statement)) {
         final Filter filter = new Filter(handleSubscriptionsAndResolveSafely(declaredVar));
         final PsiElement firstParent = PsiTreeUtil.findFirstParent(statement, true, filter);
         if ((firstParent != null) && isRequiredStatement(firstParent)) {
@@ -128,7 +132,7 @@ public class PyAssignmentToLoopOrWithParameterInspection extends PyInspection {
       if (!isRequiredStatement(psiElement)) {
         return false; //Parent has wrong type, skip
       }
-      final Iterable<PyElement> varsDeclaredInStatement = ((NameDefiner)psiElement).iterateNames();
+      final List<PyElement> varsDeclaredInStatement = getNamedElementsOfForAndWithStatements(psiElement);
       for (final PsiElement varDeclaredInStatement : varsDeclaredInStatement) {
         //For each variable, declared by this parent take first declaration and open subscription list if any
         final PsiReference reference = handleSubscriptionsAndResolveSafely(varDeclaredInStatement).getReference();
@@ -165,5 +169,30 @@ public class PyAssignmentToLoopOrWithParameterInspection extends PyInspection {
   private static boolean isRequiredStatement(final PsiElement element) {
     assert element != null;
     return (element instanceof PyWithStatement) || (element instanceof PyForStatement);
+  }
+
+  private static List<PyElement> getNamedElementsOfForAndWithStatements(@NotNull PsiElement element) {
+    final List<PyElement> expressions;
+    if (element instanceof PyForStatement) {
+      final PyForStatement forStmt = (PyForStatement)element;
+      final PyExpression tgt = forStmt.getForPart().getTarget();
+      expressions = Lists.newArrayList();
+      expressions.addAll(PyUtil.flattenedParensAndStars(tgt));
+    }
+    else if (element instanceof PyWithStatement) {
+      final PyWithStatement withStmt = (PyWithStatement)element;
+      expressions = Lists.newArrayList();
+      final PyWithItem[] items = PsiTreeUtil.getChildrenOfType(withStmt, PyWithItem.class);
+      if (items != null) {
+        for (PyWithItem item : items) {
+          PyExpression targetExpression = item.getTarget();
+          expressions.addAll(PyUtil.flattenedParensAndTuples(targetExpression));
+        }
+      }
+    }
+    else {
+      expressions = Collections.emptyList();
+    }
+    return expressions;
   }
 }

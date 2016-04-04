@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,14 +75,7 @@ public class Patches {
    * https://bugs.openjdk.java.net/browse/JDK-8020443
    */
   public static final boolean SUN_BUG_ID_8020443 =
-    SystemInfo.isXWindow && SystemInfo.isJavaVersionAtLeast("1.7") && !SystemInfo.isJavaVersionAtLeast("1.9");
-
-  /**
-   * XToolkit.getScreenInsets() may be very slow.
-   * See https://bugs.openjdk.java.net/browse/JDK-8004103.
-   */
-  public static final boolean JDK_BUG_ID_8004103 =
-    SystemInfo.isXWindow && !GraphicsEnvironment.isHeadless() && SystemInfo.isJavaVersionAtLeast("1.7");
+    SystemInfo.isXWindow && SystemInfo.isJavaVersionAtLeast("1.7") && !SystemInfo.isJavaVersionAtLeast("1.8.0_60");
 
   /**
    * On some WMs modal dialogs may show behind full screen window.
@@ -110,13 +103,13 @@ public class Patches {
    * Marker field to find all usages of the reflective access to JDK 7-specific methods
    * which need to be changed when migrated to JDK 7
    */
-  public static final boolean USE_REFLECTION_TO_ACCESS_JDK7 = true;
+  public static final boolean USE_REFLECTION_TO_ACCESS_JDK7 = Boolean.valueOf(true);
 
   /**
    * Marker field to find all usages of the reflective access to JDK 7-specific methods
    * which need to be changed when migrated to JDK 8
    */
-  public static final boolean USE_REFLECTION_TO_ACCESS_JDK8 = true;
+  public static final boolean USE_REFLECTION_TO_ACCESS_JDK8 = Boolean.valueOf(true);
 
   /**
    * AtomicIntegerFieldUpdater does not work when SecurityManager is installed
@@ -142,4 +135,17 @@ public class Patches {
    * The issue was fixed in JDK 1.8.0_60 as part of <a href="https://bugs.openjdk.java.net/browse/JDK-8064833">JDK-8064833</a>.
    */
   public static final boolean JDK_MAC_FONT_STYLE_BUG = SystemInfo.isMac && !SystemInfo.isJavaVersionAtLeast("1.8.0_60");
+
+  /**
+   * On Mac OS font ligatures are not supported for natively loaded fonts, font needs to be loaded explicitly by JDK. 
+   */
+  public static final boolean JDK_BUG_ID_7162125 = SystemInfo.isMac && !SystemInfo.isJavaVersionAtLeast("1.9");
+
+  /**
+   * XToolkit.getScreenInsets() may be very slow.
+   * See https://bugs.openjdk.java.net/browse/JDK-8004103.
+   */
+  public static boolean isJdkBugId8004103() {
+    return SystemInfo.isXWindow && !GraphicsEnvironment.isHeadless() && SystemInfo.isJavaVersionAtLeast("1.7");
+  }
 }

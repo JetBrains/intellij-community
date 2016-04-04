@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,13 +38,11 @@ public class InstanceFilterEditor extends ClassFilterEditor {
     String idString = Messages.showInputDialog(myProject, DebuggerBundle.message("add.instance.filter.dialog.prompt"), DebuggerBundle.message("add.instance.filter.dialog.title"), Messages.getQuestionIcon());
     if (idString != null) {
       ClassFilter filter = createFilter(idString);
-      if(filter != null){
-        myTableModel.addRow(filter);
-        int row = myTableModel.getRowCount() - 1;
-        myTable.getSelectionModel().setSelectionInterval(row, row);
-        myTable.scrollRectToVisible(myTable.getCellRect(row, 0, true));
+      myTableModel.addRow(filter);
+      int row = myTableModel.getRowCount() - 1;
+      myTable.getSelectionModel().setSelectionInterval(row, row);
+      myTable.scrollRectToVisible(myTable.getCellRect(row, 0, true));
 
-      }
       myTable.requestFocus();
     }
   }

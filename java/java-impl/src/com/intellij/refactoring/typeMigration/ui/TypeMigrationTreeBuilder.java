@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
+import java.util.List;
 
 /**
  * @author anna
@@ -38,6 +39,6 @@ public class TypeMigrationTreeBuilder extends AbstractTreeBuilder{
   }
 
   public void setRoot(MigrationRootNode root) {
-    ((TypeMigrationTreeStructure)getTreeStructure()).setRoot(root);
+    ((TypeMigrationTreeStructure)getTreeStructure()).setRoots(root);
   }
 }

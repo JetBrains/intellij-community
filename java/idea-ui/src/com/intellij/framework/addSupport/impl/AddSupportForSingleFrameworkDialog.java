@@ -98,7 +98,9 @@ public class AddSupportForSingleFrameworkDialog extends DialogWrapper {
       }
     });
 
-    super.doOKAction();
+    if (result.get()) {
+      super.doOKAction();
+    }
   }
 
   private boolean addSupport() {

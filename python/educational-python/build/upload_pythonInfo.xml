@@ -1,0 +1,32 @@
+<project name="Upload updates.xml to jetbrains.com. Effective in half an hour" default="bootstrap">
+  <property name="home" value="${basedir}/../../../.."/>
+  <target name="upload">
+    <xmlvalidate file="${home}/build/eap/updates.xml"/>
+
+    <property name="host" value="ftp.labs.intellij.net"/>
+    <property name="user" value="idea"/>
+    <property name="password" value="4pawoMauoJjjlxpIl3XG"/>
+
+    <ftp server="${host}" action="send" binary="false" remotedir="updates" userid="${user}" password="${password}">
+      <fileset file="${home}/community/python/educational-python/build/python.txt"/>
+    </ftp>
+  </target>
+
+  <target name="bootstrap">
+    <java failonerror="true" classname="org.apache.tools.ant.Main" fork="true">
+      <classpath>
+        <fileset dir="${home}/community/lib/ant/lib">
+          <include name="*.jar"/>
+        </fileset>
+        <fileset dir="${home}/community/lib">
+          <include name="commons-net-3.3.jar"/>
+          <include name="jsch-0.1.52.jar"/>
+        </fileset>
+      </classpath>
+
+      <arg value="-f"/>
+      <arg value="${ant.file}"/>
+      <arg value="upload"/>
+    </java>
+  </target>
+</project>

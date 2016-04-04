@@ -164,7 +164,7 @@ public class ShelvedChangeList implements JDOMExternalizable, ExternalizableSche
     mySchemeName = newName;
   }
 
-  public boolean checkValid() {
+  public boolean isValid() {
     return new File(PATH).exists();
   }
 }

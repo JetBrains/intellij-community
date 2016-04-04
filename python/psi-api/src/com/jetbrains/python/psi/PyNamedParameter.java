@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Represents a named parameter, as opposed to a tuple parameter.
  */
-public interface PyNamedParameter extends PyParameter, PsiNamedElement, PsiNameIdentifierOwner, PyExpression, StubBasedPsiElement<PyNamedParameterStub> {
+public interface PyNamedParameter extends PyParameter, PsiNamedElement, PsiNameIdentifierOwner, PyExpression, PyTypeCommentOwner, StubBasedPsiElement<PyNamedParameterStub> {
   boolean isPositionalContainer();
 
   boolean isKeywordContainer();

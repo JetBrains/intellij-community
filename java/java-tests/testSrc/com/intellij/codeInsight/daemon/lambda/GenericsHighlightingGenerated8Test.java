@@ -33,7 +33,7 @@ public class GenericsHighlightingGenerated8Test extends LightDaemonAnalyzerTestC
 
   public void testEmptyTestT() throws Exception {}
 
-  public void testUnrelatedClasses() throws Exception {
+  public void _testUnrelatedClasses() throws Exception {
     doTest();
   }
 

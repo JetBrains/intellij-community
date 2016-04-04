@@ -2,7 +2,7 @@
 <module type="JAVA_MODULE" version="4">
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
-    <orderEntry type="inheritedJdk" />
+    <orderEntry type="jdk" jdkName="1.8" jdkType="JavaSDK" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="bootstrap" />
     <orderEntry type="module" module-name="colorSchemes" />
@@ -20,6 +20,6 @@
     <orderEntry type="module" module-name="jira" />
     <orderEntry type="module" module-name="ShortcutPromoter" />
     <orderEntry type="module" module-name="ipnb" />
+    <orderEntry type="module" module-name="settings-repository" />
   </component>
 </module>
-

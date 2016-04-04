@@ -93,7 +93,7 @@ class VcsAwareFormatChangedTextUtil extends FormatChangedTextUtil {
   @Nullable
   private static List<TextRange> getCachedChangedLines(@NotNull Project project, @NotNull Document document) {
     LineStatusTracker tracker = LineStatusTrackerManager.getInstance(project).getLineStatusTracker(document);
-    if (tracker != null) {
+    if (tracker != null && tracker.isValid()) {
       List<Range> ranges = tracker.getRanges();
       return getChangedTextRanges(document, ranges);
     }
@@ -113,7 +113,7 @@ class VcsAwareFormatChangedTextUtil extends FormatChangedTextUtil {
                                        @NotNull CharSequence contentFromVcs) throws FilesTooBigForDiffException
   {
     Document documentFromVcs = ((EditorFactoryImpl)EditorFactory.getInstance()).createDocument(contentFromVcs, true, false);
-    return new RangesBuilder(document, documentFromVcs).getRanges();
+    return RangesBuilder.createRanges(document, documentFromVcs);
   }
 
   @Override

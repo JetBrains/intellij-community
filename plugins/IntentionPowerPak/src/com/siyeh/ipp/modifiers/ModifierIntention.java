@@ -16,7 +16,7 @@
 package com.siyeh.ipp.modifiers;
 
 import com.intellij.codeInsight.intention.LowPriorityAction;
-import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.*;
@@ -40,8 +40,6 @@ import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
-
-import static com.intellij.openapi.application.WriteAction.start;
 
 /**
  * @author Bas Leijdekkers
@@ -70,13 +68,12 @@ abstract class ModifierIntention extends Intention implements LowPriorityAction 
       final ConflictsDialog conflictsDialog = new ConflictsDialog(project, conflicts, new Runnable() {
         @Override
         public void run() {
-          final AccessToken token = start();
-          try {
-            modifierList.setModifierProperty(getModifier(), true);
-          }
-          finally {
-            token.finish();
-          }
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            @Override
+            public void run() {
+              modifierList.setModifierProperty(getModifier(), true);
+            }
+          });
         }
       });
       conflictsDialogOK = conflictsDialog.showAndGet();

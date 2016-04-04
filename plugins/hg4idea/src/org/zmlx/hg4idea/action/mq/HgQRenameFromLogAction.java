@@ -15,14 +15,14 @@
  */
 package org.zmlx.hg4idea.action.mq;
 
-import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.Hash;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.command.mq.HgQRenameCommand;
 import org.zmlx.hg4idea.repo.HgRepository;
 
 public class HgQRenameFromLogAction extends HgMqAppliedPatchAction {
   @Override
-  protected void actionPerformed(@NotNull HgRepository repository, @NotNull VcsFullCommitDetails commit) {
-    new HgQRenameCommand(repository).execute(commit.getId());
+  protected void actionPerformed(@NotNull HgRepository repository, @NotNull Hash commit) {
+    new HgQRenameCommand(repository).execute(commit);
   }
 }

@@ -1,14 +1,20 @@
 <html>
 <body>
 Reports any methods which may safely be made <b>static</b>.
-A method may be static if it is not synchronized, it does not reference any of its class' non static methods 
+A method may be <b>static</b> if it is not <b>synchronized</b>, it does not reference any of its class' non static methods
 and non static fields and is not overridden in a sub class.
 <!-- tooltip end -->
 <p>
-Use the checkboxes below to inspect only <b>private</b>
+Use the first checkbox below to inspect only <b>private</b>
 or <b>final</b> methods, which increases the
-performance of this inspection and to ignore empty methods.
+performance of this inspection.
 <p>
-
+Use the second checkbox to ignore empty methods.
+<p>
+Use the third checkbox to ignore default methods in interface when using Java 8 or higher
+<p>
+Use the fourth checkbox to let the quick fix replace instance qualifiers with class references
+in calls to methods which are made <b>static</b>.
+<p>
 </body>
 </html>

@@ -15,16 +15,17 @@
  */
 package com.intellij.psi.templateLanguages;
 
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.options.ShowSettingsUtil;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.FileViewProvider;
-import com.intellij.lang.LangBundle;
+import com.intellij.psi.PsiManager;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
@@ -60,7 +61,10 @@ public class ChangeTemplateDataLanguageAction extends AnAction {
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) return;
 
-    final VirtualFile virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
+    editSettings(project, e.getData(CommonDataKeys.VIRTUAL_FILE));
+  }
+
+  public static void editSettings(@NotNull Project project, @Nullable final VirtualFile virtualFile) {
     final TemplateDataLanguageConfigurable configurable = new TemplateDataLanguageConfigurable(project);
     ShowSettingsUtil.getInstance().editConfigurable(project, configurable, new Runnable() {
       @Override
@@ -71,6 +75,4 @@ public class ChangeTemplateDataLanguageAction extends AnAction {
       }
     });
   }
-
-
 }

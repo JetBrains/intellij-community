@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ public class NodeManagerImpl extends NodeDescriptorFactoryImpl implements NodeMa
 
   private final DebuggerTree myDebuggerTree;
   private String myHistoryKey = null;
-  private final Map<String, DescriptorTree> myHistories = new HashMap<String, DescriptorTree>();
+  private final Map<String, DescriptorTree> myHistories = new HashMap<>();
 
   public NodeManagerImpl(Project project, DebuggerTree tree) {
     super(project);

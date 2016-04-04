@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,10 @@ package com.intellij.execution.impl;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.UnknownRunConfiguration;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.StateSplitterEx;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -30,18 +33,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-/**
- * User: anna
- * Date: 28-Mar-2006
- */
-@State(
-  name = "ProjectRunConfigurationManager",
-  storages = {
-    @Storage(file = StoragePathMacros.PROJECT_FILE),
-    @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/runConfigurations", scheme = StorageScheme.DIRECTORY_BASED,
-             stateSplitter = ProjectRunConfigurationManager.RunConfigurationStateSplitter.class)
-  }
-)
+@State(name = "ProjectRunConfigurationManager", storages = @Storage(value = "runConfigurations", stateSplitter = ProjectRunConfigurationManager.RunConfigurationStateSplitter.class))
 public class ProjectRunConfigurationManager implements PersistentStateComponent<Element> {
   private final RunManagerImpl myManager;
   private List<Element> myUnloadedElements;

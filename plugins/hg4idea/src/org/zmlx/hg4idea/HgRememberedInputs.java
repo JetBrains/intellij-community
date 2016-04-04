@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,17 @@
 package org.zmlx.hg4idea;
 
 import com.intellij.dvcs.DvcsRememberedInputs;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 
 /**
  * @author Nadya Zabrodina
  */
 @State(
   name = "HgRememberedInputs",
-  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/vcs.xml")
+  storages = @Storage("vcs.xml")
 )
 public class HgRememberedInputs extends DvcsRememberedInputs implements PersistentStateComponent<DvcsRememberedInputs.State> {
   public static DvcsRememberedInputs getInstance() {

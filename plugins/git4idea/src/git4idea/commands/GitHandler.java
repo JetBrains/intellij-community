@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProcessEventListener;
@@ -41,6 +42,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.net.IdeaWideProxySelector;
+import com.intellij.vcs.VcsLocaleHelper;
 import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.GitVcs;
 import git4idea.config.GitVcsApplicationSettings;
@@ -69,6 +71,7 @@ public abstract class GitHandler {
 
   protected static final Logger LOG = Logger.getInstance(GitHandler.class);
   protected static final Logger OUTPUT_LOG = Logger.getInstance("#output." + GitHandler.class.getName());
+  private static final Logger TIME_LOG = Logger.getInstance("#time." + GitHandler.class.getName());
 
   protected final Project myProject;
   protected final GitCommand myCommand;
@@ -417,14 +420,11 @@ public abstract class GitHandler {
     try {
       myStartTime = System.currentTimeMillis();
       if (!myProject.isDefault() && !mySilent && (myVcs != null)) {
-        myVcs.showCommandLine("cd " + myWorkingDirectory);
-        myVcs.showCommandLine(printableCommandLine());
-        LOG.info("cd " + myWorkingDirectory);
-        LOG.info(printableCommandLine());
+        myVcs.showCommandLine("[" + stringifyWorkingDir() + "] " + printableCommandLine());
+        LOG.info("[" + stringifyWorkingDir() + "] " + printableCommandLine());
       }
       else {
-        LOG.debug("cd " + myWorkingDirectory);
-        LOG.debug("[" + myWorkingDirectory.getName() + "] " + printableCommandLine());
+        LOG.debug("[" + stringifyWorkingDir() + "] " + printableCommandLine());
       }
 
       // setup environment
@@ -434,6 +434,7 @@ public abstract class GitHandler {
           setupSshAuthenticator();
         }
       }
+      setUpLocale();
       myCommandLine.getEnvironment().clear();
       myCommandLine.getEnvironment().putAll(myEnv);
       // start process
@@ -450,6 +451,10 @@ public abstract class GitHandler {
       cleanupEnv();
       myListeners.getMulticaster().startFailed(t);
     }
+  }
+
+  private void setUpLocale() {
+    myEnv.putAll(VcsLocaleHelper.getDefaultLocaleEnvironmentVars("git"));
   }
 
   private void setupHttpAuthenticator() throws IOException {
@@ -741,14 +746,29 @@ public abstract class GitHandler {
     }
   }
 
+  @NotNull
+  private String stringifyWorkingDir() {
+    String basePath = myProject.getBasePath();
+    if (basePath != null) {
+      String relPath = FileUtil.getRelativePath(basePath, FileUtil.toSystemIndependentName(myWorkingDirectory.getPath()), '/');
+      if (".".equals(relPath)) {
+        return myWorkingDirectory.getName();
+      }
+      else if (relPath != null) {
+        return FileUtil.toSystemDependentName(relPath);
+      }
+    }
+    return myWorkingDirectory.getPath();
+  }
+
   private void logTime() {
     if (myStartTime > 0) {
       long time = System.currentTimeMillis() - myStartTime;
-      if (!LOG.isDebugEnabled() && time > LONG_TIME) {
+      if (!TIME_LOG.isDebugEnabled() && time > LONG_TIME) {
         LOG.info(String.format("git %s took %s ms. Command parameters: %n%s", myCommand, time, myCommandLine.getCommandLineString()));
       }
       else {
-        LOG.debug(String.format("git %s took %s ms", myCommand, time));
+        TIME_LOG.debug(String.format("git %s took %s ms", myCommand, time));
       }
     }
     else {

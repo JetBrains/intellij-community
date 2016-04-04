@@ -17,6 +17,7 @@ import kotlin.properties.Delegates
 
 internal abstract class GitTestCase : IcsTestCase() {
   companion object {
+    @JvmField
     @ClassRule val projectRule = ProjectRule()
   }
 
@@ -102,7 +103,7 @@ internal abstract class GitTestCase : IcsTestCase() {
   }
 
   protected fun configureLocalRepository(remoteBranchName: String? = null) {
-    repositoryManager.setUpstream(remoteRepository.getWorkTree().absolutePath, remoteBranchName)
+    repositoryManager.setUpstream(remoteRepository.workTree.absolutePath, remoteBranchName)
   }
 
   protected fun FileSystem.compare(): FileSystem {

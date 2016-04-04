@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -133,7 +134,14 @@ public class MissingDeprecatedAnnotationInspection extends BaseInspection {
         return;
       }
       if (hasDeprecatedAnnotation(method)) {
-        if (warnOnMissingJavadoc && !hasDeprecatedComment(method, true)) {
+        if (warnOnMissingJavadoc) {
+          PsiMethod m = method;
+          while (m != null) {
+            if (hasDeprecatedComment(m, true)) {
+              return;
+            }
+            m = MethodUtils.getSuper(m);
+          }
           registerMethodError(method, Boolean.FALSE);
         }
       }

@@ -180,10 +180,12 @@ public class AddOnDemandStaticImportAction extends BaseElementAtCaretIntentionAc
           PsiElement qualifierExpression = expression.getQualifier();
           if (qualifierExpression instanceof PsiJavaCodeReferenceElement && ((PsiJavaCodeReferenceElement)qualifierExpression).isReferenceTo(aClass)) {
             qualifierExpression.delete();
-            HighlightManager.getInstance(project)
-              .addRangeHighlight(editor, expression.getTextRange().getStartOffset(), expression.getTextRange().getEndOffset(),
-                                 EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES),
-                                 false, null);
+            if (editor != null) {
+              HighlightManager.getInstance(project)
+                .addRangeHighlight(editor, expression.getTextRange().getStartOffset(), expression.getTextRange().getEndOffset(),
+                                   EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES),
+                                   false, null);
+            }
           }
 
           return true;

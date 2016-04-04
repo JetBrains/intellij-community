@@ -18,16 +18,20 @@ package com.intellij.openapi.diff.impl.patch.formove;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.SortByVcsRoots;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.FilePathByPathComparator;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -37,17 +41,17 @@ public class TriggerAdditionOrDeletion {
   private final Set<FilePath> myAffected;
   private final Project myProject;
   private final boolean mySilentAddDelete;
-  private ProjectLevelVcsManager myVcsManager;
-  private AbstractVcsHelper myVcsHelper;
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.patch.formove.TriggerAdditionOrDeletion");
+  private final ProjectLevelVcsManager myVcsManager;
+  private final AbstractVcsHelper myVcsHelper;
+  private static final Logger LOG = Logger.getInstance(TriggerAdditionOrDeletion.class);
   private final VcsFileListenerContextHelper myVcsFileListenerContextHelper;
 
   private MultiMap<VcsRoot, FilePath> myPreparedAddition;
   private MultiMap<VcsRoot, FilePath> myPreparedDeletion;
 
-  public TriggerAdditionOrDeletion(final Project project, boolean silentAddDelete) {
+  public TriggerAdditionOrDeletion(final Project project) {
     myProject = project;
-    mySilentAddDelete = Registry.is("vcs.add.remove.silent"); // TODO there is no sense in making add/remove non-silent anywhen; wait for users feedback, then remove
+    mySilentAddDelete = Registry.is("vcs.add.remove.silent");
     myExisting = new HashSet<FilePath>();
     myDeleted = new HashSet<FilePath>();
     myVcsManager = ProjectLevelVcsManager.getInstance(myProject);
@@ -58,28 +62,16 @@ public class TriggerAdditionOrDeletion {
 
   public void addExisting(final Collection<FilePath> files) {
     myExisting.addAll(files);
-    logFiles("FOR ADD", files);
   }
 
   public void addDeleted(final Collection<FilePath> files) {
     myDeleted.addAll(files);
-    logFiles("FOR DELETION", files);
-  }
-  
-  private void logFiles(final String name, final Collection<FilePath> files) {
-    /*final StringBuilder sb = new StringBuilder(name);
-    sb.append(": ");
-    for (FilePath file : files) {
-      sb.append(file.getPath()).append('\n');
-    }
-    sb.append('\n');
-    LOG.info(sb.toString());*/
   }
 
   public void prepare() {
     if (myExisting.isEmpty() && myDeleted.isEmpty()) return;
-    
-    final SortByVcsRoots<FilePath> sortByVcsRoots = new SortByVcsRoots<FilePath>(myProject, new Convertor.IntoSelf());
+
+    final SortByVcsRoots<FilePath> sortByVcsRoots = new SortByVcsRoots<FilePath>(myProject, new Convertor.IntoSelf<FilePath>());
 
     if (! myExisting.isEmpty()) {
       processAddition(sortByVcsRoots);
@@ -93,33 +85,62 @@ public class TriggerAdditionOrDeletion {
     if (myPreparedDeletion != null) {
       for (Map.Entry<VcsRoot, Collection<FilePath>> entry : myPreparedDeletion.entrySet()) {
         final VcsRoot vcsRoot = entry.getKey();
-        final CheckinEnvironment localChangesProvider = vcsRoot.getVcs().getCheckinEnvironment();
+        final AbstractVcs vcs = ObjectUtils.assertNotNull(vcsRoot.getVcs());
+        final CheckinEnvironment localChangesProvider = vcs.getCheckinEnvironment();
         if (localChangesProvider == null) continue;
         final Collection<FilePath> filePaths = entry.getValue();
-        if (vcsRoot.getVcs().fileListenerIsSynchronous()) {
+        if (vcs.fileListenerIsSynchronous()) {
           myAffected.addAll(filePaths);
           continue;
         }
-        askUserIfNeededDeletion(vcsRoot.getVcs(), (List<FilePath>)filePaths);
+        askUserIfNeeded(vcsRoot.getVcs(), (List<FilePath>)filePaths, VcsConfiguration.StandardConfirmation.REMOVE);
         myAffected.addAll(filePaths);
         localChangesProvider.scheduleMissingFileForDeletion((List<FilePath>)filePaths);
       }
     }
     if (myPreparedAddition != null) {
+      final List<FilePath> incorrectFilePath = new ArrayList<FilePath>();
       for (Map.Entry<VcsRoot, Collection<FilePath>> entry : myPreparedAddition.entrySet()) {
         final VcsRoot vcsRoot = entry.getKey();
-        final CheckinEnvironment localChangesProvider = vcsRoot.getVcs().getCheckinEnvironment();
+        final AbstractVcs vcs = ObjectUtils.assertNotNull(vcsRoot.getVcs());
+        final CheckinEnvironment localChangesProvider = vcs.getCheckinEnvironment();
         if (localChangesProvider == null) continue;
         final Collection<FilePath> filePaths = entry.getValue();
-        if (vcsRoot.getVcs().fileListenerIsSynchronous()) {
+        if (vcs.fileListenerIsSynchronous()) {
           myAffected.addAll(filePaths);
           continue;
         }
-        askUserIfNeededAddition(vcsRoot.getVcs(), (List<FilePath>)filePaths);
+        askUserIfNeeded(vcsRoot.getVcs(), (List<FilePath>)filePaths, VcsConfiguration.StandardConfirmation.ADD);
         myAffected.addAll(filePaths);
-        localChangesProvider.scheduleUnversionedFilesForAddition(ObjectsConvertor.fp2vf(filePaths));
+        final List<VirtualFile> virtualFiles = new ArrayList<VirtualFile>();
+        ContainerUtil.process(filePaths, new Processor<FilePath>() {
+          @Override
+          public boolean process(FilePath path) {
+            VirtualFile vf = path.getVirtualFile();
+            if (vf == null) {
+              incorrectFilePath.add(path);
+            }
+            else {
+              virtualFiles.add(vf);
+            }
+            return true;
+          }
+        });
+        //virtual files collection shouldn't contain 'null' vf
+        localChangesProvider.scheduleUnversionedFilesForAddition(virtualFiles);
+      }
+      //if some errors occurred  -> notify
+      if (!incorrectFilePath.isEmpty()) {
+        notifyAndLogFiles("Apply new files error", incorrectFilePath);
       }
     }
+  }
+
+  private void notifyAndLogFiles(@NotNull String topic, @NotNull List<FilePath> incorrectFilePath) {
+    String message = "The following " + StringUtil.pluralize("file", incorrectFilePath.size()) + " may be processed incorrectly by VCS.\n" +
+                     "Please check it manually: " + incorrectFilePath;
+    LOG.warn(message);
+    VcsNotifier.getInstance(myProject).notifyImportantWarning(topic, message);
   }
 
   public Set<FilePath> getAffected() {
@@ -193,47 +214,41 @@ public class TriggerAdditionOrDeletion {
     }
   }
 
-  private void askUserIfNeededAddition(final AbstractVcs vcs, final List<FilePath> toBeAdded) {
+  private void askUserIfNeeded(final AbstractVcs vcs, @NotNull  final List<FilePath> filePaths, @NotNull VcsConfiguration.StandardConfirmation type) {
     if (mySilentAddDelete) return;
-    final VcsShowConfirmationOption confirmationOption = myVcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.ADD, vcs);
+    final VcsShowConfirmationOption confirmationOption = myVcsManager.getStandardConfirmation(type, vcs);
     if (VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY.equals(confirmationOption.getValue())) {
-      toBeAdded.clear();
-    } else if (VcsShowConfirmationOption.Value.SHOW_CONFIRMATION.equals(confirmationOption.getValue())) {
-      final Collection<FilePath> files = myVcsHelper.selectFilePathsToProcess(toBeAdded, "Select files to add to " + vcs.getDisplayName(), null,
-        "Schedule for addition", "Do you want to schedule the following file for addition to " + vcs.getDisplayName() + "\n{0}", confirmationOption);
+      filePaths.clear();
+    }
+    else if (VcsShowConfirmationOption.Value.SHOW_CONFIRMATION.equals(confirmationOption.getValue())) {
+      String operation = type == VcsConfiguration.StandardConfirmation.ADD ? "addition" : "deletion";
+      String preposition = type == VcsConfiguration.StandardConfirmation.ADD ? " to " : " from ";
+      final Collection<FilePath> files = myVcsHelper.selectFilePathsToProcess(filePaths, "Select files to " +
+                                                                                         StringUtil.decapitalize(type.getId()) +
+                                                                                         preposition +
+                                                                                         vcs.getDisplayName(), null,
+                                                                              "Schedule for " + operation,
+                                                                              "Do you want to schedule the following file for " +
+                                                                              operation +
+                                                                              preposition +
+                                                                              vcs.getDisplayName() +
+                                                                              "\n{0}", confirmationOption);
       if (files == null) {
-        toBeAdded.clear();
-      } else {
-        toBeAdded.retainAll(files);
+        filePaths.clear();
+      }
+      else {
+        filePaths.retainAll(files);
       }
     }
   }
 
-  private void askUserIfNeededDeletion(final AbstractVcs vcs, final List<FilePath> toBeDeleted) {
-    if (mySilentAddDelete) return;
-    final VcsShowConfirmationOption confirmationOption = myVcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.REMOVE, vcs);
-    if (VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY.equals(confirmationOption.getValue())) {
-      toBeDeleted.clear();
-    } else if (VcsShowConfirmationOption.Value.SHOW_CONFIRMATION.equals(confirmationOption.getValue())) {
-      final Collection<FilePath> files = myVcsHelper.selectFilePathsToProcess(toBeDeleted, "Select files to remove from " + vcs.getDisplayName(), null,
-        "Schedule for deletion", "Do you want to schedule the following file for deletion from " + vcs.getDisplayName() + "\n{0}", confirmationOption);
-      if (files == null) {
-        toBeDeleted.clear();
-      } else {
-        toBeDeleted.retainAll(files);
-      }
-    }
-  }
-
-  private class RecursiveCheckAdder {
+  private static class RecursiveCheckAdder {
     private final Set<FilePath> myToBeAdded;
-    private ChangeListManager myChangeListManager;
     private final VirtualFile myRoot;
 
     private RecursiveCheckAdder(final VirtualFile root) {
       myRoot = root;
       myToBeAdded = new HashSet<FilePath>();
-      myChangeListManager = ChangeListManager.getInstance(myProject);
     }
 
     public void process(final FilePath path) {
@@ -246,7 +261,7 @@ public class TriggerAdditionOrDeletion {
         if (vf == null) {
           return;
         }
-        if (! VfsUtil.isAncestor(myRoot, vf, true)) return;
+        if (!VfsUtilCore.isAncestor(myRoot, vf, true)) return;
 
         myToBeAdded.add(current);
         current = current.getParentPath();

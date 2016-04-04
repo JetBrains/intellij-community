@@ -95,10 +95,11 @@ public class ExtractSuperClassUtil {
 
       // make original class extend extracted superclass
       PsiJavaCodeReferenceElement ref = createExtendingReference(superclass, subclass, selectedMemberInfos);
+      final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
       if (subClassExtends != null) {
-        subclass.getExtendsList().add(ref);
+        codeStyleManager.reformat(subclass.getExtendsList().add(ref));
       } else if (subclass instanceof PsiAnonymousClass) {
-        ((PsiAnonymousClass)subclass).getBaseClassReference().replace(ref);
+        codeStyleManager.reformat(((PsiAnonymousClass)subclass).getBaseClassReference().replace(ref));
       }
 
       PullUpProcessor pullUpHelper = new PullUpProcessor(subclass, superclass, selectedMemberInfos,

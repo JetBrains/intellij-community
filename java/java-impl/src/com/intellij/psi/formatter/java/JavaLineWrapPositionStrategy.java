@@ -63,7 +63,14 @@ public class JavaLineWrapPositionStrategy extends DefaultLineWrapPositionStrateg
       searchEndOffset = Math.min(offset + 100, lineEndOffset);
     }
 
-    return CharArrayUtil.indexOf(sequence, tagStart, searchStartOffset, offset) > 0
-      && CharArrayUtil.indexOf(sequence, tagEnd, offset, searchEndOffset) > 0;
+    CharSequence textChunkAroundOffset = sequence.subSequence(searchStartOffset, searchEndOffset);
+    int offsetInChunk = offset - searchStartOffset;
+    
+    int tagStartIndex = CharArrayUtil.lastIndexOf(textChunkAroundOffset, tagStart, offsetInChunk);
+    if (tagStartIndex > 0) {
+      int nearestTagEndIndex = CharArrayUtil.indexOf(textChunkAroundOffset, tagEnd, tagStartIndex);
+      return nearestTagEndIndex > offsetInChunk;
+    }
+    return false;
   }
 }

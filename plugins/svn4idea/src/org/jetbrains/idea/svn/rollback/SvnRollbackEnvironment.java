@@ -17,6 +17,7 @@ package org.jetbrains.idea.svn.rollback;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
@@ -29,12 +30,14 @@ import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author yole
@@ -56,9 +59,9 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
                               @NotNull RollbackProgressListener listener) {
     listener.indeterminate();
 
-    for (Collection<Change> collection : SvnUtil.splitChangesIntoWc(mySvnVcs, changes).values()) {
+    for (Map.Entry<Pair<SVNURL, WorkingCopyFormat>, Collection<Change>> entry : SvnUtil.splitChangesIntoWc(mySvnVcs, changes).entrySet()) {
       // to be more sure about nested changes, being or being not reverted
-      List<Change> sortedChanges = ContainerUtil.sorted(collection, ChangesAfterPathComparator.getInstance());
+      List<Change> sortedChanges = ContainerUtil.sorted(entry.getValue(), ChangesAfterPathComparator.getInstance());
 
       rollbackGroupForWc(sortedChanges, exceptions, listener);
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,10 @@
 package com.intellij.openapi.editor.ex;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.util.text.StringUtil;
 import org.intellij.lang.annotations.MagicConstant;
@@ -29,10 +32,7 @@ import java.beans.PropertyChangeSupport;
 import java.util.EnumSet;
 import java.util.Set;
 
-@State(
-  name = "EditorSettings",
-  storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/editor.xml")}
-)
+@State(name = "EditorSettings", storages = @Storage("editor.xml"))
 public class EditorSettingsExternalizable implements PersistentStateComponent<EditorSettingsExternalizable.OptionSet> {
   //Q: make it interface?
   public static final class OptionSet {
@@ -81,6 +81,8 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
 
     public boolean SHOW_NOTIFICATION_AFTER_REFORMAT_CODE_ACTION = true;
     public boolean SHOW_NOTIFICATION_AFTER_OPTIMIZE_IMPORTS_ACTION = true;
+    
+    public boolean ADD_CARETS_ON_DOUBLE_CTRL = true;
   }
 
   private static final String COMPOSITE_PROPERTY_SEPARATOR = ":";
@@ -504,5 +506,13 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
 
   public void setShowInlineLocalDialog(final boolean val) {
     myOptions.SHOW_INLINE_DIALOG = val;
+  }
+  
+  public boolean addCaretsOnDoubleCtrl() {
+    return myOptions.ADD_CARETS_ON_DOUBLE_CTRL;
+  }
+  
+  public void setAddCaretsOnDoubleCtrl(boolean val) {
+    myOptions.ADD_CARETS_ON_DOUBLE_CTRL = val;
   }
 }

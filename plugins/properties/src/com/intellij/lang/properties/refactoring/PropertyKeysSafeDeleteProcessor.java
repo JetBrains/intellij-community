@@ -77,7 +77,10 @@ public class PropertyKeysSafeDeleteProcessor extends SafeDeleteProcessorDelegate
     final List<PsiElement> result = new ArrayList<PsiElement>();
     for (PropertiesFile propertiesFile : file.getResourceBundle().getPropertiesFiles()) {
       for (IProperty p : propertiesFile.findPropertiesByKey(key)) {
-        result.add(p.getPsiElement());
+        final PsiElement propertyElement = p.getPsiElement();
+        if (!allElementsToDelete.contains(propertyElement)) {
+          result.add(propertyElement);
+        }
       }
     }
     return result;

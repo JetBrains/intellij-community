@@ -29,6 +29,7 @@ public abstract class BaseSyncScrollable implements SyncScrollSupport.SyncScroll
    */
   protected abstract void processHelper(@NotNull ScrollHelper helper);
 
+  @Override
   public int transfer(@NotNull Side baseSide, int line) {
     ScrollHelper helper = new ScrollHelper(baseSide, line);
     processHelper(helper);

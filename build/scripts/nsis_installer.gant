@@ -22,12 +22,9 @@ def nsis_installer(pathsToInclude, stringsFile, pathsFile, outNamePrefix, includ
   ant.mkdir(dir: "$box/nsiconf")
 
   if (!hasBundledJRE) {
-    ant.mkdir(dir: "$box/jre")
-    ant.unzip(dest: "$box/jre", src: winJDK)
-
     ant.copy(todir: "$box/bin") {
-      fileset(dir: "$box/jre/jre/bin") {
-        include(name: "msvcr71.dll")
+      fileset(dir: "${box}/jdk.win/jre") {
+        include(name: "**/msvcr71.dll")
       }
     }
   }
@@ -60,12 +57,7 @@ def nsis_installer(pathsToInclude, stringsFile, pathsFile, outNamePrefix, includ
     }
     fileset(dir: box, includes: "bin/msvcr71.dll")
     if (!hasBundledJRE) {
-      fileset(dir: box, includes: "jre/**/*")
-      if (includeToolsJar) {
-        fileset(dir: box) {
-          include(name: "jre/lib/tools.jar")
-        }
-      }
+      fileset(dir: "${box}/jdk.win", includes: "jre/**/*")
     }
   }
 

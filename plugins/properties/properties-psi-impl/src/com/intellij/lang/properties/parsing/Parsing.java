@@ -33,6 +33,8 @@ public class Parsing {
       parseKey(builder);
       if (builder.getTokenType() == PropertiesTokenTypes.KEY_VALUE_SEPARATOR) {
         parseKeyValueSeparator(builder);
+      }
+      if (builder.getTokenType() == PropertiesTokenTypes.VALUE_CHARACTERS) {
         parseValue(builder);
       }
       prop.done(PropertiesElementTypes.PROPERTY);

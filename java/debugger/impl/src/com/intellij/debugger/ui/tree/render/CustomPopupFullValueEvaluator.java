@@ -43,7 +43,7 @@ public abstract class CustomPopupFullValueEvaluator<T> extends JavaValue.JavaFul
   protected abstract JComponent createComponent(T data);
 
   @Override
-  public void evaluate(@NotNull final XFullValueEvaluationCallback callback) throws Exception {
+  public void evaluate(@NotNull final XFullValueEvaluationCallback callback) {
     final T data = getData();
     DebuggerUIUtil.invokeLater(new Runnable() {
       @Override

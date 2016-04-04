@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,6 @@
  */
 package com.intellij.openapi.util;
 
-import org.jetbrains.annotations.NonNls;
-
 /**
  * Returns {@code true} or {@code false} for the given input object.
  * <p/>
@@ -28,12 +26,10 @@ public interface Condition<T> {
   boolean value(T t);
 
   Condition<Object> NOT_NULL = new Condition<Object>() {
-    @Override
     public boolean value(final Object object) {
       return object != null;
     }
 
-    @NonNls
     @Override
     public String toString() {
       return "Condition.NOT_NULL";
@@ -41,30 +37,26 @@ public interface Condition<T> {
   };
 
   /**
-   * @see com.intellij.openapi.util.Conditions#alwaysTrue()
+   * @see Conditions#alwaysTrue()
    */
   Condition TRUE = new Condition() {
-    @Override
     public boolean value(final Object object) {
       return true;
     }
 
-    @NonNls
     @Override
     public String toString() {
       return "Condition.TRUE";
     }
   };
   /**
-   * @see com.intellij.openapi.util.Conditions#alwaysFalse()
+   * @see Conditions#alwaysFalse()
    */
   Condition FALSE = new Condition() {
-    @Override
     public boolean value(final Object object) {
       return false;
     }
 
-    @NonNls
     @Override
     public String toString() {
       return "Condition.FALSE";

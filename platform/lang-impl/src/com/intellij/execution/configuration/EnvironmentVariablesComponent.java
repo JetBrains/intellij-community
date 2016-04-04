@@ -66,6 +66,15 @@ public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWit
     myEnvVars.setPassParentEnvs(passParentEnvs);
   }
 
+  @NotNull
+  public EnvironmentVariablesData getEnvData() {
+    return myEnvVars.getData();
+  }
+
+  public void setEnvData(@NotNull EnvironmentVariablesData envData) {
+    myEnvVars.setData(envData);
+  }
+
   public static void readExternal(Element element, Map<String, String> envs) {
     final Element envsElement = element.getChild(ENVS);
     if (envsElement != null) {

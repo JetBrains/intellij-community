@@ -4,6 +4,6 @@ abstract class B {
     abstract <T> void foo(List<T>[] x);
 
     void bar(List<?>[] x){
-        foo<error descr="'foo(java.util.List<java.lang.Object>[])' in 'B' cannot be applied to '(java.util.List<?>[])'">(x)</error>;
+        foo<error descr="'foo(java.util.List<T>[])' in 'B' cannot be applied to '(java.util.List<?>[])'">(x)</error>;
     }
 }

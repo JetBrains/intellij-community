@@ -64,7 +64,28 @@ public class VirtualEnvSdkFlavor extends CPythonSdkFlavor {
     for (VirtualFile file : getCondaDefaultLocations()) {
       candidates.addAll(findInDirectory(file));
     }
+
+    final VirtualFile pyEnvLocation = getPyEnvDefaultLocations();
+    if (pyEnvLocation != null) {
+      candidates.addAll(findInDirectory(pyEnvLocation));
+    }
     return candidates;
+  }
+
+  @Nullable
+  public static VirtualFile getPyEnvDefaultLocations() {
+    final String path = System.getenv().get("PYENV_ROOT");
+    if (!StringUtil.isEmpty(path)) {
+      final VirtualFile pyEnvRoot = LocalFileSystem.getInstance().findFileByPath(FileUtil.expandUserHome(path).replace('\\', '/'));
+      if (pyEnvRoot != null) {
+        return pyEnvRoot.findFileByRelativePath("versions");
+      }
+    }
+    final VirtualFile userHome = LocalFileSystem.getInstance().findFileByPath(SystemProperties.getUserHome().replace('\\','/'));
+    if (userHome != null) {
+      return userHome.findFileByRelativePath(".pyenv/versions");
+    }
+    return null;
   }
 
   public static List<VirtualFile> getCondaDefaultLocations() {

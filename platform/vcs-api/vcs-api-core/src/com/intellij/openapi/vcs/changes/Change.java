@@ -213,8 +213,9 @@ public class Change {
   }
 
   private boolean revisionPathsSame() {
-    final String path1 = myBeforeRevision.getFile().getIOFile().getAbsolutePath();
-    final String path2 = myAfterRevision.getFile().getIOFile().getAbsolutePath();
+    final String path1 = myBeforeRevision.getFile().getPath();
+    final String path2 = myAfterRevision.getFile().getPath();
+    // intentionally comparing case-sensitively even on case-insensitive OS to identify case-only renames
     return path1.equals(path2);
   }
 

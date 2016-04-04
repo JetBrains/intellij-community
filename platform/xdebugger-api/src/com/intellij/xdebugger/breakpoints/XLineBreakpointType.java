@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,9 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
@@ -145,5 +147,62 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
 
     @Nullable
     public abstract P createProperties();
+  }
+
+  public class XLineBreakpointAllVariant extends XLineBreakpointVariant {
+    protected final XSourcePosition mySourcePosition;
+
+    public XLineBreakpointAllVariant(@NotNull XSourcePosition position) {
+      mySourcePosition = position;
+    }
+
+    @Override
+    public String getText() {
+      return "All";
+    }
+
+    @Nullable
+    @Override
+    public Icon getIcon() {
+      return null;
+    }
+
+    @Nullable
+    @Override
+    public TextRange getHighlightRange() {
+      return null;
+    }
+
+    @Override
+    @Nullable
+    public P createProperties() {
+      return createBreakpointProperties(mySourcePosition.getFile(),
+                                        mySourcePosition.getLine());
+    }
+  }
+
+  public class XLinePsiElementBreakpointVariant extends XLineBreakpointAllVariant {
+    private final PsiElement myElement;
+
+    public XLinePsiElementBreakpointVariant(@NotNull XSourcePosition position, PsiElement element) {
+      super(position);
+
+      myElement = element;
+    }
+
+    @Override
+    public Icon getIcon() {
+      return myElement.getIcon(0);
+    }
+
+    @Override
+    public String getText() {
+      return StringUtil.shortenTextWithEllipsis(myElement.getText(), 100, 0);
+    }
+
+    @Override
+    public TextRange getHighlightRange() {
+      return myElement.getTextRange();
+    }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,7 +59,7 @@ public class VisitingTest extends IntegrationTestCase {
     VirtualFile dir = createFile("dir");
     getVcs().endChangeSet(null);
     getVcs().beginChangeSet();
-    dir.rename(this, "newDir");
+    rename(dir, "newDir");
 
     assertVisitorLog("begin rename end begin create end begin create end finished ");
   }

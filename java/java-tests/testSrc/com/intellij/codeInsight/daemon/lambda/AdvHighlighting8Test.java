@@ -30,8 +30,13 @@ public class AdvHighlighting8Test extends DaemonAnalyzerTestCase {
   @NonNls private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/advHighlighting8";
 
   @Override
-  protected Sdk getTestProjectJdk() {
+  public void setUp() throws Exception {
+    super.setUp();
     LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(LanguageLevel.JDK_1_8);
+  }
+
+  @Override
+  protected Sdk getTestProjectJdk() {
     return IdeaTestUtil.getMockJdk18();
   }
 

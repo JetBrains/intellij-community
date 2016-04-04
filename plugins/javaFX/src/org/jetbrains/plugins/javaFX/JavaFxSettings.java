@@ -15,7 +15,10 @@
  */
 package org.jetbrains.plugins.javaFX;
 
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,9 +29,7 @@ import org.jetbrains.annotations.Nullable;
 @State(
   name="JavaFxSettings",
   storages = {
-    @Storage(
-      file = StoragePathMacros.APP_CONFIG + "/other.xml"
-    )}
+    @Storage("other.xml")}
 )
 public class JavaFxSettings implements PersistentStateComponent<JavaFxSettings> {
   public String myPathToSceneBuilder = null;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,14 +34,7 @@ import java.util.Map;
 /**
  * @author nik
  */
-@State(
-    name = "FacetEditorsStateManager",
-    storages = {
-        @Storage(
-            file = StoragePathMacros.WORKSPACE_FILE
-        )
-    }
-)
+@State(name = "FacetEditorsStateManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class FacetEditorsStateManagerImpl extends FacetEditorsStateManager implements PersistentStateComponent<FacetEditorsStateManagerImpl.FacetEditorsStateBean>{
   private final Map<String, Object> myFacetTypeStates = new HashMap<String, Object>();
   private FacetEditorsStateBean myBean = new FacetEditorsStateBean();

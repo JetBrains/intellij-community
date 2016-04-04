@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import com.intellij.openapi.components.impl.stores.BatchUpdateListener
 import com.intellij.util.messages.MessageBus
 import javax.swing.SwingUtilities
 
-public inline fun <T> runWriteAction(runnable: () -> T): T {
+inline fun <T> runWriteAction(runnable: () -> T): T {
   val token = WriteAction.start()
   try {
     return runnable()
@@ -29,7 +29,7 @@ public inline fun <T> runWriteAction(runnable: () -> T): T {
   }
 }
 
-public inline fun <T> runReadAction(runnable: () -> T): T {
+inline fun <T> runReadAction(runnable: () -> T): T {
   val token = ReadAction.start()
   try {
     return runnable()
@@ -39,7 +39,7 @@ public inline fun <T> runReadAction(runnable: () -> T): T {
   }
 }
 
-public inline fun <T> runBatchUpdate(messageBus: MessageBus, runnable: () -> T): T {
+inline fun <T> runBatchUpdate(messageBus: MessageBus, runnable: () -> T): T {
   val publisher = messageBus.syncPublisher(BatchUpdateListener.TOPIC)
   publisher.onBatchUpdateStarted()
   try {
@@ -53,7 +53,7 @@ public inline fun <T> runBatchUpdate(messageBus: MessageBus, runnable: () -> T):
 /**
  * @exclude Internal use only
  */
-public fun invokeAndWaitIfNeed(runnable: () -> Unit) {
+fun invokeAndWaitIfNeed(runnable: () -> Unit) {
   val app = ApplicationManager.getApplication()
   if (app == null) {
     if (SwingUtilities.isEventDispatchThread()) runnable() else SwingUtilities.invokeAndWait(runnable)

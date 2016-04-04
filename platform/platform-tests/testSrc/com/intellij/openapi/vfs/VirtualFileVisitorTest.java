@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,8 @@ import com.intellij.mock.MockVirtualFile;
 import com.intellij.mock.MockVirtualLink;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.testFramework.PlatformUltraLiteTestFixture;
+import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.util.Function;
-import com.intellij.util.NullableFunction;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.AfterClass;
@@ -34,14 +32,11 @@ import java.util.Collections;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-public class VirtualFileVisitorTest {
-  private static PlatformUltraLiteTestFixture myFixture;
+public class VirtualFileVisitorTest extends BareTestFixtureTestCase {
   private static VirtualFile myRoot;
 
   @BeforeClass
-  public static void setUp() throws Exception {
-    myFixture = PlatformUltraLiteTestFixture.getFixture();
-    myFixture.setUp();
+  public static void setUp() {
     myRoot =
       dir("/",
           dir("d1",
@@ -62,9 +57,8 @@ public class VirtualFileVisitorTest {
   }
 
   @AfterClass
-  public static void tearDown() throws Exception {
+  public static void tearDown() {
     myRoot = null;
-    myFixture.tearDown();
   }
 
   @Test
@@ -112,12 +106,7 @@ public class VirtualFileVisitorTest {
   @Test
   public void skipChildrenForDirectory() {
     doTest(
-      new Function<VirtualFile, Object>() {
-        @Override
-        public Object fun(VirtualFile file) {
-          return "d11".equals(file.getName()) ? VirtualFileVisitor.SKIP_CHILDREN : VirtualFileVisitor.CONTINUE;
-        }
-      },
+      file -> "d11".equals(file.getName()) ? VirtualFileVisitor.SKIP_CHILDREN : VirtualFileVisitor.CONTINUE,
       null,
       "-> / [0]\n" +
       "  -> d1 [1]\n" +
@@ -155,12 +144,7 @@ public class VirtualFileVisitorTest {
   @Test
   public void skipChildrenForFiles() {
     doTest(
-      new Function<VirtualFile, Object>() {
-        @Override
-        public Object fun(VirtualFile file) {
-          return file.isDirectory() ? VirtualFileVisitor.CONTINUE : VirtualFileVisitor.SKIP_CHILDREN;
-        }
-      },
+      file -> file.isDirectory() ? VirtualFileVisitor.CONTINUE : VirtualFileVisitor.SKIP_CHILDREN,
       null,
       "-> / [0]\n" +
       "  -> d1 [1]\n" +
@@ -193,14 +177,11 @@ public class VirtualFileVisitorTest {
 
   @Test
   public void skipToParent() {
-    final Ref<VirtualFile> skip = Ref.create();
+    Ref<VirtualFile> skip = Ref.create();
     doTest(
-      new Function<VirtualFile, Object>() {
-        @Override
-        public Object fun(VirtualFile file) {
-          if ("d1".equals(file.getName())) skip.set(file);
-          return "f11.1".equals(file.getName()) ? skip.get() : VirtualFileVisitor.CONTINUE;
-        }
+      file -> {
+        if ("d1".equals(file.getName())) skip.set(file);
+        return "f11.1".equals(file.getName()) ? skip.get() : VirtualFileVisitor.CONTINUE;
       },
       null,
       "-> / [0]\n" +
@@ -223,12 +204,7 @@ public class VirtualFileVisitorTest {
   @Test
   public void skipToRoot() {
     doTest(
-      new Function<VirtualFile, Object>() {
-        @Override
-        public Object fun(VirtualFile file) {
-          return "f11.1".equals(file.getName()) ? myRoot : VirtualFileVisitor.CONTINUE;
-        }
-      },
+      file -> "f11.1".equals(file.getName()) ? myRoot : VirtualFileVisitor.CONTINUE,
       null,
       "-> / [0]\n" +
       "  -> d1 [1]\n" +
@@ -239,14 +215,9 @@ public class VirtualFileVisitorTest {
   @Test
   public void abort() {
     doTest(
-      new Function<VirtualFile, Object>() {
-        @Override
-        public Object fun(VirtualFile file) {
-          if ("f11.1".equals(file.getName())) {
-            throw new AbortException();
-          }
-          return VirtualFileVisitor.CONTINUE;
-        }
+      file -> {
+        if ("f11.1".equals(file.getName())) throw new AbortException();
+        return VirtualFileVisitor.CONTINUE;
       },
       null,
       "-> / [0]\n" +
@@ -292,12 +263,7 @@ public class VirtualFileVisitorTest {
   public void customIterable() {
     doTest(
       null,
-      new NullableFunction<VirtualFile, Iterable<VirtualFile>>() {
-        @Override
-        public Iterable<VirtualFile> fun(VirtualFile file) {
-          return "d13".equals(file.getName()) ? Collections.singletonList(file.getChildren()[1]) : null;
-        }
-      },
+      file -> "d13".equals(file.getName()) ? Collections.singletonList(file.getChildren()[1]) : null,
       "-> / [0]\n" +
       "  -> d1 [1]\n" +
       "    -> d11 [2]\n" +
@@ -336,11 +302,11 @@ public class VirtualFileVisitorTest {
 
   private static class AbortException extends RuntimeException { }
 
-  private static void doTest(@Nullable final Function<VirtualFile, Object> condition,
-                             @Nullable final Function<VirtualFile, Iterable<VirtualFile>> iterable,
-                             @NonNls @NotNull String expected,
+  private static void doTest(@Nullable Function<VirtualFile, Object> condition,
+                             @Nullable Function<VirtualFile, Iterable<VirtualFile>> iterable,
+                             @NotNull String expected,
                              @NotNull VirtualFileVisitor.Option... options) {
-    final StringBuilder sb = new StringBuilder();
+    StringBuilder sb = new StringBuilder();
 
     try {
       VfsUtilCore.visitChildrenRecursively(myRoot, new VirtualFileVisitor<Integer>(options) {
@@ -382,23 +348,21 @@ public class VirtualFileVisitorTest {
     assertEquals(expected, sb.toString());
   }
 
-  private static MockVirtualFile dir(@NonNls @NotNull String name, MockVirtualFile... children) {
-    final MockVirtualFile root = new MockVirtualFile(true, name);
-    for (MockVirtualFile child : children) {
-      root.addChild(child);
-    }
-    return root;
+  private static MockVirtualFile dir(@NotNull String name, MockVirtualFile... children) {
+    MockVirtualFile dir = new MockVirtualFile(true, name);
+    for (MockVirtualFile child : children) dir.addChild(child);
+    return dir;
   }
 
-  private static MockVirtualFile file(@NonNls @NotNull String name) {
+  private static MockVirtualFile file(@NotNull String name) {
     return new MockVirtualFile(name);
   }
 
-  private static void link(@NonNls @NotNull String targetPath, @NotNull @NonNls String linkPath) {
-    final VirtualFile target = myRoot.findFileByRelativePath(targetPath);
+  private static void link(@NotNull String targetPath, @NotNull String linkPath) {
+    VirtualFile target = myRoot.findFileByRelativePath(targetPath);
     assertNotNull(targetPath, target);
-    final int pos = linkPath.lastIndexOf('/');
-    final VirtualFile linkParent = myRoot.findFileByRelativePath(linkPath.substring(0, pos));
+    int pos = linkPath.lastIndexOf('/');
+    VirtualFile linkParent = myRoot.findFileByRelativePath(linkPath.substring(0, pos));
     assertNotNull(linkPath, linkParent);
     ((MockVirtualFile)linkParent).addChild(new MockVirtualLink(linkPath.substring(pos + 1), target));
   }

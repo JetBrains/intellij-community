@@ -15,6 +15,7 @@
  */
 package com.intellij.util.xml.reflect;
 
+import com.intellij.ide.presentation.Presentation;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.JavaMethod;
 import org.jetbrains.annotations.NotNull;
@@ -25,6 +26,7 @@ import java.lang.reflect.Type;
 /**
  * @author peter
  */
+@Presentation(typeName = "XML tag")
 public interface DomCollectionChildDescription extends DomChildrenDescription {
 
   DomCollectionChildDescription[] EMPTY_ARRAY = new DomCollectionChildDescription[0];

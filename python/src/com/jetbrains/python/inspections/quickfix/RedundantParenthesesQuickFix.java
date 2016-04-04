@@ -72,7 +72,8 @@ public class RedundantParenthesesQuickFix implements LocalQuickFix {
         right instanceof PyParenthesizedExpression) {
       PyExpression leftContained = ((PyParenthesizedExpression)left).getContainedExpression();
       PyExpression rightContained = ((PyParenthesizedExpression)right).getContainedExpression();
-      if (leftContained != null && rightContained != null) {
+      if (leftContained != null && rightContained != null &&
+          !(leftContained instanceof PyTupleExpression) && !(rightContained instanceof PyTupleExpression)) {
         left.replace(leftContained);
         right.replace(rightContained);
         return true;

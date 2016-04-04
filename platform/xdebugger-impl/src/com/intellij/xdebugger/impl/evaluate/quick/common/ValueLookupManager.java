@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.Alarm;
+import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,7 +39,7 @@ import java.awt.*;
 
 public class ValueLookupManager extends EditorMouseAdapter implements EditorMouseMotionListener {
   /**
-   * @see com.intellij.xdebugger.XDebuggerUtil#disableValueLookup(com.intellij.openapi.editor.Editor)
+   * @see XDebuggerUtil#disableValueLookup(Editor)
    */
   public static final Key<Boolean> DISABLE_VALUE_LOOKUP = Key.create("DISABLE_VALUE_LOOKUP");
 
@@ -48,7 +49,7 @@ public class ValueLookupManager extends EditorMouseAdapter implements EditorMous
   private final DebuggerSupport[] mySupports;
   private boolean myListening;
 
-  public ValueLookupManager(Project project) {
+  public ValueLookupManager(@NotNull Project project) {
     myProject = project;
     mySupports = DebuggerSupport.getDebuggerSupports();
     myAlarm = new Alarm(project);

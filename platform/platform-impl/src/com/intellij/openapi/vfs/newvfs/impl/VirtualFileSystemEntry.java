@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -204,10 +204,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   @Override
   public void rename(final Object requestor, @NotNull @NonNls final String newName) throws IOException {
     if (getName().equals(newName)) return;
-    if (!isValidName(newName)) {
-      throw new IOException(VfsBundle.message("file.invalid.name.error", newName));
-    }
-
+    validateName(newName);
     ourPersistence.renameFile(requestor, this, newName);
   }
 
@@ -298,8 +295,8 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     return ourPersistence.createChildDirectory(requestor, this, name);
   }
 
-  private static void validateName(@NotNull String name) throws IOException {
-    if (!isValidName(name)) {
+  private void validateName(@NotNull String name) throws IOException {
+    if (!getFileSystem().isValidName(name)) {
       throw new IOException(VfsBundle.message("file.invalid.name.error", name));
     }
   }
@@ -319,7 +316,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   }
 
   public void setNewName(@NotNull String newName) {
-    if (!isValidName(newName)) {
+    if (!getFileSystem().isValidName(newName)) {
       throw new IllegalArgumentException(VfsBundle.message("file.invalid.name.error", newName));
     }
 

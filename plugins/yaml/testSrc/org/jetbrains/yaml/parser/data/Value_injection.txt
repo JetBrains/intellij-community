@@ -1,0 +1,20 @@
+YAML file
+  YAML document
+    YAML mapping
+      YAML key value
+        PsiElement(scalar key)('key:')
+        PsiElement(Eol)('\n')
+        PsiElement(indent)('    ')
+        YAML mapping
+          YAML key value
+            PsiElement(scalar key)('one:')
+            PsiWhiteSpace(' ')
+            YAML plain scalar text
+              PsiElement(text)('1 text')
+          PsiElement(Eol)('\n')
+          PsiElement(indent)('    ')
+          YAML key value
+            PsiElement(scalar key)('other:')
+            PsiWhiteSpace(' ')
+            YAML plain scalar text
+              PsiElement(text)('some {{count}} text')

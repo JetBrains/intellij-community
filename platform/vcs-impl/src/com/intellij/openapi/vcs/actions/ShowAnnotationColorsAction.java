@@ -17,11 +17,11 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
+import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
@@ -54,7 +54,7 @@ public class ShowAnnotationColorsAction extends ActionGroup {
     return ColorMode.ORDER;
   }
 
-  public static class SetColorModeAction extends ToggleAction {
+  public static class SetColorModeAction extends ToggleAction implements DumbAware {
     private final ColorMode myType;
     private final EditorGutterComponentEx myGutter;
 

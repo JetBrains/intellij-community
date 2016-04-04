@@ -42,12 +42,17 @@ class ProjectFilesCondition implements Condition<VirtualFile> {
 
   @Override
   public boolean value(VirtualFile file) {
-    if (myIndexableFilesFilter != null && !myIndexableFilesFilter.containsFileId(((VirtualFileWithId)file).getId())) {
+    int fileId = ((VirtualFileWithId)file).getId();
+    if (myIndexableFilesFilter != null && fileId > 0 && !myIndexableFilesFilter.containsFileId(fileId)) {
       if (myFilesFromOtherProjects >= MAX_FILES_TO_UPDATE_FROM_OTHER_PROJECT) return false;
       ++myFilesFromOtherProjects;
       return true;
     }
 
+    if (fileId < 0 && file instanceof DeletedVirtualFileStub) {
+      //file = ((FileBasedIndexImpl.MyLightVirtualFile)file).getOriginalFile();
+      return true;
+    }
     if (FileBasedIndexImpl.belongsToScope(file, myRestrictedTo, myFilter)) return true;
 
     if (myFilesFromOtherProjects < MAX_FILES_TO_UPDATE_FROM_OTHER_PROJECT) {

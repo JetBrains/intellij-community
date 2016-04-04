@@ -13,11 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/**
- * (c) 2015 Silent Forest AB
- * created: 28 January 2015
- */
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.InspectionProfileEntry;

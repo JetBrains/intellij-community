@@ -17,7 +17,6 @@ package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.ide.util.projectWizard.importSources.JavaModuleSourceRoot;
 import com.intellij.ide.util.projectWizard.importSources.JavaSourceRootDetectionUtil;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressWindow;
@@ -26,7 +25,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -35,8 +33,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 
-import javax.swing.*;
-import java.awt.*;
 import java.io.File;
 import java.util.Collection;
 import java.util.HashMap;
@@ -138,13 +134,5 @@ public class JavaContentEntriesEditor extends CommonContentEntriesEditor {
         addSourcesRunnable.run();
       }
     }.start();
-  }
-
-  @Override
-  protected JPanel createBottomControl(Module module) {
-    if (Registry.is("ide.new.project.settings")) return null;
-    final JPanel innerPanel = new JPanel(new GridBagLayout());
-    innerPanel.setBorder(BorderFactory.createEmptyBorder(6, 0, 0, 6));
-    return innerPanel;
   }
 }

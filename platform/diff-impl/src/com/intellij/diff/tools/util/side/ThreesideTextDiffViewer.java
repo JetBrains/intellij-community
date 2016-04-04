@@ -21,6 +21,7 @@ import com.intellij.diff.actions.impl.SetEditorSettingsAction;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
+import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.tools.holders.EditorHolderFactory;
 import com.intellij.diff.tools.holders.TextEditorHolder;
 import com.intellij.diff.tools.util.DiffDataKeys;
@@ -29,9 +30,7 @@ import com.intellij.diff.tools.util.SyncScrollSupport.ThreesideSyncScrollSupport
 import com.intellij.diff.tools.util.base.InitialScrollPositionSupport;
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
-import com.intellij.diff.util.DiffUtil;
-import com.intellij.diff.util.Side;
-import com.intellij.diff.util.ThreeSide;
+import com.intellij.diff.util.*;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -42,6 +41,7 @@ import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -119,7 +119,7 @@ public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEd
   @NotNull
   @Override
   protected List<JComponent> createTitles() {
-    return DiffUtil.createTextTitles(myRequest, getEditors());
+    return DiffUtil.createSyncHeightComponents(DiffUtil.createTextTitles(myRequest, getEditors()));
   }
 
   //
@@ -256,6 +256,42 @@ public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEd
   @Nullable
   protected abstract SyncScrollSupport.SyncScrollable getSyncScrollable(@NotNull Side side);
 
+  @CalledInAwt
+  @NotNull
+  protected LogicalPosition transferPosition(@NotNull ThreeSide baseSide,
+                                             @NotNull ThreeSide targetSide,
+                                             @NotNull LogicalPosition position) {
+    if (mySyncScrollSupport == null) return position;
+    if (baseSide == targetSide) return position;
+
+    SyncScrollSupport.SyncScrollable scrollable12 = mySyncScrollSupport.getScrollable12();
+    SyncScrollSupport.SyncScrollable scrollable23 = mySyncScrollSupport.getScrollable23();
+
+    int baseLine; // line number in BASE
+    if (baseSide == ThreeSide.LEFT) {
+      baseLine = scrollable12.transfer(Side.LEFT, position.line);
+    }
+    else if (baseSide == ThreeSide.RIGHT) {
+      baseLine = scrollable23.transfer(Side.RIGHT, position.line);
+    }
+    else {
+      baseLine = position.line;
+    }
+
+    int targetLine;
+    if (targetSide == ThreeSide.LEFT) {
+      targetLine = scrollable12.transfer(Side.RIGHT, baseLine);
+    }
+    else if (targetSide == ThreeSide.RIGHT) {
+      targetLine = scrollable23.transfer(Side.LEFT, baseLine);
+    }
+    else {
+      targetLine = baseLine;
+    }
+
+    return new LogicalPosition(targetLine, position.column);
+  }
+
   //
   // Misc
   //
@@ -342,6 +378,37 @@ public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEd
 
       scrollToLine(myScrollToLine.first, myScrollToLine.second);
       return true;
+    }
+  }
+
+  protected class TextShowPartialDiffAction extends ShowPartialDiffAction {
+    public TextShowPartialDiffAction(@NotNull PartialDiffMode mode) {
+      super(mode);
+    }
+
+    @NotNull
+    @Override
+    protected SimpleDiffRequest createRequest() {
+      SimpleDiffRequest request = super.createRequest();
+
+      ThreeSide currentSide = getCurrentSide();
+      LogicalPosition currentPosition = DiffUtil.getCaretPosition(getCurrentEditor());
+
+      // we won't use DiffUserDataKeysEx.EDITORS_CARET_POSITION to avoid desync scroll position (as they can point to different places)
+      // TODO: pass EditorsVisiblePositions in case if view was scrolled without changing caret position ?
+      if (currentSide == mySide1) {
+        request.putUserData(DiffUserDataKeys.SCROLL_TO_LINE, Pair.create(Side.LEFT, currentPosition.line));
+      }
+      else if (currentSide == mySide2) {
+        request.putUserData(DiffUserDataKeys.SCROLL_TO_LINE, Pair.create(Side.RIGHT, currentPosition.line));
+      }
+      else {
+        LogicalPosition position1 = transferPosition(currentSide, mySide1, currentPosition);
+        LogicalPosition position2 = transferPosition(currentSide, mySide2, currentPosition);
+        request.putUserData(DiffUserDataKeysEx.EDITORS_CARET_POSITION, new LogicalPosition[]{position1, position2});
+      }
+
+      return request;
     }
   }
 }

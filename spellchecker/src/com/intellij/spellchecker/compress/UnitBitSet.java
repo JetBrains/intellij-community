@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,25 +19,25 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
-public class UnitBitSet {
-  public static final int MAX_CHARS_IN_WORD = 64;
-  public static final int MAX_UNIT_VALUE = 255;
+class UnitBitSet {
+  static final int MAX_CHARS_IN_WORD = 64;
+  static final int MAX_UNIT_VALUE = 255;
 
   final byte[] b;
   private final Alphabet alpha;
 
-  public UnitBitSet(@NotNull byte[] indices, @NotNull Alphabet alphabet) {
+  UnitBitSet(@NotNull byte[] indices, @NotNull Alphabet alphabet) {
     b = indices;
     alpha = alphabet;
   }
 
-  public int getUnitValue(int number) {
+  int getUnitValue(int number) {
     final int r = b[number] & 0xFF;
     assert r >= 0 && r <= MAX_UNIT_VALUE : "invalid unit value";
     return r;
   }
 
-  public void setUnitValue(int number, int value) {
+  void setUnitValue(int number, int value) {
     assert value >= 0 : "unit value is negative" + value;
     assert value <= MAX_UNIT_VALUE : "unit value is too big";
     b[number] = (byte)value;
@@ -45,8 +45,7 @@ public class UnitBitSet {
 
   @Override
   public boolean equals(Object obj) {
-    if (!(obj instanceof UnitBitSet)) return false;
-    return Arrays.equals(b, ((UnitBitSet)obj).b);
+    return obj instanceof UnitBitSet && Arrays.equals(b, ((UnitBitSet)obj).b);
   }
 
   @Override
@@ -61,7 +60,7 @@ public class UnitBitSet {
   @NotNull
   public byte[] pack() {
     int meaningfulBits = 32 - Integer.numberOfLeadingZeros(alpha.getLastIndexUsed());
-    assert meaningfulBits <= 8 && meaningfulBits >= 1 : meaningfulBits + ": "+alpha.getLastIndexUsed();
+    assert meaningfulBits <= 8 && meaningfulBits >= 1 : meaningfulBits + ": "+alpha;
     byte[] result = new byte[(b.length * meaningfulBits + 7) / 8];
 
     int byteNumber = 0;
@@ -87,7 +86,7 @@ public class UnitBitSet {
   @NotNull
   public static String decode(@NotNull byte[] packed, @NotNull Alphabet alphabet) {
     int meaningfulBits = 32 - Integer.numberOfLeadingZeros(alphabet.getLastIndexUsed());
-    assert meaningfulBits <= 8;
+    assert meaningfulBits <= 8 : alphabet;
 
     StringBuilder result = new StringBuilder(packed.length * 8 / meaningfulBits);
 
@@ -105,7 +104,7 @@ public class UnitBitSet {
 
       curByte >>>= meaningfulBits;
       bitOffset += meaningfulBits;
-      assert bitOffset <= 8;
+      assert bitOffset <= 8 : alphabet;
       if (bitOffset + meaningfulBits > 8) {
         if (++byteIndex == packed.length) break;
         int leftOverBits = 8 - bitOffset;
@@ -116,9 +115,9 @@ public class UnitBitSet {
     return result.toString();
   }
 
-  public static int getFirstLetterIndex(byte firstPackedByte, @NotNull Alphabet alphabet) {
+  static int getFirstLetterIndex(byte firstPackedByte, @NotNull Alphabet alphabet) {
     int meaningfulBits = 32 - Integer.numberOfLeadingZeros(alphabet.getLastIndexUsed());
-    assert meaningfulBits <= 8;
+    assert meaningfulBits <= 8 : alphabet;
 
     int index = firstPackedByte & ((1 << meaningfulBits) - 1);
     return index;

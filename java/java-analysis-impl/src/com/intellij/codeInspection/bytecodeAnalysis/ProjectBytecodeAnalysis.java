@@ -277,7 +277,7 @@ public class ProjectBytecodeAnalysis {
     final Solver notNullSolver = new Solver(new ELattice<Value>(Value.NotNull, Value.Top), Value.Top);
     collectEquations(Collections.singletonList(notNullKey), notNullSolver, equationsCache);
 
-    HashMap<HKey, Value> notNullSolutions = notNullSolver.solve();
+    Map<HKey, Value> notNullSolutions = notNullSolver.solve();
     // subtle point
     boolean notNull =
       (Value.NotNull == notNullSolutions.get(notNullKey)) || (Value.NotNull == notNullSolutions.get(notNullKey.mkUnstable()));
@@ -285,7 +285,7 @@ public class ProjectBytecodeAnalysis {
     final Solver nullableSolver = new Solver(new ELattice<Value>(Value.Null, Value.Top), Value.Top);
     final HKey nullableKey = new HKey(notNullKey.key, notNullKey.dirKey + 1, true, false);
     collectEquations(Collections.singletonList(nullableKey), nullableSolver, equationsCache);
-    HashMap<HKey, Value> nullableSolutions = nullableSolver.solve();
+    Map<HKey, Value> nullableSolutions = nullableSolver.solve();
     // subtle point
     boolean nullable =
       (Value.Null == nullableSolutions.get(nullableKey)) || (Value.Null == nullableSolutions.get(nullableKey.mkUnstable()));
@@ -298,10 +298,17 @@ public class ProjectBytecodeAnalysis {
     Map<Bytes, List<HEquations>> equationsCache = new HashMap<Bytes, List<HEquations>>();
 
     final Solver outSolver = new Solver(new ELattice<Value>(Value.Bot, Value.Top), Value.Top);
+    final PuritySolver puritySolver = new PuritySolver();
     collectEquations(allKeys, outSolver, equationsCache);
-    HashMap<HKey, Value> solutions = outSolver.solve();
+    collectPurityEquations(key.updateDirection(BytecodeAnalysisConverter.mkDirectionKey(Pure)), puritySolver, equationsCache);
+
+    Map<HKey, Value> solutions = outSolver.solve();
+    Map<HKey, Set<HEffectQuantum>> puritySolutions = puritySolver.solve();
+
     int arity = owner.getParameterList().getParameters().length;
     BytecodeAnalysisConverter.addMethodAnnotations(solutions, result, key, arity);
+    BytecodeAnalysisConverter.addEffectAnnotations(puritySolutions, result, key, arity);
+
 
     if (nullableMethod) {
       final Solver nullableMethodSolver = new Solver(new ELattice<Value>(Value.Bot, Value.Null), Value.Bot);
@@ -312,12 +319,59 @@ public class ProjectBytecodeAnalysis {
       else {
         collectSingleEquation(nullableKey, nullableMethodSolver, equationsCache);
       }
-      HashMap<HKey, Value> nullableSolutions = nullableMethodSolver.solve();
+      Map<HKey, Value> nullableSolutions = nullableMethodSolver.solve();
       if (nullableSolutions.get(nullableKey) == Value.Null || nullableSolutions.get(nullableKey.invertStability()) == Value.Null) {
         result.nullables.add(key);
       }
     }
     return result;
+  }
+
+  private void collectPurityEquations(HKey key, PuritySolver puritySolver, Map<Bytes, List<HEquations>> cache)
+    throws EquationsLimitException {
+    GlobalSearchScope librariesScope = ProjectScope.getLibrariesScope(myProject);
+    HashSet<HKey> queued = new HashSet<HKey>();
+    Stack<HKey> queue = new Stack<HKey>();
+
+    queue.push(key);
+    queued.add(key);
+
+    FileBasedIndex index = FileBasedIndex.getInstance();
+
+    while (!queue.empty()) {
+      if (queued.size() > EQUATIONS_LIMIT) {
+        throw new EquationsLimitException();
+      }
+      ProgressManager.checkCanceled();
+      HKey hKey = queue.pop();
+      Bytes bytes = new Bytes(hKey.key);
+
+      List<HEquations> hEquationss = cache.get(bytes);
+      if (hEquationss == null) {
+        hEquationss = index.getValues(BytecodeAnalysisIndex.NAME, bytes, librariesScope);
+        cache.put(bytes, hEquationss);
+      }
+
+      for (HEquations hEquations : hEquationss) {
+        boolean stable = hEquations.stable;
+        for (DirectionResultPair pair : hEquations.results) {
+          int dirKey = pair.directionKey;
+          if (dirKey == hKey.dirKey) {
+            Set<HEffectQuantum> effects = ((HEffects)pair.hResult).effects;
+            puritySolver.addEquation(new HKey(bytes.bytes, dirKey, stable, false), effects);
+            for (HEffectQuantum effect : effects) {
+              if (effect instanceof HEffectQuantum.CallQuantum) {
+                HKey depKey = ((HEffectQuantum.CallQuantum)effect).key;
+                if (!queued.contains(depKey)) {
+                  queue.push(depKey);
+                  queued.add(depKey);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
   }
 
   private void collectEquations(List<HKey> keys, Solver solver, @NotNull Map<Bytes, List<HEquations>> cache) throws EquationsLimitException {

@@ -15,13 +15,14 @@
  */
 package com.intellij.vcs.log.ui.filter;
 
+import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -32,7 +33,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.EditorCustomization;
 import com.intellij.ui.EditorTextField;
-import com.intellij.ui.EditorTextFieldProvider;
+import com.intellij.ui.LanguageTextField;
 import com.intellij.ui.SoftWrapsEditorCustomization;
 import com.intellij.util.Function;
 import com.intellij.util.TextFieldCompletionProviderDumbAware;
@@ -43,7 +44,6 @@ import javax.swing.*;
 import javax.swing.border.CompoundBorder;
 import java.awt.*;
 import java.util.Collection;
-import java.util.List;
 
 class MultilinePopupBuilder {
 
@@ -55,17 +55,26 @@ class MultilinePopupBuilder {
                         @NotNull final Collection<String> values,
                         @NotNull String initialValue,
                         boolean supportsNegativeValues) {
-    myTextField = createTextField(project);
-    new MyCompletionProvider(values, supportsNegativeValues).apply(myTextField);
-    myTextField.setText(initialValue);
+    myTextField = createTextField(project, values, supportsNegativeValues, initialValue);
   }
 
   @NotNull
-  private static EditorTextField createTextField(@NotNull Project project) {
-    final EditorTextFieldProvider service = ServiceManager.getService(project, EditorTextFieldProvider.class);
-    List<EditorCustomization> features = ContainerUtil.packNullables(SoftWrapsEditorCustomization.ENABLED,
-                                                                     SpellCheckingEditorCustomizationProvider.getInstance().getDisabledCustomization());
-    EditorTextField textField = service.getEditorField(FileTypes.PLAIN_TEXT.getLanguage(), project, features);
+  private static EditorTextField createTextField(@NotNull Project project,
+                                                 Collection<String> values,
+                                                 boolean supportsNegativeValues,
+                                                 @NotNull String initialValue) {
+    EditorTextField textField = new LanguageTextField(FileTypes.PLAIN_TEXT.getLanguage(), project, "") {
+      @Override
+      protected EditorEx createEditor() {
+        EditorEx editor = super.createEditor();
+        SoftWrapsEditorCustomization.ENABLED.customize(editor);
+        EditorCustomization disableSpellChecking = SpellCheckingEditorCustomizationProvider.getInstance().getDisabledCustomization();
+        if (disableSpellChecking != null) disableSpellChecking.customize(editor);
+        editor.putUserData(AutoPopupController.ALWAYS_AUTO_POPUP, true);
+        return editor;
+      }
+    };
+    new MyCompletionProvider(values, supportsNegativeValues).apply(textField, initialValue);
     textField.setBorder(new CompoundBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2), textField.getBorder()));
     textField.setOneLineMode(false);
     return textField;

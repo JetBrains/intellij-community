@@ -18,10 +18,10 @@ package com.intellij.openapi.vfs
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
-import kotlin.properties.Delegates
-import kotlin.test.assertEquals
 import org.junit.Before
 import org.junit.Test
+import kotlin.properties.Delegates
+import kotlin.test.assertEquals
 
 class ArchiveFileSystemPerformanceTest : BareTestFixtureTestCase() {
   private var fs: ArchiveFileSystem by Delegates.notNull()
@@ -38,7 +38,7 @@ class ArchiveFileSystemPerformanceTest : BareTestFixtureTestCase() {
       for (i in 0..100000) {
         assertEquals(root, fs.getRootByEntry(entry))
       }
-    }).cpuBound().assertTiming()
+    }).cpuBound().useLegacyScaling().assertTiming()
   }
 
   @Test fun getLocalByEntry() {
@@ -47,6 +47,6 @@ class ArchiveFileSystemPerformanceTest : BareTestFixtureTestCase() {
       for (i in 0..100000) {
         assertEquals(local, fs.getLocalByEntry(entry))
       }
-    }).cpuBound().assertTiming()
+    }).cpuBound().useLegacyScaling().assertTiming()
   }
 }

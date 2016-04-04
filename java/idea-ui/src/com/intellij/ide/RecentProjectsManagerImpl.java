@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,16 +19,21 @@ import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.PlatformProjectOpenProcessor;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
+
+import java.io.File;
 
 @State(
   name = "RecentProjectsManager",
   storages = {
-    @Storage(file = StoragePathMacros.APP_CONFIG + "/recentProjects.xml", roamingType = RoamingType.DISABLED),
-    @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml", deprecated = true)
+    @Storage(value = "recentProjects.xml", roamingType = RoamingType.DISABLED),
+    @Storage(value = "other.xml", deprecated = true)
   }
 )
 public class RecentProjectsManagerImpl extends RecentProjectsManagerBase {
@@ -43,6 +48,15 @@ public class RecentProjectsManagerImpl extends RecentProjectsManagerBase {
 
   @Override
   protected void doOpenProject(@NotNull String projectPath, Project projectToClose, boolean forceOpenInNewFrame) {
+    if (new File(projectPath).isDirectory() && !new File(projectPath, Project.DIRECTORY_STORE_FOLDER).exists()) {
+      VirtualFile projectDir = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(projectPath));
+      PlatformProjectOpenProcessor processor = PlatformProjectOpenProcessor.getInstanceIfItExists();
+      if (projectDir != null && processor != null) {
+        processor.doOpenProject(projectDir, projectToClose, forceOpenInNewFrame);
+        return;
+      }
+    }
+
     ProjectUtil.openProject(projectPath, projectToClose, forceOpenInNewFrame);
   }
 }

@@ -7,7 +7,7 @@
       <keyboard-shortcut first-keystroke="control alt 8"/>
       <mouse-shortcut keystroke="control shift alt button1"/>
     </action>
-    <action id="ActivateChangesToolWindow">
+    <action id="ActivateVersionControlToolWindow">
       <keyboard-shortcut first-keystroke="alt 9"/>
     </action>
     <action id="ShowUsages">

@@ -15,7 +15,7 @@ import java.rmi.RemoteException;
 
 /**
  * Intercepts calls to the target {@link RemoteExternalSystemProjectResolver} and
- * {@link ExternalSystemTaskNotificationListener#onQueued(ExternalSystemTaskId) updates 'queued' task status}.
+ * {@link ExternalSystemTaskNotificationListener#onQueued(ExternalSystemTaskId, String) updates 'queued' task status}.
  * <p/>
  * Thread-safe.
  * 
@@ -44,7 +44,7 @@ public class ExternalSystemProjectResolverWrapper<S extends ExternalSystemExecut
                                                     @Nullable S settings)
     throws ExternalSystemException, IllegalArgumentException, IllegalStateException, RemoteException
   {
-    myProgressManager.onQueued(id);
+    myProgressManager.onQueued(id, projectPath);
     try {
       DataNode<ProjectData> projectDataNode = getDelegate().resolveProjectInfo(id, projectPath, isPreviewMode, settings);
       myProgressManager.onSuccess(id);
@@ -66,12 +66,12 @@ public class ExternalSystemProjectResolverWrapper<S extends ExternalSystemExecut
   @Override
   public boolean cancelTask(@NotNull ExternalSystemTaskId id)
     throws ExternalSystemException, IllegalArgumentException, IllegalStateException, RemoteException {
-    myProgressManager.onQueued(id);
+    myProgressManager.beforeCancel(id);
     try {
       return getDelegate().cancelTask(id);
     }
     finally {
-      myProgressManager.onEnd(id);
+      myProgressManager.onCancel(id);
     }
   }
 }

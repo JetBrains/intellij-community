@@ -24,14 +24,17 @@ import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageViewManager;
 import com.intellij.usages.UsageViewPresentation;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.psi.resolve.PyResolveProcessor;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
-import com.jetbrains.python.psi.resolve.ResolveProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 /**
  * An utility class that checks local definitions of a given name and can show a conflicts panel.
@@ -50,24 +53,21 @@ public class DeclarationConflictChecker {
    * @return a list of pairs (referring element, element that defines name).
    */
   @NotNull
-  public static List<Pair<PsiElement, PsiElement>> findDefinitions(
-    String name, Collection<? extends PsiReference> references, @Nullable Collection<? extends PsiElement> ignored
-  ) {
+  public static List<Pair<PsiElement, PsiElement>> findDefinitions(@NotNull String name,
+                                                                   @NotNull Collection<PsiReference> references,
+                                                                   @NotNull Set<PsiElement> ignored) {
     List<Pair<PsiElement, PsiElement>> conflicts = new ArrayList<Pair<PsiElement, PsiElement>>();
-    REF_LOOP:
     for (PsiReference ref : references) {
-      ResolveProcessor processor = new ResolveProcessor(name);
-      PyResolveUtil.treeCrawlUp(processor, ref.getElement());
-      PsiElement result = processor.getResult();
-      if (result != null) {
-        List<PsiElement> definers = processor.getDefiners();
-        if (definers != null && definers.size() > 0) {
-          result = definers.get(0); // in this case, processor's result is one hop of resolution too far from what we want.
+      final PsiElement refElement = ref.getElement();
+      final ScopeOwner owner = ScopeUtil.getScopeOwner(refElement);
+      final PyResolveProcessor processor = new PyResolveProcessor(name, true);
+      if (owner != null) {
+        PyResolveUtil.scopeCrawlUp(processor, owner, name, null);
+        for (PsiElement element : processor.getElements()) {
+          if (!ignored.contains(element)) {
+            conflicts.add(Pair.create(refElement, element));
+          }
         }
-        if (ignored != null) for (PsiElement ignorable : ignored) {
-          if (result == ignorable) continue REF_LOOP;
-        }
-        conflicts.add(Pair.create(ref.getElement(), result));
       }
     }
     return conflicts;

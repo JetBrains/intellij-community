@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.testIntegration;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.testIntegration.TestRunLineMarkerProvider;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 
@@ -25,6 +26,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 public class GroovyTestLineMarkerContributor extends TestRunLineMarkerProvider {
   @Override
   protected boolean isIdentifier(PsiElement e) {
-    return e.getNode().getElementType() == GroovyTokenTypes.mIDENT;
+    IElementType type = e.getNode().getElementType();
+    return type == GroovyTokenTypes.mIDENT || type == GroovyTokenTypes.mGSTRING_LITERAL;
   }
 }

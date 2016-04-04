@@ -89,6 +89,7 @@ public abstract class PythonRemoteInterpreterManager {
   /**
    * @deprecated use {@link com.jetbrains.python.run.PyRemoteProcessStarterManager#executeRemoteProcess(Project, String[], String, PythonRemoteInterpreterManager, PyRemoteSdkAdditionalDataBase, PyRemotePathMapper, boolean)}
    */
+  @Deprecated
   public abstract ProcessOutput runRemoteProcess(@Nullable Project project,
                                                  RemoteSdkCredentials data,
                                                  @NotNull PyRemotePathMapper pathMapper,

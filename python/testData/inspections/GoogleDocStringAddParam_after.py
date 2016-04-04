@@ -1,5 +1,6 @@
-def f(b):
+def f(a, b):
     """
     Args:
         b: 
+        a
     """

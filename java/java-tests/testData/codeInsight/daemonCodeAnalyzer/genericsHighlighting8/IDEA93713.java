@@ -10,6 +10,6 @@ class Bug1<A, B> {
   <X, Y extends X> void f1(Bug1<X, Y> b) {}
 
   void f2(Bug1<?, ?> b) {
-    <error descr="Inferred type 'capture<?>' for type parameter 'Y' is not within its bound; should extend 'capture<?>'">f1(b)</error>;
+    f1<error descr="'f1(Bug1<X,Y>)' in 'Bug1' cannot be applied to '(Bug1<capture<?>,capture<?>>)'">(b)</error>;
   }
 }

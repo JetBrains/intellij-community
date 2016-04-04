@@ -71,7 +71,10 @@ public class PyIterableVariableMacro extends Macro {
     final PsiElement element = context.getPsiElementAtStartOffset();
     if (element != null) {
       for (PsiNamedElement iterableElement : getIterableElements(element)) {
-        results.add(LookupElementBuilder.create(iterableElement));
+        final String name = iterableElement.getName();
+        if (name != null) {
+          results.add(LookupElementBuilder.createWithSmartPointer(name, iterableElement));
+        }
       }
     }
     return results.toArray(new LookupElement[results.size()]);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,22 @@
  */
 package com.siyeh.ig.bugs;
 
-import com.siyeh.ig.IGInspectionTestCase;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.Nullable;
 
-public class ResultOfObjectAllocationIgnoredInspectionTest extends IGInspectionTestCase {
+/**
+ * @author Bas Leijdekkers
+ */
+public class ResultOfObjectAllocationIgnoredInspectionTest extends LightInspectionTestCase {
 
-  public void test() throws Exception {
-    doTest("com/siyeh/igtest/bugs/result_of_object_allocation_ignored", new ResultOfObjectAllocationIgnoredInspection());
+  public void testResultOfObjectAllocationIgnored() throws Exception {
+    doTest();
+  }
+
+  @Nullable
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    return new ResultOfObjectAllocationIgnoredInspection();
   }
 }

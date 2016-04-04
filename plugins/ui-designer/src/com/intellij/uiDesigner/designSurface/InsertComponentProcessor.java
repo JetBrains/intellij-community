@@ -27,6 +27,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -525,8 +526,13 @@ public final class InsertComponentProcessor extends EventProcessor {
   }
 
   @Nullable
-  public static RadComponentFactory getRadComponentFactory(Project project, final String className) {
-    ClassLoader loader = LoaderFactory.getInstance(project).getProjectClassLoader();
+  public static RadComponentFactory getRadComponentFactory(final Project project, final String className) {
+    ClassLoader loader = ApplicationManager.getApplication().runReadAction(new Computable<ClassLoader>() {
+      @Override
+      public ClassLoader compute() {
+        return LoaderFactory.getInstance(project).getProjectClassLoader();
+      }
+    });
     return getRadComponentFactory(className, loader);
   }
 

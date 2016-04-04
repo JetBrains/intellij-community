@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,10 @@ package com.siyeh.ig.security;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiParameterList;
-import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.CloneUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class NonFinalCloneInspection extends BaseInspection {
@@ -50,24 +49,17 @@ public class NonFinalCloneInspection extends BaseInspection {
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
       super.visitMethod(method);
-      final String name = method.getName();
-      if (!HardcodedMethodConstants.CLONE.equals(name)) {
+      if (!CloneUtils.isClone(method)) {
         return;
       }
-      final PsiParameterList parameterList = method.getParameterList();
-      if (parameterList.getParametersCount() != 0) {
-        return;
-      }
-      if (method.hasModifierProperty(PsiModifier.FINAL)
-          || method.hasModifierProperty(PsiModifier.ABSTRACT)) {
+      if (method.hasModifierProperty(PsiModifier.FINAL) || method.hasModifierProperty(PsiModifier.ABSTRACT)) {
         return;
       }
       final PsiClass containingClass = method.getContainingClass();
       if (containingClass == null) {
         return;
       }
-      if (containingClass.hasModifierProperty(PsiModifier.FINAL)
-          || containingClass.isInterface()) {
+      if (containingClass.hasModifierProperty(PsiModifier.FINAL) || containingClass.isInterface()) {
         return;
       }
       registerMethodError(method);

@@ -95,13 +95,14 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
   private void handleConstantSearchTask(final Channel channel, final UUID sessionId, final CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask task) {
     ProgressIndicatorUtils.scheduleWithWriteActionPriority(new ProgressIndicatorBase(), myTaskExecutor, new ReadTask() {
       @Override
-      public void computeInReadAction(@NotNull ProgressIndicator indicator) {
-        if (DumbService.isDumb(myProject)) {
-          onCanceled(indicator);
-        }
-        else {
-          doHandleConstantSearchTask(channel, sessionId, task);
-        }
+      public Continuation runBackgroundProcess(@NotNull ProgressIndicator indicator) throws ProcessCanceledException {
+        return DumbService.getInstance(myProject).runReadActionInSmartMode(new Computable<Continuation>() {
+          @Override
+          public Continuation compute() {
+            doHandleConstantSearchTask(channel, sessionId, task);
+            return null;
+          }
+        });
       }
 
       @Override

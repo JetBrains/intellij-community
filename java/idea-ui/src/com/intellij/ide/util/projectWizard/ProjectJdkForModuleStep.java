@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -47,7 +48,7 @@ import java.awt.event.ActionListener;
  */
 public class ProjectJdkForModuleStep extends ModuleWizardStep {
   private final JdkChooserPanel myJdkChooser;
-  private final JPanel myPanel;
+  @NotNull private final JPanel myPanel;
   private final WizardContext myContext;
   private final SdkType myType;
   private boolean myInitialized = false;

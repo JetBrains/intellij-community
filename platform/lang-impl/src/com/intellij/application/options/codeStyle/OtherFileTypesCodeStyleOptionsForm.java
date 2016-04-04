@@ -17,12 +17,14 @@ package com.intellij.application.options.codeStyle;
 
 import com.intellij.application.options.CodeStyleAbstractPanel;
 import com.intellij.application.options.IndentOptionsEditor;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,13 +37,13 @@ import java.awt.*;
  * @author Rustam Vishnyakov.
  */
 public class OtherFileTypesCodeStyleOptionsForm extends CodeStyleAbstractPanel {
-  private final IndentOptionsEditor myIndentOptionsEditor;
+  private final IndentOptionsEditorWithSmartTabs myIndentOptionsEditor;
   private JPanel myIndentOptionsPanel;
   private JPanel myTopPanel;
 
   protected OtherFileTypesCodeStyleOptionsForm(@NotNull CodeStyleSettings settings) {
     super(settings);
-    myIndentOptionsEditor = new IndentOptionsEditor();
+    myIndentOptionsEditor = new IndentOptionsEditorWithSmartTabs();
     myIndentOptionsPanel.add(myIndentOptionsEditor.createPanel(), BorderLayout.CENTER);
   }
 
@@ -87,5 +89,33 @@ public class OtherFileTypesCodeStyleOptionsForm extends CodeStyleAbstractPanel {
   @Override
   protected void resetImpl(CodeStyleSettings settings) {
     myIndentOptionsEditor.reset(settings, settings.OTHER_INDENT_OPTIONS);
+  }
+}
+
+class IndentOptionsEditorWithSmartTabs extends IndentOptionsEditor {
+  private JCheckBox myCbSmartTabs;
+
+  @Override
+  protected void addTabOptions() {
+    super.addTabOptions();
+    myCbSmartTabs = new JCheckBox(ApplicationBundle.message("checkbox.indent.smart.tabs"));
+    add(myCbSmartTabs, true);
+  }
+
+  @Override
+  public void reset(@NotNull CodeStyleSettings settings, @NotNull CommonCodeStyleSettings.IndentOptions options) {
+    super.reset(settings, options);
+    myCbSmartTabs.setSelected(options.SMART_TABS);
+  }
+
+  @Override
+  public boolean isModified(CodeStyleSettings settings, CommonCodeStyleSettings.IndentOptions options) {
+    return super.isModified(settings, options) || isFieldModified(myCbSmartTabs, options.SMART_TABS);
+  }
+
+  @Override
+  public void apply(CodeStyleSettings settings, CommonCodeStyleSettings.IndentOptions options) {
+    super.apply(settings, options);
+    options.SMART_TABS = myCbSmartTabs.isSelected();
   }
 }

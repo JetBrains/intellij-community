@@ -36,19 +36,29 @@ public class JavaFxFieldIdReferenceProvider extends JavaFxControllerBasedReferen
   protected PsiReference[] getReferencesByElement(@NotNull final PsiClass aClass,
                                                   final XmlAttributeValue xmlAttributeValue,
                                                   ProcessingContext context) {
-    final PsiField field = aClass.findFieldByName(xmlAttributeValue.getValue(), true);
-    return new PsiReference[]{new JavaFxControllerFieldRef(xmlAttributeValue, field, aClass)};
+    final String name = xmlAttributeValue.getValue();
+    PsiMember fieldOrGetterMethod = aClass.findFieldByName(name, true);
+    if (fieldOrGetterMethod == null) {
+      final PsiMethod[] methods = aClass.findMethodsByName(name, true);
+      for (PsiMethod method : methods) {
+        if (method.getParameterList().getParameters().length == 0) {
+          fieldOrGetterMethod = method;
+          break;
+        }
+      }
+    }
+    return new PsiReference[]{new JavaFxControllerFieldRef(xmlAttributeValue, fieldOrGetterMethod, aClass)};
   }
 
   public static class JavaFxControllerFieldRef extends PsiReferenceBase<XmlAttributeValue> {
     private final XmlAttributeValue myXmlAttributeValue;
-    private final PsiField myField;
+    private final PsiMember myFieldOrMethod;
     private final PsiClass myAClass;
 
-    public JavaFxControllerFieldRef(XmlAttributeValue xmlAttributeValue, PsiField field, PsiClass aClass) {
+    public JavaFxControllerFieldRef(XmlAttributeValue xmlAttributeValue, PsiMember fieldOrMethod, PsiClass aClass) {
       super(xmlAttributeValue, true);
       myXmlAttributeValue = xmlAttributeValue;
-      myField = field;
+      myFieldOrMethod = fieldOrMethod;
       myAClass = aClass;
     }
 
@@ -63,11 +73,11 @@ public class JavaFxFieldIdReferenceProvider extends JavaFxControllerBasedReferen
     @Nullable
     @Override
     public PsiElement resolve() {
-      return myField != null ? myField : myXmlAttributeValue;
+      return myFieldOrMethod != null ? myFieldOrMethod : myXmlAttributeValue;
     }
 
     public boolean isUnresolved() {
-      if (myField == null && myAClass != null) {
+      if (myFieldOrMethod == null && myAClass != null) {
         final XmlFile xmlFile = (XmlFile)myXmlAttributeValue.getContainingFile();
         if (xmlFile.getRootTag() != null && !JavaFxPsiUtil.isOutOfHierarchy(myXmlAttributeValue)) {
           return true;

@@ -65,32 +65,16 @@ import java.io.UnsupportedEncodingException;
 import java.util.*;
 
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
+import static com.intellij.dvcs.DvcsUtil.joinShortNames;
 
 /**
  * Git utility/helper methods
  */
 public class GitUtil {
-  /**
-   * Comparator for virtual files by name
-   */
-  public static final Comparator<VirtualFile> VIRTUAL_FILE_COMPARATOR = new Comparator<VirtualFile>() {
-    public int compare(final VirtualFile o1, final VirtualFile o2) {
-      if (o1 == null && o2 == null) {
-        return 0;
-      }
-      if (o1 == null) {
-        return -1;
-      }
-      if (o2 == null) {
-        return 1;
-      }
-      return o1.getPresentableUrl().compareTo(o2.getPresentableUrl());
-    }
-  };
+
   public static final String DOT_GIT = ".git";
 
   public static final String ORIGIN_HEAD = "origin/HEAD";
-  public static final String GIT_HEAD = "HEAD";
 
   public static final Function<GitRepository, VirtualFile> REPOSITORY_TO_ROOT = new Function<GitRepository, VirtualFile>() {
     @Override
@@ -99,8 +83,13 @@ public class GitUtil {
     }
   };
 
+  public static final String HEAD = "HEAD";
+  public static final String CHERRY_PICK_HEAD = "CHERRY_PICK_HEAD";
+  public static final String MERGE_HEAD = "MERGE_HEAD";
+
   private static final String SUBMODULE_REPO_PATH_PREFIX = "gitdir:";
   private final static Logger LOG = Logger.getInstance(GitUtil.class);
+  private static final String HEAD_FILE = "HEAD";
 
   /**
    * A private constructor to suppress instance creation
@@ -119,7 +108,7 @@ public class GitUtil {
     File dotGit = new File(rootDir, DOT_GIT);
     if (!dotGit.exists()) return null;
     if (dotGit.isDirectory()) {
-      boolean headExists = new File(dotGit, GitRepositoryFiles.HEAD).exists();
+      boolean headExists = new File(dotGit, HEAD_FILE).exists();
       return headExists ? dotGit : null;
     }
 
@@ -144,7 +133,7 @@ public class GitUtil {
       return null;
     }
     if (dotGit.isDirectory()) {
-      boolean headExists = dotGit.findChild(GitRepositoryFiles.HEAD) != null;
+      boolean headExists = dotGit.findChild(HEAD_FILE) != null;
       return headExists ? dotGit : null;
     }
 
@@ -461,12 +450,11 @@ public class GitUtil {
     if (contentRoots == null || contentRoots.length == 0) {
       throw new VcsException(GitBundle.getString("repository.action.missing.roots.unconfigured.message"));
     }
-    final List<VirtualFile> roots = new ArrayList<VirtualFile>(gitRootsForPaths(Arrays.asList(contentRoots)));
-    if (roots.size() == 0) {
+    final List<VirtualFile> sortedRoots = DvcsUtil.sortVirtualFilesByPresentation(gitRootsForPaths(Arrays.asList(contentRoots)));
+    if (sortedRoots.size() == 0) {
       throw new VcsException(GitBundle.getString("repository.action.missing.roots.misconfigured"));
     }
-    Collections.sort(roots, VIRTUAL_FILE_COMPARATOR);
-    return roots;
+    return sortedRoots;
   }
 
 
@@ -743,7 +731,7 @@ public class GitUtil {
                                                          @NotNull GitRemote remote,
                                                          @NotNull String branchName) {
     GitRemoteBranch remoteBranch = findRemoteBranch(repository, remote, branchName);
-    return ObjectUtils.notNull(remoteBranch, new GitStandardRemoteBranch(remote, branchName, GitBranch.DUMMY_HASH));
+    return ObjectUtils.notNull(remoteBranch, new GitStandardRemoteBranch(remote, branchName));
   }
 
   @Nullable
@@ -829,16 +817,6 @@ public class GitUtil {
         return remote.getName() + ": [" + StringUtil.join(remote.getUrls(), ", ") + "]";
       }
     }, "\n");
-  }
-
-  @NotNull
-  public static String fileOrFolder(@NotNull VirtualFile file) {
-    if (file.isDirectory()) {
-      return "Folder";
-    }
-    else {
-      return "File";
-    }
   }
 
   /**
@@ -1042,5 +1020,31 @@ public class GitUtil {
   @NotNull
   public static String mention(@NotNull GitRepository repository) {
     return getRepositoryManager(repository.getProject()).moreThanOneRoot() ? " in " + getShortRepositoryName(repository) : "";
+  }
+
+  @NotNull
+  public static String mention(@NotNull Collection<GitRepository> repositories) {
+    return mention(repositories, -1);
+  }
+
+  @NotNull
+  public static String mention(@NotNull Collection<GitRepository> repositories, int limit) {
+    if (repositories.isEmpty()) return "";
+    return " in " + joinShortNames(repositories, limit);
+  }
+
+  public static void updateRepositories(@NotNull Collection<GitRepository> repositories) {
+    for (GitRepository repository : repositories) {
+      repository.update();
+    }
+  }
+
+  public static boolean hasGitRepositories(@NotNull Project project) {
+    return !getRepositories(project).isEmpty();
+  }
+
+  @NotNull
+  public static Collection<GitRepository> getRepositories(@NotNull Project project) {
+    return getRepositoryManager(project).getRepositories();
   }
 }

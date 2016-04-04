@@ -1,5 +1,8 @@
 package com.siyeh.igtest.bugs.subtraction_in_compare_to;
 
+import java.util.Map;
+import java.util.HashMap;
+
 public class SubtractionInCompareTo implements java.util.Comparator<SubtractionInCompareTo>
 {
     private int m_foo = 3;
@@ -17,6 +20,24 @@ public class SubtractionInCompareTo implements java.util.Comparator<SubtractionI
     }
 
     {
-        java.util.Comparator<String> c = (s1, s2) -> <warning descr="Subtraction 's1.length() - s2.length()' in 'compareTo()' may result in overflow errors">s1.length() - s2.length()</warning>;
+        java.util.Comparator<Integer> c = (s1, s2) -> <warning descr="Subtraction 's1 - s2' in 'compareTo()' may result in overflow errors">s1 - s2</warning>;
+    }
+}
+class A implements Comparable<A> {
+    final String s = "";
+    public int compareTo(A a) {
+        return s.length() - a.s.length();
+    }
+}
+class B implements Comparable<B> {
+    final Map<String, String> map = new HashMap();
+    public int compareTo(B b) {
+        return map.size() - b.map.size();
+    }
+}
+class C implements Comparable<C> {
+    private short small = 1;
+    public int compareTo(C c) {
+        return small - c.small;
     }
 }

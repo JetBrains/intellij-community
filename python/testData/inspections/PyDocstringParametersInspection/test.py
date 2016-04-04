@@ -49,3 +49,8 @@ def varargs_undefined(x, *args, y, **kwargs):
     @param y:
     """
     pass
+
+
+def no_parameters_declared(x, y):
+    """ 
+    """

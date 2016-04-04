@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleType;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyKeywordArgumentProvider;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -41,12 +42,10 @@ public class KeywordArgumentCompletionUtil {
     if (callExpr != null) {
       PyExpression callee = callExpr.getCallee();
       if (callee instanceof PyReferenceExpression && element.getParent() == callExpr.getArgumentList()) {
-
         PsiElement def = getElementByType(context, callee);
         if (def == null) {
           def = getElementByChain(context, (PyReferenceExpression)callee);
         }
-
 
         if (def instanceof PyCallable) {
           addKeywordArgumentVariants((PyCallable)def, callExpr, ret);
@@ -58,9 +57,20 @@ public class KeywordArgumentCompletionUtil {
           }
         }
 
-        final PyUnionType unionType = PyUtil.as(context.getType(callee), PyUnionType.class);
+        final PyType calleeType = context.getType(callee);
+
+        final PyUnionType unionType = PyUtil.as(calleeType, PyUnionType.class);
         if (unionType != null) {
           fetchCallablesFromUnion(ret, callExpr, unionType, context);
+        }
+
+        final PyNamedTupleType namedTupleType = PyUtil.as(calleeType, PyNamedTupleType.class);
+        if (namedTupleType != null) {
+          for (String name : namedTupleType.getElementNames()) {
+            ret.add(
+              PyUtil.createNamedParameterLookup(name, element.getProject())
+            );
+          }
         }
       }
     }

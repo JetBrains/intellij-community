@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.incremental.GlobalContextKey;
 import org.jetbrains.jps.service.SharedThreadPool;
 
-import javax.tools.Diagnostic;
+import javax.tools.*;
 import java.io.File;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -273,11 +273,11 @@ public class ExternalJavacManager {
     builder.directory(workingDir);
 
     final Process process = builder.start();
-    return createProcessHandler(process);
+    return createProcessHandler(process, StringUtil.join(cmdLine, " "));
   }
 
-  protected ExternalJavacProcessHandler createProcessHandler(Process process) {
-    return new ExternalJavacProcessHandler(process);
+  protected ExternalJavacProcessHandler createProcessHandler(@NotNull Process process, @NotNull String commandLine) {
+    return new ExternalJavacProcessHandler(process, commandLine);
   }
 
   private static void appendParam(List<String> cmdLine, String param) {
@@ -299,8 +299,8 @@ public class ExternalJavacManager {
   protected static class ExternalJavacProcessHandler extends BaseOSProcessHandler {
     private volatile int myExitCode;
 
-    public ExternalJavacProcessHandler(Process process) {
-      super(process, null, null);
+    protected ExternalJavacProcessHandler(@NotNull Process process, @NotNull String commandLine) {
+      super(process, commandLine, null);
       addProcessListener(new ProcessAdapter() {
         @Override
         public void processTerminated(ProcessEvent event) {

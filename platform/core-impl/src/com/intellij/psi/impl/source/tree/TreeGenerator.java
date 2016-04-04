@@ -23,11 +23,12 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.CharTable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface TreeGenerator {
   ExtensionPointName<TreeGenerator> EP_NAME = ExtensionPointName.create("com.intellij.treeGenerator");
   
   @Nullable
-  TreeElement generateTreeFor(PsiElement original, CharTable table, final PsiManager manager);
+  TreeElement generateTreeFor(@NotNull PsiElement original, @NotNull CharTable table, @NotNull final PsiManager manager);
 }

@@ -60,8 +60,8 @@ public class Maven32AetherModelConverter extends MavenModelConverter {
 
     Map<Artifact, MavenArtifact> convertedArtifacts = new THashMap<Artifact, MavenArtifact>();
     result.setExtensions(convertArtifacts(extensions, convertedArtifacts, localRepository));
-    result.setDependencies(convertArtifacts(dependencies, convertedArtifacts, localRepository));
     result.setDependencyTree(convertAetherDependencyNodes(null, dependencyTree, convertedArtifacts, localRepository));
+    result.setDependencies(convertArtifacts(dependencies, convertedArtifacts, localRepository));
 
     result.setRemoteRepositories(convertRepositories(model.getRepositories()));
     result.setProfiles(convertProfiles(model.getProfiles()));
@@ -88,19 +88,24 @@ public class Maven32AetherModelConverter extends MavenModelConverter {
       MavenArtifactState state = MavenArtifactState.ADDED;
       MavenArtifact relatedArtifact = null;
 
+      String scope = each.getDependency().getScope();
       Object winner = data.get(ConflictResolver.NODE_DATA_WINNER);
-      if(winner instanceof DependencyNode) {
+      if (winner instanceof DependencyNode) {
         DependencyNode winnerNode = (DependencyNode)winner;
-        if(!StringUtil.equals(each.getVersion().toString(), winnerNode.getVersion().toString())) {
+        scope = winnerNode.getDependency().getScope();
+        Artifact winnerArtifact = RepositoryUtils.toArtifact(winnerNode.getDependency().getArtifact());
+        relatedArtifact = convertArtifact(winnerArtifact, nativeToConvertedMap, localRepository);
+        if (!StringUtil.equals(each.getVersion().toString(), winnerNode.getVersion().toString())) {
           state = MavenArtifactState.CONFLICT;
-          Artifact winnerArtifact = RepositoryUtils.toArtifact(winnerNode.getDependency().getArtifact());
-          relatedArtifact = convertArtifact(winnerArtifact, nativeToConvertedMap, localRepository);
+        }
+        else {
+          state = MavenArtifactState.DUPLICATE;
         }
       }
 
-      MavenArtifactNode newNode = new MavenArtifactNode(
-        parent, ma, state, relatedArtifact, each.getDependency().getScope(),
-        premanagedVersion, premanagedScope);
+      ma.setScope(scope);
+      MavenArtifactNode newNode =
+        new MavenArtifactNode(parent, ma, state, relatedArtifact, each.getDependency().getScope(), premanagedVersion, premanagedScope);
       newNode.setDependencies(convertAetherDependencyNodes(newNode, each.getChildren(), nativeToConvertedMap, localRepository));
       result.add(newNode);
     }

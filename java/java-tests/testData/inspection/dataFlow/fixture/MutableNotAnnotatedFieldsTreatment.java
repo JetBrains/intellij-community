@@ -20,7 +20,7 @@ class Foo {
     if (data != null) {
       return;
     }
-    System.out.println(<warning descr="Method invocation 'data.hashCode()' may produce 'java.lang.NullPointerException'">data.hashCode()</warning>);
+    System.out.println(data.<warning descr="Method invocation 'hashCode' may produce 'java.lang.NullPointerException'">hashCode</warning>());
     System.out.println(data.hashCode());
   }
 

@@ -17,8 +17,8 @@ package org.jetbrains.plugins.gradle.execution.test.runner.events;
 
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
+import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsole;
 import org.jetbrains.plugins.gradle.util.XmlXpathHelper;
-import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsoleManager;
 
 /**
  * @author Vladislav.Soroka
@@ -26,8 +26,8 @@ import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionCo
  */
 public class OnOutputEvent extends AbstractTestEvent {
 
-  public OnOutputEvent(GradleTestsExecutionConsoleManager consoleManager) {
-    super(consoleManager);
+  public OnOutputEvent(GradleTestsExecutionConsole executionConsole) {
+    super(executionConsole);
   }
 
   @Override

@@ -221,16 +221,22 @@ public class TestNGUtil {
         if (checkJavadoc && getTextJavaDoc(method) != null) return true;
       }
       return false;
-    } else if (element instanceof PsiMethod) {
+    }
+    else if (element instanceof PsiMethod) {
+      //even if it has a global test, we ignore private and static methods
+      if (element.hasModifierProperty(PsiModifier.PRIVATE) || 
+          element.hasModifierProperty(PsiModifier.STATIC)) {
+        return false;
+      }
+
       //if it's a method, we check if the class it's in has a global @Test annotation
       PsiClass psiClass = ((PsiMethod)element).getContainingClass();
       if (psiClass != null) {
-        final PsiAnnotation annotation = AnnotationUtil.findAnnotation(psiClass, true, TEST_ANNOTATION_FQN);
+        final PsiAnnotation annotation = checkHierarchy ? AnnotationUtil.findAnnotationInHierarchy(psiClass, Collections.singleton(TEST_ANNOTATION_FQN)) 
+                                                        : AnnotationUtil.findAnnotation(psiClass, true, TEST_ANNOTATION_FQN);
         if (annotation != null) {
           if (checkDisabled && isDisabled(annotation)) return false;
-          //even if it has a global test, we ignore private methods
-          boolean isPrivate = element.hasModifierProperty(PsiModifier.PRIVATE);
-          return !isPrivate && !element.hasModifierProperty(PsiModifier.STATIC) && !hasConfig(element);
+          return !hasConfig(element);
         }
         else if (checkJavadoc && getTextJavaDoc(psiClass) != null) return true;
       }
@@ -335,15 +341,17 @@ public class TestNGUtil {
   }
 
   public static Set<String> getAnnotationValues(String parameter, PsiClass... classes) {
-    Set<String> results = new HashSet<String>();
-    collectAnnotationValues(results, parameter, null, classes);
-    return results;
+    Map<String, Collection<String>> results = new HashMap<>();
+    final HashSet<String> set = new HashSet<>();
+    results.put(parameter, set);
+    collectAnnotationValues(results, null, classes);
+    return set;
   }
 
   /**
    * @return were javadoc params used
    */
-  public static void collectAnnotationValues(final Set<String> results, final String parameter, PsiMethod[] psiMethods, PsiClass... classes) {
+  public static void collectAnnotationValues(final Map<String, Collection<String>> results, PsiMethod[] psiMethods, PsiClass... classes) {
     final Set<String> test = new HashSet<String>(1);
     test.add(TEST_ANNOTATION_FQN);
     ContainerUtil.addAll(test, CONFIG_ANNOTATIONS_FQN);
@@ -352,7 +360,7 @@ public class TestNGUtil {
         ApplicationManager.getApplication().runReadAction(
           new Runnable() {
             public void run() {
-              appendAnnotationAttributeValues(parameter, results, AnnotationUtil.findAnnotation(psiMethod, test), psiMethod);
+              appendAnnotationAttributeValues(results, AnnotationUtil.findAnnotation(psiMethod, test), psiMethod);
             }
           }
         );
@@ -363,11 +371,11 @@ public class TestNGUtil {
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           public void run() {
             if (psiClass != null && hasTest(psiClass)) {
-              appendAnnotationAttributeValues(parameter, results, AnnotationUtil.findAnnotation(psiClass, test), psiClass);
+              appendAnnotationAttributeValues(results, AnnotationUtil.findAnnotation(psiClass, test), psiClass);
               PsiMethod[] methods = psiClass.getMethods();
               for (PsiMethod method : methods) {
                 if (method != null) {
-                  appendAnnotationAttributeValues(parameter, results, AnnotationUtil.findAnnotation(method, test), method);
+                  appendAnnotationAttributeValues(results, AnnotationUtil.findAnnotation(method, test), method);
                 }
               }
             }
@@ -377,17 +385,19 @@ public class TestNGUtil {
     }
   }
 
-  private static void appendAnnotationAttributeValues(final String parameter,
-                                                      final Collection<String> results,
+  private static void appendAnnotationAttributeValues(final Map<String, Collection<String>> results,
                                                       final PsiAnnotation annotation,
                                                       final PsiDocCommentOwner commentOwner) {
-    if (annotation != null) {
-      final PsiAnnotationMemberValue value = annotation.findDeclaredAttributeValue(parameter);
-      if (value != null) {
-        results.addAll(extractValuesFromParameter(value));
+    for (String parameter : results.keySet()) {
+      final Collection<String> values = results.get(parameter);
+      if (annotation != null) {
+        final PsiAnnotationMemberValue value = annotation.findDeclaredAttributeValue(parameter);
+        if (value != null) {
+          values.addAll(extractValuesFromParameter(value));
+        }
+      } else {
+        values.addAll(extractAnnotationValuesFromJavaDoc(getTextJavaDoc(commentOwner), parameter));
       }
-    } else {
-      results.addAll(extractAnnotationValuesFromJavaDoc(getTextJavaDoc(commentOwner), parameter));
     }
   }
 

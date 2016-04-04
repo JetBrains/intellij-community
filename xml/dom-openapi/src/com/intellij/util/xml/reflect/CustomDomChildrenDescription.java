@@ -38,8 +38,6 @@ public interface CustomDomChildrenDescription extends AbstractDomChildrenDescrip
 
   class TagNameDescriptor {
 
-    public static final AttributeDescriptor EMPTY = new AttributeDescriptor();
-
     public Set<EvaluatedXmlName> getCompletionVariants(@NotNull DomElement parent) {
       return Collections.emptySet();
     }
@@ -57,6 +55,7 @@ public interface CustomDomChildrenDescription extends AbstractDomChildrenDescrip
   }
 
   class AttributeDescriptor extends TagNameDescriptor {
+    public static final AttributeDescriptor EMPTY = new AttributeDescriptor();
 
     public Type getElementType(DomElement child) {
       throw new UnsupportedOperationException();

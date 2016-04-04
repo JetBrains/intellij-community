@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,8 +31,8 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.local.FileWatcherNotificationSink;
@@ -45,10 +45,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.event.HyperlinkEvent;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
+import java.io.*;
+import java.nio.charset.Charset;
+import java.text.Normalizer;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -205,7 +204,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     LOG.info("Starting file watcher: " + myExecutable);
     ProcessBuilder processBuilder = new ProcessBuilder(myExecutable.getAbsolutePath());
     Process process = processBuilder.start();
-    myProcessHandler = new MyProcessHandler(process);
+    myProcessHandler = new MyProcessHandler(process, myExecutable.getName());
     myProcessHandler.addProcessListener(new MyProcessAdapter());
     myProcessHandler.startNotify();
 
@@ -222,16 +221,16 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     final OSProcessHandler processHandler = myProcessHandler;
     if (processHandler != null) {
       if (!processHandler.isProcessTerminated()) {
-        boolean forceQuite = true;
+        boolean killProcess = true;
         try {
           writeLine(EXIT_COMMAND);
-          forceQuite = !processHandler.waitFor(500);
-          if (forceQuite) {
+          killProcess = !processHandler.waitFor(500);
+          if (killProcess) {
             LOG.warn("File watcher is still alive. Doing a force quit.");
           }
         }
         catch (IOException ignore) { }
-        if (forceQuite) {
+        if (killProcess) {
           processHandler.destroyProcess();
         }
       }
@@ -271,11 +270,8 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
   }
 
   private void writeLine(final String line) throws IOException {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("<< " + line);
-    }
-
-    final MyProcessHandler processHandler = myProcessHandler;
+    if (LOG.isTraceEnabled()) LOG.trace("<< " + line);
+    MyProcessHandler processHandler = myProcessHandler;
     if (processHandler != null) {
       processHandler.writeLine(line);
     }
@@ -290,12 +286,18 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
   }
 
   private static class MyProcessHandler extends OSProcessHandler {
+    private static final Charset CHARSET = SystemInfo.isWindows | SystemInfo.isMac ? CharsetToolkit.UTF8_CHARSET : null;
+
     private final BufferedWriter myWriter;
 
     @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-    private MyProcessHandler(@NotNull Process process) {
-      super(process, null, null);  // do not access EncodingManager here
-      myWriter = new BufferedWriter(new OutputStreamWriter(process.getOutputStream()));
+    private MyProcessHandler(@NotNull Process process, @NotNull String commandLine) {
+      super(process, commandLine, CHARSET);
+      myWriter = new BufferedWriter(writer(process.getOutputStream()));
+    }
+
+    private static OutputStreamWriter writer(OutputStream stream) {
+      return CHARSET != null ? new OutputStreamWriter(stream, CHARSET) :  new OutputStreamWriter(stream);
     }
 
     private void writeLine(String line) throws IOException {
@@ -344,10 +346,8 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
         return;
       }
 
-      final String line = event.getText().trim();
-      if (LOG.isDebugEnabled()) {
-        LOG.debug(">> " + line);
-      }
+      String line = event.getText().trim();
+      if (LOG.isTraceEnabled()) LOG.trace(">> " + line);
 
       if (myLastOp == null) {
         final WatcherOp watcherOp;
@@ -425,10 +425,12 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
       }
 
       if ((op == WatcherOp.CHANGE || op == WatcherOp.STATS) && isRepetition(path)) {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("repetition: " + path);
-        }
+        if (LOG.isTraceEnabled()) LOG.trace("repetition: " + path);
         return;
+      }
+
+      if (SystemInfo.isMac) {
+        path = Normalizer.normalize(path, Normalizer.Form.NFC);
       }
 
       switch (op) {

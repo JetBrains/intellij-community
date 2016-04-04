@@ -23,8 +23,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
+ * This is internal API, please don't use it.
  * @author yole
  */
+@Deprecated
 public abstract class SmartPointerElementInfoFactory {
   public static final ExtensionPointName<SmartPointerElementInfoFactory> EP_NAME = ExtensionPointName.create("com.intellij.smartPointerElementInfoFactory");
 

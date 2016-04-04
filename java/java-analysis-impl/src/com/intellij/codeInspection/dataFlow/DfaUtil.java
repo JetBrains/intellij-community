@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,7 +70,7 @@ public class DfaUtil {
       @Override
       public Result<Map<PsiElement, ValuableInstructionVisitor.PlaceResult>> compute() {
         final ValuableInstructionVisitor visitor = new ValuableInstructionVisitor();
-        RunnerResult runnerResult = new ValuableDataFlowRunner(codeBlock).analyzeMethod(codeBlock, visitor);
+        RunnerResult runnerResult = new ValuableDataFlowRunner().analyzeMethod(codeBlock, visitor);
         return Result.create(runnerResult == RunnerResult.OK ? visitor.myResults : null, codeBlock);
       }
     });
@@ -242,11 +242,11 @@ public class DfaUtil {
         final ValuableDataFlowRunner.ValuableDfaVariableState curState = (ValuableDataFlowRunner.ValuableDfaVariableState)memState.getVariableState(var);
         final FList<PsiExpression> curValue = curState.myConcatenation;
         final FList<PsiExpression> nextValue;
-        if (type == JavaTokenType.PLUSEQ && !prevValue.isEmpty()) {
+        if (type == JavaTokenType.PLUSEQ && !prevValue.isEmpty() && rightValue != null) {
           nextValue = prevValue.prepend(rightValue);
         }
         else {
-          nextValue = curValue.isEmpty() ? curValue.prepend(rightValue) : curValue;
+          nextValue = curValue.isEmpty() && rightValue != null ? curValue.prepend(rightValue) : curValue;
         }
         memState.setVariableState(var, curState.withExpression(nextValue));
       }

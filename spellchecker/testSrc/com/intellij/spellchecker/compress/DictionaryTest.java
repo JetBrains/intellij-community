@@ -81,13 +81,15 @@ public class DictionaryTest {
       public void run() {
         ref.set(CompressedDictionary.create(getLoader(name), myTransformation));
       }
-    }).cpuBound().assertTiming();
+    }).cpuBound().useLegacyScaling().assertTiming();
 
     assertFalse(ref.isNull());
     return ref.get();
   }
 
   private void containsWordPerformanceTest(final Dictionary dictionary, int time) {
+    if (PlatformTestUtil.COVERAGE_ENABLED_BUILD) return;
+
     final Set<String> wordsToCheck = createWordSets(dictionary, 50000, 1).first;
     PlatformTestUtil.startPerformanceTest("contains word", time, new ThrowableRunnable() {
       @Override
@@ -96,7 +98,7 @@ public class DictionaryTest {
           assertEquals(Boolean.TRUE, dictionary.contains(s));
         }
       }
-    }).cpuBound().assertTiming();
+    }).cpuBound().useLegacyScaling().assertTiming();
   }
 
   private void containsWordTest(Dictionary dictionary) {

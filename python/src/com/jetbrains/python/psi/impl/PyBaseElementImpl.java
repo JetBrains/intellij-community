@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.extapi.psi.StubBasedPsiElementBase;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.stubs.IStubElementType;
@@ -64,9 +65,7 @@ public class PyBaseElementImpl<T extends StubElement> extends StubBasedPsiElemen
     if (pos >= 0) {
       className = className.substring(pos + 1);
     }
-    if (className.endsWith("Impl")) {
-      className = className.substring(0, className.length() - 4);
-    }
+    className = StringUtil.trimEnd(className, "Impl");
     return className;
   }
 

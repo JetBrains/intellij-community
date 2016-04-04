@@ -1,0 +1,1 @@
+"Yeah you can take me out the {pla<caret>} But you can’t take the hood up outta me".format(place="hood")

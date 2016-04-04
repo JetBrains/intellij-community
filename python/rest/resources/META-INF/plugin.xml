@@ -13,7 +13,4 @@
     <li>Added inspection for title & underline length math (PY-10998)</li>
     </ul>
 ]]></change-notes>
-  <extensions defaultExtensionNs="com.intellij">
-    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
-  </extensions>
 </idea-plugin>

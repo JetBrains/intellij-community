@@ -1,0 +1,10 @@
+<html>
+<body>
+Reports interface methods that clash with the <b>protected</b> methods <code>clone()</code> and <code>finalize()</code> in <code>java.lang.Object</code>.
+In an interface it is possible to declare those methods with a return type that is incompatible with the <code>java.lang.Object</code> methods.
+This makes it impossible to create a class implementing such an interface.
+When the interface is functional it remains possible to create a lambda from it, but this can still be confusing.
+<p>
+<small>New in 16</small>
+</body>
+</html>

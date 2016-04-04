@@ -33,7 +33,6 @@ import java.util.Set;
 public abstract class ExternalProjectSettings implements Comparable<ExternalProjectSettings>, Cloneable {
 
   private String  myExternalProjectPath;
-  @AbstractCollection(surroundWithTag = true)
   @Nullable private Set<String> myModules = new HashSet<String>();
 
   @NotNull

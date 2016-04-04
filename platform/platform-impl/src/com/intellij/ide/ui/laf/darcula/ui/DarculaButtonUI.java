@@ -29,6 +29,7 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.plaf.ColorUIResource;
 import javax.swing.plaf.ComponentUI;
+import javax.swing.plaf.FontUIResource;
 import javax.swing.plaf.UIResource;
 import javax.swing.plaf.basic.BasicButtonUI;
 import java.awt.*;
@@ -146,7 +147,7 @@ public class DarculaButtonUI extends BasicButtonUI {
     super.update(g, c);
     if (isDefaultButton(c) && !SystemInfo.isMac) {
       if (!c.getFont().isBold()) {
-       c.setFont(c.getFont().deriveFont(Font.BOLD));
+       c.setFont(new FontUIResource(c.getFont().deriveFont(Font.BOLD)));
       }
     }
   }

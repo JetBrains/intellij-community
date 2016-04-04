@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,9 @@ package com.intellij.ide.impl.convert;
 import com.intellij.conversion.ConversionService;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.State;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
@@ -30,14 +32,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author nik
  */
-@State(
-  name = ProjectFileVersionImpl.COMPONENT_NAME,
-  storages = {
-    @Storage(
-      file = StoragePathMacros.PROJECT_FILE
-    )
-  }
-)
+@State(name = ProjectFileVersionImpl.COMPONENT_NAME)
 public class ProjectFileVersionImpl extends ProjectFileVersion implements ProjectComponent, PersistentStateComponent<ProjectFileVersionState> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.impl.convert.ProjectFileVersionImpl");
   @NonNls public static final String COMPONENT_NAME = "ProjectFileVersion";

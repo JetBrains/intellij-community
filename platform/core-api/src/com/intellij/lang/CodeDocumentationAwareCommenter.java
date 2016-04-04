@@ -39,7 +39,7 @@ public interface CodeDocumentationAwareCommenter extends Commenter {
    * Returns the type of the block comment in the language,
    * or null if the language does not support block comments.
    * It is assumed that block comment prefix is not null when block comment type is not null.
-   * @return the line block comment type.
+   * @return the block comment type.
    */
   @Nullable
   IElementType getBlockCommentTokenType();
@@ -48,7 +48,7 @@ public interface CodeDocumentationAwareCommenter extends Commenter {
    * Returns the type of the documentation comment token in the language,
    * or null if the language does not support documentation comments.
    * It is assumed that documentation comment prefix is not null when documentation comment type is not null.
-   * @return the line block comment type.
+   * @return the documentation comment type.
    */
   @Nullable
   IElementType getDocumentationCommentTokenType();

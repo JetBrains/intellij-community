@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,8 @@ import com.intellij.idea.IdeaLogger;
 import com.intellij.idea.IdeaTestApplication;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
@@ -66,12 +66,10 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.DocumentCommitThread;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
-import com.intellij.util.PathUtilRt;
-import com.intellij.util.PlatformUtils;
-import com.intellij.util.SmartList;
-import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.*;
+import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.IndexableSetContributor;
-import com.intellij.util.indexing.IndexedRootsProvider;
 import com.intellij.util.lang.CompoundRuntimeException;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.TestCase;
@@ -100,9 +98,8 @@ import java.util.Set;
  * @author yole
  */
 public abstract class PlatformTestCase extends UsefulTestCase implements DataProvider {
-  public static final String TEST_DIR_PREFIX = "idea_test_";
-
-  protected static IdeaTestApplication ourApplication;
+  private static IdeaTestApplication ourApplication;
+  private static boolean ourReportedLeakedProjects;
   protected ProjectManagerEx myProjectManager;
   protected Project myProject;
   protected Module myModule;
@@ -110,21 +107,17 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   protected boolean myAssertionsInTestDetected;
   protected static final Logger LOG = Logger.getInstance("#com.intellij.testFramework.PlatformTestCase");
   public static Thread ourTestThread;
-  private static TestCase ourTestCase = null;
-  public static final long DEFAULT_TEST_TIME = 300L;
+  private static TestCase ourTestCase;
+  private static final long DEFAULT_TEST_TIME = 300L;
   public static long ourTestTime = DEFAULT_TEST_TIME;
   private EditorListenerTracker myEditorListenerTracker;
   private ThreadTracker myThreadTracker;
 
-  protected static boolean ourPlatformPrefixInitialized;
+  private static boolean ourPlatformPrefixInitialized;
   private static Set<VirtualFile> ourEternallyLivingFilesCache;
 
   static {
     Logger.setFactory(TestLoggerFactory.class);
-  }
-
-  protected static long getTimeRequired() {
-    return DEFAULT_TEST_TIME;
   }
 
   /**
@@ -136,14 +129,9 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     tempDir.refresh(false, true);
   }
 
-  @Nullable
-  protected String getApplicationConfigDirPath() throws Exception {
-    return null;
-  }
-
   protected void initApplication() throws Exception {
     boolean firstTime = ourApplication == null;
-    ourApplication = IdeaTestApplication.getInstance(getApplicationConfigDirPath());
+    ourApplication = IdeaTestApplication.getInstance(null);
     ourApplication.setDataProvider(this);
 
     if (firstTime) {
@@ -191,6 +179,9 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+    File tempDir = new File(FileUtilRt.getTempDirectory());
+    myFilesToDelete.add(tempDir);
+
     if (ourTestCase != null) {
       String message = "Previous test " + ourTestCase + " hasn't called tearDown(). Probably overridden without super call.";
       ourTestCase = null;
@@ -273,6 +264,12 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       return project;
     }
     catch (TooManyProjectLeakedException e) {
+      if (ourReportedLeakedProjects) {
+        fail("Too many projects leaked, again.");
+        return null;
+      }
+      ourReportedLeakedProjects = true;
+
       StringBuilder leakers = new StringBuilder();
       leakers.append("Too many projects leaked: \n");
       for (Project project : e.getLeakedProjects()) {
@@ -281,7 +278,16 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
         leakers.append("\n");
       }
 
-      fail(leakers.toString());
+      String dumpPath = PathManager.getHomePath() + "/leakedProjects.hprof.zip";
+      System.out.println("##teamcity[publishArtifacts 'leakedProjects.hprof.zip']");
+      try {
+        FileUtil.delete(new File(dumpPath));
+        MemoryDumpHelper.captureMemoryDumpZipped(dumpPath);
+      }
+      catch (Exception ex) {
+        ex.printStackTrace();
+      }
+      fail(leakers+"\nPlease see '"+dumpPath+"' for a memory dump");
       return null;
     }
   }
@@ -307,7 +313,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   protected File getIprFile() throws IOException {
-    File tempFile = FileUtil.createTempFile(getName() + "_", ProjectFileType.DOT_DEFAULT_EXTENSION);
+    File tempFile = FileUtil.createTempFile(getName(), ProjectFileType.DOT_DEFAULT_EXTENSION);
     myFilesToDelete.add(tempFile);
     return tempFile;
   }
@@ -372,6 +378,8 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       ((PsiManagerImpl)PsiManager.getInstance(defaultProject)).cleanupForNextTest();
     }
 
+    ((FileBasedIndexImpl) FileBasedIndex.getInstance()).cleanupForNextTest();
+
     LocalFileSystemImpl localFileSystem = (LocalFileSystemImpl)LocalFileSystem.getInstance();
     if (localFileSystem != null) {
       localFileSystem.cleanupForNextTest();
@@ -386,8 +394,8 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
     Set<VirtualFile> survivors = new HashSet<VirtualFile>();
 
-    for (IndexedRootsProvider provider : IndexedRootsProvider.EP_NAME.getExtensions()) {
-      for (VirtualFile file : IndexableSetContributor.getRootsToIndex(provider)) {
+    for (IndexableSetContributor contributor : IndexableSetContributor.EP_NAME.getExtensions()) {
+      for (VirtualFile file : IndexableSetContributor.getRootsToIndex(contributor)) {
         registerSurvivor(survivors, file);
       }
     }
@@ -530,13 +538,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     myProject = null;
   }
 
-  public static void closeAndDisposeProjectAndCheckThatNoOpenProjects(@NotNull Project projectToClose) {
-    List<Throwable> exceptions = new SmartList<Throwable>();
-    closeAndDisposeProjectAndCheckThatNoOpenProjects(projectToClose, exceptions);
-    CompoundRuntimeException.throwIfNotEmpty(exceptions);
-  }
-
-  public static void closeAndDisposeProjectAndCheckThatNoOpenProjects(@NotNull Project projectToClose, @NotNull List<Throwable> exceptions) {
+  public static void closeAndDisposeProjectAndCheckThatNoOpenProjects(@NotNull final Project projectToClose, @NotNull final List<Throwable> exceptions) {
     try {
       ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
       if (projectManager instanceof ProjectManagerImpl) {
@@ -555,16 +557,17 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       exceptions.add(e);
     }
     finally {
-      AccessToken token = WriteAction.start();
-      try {
-        Disposer.dispose(projectToClose);
-      }
-      catch (Throwable e) {
-        exceptions.add(e);
-      }
-      finally {
-        token.finish();
-      }
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            Disposer.dispose(projectToClose);
+          }
+          catch (Throwable e) {
+            exceptions.add(e);
+          }
+        }
+      });
     }
   }
 
@@ -645,10 +648,12 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       @Override
       public void run() throws Throwable {
         ourTestThread = Thread.currentThread();
-        ourTestTime = getTimeRequired();
+        ourTestTime = DEFAULT_TEST_TIME;
         try {
           try {
+            myAssertionsInTestDetected = true;
             setUp();
+            myAssertionsInTestDetected = false;
           }
           catch (Throwable e) {
             try {
@@ -701,20 +706,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     if (IdeaLogger.ourErrorsOccurred != null) {
       throw IdeaLogger.ourErrorsOccurred;
     }
-
-    /*
-    if (++LEAK_WALKS % 1 == 0) {
-      LeakHunter.checkLeak(ApplicationManager.getApplication(), ProjectImpl.class, new Processor<ProjectImpl>() {
-        @Override
-        public boolean process(ProjectImpl project) {
-          return !project.isDefault() && !LightPlatformTestCase.isLight(project);
-        }
-      });
-    }
-    */
   }
-
-  private static int LEAK_WALKS;
 
   private static void waitForAllLaters() throws InterruptedException, InvocationTargetException {
     for (int i = 0; i < 3; i++) {
@@ -736,7 +728,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   protected boolean isRunInWriteAction() {
-    return true;
+    return false;
   }
 
   @Override
@@ -781,7 +773,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   public static File createTempDir(@NonNls final String prefix, final boolean refresh) throws IOException {
-    final File tempDirectory = FileUtilRt.createTempDirectory(TEST_DIR_PREFIX + prefix, null, false);
+    final File tempDirectory = FileUtilRt.createTempDirectory("idea_test_" + prefix, null, false);
     myFilesToDelete.add(tempDirectory);
     if (refresh) {
       getVirtualFile(tempDirectory);
@@ -789,8 +781,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     return tempDirectory;
   }
 
-  @Nullable
-  protected static VirtualFile getVirtualFile(final File file) {
+  protected static VirtualFile getVirtualFile(@NotNull File file) {
     return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
   }
 
@@ -802,7 +793,8 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     return createTempDir(getTestName(true), refresh);
   }
 
-  protected File createTempFile(String name, @Nullable String text) throws IOException {
+  @NotNull
+  protected File createTempFile(@NotNull String name, @Nullable String text) throws IOException {
     File directory = createTempDirectory();
     File file = new File(directory, name);
     if (!file.createNewFile()) {
@@ -914,6 +906,10 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     }.execute().throwException();
   }
 
+  protected static void delete(@NotNull final VirtualFile vFile1) {
+    VfsTestUtil.deleteFile(vFile1);
+  }
+
   protected static void move(@NotNull final VirtualFile vFile1, @NotNull final VirtualFile newFile) {
     new WriteCommandAction.Simple(null) {
       @Override
@@ -955,11 +951,19 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     }.execute().throwException();
   }
 
-  public static void setBinaryContent(final VirtualFile file, final byte[] content) {
+  public static void setBinaryContent(@NotNull final VirtualFile file, @NotNull final byte[] content) {
     new WriteAction() {
       @Override
       protected void run(@NotNull Result result) throws Throwable {
         file.setBinaryContent(content);
+      }
+    }.execute().throwException();
+  }
+  public static void setBinaryContent(@NotNull final VirtualFile file, @NotNull final byte[] content, final long newModificationStamp, final long newTimeStamp, final Object requestor) {
+    new WriteAction() {
+      @Override
+      protected void run(@NotNull Result result) throws Throwable {
+        file.setBinaryContent(content,newModificationStamp, newTimeStamp,requestor);
       }
     }.execute().throwException();
   }

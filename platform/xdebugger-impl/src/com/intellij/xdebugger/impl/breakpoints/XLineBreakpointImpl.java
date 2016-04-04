@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -134,7 +134,7 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
       markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, getProject(), false);
       if (markupModel != null) {
         // renderersChanged false - we don't change gutter size
-        markupModel.fireAttributesChanged((RangeHighlighterEx)highlighter, false);
+        markupModel.fireAttributesChanged((RangeHighlighterEx)highlighter, false, false);
       }
     }
   }
@@ -240,9 +240,11 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
   }
 
   private boolean canMoveTo(int line, VirtualFile file) {
-    return file != null &&
-           myType.canPutAt(file, line, getProject()) &&
-           getBreakpointManager().findBreakpointAtLine(myType, file, line) == null;
+    if (file != null && myType.canPutAt(file, line, getProject())) {
+      XLineBreakpoint<P> existing = getBreakpointManager().findBreakpointAtLine(myType, file, line);
+      return existing == null || existing == this;
+    }
+    return false;
   }
 
   public void updatePosition() {

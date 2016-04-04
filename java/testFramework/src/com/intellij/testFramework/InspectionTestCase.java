@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -141,7 +141,8 @@ public abstract class InspectionTestCase extends PsiTestCase {
         }
       }
     });
-    AnalysisScope scope = createAnalysisScope(sourceDir[0].getParent());
+    VirtualFile projectDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(testDir));
+    AnalysisScope scope = createAnalysisScope(sourceDir[0].equals(projectDir) ? projectDir : sourceDir[0].getParent());
 
     InspectionManagerEx inspectionManager = (InspectionManagerEx)InspectionManager.getInstance(getProject());
     InspectionToolWrapper[] toolWrappers = runDeadCodeFirst ? new InspectionToolWrapper []{getUnusedDeclarationWrapper(), toolWrapper} : new InspectionToolWrapper []{toolWrapper};
@@ -245,10 +246,5 @@ public abstract class InspectionTestCase extends PsiTestCase {
   @NonNls
   protected String getTestDataPath() {
     return PathManagerEx.getTestDataPath() + "/inspection/";
-  }
-
-  @Override
-  protected final boolean isRunInWriteAction() {
-    return false;
   }
 }

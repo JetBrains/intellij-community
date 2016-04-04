@@ -60,7 +60,8 @@ class AstLeaksTest extends LightCodeInsightFixtureTestCase {
     def sup = myFixture.addFileToProject('sup.java', 'class Super { Super() {} }')
     assert sup.findElementAt(0) // load AST
     assert !((PsiFileImpl)sup).stub
-    LeakHunter.checkLeak(sup, MethodElement)
+
+    LeakHunter.checkLeak(sup, MethodElement, { it.psi.containingFile == sup } as Processor)
 
     def foo = myFixture.addFileToProject('a.java', 'class Foo extends Super { void bar() { bar(); } }')
     myFixture.configureFromExistingVirtualFile(foo.virtualFile)
@@ -69,8 +70,8 @@ class AstLeaksTest extends LightCodeInsightFixtureTestCase {
     assert !((PsiFileImpl)foo).stub
     assert ((PsiFileImpl)foo).treeElement
 
-    LeakHunter.checkLeak(foo, MethodElement)
-    LeakHunter.checkLeak(sup, MethodElement)
+    LeakHunter.checkLeak(foo, MethodElement, { it.psi.containingFile == foo } as Processor)
+    LeakHunter.checkLeak(sup, MethodElement, { it.psi.containingFile == sup } as Processor)
   }
 
   public void "test no hard refs to Default File Template inspection internal AST"() {

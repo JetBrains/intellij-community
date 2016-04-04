@@ -27,10 +27,12 @@ public class VagrantBasedCredentialsHolder {
   private static final String VAGRANT_FOLDER = "VAGRANT_FOLDER";
   private static final String MACHINE_NAME = "MACHINE_NAME";
 
+  @NotNull
   private String myVagrantFolder;
   private String myMachineName;
 
   public VagrantBasedCredentialsHolder() {
+    myVagrantFolder = "";
   }
 
   @Deprecated

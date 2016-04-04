@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,17 +23,17 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.ui.DialogBuilder
 import com.intellij.openapi.ui.TextBrowseFolderListener
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.DocumentAdapter
 import com.intellij.util.Function
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.deleteRecursively
+import com.intellij.util.exists
 import com.intellij.util.ui.FormBuilder
 import com.intellij.util.ui.table.TableModelEditor
 import gnu.trove.THashSet
 import org.jetbrains.settingsRepository.git.asProgressMonitor
 import org.jetbrains.settingsRepository.git.cloneBare
-import java.io.File
 import javax.swing.JTextField
 import javax.swing.event.DocumentEvent
 
@@ -130,7 +130,7 @@ internal fun createReadOnlySourcesEditor(): ConfigurableUi<IcsSettings> {
               indicator.checkCanceled()
               try {
                 indicator.text2 = path
-                FileUtil.delete(File(root, path))
+                root.resolve(path).deleteRecursively()
               }
               catch (e: Exception) {
                 LOG.error(e)
@@ -143,9 +143,9 @@ internal fun createReadOnlySourcesEditor(): ConfigurableUi<IcsSettings> {
               indicator.checkCanceled()
               try {
                 indicator.text = "Cloning ${StringUtil.trimMiddle(source.url!!, 255)}"
-                val dir = File(root, source.path!!)
+                val dir = root.resolve(source.path!!)
                 if (dir.exists()) {
-                  FileUtil.delete(dir)
+                  dir.deleteRecursively()
                 }
                 cloneBare(source.url!!, dir, icsManager.credentialsStore, indicator.asProgressMonitor()).close()
               }

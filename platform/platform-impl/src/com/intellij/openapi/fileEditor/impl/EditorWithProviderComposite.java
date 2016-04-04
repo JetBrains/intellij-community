@@ -88,7 +88,7 @@ public class EditorWithProviderComposite extends EditorComposite {
     final int selectedProviderIndex = ArrayUtil.find(editors, getSelectedEditor());
     LOG.assertTrue(selectedProviderIndex != -1);
     final FileEditorProvider[] providers = getProviders();
-    return new HistoryEntry(getFile(), providers, states, providers[selectedProviderIndex]);
+    return HistoryEntry.createLight(getFile(), providers, states, providers[selectedProviderIndex]);
   }
 
   public void addEditor(@NotNull FileEditor editor, FileEditorProvider provider) {

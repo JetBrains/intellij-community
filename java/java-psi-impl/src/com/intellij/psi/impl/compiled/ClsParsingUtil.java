@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -117,29 +117,24 @@ public class ClsParsingUtil {
     }
   }
 
-  private static PsiExpression psiToClsExpression(@NotNull PsiExpression expr, @Nullable ClsElementImpl parent) {
+  static PsiExpression psiToClsExpression(@NotNull PsiExpression expr, @NotNull ClsElementImpl parent) {
     if (expr instanceof PsiLiteralExpression) {
-      if (parent != null && ((ClsFileImpl)parent.getContainingFile()).isForDecompiling()) {
-        return new ClsLiteralExpressionImpl(parent, expr.getText(), PsiType.NULL, null);
-      }
-      return new ClsLiteralExpressionImpl(parent, expr.getText(), expr.getType(), ((PsiLiteralExpression)expr).getValue());
+      boolean forDecompiling = ((ClsFileImpl)parent.getContainingFile()).isForDecompiling();
+      PsiType type = forDecompiling ? PsiType.NULL : expr.getType();
+      Object value = forDecompiling ? null : ((PsiLiteralExpression)expr).getValue();
+      return new ClsLiteralExpressionImpl(parent, expr.getText(), type, value);
     }
-    if (expr instanceof PsiPrefixExpression) {
-      final PsiPrefixExpression prefixExpr = (PsiPrefixExpression)expr;
-      return new ClsPrefixExpressionImpl(parent){
-        @NotNull
-        @Override
-        protected PsiJavaToken createOperation() {
-          return new ClsJavaTokenImpl(this, prefixExpr.getOperationTokenType(), prefixExpr.getOperationSign().getText());
-        }
 
-        @NotNull
-        @Override
-        protected PsiExpression createOperand() {
-          return psiToClsExpression(prefixExpr.getOperand(), this);
-        }
-      };
+    if (expr instanceof PsiPrefixExpression) {
+      PsiJavaToken sign = ((PsiPrefixExpression)expr).getOperationSign();
+      PsiExpression operand = ((PsiPrefixExpression)expr).getOperand();
+      if (operand == null) {
+        LOG.error("Invalid prefix expression: " + expr + " [" + expr.getText() + "]");
+        return null;
+      }
+      return new ClsPrefixExpressionImpl(parent, sign, operand);
     }
+
     if (expr instanceof PsiClassObjectAccessExpression) {
       String exprText = expr.getText();
       if (StringUtil.endsWith(exprText, ".class")) {
@@ -147,36 +142,28 @@ public class ClsParsingUtil {
         return new ClsClassObjectAccessExpressionImpl(parent, classText);
       }
     }
+
     if (expr instanceof PsiReferenceExpression) {
       return new ClsReferenceExpressionImpl(parent, (PsiReferenceExpression)expr);
     }
+
     if (expr instanceof PsiBinaryExpression) {
-      final PsiBinaryExpression binaryExpr = (PsiBinaryExpression)expr;
-      return new ClsBinaryExpressionImpl(parent){
-        @NotNull
-        @Override
-        protected PsiJavaToken createOperation() {
-          return new ClsJavaTokenImpl(this, binaryExpr.getOperationTokenType(), binaryExpr.getOperationSign().getText());
-        }
-
-        @NotNull
-        @Override
-        protected PsiExpression createLOperand() {
-          return psiToClsExpression(binaryExpr.getLOperand(), this);
-        }
-
-        @NotNull
-        @Override
-        protected ClsLiteralExpressionImpl createROperand() {
-          return (ClsLiteralExpressionImpl)psiToClsExpression(binaryExpr.getROperand(), this);
-        }
-      };
+      PsiJavaToken sign = ((PsiBinaryExpression)expr).getOperationSign();
+      PsiExpression left = ((PsiBinaryExpression)expr).getLOperand();
+      PsiExpression right = ((PsiBinaryExpression)expr).getROperand();
+      if (right == null) {
+        LOG.error("Invalid binary expression: " + expr + " [" + expr.getText() + "]");
+        return null;
+      }
+      return new ClsBinaryExpressionImpl(parent, sign, left, right);
     }
-    if (parent != null && ((ClsFileImpl)parent.getContainingFile()).isForDecompiling()) {
+
+    if (((ClsFileImpl)parent.getContainingFile()).isForDecompiling()) {
       return new ClsLiteralExpressionImpl(parent, expr.getText(), PsiType.NULL, null);
     }
-    final PsiConstantEvaluationHelper evaluator = JavaPsiFacade.getInstance(expr.getProject()).getConstantEvaluationHelper();
-    final Object value = evaluator.computeConstantExpression(expr);
+
+    PsiConstantEvaluationHelper evaluator = JavaPsiFacade.getInstance(expr.getProject()).getConstantEvaluationHelper();
+    Object value = evaluator.computeConstantExpression(expr);
     if (value != null) {
       return new ClsLiteralExpressionImpl(parent, expr.getText(), expr.getType(), value);
     }

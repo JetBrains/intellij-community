@@ -12,6 +12,7 @@ import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -242,7 +243,7 @@ public class MultiProcessDebugger implements ProcessDebugger {
     }
 
     public static String threadName(@NotNull String name, @NotNull String id) {
-      int indx = id.indexOf("_");
+      int indx = id.indexOf("_", id.indexOf("_") + 1);
       if (indx != -1) {
         id = id.substring(0, indx);
       }
@@ -365,35 +366,37 @@ public class MultiProcessDebugger implements ProcessDebugger {
   }
 
   @Override
-  public void setTempBreakpoint(String type, String file, int line) {
+  public void setTempBreakpoint(@NotNull String type, @NotNull String file, int line) {
     for (ProcessDebugger d : allDebuggers()) {
       d.setTempBreakpoint(type, file, line);
     }
   }
 
   @Override
-  public void removeTempBreakpoint(String file, int line) {
+  public void removeTempBreakpoint(@NotNull String file, int line) {
     for (ProcessDebugger d : allDebuggers()) {
       d.removeTempBreakpoint(file, line);
     }
   }
 
   @Override
-  public void setBreakpoint(String typeId, String file, int line, String condition, String logExpression) {
+  public void setBreakpoint(@NotNull String typeId, @NotNull String file, int line, @Nullable String condition,
+                            @Nullable String logExpression) {
     for (ProcessDebugger d : allDebuggers()) {
       d.setBreakpoint(typeId, file, line, condition, logExpression);
     }
   }
 
   @Override
-  public void setBreakpointWithFuncName(String typeId, String file, int line, String condition, String logExpression, String funcName) {
+  public void setBreakpointWithFuncName(@NotNull String typeId, @NotNull String file, int line, @Nullable String condition,
+                                        @Nullable String logExpression, @Nullable String funcName) {
     for (ProcessDebugger d : allDebuggers()) {
       d.setBreakpointWithFuncName(typeId, file, line, condition, logExpression, funcName);
     }
   }
 
   @Override
-  public void removeBreakpoint(String typeId, String file, int line) {
+  public void removeBreakpoint(@NotNull String typeId, @NotNull String file, int line) {
     for (ProcessDebugger d : allDebuggers()) {
       d.removeBreakpoint(typeId, file, line);
     }

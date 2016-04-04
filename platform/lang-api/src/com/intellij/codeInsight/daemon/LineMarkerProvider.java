@@ -26,6 +26,7 @@ import java.util.List;
 /**
  * @author yole
  * @see LineMarkerProviders#EP_NAME
+ * @see LineMarkerProviderDescriptor
  */
 public interface LineMarkerProvider {
   /**
@@ -37,7 +38,7 @@ public interface LineMarkerProvider {
    * return it for the PsiIdentifier which is a name of this method.
    * <p/>
    * More technical details:<p>
-   * IDEA highlighting (specifically, LineMarkersPass) queries all LineMarkerProviders in two passes (for performance reasons):
+   * Highlighting (specifically, LineMarkersPass) queries all LineMarkerProviders in two passes (for performance reasons):
    * <ul>
    * <li>first pass for all elements in visible area</li>
    * <li>second pass for all the rest elements</li>

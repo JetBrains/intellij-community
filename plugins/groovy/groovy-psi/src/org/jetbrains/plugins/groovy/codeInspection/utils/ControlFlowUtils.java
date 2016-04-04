@@ -800,8 +800,9 @@ public class ControlFlowUtils {
   public static ArrayList<BitSet> inferWriteAccessMap(final Instruction[] flow, final GrVariable var) {
 
     final Semilattice<BitSet> sem = new Semilattice<BitSet>() {
+      @NotNull
       @Override
-      public BitSet join(ArrayList<BitSet> ins) {
+      public BitSet join(@NotNull ArrayList<BitSet> ins) {
         BitSet result = new BitSet(flow.length);
         for (BitSet set : ins) {
           result.or(set);

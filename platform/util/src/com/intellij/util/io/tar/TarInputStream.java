@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,14 +22,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-/**
- * The TarInputStream reads a UNIX tar archive as an InputStream.
- * methods are provided to position at each successive entry in
- * the archive, and the read each entry as a normal input stream
- * using read().
- *
- */
-// Copy-pasted from org.apache.tools.tar.TarInputStream
+/** @deprecated use bundled commons-compress library (to be removed in IDEA 17) */
+@SuppressWarnings("unused")
 public class TarInputStream extends FilterInputStream {
   private static final int SMALL_BUFFER_SIZE = 256;
   private static final int BUFFER_SIZE = 8 * 1024;

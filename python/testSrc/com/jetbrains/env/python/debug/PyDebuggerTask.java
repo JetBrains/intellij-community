@@ -29,6 +29,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.xdebugger.*;
+import com.jetbrains.env.python.PythonDebuggerTest;
 import com.jetbrains.python.debugger.PyDebugProcess;
 import com.jetbrains.python.debugger.PyDebugRunner;
 import com.jetbrains.python.run.PythonCommandLineState;
@@ -116,6 +117,8 @@ public class PyDebuggerTask extends PyBaseDebuggerTask {
 
     final int serverLocalPort = serverSocket.getLocalPort();
     final RunProfile profile = env.getRunProfile();
+
+    PythonDebuggerTest.createExceptionBreak(myFixture, false, false, false); //turn off exception breakpoints by default
 
     before();
 

@@ -34,7 +34,6 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.LibraryConfigurab
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -98,11 +97,7 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
     StringBuilder buffer = new StringBuilder();
     final String name = StringUtil.escapeXml(libraryName);
     buffer.append("Library ");
-    if (Registry.is("ide.new.project.settings")) {
-      buffer.append("<a href='http://library/").append(name).append("'>").append(name).append("</a>");
-    } else {
-      buffer.append("'").append(name).append("'");
-    }
+    buffer.append("<a href='http://library/").append(name).append("'>").append(name).append("</a>");
     buffer.append(" has broken " + rootName + " " + StringUtil.pluralize("path", invalidClasses.size()) + ":");
     for (String url : invalidClasses) {
       buffer.append("<br>&nbsp;&nbsp;");
@@ -159,16 +154,15 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
   public ProjectStructureProblemDescription createUnusedElementWarning() {
     final List<ConfigurationErrorQuickFix> fixes = Arrays.asList(new AddLibraryToDependenciesFix(), new RemoveLibraryFix(), new RemoveAllUnusedLibrariesFix());
     final String name = StringUtil.escapeXml(myLibrary.getName());
-    String libraryName = Registry.is("ide.new.project.settings") ? "<a href='http://library/" + name + "'>" + name + "</a>"
-                         : "'" + name + "'";
-    return new ProjectStructureProblemDescription("Library " + libraryName + " is not used", null, createPlace(),
+    String libraryName = "<a href='http://library/" + name + "'>" + name + "</a>";
+    return new ProjectStructureProblemDescription(XmlStringUtil.wrapInHtml("Library " + libraryName + " is not used"), null, createPlace(),
                                                   ProjectStructureProblemType.unused("unused-library"), ProjectStructureProblemDescription.ProblemLevel.PROJECT,
                                                   fixes, false);
   }
 
   @Override
   public String getPresentableName() {
-    return "Library '" + myLibrary.getName() + "'";
+    return myLibrary.getName();
   }
 
   @Override

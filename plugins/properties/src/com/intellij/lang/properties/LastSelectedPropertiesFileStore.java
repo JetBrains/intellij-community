@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ import java.util.Map;
  */
 @State(
   name = "LastSelectedPropertiesFileStore",
-  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/lastSelectedPropertiesFile.xml", roamingType = RoamingType.DISABLED)
+  storages = @Storage(value = "lastSelectedPropertiesFile.xml", roamingType = RoamingType.DISABLED)
 )
 public class LastSelectedPropertiesFileStore implements PersistentStateComponent<Element> {
   private static final String PROPERTIES_FILE_STATISTICS_KEY = "PROPERTIES_FILE";

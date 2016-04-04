@@ -85,7 +85,7 @@ public class RunContentBuilder extends RunTab {
       }
       initLogConsoles(profile, contentDescriptor, console);
     }
-    myUi.getOptions().setLeftToolbar(createActionToolbar(contentDescriptor), ActionPlaces.UNKNOWN);
+    myUi.getOptions().setLeftToolbar(createActionToolbar(contentDescriptor), ActionPlaces.RUNNER_TOOLBAR);
 
     if (profile instanceof RunConfigurationBase) {
       if (console instanceof ObservableConsoleView && !ApplicationManager.getApplication().isUnitTestMode()) {
@@ -131,7 +131,7 @@ public class RunContentBuilder extends RunTab {
       }
     }
 
-    consoleContent.setActions(consoleActions, ActionPlaces.UNKNOWN, console.getComponent());
+    consoleContent.setActions(consoleActions, ActionPlaces.RUNNER_TOOLBAR, console.getComponent());
   }
 
   @NotNull

@@ -9,7 +9,4 @@
   <resource-bundle>messages.TerminalBundle</resource-bundle>
   <xi:include href="/META-INF/terminal.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
-  <extensions defaultExtensionNs="com.intellij">
-    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
-  </extensions>
 </idea-plugin>

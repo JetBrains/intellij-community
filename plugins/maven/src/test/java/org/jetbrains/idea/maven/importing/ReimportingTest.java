@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.compiler.CompilerConfiguration;
+import com.intellij.idea.Bombed;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
@@ -27,6 +28,7 @@ import com.intellij.openapi.roots.impl.OrderEntryUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 
+import java.util.Calendar;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ReimportingTest extends MavenImportingTestCase {
@@ -253,6 +255,7 @@ public class ReimportingTest extends MavenImportingTestCase {
 
   }
 
+  @Bombed(user = "Vladislav.Soroka", year=2020, month = Calendar.APRIL, day = 1, description = "temporary disabled")
   public void testSettingTargetLevel() throws Exception {
     createModulePom("m1", "<groupId>test</groupId>" +
                           "<artifactId>project</artifactId>" +

@@ -67,7 +67,7 @@ public class LogicalPosition implements Comparable<LogicalPosition> {
    * Number of virtual soft wrap introduced lines on a current logical line before the visual position that corresponds
    * to the current logical position.
    * <p>
-   * Instead of directly using this value, EditorUtil.getSoftWrapCountAfterLogicalLineStart(LogicalPosition) method can be used,
+   * Instead of directly using this value, EditorUtil.getSoftWrapCountAfterLineStart(Editor, LogicalPosition) method can be used,
    * it will work regardless of whether current <code>LogicalPosition</code> instance is {@link #visualPositionAware}.
    *
    * @see #visualPositionAware

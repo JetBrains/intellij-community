@@ -148,16 +148,22 @@ public class DirectoryNode extends PackageDependenciesNode {
 
   public String toString() {
     if (myFQName != null) return myFQName;
-    if (myCompactPackages && myCompactedDirNode != null) {
-      return myDirName + "/" + myCompactedDirNode.getDirName();
+    if (myCompactPackages) {
+      final DirectoryNode compactedDirNode = myCompactedDirNode;
+      if (compactedDirNode != null) {
+        return myDirName + "/" + compactedDirNode.getDirName();
+      }
     }
     return myDirName;
   }
 
   public String getDirName() {
     if (myVDirectory == null || !myVDirectory.isValid()) return "";
-    if (myCompactPackages && myCompactedDirNode != null) {
-      return myVDirectory.getName() + "/" + myCompactedDirNode.getDirName();
+    if (myCompactPackages) {
+      final DirectoryNode compactedDirNode = myCompactedDirNode;
+      if (compactedDirNode != null) {
+        return myVDirectory.getName() + "/" + compactedDirNode.getDirName();
+      }
     }
     return myDirName;
   }

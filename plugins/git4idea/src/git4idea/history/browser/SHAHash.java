@@ -15,8 +15,10 @@
  */
 package git4idea.history.browser;
 
-import git4idea.history.wholeTree.AbstractHash;
-
+/**
+ * @deprecated Use {@link com.intellij.vcs.log.Hash}
+ */
+@Deprecated
 public class SHAHash {
   private final String myValue;
 
@@ -33,10 +35,6 @@ public class SHAHash {
 
   public String getValue() {
     return myValue;
-  }
-
-  public static SHAHash emulate(final AbstractHash abstractHash) {
-    return new SHAHash(abstractHash.getString(), false);
   }
 
   @Override

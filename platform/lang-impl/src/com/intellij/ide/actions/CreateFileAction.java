@@ -75,7 +75,7 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
     }
     else {
       Messages.showInputDialog(project, IdeBundle.message("prompt.enter.new.file.name"),
-                               IdeBundle.message("title.new.file"), Messages.getQuestionIcon(), null, validator);
+                               IdeBundle.message("title.new.file"), null, null, validator);
       return validator.getCreatedElements();
     }
   }

@@ -15,8 +15,10 @@
  */
 package com.intellij.openapi.actionSystem;
 
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Set;
 
 /**
  * Possible places in the IDEA user interface where an action can appear.
@@ -25,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 @SuppressWarnings({"HardCodedStringLiteral"})
 public abstract class ActionPlaces {
   public static final String UNKNOWN = "unknown";
+  public static final String TOOLBAR = "toolbar";
 
   /**
    * consider to use {@link #isMainMenuOrActionSearch(String)} instead
@@ -63,13 +66,13 @@ public abstract class ActionPlaces {
   public static final String CALL_HIERARCHY_VIEW_TOOLBAR = "CallHierarchyViewToolbar";
   public static final String J2EE_ATTRIBUTES_VIEW_POPUP = "J2EEAttributesViewPopup";
   public static final String J2EE_VIEW_POPUP = "J2EEViewPopup";
+  public static final String RUNNER_TOOLBAR = "RunnerToolbar";
   public static final String DEBUGGER_TOOLBAR = "DebuggerToolbar";
   public static final String USAGE_VIEW_POPUP = "UsageViewPopup";
   public static final String USAGE_VIEW_TOOLBAR = "UsageViewToolbar";
   public static final String STRUCTURE_VIEW_POPUP = "StructureViewPopup";
   public static final String STRUCTURE_VIEW_TOOLBAR = "StructureViewToolbar";
   public static final String NAVIGATION_BAR_POPUP = "NavBar";
-  @Deprecated public static final String NAVIGATION_BAR = NAVIGATION_BAR_POPUP;
   public static final String NAVIGATION_BAR_TOOLBAR = "NavBarToolbar";
 
   public static final String TODO_VIEW_POPUP = "TodoViewPopup";
@@ -128,22 +131,25 @@ public abstract class ActionPlaces {
   public static final String V8_HEAP_PROFILING_POPUP = "V8_HEAP_PROFILING_POPUP";
   public static final String V8_HEAP_DIFF_PROFILING_POPUP = "V8_HEAP_DIFF_PROFILING_POPUP";
 
-  private static final String[] ourToolbarPlaces = {EDITOR_TOOLBAR, PROJECT_VIEW_TOOLBAR, TESTTREE_VIEW_TOOLBAR, MAIN_TOOLBAR,
+  private static final Set<String> ourToolbarPlaces = ContainerUtil.newHashSet(
+    EDITOR_TOOLBAR, PROJECT_VIEW_TOOLBAR, TESTTREE_VIEW_TOOLBAR, MAIN_TOOLBAR, TOOLBAR, RUNNER_TOOLBAR,
     ANT_EXPLORER_TOOLBAR, ANT_MESSAGES_TOOLBAR, COMPILER_MESSAGES_TOOLBAR, TODO_VIEW_TOOLBAR, STRUCTURE_VIEW_TOOLBAR, USAGE_VIEW_TOOLBAR,
     DEBUGGER_TOOLBAR, CALL_HIERARCHY_VIEW_TOOLBAR, METHOD_HIERARCHY_VIEW_TOOLBAR, TYPE_HIERARCHY_VIEW_TOOLBAR, JAVADOC_TOOLBAR,
     FILE_HISTORY_TOOLBAR, FILEHISTORY_VIEW_TOOLBAR, LVCS_DIRECTORY_HISTORY_TOOLBAR, CHANGES_VIEW_TOOLBAR, PHING_EXPLORER_TOOLBAR,
-    PHING_MESSAGES_TOOLBAR, ANALYZE_STACKTRACE_PANEL_TOOLBAR};
+    PHING_MESSAGES_TOOLBAR, ANALYZE_STACKTRACE_PANEL_TOOLBAR
+  );
 
 
   public static boolean isToolbarPlace(@NotNull String place) {
-    return ArrayUtil.find(ourToolbarPlaces, place) != -1;
+    return ourToolbarPlaces.contains(place);
   }
 
   public static boolean isMainMenuOrActionSearch(String place) {
     return MAIN_MENU.equals(place) || ACTION_SEARCH.equals(place);
   }
 
-  private static final String[] ourPopupPlaces = {EDITOR_POPUP, EDITOR_TAB_POPUP, COMMANDER_POPUP,
+  private static final Set<String> ourPopupPlaces = ContainerUtil.newHashSet(
+    EDITOR_POPUP, EDITOR_TAB_POPUP, COMMANDER_POPUP,
     PROJECT_VIEW_POPUP, FAVORITES_VIEW_POPUP, SCOPE_VIEW_POPUP, TESTTREE_VIEW_POPUP, TESTSTATISTICS_VIEW_POPUP, TYPE_HIERARCHY_VIEW_POPUP,
     METHOD_HIERARCHY_VIEW_POPUP, CALL_HIERARCHY_VIEW_POPUP, J2EE_ATTRIBUTES_VIEW_POPUP, J2EE_VIEW_POPUP, USAGE_VIEW_POPUP,
     STRUCTURE_VIEW_POPUP, TODO_VIEW_POPUP, COMPILER_MESSAGES_POPUP, ANT_MESSAGES_POPUP, ANT_EXPLORER_POPUP, UPDATE_POPUP,
@@ -152,9 +158,9 @@ public abstract class ActionPlaces {
     CREATE_EJB_POPUP, CHANGES_VIEW_POPUP, REMOTE_HOST_VIEW_POPUP, REMOTE_HOST_DIALOG_POPUP, TFS_TREE_POPUP,
     ACTION_PLACE_VCS_QUICK_LIST_POPUP_ACTION, PHING_EXPLORER_POPUP, NAVIGATION_BAR_POPUP, JS_BUILD_TOOL_POPUP, DIFF_TOOLBAR,
     V8_CPU_PROFILING_POPUP, V8_HEAP_PROFILING_POPUP, V8_HEAP_PROFILING_POPUP
-  };
+  );
 
   public static boolean isPopupPlace(@NotNull String place) {
-    return ArrayUtil.find(ourPopupPlaces, place) != -1;
+    return ourPopupPlaces.contains(place);
   }
 }

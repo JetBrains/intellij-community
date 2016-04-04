@@ -55,10 +55,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileFactory;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.DebugUtil;
@@ -1065,7 +1062,16 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
       final PsiReference[] references = element.getReferences();
       cache = new PsiElement[references.length];
       for (int i = 0; i < references.length; i++) {
-        cache[i] = references[i].resolve();
+        final PsiReference reference = references[i];
+        final PsiElement resolveResult;
+        if (reference instanceof PsiPolyVariantReference) {
+          final ResolveResult[] results = ((PsiPolyVariantReference)reference).multiResolve(true);
+          resolveResult = results.length == 0 ? null : results[0].getElement();
+        }
+        else {
+          resolveResult = reference.resolve();
+        }
+        cache[i] = resolveResult;
       }
       map.put(element, cache);
     }

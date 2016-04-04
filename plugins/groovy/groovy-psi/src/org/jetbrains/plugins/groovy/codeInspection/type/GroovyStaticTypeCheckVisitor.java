@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,12 +40,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTupleE
 import java.util.List;
 
 public class GroovyStaticTypeCheckVisitor extends GroovyTypeCheckVisitor {
-
   private AnnotationHolder myHolder;
-
-  public void setAnnotationHolder(@NotNull AnnotationHolder annotationHolder) {
-    myHolder = annotationHolder;
-  }
 
   @Override
   protected void processTupleAssignment(@NotNull GrTupleExpression tupleExpression, @NotNull GrExpression initializer) {
@@ -142,5 +137,15 @@ public class GroovyStaticTypeCheckVisitor extends GroovyTypeCheckVisitor {
   @Override
   public void visitElement(GroovyPsiElement element) {
     // do nothing & disable recursion
+  }
+
+  public void accept(@NotNull GroovyPsiElement element, @NotNull AnnotationHolder holder) {
+    myHolder = holder;
+    try {
+      element.accept(this);
+    }
+    finally {
+      myHolder = null;
+    }
   }
 }

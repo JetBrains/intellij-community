@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,10 @@ import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.debugger.ui.tree.render.*;
 import com.intellij.debugger.ui.tree.render.Renderer;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -58,9 +61,7 @@ import java.util.List;
 @State(
   name="NodeRendererSettings",
   storages= {
-    @Storage(
-      file = StoragePathMacros.APP_CONFIG + "/debugger.renderers.xml"
-    )}
+    @Storage("debugger.renderers.xml")}
 )
 public class NodeRendererSettings implements PersistentStateComponent<Element> {
   @NonNls private static final String REFERENCE_RENDERER = "Reference renderer";
@@ -68,7 +69,6 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
   @NonNls private static final String RENDERER_ID = "ID";
 
   private final EventDispatcher<NodeRendererSettingsListener> myDispatcher = EventDispatcher.create(NodeRendererSettingsListener.class);
-  private final List<NodeRenderer> myPluginRenderers = new ArrayList<NodeRenderer>();
   private RendererConfiguration myCustomRenderers = new RendererConfiguration(this);
 
   private static final String USE_ANDROID_RENDERER = "use.android.renderer";
@@ -114,20 +114,6 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     return ServiceManager.getService(NodeRendererSettings.class);
   }
 
-  /**
-   * use {@link com.intellij.debugger.ui.tree.render.NodeRenderer} extension
-   * @param renderer
-   */
-  @Deprecated
-  public void addPluginRenderer(NodeRenderer renderer) {
-    myPluginRenderers.add(renderer);
-  }
-
-  @Deprecated
-  public void removePluginRenderer(NodeRenderer renderer) {
-    myPluginRenderers.remove(renderer);
-  }
-  
   public void setAlternateCollectionViewsEnabled(boolean enabled) {
     for (NodeRenderer myAlternateCollectionRenderer : myAlternateCollectionRenderers) {
       myAlternateCollectionRenderer.setEnabled(enabled);
@@ -241,10 +227,6 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     }
   }
 
-  public List<NodeRenderer> getPluginRenderers() {
-    return new ArrayList<NodeRenderer>(myPluginRenderers);
-  }
-  
   public PrimitiveRenderer getPrimitiveRenderer() {
     return myPrimitiveRenderer;
   }
@@ -275,7 +257,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
 
   public List<NodeRenderer> getAllRenderers() {
     // the order is important as the renderers are applied according to it
-    final List<NodeRenderer> allRenderers = new ArrayList<NodeRenderer>();
+    final List<NodeRenderer> allRenderers = new ArrayList<>();
 
     // user defined renderers must come first
     myCustomRenderers.iterateRenderers(new InternalIterator<NodeRenderer>() {
@@ -286,7 +268,6 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     });
 
     // plugins registered renderers come after that
-    allRenderers.addAll(myPluginRenderers);
     Collections.addAll(allRenderers, NodeRenderer.EP_NAME.getExtensions());
 
     // now all predefined stuff
@@ -406,9 +387,10 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
   private static EnumerationChildrenRenderer createEnumerationChildrenRenderer(@NonNls String[][] expressions) {
     final EnumerationChildrenRenderer childrenRenderer = new EnumerationChildrenRenderer();
     if (expressions != null && expressions.length > 0) {
-      final ArrayList<Pair<String, TextWithImports>> childrenList = new ArrayList<Pair<String, TextWithImports>>(expressions.length);
+      final ArrayList<Pair<String, TextWithImports>> childrenList = new ArrayList<>(expressions.length);
       for (final String[] expression : expressions) {
-        childrenList.add(new Pair<String, TextWithImports>(expression[0], new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, expression[1], "", StdFileTypes.JAVA)));
+        childrenList.add(
+          new Pair<>(expression[0], new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, expression[1], "", StdFileTypes.JAVA)));
       }
       childrenRenderer.setChildren(childrenList);
     }
@@ -476,14 +458,14 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
       if (eval != null) {
         final WatchItemDescriptor evalDescriptor = new WatchItemDescriptor(evaluationContext.getProject(), evaluator.getReferenceExpression(), eval);
         evalDescriptor.setShowIdLabel(false);
-        return new Pair<Computable<String>, ValueDescriptorImpl>(new Computable<String>() {
+        return new Pair<>(new Computable<String>() {
           public String compute() {
             evalDescriptor.updateRepresentation((EvaluationContextImpl)evaluationContext, listener);
             return evalDescriptor.getValueLabel();
           }
         }, evalDescriptor);
       }
-      return new Pair<Computable<String>, ValueDescriptorImpl>(NULL_LABEL_COMPUTABLE, null);
+      return new Pair<>(NULL_LABEL_COMPUTABLE, null);
     }
 
     public String getUniqueId() {

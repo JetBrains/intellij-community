@@ -59,7 +59,7 @@ public class JavaMethodResolveHelper {
                                                         final boolean accessible, final boolean varargs) {
         return JavaMethodResolveHelper.this
           .createCandidateInfo(method, substitutor, staticProblem, myCurrentFileContext, !accessible, argumentList, argumentTypes,
-                               languageLevel);
+                               languageLevel, varargs);
       }
 
       @Override
@@ -76,9 +76,14 @@ public class JavaMethodResolveHelper {
                                                     boolean accessProblem,
                                                     PsiElement argumentList,
                                                     PsiType[] argumentTypes,
-                                                    @NotNull LanguageLevel languageLevel) {
+                                                    @NotNull LanguageLevel languageLevel, boolean vararg) {
     return new MethodCandidateInfo(method, substitutor, accessProblem, staticProblem, argumentList, currentFileContext, argumentTypes,
-                                   PsiType.EMPTY_ARRAY, languageLevel);
+                                   PsiType.EMPTY_ARRAY, languageLevel) {
+      @Override
+      public boolean isVarargs() {
+        return vararg;
+      }
+    };
   }
 
   public void addMethod(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor, boolean staticError) {

@@ -3,7 +3,6 @@ package com.intellij.structuralsearch.impl.matcher;
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.MatchResult;
 import com.intellij.structuralsearch.plugin.util.SmartPsiPointer;
-import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -23,7 +22,6 @@ public final class MatchResultImpl extends MatchResult {
 
   private boolean myScopeMatch;
   private boolean myMultipleMatch;
-  @NonNls private static final String NULL = "null";
   private MatchResultImpl myContext;
 
   MatchResultImpl() {
@@ -42,21 +40,21 @@ public final class MatchResultImpl extends MatchResult {
     this.end = end;
   }
 
+  @Override
   public String getMatchImage() {
-    if (matchImage==null) {
-      matchImage = NULL;
-    }
     return matchImage;
   }
 
-  public void setParent(MatchResult parent) {
-  }
-
+  @Override
   public SmartPsiPointer getMatchRef() {
     return matchRef;
   }
 
+  @Override
   public PsiElement getMatch() {
+    if (matchRef == null) {
+      return null;
+    }
     return matchRef.getElement();
   }
 
@@ -64,6 +62,7 @@ public final class MatchResultImpl extends MatchResult {
     matchRef = matchStart;
   }
 
+  @Override
   public String getName() {
     return name;
   }
@@ -77,18 +76,22 @@ public final class MatchResultImpl extends MatchResult {
     return matches;
   }
 
+  @Override
   public List<MatchResult> getAllSons() {
     return getMatches();
   }
 
+  @Override
   public boolean hasSons() {
-    return matches!=null;
+    return matches!=null && matches.size() > 0;
   }
 
+  @Override
   public boolean isScopeMatch() {
     return myScopeMatch;
   }
 
+  @Override
   public boolean isMultipleMatch() {
     return myMultipleMatch;
   }
@@ -159,6 +162,7 @@ public final class MatchResultImpl extends MatchResult {
     this.matchImage = matchImage;
   }
 
+  @Override
   public boolean isTarget() {
     return target;
   }
@@ -171,6 +175,7 @@ public final class MatchResultImpl extends MatchResult {
     return matchImage==null;
   }
 
+  @Override
   public int getStart() {
     return start;
   }
@@ -179,6 +184,7 @@ public final class MatchResultImpl extends MatchResult {
     this.start = start;
   }
 
+  @Override
   public int getEnd() {
     return end;
   }

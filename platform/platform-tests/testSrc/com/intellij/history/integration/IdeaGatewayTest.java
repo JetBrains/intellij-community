@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,13 @@
 
 package com.intellij.history.integration;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.io.IOException;
 
 public class IdeaGatewayTest extends IntegrationTestCase {
   public void testFindingFile() throws Exception {
@@ -27,14 +31,25 @@ public class IdeaGatewayTest extends IntegrationTestCase {
   }
 
   public void testGettingDirectory() throws Exception {
-    assertEquals(myRoot, myGateway.findOrCreateFileSafely(myRoot.getPath(), true));
+    assertEquals(myRoot, findOrCreateFileSafely(myRoot.getPath()));
+  }
+
+  @NotNull
+  private VirtualFile findOrCreateFileSafely(String path) throws IOException {
+    return ApplicationManager.getApplication().runWriteAction(new ThrowableComputable<VirtualFile, IOException>() {
+          @Override
+          public VirtualFile compute() throws IOException {
+            return myGateway.findOrCreateFileSafely(path, true);
+          }
+        })
+      ;
   }
 
   public void testCreatingDirectory() throws Exception {
     String subSubDirPath = myRoot.getPath() + "/subDir/subSubDir";
 
     assertFalse(new File(subSubDirPath).exists());
-    VirtualFile subDir = myGateway.findOrCreateFileSafely(subSubDirPath, true);
+    VirtualFile subDir = findOrCreateFileSafely(subSubDirPath);
 
     assertNotNull(subDir);
     assertEquals(subSubDirPath, subDir.getPath());
@@ -46,9 +61,9 @@ public class IdeaGatewayTest extends IntegrationTestCase {
     String subSubDirPath = myRoot.getPath() + "/subDir/subSubDir";
 
     assertFalse(new File(subSubDirPath).exists());
-    myRoot.createChildData(this, "subDir");
+    createChildData(myRoot, "subDir");
 
-    VirtualFile subDir = myGateway.findOrCreateFileSafely(subSubDirPath, true);
+    VirtualFile subDir = findOrCreateFileSafely(subSubDirPath);
 
     assertNotNull(subDir);
     assertEquals(subSubDirPath, subDir.getPath());

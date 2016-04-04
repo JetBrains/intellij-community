@@ -16,33 +16,14 @@
 package git4idea.history.browser;
 
 import git4idea.GitBranch;
-import git4idea.history.wholeTree.AbstractHash;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.TreeSet;
-
-/**
- * Created by IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 12/1/11
- * Time: 10:18 PM
- * To change this template use File | Settings | File Templates.
- */
+@Deprecated
 public interface SymbolicRefsI {
-  /*TreeSet<String> getLocalBranches();
-
-  TreeSet<String> getRemoteBranches();*/
-
-  @Nullable
-  String getCurrentName();
 
   GitBranch getCurrent();
 
   SymbolicRefs.Kind getKind(String s);
 
-  String getTrackedRemoteName();
-
   String getUsername();
 
-  AbstractHash getHeadHash();
 }

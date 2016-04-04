@@ -518,7 +518,6 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   }
 
   private final class MyCellEditorRemover extends Activatable.Adapter implements PropertyChangeListener {
-    private final IdeFocusManager myFocusManager = IdeFocusManager.findInstanceByComponent(JBTable.this);
     private boolean myIsActive = false;
 
     public MyCellEditorRemover() {
@@ -572,7 +571,8 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
         return;
       }
 
-      myFocusManager.doWhenFocusSettlesDown(new ExpirableRunnable() {
+      final IdeFocusManager focusManager = IdeFocusManager.findInstanceByComponent(JBTable.this);
+      focusManager.doWhenFocusSettlesDown(new ExpirableRunnable() {
         @Override
         public boolean isExpired() {
           return !isEditing();
@@ -580,7 +580,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
         @Override
         public void run() {
-          Component c = myFocusManager.getFocusOwner();
+          Component c = focusManager.getFocusOwner();
           if (UIUtil.isMeaninglessFocusOwner(c)) {
             // this allows using popup menus and menu bar without stopping cell editing
             return;

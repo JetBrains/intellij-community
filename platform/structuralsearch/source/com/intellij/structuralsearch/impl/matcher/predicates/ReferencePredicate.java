@@ -15,10 +15,7 @@ public final class ReferencePredicate extends SubstitutionHandler {
   }
 
   public boolean match(PsiElement node, PsiElement match, MatchContext context) {
-    if (StructuralSearchUtil.isIdentifier(match)) {
-      // since we pickup tokens
-      match = match.getParent();
-    }
+    match = StructuralSearchUtil.getParentIfIdentifier(match);
 
     PsiElement result = MatchUtils.getReferencedElement(match);
     if (result == null) {

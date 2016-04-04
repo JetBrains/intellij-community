@@ -24,10 +24,11 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemAutoImportAware;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
-import com.intellij.openapi.externalSystem.model.*;
+import com.intellij.openapi.externalSystem.model.DataNode;
+import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.Key;
+import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.LibraryData;
-import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
 import com.intellij.openapi.externalSystem.service.ParametersEnhancer;
@@ -256,6 +257,17 @@ public class ExternalSystemApiUtil {
   }
 
   @NotNull
+  public static <K, V> MultiMap<DataNode<K>, DataNode<V>> groupBy(@NotNull Collection<DataNode<V>> nodes, final Class<K> moduleDataClass) {
+    return ContainerUtil.groupBy(nodes, new NullableFunction<DataNode<V>, DataNode<K>>() {
+      @Nullable
+      @Override
+      public DataNode<K> fun(DataNode<V> node) {
+        return node.getParent(moduleDataClass);
+      }
+    });
+  }
+
+  @NotNull
   public static <K, V> MultiMap<DataNode<K>, DataNode<V>> groupBy(@NotNull Collection<DataNode<V>> nodes, @NotNull final Key<K> key) {
     return ContainerUtil.groupBy(nodes, new NullableFunction<DataNode<V>, DataNode<K>>() {
       @Nullable
@@ -325,17 +337,7 @@ public class ExternalSystemApiUtil {
   @SuppressWarnings("unchecked")
   @NotNull
   public static <T> Collection<DataNode<T>> findAll(@NotNull DataNode<?> parent, @NotNull Key<T> key) {
-    Collection<DataNode<T>> result = null;
-    for (DataNode<?> child : parent.getChildren()) {
-      if (!key.equals(child.getKey())) {
-        continue;
-      }
-      if (result == null) {
-        result = ContainerUtilRt.newArrayList();
-      }
-      result.add((DataNode<T>)child);
-    }
-    return result == null ? Collections.<DataNode<T>>emptyList() : result;
+    return getChildren(parent, key);
   }
 
   public static void visit(@Nullable DataNode node, @NotNull Consumer<DataNode<?>> consumer) {
@@ -510,10 +512,6 @@ public class ExternalSystemApiUtil {
 
   public static <T> T executeOnEdt(@NotNull final Computable<T> task) {
     final Application app = ApplicationManager.getApplication();
-    if (app.isDispatchThread()) {
-      return task.compute();
-    }
-
     final Ref<T> result = Ref.create();
     app.invokeAndWait(new Runnable() {
       @Override
@@ -596,11 +594,11 @@ public class ExternalSystemApiUtil {
    * ide project if it doesn't completely corresponds to the given ide project then.
    *
    * @param ideProject       target ide project
-   * @param externalProject  target external project
+   * @param projectData      target external project
    * @return                 <code>true</code> if given ide project has 1-1 mapping to the given external project;
    *                         <code>false</code> otherwise
    */
-  public static boolean isOneToOneMapping(@NotNull Project ideProject, @NotNull DataNode<ProjectData> externalProject) {
+  public static boolean isOneToOneMapping(@NotNull Project ideProject, @NotNull ProjectData projectData) {
     String linkedExternalProjectPath = null;
     for (ExternalSystemManager<?, ?, ?, ?, ?> manager : getAllManagers()) {
       ProjectSystemId externalSystemId = manager.getSystemId();
@@ -622,30 +620,18 @@ public class ExternalSystemApiUtil {
       }
     }
 
-    ProjectData projectData = externalProject.getData();
     if (linkedExternalProjectPath != null && !linkedExternalProjectPath.equals(projectData.getLinkedExternalProjectPath())) {
       // New external project is being linked.
       return false;
     }
 
-    Set<String> externalModulePaths = ContainerUtilRt.newHashSet();
-    for (DataNode<ModuleData> moduleNode : findAll(externalProject, ProjectKeys.MODULE)) {
-      if(!moduleNode.isIgnored()) {
-        externalModulePaths.add(moduleNode.getData().getLinkedExternalProjectPath());
-      }
-    }
-    externalModulePaths.remove(linkedExternalProjectPath);
-
     for (Module module : ModuleManager.getInstance(ideProject).getModules()) {
-      String path = getExternalProjectPath(module);
-      if (!StringUtil.isEmpty(path) && !externalModulePaths.remove(path)) {
+      if (!isExternalSystemAwareModule(projectData.getOwner(), module)) {
         return false;
       }
     }
-    return externalModulePaths.isEmpty();
+    return true;
   }
-
-
 
   public static void storeLastUsedExternalProjectPath(@Nullable String path, @NotNull ProjectSystemId externalSystemId) {
     if (path != null) {
@@ -891,6 +877,12 @@ public class ExternalSystemApiUtil {
   @Contract(pure=true)
   public static String getExternalProjectVersion(@Nullable Module module) {
     return module != null && !module.isDisposed() ? module.getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_MODULE_VERSION_KEY) : null;
+  }
+
+  @Nullable
+  @Contract(pure=true)
+  public static String getExternalModuleType(@Nullable Module module) {
+    return module != null && !module.isDisposed() ? module.getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_MODULE_TYPE_KEY) : null;
   }
 
   public static void subscribe(@NotNull Project project,

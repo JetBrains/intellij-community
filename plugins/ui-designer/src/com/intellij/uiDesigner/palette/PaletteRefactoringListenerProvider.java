@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,12 @@
  */
 package com.intellij.uiDesigner.palette;
 
-import com.intellij.refactoring.listeners.RefactoringElementAdapter;
-import com.intellij.refactoring.listeners.RefactoringElementListenerProvider;
-import com.intellij.refactoring.listeners.RefactoringElementListener;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.ClassUtil;
+import com.intellij.refactoring.listeners.RefactoringElementAdapter;
+import com.intellij.refactoring.listeners.RefactoringElementListener;
+import com.intellij.refactoring.listeners.RefactoringElementListenerProvider;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -28,19 +28,18 @@ import org.jetbrains.annotations.NotNull;
 */
 public class PaletteRefactoringListenerProvider implements RefactoringElementListenerProvider {
   private final UIDesignerPaletteProvider myUiDesignerPaletteProvider;
-  private final Palette myPalette;
 
-  public PaletteRefactoringListenerProvider(UIDesignerPaletteProvider uiDesignerPaletteProvider, Palette palette) {
+  public PaletteRefactoringListenerProvider(UIDesignerPaletteProvider uiDesignerPaletteProvider) {
     myUiDesignerPaletteProvider = uiDesignerPaletteProvider;
-    myPalette = palette;
   }
 
+  @Override
   public RefactoringElementListener getListener(PsiElement element) {
     if (element instanceof PsiClass) {
       PsiClass psiClass = (PsiClass) element;
       final String oldName = ClassUtil.getJVMClassName(psiClass);
       if (oldName != null) {
-        final ComponentItem item = myPalette.getItem(oldName);
+        final ComponentItem item = Palette.getInstance(element.getProject()).getItem(oldName);
         if (item != null) {
           return new MyRefactoringElementListener(item);
         }
@@ -56,6 +55,7 @@ public class PaletteRefactoringListenerProvider implements RefactoringElementLis
       myItem = item;
     }
 
+    @Override
     public void elementRenamedOrMoved(@NotNull PsiElement newElement) {
       PsiClass psiClass = (PsiClass) newElement;
       final String qName = ClassUtil.getJVMClassName(psiClass);

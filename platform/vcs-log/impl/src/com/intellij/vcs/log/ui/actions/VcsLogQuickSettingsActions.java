@@ -15,38 +15,31 @@
  */
 package com.intellij.vcs.log.ui.actions;
 
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.actionSystem.ActionButtonComponent;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogDataKeys;
-import com.intellij.vcs.log.VcsLogSettings;
 import com.intellij.vcs.log.VcsLogUi;
-import com.intellij.vcs.log.ui.VcsLogHighlighterFactory;
-import com.intellij.vcs.log.ui.VcsLogUiImpl;
+import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.awt.Component;
-import java.util.List;
+import java.awt.*;
 
 public class VcsLogQuickSettingsActions extends DumbAwareAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-    VcsLogUi logUi = e.getRequiredData(VcsLogDataKeys.VCS_LOG_UI);
-    VcsLogSettings settings = ServiceManager.getService(project, VcsLogSettings.class);
+    DefaultActionGroup group = new DefaultActionGroup(ActionManager.getInstance().getAction(VcsLogActionPlaces.SETTINGS_ACTION_GROUP));
 
     ListPopup popup = JBPopupFactory.getInstance()
-      .createActionGroupPopup(null, new MySettingsActionGroup(settings, logUi), e.getDataContext(),
-                              JBPopupFactory.ActionSelectionAid.MNEMONICS, true, ToolWindowContentUi.POPUP_PLACE);
+      .createActionGroupPopup(null, group, e.getDataContext(), JBPopupFactory.ActionSelectionAid.MNEMONICS, true,
+                              ToolWindowContentUi.POPUP_PLACE);
     Component component = e.getInputEvent().getComponent();
     if (component instanceof ActionButtonComponent) {
       popup.showUnderneathOf(component);
@@ -61,88 +54,5 @@ public class VcsLogQuickSettingsActions extends DumbAwareAction {
     Project project = e.getProject();
     VcsLogUi logUi = e.getData(VcsLogDataKeys.VCS_LOG_UI);
     e.getPresentation().setEnabledAndVisible(project != null && logUi != null);
-  }
-
-  private static class MySettingsActionGroup extends ActionGroup {
-
-    private final VcsLogSettings mySettings;
-    private final VcsLogUi myUi;
-
-    public MySettingsActionGroup(VcsLogSettings settings, VcsLogUi ui) {
-      mySettings = settings;
-      myUi = ui;
-    }
-
-    @NotNull
-    @Override
-    public AnAction[] getChildren(@Nullable AnActionEvent e) {
-      List<AnAction> actions = ContainerUtil.<AnAction>newArrayList(new ShowBranchesPanelAction(), new ShowRootsColumnAction());
-
-      actions.add(new Separator("Highlight"));
-      for (VcsLogHighlighterFactory factory : Extensions.getExtensions(VcsLogUiImpl.LOG_HIGHLIGHTER_FACTORY_EP, e.getProject())) {
-        actions.add(new EnableHighlighterAction(factory));
-      }
-      return actions.toArray(new AnAction[actions.size()]);
-    }
-
-    private class ShowBranchesPanelAction extends ToggleAction implements DumbAware {
-      public ShowBranchesPanelAction() {
-        super("Show Branches Panel");
-      }
-
-      @Override
-      public boolean isSelected(AnActionEvent e) {
-        return mySettings.isShowBranchesPanel();
-      }
-
-      @Override
-      public void setSelected(AnActionEvent e, boolean state) {
-        mySettings.setShowBranchesPanel(state);
-        myUi.setBranchesPanelVisible(state);
-      }
-    }
-
-    private class ShowRootsColumnAction extends ToggleAction implements DumbAware {
-
-      public ShowRootsColumnAction() {
-        super("Show Root Names");
-      }
-
-      @Override
-      public void update(AnActionEvent e) {
-        super.update(e);
-
-        e.getPresentation().setEnabledAndVisible(myUi.isMultipleRoots());
-      }
-
-      @Override
-      public boolean isSelected(AnActionEvent e) {
-        return myUi.isShowRootNames();
-      }
-
-      @Override
-      public void setSelected(AnActionEvent e, boolean state) {
-        myUi.setShowRootNames(state);
-      }
-    }
-
-    private class EnableHighlighterAction extends ToggleAction implements DumbAware {
-      private final VcsLogHighlighterFactory myFactory;
-
-      private EnableHighlighterAction(VcsLogHighlighterFactory factory) {
-        super(factory.getTitle());
-        myFactory = factory;
-      }
-
-      @Override
-      public boolean isSelected(AnActionEvent e) {
-        return myUi.isHighlighterEnabled(myFactory.getId());
-      }
-
-      @Override
-      public void setSelected(AnActionEvent e, boolean state) {
-        myUi.setHighlighterEnabled(myFactory.getId(), state);
-      }
-    }
   }
 }

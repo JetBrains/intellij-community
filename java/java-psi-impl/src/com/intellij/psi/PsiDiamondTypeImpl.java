@@ -26,7 +26,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.PsiConflictResolver;
@@ -235,19 +234,15 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
     }
 
     final MethodCandidateInfo staticFactoryCandidateInfo = createMethodCandidate(staticFactory, context, false, argumentList);
-    if (staticFactory.isVarArgs()) {
-      final Computable<Integer> computable = new Computable<Integer>() {
-        @Override
-        public Integer compute() {
-          return staticFactoryCandidateInfo.getPertinentApplicabilityLevel();
-        }
-      };
-      final Integer applicability = MethodCandidateInfo.ourOverloadGuard.doPreventingRecursion(newExpression, true, computable);
-      if ((applicability != null ? applicability : staticFactoryCandidateInfo.getApplicabilityLevel()) < MethodCandidateInfo.ApplicabilityLevel.FIXED_ARITY) {
-        return createMethodCandidate(staticFactory, context, true, argumentList);
-      }
+    if (!staticFactory.isVarArgs()) {
+      return staticFactoryCandidateInfo;
     }
-    return staticFactoryCandidateInfo;
+
+    final JavaMethodsConflictResolver resolver = new JavaMethodsConflictResolver(argumentList, PsiUtil.getLanguageLevel(argumentList));
+    final ArrayList<CandidateInfo> conflicts = new ArrayList<CandidateInfo>();
+    conflicts.add(staticFactoryCandidateInfo);
+    conflicts.add(createMethodCandidate(staticFactory, context, true, argumentList));
+    return resolver.resolveConflict(conflicts);
   }
 
   @Nullable
@@ -440,7 +435,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
       public PsiType[] getArgumentTypes() {
         if (myExpressionTypes == null) {
           final PsiType[] expressionTypes = argumentList.getExpressionTypes();
-          if (MethodCandidateInfo.isOverloadCheck()) {
+          if (MethodCandidateInfo.isOverloadCheck() || LambdaUtil.isLambdaParameterCheck()) {
             return expressionTypes;
           }
           myExpressionTypes = expressionTypes;
@@ -539,7 +534,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
       final PsiClassType.ClassResolveResult resolveResult = classType.resolveGenerics();
       final PsiClass psiClass = resolveResult.getElement();
       if (psiClass != null) {
-        if (psiClass instanceof PsiTypeParameter && InferenceSession.isFreshVariable((PsiTypeParameter)psiClass)) {
+        if (psiClass instanceof PsiTypeParameter && TypeConversionUtil.isFreshVariable((PsiTypeParameter)psiClass)) {
           return false;
         }
         
@@ -548,7 +543,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
         }
         
         for (PsiType psiType : resolveResult.getSubstitutor().getSubstitutionMap().values()) {
-          final Boolean accepted = psiType.accept(this);
+          final Boolean accepted = psiType != null ? psiType.accept(this) : null;
           if (accepted != null && !accepted.booleanValue()) {
             return false;
           }

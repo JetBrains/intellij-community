@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.openapi.util;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -28,7 +27,7 @@ import java.awt.*;
  */
 @State(
   name = "WindowStateApplicationService",
-  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/window.state.xml", roamingType = RoamingType.DISABLED)
+  storages = @Storage(value = "window.state.xml", roamingType = RoamingType.DISABLED)
 )
 final class WindowStateApplicationService extends WindowStateServiceImpl {
   @Override

@@ -21,7 +21,7 @@ import com.intellij.openapi.util.Throwable2Computable;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsKey;
-import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.ByteBackedContentRevision;
 import com.intellij.openapi.vcs.changes.MarkerVcsContentRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.ContentRevisionCache;
@@ -39,7 +39,7 @@ import java.io.IOException;
 /**
  * @author yole
 */
-public class SvnContentRevision implements ContentRevision, MarkerVcsContentRevision {
+public class SvnContentRevision implements ByteBackedContentRevision, MarkerVcsContentRevision {
 
   @NotNull private final SvnVcs myVcs;
   @NotNull protected final FilePath myFile;
@@ -81,30 +81,36 @@ public class SvnContentRevision implements ContentRevision, MarkerVcsContentRevi
 
   @Nullable
   public String getContent() throws VcsException {
+    return ContentRevisionCache.getAsString(getContentAsBytes(), myFile, null);
+  }
+
+  @Nullable
+  @Override
+  public byte[] getContentAsBytes() throws VcsException {
     try {
       if (myUseBaseRevision) {
-        return ContentRevisionCache.getOrLoadCurrentAsString(myVcs.getProject(), myFile, myVcs.getKeyInstanceMethod(),
-                                                             new CurrentRevisionProvider() {
-                                                               @Override
-                                                               public VcsRevisionNumber getCurrentRevision() throws VcsException {
-                                                                 return getRevisionNumber();
-                                                               }
+        return ContentRevisionCache.getOrLoadCurrentAsBytes(myVcs.getProject(), myFile, myVcs.getKeyInstanceMethod(),
+                                                            new CurrentRevisionProvider() {
+                                                              @Override
+                                                              public VcsRevisionNumber getCurrentRevision() throws VcsException {
+                                                                return getRevisionNumber();
+                                                              }
 
-                                                               @Override
-                                                               public Pair<VcsRevisionNumber, byte[]> get()
-                                                                 throws VcsException, IOException {
-                                                                 return Pair.create(getRevisionNumber(), getUpToDateBinaryContent());
-                                                               }
-                                                             }).getSecond();
+                                                              @Override
+                                                              public Pair<VcsRevisionNumber, byte[]> get()
+                                                                throws VcsException, IOException {
+                                                                return Pair.create(getRevisionNumber(), getUpToDateBinaryContent());
+                                                              }
+                                                            }).getSecond();
       } else {
-        return ContentRevisionCache.getOrLoadAsString(myVcs.getProject(), myFile, getRevisionNumber(), myVcs.getKeyInstanceMethod(),
-                                                      ContentRevisionCache.UniqueType.REPOSITORY_CONTENT,
-                                                      new Throwable2Computable<byte[], VcsException, IOException>() {
-                                                        @Override
-                                                        public byte[] compute() throws VcsException, IOException {
-                                                          return getUpToDateBinaryContent();
-                                                        }
-                                                      });
+        return ContentRevisionCache.getOrLoadAsBytes(myVcs.getProject(), myFile, getRevisionNumber(), myVcs.getKeyInstanceMethod(),
+                                                     ContentRevisionCache.UniqueType.REPOSITORY_CONTENT,
+                                                     new Throwable2Computable<byte[], VcsException, IOException>() {
+                                                       @Override
+                                                       public byte[] compute() throws VcsException, IOException {
+                                                         return getUpToDateBinaryContent();
+                                                       }
+                                                     });
       }
     }
     catch (IOException e) {
@@ -112,7 +118,7 @@ public class SvnContentRevision implements ContentRevision, MarkerVcsContentRevi
     }
   }
 
-  protected byte[] getUpToDateBinaryContent() throws VcsException {
+  private byte[] getUpToDateBinaryContent() throws VcsException {
     File file = myFile.getIOFile();
     File lock = new File(file.getParentFile(), SvnUtil.PATH_TO_LOCK_FILE);
     if (lock.exists()) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vfs.local;
 
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -31,6 +32,7 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -51,10 +53,13 @@ import static com.intellij.openapi.util.io.IoTestUtil.*;
 
 @SuppressWarnings("Duplicates")
 public class FileWatcherTest extends PlatformTestCase {
+  private static final Logger LOG = Logger.getInstance(NativeFileWatcherImpl.class);
+
   private static final int INTER_RESPONSE_DELAY = 500;  // time to wait for a next event in a sequence
   private static final int NATIVE_PROCESS_DELAY = 60000;  // time to wait for a native watcher response
 
-  private static final Logger LOG = Logger.getInstance(NativeFileWatcherImpl.class);
+  @SuppressWarnings("SpellCheckingInspection") private static final String UNICODE_NAME_1 = "Úñíçødê";
+  @SuppressWarnings("SpellCheckingInspection") private static final String UNICODE_NAME_2 = "Юникоде";
 
   private FileWatcher myWatcher;
   private LocalFileSystem myFileSystem;
@@ -516,7 +521,7 @@ public class FileWatcherTest extends PlatformTestCase {
     File subDir = createTestDir(targetDir, "sub");
     File file = createTestFile(subDir, "test.txt");
     File rootFile = createSubst(targetDir.getPath());
-    VfsRootAccess.allowRootAccess(rootFile.getPath());
+    VfsRootAccess.allowRootAccess(getTestRootDisposable(), rootFile.getPath());
     VirtualFile vfsRoot = myFileSystem.findFileByIoFile(rootFile);
 
     try {
@@ -557,7 +562,6 @@ public class FileWatcherTest extends PlatformTestCase {
         ((NewVirtualFile)vfsRoot).markDirty();
         myFileSystem.refresh(false);
       }
-      VfsRootAccess.disallowRootAccess(rootFile.getPath());
     }
   }
 
@@ -771,14 +775,8 @@ public class FileWatcherTest extends PlatformTestCase {
   }
 
   public void testUnicodePaths() throws Exception {
-    if (!SystemInfo.isUnix || SystemInfo.isMac) {
-      System.err.println("Ignored: well-defined FS required");
-      return;
-    }
-
-    File topDir = createTestDir(myTempDirectory, "top");
-    File testDir = createTestDir(topDir, "тест");
-    File testFile = createTestFile(testDir, "файл.txt");
+    File topDir = createTestDir(myTempDirectory, UNICODE_NAME_1);
+    File testFile = createTestFile(topDir, UNICODE_NAME_2 + ".txt");
     refresh(topDir);
 
     LocalFileSystem.WatchRequest request = watch(topDir);
@@ -853,6 +851,30 @@ public class FileWatcherTest extends PlatformTestCase {
     }
   }
 
+  public void testPermissionUpdate() throws IOException {
+    File file = createTestFile(myTempDirectory, "test.txt", "some content");
+    VirtualFile vFile = refresh(file);
+    assertTrue(vFile.isWritable());
+    boolean win = SystemInfo.isWindows;
+
+    LocalFileSystem.WatchRequest request = watch(file);
+    try {
+      myAccept = true;
+      PlatformTestUtil.assertSuccessful(new GeneralCommandLine(win ? "attrib" : "chmod", win ? "+R" : "500", file.getPath()));
+      assertEvent(VFilePropertyChangeEvent.class, file.getPath());
+      assertFalse(vFile.isWritable());
+
+      myAccept = true;
+      PlatformTestUtil.assertSuccessful(new GeneralCommandLine(win ? "attrib" : "chmod", win ? "-R" : "700", file.getPath()));
+      assertEvent(VFilePropertyChangeEvent.class, file.getPath());
+      assertTrue(vFile.isWritable());
+    }
+    finally {
+      unwatch(request);
+      delete(file);
+    }
+  }
+
 
   @NotNull
   private LocalFileSystem.WatchRequest watch(File watchFile) {
@@ -867,6 +889,7 @@ public class FileWatcherTest extends PlatformTestCase {
     assertFalse(myWatcher.isSettingRoots());
     return request.get();
   }
+
 
   private void unwatch(LocalFileSystem.WatchRequest... requests) {
     getEvents("events to stop watching", () -> myFileSystem.removeWatchedRoots(Arrays.asList(requests)));

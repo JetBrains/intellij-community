@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.run;
 
-import com.intellij.execution.configuration.AbstractRunConfiguration;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
@@ -27,7 +26,7 @@ import org.jetbrains.annotations.NonNls;
 /**
  * @author traff
  */
-abstract public class AbstractServerPythonRunConfiguration<T extends AbstractRunConfiguration> extends AbstractPythonRunConfiguration<T>{
+abstract public class AbstractServerPythonRunConfiguration<T extends AbstractServerPythonRunConfiguration> extends AbstractPythonRunConfiguration<T>{
   @NonNls private static final String LAUNCH_JAVASCRIPT_DEBUGGER = "launchJavascriptDebuger";
   private boolean myLaunchJavascriptDebugger;
 

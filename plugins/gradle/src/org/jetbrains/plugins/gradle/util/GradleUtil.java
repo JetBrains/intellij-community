@@ -141,7 +141,7 @@ public class GradleUtil {
       if (script != null) {
         File file = script.getSourceFile();
         if (file != null) {
-          if (file.isFile()) {
+          if (!file.isDirectory()) {
             // The file points to 'build.gradle' at the moment but we keep it's parent dir path instead.
             file = file.getParentFile();
           }

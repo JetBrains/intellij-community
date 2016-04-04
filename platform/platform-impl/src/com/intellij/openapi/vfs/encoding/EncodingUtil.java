@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -201,7 +201,7 @@ public class EncodingUtil {
   }
 
   @NotNull
-  // returns existing charset (null means N/A), failReason: null means enabled, notnull means disabled and contains error message
+  // returns pair (existing charset (null means N/A); failReason: null means enabled, notnull means disabled and contains error message)
   public static Pair<Charset, String> checkCanReload(@NotNull VirtualFile virtualFile) {
     if (virtualFile.isDirectory()) {
       return Pair.create(null, "file is a directory");

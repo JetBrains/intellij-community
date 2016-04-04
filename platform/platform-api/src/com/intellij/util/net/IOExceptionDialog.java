@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,11 @@ public class IOExceptionDialog extends DialogWrapper {
     setOKButtonText(CommonBundle.message("dialog.ioexception.tryagain"));
 
     myErrorLabel = new JTextArea();
+    myErrorLabel.setEditable(false);
     myErrorLabel.setText(errorText);
+    myErrorLabel.setColumns(120);
+    myErrorLabel.setLineWrap(true);
+    myErrorLabel.setWrapStyleWord(true);
     myErrorLabel.setFont(UIManager.getFont("Label.font"));
     myErrorLabel.setBackground(UIManager.getColor("Label.background"));
     myErrorLabel.setForeground(UIManager.getColor("Label.foreground"));

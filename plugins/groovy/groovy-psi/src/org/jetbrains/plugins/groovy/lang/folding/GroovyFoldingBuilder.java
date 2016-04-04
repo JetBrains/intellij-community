@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -210,7 +210,10 @@ public class GroovyFoldingBuilder extends CustomFoldingBuilder implements DumbAw
         int end = marker.getTextRange().getEndOffset();
         int tail = "import ".length();
         if (start + tail < end && !JavaFoldingBuilderBase.hasErrorElementsNearby(first.getContainingFile(), start, end)) {
-          descriptors.add(new FoldingDescriptor(first.getNode(), new TextRange(start + tail, end)));
+          FoldingDescriptor descriptor = new FoldingDescriptor(first.getNode(), new TextRange(start + tail, end));
+          // imports are often added/removed automatically, so we enable autoupdate of folded region for foldings even if it's collapsed
+          descriptor.setCanBeRemovedWhenCollapsed(true);
+          descriptors.add(descriptor);
         }
       }
       while (!(next instanceof GrImportStatement) && next != null) next = next.getNextSibling();

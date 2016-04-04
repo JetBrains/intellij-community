@@ -1,0 +1,9 @@
+<idea-plugin>
+  <extensionPoints>
+    <extensionPoint name="ep" beanClass="EP"/>
+  </extensionPoints>
+  <extensions>
+    <ep implementation="Ext"/>
+    <ep implementation="ProjectComp"/>
+  </extensions>
+</idea-plugin>

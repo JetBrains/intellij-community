@@ -21,6 +21,7 @@ import com.intellij.openapi.options.SchemeFactory;
 import com.intellij.openapi.options.SchemeImportException;
 import com.intellij.openapi.options.SchemeImporter;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.util.ArrayUtil;
@@ -47,28 +48,25 @@ public class EclipseCodeStyleSchemeImporter implements SchemeImporter<CodeStyleS
   @Override
   public CodeStyleScheme importScheme(@NotNull Project project,
                                       @NotNull VirtualFile selectedFile,
-                                      CodeStyleScheme currentScheme,
-                                      SchemeFactory<CodeStyleScheme> schemeFactory) throws SchemeImportException {
-    final String[] schemeNames = readSchemeNames(selectedFile);
-    final ImportSchemeChooserDialog schemeChooserDialog =
-      new ImportSchemeChooserDialog(project, schemeNames, !currentScheme.isDefault() ? currentScheme.getName() : null);
-    if (! schemeChooserDialog.showAndGet()) return null;
-    final CodeStyleScheme scheme = schemeChooserDialog.isUseCurrentScheme() && (! currentScheme.isDefault()) ? currentScheme :
-      schemeFactory.createNewScheme(schemeChooserDialog.getTargetName());
-    if (scheme == null) return null;
-    readFromStream(selectedFile, new ThrowableConsumer<InputStream, SchemeImportException>() {
-      @Override
-      public void consume(InputStream stream) throws SchemeImportException {
-        new EclipseCodeStyleImportWorker().importScheme(stream, schemeChooserDialog.getSelectedName(), scheme);
-      }
-    });
-
-    return scheme;
+                                      @NotNull CodeStyleScheme currentScheme,
+                                      @NotNull SchemeFactory<CodeStyleScheme> schemeFactory) throws SchemeImportException {
+    final Pair<String, CodeStyleScheme> importPair =
+      ImportSchemeChooserDialog.selectOrCreateTargetScheme(project, currentScheme, schemeFactory, readSchemeNames(selectedFile));
+    if (importPair != null) {
+      readFromStream(selectedFile, new ThrowableConsumer<InputStream, SchemeImportException>() {
+        @Override
+        public void consume(InputStream stream) throws SchemeImportException {
+          new EclipseCodeStyleImportWorker().importScheme(stream, importPair.first, importPair.second);
+        }
+      });
+      return importPair.second;
+    }
+    return null;
   }
 
   @Nullable
   @Override
-  public String getAdditionalImportInfo(CodeStyleScheme scheme) {
+  public String getAdditionalImportInfo(@NotNull CodeStyleScheme scheme) {
     return null;
   }
 
@@ -76,12 +74,11 @@ public class EclipseCodeStyleSchemeImporter implements SchemeImporter<CodeStyleS
    * Attempts to read scheme names from the given stream. The stream may contain several schemes in which case all the available
    * names are returned.
    *
-   * @param inputStream The input stream to read the name from.
    * @return Either scheme name or null if the scheme doesn't have a name.
    * @throws SchemeImportException
    */
   @NotNull
-  private String[] readSchemeNames(@NotNull VirtualFile selectedFile) throws SchemeImportException {
+  private static String[] readSchemeNames(@NotNull VirtualFile selectedFile) throws SchemeImportException {
     final Set<String> names = new HashSet<String>();
     final EclipseXmlProfileReader reader = new EclipseXmlProfileReader(new EclipseXmlProfileReader.OptionHandler() {
       @Override

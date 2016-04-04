@@ -17,9 +17,15 @@ package com.intellij.diff.fragments;
 
 import com.intellij.diff.util.ThreeSide;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public interface MergeLineFragment {
   int getStartLine(@NotNull ThreeSide side);
 
   int getEndLine(@NotNull ThreeSide side);
+
+  @Nullable
+  List<MergeWordFragment> getInnerFragments();
 }

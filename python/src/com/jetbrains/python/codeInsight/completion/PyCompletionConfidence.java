@@ -32,11 +32,6 @@ import java.util.List;
  * @author yole
  */
 public class PyCompletionConfidence extends CompletionConfidence {
-  @NotNull
-  @Override
-  public ThreeState shouldFocusLookup(@NotNull CompletionParameters parameters) {
-    return ThreeState.UNSURE;
-  }
 
   @NotNull
   @Override

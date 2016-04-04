@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,18 +40,19 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class DfaVariableState {
-  protected final Set<DfaPsiType> myInstanceofValues;
-  protected final Set<DfaPsiType> myNotInstanceofValues;
-  protected final Nullness myNullability;
+class DfaVariableState {
+  @NotNull final Set<DfaPsiType> myInstanceofValues;
+  @NotNull final Set<DfaPsiType> myNotInstanceofValues;
+  @NotNull final Nullness myNullability;
   private final int myHash;
 
-  public DfaVariableState(@NotNull DfaVariableValue dfaVar) {
+  DfaVariableState(@NotNull DfaVariableValue dfaVar) {
     this(Collections.<DfaPsiType>emptySet(), Collections.<DfaPsiType>emptySet(), dfaVar.getInherentNullability());
   }
 
-  protected DfaVariableState(Set<DfaPsiType> instanceofValues,
-                             Set<DfaPsiType> notInstanceofValues, Nullness nullability) {
+  DfaVariableState(@NotNull Set<DfaPsiType> instanceofValues,
+                   @NotNull Set<DfaPsiType> notInstanceofValues,
+                   @NotNull Nullness nullability) {
     myInstanceofValues = instanceofValues;
     myNotInstanceofValues = notInstanceofValues;
     myNullability = nullability;
@@ -62,7 +63,7 @@ public class DfaVariableState {
     return myNullability == Nullness.NULLABLE;
   }
 
-  private boolean checkInstanceofValue(DfaPsiType dfaType) {
+  private boolean checkInstanceofValue(@NotNull DfaPsiType dfaType) {
     if (myInstanceofValues.contains(dfaType)) return true;
 
     for (DfaPsiType dfaTypeValue : myNotInstanceofValues) {
@@ -77,7 +78,7 @@ public class DfaVariableState {
   }
 
   @Nullable
-  public DfaVariableState withInstanceofValue(DfaTypeValue dfaType) {
+  DfaVariableState withInstanceofValue(@NotNull DfaTypeValue dfaType) {
     if (dfaType.getDfaType().getPsiType() instanceof PsiPrimitiveType) return this;
 
     if (checkInstanceofValue(dfaType.getDfaType())) {
@@ -103,7 +104,7 @@ public class DfaVariableState {
   }
 
   @Nullable
-  public DfaVariableState withNotInstanceofValue(DfaTypeValue dfaType) {
+  DfaVariableState withNotInstanceofValue(@NotNull DfaTypeValue dfaType) {
     if (myNotInstanceofValues.contains(dfaType.getDfaType())) return this;
 
     for (DfaPsiType dfaTypeValue : myInstanceofValues) {
@@ -126,7 +127,8 @@ public class DfaVariableState {
     return createCopy(myInstanceofValues, newNotInstanceof, myNullability);
   }
 
-  DfaVariableState withoutType(DfaPsiType type) {
+  @NotNull
+  DfaVariableState withoutType(@NotNull DfaPsiType type) {
     if (myInstanceofValues.contains(type)) {
       HashSet<DfaPsiType> newInstanceof = ContainerUtil.newHashSet(myInstanceofValues);
       newInstanceof.remove(type);
@@ -154,7 +156,8 @@ public class DfaVariableState {
            myNotInstanceofValues.equals(aState.myNotInstanceofValues);
   }
 
-  protected DfaVariableState createCopy(Set<DfaPsiType> instanceofValues, Set<DfaPsiType> notInstanceofValues, Nullness nullability) {
+  @NotNull
+  protected DfaVariableState createCopy(@NotNull Set<DfaPsiType> instanceofValues, @NotNull Set<DfaPsiType> notInstanceofValues, @NotNull Nullness nullability) {
     return new DfaVariableState(instanceofValues, notInstanceofValues, nullability);
   }
 
@@ -172,7 +175,8 @@ public class DfaVariableState {
     return buf.toString();
   }
 
-  public Nullness getNullability() {
+  @NotNull
+  Nullness getNullability() {
     return myNullability;
   }
 
@@ -180,14 +184,17 @@ public class DfaVariableState {
     return myNullability == Nullness.NOT_NULL;
   }
 
+  @NotNull
   DfaVariableState withNullability(@NotNull Nullness nullness) {
     return myNullability == nullness ? this : createCopy(myInstanceofValues, myNotInstanceofValues, nullness);
   }
 
-  public DfaVariableState withNullable(final boolean nullable) {
+  @NotNull
+  DfaVariableState withNullable(final boolean nullable) {
     return myNullability != Nullness.NOT_NULL ? withNullability(nullable ? Nullness.NULLABLE : Nullness.UNKNOWN) : this;
   }
 
+  @NotNull
   public DfaVariableState withValue(DfaValue value) {
     return this;
   }

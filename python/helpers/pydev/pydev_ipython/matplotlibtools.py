@@ -22,7 +22,7 @@ backend2gui['CocoaAgg'] = 'osx'
 
 
 def do_enable_gui(guiname):
-    from pydev_versioncheck import versionok_for_gui
+    from _pydev_bundle.pydev_versioncheck import versionok_for_gui
     if versionok_for_gui():
         try:
             from pydev_ipython.inputhook import enable_gui
@@ -52,7 +52,7 @@ def find_gui_and_backend():
 def is_interactive_backend(backend):
     """ Check if backend is interactive """
     matplotlib = sys.modules['matplotlib']
-    from matplotlib.rcsetup import interactive_bk, non_interactive_bk
+    from matplotlib.rcsetup import interactive_bk, non_interactive_bk  # @UnresolvedImport
     if backend in interactive_bk:
         return True
     elif backend in non_interactive_bk:

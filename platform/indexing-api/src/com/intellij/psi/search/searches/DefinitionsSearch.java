@@ -26,7 +26,7 @@ import com.intellij.util.QueryExecutor;
  */
 @Deprecated()
 public class DefinitionsSearch extends ExtensibleQueryFactory<PsiElement, PsiElement> {
-  public static ExtensionPointName<QueryExecutor> EP_NAME = ExtensionPointName.create("com.intellij.definitionsSearch");
+  public static final ExtensionPointName<QueryExecutor> EP_NAME = ExtensionPointName.create("com.intellij.definitionsSearch");
   public static DefinitionsSearch INSTANCE = new DefinitionsSearch();
 
   public static Query<PsiElement> search(PsiElement definitionsOf) {

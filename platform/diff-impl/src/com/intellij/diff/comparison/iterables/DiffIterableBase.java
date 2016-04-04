@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
 
-@SuppressWarnings("ConstantConditions")
 abstract class DiffIterableBase implements DiffIterable {
   @NotNull
   @Override

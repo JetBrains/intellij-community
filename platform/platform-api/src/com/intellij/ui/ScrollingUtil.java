@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Couple;
+import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NonNls;
@@ -357,8 +358,9 @@ public class ScrollingUtil {
     UIUtil.maybeInstall(map, MOVE_END_ID, KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0));
   }
 
-  public static abstract class ListScrollAction extends DumbAwareAction {
+  public static abstract class ListScrollAction extends SpeedSearchAwareAction {
     protected ListScrollAction(final ShortcutSet shortcutSet, final JComponent component) {
+      super(component);
       registerCustomShortcutSet(shortcutSet, component);
     }
   }
@@ -543,6 +545,19 @@ public class ScrollingUtil {
     installActions(table, UISettings.getInstance().CYCLE_SCROLLING);
   }
 
+  public abstract static class SpeedSearchAwareAction extends DumbAwareAction {
+    private final JComponent myComponent;
+
+    public SpeedSearchAwareAction(JComponent component) {
+      myComponent = component;
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      e.getPresentation().setEnabled(SpeedSearchSupply.getSupply(myComponent) == null);
+    }
+  }
+
   public static void installActions(final JTable table, final boolean cycleScrolling) {
     ActionMap actionMap = table.getActionMap();
     actionMap.put(SCROLLUP_ACTION_ID, new MoveAction(SCROLLUP_ACTION_ID, table, cycleScrolling));
@@ -554,42 +569,42 @@ public class ScrollingUtil {
 
     maybeInstallDefaultShortcuts(table);
 
-    new DumbAwareAction() {
+    new SpeedSearchAwareAction(table) {
       public void actionPerformed(AnActionEvent e) {
         moveHome(table);
       }
     }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0)), table);
-    new DumbAwareAction() {
+    new SpeedSearchAwareAction(table) {
       public void actionPerformed(AnActionEvent e) {
         moveEnd(table);
       }
     }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0)), table);
-    new DumbAwareAction() {
+    new SpeedSearchAwareAction(table) {
       public void actionPerformed(AnActionEvent e) {
         moveHome(table);
       }
     }.registerCustomShortcutSet(CommonShortcuts.getMoveHome(), table);
-    new DumbAwareAction() {
+    new SpeedSearchAwareAction(table) {
       public void actionPerformed(AnActionEvent e) {
         moveEnd(table);
       }
     }.registerCustomShortcutSet(CommonShortcuts.getMoveEnd(), table);
-    new DumbAwareAction() {
+    new SpeedSearchAwareAction(table) {
       public void actionPerformed(AnActionEvent e) {
         moveDown(table, e.getModifiers(), cycleScrolling);
       }
     }.registerCustomShortcutSet(CommonShortcuts.getMoveDown(), table);
-    new DumbAwareAction() {
+    new SpeedSearchAwareAction(table) {
       public void actionPerformed(AnActionEvent e) {
         moveUp(table, e.getModifiers(), cycleScrolling);
       }
     }.registerCustomShortcutSet(CommonShortcuts.getMoveUp(), table);
-    new DumbAwareAction() {
+    new SpeedSearchAwareAction(table) {
       public void actionPerformed(AnActionEvent e) {
         movePageUp(table);
       }
     }.registerCustomShortcutSet(CommonShortcuts.getMovePageUp(), table);
-    new DumbAwareAction() {
+    new SpeedSearchAwareAction(table) {
       public void actionPerformed(AnActionEvent e) {
         movePageDown(table);
       }

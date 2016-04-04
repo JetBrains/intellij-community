@@ -435,9 +435,12 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
   }
 
   private void reportCallMayProduceNpe(ProblemsHolder holder, PsiMethodCallExpression callExpression, boolean onTheFly) {
-    LocalQuickFix[] fix = createNPEFixes(callExpression.getMethodExpression().getQualifierExpression(), callExpression, onTheFly);
+    PsiReferenceExpression methodExpression = callExpression.getMethodExpression();
+    LocalQuickFix[] fix = createNPEFixes(methodExpression.getQualifierExpression(), callExpression, onTheFly);
 
-    holder.registerProblem(callExpression,
+    PsiElement toHighlight = methodExpression.getReferenceNameElement();
+    if (toHighlight == null) toHighlight = methodExpression;
+    holder.registerProblem(toHighlight,
                            InspectionsBundle.message("dataflow.message.npe.method.invocation"),
                            fix);
   }

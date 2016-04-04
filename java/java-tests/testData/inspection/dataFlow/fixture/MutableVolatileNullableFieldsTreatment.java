@@ -5,7 +5,7 @@ class Foo {
 
   void checkNotNullAndUse(Foo f) {
     if (f.data != null) {
-      System.out.println(<warning descr="Method invocation 'f.data.hashCode()' may produce 'java.lang.NullPointerException'">f.data.hashCode()</warning>);
+      System.out.println(f.data.<warning descr="Method invocation 'hashCode' may produce 'java.lang.NullPointerException'">hashCode</warning>());
     }
   }
 
@@ -13,23 +13,23 @@ class Foo {
     if (f.data == null) {
       return;
     }
-    System.out.println(<warning descr="Method invocation 'f.data.hashCode()' may produce 'java.lang.NullPointerException'">f.data.hashCode()</warning>);
+    System.out.println(f.data.<warning descr="Method invocation 'hashCode' may produce 'java.lang.NullPointerException'">hashCode</warning>());
   }
 
   void warnWhenWrongCheck() {
     if (data != null) {
       return;
     }
-    System.out.println(<warning descr="Method invocation 'data.hashCode()' may produce 'java.lang.NullPointerException'">data.hashCode()</warning>);
-    System.out.println(<warning descr="Method invocation 'data.hashCode()' may produce 'java.lang.NullPointerException'">data.hashCode()</warning>);
+    System.out.println(data.<warning descr="Method invocation 'hashCode' may produce 'java.lang.NullPointerException'">hashCode</warning>());
+    System.out.println(data.<warning descr="Method invocation 'hashCode' may produce 'java.lang.NullPointerException'">hashCode</warning>());
   }
 
   void warnWhenNotChecked(Foo f) {
-    System.out.println(<warning descr="Method invocation 'f.data.hashCode()' may produce 'java.lang.NullPointerException'">f.data.hashCode()</warning>);
+    System.out.println(f.data.<warning descr="Method invocation 'hashCode' may produce 'java.lang.NullPointerException'">hashCode</warning>());
   }
   
   void warnWhenNotCheckedThis() {
-    System.out.println(<warning descr="Method invocation 'data.hashCode()' may produce 'java.lang.NullPointerException'">data.hashCode()</warning>);
+    System.out.println(data.<warning descr="Method invocation 'hashCode' may produce 'java.lang.NullPointerException'">hashCode</warning>());
   }
   
   void dontWarnWhenDoubleChecked(Foo f) {
@@ -39,7 +39,7 @@ class Foo {
     if (f.data == null) {
       return;
     }
-    System.out.println(<warning descr="Method invocation 'f.data.hashCode()' may produce 'java.lang.NullPointerException'">f.data.hashCode()</warning>);
+    System.out.println(f.data.<warning descr="Method invocation 'hashCode' may produce 'java.lang.NullPointerException'">hashCode</warning>());
   }
 
   void dontWarnWhenDoubleChecked_This_Synchronized() {
@@ -51,18 +51,18 @@ class Foo {
         return;
       }
     }
-    System.out.println(<warning>data.hashCode()</warning>);
+    System.out.println(data.<warning descr="Method invocation 'hashCode' may produce 'java.lang.NullPointerException'">hashCode</warning>());
   }
   
   void dontWarnWhenDoubleChecked_This_WithMethodCall() {
     if (data == null) {
       return;
     }
-    System.out.println(<warning>data.hashCode()</warning>);
+    System.out.println(data.<warning descr="Method invocation 'hashCode' may produce 'java.lang.NullPointerException'">hashCode</warning>());
     if (data == null) {
       return;
     }
-    System.out.println(<warning>data.hashCode()</warning>);
+    System.out.println(data.<warning descr="Method invocation 'hashCode' may produce 'java.lang.NullPointerException'">hashCode</warning>());
   }
 
 }

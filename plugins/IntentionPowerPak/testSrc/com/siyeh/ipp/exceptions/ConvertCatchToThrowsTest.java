@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,9 @@ package com.siyeh.ipp.exceptions;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.IPPTestCase;
 
+/**
+ * @see ConvertCatchToThrowsIntention
+ */
 public class ConvertCatchToThrowsTest extends IPPTestCase {
   public void testSingleCatch() { doTest(); }
   public void testPluralCatches() { doTest(); }
@@ -26,6 +29,8 @@ public class ConvertCatchToThrowsTest extends IPPTestCase {
   public void testArmWithSingleCatch() { doTest(); }
   public void testExistingThrows() { doTest(); }
   public void testLambda() { doTest(); }
+  public void testLeaveFinallySection() { doTest(); }
+  public void testTryWithConflictingDeclaration() { doTest(); }
 
   @Override
   protected String getIntentionName() {

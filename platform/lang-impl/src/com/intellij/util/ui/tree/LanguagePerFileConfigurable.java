@@ -21,23 +21,25 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.project.DumbModePermission;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.table.TableCellEditor;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
@@ -226,6 +228,26 @@ public abstract class LanguagePerFileConfigurable<T> implements SearchableConfig
           }
         }
       });
+      CustomShortcutSet shortcutSet = new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_SHOW_INTENTION_ACTIONS));
+      new AnAction() {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          if (editCellAt(getSelectedRow(), 1)) {
+            TableCellEditor editor = getCellEditor(editingRow, editingColumn);
+            Component component = ((DefaultCellEditor)editor).getComponent();
+            JButton button = (JButton)UIUtil.uiTraverser().withRoot(component).bfsTraversal().filter(new Condition<Component>() {
+              @Override
+              public boolean value(Component component) {
+                return component instanceof JButton;
+              }
+            }).first();
+            if (button != null) {
+              button.doClick();
+            }
+          }
+          
+        }
+      }.registerCustomShortcutSet(shortcutSet, this);
     }
 
     @Override

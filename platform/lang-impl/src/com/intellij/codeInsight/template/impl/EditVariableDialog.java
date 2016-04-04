@@ -40,6 +40,9 @@ import javax.swing.table.TableModel;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 class EditVariableDialog extends DialogWrapper {
   private ArrayList<Variable> myVariables = new ArrayList<Variable>();
@@ -108,23 +111,13 @@ class EditVariableDialog extends DialogWrapper {
       myTable.getSelectionModel().setSelectionInterval(0, 0);
     }
 
+    Predicate<Macro> isAcceptableInContext = macro -> myContextTypes.stream().anyMatch(macro::isAcceptableInContext);
+    Stream<String> availableMacroNames = Arrays.stream(MacroFactory.getMacros()).filter(isAcceptableInContext).map(Macro::getPresentableName).sorted();
+    Set<String> uniqueNames = availableMacroNames.collect(Collectors.toCollection(LinkedHashSet::new));
+
     ComboBox comboField = new ComboBox();
-    Macro[] macros = MacroFactory.getMacros();
-    Arrays.sort(macros, new Comparator<Macro> () {
-      @Override
-      public int compare(@NotNull Macro m1, @NotNull Macro m2) {
-        return m1.getPresentableName().compareTo(m2.getPresentableName());
-      }
-    });
-    eachMacro:
-    for (Macro macro : macros) {
-      for (TemplateContextType contextType : myContextTypes) {
-        if (macro.isAcceptableInContext(contextType)) {
-          comboField.addItem(macro.getPresentableName());
-          continue eachMacro;
-        }
-      }
-    }
+    uniqueNames.forEach(comboField::addItem);
+
     comboField.setEditable(true);
     DefaultCellEditor cellEditor = new DefaultCellEditor(comboField);
     cellEditor.setClickCountToStart(1);

@@ -59,12 +59,12 @@ public class PyClassicStyleClassInspection extends PyInspection {
     @Override
     public void visitPyClass(PyClass node) {
       final ASTNode nameNode = node.getNameNode();
-      if (!node.isNewStyleClass(null) && nameNode != null) {
+      if (!node.isNewStyleClass(myTypeEvalContext) && nameNode != null) {
         PyExpression[] superClassExpressions = node.getSuperClassExpressions();
         if (superClassExpressions.length == 0) {
-          registerProblem(nameNode.getPsi(), "Old-style class", new TransformClassicClassQuickFix());
+          registerProblem(nameNode.getPsi(), PyBundle.message("INSP.classic.class.usage.old.style.class"), new TransformClassicClassQuickFix());
         } else {
-          registerProblem(nameNode.getPsi(), "Old-style class, because all classes from whom it inherits are old-style");
+          registerProblem(nameNode.getPsi(), PyBundle.message("INSP.classic.class.usage.old.style.class.ancestors"));
         }
       }
     }

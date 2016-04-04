@@ -22,6 +22,7 @@ import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.List;
@@ -65,8 +66,12 @@ public class XDebuggerTreeState {
         for (XDebuggerTreeNode child : children) {
           final TreePath path = child.getPath();
           final Rectangle bounds = tree.getPathBounds(path);
-          if (bounds != null && tree.getVisibleRect().contains(bounds)) {
-            myLastVisibleNodeRect = bounds;
+          if (bounds != null) {
+            Rectangle treeVisibleRect =
+              tree.getParent() instanceof JViewport ? ((JViewport)tree.getParent()).getViewRect() : tree.getVisibleRect();
+            if (treeVisibleRect.contains(bounds)) {
+              myLastVisibleNodeRect = bounds;
+            }
           }
           NodeInfo childInfo = createNode(child, tree.isPathSelected(path));
           if (childInfo != null) {

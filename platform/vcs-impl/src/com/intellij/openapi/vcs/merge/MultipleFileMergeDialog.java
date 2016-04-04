@@ -30,6 +30,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.mergeTool.MergeVersion;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.DumbModePermission;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -42,12 +44,16 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTableCellRenderer;
+import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.TableSpeedSearch;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.UIUtil;
@@ -61,6 +67,7 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableCellRenderer;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.util.*;
 
@@ -115,6 +122,12 @@ public class MultipleFileMergeDialog extends DialogWrapper {
       @Override
       public TableCellRenderer getRenderer(final VirtualFile virtualFile) {
         return myVirtualFileRenderer;
+      }
+
+      @Nullable
+      @Override
+      public Comparator<VirtualFile> getComparator() {
+        return VirtualFileComparator.INSTANCE;
       }
     });
     columns.add(new ColumnInfo<VirtualFile, String>(VcsBundle.message("multiple.file.merge.column.type")) {
@@ -173,6 +186,22 @@ public class MultipleFileMergeDialog extends DialogWrapper {
       }
     }
     myTable.getSelectionModel().setSelectionInterval(0, 0);
+    new DoubleClickListener() {
+      @Override
+      protected boolean onDoubleClick(MouseEvent event) {
+        showMergeDialog();
+        return true;
+      }
+    }.installOn(myTable);
+    new TableSpeedSearch(myTable, new Convertor<Object, String>() {
+      @Override
+      public String convert(Object o) {
+        if (o instanceof VirtualFile) {
+          return ((VirtualFile)o).getName();
+        }
+        return null;
+      }
+    });
   }
 
   private void updateButtonState() {
@@ -410,7 +439,17 @@ public class MultipleFileMergeDialog extends DialogWrapper {
     return myProcessedFiles;
   }
 
-  private static class VirtualFileRenderer extends ColoredTableCellRenderer {
+  @Override
+  public void show() {
+    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
+      @Override
+      public void run() {
+        MultipleFileMergeDialog.super.show();
+      }
+    });
+  }
+
+  private class VirtualFileRenderer extends ColoredTableCellRenderer {
     @Override
     protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
       VirtualFile vf = (VirtualFile)value;
@@ -420,6 +459,23 @@ public class MultipleFileMergeDialog extends DialogWrapper {
       if (parent != null) {
         append(" (" + FileUtil.toSystemDependentName(parent.getPresentableUrl()) + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
       }
+      SpeedSearchUtil.applySpeedSearchHighlighting(myTable, this, true, selected);
+    }
+  }
+
+  private static class VirtualFileComparator implements Comparator<VirtualFile> {
+    public static final VirtualFileComparator INSTANCE = new VirtualFileComparator();
+
+    @Override
+    public int compare(VirtualFile file1, VirtualFile file2) {
+      int delta = StringUtil.naturalCompare(file1.getName(), file2.getName());
+      if (delta != 0) return delta;
+
+      VirtualFile parent1 = file1.getParent();
+      VirtualFile parent2 = file2.getParent();
+      String path1 = parent1 != null ? parent1.getPath() : null;
+      String path2 = parent2 != null ? parent2.getPath() : null;
+      return StringUtil.naturalCompare(path1, path2);
     }
   }
 }

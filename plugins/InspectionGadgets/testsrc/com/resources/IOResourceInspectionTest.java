@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,9 +29,16 @@ public class IOResourceInspectionTest extends LightInspectionTestCase {
     doTest();
   }
 
-  public void testInsideTry() throws Exception {
+  public void testInsideTry() {
     final IOResourceInspection inspection = new IOResourceInspection();
     inspection.insideTryAllowed = true;
+    myFixture.enableInspections(inspection);
+    doTest();
+  }
+
+  public void testNoEscapingThroughMethodCalls() {
+    final IOResourceInspection inspection = new IOResourceInspection();
+    inspection.anyMethodMayClose = false;
     myFixture.enableInspections(inspection);
     doTest();
   }
@@ -40,5 +47,16 @@ public class IOResourceInspectionTest extends LightInspectionTestCase {
   @Override
   protected InspectionProfileEntry getInspection() {
     return new IOResourceInspection();
+  }
+
+  @Override
+  protected String[] getEnvironmentClasses() {
+    return new String[] {
+      "package org.apache.commons.io;" +
+      "import java.io.InputStream;" +
+      "public class IOUtils {" +
+      "  public static void closeQuietly(InputStream input) {}" +
+      "}"
+    };
   }
 }

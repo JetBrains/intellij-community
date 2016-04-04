@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ import java.util.Date;
 
 public class FileHistoryDialogTest extends LocalHistoryUITestCase {
   public void testDialogWorks() throws IOException {
-    VirtualFile file = myRoot.createChildData(null, "f.txt");
+    VirtualFile file = createChildData(myRoot, "f.txt");
 
     FileHistoryDialog d = new FileHistoryDialog(myProject, myGateway, file);
     Disposer.dispose(d);
@@ -43,13 +43,14 @@ public class FileHistoryDialogTest extends LocalHistoryUITestCase {
     long leftTime = new Date(2001 - 1900, 1, 3, 12, 0).getTime();
     long rightTime = new Date(2002 - 1900, 2, 4, 14, 0).getTime();
 
-    VirtualFile f = myRoot.createChildData(null, "old.txt");
-    f.setBinaryContent("old".getBytes(), -1, leftTime);
+    VirtualFile f = createChildData(myRoot, "old.txt");
+    setBinaryContent(f, "old".getBytes(), -1, leftTime, this);
 
-    f.rename(null, "new.txt");
-    f.setBinaryContent("new".getBytes(), -1, rightTime);
+    rename(f, "new.txt");
+    setBinaryContent(f, "new".getBytes(), -1, rightTime, this);
 
-    f.setBinaryContent(new byte[0]); // to create current content to skip.
+    byte[] content = new byte[0];
+    setBinaryContent(f, content);
 
     FileHistoryDialogModel m = createFileModelAndSelectRevisions(f, 0, 2);
     assertEquals(FileUtil.toSystemDependentName(f.getPath()), m.getDifferenceModel().getTitle());
@@ -61,10 +62,10 @@ public class FileHistoryDialogTest extends LocalHistoryUITestCase {
   }
 
   public void testContent() throws IOException {
-    VirtualFile f = myRoot.createChildData(null, "f.txt");
-    f.setBinaryContent("old".getBytes());
-    f.setBinaryContent("new".getBytes());
-    f.setBinaryContent("current".getBytes());
+    VirtualFile f = createChildData(myRoot, "f.txt");
+    setBinaryContent(f, "old".getBytes());
+    setBinaryContent(f, "new".getBytes());
+    setBinaryContent(f, "current".getBytes());
 
     FileHistoryDialogModel m = createFileModelAndSelectRevisions(f, 0, 1);
 
@@ -72,9 +73,9 @@ public class FileHistoryDialogTest extends LocalHistoryUITestCase {
   }
 
   public void testContentWhenOnlyOneRevisionSelected() throws IOException {
-    VirtualFile f = myRoot.createChildData(null, "f.txt");
-    f.setBinaryContent("old".getBytes());
-    f.setBinaryContent("new".getBytes());
+    VirtualFile f = createChildData(myRoot, "f.txt");
+    setBinaryContent(f, "old".getBytes());
+    setBinaryContent(f, "new".getBytes());
 
     FileHistoryDialogModel m = createFileModelAndSelectRevisions(f, 0, 0);
 
@@ -82,9 +83,9 @@ public class FileHistoryDialogTest extends LocalHistoryUITestCase {
   }
 
   public void testContentForCurrentRevision() throws IOException {
-    VirtualFile f = myRoot.createChildData(null, "f.txt");
-    f.setBinaryContent("old".getBytes());
-    f.setBinaryContent("current".getBytes());
+    VirtualFile f = createChildData(myRoot, "f.txt");
+    setBinaryContent(f, "old".getBytes());
+    setBinaryContent(f, "current".getBytes());
 
     FileHistoryDialogModel m = createFileModelAndSelectRevisions(f, 0, 0);
 
@@ -93,10 +94,10 @@ public class FileHistoryDialogTest extends LocalHistoryUITestCase {
   }
 
   public void testRevertion() throws Exception {
-    VirtualFile dir = myRoot.createChildDirectory(null, "oldDir");
-    VirtualFile f = dir.createChildData(null, "old.txt");
-    f.rename(null, "new.txt");
-    dir.rename(null, "newDir");
+    VirtualFile dir = createChildDirectory(myRoot, "oldDir");
+    VirtualFile f = createChildData(dir, "old.txt");
+    rename(f, "new.txt");
+    rename(dir, "newDir");
 
     FileHistoryDialogModel m = createFileModelAndSelectRevisions(f, 1, 1);
     m.createReverter().revert();

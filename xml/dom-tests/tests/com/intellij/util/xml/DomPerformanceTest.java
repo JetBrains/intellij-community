@@ -15,6 +15,7 @@
  */
 package com.intellij.util.xml;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.Module;
@@ -56,11 +57,16 @@ public class DomPerformanceTest extends DomHardCoreTestCase{
     PlatformTestUtil.startPerformanceTest(getTestName(false), 80000, new ThrowableRunnable() {
       @Override
       public void run() throws Exception {
-        for (int i = 0; i < 239; i++) {
-          element.addChildElement().copyFrom(child);
-        }
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            for (int i = 0; i < 239; i++) {
+              element.addChildElement().copyFrom(child);
+            }
+          }
+        });
       }
-    }).cpuBound().attempts(1).assertTiming();
+    }).cpuBound().attempts(1).useLegacyScaling().assertTiming();
 
     final MyElement newElement = createElement(DomUtil.getFile(element).getText(), MyElement.class);
 
@@ -75,7 +81,7 @@ public class DomPerformanceTest extends DomHardCoreTestCase{
         });
 
       }
-    }).cpuBound().assertTiming();
+    }).cpuBound().useLegacyScaling().assertTiming();
   }
 
   public void testShouldntParseNonDomFiles() throws Throwable {
@@ -125,7 +131,7 @@ public class DomPerformanceTest extends DomHardCoreTestCase{
       public void run() throws Exception {
         assertNull(getDomManager().getFileElement(file));
       }
-    }).cpuBound().assertTiming();
+    }).cpuBound().useLegacyScaling().assertTiming();
   }
 
   public void testDontParseNamespacedDomFiles() throws Exception {

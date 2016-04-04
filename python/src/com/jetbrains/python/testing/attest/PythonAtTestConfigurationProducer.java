@@ -50,7 +50,9 @@ public class PythonAtTestConfigurationProducer extends
   }
 
   @Override
-  protected boolean isTestClass(@NotNull final PyClass pyClass, @Nullable final AbstractPythonTestRunConfiguration configuration) {
+  protected boolean isTestClass(@NotNull final PyClass pyClass,
+                                @Nullable final AbstractPythonTestRunConfiguration configuration,
+                                @Nullable final TypeEvalContext context) {
     for (PyClassLikeType type : pyClass.getAncestorTypes(TypeEvalContext.codeInsightFallback(pyClass.getProject()))) {
       if (type != null && "TestBase".equals(type.getName()) && hasTestFunction(pyClass)) {
         return true;
@@ -86,7 +88,7 @@ public class PythonAtTestConfigurationProducer extends
   protected List<PyStatement> getTestCaseClassesFromFile(@NotNull final PyFile file) {
     List<PyStatement> result = Lists.newArrayList();
     for (PyClass cls : file.getTopLevelClasses()) {
-      if (isTestClass(cls, null)) {
+      if (isTestClass(cls, null, null)) {
         result.add(cls);
       }
     }

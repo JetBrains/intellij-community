@@ -20,11 +20,14 @@ import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.speedSearch.ElementFilter;
 import com.intellij.ui.speedSearch.SpeedSearch;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ListPopupModel extends AbstractListModel {
 
@@ -37,6 +40,7 @@ public class ListPopupModel extends AbstractListModel {
   private int myFullMatchIndex = -1;
   private int myStartsWithIndex = -1;
   private final SpeedSearch mySpeedSearch;
+  private final Map<Object, ListSeparator> mySeparators = new HashMap<Object, ListSeparator>();
 
   public ListPopupModel(ElementFilter filter, SpeedSearch speedSearch, ListPopupStep step) {
     myFilter = filter;
@@ -66,12 +70,20 @@ public class ListPopupModel extends AbstractListModel {
 
   private void rebuildLists() {
     myFilteredList.clear();
+    mySeparators.clear();
     myFullMatchIndex = -1;
     myStartsWithIndex = -1;
 
+    ListSeparator lastSeparator = null;
     for (Object each : myOriginalList) {
+      lastSeparator = ObjectUtils.chooseNotNull(myStep.getSeparatorAbove(each), lastSeparator);
+
       if (myFilter.shouldBeShowing(each)) {
         addToFiltered(each);
+        if (lastSeparator != null) {
+          mySeparators.put(each, lastSeparator);
+          lastSeparator = null;
+        }
       }
     }
   }
@@ -115,7 +127,7 @@ public class ListPopupModel extends AbstractListModel {
   }
 
   private ListSeparator getSeparatorAbove(Object value) {
-    return myStep.getSeparatorAbove(value);
+    return mySeparators.get(value);
   }
 
   public void refilter() {
@@ -123,9 +135,7 @@ public class ListPopupModel extends AbstractListModel {
     if (myFilteredList.isEmpty() && !myOriginalList.isEmpty()) {
       mySpeedSearch.noHits();
     }
-    else {
-      fireContentsChanged(this, 0, myFilteredList.size());
-    }
+    fireContentsChanged(this, 0, myFilteredList.size());
   }
 
   public boolean isVisible(Object object) {

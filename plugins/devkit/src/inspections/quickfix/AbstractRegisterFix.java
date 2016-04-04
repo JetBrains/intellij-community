@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +24,10 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -38,11 +40,11 @@ import org.jetbrains.idea.devkit.util.DescriptorUtil;
 import java.util.List;
 
 abstract class AbstractRegisterFix implements LocalQuickFix, DescriptorUtil.Patcher {
-  protected final PsiClass myClass;
-  private static final Logger LOG = Logger.getInstance("org.jetbrains.idea.devkit.inspections.quickfix.AbstractRegisterFix");
+  protected final SmartPsiElementPointer<PsiClass> myPointer;
+  protected static final Logger LOG = Logger.getInstance(AbstractRegisterFix.class);
 
-  public AbstractRegisterFix(PsiClass klass) {
-    myClass = klass;
+  public AbstractRegisterFix(@NotNull SmartPsiElementPointer<PsiClass> klass) {
+    myPointer = klass;
   }
 
   @NotNull
@@ -60,16 +62,19 @@ abstract class AbstractRegisterFix implements LocalQuickFix, DescriptorUtil.Patc
   // copy of com.intellij.ide.actions.CreateElementActionBase.filterMessage()
   protected static String filterMessage(String message) {
     if (message == null) return null;
-    @NonNls final String ioExceptionPrefix = "java.io.IOException:";
-    if (message.startsWith(ioExceptionPrefix)) {
-      message = message.substring(ioExceptionPrefix.length());
-    }
+    @NonNls String ioExceptionPrefix = "java.io.IOException:";
+    message = StringUtil.trimStart(message, ioExceptionPrefix);
     return message;
   }
 
   public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
     if (!FileModificationService.getInstance().preparePsiElementForWrite(descriptor.getPsiElement())) return;
-    final PsiFile psiFile = myClass.getContainingFile();
+    PsiFile psiFile = myPointer.getContainingFile();
+    final PsiClass element = myPointer.getElement();
+    if (element == null) {
+      LOG.info("Element is null for PsiPointer: " + myPointer);
+      return;
+    }
     LOG.assertTrue(psiFile != null);
     final Module module = ModuleUtil.findModuleForFile(psiFile.getVirtualFile(), project);
     assert module != null;
@@ -78,26 +83,26 @@ abstract class AbstractRegisterFix implements LocalQuickFix, DescriptorUtil.Patc
       public void run() {
         try {
           if (PluginModuleType.isOfType(module)) {
-            final XmlFile pluginXml = PluginModuleType.getPluginXml(module);
+            XmlFile pluginXml = PluginModuleType.getPluginXml(module);
             if (pluginXml != null) {
-              DescriptorUtil.patchPluginXml(AbstractRegisterFix.this, myClass, pluginXml);
+              DescriptorUtil.patchPluginXml(AbstractRegisterFix.this, element, pluginXml);
             }
           }
           else {
             List<Module> modules = PluginModuleType.getCandidateModules(module);
             if (modules.size() > 1) {
-              final ChooseModulesDialog dialog = new ChooseModulesDialog(project, modules, getName());
+              ChooseModulesDialog dialog = new ChooseModulesDialog(project, modules, getName());
               if (!dialog.showAndGet()) {
                 return;
               }
               modules = dialog.getSelectedModules();
             }
-            final XmlFile[] pluginXmls = new XmlFile[modules.size()];
+            XmlFile[] pluginXmls = new XmlFile[modules.size()];
             for (int i = 0; i < pluginXmls.length; i++) {
               pluginXmls[i] = PluginModuleType.getPluginXml(modules.get(i));
             }
 
-            DescriptorUtil.patchPluginXml(AbstractRegisterFix.this, myClass, pluginXmls);
+            DescriptorUtil.patchPluginXml(AbstractRegisterFix.this, element, pluginXmls);
           }
           CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
         }

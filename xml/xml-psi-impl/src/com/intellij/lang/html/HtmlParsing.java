@@ -368,6 +368,10 @@ public class HtmlParsing {
         return false;
       }
 
+      if ("dl".equals(parentName) && ("dd".equals(childName) || "dt".equals(childName))) {
+        return false;
+      }
+
       if (HtmlUtil.canTerminate(childName, parentName)) {
         return true;
       }

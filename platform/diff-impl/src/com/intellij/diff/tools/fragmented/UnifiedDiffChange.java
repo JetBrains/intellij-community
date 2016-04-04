@@ -25,7 +25,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,7 +45,7 @@ public class UnifiedDiffChange {
   @NotNull private final List<RangeHighlighter> myHighlighters = new ArrayList<RangeHighlighter>();
   @NotNull private final List<MyGutterOperation> myOperations = new ArrayList<MyGutterOperation>();
 
-  public UnifiedDiffChange(@NotNull UnifiedDiffViewer viewer, @NotNull ChangedBlock block, boolean innerFragments) {
+  public UnifiedDiffChange(@NotNull UnifiedDiffViewer viewer, @NotNull ChangedBlock block) {
     myViewer = viewer;
     myEditor = viewer.getEditor();
 
@@ -54,10 +53,10 @@ public class UnifiedDiffChange {
     myLine2 = block.getLine2();
     myLineFragment = block.getLineFragment();
 
-    TextRange deleted = new TextRange(block.getStartOffset1(), block.getEndOffset1());
-    TextRange inserted = new TextRange(block.getStartOffset2(), block.getEndOffset2());
+    LineRange deleted = block.getRange1();
+    LineRange inserted = block.getRange2();
 
-    installHighlighter(deleted, inserted, innerFragments);
+    installHighlighter(deleted, inserted);
   }
 
   public void destroyHighlighter() {
@@ -72,10 +71,10 @@ public class UnifiedDiffChange {
     myOperations.clear();
   }
 
-  private void installHighlighter(@NotNull TextRange deleted, @NotNull TextRange inserted, boolean innerFragments) {
+  private void installHighlighter(@NotNull LineRange deleted, @NotNull LineRange inserted) {
     assert myHighlighters.isEmpty();
 
-    if (innerFragments && myLineFragment.getInnerFragments() != null) {
+    if (myLineFragment.getInnerFragments() != null) {
       doInstallHighlighterWithInner(deleted, inserted);
     }
     else {
@@ -88,51 +87,59 @@ public class UnifiedDiffChange {
     boolean leftEditable = myViewer.isEditable(Side.LEFT, false);
     boolean rightEditable = myViewer.isEditable(Side.RIGHT, false);
 
-    if (rightEditable) myOperations.add(createOperation(Side.LEFT, false));
-    if (leftEditable) myOperations.add(createOperation(Side.RIGHT, rightEditable));
+    if (leftEditable && rightEditable) {
+      myOperations.add(createOperation(Side.LEFT));
+      myOperations.add(createOperation(Side.RIGHT));
+    }
+    else if (rightEditable) {
+      myOperations.add(createOperation(Side.LEFT));
+    }
   }
 
-  private void doInstallHighlighterSimple(@NotNull TextRange deleted, @NotNull TextRange inserted) {
+  private void doInstallHighlighterSimple(@NotNull LineRange deleted, @NotNull LineRange inserted) {
     createLineHighlighters(deleted, inserted, false);
   }
 
-  private void doInstallHighlighterWithInner(@NotNull TextRange deleted, @NotNull TextRange inserted) {
+  private void doInstallHighlighterWithInner(@NotNull LineRange deleted, @NotNull LineRange inserted) {
     List<DiffFragment> innerFragments = myLineFragment.getInnerFragments();
     assert innerFragments != null;
+
+    int deletedStartOffset = myEditor.getDocument().getLineStartOffset(deleted.start);
+    int insertedStartOffset = myEditor.getDocument().getLineStartOffset(inserted.start);
 
     createLineHighlighters(deleted, inserted, true);
 
     for (DiffFragment fragment : innerFragments) {
       createInlineHighlighter(TextDiffType.DELETED,
-                              deleted.getStartOffset() + fragment.getStartOffset1(),
-                              deleted.getStartOffset() + fragment.getEndOffset1());
+                              deletedStartOffset + fragment.getStartOffset1(),
+                              deletedStartOffset + fragment.getEndOffset1());
       createInlineHighlighter(TextDiffType.INSERTED,
-                              inserted.getStartOffset() + fragment.getStartOffset2(),
-                              inserted.getStartOffset() + fragment.getEndOffset2());
+                              insertedStartOffset + fragment.getStartOffset2(),
+                              insertedStartOffset + fragment.getEndOffset2());
     }
   }
 
-  private void createLineHighlighters(@NotNull TextRange deleted, @NotNull TextRange inserted, boolean ignored) {
+  private void createLineHighlighters(@NotNull LineRange deleted, @NotNull LineRange inserted, boolean ignored) {
     if (!inserted.isEmpty() && !deleted.isEmpty()) {
       createLineMarker(TextDiffType.DELETED, getLine1(), SeparatorPlacement.TOP);
-      createHighlighter(TextDiffType.DELETED, deleted.getStartOffset(), deleted.getEndOffset(), ignored);
-      createHighlighter(TextDiffType.INSERTED, inserted.getStartOffset(), inserted.getEndOffset(), ignored);
+      createHighlighter(TextDiffType.DELETED, deleted.start, deleted.end, ignored);
+      createHighlighter(TextDiffType.INSERTED, inserted.start, inserted.end, ignored);
       createLineMarker(TextDiffType.INSERTED, getLine2() - 1, SeparatorPlacement.BOTTOM);
     }
     else if (!inserted.isEmpty()) {
       createLineMarker(TextDiffType.INSERTED, getLine1(), SeparatorPlacement.TOP);
-      createHighlighter(TextDiffType.INSERTED, inserted.getStartOffset(), inserted.getEndOffset(), ignored);
+      createHighlighter(TextDiffType.INSERTED, inserted.start, inserted.end, ignored);
       createLineMarker(TextDiffType.INSERTED, getLine2() - 1, SeparatorPlacement.BOTTOM);
     }
     else if (!deleted.isEmpty()) {
       createLineMarker(TextDiffType.DELETED, getLine1(), SeparatorPlacement.TOP);
-      createHighlighter(TextDiffType.DELETED, deleted.getStartOffset(), deleted.getEndOffset(), ignored);
+      createHighlighter(TextDiffType.DELETED, deleted.start, deleted.end, ignored);
       createLineMarker(TextDiffType.DELETED, getLine2() - 1, SeparatorPlacement.BOTTOM);
     }
   }
 
-  private void createHighlighter(@NotNull TextDiffType type, int start, int end, boolean ignored) {
-    myHighlighters.addAll(DiffDrawUtil.createHighlighter(myEditor, start, end, type, ignored));
+  private void createHighlighter(@NotNull TextDiffType type, int startLine, int endLine, boolean ignored) {
+    myHighlighters.addAll(DiffDrawUtil.createHighlighter(myEditor, startLine, endLine, type, ignored));
   }
 
   private void createInlineHighlighter(@NotNull TextDiffType type, int start, int end) {
@@ -176,15 +183,13 @@ public class UnifiedDiffChange {
   }
 
   @NotNull
-  private MyGutterOperation createOperation(@NotNull Side side, boolean secondAction) {
-    int line = secondAction ? Math.min(myLine1 + 1, myLine2 - 1) : myLine1;
-    int offset = myEditor.getDocument().getLineStartOffset(line);
-
+  private MyGutterOperation createOperation(@NotNull Side sourceSide) {
+    int offset = myEditor.getDocument().getLineStartOffset(myLine1);
     RangeHighlighter highlighter = myEditor.getMarkupModel().addRangeHighlighter(offset, offset,
                                                                                  HighlighterLayer.ADDITIONAL_SYNTAX,
                                                                                  null,
                                                                                  HighlighterTargetArea.LINES_IN_RANGE);
-    return new MyGutterOperation(side, highlighter);
+    return new MyGutterOperation(sourceSide, highlighter);
   }
 
   private class MyGutterOperation {
@@ -210,23 +215,12 @@ public class UnifiedDiffChange {
     public GutterIconRenderer createRenderer() {
       if (myViewer.isStateIsOutOfDate()) return null;
       if (!myViewer.isEditable(mySide.other(), true)) return null;
-      boolean bothEditable = myViewer.isEditable(mySide, true);
 
-      if (bothEditable) {
-        if (mySide.isLeft()) {
-          return createIconRenderer(mySide, "Apply Before", AllIcons.Diff.ArrowRight);
-        }
-        else {
-          return createIconRenderer(mySide, "Apply After", AllIcons.Diff.Arrow);
-        }
+      if (mySide.isLeft()) {
+        return createIconRenderer(mySide, "Revert", AllIcons.Diff.Remove);
       }
       else {
-        if (mySide.isLeft()) {
-          return createIconRenderer(mySide, "Revert", AllIcons.Diff.Remove);
-        }
-        else {
-          return createIconRenderer(mySide, "Apply", AllIcons.Diff.Arrow);
-        }
+        return createIconRenderer(mySide, "Accept", AllIcons.Actions.Checked);
       }
     }
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.daemon.LightIntentionActionTestCase;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 
 /**
@@ -26,18 +25,19 @@ public class CreateFieldFromParameterTest extends LightIntentionActionTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
-    settings.FIELD_NAME_PREFIX = "my";
+    CodeStyleSettingsManager.getSettings(getProject()).FIELD_NAME_PREFIX = "my";
   }
 
   @Override
   protected void tearDown() throws Exception {
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
-    settings.FIELD_NAME_PREFIX = "";
+    CodeStyleSettingsManager.getSettings(getProject()).FIELD_NAME_PREFIX = "";
+    //noinspection SuperTearDownInFinally
     super.tearDown();
   }
 
-  public void test() throws Exception { doAllTests(); }
+  public void test() {
+    doAllTests();
+  }
 
   @Override
   protected String getBasePath() {

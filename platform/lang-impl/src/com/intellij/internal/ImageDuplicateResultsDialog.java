@@ -15,7 +15,6 @@
  */
 package com.intellij.internal;
 
-import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.hint.ImplementationViewComponent;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.PropertiesComponent;
@@ -232,7 +231,7 @@ public class ImageDuplicateResultsDialog extends DialogWrapper {
             final JBPopup popup =
               JBPopupFactory.getInstance().createComponentPopupBuilder(viewComponent, viewComponent.getPreferredFocusableComponent())
                 .setProject(myProject)
-                .setDimensionServiceKey(myProject, DocumentationManager.JAVADOC_LOCATION_AND_SIZE, false)
+                .setDimensionServiceKey(myProject, ImageDuplicateResultsDialog.class.getName(), false)
                 .setResizable(true)
                 .setMovable(true)
                 .setRequestFocus(false)

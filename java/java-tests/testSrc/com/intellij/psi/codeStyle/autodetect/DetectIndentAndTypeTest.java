@@ -23,6 +23,8 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 
+import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
+
 public class DetectIndentAndTypeTest extends LightPlatformCodeInsightFixtureTestCase {
 
   private CodeStyleSettings mySettings;
@@ -164,8 +166,8 @@ public class DetectIndentAndTypeTest extends LightPlatformCodeInsightFixtureTest
     PsiFile file = myFixture.getFile();
     CommonCodeStyleSettings.IndentOptions options = mySettings.getIndentOptionsByFile(file);
 
-    assertEquals(4, options.INDENT_SIZE);
-    assertEquals(8, options.CONTINUATION_INDENT_SIZE);
+    assertThat(options.INDENT_SIZE).isEqualTo(4);
+    assertThat(indentOptions.CONTINUATION_INDENT_SIZE).isEqualTo(8);
   }
   
 }

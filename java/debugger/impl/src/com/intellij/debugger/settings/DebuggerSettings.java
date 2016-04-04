@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,10 @@
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -36,7 +39,10 @@ import java.util.Map;
 @State(
   name = "DebuggerSettings",
   defaultStateAsResource = true,
-  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml")
+  storages = {
+    @Storage("debugger.xml"),
+    @Storage(value = "other.xml", deprecated = true)
+  }
 )
 public class DebuggerSettings implements Cloneable, PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(DebuggerSettings.class);
@@ -79,9 +85,11 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
 
   public String EVALUATE_FINALLY_ON_POP_FRAME = EVALUATE_FINALLY_ASK;
 
+  public boolean RESUME_ONLY_CURRENT_THREAD = false;
+
   private ClassFilter[] mySteppingFilters = ClassFilter.EMPTY_ARRAY;
 
-  private Map<String, ContentState> myContentStates = new LinkedHashMap<String, ContentState>();
+  private Map<String, ContentState> myContentStates = new LinkedHashMap<>();
 
   // transient - custom serialization
   @Transient
@@ -156,6 +164,7 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
       SKIP_CLASSLOADERS == secondSettings.SKIP_CLASSLOADERS &&
       SKIP_CONSTRUCTORS == secondSettings.SKIP_CONSTRUCTORS &&
       SKIP_GETTERS == secondSettings.SKIP_GETTERS &&
+      RESUME_ONLY_CURRENT_THREAD == secondSettings.RESUME_ONLY_CURRENT_THREAD &&
       COMPILE_BEFORE_HOTSWAP == secondSettings.COMPILE_BEFORE_HOTSWAP &&
       HOTSWAP_HANG_WARNING_ENABLED == secondSettings.HOTSWAP_HANG_WARNING_ENABLED &&
       (RUN_HOTSWAP_AFTER_COMPILE != null ? RUN_HOTSWAP_AFTER_COMPILE.equals(secondSettings.RUN_HOTSWAP_AFTER_COMPILE) : secondSettings.RUN_HOTSWAP_AFTER_COMPILE == null) &&
@@ -166,7 +175,7 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
   public DebuggerSettings clone() {
     try {
       final DebuggerSettings cloned = (DebuggerSettings)super.clone();
-      cloned.myContentStates = new HashMap<String, ContentState>();
+      cloned.myContentStates = new HashMap<>();
       for (Map.Entry<String, ContentState> entry : myContentStates.entrySet()) {
         cloned.myContentStates.put(entry.getKey(), entry.getValue().clone());
       }

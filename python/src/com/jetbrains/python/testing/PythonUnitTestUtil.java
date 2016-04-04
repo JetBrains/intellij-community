@@ -90,16 +90,17 @@ public class PythonUnitTestUtil {
     return false;
   }
 
-  public static List<PyStatement> getTestCaseClassesFromFile(PsiFile file) {
-    if (file instanceof PyFile)
-      return getTestCaseClassesFromFile((PyFile)file, PYTHON_TEST_QUALIFIED_CLASSES);
+  public static List<PyStatement> getTestCaseClassesFromFile(PsiFile file, @Nullable final TypeEvalContext context) {
+    if (file instanceof PyFile) {
+      return getTestCaseClassesFromFile((PyFile)file, PYTHON_TEST_QUALIFIED_CLASSES, context);
+    }
     return Collections.emptyList();
   }
 
-  public static List<PyStatement> getTestCaseClassesFromFile(PyFile file, Set<String> testQualifiedNames) {
+  public static List<PyStatement> getTestCaseClassesFromFile(PyFile file, Set<String> testQualifiedNames, @Nullable final TypeEvalContext context) {
     List<PyStatement> result = Lists.newArrayList();
     for (PyClass cls : file.getTopLevelClasses()) {
-      if (isTestCaseClass(cls, testQualifiedNames)) {
+      if (isTestCaseClassWithContext(cls, testQualifiedNames, context)) {
         result.add(cls);
       }
     }
@@ -113,7 +114,6 @@ public class PythonUnitTestUtil {
 
   public static boolean isTestCaseFunction(PyFunction function) {
     return isTestCaseFunction(function, true);
-
   }
 
   public static boolean isTestCaseFunction(PyFunction function, boolean checkAssert) {
@@ -122,7 +122,7 @@ public class PythonUnitTestUtil {
       return false;
     }
     if (function.getContainingClass() != null) {
-      if (isTestCaseClass(function.getContainingClass())) return true;
+      if (isTestCaseClass(function.getContainingClass(), null)) return true;
     }
     if (checkAssert) {
       boolean hasAssert = hasAssertOrYield(function.getStatementList());
@@ -133,35 +133,39 @@ public class PythonUnitTestUtil {
 
   private static boolean hasAssertOrYield(PyStatementList list) {
     Stack<PsiElement> stack = new Stack<PsiElement>();
-      if (list != null) {
-        for (PyStatement st : list.getStatements()) {
-          stack.push(st);
-          while (!stack.isEmpty()) {
-            PsiElement e = stack.pop();
-            if (e instanceof PyAssertStatement || e instanceof PyYieldExpression) return true;
-            for (PsiElement psiElement : e.getChildren()) {
-              stack.push(psiElement);
-            }
+    if (list != null) {
+      for (PyStatement st : list.getStatements()) {
+        stack.push(st);
+        while (!stack.isEmpty()) {
+          PsiElement e = stack.pop();
+          if (e instanceof PyAssertStatement || e instanceof PyYieldExpression) return true;
+          for (PsiElement psiElement : e.getChildren()) {
+            stack.push(psiElement);
           }
         }
       }
+    }
     return false;
   }
 
-  public static boolean isTestCaseClass(@NotNull PyClass cls) {
-    return isTestCaseClass(cls, PYTHON_TEST_QUALIFIED_CLASSES);
+  public static boolean isTestCaseClass(@NotNull PyClass cls, @Nullable final TypeEvalContext context) {
+    return isTestCaseClassWithContext(cls, PYTHON_TEST_QUALIFIED_CLASSES, context);
   }
 
-  public static boolean isTestCaseClass(@NotNull PyClass cls, Set<String> testQualifiedNames) {
-    for (PyClassLikeType type : cls.getAncestorTypes(TypeEvalContext.codeInsightFallback(cls.getProject()))) {
+  public static boolean isTestCaseClassWithContext(@NotNull PyClass cls,
+                                                   Set<String> testQualifiedNames,
+                                                   @Nullable TypeEvalContext context) {
+    final TypeEvalContext contextToUse = (context != null ? context : TypeEvalContext.codeInsightFallback(cls.getProject()));
+    for (PyClassLikeType type : cls.getAncestorTypes(contextToUse)) {
       if (type != null) {
         if (testQualifiedNames.contains(type.getClassQName())) {
           return true;
         }
         String clsName = cls.getQualifiedName();
         String[] names = new String[0];
-        if (clsName != null)
+        if (clsName != null) {
           names = clsName.split("\\.");
+        }
         if (names.length == 0) return false;
 
         clsName = names[names.length - 1];
@@ -185,8 +189,9 @@ public class PythonUnitTestUtil {
       final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(fileName);
       if (virtualFile == null) return locations;
       final PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
-      if (psiFile != null)
+      if (psiFile != null) {
         locations.add(new PsiLocation<PsiFile>(project, psiFile));
+      }
     }
 
     if (className != null) {
@@ -195,9 +200,9 @@ public class PythonUnitTestUtil {
 
         final PsiFile containingFile = cls.getContainingFile();
         final VirtualFile virtualFile = containingFile.getVirtualFile();
-        final String clsFileName = virtualFile == null? containingFile.getName() : virtualFile.getPath();
+        final String clsFileName = virtualFile == null ? containingFile.getName() : virtualFile.getPath();
         final String clsFileNameWithoutExt = FileUtil.getNameWithoutExtension(clsFileName);
-        if (!clsFileNameWithoutExt.endsWith(fileName) && ! fileName.equals(clsFileName)) {
+        if (!clsFileNameWithoutExt.endsWith(fileName) && !fileName.equals(clsFileName)) {
           continue;
         }
         if (methodName == null) {
@@ -219,7 +224,7 @@ public class PythonUnitTestUtil {
         if (function.getContainingClass() == null) {
           final PsiFile containingFile = function.getContainingFile();
           final VirtualFile virtualFile = containingFile.getVirtualFile();
-          final String clsFileName = virtualFile == null? containingFile.getName() : virtualFile.getPath();
+          final String clsFileName = virtualFile == null ? containingFile.getName() : virtualFile.getPath();
           final String clsFileNameWithoutExt = FileUtil.getNameWithoutExtension(clsFileName);
           if (!clsFileNameWithoutExt.endsWith(fileName)) {
             continue;

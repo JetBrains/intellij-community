@@ -118,4 +118,8 @@ public class ContentRevisionVirtualFile extends AbstractVcsVirtualFile {
       myContent = ArrayUtil.EMPTY_BYTE_ARRAY;
     }
   }
+
+  public ContentRevision getContentRevision() {
+    return myContentRevision;
+  }
 }

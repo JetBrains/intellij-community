@@ -44,8 +44,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-import static java.util.Collections.singletonList;
-
 @PlatformTestCase.WrapInCommand
 public class DirectoryIndexTest extends IdeaTestCase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.DirectoryIndexTest");
@@ -67,11 +65,6 @@ public class DirectoryIndexTest extends IdeaTestCase {
   private VirtualFile myResDir, myTestResDir;
   private VirtualFile myExcludedLibSrcDir, myExcludedLibClsDir;
   private ProjectFileIndex myFileIndex;
-
-  @Override
-  protected boolean isRunInWriteAction() {
-    return false;
-  }
 
   @Override
   protected void setUp() throws Exception {
@@ -149,7 +142,8 @@ public class DirectoryIndexTest extends IdeaTestCase {
           PsiTestUtil.addSourceRoot(myModule, myTestResDir, JavaResourceRootType.TEST_RESOURCE);
 
           ModuleRootModificationUtil.addModuleLibrary(myModule, "lib.js",
-                                                      singletonList(myFileLibCls.getUrl()), singletonList(myFileLibSrc.getUrl()));
+                                                      Collections.singletonList(myFileLibCls.getUrl()), Collections
+                                                        .singletonList(myFileLibSrc.getUrl()));
           PsiTestUtil.addExcludedRoot(myModule, myExcludedLibClsDir);
           PsiTestUtil.addExcludedRoot(myModule, myExcludedLibSrcDir);
         }
@@ -163,7 +157,7 @@ public class DirectoryIndexTest extends IdeaTestCase {
           PsiTestUtil.addSourceRoot(myModule2, mySrcDir2);
           PsiTestUtil.addExcludedRoot(myModule2, myExcludeDir);
           ModuleRootModificationUtil.addModuleLibrary(myModule2, "lib",
-                                                      singletonList(myLibClsDir.getUrl()), singletonList(myLibSrcDir.getUrl()),
+                                                      Collections.singletonList(myLibClsDir.getUrl()), Collections.singletonList(myLibSrcDir.getUrl()),
                                                       Arrays.asList(myExcludedLibClsDir.getUrl(), myExcludedLibSrcDir.getUrl()), DependencyScope.COMPILE, true);
         }
 
@@ -815,7 +809,7 @@ public class DirectoryIndexTest extends IdeaTestCase {
   public void testFileLibraryInsideFolderLibrary() throws IOException {
     VirtualFile file = createChildData(myLibSrcDir, "empty.txt");
     ModuleRootModificationUtil.addModuleLibrary(myModule2, "lib2",
-                                                Collections.<String>emptyList(), singletonList(file.getUrl()),
+                                                Collections.<String>emptyList(), Collections.singletonList(file.getUrl()),
                                                 Collections.<String>emptyList(), DependencyScope.COMPILE, true);
 
     // same for the dir and for the file

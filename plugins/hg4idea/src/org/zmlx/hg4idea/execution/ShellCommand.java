@@ -23,6 +23,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.LineHandlerHelper;
+import com.intellij.vcs.VcsLocaleHelper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,8 +36,8 @@ public final class ShellCommand {
 
   private final GeneralCommandLine myCommandLine;
 
-  public ShellCommand(@Nullable List<String> commandLine, @Nullable String dir, @Nullable Charset charset) {
-    if (commandLine == null || commandLine.isEmpty()) {
+  public ShellCommand(@NotNull List<String> commandLine, @Nullable String dir, @Nullable Charset charset) {
+    if (commandLine.isEmpty()) {
       throw new IllegalArgumentException("commandLine is empty");
     }
     myCommandLine = new GeneralCommandLine(commandLine);
@@ -50,6 +51,7 @@ public final class ShellCommand {
       //ignore all hg config files except current repository config
       myCommandLine.getEnvironment().put("HGRCPATH", "");
     }
+    myCommandLine.withEnvironment(VcsLocaleHelper.getDefaultLocaleEnvironmentVars("hg"));
   }
 
   @NotNull

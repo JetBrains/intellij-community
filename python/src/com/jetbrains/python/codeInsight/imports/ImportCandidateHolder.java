@@ -64,7 +64,6 @@ class ImportCandidateHolder implements Comparable<ImportCandidateHolder> {
    *                      For modules and packages it should be <em>qualified name of their parental package</em>
    *                      (empty for modules and packages located at source roots).
    *
-   * @see PythonReferenceImporter#proposeImportFix
    */
   public ImportCandidateHolder(@NotNull PsiElement importable, @NotNull PsiFileSystemItem file,
                                @Nullable PyImportElement importElement, @Nullable QualifiedName path, @Nullable String asName) {

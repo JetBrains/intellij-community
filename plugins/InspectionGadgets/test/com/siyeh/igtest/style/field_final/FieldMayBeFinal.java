@@ -1,5 +1,9 @@
 package com.siyeh.igtest.style.field_final;
-import java.awt.*; import java.io.File;import java.io.IOException; import java.util.*;
+
+import java.awt.*;
+import java.io.*;
+import java.util.*;
+
 public class FieldMayBeFinal {
 
     private static String string;
@@ -576,15 +580,6 @@ class T21 {
     final Object[] objects = new Object[]{1, 2, i=3};
   }
 }
-class T22 {
-  private final int i; // may not be final, but green when it is
-  {
-    new Object() {{
-      System.out.println(i);
-    }};
-    i = 1;
-  }
-}
 class T23 {
   private int <warning descr="Field 'i' may be 'final'">i</warning>; // may be final
   {
@@ -776,7 +771,7 @@ class T44 {
   }
 }
 class T45 {
-  private int i; // should be allowed final, but does not compile in javac
+  private int i; // should be allowed final and green when it is, but does not compile in javac
   {
     for (; true; i = 1) {
       i = 2;
@@ -898,6 +893,76 @@ class T60 {
     if (false) i = 2;
   }
 }
+class T61 {
+  private String <warning descr="Field 's' may be 'final'">s</warning>; // may be final
+  T61() throws IOException {
+    try (final InputStream is = new FileInputStream(s="ab")) {
+    }
+  }
+}
+class T62 {
+  private String s; // may not be final
+  T62() throws IOException {
+    try (final InputStream is = new FileInputStream(s="ab")) {
+    }
+    s = "ba";
+  }
+}
+class T63 {
+  private String s; // may not be final
+  T63() throws IOException {
+    try (final InputStream is = new FileInputStream(s=s="ab")) {
+    }
+  }
+}
+class T64 {
+  private String s; // may not be final, but green when it is.
+  T64() throws IOException {
+    try (final InputStream is = new FileInputStream("ab") {{System.out.println(s);}}) {
+    }
+    s="";
+  }
+}
+class T65 {
+  private Runnable r; // may not be final
+  T65() {
+    r = () -> System.out.println(r);
+  }
+}
+class T66 {
+  private  String <warning descr="Field 's' may be 'final'">s</warning>; // may be final
+  T66() {
+    s = "10";
+    Runnable r = () -> System.out.println(s);
+  }
+}
+class T67 {
+  private  String s; // may not be final
+  T67() {
+    Runnable r = () -> System.out.println(s);
+    s = "10";
+  }
+}
+class T68 {
+  private Runnable <warning descr="Field 'r' may be 'final'">r</warning>; // may be final, compare to T65
+  T68() {
+    r = () -> System.out.println((this).r);
+  }
+}
+class T69 {
+  private String s; // may not be final
+  T69() {
+    Runnable r = () -> s = "asdf";
+  }
+}
+class T70 {
+  private String s; // may not be final
+  T70() {
+    Runnable r = () -> s = "asdf";
+    s = "";
+  }
+}
+
 class Foo {
 
   public interface Accessor<T> {

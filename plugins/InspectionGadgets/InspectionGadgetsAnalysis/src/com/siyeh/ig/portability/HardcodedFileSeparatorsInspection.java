@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers, Mark Scott
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers, Mark Scott
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,14 @@
 package com.siyeh.ig.portability;
 
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiLiteralExpression;
-import com.intellij.psi.PsiMethodCallExpression;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.portability.mediatype.*;
 import com.siyeh.ig.psiutils.MethodCallUtils;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -143,12 +141,10 @@ public class HardcodedFileSeparatorsInspection extends BaseInspection {
     return new HardcodedFileSeparatorsVisitor();
   }
 
-  private class HardcodedFileSeparatorsVisitor
-    extends BaseInspectionVisitor {
+  private class HardcodedFileSeparatorsVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitLiteralExpression(
-      @NotNull PsiLiteralExpression expression) {
+    public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
       super.visitLiteralExpression(expression);
       final PsiType type = expression.getType();
       if (TypeUtils.isJavaLangString(type)) {
@@ -156,17 +152,25 @@ public class HardcodedFileSeparatorsInspection extends BaseInspection {
         if (!isHardcodedFilenameString(value)) {
           return;
         }
-        final PsiElement parent = expression.getParent();
-        final PsiElement grandParent = parent.getParent();
-        if (grandParent instanceof PsiMethodCallExpression) {
-          final PsiMethodCallExpression methodCallExpression =
-            (PsiMethodCallExpression)grandParent;
-          if (MethodCallUtils.isCallToRegexMethod(
-            methodCallExpression)) {
-            return;
+        final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(expression);
+        if (parent != null) {
+          final PsiElement grandParent = parent.getParent();
+          if (grandParent instanceof PsiMethodCallExpression) {
+            final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
+            if (MethodCallUtils.isCallToRegexMethod(methodCallExpression) ||
+                MethodCallUtils.isCallToMethod(methodCallExpression, "java.lang.Class", null, "getResource", null) ||
+                MethodCallUtils.isCallToMethod(methodCallExpression, "java.lang.Class", null, "getResourceAsStream", null)) {
+              return;
+            }
+          }
+          else if (grandParent instanceof PsiNewExpression) {
+            final PsiNewExpression newExpression = (PsiNewExpression)grandParent;
+            if (TypeUtils.expressionHasTypeOrSubtype(newExpression, "javax.swing.ImageIcon")) {
+              return;
+            }
           }
         }
-        registerError(expression);
+        registerErrorAtOffset(expression, 1, expression.getTextLength() - 2);
       }
       else if (type != null && type.equals(PsiType.CHAR)) {
         final Character value = (Character)expression.getValue();
@@ -175,7 +179,7 @@ public class HardcodedFileSeparatorsInspection extends BaseInspection {
         }
         final char unboxedValue = value.charValue();
         if (unboxedValue == BACKSLASH || unboxedValue == SLASH) {
-          registerError(expression);
+          registerErrorAtOffset(expression, 1, expression.getTextLength() - 2);
         }
       }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,8 @@ import java.util.Map;
 
 /**
  * Soft keys hash map.
- * Null keys are not supported.
+ * Null keys are NOT allowed
+ * Null values are allowed
  */
 public final class SoftHashMap<K,V> extends RefHashMap<K,V> {
   public SoftHashMap(int initialCapacity, float loadFactor) {
@@ -37,7 +38,6 @@ public final class SoftHashMap<K,V> extends RefHashMap<K,V> {
   }
 
   public SoftHashMap() {
-    super();
   }
 
   public SoftHashMap(@NotNull Map<K, V> t) {
@@ -48,29 +48,34 @@ public final class SoftHashMap<K,V> extends RefHashMap<K,V> {
     super(hashingStrategy);
   }
 
+  public SoftHashMap(int initialCapacity, float loadFactor, @NotNull TObjectHashingStrategy<K> strategy) {
+    super(initialCapacity, loadFactor, strategy);
+  }
+
   @NotNull
   @Override
-  protected <T> Key<T> createKey(@NotNull T k, @NotNull ReferenceQueue<? super T> q) {
-    return new SoftKey<T>(k, q);
+  protected <T> Key<T> createKey(@NotNull T k, @NotNull TObjectHashingStrategy<T> strategy, @NotNull ReferenceQueue<? super T> q) {
+    return new SoftKey<T>(k, strategy, q);
   }
 
   private static class SoftKey<T> extends SoftReference<T> implements Key<T> {
     private final int myHash;  /* Hash code of key, stored here since the key may be tossed by the GC */
+    @NotNull private final TObjectHashingStrategy<T> myStrategy;
 
-    private SoftKey(@NotNull T k, @NotNull ReferenceQueue<? super T> q) {
+    private SoftKey(@NotNull T k, @NotNull TObjectHashingStrategy<T> strategy, @NotNull ReferenceQueue<? super T> q) {
       super(k, q);
-      myHash = k.hashCode();
+      myStrategy = strategy;
+      myHash = strategy.computeHashCode(k);
     }
 
     public boolean equals(Object o) {
       if (this == o) return true;
       if (!(o instanceof Key)) return false;
       if (myHash != o.hashCode()) return false;
-      Object t = get();
-      Object u = ((Key)o).get();
+      T t = get();
+      T u = ((Key<T>)o).get();
       if (t == null || u == null) return false;
-      if (t == u) return true;
-      return t.equals(u);
+      return keyEqual(t, u, myStrategy);
     }
 
     public int hashCode() {

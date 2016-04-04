@@ -16,7 +16,6 @@
 package com.intellij.refactoring.util;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -217,7 +216,10 @@ public class RefactoringConflictsUtil {
     }
     else if (newContext instanceof PsiClass && refMember instanceof PsiField && refMember.getContainingClass() == member.getContainingClass()) {
       final PsiField fieldInSubClass = ((PsiClass)newContext).findFieldByName(refMember.getName(), false);
-      if (fieldInSubClass != null && fieldInSubClass != refMember) {
+      if (fieldInSubClass != null && 
+          !refMember.hasModifierProperty(PsiModifier.STATIC) && 
+          fieldInSubClass != refMember &&
+          !member.hasModifierProperty(PsiModifier.STATIC)) {
         conflicts.putValue(refMember, CommonRefactoringUtil.capitalize(RefactoringUIUtil.getDescription(fieldInSubClass, true) +
                                                                        " would hide " + RefactoringUIUtil.getDescription(refMember, true) +
                                                                        " which is used by moved " + RefactoringUIUtil.getDescription(member, false)));

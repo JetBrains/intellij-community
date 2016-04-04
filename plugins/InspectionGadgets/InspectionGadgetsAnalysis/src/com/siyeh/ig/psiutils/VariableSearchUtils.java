@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,15 +17,17 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.controlFlow.DefUseUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class VariableSearchUtils {
 
-  private VariableSearchUtils() {
-  }
+  private VariableSearchUtils() {}
 
   public static boolean variableNameResolvesToTarget(
     @NotNull String variableName, @NotNull PsiVariable target,
@@ -40,12 +42,13 @@ public class VariableSearchUtils {
     return target.equals(variable);
   }
 
-  public static boolean containsConflictingDeclarations(
-    PsiCodeBlock block, PsiCodeBlock parentBlock) {
-    final List<PsiCodeBlock> followingBlocks = new ArrayList();
-    collectFollowingBlocks(block.getParent().getNextSibling(),
-                           followingBlocks);
+  public static boolean containsConflictingDeclarations(PsiCodeBlock block, PsiCodeBlock parentBlock) {
     final PsiStatement[] statements = block.getStatements();
+    if (statements.length == 0) {
+      return false;
+    }
+    final List<PsiCodeBlock> followingBlocks = new ArrayList<PsiCodeBlock>();
+    collectFollowingBlocks(block.getParent().getNextSibling(), followingBlocks);
     final Project project = block.getProject();
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
     final PsiResolveHelper resolveHelper = facade.getResolveHelper();
@@ -53,28 +56,24 @@ public class VariableSearchUtils {
       if (!(statement instanceof PsiDeclarationStatement)) {
         continue;
       }
-      final PsiDeclarationStatement declaration =
-        (PsiDeclarationStatement)statement;
-      final PsiElement[] variables =
-        declaration.getDeclaredElements();
+      final PsiDeclarationStatement declaration = (PsiDeclarationStatement)statement;
+      final PsiElement[] variables = declaration.getDeclaredElements();
       for (PsiElement variable : variables) {
         if (!(variable instanceof PsiLocalVariable)) {
           continue;
         }
-        final PsiLocalVariable localVariable =
-          (PsiLocalVariable)variable;
+        final PsiLocalVariable localVariable = (PsiLocalVariable)variable;
         final String variableName = localVariable.getName();
-        final PsiVariable target =
-          resolveHelper.resolveAccessibleReferencedVariable(
-            variableName, parentBlock);
-        if (target != null) {
+        if (variableName == null) {
+          continue;
+        }
+        final PsiVariable target = resolveHelper.resolveAccessibleReferencedVariable(variableName, parentBlock);
+        if (target instanceof PsiLocalVariable) {
           return true;
         }
         for (PsiCodeBlock codeBlock : followingBlocks) {
-          final PsiVariable target1 =
-            resolveHelper.resolveAccessibleReferencedVariable(
-              variableName, codeBlock);
-          if (target1 != null) {
+          final PsiVariable target1 = resolveHelper.resolveAccessibleReferencedVariable(variableName, codeBlock);
+          if (target1 instanceof PsiLocalVariable) {
             return true;
           }
         }
@@ -95,5 +94,42 @@ public class VariableSearchUtils {
       collectFollowingBlocks(element.getFirstChild(), out);
       element = element.getNextSibling();
     }
+  }
+
+  public static PsiExpression findDefinition(@NotNull PsiReferenceExpression referenceExpression,
+                                             @Nullable PsiVariable variable) {
+    if (variable == null) {
+      final PsiElement target = referenceExpression.resolve();
+      if (!(target instanceof PsiVariable)) {
+        return null;
+      }
+      variable = (PsiVariable)target;
+    }
+    final PsiCodeBlock block = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
+    if (block == null) {
+      return null;
+    }
+    final PsiElement[] defs = DefUseUtil.getDefs(block, variable, referenceExpression);
+    if (defs.length != 1) {
+      return null;
+    }
+    final PsiElement def = defs[0];
+    if (def instanceof PsiVariable) {
+      final PsiVariable target = (PsiVariable)def;
+      final PsiExpression initializer = target.getInitializer();
+      return ParenthesesUtils.stripParentheses(initializer);
+    }
+    else if (def instanceof PsiReferenceExpression) {
+      final PsiElement parent = def.getParent();
+      if (!(parent instanceof PsiAssignmentExpression)) {
+        return null;
+      }
+      final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
+      if (assignmentExpression.getOperationTokenType() != JavaTokenType.EQ) {
+        return null;
+      }
+      return ParenthesesUtils.stripParentheses(assignmentExpression.getRExpression());
+    }
+    return null;
   }
 }

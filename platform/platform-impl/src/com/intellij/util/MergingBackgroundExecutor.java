@@ -1,12 +1,23 @@
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.util;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.concurrency.BoundedTaskExecutor;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.atomic.AtomicInteger;
+import org.jetbrains.ide.PooledThreadExecutor;
 
 /**
  * Executes tasks on pooled threads. At any point, at most {@code maxThreads} threads will be active processing tasks.
@@ -18,67 +29,22 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @param <T> the type of elements
  */
 public class MergingBackgroundExecutor<T> {
-
-  private static final Logger LOG = Logger.getInstance(MergingBackgroundExecutor.class);
-
-  private final int myMaxThreads;
   private final Consumer<T> myConsumer;
-  private final BlockingQueue<T> myQueue = new LinkedBlockingDeque<T>();
-  private final AtomicInteger myRunningThreads = new AtomicInteger(0);
+  private final BoundedTaskExecutor myExecutorService;
 
   public MergingBackgroundExecutor(int maxThreads, @NotNull Consumer<T> consumer) {
-    myMaxThreads = maxThreads;
     myConsumer = consumer;
+    myExecutorService = new BoundedTaskExecutor(PooledThreadExecutor.INSTANCE, maxThreads);
   }
 
-  protected void executeOnPooledThread(@NotNull Runnable runnable) {
-    ApplicationManager.getApplication().executeOnPooledThread(runnable);
-  }
 
-  public void queue(@NotNull T t) {
-    if (!myQueue.offer(t)) {
-      LOG.error("Unable to enqueue an element, queue size: " + myQueue.size());
-      return;
-    }
-    if (incrementIfSmaller(myRunningThreads, myMaxThreads)) {
-      executeOnPooledThread(new Runnable() {
-        @Override
-        public void run() {
-          do {
-            try {
-              processQueue();
-            }
-            finally {
-              myRunningThreads.decrementAndGet();
-            }
-            // Defense from unlucky timing:
-            // An element could be enqueued between "processQueue()" and "myRunningThreads.decrementAndGet()".
-            // As a result, "executeOnPooledThread(Runnable)" won't be called.
-            // In this case the queue processing should be started over.
-          }
-          while (!myQueue.isEmpty() && incrementIfSmaller(myRunningThreads, myMaxThreads));
-        }
-      });
-    }
-  }
-
-  private static boolean incrementIfSmaller(@NotNull AtomicInteger i, int max) {
-    int value;
-    do {
-      value = i.get();
-      if (value >= max) {
-        return false;
+  public void queue(@NotNull final T t) {
+    myExecutorService.execute(new Runnable() {
+      @Override
+      public void run() {
+        myConsumer.consume(t);
       }
-    }
-    while (!i.compareAndSet(value, value + 1));
-    return true;
-  }
-
-  private void processQueue() {
-    T t;
-    while ((t = myQueue.poll()) != null) {
-      myConsumer.consume(t);
-    }
+    });
   }
 
   @NotNull

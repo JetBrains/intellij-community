@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
@@ -33,6 +34,10 @@ import com.intellij.psi.search.PsiElementProcessorAdapter;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.ClassesWithAnnotatedMembersSearch;
+import com.intellij.psi.stubsHierarchy.impl.ClassAnchorUtil;
+import com.intellij.psi.stubsHierarchy.impl.SingleClassHierarchy;
+import com.intellij.psi.stubsHierarchy.impl.HierarchyService;
+import com.intellij.psi.stubsHierarchy.impl.SmartClassAnchor;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -49,12 +54,30 @@ public class ConfigurationUtil {
     final Project project = manager.getProject();
     GlobalSearchScope projectScopeWithoutLibraries = GlobalSearchScope.projectScope(project);
     final GlobalSearchScope scope = projectScopeWithoutLibraries.intersectWith(testClassFilter.getScope());
-    ClassInheritorsSearch.search(testClassFilter.getBase(), scope, true, true, false).forEach(new PsiElementProcessorAdapter<PsiClass>(new PsiElementProcessor<PsiClass>() {
-      public boolean execute(@NotNull final PsiClass aClass) {
-        if (testClassFilter.isAccepted(aClass)) found.add(aClass);
-        return true;
+
+    SingleClassHierarchy symbols = HierarchyService.isEnabled() ? HierarchyService.instance(project).getSingleClassHierarchy() : null;
+
+    if (symbols != null) {
+      SmartClassAnchor[] candidates = symbols.getAllSubtypes(testClassFilter.getBase());
+      for (SmartClassAnchor candidate : candidates) {
+        int fileId = candidate.myFileId;
+        VirtualFile file = PersistentFS.getInstance().findFileById(fileId);
+        if (file != null && scope.contains(file)) {
+          PsiClass aClass = ClassAnchorUtil.retrieveInReadAction(project, candidate);
+          if (testClassFilter.isAccepted(aClass)) {
+            found.add(aClass);
+          }
+        }
       }
-    }));
+    }
+    else {
+      ClassInheritorsSearch.search(testClassFilter.getBase(), scope, true, true, false).forEach(new PsiElementProcessorAdapter<PsiClass>(new PsiElementProcessor<PsiClass>() {
+        public boolean execute(@NotNull final PsiClass aClass) {
+          if (testClassFilter.isAccepted(aClass)) found.add(aClass);
+          return true;
+        }
+      }));
+    }
 
     // classes having suite() method
     final PsiMethod[] suiteMethods = ApplicationManager.getApplication().runReadAction(
@@ -80,8 +103,8 @@ public class ConfigurationUtil {
     }
 
     Set<PsiClass> processed = ContainerUtil.newHashSet();
-    boolean hasJunit4 = addAnnotatedMethodsAnSubclasses(manager, scope, testClassFilter, found, processed, "org.junit.Test", true);
-    hasJunit4 |= addAnnotatedMethodsAnSubclasses(manager, scope, testClassFilter, found, processed, "org.junit.runner.RunWith", false);
+    boolean hasJunit4 = addAnnotatedMethodsAnSubclasses(manager, scope, testClassFilter, found, processed, "org.junit.Test", true, symbols);
+    hasJunit4 |= addAnnotatedMethodsAnSubclasses(manager, scope, testClassFilter, found, processed, "org.junit.runner.RunWith", false, symbols);
     return hasJunit4;
   }
 
@@ -89,7 +112,8 @@ public class ConfigurationUtil {
                                                          final Set<PsiClass> found,
                                                          final Set<PsiClass> processed,
                                                          final String annotation,
-                                                         final boolean isMethod) {
+                                                         final boolean isMethod,
+                                                         final SingleClassHierarchy table) {
     final Ref<Boolean> isJUnit4 = new Ref<Boolean>(Boolean.FALSE);
     // annotated with @Test
     final PsiClass testAnnotation = ApplicationManager.getApplication().runReadAction(
@@ -120,18 +144,39 @@ public class ConfigurationUtil {
           finally {
             token.finish();
           }
-
-          ClassInheritorsSearch.search(annotated, scope, true, true, false).forEach(new ReadActionProcessor<PsiClass>() {
-            @Override
-            public boolean processInReadAction(PsiClass aClass) {
-              if (testClassFilter.isAccepted(aClass)) {
-                found.add(aClass);
-                processed.add(aClass);
-                isJUnit4.set(Boolean.TRUE);
-              }
-              return true;
+          if (table != null) {
+            SmartClassAnchor[] candidates = table.getAllSubtypes(annotated);
+            for (final SmartClassAnchor candidate : candidates) {
+              ApplicationManager.getApplication().runReadAction(new Runnable() {
+                @Override
+                public void run() {
+                  int fileId = candidate.myFileId;
+                  VirtualFile file = PersistentFS.getInstance().findFileById(fileId);
+                  if (file != null && scope.contains(file)) {
+                    PsiClass aClass = ClassAnchorUtil.retrieve(manager.getProject(), candidate);
+                    if (testClassFilter.isAccepted(aClass)) {
+                      found.add(aClass);
+                      processed.add(aClass);
+                      isJUnit4.set(Boolean.TRUE);
+                    }
+                  }
+                }
+              });
             }
-          });
+          }
+          else {
+            ClassInheritorsSearch.search(annotated, scope, true, true, false).forEach(new ReadActionProcessor<PsiClass>() {
+              @Override
+              public boolean processInReadAction(PsiClass aClass) {
+                if (testClassFilter.isAccepted(aClass)) {
+                  found.add(aClass);
+                  processed.add(aClass);
+                  isJUnit4.set(Boolean.TRUE);
+                }
+                return true;
+              }
+            });
+          }
           return true;
         }
       });

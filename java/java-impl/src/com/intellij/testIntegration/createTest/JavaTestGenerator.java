@@ -74,6 +74,7 @@ public class JavaTestGenerator implements TestGenerator {
               Editor editor = CodeInsightUtil.positionCursorAtLBrace(project, targetClass.getContainingFile(), targetClass);
               addTestMethods(editor,
                              targetClass,
+                             d.getTargetClass(),
                              frameworkDescriptor,
                              d.getSelectedMethods(),
                              d.shouldGeneratedBefore(),
@@ -177,15 +178,28 @@ public class JavaTestGenerator implements TestGenerator {
                                     Collection<MemberInfo> methods,
                                     boolean generateBefore,
                                     boolean generateAfter) throws IncorrectOperationException {
+    addTestMethods(editor, targetClass, null, descriptor, methods, generateBefore, generateAfter);
+  }
+
+  public static void addTestMethods(Editor editor,
+                                    PsiClass targetClass,
+                                    @Nullable PsiClass sourceClass, 
+                                    final TestFramework descriptor,
+                                    Collection<MemberInfo> methods,
+                                    boolean generateBefore,
+                                    boolean generateAfter) throws IncorrectOperationException {
     final Set<String> existingNames = new HashSet<String>();
+    PsiMethod anchor = null;
     if (generateBefore && descriptor.findSetUpMethod(targetClass) == null) {
-      generateMethod(TestIntegrationUtils.MethodKind.SET_UP, descriptor, targetClass, editor, null, existingNames);
-    }
-    if (generateAfter && descriptor.findTearDownMethod(targetClass) == null) {
-      generateMethod(TestIntegrationUtils.MethodKind.TEAR_DOWN, descriptor, targetClass, editor, null, existingNames);
+      anchor = generateMethod(TestIntegrationUtils.MethodKind.SET_UP, descriptor, targetClass, sourceClass, editor, null, existingNames, null);
     }
 
-    final Template template = TestIntegrationUtils.createTestMethodTemplate(TestIntegrationUtils.MethodKind.TEST, descriptor, targetClass, null, true, existingNames);
+    if (generateAfter && descriptor.findTearDownMethod(targetClass) == null) {
+      anchor = generateMethod(TestIntegrationUtils.MethodKind.TEAR_DOWN, descriptor, targetClass, sourceClass, editor, null, existingNames, anchor);
+    }
+
+    final Template template = TestIntegrationUtils.createTestMethodTemplate(TestIntegrationUtils.MethodKind.TEST, descriptor,
+                                                                            targetClass, sourceClass, null, true, existingNames);
     final String prefix = JavaPsiFacade.getElementFactory(targetClass.getProject()).createMethodFromText(template.getTemplateText(), targetClass).getName();
     existingNames.addAll(ContainerUtil.map(targetClass.getMethods(), new Function<PsiMethod, String>() {
       @Override
@@ -195,7 +209,7 @@ public class JavaTestGenerator implements TestGenerator {
     }));
 
     for (MemberInfo m : methods) {
-      generateMethod(TestIntegrationUtils.MethodKind.TEST, descriptor, targetClass, editor, m.getMember().getName(), existingNames);
+      anchor = generateMethod(TestIntegrationUtils.MethodKind.TEST, descriptor, targetClass, sourceClass, editor, m.getMember().getName(), existingNames, anchor);
     }
   }
 
@@ -209,14 +223,17 @@ public class JavaTestGenerator implements TestGenerator {
     });
   }
 
-  private static void generateMethod(TestIntegrationUtils.MethodKind methodKind,
-                                     TestFramework descriptor,
-                                     PsiClass targetClass,
-                                     Editor editor,
-                                     @Nullable String name, Set<String> existingNames) {
-    PsiMethod method = (PsiMethod)targetClass.add(TestIntegrationUtils.createDummyMethod(targetClass));
+  private static PsiMethod generateMethod(TestIntegrationUtils.MethodKind methodKind,
+                                          TestFramework descriptor,
+                                          PsiClass targetClass,
+                                          @Nullable PsiClass sourceClass,
+                                          Editor editor,
+                                          @Nullable String name,
+                                          Set<String> existingNames, PsiMethod anchor) {
+    PsiMethod method = (PsiMethod)targetClass.addAfter(TestIntegrationUtils.createDummyMethod(targetClass), anchor);
     PsiDocumentManager.getInstance(targetClass.getProject()).doPostponedOperationsAndUnblockDocument(editor.getDocument());
-    TestIntegrationUtils.runTestMethodTemplate(methodKind, descriptor, editor, targetClass, method, name, true, existingNames);
+    TestIntegrationUtils.runTestMethodTemplate(methodKind, descriptor, editor, targetClass, sourceClass, method, name, true, existingNames);
+    return method;
   }
 
   @Override

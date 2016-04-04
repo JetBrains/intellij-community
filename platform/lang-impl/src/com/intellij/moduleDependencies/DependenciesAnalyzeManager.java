@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.moduleDependencies;
 
 import com.intellij.icons.AllIcons;
@@ -27,35 +26,31 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
+import org.jetbrains.annotations.NotNull;
 
 /**
- * User: anna
- * Date: Feb 10, 2005
+ * @author anna
+ * @since Feb 10, 2005
  */
-@State(
-    name = "DependenciesAnalyzeManager",
-    storages = {@Storage(file = StoragePathMacros.WORKSPACE_FILE)}
-)
+@State(name = "DependenciesAnalyzeManager", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
 public class DependenciesAnalyzeManager implements PersistentStateComponent<DependenciesAnalyzeManager.State> {
   private final Project myProject;
   private ContentManager myContentManager;
 
   public static class State {
-    public boolean myForwardDirection;
+    public boolean forwardDirection = true;
+    public boolean includeTests = false;
   }
 
-  private State myState;
+  private State myState = new State();
 
   public DependenciesAnalyzeManager(final Project project) {
     myProject = project;
     StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new Runnable() {
       @Override
       public void run() {
-        ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
-        ToolWindow toolWindow = toolWindowManager.registerToolWindow(ToolWindowId.MODULES_DEPENDENCIES,
-                                                                     true,
-                                                                     ToolWindowAnchor.RIGHT,
-                                                                     project);
+        ToolWindowManager manager = ToolWindowManager.getInstance(myProject);
+        ToolWindow toolWindow = manager.registerToolWindow(ToolWindowId.MODULES_DEPENDENCIES, true, ToolWindowAnchor.RIGHT, project);
         myContentManager = toolWindow.getContentManager();
         toolWindow.setIcon(AllIcons.Toolwindows.ToolWindowModuleDependencies);
         new ContentManagerWatcher(toolWindow, myContentManager);
@@ -63,7 +58,7 @@ public class DependenciesAnalyzeManager implements PersistentStateComponent<Depe
     });
   }
 
-  public static DependenciesAnalyzeManager getInstance(Project project){
+  public static DependenciesAnalyzeManager getInstance(Project project) {
     return ServiceManager.getService(project, DependenciesAnalyzeManager.class);
   }
 
@@ -78,12 +73,13 @@ public class DependenciesAnalyzeManager implements PersistentStateComponent<Depe
   }
 
   @Override
+  @NotNull
   public State getState() {
     return myState;
   }
 
   @Override
-  public void loadState(final State state) {
-    myState = state;
+  public void loadState(State state) {
+    myState = state != null ? state : new State();
   }
 }

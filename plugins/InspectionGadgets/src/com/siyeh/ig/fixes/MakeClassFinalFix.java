@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package com.siyeh.ig.fixes;
 
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -34,7 +34,6 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.openapi.application.WriteAction.start;
 import static com.intellij.psi.PsiModifier.ABSTRACT;
 import static com.intellij.psi.PsiModifier.FINAL;
 
@@ -97,14 +96,13 @@ public class MakeClassFinalFix extends InspectionGadgetsFix {
       final ConflictsDialog conflictsDialog = new ConflictsDialog(element.getProject(), conflicts, new Runnable() {
         @Override
         public void run() {
-          final AccessToken token = start();
-          try {
-            modifierList.setModifierProperty(FINAL, true);
-            modifierList.setModifierProperty(ABSTRACT, false);
-          }
-          finally {
-            token.finish();
-          }
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            @Override
+            public void run() {
+              modifierList.setModifierProperty(FINAL, true);
+              modifierList.setModifierProperty(ABSTRACT, false);
+            }
+          });
         }
       });
       conflictsDialogOK = conflictsDialog.showAndGet();

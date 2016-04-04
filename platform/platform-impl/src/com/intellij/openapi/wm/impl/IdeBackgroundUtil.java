@@ -55,7 +55,7 @@ public class IdeBackgroundUtil {
     JRootPane rootPane = component.getRootPane();
     Component glassPane = rootPane == null ? null : rootPane.getGlassPane();
     final PaintersHelper helper = glassPane instanceof IdeGlassPaneImpl? ((IdeGlassPaneImpl)glassPane).getNamedPainters(paintersName) : null;
-    if (helper == null || !helper.hasPainters()) return (Graphics2D)g;
+    if (helper == null || !helper.needsRepaint()) return (Graphics2D)g;
     return new MyGraphics(g, helper, component);
   }
 

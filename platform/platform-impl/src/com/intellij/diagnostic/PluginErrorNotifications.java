@@ -1,11 +1,14 @@
 package com.intellij.diagnostic;
 
+import com.intellij.diagnostic.errordialog.DisablePluginWarningDialog;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.notification.*;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import java.util.Set;
 
@@ -31,7 +34,8 @@ class PluginErrorNotifications {
     NotificationListener listener = new NotificationListener() {
       @Override
       public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-        IdeErrorsDialog.disablePlugin(pluginId);
+        JRootPane rootPane = WindowManager.getInstance().findVisibleFrame().getRootPane();
+        DisablePluginWarningDialog.disablePlugin(pluginId, rootPane);
       }
     };
     Notification notification =

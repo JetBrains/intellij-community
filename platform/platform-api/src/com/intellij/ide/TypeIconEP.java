@@ -27,7 +27,7 @@ import javax.swing.*;
  * @author yole
  */
 public class TypeIconEP extends AbstractExtensionPointBean {
-  public static ExtensionPointName<TypeIconEP> EP_NAME = ExtensionPointName.create("com.intellij.typeIcon");
+  public static final ExtensionPointName<TypeIconEP> EP_NAME = ExtensionPointName.create("com.intellij.typeIcon");
 
   @Attribute("className")
   public String className;

@@ -8,7 +8,7 @@ class Test {
     }
 
     void foo() {
-        <error descr="Incompatible types. Found: 'java.util.List<java.lang.Class<? extends java.io.Serializable & java.lang.Comparable<? extends java.lang.Comparable<?>>>>', required: 'java.util.List<java.lang.Class<? extends java.io.Serializable>>'">List<Class<? extends Serializable>> l = <warning descr="Unchecked generics array creation for varargs parameter">this.asList</warning>(String.class, Integer.class);</error>
+        <error descr="Incompatible types. Found: 'java.util.List<java.lang.Class<? extends java.io.Serializable & java.lang.Comparable<? extends java.io.Serializable & java.lang.Comparable<?>>>>', required: 'java.util.List<java.lang.Class<? extends java.io.Serializable>>'">List<Class<? extends Serializable>> l = <warning descr="Unchecked generics array creation for varargs parameter">this.asList</warning>(String.class, Integer.class);</error>
         l.size();
         List<? extends Object> objects = this.asList(new String(), new Integer(0));
         objects.size();
@@ -146,7 +146,7 @@ class IDEADEV25515 {
     }
 
     public static final
-    <error descr="Incompatible types. Found: 'java.util.List<java.lang.Class<? extends java.io.Serializable & java.lang.Comparable<? extends java.lang.Comparable<?>>>>', required: 'java.util.List<java.lang.Class<? extends java.io.Serializable>>'">List<Class<? extends Serializable>> SIMPLE_TYPES =
+    <error descr="Incompatible types. Found: 'java.util.List<java.lang.Class<? extends java.io.Serializable & java.lang.Comparable<? extends java.io.Serializable & java.lang.Comparable<?>>>>', required: 'java.util.List<java.lang.Class<? extends java.io.Serializable>>'">List<Class<? extends Serializable>> SIMPLE_TYPES =
 <warning descr="Unchecked generics array creation for varargs parameter">asList</warning>(String.class, Integer.class ,Long.class, Double.class, /*Date.class,*/
 Boolean.class, Boolean.TYPE /*,String[].class */ /*,BigDecimal.class*/);</error>
 

@@ -8,4 +8,6 @@ class Test {
   @org.junit.Rule public org.junit.rules.TestRule f6;
   @org.junit.Rule static org.junit.rules.TestRule <warning descr="Fields annotated with @org.junit.Rule should be public and non-static">f7</warning>;
   @org.junit.Rule org.junit.rules.TestRule <warning descr="Fields annotated with @org.junit.Rule should be public">f8</warning>;
+  @org.junit.Rule public String <warning descr="Field type should be subtype of org.junit.rules.TestRule">f9</warning>;
+  @org.junit.Rule public org.junit.rules.MethodRule f10;
 }

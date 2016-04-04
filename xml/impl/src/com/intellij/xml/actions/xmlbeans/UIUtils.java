@@ -20,9 +20,7 @@ import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.xml.XmlBundle;
@@ -68,21 +66,17 @@ public class UIUtils {
           String selectedItem = wsdlUrl.getTextField().getText();
           if (selectedItem != null && selectedItem.startsWith(LocalFileSystem.PROTOCOL_PREFIX)) {
             VirtualFile fileByPath = VfsUtilCore
-              .findRelativeFile(ExternalResourceManager.getInstance().getResourceLocation(VfsUtil.fixURLforIDEA(selectedItem)), null);
+              .findRelativeFile(ExternalResourceManager.getInstance().getResourceLocation(VfsUtilCore.fixURLforIDEA(selectedItem)), null);
             if (fileByPath != null) initialFile = fileByPath;
           }
 
           final VirtualFile[] virtualFiles = FileChooser.chooseFiles(fileChooserDescriptor, myProject, initialFile);
           if (virtualFiles.length == 1) {
-            String url = fixIDEAUrl(virtualFiles[0].getUrl());
+            String url = VfsUtilCore.fixIDEAUrl(virtualFiles[0].getUrl());
             wsdlUrl.setText(url);
           }
         }
       }
     );
-  }
-
-  public static String fixIDEAUrl(String url) {
-    return SystemInfo.isWindows ? VfsUtilCore.fixIDEAUrl(url) : url;
   }
 }

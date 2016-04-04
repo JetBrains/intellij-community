@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,6 +50,7 @@ public class Launcher {
     //if (Boolean.parseBoolean(System.getProperty("io.netty.random.id"))) {
       System.setProperty("io.netty.machineId", "9e43d860");
       System.setProperty("io.netty.processId", Integer.toString(new Random().nextInt(65535)));
+      System.setProperty("io.netty.serviceThreadPrefix", "Netty");
     //}
 
     final Class<?> mainClass = jpsLoader.loadClass(mainClassName);

@@ -23,7 +23,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.Task;
@@ -376,19 +375,19 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
    */
   public void showMessages(@NotNull String message) {
     if (message.length() == 0) return;
-    showMessage(message, ConsoleViewContentType.NORMAL_OUTPUT.getAttributes());
+    showMessage(message, ConsoleViewContentType.NORMAL_OUTPUT);
   }
 
   /**
    * Show message in the Version Control Console
    * @param message a message to show
-   * @param style   a style to use
+   * @param contentType a style to use
    */
-  private void showMessage(@NotNull String message, final TextAttributes style) {
+  private void showMessage(@NotNull String message, @NotNull ConsoleViewContentType contentType) {
     if (message.length() > MAX_CONSOLE_OUTPUT_SIZE) {
       message = message.substring(0, MAX_CONSOLE_OUTPUT_SIZE);
     }
-    myVcsManager.addMessageToConsoleWindow(message, style);
+    myVcsManager.addMessageToConsoleWindow(message, contentType);
   }
 
   /**
@@ -428,7 +427,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
         final String reason = (e.getCause() != null ? e.getCause() : e).getMessage();
         String message = GitBundle.message("vcs.unable.to.run.git", executable, reason);
         if (!myProject.isDefault()) {
-          showMessage(message, ConsoleViewContentType.SYSTEM_OUTPUT.getAttributes());
+          showMessage(message, ConsoleViewContentType.SYSTEM_OUTPUT);
         }
         VcsBalloonProblemNotifier.showOverVersionControlView(myProject, message, MessageType.ERROR);
       }
@@ -448,14 +447,14 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
    */
   public void showCommandLine(final String cmdLine) {
     SimpleDateFormat f = new SimpleDateFormat("HH:mm:ss.SSS");
-    showMessage(f.format(new Date()) + ": " + cmdLine, ConsoleViewContentType.SYSTEM_OUTPUT.getAttributes());
+    showMessage(f.format(new Date()) + ": " + cmdLine, ConsoleViewContentType.SYSTEM_OUTPUT);
   }
 
   /**
    * Shows error message in the Version Control Console
    */
   public void showErrorMessages(final String line) {
-    showMessage(line, ConsoleViewContentType.ERROR_OUTPUT.getAttributes());
+    showMessage(line, ConsoleViewContentType.ERROR_OUTPUT);
   }
 
   @Override

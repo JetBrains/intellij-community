@@ -8,6 +8,8 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="platform-impl" />
+    <orderEntry type="module" module-name="python-community-configure" />
+    <orderEntry type="module" module-name="python-community-ide-resources" />
     <orderEntry type="module" module-name="python-community" />
     <orderEntry type="module" module-name="lang-api" />
     <orderEntry type="module" module-name="lang-impl" />
@@ -15,4 +17,3 @@
     <orderEntry type="module" module-name="xml-psi-impl" />
   </component>
 </module>
-

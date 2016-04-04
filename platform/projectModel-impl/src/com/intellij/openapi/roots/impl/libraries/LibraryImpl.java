@@ -127,7 +127,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
 
   // primary
   private LibraryImpl(LibraryTable table, ModifiableRootModel rootModel, LibraryImpl newSource, String name, @Nullable final PersistentLibraryKind<?> kind) {
-    super(new Throwable());
+    super(true);
     myLibraryTable = table;
     myRootModel = rootModel;
     mySource = newSource;

@@ -237,6 +237,14 @@ public class XmlNamespacesTest extends LightCodeInsightFixtureTestCase {
     doOptimizeImportsTest(text);
   }
 
+  public void testFixAll() throws Exception {
+    myFixture.configureByFiles("fixAll.xml", "spring-beans-2.5.xsd", "spring-batch-2.1.xsd");
+    IntentionAction action = myFixture.findSingleIntention("Fix all");
+    assertNotNull(action);
+    myFixture.launchAction(action);
+    myFixture.checkResultByFile("fixAll_after.xml");
+  }
+
   private void doUnusedDeclarationTest(String text, String after, String name) throws Exception {
     doUnusedDeclarationTest(text, after, name, true);
   }

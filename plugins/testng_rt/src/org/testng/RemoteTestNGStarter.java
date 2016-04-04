@@ -116,8 +116,7 @@ public class RemoteTestNGStarter {
       }
       final IDEARemoteTestNG testNG = new IDEARemoteTestNG(param);
       CommandLineArgs cla = new CommandLineArgs();
-      RemoteArgs ra = new RemoteArgs();
-      new JCommander(Arrays.asList(cla, ra), (String[])resultArgs.toArray(new String[resultArgs.size()]));
+      new JCommander(Collections.singletonList(cla), (String[])resultArgs.toArray(new String[resultArgs.size()]));
       testNG.configure(cla);
       testNG.run();
       return;

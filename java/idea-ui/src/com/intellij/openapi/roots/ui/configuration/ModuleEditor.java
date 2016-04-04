@@ -39,7 +39,6 @@ import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableBase;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
 import com.intellij.util.EventDispatcher;
@@ -260,11 +259,6 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
     myGenericSettingsPanel = new ModuleEditorPanel();
 
     createEditors(getModule());
-
-    if (!Registry.is("ide.new.project.settings")) {
-      JPanel northPanel = new JPanel(new GridBagLayout());
-      myGenericSettingsPanel.add(northPanel, BorderLayout.NORTH);
-    }
 
     final JComponent component = createCenterPanel();
     myGenericSettingsPanel.add(component, BorderLayout.CENTER);

@@ -21,15 +21,15 @@ import java.lang.annotation.*;
  * Specifies some aspects of the method behavior depending on the arguments. Can be used by tools for advanced data flow analysis.
  * Note that this annotation just describes how the code works and doesn't add any functionality by means of code generation.<p>
  * 
- * Method contract has the following syntax:<br/>
- *  contract ::= (clause ';')* clause<br/>
- *  clause ::= args '->' effect<br/>
- *  args ::= ((arg ',')* arg )?<br/>
- *  arg ::= value-constraint<br/>
- *  value-constraint ::= 'any' | 'null' | '!null' | 'false' | 'true'<br/>
- *  effect ::= value-constraint | 'fail' <p/>
+ * Method contract has the following syntax:<br>
+ *  contract ::= (clause ';')* clause<br>
+ *  clause ::= args '-&gt;' effect<br>
+ *  args ::= ((arg ',')* arg )?<br>
+ *  arg ::= value-constraint<br>
+ *  value-constraint ::= 'any' | 'null' | '!null' | 'false' | 'true'<br>
+ *  effect ::= value-constraint | 'fail' <p>
  *  
- * The constraints denote the following:<br/>
+ * The constraints denote the following:<br>
  * <ul>
  * <li> _ - any value
  * <li> null - null value
@@ -38,10 +38,10 @@ import java.lang.annotation.*;
  * <li> false - false boolean value
  * <li> fail - the method throws an exception, if the arguments satisfy argument constraints
  * </ul>
- * Examples:<p/>
- * <code>@Contract("_, null -> null")</code> - method returns null if its second argument is null<br/>
- * <code>@Contract("_, null -> null; _, !null -> !null")</code> - method returns null if its second argument is null and not-null otherwise<br/>
- * <code>@Contract("true -> fail")</code> - a typical assertFalse method which throws an exception if <code>true</code> is passed to it<br/> 
+ * Examples:<p>
+ * <code>@Contract("_, null -&gt; null")</code> - method returns null if its second argument is null<br>
+ * <code>@Contract("_, null -&gt; null; _, !null -&gt; !null")</code> - method returns null if its second argument is null and not-null otherwise<br>
+ * <code>@Contract("true -&gt; fail")</code> - a typical assertFalse method which throws an exception if <code>true</code> is passed to it<br>
  * 
  */
 @Documented

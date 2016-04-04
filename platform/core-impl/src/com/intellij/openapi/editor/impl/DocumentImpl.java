@@ -28,6 +28,7 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
@@ -51,6 +52,8 @@ import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import static com.intellij.openapi.editor.StripTrailingSpacesFilterFactory.EXTENSION_POINT;
 
 public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.DocumentImpl");
@@ -118,6 +121,11 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     this(chars, false);
   }
 
+  /**
+   * NOTE: if client sets forUseInNonAWTThread to true it's supposed that client will completely control document and its listeners.
+   * The noticable peculiarity of DocumentImpl behavior in this mode is that DocumentImpl won't suppress ProcessCancelledException 
+   * thrown from listeners during changedUpdate event, so the exception will be rethrown and rest of the listeners WON'T be notified.
+   */
   public DocumentImpl(@NotNull CharSequence chars, boolean forUseInNonAWTThread) {
     this(chars, false, forUseInNonAWTThread);
   }
@@ -190,6 +198,19 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     if (!isStripTrailingSpacesEnabled) {
       return true;
     }
+    List<StripTrailingSpacesFilter> filters = new ArrayList<StripTrailingSpacesFilter>();
+    for (StripTrailingSpacesFilterFactory filterFactory : EXTENSION_POINT.getExtensions()) {
+      StripTrailingSpacesFilter filter = filterFactory.createFilter(project, this);
+      if (filter == StripTrailingSpacesFilter.NOT_ALLOWED) {
+        return true;
+      }
+      else if (filter == StripTrailingSpacesFilter.POSTPONED) {
+        return false;
+      }
+      else {
+        filters.add(filter);
+      }
+    }
 
     boolean markAsNeedsStrippingLater = false;
     CharSequence text = myText;
@@ -213,7 +234,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       lineLoop:
       for (int line = 0; line < getLineCount(); line++) {
         LineSet lineSet = getLineSet();
-        if (inChangedLinesOnly && !lineSet.isModified(line)) continue;
+        if (inChangedLinesOnly && !lineSet.isModified(line) || !canStripSpacesFrom(line, filters)) continue;
         int whiteSpaceStart = -1;
         final int lineEnd = lineSet.getLineEnd(line) - lineSet.getSeparatorLength(line);
         int lineStart = lineSet.getLineStart(line);
@@ -269,6 +290,13 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       });
     }
     return markAsNeedsStrippingLater;
+  }
+
+  private static boolean canStripSpacesFrom(int line, @NotNull List<StripTrailingSpacesFilter> filters) {
+    for (StripTrailingSpacesFilter filter :  filters) {
+      if (!filter.isStripSpacesAllowedForLine(line)) return false;
+    }
+    return true;
   }
 
   @Override
@@ -756,6 +784,14 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
           try {
             listener.documentChanged(event);
           }
+          catch (ProcessCanceledException e) {
+            if (!myAssertThreading) {
+              throw e;
+            }
+            else {
+              LOG.error("ProcessCanceledException must not be thrown from document listeners for real document", new Throwable(e));
+            }
+          }
           catch (Throwable e) {
             LOG.error(e);
           }
@@ -1033,7 +1069,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   @Override
   public boolean processRangeMarkersOverlappingWith(int start, int end, @NotNull Processor<RangeMarker> processor) {
     TextRangeInterval interval = new TextRangeInterval(start, end);
-    IntervalTreeImpl.PeekableIterator<RangeMarkerEx> iterator = IntervalTreeImpl
+    MarkupIterator<RangeMarkerEx> iterator = IntervalTreeImpl
       .mergingOverlappingIterator(myRangeMarkers, interval, myPersistentRangeMarkers, interval, RangeMarker.BY_START_OFFSET);
     try {
       return ContainerUtil.process(iterator, processor);

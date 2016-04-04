@@ -16,6 +16,7 @@
 package com.intellij.util.lang;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,7 +70,7 @@ class FileLoader extends Loader {
   private String getRelativeResourcePath(final String absFilePath) {
     String relativePath = absFilePath.substring(myRootDirAbsolutePath.length());
     relativePath = relativePath.replace(File.separatorChar, '/');
-    if (relativePath.startsWith("/")) relativePath = relativePath.substring(1);
+    relativePath = StringUtil.trimStart(relativePath, "/");
     return relativePath;
   }
 

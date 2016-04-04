@@ -19,14 +19,10 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeInsight.daemon.impl.analysis.ErrorQuickFixProvider;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.highlighting.HighlightErrorFilter;
-import com.intellij.lang.Language;
-import com.intellij.lang.LanguageAnnotators;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.Annotator;
-import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
@@ -37,17 +33,14 @@ import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.List;
 
 /**
  * @author yole
  */
-public class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
+class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
   private AnnotationHolderImpl myAnnotationHolder;
 
   private final HighlightErrorFilter[] myErrorFilters;
@@ -57,15 +50,18 @@ public class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
   private final DumbService myDumbService;
   private HighlightInfoHolder myHolder;
   private final boolean myBatchMode;
+  private final CachedAnnotators cachedAnnotators;
 
   @SuppressWarnings("UnusedDeclaration")
-  public DefaultHighlightVisitor(@NotNull Project project) {
-    this(project, true, true, false);
+  DefaultHighlightVisitor(@NotNull Project project, @NotNull CachedAnnotators cachedAnnotators) {
+    this(project, true, true, false, cachedAnnotators);
   }
-  public DefaultHighlightVisitor(@NotNull Project project, boolean highlightErrorElements, boolean runAnnotators, boolean batchMode) {
+
+  DefaultHighlightVisitor(@NotNull Project project, boolean highlightErrorElements, boolean runAnnotators, boolean batchMode, @NotNull CachedAnnotators cachedAnnotators) {
     myProject = project;
     myHighlightErrorElements = highlightErrorElements;
     myRunAnnotators = runAnnotators;
+    this.cachedAnnotators = cachedAnnotators;
     myErrorFilters = Extensions.getExtensions(HighlightErrorFilter.EP_NAME, project);
     myDumbService = DumbService.getInstance(project);
     myBatchMode = batchMode;
@@ -114,35 +110,12 @@ public class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
   @Override
   @NotNull
   public HighlightVisitor clone() {
-    return new DefaultHighlightVisitor(myProject, myHighlightErrorElements, myRunAnnotators, myBatchMode);
+    return new DefaultHighlightVisitor(myProject, myHighlightErrorElements, myRunAnnotators, myBatchMode,cachedAnnotators);
   }
 
   @Override
   public int order() {
     return 2;
-  }
-
-  private static final ThreadLocalAnnotatorMap<String, Annotator> cachedAnnotators = new ThreadLocalAnnotatorMap<String, Annotator>() {
-    @NotNull
-    @Override
-    public Collection<Annotator> initialValue(@NotNull String languageId) {
-      Language language = Language.findLanguageByID(languageId);
-      return language == null ? ContainerUtil.<Annotator>emptyList() : LanguageAnnotators.INSTANCE.allForLanguage(language);
-    }
-  };
-
-  static {
-    LanguageAnnotators.INSTANCE.addListener(new ExtensionPointListener<Annotator>() {
-      @Override
-      public void extensionAdded(@NotNull Annotator extension, @Nullable PluginDescriptor pluginDescriptor) {
-        cachedAnnotators.clear();
-      }
-
-      @Override
-      public void extensionRemoved(@NotNull Annotator extension, @Nullable PluginDescriptor pluginDescriptor) {
-        cachedAnnotators.clear();
-      }
-    });
   }
 
   private void runAnnotators(PsiElement element) {

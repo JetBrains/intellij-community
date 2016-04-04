@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,7 +89,7 @@ public class GrDocFieldReferenceImpl extends GrDocMemberReferenceImpl implements
       GrCodeReferenceElement referenceElement = holder.getReferenceElement();
       resolved = referenceElement != null ? referenceElement.resolve() : null;
     } else {
-      resolved = PsiUtil.getContextClass(this);
+      resolved = PsiUtil.getContextClass(GrDocCommentUtil.findDocOwner(this));
     }
     if (resolved instanceof PsiClass) {
       PropertyResolverProcessor processor = new PropertyResolverProcessor(name, this);

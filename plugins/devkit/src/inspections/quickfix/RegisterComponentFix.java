@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,18 @@
 package org.jetbrains.idea.devkit.inspections.quickfix;
 
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.util.ComponentType;
 
 public class RegisterComponentFix extends AbstractRegisterFix {
   private final ComponentType myType;
 
-  public RegisterComponentFix(ComponentType type, PsiClass klass) {
-    super(klass);
+  public RegisterComponentFix(ComponentType type, @NotNull SmartPsiElementPointer<PsiClass> pointer) {
+    super(pointer);
     myType = type;
   }
 

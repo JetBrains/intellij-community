@@ -44,11 +44,13 @@ public class MergeApplication extends ApplicationStarterBase {
   }
 
   @NotNull
+  @Override
   public String getUsageMessage() {
     final String scriptName = ApplicationNamesInfo.getInstance().getScriptName();
     return DiffBundle.message("merge.application.usage.parameters.and.description", scriptName);
   }
 
+  @Override
   public void processCommand(@NotNull String[] args, @Nullable String currentDirectory) throws Exception {
     Project project = getProject();
 

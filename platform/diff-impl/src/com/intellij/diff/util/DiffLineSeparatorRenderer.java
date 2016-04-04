@@ -22,7 +22,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
-import com.intellij.openapi.editor.markup.LineMarkerRenderer;
+import com.intellij.openapi.editor.markup.LineMarkerRendererEx;
 import com.intellij.openapi.editor.markup.LineSeparatorRenderer;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.BooleanGetter;
@@ -36,7 +36,7 @@ import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.util.Arrays;
 
-public class DiffLineSeparatorRenderer implements LineMarkerRenderer, LineSeparatorRenderer {
+public class DiffLineSeparatorRenderer implements LineMarkerRendererEx, LineSeparatorRenderer {
   @NotNull private final Editor myEditor;
   @NotNull private final BooleanGetter myCondition;
 
@@ -140,6 +140,11 @@ public class DiffLineSeparatorRenderer implements LineMarkerRenderer, LineSepara
     }
 
     draw(g, shiftX, y, lineHeight, myEditor.getColorsScheme());
+  }
+
+  @Override
+  public LineMarkerRendererEx.Position getPosition() {
+    return LineMarkerRendererEx.Position.CUSTOM;
   }
 
   private static void draw(@NotNull Graphics g,

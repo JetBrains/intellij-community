@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,9 @@ import com.intellij.openapi.diagnostic.Logger
 
 val LOG: Logger = Logger.getInstance(CredentialsStore::class.java)
 
-public class Credentials(id: String?, token: String?) {
-  public val id: String? = if (id.isNullOrEmpty()) null else id
-  public val token: String? = if (token.isNullOrEmpty()) null else token
+class Credentials(id: String?, token: String?) {
+  val id: String? = if (id.isNullOrEmpty()) null else id
+  val token: String? = if (token.isNullOrEmpty()) null else token
 
   override fun equals(other: Any?): Boolean {
     if (other !is Credentials) return false
@@ -33,12 +33,12 @@ public class Credentials(id: String?, token: String?) {
   }
 }
 
-public fun Credentials?.isFulfilled(): Boolean = this != null && id != null && token != null
+fun Credentials?.isFulfilled(): Boolean = this != null && id != null && token != null
 
-public interface CredentialsStore {
-  public fun get(host: String?, sshKeyFile: String? = null): Credentials?
+interface CredentialsStore {
+  fun get(host: String?, sshKeyFile: String? = null): Credentials?
 
-  public fun save(host: String?, credentials: Credentials, sshKeyFile: String? = null)
+  fun save(host: String?, credentials: Credentials, sshKeyFile: String? = null)
 
-  public fun reset(host: String)
+  fun reset(host: String)
 }

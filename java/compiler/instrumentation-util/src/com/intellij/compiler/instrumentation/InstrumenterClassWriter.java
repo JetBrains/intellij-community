@@ -1,5 +1,6 @@
 package com.intellij.compiler.instrumentation;
 
+import org.jetbrains.org.objectweb.asm.ClassReader;
 import org.jetbrains.org.objectweb.asm.ClassWriter;
 
 /**
@@ -8,6 +9,11 @@ import org.jetbrains.org.objectweb.asm.ClassWriter;
 */
 public class InstrumenterClassWriter extends ClassWriter {
   private final InstrumentationClassFinder myFinder;
+
+  public InstrumenterClassWriter(ClassReader reader, int flags, final InstrumentationClassFinder finder) {
+    super(reader, flags);
+    myFinder = finder;
+  }
 
   public InstrumenterClassWriter(int flags, final InstrumentationClassFinder finder) {
     super(flags);

@@ -124,6 +124,11 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
    doTestWithoutLibrary();
   }
 
+  public void testWrongComparatorInUpperBound() throws Exception {
+    addDependencies_37_78();
+    doTestWithoutLibrary();
+  }
+
   public void testGenericComparator() throws Exception {
     addDependencies_37_78();
     doTestWithoutLibrary();
@@ -178,6 +183,15 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
     final String name = getTestName(false);
     myFixture.copyFileToProject("java3/p/" + name + ".java");
     myFixture.configureByFiles("java7/p/" + name + ".java");
+    myFixture.checkHighlighting();
+  }
+
+  public void testMissedAutoCloseable() {
+    IdeaTestUtil.setModuleLanguageLevel(myJava7Module, LanguageLevel.JDK_1_7);
+    ModuleRootModificationUtil.addDependency(myJava3Module, myJava7Module);
+    final String name = getTestName(false);
+    myFixture.copyFileToProject("java7/p/" + name + ".java");
+    myFixture.configureByFiles("java3/p/" + name + ".java");
     myFixture.checkHighlighting();
   }
 

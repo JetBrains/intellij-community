@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -210,6 +210,47 @@ public class ExtractMethodObject4DebuggerTest extends LightRefactoringTestCase {
            "                public void run() {\n" +
            "                }\n" +
            "            }};\n" +
+           "        }\n" +
+           "    }", false);
+  }
+
+  public void testThisAndSuperReferences() throws Exception {
+    doTest("list.forEach(i -> {\n" +
+           "      new Runnable() {\n" +
+           "        int xxx = 0;\n" +
+           "        @Override\n" +
+           "        public void run() {\n" +
+           "          this.xxx = 5; // this stays the same\n" +
+           "        }\n" +
+           "      }.run();\n" +
+           "      this.a++;  // have to be qualified\n" +
+           "      super.foo();  // have to be qualified\n" +
+           "      a++;\n" +
+           "      foo();\n" +
+           "    });",
+           "new Test(list).invoke();",
+           "public class Test {\n" +
+           "        private List<Integer> list;\n" +
+           "\n" +
+           "        public Test(List<Integer> list) {\n" +
+           "            this.list = list;\n" +
+           "        }\n" +
+           "\n" +
+           "        public void invoke() {\n" +
+           "            list.forEach(i -> {\n" +
+           "                new Runnable() {\n" +
+           "                    int xxx = 0;\n" +
+           "\n" +
+           "                    @Override\n" +
+           "                    public void run() {\n" +
+           "                        this.xxx = 5; // this stays the same\n" +
+           "                    }\n" +
+           "                }.run();\n" +
+           "                Sample.this.a++;  // have to be qualified\n" +
+           "                Sample.super.foo();  // have to be qualified\n" +
+           "                a++;\n" +
+           "                foo();\n" +
+           "            });\n" +
            "        }\n" +
            "    }", false);
   }

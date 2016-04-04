@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,31 +16,31 @@
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.ide.highlighter.JavaClassFileType;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.impl.cache.TypeInfo;
+import com.intellij.psi.impl.compiled.SignatureParsing;
 import com.intellij.psi.impl.compiled.StubBuildingVisitor;
+import com.intellij.util.cls.ClsFormatException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.FileBasedIndex.InputFilter;
 import com.intellij.util.io.DataExternalizer;
-import com.intellij.util.io.EnumeratorIntegerDescriptor;
-import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.org.objectweb.asm.ClassReader;
 import org.jetbrains.org.objectweb.asm.ClassVisitor;
 import org.jetbrains.org.objectweb.asm.FieldVisitor;
+import org.jetbrains.org.objectweb.asm.Type;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.text.StringCharacterIterator;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
 
-import static com.intellij.util.io.DataInputOutputUtil.*;
+import static com.intellij.psi.impl.compiled.ClsFileImpl.EMPTY_ATTRIBUTES;
+import static com.intellij.util.io.DataInputOutputUtil.readINT;
+import static com.intellij.util.io.DataInputOutputUtil.writeINT;
 import static com.intellij.util.io.IOUtil.readUTF;
 import static com.intellij.util.io.IOUtil.writeUTF;
 import static org.jetbrains.org.objectweb.asm.Opcodes.ACC_SYNTHETIC;
@@ -48,19 +48,26 @@ import static org.jetbrains.org.objectweb.asm.Opcodes.ASM5;
 import static org.jetbrains.plugins.groovy.lang.resolve.GroovyTraitFieldsFileIndex.TraitFieldDescriptor;
 
 public class GroovyTraitFieldsFileIndex
-  extends FileBasedIndexExtension<Integer, Collection<TraitFieldDescriptor>>
-  implements DataIndexer<Integer, Collection<TraitFieldDescriptor>, FileContent>,
-             DataExternalizer<Collection<TraitFieldDescriptor>> {
+  extends SingleEntryFileBasedIndexExtension<Collection<TraitFieldDescriptor>>
+  implements DataExternalizer<Collection<TraitFieldDescriptor>> {
 
   public static final ID<Integer, Collection<TraitFieldDescriptor>> INDEX_ID = ID.create("groovy.trait.fields");
-  public static final InputFilter INPUT_FILTER = new DefaultFileTypeSpecificInputFilter(JavaClassFileType.INSTANCE) {
+  public static final String HELPER_SUFFIX = "$Trait$FieldHelper.class";
+
+  private static final InputFilter FILTER = new DefaultFileTypeSpecificInputFilter(JavaClassFileType.INSTANCE) {
     @Override
     public boolean acceptInput(@NotNull VirtualFile file) {
-      return StringUtil.endsWith(file.getNameSequence(), "$Trait$FieldHelper.class");
+      return StringUtil.endsWith(file.getNameSequence(), HELPER_SUFFIX);
     }
   };
 
-  private static final Logger LOG = Logger.getInstance(GroovyTraitFieldsFileIndex.class);
+  private static final SingleEntryIndexer<Collection<TraitFieldDescriptor>> INDEXER = new SingleEntryIndexer<Collection<TraitFieldDescriptor>>(true) {
+    @Override
+    protected Collection<TraitFieldDescriptor> computeValue(@NotNull FileContent inputData) {
+      return index(inputData);
+    }
+  };
+
   private static final String INSTANCE_PREFIX = "$ins";
   private static final String STATIC_PREFIX = "$static";
   private static final String PRIVATE_PREFIX = "$0";
@@ -75,14 +82,8 @@ public class GroovyTraitFieldsFileIndex
 
   @NotNull
   @Override
-  public DataIndexer<Integer, Collection<TraitFieldDescriptor>, FileContent> getIndexer() {
-    return this;
-  }
-
-  @NotNull
-  @Override
-  public KeyDescriptor<Integer> getKeyDescriptor() {
-    return EnumeratorIntegerDescriptor.INSTANCE;
+  public SingleEntryIndexer<Collection<TraitFieldDescriptor>> getIndexer() {
+    return INDEXER;
   }
 
   @NotNull
@@ -94,7 +95,7 @@ public class GroovyTraitFieldsFileIndex
   @NotNull
   @Override
   public InputFilter getInputFilter() {
-    return INPUT_FILTER;
+    return FILTER;
   }
 
   @Override
@@ -104,27 +105,13 @@ public class GroovyTraitFieldsFileIndex
 
   @Override
   public int getVersion() {
-    return 2;
+    return 3;
   }
 
-  @NotNull
-  @Override
-  public Map<Integer, Collection<TraitFieldDescriptor>> map(@NotNull FileContent inputData) {
-    try {
-      return mapInner(inputData);
-    }
-    catch (Exception e) {
-      LOG.warn(e);
-      return Collections.emptyMap();
-    }
-  }
+  private static Collection<TraitFieldDescriptor> index(FileContent inputData) {
+    final Collection<TraitFieldDescriptor> values = ContainerUtil.newArrayList();
 
-  @NotNull
-  private static Map<Integer, Collection<TraitFieldDescriptor>> mapInner(@NotNull FileContent inputData) {
-    final int key = FileBasedIndex.getFileId(inputData.getFile());
-    final Map<Integer, Collection<TraitFieldDescriptor>> result = ContainerUtil.newHashMap();
     new ClassReader(inputData.getContent()).accept(new ClassVisitor(ASM5) {
-
       @Override
       public FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {
         processField(access, name, desc, signature);
@@ -133,6 +120,7 @@ public class GroovyTraitFieldsFileIndex
 
       private void processField(int access, String name, String desc, String signature) {
         if ((access & ACC_SYNTHETIC) == 0) return;
+
         final boolean isStatic;
         final boolean isPublic;
         Pair<Boolean, String> p;
@@ -151,7 +139,7 @@ public class GroovyTraitFieldsFileIndex
           return;
         }
 
-        final String typeString = TypeInfo.createTypeText(StubBuildingVisitor.fieldType(desc, signature));
+        final String typeString = fieldType(desc, signature);
         if (typeString == null) return;
 
         final int delimiter = name.indexOf(DELIMITER);
@@ -159,12 +147,8 @@ public class GroovyTraitFieldsFileIndex
           name = name.substring(delimiter + DELIMITER.length());
         }
 
-        Collection<TraitFieldDescriptor> values = result.get(key);
-        if (values == null) {
-          result.put(key, (values = ContainerUtil.newArrayList()));
-        }
-
-        values.add(new TraitFieldDescriptor(isStatic, isPublic, typeString, name));
+        byte flags = (byte)((isPublic ? TraitFieldDescriptor.PUBLIC : 0) | (isStatic ? TraitFieldDescriptor.STATIC : 0));
+        values.add(new TraitFieldDescriptor(flags, typeString, name));
       }
 
       private Pair<Boolean, String> parse(String prefix, String prefix2, String input) {
@@ -178,16 +162,28 @@ public class GroovyTraitFieldsFileIndex
           return Pair.create(null, input);
         }
       }
-    }, ClassReader.SKIP_FRAMES);
-    return result;
+
+      private String fieldType(String desc, String signature) {
+        if (signature != null) {
+          try {
+            return SignatureParsing.parseTypeString(new StringCharacterIterator(signature), StubBuildingVisitor.GUESSING_MAPPER);
+          }
+          catch (ClsFormatException ignored) { }
+        }
+
+        String raw = Type.getType(desc).getClassName();
+        return StubBuildingVisitor.GUESSING_MAPPER.fun(raw);
+      }
+    }, EMPTY_ATTRIBUTES, ClassReader.SKIP_CODE);
+
+    return values;
   }
 
   @Override
   public void save(@NotNull DataOutput out, Collection<TraitFieldDescriptor> values) throws IOException {
     writeINT(out, values.size());
     for (TraitFieldDescriptor descriptor : values) {
-      writeSINT(out, descriptor.isStatic ? 1 : 0);
-      writeSINT(out, descriptor.isPublic ? 1 : 0);
+      out.writeByte(descriptor.flags);
       writeUTF(out, descriptor.typeString);
       writeUTF(out, descriptor.name);
     }
@@ -196,52 +192,25 @@ public class GroovyTraitFieldsFileIndex
   @Override
   public Collection<TraitFieldDescriptor> read(@NotNull DataInput in) throws IOException {
     int size = readINT(in);
-    final Collection<TraitFieldDescriptor> result = ContainerUtil.newArrayListWithCapacity(size);
-    while (size-- > 0) {
-      result.add(new TraitFieldDescriptor(
-        readSINT(in) > 0,
-        readSINT(in) > 0,
-        readUTF(in),
-        readUTF(in)));
+    Collection<TraitFieldDescriptor> result = ContainerUtil.newArrayListWithCapacity(size);
+    for (int i = 0; i < size; i++) {
+      result.add(new TraitFieldDescriptor(in.readByte(), readUTF(in), readUTF(in)));
     }
     return result;
   }
 
   public static class TraitFieldDescriptor {
-    public final boolean isStatic;
-    public final boolean isPublic;
-    public final @NotNull String typeString;
-    public final @NotNull String name;
+    public static final byte PUBLIC = 0x01;
+    public static final byte STATIC = 0x02;
 
-    TraitFieldDescriptor(boolean aStatic, boolean aPublic, @NotNull String typeString, @NotNull String name) {
-      isStatic = aStatic;
-      isPublic = aPublic;
+    public final byte flags;
+    public final String typeString;
+    public final String name;
+
+    private TraitFieldDescriptor(byte flags, @NotNull String typeString, @NotNull String name) {
+      this.flags = flags;
       this.typeString = typeString;
       this.name = name;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      TraitFieldDescriptor that = (TraitFieldDescriptor)o;
-
-      if (isStatic != that.isStatic) return false;
-      if (isPublic != that.isPublic) return false;
-      if (!typeString.equals(that.typeString)) return false;
-      if (!name.equals(that.name)) return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      int result = (isStatic ? 1 : 0);
-      result = 31 * result + (isPublic ? 1 : 0);
-      result = 31 * result + typeString.hashCode();
-      result = 31 * result + name.hashCode();
-      return result;
     }
   }
 }

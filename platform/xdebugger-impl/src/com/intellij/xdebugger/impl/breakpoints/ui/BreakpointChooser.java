@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,11 +37,11 @@ public class BreakpointChooser {
 
   private DetailView myDetailViewDelegate;
 
-  private Delegate myDelegate;
+  private final Delegate myDelegate;
 
   private final ComboBox myComboBox;
 
-  private DetailController myDetailController;
+  private final DetailController myDetailController;
   private final List<BreakpointItem> myBreakpointItems;
   private BreakpointChooser.MyDetailView myDetailView;
 
@@ -82,7 +82,7 @@ public class BreakpointChooser {
     final Ref<Object> hackedSelection = Ref.create();
 
     myDetailController = new DetailController(new MasterController() {
-      JLabel fake = new JLabel();
+      final JLabel fake = new JLabel();
       @Override
       public ItemWrapper[] getSelectedItems() {
         if (hackedSelection.get() == null) {
@@ -212,7 +212,7 @@ public class BreakpointChooser {
       return true;
     }
 
-    UserDataHolderBase myDataHolderBase = new UserDataHolderBase();
+    final UserDataHolderBase myDataHolderBase = new UserDataHolderBase();
 
     @Override
     public <T> T getUserData(@NotNull Key<T> key) {

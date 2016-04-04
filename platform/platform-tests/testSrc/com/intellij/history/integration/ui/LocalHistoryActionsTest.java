@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ public class LocalHistoryActionsTest extends LocalHistoryUITestCase {
   @Override
   protected void setUpInWriteAction() throws Exception {
     super.setUpInWriteAction();
-    f = myRoot.createChildData(null, "f.txt");
+    f = createChildData(myRoot, "f.txt");
 
     document = FileDocumentManager.getInstance().getDocument(f);
     document.setText("foo");
@@ -70,8 +70,8 @@ public class LocalHistoryActionsTest extends LocalHistoryUITestCase {
     assertStatus(a, f, true);
     assertStatus(a, null, false);
 
-    assertStatus(a, myRoot.createChildData(null, "f.hprof"), false);
-    assertStatus(a, myRoot.createChildData(null, "f.xxx"), false);
+    assertStatus(a, createChildData(myRoot, "f.hprof"), false);
+    assertStatus(a, createChildData(myRoot, "f.xxx"), false);
   }
 
   public void testLocalHistoryActionDisabledWithoutProject() throws IOException {

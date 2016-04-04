@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,6 +55,8 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.AbstractPopup;
+import com.intellij.ui.popup.HintUpdateSupply;
+import com.intellij.ui.table.JBTable;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewUtil;
@@ -78,6 +80,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.*;
@@ -258,8 +261,6 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     final AsyncProcessIcon processIcon = new AsyncProcessIcon("xxx");
 
     addUsageNodes(usageView.getRoot(), usageView, new ArrayList<UsageNode>());
-
-    ScrollingUtil.installActions(table);
 
     final List<UsageNode> data = collectData(usages, visibleNodes, usageView, presentation);
     setTableModel(table, usageView, data, outOfScopeUsages, options.searchScope);
@@ -747,6 +748,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     final JComponent toolBar = actionToolbar.getComponent();
     toolBar.setOpaque(false);
     builder.setSettingButton(toolBar);
+    builder.setCancelKeyEnabled(false); 
 
     popup[0] = builder.createPopup();
     JComponent content = popup[0].getContent();
@@ -910,6 +912,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
       ShowUsagesTableCellRenderer renderer = new ShowUsagesTableCellRenderer(usageView, outOfScopeUsages, searchScope);
       for (int i=0;i<table.getColumnModel().getColumnCount();i++) {
         TableColumn column = table.getColumnModel().getColumn(i);
+        column.setPreferredWidth(0);
         column.setCellRenderer(renderer);
       }
     }
@@ -1069,7 +1072,10 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
 
     Dimension footerSize = ((AbstractPopup)popup).getFooterPreferredSize();
 
-    rectangle.height += headerSize.height + footerSize.height + 4/* invisible borders, margins etc*/;
+    int footer = footerSize.height;
+    int footerBorder = footer == 0 ? 0 : 1;
+    Insets insets = ((AbstractPopup)popup).getPopupBorder().getBorderInsets(content);
+    rectangle.height += headerSize.height + footer + footerBorder + insets.top + insets.bottom;
     ScreenUtil.fitToScreen(rectangle);
     Dimension newDim = rectangle.getSize();
     window.setBounds(rectangle);
@@ -1181,10 +1187,12 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     return newFileEditor instanceof TextEditor ? ((TextEditor)newFileEditor).getEditor() : null;
   }
 
-  private static class MyTable extends JBTableWithHintProvider implements DataProvider {
+  private static class MyTable extends JBTable implements DataProvider {
+    private static final int MARGIN = 2;
 
     public MyTable() {
       ScrollingUtil.installActions(this);
+      HintUpdateSupply.installSimpleHintUpdateSupply(this);
     }
 
     @Override
@@ -1204,8 +1212,22 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     }
 
     @Override
+    public int getRowHeight() {
+      return super.getRowHeight() + 2 * MARGIN;
+    }
+    
+    @NotNull
+    @Override
+    public Component prepareRenderer(@NotNull TableCellRenderer renderer, int row, int column) {
+      Component component = super.prepareRenderer(renderer, row, column);
+      if (component instanceof JComponent) {
+        ((JComponent)component).setBorder(IdeBorderFactory.createEmptyBorder(MARGIN, MARGIN, MARGIN, 0));
+      }
+      return component;
+    }
+
     @Nullable
-    protected PsiElement getPsiElementForHint(Object selectedValue) {
+    private static PsiElement getPsiElementForHint(Object selectedValue) {
       if (selectedValue instanceof UsageNode) {
         final Usage usage = ((UsageNode)selectedValue).getUsage();
         if (usage instanceof UsageInfo2UsageAdapter) {
@@ -1263,7 +1285,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
       Usage usage = node.getUsage();
       if (usage == MORE_USAGES_SEPARATOR || usage == USAGES_OUTSIDE_SCOPE_SEPARATOR) return "";
       GroupNode group = (GroupNode)node.getParent();
-      return usage.getPresentation().getPlainText() + group;
+      return group + usage.getPresentation().getPlainText();
     }
 
     @Override

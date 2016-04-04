@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,19 +18,18 @@ package com.intellij.psi.impl.compiled;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ven
  */
-public class ClsNameValuePairImpl extends ClsElementImpl implements PsiNameValuePair {
+class ClsNameValuePairImpl extends ClsElementImpl implements PsiNameValuePair {
   private final ClsElementImpl myParent;
   private final ClsIdentifierImpl myNameIdentifier;
   private final PsiAnnotationMemberValue myMemberValue;
 
-  public ClsNameValuePairImpl(@NotNull ClsElementImpl parent, @Nullable String name, @NotNull PsiAnnotationMemberValue value) {
+  ClsNameValuePairImpl(@NotNull ClsElementImpl parent, @Nullable String name, @NotNull PsiAnnotationMemberValue value) {
     myParent = parent;
     myNameIdentifier = name != null ? new ClsIdentifierImpl(this, name) : null;
     myMemberValue = ClsParsingUtil.getMemberValue(value, this);
@@ -100,6 +99,6 @@ public class ClsNameValuePairImpl extends ClsElementImpl implements PsiNameValue
   @Override
   @NotNull
   public PsiAnnotationMemberValue setValue(@NotNull PsiAnnotationMemberValue newValue) {
-    throw new IncorrectOperationException(CAN_NOT_MODIFY_MESSAGE);
+    throw cannotModifyException(this);
   }
 }

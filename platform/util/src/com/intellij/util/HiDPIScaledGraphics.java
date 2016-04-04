@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -452,11 +452,6 @@ class HiDPIScaledGraphics extends Graphics2D {
   @Override
   public void dispose() {
     myPeer.dispose();
-  }
-
-  @Override
-  public void finalize() {
-    myPeer.finalize();
   }
 
   @Override

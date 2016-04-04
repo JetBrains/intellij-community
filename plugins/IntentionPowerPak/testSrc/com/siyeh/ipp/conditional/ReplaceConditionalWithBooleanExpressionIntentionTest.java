@@ -13,11 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/**
- * (c) 2015 Silent Forest AB
- * created: 24 September 2015
- */
 package com.siyeh.ipp.conditional;
 
 import com.siyeh.ipp.IPPTestCase;

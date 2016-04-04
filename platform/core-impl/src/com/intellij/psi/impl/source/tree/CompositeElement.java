@@ -117,7 +117,7 @@ public class CompositeElement extends TreeElement {
     clearRelativeOffsets(rawFirstChild());
   }
 
-  public void assertThreading() {
+  private void assertThreading() {
     if (ASSERT_THREADING) {
       boolean ok = ApplicationManager.getApplication().isWriteAccessAllowed() || isNonPhysicalOrInjected();
       if (!ok) {
@@ -518,7 +518,7 @@ public class CompositeElement extends TreeElement {
     return count;
   }
 
-  public int countChildren(IElementType type) {
+  private int countChildren(@NotNull IElementType type) {
     // no lock is needed because all chameleons are expanded already
     int count = 0;
     for (ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
@@ -559,14 +559,13 @@ public class CompositeElement extends TreeElement {
 
     ApplicationManager.getApplication().assertReadAccessAllowed(); //otherwise a write action can modify the tree while we're walking it
     try {
-      walkCachingLength();
+      return walkCachingLength();
     }
     catch (AssertionError e) {
       myCachedLength = -1;
       String assertion = StringUtil.getThrowableText(e);
       throw new AssertionError("Walking failure: ===\n"+assertion+"\n=== Thread dump:\n"+ ThreadDumper.dumpThreadsToString()+"\n===\n");
     }
-    return myCachedLength;
   }
 
   @Override
@@ -602,11 +601,14 @@ public class CompositeElement extends TreeElement {
     return cur;
   }
 
-  private void walkCachingLength() {
+  // returns computed length
+  private int walkCachingLength() {
     TreeElement cur = drillDown(this);
     while (true) {
-      if (cur.getCachedLength() < 0) {
-        int length = 0;
+      int length = cur.getCachedLength();
+      if (length < 0) {
+        // can happen only in CompositeElement
+        length = 0;
         for (TreeElement child = cur.getFirstChildNode(); child != null; child = child.getTreeNext()) {
           length += child.getTextLength();
         }
@@ -614,7 +616,7 @@ public class CompositeElement extends TreeElement {
       }
 
       if (cur == this) {
-        return;
+        return length;
       }
 
       TreeElement next = cur.getTreeNext();

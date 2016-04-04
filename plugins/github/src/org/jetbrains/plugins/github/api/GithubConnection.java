@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,6 @@ import org.jetbrains.plugins.github.util.GithubAuthData;
 import org.jetbrains.plugins.github.util.GithubSettings;
 import org.jetbrains.plugins.github.util.GithubUrlUtil;
 import org.jetbrains.plugins.github.util.GithubUtil;
-import sun.security.validator.ValidatorException;
 
 import javax.net.ssl.SSLHandshakeException;
 import java.awt.*;
@@ -58,6 +57,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.security.cert.CertificateException;
 import java.util.*;
 import java.util.List;
 
@@ -274,7 +274,7 @@ public class GithubConnection {
       return createResponse(ret, nextPage, response);
     }
     catch (SSLHandshakeException e) { // User canceled operation from CertificateManager
-      if (e.getCause() instanceof ValidatorException) {
+      if (e.getCause() instanceof CertificateException) {
         LOG.info("Host SSL certificate is not trusted", e);
         throw new GithubOperationCanceledException("Host SSL certificate is not trusted", e);
       }

@@ -73,15 +73,19 @@ public class UnifiedDiffWriter {
                        lineSeparator);
         for(PatchLine line: hunk.getLines()) {
           char prefixChar = ' ';
-          switch(line.getType()) {
-            case ADD: prefixChar = '+'; break;
-            case REMOVE: prefixChar = '-'; break;
-            case CONTEXT: prefixChar = ' '; break;
+          switch (line.getType()) {
+            case ADD:
+              prefixChar = '+';
+              break;
+            case REMOVE:
+              prefixChar = '-';
+              break;
+            case CONTEXT:
+              prefixChar = ' ';
+              break;
           }
           String text = line.getText();
-          if (text.endsWith("\n")) {
-            text = text.substring(0, text.length()-1);
-          }
+          text = StringUtil.trimEnd(text, "\n");
           writeLine(writer, text, prefixChar);
           if (line.isSuppressNewLine()) {
             writer.write(lineSeparator + NO_NEWLINE_SIGNATURE + lineSeparator);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,11 +23,12 @@ import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.AsyncPromise;
+import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
 
@@ -55,16 +56,17 @@ public abstract class LazyUiDisposable<T extends Disposable> implements Activata
     if (myWasEverShown) return;
 
     try {
-      findParentDisposable().doWhenDone(new Consumer<Disposable>() {
-        public void consume(Disposable parent) {
-          Project project = null;
-          if (ApplicationManager.getApplication() != null) {
-            project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
+      findParentDisposable()
+        .done(new Consumer<Disposable>() {
+          public void consume(Disposable parent) {
+            Project project = null;
+            if (ApplicationManager.getApplication() != null) {
+              project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
+            }
+            initialize(parent, myChild, project);
+            Disposer.register(parent, myChild);
           }
-          initialize(parent, myChild, project);
-          Disposer.register(parent, myChild);
-        }
-      });
+        });
     }
     finally {
       myWasEverShown = true;
@@ -77,24 +79,25 @@ public abstract class LazyUiDisposable<T extends Disposable> implements Activata
   protected abstract void initialize(@NotNull Disposable parent, @NotNull T child, @Nullable Project project);
 
   @NotNull
-  private AsyncResult<Disposable> findParentDisposable() {
+  private Promise<Disposable> findParentDisposable() {
     return findDisposable(myParent, PlatformDataKeys.UI_DISPOSABLE);
   }
 
-
-  private static AsyncResult<Disposable> findDisposable(Disposable defaultValue, final DataKey<? extends Disposable> key) {
+  private static Promise<Disposable> findDisposable(Disposable defaultValue, final DataKey<? extends Disposable> key) {
     if (defaultValue == null) {
       if (ApplicationManager.getApplication() != null) {
-        final AsyncResult<Disposable> result = new AsyncResult<Disposable>();
-        DataManager.getInstance().getDataContextFromFocus().doWhenDone(new Consumer<DataContext>() {
-          public void consume(DataContext context) {
-            Disposable disposable = key.getData(context);
-            if (disposable == null) {
-              disposable = Disposer.get("ui");
+        final AsyncPromise<Disposable> result = new AsyncPromise<Disposable>();
+        DataManager.getInstance().getDataContextFromFocus()
+          .doWhenDone(new Consumer<DataContext>() {
+            @Override
+            public void consume(DataContext context) {
+              Disposable disposable = key.getData(context);
+              if (disposable == null) {
+                disposable = Disposer.get("ui");
+              }
+              result.setResult(disposable);
             }
-            result.setDone(disposable);
-          }
-        });
+          });
         return result;
       }
       else {
@@ -102,8 +105,7 @@ public abstract class LazyUiDisposable<T extends Disposable> implements Activata
       }
     }
     else {
-      return new AsyncResult.Done<Disposable>(defaultValue);
+      return Promise.resolve(defaultValue);
     }
   }
-
 }

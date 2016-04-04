@@ -17,9 +17,10 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.util.Enumeration;
@@ -285,4 +286,25 @@ public class ZipUtil {
       zos.close();
     }
   }
+
+  @Nullable
+  public static File compressFile(@NotNull File srcFile, @NotNull File zipFile) throws IOException {
+    InputStream is = new FileInputStream(srcFile);
+    try {
+      ZipOutputStream os = new ZipOutputStream(new FileOutputStream(zipFile));
+      try {
+        os.putNextEntry(new ZipEntry(srcFile.getName()));
+        FileUtilRt.copy(is, os);
+        os.closeEntry();
+        return zipFile;
+      }
+      finally {
+        os.close();
+      }
+    }
+    finally {
+      is.close();
+    }
+  }
+
 }

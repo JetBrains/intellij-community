@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ import java.util.*
 /**
  * @author nik
  */
-public class PluginModuleCompilationTest : BaseCompilerTestCase() {
+class PluginModuleCompilationTest : BaseCompilerTestCase() {
   private var pluginSdk: Sdk? = null
 
   override fun setUpJdk() {
@@ -70,7 +70,7 @@ public class PluginModuleCompilationTest : BaseCompilerTestCase() {
     }
   }
 
-  public fun testMakeSimpleModule() {
+  fun testMakeSimpleModule() {
     val module = setupSimplePluginProject()
     make(module)
     BaseCompilerTestCase.assertOutput(module, fs().dir("xxx").file("MyAction.class"))
@@ -86,13 +86,13 @@ public class PluginModuleCompilationTest : BaseCompilerTestCase() {
       .build().assertDirectoryEqual(sandbox)
   }
 
-  public fun testRebuildSimpleProject() {
+  fun testRebuildSimpleProject() {
     setupSimplePluginProject()
     val log = rebuild()
     assertThat(log.warnings).`as`("Rebuild finished with warnings: ${Arrays.toString(log.warnings)}").isEmpty()
   }
 
-  public fun testPrepareSimpleProjectForDeployment() {
+  fun testPrepareSimpleProjectForDeployment() {
     val module = setupSimplePluginProject()
     rebuild()
     prepareForDeployment(module)
@@ -106,7 +106,7 @@ public class PluginModuleCompilationTest : BaseCompilerTestCase() {
       .build().assertFileEqual(outputFile)
   }
 
-  public fun testBuildProjectWithJpsModule() {
+  fun testBuildProjectWithJpsModule() {
     val module = setupPluginProjectWithJpsModule()
     rebuild()
     prepareForDeployment(module)

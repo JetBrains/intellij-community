@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,20 +36,23 @@ import java.net.InetSocketAddress
 import java.util.concurrent.atomic.AtomicReference
 
 abstract class RemoteVmConnection : VmConnection<Vm>() {
+  var port = -1
+
   private val connectCancelHandler = AtomicReference<() -> Unit>()
 
   abstract fun createBootstrap(address: InetSocketAddress, vmResult: org.jetbrains.concurrency.AsyncPromise<Vm>): Bootstrap
 
   @JvmOverloads
-  fun open(address: InetSocketAddress, stopCondition: Condition<Void>? = null) {
-    setState(ConnectionStatus.WAITING_FOR_CONNECTION, "Connecting to ${address.hostName}:${address.port}")
+  fun open(address: InetSocketAddress, stopCondition: Condition<Void>? = null): Promise<Vm> {
+    port = address.port
+    setState(ConnectionStatus.WAITING_FOR_CONNECTION, "Connecting to ${address.hostName}:${port}")
+    val result = AsyncPromise<Vm>()
     val future = ApplicationManager.getApplication().executeOnPooledThread {
       if (Thread.interrupted()) {
         return@executeOnPooledThread
       }
 
-      val result = AsyncPromise<Vm>()
-      connectCancelHandler.set({ result.setError("Closed explicitly") })
+      connectCancelHandler.set { result.setError("Closed explicitly") }
 
       val connectionPromise = AsyncPromise<Any?>()
       connectionPromise.rejected { result.setError(it) }
@@ -70,7 +73,16 @@ abstract class RemoteVmConnection : VmConnection<Vm>() {
 
       createBootstrap(address, result).connect(address, connectionPromise, maxAttemptCount = if (stopCondition == null) NettyUtil.DEFAULT_CONNECT_ATTEMPT_COUNT else -1, stopCondition = stopCondition)
     }
-    connectCancelHandler.set { future.cancel(true) }
+
+    connectCancelHandler.set {
+      try {
+        future.cancel(true)
+      }
+      finally {
+        result.setError("Cancelled")
+      }
+    }
+    return result
   }
 
   protected open fun connectedAddressToPresentation(address: InetSocketAddress, vm: Vm): String = "${address.hostName}:${address.port}"

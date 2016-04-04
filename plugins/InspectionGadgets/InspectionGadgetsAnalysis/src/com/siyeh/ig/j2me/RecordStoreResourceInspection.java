@@ -15,12 +15,15 @@
  */
 package com.siyeh.ig.j2me;
 
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiVariable;
+import com.intellij.util.xmlb.XmlSerializer;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.resources.ResourceInspection;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 public class RecordStoreResourceInspection extends ResourceInspection {
@@ -50,5 +53,10 @@ public class RecordStoreResourceInspection extends ResourceInspection {
   @Override
   protected boolean isResourceClose(PsiMethodCallExpression call, PsiVariable resource) {
     return MethodCallUtils.isMethodCallOnVariable(call, resource, "closeRecordStore");
+  }
+
+  @Override
+  public void writeSettings(@NotNull Element node) throws WriteExternalException {
+    XmlSerializer.serializeInto(this, node, getSerializationFilter());
   }
 }

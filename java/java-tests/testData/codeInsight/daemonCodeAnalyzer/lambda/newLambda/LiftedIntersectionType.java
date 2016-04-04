@@ -13,7 +13,7 @@ class Test {
   }
 
   void bar(C c) {
-    foo(c, x -> <error descr="Bad return type in lambda expression: A cannot be converted to C">x.f()</error>);
+    foo(c, <error descr="Bad return type in lambda expression: A cannot be converted to C">x -> x.f()</error>);
     foo(c, x -> x);
   }
 

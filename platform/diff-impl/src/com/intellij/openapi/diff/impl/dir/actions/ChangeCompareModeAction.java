@@ -16,9 +16,9 @@
 package com.intellij.openapi.diff.impl.dir.actions;
 
 import com.intellij.ide.diff.DirDiffSettings;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diff.impl.dir.DirDiffTableModel;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.EmptyIcon;
 
@@ -27,7 +27,7 @@ import javax.swing.*;
 /**
 * @author Konstantin Bulenkov
 */
-class ChangeCompareModeAction extends AnAction {
+class ChangeCompareModeAction extends DumbAwareAction {
   private final static Icon ON = PlatformIcons.CHECK_ICON;
   private final static Icon ON_SELECTED = PlatformIcons.CHECK_ICON_SELECTED;
   private final static Icon OFF = EmptyIcon.create(ON.getIconHeight());
@@ -37,6 +37,7 @@ class ChangeCompareModeAction extends AnAction {
 
   ChangeCompareModeAction(DirDiffTableModel model, DirDiffSettings.CompareMode mode) {
     super(mode.getPresentableName(model.getSettings()));
+    getTemplatePresentation().setIcon(OFF);
     myModel = model;
     myMode = mode;
   }

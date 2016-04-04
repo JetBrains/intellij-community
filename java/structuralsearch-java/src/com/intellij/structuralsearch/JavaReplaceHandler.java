@@ -127,18 +127,18 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
     return getSymbolReplacementTarget(el) != null;
   }
 
-  @SuppressWarnings({"ConstantConditions"})
-  private void handleModifierList(final PsiElement el, final PsiElement replacement) throws IncorrectOperationException {
-    // We want to copy all comments, including doc comments and modifier lists
+  @SuppressWarnings("ConstantConditions")
+  private void copyUnmatchedElements(final PsiElement original, final PsiElement replacement) {
+    // We want to copy all comments, including doc comments, modifier lists and method bodies
     // that are present in matched nodes but not present in search/replace
 
     Map<String, String> newNameToSearchPatternNameMap = myContext.getNewName2PatternNameMap();
 
-    Map<String, PsiNamedElement> originalNamedElements = Collector.collectNamedElements(el);
+    Map<String, PsiNamedElement> originalNamedElements = Collector.collectNamedElements(original);
     Map<String, PsiNamedElement> replacedNamedElements = Collector.collectNamedElements(replacement);
 
     if (originalNamedElements.size() == 0 && replacedNamedElements.size() == 0) {
-      Replacer.handleComments(el, replacement, myContext);
+      Replacer.handleComments(original, replacement, myContext);
       return;
     }
 
@@ -149,7 +149,7 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
       PsiNamedElement replacementNamedElement = replacedNamedElements.get(name);
       String key = newNameToSearchPatternNameMap.get(name);
       if (key == null) key = name;
-      PsiNamedElement searchNamedElement = searchedNamedElements.get(key);
+      PsiNamedElement searchedNamedElement = searchedNamedElements.get(key);
 
       if (replacementNamedElement == null && originalNamedElements.size() == 1 && replacedNamedElements.size() == 1) {
         replacementNamedElement = replacedNamedElements.entrySet().iterator().next().getValue();
@@ -170,7 +170,7 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
         }
       }
 
-      if (replacementNamedElement != null && searchNamedElement != null) {
+      if (replacementNamedElement != null && searchedNamedElement != null) {
         Replacer.handleComments(originalNamedElement, replacementNamedElement, myContext);
       }
 
@@ -191,8 +191,8 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
         ) {
         PsiModifierList modifierList = ((PsiModifierListOwner)originalNamedElements.get(name)).getModifierList();
 
-        if (searchNamedElement instanceof PsiModifierListOwner) {
-          PsiModifierList modifierListOfSearchedElement = ((PsiModifierListOwner)searchNamedElement).getModifierList();
+        if (searchedNamedElement instanceof PsiModifierListOwner) {
+          PsiModifierList modifierListOfSearchedElement = ((PsiModifierListOwner)searchedNamedElement).getModifierList();
           final PsiModifierListOwner modifierListOwner = ((PsiModifierListOwner)replacementNamedElement);
           PsiModifierList modifierListOfReplacement = modifierListOwner.getModifierList();
 
@@ -213,6 +213,18 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
             }
             modifierListOfReplacement.replace(copy);
           }
+        }
+      }
+
+      if (originalNamedElement instanceof PsiMethod &&
+          searchedNamedElement instanceof PsiMethod &&
+          replacementNamedElement instanceof PsiMethod) {
+        final PsiMethod searchedMethod = (PsiMethod)searchedNamedElement;
+        final PsiMethod replacementMethod = (PsiMethod)replacementNamedElement;
+        if (searchedMethod.getBody() == null && replacementMethod.getBody() == null) {
+          final PsiMethod originalMethod = (PsiMethod)originalNamedElement;
+          final PsiCodeBlock originalBody = originalMethod.getBody();
+          replacementMethod.add(originalBody);
         }
       }
     }
@@ -267,12 +279,12 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
     if (listContext) {
       if (statements.length > 1) {
         final PsiElement replacement = elementParent.addRangeBefore(statements[0], statements[statements.length - 1], elementToReplace);
-        handleModifierList(elementToReplace, replacement);
+        copyUnmatchedElements(elementToReplace, replacement);
       }
       else if (statements.length == 1) {
         PsiElement replacement = getMatchExpr(statements[0], elementToReplace);
 
-        handleModifierList(elementToReplace, replacement);
+        copyUnmatchedElements(elementToReplace, replacement);
         replacement = handleSymbolReplacement(replacement, elementToReplace);
 
         if (replacement instanceof PsiTryStatement) {
@@ -337,7 +349,7 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
       }
       else {
         // preserve comments
-        handleModifierList(elementToReplace, replacement);
+        copyUnmatchedElements(elementToReplace, replacement);
 
         if (replacement instanceof PsiClass) {
           final PsiStatement[] searchStatements = getCodeBlock().getStatements();
