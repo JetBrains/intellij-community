@@ -224,14 +224,49 @@ public class JavaCompletionContributor extends CompletionContributor {
       return;
     }
 
+    PrefixMatcher matcher = result.getPrefixMatcher();
+    PsiElement parent = position.getParent();
+
     final InheritorsHolder inheritors = new InheritorsHolder(result);
+    if (position instanceof PsiIdentifier) {
+      addIdentifierVariants(parameters, position, result, matcher, parent, inheritors);
+    }
+
+    Set<String> usedWords = addReferenceVariants(parameters, result, inheritors);
+
+    if (psiElement().inside(PsiLiteralExpression.class).accepts(position)) {
+      PsiReference reference = position.getContainingFile().findReferenceAt(parameters.getOffset());
+      if (reference == null || reference.isSoft()) {
+        WordCompletionContributor.addWordCompletionVariants(result, parameters, usedWords);
+      }
+    }
+
+    if (position instanceof PsiIdentifier) {
+      JavaGenerateMemberCompletionContributor.fillCompletionVariants(parameters, result);
+    }
+
+    addAllClasses(parameters, result, inheritors);
+
+    if (position instanceof PsiIdentifier &&
+        parent instanceof PsiReferenceExpression &&
+        !((PsiReferenceExpression)parent).isQualified() &&
+        parameters.isExtendedCompletion() &&
+        StringUtil.isNotEmpty(matcher.getPrefix())) {
+      new JavaStaticMemberProcessor(parameters).processStaticMethodsGlobally(matcher, result);
+    }
+    result.stopHere();
+  }
+
+  private static void addIdentifierVariants(@NotNull CompletionParameters parameters,
+                                            PsiElement position,
+                                            final CompletionResultSet result,
+                                            PrefixMatcher matcher, PsiElement parent, final InheritorsHolder inheritors) {
     if (TypeArgumentCompletionProvider.IN_TYPE_ARGS.accepts(position)) {
       new TypeArgumentCompletionProvider(false, inheritors).addCompletions(parameters, new ProcessingContext(), result);
     }
 
     result.addAllElements(FunctionalExpressionCompletionProvider.getLambdaVariants(parameters, true));
 
-    PrefixMatcher matcher = result.getPrefixMatcher();
     if (JavaSmartCompletionContributor.AFTER_NEW.accepts(position)) {
       new JavaInheritorsGetter(ConstructorInsertHandler.BASIC_INSTANCE).generateVariants(parameters, matcher, inheritors);
     }
@@ -256,10 +291,9 @@ public class JavaCompletionContributor extends CompletionContributor {
       });
     }
 
-    PsiElement parent = position.getParent();
     if (parent instanceof PsiReferenceExpression) {
       final List<ExpectedTypeInfo> expected = Arrays.asList(ExpectedTypesProvider.getExpectedTypes((PsiExpression)parent, true));
-      CollectConversion.addCollectConversion((PsiReferenceExpression)parent, expected, 
+      CollectConversion.addCollectConversion((PsiReferenceExpression)parent, expected,
                                              JavaSmartCompletionContributor.decorateWithoutTypeCheck(result, expected));
     }
 
@@ -270,27 +304,6 @@ public class JavaCompletionContributor extends CompletionContributor {
     addKeywords(parameters, result);
 
     addExpressionVariants(parameters, position, result);
-
-    Set<String> usedWords = addReferenceVariants(parameters, result, inheritors);
-
-    if (psiElement().inside(PsiLiteralExpression.class).accepts(position)) {
-      PsiReference reference = position.getContainingFile().findReferenceAt(parameters.getOffset());
-      if (reference == null || reference.isSoft()) {
-        WordCompletionContributor.addWordCompletionVariants(result, parameters, usedWords);
-      }
-    }
-
-    JavaGenerateMemberCompletionContributor.fillCompletionVariants(parameters, result);
-
-    addAllClasses(parameters, result, inheritors);
-
-    if (parent instanceof PsiReferenceExpression &&
-        !((PsiReferenceExpression)parent).isQualified() &&
-        parameters.isExtendedCompletion() &&
-        StringUtil.isNotEmpty(matcher.getPrefix())) {
-      new JavaStaticMemberProcessor(parameters).processStaticMethodsGlobally(matcher, result);
-    }
-    result.stopHere();
   }
 
   private static void registerClassFromTypeElement(LookupElement element, InheritorsHolder inheritors) {
