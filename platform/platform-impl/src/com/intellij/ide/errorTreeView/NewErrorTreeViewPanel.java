@@ -127,7 +127,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
 
     myMessagePanel = new JPanel(new BorderLayout());
 
-    myErrorViewStructure = new ErrorViewStructure(project, canHideWarnings());
+    myErrorViewStructure = createErrorViewStructure(project, canHideWarnings());
     DefaultMutableTreeNode root = new DefaultMutableTreeNode();
     root.setUserObject(myErrorViewStructure.createDescriptor(myErrorViewStructure.getRootElement(), null));
     final DefaultTreeModel treeModel = new DefaultTreeModel(root);
@@ -178,6 +178,10 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     });
 
     EditSourceOnDoubleClickHandler.install(myTree);
+  }
+
+  protected ErrorViewStructure createErrorViewStructure(Project project, boolean canHideWarnings) {
+    return new ErrorViewStructure(project, canHideWarnings);
   }
 
   @Override
