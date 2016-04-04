@@ -497,4 +497,21 @@ public class StudyUtils {
   public static boolean isStudyProject(Project project) {
     return StudyTaskManager.getInstance(project).getCourse() != null;
   }
+
+  @Nullable
+  public static Task getTask(@NotNull Project project, @NotNull VirtualFile taskVF) {
+    Course course = StudyTaskManager.getInstance(project).getCourse();
+    if (course == null) {
+      return null;
+    }
+    VirtualFile lessonVF = taskVF.getParent();
+    if (lessonVF == null) {
+      return null;
+    }
+    Lesson lesson = course.getLesson(lessonVF.getName());
+    if (lesson == null) {
+      return null;
+    }
+    return lesson.getTask(taskVF.getName());
+  }
 }

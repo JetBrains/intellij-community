@@ -178,4 +178,16 @@ public class CCUtils {
 
     return COURSE_MODE.equals(course.getCourseMode());
   }
+
+  public static boolean isTestsFile(@NotNull Project project, @NotNull VirtualFile file) {
+    Course course = StudyTaskManager.getInstance(project).getCourse();
+    if (course == null) {
+      return false;
+    }
+    CCLanguageManager manager = getStudyLanguageManager(course);
+    if (manager == null) {
+      return false;
+    }
+    return manager.isTestFile(file);
+  }
 }

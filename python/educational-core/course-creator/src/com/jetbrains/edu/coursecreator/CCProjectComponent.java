@@ -1,23 +1,13 @@
 package com.jetbrains.edu.coursecreator;
 
 import com.intellij.openapi.components.ProjectComponent;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.event.EditorFactoryEvent;
-import com.intellij.openapi.editor.impl.EditorFactoryImpl;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorImpl;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.jetbrains.edu.learning.courseFormat.Course;
 import org.jetbrains.annotations.NotNull;
 
 public class CCProjectComponent implements ProjectComponent {
   private final Project myProject;
+  private final  CCVirtualFileListener myTaskFileLifeListener = new CCVirtualFileListener();
   private CCFileDeletedListener myListener;
 
   public CCProjectComponent(Project project) {
@@ -25,6 +15,7 @@ public class CCProjectComponent implements ProjectComponent {
   }
 
   public void initComponent() {
+    VirtualFileManager.getInstance().addVirtualFileListener(myTaskFileLifeListener);
   }
 
   public void disposeComponent() {
@@ -36,14 +27,15 @@ public class CCProjectComponent implements ProjectComponent {
   }
 
   public void projectOpened() {
+    VirtualFileManager.getInstance().addVirtualFileListener(myTaskFileLifeListener);
     StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new Runnable() {
       @Override
       public void run() {
         final Course course = CCProjectService.getInstance(myProject).getCourse();
         if (course != null) {
           course.initCourse(true);
-          myListener = new CCFileDeletedListener(myProject);
-          VirtualFileManager.getInstance().addVirtualFileListener(myListener);
+          myTaskFileLifeListener = new CCFileDeletedListener(myProject);
+          VirtualFileManager.getInstance().addVirtualFileListener(myTaskFileLifeListener);
           final CCEditorFactoryListener editorFactoryListener = new CCEditorFactoryListener();
           EditorFactory.getInstance().addEditorFactoryListener(editorFactoryListener, myProject);
           VirtualFile[] files = FileEditorManager.getInstance(myProject).getOpenFiles();
@@ -64,8 +56,9 @@ public class CCProjectComponent implements ProjectComponent {
   }
 
   public void projectClosed() {
+    VirtualFileManager.getInstance().removeVirtualFileListener(myTaskFileLifeListener);
     if (myListener != null) {
-      VirtualFileManager.getInstance().removeVirtualFileListener(myListener);
+      VirtualFileManager.getInstance().removeVirtualFileListener(myTaskFileLifeListener);
     }
   }
 }

@@ -10,7 +10,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -110,10 +109,6 @@ public class CCCreateTask extends CCCreateStudyItemActionBase {
           if (defaultExtension != null) {
             FileTemplate taskFileTemplate = manager.getTaskFileTemplateForExtension(project, defaultExtension);
             createFromTemplate(taskDirectory.get(), taskFileTemplate, view, true);
-            if (taskFileTemplate != null) {
-              String taskFileName = FileUtil.getNameWithoutExtension(taskFileTemplate.getName());
-              ((Task)item).addTaskFile(taskFileName + "." + defaultExtension, 1);
-            }
           }
         }
       }
