@@ -844,54 +844,25 @@ public abstract class UsefulTestCase extends TestCase {
     });
   }
 
-  protected static void checkAllTimersAreDisposed(@NotNull List<Throwable> exceptions) {
-    Field firstTimerF;
-    Object timerQueue;
-    Object timer;
+  static void checkJavaSwingTimersAreDisposed(@NotNull List<Throwable> exceptions) {
     try {
-      Class<?> TimerQueueC = Class.forName("javax.swing.TimerQueue");
-      Method sharedInstance = TimerQueueC.getDeclaredMethod("sharedInstance");
-      sharedInstance.setAccessible(true);
+      Class<?> TimerQueueClass = Class.forName("javax.swing.TimerQueue");
+      Method sharedInstance = ReflectionUtil.getMethod(TimerQueueClass, "sharedInstance");
 
-      firstTimerF = ReflectionUtil.getDeclaredField(TimerQueueC, "firstTimer");
-      timerQueue = sharedInstance.invoke(null);
-      if (firstTimerF == null) {
-        // jdk 8
-        DelayQueue delayQueue = ReflectionUtil.getField(TimerQueueC, timerQueue, DelayQueue.class, "queue");
-        timer = delayQueue.peek();
-      }
-      else {
-        // ancient jdk
-        firstTimerF.setAccessible(true);
-        timer = firstTimerF.get(timerQueue);
+      Object timerQueue = sharedInstance.invoke(null);
+      DelayQueue delayQueue = ReflectionUtil.getField(TimerQueueClass, timerQueue, DelayQueue.class, "queue");
+      Delayed timer = delayQueue.peek();
+      if (timer != null) {
+        long delay = timer.getDelay(TimeUnit.MILLISECONDS);
+        String text = "(delayed for " + delay + "ms)";
+        Method getTimer = ReflectionUtil.getDeclaredMethod(timer.getClass(), "getTimer");
+        Timer swingTimer = (Timer)getTimer.invoke(timer);
+        text = "Timer (listeners: "+Arrays.asList(swingTimer.getActionListeners()) + ") "+text;
+        exceptions.add(new AssertionFailedError("Not disposed java.swing.Timer: " + text + "; queue:" + timerQueue));
       }
     }
     catch (Throwable e) {
       exceptions.add(e);
-      return;
-    }
-
-    if (timer != null) {
-      if (firstTimerF != null) {
-        ReflectionUtil.resetField(timerQueue, firstTimerF);
-      }
-      String text = "";
-      if (timer instanceof Delayed) {
-        long delay = ((Delayed)timer).getDelay(TimeUnit.MILLISECONDS);
-        text = "(delayed for "+delay+"ms)";
-        Method getTimer = ReflectionUtil.getDeclaredMethod(timer.getClass(), "getTimer");
-        getTimer.setAccessible(true);
-        try {
-          timer = getTimer.invoke(timer);
-        }
-        catch (Exception e) {
-          exceptions.add(e);
-          return;
-        }
-      }
-      Timer t = (Timer)timer;
-      text = "Timer (listeners: "+Arrays.asList(t.getActionListeners()) + ") "+text;
-      exceptions.add(new AssertionFailedError("Not disposed Timer: " + text + "; queue:" + timerQueue));
     }
   }
 
@@ -899,7 +870,6 @@ public abstract class UsefulTestCase extends TestCase {
    * Checks that code block throw corresponding exception.
    *
    * @param exceptionCase Block annotated with some exception type
-   * @throws Throwable
    */
   protected void assertException(final AbstractExceptionCase exceptionCase) throws Throwable {
     assertException(exceptionCase, null);
