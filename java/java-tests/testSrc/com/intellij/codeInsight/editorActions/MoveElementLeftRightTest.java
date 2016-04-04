@@ -85,6 +85,11 @@ public class MoveElementLeftRightTest extends AbstractMoveElementLeftRightTest {
                           "class C { void m() throws Exception, RuntimeExceptio<caret>n {} }");
   }
 
+  public void testMoveThrowsExceptionsWithCaretAtEnd() throws Exception {
+    doTestFromRightToLeft("class C { void m() throws RuntimeException, Exception<caret> {} }",
+                          "class C { void m() throws Exception<caret>, RuntimeException {} }");
+  }
+
   public void testMoveImplementsClause() throws Exception {
     doTestFromLeftToRight("class C implements Cl<caret>oneable, java.io.Serializable {}",
                           "class C implements java.io.Serializable, Cl<caret>oneable {}");
