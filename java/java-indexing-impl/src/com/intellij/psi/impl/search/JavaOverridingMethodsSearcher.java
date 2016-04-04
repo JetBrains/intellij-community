@@ -79,6 +79,8 @@ public class JavaOverridingMethodsSearcher implements QueryExecutor<PsiMethod, O
     // optimisation: in case of local scope it's considered cheaper to enumerate all scope files and check if there is an inheritor there,
     // instead of traversing the (potentially huge) class hierarchy and filter out almost everything by scope.
     VirtualFile[] virtualFiles = searchScope.getVirtualFiles();
+    final PsiClass methodContainingClass = ApplicationManager.getApplication().runReadAction((Computable<PsiClass>)method::getContainingClass);
+    if (methodContainingClass == null) return true;
 
     final boolean[] success = {true};
     for (VirtualFile virtualFile : virtualFiles) {
@@ -88,13 +90,12 @@ public class JavaOverridingMethodsSearcher implements QueryExecutor<PsiMethod, O
         public void run() {
           PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
           if (psiFile != null) {
-            final PsiClass containingClass = ApplicationManager.getApplication().runReadAction((Computable<PsiClass>)method::getContainingClass);
             psiFile.accept(new JavaRecursiveElementVisitor() {
               @Override
               public void visitClass(PsiClass candidate) {
                 ProgressManager.checkCanceled();
                 if (!success[0]) return;
-                PsiMethod overridingMethod = candidate == containingClass ? null : findOverridingMethod(project, candidate, method, containingClass);
+                PsiMethod overridingMethod = candidate == methodContainingClass ? null : findOverridingMethod(project, candidate, method, methodContainingClass);
                 if (overridingMethod != null && !consumer.process(overridingMethod)) {
                   success[0] = false;
                 }
