@@ -82,6 +82,9 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
     final int lineStartOffset = getLineStartSafeOffset(document, lineNumber);
     final int lineEndOffset = document.getLineEndOffset(lineNumber);
 
+    final String linePrefix = document.getText(TextRange.create(lineStartOffset, caretOffset));
+    if (!StringUtil.isEmptyOrSpaces(linePrefix)) return text;
+    
     final PsiElement element = file.findElementAt(caretOffset);
     if (PsiTreeUtil.getParentOfType(element, PyStringLiteralExpression.class) != null) return text;
 
@@ -186,15 +189,13 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
   }
 
   private static boolean isApplicable(@NotNull final PsiFile file, @NotNull String text, int caretOffset) {
-    final boolean useTabs = CodeStyleSettingsManager.getSettings(file.getProject()).useTabCharacter(PythonFileType.INSTANCE);
+    final boolean useTabs =
+      CodeStyleSettingsManager.getSettings(file.getProject()).useTabCharacter(PythonFileType.INSTANCE);
     final PsiElement nonWS = PyUtil.findNextAtOffset(file, caretOffset, PsiWhiteSpace.class);
-    if (nonWS == null) {
-      return !StringUtil.isEmptyOrSpaces(text);
-    }
-    if (text.endsWith("\n") ||
-        (inStatementList(file, caretOffset) && (text.startsWith(useTabs ? "\t" : " ") || StringUtil.split(text, "\n").size() > 1))) {
+    if (nonWS == null || text.endsWith("\n"))
       return true;
-    }
+    if (inStatementList(file, caretOffset) && (text.startsWith(useTabs ? "\t" : " ") || StringUtil.split(text, "\n").size() > 1))
+      return true;
     return false;
   }
 
