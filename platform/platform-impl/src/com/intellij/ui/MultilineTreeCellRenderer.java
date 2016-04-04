@@ -79,7 +79,12 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Ac
         }
       }
     });
+    updateUI();
+  }
 
+  @Override
+  public void updateUI() {
+    UISettings.setupComponentAntialiasing(this);
   }
 
   protected void setMinHeight(int height) {
