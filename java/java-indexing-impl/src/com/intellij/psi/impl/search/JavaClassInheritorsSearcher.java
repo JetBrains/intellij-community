@@ -115,9 +115,11 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
   // returns lazy collection of subclasses. Each call to next() leads to calculation of next batch of subclasses.
   // Candidates to subclasses are kept in 'stack'. Already computed inheritors are in 'subClasses' array.
   private static Collection<PsiClass> computeAllSubClasses(@NotNull Project project, @NotNull PsiClass baseClass) {
-    final Stack<PsiAnchor> stack = new Stack<>();
-    final Set<PsiAnchor> processed = new THashSet<>();
+    final Stack<PsiAnchor> stack = new Stack<>(); // guarded by lock
+    final Set<PsiAnchor> processed = new THashSet<>(); // guarded by lock
     final List<PsiClass> subClasses = Collections.synchronizedList(new ArrayList<>());
+    final Object lock = new Object();
+    final GlobalSearchScope projectScope = GlobalSearchScope.allScope(project);
 
     ApplicationManager.getApplication().runReadAction(() -> {
       stack.push(PsiAnchor.create(baseClass));
@@ -153,36 +155,37 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
       }
 
       private void checkNextCandidates() {
-        final GlobalSearchScope projectScope = GlobalSearchScope.allScope(project);
-        synchronized (subClasses) { // this collection can be iterated from different threads concurrently
-          while (!stack.isEmpty()) {
-            ProgressManager.checkCanceled();
+        // This collection can be iterated from different threads concurrently,
+        // so taking element off the stack and adding checked candidates to subClasses should be atomic.
+        // More, it should happen under read action because otherwise the deadlock is possible because checkNextCandidates() could be called with or without read action.
+        ApplicationManager.getApplication().runReadAction(() -> {
+          synchronized (lock) {
+            while (!stack.isEmpty()) {
+              ProgressManager.checkCanceled();
 
-            final PsiAnchor anchor = stack.pop();
-            if (!processed.add(anchor)) continue;
+              final PsiAnchor anchor = stack.pop();
+              if (!processed.add(anchor)) continue;
 
-            PsiClass psiClass = ApplicationManager.getApplication().runReadAction((Computable<PsiClass>)() -> (PsiClass)anchor.retrieve());
-            if (psiClass == null) continue;
+              PsiClass psiClass = (PsiClass)anchor.retrieve();
+              if (psiClass == null) continue;
 
-            if (!(psiClass instanceof PsiAnonymousClass) && !isFinal(psiClass)) {
-              DirectClassInheritorsSearch.search(psiClass, projectScope).forEach(
-                candidate -> {
-                  ProgressManager.checkCanceled();
-                  ApplicationManager.getApplication().runReadAction(() -> {
+              if (!(psiClass instanceof PsiAnonymousClass) && !psiClass.hasModifierProperty(PsiModifier.FINAL)) {
+                DirectClassInheritorsSearch.search(psiClass, projectScope).forEach(
+                  candidate -> {
+                    ProgressManager.checkCanceled();
                     stack.push(PsiAnchor.create(candidate));
+                    return true;
                   });
+              }
 
-                  return true;
-                });
+              if (psiClass != baseClass) {
+                subClasses.add(psiClass);
+                return; // just allow the iterator to move forward, rest elements will be added on the next call to .next()
+              }
             }
-
-            if (psiClass != baseClass) {
-              subClasses.add(psiClass);
-              return; // just allow the iterator to move forward, rest elements will be added on the next call to .next()
-            }
+            processed.clear(); // prevent too many PsiAnchors retained by this anonymous class closure
           }
-          processed.clear(); // prevent too many PsiAnchors retained by this anonymous class closure
-        }
+        });
       }
     };
   }
