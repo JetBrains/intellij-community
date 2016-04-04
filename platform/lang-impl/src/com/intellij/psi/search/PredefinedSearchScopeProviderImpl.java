@@ -152,7 +152,8 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
       addHierarchyScope(project, result);
       UsageView selectedUsageView = UsageViewManager.getInstance(project).getSelectedUsageView();
       if (selectedUsageView != null && !selectedUsageView.isSearchInProgress()) {
-        final Set<Usage> usages = selectedUsageView.getUsages();
+        final Set<Usage> usages = ContainerUtil.newTroveSet(selectedUsageView.getUsages());
+        usages.removeAll(selectedUsageView.getExcludedUsages());
         final List<PsiElement> results = new ArrayList<PsiElement>(usages.size());
 
         if (prevSearchFiles) {
