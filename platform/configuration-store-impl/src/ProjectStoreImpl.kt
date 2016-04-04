@@ -20,8 +20,8 @@ import com.intellij.ide.highlighter.WorkspaceFileType
 import com.intellij.notification.Notifications
 import com.intellij.notification.NotificationsManager
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.invokeAndWaitIfNeed
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.StateStorage.SaveSession
 import com.intellij.openapi.components.impl.stores.IComponentStore
@@ -47,7 +47,6 @@ import java.io.File
 import java.io.IOException
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.*
 
 const val PROJECT_FILE = "\$PROJECT_FILE$"
 const val PROJECT_CONFIG_DIR = "\$PROJECT_CONFIG_DIR$"
@@ -278,8 +277,7 @@ private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroM
       nameFile.delete()
     }
     else {
-      val baseDir = Paths.get(basePath)
-      if (baseDir.isDirectory()) {
+      if (Paths.get(basePath).isDirectory()) {
         nameFile.write(currentProjectName.toByteArray())
       }
     }
@@ -310,28 +308,19 @@ private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroM
       throw IComponentStore.SaveCancelledException()
     }
 
-    val status: ReadonlyStatusHandler.OperationStatus
-    val token = ReadAction.start()
-    try {
-      status = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(*getFilesList(readonlyFiles))
-    }
-    finally {
-      token.finish()
-    }
-
+    val status = runReadAction { ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(*getFilesList(readonlyFiles)) }
     if (status.hasReadonlyFiles()) {
       dropUnableToSaveProjectNotification(project, status.readonlyFiles)
       throw IComponentStore.SaveCancelledException()
     }
-    val oldList = ArrayList(readonlyFiles)
+
+    val oldList = readonlyFiles.toTypedArray()
     readonlyFiles.clear()
     for (entry in oldList) {
       errors = executeSave(entry.first, readonlyFiles, errors)
     }
 
-    if (errors != null) {
-      CompoundRuntimeException.throwIfNotEmpty(errors)
-    }
+    CompoundRuntimeException.throwIfNotEmpty(errors)
 
     if (!readonlyFiles.isEmpty()) {
       dropUnableToSaveProjectNotification(project, getFilesList(readonlyFiles))
