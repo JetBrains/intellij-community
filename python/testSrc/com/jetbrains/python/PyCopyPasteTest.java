@@ -391,4 +391,9 @@ public class PyCopyPasteTest extends PyTestCase {
   public void testEmptyFunctionCaretAtBodyIndent() {
     doTest();
   }
+
+  // PY-19053
+  public void testSimpleExpressionPartCaretAtLineEnd() {
+    doTest();
+  }
 }
