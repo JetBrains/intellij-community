@@ -59,7 +59,7 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
   @NotNull
   FileStatus getElementStatus(final RefEntity element);
   @NotNull
-  Collection<RefEntity> getIgnoredRefElements();
+  Set<RefEntity> getIgnoredRefElements();
   @Nullable
   IntentionAction findQuickFixes(@NotNull CommonProblemDescriptor descriptor, final String hint);
   @NotNull

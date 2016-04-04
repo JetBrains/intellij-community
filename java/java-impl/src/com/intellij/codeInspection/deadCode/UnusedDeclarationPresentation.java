@@ -469,7 +469,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
 
   @Override
   @NotNull
-  public Collection<RefEntity> getIgnoredRefElements() {
+  public Set<RefEntity> getIgnoredRefElements() {
     return myIgnoreElements;
   }
 

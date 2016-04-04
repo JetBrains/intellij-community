@@ -281,7 +281,8 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
     for (InspectionToolWrapper toolWrapper : toolWrappers) {
       InspectionToolPresentation presentation = myView.getGlobalInspectionContext().getPresentation(toolWrapper);
       presentation.updateContent();
-      final Map<String, Set<RefEntity>> toolContent = presentation.getContent();
+      Map<String, Set<RefEntity>> toolContent = presentation.getContent();
+      toolContent = filterIgnoredElementsFromContent(toolContent, presentation.getIgnoredRefElements());
       content.putAll(toolContent);
     }
 
@@ -310,7 +311,7 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
         contentIndex.append("\" target=\"elementFrame\">");
         contentIndex.append(refElement.getName());
         contentIndex.append("</a><br>");
-
+        //TODO here we have descriptors
         exporter.createPage(refElement);
       }
 
@@ -356,6 +357,19 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
     packageIndex.append("-index.html\" target=\"packageFrame\">");
     packageIndex.append(packageName);
     packageIndex.append("</a><br>");
+  }
+
+  @NotNull
+  private static Map<String, Set<RefEntity>> filterIgnoredElementsFromContent(Map<String, Set<RefEntity>> toolContent, Set<RefEntity> ignored) {
+    if (ignored.isEmpty()) return toolContent;
+    final Map<String, Set<RefEntity>> resultMap = new HashMap<>();
+    for (Map.Entry<String, Set<RefEntity>> entry : toolContent.entrySet()) {
+      final Set<RefEntity> currentElements = new HashSet<>(entry.getValue());
+      currentElements.removeAll(ignored);
+      final String currentPackage = entry.getKey();
+      resultMap.put(currentPackage, currentElements);
+    }
+    return resultMap;
   }
 
 }
