@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import com.jetbrains.jsonSchema.impl.JsonSchemaServiceEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,12 +19,12 @@ import java.util.List;
 public interface JsonSchemaService {
 
   class Impl {
-
-    @Nullable
     public static JsonSchemaService get(@NotNull Project project) {
       return ServiceManager.getService(project, JsonSchemaService.class);
     }
-
+    public static JsonSchemaServiceEx getEx(@NotNull Project project) {
+      return (JsonSchemaServiceEx) ServiceManager.getService(project, JsonSchemaService.class);
+    }
   }
 
   @Nullable

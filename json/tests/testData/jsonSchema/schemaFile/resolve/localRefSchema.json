@@ -1,0 +1,12 @@
+{
+  "id": "https://myurl",
+  "properties": {
+    "baseEnum": {
+      "type": "string",
+      "enum": ["one", "two"]
+    },
+    "smth": {
+      "$ref" : "#/properties/baseEnum<caret>"
+    }
+  }
+}
