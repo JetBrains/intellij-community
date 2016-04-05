@@ -1298,6 +1298,9 @@ public class InferenceSession {
   }
 
   public GlobalSearchScope getScope() {
+    if (myContext != null) {
+      return myContext.getResolveScope();
+    }
     return GlobalSearchScope.allScope(myManager.getProject());
   }
 
