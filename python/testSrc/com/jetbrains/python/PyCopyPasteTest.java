@@ -397,6 +397,11 @@ public class PyCopyPasteTest extends PyTestCase {
     doTest();
   }
 
+  // PY-18522
+  public void testEmptyBranchBlock() {
+    doTest();
+  }
+
   // PY-19064
   public void testAmbiguousParentBlockSmallestIndent() {
     doTest();
