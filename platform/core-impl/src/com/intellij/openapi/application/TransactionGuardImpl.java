@@ -50,9 +50,11 @@ public class TransactionGuardImpl extends TransactionGuard {
   public AccessToken startSynchronousTransaction(@NotNull TransactionKind kind) throws IllegalStateException {
     if (isInsideTransaction() && !myWritingAllowed && !myMergeableKinds.contains(kind)) {
       // please assign exceptions that occur here to Peter
+      /*
       LOG.error("Synchronous transactions are allowed only from user actions. " +
                 "Please use submit*Transaction instead of invokeLater. " +
                 "See FAQ in TransactionGuard class javadoc.");
+      */
       return AccessToken.EMPTY_ACCESS_TOKEN;
     }
 
