@@ -68,7 +68,7 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
     final int indentSize = codeStyleSettings.getIndentSize(PythonFileType.INSTANCE);
     CharFilter NOT_INDENT_FILTER = new CharFilter() {
       public boolean accept(char ch) {
-        return useTabs? ch != '\t' : ch != ' ';
+        return ch != (useTabs ? '\t' : ' ');
       }
     };
     final String indentChar = useTabs ? "\t" : " ";
@@ -89,16 +89,16 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
     if (PsiTreeUtil.getParentOfType(element, PyStringLiteralExpression.class) != null) return text;
 
     text = addLeadingSpaces(text, NOT_INDENT_FILTER, indentSize, indentChar);
-    int firstLineIndent = StringUtil.findFirst(text, NOT_INDENT_FILTER);
     final String indentText = getIndentText(file, document, caretOffset, lineNumber);
 
     int toRemove = calculateIndentToRemove(text, NOT_INDENT_FILTER);
 
-    final String toString = document.getText(TextRange.create(lineStartOffset, lineEndOffset));
-    if (StringUtil.isEmptyOrSpaces(indentText) && isApplicable(file, text, caretOffset)) {
+    final String line = document.getText(TextRange.create(lineStartOffset, lineEndOffset));
+    if (StringUtil.isEmptyOrSpaces(indentText) && shouldPasteOnPreviousLine(file, text, caretOffset)) {
       caretModel.moveToOffset(lineStartOffset);
+      editor.getSelectionModel().setSelection(lineStartOffset, selectionModel.getSelectionEnd());
 
-      if (StringUtil.isEmptyOrSpaces(toString)) {
+      if (StringUtil.isEmptyOrSpaces(line)) {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           @Override
           public void run() {
@@ -106,7 +106,6 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
           }
         });
       }
-      editor.getSelectionModel().setSelection(lineStartOffset, selectionModel.getSelectionEnd());
     }
 
     final List<String> strings = StringUtil.split(text, "\n", false);
@@ -120,8 +119,9 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
       newText = text;
     }
 
-    if (addLinebreak(text, toString, useTabs) && selectionModel.getSelectionStart() == selectionModel.getSelectionEnd())
+    if (addLinebreak(text, line, useTabs) && selectionModel.getSelectionStart() == selectionModel.getSelectionEnd()) {
       newText += "\n";
+    }
     return newText;
   }
 
@@ -188,33 +188,30 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
     return minIndent >= 0 ? minIndent : 0;
   }
 
-  private static boolean isApplicable(@NotNull final PsiFile file, @NotNull String text, int caretOffset) {
-    final boolean useTabs =
-      CodeStyleSettingsManager.getSettings(file.getProject()).useTabCharacter(PythonFileType.INSTANCE);
+  private static boolean shouldPasteOnPreviousLine(@NotNull final PsiFile file, @NotNull String text, int caretOffset) {
+    final boolean useTabs = CodeStyleSettingsManager.getSettings(file.getProject()).useTabCharacter(PythonFileType.INSTANCE);
     final PsiElement nonWS = PyUtil.findNextAtOffset(file, caretOffset, PsiWhiteSpace.class);
-    if (nonWS == null || text.endsWith("\n"))
+    if (nonWS == null || text.endsWith("\n")) {
       return true;
-    if (inStatementList(file, caretOffset) && (text.startsWith(useTabs ? "\t" : " ") || StringUtil.split(text, "\n").size() > 1))
+    }
+    if (inStatementList(file, caretOffset) && (text.startsWith(useTabs ? "\t" : " ") || StringUtil.split(text, "\n").size() > 1)) {
       return true;
+    }
     return false;
   }
 
   private static boolean inStatementList(@NotNull final PsiFile file, int caretOffset) {
     final PsiElement element = file.findElementAt(caretOffset);
-    return PsiTreeUtil.getParentOfType(element, PyStatementList.class) != null ||
-           PsiTreeUtil.getParentOfType(element, PyFunction.class) != null ||
-           PsiTreeUtil.getParentOfType(element, PyClass.class) != null;
+    return PsiTreeUtil.getParentOfType(element, PyStatementListContainer.class) != null;
   }
 
-  private static boolean addLinebreak(@NotNull String text, @NotNull String toString, boolean useTabs) {
-    if ((text.startsWith(useTabs ? "\t" : " ") || StringUtil.split(text, "\n").size() > 1)
-        && !text.endsWith("\n") && !StringUtil.isEmptyOrSpaces(toString))
-      return true;
-    return false;
+  private static boolean addLinebreak(@NotNull String text, @NotNull String line, boolean useTabs) {
+    return (text.startsWith(useTabs ? "\t" : " ") || StringUtil.split(text, "\n").size() > 1)
+           && !text.endsWith("\n") && !StringUtil.isEmptyOrSpaces(line);
   }
 
-  public static int getLineStartSafeOffset(final Document document, int line) {
-    if (line == document.getLineCount()) return document.getTextLength();
+  private static int getLineStartSafeOffset(final Document document, int line) {
+    if (line >= document.getLineCount()) return document.getTextLength();
     if (line < 0) return 0;
     return document.getLineStartOffset(line);
   }
