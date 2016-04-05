@@ -24,6 +24,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.CharFilter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -156,9 +157,7 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
     final PsiElement ws = file.findElementAt(lineStartOffset);
     final String userIndent = document.getText(TextRange.create(lineStartOffset, caretOffset));
     if (ws != null) {
-      // Beginning of empty definition, e.g. class or function header without the actual body
-      PyStatementList statementList = ObjectUtils.chooseNotNull(as(ws.getNextSibling(), PyStatementList.class),
-                                                                as(ws.getPrevSibling(), PyStatementList.class));
+      PyStatementList statementList = findEmptyStatementListNearby(ws);
 
       if (statementList != null && statementList.getStatements().length == 0) {
         return PyIndentUtil.getElementIndent(statementList);
@@ -182,6 +181,19 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
       }
     }
     return userIndent;
+  }
+
+  @Nullable
+  private static PyStatementList findEmptyStatementListNearby(@NotNull PsiElement ws) {
+    PyStatementList statementList = ObjectUtils.chooseNotNull(as(ws.getNextSibling(), PyStatementList.class),
+                                                              as(ws.getPrevSibling(), PyStatementList.class));
+    if (statementList == null) {
+      final PsiElement prevLeaf = PsiTreeUtil.prevLeaf(ws, false);
+      if (prevLeaf instanceof PsiErrorElement) {
+        statementList = as(prevLeaf.getParent(), PyStatementList.class);
+      }
+    }
+    return statementList;
   }
 
   @Nullable
