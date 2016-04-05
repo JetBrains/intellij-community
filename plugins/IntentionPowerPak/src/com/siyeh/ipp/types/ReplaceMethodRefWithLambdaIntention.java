@@ -15,6 +15,7 @@
  */
 package com.siyeh.ipp.types;
 
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
@@ -43,8 +44,10 @@ public class ReplaceMethodRefWithLambdaIntention extends Intention {
 
   @Override
   protected void processIntention(final Editor editor, @NotNull PsiElement element) {
-    final PsiMethodReferenceExpression referenceExpression = PsiTreeUtil.getParentOfType(element, PsiMethodReferenceExpression.class);
-    final PsiLambdaExpression expr = referenceExpression != null ? LambdaRefactoringUtil.convertMethodReferenceToLambda(referenceExpression, false, true) : null;
+    PsiMethodReferenceExpression ref = PsiTreeUtil.getParentOfType(element, PsiMethodReferenceExpression.class);
+    PsiLambdaExpression expr = ref != null
+                               ? WriteAction.compute(() -> LambdaRefactoringUtil.convertMethodReferenceToLambda(ref, false, true))
+                               : null;
     if (expr == null) return;
     LambdaRefactoringUtil.removeSideEffectsFromLambdaBody(editor, expr);
   }
