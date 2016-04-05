@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -469,7 +469,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
         getUpdatedFiles(actualResult.updatedFiles), ContainerUtil.notNullize(updatedFiles))
   }
 
-  private fun getUpdatedFiles(updatedFiles: UpdatedFiles): Collection<String>? {
+  private fun getUpdatedFiles(updatedFiles: UpdatedFiles): Collection<String> {
     val result = ContainerUtil.newArrayList<String>()
     for (group in updatedFiles.topLevelGroups) {
       result.addAll(getUpdatedFiles(group))
