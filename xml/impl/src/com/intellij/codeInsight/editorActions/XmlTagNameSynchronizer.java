@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -304,7 +304,9 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements NamedCompo
             final RangeMarker leader = couple.first;
             final RangeMarker support = couple.second;
             final String name = document.getText(new TextRange(leader.getStartOffset(), leader.getEndOffset()));
-            document.replaceString(support.getStartOffset(), support.getEndOffset(), name);
+            if (!name.equals(document.getText(new TextRange(support.getStartOffset(), support.getEndOffset())))) {
+              document.replaceString(support.getStartOffset(), support.getEndOffset(), name);
+            }
           }
         }
       };
