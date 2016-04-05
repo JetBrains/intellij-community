@@ -217,6 +217,11 @@ public class JavaFxCompletionTest extends LightFixtureCompletionTestCase {
     doTest("ColumnConstraints");
   }
 
+  public void testEventHandlerMethod() throws Exception {
+    configureAndComplete("EventHandlerMethod.java", "EventHandlerMethodSuper.java");
+    assertSameElements(myFixture.getLookupElementStrings(), "onMyKeyTyped", "onSuperKeyTyped");
+  }
+
   public void testRawCollectionItem() throws Exception {
     configureAndComplete();
     assertDoesntContain(myFixture.getLookupElementStrings(), "T", "Object", "java.lang.Object");
