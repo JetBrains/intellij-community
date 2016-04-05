@@ -205,6 +205,10 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
     def (testResourcesIncludes, testResourcesExcludes, testFilterReaders) = getFilters(project, 'processTestResources')
     //def (javaIncludes,javaExcludes) = getFilters(project,'compileJava')
 
+    def additionalIdeaGenDirs = [] as Collection<File>
+    if(generatedSourceDirs && !generatedSourceDirs.isEmpty()) {
+      additionalIdeaGenDirs.addAll(generatedSourceDirs)
+    }
     sourceSets.all { SourceSet sourceSet ->
       ExternalSourceSet externalSourceSet = new DefaultExternalSourceSet()
       externalSourceSet.name = sourceSet.name
@@ -249,6 +253,7 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
           generatedDirectorySet.outputDir = javaDirectorySet.outputDir
           generatedDirectorySet.inheritedCompilerOutput = javaDirectorySet.isCompilerOutputPathInherited()
         }
+        additionalIdeaGenDirs.removeAll(files)
       }
 
       if (SourceSet.TEST_SOURCE_SET_NAME.equals(sourceSet.name)) {
@@ -345,6 +350,22 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
         if(mainSourceDirectorySet) {
           mainSourceDirectorySet.srcDirs.addAll(ideaSourceDirs - (mainGradleSourceSet.resources.srcDirs + generatedSourceDirs))
         }
+
+        if (!additionalIdeaGenDirs.isEmpty()) {
+          def mainAdditionalGenDirs = additionalIdeaGenDirs.intersect(ideaSourceDirs)
+          def mainGenSourceDirectorySet = mainSourceSet.sources[ExternalSystemSourceType.SOURCE_GENERATED]
+          if (mainGenSourceDirectorySet) {
+            mainGenSourceDirectorySet.srcDirs.addAll(mainAdditionalGenDirs)
+          }
+          else {
+            def generatedDirectorySet = new DefaultExternalSourceDirectorySet()
+            generatedDirectorySet.name = "generated " + mainSourceSet.name
+            generatedDirectorySet.srcDirs.addAll(mainAdditionalGenDirs)
+            generatedDirectorySet.outputDir = mainSourceDirectorySet.outputDir
+            generatedDirectorySet.inheritedCompilerOutput = mainSourceDirectorySet.isCompilerOutputPathInherited()
+            mainSourceSet.sources.put(ExternalSystemSourceType.SOURCE_GENERATED, generatedDirectorySet)
+          }
+        }
       }
     }
 
@@ -355,6 +376,22 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
         def testSourceDirectorySet = testSourceSet.sources[ExternalSystemSourceType.TEST]
         if(testSourceDirectorySet) {
           testSourceDirectorySet.srcDirs.addAll(ideaTestSourceDirs - (testGradleSourceSet.resources.srcDirs + generatedSourceDirs))
+        }
+
+        if (!additionalIdeaGenDirs.isEmpty()) {
+          def testAdditionalGenDirs = additionalIdeaGenDirs.intersect(ideaTestSourceDirs)
+          def testGenSourceDirectorySet = testSourceSet.sources[ExternalSystemSourceType.TEST_GENERATED]
+          if (testGenSourceDirectorySet) {
+            testGenSourceDirectorySet.srcDirs.addAll(testAdditionalGenDirs)
+          }
+          else {
+            def generatedDirectorySet = new DefaultExternalSourceDirectorySet()
+            generatedDirectorySet.name = "generated " + testSourceSet.name
+            generatedDirectorySet.srcDirs.addAll(testAdditionalGenDirs)
+            generatedDirectorySet.outputDir = testSourceDirectorySet.outputDir
+            generatedDirectorySet.inheritedCompilerOutput = testSourceDirectorySet.isCompilerOutputPathInherited()
+            testSourceSet.sources.put(ExternalSystemSourceType.TEST_GENERATED, generatedDirectorySet)
+          }
         }
       }
     }
