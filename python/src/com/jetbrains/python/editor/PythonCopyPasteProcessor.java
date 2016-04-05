@@ -23,10 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.CharFilter;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiErrorElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.tree.IElementType;
@@ -184,11 +181,11 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
   }
 
   @Nullable
-  private static PyStatementList findEmptyStatementListNearby(@NotNull PsiElement ws) {
-    PyStatementList statementList = ObjectUtils.chooseNotNull(as(ws.getNextSibling(), PyStatementList.class),
-                                                              as(ws.getPrevSibling(), PyStatementList.class));
+  private static PyStatementList findEmptyStatementListNearby(@NotNull PsiElement whitespace) {
+    PyStatementList statementList = ObjectUtils.chooseNotNull(as(whitespace.getNextSibling(), PyStatementList.class),
+                                                              as(whitespace.getPrevSibling(), PyStatementList.class));
     if (statementList == null) {
-      final PsiElement prevLeaf = PsiTreeUtil.prevLeaf(ws, false);
+      final PsiElement prevLeaf = getPrevNonCommentLeaf(whitespace);
       if (prevLeaf instanceof PsiErrorElement) {
         statementList = as(prevLeaf.getParent(), PyStatementList.class);
       }
@@ -198,7 +195,7 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
 
   @Nullable
   private static PyStatementListContainer getDeepestPossibleParentBlock(@NotNull PsiElement whitespace) {
-    final PsiElement prevLeaf = PsiTreeUtil.prevVisibleLeaf(whitespace);
+    final PsiElement prevLeaf = getPrevNonCommentLeaf(whitespace);
     return PsiTreeUtil.getParentOfType(prevLeaf, PyStatementListContainer.class);
   }
 
@@ -212,6 +209,15 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
       return true;
     }
     return false;
+  }
+
+  @Nullable
+  private static PsiElement getPrevNonCommentLeaf(@NotNull PsiElement element) {
+    PsiElement anchor = PsiTreeUtil.prevLeaf(element);
+    while (anchor instanceof PsiComment || anchor instanceof PsiWhiteSpace) {
+      anchor = PsiTreeUtil.prevLeaf(anchor, false);
+    }
+    return anchor;
   }
 
   private static boolean inStatementList(@NotNull final PsiFile file, int caretOffset) {
