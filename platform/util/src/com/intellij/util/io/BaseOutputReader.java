@@ -93,6 +93,7 @@ public abstract class BaseOutputReader extends BaseDataReader {
    * @throws IOException If an I/O error occurs
    */
   protected final boolean readAvailableBlocking() throws IOException {
+    final boolean availableUnsupported = ((BaseInputStreamReader)myReader).availableUnsupported();
     boolean read = false;
 
     int n;
@@ -101,14 +102,19 @@ public abstract class BaseOutputReader extends BaseDataReader {
         read = true;
         processLine(myInputBuffer, myLineBuffer, n);
       }
-      if (!myReader.ready()) {
+
+      boolean isReady = availableUnsupported || myReader.ready();
+
+      if (!isReady) {
         TimeoutUtil.sleep(mySleepingPolicy.getTimeToSleep(n > 0));
-        if (!myReader.ready()) {
-          if (myLineBuffer.length() > 0) {
-            sendLine(myLineBuffer);
-          }
-          onBufferExhaustion();
+        isReady = myReader.ready();
+      }
+
+      if (!isReady) {
+        if (myLineBuffer.length() > 0) {
+          sendLine(myLineBuffer);
         }
+        onBufferExhaustion();
       }
     }
 
