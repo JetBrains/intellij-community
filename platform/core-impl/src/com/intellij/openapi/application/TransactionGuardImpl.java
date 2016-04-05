@@ -27,10 +27,8 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Queue;
-import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -40,7 +38,6 @@ import java.util.concurrent.atomic.AtomicLong;
 public class TransactionGuardImpl extends TransactionGuard {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.application.TransactionGuardImpl");
   private final Queue<Transaction> myQueue = new LinkedBlockingQueue<Transaction>();
-  private final Set<TransactionKind> myMergeableKinds = ContainerUtil.newHashSet();
   private final Map<ProgressIndicator, TransactionIdImpl> myProgresses = ContainerUtil.createConcurrentWeakMap();
   private TransactionIdImpl myCurrentTransaction;
   private boolean myWritingAllowed;
@@ -48,7 +45,7 @@ public class TransactionGuardImpl extends TransactionGuard {
   @Override
   @NotNull
   public AccessToken startSynchronousTransaction(@NotNull TransactionKind kind) throws IllegalStateException {
-    if (isInsideTransaction() && !myWritingAllowed && !myMergeableKinds.contains(kind)) {
+    if (isInsideTransaction() && !myWritingAllowed) {
       // please assign exceptions that occur here to Peter
       /*
       LOG.error("Synchronous transactions are allowed only from user actions. " +
@@ -168,7 +165,7 @@ public class TransactionGuardImpl extends TransactionGuard {
 
   private boolean canRunTransactionNow(Transaction transaction, boolean sync) {
     TransactionIdImpl currentId = myCurrentTransaction;
-    if (currentId == null || myMergeableKinds.contains(transaction.kind)) {
+    if (currentId == null) {
       return true;
     }
 
@@ -177,29 +174,6 @@ public class TransactionGuardImpl extends TransactionGuard {
     }
 
     return transaction.mergeInto != null && currentId.myStartCounter <= transaction.mergeInto.myStartCounter;
-  }
-
-  @Override
-  @NotNull
-  public AccessToken acceptNestedTransactions(@NotNull TransactionKind... kinds) {
-    //todo enable when transactions are mandatory
-    /*
-    if (!isInsideTransaction()) {
-      throw new IllegalStateException("acceptNestedTransactions must be called inside a transaction");
-    }
-    */
-    final List<TransactionKind> toRemove = ContainerUtil.newArrayList();
-    for (TransactionKind kind : kinds) {
-      if (myMergeableKinds.add(kind)) {
-        toRemove.add(kind);
-      }
-    }
-    return new AccessToken() {
-      @Override
-      public void finish() {
-        myMergeableKinds.removeAll(toRemove);
-      }
-    };
   }
 
   @Override

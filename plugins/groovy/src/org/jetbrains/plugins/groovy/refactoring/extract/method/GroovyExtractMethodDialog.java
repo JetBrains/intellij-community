@@ -16,8 +16,6 @@
 
 package org.jetbrains.plugins.groovy.refactoring.extract.method;
 
-import com.intellij.openapi.application.AcceptNestedTransactions;
-import com.intellij.openapi.application.TransactionKind;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.help.HelpManager;
@@ -65,7 +63,6 @@ import java.util.Map;
 /**
  * @author ilyas
  */
-@AcceptNestedTransactions(TransactionKind.Common.TEXT_EDITING)
 public class GroovyExtractMethodDialog extends DialogWrapper {
   private final ExtractMethodInfoHelper myHelper;
 

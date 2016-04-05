@@ -16,10 +16,8 @@
 package org.jetbrains.plugins.groovy.refactoring.introduce.constant;
 
 import com.intellij.ide.util.*;
-import com.intellij.openapi.application.AcceptNestedTransactions;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.TransactionKind;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -78,7 +76,6 @@ import java.util.List;
 /**
  * @author Maxim.Medvedev
  */
-@AcceptNestedTransactions(TransactionKind.Common.TEXT_EDITING)
 public class GrIntroduceConstantDialog extends DialogWrapper
   implements GrIntroduceConstantSettings, GrIntroduceDialog<GrIntroduceConstantSettings> {
 

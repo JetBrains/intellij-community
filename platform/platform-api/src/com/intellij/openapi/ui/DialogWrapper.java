@@ -24,7 +24,10 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -1665,10 +1668,7 @@ public abstract class DialogWrapper {
       }
     });
 
-    AcceptNestedTransactions anno = getClass().getAnnotation(AcceptNestedTransactions.class);
-    try (AccessToken ignore = anno == null ? null : TransactionGuard.getInstance().acceptNestedTransactions((TransactionKind[])anno.value())) {
-      myPeer.show();
-    }
+    myPeer.show();
 
     return result;
   }
