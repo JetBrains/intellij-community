@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -240,28 +240,27 @@ public class UnusedSymbolUtil {
     }
     FindUsagesOptions options;
     if (member instanceof PsiPackage) {
-      options = new JavaPackageFindUsagesOptions(project);
+      options = new JavaPackageFindUsagesOptions(useScope);
       options.isSearchForTextOccurrences = true;
     }
     else if (member instanceof PsiClass) {
-      options = new JavaClassFindUsagesOptions(project);
+      options = new JavaClassFindUsagesOptions(useScope);
       options.isSearchForTextOccurrences = true;
     }
     else if (member instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)member;
-      options = new JavaMethodFindUsagesOptions(project);
+      options = new JavaMethodFindUsagesOptions(useScope);
       options.isSearchForTextOccurrences = method.isConstructor();
     }
     else if (member instanceof PsiVariable) {
-      options = new JavaVariableFindUsagesOptions(project);
+      options = new JavaVariableFindUsagesOptions(useScope);
       options.isSearchForTextOccurrences = false;
     }
     else {
-      options = new FindUsagesOptions(project);
+      options = new FindUsagesOptions(useScope);
       options.isSearchForTextOccurrences = true;
     }
     options.isUsages = true;
-    options.searchScope = useScope;
     return JavaFindUsagesHelper.processElementUsages(member, options, usageInfoProcessor);
   }
 
