@@ -420,7 +420,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     }
   }
 
-  private static boolean isFreeThreaded(@NotNull VirtualFile file) {
+  static boolean isFreeThreaded(@NotNull VirtualFile file) {
     return Boolean.TRUE.equals(file.getUserData(SingleRootFileViewProvider.FREE_THREADED));
   }
 
