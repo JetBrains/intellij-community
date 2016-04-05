@@ -180,7 +180,8 @@ public class GenericPatchApplier {
 
     final List<BeforeAfter<List<String>>> steps = copy.getPatchSteps();
     final BeforeAfter<List<String>> first = steps.get(0);
-    final BeforeAfter<List<String>> last = steps.get(steps.size() - 1);
+    final int lastStepIndex = steps.size() - 1;
+    final BeforeAfter<List<String>> last = steps.get(lastStepIndex);
 
     final BeforeAfter<List<String>> firstCopy = copyBeforeAfter(first);
     steps.set(0, firstCopy);
@@ -194,6 +195,7 @@ public class GenericPatchApplier {
       final BeforeAfter<List<String>> lastCopy = copyBeforeAfter(last);
       lastCopy.getBefore().addAll(hunk.getContextAfter());
       lastCopy.getAfter().addAll(hunk.getContextAfter());
+      steps.set(lastStepIndex, lastCopy);
     }
     return copy;
   }
