@@ -42,14 +42,14 @@ public class CreateModuleLibraryFromFilesTest extends ModuleRootManagerTestCase 
     myModifiableModel = myModifiableRootModel.getModuleLibraryTable().getModifiableModel();
   }
 
-  public void testSingleJar() throws Exception {
+  public void testSingleJar() {
     Library library = assertOneElement(createLibraries(new OrderRoot(getJDomJar(), OrderRootType.CLASSES)));
     assertNull(library.getName());
     assertSameElements(library.getFiles(OrderRootType.CLASSES), getJDomJar());
     assertEmpty(library.getFiles(OrderRootType.SOURCES));
   }
 
-  public void testTwoJars() throws Exception {
+  public void testTwoJars() {
     List<Library> libraries = createLibraries(new OrderRoot(getJDomJar(), OrderRootType.CLASSES),
                                               new OrderRoot(getAsmJar(), OrderRootType.CLASSES));
     assertEquals(2, libraries.size());
@@ -59,6 +59,46 @@ public class CreateModuleLibraryFromFilesTest extends ModuleRootManagerTestCase 
     assertSameElements(libraries.get(1).getFiles(OrderRootType.CLASSES), getAsmJar());
   }
 
+  public void testJarAndSources() {
+    Library library = assertOneElement(createLibraries(new OrderRoot(getJDomJar(), OrderRootType.CLASSES),
+                                                       new OrderRoot(getJDomSources(), OrderRootType.SOURCES)));
+    assertNull(library.getName());
+    assertSameElements(library.getFiles(OrderRootType.CLASSES), getJDomJar());
+    assertSameElements(library.getFiles(OrderRootType.SOURCES), getJDomSources());
+  }
+
+  public void testJarWithSourcesInside() {
+    Library library = assertOneElement(createLibraries(new OrderRoot(getJDomJar(), OrderRootType.CLASSES),
+                                                       new OrderRoot(getJDomJar(), OrderRootType.SOURCES)));
+    assertNull(library.getName());
+    assertSameElements(library.getFiles(OrderRootType.CLASSES), getJDomJar());
+    assertSameElements(library.getFiles(OrderRootType.SOURCES), getJDomJar());
+  }
+
+  public void testTwoJarAndSources() {
+    List<Library> libraries = createLibraries(new OrderRoot(getJDomJar(), OrderRootType.CLASSES),
+                                              new OrderRoot(getAsmJar(), OrderRootType.CLASSES),
+                                              new OrderRoot(getJDomSources(), OrderRootType.SOURCES));
+    Library library = assertOneElement(libraries);
+    assertNull(library.getName());
+    assertSameElements(library.getFiles(OrderRootType.CLASSES), getJDomJar(), getAsmJar());
+    assertSameElements(library.getFiles(OrderRootType.SOURCES), getJDomSources());
+  }
+
+  public void testTwoJarWithSourcesInside() {
+    List<Library> libraries = createLibraries(new OrderRoot(getJDomJar(), OrderRootType.CLASSES),
+                                              new OrderRoot(getAsmJar(), OrderRootType.CLASSES),
+                                              new OrderRoot(getJDomJar(), OrderRootType.SOURCES),
+                                              new OrderRoot(getAsmJar(), OrderRootType.SOURCES));
+    assertEquals(2, libraries.size());
+    assertNull(libraries.get(0).getName());
+    assertSameElements(libraries.get(0).getFiles(OrderRootType.CLASSES), getJDomJar());
+    assertSameElements(libraries.get(0).getFiles(OrderRootType.SOURCES), getJDomJar());
+    assertNull(libraries.get(1).getName());
+    assertSameElements(libraries.get(1).getFiles(OrderRootType.CLASSES), getAsmJar());
+    assertSameElements(libraries.get(1).getFiles(OrderRootType.SOURCES), getAsmJar());
+  }
+
   @NotNull
   private List<Library> createLibraries(OrderRoot... roots) {
     return CreateModuleLibraryChooser.createLibrariesFromRoots(Arrays.asList(roots), myModifiableModel);
@@ -66,7 +106,12 @@ public class CreateModuleLibraryFromFilesTest extends ModuleRootManagerTestCase 
 
   @Override
   protected void tearDown() throws Exception {
-    myModifiableRootModel.dispose();
-    super.tearDown();
+    try {
+      myModifiableRootModel.dispose();
+    }
+    finally {
+      //noinspection ThrowFromFinallyBlock
+      super.tearDown();
+    }
   }
 }

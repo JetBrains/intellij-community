@@ -30,7 +30,6 @@ import com.intellij.openapi.roots.ui.configuration.libraries.LibraryEditingUtil;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.DefaultLibraryRootsComponentDescriptor;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,6 +37,10 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+
+import static com.intellij.util.ArrayUtil.contains;
 
 /**
 * @author nik
@@ -109,7 +112,7 @@ public class CreateModuleLibraryChooser implements ClasspathElementChooser<Libra
     final List<OrderRoot> result = new ArrayList<OrderRoot>();
     final Library[] libraries = moduleLibrariesModel.getLibraries();
     for (OrderRoot root : roots) {
-      if (!Arrays.stream(libraries).anyMatch(library -> ArrayUtil.contains(root.getFile(), library.getFiles(root.getType())))) {
+      if (!Arrays.stream(libraries).anyMatch(library -> contains(root.getFile(), library.getFiles(root.getType())))) {
         result.add(root);
       }
     }
@@ -194,14 +197,11 @@ public class CreateModuleLibraryChooser implements ClasspathElementChooser<Libra
     }
 
     final List<Library> addedLibraries = new ArrayList<Library>();
-    boolean onlyClasses = true;
-    for (OrderRoot root : roots) {
-      onlyClasses &= root.getType() == OrderRootType.CLASSES;
-    }
-    if (onlyClasses) {
-      for (OrderRoot root : roots) {
-        addedLibraries.add(createLibraryFromRoots(Collections.singletonList(root), libraryType, moduleLibrariesModel,
-                                                  defaultPropertiesFactory));
+    Map<VirtualFile, List<OrderRoot>> byFile = roots.stream().collect(Collectors.groupingBy(OrderRoot::getFile));
+    Predicate<List<OrderRoot>> containsClasses = it -> it.stream().anyMatch(root -> root.getType().equals(OrderRootType.CLASSES));
+    if (byFile.values().stream().allMatch(containsClasses)) {
+      for (List<OrderRoot> rootsForFile : byFile.values()) {
+        addedLibraries.add(createLibraryFromRoots(rootsForFile, libraryType, moduleLibrariesModel, defaultPropertiesFactory));
       }
     }
     else {
