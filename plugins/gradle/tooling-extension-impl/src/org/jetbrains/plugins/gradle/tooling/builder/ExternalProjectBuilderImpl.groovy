@@ -193,6 +193,14 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
     //noinspection GrUnresolvedAccess
     def sourceSets = project.sourceSets as SourceSetContainer
 
+    // ignore inherited source sets from parent project
+    def parentProject = project.parent
+    if (parentProject && parentProject.hasProperty("sourceSets") && parentProject.sourceSets instanceof SourceSetContainer) {
+      if(sourceSets.is(parentProject.sourceSets)){
+        return result
+      }
+    }
+
     def (resourcesIncludes, resourcesExcludes, filterReaders) = getFilters(project, 'processResources')
     def (testResourcesIncludes, testResourcesExcludes, testFilterReaders) = getFilters(project, 'processTestResources')
     //def (javaIncludes,javaExcludes) = getFilters(project,'compileJava')
