@@ -19,7 +19,7 @@ public class FallthruInSwitch
               // Falls through
             case (4):
                 System.out.println("3");
-            case (5):
+            <warning descr="'case (5):' fall-through in 'switch' statement">case (5):</warning>
             case (6): // don't warn here
                 System.out.println("4");
         }
