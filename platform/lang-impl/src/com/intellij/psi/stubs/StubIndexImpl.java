@@ -99,11 +99,11 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
   }
 
   private AsyncState getAsyncState() {
-    if (!myInitialized) { // memory barrier
-      //throw new IndexNotReadyException();
-      LOG.error("Unexpected initialization problem");
-    }
-    AsyncState state = myState;
+    //if (!myInitialized) { // memory barrier
+    //  //throw new IndexNotReadyException();
+    //  LOG.error("Unexpected initialization problem");
+    //}
+    AsyncState state = myState; // memory barrier
     if (state == null) {
       try {
         myState = state = myStateFuture.get();
@@ -512,9 +512,9 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     }
   }
 
-  @NotNull
   @Override
   public StubIndexState getState() {
+    if (!myInitialized) return null;
     return new StubIndexState(getAsyncState().myIndices.keySet());
   }
 
