@@ -104,7 +104,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private final boolean myTestModeFlag;
   private final boolean myHeadlessMode;
   private final boolean myCommandLineMode;
-  private static volatile Boolean ourIsRunningFromSources;
 
   private final boolean myIsInternal;
   private final String myName;
@@ -356,11 +355,11 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     return myCommandLineMode;
   }
 
+  private static class Holder {
+    private static final boolean ourIsRunningFromSources = new File(PathManager.getHomePath(), ".idea").isDirectory();
+  }
   public static boolean isRunningFromSources() {
-    if (ourIsRunningFromSources == null) {
-      ourIsRunningFromSources = new File(PathManager.getHomePath(), ".idea").isDirectory();
-    }
-    return ourIsRunningFromSources;
+    return Holder.ourIsRunningFromSources;
   }
 
   @NotNull
