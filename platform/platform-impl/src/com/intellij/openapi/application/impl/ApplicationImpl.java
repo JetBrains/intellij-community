@@ -84,10 +84,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -1245,22 +1242,20 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
           assertNoPsiLock();
         }
         if (!myLock.writeLock().tryLock()) {
-          final AtomicBoolean lockAcquired = new AtomicBoolean(false);
+          final CountDownLatch lockAcquired = new CountDownLatch(1);
           if (ourDumpThreadsOnLongWriteActionWaiting > 0) {
-            executeOnPooledThread(new Runnable() {
-              @Override
-              public void run() {
-                while (!lockAcquired.get()) {
-                  TimeoutUtil.sleep(ourDumpThreadsOnLongWriteActionWaiting);
-                  if (!lockAcquired.get()) {
-                    PerformanceWatcher.getInstance().dumpThreads("waiting", true);
-                  }
+            executeOnPooledThread(() -> {
+              try {
+                while (!lockAcquired.await(ourDumpThreadsOnLongWriteActionWaiting, TimeUnit.MILLISECONDS)) {
+                  PerformanceWatcher.getInstance().dumpThreads("waiting", true);
                 }
+              }
+              catch (InterruptedException ignored) {
               }
             });
           }
           myLock.writeLock().lockInterruptibly();
-          lockAcquired.set(true);
+          lockAcquired.countDown();
         }
       }
       catch (InterruptedException e) {
