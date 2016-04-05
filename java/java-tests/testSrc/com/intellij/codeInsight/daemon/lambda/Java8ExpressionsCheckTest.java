@@ -15,6 +15,8 @@
  */
 package com.intellij.codeInsight.daemon.lambda;
 
+import com.intellij.codeInsight.ExpectedTypeInfo;
+import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.psi.*;
@@ -73,6 +75,17 @@ public class Java8ExpressionsCheckTest extends LightDaemonAnalyzerTestCase {
 
   public void testMethodOverloadsInsideLambdaHierarchy() throws Exception {
     doTestAllMethodCallExpressions();
+  }
+
+  public void testNonCachingFolding() throws Exception {
+    final String filePath = BASE_PATH + "/" + getTestName(false) + ".java";
+    configureByFile(filePath);
+    PsiNewExpression newWithAnonym =
+      PsiTreeUtil.getParentOfType(getFile().findElementAt(getEditor().getCaretModel().getOffset()), PsiNewExpression.class);
+    ExpectedTypeInfo[] types = ExpectedTypesProvider.getExpectedTypes(newWithAnonym, false);
+    assertNotNull(types);
+
+    doTestConfiguredFile(false, false, filePath);
   }
 
   private void doTestCachedUnresolved() {
