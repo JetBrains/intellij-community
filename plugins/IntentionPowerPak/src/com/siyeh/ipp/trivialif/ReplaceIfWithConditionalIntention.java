@@ -26,6 +26,7 @@ import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -88,13 +89,10 @@ public class ReplaceIfWithConditionalIntention extends Intention {
       if (elseReturnValue == null) {
         return;
       }
-      final PsiElement method = PsiTreeUtil.getParentOfType(thenReturn, PsiMethod.class, PsiLambdaExpression.class);
-      if (method == null) {
+      final String conditional = getConditional(condition, thenReturn, thenReturnValue, elseReturnValue);
+      if (conditional == null) {
         return;
       }
-      final PsiType returnType = method instanceof PsiMethod ? ((PsiMethod)method).getReturnType() 
-                                                             : LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)method);
-      final String conditional = getConditionalText(condition, thenReturnValue, elseReturnValue, returnType);
       replaceIfStatement(ifStatement, "return " + conditional + ';');
     }
     else if (ReplaceIfWithConditionalPredicate.isReplaceableMethodCall(ifStatement)) {
@@ -159,18 +157,29 @@ public class ReplaceIfWithConditionalIntention extends Intention {
       if (elseReturnValue == null) {
         return;
       }
-      final PsiMethod method = PsiTreeUtil.getParentOfType(thenBranch, PsiMethod.class);
-      if (method == null) {
-        return;
-      }
-      final PsiType methodType = method.getReturnType();
-      final String conditional = getConditionalText(condition, thenReturnValue, elseReturnValue, methodType);
-      if (conditional == null) {
-        return;
-      }
+      final String conditional = getConditional(condition, thenBranch, thenReturnValue, elseReturnValue);
+      if (conditional == null) return;
       replaceIfStatement(ifStatement, "return " + conditional + ';');
       elseBranch.delete();
     }
+  }
+
+  @Nullable
+  private static String getConditional(PsiExpression condition,
+                                       PsiElement thenBranch,
+                                       PsiExpression thenReturnValue,
+                                       PsiExpression elseReturnValue) {
+    final PsiElement method = PsiTreeUtil.getParentOfType(thenBranch, PsiMethod.class, PsiLambdaExpression.class);
+    if (method == null) {
+      return null;
+    }
+    final PsiType methodType = method instanceof PsiMethod ? ((PsiMethod)method).getReturnType()
+                                                           : LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)method);
+    final String conditional = getConditionalText(condition, thenReturnValue, elseReturnValue, methodType);
+    if (conditional == null) {
+      return null;
+    }
+    return conditional;
   }
 
   private static void replaceIfStatement(PsiIfStatement ifStatement, String text) {
