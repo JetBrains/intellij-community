@@ -96,7 +96,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     myCancelText = cancelText;
     setModalityProgress(shouldShowBackground ? null : this);
     TransactionGuardImpl guard = (TransactionGuardImpl)TransactionGuard.getInstance();
-    guard.registerProgress(this, guard.getCurrentMergeableTransaction());
+    guard.registerProgress(this, guard.getContextTransaction());
 
     myFocusTrackback = new FocusTrackback(this, WindowManager.getInstance().suggestParentWindow(project), false);
 

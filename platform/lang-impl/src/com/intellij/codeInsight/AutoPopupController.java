@@ -222,7 +222,7 @@ public class AutoPopupController implements Disposable {
   }
   public static void runTransactionWithEverythingCommitted(@NotNull final Project project, @NotNull final Runnable runnable) {
     TransactionGuard guard = TransactionGuard.getInstance();
-    TransactionId id = guard.getCurrentMergeableTransaction();
+    TransactionId id = guard.getContextTransaction();
     ModalityState modalityState = ModalityState.current();
     final PsiDocumentManager pdm = PsiDocumentManager.getInstance(project);
     pdm.performWhenAllCommitted(() -> {

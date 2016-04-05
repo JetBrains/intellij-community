@@ -174,7 +174,7 @@ public abstract class TransactionGuard {
    *                         and so it won't be run after it has been disposed.
    * @param mergeInto an optional id of another transaction, to allow execution inside that transaction if it's still running
    * @param transaction code to execute inside a transaction.
-   * @see #getCurrentMergeableTransaction()
+   * @see #getContextTransaction()
    */
   public abstract void submitMergeableTransaction(@NotNull Disposable parentDisposable, @Nullable TransactionId mergeInto, @NotNull Runnable transaction);
 
@@ -203,5 +203,5 @@ public abstract class TransactionGuard {
    * @return the id of the currently running transaction for using in {@link #submitMergeableTransaction(Disposable, TransactionId, Runnable)},
    * or null if there's no transaction running or merging is not allowed in the callee context (e.g. from invokeLater).
    */
-  public abstract TransactionId getCurrentMergeableTransaction();
+  public abstract TransactionId getContextTransaction();
 }

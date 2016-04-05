@@ -121,7 +121,7 @@ public class TransactionGuardImpl extends TransactionGuard {
 
   @Override
   public void submitMergeableTransaction(@NotNull final Disposable parentDisposable, @NotNull final TransactionKind kind, @NotNull final Runnable _transaction) {
-    submitMergeableTransaction(parentDisposable, kind, getCurrentMergeableTransaction(), _transaction);
+    submitMergeableTransaction(parentDisposable, kind, getContextTransaction(), _transaction);
   }
 
   @Override
@@ -204,7 +204,7 @@ public class TransactionGuardImpl extends TransactionGuard {
   public void submitTransactionAndWait(@NotNull final Runnable runnable) throws ProcessCanceledException {
     Application app = ApplicationManager.getApplication();
     if (app.isDispatchThread()) {
-      Transaction transaction = new Transaction(runnable, getCurrentMergeableTransaction(), TransactionKind.ANY_CHANGE, app);
+      Transaction transaction = new Transaction(runnable, getContextTransaction(), TransactionKind.ANY_CHANGE, app);
       if (!canRunTransactionNow(transaction, true)) {
         throw new AssertionError("Cannot run synchronous submitTransactionAndWait from invokeLater. " +
                                  "Please use asynchronous submit*Transaction. " +
@@ -285,7 +285,7 @@ public class TransactionGuardImpl extends TransactionGuard {
 
   @Override
   public void submitTransactionLater(@NotNull final Disposable parentDisposable, @NotNull final Runnable transaction) {
-    final TransactionIdImpl id = getCurrentMergeableTransaction();
+    final TransactionIdImpl id = getContextTransaction();
     Application app = ApplicationManager.getApplication();
     app.invokeLater(new Runnable() {
       @Override
@@ -296,7 +296,7 @@ public class TransactionGuardImpl extends TransactionGuard {
   }
 
   @Override
-  public TransactionIdImpl getCurrentMergeableTransaction() {
+  public TransactionIdImpl getContextTransaction() {
     if (!ApplicationManager.getApplication().isDispatchThread()) {
       ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
       return indicator != null ? myProgresses.get(indicator) : null;

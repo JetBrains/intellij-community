@@ -275,7 +275,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
 
   protected void restartAnalysis(final Project project, final AnalysisScope scope) {
     TransactionGuard guard = TransactionGuard.getInstance();
-    TransactionId id = guard.getCurrentMergeableTransaction();
+    TransactionId id = guard.getContextTransaction();
     DumbService.getInstance(project).smartInvokeLater(
       () -> TransactionGuard.getInstance().submitMergeableTransaction(project, id, () -> {
         if (DumbService.isDumb(project)) {
