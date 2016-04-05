@@ -218,7 +218,12 @@ public class JavaFxCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testEventHandlerMethod() throws Exception {
-    configureAndComplete("EventHandlerMethod.java", "EventHandlerMethodSuper.java");
+    configureAndComplete(getTestName(false) + ".java", getTestName(false) + "Super.java");
+    assertSameElements(myFixture.getLookupElementStrings(), "onMyKeyTyped", "onSuperKeyTyped");
+  }
+
+  public void testEventHandlerMethodTypeParam() throws Exception {
+    configureAndComplete(getTestName(false) + ".java", getTestName(false) + "Super.java");
     assertSameElements(myFixture.getLookupElementStrings(), "onMyKeyTyped", "onSuperKeyTyped");
   }
 
