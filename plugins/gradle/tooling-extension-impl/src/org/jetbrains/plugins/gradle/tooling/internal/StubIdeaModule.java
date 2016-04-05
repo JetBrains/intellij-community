@@ -18,6 +18,7 @@ package org.jetbrains.plugins.gradle.tooling.internal;
 import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.GradleProject;
 import org.gradle.tooling.model.HierarchicalElement;
+import org.gradle.tooling.model.UnsupportedMethodException;
 import org.gradle.tooling.model.idea.*;
 
 import java.io.Serializable;
@@ -32,6 +33,11 @@ public class StubIdeaModule implements IdeaModule, Serializable {
 
   public StubIdeaModule(String name) {
     this.name = name;
+  }
+
+  @Override
+  public IdeaJavaLanguageSettings getJavaLanguageSettings() throws UnsupportedMethodException {
+    throw new UnsupportedOperationException();
   }
 
   @Override
