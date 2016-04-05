@@ -149,6 +149,7 @@ class StaticInheritanceFix extends InspectionGadgetsFix {
   }
 
   private static void invokeWriteAction(final Runnable runnable, final PsiFile file) {
-    TransactionGuard.submitTransaction(() -> WriteCommandAction.runWriteCommandAction(file.getProject(), null, null, runnable, file));
+    Project project = file.getProject();
+    TransactionGuard.submitTransaction(project, () -> WriteCommandAction.runWriteCommandAction(project, null, null, runnable, file));
   }
 }

@@ -1018,7 +1018,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
         }, title, null);
       }
     };
-    TransactionGuard.submitTransaction(runnable);
+    TransactionGuard.submitTransaction(project, runnable);
   }
 
   private static boolean isBinary(@NotNull PsiFile file) {
