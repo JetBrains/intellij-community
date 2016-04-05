@@ -5,7 +5,6 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/ByteCodeViewer/ByteCodeViewer.iml" filepath="$PROJECT_DIR$/plugins/ByteCodeViewer/ByteCodeViewer.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/plugins/IntelliLang/IntelliLang.iml" filepath="$PROJECT_DIR$/plugins/IntelliLang/IntelliLang.iml" group="plugins/IntelliLang" />
       <module fileurl="file://$PROJECT_DIR$/plugins/IntelliLang/IntelliLang-java.iml" filepath="$PROJECT_DIR$/plugins/IntelliLang/IntelliLang-java.iml" group="plugins/IntelliLang" />
-      <module fileurl="file://$PROJECT_DIR$/python/IntelliLang-python/IntelliLang-python.iml" filepath="$PROJECT_DIR$/python/IntelliLang-python/IntelliLang-python.iml" group="python" />
       <module fileurl="file://$PROJECT_DIR$/plugins/IntelliLang/IntelliLang-tests/IntelliLang-tests.iml" filepath="$PROJECT_DIR$/plugins/IntelliLang/IntelliLang-tests/IntelliLang-tests.iml" group="plugins/IntelliLang" />
       <module fileurl="file://$PROJECT_DIR$/plugins/IntelliLang/IntelliLang-xml.iml" filepath="$PROJECT_DIR$/plugins/IntelliLang/IntelliLang-xml.iml" group="plugins/IntelliLang" />
       <module fileurl="file://$PROJECT_DIR$/RegExpSupport/RegExpSupport.iml" filepath="$PROJECT_DIR$/RegExpSupport/RegExpSupport.iml" group="platform" />
@@ -65,8 +64,6 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/copyright/copyright.iml" filepath="$PROJECT_DIR$/plugins/copyright/copyright.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/platform/core-api/core-api.iml" filepath="$PROJECT_DIR$/platform/core-api/core-api.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/core-impl/core-impl.iml" filepath="$PROJECT_DIR$/platform/core-impl/core-impl.iml" group="platform" />
-      <module fileurl="file://$PROJECT_DIR$/python/educational-core/course-creator/course-creator.iml" filepath="$PROJECT_DIR$/python/educational-core/course-creator/course-creator.iml" group="python/educational/educational-core" />
-      <module fileurl="file://$PROJECT_DIR$/python/educational-python/course-creator-python/course-creator-python.iml" filepath="$PROJECT_DIR$/python/educational-python/course-creator-python/course-creator-python.iml" group="python/educational/educational-python" />
       <module fileurl="file://$PROJECT_DIR$/plugins/coverage/coverage.iml" filepath="$PROJECT_DIR$/plugins/coverage/coverage.iml" group="plugins/coverage" />
       <module fileurl="file://$PROJECT_DIR$/plugins/coverage-common/coverage-common.iml" filepath="$PROJECT_DIR$/plugins/coverage-common/coverage-common.iml" group="plugins/coverage" />
       <module fileurl="file://$PROJECT_DIR$/plugins/coverage/coverage_rt/coverage_rt.iml" filepath="$PROJECT_DIR$/plugins/coverage/coverage_rt/coverage_rt.iml" group="plugins/coverage" />
@@ -100,8 +97,6 @@
       <module fileurl="file://$PROJECT_DIR$/platform/editor-ui-api/editor-ui-api.iml" filepath="$PROJECT_DIR$/platform/editor-ui-api/editor-ui-api.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/editor-ui-ex/editor-ui-ex.iml" filepath="$PROJECT_DIR$/platform/editor-ui-ex/editor-ui-ex.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/plugins/editorconfig/editorconfig.iml" filepath="$PROJECT_DIR$/plugins/editorconfig/editorconfig.iml" group="plugins" />
-      <module fileurl="file://$PROJECT_DIR$/python/educational-core/educational-core.iml" filepath="$PROJECT_DIR$/python/educational-core/educational-core.iml" group="python/educational/educational-core" />
-      <module fileurl="file://$PROJECT_DIR$/python/educational-python/educational-python.iml" filepath="$PROJECT_DIR$/python/educational-python/educational-python.iml" group="python/educational" />
       <module fileurl="file://$PROJECT_DIR$/java/execution/impl/execution-impl.iml" filepath="$PROJECT_DIR$/java/execution/impl/execution-impl.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/java/execution/openapi/execution-openapi.iml" filepath="$PROJECT_DIR$/java/execution/openapi/execution-openapi.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/platform/extensions/extensions.iml" filepath="$PROJECT_DIR$/platform/extensions/extensions.iml" group="platform" />
@@ -145,7 +140,6 @@
       <module fileurl="file://$PROJECT_DIR$/../base/instant-run/instant-run-common/instant-run-common.iml" filepath="$PROJECT_DIR$/../base/instant-run/instant-run-common/instant-run-common.iml" group="android/sdktools" />
       <module fileurl="file://$PROJECT_DIR$/java/compiler/instrumentation-util/instrumentation-util.iml" filepath="$PROJECT_DIR$/java/compiler/instrumentation-util/instrumentation-util.iml" group="java/compiler" />
       <module fileurl="file://$PROJECT_DIR$/plugins/IntelliLang/intellilang-jps-plugin/intellilang-jps-plugin.iml" filepath="$PROJECT_DIR$/plugins/IntelliLang/intellilang-jps-plugin/intellilang-jps-plugin.iml" group="jps" />
-      <module fileurl="file://$PROJECT_DIR$/python/ipnb/ipnb.iml" filepath="$PROJECT_DIR$/python/ipnb/ipnb.iml" group="python" />
       <module fileurl="file://$PROJECT_DIR$/java/java-analysis-api/java-analysis-api.iml" filepath="$PROJECT_DIR$/java/java-analysis-api/java-analysis-api.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/java/java-analysis-impl/java-analysis-impl.iml" filepath="$PROJECT_DIR$/java/java-analysis-impl/java-analysis-impl.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/plugins/java-decompiler/engine/java-decompiler-engine.iml" filepath="$PROJECT_DIR$/plugins/java-decompiler/engine/java-decompiler-engine.iml" group="plugins" />
@@ -191,9 +185,6 @@
       <module fileurl="file://$PROJECT_DIR$/platform/lvcs-api/lvcs-api.iml" filepath="$PROJECT_DIR$/platform/lvcs-api/lvcs-api.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/lvcs-impl/lvcs-impl.iml" filepath="$PROJECT_DIR$/platform/lvcs-impl/lvcs-impl.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android/main_AndroidStudio.iml" filepath="$PROJECT_DIR$/../adt/idea/android/main_AndroidStudio.iml" group="android" />
-      <module fileurl="file://$PROJECT_DIR$/python/main_idea_python_plugin.iml" filepath="$PROJECT_DIR$/python/main_idea_python_plugin.iml" group="python" />
-      <module fileurl="file://$PROJECT_DIR$/python/main_pycharm_ce.iml" filepath="$PROJECT_DIR$/python/main_pycharm_ce.iml" group="python" />
-      <module fileurl="file://$PROJECT_DIR$/python/educational-python/main_pycharm_edu.iml" filepath="$PROJECT_DIR$/python/educational-python/main_pycharm_edu.iml" group="python/educational" />
       <module fileurl="file://$PROJECT_DIR$/java/manifest/manifest.iml" filepath="$PROJECT_DIR$/java/manifest/manifest.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/../base/build-system/manifest-merger/manifest-merger.iml" filepath="$PROJECT_DIR$/../base/build-system/manifest-merger/manifest-merger.iml" group="android/sdktools" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/maven.iml" filepath="$PROJECT_DIR$/plugins/maven/maven.iml" group="plugins/maven" />
@@ -225,22 +216,6 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/properties/properties-psi-api/properties-psi-api.iml" filepath="$PROJECT_DIR$/plugins/properties/properties-psi-api/properties-psi-api.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/plugins/properties/properties-psi-impl/properties-psi-impl.iml" filepath="$PROJECT_DIR$/plugins/properties/properties-psi-impl/properties-psi-impl.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/platform/script-debugger/protocol/protocol-reader-runtime/protocol-reader-runtime.iml" filepath="$PROJECT_DIR$/platform/script-debugger/protocol/protocol-reader-runtime/protocol-reader-runtime.iml" group="platform/script-debugger" />
-      <module fileurl="file://$PROJECT_DIR$/python/python-community.iml" filepath="$PROJECT_DIR$/python/python-community.iml" group="python" />
-      <module fileurl="file://$PROJECT_DIR$/python/build/python-community-build.iml" filepath="$PROJECT_DIR$/python/build/python-community-build.iml" group="python" />
-      <module fileurl="file://$PROJECT_DIR$/python/python-community-configure/python-community-configure.iml" filepath="$PROJECT_DIR$/python/python-community-configure/python-community-configure.iml" group="python" />
-      <module fileurl="file://$PROJECT_DIR$/python/python-community-ide-resources/python-community-ide-resources.iml" filepath="$PROJECT_DIR$/python/python-community-ide-resources/python-community-ide-resources.iml" group="python" />
-      <module fileurl="file://$PROJECT_DIR$/python/pluginCore/python-community-plugin-core.iml" filepath="$PROJECT_DIR$/python/pluginCore/python-community-plugin-core.iml" group="python" />
-      <module fileurl="file://$PROJECT_DIR$/python/pluginJava/python-community-plugin-java.iml" filepath="$PROJECT_DIR$/python/pluginJava/python-community-plugin-java.iml" group="python" />
-      <module fileurl="file://$PROJECT_DIR$/python/python-community-plugin-resources.iml" filepath="$PROJECT_DIR$/python/python-community-plugin-resources.iml" group="python" />
-      <module fileurl="file://$PROJECT_DIR$/python/testSrc/python-community-tests.iml" filepath="$PROJECT_DIR$/python/testSrc/python-community-tests.iml" group="python" />
-      <module fileurl="file://$PROJECT_DIR$/python/educational-python/build/python-edu-build.iml" filepath="$PROJECT_DIR$/python/educational-python/build/python-edu-build.iml" group="python/educational" />
-      <module fileurl="file://$PROJECT_DIR$/python/python-helpers.iml" filepath="$PROJECT_DIR$/python/python-helpers.iml" group="python" />
-      <module fileurl="file://$PROJECT_DIR$/python/ide/python-ide-community.iml" filepath="$PROJECT_DIR$/python/ide/python-ide-community.iml" group="python" />
-      <module fileurl="file://$PROJECT_DIR$/python/openapi/python-openapi.iml" filepath="$PROJECT_DIR$/python/openapi/python-openapi.iml" group="python" />
-      <module fileurl="file://$PROJECT_DIR$/python/python-plugin-tests.iml" filepath="$PROJECT_DIR$/python/python-plugin-tests.iml" group="python" />
-      <module fileurl="file://$PROJECT_DIR$/python/psi-api/python-psi-api.iml" filepath="$PROJECT_DIR$/python/psi-api/python-psi-api.iml" group="python" />
-      <module fileurl="file://$PROJECT_DIR$/python/python-pydev.iml" filepath="$PROJECT_DIR$/python/python-pydev.iml" group="python" />
-      <module fileurl="file://$PROJECT_DIR$/python/python-rest/python-rest.iml" filepath="$PROJECT_DIR$/python/python-rest/python-rest.iml" group="python" />
       <module fileurl="file://$PROJECT_DIR$/xml/relaxng/relaxng.iml" filepath="$PROJECT_DIR$/xml/relaxng/relaxng.iml" group="xml" />
       <module fileurl="file://$PROJECT_DIR$/platform/remote-servers/agent-rt/remote-servers-agent-rt.iml" filepath="$PROJECT_DIR$/platform/remote-servers/agent-rt/remote-servers-agent-rt.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/remote-servers/api/remote-servers-api.iml" filepath="$PROJECT_DIR$/platform/remote-servers/api/remote-servers-api.iml" group="platform" />
@@ -252,7 +227,6 @@
       <module fileurl="file://$PROJECT_DIR$/../base/repository/repository.iml" filepath="$PROJECT_DIR$/../base/repository/repository.iml" group="plugins/Android/android-sdk" />
       <module fileurl="file://$PROJECT_DIR$/resources/resources.iml" filepath="$PROJECT_DIR$/resources/resources.iml" />
       <module fileurl="file://$PROJECT_DIR$/resources-en/resources-en.iml" filepath="$PROJECT_DIR$/resources-en/resources-en.iml" />
-      <module fileurl="file://$PROJECT_DIR$/python/rest/rest.iml" filepath="$PROJECT_DIR$/python/rest/rest.iml" group="python" />
       <module fileurl="file://$PROJECT_DIR$/../base/rpclib/rpclib.iml" filepath="$PROJECT_DIR$/../base/rpclib/rpclib.iml" group="android/sdktools" />
       <module fileurl="file://$PROJECT_DIR$/platform/script-debugger/backend/script-debugger-backend.iml" filepath="$PROJECT_DIR$/platform/script-debugger/backend/script-debugger-backend.iml" group="platform/script-debugger" />
       <module fileurl="file://$PROJECT_DIR$/platform/script-debugger/debugger-ui/script-debugger-ui.iml" filepath="$PROJECT_DIR$/platform/script-debugger/debugger-ui/script-debugger-ui.iml" group="platform/script-debugger" />
@@ -268,8 +242,6 @@
       <module fileurl="file://$PROJECT_DIR$/java/structuralsearch-java/structuralsearch-java.iml" filepath="$PROJECT_DIR$/java/structuralsearch-java/structuralsearch-java.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/platform/structuralsearch/structuralsearch-tests.iml" filepath="$PROJECT_DIR$/platform/structuralsearch/structuralsearch-tests.iml" group="plugins/structuralsearch" />
       <module fileurl="file://$PROJECT_DIR$/platform/structure-view-impl/structure-view-impl.iml" filepath="$PROJECT_DIR$/platform/structure-view-impl/structure-view-impl.iml" group="platform" />
-      <module fileurl="file://$PROJECT_DIR$/python/educational-core/student/student.iml" filepath="$PROJECT_DIR$/python/educational-core/student/student.iml" group="python/educational/educational-core" />
-      <module fileurl="file://$PROJECT_DIR$/python/educational-python/student-python/student-python.iml" filepath="$PROJECT_DIR$/python/educational-python/student-python/student-python.iml" group="python/educational/educational-python" />
       <module fileurl="file://$PROJECT_DIR$/plugins/svn4idea/svn4idea.iml" filepath="$PROJECT_DIR$/plugins/svn4idea/svn4idea.iml" group="plugins/VCS" />
       <module fileurl="file://$PROJECT_DIR$/plugins/svn4idea/svn4idea-tests.iml" filepath="$PROJECT_DIR$/plugins/svn4idea/svn4idea-tests.iml" group="plugins/VCS" />
       <module fileurl="file://$PROJECT_DIR$/plugins/tasks/tasks-api/tasks-api.iml" filepath="$PROJECT_DIR$/plugins/tasks/tasks-api/tasks-api.iml" group="plugins/tasks" />
