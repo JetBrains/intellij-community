@@ -160,4 +160,20 @@ class TransactionTest extends LightPlatformTestCase {
     }
   }
 
+  public void "test submit with finished transaction id"() {
+    TransactionGuard.submitTransaction testRootDisposable, {
+      log << '1'
+      TransactionId id = null
+      TransactionGuard.submitTransaction testRootDisposable, {
+        log << '2'
+        id = guard.contextTransaction
+      }
+      SwingUtilities.invokeLater {
+        guard.submitMergeableTransaction testRootDisposable, id, { log << '3' }
+      }
+      UIUtil.dispatchAllInvocationEvents()
+      assert log == ['1', '2', '3']
+    }
+  }
+
 }

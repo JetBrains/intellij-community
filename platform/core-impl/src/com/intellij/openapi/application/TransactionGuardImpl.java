@@ -83,8 +83,15 @@ public class TransactionGuardImpl extends TransactionGuard {
   }
 
   @NotNull
-  private Queue<Transaction> getQueue(@Nullable TransactionIdImpl prevTransaction) {
-    return prevTransaction == null ? myQueue : prevTransaction.myQueue;
+  private Queue<Transaction> getQueue(@Nullable TransactionIdImpl transaction) {
+    if (transaction == null) {
+      return myQueue;
+    }
+    if (myCurrentTransaction != null && transaction.myStartCounter > myCurrentTransaction.myStartCounter) {
+      // transaction is finished already, it makes no sense to add to its queue
+      return myCurrentTransaction.myQueue;
+    }
+    return transaction.myQueue;
   }
 
   private void pollQueueLater() {
