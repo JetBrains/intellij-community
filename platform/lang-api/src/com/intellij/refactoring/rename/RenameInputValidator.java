@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ProcessingContext;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Gregory.Shrago
@@ -27,12 +28,13 @@ import com.intellij.util.ProcessingContext;
 public interface RenameInputValidator {
   ExtensionPointName<RenameInputValidator> EP_NAME = ExtensionPointName.create("com.intellij.renameInputValidator");
 
+  @NotNull
   ElementPattern<? extends PsiElement> getPattern();
 
   /**
-   * Is invoked for elements accepted by pattern {@link #getPattern()}. 
-   * Should return true if {@link RenameInputValidatorEx} is intended to return custom error message, 
+   * Is invoked for elements accepted by pattern {@link #getPattern()}.
+   * Should return true if {@link RenameInputValidatorEx} is intended to return custom error message,
    * otherwise default message "newName is not a valid identifier" would be shown
    */
-  boolean isInputValid(final String newName, final PsiElement element, final ProcessingContext context);
+  boolean isInputValid(@NotNull final String newName, @NotNull final PsiElement element, @NotNull final ProcessingContext context);
 }

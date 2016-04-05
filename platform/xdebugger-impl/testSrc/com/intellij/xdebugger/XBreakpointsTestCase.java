@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,7 +61,7 @@ public abstract class XBreakpointsTestCase extends XDebuggerTestCase {
               return myBreakpointManager.getAllBreakpoints();
             }
           });
-    final List<XBreakpoint<?>> result = new ArrayList<XBreakpoint<?>>();
+    final List<XBreakpoint<?>> result = new ArrayList<>();
     for (XBreakpointBase<?, ?, ?> breakpoint : breakpoints) {
       final XBreakpointType type = breakpoint.getType();
       if (type instanceof MySimpleBreakpointType || type instanceof MyLineBreakpointType) {

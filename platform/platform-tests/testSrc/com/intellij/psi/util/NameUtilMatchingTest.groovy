@@ -651,6 +651,10 @@ public class NameUtilMatchingTest extends UsefulTestCase {
     assertMatches("NSUserDEF", "NSUserDefaults")
   }
 
+  public void testCyrillicMatch() {
+    assertMatches("ыек", "String");
+  }
+
   public void testPerformance() {
     @NonNls final String longName = "ThisIsAQuiteLongNameWithParentheses().Dots.-Minuses-_UNDERSCORES_digits239:colons:/slashes\\AndOfCourseManyLetters";
     final List<MinusculeMatcher> matching = new ArrayList<MinusculeMatcher>();

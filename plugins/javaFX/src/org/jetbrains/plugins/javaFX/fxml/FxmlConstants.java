@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.javaFX.fxml;
 
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
@@ -45,28 +46,26 @@ public class FxmlConstants {
   @NonNls public static final String STYLE_CLASS = "styleClass";
   @NonNls public static final String STYLESHEETS = "stylesheets";
 
-  public static final List<String> FX_DEFAULT_PROPERTIES = Arrays.asList(FX_ID, FX_CONTROLLER, VALUE, FX_VALUE, FX_FACTORY, FX_CONSTANT);
-  public static final List<String> FX_DEFAULT_ELEMENTS = Arrays.asList(FX_INCLUDE, FX_REFERENCE, FX_COPY, FX_DEFINE, FX_SCRIPT, FX_ROOT);
+  @NonNls public static final String SOURCE = "source";
 
-  public static final String FX_ELEMENT_SOURCE = "source";
+  public static final Set<String> FX_BUILT_IN_ATTRIBUTES =
+    ContainerUtil.immutableSet(FX_ID, FX_CONTROLLER, VALUE, FX_VALUE, FX_FACTORY, FX_CONSTANT);
 
-  public static final Map<String, List<String>> FX_ELEMENT_ATTRIBUTES = new HashMap<String, List<String>>();
+  public static final Set<String> FX_BUILT_IN_TAGS = ContainerUtil.immutableSet(FX_INCLUDE, FX_REFERENCE, FX_COPY, FX_DEFINE, FX_SCRIPT);
 
-  static {
-    FX_ELEMENT_ATTRIBUTES.put(FX_INCLUDE, Arrays.asList(FX_ELEMENT_SOURCE, FX_ID, RESOURCES, CHARSET));
-    FX_ELEMENT_ATTRIBUTES.put(FX_REFERENCE, Collections.singletonList(FX_ELEMENT_SOURCE));
-    FX_ELEMENT_ATTRIBUTES.put(FX_COPY, Collections.singletonList(FX_ELEMENT_SOURCE));
-    FX_ELEMENT_ATTRIBUTES.put(FX_SCRIPT, Collections.singletonList(FX_ELEMENT_SOURCE));
-    FX_ELEMENT_ATTRIBUTES.put(FX_ROOT, Collections.singletonList(TYPE));
-  }
+  public static final Map<String, List<String>> FX_BUILT_IN_TAG_SUPPORTED_ATTRIBUTES =
+    ContainerUtil.<String, List<String>>immutableMapBuilder()
+      .put(FX_INCLUDE, ContainerUtil.immutableList(SOURCE, FX_ID, RESOURCES, CHARSET))
+      .put(FX_REFERENCE, Collections.singletonList(SOURCE))
+      .put(FX_COPY, Collections.singletonList(SOURCE))
+      .put(FX_SCRIPT, Collections.singletonList(SOURCE))
+      .build();
 
-  public static final Map<String, List<String>> FX_REQUIRED_ELEMENT_ATTRIBUTES = new HashMap<String, List<String>>();
-
-  static {
-    FX_REQUIRED_ELEMENT_ATTRIBUTES.put(FX_INCLUDE, Collections.singletonList(FX_ELEMENT_SOURCE));
-    FX_REQUIRED_ELEMENT_ATTRIBUTES.put(FX_REFERENCE, Collections.singletonList(FX_ELEMENT_SOURCE));
-    FX_REQUIRED_ELEMENT_ATTRIBUTES.put(FX_COPY, Collections.singletonList(FX_ELEMENT_SOURCE));
-    FX_REQUIRED_ELEMENT_ATTRIBUTES.put(FX_ROOT, Collections.singletonList(TYPE));
-  }
+  public static final Map<String, List<String>> FX_BUILT_IN_TAG_REQUIRED_ATTRIBUTES =
+    ContainerUtil.<String, List<String>>immutableMapBuilder()
+      .put(FX_INCLUDE, Collections.singletonList(SOURCE))
+      .put(FX_REFERENCE, Collections.singletonList(SOURCE))
+      .put(FX_COPY, Collections.singletonList(SOURCE))
+      .build();
 
 }

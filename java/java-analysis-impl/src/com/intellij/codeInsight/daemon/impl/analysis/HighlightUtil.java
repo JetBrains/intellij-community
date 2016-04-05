@@ -568,6 +568,7 @@ public class HighlightUtil extends HighlightUtilBase {
     }
     if (expression != null) {
       QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createWrapLongWithMathToIntExactFix(lType, expression));
+      QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createWrapWithOptionalFix(lType, expression));
       QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createWrapExpressionFix(lType, expression));
       AddTypeArgumentsConditionalFix.register(highlightInfo, expression, lType);
     }

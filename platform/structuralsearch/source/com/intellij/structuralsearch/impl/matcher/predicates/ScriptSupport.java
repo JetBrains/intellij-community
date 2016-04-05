@@ -35,13 +35,15 @@ import java.util.Map;
 public class ScriptSupport {
   private final Script script;
   private final ScriptLog myScriptLog;
+  private final String myName;
 
   public ScriptSupport(Project project, String text, String name) {
     myScriptLog = new ScriptLog(project);
+    myName = name;
     File scriptFile = new File(text);
     GroovyShell shell = new GroovyShell();
     try {
-      script = scriptFile.exists() ? shell.parse(scriptFile) : shell.parse(text, name);
+      script = scriptFile.exists() ? shell.parse(scriptFile) : shell.parse(text, name + "_script.groovy");
     } catch (Exception ex) {
       Logger.getInstance(getClass().getName()).error(ex);
       throw new RuntimeException(ex);
@@ -82,18 +84,19 @@ public class ScriptSupport {
   public String evaluate(MatchResult result, PsiElement context) {
     try {
       final HashMap<String, Object> variableMap = new HashMap<String, Object>();
-      variableMap.put("__log__", myScriptLog);
+      variableMap.put(ScriptLog.SCRIPT_LOG_VAR_NAME, myScriptLog);
       if (result != null) {
         buildVariableMap(result, variableMap);
         if (context == null) {
           context = result.getMatch();
         }
       }
-      final Binding binding = new Binding(variableMap);
 
       context = StructuralSearchUtil.getPresentableElement(context);
-      binding.setVariable(Configuration.CONTEXT_VAR_NAME, context);
-      script.setBinding(binding);
+      variableMap.put(myName, context);
+      variableMap.put(Configuration.CONTEXT_VAR_NAME, context);
+
+      script.setBinding(new Binding(variableMap));
 
       final Object o = script.run();
       return String.valueOf(o);

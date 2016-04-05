@@ -97,6 +97,7 @@ public class GenerateDependencyUtil {
       myDependency = dependency;
     }
 
+    @NotNull
     @Override
     public String getText() {
       StringBuffer sb = new StringBuffer();

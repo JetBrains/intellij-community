@@ -8,7 +8,7 @@ import java.util.Map;
 /**
  * @author Irina.Chernushina on 8/28/2015.
  */
-class JsonSchemaObject {
+public class JsonSchemaObject {
   private Map<String, JsonSchemaObject> myDefinitions;
   private Map<String, JsonSchemaObject> myProperties;
   private Map<String, JsonSchemaObject> myPatternProperties;

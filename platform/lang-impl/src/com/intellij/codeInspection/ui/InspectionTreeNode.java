@@ -31,9 +31,8 @@ import java.util.Enumeration;
  * @author max
  */
 public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
-  private boolean myResolved;
   protected volatile InspectionTreeUpdater myUpdater;
-  protected InspectionTreeNode(Object userObject) {
+  protected InspectionTreeNode  (Object userObject) {
     super(userObject);
   }
 
@@ -54,8 +53,8 @@ public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
     return true;
   }
 
-  public boolean isResolved(){
-    return myResolved;
+  public boolean isResolved(ExcludedInspectionTreeNodesManager excludedManager){
+    return excludedManager.isExcluded(this);
   }
 
   public boolean appearsBold() {
@@ -66,21 +65,21 @@ public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
     return FileStatus.NOT_CHANGED;
   }
 
-  public void ignoreElement() {
-    myResolved = true;
+  public void ignoreElement(ExcludedInspectionTreeNodesManager excludedManager) {
+    excludedManager.exclude(this);
     Enumeration enumeration = children();
     while (enumeration.hasMoreElements()) {
       InspectionTreeNode child = (InspectionTreeNode)enumeration.nextElement();
-      child.ignoreElement();
+      child.ignoreElement(excludedManager);
     }
   }
 
-  public void amnesty() {
-    myResolved = false;
+  public void amnesty(ExcludedInspectionTreeNodesManager excludedManager) {
+    excludedManager.amnesty(this);
     Enumeration enumeration = children();
     while (enumeration.hasMoreElements()) {
       InspectionTreeNode child = (InspectionTreeNode)enumeration.nextElement();
-      child.amnesty();
+      child.amnesty(excludedManager);
     }
   }
 
@@ -89,7 +88,7 @@ public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
     super.add(newChild);
     if (myUpdater != null) {
       ((InspectionTreeNode)newChild).propagateUpdater(myUpdater);
-      myUpdater.updateWithPreviewPanel();
+      myUpdater.updateWithPreviewPanel(this);
     }
   }
 
@@ -98,7 +97,7 @@ public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
     super.insert(newChild, childIndex);
     if (myUpdater != null) {
       ((InspectionTreeNode)newChild).propagateUpdater(myUpdater);
-      myUpdater.updateWithPreviewPanel();
+      myUpdater.updateWithPreviewPanel(this);
     }
   }
 
@@ -124,5 +123,15 @@ public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
       current = entity;
     }
     return current;
+  }
+
+  @Override
+  public synchronized void setParent(MutableTreeNode newParent) {
+    super.setParent(newParent);
+  }
+
+  @Override
+  public synchronized TreeNode getParent() {
+    return super.getParent();
   }
 }

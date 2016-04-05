@@ -118,7 +118,7 @@ public abstract class XDebuggerUtil {
   public abstract XValueContainer getValueContainer(DataContext dataContext);
 
   /**
-   * Process all {@link com.intellij.psi.PsiElement}s on the specified line
+   * Process all {@link PsiElement}s on the specified line
    * @param project project
    * @param document document
    * @param line 0-based line number

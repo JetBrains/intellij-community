@@ -421,10 +421,11 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
       if (success) {
         assert !myApplication.isDispatchThread();
         final Runnable finalFinishRunnable = finishRunnable;
+        final Project finalProject = project;
         myApplication.invokeLater(new Runnable() {
           @Override
           public void run() {
-            TransactionGuard.getInstance().submitMergeableTransaction(TransactionKind.TEXT_EDITING, finalFinishRunnable);
+            TransactionGuard.getInstance().submitMergeableTransaction(finalProject, TransactionKind.TEXT_EDITING, finalFinishRunnable);
           }
         }, task.myCreationModalityState);
       }

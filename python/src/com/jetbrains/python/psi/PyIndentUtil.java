@@ -37,6 +37,17 @@ import java.util.Collections;
 import java.util.List;
 
 /**
+ * Contains various methods for manipulation on indentation found in arbitrary text and individual lines: 
+ * <ul>
+ *   <li>calculating actual and expected indentation</li>
+ *   <li>finding common indentation of several lines</li>
+ *   <li>replacing and removing indentation of multiple lines</li>
+ * </ul>
+ *
+ * It indented to be used primarily when one needs to modify content of Python files on document level and preserve valid block structure.  
+ * Note that in most scenarios accurate indentation consistent with the code style settings is provided by automatic formatting pass 
+ * that is performed each time you modify PSI tree directly.
+ * 
  * @author Mikhail Golubev
  */
 public class PyIndentUtil {
@@ -46,12 +57,11 @@ public class PyIndentUtil {
   private PyIndentUtil() {
   }
 
+  /**
+   * Returns indentation size as number of characters <tt>' '</tt> and <tt>'\t'</tt> in the beginning of a line. 
+   * It doesn't perform any expansion of tabs.
+   */
   public static int getLineIndentSize(@NotNull CharSequence line) {
-    return getLineIndent(line).length();
-  }
-
-  @NotNull
-  public static CharSequence getLineIndent(@NotNull CharSequence line) {
     int stop;
     for (stop = 0; stop < line.length(); stop++) {
       final char c = line.charAt(stop);
@@ -59,7 +69,20 @@ public class PyIndentUtil {
         break;
       }
     }
-    return line.subSequence(0, stop);
+    return stop;
+  }
+
+  @NotNull
+  public static String getLineIndent(@NotNull String line) {
+    return line.substring(0, getLineIndentSize(line));
+  }
+
+  /**
+   * Useful version of {@link #getLineIndent(String)} for custom character sequences like {@link com.jetbrains.python.toolbox.Substring}.
+   */
+  @NotNull
+  public static CharSequence getLineIndent(@NotNull CharSequence line) {
+    return line.subSequence(0, getLineIndentSize(line));
   }
 
   @NotNull
@@ -102,12 +125,23 @@ public class PyIndentUtil {
     return depth * getIndentSizeFromSettings(anchor.getProject());
   }
 
+  /**
+   * Returns indentation size configured in the Python code style settings.
+   * 
+   * @see #getIndentFromSettings(Project) 
+   */
   public static int getIndentSizeFromSettings(@NotNull Project project) {
     final CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getInstance(project).getCurrentSettings();
     final CodeStyleSettings.IndentOptions indentOptions = codeStyleSettings.getIndentOptions(PythonFileType.INSTANCE);
     return indentOptions.INDENT_SIZE;
   }
 
+  /**
+   * Returns indentation configured in the Python code style settings as plain space character repeated number times specified there.
+   * Note that it doesn't take into account usage of tab characters that might be configured there as well.
+   * 
+   * @see #getIndentSizeFromSettings(Project) 
+   */
   @NotNull
   public static String getIndentFromSettings(@NotNull Project project) {
     return StringUtil.repeatSymbol(' ', getIndentSizeFromSettings(project));
@@ -130,10 +164,8 @@ public class PyIndentUtil {
     return StringUtil.join(trimmed, "\n");
   }
 
-
-
   /**
-   * Not that all empty lines will be trimmed.
+   * Note that all empty lines will be trimmed regardless of their actual indentation.
    */
   @NotNull
   public static List<String> changeIndent(@NotNull Iterable<String> lines, boolean ignoreFirstLine, final String newIndent) {
@@ -160,10 +192,12 @@ public class PyIndentUtil {
   }
 
   /**
-   * If lines include non-empty lines, all empty lines or lines that contain only spaces are ignored.
-   * Otherwise (all line are empty) their common indent are returned as expected. If any two lines
-   * have different indentation (e.g. one contains tab character and another doesn't), empty prefix
-   * is returned.
+   * Finds maximum common indentation of the given lines. Indentation of empty lines and lines containing only whitespaces is ignored unless
+   * they're the only lines provided. In the latter case common indentation for such lines is returned. If mix of tabs and spaces was used
+   * for indentation and any two of lines taken into account contain incompatible combination of these symbols, i.e. it's impossible to 
+   * decide which one can be used as prefix for another, empty string is returned.
+   *
+   * @param ignoreFirstLine whether the first line should be considered (useful for multiline string literals)
    */
   @NotNull
   public static String findCommonIndent(@NotNull Iterable<String> lines, boolean ignoreFirstLine) {
@@ -178,7 +212,7 @@ public class PyIndentUtil {
       if (lineEmpty && !allLinesEmpty) {
         continue;
       }
-      final String indent = (String)getLineIndent(line);
+      final String indent = getLineIndent(line);
       if (minIndent == null || (!lineEmpty && allLinesEmpty) || minIndent.startsWith(indent)) {
         minIndent = indent;
       }
@@ -202,6 +236,6 @@ public class PyIndentUtil {
   public static String getLineIndent(@NotNull Document document, int lineNumber) {
     final TextRange lineRange = TextRange.create(document.getLineStartOffset(lineNumber), document.getLineEndOffset(lineNumber));
     final String line = document.getText(lineRange);
-    return (String)getLineIndent(line);
+    return getLineIndent(line);
   }
 }

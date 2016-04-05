@@ -700,7 +700,11 @@ public class AbstractPopup implements JBPopup {
 
   @Override
   public boolean isVisible() {
-    return myPopup != null;
+    if (myPopup == null) return false;
+    Window window = myPopup.getWindow();
+    if (window != null && window.isShowing()) return true;
+    if (LOG.isDebugEnabled()) LOG.debug("window hidden, popup's state: " + myState);
+    return false;
   }
 
   @Override
@@ -750,6 +754,19 @@ public class AbstractPopup implements JBPopup {
 
     if (myForcedSize != null) {
       sizeToSet = myForcedSize;
+    }
+
+    if (myLocateWithinScreen) {
+      Dimension size = sizeToSet != null ? sizeToSet : myContent.getPreferredSize();
+      Rectangle screen = ScreenUtil.getScreenRectangle(aScreenX, aScreenY);
+      if (size.width > screen.width) {
+        size.width = screen.width;
+        sizeToSet = size;
+      }
+      if (size.height > screen.height) {
+        size.height = screen.height;
+        sizeToSet = size;
+      }
     }
 
     if (sizeToSet != null) {

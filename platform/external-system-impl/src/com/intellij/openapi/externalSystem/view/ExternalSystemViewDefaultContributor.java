@@ -111,7 +111,7 @@ public class ExternalSystemViewDefaultContributor extends ExternalSystemViewCont
         //noinspection unchecked
         ModuleDependencyDataExternalSystemNode moduleDependencyDataExternalSystemNode =
           new ModuleDependencyDataExternalSystemNode(externalProjectsView, (DataNode<ModuleDependencyData>)dataNode);
-        if (dataNode.getParent() != null && dataNode.getParent().getData() instanceof ModuleDependencyData) {
+        if (dataNode.getParent() != null && dataNode.getParent().getData() instanceof AbstractDependencyData) {
           result.add(moduleDependencyDataExternalSystemNode);
         }
         else {

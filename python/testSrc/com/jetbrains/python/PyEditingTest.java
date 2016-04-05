@@ -213,6 +213,11 @@ public class PyEditingTest extends PyTestCase {
     });
   }
 
+  // PY-18486
+  public void testTripleQuotesThenEnterInsertsDocstring() {
+    doDocStringTypingTest("\"\"\"\n", DocStringFormat.REST);
+  }
+
   public void testEnterDocStringStubInClass() {
     doDocStringTypingTest("\n", DocStringFormat.REST);
   }

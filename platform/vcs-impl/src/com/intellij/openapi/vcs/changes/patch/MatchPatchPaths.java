@@ -50,6 +50,7 @@ public class MatchPatchPaths {
   private static final int BIG_FILE_BOUND = 100000;
   private final Project myProject;
   private final VirtualFile myBaseDir;
+  private boolean myUseProjectRootAsPredefinedBase;
 
   public MatchPatchPaths(Project project) {
     myProject = project;
@@ -57,8 +58,21 @@ public class MatchPatchPaths {
   }
 
   public List<AbstractFilePatchInProgress> execute(@NotNull final List<? extends FilePatch> list) {
+    return execute(list, false);
+  }
+
+  /**
+   * Find the best matched bases for file patches; e.g. Unshelve has to use project dir as best base by default,
+   * while Apply patch should process through context, because it may have been created outside IDE for a certain vcs root
+   *
+   * @param list
+   * @param useProjectRootAsPredefinedBase if true then we use project dir as default base despite context matching
+   * @return
+   */
+  public List<AbstractFilePatchInProgress> execute(@NotNull final List<? extends FilePatch> list, boolean useProjectRootAsPredefinedBase) {
     final PatchBaseDirectoryDetector directoryDetector = PatchBaseDirectoryDetector.getInstance(myProject);
 
+    myUseProjectRootAsPredefinedBase = useProjectRootAsPredefinedBase;
     final List<PatchAndVariants> candidates = new ArrayList<PatchAndVariants>(list.size());
     final List<FilePatch> newOrWithoutMatches = new ArrayList<FilePatch>();
     findCandidates(list, directoryDetector, candidates, newOrWithoutMatches);
@@ -256,6 +270,10 @@ public class MatchPatchPaths {
         int maxLines = -100;
         for (AbstractFilePatchInProgress variant : myVariants) {
           TextFilePatchInProgress textFilePAch = (TextFilePatchInProgress)variant;
+          if (myUseProjectRootAsPredefinedBase && variantMatchedToProjectDir(textFilePAch)) {
+            best = textFilePAch;
+            break;
+          }
           final int lines = getMatchingLines(textFilePAch);
           if (lines > maxLines) {
             maxLines = lines;
@@ -269,7 +287,7 @@ public class MatchPatchPaths {
         for (AbstractFilePatchInProgress variant : myVariants) {
           int currentStrip = variant.getCurrentStrip();
           //the best variant if several match should be project based variant
-          if (currentStrip == 0 && myProject.getBaseDir().equals(variant.getBase())) {
+          if (variantMatchedToProjectDir(variant)) {
             best = variant;
             break;
           }
@@ -281,6 +299,10 @@ public class MatchPatchPaths {
         putSelected(result, myVariants, best);
       }
     }
+  }
+
+  private boolean variantMatchedToProjectDir(@NotNull AbstractFilePatchInProgress variant) {
+    return variant.getCurrentStrip() == 0 && myProject.getBaseDir().equals(variant.getBase());
   }
 
   private static Pair<VirtualFile, Integer> compareNames(final String beforeName, final VirtualFile file) {

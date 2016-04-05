@@ -27,7 +27,6 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.util.Collection;
-import java.util.Comparator;
 
 import static org.jetbrains.plugins.github.GithubCreatePullRequestWorker.BranchInfo;
 import static org.jetbrains.plugins.github.GithubCreatePullRequestWorker.ForkInfo;
@@ -52,20 +51,10 @@ public class GithubCreatePullRequestPanel {
   public GithubCreatePullRequestPanel() {
     myDescriptionTextArea.setBorder(BorderFactory.createEtchedBorder());
 
-    myBranchModel = new SortedComboBoxModel<BranchInfo>(new Comparator<BranchInfo>() {
-      @Override
-      public int compare(BranchInfo o1, BranchInfo o2) {
-        return StringUtil.naturalCompare(o1.getRemoteName(), o2.getRemoteName());
-      }
-    });
+    myBranchModel = new SortedComboBoxModel<BranchInfo>((o1, o2) -> StringUtil.naturalCompare(o1.getRemoteName(), o2.getRemoteName()));
     myBranchComboBox.setModel(myBranchModel);
 
-    myForkModel = new SortedComboBoxModel<ForkInfo>(new Comparator<ForkInfo>() {
-      @Override
-      public int compare(ForkInfo o1, ForkInfo o2) {
-        return StringUtil.naturalCompare(o1.getPath().getUser(), o2.getPath().getUser());
-      }
-    });
+    myForkModel = new SortedComboBoxModel<ForkInfo>((o1, o2) -> StringUtil.naturalCompare(o1.getPath().getUser(), o2.getPath().getUser()));
     myForkComboBox.setModel(myForkModel);
 
     DocumentListener userModifiedDocumentListener = new DocumentAdapter() {

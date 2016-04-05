@@ -84,7 +84,6 @@ import com.intellij.util.ui.*;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import gnu.trove.TIntArrayList;
-import gnu.trove.TIntFunction;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntIntHashMap;
 import org.intellij.lang.annotations.JdkConstants;
@@ -140,7 +139,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @NotNull private final DocumentEx myDocument;
 
   private final JPanel myPanel;
-  @NotNull private final JScrollPane myScrollPane;
+  @NotNull private final JScrollPane myScrollPane = new MyScrollPane();
   @NotNull private final EditorComponentImpl myEditorComponent;
   @NotNull private final EditorGutterComponentImpl myGutterComponent;
   private final TraceableDisposable myTraceableDisposable = new TraceableDisposable(true);
@@ -344,7 +343,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     initTabPainter();
     myIsViewer = viewer;
     mySettings = new SettingsImpl(this, project);
-    if (shouldSoftWrapsBeForced()) {
+    if (!mySettings.isUseSoftWraps() && shouldSoftWrapsBeForced()) {
       mySettings.setUseSoftWrapsQuiet();
       putUserData(FORCED_SOFT_WRAPS, Boolean.TRUE);
     }
@@ -356,6 +355,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myDocumentMarkupModel = new EditorFilteringMarkupModelEx(this, documentMarkup);
     myFoldingModel = new FoldingModelImpl(this);
     myCaretModel = new CaretModelImpl(this);
+    myScrollingModel = new ScrollingModelImpl(this);
     mySoftWrapModel = new SoftWrapModelImpl(this);
     if (!myUseNewRendering) mySizeContainer.reset();
 
@@ -534,7 +534,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     setHighlighter(highlighter);
 
     myEditorComponent = new EditorComponentImpl(this);
-    myScrollPane = new MyScrollPane();
     myScrollPane.putClientProperty(JBScrollPane.BRIGHTNESS_FROM_VIEW, true);
     myVerticalScrollBar = (MyScrollBar)myScrollPane.getVerticalScrollBar();
     myVerticalScrollBar.setOpaque(false);
@@ -556,7 +555,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myHeaderPanel = new MyHeaderPanel();
     myGutterComponent = new EditorGutterComponentImpl(this);
     initComponent();
-    myScrollingModel = new ScrollingModelImpl(this);
 
     if (myUseNewRendering) {
       myView = new EditorView(this);
@@ -570,12 +568,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       setFontSize(UISettings.getInstance().PRESENTATION_MODE_FONT_SIZE);
     }
 
-    myGutterComponent.setLineNumberAreaWidthFunction(new TIntFunction() {
-        @Override
-        public int execute(int lineNumber) {
-          return getFontMetrics(Font.PLAIN).stringWidth(Integer.toString(lineNumber + 1));
-        }
-      });
     myGutterComponent.updateSize();
     Dimension preferredSize = getPreferredSize();
     myEditorComponent.setSize(preferredSize);
@@ -583,10 +575,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     updateCaretCursor();
   }
 
-  private boolean shouldSoftWrapsBeForced() {
-    if (mySettings.isUseSoftWraps() ||
-        // Disable checking for files in intermediate states - e.g. for files during refactoring.
-        myProject != null && PsiDocumentManager.getInstance(myProject).isDocumentBlockedByPsi(myDocument)) {
+  public boolean shouldSoftWrapsBeForced() {
+    if (myProject != null && PsiDocumentManager.getInstance(myProject).isDocumentBlockedByPsi(myDocument)) {
+      // Disable checking for files in intermediate states - e.g. for files during refactoring.
       return false;
     }
     int lineWidthLimit = Registry.intValue("editor.soft.wrap.force.limit");
@@ -2165,7 +2156,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     if (isReleased) {
-      g.setColor(new JBColor(new Color(128, 255, 128), new Color(128, 255, 128)));
+      g.setColor(getDisposedBackground());
       g.fillRect(clip.x, clip.y, clip.width, clip.height);
       return;
     }
@@ -2201,6 +2192,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       paintComposedTextDecoration(g);
     }
+  }
+
+  Color getDisposedBackground() {
+    return new JBColor(new Color(128, 255, 128), new Color(128, 255, 128));
   }
 
   private static final char IDEOGRAPHIC_SPACE = '\u3000'; // http://www.marathon-studios.com/unicode/U3000/Ideographic_Space
@@ -5434,11 +5429,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   void replaceInputMethodText(@NotNull InputMethodEvent e) {
+    if (isReleased) return;
     getInputMethodRequests();
     myInputMethodRequestsHandler.replaceInputMethodText(e);
   }
 
   void inputMethodCaretPositionChanged(@NotNull InputMethodEvent e) {
+    if (isReleased) return;
     getInputMethodRequests();
     myInputMethodRequestsHandler.setInputMethodCaretPosition(e);
   }

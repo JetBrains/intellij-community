@@ -69,6 +69,7 @@ public abstract class TaskBranchesTest extends PlatformTestCase {
 
     final String first = "first";
     VcsTaskHandler.TaskInfo firstInfo = handler.startNewTask(first);
+    repository.update();
     assertEquals(first, firstInfo.getName());
     assertEquals(2, firstInfo.getRepositories().size());
 
@@ -76,15 +77,18 @@ public abstract class TaskBranchesTest extends PlatformTestCase {
     assertEquals(first, repository.getCurrentBranchName());
 
     handler.switchToTask(defaultInfo, null);
+    repository.update();
     assertEquals(defaultBranchName, repository.getCurrentBranchName());
 
     final String second = "second";
     VcsTaskHandler.TaskInfo secondInfo = handler.startNewTask(second);
+    repository.update();
     assertEquals(3, getNumberOfBranches(repository));
     assertEquals(second, repository.getCurrentBranchName());
     handler.switchToTask(firstInfo, null);
     commitChanges(repository);
     handler.closeTask(secondInfo, firstInfo);
+    repository.update();
     assertEquals(2, getNumberOfBranches(repository));
   }
 
@@ -115,6 +119,7 @@ public abstract class TaskBranchesTest extends PlatformTestCase {
     commitChanges(repository);
 
     myTaskManager.mergeBranch(localTask);
+    repository.update();
     assertEquals(defaultBranchName, repository.getCurrentBranchName());
     assertEquals(1, getNumberOfBranches(repository));
 
@@ -144,7 +149,7 @@ public abstract class TaskBranchesTest extends PlatformTestCase {
     myTaskManager.createBranch(localTask, defaultTask, myTaskManager.suggestBranchName(localTask));
     commitChanges(repository);
     myTaskManager.mergeBranch(localTask);
-
+    repository.update();
     assertEquals(getDefaultBranchName(), repository.getCurrentBranchName());
     assertEquals(1, getNumberOfBranches(repository));
   }
@@ -166,13 +171,14 @@ public abstract class TaskBranchesTest extends PlatformTestCase {
   }
 
   public void testBranchBloating() throws Exception {
-    initRepository("foo");
+    Repository repository = initRepository("foo");
     LocalTask defaultTask = myTaskManager.getActiveTask();
     assertNotNull(defaultTask);
     assertEquals(0, defaultTask.getBranches().size());
     LocalTaskImpl foo = myTaskManager.createLocalTask("foo");
     LocalTask localTask = myTaskManager.activateTask(foo, false);
     myTaskManager.createBranch(localTask, defaultTask, myTaskManager.suggestBranchName(localTask));
+    repository.update();
     assertEquals(2, localTask.getBranches().size());
     assertEquals(1, defaultTask.getBranches().size());
 
@@ -180,6 +186,7 @@ public abstract class TaskBranchesTest extends PlatformTestCase {
     LocalTaskImpl bar = myTaskManager.createLocalTask("bar");
     LocalTask barTask = myTaskManager.activateTask(bar, false);
     myTaskManager.createBranch(localTask, defaultTask, myTaskManager.suggestBranchName(barTask));
+    repository.update();
     assertEquals(1, defaultTask.getBranches().size());
   }
 
@@ -199,8 +206,10 @@ public abstract class TaskBranchesTest extends PlatformTestCase {
     info.name = "non-existing";
     info.repository = defaultTask.getBranches().get(0).repository;
     defaultTask.addBranch(info);
+    repository.update();
     assertEquals("foo", repository.getCurrentBranchName());
     myTaskManager.activateTask(defaultTask, false);
+    repository.update();
     assertEquals(getDefaultBranchName(), repository.getCurrentBranchName());
     // do not re-create "non-existing"
     assertEquals(2, getNumberOfBranches(repository));

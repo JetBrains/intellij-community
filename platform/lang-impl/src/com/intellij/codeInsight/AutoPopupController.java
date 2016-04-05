@@ -32,6 +32,8 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.TransactionId;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbService;
@@ -124,7 +126,7 @@ public class AutoPopupController implements Disposable {
     CompletionServiceImpl.setCompletionPhase(phase);
     phase.ignoreCurrentDocumentChange();
 
-    runLaterWithEverythingCommitted(myProject, () -> {
+    runTransactionWithEverythingCommitted(myProject, () -> {
       if (phase.checkExpired()) return;
 
       PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
@@ -185,7 +187,7 @@ public class AutoPopupController implements Disposable {
           if (editor.isDisposed() || !editor.getComponent().isShowing()) return;
           int lbraceOffset = editor.getCaretModel().getOffset() - 1;
           try {
-            ShowParameterInfoHandler.invoke(myProject, editor, file1, lbraceOffset, highlightedMethod);
+            ShowParameterInfoHandler.invoke(myProject, editor, file1, lbraceOffset, highlightedMethod, false);
           }
           catch (IndexNotReadyException ignored) { //anything can happen on alarm
           }
@@ -214,6 +216,27 @@ public class AutoPopupController implements Disposable {
         else {
           runnable.run();
         }
+      }, modalityState, project.getDisposed());
+
+    });
+  }
+  public static void runTransactionWithEverythingCommitted(@NotNull final Project project, @NotNull final Runnable runnable) {
+    TransactionGuard guard = TransactionGuard.getInstance();
+    TransactionId id = guard.getContextTransaction();
+    ModalityState modalityState = ModalityState.current();
+    final PsiDocumentManager pdm = PsiDocumentManager.getInstance(project);
+    pdm.performWhenAllCommitted(() -> {
+      // later because we may end up in write action here if there was a synchronous commit
+      ApplicationManager.getApplication().invokeLater(() -> {
+        guard.submitMergeableTransaction(project, id, () -> {
+          if (pdm.hasUncommitedDocuments()) {
+            // no luck, will try later
+            runTransactionWithEverythingCommitted(project, runnable);
+          }
+          else {
+            runnable.run();
+          }
+        });
       }, modalityState, project.getDisposed());
 
     });

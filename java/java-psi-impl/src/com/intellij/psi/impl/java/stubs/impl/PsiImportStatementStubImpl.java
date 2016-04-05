@@ -25,6 +25,7 @@ import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.reference.SoftReference;
+import com.intellij.util.BitUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.Nullable;
@@ -56,12 +57,12 @@ public class PsiImportStatementStubImpl extends StubBase<PsiImportStatementBase>
   }
 
   private static boolean isStatic(final byte flags) {
-    return (flags & STATIC) != 0;
+    return BitUtil.isSet(flags, STATIC);
   }
 
   @Override
   public boolean isOnDemand() {
-    return (myFlags & ON_DEMAND) != 0;
+    return BitUtil.isSet(myFlags, ON_DEMAND);
   }
 
   public byte getFlags() {

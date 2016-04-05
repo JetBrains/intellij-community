@@ -30,6 +30,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.containers.WeakHashMap;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -100,39 +101,6 @@ public class UIUtil {
     kit.setStyleSheet(null);
   }
 
-  public static final String A11Y_ATK_WRAPPER = "org.GNOME.Accessibility.AtkWrapper";
-  public static final String A11Y_ACCESS_BRIDGE = "com.sun.java.accessibility.AccessBridge";
-
-  public static boolean isA11YEnabled(String a11yClassName) {
-    String[] paths = new String[] {System.getProperty("user.home") + File.separator + ".accessibility.properties",
-                                   System.getProperty("java.home") + File.separator + "lib" + File.separator + "accessibility.properties"};
-    Properties properties = new Properties();
-    for (String path : paths) {
-      try {
-        File propsFile = new File(path);
-        FileInputStream in = new FileInputStream(propsFile);
-        properties.load(in);
-        in.close();
-      }
-      catch (Exception ignore) {
-        continue;
-      }
-      if (!properties.isEmpty()) break;
-    }
-    if (!properties.isEmpty()) {
-      // First, check the system property
-      String classNames = System.getProperty("javax.accessibility.assistive_technologies");
-      if (classNames == null) {
-        // If the system property is not set, Toolkit will try to use the properties file.
-        classNames = properties.getProperty("assistive_technologies", null);
-      }
-      if (classNames != null && classNames.contains(a11yClassName)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   private static void blockATKWrapper() {
     /*
      * The method should be called before java.awt.Toolkit.initAssistiveTechnologies()
@@ -140,10 +108,10 @@ public class UIUtil {
      */
     if (!(SystemInfo.isLinux && Registry.is("linux.jdk.accessibility.atkwrapper.block"))) return;
 
-    if (isA11YEnabled(A11Y_ATK_WRAPPER)) {
+    if (ScreenReader.isEnabled(ScreenReader.ATK_WRAPPER)) {
       // Replace AtkWrapper with a dummy Object. It'll be instantiated & GC'ed right away, a NOP.
       System.setProperty("javax.accessibility.assistive_technologies", "java.lang.Object");
-      LOG.info(A11Y_ATK_WRAPPER + " is blocked, see IDEA-149219");
+      LOG.info(ScreenReader.ATK_WRAPPER + " is blocked, see IDEA-149219");
     }
   }
 
@@ -1821,6 +1789,10 @@ public class UIUtil {
   }
 
   public static void drawImage(Graphics g, Image image, int x, int y, ImageObserver observer) {
+    drawImage(g, image, x, y, -1, -1, observer);
+  }
+
+  public static void drawImage(Graphics g, Image image, int x, int y, int width, int height, ImageObserver observer) {
     if (image instanceof JBHiDPIScaledImage) {
       final Graphics2D newG = (Graphics2D)g.create(x, y, image.getWidth(observer), image.getHeight(observer));
       newG.scale(0.5, 0.5);
@@ -1828,11 +1800,20 @@ public class UIUtil {
       if (img == null) {
         img = image;
       }
-      newG.drawImage(img, 0, 0, observer);
+      if (width == -1 && height == -1) {
+        newG.drawImage(img, 0, 0, observer);
+      }
+      else {
+        newG.drawImage(img, 0, 0, width * 2, height * 2, 0, 0, width * 2, height * 2, observer);
+      }
       //newG.scale(1, 1);
       newG.dispose();
-    } else {
+    }
+    else if (width == -1 && height == -1) {
       g.drawImage(image, x, y, observer);
+    }
+    else {
+      g.drawImage(image, x, y, x + width, y + height, 0, 0, width, height, observer);
     }
   }
 
@@ -1914,9 +1895,9 @@ public class UIUtil {
     AWTEvent event = eventQueue.peekEvent();
     if (event == null) return false;
     try {
-      AWTEvent event1 = eventQueue.getNextEvent();
-      if (event1 instanceof InvocationEvent) {
-        ((InvocationEvent)event1).dispatch();
+      event = eventQueue.getNextEvent();
+      if (event instanceof InvocationEvent) {
+        eventQueue.getClass().getDeclaredMethod("dispatchEvent", AWTEvent.class).invoke(eventQueue, event);
       }
     }
     catch (Exception e) {
@@ -2078,7 +2059,7 @@ public class UIUtil {
     return null;
   }
 
-  public static <T extends JComponent> T findParentByClass(@NotNull Component c, Class<T> cls) {
+  public static <T extends Component> T findParentByClass(@NotNull Component c, Class<T> cls) {
     for (Component component = c; component != null; component = component.getParent()) {
       if (cls.isAssignableFrom(component.getClass())) {
         @SuppressWarnings({"unchecked"}) final T t = (T)component;
@@ -2544,11 +2525,31 @@ public class UIUtil {
     }
   }
 
+  private static String systemLaFClassName;
+
   public static String getSystemLookAndFeelClassName() {
-    // Force GTK LaF on Linux to let it retrieve system font settings
-    // with proper font scale based on Xft.dpi
-    return SystemInfo.isLinux ? "com.sun.java.swing.plaf.gtk.GTKLookAndFeel" :
-           UIManager.getSystemLookAndFeelClassName();
+    if (systemLaFClassName != null) {
+      return systemLaFClassName;
+    }
+    else if (SystemInfo.isLinux) {
+      // Normally, GTK LaF is considered "system" when:
+      // 1) Gnome session is run
+      // 2) gtk lib is available
+      // Here we weaken the requirements to only 2) and force GTK LaF
+      // installation in order to let it properly scale default font
+      // based on Xft.dpi value.
+      try {
+        String name = "com.sun.java.swing.plaf.gtk.GTKLookAndFeel";
+        Class cls = Class.forName(name);
+        LookAndFeel laf = (LookAndFeel)cls.newInstance();
+        if (laf.isSupportedLookAndFeel()) { // if gtk lib is available
+          return systemLaFClassName = name;
+        }
+      }
+      catch (Exception ignore) {
+      }
+    }
+    return systemLaFClassName = UIManager.getSystemLookAndFeelClassName();
   }
 
   public static void initDefaultLAF() {

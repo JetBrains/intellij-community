@@ -228,40 +228,32 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
     if (context.isViewClosed() || !(refElement instanceof RefElement)) {
       return;
     }
-    InspectionResultsView view = context.getView();
-    if (view == null) {
-      view = UIUtil.invokeAndWaitIfNeeded(() -> {
-        InspectionResultsView newView = context.getView();
-        if (newView != null) {
-          return newView;
-        }
-        newView = new InspectionResultsView(context, new InspectionRVContentProviderImpl(context.getProject()));
-        context.addView(newView);
-        return newView;
-      });
-    }
-    if (!isDisposed()) {
-      ApplicationManager.getApplication().assertReadAccessAllowed();
-      synchronized (view.getTreeStructureUpdateLock()) {
-        final InspectionNode toolNode;
-        toolNode = myToolNode == null ?
-                   view.addTool(myToolWrapper, HighlightDisplayLevel.find(getSeverity((RefElement)refElement)),
-                                context.getUIOptions().GROUP_BY_SEVERITY, context.isSingleInspectionRun()) : myToolNode;
+    if (myToolWrapper instanceof LocalInspectionToolWrapper && !ApplicationManager.getApplication().isUnitTestMode()) {
+      InspectionResultsView view = context.createViewIfNeed();
+      if (!isDisposed()) {
+        ApplicationManager.getApplication().assertReadAccessAllowed();
+        synchronized (view.getTreeStructureUpdateLock()) {
+          final InspectionNode toolNode;
+          toolNode = myToolNode == null ?
+                     view.addTool(myToolWrapper, HighlightDisplayLevel.find(getSeverity((RefElement)refElement)),
+                                  context.getUIOptions().GROUP_BY_SEVERITY, context.isSingleInspectionRun()) : myToolNode;
 
-        final Map<RefEntity, CommonProblemDescriptor[]> problems = new HashMap<RefEntity, CommonProblemDescriptor[]>();
-        problems.put(refElement, descriptors);
-        final Map<String, Set<RefEntity>> contents = new HashMap<String, Set<RefEntity>>();
-        final String groupName = refElement.getRefManager().getGroupName((RefElement)refElement);
-        Set<RefEntity> content = contents.get(groupName);
-        if (content == null) {
-          content = new HashSet<RefEntity>();
-          contents.put(groupName, content);
-        }
-        content.add(refElement);
+          final Map<RefEntity, CommonProblemDescriptor[]> problems = new HashMap<RefEntity, CommonProblemDescriptor[]>();
+          problems.put(refElement, descriptors);
+          final Map<String, Set<RefEntity>> contents = new HashMap<String, Set<RefEntity>>();
+          final String groupName = refElement.getRefManager().getGroupName((RefElement)refElement);
+          Set<RefEntity> content = contents.get(groupName);
+          if (content == null) {
+            content = new HashSet<RefEntity>();
+            contents.put(groupName, content);
+          }
+          content.add(refElement);
 
-        view.getProvider().appendToolNodeContent(context, toolNode,
-                                                 (InspectionTreeNode)toolNode.getParent(), context.getUIOptions().SHOW_STRUCTURE,
-                                                 contents, problems);
+          view.getProvider().appendToolNodeContent(context, toolNode,
+                                                   (InspectionTreeNode)toolNode.getParent(), context.getUIOptions().SHOW_STRUCTURE,
+                                                   contents, problems);
+
+        }
       }
     }
   }
@@ -530,7 +522,7 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
         final HighlightDisplayLevel level = profile.getErrorLevel(HighlightDisplayKey.find(myToolWrapper.getShortName()), psiElement);
         severity = level.getSeverity();
       }
-      
+
       if (severity != null) {
         ProblemHighlightType problemHighlightType = descriptor instanceof ProblemDescriptor
                                                     ? ((ProblemDescriptor)descriptor).getHighlightType()
@@ -539,7 +531,7 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
         problemClassElement.setAttribute("severity", severity.myName);
         problemClassElement.setAttribute("attribute_key", attributeKey);
       }
-      
+
       element.addContent(problemClassElement);
       if (myToolWrapper instanceof GlobalInspectionToolWrapper) {
         final GlobalInspectionTool globalInspectionTool = ((GlobalInspectionToolWrapper)myToolWrapper).getTool();
@@ -746,11 +738,6 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
   public boolean isElementIgnored(final RefEntity element) {
     for (RefEntity entity : getIgnoredElements().keySet()) {
       if (Comparing.equal(entity, element)) {
-        for (RefEntity entity1 : getProblemElements().keySet()) {
-          if (Comparing.equal(entity1, element)) {
-            return false;
-          }
-        }
         return true;
       }
     }
@@ -824,7 +811,7 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
 
   @NotNull
   @Override
-  public Collection<RefEntity> getIgnoredRefElements() {
+  public Set<RefEntity> getIgnoredRefElements() {
     return getIgnoredElements().keySet();
   }
 

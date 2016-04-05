@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -154,7 +154,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
     ArrayList<UsageInfo> result = new ArrayList<UsageInfo>();
 
     PsiMethod[] overridingMethods =
-      OverridingMethodsSearch.search(myMethodToSearchFor, true).toArray(PsiMethod.EMPTY_ARRAY);
+      OverridingMethodsSearch.search(myMethodToSearchFor).toArray(PsiMethod.EMPTY_ARRAY);
     for (PsiMethod overridingMethod : overridingMethods) {
       result.add(new UsageInfo(overridingMethod));
     }

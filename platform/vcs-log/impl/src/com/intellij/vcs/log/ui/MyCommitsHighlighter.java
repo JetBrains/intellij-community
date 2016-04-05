@@ -19,8 +19,8 @@ import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogDataManager;
-import com.intellij.vcs.log.impl.VcsUserImpl;
 import com.intellij.vcs.log.ui.filter.VcsLogUserFilterImpl;
+import com.intellij.vcs.log.util.VcsUserUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -43,7 +43,7 @@ public class MyCommitsHighlighter implements VcsLogHighlighter {
     if (!myLogUi.isHighlighterEnabled(Factory.ID)) return VcsCommitStyle.DEFAULT;
     if (myShouldHighlightUser) {
       VcsUser currentUser = myDataManager.getCurrentUser().get(details.getRoot());
-      if (currentUser != null && VcsUserImpl.isSamePerson(currentUser, details.getAuthor())) {
+      if (currentUser != null && VcsUserUtil.isSamePerson(currentUser, details.getAuthor())) {
         return VcsCommitStyleFactory.bold();
       }
     }
@@ -61,7 +61,7 @@ public class MyCommitsHighlighter implements VcsLogHighlighter {
       @NotNull
       @Override
       public String fun(VcsUser user) {
-        return VcsUserImpl.getNameInStandardForm(user.getName());
+        return VcsUserUtil.getNameInStandardForm(VcsUserUtil.getShortPresentation(user));
       }
     };
     Set<String> allUserNames = ContainerUtil.newHashSet(ContainerUtil.map(myDataManager.getAllUsers(), nameToString));

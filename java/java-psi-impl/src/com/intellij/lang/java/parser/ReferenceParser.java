@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,8 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.lang.PsiBuilderUtil.expect;
 import static com.intellij.lang.java.parser.JavaParserUtil.*;
-import static com.intellij.util.BitUtil.*;
+import static com.intellij.util.BitUtil.isSet;
+import static com.intellij.util.BitUtil.set;
 
 public class ReferenceParser {
   public static final int EAT_LAST_DOT = 0x01;
@@ -67,7 +68,7 @@ public class ReferenceParser {
     final TypeInfo typeInfo = parseTypeInfo(builder, flags, false);
 
     if (typeInfo != null) {
-      assert notSet(flags, DISJUNCTIONS|CONJUNCTIONS) : "don't set both flags simultaneously";
+      assert !isSet(flags, DISJUNCTIONS) || !isSet(flags,CONJUNCTIONS) : "don't set both flags simultaneously";
       final IElementType operator = isSet(flags, DISJUNCTIONS) ? JavaTokenType.OR : isSet(flags, CONJUNCTIONS) ? JavaTokenType.AND : null;
 
       if (operator != null && builder.getTokenType() == operator) {

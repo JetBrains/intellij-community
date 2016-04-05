@@ -579,16 +579,16 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       if (id < 0) return UnknownFileType.INSTANCE;
 
       long flags = packedFlags.get(id);
-      if ((flags & ATTRIBUTES_WERE_LOADED_MASK) == 0) {
+      if (!BitUtil.isSet(flags, ATTRIBUTES_WERE_LOADED_MASK)) {
         flags = readFlagsFromCache(file);
         flags = BitUtil.set(flags, ATTRIBUTES_WERE_LOADED_MASK, true);
 
         packedFlags.set(id, flags);
         if (toLog()) {
-          log("F: getOrDetectFromContent("+file.getName()+"): readFlagsFromCache() = "+ readableFlags(flags));
+          log("F: getOrDetectFromContent(" + file.getName() + "): readFlagsFromCache() = " + readableFlags(flags));
         }
       }
-      boolean autoDetectWasRun = (flags & AUTO_DETECT_WAS_RUN_MASK) != 0;
+      boolean autoDetectWasRun = BitUtil.isSet(flags, AUTO_DETECT_WAS_RUN_MASK);
       if (autoDetectWasRun) {
         FileType type = textOrBinaryFromCachedFlags(flags);
         if (toLog()) {

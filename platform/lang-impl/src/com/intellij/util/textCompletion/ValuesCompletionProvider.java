@@ -15,10 +15,10 @@
  */
 package com.intellij.util.textCompletion;
 
-import com.intellij.codeInsight.completion.CompletionParameters;
-import com.intellij.codeInsight.completion.CompletionResultSet;
-import com.intellij.codeInsight.completion.PlainPrefixMatcher;
+import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.CharFilter;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +43,16 @@ public class ValuesCompletionProvider<T> implements TextCompletionProvider {
   @NotNull private final List<Character> mySeparators;
   @NotNull protected final Collection<? extends T> myValues;
   private final boolean myCaseSensitive;
+  @NotNull private final InsertHandler<LookupElement> myInsertHandler = new CompletionCharInsertHandler();
 
+  /**
+   * Create a completion provider.
+   *
+   * @param descriptor descriptor for completion values (text, icons, etc).
+   * @param separators characters that separate values in the editor (like new line or space). If user is supposed to choose only one value this list should be empty.
+   * @param values values to show in completion.
+   * @param caseSensitive is completion case-sensitive.
+   */
   public ValuesCompletionProvider(@NotNull TextCompletionValueDescriptor<T> descriptor,
                                   @NotNull List<Character> separators,
                                   @NotNull Collection<? extends T> values, boolean caseSensitive) {
@@ -53,8 +62,10 @@ public class ValuesCompletionProvider<T> implements TextCompletionProvider {
     myCaseSensitive = caseSensitive;
   }
 
-  /*
-  Single-line single-value case-insensitive completion.
+  /**
+   * Creates a completion provider for selecting single value from a list of values. Completion is case-insensitive.
+   * @param presentation descriptor for completion values.
+   * @param values list of values.
    */
   public ValuesCompletionProvider(@NotNull TextCompletionValueDescriptor<T> presentation,
                                   @NotNull Collection<? extends T> values) {
@@ -105,14 +116,34 @@ public class ValuesCompletionProvider<T> implements TextCompletionProvider {
     values = ContainerUtil.sorted(values, myDescriptor);
 
     for (T completionVariant : values) {
-      result.addElement(myDescriptor.createLookupBuilder(completionVariant));
+      result.addElement(installInsertHandler(myDescriptor.createLookupBuilder(completionVariant)));
     }
     result.stopHere();
   }
 
   @NotNull
+  private LookupElement installInsertHandler(@NotNull LookupElementBuilder builder) {
+    InsertHandler<LookupElement> handler = builder.getInsertHandler();
+    if (handler == null) return builder.withInsertHandler(myInsertHandler);
+    return builder.withInsertHandler(new InsertHandler<LookupElement>() {
+      @Override
+      public void handleInsert(InsertionContext context, LookupElement item) {
+        myInsertHandler.handleInsert(context, item);
+        handler.handleInsert(context, item);
+      }
+    });
+  }
+
+  @NotNull
   protected Collection<? extends T> getValues(@NotNull String prefix, @NotNull CompletionResultSet result) {
     return myValues;
+  }
+
+  public class CompletionCharInsertHandler implements InsertHandler<LookupElement> {
+    @Override
+    public void handleInsert(InsertionContext context, LookupElement item) {
+      context.setAddCompletionChar(mySeparators.contains(context.getCompletionChar()));
+    }
   }
 
   public static class ValuesCompletionProviderDumbAware<T> extends ValuesCompletionProvider<T> implements DumbAware {

@@ -2221,8 +2221,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
       Window frame = myWindowedDecorator.getFrame();
       if (!frame.isShowing()) return;
-      Rectangle bounds = frame.getBounds();
-      bounds.setLocation(frame.getLocationOnScreen());
+      Rectangle bounds = getRootBounds((JFrame)frame);
       info.setFloatingBounds(bounds);
     }
 
@@ -2241,6 +2240,14 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     public Condition getExpireCondition() {
       return ApplicationManager.getApplication().getDisposed();
     }
+  }
+
+  @NotNull
+  private static Rectangle getRootBounds(JFrame frame) {
+    JRootPane rootPane = frame.getRootPane();
+    Rectangle bounds = rootPane.getBounds();
+    bounds.setLocation(frame.getX() + rootPane.getX(), frame.getY() + rootPane.getY());
+    return bounds;
   }
 
   private final class EditorComponentFocusWatcher extends FocusWatcher {
@@ -2382,6 +2389,12 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         if (owner != null) {
           info.setFloatingBounds(owner.getBounds());
         }
+      }
+      else if (info.isWindowed()) {
+        WindowedDecorator decorator = getWindowedDecorator(info.getId());
+        Window frame = decorator != null ? decorator.getFrame() : null;
+        if (frame == null || !frame.isShowing()) return;
+        info.setFloatingBounds(getRootBounds((JFrame)frame));
       }
       else { // docked and sliding windows
         ToolWindowAnchor anchor = info.getAnchor();

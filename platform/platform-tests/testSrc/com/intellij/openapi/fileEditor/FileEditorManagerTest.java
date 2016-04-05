@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,6 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -232,16 +231,6 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     @Override
     public String getEditorTypeId() {
       return "mock";
-    }
-
-    @NotNull
-    @Override
-    public FileEditorState readState(@NotNull Element sourceElement, @NotNull Project project, @NotNull VirtualFile file) {
-      return FileEditorState.INSTANCE;
-    }
-
-    @Override
-    public void writeState(@NotNull FileEditorState state, @NotNull Project project, @NotNull Element targetElement) {
     }
 
     @Override

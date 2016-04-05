@@ -83,7 +83,7 @@ public class CheckEmptyTagInspection extends XmlSuppressableInspectionTool {
 
     Language language = tag.getLanguage();
     return ourTagsWithEmptyEndsNotAllowed.contains(tagName) && language != XMLLanguage.INSTANCE ||
-           language == HTMLLanguage.INSTANCE && !HtmlUtil.isSingleHtmlTagL(tagName) && tagName.indexOf(':') == -1;
+           language.isKindOf(HTMLLanguage.INSTANCE) && !HtmlUtil.isSingleHtmlTagL(tagName) && tagName.indexOf(':') == -1;
   }
 
   @Override

@@ -46,6 +46,7 @@ import com.intellij.vcs.log.data.VisiblePack;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.render.VcsRefPainter;
 import com.intellij.vcs.log.ui.tables.GraphTableModel;
+import com.intellij.vcs.log.util.VcsUserUtil;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -440,8 +441,8 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       long authorTime = commit.getAuthorTime();
       long commitTime = commit.getCommitTime();
 
-      String authorText = commit.getAuthor().getName() + formatDateTime(authorTime);
-      if (!commit.getAuthor().equals(commit.getCommitter())) {
+      String authorText = VcsUserUtil.getShortPresentation(commit.getAuthor()) + formatDateTime(authorTime);
+      if (!VcsUserUtil.isSamePerson(commit.getAuthor(), commit.getCommitter())) {
         String commitTimeText;
         if (authorTime != commitTime) {
           commitTimeText = formatDateTime(commitTime);
@@ -449,7 +450,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
         else {
           commitTimeText = "";
         }
-        authorText += " (committed by " + commit.getCommitter().getName() + commitTimeText + ")";
+        authorText += " (committed by " + VcsUserUtil.getShortPresentation(commit.getCommitter()) + commitTimeText + ")";
       }
       else if (authorTime != commitTime) {
         authorText += " (committed " + formatDateTime(commitTime) + ")";

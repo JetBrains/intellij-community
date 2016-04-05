@@ -29,6 +29,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SideBorder;
 import com.intellij.util.Function;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -73,6 +74,7 @@ public class ParameterInfoComponent extends JPanel {
       return -1;
     }
   };
+  private boolean myRequestFocus;
 
   @TestOnly
   public static ParameterInfoUIContextEx createContext(Object[] objects, Editor editor, @NotNull ParameterInfoHandler handler, int currentParameterIndex) {
@@ -112,6 +114,9 @@ public class ParameterInfoComponent extends JPanel {
                                                     GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
                                                     new Insets(0, 0, 0, 0), 0, 0));
     }
+    if (myRequestFocus) {
+      AccessibleContextUtil.setName(this, "Parameter Info. Press TAB to navigate through each element. Press ESC to close.");
+    }
 
     final JScrollPane pane = ScrollPaneFactory.createScrollPane(panel);
     pane.setBorder(null);
@@ -135,6 +140,14 @@ public class ParameterInfoComponent extends JPanel {
 
   public Object getHighlighted() {
     return myHighlighted;
+  }
+
+  public void setRequestFocus(boolean requestFocus) {
+    myRequestFocus = requestFocus;
+  }
+
+  public boolean isRequestFocus() {
+    return myRequestFocus;
   }
 
   class MyParameterContext implements ParameterInfoUIContextEx {
@@ -370,6 +383,8 @@ public class ParameterInfoComponent extends JPanel {
 
       myLabel.setOpaque(true);
       myLabel.setFont(NORMAL_FONT);
+      if (myRequestFocus)
+        myLabel.setFocusable(true);
 
       add(myLabel, new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.NONE,
                                           new Insets(0, 0, 0, 0), 0, 0));

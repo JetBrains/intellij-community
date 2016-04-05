@@ -29,6 +29,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBRadioButton;
 import com.intellij.util.Alarm;
@@ -112,6 +113,9 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
   @Nullable
   private JBRadioButton myUseBundledDistributionButton;
   private boolean dropUseBundledDistributionButton;
+  @Nullable
+  private JBCheckBox myResolveModulePerSourceSetCheckBox;
+  private boolean dropResolveModulePerSourceSetCheckBox;
 
   public IdeaGradleProjectSettingsControlBuilder(@NotNull GradleProjectSettings initialSettings) {
     myInstallationManager = ServiceManager.getService(GradleInstallationManager.class);
@@ -186,6 +190,11 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
     return this;
   }
 
+  public IdeaGradleProjectSettingsControlBuilder dropResolveModulePerSourceSetCheckBox() {
+    dropResolveModulePerSourceSetCheckBox = true;
+    return this;
+  }
+
   @Override
   public void showUi(boolean show) {
     ExternalSystemUiUtil.showUi(this, show);
@@ -226,6 +235,11 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
         }
       }
     });
+
+    if (!dropResolveModulePerSourceSetCheckBox) {
+      myResolveModulePerSourceSetCheckBox = new JBCheckBox(GradleBundle.message("gradle.settings.text.create.module.per.sourceset"));
+      content.add(myResolveModulePerSourceSetCheckBox, ExternalSystemUiUtil.getFillLineConstraints(indentLevel));
+    }
 
     addGradleChooserComponents(content, indentLevel);
     addGradleHomeComponents(content, indentLevel);
@@ -344,6 +358,10 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
       settings.setGradleJvm(StringUtil.isEmpty(gradleJvm) ? null : gradleJvm);
     }
 
+    if (myResolveModulePerSourceSetCheckBox != null) {
+      settings.setResolveModulePerSourceSet(myResolveModulePerSourceSetCheckBox.isSelected());
+    }
+
     if (myUseLocalDistributionButton != null && myUseLocalDistributionButton.isSelected()) {
       settings.setDistributionType(DistributionType.LOCAL);
     }
@@ -379,6 +397,11 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
       return true;
     }
 
+    if (myResolveModulePerSourceSetCheckBox != null &&
+        (myResolveModulePerSourceSetCheckBox.isSelected() != myInitialSettings.isResolveModulePerSourceSet())) {
+      return true;
+    }
+
     if (myGradleJdkComboBox != null && !StringUtil.equals(myGradleJdkComboBox.getSelectedValue(), myInitialSettings.getGradleJvm())) {
       return true;
     }
@@ -399,6 +422,9 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
     if (myGradleHomePathField != null) {
       myGradleHomePathField.setText(gradleHome == null ? "" : gradleHome);
       myGradleHomePathField.getTextField().setForeground(LocationSettingType.EXPLICIT_CORRECT.getColor());
+    }
+    if (myResolveModulePerSourceSetCheckBox != null) {
+      myResolveModulePerSourceSetCheckBox.setSelected(settings.isResolveModulePerSourceSet());
     }
 
     resetGradleJdkComboBox(project, settings);
@@ -428,6 +454,9 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
   @Override
   public void update(String linkedProjectPath, GradleProjectSettings settings, boolean isDefaultModuleCreation) {
     resetWrapperControls(linkedProjectPath, settings, isDefaultModuleCreation);
+    if (myResolveModulePerSourceSetCheckBox != null) {
+      myResolveModulePerSourceSetCheckBox.setSelected(settings.isResolveModulePerSourceSet());
+    }
   }
 
   @Override

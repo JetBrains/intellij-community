@@ -1076,7 +1076,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   private class MyReadOnlyLockAction extends TextDiffViewerUtil.ReadOnlyLockAction {
     public MyReadOnlyLockAction() {
       super(getContext());
-      init();
+      applyDefaults();
     }
 
     @Override

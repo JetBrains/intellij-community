@@ -22,16 +22,18 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.RollbackUtil;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -46,7 +48,7 @@ public class RollbackChangesDialog extends DialogWrapper {
   private final Project myProject;
   private final boolean myRefreshSynchronously;
   private final Runnable myAfterVcsRefreshInAwt;
-  private final MultipleChangeListBrowser myBrowser;
+  private final ChangesBrowser myBrowser;
   private final boolean myInvokedFromModalContext;
   private final JCheckBox myDeleteLocallyAddedFiles;
   private final ChangeInfoCalculator myInfoCalculator;
@@ -92,7 +94,7 @@ public class RollbackChangesDialog extends DialogWrapper {
   }
 
   public RollbackChangesDialog(final Project project,
-                               List<LocalChangeList> changeLists,
+                               final List<LocalChangeList> changeLists,
                                final List<Change> changes,
                                final boolean refreshSynchronously, final Runnable afterVcsRefreshInAwt) {
     super(project, true);
@@ -108,20 +110,14 @@ public class RollbackChangesDialog extends DialogWrapper {
       @Override
       public void run() {
         if (myBrowser != null) {
-          myInfoCalculator.update(new ArrayList<Change>(myBrowser.getAllChanges()),
-                                  new ArrayList<Change>(myBrowser.getChangesIncludedInAllLists()));
+          // We could not utilize "myBrowser.getViewer().getChanges()" here (to get all changes) as currently it is not recursive.
+          List<Change> allChanges = getAllChanges(changeLists);
+          Collection<Change> includedChanges = myBrowser.getViewer().getIncludedChanges();
+
+          myInfoCalculator.update(allChanges, ContainerUtil.newArrayList(includedChanges));
           myCommitLegendPanel.update();
 
-          Collection<Change> selected = myBrowser.getChangesIncludedInAllLists();
-          List<Change> visibleSelected = myBrowser.getCurrentIncludedChanges();
-          if (selected.size() != visibleSelected.size()) {
-            setErrorText("Selection contains changes from other changelist");
-          }
-          else {
-            setErrorText(null);
-          }
-
-          boolean hasNewFiles = ContainerUtil.exists(selected, new Condition<Change>() {
+          boolean hasNewFiles = ContainerUtil.exists(includedChanges, new Condition<Change>() {
             @Override
             public boolean value(Change change) {
               return change.getType() == Change.Type.NEW;
@@ -131,9 +127,22 @@ public class RollbackChangesDialog extends DialogWrapper {
         }
       }
     };
-    myBrowser = new MultipleChangeListBrowser(project, changeLists, changes, getDisposable(), null, true, true, myListChangeListener, myListChangeListener);
+    myBrowser =
+      new ChangesBrowser(project, changeLists, changes, null, true, true, myListChangeListener, ChangesBrowser.MyUseCase.LOCAL_CHANGES,
+                         null) {
+        @NotNull
+        @Override
+        protected DefaultTreeModel buildTreeModel(List<Change> changes, ChangeNodeDecorator changeNodeDecorator, boolean showFlatten) {
+          TreeModelBuilder builder = new TreeModelBuilder(myProject, showFlatten);
+          // Currently we do not explicitly utilize passed "changeNodeDecorator" instance (which is defined by
+          // "ChangesBrowser.MyUseCase.LOCAL_CHANGES" parameter passed to "ChangesBrowser"). But correct node decorator will still be set
+          // in "TreeModelBuilder.setChangeLists()".
+          return builder.setChangeLists(changeLists).build();
+        }
+      };
+    Disposer.register(getDisposable(), myBrowser);
 
-    myOperationName = operationNameByChanges(project, myBrowser.getAllChanges());
+    myOperationName = operationNameByChanges(project, getAllChanges(changeLists));
     setOKButtonText(myOperationName);
 
     myOperationName = UIUtil.removeMnemonic(myOperationName);
@@ -154,30 +163,27 @@ public class RollbackChangesDialog extends DialogWrapper {
     myListChangeListener.run();
   }
 
-  public static String operationNameByChanges(Project project, Collection<Change> changes) {
-    Set<AbstractVcs> affectedVcs = new HashSet<AbstractVcs>();
-    for (Change c : changes) {
-      final AbstractVcs vcs = ChangesUtil.getVcsForChange(c, project);
-      if (vcs != null) {
-        // vcs may be null if we have turned off VCS integration and are in process of refreshing
-        affectedVcs.add(vcs);
-      }
-    }
-
-    return RollbackUtil.getRollbackOperationName(affectedVcs);
+  @NotNull
+  public static String operationNameByChanges(@NotNull Project project, @NotNull Collection<Change> changes) {
+    return RollbackUtil.getRollbackOperationName(ChangesUtil.getAffectedVcses(changes, project));
   }
 
-  @Override
-  protected void dispose() {
-    super.dispose();
-    myBrowser.dispose();
+  @NotNull
+  private static List<Change> getAllChanges(@NotNull List<? extends ChangeList> changeLists) {
+    List<Change> result = ContainerUtil.newArrayList();
+
+    for (ChangeList list : changeLists) {
+      result.addAll(list.getChanges());
+    }
+
+    return result;
   }
 
   @Override
   protected void doOKAction() {
     super.doOKAction();
     RollbackWorker worker = new RollbackWorker(myProject, myOperationName, myInvokedFromModalContext);
-    worker.doRollback(myBrowser.getChangesIncludedInAllLists(), myDeleteLocallyAddedFiles.isSelected(),
+    worker.doRollback(myBrowser.getViewer().getIncludedChanges(), myDeleteLocallyAddedFiles.isSelected(),
                       myAfterVcsRefreshInAwt, null);
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBCheckBox;
+import com.intellij.util.BitUtil;
 import com.intellij.util.FontUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -166,8 +167,8 @@ public class ColorAndFontDescriptionPanel extends JPanel {
       myCbBold.setEnabled(true);
       myCbItalic.setEnabled(true);
       int fontType = description.getFontType();
-      myCbBold.setSelected((fontType & Font.BOLD) != 0);
-      myCbItalic.setSelected((fontType & Font.ITALIC) != 0);
+      myCbBold.setSelected(BitUtil.isSet(fontType, Font.BOLD));
+      myCbItalic.setSelected(BitUtil.isSet(fontType, Font.ITALIC));
     }
     else {
       myLabelFont.setEnabled(false);

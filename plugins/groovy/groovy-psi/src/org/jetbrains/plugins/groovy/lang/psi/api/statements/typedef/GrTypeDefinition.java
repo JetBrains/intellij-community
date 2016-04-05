@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef;
 
-import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
@@ -31,24 +30,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefinition
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
 
-/**
- * @autor: Dmitry.Krasilschikov
- * @date: 18.03.2007
- */
-public interface GrTypeDefinition
-  extends GrTopStatement, NavigatablePsiElement, PsiClass, GrTopLevelDefinition, GrDocCommentOwner, GrMember {
+public interface GrTypeDefinition extends PsiClass, GrTopLevelDefinition, GrDocCommentOwner, GrMember {
 
   GrTypeDefinition[] EMPTY_ARRAY = new GrTypeDefinition[0];
-  ArrayFactory<GrTypeDefinition> ARRAY_FACTORY = new ArrayFactory<GrTypeDefinition>() {
-    @NotNull
-    @Override
-    public GrTypeDefinition[] create(int count) {
-      return new GrTypeDefinition[count];
-    }
-  };
+  ArrayFactory<GrTypeDefinition> ARRAY_FACTORY = GrTypeDefinition[]::new;
 
   boolean isTrait();
 
@@ -85,6 +72,7 @@ public interface GrTypeDefinition
   @Nullable
   GrImplementsClause getImplementsClause();
 
+  @NotNull
   String[] getSuperClassNames();
 
   @NotNull

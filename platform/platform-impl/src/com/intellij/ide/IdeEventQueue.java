@@ -539,8 +539,6 @@ public class IdeEventQueue extends EventQueue {
     }
 
     myEventCount++;
-    
-    traceClipboardEvents(e);
 
     if (processAppActivationEvents(e)) return;
 
@@ -662,40 +660,6 @@ public class IdeEventQueue extends EventQueue {
     }
     else {
       defaultDispatchEvent(e);
-    }
-  }
-
-  private static final Field ourInvocationEventRunnableAccessor;
-  
-  static {
-    Field field = null;
-    if (Boolean.getBoolean("trace.clipboard.events") && SystemInfo.isJavaVersionAtLeast("1.8.0_60")) {
-      try {
-        field = InvocationEvent.class.getDeclaredField("runnable");
-        field.setAccessible(true);
-      }
-      catch (Exception e) {
-        LOG.warn("Error creating accessor for java.awt.event.InvocationEvent.runnable field", e);
-      }
-    }
-    ourInvocationEventRunnableAccessor = field;
-  }
-  
-  private static void traceClipboardEvents(AWTEvent e) {
-    if (ourInvocationEventRunnableAccessor != null && e instanceof InvocationEvent && e.getClass().getName().equals("sun.awt.PeerEvent")) {
-      try {
-        Object r = ourInvocationEventRunnableAccessor.get(e);
-        if (r != null) {
-          String className = r.getClass().getName();
-          // This check for event constructed in SunClipboard.lostOwnershipLater() (known to work with JDK 8u60) 
-          if (className.contains("sun.awt.datatransfer.SunClipboard") && className.contains("Lambda")) {
-            LOG.info("Clipboard has been set by other application");
-          }
-        }
-      }
-      catch (Exception ex) {
-        LOG.warn("Error accessing java.awt.event.InvocationEvent.runnable field");
-      }
     }
   }
 

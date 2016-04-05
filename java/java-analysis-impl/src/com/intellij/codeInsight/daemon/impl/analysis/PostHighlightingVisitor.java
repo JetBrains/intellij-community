@@ -35,6 +35,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
@@ -81,21 +82,15 @@ class PostHighlightingVisitor {
   private void optimizeImportsOnTheFlyLater(@NotNull final ProgressIndicator progress) {
     if ((myHasRedundantImports || myHasMissortedImports) && !progress.isCanceled()) {
       // schedule optimise action at the time of session disposal, which is after all applyInformation() calls
-      Disposable invokeFixLater = new Disposable() {
-        @Override
-        public void dispose() {
-          // later because should invoke when highlighting is finished
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              if (myProject.isDisposed() || !myFile.isValid() || !myFile.isWritable()) return;
-              IntentionAction optimizeImportsFix = QuickFixFactory.getInstance().createOptimizeImportsFix(true);
-              if (optimizeImportsFix.isAvailable(myProject, null, myFile)) {
-                optimizeImportsFix.invoke(myProject, null, myFile);
-              }
-            }
-          });
-        }
+      Disposable invokeFixLater = () -> {
+        // later because should invoke when highlighting is finished
+        TransactionGuard.getInstance().submitTransactionLater(myProject, () -> {
+          if (!myFile.isValid() || !myFile.isWritable()) return;
+          IntentionAction optimizeImportsFix = QuickFixFactory.getInstance().createOptimizeImportsFix(true);
+          if (optimizeImportsFix.isAvailable(myProject, null, myFile)) {
+            optimizeImportsFix.invoke(myProject, null, myFile);
+          }
+        });
       };
       Disposer.register((DaemonProgressIndicator)progress, invokeFixLater);
       if (progress.isCanceled()) {

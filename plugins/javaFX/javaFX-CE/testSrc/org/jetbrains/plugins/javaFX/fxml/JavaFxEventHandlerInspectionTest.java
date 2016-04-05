@@ -2,7 +2,8 @@ package org.jetbrains.plugins.javaFX.fxml;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxEventHandlerInspection;
 
@@ -66,6 +67,26 @@ public class JavaFxEventHandlerInspectionTest extends AbstractJavaFXTestCase {
 
   public void testQuickfixSpecific() throws Exception {
     doQuickfixTest("Create method 'void onSort(SortEvent)'");
+  }
+
+  public void testQuickfixNoField() throws Exception {
+    doQuickfixTest("Create method 'void onSort(SortEvent)'");
+  }
+
+  public void testQuickfixFieldType()throws Exception {
+    doQuickfixTest("Change field 'table' type to 'javafx.scene.control.TableView<java.util.Map<java.lang.String,java.lang.Double>>'");
+  }
+
+  public void testQuickfixNoFieldNested() throws Exception {
+    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    final boolean oldImports = settings.INSERT_INNER_CLASS_IMPORTS;
+    try {
+      settings.INSERT_INNER_CLASS_IMPORTS = true;
+      doQuickfixTest("Create method 'void onColumnEditStart(CellEditEvent)'");
+    }
+    finally {
+      settings.INSERT_INNER_CLASS_IMPORTS = oldImports;
+    }
   }
 
   public void testQuickfixSuper() throws Exception {

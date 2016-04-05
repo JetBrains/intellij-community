@@ -1177,15 +1177,18 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     final String source2 = "class A {" +
                            "  String s = new String();" +
-                           "  int m() {" +
+                           "  @SuppressWarnings(\"\") int m() {" +
+                           "    n();" +
                            "    int i = 2+1;" +
                            "    return i;" +
                            "  }" +
+                           "  void n() {}" +
                            "}";
     assertEquals("type of variables in script are as expected", 1,
                  findMatchesCount(source2,
                                   "[script(\"" +
                                   "import com.intellij.psi.*\n" +
+                                  "__context__ instanceof PsiElement &&" +
                                   "a instanceof PsiClass &&" +
                                   "b instanceof PsiTypeElement &&" +
                                   "c instanceof PsiField &&" +
@@ -1195,15 +1198,22 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                                   "g instanceof PsiTypeElement &&" +
                                   "h instanceof PsiLocalVariable &&" +
                                   "i instanceof PsiPolyadicExpression &&" +
-                                  "j instanceof PsiReferenceExpression" +
-                                  "\n\")]" +
+                                  "j instanceof PsiReferenceExpression &&" +
+                                  "k instanceof PsiMethodCallExpression &&" +
+                                  "l instanceof PsiAnnotation\n" +
+                                  "\")]" +
                                   "class '_a {" +
-                                  "  '_b '_c = '_d;" +
-                                  "  '_e '_f() {" +
+                                  "  '_b '_c = new '_d();" +
+                                  "  @'_l '_e '_f() {" +
+                                  "    '_k();" +
                                   "    '_g '_h = '_i;" +
                                   "    return '_j;" +
                                   "  }" +
                                   "}"));
+
+    assertEquals("Current variable should be available under own name", 1,
+                 findMatchesCount(source2,
+                                  "'_a + '_b:[script(\"__log__.info(b)\n__log__.info(__context__)\ntrue\")]"));
   }
 
   public void testCheckScriptValidation() {

@@ -25,8 +25,8 @@ public class LocalChangeListImpl extends LocalChangeList {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ChangeList");
 
   private final Project myProject;
-  private Collection<Change> myChanges = new HashSet<Change>();
-  private Collection<Change> myReadChangesCache = null;
+  private Set<Change> myChanges = ContainerUtil.newHashSet();
+  private Set<Change> myReadChangesCache = null;
   private String myId;
   @NotNull private String myName;
   private String myComment = "";
@@ -53,14 +53,15 @@ public class LocalChangeListImpl extends LocalChangeList {
     setNameImpl(origin.myName);
   }
 
-  public Collection<Change> getChanges() {
+  @NotNull
+  public Set<Change> getChanges() {
     createReadChangesCache();
     return myReadChangesCache;
   }
 
   private void createReadChangesCache() {
     if (myReadChangesCache == null) {
-      myReadChangesCache = Collections.unmodifiableCollection(new HashSet<Change>(myChanges));
+      myReadChangesCache = Collections.unmodifiableSet(ContainerUtil.newHashSet(myChanges));
     }
   }
 
@@ -275,7 +276,7 @@ public class LocalChangeListImpl extends LocalChangeList {
     copy.myData = myData;
 
     if (myChanges != null) {
-      copy.myChanges = new HashSet<Change>(myChanges);
+      copy.myChanges = ContainerUtil.newHashSet(myChanges);
     }
 
     if (myChangesBeforeUpdate != null) {
@@ -283,7 +284,7 @@ public class LocalChangeListImpl extends LocalChangeList {
     }
 
     if (myReadChangesCache != null) {
-      copy.myReadChangesCache = new HashSet<Change>(myReadChangesCache);
+      copy.myReadChangesCache = ContainerUtil.newHashSet(myReadChangesCache);
     }
 
     return copy;

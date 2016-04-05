@@ -34,7 +34,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultTreeModel;
 import java.io.File;
-import java.io.IOException;
 import java.util.*;
 
 /**
@@ -108,7 +107,7 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
         Messages.showErrorDialog(myProject, "Please select file under project root.", ADD_PROJECT_SCHEMA);
         return;
       }
-      final JsonSchemaChecker importer = new JsonSchemaChecker(file, true);
+      final JsonSchemaChecker importer = new JsonSchemaChecker(myProject, file);
       if (!importer.checkSchemaFile()) {
         if (!StringUtil.isEmptyOrSpaces(importer.getError())) {
           JsonSchemaReader.ERRORS_NOTIFICATION.createNotification(importer.getError(), MessageType.ERROR).notify(myProject);
@@ -345,23 +344,19 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
 
   public static class JsonSchemaChecker {
     private static final int MAX_SCHEMA_LENGTH = FileUtil.MEGABYTE;
-    private final boolean myLoadText;
+    private final Project myProject;
     private final VirtualFile myFile;
 
-    public JsonSchemaChecker(VirtualFile file, boolean loadText) {
-      myLoadText = loadText;
+    public JsonSchemaChecker(Project project, VirtualFile file) {
+      myProject = project;
       myFile = file;
     }
 
     @Nullable
-    private String myText;
-    @Nullable
     private String myError;
 
     public boolean checkSchemaFile() {
-      String text = null;
-      try {
-        final File ioFile = new File(myFile.getPath());
+      final File ioFile = new File(myFile.getPath());
         final long length = ioFile.length();
         if (length > MAX_SCHEMA_LENGTH) {
           myError = "JSON schema was not loaded from '" + myFile.getName() + "' because it's too large (file size is " + length + " bytes).";
@@ -371,32 +366,20 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
           myError = "JSON schema was not loaded from '" + myFile.getName() + "'. File is empty.";
           return false;
         }
-        myText = FileUtil.loadFile(ioFile);
-      }
-      catch (IOException e1) {
-        JsonSchemaReader.LOG.info(e1);
-        myError = "Problem during reading JSON schema from '" + myFile.getName() + "': " + e1.getMessage();
-        return false;
-      }
       final CollectConsumer<String> collectConsumer = new CollectConsumer<>();
-      if (!JsonSchemaReader.isJsonSchema(myText, collectConsumer)) {
+      final JsonSchemaService service = JsonSchemaService.Impl.get(myProject);
+      if (service != null && !service.isSchemaFile(ioFile, collectConsumer)) {
         myError = "JSON Schema not found or contain error in '" + myFile.getName() + "'";
         if (!collectConsumer.getResult().isEmpty()) {
           myError += ": " + StringUtil.join(collectConsumer.getResult(), "; ");
         }
         return false;
       }
-      if (!myLoadText) myText = null;
       return true;
     }
 
     public VirtualFile getFile() {
       return myFile;
-    }
-
-    @Nullable
-    public String getText() {
-      return myText;
     }
 
     @Nullable

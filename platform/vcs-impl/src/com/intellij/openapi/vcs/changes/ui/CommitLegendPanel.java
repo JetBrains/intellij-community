@@ -20,56 +20,50 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * @author max
- */
 public class CommitLegendPanel {
 
-  private final SimpleColoredComponent myRootPanel;
-  private final InfoCalculator myInfoCalculator;
+  @NotNull private final SimpleColoredComponent myRootPanel;
+  @NotNull private final InfoCalculator myInfoCalculator;
 
-  public CommitLegendPanel(InfoCalculator infoCalculator) {
+  public CommitLegendPanel(@NotNull InfoCalculator infoCalculator) {
     myInfoCalculator = infoCalculator;
     myRootPanel = new SimpleColoredComponent();
   }
 
+  @NotNull
   public JComponent getComponent() {
     return myRootPanel;
   }
 
   public void update() {
-    final int deleted = myInfoCalculator.getDeleted();
-    final int modified = myInfoCalculator.getModified();
-    final int cntNew = myInfoCalculator.getNew();
-
     myRootPanel.clear();
-    if (cntNew > 0) {
-      appendText(cntNew, myInfoCalculator.getIncludedNew(), FileStatus.ADDED, "commit.legend.new");
-      if (modified > 0 || deleted > 0) {
+    appendText(myInfoCalculator.getNew(), myInfoCalculator.getIncludedNew(), FileStatus.ADDED, VcsBundle.message("commit.legend.new"));
+    appendText(myInfoCalculator.getModified(), myInfoCalculator.getIncludedModified(), FileStatus.MODIFIED, VcsBundle.message("commit.legend.modified"));
+    appendText(myInfoCalculator.getDeleted(), myInfoCalculator.getIncludedDeleted(), FileStatus.DELETED, VcsBundle.message("commit.legend.deleted"));
+    appendText(myInfoCalculator.getUnversioned(), myInfoCalculator.getIncludedUnversioned(), FileStatus.UNKNOWN,
+               VcsBundle.message("commit.legend.unversioned"));
+  }
+
+  protected void appendText(int total, int included, @NotNull FileStatus fileStatus, @NotNull String labelName) {
+    if (total > 0) {
+      if (!isPanelEmpty()) {
         appendSpace();
       }
-    }
-    if (modified > 0) {
-      appendText(modified, myInfoCalculator.getIncludedModified(), FileStatus.MODIFIED, "commit.legend.modified");
-      if (deleted > 0) {
-        appendSpace();
-      }
-    }
-    if (deleted > 0) {
-      appendText(deleted, myInfoCalculator.getIncludedDeleted(), FileStatus.DELETED, "commit.legend.deleted");
+      String pattern = total == included ? "%s %d" : "%s %d of %d";
+      String text = String.format(pattern, labelName, included, total);
+      myRootPanel.append(text, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, fileStatus.getColor()));
     }
   }
 
-  private void appendText(int total, int included, FileStatus fileStatus, String labelKey) {
-    String pattern = total == included ? "%s %d" : "%s %d of %d";
-    String text = String.format(pattern, VcsBundle.message(labelKey), included, total);
-    myRootPanel.append(text, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, fileStatus.getColor()));
+  private boolean isPanelEmpty() {
+    return !myRootPanel.iterator().hasNext();
   }
 
-  private void appendSpace() {
+  protected final void appendSpace() {
     myRootPanel.append("   ");
   }
 
@@ -77,8 +71,10 @@ public class CommitLegendPanel {
     int getNew();
     int getModified();
     int getDeleted();
+    int getUnversioned();
     int getIncludedNew();
     int getIncludedModified();
     int getIncludedDeleted();
+    int getIncludedUnversioned();
   }
 }

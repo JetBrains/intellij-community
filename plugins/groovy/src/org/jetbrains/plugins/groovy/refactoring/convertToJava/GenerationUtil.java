@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -517,12 +517,24 @@ public class GenerationUtil {
     if (declared == null) return false;
 
     final CheckProcessElement checker = new CheckProcessElement(member);
-    ResolveUtil.processAllDeclarationsSeparately(declared, checker, new BaseScopeProcessor() {
+    final BaseScopeProcessor processor = new BaseScopeProcessor() {
       @Override
       public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
         return false;
       }
-    }, ResolveState.initial(), qualifier);
+    };
+
+    if (ResolveUtil.resolvesToClass(qualifier)) {
+      PsiType type = ResolveUtil.unwrapClassType(declared);
+      if (type != null) {
+        ResolveUtil.processAllDeclarationsSeparately(type, checker, processor, ResolveState.initial(), qualifier);
+        if (checker.isFound()) {
+          return false;
+        }
+      }
+    }
+
+    ResolveUtil.processAllDeclarationsSeparately(declared, checker, processor, ResolveState.initial(), qualifier);
     return !checker.isFound();
   }
 

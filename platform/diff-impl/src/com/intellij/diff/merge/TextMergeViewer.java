@@ -37,6 +37,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.undo.*;
 import com.intellij.openapi.diff.DiffBundle;
@@ -342,15 +343,6 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       // It could happen between this init() EDT chunk and invokeLater().
       getEditor().setViewer(true);
 
-      // we have to collect contents here, because someone can modify document while we're starting rediff
-      List<DocumentContent> contents = myMergeRequest.getContents();
-      final List<CharSequence> sequences = ContainerUtil.map(contents, new Function<DocumentContent, CharSequence>() {
-        @Override
-        public CharSequence fun(DocumentContent content) {
-          return content.getDocument().getImmutableCharSequence();
-        }
-      });
-
       // we need invokeLater() here because viewer is partially-initialized (ex: there are no toolbar or status panel)
       // user can see this state while we're showing progress indicator, so we want let init() to finish.
       ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -361,7 +353,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
             @Override
             public void run(@NotNull ProgressIndicator indicator) {
-              myCallback = doPerformRediff(sequences, indicator);
+              myCallback = doPerformRediff(indicator);
             }
 
             @Override
@@ -380,10 +372,14 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     }
 
     @NotNull
-    protected Runnable doPerformRediff(@NotNull List<CharSequence> sequences,
-                                       @NotNull ProgressIndicator indicator) {
+    protected Runnable doPerformRediff(@NotNull ProgressIndicator indicator) {
       try {
         indicator.checkCanceled();
+
+        List<DocumentContent> contents = myMergeRequest.getContents();
+        List<CharSequence> sequences = ReadAction.compute(() -> {
+          return ContainerUtil.map(contents, (content) -> content.getDocument().getImmutableCharSequence());
+        });
 
         List<MergeLineFragment> lineFragments = ByLine.compareTwoStep(sequences.get(0), sequences.get(1), sequences.get(2),
                                                                       ComparisonPolicy.DEFAULT, indicator);

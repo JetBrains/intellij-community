@@ -17,12 +17,10 @@ package com.intellij.openapi.diff;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationStarterEx;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -142,23 +140,6 @@ public abstract class ApplicationStarterBase extends ApplicationStarterEx {
     finally {
       inputStream.close();
     }
-  }
-
-  public static boolean haveDirs(VirtualFile... files) {
-    for (VirtualFile file : files) {
-      if (file.isDirectory()) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  public static boolean areJars(VirtualFile file1, VirtualFile file2) {
-    return JarFileSystem.PROTOCOL.equalsIgnoreCase(file1.getExtension()) && JarFileSystem.PROTOCOL.equalsIgnoreCase(file2.getExtension());
-  }
-
-  public static boolean areDirs(VirtualFile file1, VirtualFile file2) {
-    return file1.isDirectory() && file2.isDirectory();
   }
 
   public static class OperationFailedException extends IOException {

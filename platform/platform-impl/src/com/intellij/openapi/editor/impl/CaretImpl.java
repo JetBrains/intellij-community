@@ -125,6 +125,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     Document doc = myEditor.getDocument();
     if (myOffset > doc.getTextLength() || savedBeforeBulkCaretMarker != null) return;
     savedBeforeBulkCaretMarker = doc.createRangeMarker(myOffset, myOffset);
+    beforeDocumentChange();
   }
 
   void onBulkDocumentUpdateFinished() {
@@ -142,6 +143,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
       }
       releaseBulkCaretMarker();
     }
+    documentChanged();
   }
 
   public void beforeDocumentChange() {

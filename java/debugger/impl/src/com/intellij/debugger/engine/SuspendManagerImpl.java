@@ -39,7 +39,7 @@ public class SuspendManagerImpl implements SuspendManager {
    * "paused at breakpoint" and JDI prohibits data queries on its stack frames
    */
   private final LinkedList<SuspendContextImpl> myPausedContexts = new LinkedList<>();
-  private final Set<ThreadReferenceProxyImpl>  myFrozenThreads  = Collections.synchronizedSet(new HashSet<ThreadReferenceProxyImpl>());
+  private final Set<ThreadReferenceProxyImpl>  myFrozenThreads  = Collections.synchronizedSet(new HashSet<>());
 
   private final DebugProcessImpl myDebugProcess;
 

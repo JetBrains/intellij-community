@@ -182,6 +182,9 @@ public class GradleManager
         }
         result.setJavaHome(javaHome);
         result.setIdeProjectPath(project.getBasePath() == null ? pair.second : project.getBasePath());
+        if (projectLevelSettings != null) {
+          result.setResolveModulePerSourceSet(projectLevelSettings.isResolveModulePerSourceSet());
+        }
         return result;
       }
     };

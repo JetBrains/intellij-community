@@ -31,8 +31,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 
-import javax.swing.*;
-
 /**
  * @author nik
  */
@@ -46,13 +44,6 @@ public class WatchNodeImpl extends XValueNodeImpl implements WatchNode {
     super(tree, parent, expression.getExpression(),
           new XWatchValue(expression, tree.isShowing() || ApplicationManager.getApplication().isUnitTestMode() ? stackFrame : null));
     myExpression = expression;
-  }
-
-  @Nullable
-  @Override
-  public Icon getIcon() {
-    return getValuePresentation() instanceof XErrorValuePresentation?
-           XDebuggerUIConstants.ERROR_MESSAGE_ICON : AllIcons.Debugger.Watch;
   }
 
   @Override
@@ -88,7 +79,7 @@ public class WatchNodeImpl extends XValueNodeImpl implements WatchNode {
         }
       }
       else {
-        node.setPresentation(null, EMPTY_PRESENTATION, false);
+        node.setPresentation(AllIcons.Debugger.Watch, EMPTY_PRESENTATION, false);
       }
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@
  */
 package com.intellij.util.concurrency;
 
+import com.intellij.util.BitUtil;
 import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NotNull;
 import sun.misc.Unsafe;
@@ -91,8 +92,8 @@ public class AtomicFieldUpdater<T,V> {
       throw new IllegalArgumentException("No (non-static, non-final) field of "+fieldType+" found in the "+ownerClass);
     }
     found.setAccessible(true);
-    if ((found.getModifiers() & Modifier.VOLATILE) == 0) {
-      throw new IllegalArgumentException("Field "+found+" in the "+ownerClass+" must be volatile");
+    if (!BitUtil.isSet(found.getModifiers(), Modifier.VOLATILE)) {
+      throw new IllegalArgumentException("Field " + found + " in the " + ownerClass + " must be volatile");
     }
     return found;
   }

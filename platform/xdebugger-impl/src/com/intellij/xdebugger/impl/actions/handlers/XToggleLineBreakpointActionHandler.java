@@ -64,7 +64,7 @@ public class XToggleLineBreakpointActionHandler extends DebuggerActionHandler {
   public void perform(@NotNull final Project project, final AnActionEvent event) {
     Editor editor = event.getData(CommonDataKeys.EDITOR);
     // do not toggle more than once on the same line
-    Set<Integer> processedLines = new HashSet<Integer>();
+    Set<Integer> processedLines = new HashSet<>();
     for (XSourcePosition position : XDebuggerUtilImpl.getAllCaretsPositions(project, event.getDataContext())) {
       if (processedLines.add(position.getLine())) {
         XBreakpointUtil.toggleLineBreakpoint(project, position, editor, myTemporary, true);

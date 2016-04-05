@@ -260,9 +260,8 @@ public class BraceMatchingUtil {
     return matcher.isPairBraces(tokenType1, tokenType2);
   }
 
-  private static int getTokenGroup(IElementType tokenType, FileType fileType) {
-    BraceMatcher matcher = getBraceMatcher(fileType, tokenType);
-    return matcher.getBraceTokenGroupId(tokenType);
+  private static int getTokenGroup(@Nullable IElementType tokenType, FileType fileType) {
+    return tokenType == null ? -1 : getBraceMatcher(fileType, tokenType).getBraceTokenGroupId(tokenType);
   }
 
   // TODO: better name for this method

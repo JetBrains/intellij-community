@@ -58,7 +58,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.wm.WindowManager;
@@ -308,7 +307,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
         }
       }
     }
-    TransactionGuard.syncTransaction(TransactionKind.ANY_CHANGE, () -> runWriteAction(() -> Disposer.dispose(this)));
+    runWriteAction(() -> Disposer.dispose(this));
 
     Disposer.assertIsEmpty();
     return true;
@@ -864,7 +863,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   private boolean doExit(boolean allowListenersToCancel, boolean restart) {
-    TransactionGuard.syncTransaction(TransactionKind.ANY_CHANGE, this::saveSettings);
+    saveSettings();
 
     if (allowListenersToCancel && !canExit()) {
       return false;
@@ -1229,7 +1228,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private void startWrite(/*@NotNull*/ Class clazz) {
     assertIsDispatchThread(getStatus(), "Write access is allowed from event dispatch thread only");
     HeavyProcessLatch.INSTANCE.stopThreadPrioritizing(); // let non-cancellable read actions complete faster, if present
-    if (!((TransactionGuardImpl)TransactionGuard.getInstance()).isWriteActionAllowed()) {
+    if (!isDisposed() && !isDisposeInProgress() && !((TransactionGuardImpl)TransactionGuard.getInstance()).isWriteActionAllowed()) {
       // please assign exceptions here to Peter
       LOG.error("Write access is allowed from model transactions only, see TransactionGuard documentation for details");
     }

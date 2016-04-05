@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,7 +87,7 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
         message = RefactoringBundle.message("move.method.is.not.supported.for.generic.classes");
       }
       else if (method.findSuperMethods().length > 0 ||
-               OverridingMethodsSearch.search(method, true).toArray(PsiMethod.EMPTY_ARRAY).length > 0) {
+               OverridingMethodsSearch.search(method).toArray(PsiMethod.EMPTY_ARRAY).length > 0) {
         message = RefactoringBundle.message("move.method.is.not.supported.when.method.is.part.of.inheritance.hierarchy");
       }
       else {

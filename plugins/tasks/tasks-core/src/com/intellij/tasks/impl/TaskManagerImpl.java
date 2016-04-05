@@ -451,6 +451,10 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   }
 
   public void createBranch(LocalTask task, LocalTask previousActive, String name) {
+    createBranch(task, previousActive, name, null);
+  }
+
+  public void createBranch(LocalTask task, LocalTask previousActive, String name, @Nullable VcsTaskHandler.TaskInfo branchFrom) {
     VcsTaskHandler[] handlers = VcsTaskHandler.getAllHandlers(myProject);
     for (VcsTaskHandler handler : handlers) {
       VcsTaskHandler.TaskInfo[] info = handler.getCurrentTasks();
@@ -458,6 +462,9 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
         addBranches(previousActive, info, false);
       }
       addBranches(task, info, true);
+      if (info.length == 0 && branchFrom != null) {
+        addBranches(task, new VcsTaskHandler.TaskInfo[] { branchFrom }, true);
+      }
       addBranches(task, new VcsTaskHandler.TaskInfo[] { handler.startNewTask(name) }, false);
     }
   }

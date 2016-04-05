@@ -29,6 +29,7 @@ import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionsConfigTreeComparator;
 import com.intellij.ui.ColoredTreeCellRenderer;
@@ -52,15 +53,16 @@ import javax.swing.tree.TreePath;
 import java.util.*;
 
 public class InspectionTree extends Tree {
-  private final HashSet<Object> myExpandedUserObjects;
   @NotNull private final GlobalInspectionContextImpl myContext;
-  private SelectionPath mySelectionPath;
+  @NotNull private final ExcludedInspectionTreeNodesManager myExcludedManager;
+  @NotNull private InspectionTreeState myState = new InspectionTreeState();
   private boolean myQueueUpdate;
 
   public InspectionTree(@NotNull Project project,
                         @NotNull GlobalInspectionContextImpl context, InspectionResultsView view) {
     setModel(new DefaultTreeModel(new InspectionRootNode(project, new InspectionTreeUpdater(view))));
     myContext = context;
+    myExcludedManager = view.getExcludedManager();
 
     setCellRenderer(new CellRenderer());
     setRootVisible(!myContext.isSingleInspectionRun());
@@ -68,8 +70,7 @@ public class InspectionTree extends Tree {
     UIUtil.setLineStyleAngled(this);
     addTreeWillExpandListener(new ExpandListener());
 
-    myExpandedUserObjects = new HashSet<Object>();
-    myExpandedUserObjects.add(project);
+    myState.getExpandedUserObjects().add(project);
 
     TreeUtil.installActions(this);
     new TreeSpeedSearch(this, new Convertor<TreePath, String>() {
@@ -83,8 +84,8 @@ public class InspectionTree extends Tree {
       @Override
       public void valueChanged(TreeSelectionEvent e) {
         TreePath newSelection = e.getNewLeadSelectionPath();
-        if (newSelection != null) {
-          mySelectionPath = new SelectionPath(newSelection);
+        if (newSelection != null && !isUnderQueueUpdate()) {
+          myState.setSelectionPath(newSelection);
         }
       }
     });
@@ -209,7 +210,7 @@ public class InspectionTree extends Tree {
     final LinkedHashSet<CommonProblemDescriptor> descriptors = new LinkedHashSet<CommonProblemDescriptor>();
     for (TreePath path : paths) {
       Object node = path.getLastPathComponent();
-      traverseDescriptors((InspectionTreeNode)node, descriptors);
+      traverseDescriptors((InspectionTreeNode)node, descriptors, myExcludedManager);
     }
     return descriptors.toArray(new CommonProblemDescriptor[descriptors.size()]);
   }
@@ -250,9 +251,11 @@ public class InspectionTree extends Tree {
     return count;
   }
 
-  private static void traverseDescriptors(InspectionTreeNode node, LinkedHashSet<CommonProblemDescriptor> descriptors){
+  private static void traverseDescriptors(InspectionTreeNode node,
+                                          LinkedHashSet<CommonProblemDescriptor> descriptors,
+                                          ExcludedInspectionTreeNodesManager manager){
     if (node instanceof ProblemDescriptionNode) {
-      if (node.isValid() && !node.isResolved()) {
+      if (node.isValid() && !node.isResolved(manager)) {
         final CommonProblemDescriptor descriptor = ((ProblemDescriptionNode)node).getDescriptor();
         if (descriptor != null) {
           descriptors.add(descriptor);
@@ -260,7 +263,7 @@ public class InspectionTree extends Tree {
       }
     }
     for(int i = node.getChildCount() - 1; i >= 0; i--){
-      traverseDescriptors((InspectionTreeNode)node.getChildAt(i), descriptors);
+      traverseDescriptors((InspectionTreeNode)node.getChildAt(i), descriptors, manager);
     }
   }
 
@@ -269,7 +272,23 @@ public class InspectionTree extends Tree {
   }
 
   public void queueUpdate() {
-    ((InspectionRootNode) getRoot()).getUpdater().update(true);
+    ((InspectionRootNode) getRoot()).getUpdater().update(null, true);
+  }
+
+  public void restoreExpansionAndSelection(@Nullable InspectionTreeNode reloadedNode) {
+    myState.restoreExpansionAndSelection(this, reloadedNode);
+  }
+
+  public void setState(@NotNull InspectionTreeState state) {
+    myState = state;
+  }
+
+  public InspectionTreeState getTreeState() {
+    return myState;
+  }
+
+  public void setTreeState(@NotNull InspectionTreeState treeState) {
+    myState = treeState;
   }
 
   private class ExpandListener implements TreeWillExpandListener {
@@ -278,11 +297,11 @@ public class InspectionTree extends Tree {
       final InspectionTreeNode node = (InspectionTreeNode)event.getPath().getLastPathComponent();
       final Object userObject = node.getUserObject();
       //TODO: never re-sort
-      if (node.isValid() && !myExpandedUserObjects.contains(userObject)) {
+      if (node.isValid() && !myState.getExpandedUserObjects().contains(userObject)) {
         sortChildren(node);
         nodeStructureChanged(node);
       }
-      myExpandedUserObjects.add(userObject);
+      myState.getExpandedUserObjects().add(userObject);
       // Smart expand
       if (node.getChildCount() == 1) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -297,31 +316,11 @@ public class InspectionTree extends Tree {
     @Override
     public void treeWillCollapse(TreeExpansionEvent event) throws ExpandVetoException {
       InspectionTreeNode node = (InspectionTreeNode)event.getPath().getLastPathComponent();
-      myExpandedUserObjects.remove(node.getUserObject());
+      myState.getExpandedUserObjects().remove(node.getUserObject());
     }
   }
 
-  public void restoreExpansionAndSelection() {
-    restoreExpansionStatus((InspectionTreeNode)getModel().getRoot());
-    if (mySelectionPath != null) {
-      mySelectionPath.restore();
-    }
-  }
-
-  public void restoreExpansionStatus(InspectionTreeNode node) {
-    if (myExpandedUserObjects.contains(node.getUserObject())) {
-      //sortChildren(node);
-      TreeNode[] pathToNode = node.getPath();
-      expandPath(new TreePath(pathToNode));
-      Enumeration children = node.children();
-      while (children.hasMoreElements()) {
-        InspectionTreeNode childNode = (InspectionTreeNode)children.nextElement();
-        restoreExpansionStatus(childNode);
-      }
-    }
-  }
-
-  private static class CellRenderer extends ColoredTreeCellRenderer {
+  private class CellRenderer extends ColoredTreeCellRenderer {
     /*  private Project myProject;
       InspectionManagerEx myManager;
       public CellRenderer(Project project) {
@@ -352,16 +351,20 @@ public class InspectionTree extends Tree {
       } else {
         setIcon(node.getIcon(expanded));
       }
+      // do not need reset model (for recalculation of prefered size) when digit number of problemCount is growth
+      // or INVALID marker appears
+      final String tail = StringUtil.repeat(" ", Math.max(0, 5- - String.valueOf(problemCount).length()));
+      append(tail);
     }
 
-    public static SimpleTextAttributes patchAttr(InspectionTreeNode node, SimpleTextAttributes attributes) {
-      if (node.isResolved()) {
+    public SimpleTextAttributes patchAttr(InspectionTreeNode node, SimpleTextAttributes attributes) {
+      if (node.isResolved(myExcludedManager)) {
         return new SimpleTextAttributes(attributes.getBgColor(), attributes.getFgColor(), attributes.getWaveColor(), attributes.getStyle() | SimpleTextAttributes.STYLE_STRIKEOUT);
       }
       return attributes;
     }
 
-    private static SimpleTextAttributes getMainForegroundAttributes(InspectionTreeNode node) {
+    private SimpleTextAttributes getMainForegroundAttributes(InspectionTreeNode node) {
       SimpleTextAttributes foreground = SimpleTextAttributes.REGULAR_ATTRIBUTES;
       if (node instanceof RefElementNode) {
         RefEntity refElement = ((RefElementNode)node).getElement();
@@ -381,7 +384,7 @@ public class InspectionTree extends Tree {
       return foreground;
     }
 
-    private static boolean appearsBold(Object node) {
+    private boolean appearsBold(Object node) {
       return ((InspectionTreeNode)node).appearsBold();
     }
   }
@@ -392,75 +395,6 @@ public class InspectionTree extends Tree {
     node.removeAllChildren();
     TreeUtil.addChildrenTo(node, children);
     ((DefaultTreeModel)getModel()).reload(node);
-  }
-
-  private class SelectionPath {
-    private final Object[] myPath;
-    private final int[] myIndicies;
-
-    public SelectionPath(TreePath path) {
-      myPath = path.getPath();
-      myIndicies = new int[myPath.length];
-      for (int i = 0; i < myPath.length - 1; i++) {
-        InspectionTreeNode node = (InspectionTreeNode)myPath[i];
-        myIndicies[i + 1] = getChildIndex(node, (InspectionTreeNode)myPath[i + 1]);
-      }
-    }
-
-    private int getChildIndex(InspectionTreeNode node, InspectionTreeNode child) {
-      int idx = 0;
-      Enumeration children = node.children();
-      while (children.hasMoreElements()) {
-        InspectionTreeNode ch = (InspectionTreeNode)children.nextElement();
-        if (ch == child) break;
-        idx++;
-      }
-      return idx;
-    }
-
-    public void restore() {
-      getSelectionModel().removeSelectionPaths(getSelectionModel().getSelectionPaths());
-      TreeUtil.selectPath(InspectionTree.this, restorePath());
-    }
-
-    private TreePath restorePath() {
-      ArrayList<Object> newPath = new ArrayList<Object>();
-
-      newPath.add(getModel().getRoot());
-      restorePath(newPath, 1);
-
-      return new TreePath(newPath.toArray(new InspectionTreeNode[newPath.size()]));
-    }
-
-    private void restorePath(ArrayList<Object> newPath, int idx) {
-      if (idx >= myPath.length) return;
-      InspectionTreeNode oldNode = (InspectionTreeNode)myPath[idx];
-
-      InspectionTreeNode newRoot = (InspectionTreeNode)newPath.get(idx - 1);
-
-
-      InspectionResultsViewComparator comparator = InspectionResultsViewComparator.getInstance();
-      Enumeration children = newRoot.children();
-      while (children.hasMoreElements()) {
-        InspectionTreeNode child = (InspectionTreeNode)children.nextElement();
-        if (comparator.compare(child, oldNode) == 0) {
-          newPath.add(child);
-          restorePath(newPath, idx + 1);
-          return;
-        }
-      }
-
-      // Exactly same element not found. Trying to select somewhat near.
-      int count = newRoot.getChildCount();
-      if (count > 0) {
-        if (myIndicies[idx] < count) {
-          newPath.add(newRoot.getChildAt(myIndicies[idx]));
-        }
-        else {
-          newPath.add(newRoot.getChildAt(count - 1));
-        }
-      }
-    }
   }
 
   @NotNull

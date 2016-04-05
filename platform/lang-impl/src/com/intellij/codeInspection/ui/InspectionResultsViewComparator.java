@@ -28,7 +28,6 @@ import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.offline.OfflineProblemDescriptor;
-import com.intellij.codeInspection.offlineViewer.OfflineProblemDescriptorNode;
 import com.intellij.codeInspection.offlineViewer.OfflineRefElementNode;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
@@ -47,6 +46,10 @@ import java.util.Comparator;
 
 public class InspectionResultsViewComparator implements Comparator {
   private static final Logger LOG = Logger.getInstance("#" + InspectionResultsViewComparator.class.getName());
+
+  public boolean areEqual(Object o1, Object o2) {
+    return o1.getClass().equals(o2.getClass()) && compare(o1, o2) == 0;
+  }
 
   @Override
   public int compare(Object o1, Object o2) {
@@ -80,31 +83,18 @@ public class InspectionResultsViewComparator implements Comparator {
     if (node2 instanceof InspectionModuleNode) return 1;
 
     if (node1 instanceof InspectionPackageNode && node2 instanceof InspectionPackageNode) {
-      final int nonQualified = ((InspectionPackageNode)node1).getPackageName().compareToIgnoreCase(((InspectionPackageNode)node2).getPackageName());
-      if (nonQualified != 0) {
-        return nonQualified;
-      }
-      return nonQualified;
+      return ((InspectionPackageNode)node1).getPackageName().compareToIgnoreCase(((InspectionPackageNode)node2).getPackageName());
     }
     if (node1 instanceof InspectionPackageNode) return -1;
     if (node2 instanceof InspectionPackageNode) return 1;
 
-    if (node1 instanceof OfflineRefElementNode && node2 instanceof OfflineRefElementNode ||
-        node1 instanceof OfflineProblemDescriptorNode && node2 instanceof OfflineProblemDescriptorNode) {
-      final Object userObject1 = node1.getUserObject();
-      final Object userObject2 = node2.getUserObject();
-      if (userObject1 instanceof OfflineProblemDescriptor && userObject2 instanceof OfflineProblemDescriptor) {
-        final OfflineProblemDescriptor descriptor1 = (OfflineProblemDescriptor)userObject1;
-        final OfflineProblemDescriptor descriptor2 = (OfflineProblemDescriptor)userObject2;
-        if (descriptor1.getLine() != descriptor2.getLine()) return descriptor1.getLine() - descriptor2.getLine();
-        return descriptor1.getFQName().compareTo(descriptor2.getFQName());
-      }
-      if (userObject1 instanceof OfflineProblemDescriptor) {
-        return compareLineNumbers(userObject2, (OfflineProblemDescriptor)userObject1);
-      }
-      if (userObject2 instanceof OfflineProblemDescriptor) {
-        return -compareLineNumbers(userObject1, (OfflineProblemDescriptor)userObject2);
-      }
+    if (node1 instanceof OfflineRefElementNode && node2 instanceof OfflineRefElementNode) {
+      final Object userObject1 = ((OfflineRefElementNode)node1).getOfflineDescriptor();
+      final Object userObject2 = ((OfflineRefElementNode)node2).getOfflineDescriptor();
+      final OfflineProblemDescriptor descriptor1 = (OfflineProblemDescriptor)userObject1;
+      final OfflineProblemDescriptor descriptor2 = (OfflineProblemDescriptor)userObject2;
+      if (descriptor1.getLine() != descriptor2.getLine()) return descriptor1.getLine() - descriptor2.getLine();
+      return descriptor1.getFQName().compareTo(descriptor2.getFQName());
     }
 
     if (node1 instanceof RefElementNode && node2 instanceof RefElementNode){   //sort by filename and inside file by start offset
@@ -138,6 +128,10 @@ public class InspectionResultsViewComparator implements Comparator {
         return -compareEntity(((RefElementNode)node2).getElement(), ((ProblemDescriptor)descriptor).getPsiElement());
       }
       return -compareEntities(((RefElementNode)node2).getElement(), ((ProblemDescriptionNode)node1).getElement());
+    }
+    if (node1 instanceof InspectionRootNode && node2 instanceof InspectionRootNode) {
+      //TODO Dmitry Batkovich: optimization, because only one root node is existed
+      return 0;
     }
 
     LOG.error("node1: " + node1 + ", node2: " + node2);

@@ -45,6 +45,14 @@ public final class ShortcutTextField extends JTextField {
     });
   }
 
+  private static boolean absolutelyUnknownKey (KeyEvent e) {
+    return e.getKeyCode() == 0
+           && e.getExtendedKeyCode() == 0
+           && e.getKeyChar() == KeyEvent.CHAR_UNDEFINED
+           && e.getKeyLocation() == KeyEvent.KEY_LOCATION_UNKNOWN
+           && e.getExtendedKeyCode() == 0;
+  }
+
   protected void processKeyEvent(KeyEvent e) {
     if (e.getID() == KeyEvent.KEY_PRESSED) {
       int keyCode = e.getKeyCode();
@@ -53,7 +61,8 @@ public final class ShortcutTextField extends JTextField {
         keyCode == KeyEvent.VK_ALT ||
         keyCode == KeyEvent.VK_CONTROL ||
         keyCode == KeyEvent.VK_ALT_GRAPH ||
-        keyCode == KeyEvent.VK_META
+        keyCode == KeyEvent.VK_META ||
+        absolutelyUnknownKey(e)
       ){
         return;
       }

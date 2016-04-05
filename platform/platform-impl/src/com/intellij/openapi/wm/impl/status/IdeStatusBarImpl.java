@@ -32,6 +32,7 @@ import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.ui.ClickListener;
+import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.NotificationPopup;
 import com.intellij.util.ArrayUtil;
@@ -42,6 +43,9 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.Accessible;
+import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleRole;
 import javax.swing.*;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
@@ -53,7 +57,7 @@ import java.util.List;
 /**
  * User: spLeaner
  */
-public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
+public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBarEx {
   private static final int MIN_ICON_HEIGHT = 18 + 1 + 1;
   private final InfoAndProgressPanel myInfoAndProgressPanel;
   private IdeFrame myFrame;
@@ -183,7 +187,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
   public Dimension getPreferredSize() {
     Dimension size = super.getPreferredSize();
     if (size == null) return null;
-    
+
     Insets insets = getInsets();
     int minHeight = insets.top + insets.bottom + MIN_ICON_HEIGHT;
     return new Dimension(size.width, Math.max(size.height, minHeight));
@@ -721,7 +725,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
     void beforeUpdate();
   }
 
-  private static final class MultipleTextValuesPresentationWrapper extends TextPanel implements StatusBarWrapper {
+  private static final class MultipleTextValuesPresentationWrapper extends SimpleColoredComponent implements StatusBarWrapper {
     private final StatusBarWidget.MultipleTextValuesPresentation myPresentation;
 
     private MultipleTextValuesPresentationWrapper(@NotNull final StatusBarWidget.MultipleTextValuesPresentation presentation) {
@@ -742,33 +746,24 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
         }
       }.installOn(this);
 
-
-      setOpaque(false);
+      setFont(SystemInfo.isMac ? JBUI.Fonts.label(11) : JBUI.Fonts.label());
     }
 
     @Override
     public void beforeUpdate() {
-      setText(myPresentation.getSelectedValue());
+      clear();
+      setIcon(AllIcons.Ide.Statusbar_arrows);
+      setIconOnTheRight(true);
+      String value = myPresentation.getSelectedValue();
+      if (value != null) {
+        append(value);
+      }
     }
 
     @Override
     @Nullable
     public String getToolTipText() {
       return myPresentation.getTooltipText();
-    }
-
-    @Override
-    protected void paintComponent(@NotNull final Graphics g) {
-      super.paintComponent(g);
-
-      if (getText() != null) {
-        final Rectangle r = getBounds();
-        final Insets insets = getInsets();
-        Icon icon = AllIcons.Ide.Statusbar_arrows;
-        icon.paintIcon(this, g,
-                       r.width - insets.right - icon.getIconWidth() + 1,
-                       r.height / 2 - icon.getIconHeight() / 2);
-      }
     }
   }
 
@@ -882,5 +877,20 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
   @Override
   public IdeFrame getFrame() {
     return myFrame;
+  }
+
+  @Override
+  public AccessibleContext getAccessibleContext() {
+    if (accessibleContext == null) {
+      accessibleContext = new AccessibleIdeStatusBarImpl();
+    }
+    return accessibleContext;
+  }
+
+  protected class AccessibleIdeStatusBarImpl extends AccessibleJComponent {
+    @Override
+    public AccessibleRole getAccessibleRole() {
+      return AccessibleRole.PANEL;
+    }
   }
 }

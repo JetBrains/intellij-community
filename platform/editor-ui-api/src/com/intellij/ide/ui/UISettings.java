@@ -39,6 +39,7 @@ import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
 import java.awt.*;
@@ -53,15 +54,8 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
   /** Not tabbed pane. */
   public static final int TABS_NONE = 0;
 
-  private String lafID;
-
   public static UISettings getInstance() {
-    UISettings instance = ServiceManager.getService(UISettings.class);
-    if (!instance.lafID.equals(UIManager.getLookAndFeel().getID())) {
-      // Re-init if LaF changed.
-      instance.init();
-    }
-    return instance;
+    return ServiceManager.getService(UISettings.class);
   }
 
   /**
@@ -81,7 +75,7 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
   public boolean OVERRIDE_CONSOLE_CYCLE_BUFFER_SIZE = false;
   public int CONSOLE_CYCLE_BUFFER_SIZE_KB = 1024;
   public int EDITOR_TAB_LIMIT = 10;
-  public boolean REUSE_NOT_MODIFIED_TABS = false;
+  public boolean REUSE_NOT_MODIFIED_TABS = true;
   public boolean ANIMATE_WINDOWS = true;
   @Deprecated //todo remove in IDEA 16
   public int ANIMATION_SPEED = 4000; // Pixels per second
@@ -142,10 +136,6 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
   private final EventDispatcher<UISettingsListener> myDispatcher = EventDispatcher.create(UISettingsListener.class);
 
   public UISettings() {
-    init();
-  }
-
-  private void init() {
     tweakPlatformDefaults();
     setSystemFontFaceAndSize();
 
@@ -153,7 +143,6 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
     if (scrollToSource != null) {
       DEFAULT_AUTOSCROLL_TO_SOURCE = scrollToSource;
     }
-    lafID = UIManager.getLookAndFeel().getID();
   }
 
   private void tweakPlatformDefaults() {
@@ -193,9 +182,11 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
   }
 
   private void setSystemFontFaceAndSize() {
-    final Pair<String, Integer> fontData = getSystemFontFaceAndSize();
-    FONT_FACE = fontData.first;
-    FONT_SIZE = fontData.second;
+    if (FONT_FACE == null || FONT_SIZE <= 0) {
+      final Pair<String, Integer> fontData = getSystemFontFaceAndSize();
+      FONT_FACE = fontData.first;
+      FONT_SIZE = fontData.second;
+    }
   }
 
   private static Pair<String, Integer> getSystemFontFaceAndSize() {
@@ -286,7 +277,10 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
     }
   }
 
-  /* This method must not be used for set up antialiasing for editor components
+  /**
+   *  This method must not be used for set up antialiasing for editor components. To make sure antialiasing settings are taken into account
+   *  when preferred size of component is calculated, {@link #setupComponentAntialiasing(JComponent)} method should be called from
+   *  <code>updateUI()</code> or <code>setUI()</code> method of component.
    */
   public static void setupAntialiasing(final Graphics g) {
 
@@ -310,5 +304,12 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
     }
 
       setupFractionalMetrics(g2d);
+  }
+
+  /**
+   * @see #setupComponentAntialiasing(JComponent)
+   */
+  public static void setupComponentAntialiasing(JComponent component) {
+    component.putClientProperty(SwingUtilities2.AA_TEXT_PROPERTY_KEY, AntialiasingType.getAAHintForSwingComponent());
   }
 }

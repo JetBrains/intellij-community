@@ -50,6 +50,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.VcsUserRegistry;
+import com.intellij.vcs.log.util.VcsUserUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
@@ -657,7 +658,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       return ContainerUtil.map(userRegistry.getUsers(), new Function<VcsUser, String>() {
         @Override
         public String fun(VcsUser user) {
-          return user.getName() + " <" + user.getEmail() + ">";
+          return VcsUserUtil.toExactString(user);
         }
       });
     }
@@ -694,7 +695,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       Object data = list.getData();
       if (data instanceof VcsFullCommitDetails) {
         VcsFullCommitDetails commit = (VcsFullCommitDetails)data;
-        String author = String.format("%s <%s>", commit.getAuthor().getName(), commit.getAuthor().getEmail());
+        String author = VcsUserUtil.toExactString(commit.getAuthor());
         myAuthorField.setText(author);
         myAuthorDate = new Date(commit.getAuthorTime());
       }

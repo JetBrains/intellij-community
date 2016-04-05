@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -212,7 +212,7 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
 
     final Map<PsiModifierListOwner, LookupElement> staticMembers = ContainerUtil.newHashMap();
     final PsiElement qualifier = reference.getQualifier();
-    final PsiType qualifierType = qualifier instanceof GrExpression ? ((GrExpression)qualifier).getType() : null;
+    final PsiType qualifierType = GroovyCompletionUtil.getQualifierType(qualifier);
 
     if (reference instanceof GrReferenceExpression && (qualifier instanceof GrExpression || qualifier == null)) {
       for (String string : CompleteReferencesWithSameQualifier.getVariantsWithSameQualifier((GrReferenceExpression)reference, matcher, (GrExpression)qualifier)) {

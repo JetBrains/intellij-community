@@ -133,7 +133,11 @@ class IntroduceConstantDialog extends DialogWrapper {
     myVisibilityPanel.add(myVPanel, BorderLayout.CENTER);
     init();
 
-    myVPanel.setVisibility(JavaRefactoringSettings.getInstance().INTRODUCE_CONSTANT_VISIBILITY);
+    String initialVisibility = JavaRefactoringSettings.getInstance().INTRODUCE_CONSTANT_VISIBILITY;
+    if (initialVisibility == null) {
+      initialVisibility = PsiModifier.PUBLIC;
+    }
+    myVPanel.setVisibility(initialVisibility);
     myIntroduceEnumConstantCb.setEnabled(isSuitableForEnumConstant());
     updateVisibilityPanel();
     updateButtons();

@@ -97,7 +97,7 @@ public class HgTaskHandler extends DvcsTaskHandler<HgRepository> {
           VirtualFile repositoryRoot = repository.getRoot();
           try {
             new HgCommitCommand(project, repository, "Automated merge with " + branch).executeInCurrentThread();
-            new HgBookmarkCommand(project, repositoryRoot, branch).deleteBookmark();
+            HgBookmarkCommand.deleteBookmarkSynchronously(project, repositoryRoot, branch);
           }
           catch (HgCommandException e) {
               HgErrorUtil.handleException(project, e);
@@ -112,8 +112,8 @@ public class HgTaskHandler extends DvcsTaskHandler<HgRepository> {
   }
 
   @Override
-  protected boolean hasBranch(@NotNull HgRepository repository, @NotNull String name) {
-    return HgUtil.getNamesWithoutHashes(repository.getBookmarks()).contains(name) || repository.getOpenedBranches().contains(name);
+  protected boolean hasBranch(@NotNull HgRepository repository, @NotNull TaskInfo name) {
+    return HgUtil.getNamesWithoutHashes(repository.getBookmarks()).contains(name.getName()) || repository.getOpenedBranches().contains(name.getName());
   }
 
   @Override

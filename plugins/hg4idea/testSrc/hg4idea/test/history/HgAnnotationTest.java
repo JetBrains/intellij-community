@@ -36,7 +36,7 @@ public class HgAnnotationTest extends HgPlatformTest {
   static final String dName = "d.txt";
 
   @Override
-  protected void setUp() throws Exception {
+  public void setUp() throws Exception {
     super.setUp();
     cd(myRepository);
     appendToHgrc(myRepository, "[extensions]\n" +

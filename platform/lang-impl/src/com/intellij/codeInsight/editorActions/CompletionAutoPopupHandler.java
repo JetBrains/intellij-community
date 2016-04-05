@@ -103,11 +103,11 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
 
   /**
    * @deprecated
-   * @see AutoPopupController#runLaterWithEverythingCommitted(Project, Runnable)
+   * @see AutoPopupController#runTransactionWithEverythingCommitted(Project, Runnable)
    */
   @SuppressWarnings("unused")
   @Deprecated
   public static void runLaterWithCommitted(@NotNull final Project project, final Document document, @NotNull final Runnable runnable) {
-    AutoPopupController.runLaterWithEverythingCommitted(project, runnable);
+    AutoPopupController.runTransactionWithEverythingCommitted(project, runnable);
   }
 }

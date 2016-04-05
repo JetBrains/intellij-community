@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ public class Notification {
   private static final Logger LOG = Logger.getInstance("#com.intellij.notification.Notification");
   private static final DataKey<Notification> KEY = DataKey.create("Notification");
 
-  public final String id = String.valueOf(System.currentTimeMillis()) + "." + String.valueOf(hashCode());
+  public final String id;
 
   private final String myGroupId;
   private Icon myIcon;
@@ -82,6 +82,8 @@ public class Notification {
     mySubtitle = subtitle;
 
     LOG.assertTrue(isTitle() || isContent(), "Notification should have title: " + title + " and/or subtitle and/or content groupId: " + myGroupId);
+
+    id = String.valueOf(System.currentTimeMillis()) + "." + String.valueOf(System.identityHashCode(this));
   }
 
   public Notification(@NotNull String groupDisplayId, @NotNull String title, @NotNull String content, @NotNull NotificationType type) {
@@ -109,6 +111,7 @@ public class Notification {
     myTimestamp = System.currentTimeMillis();
 
     LOG.assertTrue(isContent(), "Notification should have content, title: " + title + ", groupId: " + myGroupId);
+    id = String.valueOf(System.currentTimeMillis()) + "." + String.valueOf(hashCode());
   }
 
   /**

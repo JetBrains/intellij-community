@@ -50,6 +50,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Map;
 
+import static com.intellij.psi.codeStyle.CommonCodeStyleSettings.*;
+
 public class JavaSpacePropertyProcessor extends JavaElementVisitor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.java.JavaSpacePropertyProcessor");
 
@@ -1291,9 +1293,27 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
 
   @Override
   public void visitLambdaExpression(PsiLambdaExpression expression) {
-    if ((myRole1 == ChildRole.ARROW && (myRole2 == ChildRole.LBRACE || myRole2 == ChildRole.EXPRESSION)) ||
-        (myRole1 == ChildRole.PARAMETER_LIST && myRole2 == ChildRole.ARROW)) {
-      createSpaceInCode(mySettings.SPACE_AROUND_LAMBDA_ARROW);
+    boolean spaceAroundArrow = mySettings.SPACE_AROUND_LAMBDA_ARROW;
+    
+    if (myRole1 == ChildRole.PARAMETER_LIST && myRole2 == ChildRole.ARROW) {
+      createSpaceInCode(spaceAroundArrow);
+    }
+    else if (myRole1 == ChildRole.ARROW) {
+      if (myRole2 == ChildRole.LBRACE) {
+        switch (mySettings.BRACE_STYLE) {
+          case NEXT_LINE:
+          case NEXT_LINE_SHIFTED:
+          case NEXT_LINE_SHIFTED2:  
+            int space = spaceAroundArrow ? 1 : 0;
+            myResult = Spacing.createSpacing(space, space, 1, false, 0);
+            break;
+          default:
+            createSpaceInCode(spaceAroundArrow);
+        }
+      }
+      else if (myRole2 == ChildRole.EXPRESSION) {
+        createSpaceInCode(spaceAroundArrow);
+      }
     }
   }
 
@@ -1442,10 +1462,6 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     else {
       if (!space && !canStickChildrenTogether(myChild1, myChild2)) {
         space = true;
-      }
-
-      if (!keepLineBreaks && myRole2 == ChildRoleBase.NONE) {
-        keepLineBreaks = true;
       }
       myResult = Spacing.createSpacing(space ? 1 : 0, space ? 1 : 0, 0, keepLineBreaks, keepBlankLines);
     }

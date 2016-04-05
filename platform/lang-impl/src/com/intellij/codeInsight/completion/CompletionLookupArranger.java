@@ -177,7 +177,7 @@ public class CompletionLookupArranger extends LookupArranger {
   }
 
   private void trimToLimit(Lookup lookup, ProcessingContext context) {
-    if (myItems.size() <= myLimit * 2) return;
+    if (myItems.size() < myLimit) return;
 
     List<LookupElement> items = getMatchingItems();
     Iterator<LookupElement> iterator = sortByRelevance(groupItemsBySorter(items)).iterator();
@@ -186,7 +186,7 @@ public class CompletionLookupArranger extends LookupArranger {
     retainedSet.addAll(getPrefixItems(true));
     retainedSet.addAll(getPrefixItems(false));
     retainedSet.addAll(myFrozenItems);
-    while (retainedSet.size() < myLimit && iterator.hasNext()) {
+    while (retainedSet.size() < myLimit / 2 && iterator.hasNext()) {
       retainedSet.add(iterator.next());
     }
 

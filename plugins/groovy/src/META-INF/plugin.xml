@@ -799,6 +799,10 @@
                      displayName="Java-style property access"
                      groupName="Style" enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.style.JavaStylePropertiesInvocationInspection"/>
+    <localInspection language="Groovy" groupPath="Groovy" shortName="ChangeToOperator"
+                     displayName="Change to operator"
+                     groupName="Style" enabledByDefault="true" level="WEAK WARNING"
+                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.changeToOperator.ChangeToOperatorInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyAccessToStaticFieldLockedOnInstance"
                      displayName="Access to static field locked on instance data"
                      groupName="Threading issues" enabledByDefault="true" level="WARNING"
@@ -1620,17 +1624,12 @@
       <add-to-group group-id="RefactoringMenu"/>
     </action>
 
-    <group id="Internal.Groovy" text="Groovy" popup="true" internal="true">
-      <action id="DumpGroovyControlFlowAction"
-              class="org.jetbrains.plugins.groovy.actions.DumpGroovyControlFlowAction"
-              text="dump groovy control flow"
-              description="" internal="true"/>
-      <action id="DumpGroovyStubsAction"
-              class="org.jetbrains.plugins.groovy.actions.DumpGroovyStubsAction"
-              text="dump groovy stubs"
-              description="" internal="true"/>
+    <action id="DumpGroovyControlFlowAction"
+            class="org.jetbrains.plugins.groovy.actions.DumpGroovyControlFlowAction"
+            text="dump groovy control flow"
+            description="" internal="true">
       <add-to-group group-id="Internal"/>
-    </group>
+    </action>
 
     <action id="ExcludeFromStubGeneration"
             class="org.jetbrains.plugins.groovy.compiler.ExcludeFromStubGenerationAction"

@@ -712,6 +712,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
           initializer = mySelectedExpr;
         }
 
+        final SmartTypePointer type = SmartTypePointerManager.getInstance(myProject).createSmartTypePointer(myType);
         initializer = IntroduceVariableBase.replaceExplicitWithDiamondWhenApplicable(initializer, myType);
 
         final PsiMethod enclosingConstructor = getEnclosingConstructor(myParentClass, myAnchorElement);
@@ -722,8 +723,9 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
         ChangeContextUtil.encodeContextInfo(destClass, true);
 
         myField = mySettings.isIntroduceEnumConstant() ? EnumConstantsUtil.createEnumConstant(destClass, myFieldName, initializer) :
-                         createField(myFieldName, myType, initializer, initializerPlace == InitializationPlace.IN_FIELD_DECLARATION && initializer != null,
-                                     myParentClass);
+                  createField(myFieldName, type.getType(), initializer,
+                              initializerPlace == InitializationPlace.IN_FIELD_DECLARATION && initializer != null,
+                              myParentClass);
 
         setModifiers(myField, mySettings);
         PsiElement finalAnchorElement = null;

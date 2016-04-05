@@ -34,9 +34,14 @@ public class FunctionalInterfaceParameterizationUtil {
       }
     }
     if (classType instanceof PsiClassType) {
-      for (PsiType type : ((PsiClassType)classType).getParameters()) {
-        if (type instanceof PsiWildcardType) {
-          return true;
+      final PsiClassType.ClassResolveResult result = ((PsiClassType)classType).resolveGenerics();
+      final PsiClass aClass = result.getElement();
+      if (aClass != null) {
+        final PsiSubstitutor substitutor = result.getSubstitutor();
+        for (PsiTypeParameter parameter : aClass.getTypeParameters()) {
+          if (substitutor.substitute(parameter) instanceof PsiWildcardType) {
+            return true;
+          }
         }
       }
       return false;
@@ -164,17 +169,16 @@ public class FunctionalInterfaceParameterizationUtil {
    */
   @Nullable
   public static PsiType getNonWildcardParameterization(PsiClassType psiClassType) {
-    final PsiClass psiClass = psiClassType.resolve();
+    final PsiClassType.ClassResolveResult result = psiClassType.resolveGenerics();
+    final PsiClass psiClass = result.getElement();
     if (psiClass != null) {
       final PsiTypeParameter[] typeParameters = psiClass.getTypeParameters();
-      final PsiType[] parameters = psiClassType.getParameters();
-      final PsiType[] newParameters = new PsiType[parameters.length];
+      final PsiType[] newParameters = new PsiType[typeParameters.length];
 
-      if (parameters.length != typeParameters.length) return null;
-
+      final PsiSubstitutor substitutor = result.getSubstitutor();
       final HashSet<PsiTypeParameter> typeParametersSet = ContainerUtil.newHashSet(typeParameters);
-      for (int i = 0; i < parameters.length; i++) {
-        PsiType paramType = parameters[i];
+      for (int i = 0; i < typeParameters.length; i++) {
+        PsiType paramType = substitutor.substitute(typeParameters[i]);
         if (paramType instanceof PsiWildcardType) {
           for (PsiClassType paramBound : typeParameters[i].getExtendsListTypes()) {
             if (PsiPolyExpressionUtil.mentionsTypeParameters(paramBound, typeParametersSet)) {

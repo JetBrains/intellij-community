@@ -133,16 +133,16 @@ public class BaseQuoteHandler extends SimpleTokenSetQuoteHandler implements Mult
   public CharSequence getClosingQuote(HighlighterIterator iterator, int offset) {
     Document document = iterator.getDocument();
     String text = document.getText();
-    char the_quote = text.charAt(offset - 1);
+    char theQuote = text.charAt(offset - 1);
     if (
-      offset >= 2 &&
-      text.charAt(offset - 2) == the_quote &&
-      text.charAt(offset - 3) == the_quote &&
-      (offset < 4 || text.charAt(offset - 4) != the_quote)) {
-      return StringUtil.repeat(String.valueOf(the_quote), 3);
+      offset >= 3 &&
+      text.charAt(offset - 2) == theQuote &&
+      text.charAt(offset - 3) == theQuote &&
+      (offset < 4 || text.charAt(offset - 4) != theQuote)) {
+      return StringUtil.repeat(String.valueOf(theQuote), 3);
     }
     else if (super.isOpeningQuote(iterator, offset - 1)) {
-      return String.valueOf(the_quote);
+      return String.valueOf(theQuote);
     }
     return null;
   }

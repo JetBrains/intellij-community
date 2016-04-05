@@ -65,7 +65,7 @@ import java.util.List;
  * @author nik
  */
 public class XLineBreakpointManager {
-  private final BidirectionalMap<XLineBreakpointImpl, Document> myBreakpoints = new BidirectionalMap<XLineBreakpointImpl, Document>();
+  private final BidirectionalMap<XLineBreakpointImpl, Document> myBreakpoints = new BidirectionalMap<>();
   private final MergingUpdateQueue myBreakpointsUpdateQueue;
   private final Project myProject;
   private final XDependentBreakpointManager myDependentBreakpointManager;
@@ -98,7 +98,7 @@ public class XLineBreakpointManager {
 
         @Override
         public void fileDeleted(@NotNull VirtualFileEvent event) {
-          List<XBreakpoint<?>> toRemove = new SmartList<XBreakpoint<?>>();
+          List<XBreakpoint<?>> toRemove = new SmartList<>();
           for (XLineBreakpointImpl breakpoint : myBreakpoints.keySet()) {
             if (breakpoint.getFileUrl().equals(event.getFile().getUrl())) {
               toRemove.add(breakpoint);
@@ -167,7 +167,7 @@ public class XLineBreakpointManager {
     }
 
     TIntHashSet lines = new TIntHashSet();
-    List<XBreakpoint<?>> toRemove = new SmartList<XBreakpoint<?>>();
+    List<XBreakpoint<?>> toRemove = new SmartList<>();
     for (XLineBreakpointImpl breakpoint : breakpoints) {
       breakpoint.updatePosition();
       if (!breakpoint.isValid() || !lines.add(breakpoint.getLine())) {
@@ -272,37 +272,32 @@ public class XLineBreakpointManager {
         return;
       }
 
-      PsiDocumentManager.getInstance(myProject).commitAndRunReadAction(() -> {
-        final int line = EditorUtil.yPositionToLogicalLine(editor, mouseEvent);
-        final Document document = editor.getDocument();
-        final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-        if (line >= 0 && line < document.getLineCount() && file != null) {
-          ApplicationManager.getApplication().invokeLater(() -> {
-            if (!myProject.isDisposed() && myProject.isInitialized() && file.isValid()) {
-              ActionManagerEx.getInstanceEx().fireBeforeActionPerformed(IdeActions.ACTION_TOGGLE_LINE_BREAKPOINT, e.getMouseEvent());
+      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+      final int line = EditorUtil.yPositionToLogicalLine(editor, mouseEvent);
+      final Document document = editor.getDocument();
+      final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+      if (line >= 0 && line < document.getLineCount() && file != null) {
+        ActionManagerEx.getInstanceEx().fireBeforeActionPerformed(IdeActions.ACTION_TOGGLE_LINE_BREAKPOINT, e.getMouseEvent());
 
-              XBreakpointUtil
-                .toggleLineBreakpoint(myProject, XSourcePositionImpl.create(file, line), editor, mouseEvent.isAltDown(), false)
-                .done(breakpoint -> {
-                  if (!mouseEvent.isAltDown() && mouseEvent.isShiftDown() && breakpoint != null) {
-                    breakpoint.setSuspendPolicy(SuspendPolicy.NONE);
-                    String selection = editor.getSelectionModel().getSelectedText();
-                    if (selection != null) {
-                      breakpoint.setLogExpression(selection);
-                    }
-                    else {
-                      breakpoint.setLogMessage(true);
-                    }
-                    // edit breakpoint
-                    DebuggerUIUtil
-                      .showXBreakpointEditorBalloon(myProject, mouseEvent.getPoint(), ((EditorEx)editor).getGutterComponentEx(),
-                                                    false, breakpoint);
-                  }
-                });
+        XBreakpointUtil
+          .toggleLineBreakpoint(myProject, XSourcePositionImpl.create(file, line), editor, mouseEvent.isAltDown(), false)
+          .done(breakpoint -> {
+            if (!mouseEvent.isAltDown() && mouseEvent.isShiftDown() && breakpoint != null) {
+              breakpoint.setSuspendPolicy(SuspendPolicy.NONE);
+              String selection = editor.getSelectionModel().getSelectedText();
+              if (selection != null) {
+                breakpoint.setLogExpression(selection);
+              }
+              else {
+                breakpoint.setLogMessage(true);
+              }
+              // edit breakpoint
+              DebuggerUIUtil
+                .showXBreakpointEditorBalloon(myProject, mouseEvent.getPoint(), ((EditorEx)editor).getGutterComponentEx(),
+                                              false, breakpoint);
             }
           });
-        }
-      });
+      }
     }
 
     private boolean isInsideGutter(EditorMouseEvent e, Editor editor) {

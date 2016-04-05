@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -112,7 +112,7 @@ public abstract class PatternCondition<T> {
     for (Class aClass = getClass(); aClass != null; aClass = aClass.getSuperclass()) {
       for (final Field field : aClass.getDeclaredFields()) {
         if (!Modifier.isStatic(field.getModifiers()) &&
-            (((field.getModifiers() & 0x1000 /*Modifer.SYNTHETIC*/) == 0 && !aClass.equals(PatternCondition.class))
+            (!field.isSynthetic() && !aClass.equals(PatternCondition.class)
              || field.getName().startsWith(PARAMETER_FIELD_PREFIX))) {
           final String name = field.getName();
           final String fixedName = name.startsWith(PARAMETER_FIELD_PREFIX) ?

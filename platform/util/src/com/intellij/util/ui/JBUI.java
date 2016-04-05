@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
+import javax.swing.plaf.UIResource;
 import java.awt.*;
 
 /**
@@ -110,7 +111,15 @@ public class JBUI {
   }
 
   public static JBDimension size(Dimension size) {
-    return size instanceof JBDimension ? ((JBDimension)size) : new JBDimension(size.width, size.height);
+    if (size instanceof JBDimension) {
+      final JBDimension jbSize = (JBDimension)size;
+      if (jbSize.originalScale == scale(1f)) {
+        return jbSize;
+      }
+      final JBDimension newSize = new JBDimension((int)(jbSize.width / jbSize.originalScale), (int)(jbSize.height / jbSize.originalScale));
+      return size instanceof UIResource ? newSize.asUIResource() : newSize;
+    }
+    return new JBDimension(size.width, size.height);
   }
 
   public static JBInsets insets(int top, int left, int bottom, int right) {

@@ -129,8 +129,10 @@ public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
 
         @Override
         public void applyDefaults(@NotNull List<? extends Editor> editors) {
-          for (Editor editor : editors) {
-            if (editor.getUserData(EditorImpl.FORCED_SOFT_WRAPS) != null) myForcedSoftWrap = true;
+          if (!myTextSettings.isUseSoftWraps()) {
+            for (Editor editor : editors) {
+              myForcedSoftWrap = myForcedSoftWrap || ((EditorImpl)editor).shouldSoftWrapsBeForced();
+            }
           }
           super.applyDefaults(editors);
         }

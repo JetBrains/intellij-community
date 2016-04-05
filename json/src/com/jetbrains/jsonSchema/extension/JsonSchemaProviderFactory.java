@@ -5,9 +5,10 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
 
-public interface JsonSchemaProviderFactory {
-  ExtensionPointName<JsonSchemaProviderFactory> EP_NAME = ExtensionPointName.create("JavaScript.JsonSchema.ProviderFactory");
-  JsonSchemaFileProvider[] EMPTY = new JsonSchemaFileProvider[0];
+import java.util.List;
 
-  JsonSchemaFileProvider[] getProviders(@Nullable Project project);
+public interface JsonSchemaProviderFactory<T> {
+  ExtensionPointName<JsonSchemaProviderFactory> EP_NAME = ExtensionPointName.create("JavaScript.JsonSchema.ProviderFactory");
+
+  List<JsonSchemaFileProvider<T>> getProviders(@Nullable Project project);
 }

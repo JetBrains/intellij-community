@@ -18,12 +18,14 @@ package com.jetbrains.jsonSchema.extension;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
  * @author Irina.Chernushina on 2/16/2016.
  */
-public class JsonSchemaSelfProviderFactory implements JsonSchemaProviderFactory {
+public class JsonSchemaSelfProviderFactory implements JsonSchemaProviderFactory<Object> {
   @Override
-  public JsonSchemaFileProvider[] getProviders(@Nullable Project project) {
+  public List<JsonSchemaFileProvider<Object>> getProviders(@Nullable Project project) {
     return JsonSchemaProjectSelfProviderFactory.getInstance(project).getProviders();
   }
 }

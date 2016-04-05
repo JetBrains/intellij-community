@@ -31,7 +31,7 @@ import static hg4idea.test.HgExecutor.hgMergeWith;
 
 public class HgRevertUncommittedMergeTest extends HgPlatformTest {
   @Override
-  protected void setUp() throws Exception {
+  public void setUp() throws Exception {
     super.setUp();
   }
 

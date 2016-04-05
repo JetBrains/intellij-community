@@ -38,7 +38,6 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
-import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
@@ -74,6 +73,7 @@ import com.intellij.usages.*;
 import com.intellij.usages.impl.UsagePreviewPanel;
 import com.intellij.util.*;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -469,7 +469,7 @@ public class FindDialog extends DialogWrapper {
         return;
       }
 
-      myResultsPreviewTable.getColumnModel().getColumn(0).setCellRenderer(new UsageTableCellRenderer());
+      myResultsPreviewTable.getColumnModel().getColumn(0).setCellRenderer(new UsageTableCellRenderer(false, true));
 
       myResultsPreviewTable.getEmptyText().setText("Searching...");
       myContent.setTitleAt(RESULTS_PREVIEW_TAB_INDEX, PREVIEW_TITLE);
@@ -481,7 +481,7 @@ public class FindDialog extends DialogWrapper {
       if (component instanceof EditorTextField) {
         final Document document = ((EditorTextField)component).getDocument();
         if (document != null) {
-          TransactionGuard.submitTransaction(() -> PsiDocumentManager.getInstance(myProject).commitDocument(document));
+          PsiDocumentManager.getInstance(myProject).commitDocument(document);
         }
       }
 
@@ -546,12 +546,7 @@ public class FindDialog extends DialogWrapper {
     final Alarm alarm = mySearchRescheduleOnCancellationsAlarm;
     if (alarm == null || alarm.isDisposed()) return;
     alarm.cancelAllRequests();
-    alarm.addRequest(new Runnable() {
-      @Override
-      public void run() {
-        findSettingsChanged();
-      }
-    }, 100);
+    alarm.addRequest(() -> TransactionGuard.submitTransaction(myDisposable, this::findSettingsChanged), 100);
   }
 
   private void finishPreviousPreviewSearch() {
@@ -634,6 +629,7 @@ public class FindDialog extends DialogWrapper {
         };
         table.setShowColumns(false);
         table.setShowGrid(false);
+        table.setIntercellSpacing(JBUI.emptySize());
         new NavigateToSourceListener().installOn(table);
 
         Splitter previewSplitter = new Splitter(true, 0.5f, 0.1f, 0.9f);
@@ -644,6 +640,7 @@ public class FindDialog extends DialogWrapper {
             settings.setUseSoftWraps(true);
           }
         };
+        myUsagePreviewPanel.setBorder(IdeBorderFactory.createBorder());
         myResultsPreviewTable = table;
         new TableSpeedSearch(table, new Convertor<Object, String>() {
           @Override
@@ -1662,32 +1659,50 @@ public class FindDialog extends DialogWrapper {
           // skip line number / file info
           for (int i = 1; i < text.length; ++i) {
             TextChunk textChunk = text[i];
-            myUsageRenderer.append(textChunk.getText(), textChunk.getSimpleAttributesIgnoreBackground());
+            SimpleTextAttributes attributes = getAttributes(textChunk);
+            myUsageRenderer.append(textChunk.getText(), attributes);
           }
         }
         setBorder(null);
+      }
+
+      @NotNull
+      private SimpleTextAttributes getAttributes(@NotNull TextChunk textChunk) {
+        SimpleTextAttributes at = textChunk.getSimpleAttributesIgnoreBackground();
+        if (myUseBold) return at;
+        boolean highlighted = textChunk.getType() != null || at.getFontStyle() == Font.BOLD;
+        return highlighted
+               ? new SimpleTextAttributes(null, at.getFgColor(), at.getWaveColor(),
+                                          (at.getStyle() & ~SimpleTextAttributes.STYLE_BOLD) |
+                                          SimpleTextAttributes.STYLE_SEARCH_MATCH)
+               : at;
       }
     };
     private final ColoredTableCellRenderer myFileAndLineNumber = new ColoredTableCellRenderer() {
       @Override
       protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
         if (value instanceof UsageInfo2UsageAdapter) {
-          final UsageInfo2UsageAdapter usageAdapter = (UsageInfo2UsageAdapter)value;
+          UsageInfo2UsageAdapter usageAdapter = (UsageInfo2UsageAdapter)value;
           TextChunk[] text = usageAdapter.getPresentation().getText();
-          final String uniqueVirtualFilePath =
-            UniqueVFilePathBuilder.getInstance().getUniqueVirtualFilePath(usageAdapter.getUsageInfo().getProject(), usageAdapter.getFile());
           // line number / file info
+          VirtualFile file = usageAdapter.getFile();
+          String uniqueVirtualFilePath = myOmitFileExtension ? file.getNameWithoutExtension() : file.getName();
           append(uniqueVirtualFilePath + " " + text[0].getText(), SimpleTextAttributes.GRAYED_ATTRIBUTES);
         }
         setBorder(null);
       }
     };
+    private static final int MARGIN = 2;
+    private final boolean myOmitFileExtension;
+    private final boolean myUseBold;
 
-    UsageTableCellRenderer() {
+    UsageTableCellRenderer(boolean omitFileExtension, boolean useBold) {
+      myOmitFileExtension = omitFileExtension;
+      myUseBold = useBold;
       setLayout(new BorderLayout());
-
       add(myUsageRenderer, BorderLayout.WEST);
       add(myFileAndLineNumber, BorderLayout.EAST);
+      setBorder(IdeBorderFactory.createEmptyBorder(MARGIN, MARGIN, MARGIN, 0));
     }
 
     @Override
@@ -1695,6 +1710,13 @@ public class FindDialog extends DialogWrapper {
       myUsageRenderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
       myFileAndLineNumber.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
       setBackground(myUsageRenderer.getBackground());
+      if (!isSelected && value instanceof UsageInfo2UsageAdapter) {
+        UsageInfo2UsageAdapter usageAdapter = (UsageInfo2UsageAdapter)value;
+        Color color = FileColorManager.getInstance(usageAdapter.getUsageInfo().getProject()).getFileColor(usageAdapter.getFile());
+        setBackground(color);
+        myUsageRenderer.setBackground(color);
+        myFileAndLineNumber.setBackground(color);
+      }
       return this;
     }
   }

@@ -78,6 +78,7 @@ public abstract class GrTypeDefinitionElementType<TypeDef extends GrTypeDefiniti
     return new GrTypeDefinitionStub(parentStub, name, superClasses, this, qname, annos, flags);
   }
 
+  @NotNull
   private static String[] readStringArray(StubInputStream dataStream) throws IOException {
     byte supersNumber = dataStream.readByte();
     String[] superClasses = new String[supersNumber];

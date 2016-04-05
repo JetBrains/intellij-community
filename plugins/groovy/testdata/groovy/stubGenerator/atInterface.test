@@ -1,9 +1,0 @@
-import java.lang.annotation.*
-
-@Retention(RetentionPolicy.RUNTIME) @interface AtInterface {
-
-}
------
-public @interface AtInterface {
-}
----

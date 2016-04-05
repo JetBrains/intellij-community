@@ -32,6 +32,7 @@ import com.intellij.codeInspection.reference.RefVisitor;
 import com.intellij.codeInspection.ui.DefaultInspectionToolPresentation;
 import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
+import com.intellij.codeInspection.ui.InspectionTreeState;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.concurrency.JobLauncherImpl;
 import com.intellij.concurrency.SensitiveProgressWrapper;
@@ -42,6 +43,8 @@ import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.PathMacroManager;
@@ -98,10 +101,10 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
 
   @NotNull
   private AnalysisUIOptions myUIOptions;
+  private InspectionTreeState myTreeState;
 
   public GlobalInspectionContextImpl(@NotNull Project project, @NotNull NotNullLazyValue<ContentManager> contentManager) {
     super(project);
-
     myUIOptions = AnalysisUIOptions.getInstance(project).copy();
     myContentManager = contentManager;
   }
@@ -111,7 +114,13 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     return myContentManager.getValue();
   }
 
-  public synchronized void addView(@NotNull InspectionResultsView view, @NotNull String title) {
+  public void setTreeState(InspectionTreeState treeState) {
+    myTreeState = treeState;
+  }
+
+  public synchronized void addView(@NotNull InspectionResultsView view,
+                                   @NotNull String title,
+                                   boolean isOffline) {
     LOG.assertTrue(myContent == null, "GlobalInspectionContext is busy under other view now");
     myContentManager.getValue().addContentManagerListener(new ContentManagerAdapter() {
       @Override
@@ -126,7 +135,12 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     });
 
     myView = view;
-    myView.setUpdating(true);
+    if (!isOffline) {
+      myView.setUpdating(true);
+    }
+    if (myTreeState != null) {
+      myView.getTree().setTreeState(myTreeState);
+    }
     myContent = ContentFactory.SERVICE.getInstance().createContent(view, title, false);
 
     myContent.setDisposer(myView);
@@ -144,7 +158,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
                   : InspectionsBundle.message(mySingleInspectionRun ?
                                               "inspection.results.for.inspection.toolwindow.title" :
                                               "inspection.results.for.profile.toolwindow.title",
-                                              view.getCurrentProfileName()));
+                                              view.getCurrentProfileName()), false);
 
   }
 
@@ -343,8 +357,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
 
         final InspectionResultsView view;
         if (myView == null) {
-          view = new InspectionResultsView(GlobalInspectionContextImpl.this,
-                                           new InspectionRVContentProviderImpl(getProject()));
+          view = new InspectionResultsView(GlobalInspectionContextImpl.this, createContentProvider());
         } else {
           view = null;
         }
@@ -668,6 +681,32 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
         LOG.error(e);
       }
     }
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      if (myView == null && !InspectionResultsView.hasProblems(globalTools, this, createContentProvider())) {
+        return;
+      }
+      createViewIfNeed();
+      if (!myView.isDisposed()) {
+        ReadAction.run(() -> myView.addTools(globalTools));
+      }
+    }
+  }
+
+  @NotNull
+  public InspectionResultsView createViewIfNeed() {
+    if (myView == null) {
+      LOG.assertTrue(!ApplicationManager.getApplication().isUnitTestMode());
+      return  UIUtil.invokeAndWaitIfNeeded(() -> {
+        InspectionResultsView newView = getView();
+        if (newView != null) {
+          return newView;
+        }
+        newView = new InspectionResultsView(this, createContentProvider());
+        addView(newView);
+        return newView;
+      });
+    }
+    return myView;
   }
 
   private void appendPairedInspectionsForUnfairTools(@NotNull List<Tools> globalTools,
@@ -979,11 +1018,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
         }, title, null);
       }
     };
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      runnable.run();
-    } else {
-      ApplicationManager.getApplication().invokeLater(runnable);
-    }
+    TransactionGuard.submitTransaction(project, runnable);
   }
 
   private static boolean isBinary(@NotNull PsiFile file) {
@@ -1000,5 +1035,9 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
 
   public boolean isSingleInspectionRun() {
     return mySingleInspectionRun;
+  }
+
+  private InspectionRVContentProvider createContentProvider() {
+    return new InspectionRVContentProviderImpl(getProject());
   }
 }

@@ -33,6 +33,7 @@ import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.impl.*;
+import com.intellij.vcs.test.VcsPlatformTest;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -40,7 +41,7 @@ import java.util.concurrent.*;
 
 import static com.intellij.vcs.log.TimedCommitParser.log;
 
-public class VcsLogRefresherTest extends VcsLogPlatformTest {
+public class VcsLogRefresherTest extends VcsPlatformTest {
 
   private static final Logger LOG = Logger.getInstance(VcsLogRefresherTest.class);
 

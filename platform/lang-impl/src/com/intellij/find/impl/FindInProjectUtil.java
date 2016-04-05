@@ -287,10 +287,17 @@ public class FindInProjectUtil {
       FindResult result = findManager.findString(text, offset, findModel, psiFile.getVirtualFile());
       if (!result.isStringFound()) break;
 
+      final int prevOffset = offset;
+      offset = result.getEndOffset();
+      if (prevOffset == offset) {
+        // for regular expr the size of the match could be zero -> could be infinite loop in finding usages!
+        ++offset;
+      }
+
       final SearchScope customScope = findModel.getCustomScope();
       if (customScope instanceof LocalSearchScope) {
         final TextRange range = new TextRange(result.getStartOffset(), result.getEndOffset());
-        if (!((LocalSearchScope)customScope).containsRange(psiFile, range)) break;
+        if (!((LocalSearchScope)customScope).containsRange(psiFile, range)) continue;
       }
       UsageInfo info = new FindResultUsageInfo(findManager, psiFile, offset, findModel, result);
       if (!consumer.process(info)){
@@ -298,13 +305,6 @@ public class FindInProjectUtil {
       }
       count++;
 
-      final int prevOffset = offset;
-      offset = result.getEndOffset();
-
-      if (prevOffset == offset) {
-        // for regular expr the size of the match could be zero -> could be infinite loop in finding usages!
-        ++offset;
-      }
       if (maxUsages > 0 && count >= maxUsages) {
         break;
       }

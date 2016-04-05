@@ -340,7 +340,9 @@ public abstract class HgUtil {
   @NotNull
   public static HgFile getFileNameInTargetRevision(Project project, HgRevisionNumber vcsRevisionNumber, HgFile localHgFile) {
     //get file name in target revision if it was moved/renamed
-    HgStatusCommand statCommand = new HgStatusCommand.Builder(false).copySource(true).baseRevision(vcsRevisionNumber).build(project);
+    // if file was moved but not committed then hg status would return nothing, so it's better to point working dir as '.' revision
+    HgStatusCommand statCommand = new HgStatusCommand.Builder(false).copySource(true).baseRevision(vcsRevisionNumber).
+      targetRevision(HgRevisionNumber.getInstance("", ".")).build(project);
 
     Set<HgChange> changes = statCommand.executeInCurrentThread(localHgFile.getRepo(), Collections.singletonList(localHgFile.toFilePath()));
 
@@ -648,13 +650,10 @@ public abstract class HgUtil {
     }
     // vasya.pupkin@email.com || <vasya.pupkin@email.com>
     else if (!authorString.contains(" ") && startDomainIndex > 0) { //simple e-mail check. john@localhost
+      userName = "";
       if (startEmailIndex >= 0 && startDomainIndex > startEmailIndex && startDomainIndex < endEmailIndex) {
-        // <vasya.pupkin@email.com> --> vasya.pupkin, vasya.pupkin@email.com
-        userName = authorString.substring(startEmailIndex + 1, startDomainIndex).trim();
         email = authorString.substring(startEmailIndex + 1, endEmailIndex).trim();
       } else {
-        // vasya.pupkin@email.com --> vasya.pupkin, vasya.pupkin@email.com
-        userName = authorString.substring(0, startDomainIndex).trim();
         email = authorString;
       }
     }

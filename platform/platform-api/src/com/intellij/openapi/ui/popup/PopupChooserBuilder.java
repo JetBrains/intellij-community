@@ -21,9 +21,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.*;
-import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.ui.components.JBViewport;
 import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.util.BooleanFunction;
@@ -507,30 +505,7 @@ public class PopupChooserBuilder {
 
     private MyListWrapper(final JList list) {
       super(UIUtil.isUnderAquaLookAndFeel() ? 0 : -1);
-      JBViewport viewport = new JBViewport() {
-        @Override
-        protected LayoutManager createLayoutManager() {
-          return new ViewportLayout() {
-            @Override
-            public Dimension preferredLayoutSize(Container parent) {
-              int size = list.getModel().getSize();
-              if (size >= 0 && size <= 20) {
-                return list.getPreferredSize();
-              } else {
-                final Dimension sz = super.preferredLayoutSize(parent);
-                final Point p = RelativePoint.getNorthWestOf(myList).getScreenPoint();
-                final Rectangle screen = ScreenUtil.getScreenRectangle(p);
-
-                final int bordersEtc = 20;
-                final int maxWidth = Math.abs(screen.x + screen.width - p.x) - 2 * bordersEtc;
-                return new Dimension(Math.min(maxWidth, sz.width) + bordersEtc, sz.height + list.getCellBounds(0, 0).height / 2);
-              }
-            }
-          };
-        }
-      };
       list.setVisibleRowCount(15);
-      setViewport(viewport);
       setViewportView(list);
 
 
@@ -553,6 +528,17 @@ public class PopupChooserBuilder {
         return myList.getSelectedValues();
       }
       return null;
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+      if (isPreferredSizeSet()) {
+        return super.getPreferredSize();
+      }
+      Dimension size = myList.getPreferredSize();
+      JScrollBar bar = getVerticalScrollBar();
+      if (bar != null) size.width += bar.getPreferredSize().width;
+      return size;
     }
 
     public void setBorder(Border border) {

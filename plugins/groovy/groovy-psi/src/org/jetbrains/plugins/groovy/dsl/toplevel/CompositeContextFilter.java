@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,10 @@ import java.util.List;
  * @author peter
  */
 public class CompositeContextFilter implements ContextFilter {
-  private final List<ContextFilter> myFilters;
+  private final List<? extends ContextFilter> myFilters;
   private final boolean myAnd;
 
-  private CompositeContextFilter(List<ContextFilter> filters, boolean and) {
+  private CompositeContextFilter(List<? extends ContextFilter> filters, boolean and) {
     myFilters = filters;
     myAnd = and;
   }
@@ -44,7 +44,7 @@ public class CompositeContextFilter implements ContextFilter {
   }
 
   @NotNull
-  public static ContextFilter compose(@NotNull List<ContextFilter> filters, boolean and) {
+  public static ContextFilter compose(@NotNull List<? extends ContextFilter> filters, boolean and) {
     if (filters.size() == 1) {
       return filters.get(0);
     }

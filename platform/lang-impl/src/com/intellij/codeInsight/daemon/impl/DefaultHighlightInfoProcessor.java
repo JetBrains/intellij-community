@@ -54,10 +54,10 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
     final TextRange priorityIntersection = priorityRange.intersection(restrictRange);
 
     final Editor editor = session.getEditor();
-    TransactionGuard.submitTransaction(new Runnable() {
+    TransactionGuard.submitTransaction(project, new Runnable() {
       @Override
       public void run() {
-        if (project.isDisposed() || modificationStamp != document.getModificationStamp()) return;
+        if (modificationStamp != document.getModificationStamp()) return;
         if (priorityIntersection != null) {
           MarkupModel markupModel = DocumentMarkupModel.forDocument(document, project, true);
 
@@ -67,7 +67,7 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
         }
         if (editor != null && !editor.isDisposed()) {
           // usability: show auto import popup as soon as possible
-          new ShowAutoImportPass(project, psiFile, editor).applyInformationToEditor();
+          new ShowAutoImportPass(project, psiFile, editor).addImports();
           
           DaemonListeners.repaintErrorStripeRenderer(editor, project);
         }

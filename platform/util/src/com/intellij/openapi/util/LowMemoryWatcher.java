@@ -81,16 +81,22 @@ public class LowMemoryWatcher {
   private final Runnable myRunnable;
 
   static {
-    for (MemoryPoolMXBean bean : ManagementFactory.getMemoryPoolMXBeans()) {
-      if (bean.getType() == MemoryType.HEAP && bean.isUsageThresholdSupported()) {
-        long threshold = bean.getUsage().getMax() - MEM_THRESHOLD;
-        if (threshold > 0) {
-          bean.setUsageThreshold(threshold);
-          bean.setCollectionUsageThreshold(threshold);
+    try {
+      for (MemoryPoolMXBean bean : ManagementFactory.getMemoryPoolMXBeans()) {
+        if (bean.getType() == MemoryType.HEAP && bean.isUsageThresholdSupported()) {
+          long threshold = bean.getUsage().getMax() - MEM_THRESHOLD;
+          if (threshold > 0) {
+            bean.setUsageThreshold(threshold);
+            bean.setCollectionUsageThreshold(threshold);
+          }
         }
       }
+      ((NotificationEmitter)ManagementFactory.getMemoryMXBean()).addNotificationListener(ourLowMemoryListener, null, null);
     }
-    ((NotificationEmitter)ManagementFactory.getMemoryMXBean()).addNotificationListener(ourLowMemoryListener, null, null);
+    catch (Throwable e) {
+      // should not happen normally
+      LOG.info("Errors initializing LowMemoryWatcher: ", e);
+    }
   }
 
   /**

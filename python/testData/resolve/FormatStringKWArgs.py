@@ -1,1 +1,1 @@
-"formatted string with args:"<ref>"{fst}".format(fst=12)
+"formatted string with args: {<ref>fst}".format(fst=12)

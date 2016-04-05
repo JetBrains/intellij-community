@@ -36,6 +36,7 @@ public class IdeTooltip extends ComparableObject.Impl {
   private boolean myToCenter = false;
   private boolean myToCenterIfSmall = true;
   private boolean myHighlighter;
+  private boolean myRequestFocus;
 
   private Color myTextBackground;
   private Color myTextForeground;
@@ -261,6 +262,15 @@ public class IdeTooltip extends ComparableObject.Impl {
 
   public boolean isInside(RelativePoint target) {
     return myUi != null && myUi.isInside(target);
+  }
+
+  public boolean isRequestFocus() {
+    return myRequestFocus;
+  }
+
+  public IdeTooltip setRequestFocus(boolean requestFocus) {
+    myRequestFocus = requestFocus;
+    return this;
   }
 
   public interface Ui {

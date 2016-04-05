@@ -135,7 +135,7 @@ public class XVariablesView extends XVariablesViewBase implements DataProvider {
 
   public static class InlineVariablesInfo {
     private final Map<Pair<VirtualFile, Integer>, Set<Entry>> myData
-      = new THashMap<Pair<VirtualFile, Integer>, Set<Entry>>();
+      = new THashMap<>();
 
     @Nullable
     public List<XValueNodeImpl> get(@NotNull VirtualFile file, int line) {
@@ -156,7 +156,7 @@ public class XVariablesView extends XVariablesViewBase implements DataProvider {
         Pair<VirtualFile, Integer> key = Pair.create(file, position.getLine());
         Set<Entry> entries = myData.get(key);
         if (entries == null) {
-          entries = new TreeSet<Entry>();
+          entries = new TreeSet<>();
           myData.put(key, entries);
         }
         entries.add(new Entry(position.getOffset(), node));

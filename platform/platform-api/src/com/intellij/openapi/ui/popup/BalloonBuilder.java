@@ -95,6 +95,9 @@ public interface BalloonBuilder {
   @NotNull
   BalloonBuilder setBlockClicksThroughBalloon(boolean block);
 
+  @NotNull
+  BalloonBuilder setRequestFocus(boolean requestFocus);
+
   /**
    * Links target balloon life cycle to the given object. I.e. current balloon will be auto-hide and collected as soon
    * as given anchor is disposed.

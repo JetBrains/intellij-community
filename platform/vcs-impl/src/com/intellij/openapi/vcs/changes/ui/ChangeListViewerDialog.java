@@ -29,6 +29,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsActions;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -173,6 +174,7 @@ public class ChangeListViewerDialog extends DialogWrapper implements DataProvide
         }
       }
     };
+    Disposer.register(getDisposable(), myChangesBrowser);
     myChangesBrowser.setUseCase(myInAir ? CommittedChangesBrowserUseCase.IN_AIR : null);
     splitter.setFirstComponent(myChangesBrowser);
 
@@ -194,12 +196,6 @@ public class ChangeListViewerDialog extends DialogWrapper implements DataProvide
       mainPanel.add(descPanel, BorderLayout.NORTH);
     }
     return mainPanel;
-  }
-
-  @Override
-  protected void dispose() {
-    myChangesBrowser.dispose();
-    super.dispose();
   }
 
   @NotNull

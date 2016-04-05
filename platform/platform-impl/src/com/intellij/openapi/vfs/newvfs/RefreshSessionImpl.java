@@ -129,31 +129,37 @@ public class RefreshSessionImpl extends RefreshSession {
       }
 
       long t = 0;
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("scanning " + workQueue);
+      if (LOG.isTraceEnabled()) {
+        LOG.trace("scanning " + workQueue);
         t = System.currentTimeMillis();
       }
 
-      for (VirtualFile file : workQueue) {
-        if (myCancelled) break;
+      int count = 0;
+      refresh: do {
+        if (LOG.isTraceEnabled()) LOG.trace("try=" + count);
 
-        NewVirtualFile nvf = (NewVirtualFile)file;
-        if (!myIsRecursive && !myIsAsync) {
-          nvf.markDirty();  // always scan when non-recursive AND synchronous - needed e.g. when refreshing project files on open
+        for (VirtualFile file : workQueue) {
+          if (myCancelled) break refresh;
+
+          NewVirtualFile nvf = (NewVirtualFile)file;
+          if (!myIsRecursive && !myIsAsync) {
+            nvf.markDirty();  // always scan when non-recursive AND synchronous - needed e.g. when refreshing project files on open
+          }
+
+          RefreshWorker worker = new RefreshWorker(nvf, myIsRecursive);
+          myWorker = worker;
+          worker.scan();
+          haveEventsToFire |= myEvents.addAll(worker.getEvents());
         }
 
-        RefreshWorker worker = new RefreshWorker(nvf, myIsRecursive);
-        myWorker = worker;
-        worker.scan();
-        List<VFileEvent> events = worker.getEvents();
-        if (myEvents.addAll(events)) {
-          haveEventsToFire = true;
-        }
+        count++;
+        if (LOG.isTraceEnabled()) LOG.trace("events=" + myEvents.size());
       }
+      while (myIsRecursive && count < 3 && workQueue.stream().anyMatch(f -> ((NewVirtualFile)f).isDirty()));
 
       if (t != 0) {
         t = System.currentTimeMillis() - t;
-        LOG.debug((myCancelled ? "cancelled, " : "done, ") + t + " ms, events " + myEvents);
+        LOG.trace((myCancelled ? "cancelled, " : "done, ") + t + " ms, events " + myEvents);
       }
     }
 
@@ -161,7 +167,7 @@ public class RefreshSessionImpl extends RefreshSession {
     iHaveEventsToFire = haveEventsToFire;
   }
 
-  public void cancel() {
+  void cancel() {
     myCancelled = true;
 
     RefreshWorker worker = myWorker;

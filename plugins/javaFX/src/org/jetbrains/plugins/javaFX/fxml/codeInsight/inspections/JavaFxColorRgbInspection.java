@@ -11,7 +11,7 @@ import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxPropertyAttributeDescriptor;
-import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxPropertyElementDescriptor;
+import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxPropertyTagDescriptor;
 
 /**
  * @author Pavel.Dolgov
@@ -36,7 +36,7 @@ public class JavaFxColorRgbInspection extends XmlSuppressableInspectionTool {
         final XmlAttributeDescriptor descriptor = attribute.getDescriptor();
         if (descriptor instanceof JavaFxPropertyAttributeDescriptor) {
           final PsiClass psiClass = ((JavaFxPropertyAttributeDescriptor)descriptor).getPsiClass();
-          if (JavaFxCommonNames.JAVAFX_SCENE_COLOR.equals(psiClass.getQualifiedName())) {
+          if (psiClass != null && JavaFxCommonNames.JAVAFX_SCENE_COLOR.equals(psiClass.getQualifiedName())) {
             final XmlAttributeValue valueElement = attribute.getValueElement();
             final PsiElement location = valueElement != null ? valueElement : attribute;
             validateColorComponent(psiClass, attribute.getName(), attributeValue, location);
@@ -50,9 +50,9 @@ public class JavaFxColorRgbInspection extends XmlSuppressableInspectionTool {
         if (tag.getSubTags().length != 0) return;
 
         final XmlElementDescriptor descriptor = tag.getDescriptor();
-        if (descriptor instanceof JavaFxPropertyElementDescriptor) {
-          final PsiClass psiClass = ((JavaFxPropertyElementDescriptor)descriptor).getPsiClass();
-          if (JavaFxCommonNames.JAVAFX_SCENE_COLOR.equals(psiClass.getQualifiedName())) {
+        if (descriptor instanceof JavaFxPropertyTagDescriptor) {
+          final PsiClass psiClass = ((JavaFxPropertyTagDescriptor)descriptor).getPsiClass();
+          if (psiClass != null && JavaFxCommonNames.JAVAFX_SCENE_COLOR.equals(psiClass.getQualifiedName())) {
             final XmlTagValue valueElement = tag.getValue();
             final XmlText[] textElements = valueElement.getTextElements();
             final PsiElement location = textElements.length == 1 ? textElements[0] : tag;

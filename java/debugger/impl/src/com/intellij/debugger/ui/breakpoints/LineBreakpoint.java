@@ -81,21 +81,10 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
 
   @Override
   protected Icon getDisabledIcon(boolean isMuted) {
-    final Breakpoint master = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().findMasterBreakpoint(this);
-    if (isMuted) {
-      return master == null? AllIcons.Debugger.Db_muted_disabled_breakpoint : AllIcons.Debugger.Db_muted_dep_line_breakpoint;
+    if (DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().findMasterBreakpoint(this) != null) {
+      return isMuted ? AllIcons.Debugger.Db_muted_dep_line_breakpoint : AllIcons.Debugger.Db_dep_line_breakpoint;
     }
-    else {
-      return master == null? AllIcons.Debugger.Db_disabled_breakpoint : AllIcons.Debugger.Db_dep_line_breakpoint;
-    }
-  }
-
-  @Override
-  protected Icon getSetIcon(boolean isMuted) {
-    if (isRemoveAfterHit()) {
-      return isMuted ? AllIcons.Debugger.Db_muted_temporary_breakpoint : AllIcons.Debugger.Db_temporary_breakpoint;
-    }
-    return isMuted? AllIcons.Debugger.Db_muted_breakpoint : AllIcons.Debugger.Db_set_breakpoint;
+    return null;
   }
 
   @Override

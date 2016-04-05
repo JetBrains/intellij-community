@@ -50,6 +50,7 @@ public class HintHint {
   private int myPositionChangeY;
   private boolean myShowImmediately = false;
   private boolean myAnimationEnabled;
+  private boolean myRequestFocus;
 
   public HintHint() {
   }
@@ -280,6 +281,15 @@ public class HintHint {
    */
   public HintHint setAnimationEnabled(boolean enabled){
     myAnimationEnabled = enabled;
+    return this;
+  }
+
+  public boolean isRequestFocus() {
+    return myRequestFocus;
+  }
+
+  public HintHint setRequestFocus(boolean requestFocus) {
+    myRequestFocus = requestFocus;
     return this;
   }
 }

@@ -546,17 +546,7 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
   public void testPropertyNotListedInSlots() {
     doTest();
   }
-
-  // PY-2748
-  public void testFormatStringPackedDictCall() {
-    doTest();
-  }
-
-  // PY-2748
-  public void testFormatStringPackedDict() {
-    doTest();
-  }
-
+  
   // PY-2748
   public void testFormatStringPositional() {
     doTest();
@@ -611,7 +601,102 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
   public void testFormatStringDictLiteralArgumentWithNumericExprKeys() {
     doTest();
   }
+  
+  // PY-18769
+  public void testFormatStringInRegularExpressions() {
+    doTest();
+  }
+  
+  // PY-18751
+  public void testFormatStringInMapExpression() {
+    doTest();
+  }
 
+  // PY-18751
+  public void testStringWithFormatSyntax() {
+    doTest();
+  }
+
+  // PY-18751
+  public void testStringWithPercentSyntax() {
+    doTest();
+  }
+
+  // PY-18751
+  public void testPercentStringWithFormatStringReplacementSymbols() {
+    doTest();
+  }
+
+  // PY-18751, PY-18824
+  public void testFormatStringWithPercentStringReplacementSymbols() {
+    doTest();
+  }
+  
+  // PY-18837
+  public void testPercentStringWithDictArgument() {
+    doTest();
+  }
+
+  // PY-18115
+  public void testPercentStringWithDictCallArgument() {
+    doTest();
+  }
+
+  // PY-18115
+  public void testPercentStringWithTupleSlicing() {
+    doTest();
+  }
+
+  // PY-18115
+  public void testPercentStringWithDictElement() {
+    doTest();
+  }
+
+  // PY-18115
+  public void testPercentStringWithEmptyDict() {
+    doTest();
+  }
+
+  // PY-18115
+  public void testPercentStringWithDictCall() {
+    doTest();
+  }
+
+  // PY-18115
+  public void testFormatStringPositionalSubstitutionWithDictArg() {
+    doTest();
+  }
+
+  // PY-18115
+  public void testPercentStringWithCallArgument() {
+    doTest();
+  }
+
+  // PY-18115
+  public void testFormatStringWithEmptyDictArg() {
+    doTest();
+  }
+
+  // PY-18115
+  public void testFormatStringWithDictLiteralExprInsideDictCall() {
+    doTest();
+  }
+  
+  // PY-18115
+  public void testFormatStringWithDictArgWithCallExprKey() {
+    doTest();
+  }
+
+  // PY-18115
+  public void testFormatStringWithPackedAndNonPackedArgs() {
+    doTest();
+  }
+  
+  
+  // PY-18950
+  public void testPercentStringKeywordArgumentWithReferenceKeyDictArgument() {
+    doTest();
+  }
 
   // PY-18254
   public void testVarargsAnnotatedWithFunctionComment() {

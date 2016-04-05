@@ -542,7 +542,7 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
     replacefilter(token: "@@help_id@@", value: helpId)
     replacefilter(token: "@@url_schemes@@", value: urlSchemes)
     replacefilter(token: "@@archs@@", value: archs)
-    replacefilter(token: "@@min_osx@@", value: ifNull(args.min_osx, "10.6"))
+    replacefilter(token: "@@min_osx@@", value: ifNull(args.min_osx, "10.8"))
   }
 
   if (executable != "idea") {
@@ -558,6 +558,7 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
   }
 
   ant.fixcrlf(srcdir: "$path/bin", includes: "*.sh", eol: "unix")
+  ant.fixcrlf(srcdir: "$path/bin", includes: "*.py", eol: "unix")
 })
 
 binding.setVariable("winScripts", { String target, String home, String name, Map args ->

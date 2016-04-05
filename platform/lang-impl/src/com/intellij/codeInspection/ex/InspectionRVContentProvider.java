@@ -22,6 +22,7 @@ package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.QuickFix;
+import com.intellij.codeInspection.offlineViewer.OfflineRefElementNode;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.ui.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -281,7 +282,7 @@ public abstract class InspectionRVContentProvider {
           if (node instanceof RefElementNode) {
             final RefElementNode refElementNode = (RefElementNode)node;
             final Object userObject = finalContainer.getUserObject();
-            final Object object = refElementNode.getUserObject();
+            final Object object = node instanceof OfflineRefElementNode ? ((OfflineRefElementNode) refElementNode).getOfflineDescriptor() : refElementNode.getUserObject();
             if ((object == null || userObject.getClass().equals(object.getClass())) && finalContainer.areEqual(object, userObject)) {
               if (firstLevel.get()) {
                 result.set(refElementNode);

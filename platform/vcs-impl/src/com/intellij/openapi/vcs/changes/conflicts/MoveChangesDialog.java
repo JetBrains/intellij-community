@@ -49,7 +49,7 @@ public class MoveChangesDialog extends DialogWrapper {
 
       @Override
       protected DefaultTreeModel buildTreeModel(List<Change> changes, ChangeNodeDecorator changeNodeDecorator) {
-        TreeModelBuilder builder = new TreeModelBuilder(project, false);
+        TreeModelBuilder builder = new TreeModelBuilder(project, isShowFlatten());
         return builder.buildModel(new ArrayList<ChangeList>(changeLists));
       }
 

@@ -23,7 +23,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.CatchingConsumer;
 import com.intellij.webcore.packaging.InstalledPackage;
-import com.intellij.webcore.packaging.PackageManagementService;
+import com.intellij.webcore.packaging.PackageManagementServiceEx;
 import com.intellij.webcore.packaging.RepoPackage;
 import com.jetbrains.python.packaging.*;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -44,7 +44,7 @@ import java.util.regex.Pattern;
  * @author yole
  */
 @SuppressWarnings("UseOfObsoleteCollectionType")
-public class PyPackageManagementService extends PackageManagementService {
+public class PyPackageManagementService extends PackageManagementServiceEx {
   @NotNull private static final Pattern PATTERN_ERROR_LINE = Pattern.compile(".*error:.*", Pattern.CASE_INSENSITIVE);
 
   private final Project myProject;
@@ -161,7 +161,7 @@ public class PyPackageManagementService extends PackageManagementService {
   public void installPackage(final RepoPackage repoPackage, String version, boolean forceUpgrade, String extraOptions,
                              final Listener listener, boolean installToUser) {
     final String packageName = repoPackage.getName();
-    final String repository = PyPIPackageUtil.PYPI_URL.equals(repoPackage.getRepoUrl()) ? null : repoPackage.getRepoUrl();
+    final String repository = PyPIPackageUtil.isPyPIRepository(repoPackage.getRepoUrl()) ? null : repoPackage.getRepoUrl();
     final List<String> extraArgs = new ArrayList<String>();
     if (installToUser) {
       extraArgs.add(PyPackageManager.USE_USER_SITE);
@@ -171,7 +171,7 @@ public class PyPackageManagementService extends PackageManagementService {
       Collections.addAll(extraArgs, extraOptions.split(" +"));
     }
     if (!StringUtil.isEmptyOrSpaces(repository)) {
-      extraArgs.add("--extra-index-url");
+      extraArgs.add("--index-url");
       extraArgs.add(repository);
     }
     if (forceUpgrade) {
@@ -375,11 +375,11 @@ public class PyPackageManagementService extends PackageManagementService {
     return null;
   }
 
-  /*@Override
+  @Override
   public void updatePackage(@NotNull InstalledPackage installedPackage,
                             @Nullable String version,
                             @NotNull Listener listener) {
-    installPackage(new RepoPackage(installedPackage.getName(), null *//* TODO? *//*), null, true, null, listener, false);
+    installPackage(new RepoPackage(installedPackage.getName(), null), null, true, null, listener, false);
   }
 
   @Override
@@ -390,13 +390,19 @@ public class PyPackageManagementService extends PackageManagementService {
 
   @Override
   public void fetchLatestVersion(@NotNull InstalledPackage pkg, @NotNull CatchingConsumer<String, Exception> consumer) {
-    final String version;
+    String version = "";
     try {
-      version = PyPackageManager.getInstance(mySdk).fetchLatestVersion(pkg);
-      consumer.consume(version);
+      final Map<String, String> packageToVersionMap = PyPIPackageUtil.INSTANCE.loadAndGetPackages();
+      if (packageToVersionMap.containsKey(pkg.getName())) {
+        version = packageToVersionMap.get(pkg.getName());
+      }
     }
-    catch (ExecutionException ignored) {
-
+    catch (IOException ignored) {
     }
-  }*/
+    final List<String> releases = PyPIPackageUtil.getPackageReleases(pkg.getName());
+    if (releases != null && !releases.isEmpty()) {
+      version = releases.get(0);
+    }
+    consumer.consume(version);
+  }
 }

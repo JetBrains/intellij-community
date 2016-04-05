@@ -411,6 +411,11 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
         myHistory.add(structureFilter);
       }
     }
+
+    @Override
+    public void update(AnActionEvent e) {
+      e.getPresentation().setEnabledAndVisible(e.getProject() != null);
+    }
   }
 
   private class SelectFromHistoryAction extends ToggleAction {

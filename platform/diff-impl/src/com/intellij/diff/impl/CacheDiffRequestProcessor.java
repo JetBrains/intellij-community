@@ -24,6 +24,7 @@ import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -91,6 +92,7 @@ public abstract class CacheDiffRequestProcessor<T> extends DiffRequestProcessor 
 
   @CalledInAwt
   public void updateRequest(final boolean force, boolean useCache, @Nullable final ScrollToPolicy scrollToChangePolicy) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     if (isDisposed()) return;
 
     final T requestProvider = getCurrentRequestProvider();

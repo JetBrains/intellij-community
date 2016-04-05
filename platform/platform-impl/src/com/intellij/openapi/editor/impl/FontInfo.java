@@ -20,7 +20,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.editor.impl.view.FontLayoutService;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -45,7 +44,7 @@ import java.util.List;
 public class FontInfo {
   private static final Logger LOG = Logger.getInstance(FontInfo.class);
   
-  private static final boolean USE_ALTERNATIVE_CAN_DISPLAY_PROCEDURE = SystemInfo.isAppleJvm && Registry.is("ide.mac.fix.font.fallback");
+  private static final boolean USE_ALTERNATIVE_CAN_DISPLAY_PROCEDURE = Registry.is("ide.mac.fix.font.fallback");
   private static final FontRenderContext DUMMY_CONTEXT = new FontRenderContext(null, false, false);
 
   private final TIntHashSet mySymbolsToBreakDrawingIteration = new TIntHashSet();

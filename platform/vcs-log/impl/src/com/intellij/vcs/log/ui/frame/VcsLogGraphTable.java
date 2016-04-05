@@ -57,6 +57,7 @@ import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.render.GraphCommitCell;
 import com.intellij.vcs.log.ui.render.GraphCommitCellRender;
 import com.intellij.vcs.log.ui.tables.GraphTableModel;
+import com.intellij.vcs.log.util.VcsUserUtil;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NonNls;
@@ -442,7 +443,7 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
       balloonText = "Jump to <b>\"" +
                     StringUtil.shortenTextWithEllipsis(details.getSubject(), 50, 0, "...") +
                     "\"</b> by " +
-                    details.getAuthor().getName() +
+                    VcsUserUtil.getShortPresentation(details.getAuthor()) +
                     DetailsPanel.formatDateTime(details.getAuthorTime());
     }
     return balloonText;

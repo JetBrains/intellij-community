@@ -29,7 +29,6 @@ import javax.swing.*;
  */
 public class InspectionNode extends InspectionTreeNode {
   public static final Icon TOOL = LayeredIcon.create(AllIcons.Toolwindows.ToolWindowInspection, IconUtil.getEmptyIcon(false));
-  private volatile boolean myUpdatingNow;
 
   public InspectionNode(@NotNull InspectionToolWrapper toolWrapper) {
     super(toolWrapper);

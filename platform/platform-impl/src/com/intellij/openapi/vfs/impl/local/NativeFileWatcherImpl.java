@@ -20,7 +20,6 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.ide.actions.ShowFilePathAction;
-import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationBundle;
@@ -33,8 +32,6 @@ import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.local.FileWatcherNotificationSink;
 import com.intellij.openapi.vfs.local.PluggableFileWatcher;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
@@ -44,7 +41,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.event.HyperlinkEvent;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.text.Normalizer;
@@ -65,7 +61,6 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
   private static final String EXIT_COMMAND = "EXIT";
   private static final int MAX_PROCESS_LAUNCH_ATTEMPT_COUNT = 10;
 
-  private ManagingFS myManagingFS;
   private FileWatcherNotificationSink myNotificationSink;
   private File myExecutable;
 
@@ -80,7 +75,6 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
 
   @Override
   public void initialize(@NotNull ManagingFS managingFS, @NotNull FileWatcherNotificationSink notificationSink) {
-    myManagingFS = managingFS;
     myNotificationSink = notificationSink;
 
     boolean disabled = isDisabled();
@@ -93,12 +87,8 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
       notifyOnFailure(ApplicationBundle.message("watcher.exe.not.found"), null);
     }
     else if (!myExecutable.canExecute()) {
-      notifyOnFailure(ApplicationBundle.message("watcher.exe.not.exe", myExecutable), new NotificationListener() {
-        @Override
-        public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-          ShowFilePathAction.openFile(myExecutable);
-        }
-      });
+      String message = ApplicationBundle.message("watcher.exe.not.exe", myExecutable);
+      notifyOnFailure(message, (notification, event) -> ShowFilePathAction.openFile(myExecutable));
     }
     else {
       try {
@@ -364,7 +354,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
           myIsShuttingDown = true;
         }
         else if (watcherOp == WatcherOp.RESET) {
-          reset();
+          myNotificationSink.notifyReset(null);
         }
         else {
           myLastOp = watcherOp;
@@ -397,12 +387,6 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
       }
     }
 
-    private void reset() {
-      for (VirtualFile root : myManagingFS.getLocalRoots()) {
-        myNotificationSink.notifyDirtyPathRecursive(root.getPresentableUrl());
-      }
-    }
-
     private void processRemap() {
       Set<Pair<String, String>> pairs = ContainerUtil.newHashSet();
       for (int i = 0; i < myLines.size() - 1; i += 2) {
@@ -417,10 +401,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
 
     private void processChange(String path, WatcherOp op) {
       if (SystemInfo.isWindows && op == WatcherOp.RECDIRTY) {
-        VirtualFile root = LocalFileSystem.getInstance().findFileByPath(path);
-        if (root != null) {
-          myNotificationSink.notifyDirtyPathRecursive(path);
-        }
+        myNotificationSink.notifyReset(path);
         return;
       }
 
@@ -458,7 +439,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     }
   }
 
-  private boolean isRepetition(String path) {
+  protected boolean isRepetition(String path) {
     // collapse subsequent change file change notifications that happen once we copy large file,
     // this allows reduction of path checks at least 20% for Windows
     synchronized (myLastChangedPaths) {

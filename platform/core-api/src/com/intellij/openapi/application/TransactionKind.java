@@ -15,10 +15,11 @@
  */
 package com.intellij.openapi.application;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
 
 /**
- * A kind of transaction used in {@link TransactionGuard#submitMergeableTransaction(TransactionKind, Runnable)},
+ * A kind of transaction used in {@link TransactionGuard#submitMergeableTransaction(Disposable, TransactionKind, Runnable)},
  * {@link TransactionGuard#acceptNestedTransactions(TransactionKind...)}.
  */
 public interface TransactionKind {

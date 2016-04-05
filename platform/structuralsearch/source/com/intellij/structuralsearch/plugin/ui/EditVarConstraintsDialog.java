@@ -28,6 +28,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
+import com.intellij.structuralsearch.impl.matcher.predicates.ScriptLog;
 import com.intellij.structuralsearch.impl.matcher.predicates.ScriptSupport;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
@@ -272,7 +273,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
     customScriptCode.getButton().addActionListener(new ActionListener() {
       public void actionPerformed(@NotNull final ActionEvent e) {
         final List<String> variableNames = ContainerUtil.newArrayList(myConfiguration.getMatchOptions().getVariableConstraintNames());
-        variableNames.remove(current.getName());
+        variableNames.add(ScriptLog.SCRIPT_LOG_VAR_NAME);
         variableNames.remove(CompiledPattern.ALL_CLASS_UNMATCHED_CONTENT_VAR_ARTIFICIAL_NAME);
         final EditScriptDialog dialog = new EditScriptDialog(project, customScriptCode.getChildComponent().getText(), variableNames);
         dialog.show();
@@ -465,7 +466,6 @@ class EditVarConstraintsDialog extends DialogWrapper {
     final boolean contextVar = Configuration.CONTEXT_VAR_NAME.equals(var.getName());
     containedInConstraints.setVisible(contextVar);
     textConstraintsPanel.setVisible(!contextVar);
-    expressionConstraints.setVisible(!contextVar);
     partOfSearchResults.setEnabled(!contextVar);
     occurencePanel.setVisible(!contextVar);
   }

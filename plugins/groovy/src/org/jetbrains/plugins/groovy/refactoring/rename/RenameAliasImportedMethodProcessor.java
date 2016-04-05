@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -144,7 +144,7 @@ public class RenameAliasImportedMethodProcessor extends RenameJavaMethodProcesso
                              final List<UsageInfo> result) {
     if (element instanceof PsiMethod) {
       final PsiMethod method = (PsiMethod)element;
-      OverridingMethodsSearch.search(method, method.getUseScope(), true).forEach(new Processor<PsiMethod>() {
+      OverridingMethodsSearch.search(method).forEach(new Processor<PsiMethod>() {
         @Override
         public boolean process(PsiMethod overrider) {
           PsiElement original = overrider;

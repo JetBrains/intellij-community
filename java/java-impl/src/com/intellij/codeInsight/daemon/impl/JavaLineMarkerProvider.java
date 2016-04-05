@@ -27,12 +27,12 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.SeparatorPlacement;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.FindSuperElementsHelper;
 import com.intellij.psi.search.searches.AllOverridingMethodsSearch;
+import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
@@ -40,7 +40,6 @@ import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Function;
 import com.intellij.util.FunctionUtil;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -49,7 +48,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
@@ -124,9 +122,9 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
         }
 
         if (drawSeparator) {
-          LineMarkerInfo info = new LineMarkerInfo<PsiElement>(element, element.getTextRange(), null, Pass.UPDATE_ALL,
-                                                               FunctionUtil.<Object, String>nullConstant(), null,
-                                                               GutterIconRenderer.Alignment.RIGHT);
+          LineMarkerInfo info = new LineMarkerInfo<>(element, element.getTextRange(), null, Pass.UPDATE_ALL,
+                                                     FunctionUtil.<Object, String>nullConstant(), null,
+                                                     GutterIconRenderer.Alignment.RIGHT);
           EditorColorsScheme scheme = myColorsManager.getGlobalScheme();
           info.separatorColor = scheme.getColor(CodeInsightColors.METHOD_SEPARATORS_COLOR);
           info.separatorPlacement = SeparatorPlacement.TOP;
@@ -163,9 +161,8 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
   @Override
   public void collectSlowLineMarkers(@NotNull final List<PsiElement> elements, @NotNull final Collection<LineMarkerInfo> result) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    Map<PsiClass, PsiClass> subClassCache = FindSuperElementsHelper.createSubClassCache();
 
-    Collection<PsiMethod> methods = new THashSet<PsiMethod>();
+    Collection<PsiMethod> methods = new THashSet<>();
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < elements.size(); i++) {
       PsiElement element = elements.get(i);
@@ -179,18 +176,17 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
         }
       }
       else if (parent instanceof PsiClass && !(parent instanceof PsiTypeParameter)) {
-        collectInheritingClasses((PsiClass)parent, result, subClassCache);
+        collectInheritingClasses((PsiClass)parent, result);
       }
     }
     if (!methods.isEmpty()) {
       collectOverridingMethods(methods, result);
-      collectSiblingInheritedMethods(methods, result, subClassCache);
+      collectSiblingInheritedMethods(methods, result);
     }
   }
 
   private static void collectSiblingInheritedMethods(@NotNull final Collection<PsiMethod> methods,
-                                                     @NotNull Collection<LineMarkerInfo> result,
-                                                     @NotNull Map<PsiClass, PsiClass> subClassCache) {
+                                                     @NotNull Collection<LineMarkerInfo> result) {
     for (PsiMethod method : methods) {
       ProgressManager.checkCanceled();
       PsiClass aClass = method.getContainingClass();
@@ -199,7 +195,7 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
       boolean canHaveSiblingSuper = !method.hasModifierProperty(PsiModifier.ABSTRACT) && !method.hasModifierProperty(PsiModifier.STATIC) && method.hasModifierProperty(PsiModifier.PUBLIC)&& !method.hasModifierProperty(PsiModifier.FINAL)&& !method.hasModifierProperty(PsiModifier.NATIVE);
       if (!canHaveSiblingSuper) continue;
 
-      PsiMethod siblingInheritedViaSubClass = Pair.getFirst(FindSuperElementsHelper.getSiblingInheritedViaSubClass(method, subClassCache));
+      PsiMethod siblingInheritedViaSubClass = FindSuperElementsHelper.getSiblingInheritedViaSubClass(method);
       if (siblingInheritedViaSubClass == null) {
         continue;
       }
@@ -230,14 +226,13 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
   }
 
   protected void collectInheritingClasses(@NotNull PsiClass aClass,
-                                              @NotNull Collection<LineMarkerInfo> result,
-                                              @NotNull Map<PsiClass, PsiClass> subClassCache) {
+                                          @NotNull Collection<LineMarkerInfo> result) {
     if (aClass.hasModifierProperty(PsiModifier.FINAL)) {
       return;
     }
     if (CommonClassNames.JAVA_LANG_OBJECT.equals(aClass.getQualifiedName())) return; // It's useless to have overridden markers for object.
 
-    PsiClass subClass = subClassCache.get(aClass);
+    PsiClass subClass = DirectClassInheritorsSearch.search(aClass).findFirst();
     if (subClass != null || FunctionalExpressionSearch.search(aClass).findFirst() != null) {
       final Icon icon;
       if (aClass.isInterface()) {
@@ -253,10 +248,10 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
         range = aClass;
       }
       MarkerType type = MarkerType.SUBCLASSED_CLASS;
-      LineMarkerInfo info = new LineMarkerInfo<PsiElement>(range, range.getTextRange(),
-                                                           icon, Pass.UPDATE_OVERRIDDEN_MARKERS, type.getTooltip(),
-                                                           type.getNavigationHandler(),
-                                                           GutterIconRenderer.Alignment.RIGHT);
+      LineMarkerInfo info = new LineMarkerInfo<>(range, range.getTextRange(),
+                                                 icon, Pass.UPDATE_OVERRIDDEN_MARKERS, type.getTooltip(),
+                                                 type.getNavigationHandler(),
+                                                 GutterIconRenderer.Alignment.RIGHT);
       NavigateAction.setNavigateAction(info, aClass.isInterface() ? "Go to implementation(s)" : "Go to subclass(es)", IdeActions.ACTION_GOTO_IMPLEMENTATION);
       result.add(info);
     }
@@ -264,33 +259,30 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
 
   private void collectOverridingMethods(@NotNull final Collection<PsiMethod> methods, @NotNull Collection<LineMarkerInfo> result) {
     if (!myOverriddenOption.isEnabled() && !myImplementedOption.isEnabled()) return;
-    final Set<PsiMethod> overridden = new HashSet<PsiMethod>();
-    Set<PsiClass> classes = new THashSet<PsiClass>();
+    final Set<PsiMethod> overridden = new HashSet<>();
+    Set<PsiClass> methodContainingClasses = new THashSet<>();
     for (PsiMethod method : methods) {
       ProgressManager.checkCanceled();
-      final PsiClass parentClass = method.getContainingClass();
-      if (!CommonClassNames.JAVA_LANG_OBJECT.equals(parentClass.getQualifiedName())) {
-        classes.add(parentClass);
+      PsiClass containingClass = method.getContainingClass();
+      if (containingClass != null && !CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName())) {
+        methodContainingClasses.add(containingClass);
       }
     }
 
-    for (final PsiClass aClass : classes) {
-      AllOverridingMethodsSearch.search(aClass).forEach(new Processor<Pair<PsiMethod, PsiMethod>>() {
-        @Override
-        public boolean process(final Pair<PsiMethod, PsiMethod> pair) {
-          ProgressManager.checkCanceled();
+    for (final PsiClass aClass : methodContainingClasses) {
+      AllOverridingMethodsSearch.search(aClass).forEach(pair -> {
+        ProgressManager.checkCanceled();
 
-          final PsiMethod superMethod = pair.getFirst();
-          if (methods.remove(superMethod)) {
-            overridden.add(superMethod);
-          }
-          return !methods.isEmpty();
+        final PsiMethod superMethod = pair.getFirst();
+        if (methods.remove(superMethod)) {
+          overridden.add(superMethod);
         }
+        return !methods.isEmpty();
       });
     }
 
     if (!methods.isEmpty()) {
-      for (PsiClass aClass : classes) {
+      for (PsiClass aClass : methodContainingClasses) {
         final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(aClass);
         if (interfaceMethod != null) {
           if (FunctionalExpressionSearch.search(aClass).findFirst() != null) {
@@ -312,10 +304,10 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
       PsiElement range = getMethodRange(method);
       final MarkerType type = MarkerType.OVERRIDDEN_METHOD;
       final Icon icon = overrides ? AllIcons.Gutter.OverridenMethod : AllIcons.Gutter.ImplementedMethod;
-      LineMarkerInfo<PsiElement> info = new LineMarkerInfo<PsiElement>(range, range.getTextRange(),
-                                                                       icon, Pass.UPDATE_OVERRIDDEN_MARKERS, type.getTooltip(),
-                                                                       type.getNavigationHandler(),
-                                                                       GutterIconRenderer.Alignment.RIGHT);
+      LineMarkerInfo<PsiElement> info = new LineMarkerInfo<>(range, range.getTextRange(),
+                                                             icon, Pass.UPDATE_OVERRIDDEN_MARKERS, type.getTooltip(),
+                                                             type.getNavigationHandler(),
+                                                             GutterIconRenderer.Alignment.RIGHT);
       NavigateAction.setNavigateAction(info, overrides ? "Go to overriding methods" : "Go to implementation(s)", IdeActions.ACTION_GOTO_IMPLEMENTATION);
       result.add(info);
     }
@@ -354,12 +346,7 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
     @NotNull
     @Override
     public Function<? super PsiElement, String> getCommonTooltip(@NotNull List<MergeableLineMarkerInfo> infos) {
-      return new Function<PsiElement, String>() {
-        @Override
-        public String fun(PsiElement element) {
-          return "Multiple method overrides";
-        }
-      };
+      return (Function<PsiElement, String>)element -> "Multiple method overrides";
     }
 
     @Override

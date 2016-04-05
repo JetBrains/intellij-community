@@ -1,4 +1,4 @@
-# $Id: writer_aux.py 5174 2007-05-31 00:01:52Z wiemann $
+# $Id: writer_aux.py 7320 2012-01-19 22:33:02Z milde $
 # Author: Lea Wiemann <LeWiemann@gmail.com>
 # Copyright: This module has been placed in the public domain.
 
@@ -14,7 +14,7 @@ conflicting imports like this one::
 
 __docformat__ = 'reStructuredText'
 
-from docutils import nodes, languages
+from docutils import nodes, utils, languages
 from docutils.transforms import Transform
 
 
@@ -39,11 +39,11 @@ class Compound(Transform):
 
     def apply(self):
         for compound in self.document.traverse(nodes.compound):
-            first_child = 1
+            first_child = True
             for child in compound:
                 if first_child:
                     if not isinstance(child, nodes.Invisible):
-                        first_child = 0
+                        first_child = False
                 else:
                     child['classes'].append('continued')
             # Substitute children for compound.
@@ -73,8 +73,8 @@ class Admonitions(Transform):
     default_priority = 920
 
     def apply(self):
-        lcode = self.document.settings.language_code
-        language = languages.get_language(lcode)
+        language = languages.get_language(self.document.settings.language_code,
+                                          self.document.reporter)
         for node in self.document.traverse(nodes.Admonition):
             node_name = node.__class__.__name__
             # Set class, so that we know what node this admonition came from.

@@ -28,7 +28,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -56,7 +55,6 @@ public class CvsTabbedWindow implements Disposable {
 
   public CvsTabbedWindow(Project project) {
     myProject = project;
-    Disposer.register(project, this);
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {

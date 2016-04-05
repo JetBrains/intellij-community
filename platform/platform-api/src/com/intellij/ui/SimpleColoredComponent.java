@@ -123,6 +123,12 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     myFragmentPadding = new TIntIntHashMap(10);
     myFragmentAlignment = new TIntIntHashMap(10);
     setOpaque(true);
+    updateUI();
+  }
+
+  @Override
+  public void updateUI() {
+    UISettings.setupComponentAntialiasing(this);
   }
 
   @NotNull
@@ -426,6 +432,13 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     }
 
     return new Dimension(width, height);
+  }
+
+  private Rectangle computePaintArea() {
+    Rectangle area = new Rectangle(getWidth(), getHeight());
+    JBInsets.removeFrom(area, getInsets());
+    JBInsets.removeFrom(area, myIpad);
+    return area;
   }
 
   private int computeTextWidth(@NotNull Font font, final boolean mainTextOnly) {
@@ -748,7 +761,8 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     offset += computeTextAlignShift(baseFont);
     int baseSize = baseFont.getSize();
     FontMetrics baseMetrics = g.getFontMetrics();
-    final int textBaseline = getTextBaseLine(baseMetrics, getHeight());
+    Rectangle area = computePaintArea();
+    final int textBaseline = area.y + getTextBaseLine(baseMetrics, area.height);
     boolean wasSmaller = false;
     for (int i = 0; i < myFragments.size(); i++) {
       final SimpleTextAttributes attributes = myAttributes.get(i);
@@ -917,7 +931,8 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   }
 
   protected void paintIcon(@NotNull Graphics g, @NotNull Icon icon, int offset) {
-    icon.paintIcon(this, g, offset, (getHeight() - icon.getIconHeight()) / 2);
+    Rectangle area = computePaintArea();
+    icon.paintIcon(this, g, offset, area.y + (area.height - icon.getIconHeight()) / 2);
   }
 
   protected void applyAdditionalHints(@NotNull Graphics2D g) {

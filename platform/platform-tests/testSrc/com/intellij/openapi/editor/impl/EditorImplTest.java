@@ -22,6 +22,10 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.openapi.editor.event.CaretAdapter;
+import com.intellij.openapi.editor.event.CaretEvent;
+import com.intellij.openapi.editor.event.SelectionEvent;
+import com.intellij.openapi.editor.event.SelectionListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -328,5 +332,32 @@ public class EditorImplTest extends AbstractEditorTest {
     Point caretPoint = myEditor.visualPositionToXY(caretPosition);
     Rectangle visibleArea = myEditor.getScrollingModel().getVisibleArea();
     assertTrue(visibleArea.contains(caretPoint));
+  }
+
+  public void testCaretAndSelectionEventsInBulkMode() throws Exception {
+    initText("abc<selection>def<caret></selection>");
+    StringBuilder output = new StringBuilder();
+    CaretAdapter caretListener = new CaretAdapter() {
+      @Override
+      public void caretPositionChanged(CaretEvent e) {
+        output.append("caret:").append(e.getNewPosition());
+      }
+    };
+    SelectionListener selectionListener = new SelectionListener() {
+      @Override
+      public void selectionChanged(SelectionEvent e) {
+        output.append("selection:").append(e.getNewRange());
+      }
+    };
+    myEditor.getCaretModel().addCaretListener(caretListener);
+    myEditor.getSelectionModel().addSelectionListener(selectionListener);
+    ((DocumentEx)myEditor.getDocument()).setInBulkUpdate(true);
+    WriteCommandAction.runWriteCommandAction(ourProject, () -> {myEditor.getDocument().insertString(0, " ");});
+    assertEquals("", output.toString());
+    ((DocumentEx)myEditor.getDocument()).setInBulkUpdate(false);
+    myEditor.getSelectionModel().removeSelectionListener(selectionListener);
+    myEditor.getCaretModel().removeCaretListener(caretListener);
+    assertEquals("caret:LogicalPosition: (0, 7)selection:(4,7)", output.toString());
+    checkResultByText(" abc<selection>def<caret></selection>");
   }
 }

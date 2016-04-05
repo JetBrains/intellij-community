@@ -37,6 +37,11 @@ public class FieldAccessedNotGuardedInspectionTest extends LightCodeInsightFixtu
     doTest();
   }
 
+  public void testFieldAccessNotGuarded() {
+    myFixture.addClass("package javax.annotation.concurrent;\n" + getGuardedByAnnotationText());
+    doTest();
+  }
+
   private void doTest() {
     myFixture.testHighlighting(true, false, false, getTestName(true) + ".java");
   }

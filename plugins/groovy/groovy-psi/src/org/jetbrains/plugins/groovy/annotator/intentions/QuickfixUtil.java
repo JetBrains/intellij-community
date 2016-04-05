@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,6 +54,14 @@ public class QuickfixUtil {
     if (type == null && compileStatic) {
       return GroovyPsiManager.getInstance(refExpr.getProject()).findClassWithCache(CommonClassNames.JAVA_LANG_OBJECT, refExpr.getResolveScope());
     }
+
+    if (ResolveUtil.resolvesToClass(refExpr.getQualifierExpression())) {
+      PsiType classType = ResolveUtil.unwrapClassType(type);
+      if (classType != null) {
+        type = classType;
+      }
+    }
+
     if (!(type instanceof PsiClassType)) return null;
     return ((PsiClassType)type).resolve();
   }

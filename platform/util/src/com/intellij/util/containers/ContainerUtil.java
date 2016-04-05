@@ -1536,7 +1536,7 @@ public class ContainerUtil extends ContainerUtilRt {
    */
   @NotNull
   @Contract(pure=true)
-  public static <T> Collection<T> intersection(@NotNull Collection<? extends T> collection1, @NotNull Collection<? extends T> collection2) {
+  public static <T> List<T> intersection(@NotNull Collection<? extends T> collection1, @NotNull Collection<? extends T> collection2) {
     List<T> result = new ArrayList<T>();
     for (T t : collection1) {
       if (collection2.contains(t)) {
@@ -2609,6 +2609,12 @@ public class ContainerUtil extends ContainerUtilRt {
   @Contract(pure=true)
   public static <T> ConcurrentList<T> createConcurrentList() {
     return new LockFreeCopyOnWriteArrayList<T>();
+  }
+
+  @NotNull
+  @Contract(pure=true)
+  public static <T> ConcurrentList<T> createConcurrentList(@NotNull Collection <? extends T> collection) {
+    return new LockFreeCopyOnWriteArrayList<T>(collection);
   }
 
   public static <T> void addIfNotNull(@Nullable T element, @NotNull Collection<T> result) {

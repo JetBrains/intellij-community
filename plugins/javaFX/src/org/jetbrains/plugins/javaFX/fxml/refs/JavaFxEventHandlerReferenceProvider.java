@@ -17,7 +17,6 @@ package org.jetbrains.plugins.javaFX.fxml.refs;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
@@ -26,7 +25,6 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ProcessingContext;
-import com.intellij.xml.XmlElementDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
@@ -47,14 +45,13 @@ class JavaFxEventHandlerReferenceProvider extends JavaFxControllerBasedReference
     final String attValueString = xmlAttributeValue.getValue();
     LOG.assertTrue(attValueString.startsWith("#"));
 
-    final XmlAttribute attribute = (XmlAttribute)xmlAttributeValue.getContext();
-    if (attribute == null) return PsiReference.EMPTY_ARRAY;
-    if (!JavaFxPsiUtil.checkIfAttributeHandler(attribute)) return PsiReference.EMPTY_ARRAY;
+    final XmlAttribute attribute = (XmlAttribute)xmlAttributeValue.getParent();
+    if (attribute == null || !JavaFxPsiUtil.isEventHandlerProperty(attribute)) return PsiReference.EMPTY_ARRAY;
     final String eventHandlerName = attValueString.substring(1);
     final PsiMethod[] methods = controllerClass.findMethodsByName(eventHandlerName, true);
 
     final PsiReference[] references = Arrays.stream(methods)
-      .filter(JavaFxEventHandlerReference::isHandlerMethod)
+      .filter(JavaFxEventHandlerReference::isHandlerMethodSignature)
       .map(handlerMethod -> new JavaFxEventHandlerReference(xmlAttributeValue, handlerMethod, controllerClass))
       .toArray(PsiReference.ARRAY_FACTORY::create);
 

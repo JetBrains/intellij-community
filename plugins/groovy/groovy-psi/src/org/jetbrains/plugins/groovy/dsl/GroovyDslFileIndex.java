@@ -205,7 +205,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     for (GroovyDslScript script : getDslScripts(project)) {
       final MultiMap staticInfo = script.getStaticInfo();
       //noinspection unchecked
-      final Collection infos = staticInfo != null ? staticInfo.get("scriptSuperClass") : Collections.emptyList();
+      final Collection infos = staticInfo.get("scriptSuperClass");
 
       for (Object info : infos) {
         if (info instanceof Map) {
@@ -395,7 +395,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
         // because service init requires a read action
         // and there could be a deadlock with a write action waiting already on EDT
         // if current thread is inside a non-cancellable read action
-        GroovyDslExecutor.getIdeaVersion();
+        GdslScriptBase.getIdeaVersion();
         DslActivationStatus.getInstance();
 
         int count = 0;
@@ -510,7 +510,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     }
 
     try {
-      return new GroovyDslExecutor(text, vfile.getName());
+      return GroovyDslExecutor.createAndRunExecutor(text, vfile.getName());
     }
     catch (final Throwable e) {
       if (project.isDisposed()) {

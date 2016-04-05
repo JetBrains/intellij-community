@@ -21,6 +21,7 @@ package com.intellij.util.io.storage;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.EventDispatcher;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -30,6 +31,7 @@ import java.util.EventListener;
 import java.util.Set;
 
 public class HeavyProcessLatch {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.storage.HeavyProcessLatch");
   public static final HeavyProcessLatch INSTANCE = new HeavyProcessLatch();
 
   private final Set<String> myHeavyProcesses = new THashSet<String>();
@@ -101,6 +103,8 @@ public class HeavyProcessLatch {
    * @see #stopThreadPrioritizing()
    */
   public void prioritizeUiActivity() {
+    LOG.assertTrue(SwingUtilities.isEventDispatchThread());
+
     // don't wait forever in case someone forgot to stop prioritizing before waiting for other threads to complete
     // wait just for 12 seconds; this will be noticeable (and we'll get 2 thread dumps) but not fatal
     myPrioritizingDeadLine = System.currentTimeMillis() + 12 * 1000;
@@ -130,8 +134,12 @@ public class HeavyProcessLatch {
    * @return whether there is a prioritized thread, but not the current one
    */
   public boolean isInsideLowPriorityThread() {
-    Thread thread = myUiActivityThread;
-    if (thread != null && thread != Thread.currentThread()) {
+    Thread uiThread = myUiActivityThread;
+    if (uiThread != null && uiThread != Thread.currentThread()) {
+      Thread.State state = uiThread.getState();
+      if (state == Thread.State.WAITING || state == Thread.State.TIMED_WAITING || state == Thread.State.BLOCKED) {
+        return false;
+      }
       if (System.currentTimeMillis() > myPrioritizingDeadLine) {
         stopThreadPrioritizing();
         return false;

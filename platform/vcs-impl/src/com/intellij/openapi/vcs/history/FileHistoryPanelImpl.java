@@ -107,7 +107,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
 
   private final AbstractVcs myVcs;
   private final VcsHistoryProvider myProvider;
-  private final AnnotationProvider myAnnotationProvider;
   private VcsHistorySession myHistorySession;
   @NotNull private final FilePath myFilePath;
   @Nullable private final VcsRevisionNumber myStartingRevision;
@@ -355,7 +354,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     myIsStaticAndEmbedded = false;
     myVcs = vcs;
     myProvider = provider;
-    myAnnotationProvider = myVcs.getCachingAnnotationProvider();
     myRefresherI = refresherI;
     myHistorySession = session;
     myFilePath = filePath;

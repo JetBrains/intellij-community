@@ -249,6 +249,10 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
 
   @Override
   public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
+    if (parameters.getPosition() instanceof PsiComment) {
+      return;
+    }
+
     super.fillCompletionVariants(parameters, JavaCompletionSorting.addJavaSorting(parameters, result));
   }
 

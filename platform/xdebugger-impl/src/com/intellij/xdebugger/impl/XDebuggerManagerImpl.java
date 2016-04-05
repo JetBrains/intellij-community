@@ -77,13 +77,13 @@ public class XDebuggerManagerImpl extends XDebuggerManager
   private final XDebuggerWatchesManager myWatchesManager;
   private final Map<ProcessHandler, XDebugSessionImpl> mySessions;
   private final ExecutionPointHighlighter myExecutionPointHighlighter;
-  private final AtomicReference<XDebugSessionImpl> myActiveSession = new AtomicReference<XDebugSessionImpl>();
+  private final AtomicReference<XDebugSessionImpl> myActiveSession = new AtomicReference<>();
 
   public XDebuggerManagerImpl(final Project project, final StartupManager startupManager, MessageBus messageBus) {
     myProject = project;
     myBreakpointManager = new XBreakpointManagerImpl(project, this, startupManager);
     myWatchesManager = new XDebuggerWatchesManager();
-    mySessions = new LinkedHashMap<ProcessHandler, XDebugSessionImpl>();
+    mySessions = new LinkedHashMap<>();
     myExecutionPointHighlighter = new ExecutionPointHighlighter(project);
 
     MessageBusConnection messageBusConnection = messageBus.connect();
@@ -305,7 +305,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager
       final XDebugProcess process = session.getDebugProcess();
       if (processClass.isInstance(process)) {
         if (list == null) {
-          list = new SmartList<T>();
+          list = new SmartList<>();
         }
         list.add(processClass.cast(process));
       }
