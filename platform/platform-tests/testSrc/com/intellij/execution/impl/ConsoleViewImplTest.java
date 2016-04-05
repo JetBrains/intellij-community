@@ -155,7 +155,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
   }
 
   @NotNull
-  private static ConsoleViewImpl createConsole() {
+  static ConsoleViewImpl createConsole() {
     Project project = getProject();
     ConsoleViewImpl console = new ConsoleViewImpl(project,
                                                   GlobalSearchScope.allScope(project),
@@ -168,7 +168,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
     return console;
   }
 
-  private static class MyProcessHandler extends ProcessHandler {
+  static class MyProcessHandler extends ProcessHandler {
     @Override
     protected void destroyProcessImpl() {
       notifyProcessTerminated(0);
