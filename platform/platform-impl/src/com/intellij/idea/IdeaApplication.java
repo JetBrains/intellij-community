@@ -342,29 +342,16 @@ public class IdeaApplication {
         }
       }, ModalityState.NON_MODAL);
 
-      app.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          Project projectFromCommandLine = null;
-          if (myPerformProjectLoad) {
-            projectFromCommandLine = loadProjectFromExternalCommandLine();
-          }
+      TransactionGuard.submitTransaction(app, () -> {
+        Project projectFromCommandLine = myPerformProjectLoad ? loadProjectFromExternalCommandLine() : null;
+        app.getMessageBus().syncPublisher(AppLifecycleListener.TOPIC).appStarting(projectFromCommandLine);
 
-          final MessageBus bus = ApplicationManager.getApplication().getMessageBus();
-          bus.syncPublisher(AppLifecycleListener.TOPIC).appStarting(projectFromCommandLine);
+        //noinspection SSBasedInspection
+        SwingUtilities.invokeLater(PluginManager::reportPluginError);
 
-          //noinspection SSBasedInspection
-          SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              PluginManager.reportPluginError();
-            }
-          });
-
-          //safe for headless and unit test modes
-          UsageTrigger.trigger(app.getName() + "app.started");
-        }
-      }, ModalityState.NON_MODAL);
+        //safe for headless and unit test modes
+        UsageTrigger.trigger(app.getName() + "app.started");
+      });
     }
   }
 
