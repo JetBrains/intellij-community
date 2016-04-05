@@ -134,12 +134,11 @@ if [ -n "$@@product_uc@@_PROPERTIES" ]; then
   IDE_PROPERTIES_PROPERTY="-Didea.properties.file=$@@product_uc@@_PROPERTIES"
 fi
 
-VM_OPTIONS=""
+declare -a VM_OPTIONS
 VM_OPTIONS_FILES_USED=""
 for vm_opts_file in "$IDE_BIN_HOME/@@vm_options@@$BITS.vmoptions" "$OS_SPECIFIC_BIN_DIR/@@vm_options@@$BITS.vmoptions" "$HOME/.@@system_selector@@/@@vm_options@@$BITS.vmoptions" "$@@product_uc@@_VM_OPTIONS"; do
   if [ -r "$vm_opts_file" ]; then
-    VM_OPTIONS_DATA=`"$CAT" "$vm_opts_file" | "$GREP" -v "^#.*" | "$TR" '\n' ' '`
-    VM_OPTIONS="$VM_OPTIONS $VM_OPTIONS_DATA"
+    VM_OPTIONS=("${VM_OPTIONS[@]}" `"$CAT" "$vm_opts_file" | "$GREP" -v "^#.*" `)
     if [ -n "$VM_OPTIONS_FILES_USED" ]; then
       VM_OPTIONS_FILES_USED="$VM_OPTIONS_FILES_USED,"
     fi
@@ -174,13 +173,13 @@ LD_LIBRARY_PATH="$IDE_BIN_HOME:$LD_LIBRARY_PATH" "$JAVA_BIN" \
   $AGENT \
   "-Xbootclasspath/a:$IDE_HOME/lib/boot.jar" \
   -classpath "$CLASSPATH" \
-  `echo "$VM_OPTIONS" | "$TR" '\n' '\t'` \
+  "${VM_OPTIONS[@]}" \
   "-Djb.vmOptionsFile=$VM_OPTIONS_FILES_USED" \
   "-XX:ErrorFile=$HOME/java_error_in_@@product_uc@@_%p.log" \
   "-XX:HeapDumpPath=$HOME/java_error_in_@@product_uc@@.hprof" \
   -Djb.restart.code=88 -Didea.paths.selector=@@system_selector@@ \
   $IDE_PROPERTIES_PROPERTY \
-  `echo "$IDE_JVM_ARGS" | "$TR" ' ' '\t'` \
+  @@ide_jvm_args@@ \
   @@main_class_name@@ \
   "$@"
 EC=$?
