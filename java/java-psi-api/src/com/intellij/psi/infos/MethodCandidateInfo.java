@@ -371,6 +371,9 @@ public class MethodCandidateInfo extends CandidateInfo{
     }
   }
 
+  /**
+   * If iterated through all candidates, should be called under {@link #ourOverloadGuard} guard so results won't be cached on the top level call
+   */
   @NotNull
   public PsiSubstitutor inferTypeArguments(@NotNull final ParameterTypeInferencePolicy policy,
                                            @NotNull final PsiExpression[] arguments,
