@@ -5,11 +5,11 @@ class Test {
     Result<String> r2 = Result.create<error descr="'create(K)' in 'Result' cannot be applied to '(Holder)'">(h)</error>;
 
     Holder dataHolder = null;
-    Result<String> r3 = new Result<>(new Holder<>(dataHolder));
-    Result<String> r4 = Result.create(new Holder<>(dataHolder));
+    Result<String> r3 = new Result<><error descr="'Result(D)' in 'Result' cannot be applied to '(Holder<E>)'">(new Holder<>(dataHolder))</error>;
+    Result<String> r4 = Result.create<error descr="'create(K)' in 'Result' cannot be applied to '(Holder<E>)'">(new Holder<>(dataHolder))</error>;
 
-    Result<String> r5 = new Result<>(Holder.create(dataHolder));
-    Result<String> r6 = Result.create(Holder.create(dataHolder));
+    Result<String> r5 = new Result<>(Holder.create<error descr="'create(Holder<M>)' in 'Holder' cannot be applied to '(Holder)'">(dataHolder)</error>);
+    Result<String> r6 = Result.create<error descr="'create(K)' in 'Result' cannot be applied to '(Holder)'">(Holder.create(dataHolder))</error>;
 
   }
 }
