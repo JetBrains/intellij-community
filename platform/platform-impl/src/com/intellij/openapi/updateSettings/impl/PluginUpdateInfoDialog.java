@@ -38,7 +38,7 @@ class PluginUpdateInfoDialog extends AbstractUpdateDialog {
   private final Collection<PluginDownloader> myUploadedPlugins;
   private final boolean myPlatformUpdate;
 
-  public PluginUpdateInfoDialog(Collection<PluginDownloader> uploadedPlugins, boolean enableLink) {
+  PluginUpdateInfoDialog(Collection<PluginDownloader> uploadedPlugins, boolean enableLink) {
     super(enableLink);
     myUploadedPlugins = uploadedPlugins;
     myPlatformUpdate = false;
