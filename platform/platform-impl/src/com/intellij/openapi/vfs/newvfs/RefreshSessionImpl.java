@@ -57,16 +57,14 @@ public class RefreshSessionImpl extends RefreshSession {
   private volatile boolean iHaveEventsToFire;
   private volatile RefreshWorker myWorker = null;
   private volatile boolean myCancelled = false;
-
-  public RefreshSessionImpl(boolean async, boolean recursive, @Nullable Runnable finishRunnable) {
-    this(async, recursive, finishRunnable, ModalityState.NON_MODAL);
-  }
+  private final TransactionId myTransaction;
 
   public RefreshSessionImpl(boolean async, boolean recursive, @Nullable Runnable finishRunnable, @NotNull ModalityState modalityState) {
     myIsAsync = async;
     myIsRecursive = recursive;
     myFinishRunnable = finishRunnable;
     myModalityState = modalityState;
+    myTransaction = ((TransactionGuardImpl)TransactionGuard.getInstance()).getModalityTransaction(modalityState);
     LOG.assertTrue(modalityState == ModalityState.NON_MODAL || modalityState != ModalityState.any(), "Refresh session should have a specific modality");
 
     if (modalityState == ModalityState.NON_MODAL) {
@@ -176,7 +174,7 @@ public class RefreshSessionImpl extends RefreshSession {
     }
   }
 
-  void fireEvents(boolean async) {
+  void fireEvents() {
     if (!iHaveEventsToFire || ApplicationManager.getApplication().isDisposed()) {
       mySemaphore.up();
       return;
@@ -184,7 +182,6 @@ public class RefreshSessionImpl extends RefreshSession {
 
     //noinspection unused
     try (AccessToken dumb  = myStartTrace == null ? null : DumbServiceImpl.forceDumbModeStartTrace(myStartTrace);
-         AccessToken guard = async ? TransactionGuard.getInstance().startSynchronousTransaction(TransactionKind.ANY_CHANGE) : null;
          AccessToken write = WriteAction.start()) {
       if (myDumbModePermission != null) {
         DumbService.allowStartingDumbModeInside(myDumbModePermission, this::fireEventsInWriteAction);
@@ -231,8 +228,13 @@ public class RefreshSessionImpl extends RefreshSession {
   }
 
   @NotNull
-  public ModalityState getModalityState() {
+  ModalityState getModalityState() {
     return myModalityState;
+  }
+
+  @Nullable
+  TransactionId getTransaction() {
+    return myTransaction;
   }
 
   @Override

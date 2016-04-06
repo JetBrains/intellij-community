@@ -472,7 +472,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
             else {
               s1.down();
               s2.down();
-              TransactionGuard.getInstance().submitMergeableTransaction(TransactionKind.TEXT_EDITING, new Runnable() {
+              TransactionGuard.submitTransaction(myProject, new Runnable() {
                 @Override
                 public void run() {
                   commitAllDocuments();
