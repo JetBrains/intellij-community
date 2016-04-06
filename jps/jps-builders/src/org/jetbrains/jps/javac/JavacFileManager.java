@@ -25,6 +25,7 @@ import javax.tools.*;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -335,5 +336,22 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
 
   public Context getContext() {
     return myContext;
+  }
+
+  private static Map<Method, Boolean> ourImplStatus = Collections.synchronizedMap(new HashMap<Method, Boolean>());
+
+  JavaFileManager getApiCallHandler(Method method) {
+    Boolean isImplemented = ourImplStatus.get(method);
+    if (isImplemented == null) {
+      try {
+        JavacFileManager.class.getDeclaredMethod(method.getName(), method.getParameterTypes());
+        isImplemented = Boolean.TRUE;
+      }
+      catch (NoSuchMethodException e) {
+        isImplemented = Boolean.FALSE;
+      }
+      ourImplStatus.put(method, isImplemented);
+    }
+    return isImplemented? this : getStdManager();
   }
 }
