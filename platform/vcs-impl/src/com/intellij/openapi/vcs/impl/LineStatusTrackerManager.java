@@ -45,7 +45,6 @@ import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.ex.LineStatusTracker;
@@ -64,6 +63,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Map;
 
 public class LineStatusTrackerManager implements ProjectComponent, LineStatusTrackerManagerI {
@@ -80,7 +80,7 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
   @NotNull private final FileEditorManager myFileEditorManager;
   @NotNull private final Disposable myDisposable;
 
-  @NotNull private final Map<Document, LineStatusTracker> myLineStatusTrackers;
+  @NotNull private final Map<Document, TrackerData> myLineStatusTrackers;
 
   @NotNull private final QueueProcessorRemovePartner<Document, BaseRevisionLoader> myPartner;
   private long myLoadCounter;
@@ -102,7 +102,7 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
     myApplication = application;
     myFileEditorManager = fileEditorManager;
 
-    myLineStatusTrackers = new HashMap<Document, LineStatusTracker>();
+    myLineStatusTrackers = new HashMap<>();
     myPartner = new QueueProcessorRemovePartner<Document, BaseRevisionLoader>(myProject, new Consumer<BaseRevisionLoader>() {
       @Override
       public void consume(BaseRevisionLoader baseRevisionLoader) {
@@ -129,8 +129,8 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
       public void settingsUpdated() {
         synchronized (myLock) {
           LineStatusTracker.Mode mode = getMode();
-          for (LineStatusTracker tracker : myLineStatusTrackers.values()) {
-            tracker.setMode(mode);
+          for (TrackerData data : myLineStatusTrackers.values()) {
+            data.tracker.setMode(mode);
           }
         }
       }
@@ -140,8 +140,8 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
       @Override
       public void dispose() {
         synchronized (myLock) {
-          for (final LineStatusTracker tracker : myLineStatusTrackers.values()) {
-            tracker.release();
+          for (final TrackerData data : myLineStatusTrackers.values()) {
+            data.tracker.release();
           }
 
           myLineStatusTrackers.clear();
@@ -201,11 +201,12 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
   }
 
   @Override
+  @Nullable
   public LineStatusTracker getLineStatusTracker(final Document document) {
     synchronized (myLock) {
       if (isDisabled()) return null;
-
-      return myLineStatusTrackers.get(document);
+      TrackerData data = myLineStatusTrackers.get(document);
+      return data != null ? data.tracker : null;
     }
   }
 
@@ -214,7 +215,8 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
       if (isDisabled()) return;
       log("resetTrackers", null);
 
-      for (LineStatusTracker tracker : ContainerUtil.newArrayList(myLineStatusTrackers.values())) {
+      List<LineStatusTracker> trackers = ContainerUtil.map(myLineStatusTrackers.values(), (data) -> data.tracker);
+      for (LineStatusTracker tracker : trackers) {
         resetTracker(tracker.getDocument(), tracker.getVirtualFile(), tracker);
       }
 
@@ -239,7 +241,7 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
     synchronized (myLock) {
       if (isDisabled()) return;
 
-      final LineStatusTracker tracker = myLineStatusTrackers.get(document);
+      final LineStatusTracker tracker = getLineStatusTracker(document);
       if (insertOnly && tracker != null) return;
       resetTracker(document, virtualFile, tracker);
     }
@@ -295,9 +297,9 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
       if (isDisabled()) return;
 
       myPartner.remove(document);
-      final LineStatusTracker tracker = myLineStatusTrackers.remove(document);
-      if (tracker != null) {
-        tracker.release();
+      final TrackerData data = myLineStatusTrackers.remove(document);
+      if (data != null) {
+        data.tracker.release();
       }
     }
   }
@@ -310,7 +312,7 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
       assert !myPartner.containsKey(document);
 
       final LineStatusTracker tracker = LineStatusTracker.createOn(virtualFile, document, myProject, getMode());
-      myLineStatusTrackers.put(document, tracker);
+      myLineStatusTrackers.put(document, new TrackerData(tracker));
 
       startAlarm(document, virtualFile);
     }
@@ -348,8 +350,8 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
         return;
       }
 
-      final Pair<VcsRevisionNumber, String> baseRevision = myStatusProvider.getBaseRevision(myVirtualFile);
-      if (baseRevision == null) {
+      VcsBaseContentProvider.BaseContent baseContent = myStatusProvider.getBaseRevision(myVirtualFile);
+      if (baseContent == null) {
         log("BaseRevisionLoader failed: null returned for base revision", myVirtualFile);
         reportTrackerBaseLoadFailed();
         return;
@@ -357,19 +359,47 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
 
       // loads are sequential (in single threaded QueueProcessor);
       // so myLoadCounter can't take less value for greater base revision -> the only thing we want from it
-      final LineStatusTracker.RevisionPack revisionPack = new LineStatusTracker.RevisionPack(myLoadCounter, baseRevision.first);
+      final VcsRevisionNumber revisionNumber = baseContent.getRevisionNumber();
+      final long loadCounter = myLoadCounter;
       myLoadCounter++;
 
-      final String converted = StringUtil.convertLineSeparators(baseRevision.second);
+      synchronized (myLock) {
+        final TrackerData data = myLineStatusTrackers.get(myDocument);
+        if (data == null) {
+          log("BaseRevisionLoader canceled: tracker already released", myVirtualFile);
+          return;
+        }
+        if (!data.shouldBeUpdated(revisionNumber, loadCounter)) {
+          log("BaseRevisionLoader canceled: no need to update", myVirtualFile);
+          return;
+        }
+      }
+
+      String lastUpToDateContent = baseContent.loadContent();
+      if (lastUpToDateContent == null) {
+        log("BaseRevisionLoader failed: can't load up-to-date content", myVirtualFile);
+        reportTrackerBaseLoadFailed();
+        return;
+      }
+
+      final String converted = StringUtil.convertLineSeparators(lastUpToDateContent);
       final Runnable runnable = new Runnable() {
         @Override
         public void run() {
           synchronized (myLock) {
-            log("BaseRevisionLoader: initializing tracker", myVirtualFile);
-            final LineStatusTracker tracker = myLineStatusTrackers.get(myDocument);
-            if (tracker != null) {
-              tracker.setBaseRevision(converted, revisionPack);
+            final TrackerData data = myLineStatusTrackers.get(myDocument);
+            if (data == null) {
+              log("BaseRevisionLoader initializing: tracker already released", myVirtualFile);
+              return;
             }
+            if (!data.shouldBeUpdated(revisionNumber, loadCounter)) {
+              log("BaseRevisionLoader initializing: canceled", myVirtualFile);
+              return;
+            }
+
+            log("BaseRevisionLoader initializing: success", myVirtualFile);
+            myLineStatusTrackers.put(myDocument, new TrackerData(data.tracker, revisionNumber, loadCounter));
+            data.tracker.setBaseRevision(converted);
           }
         }
       };
@@ -444,6 +474,39 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
     @Override
     public void globalSchemeChange(EditorColorsScheme scheme) {
       resetTrackers();
+    }
+  }
+
+  private static class TrackerData {
+    @NotNull public final LineStatusTracker tracker;
+    @Nullable private final ContentInfo currentContent;
+
+    public TrackerData(@NotNull LineStatusTracker tracker) {
+      this.tracker = tracker;
+      this.currentContent = null;
+    }
+
+    public TrackerData(@NotNull LineStatusTracker tracker,
+                       @NotNull VcsRevisionNumber revision,
+                       long loadCounter) {
+      this.tracker = tracker;
+      this.currentContent = new ContentInfo(revision, loadCounter);
+    }
+
+    public boolean shouldBeUpdated(@NotNull VcsRevisionNumber revision, long loadCounter) {
+      if (currentContent == null) return true;
+      if (currentContent.revision.equals(revision) && !currentContent.revision.equals(VcsRevisionNumber.NULL)) return false;
+      return currentContent.loadCounter < loadCounter;
+    }
+  }
+
+  private static class ContentInfo {
+    @NotNull public final VcsRevisionNumber revision;
+    public final long loadCounter;
+
+    public ContentInfo(@NotNull VcsRevisionNumber revision, long loadCounter) {
+      this.revision = revision;
+      this.loadCounter = loadCounter;
     }
   }
 

@@ -87,8 +87,6 @@ public class LineStatusTracker {
   @NotNull private final MyDocumentListener myDocumentListener;
   @NotNull private final ApplicationAdapter myApplicationListener;
 
-  @Nullable private RevisionPack myBaseRevisionNumber;
-
   private boolean myInitialized;
   private boolean myDuringRollback;
   private boolean myBulkUpdate;
@@ -134,15 +132,12 @@ public class LineStatusTracker {
   }
 
   @CalledInAwt
-  public void setBaseRevision(@NotNull final String vcsContent, @NotNull RevisionPack baseRevisionNumber) {
+  public void setBaseRevision(@NotNull final String vcsContent) {
     myApplication.assertIsDispatchThread();
     if (myReleased) return;
 
     synchronized (LOCK) {
       try {
-        if (myBaseRevisionNumber != null && myBaseRevisionNumber.contains(baseRevisionNumber)) return;
-        myBaseRevisionNumber = baseRevisionNumber;
-
         myVcsDocument.setReadOnly(false);
         myVcsDocument.setText(vcsContent);
         myVcsDocument.setReadOnly(true);
@@ -938,21 +933,6 @@ public class LineStatusTracker {
         result += length2 - length1;
       }
       return result;
-    }
-  }
-
-  public static class RevisionPack {
-    private final long myNumber;
-    private final VcsRevisionNumber myRevision;
-
-    public RevisionPack(long number, VcsRevisionNumber revision) {
-      myNumber = number;
-      myRevision = revision;
-    }
-
-    public boolean contains(final RevisionPack previous) {
-      if (myRevision.equals(previous.myRevision) && !myRevision.equals(VcsRevisionNumber.NULL)) return true;
-      return myNumber >= previous.myNumber;
     }
   }
 
