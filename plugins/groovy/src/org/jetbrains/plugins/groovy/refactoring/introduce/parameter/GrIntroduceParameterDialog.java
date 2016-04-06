@@ -15,9 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.introduce.parameter;
 
-import com.intellij.openapi.application.AcceptNestedTransactions;
 import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.TransactionKind;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -78,7 +76,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 
-@AcceptNestedTransactions(TransactionKind.Common.TEXT_EDITING)
 public class GrIntroduceParameterDialog extends DialogWrapper {
   private GrTypeComboBox myTypeComboBox;
   private NameSuggestionsField myNameSuggestionsField;

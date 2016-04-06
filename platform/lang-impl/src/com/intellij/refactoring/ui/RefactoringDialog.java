@@ -195,9 +195,7 @@ public abstract class RefactoringDialog extends DialogWrapper {
   @Override
   public void show() {
     DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_MODAL, () -> {
-      try (AccessToken ignored = TransactionGuard.getInstance().acceptNestedTransactions(TransactionKind.TEXT_EDITING)) {
-        RefactoringDialog.super.show();
-      }
+      RefactoringDialog.super.show();
     });
   }
 

@@ -76,7 +76,10 @@ def patch_args(args):
             try:
                 indC = args.index('-c')
             except ValueError:
-                indC = -1
+                try:
+                    indC = args.index('"-c"')
+                except ValueError:
+                    indC = -1
 
             if indC != -1:
                 host, port = _get_host_port()
@@ -118,12 +121,16 @@ def patch_args(args):
         #  '--vm_type', 'python', '--client', '127.0.0.1', '--port', '56352', '--file', 'x:\\snippet1.py']
         original = sys.original_argv[:]
         while i < len(args):
-            if args[i] == '-m':
+            if sys.platform == "win32" and args[i].endswith('"'):
+                arg = args[i].strip('"')
+            else:
+                arg = args[i]
+            if arg == '-m':
                 # Always insert at pos == 1 (i.e.: pydevd "--module" --multiprocess ...)
                 original.insert(1, '--module')
             else:
-                if args[i].startswith('-'):
-                    new_args.append(args[i])
+                if arg.startswith('-'):
+                    new_args.append(arg)
                 else:
                     break
             i += 1

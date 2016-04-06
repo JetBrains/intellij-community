@@ -17,8 +17,11 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.lookup.Lookup;
+import com.intellij.idea.Bombed;
 import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Calendar;
 
 public class SmartType18CompletionTest extends LightFixtureCompletionTestCase {
   @Override
@@ -183,8 +186,13 @@ public void testConvertToObjectStream() {
     checkResultByFile("/" + getTestName(false) + "-out.java");
   }
 
+  @Bombed(user = "anna/peter", month = Calendar.MAY, day = 4)
   public void testOnlyCompatibleTypes() {
     configureByTestName();
     assertOrderedEquals(myFixture.getLookupElementStrings(), "get2");
   }
+
+  public void testSuggestMapInheritors() { doTest(); }
+
+  public void testUnboundTypeArgs() { doTest(); }
 }

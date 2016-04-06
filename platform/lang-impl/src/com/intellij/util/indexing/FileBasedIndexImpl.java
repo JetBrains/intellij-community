@@ -233,6 +233,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       }
 
       private void rebuildAllIndices() {
+        waitUntilIndicesAreInitialized();
         IndexingStamp.flushCaches();
         for (ID<?, ?> indexId : getState().getIndexIDs()) {
           try {
@@ -301,11 +302,15 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     myStateFuture = IndexInfrastructure.submitGenesisTask(new FileIndexDataInitialization(extensions));
     LOG.info("Index scheduled:" + (System.nanoTime() - started) / 1000000);
     if (!IndexInfrastructure.ourDoAsyncIndicesInitialization) {
-      try {
-        myStateFuture.get();
-      } catch (Throwable t) {
-        LOG.error(t);
-      }
+      waitUntilIndicesAreInitialized();
+    }
+  }
+
+  private void waitUntilIndicesAreInitialized() {
+    try {
+      myStateFuture.get();
+    } catch (Throwable t) {
+      LOG.error(t);
     }
   }
 
@@ -488,6 +493,8 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     if (!myShutdownPerformed.compareAndSet(false, true)) {
       return; // already shut down
     }
+
+    waitUntilIndicesAreInitialized();
     try {
       if (myFlushingFuture != null) {
         myFlushingFuture.cancel(false);
@@ -1454,6 +1461,12 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   }
 
   private InputFilter getInputFilter(@NotNull ID<?, ?> indexId) {
+    if (!myInitialized) {
+      // 1. early vfs event that needs invalidation
+      // 2. pushers that do synchronous indexing for contentless indices
+      waitUntilIndicesAreInitialized();
+    }
+
     return getState().getInputFilter(indexId);
   }
 

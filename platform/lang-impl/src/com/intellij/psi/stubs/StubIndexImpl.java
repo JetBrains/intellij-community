@@ -81,7 +81,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
   private final StubProcessingHelper myStubProcessingHelper;
   private final IndexAccessValidator myAccessValidator = new IndexAccessValidator();
   private volatile Future<AsyncState> myStateFuture;
-  private AsyncState myState;
+  private volatile AsyncState myState;
   private volatile boolean myInitialized;
 
   private StubIndexState myPreviouslyRegistered;

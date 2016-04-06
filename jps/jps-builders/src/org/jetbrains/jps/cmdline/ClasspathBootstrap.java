@@ -190,6 +190,13 @@ public class ClasspathBootstrap {
     if (optimizedFileManagerClass != null) {
       cp.add(getResourceFile(optimizedFileManagerClass));  // optimizedFileManager, if applicable
     }
+    else {
+      // last resort
+      final File f = new File(PathManager.getLibPath(), "optimizedFileManager.jar");
+      if (f.exists()) {
+        cp.add(f);
+      }
+    }
 
     try {
       final Class<?> cmdLineWrapper = Class.forName("com.intellij.rt.execution.CommandLineWrapper");

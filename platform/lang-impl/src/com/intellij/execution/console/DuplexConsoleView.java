@@ -33,6 +33,7 @@ import com.intellij.openapi.editor.actions.ScrollToTheEndToolbarAction;
 import com.intellij.openapi.editor.actions.ToggleUseSoftWrapsToolbarAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
@@ -41,8 +42,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> extends JPanel implements ConsoleView, 
@@ -217,7 +218,8 @@ public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> ext
   @Override
   public AnAction[] createConsoleActions() {
     List<AnAction> actions = Lists.newArrayList();
-    actions.addAll(mergeConsoleActions(myPrimaryConsoleView.createConsoleActions(), mySecondaryConsoleView.createConsoleActions()));
+    actions.addAll(mergeConsoleActions(Arrays.asList(myPrimaryConsoleView.createConsoleActions()), 
+                                       Arrays.asList(mySecondaryConsoleView.createConsoleActions())));
     actions.add(mySwitchConsoleAction);
 
     LanguageConsoleView langConsole = ContainerUtil.findInstance(Arrays.asList(myPrimaryConsoleView, mySecondaryConsoleView), LanguageConsoleView.class);
@@ -279,30 +281,24 @@ public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> ext
   }
   
   @NotNull
-  private List<AnAction> mergeConsoleActions(@NotNull AnAction[] actions1, @NotNull AnAction[] actions2) {
-    List<AnAction> result = new ArrayList<>(actions1.length);
-    for (int i = 0; i < actions1.length && i < actions2.length; ++i) {
-      final AnAction action1 = actions1[i];
-      final AnAction action2 = actions2[i];
-      if (action2.getClass() != action1.getClass()) {
-        result.add(action1);
-        continue;
+  private List<AnAction> mergeConsoleActions(@NotNull List<AnAction> actions1, @NotNull Collection<AnAction> actions2) {
+    return ContainerUtil.map(actions1, action1 -> {
+      final AnAction action2 = ContainerUtil.find(actions2, action -> action1.getClass() == action.getClass()
+                                                                      && StringUtil.equals(action1.getTemplatePresentation().getText(),
+                                                                                           action.getTemplatePresentation().getText()));
+      if (action2 instanceof ToggleUseSoftWrapsToolbarAction) {
+        return new MergedWrapTextAction(((ToggleUseSoftWrapsToolbarAction)action1), (ToggleUseSoftWrapsToolbarAction)action2);
       }
-      
-      if (action1 instanceof ToggleUseSoftWrapsToolbarAction) {
-        result.add(new MergedWrapTextAction(((ToggleUseSoftWrapsToolbarAction)action1), (ToggleUseSoftWrapsToolbarAction)action2));
+      else if (action2 instanceof ScrollToTheEndToolbarAction) {
+        return new MergedToggleAction(((ToggleAction)action1), (ToggleAction)action2);
       }
-      else if (action1 instanceof ScrollToTheEndToolbarAction) {
-        result.add(new MergedToggleAction(((ToggleAction)action1), (ToggleAction)action2));
-      }
-      else if (action1 instanceof ConsoleViewImpl.ClearAllAction) {
-        result.add(new MergedAction(action1, action2));
+      else if (action2 instanceof ConsoleViewImpl.ClearAllAction) {
+        return new MergedAction(action1, action2);
       }
       else {
-        result.add(action1);
+        return action1;
       }
-    }
-    return result;
+    });
   }
 
   private class MergedWrapTextAction extends MergedToggleAction {

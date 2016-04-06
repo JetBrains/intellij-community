@@ -32,9 +32,12 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PythonFileType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
+
+import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
  * Contains various methods for manipulation on indentation found in arbitrary text and individual lines: 
@@ -90,7 +93,7 @@ public class PyIndentUtil {
     if (anchor instanceof PsiFile) {
       return "";
     }
-    final PyStatementList statementList = PsiTreeUtil.getParentOfType(anchor, PyStatementList.class, false);
+    final PyStatementList statementList = getAnchorStatementList(anchor);
     if (statementList == null) {
       return "";
     }
@@ -101,23 +104,36 @@ public class PyIndentUtil {
       return whitespace.substring(i + 1);
     }
     else {
-      return getExpectedElementIndent(anchor);
+      return getExpectedBlockIndent(statementList);
     }
   }
 
   @NotNull
-  public static String getExpectedElementIndent(@NotNull PsiElement anchor) {
+  private static String getExpectedBlockIndent(@NotNull PyStatementList anchor) {
     final String indentStep = getIndentFromSettings(anchor.getProject());
     final PyStatementList parentBlock = PsiTreeUtil.getParentOfType(anchor, PyStatementList.class, true);
     if (parentBlock != null) {
       return getElementIndent(parentBlock) + indentStep;
     }
-    return anchor instanceof PyStatementList ? indentStep : "";
+    return indentStep;
   }
+
+  @Nullable
+  private static PyStatementList getAnchorStatementList(@NotNull PsiElement element) {
+    PyStatementList statementList = null;
+    // First whitespace right before the statement list (right after ":")
+    if (element instanceof PsiWhiteSpace) {
+      statementList = as(element.getNextSibling(), PyStatementList.class);
+    }
+    if (statementList == null) {
+      statementList = PsiTreeUtil.getParentOfType(element, PyStatementList.class, false);
+    }
+    return statementList;
+  } 
 
   public static int getExpectedElementIndentSize(@NotNull PsiElement anchor) {
     int depth = 0;
-    PyStatementList block = PsiTreeUtil.getParentOfType(anchor, PyStatementList.class, false);
+    PyStatementList block = getAnchorStatementList(anchor);
     while (block != null) {
       depth += 1;
       block = PsiTreeUtil.getParentOfType(block, PyStatementList.class);
@@ -154,13 +170,13 @@ public class PyIndentUtil {
 
   @NotNull
   public static String removeCommonIndent(@NotNull String s, boolean ignoreFirstLine) {
-    final List<String> trimmed = removeCommonIndent(LineTokenizer.tokenizeIntoList(s, false), ignoreFirstLine);
+    final List<String> trimmed = removeCommonIndent(LineTokenizer.tokenizeIntoList(s, false, false), ignoreFirstLine);
     return StringUtil.join(trimmed, "\n");
   }
 
   @NotNull
   public static String changeIndent(@NotNull String s, boolean ignoreFirstLine, String newIndent) {
-    final List<String> trimmed = changeIndent(LineTokenizer.tokenizeIntoList(s, false), ignoreFirstLine, newIndent);
+    final List<String> trimmed = changeIndent(LineTokenizer.tokenizeIntoList(s, false, false), ignoreFirstLine, newIndent);
     return StringUtil.join(trimmed, "\n");
   }
 

@@ -441,7 +441,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
           return null;
         }
 
-        TransactionGuard.getInstance().submitTransactionAndWait(() -> openProject(project));
+        openProject(project);
         return project;
       }
     });
