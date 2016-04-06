@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,9 +25,6 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Collections;
-import java.util.List;
 
 public class PsiAugmentProviderTest extends LightCodeInsightFixtureTestCase {
   @Override
@@ -68,15 +65,9 @@ public class PsiAugmentProviderTest extends LightCodeInsightFixtureTestCase {
     private static final String LOMBOK_VAL_FQN = "lombok.val";
     private static final String LOMBOK_VAL_SHORT_NAME = "val";
 
-    @NotNull
-    @Override
-    public <Psi extends PsiElement> List<Psi> getAugments(@NotNull PsiElement element, @NotNull Class<Psi> type) {
-      return Collections.emptyList();
-    }
-
     @Nullable
     @Override
-    protected PsiType inferType(PsiTypeElement typeElement) {
+    protected PsiType inferType(@NotNull PsiTypeElement typeElement) {
       PsiElement parent = typeElement.getParent();
       if (parent instanceof PsiLocalVariable && ((PsiLocalVariable)parent).getInitializer() != null ||
           parent instanceof PsiParameter && ((PsiParameter)parent).getDeclarationScope() instanceof PsiForeachStatement) {
