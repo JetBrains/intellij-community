@@ -80,6 +80,10 @@ public class JavaFxCompletionTest extends LightFixtureCompletionTestCase {
     doTest();
   }
 
+  public void testEnumConstantValue() throws Exception {
+    doTest("TOP_LEFT");
+  }
+
   public void testConstants() throws Exception {
     doTest("NEGATIVE_INFINITY");
   }

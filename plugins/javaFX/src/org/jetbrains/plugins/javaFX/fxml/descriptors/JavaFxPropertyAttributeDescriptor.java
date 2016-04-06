@@ -72,12 +72,12 @@ public class JavaFxPropertyAttributeDescriptor extends BasicXmlAttributeDescript
   @Nullable
   @Override
   public String[] getEnumeratedValues() {
-    final PsiClass enumClass = getEnum();
-    if (enumClass != null) {
-      final PsiField[] fields = enumClass.getAllFields();
+    final PsiClass aClass = getEnum();
+    if (aClass != null) {
+      final PsiField[] fields = aClass.getAllFields();
       final List<String> enumConstants = new ArrayList<String>();
       for (PsiField enumField : fields) {
-        if (isConstant(enumField)) {
+        if (isConstant(enumField, aClass.isEnum())) {
           enumConstants.add(enumField.getName());
         }
       }
@@ -94,8 +94,8 @@ public class JavaFxPropertyAttributeDescriptor extends BasicXmlAttributeDescript
     return null;
   }
 
-  protected boolean isConstant(PsiField enumField) {
-    return enumField instanceof PsiEnumConstant;
+  protected boolean isConstant(PsiField field, boolean inEnum) {
+    return inEnum && field instanceof PsiEnumConstant;
   }
 
   protected PsiClass getEnum() {

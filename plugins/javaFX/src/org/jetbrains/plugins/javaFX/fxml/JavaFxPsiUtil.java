@@ -438,8 +438,7 @@ public class JavaFxPsiUtil {
   }
 
   public static boolean isAbleToInstantiate(@NotNull PsiClass psiClass, @NotNull Consumer<String> messageConsumer) {
-    if (psiClass.getConstructors().length == 0) return true;
-    if (hasNamedArgOrNoArgConstructor(psiClass)) return true;
+    if (psiClass.isEnum() || hasNamedArgOrNoArgConstructor(psiClass)) return true;
     final PsiMethod valueOf = findValueOfMethod(psiClass);
     if (valueOf == null) {
       if (!hasBuilder(psiClass)) {
@@ -451,6 +450,7 @@ public class JavaFxPsiUtil {
   }
 
   private static boolean hasNamedArgOrNoArgConstructor(@NotNull PsiClass psiClass) {
+    if (psiClass.getConstructors().length == 0) return true;
     return CachedValuesManager.getCachedValue(psiClass, () -> {
       for (PsiMethod constructor : psiClass.getConstructors()) {
         final PsiParameter[] parameters = constructor.getParameterList().getParameters();

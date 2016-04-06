@@ -358,6 +358,10 @@ public class JavaFXHighlightingTest extends AbstractJavaFXTestCase {
     doTest();
   }
 
+  public void testEnumConstantValue() throws Exception {
+    doTest();
+  }
+
   public void testBoxedConstantValue() throws Exception {
     doTest();
   }

@@ -100,7 +100,7 @@ public class JavaFxRootTagDescriptor extends JavaFxClassTagDescriptorBase {
       return null;
     }
 
-    protected boolean isConstant(PsiField field) {
+    protected boolean isConstant(PsiField field, boolean inEnum) {
       return false;
     }
 

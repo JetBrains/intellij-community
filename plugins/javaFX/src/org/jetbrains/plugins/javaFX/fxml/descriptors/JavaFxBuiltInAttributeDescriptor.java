@@ -52,7 +52,10 @@ public class JavaFxBuiltInAttributeDescriptor extends JavaFxPropertyAttributeDes
 
   @Override
   public boolean isEnumerated() {
-    return getPsiClass() != null && getName().equals(FxmlConstants.FX_CONSTANT);
+    final PsiClass psiClass = getPsiClass();
+    if (psiClass == null) return false;
+    final String name = getName();
+    return FxmlConstants.FX_CONSTANT.equals(name) || psiClass.isEnum() && FxmlConstants.FX_VALUE.equals(name);
   }
 
   @Override
@@ -67,7 +70,8 @@ public class JavaFxBuiltInAttributeDescriptor extends JavaFxPropertyAttributeDes
     return isEnumerated() ? getPsiClass() : null ;
   }
 
-  protected boolean isConstant(PsiField field) {
+  protected boolean isConstant(PsiField field, boolean inEnum) {
+    if (inEnum) return field instanceof PsiEnumConstant;
     return field.hasModifierProperty(PsiModifier.STATIC) && field.hasModifierProperty(PsiModifier.FINAL) && field.hasModifierProperty(PsiModifier.PUBLIC);
   }
 
