@@ -19,14 +19,8 @@ public class ProcessIOExecutorService extends ThreadPoolExecutor {
   public static final String POOLED_THREAD_PREFIX = "Process I/O pool ";
   public static final ProcessIOExecutorService INSTANCE = new ProcessIOExecutorService();
 
-  /**
-   * 3 for each process: ProcessWaitFor + 2 x BaseDataReader (stdout and stderr)
-   * Allow for at least 2 processes: fsnotifier and external build/VCS/run configuration
-   */
-  private static final int CORE_POOL_SIZE = 3 * 3;
-
   private ProcessIOExecutorService() {
-    super(CORE_POOL_SIZE, Integer.MAX_VALUE, 1, TimeUnit.MINUTES, new SynchronousQueue<Runnable>(), new ThreadFactory() {
+    super(1, Integer.MAX_VALUE, 1, TimeUnit.MINUTES, new SynchronousQueue<Runnable>(), new ThreadFactory() {
       private final AtomicInteger counter = new AtomicInteger();
       @NotNull
       @Override
