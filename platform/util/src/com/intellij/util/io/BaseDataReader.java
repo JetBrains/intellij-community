@@ -55,7 +55,7 @@ public abstract class BaseDataReader {
         public void run() {
           String oldThreadName = Thread.currentThread().getName();
           if (!StringUtil.isEmptyOrSpaces(presentableName)) {
-            Thread.currentThread().setName(StringUtil.first("BaseDataReader: " + presentableName, 120, true));
+            Thread.currentThread().setName(oldThreadName + ": " + StringUtil.first("BaseDataReader: " + presentableName, 120, true));
           }
           try {
             doRun();
