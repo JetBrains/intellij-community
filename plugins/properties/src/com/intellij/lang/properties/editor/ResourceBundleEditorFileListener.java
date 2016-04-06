@@ -83,18 +83,18 @@ class ResourceBundleEditorFileListener extends VirtualFileAdapter {
         }
         return null;
       }, (editor) -> {
-        if (editor != null) {
-          final String propertyName = event.getPropertyName();
-          if (VirtualFile.PROP_WRITABLE.equals(propertyName)) {
+        final String propertyName = event.getPropertyName();
+        if (VirtualFile.PROP_WRITABLE.equals(propertyName)) {
+          if (!editor.isDisposed()) {
             editor.setViewer((Boolean)event.getNewValue());
-            return;
           }
-          if (VirtualFile.PROP_NAME.equals(propertyName)) {
-            myEditor.recreateEditorsPanel();
-          }
-          else {
-            myEditor.updateEditorsFromProperties(true);
-          }
+          return;
+        }
+        if (VirtualFile.PROP_NAME.equals(propertyName)) {
+          myEditor.recreateEditorsPanel();
+        }
+        else {
+          myEditor.updateEditorsFromProperties(true);
         }
       });
     }
