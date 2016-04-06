@@ -558,30 +558,24 @@ public class BraceHighlightingHandler {
     LogicalPosition bracePosition = myEditor.offsetToLogicalPosition(lbraceStart);
     Point braceLocation = myEditor.logicalPositionToXY(bracePosition);
     final int y = braceLocation.y;
-    myAlarm.addRequest(
-        new Runnable() {
-          @Override
-          public void run() {
-            if (!myEditor.getComponent().isShowing()) return;
-            Rectangle viewRect = myEditor.getScrollingModel().getVisibleArea();
-            if (y < viewRect.y) {
-              int start = lbraceStart;
-              if (!(myPsiFile instanceof PsiPlainTextFile) && myPsiFile.isValid()) {
-                PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-                start = BraceMatchingUtil.getBraceMatcher(getFileTypeByOffset(lbraceStart), PsiUtilCore
-                  .getLanguageAtOffset(myPsiFile, lbraceStart)).getCodeConstructStart(myPsiFile, lbraceStart);
-              }
-              TextRange range = new TextRange(start, lbraceEnd);
-              int line1 = myDocument.getLineNumber(range.getStartOffset());
-              int line2 = myDocument.getLineNumber(range.getEndOffset());
-              line1 = Math.max(line1, line2 - 5);
-              range = new TextRange(myDocument.getLineStartOffset(line1), range.getEndOffset());
-              LightweightHint hint = EditorFragmentComponent.showEditorFragmentHint(myEditor, range, true, true);
-              myEditor.putUserData(HINT_IN_EDITOR_KEY, hint);
-            }
+    myAlarm.addRequest(() -> PsiDocumentManager.getInstance(myProject).performLaterWhenAllCommitted(() -> {
+        if (!myEditor.getComponent().isShowing()) return;
+        Rectangle viewRect = myEditor.getScrollingModel().getVisibleArea();
+        if (y < viewRect.y) {
+          int start = lbraceStart;
+          if (!(myPsiFile instanceof PsiPlainTextFile) && myPsiFile.isValid()) {
+            start = BraceMatchingUtil.getBraceMatcher(getFileTypeByOffset(lbraceStart), PsiUtilCore
+              .getLanguageAtOffset(myPsiFile, lbraceStart)).getCodeConstructStart(myPsiFile, lbraceStart);
           }
-        },
-        300, ModalityState.stateForComponent(myEditor.getComponent()));
+          TextRange range = new TextRange(start, lbraceEnd);
+          int line1 = myDocument.getLineNumber(range.getStartOffset());
+          int line2 = myDocument.getLineNumber(range.getEndOffset());
+          line1 = Math.max(line1, line2 - 5);
+          range = new TextRange(myDocument.getLineStartOffset(line1), range.getEndOffset());
+          LightweightHint hint = EditorFragmentComponent.showEditorFragmentHint(myEditor, range, true, true);
+          myEditor.putUserData(HINT_IN_EDITOR_KEY, hint);
+        }
+      }), 300, ModalityState.stateForComponent(myEditor.getComponent()));
   }
 
   void clearBraceHighlighters() {
