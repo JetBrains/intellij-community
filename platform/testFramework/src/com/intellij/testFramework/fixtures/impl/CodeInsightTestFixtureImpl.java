@@ -1843,13 +1843,39 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       configureByText(FileTypeManager.getInstance().getFileTypeByFileName(verificationFileName), cleanContent);
     }
     else {
-      try {
-        FileUtil.writeToFile(new File(destinationFileName), cleanContent);
-        configureFromExistingVirtualFile(LocalFileSystem.getInstance().refreshAndFindFileByPath(verificationFileName));
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
+      // In order for PsiReferenceExpression.resolve() & friends to work we need
+      // to have the editor correspond to a file in an actual source root. What
+      // *should* work is
+      //PsiFile psiFile = addFileToProject(destinationFileName, cleanContent);
+      //configureFromExistingVirtualFile(psiFile.getVirtualFile());
+      // ....but it doesn't! So we try quite a bit harder:
+      VirtualFile virtualFile = new WriteCommandAction<VirtualFile>(getProject()) {
+        @Override
+        protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
+          try {
+            FileUtil.writeToFile(new File(destinationFileName), cleanContent);
+            VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(verificationFileName);
+            result.setResult(virtualFile);
+          }
+          catch (IOException e) {
+            throw new RuntimeException(e);
+          }
+        }
+      }.execute().getResultObject();
+
+      configureFromExistingVirtualFile(virtualFile);
+
+      // You'd think that would be the end of it. The above does work in the sense
+      // that resolve() calls now work. But for *really* weird reasons, even though
+      // we've configured from the virtual file, myEditor.getDocument() can still
+      // point to *old* contents, so we need to make sure it's really using the
+      // clean content:
+      new WriteCommandAction<VirtualFile>(getProject()) {
+        @Override
+        protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
+          myEditor.getDocument().setText(cleanContent); // HACK
+        }
+      }.execute();
     }
 
     final String actual = getFoldingDescription(doCheckCollapseStatus);
