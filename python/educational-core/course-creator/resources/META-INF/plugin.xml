@@ -59,9 +59,16 @@
     <action id="AddTaskFile" class="com.jetbrains.edu.coursecreator.actions.CCAddAsTaskFile" text="Add As Task File">
       <add-to-group group-id="ProjectViewPopupMenu" anchor="first"/>
     </action>
+    <group id="CCProjectViewGroup">
+      <action id="DeleteAllPlaceholders" class="com.jetbrains.edu.coursecreator.actions.CCDeleteAllAnswerPlaceholdersAction"/>
+      <separator/>
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="before" relative-to-action="CutCopyPasteGroup"/>
+    </group>
+
     <group id="AnswerPlaceholderGroup">
       <action id="AddTaskWindow" class="com.jetbrains.edu.coursecreator.actions.CCAddAnswerPlaceholder"/>
-       <separator/>
+      <reference ref="DeleteAllPlaceholders"/>
+      <separator/>
       <add-to-group group-id="EditorPopupMenu" anchor="first"/>
     </group>
     <action id="ShowTaskWindowDetails" class="com.jetbrains.edu.coursecreator.actions.CCShowAnswerPlaceholderDetails">
@@ -83,11 +90,6 @@
     <action id="PushCourse" class="com.jetbrains.edu.coursecreator.actions.CCPushCourse">
       <add-to-group group-id="ProjectViewPopupMenu" anchor="before" relative-to-action="CutCopyPasteGroup"/>
       <add-to-group group-id="FileMenu" relative-to-action="FileMainSettingsGroup" anchor="before"/>
-    </action>
-
-    <action id="DeleteAllPlaceholders" class="com.jetbrains.edu.coursecreator.actions.CCDeleteAllAnswerPlaceholdersAction">
-      <add-to-group group-id="ProjectViewPopupMenu" anchor="before" relative-to-action="CutCopyPasteGroup"/>
-      <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="DeleteTaskWindow"/>
     </action>
   </actions>
 
