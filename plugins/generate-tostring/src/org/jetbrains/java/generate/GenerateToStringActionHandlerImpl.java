@@ -20,6 +20,7 @@ import com.intellij.codeInsight.generation.PsiElementClassMember;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.options.Configurable;
@@ -112,8 +113,14 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
             ToStringTemplatesManager.getInstance().setDefaultTemplate(template);
 
             if (template.isValidTemplate()) {
-                GenerateToStringWorker.executeGenerateActionLater(clazz, editor, selectedMembers, template,
-                                                                  chooser.isInsertOverrideAnnotation());
+                WriteAction.run(() -> {
+                    try {
+                        new GenerateToStringWorker(clazz, editor, chooser.isInsertOverrideAnnotation()).execute(selectedMembers, template);
+                    }
+                    catch (Exception e) {
+                        GenerationUtil.handleException(project, e);
+                    }
+                });
             }
             else {
                 HintManager.getInstance().showErrorHint(editor, "toString() template '" + template.getFileName() + "' is invalid");
