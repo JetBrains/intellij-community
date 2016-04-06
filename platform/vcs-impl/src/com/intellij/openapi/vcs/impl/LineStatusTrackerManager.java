@@ -212,10 +212,7 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
   private void resetTrackers() {
     synchronized (myLock) {
       if (isDisabled()) return;
-
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("resetTrackers");
-      }
+      log("resetTrackers", null);
 
       for (LineStatusTracker tracker : ContainerUtil.newArrayList(myLineStatusTrackers.values())) {
         resetTracker(tracker.getDocument(), tracker.getVirtualFile(), tracker);
@@ -235,9 +232,7 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
   private void resetTracker(@NotNull final VirtualFile virtualFile, boolean insertOnly) {
     final Document document = FileDocumentManager.getInstance().getCachedDocument(virtualFile);
     if (document == null) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("resetTracker: no cached document for " + virtualFile.getPath());
-      }
+      log("resetTracker: no cached document", virtualFile);
       return;
     }
 
@@ -254,9 +249,7 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
     final boolean editorOpened = myFileEditorManager.isFileOpen(virtualFile);
     final boolean shouldBeInstalled = editorOpened && shouldBeInstalled(virtualFile);
 
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("resetTracker: shouldBeInstalled - " + shouldBeInstalled + ", tracker - " + (tracker == null ? "null" : "found"));
-    }
+    log("resetTracker: shouldBeInstalled - " + shouldBeInstalled + ", tracker - " + (tracker == null ? "null" : "found"), virtualFile);
 
     if (tracker != null && shouldBeInstalled) {
       refreshTracker(tracker);
@@ -278,16 +271,12 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
     if (statusManager == null) return false;
     final AbstractVcs activeVcs = myVcsManager.getVcsFor(virtualFile);
     if (activeVcs == null) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("shouldBeInstalled: for file " + virtualFile.getPath() + " failed: no active VCS");
-      }
+      log("shouldBeInstalled failed: no active VCS", virtualFile);
       return false;
     }
     final FileStatus status = statusManager.getStatus(virtualFile);
     if (status == FileStatus.NOT_CHANGED || status == FileStatus.ADDED || status == FileStatus.UNKNOWN || status == FileStatus.IGNORED) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("shouldBeInstalled: for file " + virtualFile.getPath() + " skipped: status=" + status);
-      }
+      log("shouldBeInstalled skipped: status=" + status, virtualFile);
       return false;
     }
     return true;
@@ -354,18 +343,14 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
       if (isDisabled()) return;
 
       if (!myVirtualFile.isValid()) {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("BaseRevisionLoader: for file " + myVirtualFile.getPath() + " failed: virtual file not valid");
-        }
+        log("BaseRevisionLoader failed: virtual file not valid", myVirtualFile);
         reportTrackerBaseLoadFailed();
         return;
       }
 
       final Pair<VcsRevisionNumber, String> baseRevision = myStatusProvider.getBaseRevision(myVirtualFile);
       if (baseRevision == null) {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("BaseRevisionLoader: for file " + myVirtualFile.getPath() + " failed: null returned for base revision");
-        }
+        log("BaseRevisionLoader failed: null returned for base revision", myVirtualFile);
         reportTrackerBaseLoadFailed();
         return;
       }
@@ -380,9 +365,7 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
         @Override
         public void run() {
           synchronized (myLock) {
-            if (LOG.isDebugEnabled()) {
-              LOG.debug("BaseRevisionLoader: initializing tracker for file " + myVirtualFile.getPath());
-            }
+            log("BaseRevisionLoader: initializing tracker", myVirtualFile);
             final LineStatusTracker tracker = myLineStatusTrackers.get(myDocument);
             if (tracker != null) {
               tracker.setBaseRevision(converted, revisionPack);
@@ -461,6 +444,13 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
     @Override
     public void globalSchemeChange(EditorColorsScheme scheme) {
       resetTrackers();
+    }
+  }
+
+  private static void log(@NotNull String message, @Nullable VirtualFile file) {
+    if (LOG.isDebugEnabled()) {
+      if (file != null) message += "; file: " + file.getPath();
+      LOG.debug(message);
     }
   }
 }
