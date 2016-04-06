@@ -25,7 +25,6 @@ import javax.tools.*;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -107,26 +106,6 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
 
   public void setLocation(Location location, Iterable<? extends File> path) throws IOException{
     getStdManager().setLocation(location, path);
-  }
-
-  // IMPORTANT! DO NOT REMOVE!
-  // when run on java9, this method will override corresponding method from the superclass
-  // will be called by javac9
-  public void setLocationFromPaths(Location location, Iterable<? /*extends java.nio.file.Path*/> paths) throws IOException {
-    try {
-      final Method forwardingMethod = StandardJavaFileManager.class.getMethod("setLocationFromPaths", Location.class, Iterable.class);
-      forwardingMethod.invoke(getStdManager(), location, paths);
-    }
-    catch (InvocationTargetException e) {
-      final Throwable cause = e.getCause();
-      if (cause instanceof IOException) {
-        throw (IOException)cause;
-      }
-      throw new IOException("Error configuring " + location.getName(), cause);
-    }
-    catch (Throwable e) {
-      throw new IOException("Internal error: ", e);
-    }
   }
 
   public Iterable<? extends JavaFileObject> getJavaFileObjectsFromFiles(Iterable<? extends File> files) {
@@ -357,5 +336,22 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
 
   public Context getContext() {
     return myContext;
+  }
+
+  private static Map<Method, Boolean> ourImplStatus = Collections.synchronizedMap(new HashMap<Method, Boolean>());
+
+  JavaFileManager getApiCallHandler(Method method) {
+    Boolean isImplemented = ourImplStatus.get(method);
+    if (isImplemented == null) {
+      try {
+        JavacFileManager.class.getDeclaredMethod(method.getName(), method.getParameterTypes());
+        isImplemented = Boolean.TRUE;
+      }
+      catch (NoSuchMethodException e) {
+        isImplemented = Boolean.FALSE;
+      }
+      ourImplStatus.put(method, isImplemented);
+    }
+    return isImplemented? this : getStdManager();
   }
 }
