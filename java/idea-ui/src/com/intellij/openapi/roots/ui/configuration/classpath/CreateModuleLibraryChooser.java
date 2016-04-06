@@ -197,7 +197,7 @@ public class CreateModuleLibraryChooser implements ClasspathElementChooser<Libra
     }
 
     final List<Library> addedLibraries = new ArrayList<Library>();
-    Map<VirtualFile, List<OrderRoot>> byFile = roots.stream().collect(Collectors.groupingBy(OrderRoot::getFile));
+    Map<VirtualFile, List<OrderRoot>> byFile = roots.stream().collect(Collectors.groupingBy(OrderRoot::getFile, LinkedHashMap::new, Collectors.toList()));
     Predicate<List<OrderRoot>> containsClasses = it -> it.stream().anyMatch(root -> root.getType().equals(OrderRootType.CLASSES));
     if (byFile.values().stream().allMatch(containsClasses)) {
       for (List<OrderRoot> rootsForFile : byFile.values()) {
