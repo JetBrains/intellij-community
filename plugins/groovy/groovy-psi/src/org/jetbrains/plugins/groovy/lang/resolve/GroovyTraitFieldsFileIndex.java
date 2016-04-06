@@ -105,7 +105,7 @@ public class GroovyTraitFieldsFileIndex
 
   @Override
   public int getVersion() {
-    return 3;
+    return 4;
   }
 
   private static Collection<TraitFieldDescriptor> index(FileContent inputData) {
@@ -211,6 +211,28 @@ public class GroovyTraitFieldsFileIndex
       this.flags = flags;
       this.typeString = typeString;
       this.name = name;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      TraitFieldDescriptor that = (TraitFieldDescriptor)o;
+
+      if (flags != that.flags) return false;
+      if (!typeString.equals(that.typeString)) return false;
+      if (!name.equals(that.name)) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = (int)flags;
+      result = 31 * result + typeString.hashCode();
+      result = 31 * result + name.hashCode();
+      return result;
     }
   }
 }
