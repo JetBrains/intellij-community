@@ -38,7 +38,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public class TransactionGuardImpl extends TransactionGuard {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.application.TransactionGuardImpl");
   private final Queue<Transaction> myQueue = new LinkedBlockingQueue<Transaction>();
-  private final Map<ProgressIndicator, TransactionIdImpl> myProgresses = ContainerUtil.createConcurrentWeakMap();
+  private final Map<ModalityState, TransactionIdImpl> myModalities = ContainerUtil.createConcurrentWeakMap();
   private TransactionIdImpl myCurrentTransaction;
   private boolean myWritingAllowed;
 
@@ -282,16 +282,22 @@ public class TransactionGuardImpl extends TransactionGuard {
   public TransactionIdImpl getContextTransaction() {
     if (!ApplicationManager.getApplication().isDispatchThread()) {
       ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
-      return indicator != null ? myProgresses.get(indicator) : null;
+      return indicator != null ? myModalities.get(indicator.getModalityState()) : null;
     }
 
     return myWritingAllowed ? myCurrentTransaction : null;
   }
 
-  public void registerProgress(@NotNull ProgressIndicator indicator, @Nullable TransactionIdImpl contextTransaction) {
+  public void enteredModality(@NotNull ModalityState modality) {
+    TransactionIdImpl contextTransaction = getContextTransaction();
     if (contextTransaction != null) {
-      myProgresses.put(indicator, contextTransaction);
+      myModalities.put(modality, contextTransaction);
     }
+  }
+
+  @Nullable
+  public TransactionIdImpl getModalityTransaction(@NotNull ModalityState modalityState) {
+    return myModalities.get(modalityState);
   }
 
   private static class Transaction {

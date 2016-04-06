@@ -748,8 +748,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @Override
   @NotNull
   public ModalityState getCurrentModalityState() {
-    Object[] entities = LaterInvocator.getCurrentModalEntities();
-    return entities.length > 0 ? new ModalityStateEx(entities) : getNoneModalityState();
+    return LaterInvocator.getCurrentModalityState();
   }
 
   @Override
