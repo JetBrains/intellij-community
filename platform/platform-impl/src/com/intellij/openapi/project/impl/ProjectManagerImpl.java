@@ -215,7 +215,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     ProgressIndicator indicator = myProgressManager.getProgressIndicator();
     if (indicator != null && !project.isDefault()) {
       indicator.setText(ProjectBundle.message("loading.components.for", project.getName()));
-      indicator.setIndeterminate(true);
     }
 
     ApplicationManager.getApplication().getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).beforeProjectLoaded(project);
