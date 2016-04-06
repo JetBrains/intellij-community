@@ -394,7 +394,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
     });
   }
 
-  private void recreateEditorsPanel() {
+  void recreateEditorsPanel() {
     myValuesPanel.removeAll();
     myValuesPanel.setLayout(new CardLayout());
 
@@ -513,7 +513,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
     }
   }
 
-  private void updateEditorsFromProperties(final boolean checkIsUnderUndoRedoAction) {
+  void updateEditorsFromProperties(final boolean checkIsUnderUndoRedoAction) {
     String propertyName = getSelectedPropertyName();
     ((CardLayout)myValuesPanel.getLayout()).show(myValuesPanel, propertyName == null ? NO_PROPERTY_SELECTED : VALUES);
     if (propertyName == null) return;
@@ -551,51 +551,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
     if (myVfsListener != null) {
       throw new AssertionError("Listeners can't be initialized twice");
     }
-    myVfsListener = new VirtualFileAdapter() {
-      @Override
-      public void fileCreated(@NotNull VirtualFileEvent event) {
-        if (PropertiesImplUtil.isPropertiesFile(event.getFile(), myProject)) {
-          recreateEditorsPanel();
-        }
-      }
-
-      @Override
-      public void fileDeleted(@NotNull VirtualFileEvent event) {
-        for (PropertiesFile file : myEditors.keySet()) {
-          if (Comparing.equal(file.getVirtualFile(), event.getFile())) {
-            recreateEditorsPanel();
-            return;
-          }
-        }
-      }
-
-      @Override
-      public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
-        final VirtualFile eventFile = event.getFile();
-        if (PropertiesImplUtil.isPropertiesFile(eventFile, myProject)) {
-          EditorEx correspondingEditor = null;
-          for (Map.Entry<PropertiesFile, EditorEx> e : myEditors.entrySet()) {
-            if (eventFile.equals(e.getKey().getContainingFile())) {
-              correspondingEditor = e.getValue();
-              break;
-            }
-          }
-          if (correspondingEditor != null) {
-            final String propertyName = event.getPropertyName();
-            if (VirtualFile.PROP_WRITABLE.equals(propertyName)) {
-              correspondingEditor.setViewer(Boolean.valueOf((String)event.getNewValue()));
-              return;
-            }
-            if (VirtualFile.PROP_NAME.equals(propertyName)) {
-              recreateEditorsPanel();
-            }
-            else {
-              updateEditorsFromProperties(true);
-            }
-          }
-        }
-      }
-    };
+    myVfsListener = new ResourceBundleEditorFileListener(this, myProject);
 
     virtualFileManager.addVirtualFileListener(myVfsListener, this);
     PsiTreeChangeAdapter psiTreeChangeAdapter = new PsiTreeChangeAdapter() {
@@ -938,6 +894,10 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
         return FileDocumentManager.getInstance().getDocument(file.getVirtualFile());
       }
     });
+  }
+
+  Map<PropertiesFile, EditorEx> getTranslationEditors() {
+    return myEditors;
   }
 
   public static class ResourceBundleEditorState implements FileEditorState {
