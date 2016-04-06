@@ -989,10 +989,10 @@ public class GenericPatchApplier {
   }
 
   private void linesToSb(final StringBuilder sb, final List<String> list) {
-    for (String s : list) {
-      if (sb.length() > 0) sb.append('\n');
-      sb.append(s);
+    if (sb.length() > 0 && !list.isEmpty()) {
+      sb.append("\n");
     }
+    StringUtil.join(list, "\n", sb);
   }
 
   // indexes are passed inclusive
