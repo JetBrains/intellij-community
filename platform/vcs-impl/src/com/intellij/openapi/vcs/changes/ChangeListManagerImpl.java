@@ -1686,7 +1686,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       Future future = ourUpdateAlarm.get();
       if (future == null) break;
 
-      UIUtil.dispatchAllInvocationEvents();
+      if (ApplicationManager.getApplication().isDispatchThread()) {
+        UIUtil.dispatchAllInvocationEvents();
+      }
       try {
         future.get(10, TimeUnit.MILLISECONDS);
         break;
