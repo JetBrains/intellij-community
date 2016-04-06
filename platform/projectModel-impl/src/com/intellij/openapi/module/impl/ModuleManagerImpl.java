@@ -218,8 +218,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     final List<ModulePath> paths = new ArrayList<ModulePath>();
     final Element modules = element.getChild(ELEMENT_MODULES);
     if (modules != null) {
-      for (final Object value : modules.getChildren(ELEMENT_MODULE)) {
-        Element moduleElement = (Element)value;
+      for (final Element moduleElement : modules.getChildren(ELEMENT_MODULE)) {
         final String fileUrlValue = moduleElement.getAttributeValue(ATTRIBUTE_FILEURL);
         final String filepath;
         if (fileUrlValue != null) {
