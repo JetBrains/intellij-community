@@ -21,13 +21,14 @@ import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettin
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
+import java.io.File;
 import java.util.Collection;
+import java.util.Map;
 
 /**
  * @author Denis Zhdanov
@@ -49,19 +50,19 @@ public class GradleAutoImportAware implements ExternalSystemAutoImportAware {
     if (projectsSettings.isEmpty()) {
       return null;
     }
-
+    Map<String, String> rootPaths = ContainerUtilRt.newHashMap();
     for (ExternalProjectSettings setting : projectsSettings) {
-      String rootProjectPath = setting.getExternalProjectPath();
-      if (FileUtil.isAncestor(rootProjectPath, changedFileOrDirPath, false)) {
-        return rootProjectPath;
-      } else {
-        // honor multi-projects with flat structure
-        for (String modulePath : setting.getModules()) {
-          if(StringUtil.equals(modulePath, rootProjectPath)) continue;
-          if (FileUtil.isAncestor(modulePath, changedFileOrDirPath, false)) {
-            return rootProjectPath;
-          }
+      if(setting != null) {
+        for (String path : setting.getModules()) {
+          rootPaths.put(new File(path).getAbsolutePath(), setting.getExternalProjectPath());
         }
+      }
+    }
+
+    for (File f = new File(changedFileOrDirPath).getParentFile(); f != null; f = f.getParentFile()) {
+      String dirPath = f.getAbsolutePath();
+      if (rootPaths.containsKey(dirPath)) {
+        return rootPaths.get(dirPath);
       }
     }
     return null;
