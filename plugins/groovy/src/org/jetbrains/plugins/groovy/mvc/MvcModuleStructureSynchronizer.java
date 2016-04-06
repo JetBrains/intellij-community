@@ -26,6 +26,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ReadTask;
 import com.intellij.openapi.project.DumbAwareRunnable;
@@ -46,6 +47,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.GuiUtils;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
@@ -54,11 +56,13 @@ import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.plugins.groovy.mvc.projectView.MvcToolWindowDescriptor;
 
 import java.util.*;
+import java.util.concurrent.ExecutorService;
 
 /**
  * @author peter
  */
 public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
+  private static final ExecutorService ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor(1);
   private final Set<Pair<Object, SyncAction>> myOrders = new LinkedHashSet<Pair<Object, SyncAction>>();
 
   private Set<VirtualFile> myPluginRoots = Collections.emptySet();
@@ -292,7 +296,9 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
         return !myProject.isDisposed() && orderSnapshot.equals(takeOrderSnapshot());
       }
     };
-    GuiUtils.invokeLaterIfNeeded(() -> ProgressIndicatorUtils.scheduleWithWriteActionPriority(task), ModalityState.NON_MODAL);
+    GuiUtils.invokeLaterIfNeeded(
+      () -> ProgressIndicatorUtils.scheduleWithWriteActionPriority(new ProgressIndicatorBase(), ourExecutor, task),
+      ModalityState.NON_MODAL);
   }
 
   private LinkedHashSet<Pair<Object, SyncAction>> takeOrderSnapshot() {
