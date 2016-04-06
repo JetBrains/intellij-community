@@ -80,7 +80,7 @@ public class LaterInvocator {
   }
 
   private static final List<Object> ourModalEntities = ContainerUtil.createLockFreeCopyOnWriteList();
-  private static Stack<ModalityState> ourModalityStack = new Stack<>(ModalityState.NON_MODAL);
+  private static final Stack<ModalityState> ourModalityStack = new Stack<>(ModalityState.NON_MODAL);
   private static final List<RunnableInfo> ourQueue = new ArrayList<RunnableInfo>(); //protected by LOCK
   private static volatile int ourQueueSkipCount; // optimization
   private static final FlushQueue ourFlushQueueRunnable = new FlushQueue();
@@ -210,9 +210,10 @@ public class LaterInvocator {
     ourModalityStateMulticaster.getMulticaster().beforeModalityStateChanged(false);
 
     boolean removed = ourModalEntities.remove(modalEntity);
-    ourModalityStack.pop();
+    if (ourModalityStack.size() > 1) {
+      ourModalityStack.pop();
+    }
     LOG.assertTrue(removed, modalEntity);
-    LOG.assertTrue(!ourModalityStack.isEmpty(), modalEntity);
     cleanupQueueForModal(modalEntity);
     ourQueueSkipCount = 0;
     requestFlush();
@@ -236,6 +237,10 @@ public class LaterInvocator {
   @TestOnly
   static void leaveAllModals() {
     ourModalEntities.clear();
+    while (ourModalityStack.size() > 1) {
+      ourModalityStack.pop();
+    }
+    LOG.assertTrue(getCurrentModalityState() == ModalityState.NON_MODAL, getCurrentModalityState());
     ourQueueSkipCount = 0;
     requestFlush();
   }
