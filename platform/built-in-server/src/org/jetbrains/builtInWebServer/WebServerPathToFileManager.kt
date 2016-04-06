@@ -79,7 +79,7 @@ class WebServerPathToFileManager(application: Application, private val project: 
 
   fun getPath(file: VirtualFile) = getPathInfo(file)?.path
 
-  private fun getPathInfo(child: VirtualFile): PathInfo? {
+  fun getPathInfo(child: VirtualFile): PathInfo? {
     var result = virtualFileToPathInfo.getIfPresent(child)
     if (result == null) {
       result = WebServerRootsProvider.EP_NAME.extensions.computeOrNull { it.getPathInfo(child, project) }
@@ -92,8 +92,8 @@ class WebServerPathToFileManager(application: Application, private val project: 
 
   internal fun doFindByRelativePath(path: String): PathInfo? {
     val result = WebServerRootsProvider.EP_NAME.extensions.computeOrNull { it.resolve(path, project) } ?: return null
-    if (result.file != null) {
-      virtualFileToPathInfo.put(result.file, result)
+    result.file?.let {
+      virtualFileToPathInfo.put(it, result)
     }
     return result
   }
