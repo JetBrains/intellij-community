@@ -110,7 +110,6 @@ public class CreateModuleLibraryFromFilesTest extends ModuleRootManagerTestCase 
       myModifiableRootModel.dispose();
     }
     finally {
-      //noinspection ThrowFromFinallyBlock
       super.tearDown();
     }
   }
