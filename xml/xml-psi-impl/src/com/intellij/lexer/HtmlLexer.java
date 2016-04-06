@@ -74,11 +74,10 @@ public class HtmlLexer extends BaseHtmlLexer {
     if (hasSeenStyle()) {
       if (hasSeenTag() && isStartOfEmbeddmentTagContent(tokenType)) {
         Language stylesheetLanguage = getStyleLanguage();
-        IElementType currentStylesheetElementType;
-        if ((stylesheetLanguage == null || LanguageUtil.isInjectableLanguage(stylesheetLanguage)) &&
-            (currentStylesheetElementType = getCurrentStylesheetElementType()) != null) {
+        if (stylesheetLanguage == null || LanguageUtil.isInjectableLanguage(stylesheetLanguage)) {
           myTokenEnd = skipToTheEndOfTheEmbeddment();
-          tokenType = currentStylesheetElementType;
+          IElementType currentStylesheetElementType = getCurrentStylesheetElementType();
+          tokenType = currentStylesheetElementType == null ? XmlTokenType.XML_DATA_CHARACTERS : currentStylesheetElementType;
         }
       } else if (ourInlineStyleElementType!=null && isStartOfEmbeddmentAttributeValue(tokenType) && hasSeenAttribute()) {
         tokenType = ourInlineStyleElementType;
@@ -86,11 +85,10 @@ public class HtmlLexer extends BaseHtmlLexer {
     } else if (hasSeenScript()) {
       if (hasSeenTag() && isStartOfEmbeddmentTagContent(tokenType)) {
         Language scriptLanguage = getScriptLanguage();
-        IElementType currentScriptElementType;
-        if ((scriptLanguage == null || LanguageUtil.isInjectableLanguage(scriptLanguage)) &&
-            (currentScriptElementType = getCurrentScriptElementType()) != null) {
+        if (scriptLanguage == null || LanguageUtil.isInjectableLanguage(scriptLanguage)) {
           myTokenEnd = skipToTheEndOfTheEmbeddment();
-          tokenType = currentScriptElementType;
+          IElementType currentScriptElementType = getCurrentScriptElementType();
+          tokenType = currentScriptElementType == null ? XmlTokenType.XML_DATA_CHARACTERS : currentScriptElementType;
         }
       } else if (hasSeenAttribute() && isStartOfEmbeddmentAttributeValue(tokenType) && ourInlineScriptElementType!=null) {
         myTokenEnd = skipToTheEndOfTheEmbeddment();

@@ -13,13 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.updateSettings.impl;
+package com.siyeh.ig.controlflow;
 
-import org.jetbrains.annotations.NotNull;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
+/**
+ * @author Bas Leijdekkers
+ */
+public class LoopStatementsThatDontLoopInspectionTest extends LightInspectionTestCase {
 
-public interface UserUpdateSettings {
-  @NotNull ChannelStatus getSelectedChannelStatus();
-  @NotNull List<String> getIgnoredBuildNumbers();
+  public void testLoopStatementsThatDontLoop() {
+    doTest();
+  }
+
+  @Nullable
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    return new LoopStatementsThatDontLoopInspection();
+  }
 }

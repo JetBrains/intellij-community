@@ -66,8 +66,8 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
    * @param task a task to run
    */
   @NotNull
-  protected Future<?> executeOnPooledThread(@NotNull Runnable task) {
-    return AppExecutorUtil.getAppExecutorService().submit(task);
+  protected Future<?> executeOnPooledThread(@NotNull final Runnable task) {
+    return ProcessIOExecutorService.INSTANCE.submit(task);
   }
 
   @Override

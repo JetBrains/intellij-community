@@ -15,6 +15,7 @@
  */
 package com.intellij.testFramework;
 
+import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.ProjectManager;
@@ -92,7 +93,10 @@ public class ThreadTracker {
     wellKnownOffenders.add("VM Thread");
     wellKnownOffenders.add("YJPAgent-Telemetry");
 
-    longRunningThreadCreated(ApplicationManager.getApplication(), "Periodic tasks thread", "ApplicationImpl pooled thread");
+    longRunningThreadCreated(ApplicationManager.getApplication(),
+                             "Periodic tasks thread",
+                             "ApplicationImpl pooled thread ",
+                             ProcessIOExecutorService.POOLED_THREAD_PREFIX);
   }
 
   // marks Thread with this name as long-running, which should be ignored from the thread-leaking checks

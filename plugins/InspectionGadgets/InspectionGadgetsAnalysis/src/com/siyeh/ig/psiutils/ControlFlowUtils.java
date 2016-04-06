@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -153,6 +153,7 @@ public class ControlFlowUtils {
     boolean hasDefaultCase = false;
     for (PsiStatement statement : statements) {
       if (statement instanceof PsiSwitchLabelStatement) {
+        numCases++;
         final PsiSwitchLabelStatement switchLabelStatement = (PsiSwitchLabelStatement)statement;
         if (switchLabelStatement.isDefaultCase()) {
           hasDefaultCase = true;
@@ -164,7 +165,6 @@ public class ControlFlowUtils {
           return true;
         }
       }
-      numCases++;
     }
     final boolean isEnum = isEnumSwitch(switchStatement);
     if (!hasDefaultCase && !isEnum) {
