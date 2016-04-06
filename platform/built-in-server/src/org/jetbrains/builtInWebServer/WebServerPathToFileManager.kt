@@ -5,8 +5,8 @@ import com.intellij.ProjectTopics
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ModuleRootAdapter
 import com.intellij.openapi.roots.ModuleRootEvent
+import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -45,7 +45,7 @@ class WebServerPathToFileManager(application: Application, private val project: 
         }
       }
     })
-    project.messageBus.connect().subscribe(ProjectTopics.PROJECT_ROOTS, object : ModuleRootAdapter() {
+    project.messageBus.connect().subscribe(ProjectTopics.PROJECT_ROOTS, object : ModuleRootListener {
       override fun rootsChanged(event: ModuleRootEvent) {
         clearCache()
       }
