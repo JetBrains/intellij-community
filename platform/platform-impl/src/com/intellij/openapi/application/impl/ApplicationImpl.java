@@ -90,7 +90,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class ApplicationImpl extends PlatformComponentManagerImpl implements ApplicationEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.impl.ApplicationImpl");
-  private final ModalityState MODALITY_STATE_NONE = ModalityState.NON_MODAL;
 
   // about writer preference: the way the j.u.c.l.ReentrantReadWriteLock.NonfairSync is implemented, the
   // writer thread will be always at the queue head and therefore, j.u.c.l.ReentrantReadWriteLock.NonfairSync.readerShouldBlock()
@@ -774,7 +773,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @Override
   @NotNull
   public ModalityState getNoneModalityState() {
-    return MODALITY_STATE_NONE;
+    return ModalityState.NON_MODAL;
   }
 
   @Override

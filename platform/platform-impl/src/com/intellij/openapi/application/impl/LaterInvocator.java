@@ -214,6 +214,7 @@ public class LaterInvocator {
       ourModalityStack.pop();
     }
     LOG.assertTrue(removed, modalEntity);
+    LOG.assertTrue(!ourModalityStack.isEmpty());
     cleanupQueueForModal(modalEntity);
     ourQueueSkipCount = 0;
     requestFlush();
@@ -303,14 +304,7 @@ public class LaterInvocator {
       }
 
 
-      ModalityState currentModality;
-      if (ourModalEntities.isEmpty()) {
-        Application application = ApplicationManager.getApplication();
-        currentModality = application == null ? ModalityState.NON_MODAL : application.getNoneModalityState();
-      }
-      else {
-        currentModality = new ModalityStateEx(ourModalEntities.toArray());
-      }
+      ModalityState currentModality = getCurrentModalityState();
 
       while (ourQueueSkipCount < ourQueue.size()) {
         RunnableInfo info = ourQueue.get(ourQueueSkipCount);
