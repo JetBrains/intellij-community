@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,13 +24,16 @@ import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
+import com.intellij.util.Processors;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.util.indexing.IdFilter;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class DefaultFileNavigationContributor implements ChooseByNameContributorEx, DumbAware {
 
@@ -59,10 +62,11 @@ public class DefaultFileNavigationContributor implements ChooseByNameContributor
   @Override
   @NotNull
   public NavigationItem[] getItemsByName(String name, final String pattern, Project project, boolean includeNonProjectItems) {
-    CommonProcessors.CollectProcessor<NavigationItem> processor = new CommonProcessors.CollectProcessor<NavigationItem>();
+    List<NavigationItem> result = new ArrayList<>();
+    Processor<NavigationItem> processor = Processors.cancelableCollectProcessor(result);
     processElementsWithName(name, processor, FindSymbolParameters.wrap(pattern, project, includeNonProjectItems));
 
-    return processor.toArray(new NavigationItem[processor.getResults().size()]);
+    return result.isEmpty() ? NavigationItem.EMPTY_NAVIGATION_ITEM_ARRAY : result.toArray(new NavigationItem[result.size()]);
   }
 
   @Override

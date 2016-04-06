@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -612,7 +612,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   @NotNull
   public <K> Collection<K> getAllKeys(@NotNull final ID<K, ?> indexId, @NotNull Project project) {
     Set<K> allKeys = new THashSet<K>();
-    processAllKeys(indexId, new CommonProcessors.CollectProcessor<K>(allKeys), project);
+    processAllKeys(indexId, Processors.cancelableCollectProcessor(allKeys), project);
     return allKeys;
   }
 

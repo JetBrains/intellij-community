@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.psi.*;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
+import com.intellij.util.Processors;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.DomElement;
@@ -115,8 +116,8 @@ public abstract class AbstractMethodResolveConverter<ParentType extends DomEleme
 
   @NotNull
   public Collection<? extends PsiMethod> getVariants(final ConvertContext context) {
-    LinkedHashSet<PsiMethod> methodList = new LinkedHashSet<PsiMethod>();
-    Processor<PsiMethod> processor = CommonProcessors.notNullProcessor(new CommonProcessors.CollectProcessor<PsiMethod>(methodList));
+    Set<PsiMethod> methodList = new LinkedHashSet<PsiMethod>();
+    Processor<PsiMethod> processor = CommonProcessors.notNullProcessor(Processors.cancelableCollectProcessor(methodList));
     processMethods(context, processor, new Function<PsiClass, PsiMethod[]>() {
       public PsiMethod[] fun(final PsiClass s) {
         final List<PsiMethod> list = ContainerUtil.findAll(getVariants(s), new Condition<PsiMethod>() {

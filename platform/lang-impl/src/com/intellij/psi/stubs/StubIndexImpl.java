@@ -44,8 +44,8 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
+import com.intellij.util.Processors;
 import com.intellij.util.SmartList;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
@@ -268,8 +268,8 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
                                                            @NotNull Project project,
                                                            @Nullable GlobalSearchScope scope,
                                                            IdFilter filter) {
-    final List<Psi> result = new SmartList<Psi>();
-    process(indexKey, key, project, scope, filter, new CommonProcessors.CollectProcessor<Psi>(result));
+    final List<Psi> result = new SmartList<>();
+    process(indexKey, key, project, scope, filter, Processors.cancelableCollectProcessor(result));
     return result;
   }
 
@@ -364,7 +364,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
   @NotNull
   public <K> Collection<K> getAllKeys(@NotNull StubIndexKey<K, ?> indexKey, @NotNull Project project) {
     Set<K> allKeys = ContainerUtil.newTroveSet();
-    processAllKeys(indexKey, project, new CommonProcessors.CollectProcessor<K>(allKeys));
+    processAllKeys(indexKey, project, Processors.cancelableCollectProcessor(allKeys));
     return allKeys;
   }
 
