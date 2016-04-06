@@ -17,7 +17,6 @@ package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.openapi.updateSettings.UpdateStrategyCustomization
 import com.intellij.openapi.util.BuildNumber
-import java.util.*
 
 class UpdateStrategy(private val currentBuild: BuildNumber, private val updates: UpdatesInfo, private val settings: UserUpdateSettings) {
   enum class State {
@@ -34,10 +33,10 @@ class UpdateStrategy(private val currentBuild: BuildNumber, private val updates:
     val ignoredBuilds = settings.ignoredBuildNumbers.toSet()
 
     val result = product.channels.asSequence()
-        .filter { it.status.compareTo(selectedChannel) >= 0 }
-        .sortedWith(Comparator { ch1, ch2 -> ch1.status.compareTo(ch2.status) })  // by stability, asc
-        .map { ch -> ch.builds.asSequence().filter { build -> isApplicable(build, ignoredBuilds) } to ch }
-        .map { p -> candidateBuild(p.first) to p.second }
+        .filter { ch -> ch.status >= selectedChannel }  // filter out inapplicable channels
+        .sortedBy { ch -> ch.status }  // sort by stability, asc
+        .map { ch -> ch.builds.asSequence().filter { build -> isApplicable(build, ignoredBuilds) } to ch }  // filter out inapplicable builds
+        .map { p -> maxBuild(p.first) to p.second }  // max build in a channel, preferring same baseline
         .filter { p -> p.first != null }
         .maxBy { p -> p.first!!.number }
 
@@ -49,11 +48,8 @@ class UpdateStrategy(private val currentBuild: BuildNumber, private val updates:
       candidate.number.asStringWithoutProductCode() !in ignoredBuilds &&
       candidate.target?.inRange(currentBuild) ?: true
 
-  private fun candidateBuild(builds: Sequence<BuildInfo>) =
-      latestBuild(builds.filter { it.number.baselineVersion == currentBuild.baselineVersion }) ?: latestBuild(builds)
-
-  private fun latestBuild(builds: Sequence<BuildInfo>) =
-      builds.fold(null as BuildInfo?) { best, candidate -> if (best == null || candidate.number > best.number) candidate else best }
+  private fun maxBuild(builds: Sequence<BuildInfo>) =
+      builds.filter { it.number.baselineVersion == currentBuild.baselineVersion }.maxBy { it.number } ?: builds.maxBy { it.number }
 
   //<editor-fold desc="Deprecated stuff.">
 
