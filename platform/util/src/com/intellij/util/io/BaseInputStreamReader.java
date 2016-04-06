@@ -15,7 +15,6 @@
  */
 package com.intellij.util.io;
 
-import com.pty4j.unix.PTYInputStream;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -45,6 +44,6 @@ public class BaseInputStreamReader extends InputStreamReader {
   }
 
   public boolean availableUnsupported() {
-    return myInputStream instanceof PTYInputStream;
+    return "com.pty4j.unix.PTYInputStream".equals(myInputStream.getClass().getName());
   }
 }
