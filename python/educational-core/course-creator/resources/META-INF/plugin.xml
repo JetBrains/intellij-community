@@ -16,13 +16,12 @@
   <depends>com.jetbrains.edu.interactivelearning</depends>
 
   <extensions defaultExtensionNs="com.intellij">
-    <projectService serviceImplementation="com.jetbrains.edu.coursecreator.CCProjectService"/>
     <treeStructureProvider implementation="com.jetbrains.edu.coursecreator.projectView.CCTreeStructureProvider"/>
     <refactoring.elementListenerProvider implementation="com.jetbrains.edu.coursecreator.CCRefactoringElementListenerProvider"/>
-    <refactoring.moveHandler implementation="com.jetbrains.edu.coursecreator.CCLessonMoveHandlerDelegate" order="first"/>
-    <refactoring.moveHandler implementation="com.jetbrains.edu.coursecreator.CCTaskMoveHandlerDelegate" order="first"/>
-    <renameHandler implementation="com.jetbrains.edu.coursecreator.CCTaskRenameHandler" order="first"/>
-    <renameHandler implementation="com.jetbrains.edu.coursecreator.CCLessonRenameHandler" order="first"/>
+    <refactoring.moveHandler implementation="com.jetbrains.edu.coursecreator.handlers.CCLessonMoveHandlerDelegate" order="first"/>
+    <refactoring.moveHandler implementation="com.jetbrains.edu.coursecreator.handlers.CCTaskMoveHandlerDelegate" order="first"/>
+    <renameHandler implementation="com.jetbrains.edu.coursecreator.handlers.CCTaskRenameHandler" order="first"/>
+    <renameHandler implementation="com.jetbrains.edu.coursecreator.handlers.CCLessonRenameHandler" order="first"/>
   </extensions>
   <extensions defaultExtensionNs="Edu">
     <studyActionsProvider implementation="com.jetbrains.edu.coursecreator.CCStudyActionsProvider"/>
@@ -33,7 +32,6 @@
   </application-components>
 
   <project-components>
-    <!-- Add your project components here -->
     <component>
       <implementation-class>com.jetbrains.edu.coursecreator.CCProjectComponent</implementation-class>
     </component>
@@ -61,13 +59,12 @@
     <action id="AddTaskFile" class="com.jetbrains.edu.coursecreator.actions.CCAddAsTaskFile" text="Add As Task File">
       <add-to-group group-id="ProjectViewPopupMenu" anchor="first"/>
     </action>
-    <action id="AddTaskWindow" class="com.jetbrains.edu.coursecreator.actions.CCAddAnswerPlaceholder">
-      <add-to-group group-id="EditorPopupMenu" anchor="before" relative-to-action="CopyReference"/>
-    </action>
+    <group id="AnswerPlaceholderGroup">
+      <action id="AddTaskWindow" class="com.jetbrains.edu.coursecreator.actions.CCAddAnswerPlaceholder"/>
+       <separator/>
+      <add-to-group group-id="EditorPopupMenu" anchor="first"/>
+    </group>
     <action id="ShowTaskWindowDetails" class="com.jetbrains.edu.coursecreator.actions.CCShowAnswerPlaceholderDetails">
-      <add-to-group group-id="EditorPopupMenu" anchor="before" relative-to-action="CopyReference"/>
-    </action>
-    <action id="DeleteTaskWindow" class="com.jetbrains.edu.coursecreator.actions.CCDeleteAnswerPlaceholder">
       <add-to-group group-id="EditorPopupMenu" anchor="before" relative-to-action="CopyReference"/>
     </action>
     <action id="ShowPreview" class="com.jetbrains.edu.coursecreator.actions.CCShowPreview">

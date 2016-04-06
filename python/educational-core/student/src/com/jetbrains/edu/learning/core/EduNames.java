@@ -41,6 +41,8 @@ public class EduNames {
   public static final String STUDY = "Study";
   public static String PYCHARM_ADDITIONAL = "PyCharm additional materials";
   public static final String PYCHARM = "PyCharm";
+
+  public static String PLACEHOLDER = "Answer Placeholder";
   private EduNames() {
   }
 
