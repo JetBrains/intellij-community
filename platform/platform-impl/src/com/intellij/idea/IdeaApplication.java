@@ -47,7 +47,6 @@ import com.intellij.ui.CustomProtocolHandler;
 import com.intellij.ui.Splash;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -340,7 +339,7 @@ public class IdeaApplication {
             mySplash = null; // Allow GC collect the splash window
           }
         }
-      }, ModalityState.NON_MODAL);
+      }, ModalityState.any());
 
       TransactionGuard.submitTransaction(app, () -> {
         Project projectFromCommandLine = myPerformProjectLoad ? loadProjectFromExternalCommandLine() : null;
