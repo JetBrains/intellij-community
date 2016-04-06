@@ -57,6 +57,11 @@ public class JavaFxUnusedImportsInspection extends XmlSuppressableInspectionTool
           usedNames.add(packageName);
         }
       }
+
+      @Override
+      protected void appendDemandedPackageName(@NotNull String packageName) {
+        usedNames.add(packageName);
+      }
     });
 
     final InspectionManager inspectionManager = InspectionManager.getInstance(file.getProject());
