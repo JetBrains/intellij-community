@@ -15,8 +15,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.problems.WolfTheProblemSolver;
+import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.core.EduDocumentListener;
+import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
+import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.navigation.StudyNavigator;
@@ -76,11 +79,20 @@ public class StudyEditorFactoryListener implements EditorFactoryListener {
                     StudyUtils.updateToolWindows(project);
                     studyToolWindow.show(null);
                   }
+                  Course course = StudyTaskManager.getInstance(project).getCourse();
+                  if (course == null) {
+                    return;
+                  }
+
                   if (!taskFile.getAnswerPlaceholders().isEmpty()) {
                     StudyNavigator.navigateToFirstAnswerPlaceholder(editor, taskFile);
-                    StudyEditor.addDocumentListener(document, new EduDocumentListener(taskFile));
-                    StudyUtils.drawAllWindows(editor, taskFile);
-                    editor.addEditorMouseListener(new WindowSelectionListener(taskFile));
+                    boolean isStudyProject = EduNames.STUDY.equals(course.getCourseType());
+                    StudyEditor.addDocumentListener(document, new EduDocumentListener(taskFile, true,
+                                                                                      !isStudyProject));
+                    StudyUtils.drawAllWindows(editor, taskFile, isStudyProject);
+                    if (isStudyProject) {
+                      editor.addEditorMouseListener(new WindowSelectionListener(taskFile));
+                    }
                   }
                 }
               }

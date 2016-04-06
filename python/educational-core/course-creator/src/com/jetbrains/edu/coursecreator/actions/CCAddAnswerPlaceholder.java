@@ -98,7 +98,7 @@ public class CCAddAnswerPlaceholder extends CCAnswerPlaceholderAction {
       answerPlaceholders.remove(answerPlaceholder);
       final Editor editor = state.getEditor();
       editor.getMarkupModel().removeAllHighlighters();
-      StudyUtils.drawAllWindows(editor, taskFile);
+      StudyUtils.drawAllWindows(editor, taskFile, false);
       EduAnswerPlaceholderPainter.createGuardedBlocks(editor, taskFile, false);
     }
   }

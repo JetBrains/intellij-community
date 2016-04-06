@@ -300,20 +300,23 @@ public class StudyUtils {
     return null;
   }
 
-
   public static void drawAllWindows(Editor editor, TaskFile taskFile) {
+    drawAllWindows(editor, taskFile, true);
+  }
+
+  public static void drawAllWindows(Editor editor, TaskFile taskFile, boolean useLength) {
     editor.getMarkupModel().removeAllHighlighters();
     final Project project = editor.getProject();
     if (project == null) return;
     final StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
     for (AnswerPlaceholder answerPlaceholder : taskFile.getAnswerPlaceholders()) {
       final JBColor color = taskManager.getColor(answerPlaceholder);
-      EduAnswerPlaceholderPainter.drawAnswerPlaceholder(editor, answerPlaceholder, true, color);
+      EduAnswerPlaceholderPainter.drawAnswerPlaceholder(editor, answerPlaceholder, useLength, color);
     }
     final Document document = editor.getDocument();
     EditorActionManager.getInstance()
       .setReadonlyFragmentModificationHandler(document, new EduAnswerPlaceholderDeleteHandler(editor));
-    EduAnswerPlaceholderPainter.createGuardedBlocks(editor, taskFile, true);
+    EduAnswerPlaceholderPainter.createGuardedBlocks(editor, taskFile, useLength);
     editor.getColorsScheme().setColor(EditorColors.READONLY_FRAGMENT_BACKGROUND_COLOR, null);
   }
 
