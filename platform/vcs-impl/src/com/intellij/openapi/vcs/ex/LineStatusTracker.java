@@ -950,32 +950,9 @@ public class LineStatusTracker {
       myRevision = revision;
     }
 
-    public long getNumber() {
-      return myNumber;
-    }
-
-    public VcsRevisionNumber getRevision() {
-      return myRevision;
-    }
-
     public boolean contains(final RevisionPack previous) {
-      if (myRevision.equals(previous.getRevision()) && !myRevision.equals(VcsRevisionNumber.NULL)) return true;
-      return myNumber >= previous.getNumber();
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      RevisionPack that = (RevisionPack)o;
-
-      return myRevision.equals(that.getRevision());
-    }
-
-    @Override
-    public int hashCode() {
-      return myRevision.hashCode();
+      if (myRevision.equals(previous.myRevision) && !myRevision.equals(VcsRevisionNumber.NULL)) return true;
+      return myNumber >= previous.myNumber;
     }
   }
 
