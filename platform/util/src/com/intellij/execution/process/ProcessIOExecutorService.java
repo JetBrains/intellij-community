@@ -16,6 +16,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author peter
  */
 public class ProcessIOExecutorService extends ThreadPoolExecutor {
+  public static final String POOLED_THREAD_PREFIX = "Process I/O pool ";
   public static final ProcessIOExecutorService INSTANCE = new ProcessIOExecutorService();
 
   /**
@@ -30,7 +31,7 @@ public class ProcessIOExecutorService extends ThreadPoolExecutor {
       @NotNull
       @Override
       public Thread newThread(@NotNull final Runnable r) {
-        Thread thread = new Thread(r, "Process I/O pool " + counter.incrementAndGet());
+        Thread thread = new Thread(r, POOLED_THREAD_PREFIX + counter.incrementAndGet());
         thread.setPriority(Thread.NORM_PRIORITY - 1);
         return thread;
       }
