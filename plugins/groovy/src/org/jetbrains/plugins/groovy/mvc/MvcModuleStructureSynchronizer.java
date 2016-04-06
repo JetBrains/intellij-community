@@ -26,7 +26,6 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ReadTask;
 import com.intellij.openapi.project.DumbAwareRunnable;
@@ -296,9 +295,7 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
         return !myProject.isDisposed() && orderSnapshot.equals(takeOrderSnapshot());
       }
     };
-    GuiUtils.invokeLaterIfNeeded(
-      () -> ProgressIndicatorUtils.scheduleWithWriteActionPriority(new ProgressIndicatorBase(), ourExecutor, task),
-      ModalityState.NON_MODAL);
+    GuiUtils.invokeLaterIfNeeded(() -> ProgressIndicatorUtils.scheduleWithWriteActionPriority(ourExecutor, task), ModalityState.NON_MODAL);
   }
 
   private LinkedHashSet<Pair<Object, SyncAction>> takeOrderSnapshot() {
