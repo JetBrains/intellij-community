@@ -116,7 +116,7 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
               @Override
               public void run() {
                 if (!exportToHTML) {
-                  dupm2XML(outputDirectoryName);
+                  dump2xml(outputDirectoryName);
                 }
                 else {
                   final HTMLExportFrameMaker maker = new HTMLExportFrameMaker(outputDirectoryName, myView.getProject());
@@ -160,7 +160,7 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
     });
   }
 
-  private void dupm2XML(final String outputDirectoryName) {
+  private void dump2xml(final String outputDirectoryName) {
     try {
       final File outputDir = new File(outputDirectoryName);
       if (!outputDir.exists() && !outputDir.mkdirs()) {
