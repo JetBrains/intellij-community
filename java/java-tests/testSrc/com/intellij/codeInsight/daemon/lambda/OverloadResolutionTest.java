@@ -225,6 +225,10 @@ public class OverloadResolutionTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testIgnoreStaticCorrectnessDuringOverloadResolution() throws Exception {
+    doTest(false);
+  }
+
   private void doTest() {
     doTest(true);
   }
