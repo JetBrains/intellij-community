@@ -35,7 +35,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class VcsLogProjectManager {
   @NotNull private final Project myProject;
@@ -48,10 +47,6 @@ public class VcsLogProjectManager {
   public VcsLogProjectManager(@NotNull Project project, @NotNull VcsLogTabsProperties uiProperties) {
     myProject = project;
     myUiProperties = uiProperties;
-  }
-
-  public void init() {
-    myLogManager.getValue();
   }
 
   @Nullable
@@ -92,6 +87,38 @@ public class VcsLogProjectManager {
   public void disposeLog() {
     myUi = null;
     myLogManager.drop();
+  }
+
+  void initOnStartup() {
+    Runnable command = new Runnable() {
+      @Override
+      public void run() {
+        if (hasDvcsRoots()) {
+          myLogManager.getValue();
+        }
+      }
+    };
+
+    MessageBusConnection connection = myProject.getMessageBus().connect(myProject);
+    connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, new VcsListener() {
+      @Override
+      public void directoryMappingChanged() {
+        if (hasDvcsRoots()) {
+          new HeavyAwareExecutor(myProject).execute(command);
+        }
+        else {
+          disposeLog();
+        }
+      }
+    });
+
+    if (hasDvcsRoots()) {
+      new HeavyAwareExecutor(myProject).execute(command);
+    }
+  }
+
+  private boolean hasDvcsRoots() {
+    return !VcsLogManager.findLogProviders(getVcsRoots(), myProject).isEmpty();
   }
 
   public static VcsLogProjectManager getInstance(@NotNull Project project) {
@@ -137,34 +164,7 @@ public class VcsLogProjectManager {
     @Override
     public void runActivity(@NotNull Project project) {
       if (!PostponableLogRefresher.keepUpToDate()) return;
-
-      VcsLogProjectManager logManager = getInstance(project);
-      AtomicBoolean isInitialized = new AtomicBoolean(false);
-      MessageBusConnection connection = project.getMessageBus().connect();
-      connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, new VcsListener() {
-        @Override
-        public void directoryMappingChanged() {
-          init(logManager, connection, isInitialized);
-        }
-      });
-
-      if (!logManager.getVcsRoots().isEmpty()) {
-        init(logManager, connection, isInitialized);
-      }
-    }
-
-    private static void init(@NotNull VcsLogProjectManager logManager,
-                             @NotNull MessageBusConnection connection,
-                             @NotNull AtomicBoolean isInitialized) {
-      if (isInitialized.compareAndSet(false, true)) {
-        connection.disconnect();
-        new HeavyAwareExecutor(logManager.myProject).execute(new Runnable() {
-          @Override
-          public void run() {
-            logManager.init();
-          }
-        });
-      }
+      getInstance(project).initOnStartup();
     }
   }
 }
