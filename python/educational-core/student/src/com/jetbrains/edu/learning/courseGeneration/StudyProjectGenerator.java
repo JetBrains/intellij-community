@@ -22,17 +22,18 @@ import com.intellij.platform.templates.github.ZipUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.edu.learning.StudyProjectComponent;
+import com.jetbrains.edu.learning.StudyTaskManager;
+import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
 import com.jetbrains.edu.learning.courseFormat.Task;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
-import com.jetbrains.edu.learning.StudyProjectComponent;
-import com.jetbrains.edu.learning.StudyTaskManager;
-import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.stepic.CourseInfo;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
+import com.jetbrains.edu.learning.stepic.StepicUser;
 import org.apache.commons.codec.binary.Base64;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -466,10 +467,13 @@ public class StudyProjectGenerator {
         courseInfo.setName(courseName);
         courseInfo.setDescription(courseDescription);
         courseInfo.setType("pycharm " + language);
-        final ArrayList<CourseInfo.Author> authors = new ArrayList<>();
+        final ArrayList<StepicUser> authors = new ArrayList<>();
         for (JsonElement author : courseAuthors) {
           final JsonObject authorAsJsonObject = author.getAsJsonObject();
-          authors.add(new CourseInfo.Author(authorAsJsonObject.get("first_name").getAsString(), authorAsJsonObject.get("last_name").getAsString()));
+          final StepicUser stepicUser = new StepicUser();
+          stepicUser.setFirst_name(authorAsJsonObject.get("first_name").getAsString());
+          stepicUser.setLast_name(authorAsJsonObject.get("last_name").getAsString());
+          authors.add(stepicUser);
         }
         courseInfo.setAuthors(authors);
       }

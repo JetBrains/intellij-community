@@ -12,20 +12,24 @@ import java.util.List;
  * and when project is being created
  */
 public class CourseInfo {
-  boolean is_public;
-  public List<Integer> sections;
   @SerializedName("title")
   private String myName;
+  
   @SerializedName("summary")
   private String myDescription;
+  
   @SerializedName("course_format")
   //course type in format "pycharm <language>"
   private String myType = "pycharm Python";
-
-  List<Integer> instructors = new ArrayList<Integer>();
-
-  List<Author> myAuthors = new ArrayList<Author>();
+  
+  @SerializedName("is_adaptive")
+  private boolean isAdaptive;
+  
   int id;
+  boolean is_public;
+  public List<Integer> sections;
+  List<Integer> instructors = new ArrayList<Integer>();
+  List<StepicUser> myAuthors = new ArrayList<>();
 
   public static CourseInfo INVALID_COURSE = new CourseInfo();
 
@@ -34,7 +38,7 @@ public class CourseInfo {
   }
 
   @NotNull
-  public List<Author> getAuthors() {
+  public List<StepicUser> getAuthors() {
     return myAuthors;
   }
 
@@ -93,18 +97,18 @@ public class CourseInfo {
     myName = name;
   }
 
-  public void setAuthors(List<Author> authors) {
+  public void setAuthors(List<StepicUser> authors) {
     myAuthors = authors;
-    for (Author author : authors) {
+    for (StepicUser author : authors) {
       if (author.id > 0) {
         instructors.add(author.id);
       }
     }
   }
 
-  public void addAuthor(Author author) {
+  public void addAuthor(StepicUser author) {
     if (myAuthors == null) {
-      myAuthors = new ArrayList<Author>();
+      myAuthors = new ArrayList<>();
     }
     myAuthors.add(author);
   }
@@ -115,5 +119,9 @@ public class CourseInfo {
 
   public void setType(String type) {
     myType = type;
+  }
+  
+  public boolean isAdaptive() {
+    return isAdaptive;
   }
 }

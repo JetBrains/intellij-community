@@ -15,7 +15,6 @@ import com.jetbrains.edu.learning.actions.StudyRunAction;
 import com.jetbrains.edu.learning.checker.StudyCheckTask;
 import com.jetbrains.edu.learning.checker.StudyCheckUtils;
 import com.jetbrains.edu.learning.checker.StudyTestRunner;
-import com.jetbrains.edu.learning.checker.StudyTestsOutputParser;
 import com.jetbrains.edu.learning.courseFormat.StudyStatus;
 import com.jetbrains.edu.learning.courseFormat.Task;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
@@ -92,7 +91,7 @@ public class PyStudyCheckAction extends StudyCheckAction {
                                       final String commandLine) {
     return new StudyCheckTask(project, studyState, myCheckInProgress, testProcess, commandLine) {
             @Override
-            protected void onTaskFailed(StudyTestsOutputParser.TestsOutput testsOutput) {
+            protected void onTaskFailed(String message) {
               ApplicationManager.getApplication().invokeLater(() -> {
                 if (myTaskDir == null) return;
                 myTaskManger.setStatus(myTask, StudyStatus.Failed);
@@ -107,7 +106,7 @@ public class PyStudyCheckAction extends StudyCheckAction {
                     StudyCheckUtils.runSmartTestProcess(myTaskDir, testRunner, name, taskFile, project);
                   }));
                 }
-                StudyCheckUtils.showTestResultPopUp(testsOutput.getMessage(), MessageType.ERROR.getPopupBackground(), project);
+                StudyCheckUtils.showTestResultPopUp(message, MessageType.ERROR.getPopupBackground(), project);
                 StudyCheckUtils.navigateToFailedPlaceholder(myStudyState, myTask, myTaskDir, project);
               });
             }

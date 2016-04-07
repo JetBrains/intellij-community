@@ -6,8 +6,10 @@ import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -17,8 +19,10 @@ import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.actions.StudyAfterCheckAction;
 import com.jetbrains.edu.learning.core.EduUtils;
+import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.StudyStatus;
 import com.jetbrains.edu.learning.courseFormat.Task;
+import com.jetbrains.edu.learning.stepic.EduAdaptiveStepicConnector;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
 import com.jetbrains.edu.learning.stepic.StudySettings;
 import org.jetbrains.annotations.NotNull;
@@ -70,12 +74,23 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
 
   @Override
   public void run(@NotNull ProgressIndicator indicator) {
+    final Course course = StudyTaskManager.getInstance(myProject).getCourse();
+    if (course != null && course.isAdaptive()) {
+      checkAdaptiveCourse(indicator);
+    }
+    else {
+      if (checkCourse(indicator)) return;
+    }
+    runAfterTaskSolvedActions();
+  }
+
+  private boolean checkCourse(@NotNull ProgressIndicator indicator) {
     final CapturingProcessHandler handler = new CapturingProcessHandler(myTestProcess, null, myCommandLine);
     final ProcessOutput output = handler.runProcessWithProgressIndicator(indicator);
     if (indicator.isCanceled()) {
       ApplicationManager.getApplication().invokeLater(
         () -> StudyCheckUtils.showTestResultPopUp("Check cancelled", MessageType.WARNING.getPopupBackground(), myProject));
-      return;
+      return true;
     }
 
 
@@ -88,31 +103,56 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
                                                                                             myProject));
       //log error output of tests
       LOG.info("#educational " + stderr);
-      return;
+      return true;
     }
 
     postAttemptToStepic(testsOutput);
 
 
     if (testsOutput.isSuccess()) {
-      onTaskSolved(testsOutput);
+      onTaskSolved(testsOutput.getMessage());
     }
     else {
-      onTaskFailed(testsOutput);
+      onTaskFailed(testsOutput.getMessage());
     }
-    runAfterTaskSolvedActions();
+    return false;
   }
 
-  protected void onTaskFailed(StudyTestsOutputParser.TestsOutput testsOutput) {
+  private void checkAdaptiveCourse(ProgressIndicator indicator) {
+    ProgressManager.getInstance().runProcessWithProgressAsynchronously(new Backgroundable(myProject, "Checking Task") {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        final Pair<Boolean, String> pair = EduAdaptiveStepicConnector.checkTask(myTask, myProject);
+        if (pair != null) {
+          final String checkMessage = pair.getSecond();
+          if (pair.getFirst()) {
+            onTaskSolved(checkMessage);
+          }
+          else {
+            onTaskFailed(checkMessage);
+          }
+        }
+        else {
+          ApplicationManager.getApplication().invokeLater(() ->
+                                                            StudyCheckUtils.showTestResultPopUp("Failed to launch checking",
+                                                                                                MessageType.WARNING.getPopupBackground(),
+                                                                                                myProject));
+        }
+      }
+    }, indicator);
+    
+  }
+
+  protected void onTaskFailed( String message) {
     myTaskManger.setStatus(myTask, StudyStatus.Failed);
     ApplicationManager.getApplication().invokeLater(
-      () -> StudyCheckUtils.showTestResultPopUp(testsOutput.getMessage(), MessageType.ERROR.getPopupBackground(), myProject));
+      () -> StudyCheckUtils.showTestResultPopUp(message, MessageType.ERROR.getPopupBackground(), myProject));
   }
 
-  protected void onTaskSolved(StudyTestsOutputParser.TestsOutput testsOutput) {
+  protected void onTaskSolved(String message) {
     myTaskManger.setStatus(myTask, StudyStatus.Solved);
     ApplicationManager.getApplication().invokeLater(
-      () -> StudyCheckUtils.showTestResultPopUp(testsOutput.getMessage(), MessageType.INFO.getPopupBackground(), myProject));
+      () -> StudyCheckUtils.showTestResultPopUp(message, MessageType.INFO.getPopupBackground(), myProject));
   }
 
   private void runAfterTaskSolvedActions() {

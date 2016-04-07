@@ -22,20 +22,31 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
+import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.ui.JBCardLayout;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import com.jetbrains.edu.learning.StudyBasePluginConfigurator;
 import com.jetbrains.edu.learning.StudyPluginConfigurator;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.courseFormat.Course;
+import com.jetbrains.edu.learning.stepic.EduAdaptiveStepicConnector;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.Map;
 
 public abstract class StudyToolWindow extends SimpleToolWindowPanel implements DataProvider, Disposable {
@@ -59,7 +70,13 @@ public abstract class StudyToolWindow extends SimpleToolWindowPanel implements D
     JPanel toolbarPanel = createToolbarPanel(project);
     setToolbar(toolbarPanel);
 
-    myContentPanel.add(TASK_INFO_ID, createTaskInfoPanel(taskText, project));
+    final JPanel panel = new JPanel(new VerticalFlowLayout());
+    final Course course = StudyTaskManager.getInstance(project).getCourse();
+    if (course != null && course.isAdaptive()) {
+      panel.add(createReactionPanel());
+    }
+    panel.add(createTaskInfoPanel(taskText, project));
+    myContentPanel.add(TASK_INFO_ID, panel);
     mySplitPane.setFirstComponent(myContentPanel);
     addAdditionalPanels(project);
     myCardLayout.show(myContentPanel, TASK_INFO_ID);
@@ -82,7 +99,67 @@ public abstract class StudyToolWindow extends SimpleToolWindowPanel implements D
       }
     }
   }
+  
+  public JPanel createReactionPanel() {
+    final JPanel panel = new JPanel(new GridBagLayout());
+    panel.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, JBColor.border()));
+    final JPanel hardPanel = new JPanel(new BorderLayout());
+    hardPanel.add(new JLabel("Too hard"), BorderLayout.CENTER);
+    hardPanel.setBorder(BorderFactory.createEtchedBorder());
 
+    final JPanel boringPanel = new JPanel(new BorderLayout());
+    boringPanel.setBorder(BorderFactory.createEtchedBorder());
+    boringPanel.add(new JLabel("Too boring"), BorderLayout.CENTER);
+
+    final GridBagConstraints c = new GridBagConstraints();
+    c.fill  = GridBagConstraints.HORIZONTAL;
+    c.gridx = 0;
+    c.gridy = 0;
+    c.weightx = 1;
+    panel.add(hardPanel, c);
+    c.gridx =  1;
+    panel.add(boringPanel, c);
+    c.gridy = 1;
+    c.weightx = 1;
+    panel.add(Box.createVerticalBox(), c);
+
+    final Project project = ProjectUtil.guessCurrentProject(myContentPanel);
+    addMouseListener(hardPanel, () -> EduAdaptiveStepicConnector.addNextRecommendedTask(project, 0));
+    addMouseListener(boringPanel, () -> EduAdaptiveStepicConnector.addNextRecommendedTask(project, -1));
+    
+    return panel;
+  }
+
+  private static void addMouseListener(@NotNull final JPanel panel, @NotNull Runnable onClickAction ) {
+    panel.addMouseListener(new MouseAdapter() {
+      @Override
+      public void mouseClicked(MouseEvent e) {
+        if (e.getClickCount() == 1) {
+          final ProgressIndicatorBase progress = new ProgressIndicatorBase();
+          progress.setText("Loading Next Recommendation");
+          ProgressManager.getInstance().run(new Task.Backgroundable(ProjectUtil.guessCurrentProject(panel),
+                                                                    "Loading Next Recommendation") {
+
+            @Override
+            public void run(@NotNull ProgressIndicator indicator) {
+              onClickAction.run();
+            }
+          });
+        }
+      }
+
+      @Override
+      public void mouseEntered(MouseEvent e) {
+        panel.setBackground(UIUtil.getTreeSelectionBackground());
+      }
+
+      @Override
+      public void mouseExited(MouseEvent e) {
+        panel.setBackground(UIUtil.getLabelBackground());
+      }
+    });
+  }
+  
   public void dispose() {
   }
   
