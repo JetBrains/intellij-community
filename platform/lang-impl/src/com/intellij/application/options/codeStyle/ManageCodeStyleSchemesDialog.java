@@ -122,32 +122,23 @@ public class ManageCodeStyleSchemesDialog extends DialogWrapper {
             final CodeStyleScheme scheme = importExternalCodeStyle(importer);
             if (scheme != null) {
               final String additionalImportInfo = StringUtil.notNullize(importer.getAdditionalImportInfo(scheme));
-              showStatus(myImportButton,
+              SchemeImportUtil
+                .showStatus(myImportButton,
                          ApplicationBundle.message("message.code.style.scheme.import.success", selectedImporterName, scheme.getName(), additionalImportInfo),
                          MessageType.INFO);
             }
           }
           catch (SchemeImportException e) {
             if (e.isWarning()) {
-              showStatus(myImportButton, e.getMessage(), MessageType.WARNING);
+              SchemeImportUtil.showStatus(myImportButton, e.getMessage(), MessageType.WARNING);
               return;
             }
             final String message = ApplicationBundle.message("message.code.style.scheme.import.failure", selectedImporterName, e.getMessage());
-            showStatus(myImportButton, message, MessageType.ERROR);
+            SchemeImportUtil.showStatus(myImportButton, message, MessageType.ERROR);
           }
         }
       }
     }
-  }
-
-  private static void showStatus(final JComponent component, final String message, MessageType messageType) {
-    BalloonBuilder balloonBuilder = JBPopupFactory.getInstance()
-      .createHtmlTextBalloonBuilder(message, messageType.getDefaultIcon(),
-                                    messageType.getPopupBackground(), null);
-    balloonBuilder.setFadeoutTime(5000);
-    final Balloon balloon = balloonBuilder.createBalloon();
-    balloon.showInCenterOf(component);
-    Disposer.register(ProjectManager.getInstance().getDefaultProject(), balloon);
   }
 
   @Nullable
@@ -415,6 +406,6 @@ public class ManageCodeStyleSchemesDialog extends DialogWrapper {
 
   private void exportSelectedScheme() {
     new CodeStyleSchemeExporterUI(myExportButton, getSelectedScheme(),
-                                  (message, messageType) -> showStatus(myExportButton, message, messageType)).export();
+                                  (message, messageType) -> SchemeImportUtil.showStatus(myExportButton, message, messageType)).export();
   }
 }

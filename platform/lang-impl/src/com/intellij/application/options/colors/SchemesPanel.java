@@ -29,6 +29,7 @@ import com.intellij.openapi.options.SchemeImportUtil;
 import com.intellij.openapi.options.SchemeImporter;
 import com.intellij.openapi.options.SchemeImporterEP;
 import com.intellij.openapi.project.DefaultProjectFactory;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
@@ -242,7 +243,7 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
               
             }
             catch (SchemeImportException e) {
-              e.printStackTrace();
+              SchemeImportUtil.showStatus(myImportButton, "Import failed: " + e.getMessage(), MessageType.ERROR);
             }
           }
         }

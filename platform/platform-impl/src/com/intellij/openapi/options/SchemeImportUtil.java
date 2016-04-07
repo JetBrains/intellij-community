@@ -18,10 +18,17 @@ package com.intellij.openapi.options;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.BalloonBuilder;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -58,5 +65,15 @@ public class SchemeImportUtil {
     if (virtualFiles.length != 1) return null;
     virtualFiles[0].refresh(false, false);
     return virtualFiles[0];
+  }
+
+  public static void showStatus(final JComponent component, final String message, MessageType messageType) {
+    BalloonBuilder balloonBuilder = JBPopupFactory.getInstance()
+      .createHtmlTextBalloonBuilder(message, messageType.getDefaultIcon(),
+                                    messageType.getPopupBackground(), null);
+    balloonBuilder.setFadeoutTime(5000);
+    final Balloon balloon = balloonBuilder.createBalloon();
+    balloon.showInCenterOf(component);
+    Disposer.register(ProjectManager.getInstance().getDefaultProject(), balloon);
   }
 }
