@@ -3,8 +3,12 @@ package com.jetbrains.edu.learning.ui;
 import com.intellij.facet.ui.FacetValidatorsManager;
 import com.intellij.facet.ui.ValidationResult;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DefaultProjectFactoryImpl;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -13,8 +17,8 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
-import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.StudyUtils;
+import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import com.jetbrains.edu.learning.stepic.CourseInfo;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
@@ -22,6 +26,7 @@ import com.jetbrains.edu.learning.stepic.StudySettings;
 import icons.InteractiveLearningIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.service.SharedThreadPool;
 
 import javax.swing.*;
 import java.awt.*;
@@ -29,15 +34,18 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 /**
  * author: liana
  * data: 7/31/14.
  */
 public class StudyNewProjectPanel{
+  private static  final Logger LOG = Logger.getInstance(StudyNewProjectPanel.class);
   private List<CourseInfo> myAvailableCourses = new ArrayList<CourseInfo>();
   private JButton myBrowseButton;
-  private JComboBox myCoursesComboBox;
+  private JComboBox<CourseInfo> myCoursesComboBox;
   private JButton myRefreshButton;
   private JPanel myContentPanel;
   private JLabel myAuthorLabel;
@@ -261,13 +269,31 @@ public class StudyNewProjectPanel{
       }
 
       super.doOKAction();
-      final boolean isSuccess = EduStepicConnector.login(myRemoteCourse.getLogin(), myRemoteCourse.getPassword());
-      if (!isSuccess) {
-        setError("Failed to log in");
-      }
-      StudySettings.getInstance().setLogin(myRemoteCourse.getLogin());
-      StudySettings.getInstance().setPassword(myRemoteCourse.getPassword());
-      refreshCoursesList();
+      final ProgressManager progressManager = ProgressManager.getInstance();
+      progressManager.runProcessWithProgressSynchronously(() -> {
+
+        final Future<?> future = SharedThreadPool.getInstance().executeOnPooledThread(() -> {
+          final boolean isSuccess = EduStepicConnector.login(myRemoteCourse.getLogin(), myRemoteCourse.getPassword());
+          ApplicationManager.getApplication().invokeLater(() -> {
+            if (!isSuccess) {
+              setError("Failed to log in");
+            }
+            StudySettings.getInstance().setLogin(myRemoteCourse.getLogin());
+            StudySettings.getInstance().setPassword(myRemoteCourse.getPassword());
+            refreshCoursesList();
+          });
+        });
+
+        while (!future.isDone()) {
+          progressManager.getProgressIndicator().checkCanceled();
+          try {
+            TimeUnit.MILLISECONDS.sleep(500);
+          }
+          catch (final InterruptedException e) {
+            LOG.warn(e.getMessage());
+          }
+        }
+      }, "Getting Stepic Course List", true, new DefaultProjectFactoryImpl().getDefaultProject());
     }
   }
 
