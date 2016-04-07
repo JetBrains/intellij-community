@@ -98,7 +98,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     myChangesBrowser.getViewer().setScrollPaneBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
     myChangesBrowser.getDiffAction().registerCustomShortcutSet(myChangesBrowser.getDiffAction().getShortcutSet(), getGraphTable());
     myChangesBrowser.getEditSourceAction().registerCustomShortcutSet(CommonShortcuts.getEditSource(), getGraphTable());
-    setDefaultEmptyText(myChangesBrowser);
+    myChangesBrowser.getViewer().setEmptyText("");
     myChangesLoadingPane = new JBLoadingPanel(new BorderLayout(), project, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
     myChangesLoadingPane.add(myChangesBrowser);
 
@@ -182,10 +182,6 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myGraphTable, SideBorder.TOP);
     myGraphTable.viewportSet(scrollPane.getViewport());
     return scrollPane;
-  }
-
-  private static void setDefaultEmptyText(ChangesBrowser changesBrowser) {
-    changesBrowser.getViewer().setEmptyText("");
   }
 
   @NotNull
@@ -369,7 +365,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       }
       else {
         myChangesBrowser.setChangesToDisplay(Collections.<Change>emptyList());
-        setDefaultEmptyText(myChangesBrowser);
+        myChangesBrowser.getViewer().setEmptyText("");
         myChangesLoadingPane.startLoading();
 
         final EmptyProgressIndicator indicator = new EmptyProgressIndicator();
