@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.testFramework;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.EmptyModuleType;
 import com.intellij.openapi.module.Module;
@@ -34,7 +33,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
-import com.intellij.util.Consumer;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.IndexableFileSet;
 import org.jetbrains.annotations.NotNull;
@@ -50,33 +48,27 @@ public class LightProjectDescriptor {
   public static final LightProjectDescriptor EMPTY_PROJECT_DESCRIPTOR = new LightProjectDescriptor();
 
   public void setUpProject(@NotNull final Project project, @NotNull final SetupHandler handler) throws Exception {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        Module module = createMainModule(project);
-        handler.moduleCreated(module);
-        VirtualFile sourceRoot = createSourcesRoot(module);
-        if (sourceRoot != null) {
-          handler.sourceRootCreated(sourceRoot);
-          createContentEntry(module, sourceRoot);
-        }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      Module module = createMainModule(project);
+      handler.moduleCreated(module);
+      VirtualFile sourceRoot = createSourcesRoot(module);
+      if (sourceRoot != null) {
+        handler.sourceRootCreated(sourceRoot);
+        createContentEntry(module, sourceRoot);
       }
     });
   }
 
   @NotNull
   public Module createMainModule(@NotNull final Project project) {
-    return ApplicationManager.getApplication().runWriteAction(new Computable<Module>() {
-      @Override
-      public Module compute() {
-        String moduleFilePath = "light_idea_test_case.iml";
-        File imlFile = new File(moduleFilePath);
-        if (imlFile.exists()) {
-          //temporary workaround for IDEA-147530: otherwise if someone saved module with this name before the created module will get its settings
-          FileUtil.delete(imlFile);
-        }
-        return ModuleManager.getInstance(project).newModule(moduleFilePath, getModuleType().getId());
+    return ApplicationManager.getApplication().runWriteAction((Computable<Module>)() -> {
+      String moduleFilePath = "light_idea_test_case.iml";
+      File imlFile = new File(moduleFilePath);
+      if (imlFile.exists()) {
+        //temporary workaround for IDEA-147530: otherwise if someone saved module with this name before the created module will get its settings
+        FileUtil.delete(imlFile);
       }
+      return ModuleManager.getInstance(project).newModule(moduleFilePath, getModuleType().getId());
     });
   }
 
@@ -119,30 +111,22 @@ public class LightProjectDescriptor {
       }
     };
     FileBasedIndex.getInstance().registerIndexableSet(indexableFileSet, null);
-    Disposer.register(module.getProject(), new Disposable() {
-      @Override
-      public void dispose() {
-        FileBasedIndex.getInstance().removeIndexableSet(indexableFileSet);
-      }
-    });
+    Disposer.register(module.getProject(), () -> FileBasedIndex.getInstance().removeIndexableSet(indexableFileSet));
 
     return srcRoot;
   }
 
   protected void createContentEntry(@NotNull final Module module, @NotNull final VirtualFile srcRoot) {
-    updateModel(module, new Consumer<ModifiableRootModel>() {
-      @Override
-      public void consume(ModifiableRootModel model) {
-        Sdk sdk = getSdk();
-        if (sdk != null) {
-          model.setSdk(sdk);
-        }
-
-        ContentEntry contentEntry = model.addContentEntry(srcRoot);
-        contentEntry.addSourceFolder(srcRoot, false);
-
-        configureModule(module, model, contentEntry);
+    updateModel(module, model -> {
+      Sdk sdk = getSdk();
+      if (sdk != null) {
+        model.setSdk(sdk);
       }
+
+      ContentEntry contentEntry = model.addContentEntry(srcRoot);
+      contentEntry.addSourceFolder(srcRoot, false);
+
+      configureModule(module, model, contentEntry);
     });
   }
 
@@ -163,9 +147,12 @@ public class LightProjectDescriptor {
 
   protected void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
   }
-  
+
   public interface SetupHandler {
-    void moduleCreated(@NotNull Module module);
-    void sourceRootCreated(@NotNull VirtualFile sourceRoot); 
-  } 
+    default void moduleCreated(@NotNull Module module) {
+    }
+
+    default void sourceRootCreated(@NotNull VirtualFile sourceRoot) {
+    }
+  }
 }

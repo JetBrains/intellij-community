@@ -8,7 +8,7 @@ import org.junit.Test
 import java.net.HttpURLConnection
 import java.net.URL
 
-private class RestApiTest : BuiltInServerTestCase() {
+internal class RestApiTest : BuiltInServerTestCase() {
   override val urlPathPrefix = "/api/file"
 
   @Test
