@@ -49,10 +49,6 @@ class JavaFxComponentIdReferenceProvider extends PsiReferenceProvider {
   @Override
   public PsiReference[] getReferencesByElement(@NotNull PsiElement element,
                                                @NotNull ProcessingContext context) {
-    final PsiElement parent = element.getParent();
-    if (parent instanceof XmlAttribute && FxmlConstants.FX_VALUE.equals(((XmlAttribute)parent).getName())) {
-      return PsiReference.EMPTY_ARRAY;
-    }
     final XmlAttributeValue xmlAttributeValue = (XmlAttributeValue)element;
     final String value = xmlAttributeValue.getValue();
     if (JavaFxPsiUtil.isIncorrectExpressionBinding(value)) {
