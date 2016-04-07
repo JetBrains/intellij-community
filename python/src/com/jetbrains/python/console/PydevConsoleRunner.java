@@ -576,7 +576,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
       }
       else {
         if (LOG.isDebugEnabled()) {
-          LOG.debug(String.format("Using direct communication for Python console: port %d on IDE side, port %d on PyDev side",
+          LOG.debug(String.format("Using direct communication for Python console: port %d on IDE side, port %d on pydevconsole.py side",
                                   remotePorts.second, remotePorts.first));
         }
 
