@@ -62,6 +62,8 @@ public class JavaFxRedundantPropertyValueInspection extends XmlSuppressableInspe
             attributeValue.startsWith("#") ||
             attributeValue.startsWith("%") ||
             FxmlConstants.FX_ID.equals(attributeName) ||
+            FxmlConstants.FX_VALUE.equals(attributeName) ||
+            FxmlConstants.FX_CONSTANT.equals(attributeName) ||
             FxmlConstants.FX_CONTROLLER.equals(attributeName)) {
           return;
         }
