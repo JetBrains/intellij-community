@@ -200,19 +200,14 @@ public class PyPep8NamingInspection extends PyInspection {
     public void visitPyClass(PyClass node) {
       final String name = node.getName();
       if (name == null) return;
-      if (isContextManager(node)) {
-        if (!LOWERCASE_REGEX.matcher(name).matches()) {
+      final String errorCode = "N801";
+      if (!ignoredErrors.contains(errorCode)) {
+        final boolean isLowercaseContextManagerClass = isContextManager(node) && LOWERCASE_REGEX.matcher(name).matches();
+        if (!isLowercaseContextManagerClass && !MIXEDCASE_REGEX.matcher(name).matches()) {
           final ASTNode nameNode = node.getNameNode();
           if (nameNode != null) {
-            registerProblem(nameNode.getPsi(), "Context manager class name should be lowercase", new PyRenameElementQuickFix());
+            registerAndAddRenameAndIgnoreErrorQuickFixes(nameNode.getPsi(), errorCode);
           }
-        }
-      }
-      else if ((!MIXEDCASE_REGEX.matcher(name).matches())) {
-        final String errorCode = "N801";
-        final ASTNode nameNode = node.getNameNode();
-        if (nameNode != null && !ignoredErrors.contains(errorCode)) {
-          registerAndAddRenameAndIgnoreErrorQuickFixes(nameNode.getPsi(), errorCode);
         }
       }
     }
