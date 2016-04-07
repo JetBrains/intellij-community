@@ -46,39 +46,19 @@ public class HTMLExporter {
   private final Map<RefEntity,String> myElementToFilenameMap;
   private final HTMLComposerImpl myComposer;
   private final Set<RefEntity> myGeneratedReferences;
-  private final Set<RefEntity> myGeneratedPages;
 
   public HTMLExporter(String rootFolder, HTMLComposerImpl composer) {
     myRootFolder = rootFolder;
     myElementToFilenameMap = new HashMap<RefEntity, String>();
     myFileCounter = 0;
     myComposer = composer;
-    myGeneratedPages = new HashSet<RefEntity>();
     myGeneratedReferences = new HashSet<RefEntity>();
   }
 
-  public void createPage(RefEntity element) throws IOException {
-    final String currentFileName = fileNameForElement(element);
-    StringBuffer buf = new StringBuffer("<html>" +
-                                        "<head>\n" +
-                                        "<link rel=\"stylesheet\" type=\"text/css\" href=\"../inspection-report-style.css\">\n" +
-                                        "</head>" +
-                                        "<body>");
-    appendNavBar(buf, element);
+  public String createPage(RefEntity element) {
+    StringBuffer buf = new StringBuffer();
     myComposer.composeWithExporter(buf, element, this);
-    buf.append("</body></html>");
-    writeFileImpl(myRootFolder, currentFileName, buf);
-    myGeneratedPages.add(element);
-  }
-
-  private void appendNavBar(@NonNls final StringBuffer buf, RefEntity element) {
-    buf.append("<a href=\"../index.html\" target=\"_top\">");
-    buf.append(InspectionsBundle.message("inspection.export.inspections.link.text"));
-    buf.append("</a>  ");
-    if (element instanceof RefElement) {
-      myComposer.appendElementReference(buf, getURL(element), InspectionsBundle.message("inspection.export.open.source.link.text"), "_blank");
-    }
-    buf.append("<hr>");
+    return buf.toString();
   }
 
   public static void writeFileImpl(String folder, @NonNls String fileName, CharSequence buf) throws IOException {
@@ -110,12 +90,14 @@ public class HTMLExporter {
     }
   }
 
+  //TODO delete all these methods
+
   public String getURL(RefEntity element) {
     myGeneratedReferences.add(element);
     return fileNameForElement(element);
   }
 
-  private String fileNameForElement(RefEntity element) {
+  public String fileNameForElement(RefEntity element) {
     @NonNls String fileName = myElementToFilenameMap.get(element);
 
     if (fileName == null) {
@@ -124,27 +106,6 @@ public class HTMLExporter {
     }
 
     return fileName;
-  }
-
-  private Set<RefEntity> getReferencesWithoutPages() {
-    HashSet<RefEntity> result = new HashSet<RefEntity>();
-    for (RefEntity refElement : myGeneratedReferences) {
-      if (!myGeneratedPages.contains(refElement)) {
-        result.add(refElement);
-      }
-    }
-
-    return result;
-  }
-
-  public void generateReferencedPages() throws IOException {
-    Set<RefEntity> extras = getReferencesWithoutPages();
-    while (extras.size() > 0) {
-      for (RefEntity refElement : extras) {
-        createPage(refElement);
-      }
-      extras = getReferencesWithoutPages();
-    }
   }
 
   public String getRootFolder() {
