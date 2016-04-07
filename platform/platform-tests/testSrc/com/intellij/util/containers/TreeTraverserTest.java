@@ -33,6 +33,22 @@ import static com.intellij.openapi.util.Conditions.not;
  */
 public class TreeTraverserTest extends TestCase {
 
+
+  /**
+   * <pre>
+   *                   --- 5
+   *           ---  2  --- 6
+   *         /         --- 7
+   *       /
+   *     /          --- 8
+   *   1   ---  3   --- 9
+   *     \          --- 10
+   *      \
+   *       \           --- 11
+   *         ---  4    --- 12
+   *                   --- 13
+   * </pre>
+   */
   private static Map<Integer, Collection<Integer>> numbers() {
     return ContainerUtil.<Integer, Collection<Integer>>immutableMapBuilder().
       put(1, Arrays.asList(2, 3, 4)).
@@ -455,7 +471,17 @@ public class TreeTraverserTest extends TestCase {
     assertEquals(Arrays.asList(5, 6, 3, 11, 12, 13), t.withRoot(1).regard(not(inRange(7, 10))).traverse(TreeTraversal.LEAVES_DFS).toList());
   }
 
-  public void testSkipExpandedBfs() {
+  public void testHideOneNodeDfs() {
+    JBTreeTraverser<Integer> t = filteredTraverser();
+    assertEquals(Arrays.asList(1, 2, 5, 6, 7, 4, 11, 12, 13), t.withRoot(1).expandAndFilter(x -> x != 3).traverse(TreeTraversal.PRE_ORDER_DFS).toList());
+  }
+
+  public void testHideOneNodeCompletelyBfs() {
+    JBTreeTraverser<Integer> t = filteredTraverser();
+    assertEquals(Arrays.asList(1, 2, 4, 5, 6, 7, 11, 12, 13), t.withRoot(1).expandAndFilter(x -> x != 3).traverse(TreeTraversal.PLAIN_BFS).toList());
+  }
+
+  public void testSkipExpandedCompletelyBfs() {
     JBTreeTraverser<Integer> t = filteredTraverser();
     assertEquals(Arrays.asList(2, 4, 8, 9, 10), t.withRoot(1).expand(IS_ODD).traverse(TreeTraversal.LEAVES_BFS).toList());
   }
