@@ -142,8 +142,7 @@ public class BuildNumberTest {
   @Test
   public void devSnapshotVersion() throws Exception {
     BuildNumber b = BuildNumber.fromString("__BUILD_NUMBER__");
-    assertTrue(b.asString(), b.getBaselineVersion() >= 2016);
-    assertEquals(b.asString(), -1, b.getBuildNumber());
+    assertTrue(b.asString(), b.getBaselineVersion() >= 145 && b.getBaselineVersion() <= 3000);
     assertTrue(b.isSnapshot());
     
     assertEquals(BuildNumber.fromString("__BUILD_NUMBER__"), BuildNumber.fromString("SNAPSHOT"));
