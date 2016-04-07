@@ -33,7 +33,7 @@ import javax.swing.tree.MutableTreeNode;
 /**
  * @author max
  */
-public class RefElementNode extends InspectionTreeNode {
+public class RefElementNode extends InspectionTreeNode implements RefElementAware {
   private boolean myHasDescriptorsUnder = false;
   private CommonProblemDescriptor mySingleDescriptor = null;
   protected final InspectionToolPresentation myToolPresentation;

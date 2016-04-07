@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,10 +26,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.activation.MimetypesFileTypeMap;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Date;
 
 import static org.jetbrains.io.Responses.*;
@@ -51,21 +52,21 @@ public class FileResponses {
   }
 
   @Nullable
-  public static HttpResponse prepareSend(@NotNull HttpRequest request, @NotNull Channel channel, long lastModified, @NotNull String path) {
+  public static HttpResponse prepareSend(@NotNull HttpRequest request, @NotNull Channel channel, long lastModified, @NotNull String filename) {
     if (checkCache(request, channel, lastModified)) {
       return null;
     }
 
     HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
-    response.headers().set(HttpHeaderNames.CONTENT_TYPE, getContentType(path));
+    response.headers().set(HttpHeaderNames.CONTENT_TYPE, getContentType(filename));
     addCommonHeaders(response);
     response.headers().set(HttpHeaderNames.CACHE_CONTROL, "private, must-revalidate");
     response.headers().set(HttpHeaderNames.LAST_MODIFIED, new Date(lastModified));
     return response;
   }
 
-  public static void sendFile(@NotNull HttpRequest request, @NotNull Channel channel, @NotNull File file) throws IOException {
-    HttpResponse response = prepareSend(request, channel, file.lastModified(), file.getPath());
+  public static void sendFile(@NotNull HttpRequest request, @NotNull Channel channel, @NotNull Path file) throws IOException {
+    HttpResponse response = prepareSend(request, channel, Files.getLastModifiedTime(file).toMillis(), file.getFileName().toString());
     if (response == null) {
       return;
     }
@@ -75,7 +76,7 @@ public class FileResponses {
     boolean fileWillBeClosed = false;
     RandomAccessFile raf;
     try {
-      raf = new RandomAccessFile(file, "r");
+      raf = new RandomAccessFile(file.toFile(), "r");
     }
     catch (FileNotFoundException ignored) {
       send(response(HttpResponseStatus.NOT_FOUND), channel, request);

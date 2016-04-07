@@ -362,6 +362,10 @@ public class JavaFXHighlightingTest extends AbstractJavaFXTestCase {
     doTest();
   }
 
+  public void testNestedClassConstants() throws Exception {
+    doTest("model/" + getTestName(false) + "Model.java");
+  }
+
   public void testBoxedConstantValue() throws Exception {
     doTest();
   }

@@ -16,14 +16,12 @@
 package org.jetbrains.builtInWebServer.ssi
 
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.util.io.FileUtilRt
-import com.intellij.util.SmartList
+import com.intellij.util.*
 import com.intellij.util.text.CharArrayUtil
 import gnu.trove.THashMap
 import io.netty.buffer.ByteBufUtf8Writer
-import java.io.File
-import java.io.FileInputStream
 import java.io.IOException
+import java.nio.file.Path
 import java.util.*
 
 internal val LOG = Logger.getInstance(SsiProcessor::class.java)
@@ -37,184 +35,168 @@ class SsiProcessor(allowExec: Boolean) {
   private val commands: MutableMap<String, SsiCommand> = THashMap()
 
   init {
-    commands.put("config", object : SsiCommand {
-      override fun process(state: SsiProcessingState, commandName: String, paramNames: List<String>, paramValues: Array<String>, writer: ByteBufUtf8Writer): Long {
-        for (i in paramNames.indices) {
-          val paramName = paramNames[i]
-          val paramValue = paramValues[i]
-          val substitutedValue = state.substituteVariables(paramValue)
-          if (paramName.equals("errmsg", ignoreCase = true)) {
-            state.configErrorMessage = substitutedValue
-          }
-          else if (paramName.equals("sizefmt", ignoreCase = true)) {
-            state.configSizeFmt = substitutedValue
-          }
-          else if (paramName.equals("timefmt", ignoreCase = true)) {
-            state.setConfigTimeFormat(substitutedValue, false)
-          }
-          else {
-            LOG.info("#config--Invalid attribute: " + paramName)
-            // We need to fetch this value each time, since it may change during the loop
-            writer.write(state.configErrorMessage)
-          }
+    commands.put("config", SsiCommand { state, commandName, paramNames, paramValues, writer ->
+      for (i in paramNames.indices) {
+        val paramName = paramNames[i]
+        val paramValue = paramValues[i]
+        val substitutedValue = state.substituteVariables(paramValue)
+        if (paramName.equals("errmsg", ignoreCase = true)) {
+          state.configErrorMessage = substitutedValue
         }
-        return 0
+        else if (paramName.equals("sizefmt", ignoreCase = true)) {
+          state.configSizeFmt = substitutedValue
+        }
+        else if (paramName.equals("timefmt", ignoreCase = true)) {
+          state.setConfigTimeFormat(substitutedValue, false)
+        }
+        else {
+          LOG.info("#config--Invalid attribute: " + paramName)
+          // We need to fetch this value each time, since it may change during the loop
+          writer.write(state.configErrorMessage)
+        }
       }
+      0
     })
-    commands.put("echo", object : SsiCommand {
-      override fun process(state: SsiProcessingState, commandName: String, paramNames: List<String>, paramValues: Array<String>, writer: ByteBufUtf8Writer): Long {
-        var encoding = "entity"
-        var originalValue: String? = null
-        val errorMessage = state.configErrorMessage
-        for (i in paramNames.indices) {
-          val paramName = paramNames[i]
-          val paramValue = paramValues[i]
-          if (paramName.equals("var", ignoreCase = true)) {
-            originalValue = paramValue
-          }
-          else if (paramName.equals("encoding", ignoreCase = true)) {
-            if (paramValue.equals("url", ignoreCase = true) || paramValue.equals("entity", ignoreCase = true) || paramValue.equals("none", ignoreCase = true)) {
-              encoding = paramValue
-            }
-            else {
-              LOG.info("#echo--Invalid encoding: " + paramValue)
-              writer.write(errorMessage)
-            }
+    commands.put("echo", SsiCommand { state, commandName, paramNames, paramValues, writer ->
+      var encoding = "entity"
+      var originalValue: String? = null
+      val errorMessage = state.configErrorMessage
+      for (i in paramNames.indices) {
+        val paramName = paramNames[i]
+        val paramValue = paramValues[i]
+        if (paramName.equals("var", ignoreCase = true)) {
+          originalValue = paramValue
+        }
+        else if (paramName.equals("encoding", ignoreCase = true)) {
+          if (paramValue.equals("url", ignoreCase = true) || paramValue.equals("entity", ignoreCase = true) || paramValue.equals("none", ignoreCase = true)) {
+            encoding = paramValue
           }
           else {
-            LOG.info("#echo--Invalid attribute: " + paramName)
+            LOG.info("#echo--Invalid encoding: " + paramValue)
             writer.write(errorMessage)
           }
         }
-        val variableValue = state.getVariableValue(originalValue!!, encoding)
-        writer.write(variableValue ?: "(none)")
-        return System.currentTimeMillis()
+        else {
+          LOG.info("#echo--Invalid attribute: " + paramName)
+          writer.write(errorMessage)
+        }
       }
+      val variableValue = state.getVariableValue(originalValue!!, encoding)
+      writer.write(variableValue ?: "(none)")
+      System.currentTimeMillis()
     })
     //noinspection StatementWithEmptyBody
     if (allowExec) {
       // commands.put("exec", new SsiExec());
     }
-    commands.put("include", object : SsiCommand {
-      override fun process(state: SsiProcessingState, commandName: String, paramNames: List<String>, paramValues: Array<String>, writer: ByteBufUtf8Writer): Long {
-        var lastModified: Long = 0
-        val configErrorMessage = state.configErrorMessage
-        for (i in paramNames.indices) {
-          val paramName = paramNames[i]
-          if (paramName.equals("file", ignoreCase = true) || paramName.equals("virtual", ignoreCase = true)) {
-            val substitutedValue = state.substituteVariables(paramValues[i])
-            try {
-              val virtual = paramName.equals("virtual", ignoreCase = true)
-              lastModified = state.ssiExternalResolver.getFileLastModified(substitutedValue, virtual)
-              val file = state.ssiExternalResolver.findFile(substitutedValue, virtual)
-              if (file == null) {
-                LOG.warn("#include-- Couldn't find file: " + substitutedValue)
-                return 0
-              }
-
-              val `in` = FileInputStream(file)
-              try {
-                writer.write(`in`, file.length().toInt())
-              }
-              finally {
-                `in`.close()
-              }
-            }
-            catch (e: IOException) {
-              LOG.warn("#include--Couldn't include file: " + substitutedValue, e)
-              writer.write(configErrorMessage)
-            }
-
-          }
-          else {
-            LOG.info("#include--Invalid attribute: " + paramName)
-            writer.write(configErrorMessage)
-          }
-        }
-        return lastModified
-      }
-    })
-    commands.put("flastmod", object : SsiCommand {
-      override fun process(state: SsiProcessingState, commandName: String, paramNames: List<String>, paramValues: Array<String>, writer: ByteBufUtf8Writer): Long {
-        var lastModified: Long = 0
-        val configErrMsg = state.configErrorMessage
-        for (i in paramNames.indices) {
-          val paramName = paramNames[i]
-          val paramValue = paramValues[i]
-          val substitutedValue = state.substituteVariables(paramValue)
-          if (paramName.equals("file", ignoreCase = true) || paramName.equals("virtual", ignoreCase = true)) {
+    commands.put("include", SsiCommand { state, commandName, paramNames, paramValues, writer ->
+      var lastModified: Long = 0
+      val configErrorMessage = state.configErrorMessage
+      for (i in paramNames.indices) {
+        val paramName = paramNames[i]
+        if (paramName.equals("file", ignoreCase = true) || paramName.equals("virtual", ignoreCase = true)) {
+          val substitutedValue = state.substituteVariables(paramValues[i])
+          try {
             val virtual = paramName.equals("virtual", ignoreCase = true)
             lastModified = state.ssiExternalResolver.getFileLastModified(substitutedValue, virtual)
-            val strftime = Strftime(state.configTimeFmt, Locale.US)
-            writer.write(strftime.format(Date(lastModified)))
-          }
-          else {
-            LOG.info("#flastmod--Invalid attribute: " + paramName)
-            writer.write(configErrMsg)
-          }
-        }
-        return lastModified
-      }
-    })
-    commands.put("fsize", SsiFsize())
-    commands.put("printenv", object : SsiCommand {
-      override fun process(state: SsiProcessingState, commandName: String, paramNames: List<String>, paramValues: Array<String>, writer: ByteBufUtf8Writer): Long {
-        var lastModified: Long = 0
-        // any arguments should produce an error
-        if (paramNames.isEmpty()) {
-          val variableNames = LinkedHashSet<String>()
-          //These built-in variables are supplied by the mediator ( if not over-written by the user ) and always exist
-          variableNames.add("DATE_GMT")
-          variableNames.add("DATE_LOCAL")
-          variableNames.add("LAST_MODIFIED")
-          state.ssiExternalResolver.addVariableNames(variableNames)
-          for (variableName in variableNames) {
-            var variableValue: String? = state.getVariableValue(variableName)
-            // This shouldn't happen, since all the variable names must have values
-            if (variableValue == null) {
-              variableValue = "(none)"
+            val file = state.ssiExternalResolver.findFile(substitutedValue, virtual)
+            if (file == null) {
+              LOG.warn("#include-- Couldn't find file: " + substitutedValue)
+              return@SsiCommand 0
             }
-            writer.append(variableName).append('=').append(variableValue).append('\n')
-            lastModified = System.currentTimeMillis()
+
+            file.inputStream().use {
+              writer.write(it, file.size().toInt())
+            }
           }
+          catch (e: IOException) {
+            LOG.warn("#include--Couldn't include file: " + substitutedValue, e)
+            writer.write(configErrorMessage)
+          }
+
         }
         else {
-          writer.write(state.configErrorMessage)
+          LOG.info("#include--Invalid attribute: " + paramName)
+          writer.write(configErrorMessage)
         }
-        return lastModified
       }
+      lastModified
     })
-    commands.put("set", object : SsiCommand {
-      override fun process(state: SsiProcessingState, commandName: String, paramNames: List<String>, paramValues: Array<String>, writer: ByteBufUtf8Writer): Long {
-        var lastModified: Long = 0
-        val errorMessage = state.configErrorMessage
-        var variableName: String? = null
-        for (i in paramNames.indices) {
-          val paramName = paramNames[i]
-          val paramValue = paramValues[i]
-          if (paramName.equals("var", ignoreCase = true)) {
-            variableName = paramValue
+    commands.put("flastmod", SsiCommand { state, commandName, paramNames, paramValues, writer ->
+      var lastModified: Long = 0
+      val configErrMsg = state.configErrorMessage
+      for (i in paramNames.indices) {
+        val paramName = paramNames[i]
+        val paramValue = paramValues[i]
+        val substitutedValue = state.substituteVariables(paramValue)
+        if (paramName.equals("file", ignoreCase = true) || paramName.equals("virtual", ignoreCase = true)) {
+          val virtual = paramName.equals("virtual", ignoreCase = true)
+          lastModified = state.ssiExternalResolver.getFileLastModified(substitutedValue, virtual)
+          val strftime = Strftime(state.configTimeFmt, Locale.US)
+          writer.write(strftime.format(Date(lastModified)))
+        }
+        else {
+          LOG.info("#flastmod--Invalid attribute: " + paramName)
+          writer.write(configErrMsg)
+        }
+      }
+      lastModified
+    })
+    commands.put("fsize", SsiFsize())
+    commands.put("printenv", SsiCommand { state, commandName, paramNames, paramValues, writer ->
+      var lastModified: Long = 0
+      // any arguments should produce an error
+      if (paramNames.isEmpty()) {
+        val variableNames = LinkedHashSet<String>()
+        //These built-in variables are supplied by the mediator ( if not over-written by the user ) and always exist
+        variableNames.add("DATE_GMT")
+        variableNames.add("DATE_LOCAL")
+        variableNames.add("LAST_MODIFIED")
+        state.ssiExternalResolver.addVariableNames(variableNames)
+        for (variableName in variableNames) {
+          var variableValue: String? = state.getVariableValue(variableName)
+          // This shouldn't happen, since all the variable names must have values
+          if (variableValue == null) {
+            variableValue = "(none)"
           }
-          else if (paramName.equals("value", ignoreCase = true)) {
-            if (variableName != null) {
-              val substitutedValue = state.substituteVariables(paramValue)
-              state.ssiExternalResolver.setVariableValue(variableName, substitutedValue)
-              lastModified = System.currentTimeMillis()
-            }
-            else {
-              LOG.info("#set--no variable specified")
-              writer.write(errorMessage)
-              throw SsiStopProcessingException()
-            }
+          writer.append(variableName).append('=').append(variableValue).append('\n')
+          lastModified = System.currentTimeMillis()
+        }
+      }
+      else {
+        writer.write(state.configErrorMessage)
+      }
+      lastModified
+    })
+    commands.put("set", SsiCommand { state, commandName, paramNames, paramValues, writer ->
+      var lastModified: Long = 0
+      val errorMessage = state.configErrorMessage
+      var variableName: String? = null
+      for (i in paramNames.indices) {
+        val paramName = paramNames[i]
+        val paramValue = paramValues[i]
+        if (paramName.equals("var", ignoreCase = true)) {
+          variableName = paramValue
+        }
+        else if (paramName.equals("value", ignoreCase = true)) {
+          if (variableName != null) {
+            val substitutedValue = state.substituteVariables(paramValue)
+            state.ssiExternalResolver.setVariableValue(variableName, substitutedValue)
+            lastModified = System.currentTimeMillis()
           }
           else {
-            LOG.info("#set--Invalid attribute: " + paramName)
+            LOG.info("#set--no variable specified")
             writer.write(errorMessage)
             throw SsiStopProcessingException()
           }
         }
-        return lastModified
+        else {
+          LOG.info("#set--Invalid attribute: " + paramName)
+          writer.write(errorMessage)
+          throw SsiStopProcessingException()
+        }
       }
+      lastModified
     })
 
     val ssiConditional = SsiConditional()
@@ -227,16 +209,16 @@ class SsiProcessor(allowExec: Boolean) {
   /**
    * @return the most current modified date resulting from any SSI commands
    */
-  fun process(ssiExternalResolver: SsiExternalResolver, file: File, writer: ByteBufUtf8Writer): Long {
-    val fileContents = FileUtilRt.loadFileText(file)
-    var lastModifiedDate = file.lastModified()
+  fun process(ssiExternalResolver: SsiExternalResolver, file: Path, writer: ByteBufUtf8Writer): Long {
+    val fileContents = file.readChars()
+    var lastModifiedDate = file.lastModified().toMillis()
     val ssiProcessingState = SsiProcessingState(ssiExternalResolver, lastModifiedDate)
     var index = 0
     var inside = false
     val command = StringBuilder()
-    writer.ensureWritable(file.length().toInt())
+    writer.ensureWritable(file.size().toInt())
     try {
-      while (index < fileContents.size) {
+      while (index < fileContents.length) {
         val c = fileContents[index]
         if (inside) {
           if (c == COMMAND_END[0] && charCmp(fileContents, index, COMMAND_END)) {
@@ -426,7 +408,7 @@ class SsiProcessor(allowExec: Boolean) {
     return if (firstLetter == -1) "" else instruction.substring(firstLetter, lastLetter + 1)
   }
 
-  protected fun charCmp(buf: CharArray, index: Int, command: String) = CharArrayUtil.regionMatches(buf, index, index + command.length, command)
+  protected fun charCmp(buf: CharSequence, index: Int, command: String) = CharArrayUtil.regionMatches(buf, index, index + command.length, command)
 
   protected fun isSpace(c: Char) = c == ' ' || c == '\n' || c == '\t' || c == '\r'
 

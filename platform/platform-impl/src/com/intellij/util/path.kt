@@ -18,6 +18,7 @@ package com.intellij.util
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
+import org.jetbrains.io.readCharSequence
 import java.io.File
 import java.io.IOException
 import java.io.OutputStream
@@ -81,6 +82,8 @@ val Path.parentSystemIndependentPath: String
 fun Path.readBytes() = Files.readAllBytes(this)
 
 fun Path.readText() = readBytes().toString(Charsets.UTF_8)
+
+fun Path.readChars() = inputStream().reader().readCharSequence(size().toInt())
 
 fun Path.writeChild(relativePath: String, data: ByteArray) = resolve(relativePath).write(data)
 
