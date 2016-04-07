@@ -112,7 +112,7 @@ class ResourceVersions implements PersistentStateComponent<ResourceVersions.Stat
 
       ApplicationInfo appInfo = ApplicationInfo.getInstance();
       BuildNumber build = appInfo.getBuild();
-      if (!build.isSnapshot()) return build.asStringWithAllDetails();
+      if (!build.isSnapshot()) return build.asString();
 
       // There is no good way to decide whether to update resources or not when switching to a different development build.
       return build.getProductCode() + "-" + build.getBaselineVersion() + "-" + appInfo.getBuildDate().getTimeInMillis();

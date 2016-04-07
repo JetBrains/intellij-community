@@ -28,40 +28,48 @@ public class BuildNumberTest {
 
   @Test
   public void historicBuild() {
-    assertEquals(new BuildNumber("", BuildNumber.Format.HISTORIC, 75, 7512), BuildNumber.fromString("7512"));
+    assertEquals(new BuildNumber("", 75, 7512), BuildNumber.fromString("7512"));
     assertEquals("75.7512", BuildNumber.fromString("7512").asString());
   }
 
   @Test
   public void branchBasedBuild() throws Exception {
-    assertParsed(BuildNumber.fromString("145"), 145, 0, BuildNumber.Format.BRANCH_BASED, "145.0");
-    assertParsed(BuildNumber.fromString("145.1"), 145, 1, BuildNumber.Format.BRANCH_BASED, "145.1");
-    assertParsed(BuildNumber.fromString("145.1.2"), 145, 1, BuildNumber.Format.BRANCH_BASED, "145.1.2");
-    assertParsed(BuildNumber.fromString("IU-145.1.2"), 145, 1, BuildNumber.Format.BRANCH_BASED, "IU-145.1.2");
-    assertParsed(BuildNumber.fromString("IU-145.SNAPSHOT"), 145, BuildNumber.SNAPSHOT_VALUE, BuildNumber.Format.BRANCH_BASED, "IU-145.SNAPSHOT");
-    assertParsed(BuildNumber.fromString("IU-145.1.SNAPSHOT"), 145, 1, BuildNumber.Format.BRANCH_BASED, "IU-145.1.SNAPSHOT");
+    assertParsed(BuildNumber.fromString("145"), 145, 0, false, "145.0");
+    assertParsed(BuildNumber.fromString("145.1"), 145, 1, false, "145.1");
+    assertParsed(BuildNumber.fromString("145.1.2"), 145, 1, false, "145.1.2");
+    assertParsed(BuildNumber.fromString("IU-145.1.2"), 145, 1, false, "IU-145.1.2");
+    assertParsed(BuildNumber.fromString("IU-145.SNAPSHOT"), 145, BuildNumber.SNAPSHOT_VALUE, false, "IU-145.SNAPSHOT");
+    assertParsed(BuildNumber.fromString("IU-145.1.SNAPSHOT"), 145, 1, false, "IU-145.1.SNAPSHOT");
   }
 
   @Test
   public void yearBasedBuild() throws Exception {
-    assertParsed(BuildNumber.fromString("2016"), 20160, -1, BuildNumber.Format.YEAR_BASED, "2016.0");
-    assertParsed(BuildNumber.fromString("2016.1"), 20161, -1, BuildNumber.Format.YEAR_BASED, "2016.1");
-    assertParsed(BuildNumber.fromString("2016.1.2"), 20161, -1, BuildNumber.Format.YEAR_BASED, "2016.1.2");
-    assertParsed(BuildNumber.fromString("IU-2016.1.2"), 20161, -1, BuildNumber.Format.YEAR_BASED, "IU-2016.1.2");
-    assertParsed(BuildNumber.fromString("2016.1.2.3"), 20161, -1, BuildNumber.Format.YEAR_BASED, "2016.1.2.3");
-    assertParsed(BuildNumber.fromString("IU-2016.1.2.3"), 20161, -1, BuildNumber.Format.YEAR_BASED, "IU-2016.1.2.3");
-    assertParsed(BuildNumber.fromString("2016.1.2.3.4"), 20161, -1, BuildNumber.Format.YEAR_BASED, "2016.1.2.3.4");
-    assertParsed(BuildNumber.fromString("IU-2016.1.2.3.4"), 20161, -1, BuildNumber.Format.YEAR_BASED, "IU-2016.1.2.3.4");
+    assertParsed(BuildNumber.fromString("2016"), 20160, -1, true, "2016.0");
+    assertParsed(BuildNumber.fromString("2016.1"), 20161, -1, true, "2016.1");
+    assertParsed(BuildNumber.fromString("2016.1.2"), 20161, -1, true, "2016.1.2");
+    assertParsed(BuildNumber.fromString("IU-2016.1.2"), 20161, -1, true, "IU-2016.1.2");
+    assertParsed(BuildNumber.fromString("2016.1.2.3"), 20161, -1, true, "2016.1.2.3");
+    assertParsed(BuildNumber.fromString("IU-2016.1.2.3"), 20161, -1, true, "IU-2016.1.2.3");
+    assertParsed(BuildNumber.fromString("2016.1.2.3.4"), 20161, -1, true, "2016.1.2.3.4");
+    assertParsed(BuildNumber.fromString("IU-2016.1.2.3.4"), 20161, -1, true, "IU-2016.1.2.3.4");
     
-    assertParsed(BuildNumber.fromString("IU-2016.1.SNAPSHOT"), 20161, -1, BuildNumber.Format.YEAR_BASED, "IU-2016.1.SNAPSHOT");
-    assertParsed(BuildNumber.fromString("IU-2016.1.SNAPSHOT.1"), 20161, -1, BuildNumber.Format.YEAR_BASED, "IU-2016.1.SNAPSHOT.1");
+    assertParsed(BuildNumber.fromString("IU-2016.1.SNAPSHOT"), 20161, -1, true, "IU-2016.1.SNAPSHOT");
+    assertParsed(BuildNumber.fromString("IU-2016.1.SNAPSHOT.1"), 20161, -1, true, "IU-2016.1.SNAPSHOT");
+    
+    assertParsed(BuildNumber.fromString("IU-2016.*"), 20169, -1, true, "IU-2016.SNAPSHOT");
+    assertParsed(BuildNumber.fromString("IU-2016.SNAPSHOT"), 20169, -1, true, "IU-2016.SNAPSHOT");
+    
+    assertParsed(BuildNumber.fromString("IU-2016.9"), 20169, -1, true, "IU-2016.9");
+    assertParsed(BuildNumber.fromString("IU-2016.10"), 20169, -1, true, "IU-2016.9");
+    assertParsed(BuildNumber.fromString("IU-2016.100"), 20169, -1, true, "IU-2016.9");
+    assertParsed(BuildNumber.fromString("IU-2016.1000.1000.1000"), 20169, -1, true, "IU-2016.9.1000.1000");
   }
   
-  private static void assertParsed(BuildNumber n, int expectedBaseline, int expectedBuildNumber, BuildNumber.Format based, String asString) {
+  private static void assertParsed(BuildNumber n, int expectedBaseline, int expectedBuildNumber, boolean yearBased, String asString) {
     assertEquals(expectedBaseline, n.getBaselineVersion());
     assertEquals(expectedBuildNumber, n.getBuildNumber());
     assertEquals(asString, n.asString());
-    assertEquals(based, n.getFormat());
+    assertEquals(yearBased, n.isYearBased());
   }
 
   @Test
@@ -164,8 +172,8 @@ public class BuildNumberTest {
 
   @Test
   public void fallbackVersion() throws Exception {
-    assertParsed(BuildNumber.fallback(), 29991, -1, BuildNumber.Format.YEAR_BASED, "2999.1.SNAPSHOT");
-    assertEquals(BuildNumber.Format.YEAR_BASED, BuildNumber.fallback().getFormat());
+    assertParsed(BuildNumber.fallback(), 29991, -1, true, "2999.1.SNAPSHOT");
+    assertTrue(BuildNumber.fallback().isYearBased());
     assertTrue(BuildNumber.fallback().isSnapshot());
     
     assertTrue(BuildNumber.fallback().compareTo(BuildNumber.fromString("7512")) > 0);

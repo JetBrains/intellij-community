@@ -18,6 +18,7 @@ package com.intellij.openapi.util;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,8 +31,6 @@ import java.util.List;
  * @author max
  */
 public class BuildNumber implements Comparable<BuildNumber> {
-  public enum Format { HISTORIC, BRANCH_BASED, YEAR_BASED }
-  
   private static final String BUILD_NUMBER = "__BUILD_NUMBER__";
   private static final String STAR = "*";
   private static final String SNAPSHOT = "SNAPSHOT";
@@ -44,24 +43,18 @@ public class BuildNumber implements Comparable<BuildNumber> {
   }
 
   @NotNull  private final String myProductCode;
-  @NotNull  private final Format myFormat;
   private final int[] myComponents;
   
   public BuildNumber(@NotNull String productCode, int baselineVersion, int buildNumber) {
-    this(productCode, Format.BRANCH_BASED, baselineVersion, buildNumber);
+    this(productCode, new int[]{baselineVersion, buildNumber});
   }
 
-  BuildNumber(@NotNull String productCode, @NotNull Format format, int... components) {
+  public BuildNumber(@NotNull String productCode, int... components) {
     myProductCode = productCode;
-    myFormat = format;
     myComponents = components;
   }
 
   public String asString() {
-    return asString(true, true);
-  }
-
-  public String asStringWithAllDetails() {
     return asString(true, true);
   }
 
@@ -103,7 +96,7 @@ public class BuildNumber implements Comparable<BuildNumber> {
 
     if (BUILD_NUMBER.equals(version) || SNAPSHOT.equals(version)) {
       final String productCode = name != null ? name : "";
-      return new BuildNumber(productCode, Holder.CURRENT_VERSION.getFormat(), Holder.CURRENT_VERSION.myComponents);
+      return new BuildNumber(productCode, Holder.CURRENT_VERSION.myComponents);
     }
 
     String code = version;
@@ -131,14 +124,22 @@ public class BuildNumber implements Comparable<BuildNumber> {
         throw new RuntimeException("Invalid version number: " + version + "; plugin name: " + name);
       }
 
-      if (baselineVersion >= 2016) {
+      if (isYearBased(baselineVersion)) {
         List<String> stringComponents = StringUtil.split(code, ".");
-        int[] intComponents = new int[stringComponents.size()];
-        for (int i = 0; i < stringComponents.size(); i++) {
-          intComponents[i] = parseBuildNumber(version, stringComponents.get(i), name);
+        TIntArrayList intComponentsList = new TIntArrayList();
+        
+        for (String stringComponent : stringComponents) {
+          int comp = parseBuildNumber(version, stringComponent, name);
+          intComponentsList.add(comp);
+          if (comp == SNAPSHOT_VALUE) break;
         }
 
-        return new BuildNumber(productCode, Format.YEAR_BASED, intComponents);
+        int[] intComponents = intComponentsList.toNativeArray();
+        if (intComponents[1] != SNAPSHOT_VALUE) {
+          intComponents[1] = normalizedYearRevision(intComponents);
+        }
+
+        return new BuildNumber(productCode, intComponents);
       }
       else {
         code = code.substring(baselineVersionSeparator + 1);
@@ -153,10 +154,10 @@ public class BuildNumber implements Comparable<BuildNumber> {
         buildNumber = parseBuildNumber(version, code, name);
 
         if (attemptInfo != null) {
-          return new BuildNumber(productCode, Format.BRANCH_BASED, baselineVersion, buildNumber, attemptInfo);
+          return new BuildNumber(productCode, baselineVersion, buildNumber, attemptInfo);
         }
         else {
-          return new BuildNumber(productCode, Format.BRANCH_BASED, baselineVersion, buildNumber);
+          return new BuildNumber(productCode, baselineVersion, buildNumber);
         }
       }
     }
@@ -165,15 +166,15 @@ public class BuildNumber implements Comparable<BuildNumber> {
 
       if (buildNumber <= 2000) {
         // it's probably a baseline, not a build number
-        return new BuildNumber(productCode, Format.BRANCH_BASED, buildNumber, 0);
+        return new BuildNumber(productCode, buildNumber, 0);
       }
 
-      if (buildNumber >= 2016 && buildNumber <= 2999) {
-        return new BuildNumber(productCode, Format.YEAR_BASED, buildNumber, 0);
+      if (isYearBased(buildNumber)) {
+        return new BuildNumber(productCode, buildNumber, 0);
       }
       
       baselineVersion = getBaseLineForHistoricBuilds(buildNumber);
-      return new BuildNumber(productCode, Format.HISTORIC, baselineVersion, buildNumber);
+      return new BuildNumber(productCode, baselineVersion, buildNumber);
     }
   }
 
@@ -238,21 +239,28 @@ public class BuildNumber implements Comparable<BuildNumber> {
   }
 
   public int getBaselineVersion() {
-    return myFormat == Format.YEAR_BASED ? (myComponents[0] * 10 + myComponents[1]) : myComponents[0];
+    return isYearBased() ? (myComponents[0] * 10 + normalizedYearRevision(myComponents)) : myComponents[0];
+  }
+
+  private static int normalizedYearRevision(int[] components) {
+    return Math.min(components[1], 9);
   }
 
   @Deprecated
   public int getBuildNumber() {
-    return myFormat == Format.YEAR_BASED ? -1 : myComponents[1];
+    return isYearBased() ? -1 : myComponents[1];
   }
 
   public int[] getComponents() {
     return myComponents;
   }
 
-  @NotNull
-  public Format getFormat() {
-    return myFormat;
+  public boolean isYearBased() {
+    return isYearBased(myComponents[0]); 
+  }
+
+  private static boolean isYearBased(int buildNumber) {
+    return buildNumber >= 2016 && buildNumber <= 2999;
   }
 
   @Override
@@ -262,7 +270,6 @@ public class BuildNumber implements Comparable<BuildNumber> {
 
     BuildNumber that = (BuildNumber)o;
 
-    if (myFormat != that.myFormat) return false;
     if (!myProductCode.equals(that.myProductCode)) return false;
     if (!Arrays.equals(myComponents, that.myComponents)) return false;
 
@@ -273,7 +280,6 @@ public class BuildNumber implements Comparable<BuildNumber> {
   public int hashCode() {
     int result = myProductCode.hashCode();
     result = 31 * result + Arrays.hashCode(myComponents);
-    result = 31 * result + myFormat.hashCode();
     return result;
   }
 

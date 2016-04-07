@@ -145,6 +145,77 @@ class UpdateStrategyTest {
     assertEquals("145.597", result.newBuild?.number.toString())
   }
 
+  @Test fun `variable-length build numbers are supported`() {
+    var result = check("IU-143.2332", ChannelStatus.RELEASE, """
+      <channel id="IDEA_Release" status="release" licensing="release">
+        <build number="143.2332.10" version="15.0.5"/>
+      </channel>""")
+    assertEquals("143.2332.10", result.newBuild?.number.toString())
+
+    result = check("IU-143.2332.10", ChannelStatus.RELEASE, """
+      <channel id="IDEA_Release" status="release" licensing="release">
+        <build number="143.2333" version="15.0.5"/>
+      </channel>""")
+    assertEquals("143.2333", result.newBuild?.number.toString())
+
+    result = check("IU-143.2332.9", ChannelStatus.RELEASE, """
+      <channel id="IDEA_Release" status="release" licensing="release">
+        <build number="143.2332.10" version="15.0.5"/>
+      </channel>""")
+    assertEquals("143.2332.10", result.newBuild?.number.toString())
+
+    result = check("IU-143.2332.11", ChannelStatus.RELEASE, """
+      <channel id="IDEA_Release" status="release" licensing="release">
+        <build number="143.2332.10" version="15.0.5"/>
+      </channel>""")
+    assertNull(result.newBuild)
+  }
+  
+  @Test fun `year-based build numbers are supported`() {
+    var result = check("IU-145.100", ChannelStatus.RELEASE, """
+      <channel id="IDEA_Release" status="release" licensing="release">
+        <build number="2016.1.10.10" version="15.0.5"/>
+      </channel>""")
+    assertEquals("2016.1.10.10", result.newBuild?.number.toString())
+
+    result = check("IU-2016.1.10.10", ChannelStatus.RELEASE, """
+      <channel id="IDEA_Release" status="release" licensing="release">
+        <build number="2017.1.1.1" version="15.0.5"/>
+      </channel>""")
+    assertEquals("2017.1.1.1", result.newBuild?.number.toString())
+
+    result = check("IU-2016.1.10.10", ChannelStatus.RELEASE, """
+      <channel id="IDEA_Release" status="release" licensing="release">
+        <build number="2016.2.10.10" version="15.0.5"/>
+      </channel>""")
+    assertEquals("2016.2.10.10", result.newBuild?.number.toString())
+
+    result = check("IU-2016.1.10.10", ChannelStatus.RELEASE, """
+      <channel id="IDEA_Release" status="release" licensing="release">
+        <build number="2016.1.11.10" version="15.0.5"/>
+      </channel>""")
+    assertEquals("2016.1.11.10", result.newBuild?.number.toString())
+
+    result = check("IU-2016.1.10.10", ChannelStatus.RELEASE, """
+      <channel id="IDEA_Release" status="release" licensing="release">
+        <build number="2016.1.10.11" version="15.0.5"/>
+      </channel>""")
+    assertEquals("2016.1.10.11", result.newBuild?.number.toString())
+
+    result = check("IU-2016.1.10.10", ChannelStatus.RELEASE, """
+      <channel id="IDEA_Release" status="release" licensing="release">
+        <build number="2016.1.10.9" version="15.0.5"/>
+      </channel>""")
+    assertNull(result.newBuild)
+
+    // e.g. android-studio format
+    result = check("IU-2016.1.10.10.20161111", ChannelStatus.RELEASE, """
+      <channel id="IDEA_Release" status="release" licensing="release">
+        <build number="IU-2016.1.10.10.20161112" version="15.0.5"/>
+      </channel>""")
+    assertEquals("IU-2016.1.10.10.20161112", result.newBuild?.number.toString())
+  }
+
   private fun check(currentBuild: String,
                     selectedChannel: ChannelStatus,
                     testData: String,

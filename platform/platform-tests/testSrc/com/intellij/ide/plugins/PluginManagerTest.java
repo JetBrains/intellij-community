@@ -76,6 +76,14 @@ public class PluginManagerTest {
   }
   
   @Test
+  public void compatibilityYearBased() throws Exception {
+    assertCompatible("2016.2", "2016.1", "2016.3");
+    assertCompatible("2016.2", "145.*", "2016.3");
+    assertCompatible("2016.2", null, "2016.10");
+    assertIncompatible("2016.2", null, "2015.10");
+  }
+  
+  @Test
   public void compatibilityYearBasedStar() throws Exception {
     assertCompatible("2016.2", "2016.1.*", null);
     assertIncompatible("2016.2", "2016.2.*", null);

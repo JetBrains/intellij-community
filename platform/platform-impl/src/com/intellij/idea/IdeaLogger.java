@@ -157,7 +157,7 @@ public class IdeaLogger extends Log4jBasedLogger {
       @Override
       public String getInfo() {
         final ApplicationInfoEx info = ApplicationInfoImpl.getShadowInstance();
-        return info.getFullApplicationName() + "  " + "Build #" + info.getBuild().asStringWithAllDetails();
+        return info.getFullApplicationName() + "  " + "Build #" + info.getBuild().asString();
       }
     };
   }

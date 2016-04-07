@@ -426,7 +426,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, AccessibleCont
       appName.setHorizontalAlignment(SwingConstants.CENTER);
       String appVersion = "Version ";
 
-      if (app.getBuild().getFormat() == BuildNumber.Format.YEAR_BASED) {
+      if (app.getBuild().isYearBased()) {
         appVersion += app.isEAP() ? (app.getBuild().asStringWithoutProductCode() + " EAP") : app.getFullVersion();
       }
       else {
