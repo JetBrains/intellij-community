@@ -16,7 +16,7 @@
 package org.jetbrains.ide;
 
 import com.google.gson.stream.JsonWriter;
-import com.intellij.openapi.application.ApplicationInfoUtil;
+import com.intellij.ide.IdeAboutInfoUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.fileTypes.FileType;
@@ -82,7 +82,7 @@ public class AboutHttpService extends RestService {
     JsonWriter writer = createJsonWriter(out);
     writer.beginObject();
 
-    ApplicationInfoUtil.writeJson(writer);
+    IdeAboutInfoUtil.writeAboutJson(writer);
 
     if (urlDecoder != null && getBooleanParameter("registeredFileTypes", urlDecoder)) {
       writer.name("registeredFileTypes").beginArray();

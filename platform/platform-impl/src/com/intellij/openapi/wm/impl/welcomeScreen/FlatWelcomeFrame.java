@@ -432,8 +432,8 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, AccessibleCont
       else {
         appVersion += app.getFullVersion();
 
-        if (app.isEAP() && app.getBuild().getBuildNumber() != BuildNumber.SNAPSHOT_VALUE) {
-          appVersion += " (" + app.getBuild().asString() + ")";
+        if (app.isEAP() && !app.getBuild().isSnapshot()) {
+          appVersion += " (" + app.getBuild().asStringWithoutProductCode() + ")";
         }
       }
       
