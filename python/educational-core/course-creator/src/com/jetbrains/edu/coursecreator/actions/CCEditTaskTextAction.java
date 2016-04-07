@@ -9,7 +9,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.jetbrains.edu.coursecreator.CCProjectService;
+import com.jetbrains.edu.coursecreator.CCUtils;
 import com.jetbrains.edu.learning.StudyState;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
@@ -74,7 +74,7 @@ public class CCEditTaskTextAction extends ToggleAction implements DumbAware {
       return;
     }
 
-    if (CCProjectService.getInstance(project).getCourse() == null) {
+    if (!CCUtils.isCourseCreator(project)) {
       e.getPresentation().setEnabledAndVisible(false);
     }
   }

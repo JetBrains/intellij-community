@@ -19,12 +19,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
 import com.jetbrains.edu.learning.courseFormat.Task;
 import com.jetbrains.edu.coursecreator.CCLanguageManager;
-import com.jetbrains.edu.coursecreator.CCProjectService;
 import com.jetbrains.edu.coursecreator.CCUtils;
 import com.jetbrains.edu.coursecreator.ui.CreateTaskFileDialog;
 import org.jetbrains.annotations.NotNull;
@@ -51,8 +51,7 @@ public class CCCreateTaskFile extends DumbAwareAction {
     if (lessonDir == null) {
       return;
     }
-    final CCProjectService service = CCProjectService.getInstance(project);
-    final Course course = service.getCourse();
+    final Course course = StudyTaskManager.getInstance(project).getCourse();
     final Lesson lesson = course.getLesson(lessonDir.getName());
     final Task task = lesson.getTask(taskDir.getName());
 
@@ -105,39 +104,26 @@ public class CCCreateTaskFile extends DumbAwareAction {
 
   @Override
   public void update(@NotNull AnActionEvent event) {
-    if (!CCProjectService.setCCActionAvailable(event)) {
-      return;
-    }
     final Presentation presentation = event.getPresentation();
+    presentation.setEnabledAndVisible(false);
     final Project project = event.getData(CommonDataKeys.PROJECT);
     if (project == null) {
-      presentation.setVisible(false);
-      presentation.setEnabled(false);
       return;
     }
-
     final IdeView view = event.getData(LangDataKeys.IDE_VIEW);
     if (view == null) {
-      presentation.setVisible(false);
-      presentation.setEnabled(false);
       return;
     }
 
     final PsiDirectory[] directories = view.getDirectories();
     if (directories.length == 0) {
-      presentation.setVisible(false);
-      presentation.setEnabled(false);
       return;
     }
     final PsiDirectory directory = DirectoryChooserUtil.getOrChooseDirectory(view);
-    final CCProjectService service = CCProjectService.getInstance(project);
-    final Course course = service.getCourse();
+    final Course course = StudyTaskManager.getInstance(project).getCourse();
     if (course != null && directory != null && !directory.getName().contains(EduNames.TASK)) {
-      presentation.setVisible(false);
-      presentation.setEnabled(false);
       return;
     }
-    presentation.setVisible(true);
-    presentation.setEnabled(true);
+    presentation.setEnabledAndVisible(true);
   }
 }
