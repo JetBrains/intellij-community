@@ -25,7 +25,9 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.endsWithName
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.UriUtil
+import com.intellij.util.directoryStreamIfExists
 import com.intellij.util.io.URLUtil
+import com.intellij.util.isDirectory
 import com.intellij.util.net.NetUtils
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.FullHttpRequest
@@ -33,9 +35,9 @@ import io.netty.handler.codec.http.HttpMethod
 import io.netty.handler.codec.http.QueryStringDecoder
 import org.jetbrains.ide.HttpRequestHandler
 import org.jetbrains.io.host
-import java.io.File
 import java.net.InetAddress
 import java.net.UnknownHostException
+import java.nio.file.Path
 
 internal val LOG = Logger.getInstance(BuiltInWebServer::class.java)
 
@@ -177,18 +179,18 @@ fun findIndexFile(basedir: VirtualFile): VirtualFile? {
   return null
 }
 
-fun findIndexFile(basedir: File): File? {
-  val children = basedir.listFiles { dir, name -> name.startsWith("index.") || name.startsWith("default.") }
-  if (children == null || children.isEmpty()) {
-    return null
-  }
+fun findIndexFile(basedir: Path): Path? {
+  val children = basedir.directoryStreamIfExists({
+    val name = it.fileName.toString()
+    name.startsWith("index.") || name.startsWith("default.")
+  }) { it.toList() } ?: return null
 
   for (indexNamePrefix in arrayOf("index.", "default.")) {
-    var index: File? = null
+    var index: Path? = null
     val preferredName = "${indexNamePrefix}html"
     for (child in children) {
-      if (!child.isDirectory) {
-        val name = child.name
+      if (!child.isDirectory()) {
+        val name = child.fileName.toString()
         if (name == preferredName) {
           return child
         }

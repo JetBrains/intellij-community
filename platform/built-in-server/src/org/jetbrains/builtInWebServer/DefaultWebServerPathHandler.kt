@@ -26,7 +26,7 @@ import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.FullHttpRequest
 import io.netty.handler.codec.http.HttpResponseStatus
 import org.jetbrains.io.Responses
-import java.io.File
+import java.nio.file.Path
 
 private class DefaultWebServerPathHandler : WebServerPathHandler() {
   override fun process(path: String,
@@ -62,7 +62,7 @@ private class DefaultWebServerPathHandler : WebServerPathHandler() {
       }
 
       var indexVirtualFile: VirtualFile? = null
-      var indexFile: File? = null
+      var indexFile: Path? = null
       if (pathInfo.file == null) {
         indexFile = findIndexFile(pathInfo.ioFile!!)
       }
