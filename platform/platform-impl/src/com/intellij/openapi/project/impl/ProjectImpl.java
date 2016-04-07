@@ -288,7 +288,9 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     long time = System.currentTimeMillis() - start;
     LOG.info(getComponentConfigCount() + " project components initialized in " + time + " ms");
 
-    if (!isDefault() && !ApplicationManager.getApplication().isUnitTestMode()) {
+    if (!isDefault() &&
+        !ApplicationManager.getApplication().isUnitTestMode() &&
+        !ApplicationManager.getApplication().isHeadlessEnvironment()) {
       distributeProgress();
     }
     ApplicationManager.getApplication().getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsInitialized(this);
