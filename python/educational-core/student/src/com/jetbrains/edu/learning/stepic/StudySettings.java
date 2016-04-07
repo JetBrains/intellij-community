@@ -34,6 +34,7 @@ public class StudySettings implements PersistentStateComponent<StudySettings.Sta
 
   public static class State {
     @Nullable public String LOGIN = null;
+    @Nullable public StepicUser myUser = null;
   }
 
   private static final String STEPIC_SETTINGS_PASSWORD_KEY = "STEPIC_SETTINGS_PASSWORD_KEY";
@@ -77,6 +78,16 @@ public class StudySettings implements PersistentStateComponent<StudySettings.Sta
   public void setLogin(@Nullable String login) {
     myState.LOGIN = login;
   }
+  
+  @Nullable
+  public StepicUser getUser() {
+    return myState.myUser;
+  }
+  
+  public void setUser(@NotNull final StepicUser user) {
+    myState.myUser = user;
+  }
+  
   @Nullable
   @Override
   public StudySettings.State getState() {

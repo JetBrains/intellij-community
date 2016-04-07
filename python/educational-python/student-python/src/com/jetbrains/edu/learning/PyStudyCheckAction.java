@@ -91,7 +91,7 @@ public class PyStudyCheckAction extends StudyCheckAction {
                                       final String commandLine) {
     return new StudyCheckTask(project, studyState, myCheckInProgress, testProcess, commandLine) {
             @Override
-            protected void onTaskFailed(StudyTestsOutputParser.TestsOutput testsOutput) {
+            protected void onTaskFailed(String message) {
               ApplicationManager.getApplication().invokeLater(() -> {
                 if (myTaskDir == null) return;
                 myTaskManger.setStatus(myTask, StudyStatus.Failed);
@@ -106,7 +106,7 @@ public class PyStudyCheckAction extends StudyCheckAction {
                     CommandProcessor.getInstance().runUndoTransparentAction(() -> ApplicationManager.getApplication().runWriteAction(() -> StudyCheckUtils.runSmartTestProcess(myTaskDir, testRunner, name, taskFile, project)));
                   }
                 }
-                StudyCheckUtils.showTestResultPopUp(testsOutput.getMessage(), MessageType.ERROR.getPopupBackground(), project);
+                StudyCheckUtils.showTestResultPopUp(message, MessageType.ERROR.getPopupBackground(), project);
                 StudyCheckUtils.navigateToFailedPlaceholder(myStudyState, myTask, myTaskDir, project);
               });
             }
