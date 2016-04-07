@@ -217,7 +217,7 @@ public abstract class JavaFxClassTagDescriptorBase implements XmlElementDescript
           collectInstanceProperties(descriptors);
           collectStaticAttributesDescriptors(context, descriptors);
           for (String builtInAttributeName : FxmlConstants.FX_BUILT_IN_ATTRIBUTES) {
-            descriptors.add(new JavaFxBuiltInAttributeDescriptor(builtInAttributeName, psiClass));
+            descriptors.add(JavaFxBuiltInAttributeDescriptor.create(builtInAttributeName, psiClass));
           }
           return descriptors.isEmpty() ? XmlAttributeDescriptor.EMPTY : descriptors.toArray(XmlAttributeDescriptor.EMPTY);
         }
@@ -244,7 +244,7 @@ public abstract class JavaFxClassTagDescriptorBase implements XmlElementDescript
     final PsiClass psiClass = getPsiClass();
     if (psiClass == null) return null;
     if (FxmlConstants.FX_BUILT_IN_ATTRIBUTES.contains(attributeName)) {
-      return new JavaFxBuiltInAttributeDescriptor(attributeName, psiClass);
+      return JavaFxBuiltInAttributeDescriptor.create(attributeName, psiClass);
     }
     final PsiMethod propertySetter = JavaFxPsiUtil.findStaticPropertySetter(attributeName, context);
     if (propertySetter != null) {
