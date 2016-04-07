@@ -13,93 +13,71 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.builtInWebServer.ssi;
+package org.jetbrains.builtInWebServer.ssi
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
-import gnu.trove.THashMap;
-import io.netty.handler.codec.http.HttpRequest;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.builtInWebServer.PathInfo;
-import org.jetbrains.builtInWebServer.WebServerPathToFileManager;
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.util.exists
+import com.intellij.util.lastModified
+import com.intellij.util.size
+import gnu.trove.THashMap
+import io.netty.handler.codec.http.HttpRequest
+import org.jetbrains.builtInWebServer.WebServerPathToFileManager
+import java.nio.file.Path
+import java.nio.file.Paths
 
-import java.io.File;
-import java.util.Collection;
-import java.util.Map;
+private val VARIABLE_NAMES = arrayOf("AUTH_TYPE", "CONTENT_LENGTH", "CONTENT_TYPE", "DOCUMENT_NAME", "DOCUMENT_URI", "GATEWAY_INTERFACE",
+  "HTTP_ACCEPT", "HTTP_ACCEPT_ENCODING", "HTTP_ACCEPT_LANGUAGE", "HTTP_CONNECTION", "HTTP_HOST", "HTTP_REFERER", "HTTP_USER_AGENT", "PATH_INFO",
+  "PATH_TRANSLATED", "QUERY_STRING", "QUERY_STRING_UNESCAPED", "REMOTE_ADDR", "REMOTE_HOST", "REMOTE_PORT", "REMOTE_USER", "REQUEST_METHOD",
+  "REQUEST_URI", "SCRIPT_FILENAME", "SCRIPT_NAME", "SERVER_ADDR", "SERVER_NAME", "SERVER_PORT", "SERVER_PROTOCOL", "SERVER_SOFTWARE", "UNIQUE_ID")
 
-public final class SsiExternalResolver {
-  private final String[] VARIABLE_NAMES = {"AUTH_TYPE", "CONTENT_LENGTH",
-    "CONTENT_TYPE", "DOCUMENT_NAME", "DOCUMENT_URI",
-    "GATEWAY_INTERFACE", "HTTP_ACCEPT", "HTTP_ACCEPT_ENCODING",
-    "HTTP_ACCEPT_LANGUAGE", "HTTP_CONNECTION", "HTTP_HOST",
-    "HTTP_REFERER", "HTTP_USER_AGENT", "PATH_INFO", "PATH_TRANSLATED",
-    "QUERY_STRING", "QUERY_STRING_UNESCAPED", "REMOTE_ADDR",
-    "REMOTE_HOST", "REMOTE_PORT", "REMOTE_USER", "REQUEST_METHOD",
-    "REQUEST_URI", "SCRIPT_FILENAME", "SCRIPT_NAME", "SERVER_ADDR",
-    "SERVER_NAME", "SERVER_PORT", "SERVER_PROTOCOL", "SERVER_SOFTWARE",
-    "UNIQUE_ID"};
+class SsiExternalResolver(private val project: Project,
+                          private val request: HttpRequest,
+                          private val parentPath: String,
+                          private val parentFile: Path) {
+  private val variables = THashMap<String, String>()
 
-  private final Project project;
-  private final HttpRequest request;
-
-  private Map<String, String> variables = new THashMap<String, String>();
-  private final String parentPath;
-  @NotNull private final File parentFile;
-
-  public SsiExternalResolver(@NotNull Project project,
-                             @NotNull HttpRequest request,
-                             @NotNull String parentPath,
-                             @NotNull File parentFile) {
-    this.project = project;
-    this.request = request;
-    this.parentPath = parentPath;
-    this.parentFile = parentFile;
-  }
-
-  public void addVariableNames(@NotNull Collection<String> variableNames) {
-    for (String variableName : VARIABLE_NAMES) {
-      String variableValue = getVariableValue(variableName);
+  fun addVariableNames(variableNames: MutableCollection<String>) {
+    for (variableName in VARIABLE_NAMES) {
+      val variableValue = getVariableValue(variableName)
       if (variableValue != null) {
-        variableNames.add(variableName);
+        variableNames.add(variableName)
       }
     }
   }
 
-  public void setVariableValue(@NotNull String name, String value) {
-    variables.put(name, value);
+  fun setVariableValue(name: String, value: String) {
+    variables.put(name, value)
   }
 
-  public String getVariableValue(@NotNull String name) {
-    String value = variables.get(name);
-    return value == null ? request.headers().get(name) : value;
+  fun getVariableValue(name: String): String? {
+    val value = variables[name]
+    return value ?: request.headers().get(name)
   }
 
-  @Nullable
-  public File findFile(@NotNull String originalPath, boolean virtual) {
-    String path = FileUtil.toCanonicalPath(originalPath, '/');
+  fun findFile(originalPath: String, virtual: Boolean): Path? {
+    var path = FileUtil.toCanonicalPath(originalPath, '/')
     if (!virtual) {
-      return new File(parentFile, path);
+      return parentFile.resolve(path)
     }
 
-    path = path.charAt(0) == '/' ? path : (parentPath + '/' + path);
-    PathInfo pathInfo = WebServerPathToFileManager.getInstance(project).getPathInfo(path, true);
-    if (pathInfo == null) {
-      return null;
+    path = if (path[0] == '/') path else parentPath + '/' + path
+    val pathInfo = WebServerPathToFileManager.getInstance(project).getPathInfo(path, true) ?: return null
+    if (pathInfo.ioFile == null) {
+      return Paths.get(pathInfo.file!!.path)
     }
-    if (pathInfo.getIoFile() != null) {
-      return pathInfo.getIoFile();
+    else {
+      return pathInfo.ioFile!!
     }
-    return new File(pathInfo.getFile().getPath());
   }
 
-  public long getFileLastModified(String path, boolean virtual) {
-    File file = findFile(path, virtual);
-    return file == null || !file.exists() ? 0 : file.lastModified();
+  fun getFileLastModified(path: String, virtual: Boolean): Long {
+    val file = findFile(path, virtual)
+    return if (file == null || !file.exists()) 0 else file.lastModified().toMillis()
   }
 
-  public long getFileSize(@NotNull String path, boolean virtual) {
-    File file = findFile(path, virtual);
-    return file == null || !file.exists() ? -1 : file.length();
+  fun getFileSize(path: String, virtual: Boolean): Long {
+    val file = findFile(path, virtual)
+    return if (file == null || !file.exists()) -1 else file.size()
   }
 }
