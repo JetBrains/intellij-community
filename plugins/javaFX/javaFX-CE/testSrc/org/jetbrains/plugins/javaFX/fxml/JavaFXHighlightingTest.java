@@ -370,6 +370,10 @@ public class JavaFXHighlightingTest extends AbstractJavaFXTestCase {
     doTest();
   }
 
+  public void testLiteralValue() throws Exception {
+    doTest();
+  }
+
   public void testFactoryMethod() throws Exception {
     doTest();
   }

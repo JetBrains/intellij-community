@@ -147,7 +147,7 @@ public class JavaFxBuiltInAttributeDescriptor extends JavaFxPropertyAttributeDes
           return "Unable to coerce '" + value + "' to " + tagClass.getQualifiedName() + ".";
         }
       }
-      return super.validateAttributeValue(xmlAttributeValue, value);
+      return validateLiteral(xmlAttributeValue, value);
     }
   }
 

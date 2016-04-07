@@ -188,7 +188,7 @@ public class JavaFxPropertyAttributeDescriptor extends BasicXmlAttributeDescript
   }
 
   @Nullable
-  private static String validateLiteral(@NotNull XmlAttributeValue xmlAttributeValue, @NotNull String value) {
+  protected static String validateLiteral(@NotNull XmlAttributeValue xmlAttributeValue, @NotNull String value) {
     final PsiClass tagClass = JavaFxPsiUtil.getTagClass(xmlAttributeValue);
     final PsiElement declaration = JavaFxPsiUtil.getAttributeDeclaration(xmlAttributeValue);
     final String boxedQName;
