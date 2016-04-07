@@ -1,14 +1,20 @@
 package org.jetbrains.ide
 
+import com.google.common.net.UrlEscapers
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.EmptyModuleType
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootModificationUtil
-import com.intellij.testFramework.runInEdtAndWait
-import com.intellij.util.refreshVfs
-import com.intellij.util.systemIndependentPath
-import com.intellij.util.writeChild
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.testFramework.*
+import com.intellij.util.*
+import io.netty.handler.codec.http.HttpResponseStatus
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.ClassRule
+import org.junit.Rule
 import org.junit.Test
 
 internal class BuiltInWebServerTest : BuiltInServerTestCase() {
@@ -39,18 +45,48 @@ internal class BuiltInWebServerTest : BuiltInServerTestCase() {
     newPath.writeChild(manager.filePath!!, "hello")
     newPath.refreshVfs()
 
-    runInEdtAndWait {
-      runWriteAction {
-        val systemIndependentPath = newPath.systemIndependentPath
-        val module = ModuleManager.getInstance(project).newModule("$systemIndependentPath/test.iml", EmptyModuleType.EMPTY_MODULE)
-        ModuleRootModificationUtil.addContentRoot(module, systemIndependentPath)
-      }
-    }
+    createModule(newPath.systemIndependentPath, project)
 
     for (path in paths) {
       doTest(path) {
         assertThat(it.inputStream.reader().readText()).isEqualTo("hello")
       }
+    }
+  }
+}
+
+private fun createModule(systemIndependentPath: String, project: Project) {
+  runInEdtAndWait {
+    runWriteAction {
+      val module = ModuleManager.getInstance(project).newModule("$systemIndependentPath/test.iml", EmptyModuleType.EMPTY_MODULE)
+      ModuleRootModificationUtil.addContentRoot(module, systemIndependentPath)
+    }
+  }
+}
+
+internal class HeavyBuiltInWebServerTest {
+  companion object {
+    @JvmField
+    @ClassRule val appRule = ProjectRule()
+  }
+
+  @Rule
+  @JvmField
+  val tempDirManager = TemporaryDirectory()
+
+  @Test
+  fun `path outside of project`() {
+    val projectDir = tempDirManager.newPath().resolve("foo/bar")
+    val projectDirPath = projectDir.systemIndependentPath
+    createHeavyProject("$projectDirPath/test.ipr").use { project ->
+      projectDir.createDirectories()
+      LocalFileSystem.getInstance().refreshAndFindFileByPath(projectDirPath)
+      createModule(projectDirPath, project)
+
+      val path = tempDirManager.newPath("doNotExposeMe.txt").write("doNotExposeMe").systemIndependentPath
+      val relativePath = FileUtil.getRelativePath(project.basePath!!, path, '/')
+      val webPath = StringUtil.replace(UrlEscapers.urlPathSegmentEscaper().escape("${project.name}/$relativePath"), "%2F", "/")
+      testUrl("http://localhost:${BuiltInServerManager.getInstance().port}/$webPath", HttpResponseStatus.NOT_FOUND)
     }
   }
 }

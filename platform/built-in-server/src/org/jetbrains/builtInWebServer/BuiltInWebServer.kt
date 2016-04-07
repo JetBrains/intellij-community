@@ -50,7 +50,7 @@ class BuiltInWebServer : HttpRequestHandler() {
       return false
     }
 
-    val portIndex = host.indexOf(':')
+    val portIndex = host!!.indexOf(':')
     if (portIndex > 0) {
       host = host.substring(0, portIndex)
     }
@@ -134,8 +134,7 @@ private fun doProcess(request: FullHttpRequest, context: ChannelHandlerContext, 
     return true
   }
 
-  // must be absolute path (relative to DOCUMENT_ROOT, i.e. scheme://authority/) to properly canonicalize
-  val path = FileUtil.toCanonicalPath(decodedPath.substring(offset), '/').substring(1)
+  val path = toIdeaPath(decodedPath, offset)
   for (pathHandler in WebServerPathHandler.EP_NAME.extensions) {
     LOG.catchAndLog {
       if (pathHandler.process(path, project, request, context, projectName, decodedPath, isCustomHost)) {
@@ -144,6 +143,15 @@ private fun doProcess(request: FullHttpRequest, context: ChannelHandlerContext, 
     }
   }
   return false
+}
+
+private fun toIdeaPath(decodedPath: String, offset: Int): String {
+  // must be absolute path (relative to DOCUMENT_ROOT, i.e. scheme://authority/) to properly canonicalize
+  val path = decodedPath.substring(offset)
+  if (!path.startsWith('/')) {
+    throw AssertionError("Path must be absolute")
+  }
+  return FileUtil.toCanonicalPath(path, '/').substring(1)
 }
 
 fun compareNameAndProjectBasePath(projectName: String, project: Project): Boolean {

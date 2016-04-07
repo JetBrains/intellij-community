@@ -26,7 +26,6 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.components.StateStorage.SaveSession
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.IProjectStore
-import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
@@ -246,16 +245,7 @@ private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroM
       return PathUtilRt.getFileName(baseDir).replace(":", "")
     }
     else {
-      var temp = PathUtilRt.getFileName(projectFilePath)
-      val fileType = FileTypeManager.getInstance().getFileTypeByFileName(temp)
-      if (fileType is ProjectFileType) {
-        temp = temp.substring(0, temp.length - fileType.defaultExtension.length - 1)
-      }
-      val i = temp.lastIndexOf(File.separatorChar)
-      if (i >= 0) {
-        temp = temp.substring(i + 1, temp.length - i + 1)
-      }
-      return temp
+      return PathUtilRt.getFileName(projectFilePath).removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION)
     }
   }
 
