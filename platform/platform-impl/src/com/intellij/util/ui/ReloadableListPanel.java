@@ -15,10 +15,7 @@
  */
 package com.intellij.util.ui;
 
-import com.intellij.openapi.util.Pair;
-import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.components.JBList;
-import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -35,12 +32,6 @@ public abstract class ReloadableListPanel<T> extends ReloadablePanel<T> {
 
   protected void createList() {
     myList = new JBList();
-    new ListSpeedSearch(myList, new Convertor<Object, String>() {
-      @Override
-      public String convert(Object o) {
-        return ((String)((Pair)o).getFirst());
-      }
-    });
   }
 
   @NotNull
