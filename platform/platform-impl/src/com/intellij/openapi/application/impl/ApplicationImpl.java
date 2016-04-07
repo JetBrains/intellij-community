@@ -103,7 +103,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private final boolean myIsInternal;
   private final String myName;
 
-  private final Stack<Class> myWriteActionsStack = new Stack<Class>(); // accessed from EDT only, no need to sync
+  private final Stack<Class> myWriteActionsStack = new Stack<>(); // accessed from EDT only, no need to sync
 
   private int myInEditorPaintCounter; // EDT only
   private final long myStartTime;
@@ -175,42 +175,28 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     if (!isUnitTestMode && !isHeadless) {
       Disposer.register(this, Disposer.newDisposable(), "ui");
 
-      StartupUtil.addExternalInstanceListener(new Consumer<List<String>>() {
-        @Override
-        public void consume(final List<String> args) {
-          invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              LOG.info("ApplicationImpl.externalInstanceListener invocation");
-              String currentDirectory = args.isEmpty() ? null : args.get(0);
-              List<String> realArgs = args.isEmpty() ? args : args.subList(1, args.size());
-              final Project project = CommandLineProcessor.processExternalCommandLine(realArgs, currentDirectory);
-              JFrame frame = project == null ? WindowManager.getInstance().findVisibleFrame() :
-                             (JFrame)WindowManager.getInstance().getIdeFrame(project);
-              if (frame != null) {
-                frame.toFront();
-                if (!(frame instanceof IdeFrameImpl && ((IdeFrameImpl)frame).isInFullScreen())) {
-                  DialogEarthquakeShaker.shake(frame);
-                }
-              }
-            }
-          });
+      StartupUtil.addExternalInstanceListener(args -> invokeLater(() -> {
+        LOG.info("ApplicationImpl.externalInstanceListener invocation");
+        String currentDirectory = args.isEmpty() ? null : args.get(0);
+        List<String> realArgs = args.isEmpty() ? args : args.subList(1, args.size());
+        final Project project = CommandLineProcessor.processExternalCommandLine(realArgs, currentDirectory);
+        JFrame frame = project == null ? WindowManager.getInstance().findVisibleFrame() :
+                       (JFrame)WindowManager.getInstance().getIdeFrame(project);
+        if (frame != null) {
+          frame.toFront();
+          if (!(frame instanceof IdeFrameImpl && ((IdeFrameImpl)frame).isInFullScreen())) {
+            DialogEarthquakeShaker.shake(frame);
+          }
         }
-      });
+      }));
 
-      WindowsCommandLineProcessor.LISTENER = new WindowsCommandLineListener() {
-        @Override
-        public void processWindowsLauncherCommandLine(final String currentDirectory, final String commandLine) {
-          LOG.info("Received external Windows command line: current directory " + currentDirectory + ", command line " + commandLine);
-          invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              final List<String> args = StringUtil.splitHonorQuotes(commandLine, ' ');
-              args.remove(0);   // process name
-              CommandLineProcessor.processExternalCommandLine(args, currentDirectory);
-            }
-          });
-        }
+      WindowsCommandLineProcessor.LISTENER = (currentDirectory, commandLine) -> {
+        LOG.info("Received external Windows command line: current directory " + currentDirectory + ", command line " + commandLine);
+        invokeLater(() -> {
+          final List<String> args = StringUtil.splitHonorQuotes(commandLine, ' ');
+          args.remove(0);   // process name
+          CommandLineProcessor.processExternalCommandLine(args, currentDirectory);
+        });
       };
     }
     if (isUnitTestMode && IdeaApplication.getInstance() == null) {
@@ -219,6 +205,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       System.setProperty(IdeaApplication.IDEA_IS_UNIT_TEST, Boolean.TRUE.toString());
       assert Main.isHeadless();
       assert Main.isCommandLine();
+      //noinspection ResultOfObjectAllocationIgnored
       new IdeaApplication(args);
     }
     gatherWriteActionStatistics = LOG.isDebugEnabled() || isUnitTestMode() || isInternal();
@@ -232,28 +219,22 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   private void registerShutdownHook() {
-    ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
-      @Override
-      public void run() {
-        if (isDisposed() || myDisposeInProgress) {
-          return;
-        }
-        ShutDownTracker.invokeAndWait(isUnitTestMode(), true, new Runnable() {
-          @Override
-          public void run() {
-            if (ApplicationManager.getApplication() != ApplicationImpl.this) return;
-            try {
-              myDisposeInProgress = true;
-              saveAll();
-            }
-            finally {
-              if (!disposeSelf(true)) {
-                myDisposeInProgress = false;
-              }
-            }
-          }
-        });
+    ShutDownTracker.getInstance().registerShutdownTask(() -> {
+      if (isDisposed() || myDisposeInProgress) {
+        return;
       }
+      ShutDownTracker.invokeAndWait(isUnitTestMode(), true, () -> {
+        if (ApplicationManager.getApplication() != this) return;
+        try {
+          myDisposeInProgress = true;
+          saveAll();
+        }
+        finally {
+          if (!disposeSelf(true)) {
+            myDisposeInProgress = false;
+          }
+        }
+      });
     });
   }
 
@@ -263,12 +244,9 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       final boolean[] canClose = {true};
       for (final Project project : manager.getOpenProjects()) {
         try {
-          CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-            @Override
-            public void run() {
-              if (!manager.closeProject(project, true, true, checkCanCloseProject)) {
-                canClose[0] = false;
-              }
+          CommandProcessor.getInstance().executeCommand(project, () -> {
+            if (!manager.closeProject(project, true, true, checkCanCloseProject)) {
+              canClose[0] = false;
             }
           }, ApplicationBundle.message("command.exit"), null);
         }
@@ -443,25 +421,22 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
         public void setFraction(double fraction) {
           mySplash.showProgress("", (float)(0.65 + getPercentageOfComponentsLoaded() * 0.35));
         }
-      }, new Runnable() {
-        @Override
-        public void run() {
-          // create ServiceManagerImpl at first to force extension classes registration
-          getPicoContainer().getComponentInstance(ServiceManagerImpl.class);
+      }, () -> {
+        // create ServiceManagerImpl at first to force extension classes registration
+        getPicoContainer().getComponentInstance(ServiceManagerImpl.class);
 
-          String effectiveConfigPath = FileUtilRt.toSystemIndependentName(configPath == null ? PathManager.getConfigPath() : configPath);
-          for (ApplicationLoadListener listener : ApplicationLoadListener.EP_NAME.getExtensions()) {
-            try {
-              listener.beforeApplicationLoaded(ApplicationImpl.this, effectiveConfigPath);
-            }
-            catch (Throwable e) {
-              LOG.error(e);
-            }
+        String effectiveConfigPath = FileUtilRt.toSystemIndependentName(configPath == null ? PathManager.getConfigPath() : configPath);
+        for (ApplicationLoadListener listener : ApplicationLoadListener.EP_NAME.getExtensions()) {
+          try {
+            listener.beforeApplicationLoaded(this, effectiveConfigPath);
           }
-
-          // we set it after beforeApplicationLoaded call, because app store can depends on stream provider state
-          ServiceKt.getStateStore(ApplicationImpl.this).setPath(effectiveConfigPath);
+          catch (Throwable e) {
+            LOG.error(e);
+          }
         }
+
+        // we set it after beforeApplicationLoaded call, because app store can depends on stream provider state
+        ServiceKt.getStateStore(this).setPath(effectiveConfigPath);
       });
       t = System.currentTimeMillis() - t;
       LOG.info(getComponentConfigCount() + " application components initialized in " + t + " ms");
@@ -477,12 +452,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @Override
   protected void createComponents(@Nullable final ProgressIndicator indicator) {
     // we cannot wrap "init()" call because ProgressManager instance could be created only after component registration (our "componentsRegistered" callback)
-    Runnable task = new Runnable() {
-      @Override
-      public void run() {
-        ApplicationImpl.super.createComponents(indicator);
-      }
-    };
+    Runnable task = () -> ApplicationImpl.super.createComponents(indicator);
 
 
     if (indicator == null) {
@@ -541,6 +511,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     Disposer.dispose(myLastDisposable); // dispose it last
 
     if (gatherWriteActionStatistics) {
+      //noinspection TestOnlyProblems
       LOG.info(writeActionStatistics());
       LOG.info(ActionUtil.ACTION_UPDATE_PAUSES.statistics());
     }
@@ -607,27 +578,21 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
     final AtomicBoolean threadStarted = new AtomicBoolean();
     //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        executeOnPooledThread(new Runnable() {
-          @Override
-          public void run() {
-            try {
-              ProgressManager.getInstance().runProcess(process, progress);
-            }
-            catch (ProcessCanceledException e) {
-              progress.cancel();
-              // ok to ignore.
-            }
-            catch (RuntimeException e) {
-              progress.cancel();
-              throw e;
-            }
-          }
-        });
-        threadStarted.set(true);
-      }
+    SwingUtilities.invokeLater(() -> {
+      executeOnPooledThread(() -> {
+        try {
+          ProgressManager.getInstance().runProcess(process, progress);
+        }
+        catch (ProcessCanceledException e) {
+          progress.cancel();
+          // ok to ignore.
+        }
+        catch (RuntimeException e) {
+          progress.cancel();
+          throw e;
+        }
+      });
+      threadStarted.set(true);
     });
 
     progress.startBlocking();
@@ -663,37 +628,26 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     readActionAcquired.down();
     final Semaphore modalityEntered = new Semaphore();
     modalityEntered.down();
-    executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          ApplicationManager.getApplication().runReadAction(new Runnable() {
-            @Override
-            public void run() {
-              readActionAcquired.up();
-              modalityEntered.waitFor();
-              ProgressManager.getInstance().runProcess(process, progress);
-            }
-          });
-        }
-        catch (ProcessCanceledException e) {
-          progress.cancel();
-          // ok to ignore.
-        }
-        catch (RuntimeException e) {
-          progress.cancel();
-          throw e;
-        }
+    executeOnPooledThread(() -> {
+      try {
+        ApplicationManager.getApplication().runReadAction(() -> {
+          readActionAcquired.up();
+          modalityEntered.waitFor();
+          ProgressManager.getInstance().runProcess(process, progress);
+        });
+      }
+      catch (ProcessCanceledException e) {
+        progress.cancel();
+        // ok to ignore.
+      }
+      catch (RuntimeException e) {
+        progress.cancel();
+        throw e;
       }
     });
 
     readActionAcquired.waitFor();
-    progress.startBlocking(new Runnable() {
-      @Override
-      public void run() {
-        modalityEntered.up();
-      }
-    });
+    progress.startBlocking(modalityEntered::up);
 
     LOG.assertTrue(!progress.isRunning());
 
@@ -781,7 +735,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     exit(false, exitConfirmed, true, true);
   }
 
-  /*
+  /**
    * There are two ways we can get an exit notification.
    *  1. From user input i.e. ExitAction
    *  2. From the native system.
@@ -803,19 +757,16 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
         return;
       }
 
-      Runnable runnable = new Runnable() {
-        @Override
-        public void run() {
-          if (!force && !confirmExitIfNeeded(exitConfirmed)) {
-            saveAll();
-            return;
-          }
-
-          getMessageBus().syncPublisher(AppLifecycleListener.TOPIC).appClosing();
-          myDisposeInProgress = true;
-          doExit(allowListenersToCancel, restart);
-          myDisposeInProgress = false;
+      Runnable runnable = () -> {
+        if (!force && !confirmExitIfNeeded(exitConfirmed)) {
+          saveAll();
+          return;
         }
+
+        getMessageBus().syncPublisher(AppLifecycleListener.TOPIC).appClosing();
+        myDisposeInProgress = true;
+        doExit(allowListenersToCancel, restart);
+        myDisposeInProgress = false;
       };
 
       if (isDispatchThread()) {
@@ -1434,13 +1385,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @TestOnly
   void disableEventsUntil(@NotNull Disposable disposable) {
-    final List<ApplicationListener> listeners = new ArrayList<ApplicationListener>(myDispatcher.getListeners());
+    final List<ApplicationListener> listeners = new ArrayList<>(myDispatcher.getListeners());
     myDispatcher.getListeners().removeAll(listeners);
-    Disposer.register(disposable, new Disposable() {
-      @Override
-      public void dispose() {
-        myDispatcher.getListeners().addAll(listeners);
-      }
-    });
+    Disposer.register(disposable, () -> myDispatcher.getListeners().addAll(listeners));
   }
 }
