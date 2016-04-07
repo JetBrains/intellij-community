@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.application;
+package com.intellij.openapi.application.impl;
 
 import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.openapi.Disposable;
@@ -21,7 +21,6 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
-import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -41,7 +40,6 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.StampedLock;
@@ -85,10 +83,10 @@ public class ApplicationImplTest extends LightPlatformTestCase {
 
           assertFalse(application.isReadAccessAllowed());
           int ratioPercent = (int)((l1 - l2) * 100.0 / l1);
-          String msg = "acquireReadActionLock(" + l2 + "ms) vs runReadAction(" + l1 + "ms). Ratio: " + ratioPercent + "%";
+          String msg = "acquireReadActionLock(" + l2 + "ms) vs runReadAction(" + l1 + "ms). Ratio: " + ratioPercent + "% (in "+(ratioPercent<0 ? "my" : "Maxim's") +" favor)";
           System.out.println(msg);
           if (Math.abs(ratioPercent) > 40) {
-            return "Suspiciously different times for " + msg +" (in "+(ratioPercent<0 ? "my" : "Maxim's") +" favor)";
+            return "Suspiciously different times for " + msg;
           }
         }
         catch (Throwable e) {
@@ -108,61 +106,58 @@ public class ApplicationImplTest extends LightPlatformTestCase {
 
 
   public void testRead50Write50LockPerformance() throws InterruptedException {
-    int iterations = 400000;
-    final int readIterations = iterations;
-    final int writeIterations = iterations;
+    final int readIterations = 600000;
+    final int writeIterations = 600000;
 
     runReadWrites(readIterations, writeIterations, 2000);
   }
 
   public void testRead100Write0LockPerformance() throws InterruptedException {
-    final int readIterations = 400000;
+    final int readIterations = 60000000;
     final int writeIterations = 0;
 
-    runReadWrites(readIterations, writeIterations, 1000);
+    runReadWrites(readIterations, writeIterations, 10000);
   }
 
   private static void runReadWrites(final int readIterations, final int writeIterations, int expectedMs) throws InterruptedException {
     final ApplicationImpl application = (ApplicationImpl)ApplicationManager.getApplication();
     Disposable disposable = Disposer.newDisposable();
     application.disableEventsUntil(disposable);
-    List<Thread> threads = new ArrayList<>();
 
     try {
       PlatformTestUtil.startPerformanceTest("lock performance", expectedMs, () -> {
         final int numOfThreads = JobSchedulerImpl.CORES_COUNT;
-        final CountDownLatch reads = new CountDownLatch(numOfThreads);
+        List<Thread> threads = new ArrayList<>(numOfThreads);
         for (int i = 0; i < numOfThreads; i++) {
           Thread thread = new Thread(() -> {
-            System.out.println(Thread.currentThread());
+            assertFalse(application.isReadAccessAllowed());
+            //System.out.println("start "+Thread.currentThread());
             for (int i1 = 0; i1 < readIterations; i1++) {
               application.runReadAction(() -> {
-
               });
             }
-
-            reads.countDown();
-          }, "stress thread " + i);
+            //System.out.println("end   "+Thread.currentThread());
+          }, "read thread " + i);
           thread.start();
           threads.add(thread);
         }
 
         if (writeIterations > 0) {
-          System.out.println("write start");
+          //System.out.println("write start");
           for (int i = 0; i < writeIterations; i++) {
             ApplicationManager.getApplication().runWriteAction(() -> {
             });
           }
-          System.out.println("write end");
+          //System.out.println("write end");
         }
-        reads.await();
+        for (Thread thread : threads) {
+          thread.join();
+        }
+        threads.clear();
       }).cpuBound().assertTiming();
     }
     finally {
       Disposer.dispose(disposable);
-      for (Thread thread : threads) {
-        thread.join();
-      }
     }
   }
 
@@ -646,5 +641,37 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     assertTrue(result);
     UIUtil.dispatchAllInvocationEvents();
     if (exception != null) throw exception;
+  }
+
+  public void testRWLockPerformance() throws InterruptedException {
+    long s = System.currentTimeMillis();
+    while (System.currentTimeMillis() < s + 2000) {
+      UIUtil.dispatchAllInvocationEvents();
+    }
+    //System.out.println("warming finished");
+    final int readIterations = 100000000;
+    PlatformTestUtil.startPerformanceTest("RWLock is slow", 12000, ()-> {
+      ReadMostlyRWLock lock = new ReadMostlyRWLock(Thread.currentThread());
+
+      final int numOfThreads = JobSchedulerImpl.CORES_COUNT;
+      List<Thread> threads = new ArrayList<>(numOfThreads);
+      for (int i = 0; i < numOfThreads; i++) {
+        Thread thread = new Thread(() -> {
+          for (int i1 = 0; i1 < readIterations; i1++) {
+            try {
+              lock.readLock();
+            }
+            finally {
+              lock.readUnlock();
+            }
+          }
+        }, "read thread " + i);
+        thread.start();
+        threads.add(thread);
+      }
+      for (Thread thread : threads) {
+        thread.join();
+      }
+    }).cpuBound().usesAllCPUCores().assertTiming();
   }
 }
