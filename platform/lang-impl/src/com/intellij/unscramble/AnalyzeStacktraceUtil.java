@@ -25,7 +25,6 @@ import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.ui.*;
 import com.intellij.execution.ui.actions.CloseAction;
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -39,9 +38,9 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.playback.commands.ActionCommand;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
@@ -135,7 +134,7 @@ public class AnalyzeStacktraceUtil {
                                             @NotNull RunContentDescriptor descriptor,
                                             @NotNull ConsoleView consoleView,
                                             @NotNull String stacktrace) {
-    AnAction replaceAction = ActionManager.getInstance().getAction("Replace");
+    AnAction replaceAction = ActionManager.getInstance().getAction(IdeActions.ACTION_REPLACE);
     if (replaceAction == null) {
       return;
     }
@@ -150,7 +149,11 @@ public class AnalyzeStacktraceUtil {
             UiNotifyConnector.doWhenFirstShown(myEditorPanel, new Runnable() {
               @Override
               public void run() {
-                performReplaceAction(project, replaceAction, myEditorPanel);
+                ActionManager.getInstance().tryToExecute(replaceAction,
+                                                         ActionCommand.getInputEvent(IdeActions.ACTION_REPLACE),
+                                                         myEditorPanel,
+                                                         ActionPlaces.UNKNOWN,
+                                                         false);
               }
             });
             return result;
@@ -166,26 +169,6 @@ public class AnalyzeStacktraceUtil {
         dialog.show();
       }
     }, replaceAction.getShortcutSet());
-  }
-
-  private static void performReplaceAction(@NotNull Project project, @NotNull AnAction replaceAction,
-                                           @NotNull JComponent contextComponent) {
-    IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(new Runnable() {
-      @Override
-      public void run() {
-        DataContext context = DataManager.getInstance().getDataContext(contextComponent);
-        AnActionEvent actionEvent = AnActionEvent.createFromAnAction(replaceAction, null, ActionPlaces.UNKNOWN, context);
-        replaceAction.update(actionEvent);
-        if (actionEvent.getPresentation().isEnabledAndVisible()) {
-          ActionUtil.performActionDumbAware(replaceAction, actionEvent);
-        }
-      }
-    });
-    //ApplicationManager.getApplication().invokeLater(new Runnable() {
-    //  @Override
-    //  public void run() {
-    //  }
-    //}, ModalityState.stateForComponent(contextComponent));
   }
 
   private static final class MyConsolePanel extends JPanel {
