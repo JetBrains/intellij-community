@@ -100,7 +100,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     myChangesLoadingPane = new JBLoadingPanel(new BorderLayout(), project, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
     myChangesLoadingPane.add(myChangesBrowser);
 
-    myGraphTable.getSelectionModel().addListSelectionListener(new CommitSelectionListener(myChangesBrowser));
+    myGraphTable.getSelectionModel().addListSelectionListener(new CommitSelectionListener());
     myGraphTable.getSelectionModel().addListSelectionListener(myDetailsPanel);
     updateWhenDetailsAreLoaded();
 
@@ -337,12 +337,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   }
 
   private class CommitSelectionListener implements ListSelectionListener {
-    private final ChangesBrowser myChangesBrowser;
-    private ProgressIndicator myLastRequest;
-
-    public CommitSelectionListener(ChangesBrowser changesBrowser) {
-      myChangesBrowser = changesBrowser;
-    }
+    @Nullable private ProgressIndicator myLastRequest;
 
     @Override
     public void valueChanged(@Nullable ListSelectionEvent event) {
