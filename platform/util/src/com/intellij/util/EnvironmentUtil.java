@@ -53,7 +53,6 @@ public class EnvironmentUtil {
   private static final String LC_CTYPE = "LC_CTYPE";
 
   private static final Future<Map<String, String>> ourEnvGetter;
-
   static {
     if (SystemInfo.isMac && "unlocked".equals(System.getProperty("__idea.mac.env.lock")) && Registry.is("idea.fix.mac.env")) {
       ourEnvGetter = AppExecutorUtil.getAppExecutorService().submit(new Callable<Map<String, String>>() {
