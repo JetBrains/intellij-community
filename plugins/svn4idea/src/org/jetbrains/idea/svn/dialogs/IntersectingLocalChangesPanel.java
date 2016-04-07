@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MultiLineLabelUI;
+import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer;
@@ -92,7 +93,7 @@ public class IntersectingLocalChangesPanel {
     myJTree = new JTree(root);
     myJTree.setRootVisible(false);
     myJTree.setShowsRootHandles(false);
-    myJTree.setCellRenderer(new ChangesBrowserNodeRenderer(myProject, true, false));
+    myJTree.setCellRenderer(new ChangesBrowserNodeRenderer(myProject, BooleanGetter.TRUE, false));
 
     TreeModelBuilder builder = new TreeModelBuilder(myProject, true);
     final DefaultTreeModel treeModel = builder.buildModelFromFilePaths(myFilesToShow);

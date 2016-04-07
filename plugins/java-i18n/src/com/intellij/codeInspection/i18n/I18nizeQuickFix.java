@@ -49,14 +49,13 @@ public class I18nizeQuickFix implements LocalQuickFix, I18nQuickFixHandler {
   private TextRange mySelectionRange;
 
   @Override
-  public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-    // do it later because the fix was called inside writeAction
-    ApplicationManager.getApplication().invokeLater(new Runnable(){
-      @Override
-      public void run() {
-        doFix(descriptor, project);
-      }
-    });
+  public final void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
+    doFix(descriptor, project);
+  }
+
+  @Override
+  public boolean startInWriteAction() {
+    return false;
   }
 
   @Override

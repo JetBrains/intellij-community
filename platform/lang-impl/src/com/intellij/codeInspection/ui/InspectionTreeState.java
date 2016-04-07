@@ -42,6 +42,8 @@ public class InspectionTreeState {
     if (mySelectionPath != null) {
       if (reloadedNode == null || needRestore(reloadedNode))
       mySelectionPath.restore(tree);
+    } else {
+      TreeUtil.selectFirstNode(tree);
     }
   }
 

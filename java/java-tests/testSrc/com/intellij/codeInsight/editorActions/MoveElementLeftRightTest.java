@@ -85,6 +85,11 @@ public class MoveElementLeftRightTest extends AbstractMoveElementLeftRightTest {
                           "class C { void m() throws Exception, RuntimeExceptio<caret>n {} }");
   }
 
+  public void testMoveThrowsExceptionsWithCaretAtEnd() throws Exception {
+    doTestFromRightToLeft("class C { void m() throws RuntimeException, Exception<caret> {} }",
+                          "class C { void m() throws Exception<caret>, RuntimeException {} }");
+  }
+
   public void testMoveImplementsClause() throws Exception {
     doTestFromLeftToRight("class C implements Cl<caret>oneable, java.io.Serializable {}",
                           "class C implements java.io.Serializable, Cl<caret>oneable {}");
@@ -104,6 +109,21 @@ public class MoveElementLeftRightTest extends AbstractMoveElementLeftRightTest {
     doTestFromLeftToRight("class C { int i = <caret>1 + 2 + 3; }",
                           "class C { int i = 2 + <caret>1 + 3; }",
                           "class C { int i = 2 + 3 + <caret>1; }");
+  }
+
+  public void testMoveTypeParameter() throws Exception {
+    doTestFromLeftToRight("class C {{ java.util.Map<Object<caret>, String> map; }}",
+                          "class C {{ java.util.Map<String, Object<caret>> map; }}");
+  }
+
+  public void testMoveClassTypeParameter() throws Exception {
+    doTestFromLeftToRight("class C<<caret>A, B> {}",
+                          "class C<B, <caret>A> {}");
+  }
+
+  public void testMoveModifier()  throws Exception {
+    doTestFromLeftToRight("@Suppress<caret>Warnings(\"ALL\") final class C {}",
+                          "final @Suppress<caret>Warnings(\"ALL\") class C {}");
   }
 
   @Override

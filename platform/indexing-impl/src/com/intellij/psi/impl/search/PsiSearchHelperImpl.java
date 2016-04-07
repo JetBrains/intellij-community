@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,9 +45,9 @@ import com.intellij.psi.search.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageInfoFactory;
-import com.intellij.util.CommonProcessors;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
+import com.intellij.util.Processors;
 import com.intellij.util.SmartList;
 import com.intellij.util.codeInsight.CommentUtilCore;
 import com.intellij.util.containers.ContainerUtil;
@@ -99,9 +99,10 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   @Override
   @NotNull
   public PsiElement[] findCommentsContainingIdentifier(@NotNull String identifier, @NotNull SearchScope searchScope) {
-    final List<PsiElement> results = Collections.synchronizedList(new ArrayList<PsiElement>());
-    processCommentsContainingIdentifier(identifier, searchScope, new CommonProcessors.CollectProcessor<PsiElement>(results));
-    return PsiUtilCore.toPsiElementArray(results);
+    final List<PsiElement> result = Collections.synchronizedList(new ArrayList<>());
+    Processor<PsiElement> processor = Processors.cancelableCollectProcessor(result);
+    processCommentsContainingIdentifier(identifier, searchScope, processor);
+    return PsiUtilCore.toPsiElementArray(result);
   }
 
   @Override
@@ -405,13 +406,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                 @NotNull Collection<VirtualFile> result) {
     myManager.startBatchFilesProcessingMode();
     try {
-      Processor<VirtualFile> processor = new CommonProcessors.CollectProcessor<VirtualFile>(result){
-        @Override
-        public boolean process(VirtualFile file) {
-          progress.checkCanceled();
-          return super.process(file);
-        }
-      };
+      Processor<VirtualFile> processor = Processors.cancelableCollectProcessor(result);
       boolean success = processFilesWithText(scope, searchContext, caseSensitively, text, processor);
       // success == false means exception in index
     }
@@ -794,10 +789,10 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       final GlobalSearchScope commonScope = uniteScopes(data);
       final Set<VirtualFile> intersectionWithContainerNameFiles = intersectionWithContainerNameFiles(commonScope, data, keys);
 
-      List<VirtualFile> files = new ArrayList<VirtualFile>();
-      Processor<VirtualFile> processor = new CommonProcessors.CollectProcessor<VirtualFile>(files);
+      List<VirtualFile> result = new ArrayList<VirtualFile>();
+      Processor<VirtualFile> processor = Processors.cancelableCollectProcessor(result);
       processFilesContainingAllKeys(myManager.getProject(), commonScope, null, keys, processor);
-      for (final VirtualFile file : files) {
+      for (final VirtualFile file : result) {
         progress.checkCanceled();
         for (final IdIndexEntry entry : keys) {
           DumbService.getInstance(myManager.getProject()).runReadActionInSmartMode(new Runnable() {
@@ -863,7 +858,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         return (context.intValue() & finalSearchContext) != 0;
       }
     };
-    processFilesContainingAllKeys(myManager.getProject(), commonScope, contextMatches, entries, new CommonProcessors.CollectProcessor<VirtualFile>(containerFiles));
+    Processor<VirtualFile> processor = Processors.cancelableCollectProcessor(containerFiles);
+    processFilesContainingAllKeys(myManager.getProject(), commonScope, contextMatches, entries, processor);
 
     return containerFiles;
   }

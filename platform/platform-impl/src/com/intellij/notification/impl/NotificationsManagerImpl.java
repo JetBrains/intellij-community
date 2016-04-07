@@ -86,7 +86,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
   }
 
   public static boolean newEnabled() {
-    return ApplicationManager.getApplication().isInternal() && Registry.is("ide.new.notification.enabled", false);
+    return Registry.is("ide.new.notification.enabled");
   }
 
   @Override

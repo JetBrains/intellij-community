@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package com.intellij.codeInsight.template.impl.editorActions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -33,7 +34,8 @@ public class EscapeHandler extends EditorActionHandler {
 
   @Override
   public void execute(Editor editor, DataContext dataContext) {
-    if (!editor.getSelectionModel().hasSelection()) { //remove selection has higher precedence over finishing template editing
+    //remove selection and closing lookup have higher precedence over finishing template editing
+    if (!editor.getSelectionModel().hasSelection() && LookupManager.getActiveLookup(editor) != null) { 
       final TemplateState templateState = TemplateManagerImpl.getTemplateState(editor);
       if (templateState != null && !templateState.isFinished()) {
         CommandProcessor.getInstance().setCurrentCommandName(CodeInsightBundle.message("finish.template.command"));

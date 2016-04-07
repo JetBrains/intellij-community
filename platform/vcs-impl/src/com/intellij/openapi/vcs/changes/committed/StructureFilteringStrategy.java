@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -160,7 +161,7 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
     public void initRenderer() {
       if (!myRendererInitialized) {
         myRendererInitialized = true;
-        myStructureTree.setCellRenderer(new ChangesBrowserNodeRenderer(myProject, false, false));
+        myStructureTree.setCellRenderer(new ChangesBrowserNodeRenderer(myProject, BooleanGetter.FALSE, false));
       }
     }
 

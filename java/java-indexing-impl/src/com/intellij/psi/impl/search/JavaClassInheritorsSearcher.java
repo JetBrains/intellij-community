@@ -17,14 +17,11 @@ package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.QueryExecutorBase;
-import com.intellij.openapi.application.ReadActionProcessor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -35,13 +32,16 @@ import com.intellij.psi.search.searches.AllClassesSearch;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.CommonProcessors;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Stack;
+import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.containers.HashSetQueue;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.AbstractCollection;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.concurrent.ConcurrentMap;
 
 public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, ClassInheritorsSearch.SearchParameters> {
   @Override
@@ -82,13 +82,19 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
         return isJavaLangObject(aClass) || consumer.process(aClass);
       });
     }
+    if (searchScope instanceof LocalSearchScope) {
+      return processLocalScope(project, parameters, (LocalSearchScope)searchScope, baseClass, consumer);
+    }
 
-    Collection<PsiClass> cached = getOrComputeSubClasses(project, parameters);
+    Collection<PsiClass> cached = getOrComputeSubClasses(project, parameters.getClassToProcess());
 
-    Processor<PsiClass> readActionedConsumer = ReadActionProcessor.wrapInReadAction(consumer);
     for (final PsiClass subClass : cached) {
       ProgressManager.checkCanceled();
-      if (!readActionedConsumer.process(subClass)) {
+      if (subClass instanceof PsiAnonymousClass && !parameters.isIncludeAnonymous()) {
+        continue;
+      }
+      if (ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() ->
+        checkCandidate(subClass, parameters) && !consumer.process(subClass))) {
         return false;
       }
     }
@@ -96,135 +102,81 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
   }
 
   @NotNull
-  private static Collection<PsiClass> getOrComputeSubClasses(@NotNull Project project,
-                                                             @NotNull ClassInheritorsSearch.SearchParameters parameters) {
-    List<PsiClass> computed = null;
-    PsiClass baseClass = parameters.getClassToProcess();
-    while (true) {
-      Collection<PsiClass> cached = null;
-      List<Pair<ClassInheritorsSearch.SearchParameters, Collection<PsiClass>>> cachedPairs = HighlightingCaches.getInstance(project).ALL_SUB_CLASSES.get(baseClass);
-      if (cachedPairs != null) {
-        for (Pair<ClassInheritorsSearch.SearchParameters, Collection<PsiClass>> pair : cachedPairs) {
-          ClassInheritorsSearch.SearchParameters cachedParams = pair.getFirst();
-          if (cachedParams.equals(parameters)) {
-            cached = pair.getSecond();
-            break;
-          }
-        }
-      }
-      if (cached != null) {
-        return cached;
-      }
-      if (computed == null) {
-        computed = new ArrayList<>();
-        boolean success = getAllSubClasses(project, parameters, new CommonProcessors.CollectProcessor<>(computed));
-        assert success;
-      }
-
-      if (cachedPairs != null) {
-        cachedPairs.add(Pair.create(parameters, computed));
-        break;
-      }
-      List<Pair<ClassInheritorsSearch.SearchParameters, Collection<PsiClass>>> newCachedPairs =
-        ContainerUtil.createConcurrentList(Collections.singletonList(Pair.create(parameters, computed)));
-      if (HighlightingCaches.getInstance(project).ALL_SUB_CLASSES.putIfAbsent(baseClass, newCachedPairs) == null) {
-        break;
-      }
+  private static Collection<PsiClass> getOrComputeSubClasses(@NotNull Project project, @NotNull PsiClass baseClass) {
+    ConcurrentMap<PsiClass, Collection<PsiClass>> CACHE = HighlightingCaches.getInstance(project).ALL_SUB_CLASSES;
+    Collection<PsiClass> cached = CACHE.get(baseClass);
+    if (cached == null) {
+      cached = computeAllSubClasses(project, baseClass); // it's almost empty now, no big deal
+      // make sure concurrent calls of this method always return the same collection to avoid expensive duplicate work
+      cached = ConcurrencyUtil.cacheOrGet(CACHE, baseClass, cached);
     }
-    return computed;
+    return cached;
   }
 
-  private static boolean getAllSubClasses(@NotNull Project project,
-                                          @NotNull ClassInheritorsSearch.SearchParameters parameters,
-                                          @NotNull Processor<PsiClass> consumer) {
-    SearchScope searchScope = parameters.getScope();
-    final Ref<PsiClass> currentBase = Ref.create(null);
-    final Stack<PsiAnchor> stack = new Stack<>();
-    final Set<PsiAnchor> processed = ContainerUtil.newTroveSet();
+  @NotNull
+  // returns lazy collection of subclasses. Each call to next() leads to calculation of next batch of subclasses.
+  private static Collection<PsiClass> computeAllSubClasses(@NotNull Project project, @NotNull PsiClass baseClass) {
+    return new AllSubClassesLazyCollection(project, baseClass);
+  }
 
-    boolean checkDeep = searchScope instanceof LocalSearchScope;
-    final Processor<PsiClass> processor = new ReadActionProcessor<PsiClass>() {
-      @Override
-      public boolean processInReadAction(PsiClass candidate) {
-        ProgressManager.checkCanceled();
+  private static boolean processLocalScope(@NotNull final Project project,
+                                           @NotNull final ClassInheritorsSearch.SearchParameters parameters,
+                                           @NotNull LocalSearchScope searchScope,
+                                           @NotNull PsiClass baseClass,
+                                           @NotNull Processor<PsiClass> consumer) {
+    // optimisation: in case of local scope it's considered cheaper to enumerate all scope files and check if there is an inheritor there,
+    // instead of traversing the (potentially huge) class hierarchy and filter out almost everything by scope.
+    VirtualFile[] virtualFiles = searchScope.getVirtualFiles();
 
-        if (!candidate.isInheritor(currentBase.get(), checkDeep)) {
-          return true;
-        }
-
-        if (PsiSearchScopeUtil.isInScope(searchScope, candidate)) {
-          if (candidate instanceof PsiAnonymousClass) {
-            return consumer.process(candidate);
-          }
-
-          final String name = candidate.getName();
-          if (name != null && parameters.getNameCondition().value(name) && !consumer.process(candidate)) {
-            return false;
-          }
-        }
-
-        if (!(candidate instanceof PsiAnonymousClass) && !candidate.hasModifierProperty(PsiModifier.FINAL)) {
-          stack.push(PsiAnchor.create(candidate));
-        }
-        return true;
-      }
-    };
-
-    @NotNull PsiClass baseClass = parameters.getClassToProcess();
-    if (searchScope instanceof LocalSearchScope) {
-      // optimisation: it's considered cheaper to enumerate all scope files and check if there is an inheritor there,
-      // instead of traversing the (potentially huge) class hierarchy and filter out almost everything by scope.
-      VirtualFile[] virtualFiles = ((LocalSearchScope)searchScope).getVirtualFiles();
-      final boolean[] success = {true};
-      currentBase.set(baseClass);
-      for (VirtualFile virtualFile : virtualFiles) {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          @Override
-          public void run() {
-            PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
-            if (psiFile != null) {
-              psiFile.accept(new JavaRecursiveElementVisitor() {
-                @Override
-                public void visitClass(PsiClass aClass) {
-                  if (!success[0]) return;
-                  if (!processor.process(aClass)) {
-                    success[0] = false;
-                    return;
-                  }
-                  super.visitClass(aClass);
-                }
-
-                @Override
-                public void visitCodeBlock(PsiCodeBlock block) {
-                  if (!parameters.isIncludeAnonymous()) return;
-                  super.visitCodeBlock(block);
-                }
-              });
-            }
-          }
-        });
-      }
-      return success[0];
-    }
-
-    ApplicationManager.getApplication().runReadAction(() -> {
-      stack.push(PsiAnchor.create(baseClass));
-    });
-    final GlobalSearchScope projectScope = GlobalSearchScope.allScope(project);
-
-    while (!stack.isEmpty()) {
+    final boolean[] success = {true};
+    for (VirtualFile virtualFile : virtualFiles) {
       ProgressManager.checkCanceled();
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        @Override
+        public void run() {
+          PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
+          if (psiFile != null) {
+            psiFile.accept(new JavaRecursiveElementVisitor() {
+              @Override
+              public void visitClass(PsiClass candidate) {
+                ProgressManager.checkCanceled();
+                if (!success[0]) return;
+                if (candidate.isInheritor(baseClass, true)
+                    && checkCandidate(candidate, parameters)
+                    && !consumer.process(candidate)) {
+                  success[0] = false;
+                  return;
+                }
+                super.visitClass(candidate);
+              }
 
-      final PsiAnchor anchor = stack.pop();
-      if (!processed.add(anchor)) continue;
-
-      PsiClass psiClass = ApplicationManager.getApplication().runReadAction((Computable<PsiClass>)() -> (PsiClass)anchor.retrieve());
-      if (psiClass == null) continue;
-
-      currentBase.set(psiClass);
-      if (!DirectClassInheritorsSearch.search(psiClass, projectScope, parameters.isIncludeAnonymous(), false).forEach(processor)) return false;
+              @Override
+              public void visitCodeBlock(PsiCodeBlock block) {
+                ProgressManager.checkCanceled();
+                if (!parameters.isIncludeAnonymous()) return;
+                super.visitCodeBlock(block);
+              }
+            });
+          }
+        }
+      });
     }
-    return true;
+    return success[0];
+  }
+
+  private static boolean checkCandidate(@NotNull PsiClass candidate, @NotNull ClassInheritorsSearch.SearchParameters parameters) {
+    SearchScope searchScope = parameters.getScope();
+    ProgressManager.checkCanceled();
+
+    if (!PsiSearchScopeUtil.isInScope(searchScope, candidate)) {
+      return false;
+    }
+    if (candidate instanceof PsiAnonymousClass) {
+      return true;
+    }
+
+    String name = candidate.getName();
+    return name != null && parameters.getNameCondition().value(name);
   }
 
   static boolean isJavaLangObject(@NotNull final PsiClass baseClass) {
@@ -234,5 +186,104 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
 
   private static boolean isFinal(@NotNull final PsiClass baseClass) {
     return ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> baseClass.hasModifierProperty(PsiModifier.FINAL));
+  }
+
+  private static class AllSubClassesLazyCollection extends AbstractCollection<PsiClass> {
+    // Computes all sub classes of the 'baseClass' transitively by calling DirectClassInheritorsSearch repeatedly.
+    // Already computed subclasses in this collection.
+    // There are two iterators maintained for this collection:
+    // - 'candidatesToFindSubclassesIterator' points to the next element for which direct inheritors haven't been searched yet.
+    // - 'subClassIterator' created in AllSubClassesLazyCollection.iterator() maintains state of the AllSubClassesLazyCollection iterator in a lazy fashion. If more elements requested for this iterator, the findNextSubclasses() is called which tries to populate 'subClasses' with more inheritors.
+    private final HashSetQueue<PsiClass> subClasses = new HashSetQueue<>();
+    private final Object lock = new Object();
+    private final GlobalSearchScope projectScope;
+    private final Semaphore currentlyProcessingClasses = new Semaphore();
+    private final PsiClass myBaseClass;
+
+    AllSubClassesLazyCollection(@NotNull Project project, @NotNull PsiClass baseClass) {
+      myBaseClass = baseClass;
+      projectScope = GlobalSearchScope.allScope(project);
+      // populate with at least one subclass
+      findNextSubclasses();
+    }
+
+    @NotNull
+    @Override
+    public Iterator<PsiClass> iterator() {
+      return new Iterator<PsiClass>() {
+        private final Iterator<PsiClass> subClassIterator = subClasses.iterator();
+
+        @Override
+        public boolean hasNext() {
+          synchronized (lock) {
+            if (subClassIterator.hasNext()) return true;
+          }
+
+          findNextSubclasses();
+
+          synchronized (lock) {
+            return subClassIterator.hasNext();
+          }
+        }
+
+        @Override
+        public PsiClass next() {
+          synchronized (lock) {
+            return subClassIterator.next();
+          }
+        }
+      };
+    }
+
+    @Override
+    public int size() {
+      throw new UnsupportedOperationException();
+    }
+
+    private Iterator<PsiClass> candidatesToFindSubclassesIterator; // guarded by lock
+
+    private void findNextSubclasses() {
+      while (true) {
+        ProgressManager.checkCanceled();
+
+        PsiClass candidate;
+        synchronized (lock) {
+          if (candidatesToFindSubclassesIterator == null) {
+            candidatesToFindSubclassesIterator = subClasses.iterator();
+            candidate = myBaseClass;
+          }
+          else {
+            if (!candidatesToFindSubclassesIterator.hasNext()) {
+              // no candidates left, exit
+              // but first, wait for other threads to process their candidates
+              break;
+            }
+            candidate = candidatesToFindSubclassesIterator.next();
+          }
+          currentlyProcessingClasses.down(); // tell other threads we are going to process this candidate
+        }
+
+        boolean added;
+        try {
+          if (candidate instanceof PsiAnonymousClass || isFinal(candidate)) {
+            added = false;
+          }
+          else {
+            Collection<PsiClass> foundSubClasses = DirectClassInheritorsSearch.search(candidate, projectScope).findAll();
+            synchronized (lock) {
+              added = subClasses.addAll(foundSubClasses);
+            }
+          }
+        }
+        finally {
+          currentlyProcessingClasses.up();
+        }
+        if (added) {
+          // just allow the iterator to move forward; more elements will be added on the next call to .next()
+          return;
+        }
+      }
+      currentlyProcessingClasses.waitFor(); // wait until other threads process their classes before giving up
+    }
   }
 }

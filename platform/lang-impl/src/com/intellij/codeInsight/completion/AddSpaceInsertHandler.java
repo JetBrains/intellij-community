@@ -15,15 +15,22 @@ public class AddSpaceInsertHandler implements InsertHandler<LookupElement> {
   public final static InsertHandler<LookupElement> INSTANCE = new AddSpaceInsertHandler(false);
   public final static InsertHandler<LookupElement> INSTANCE_WITH_AUTO_POPUP = new AddSpaceInsertHandler(true);
 
+  private final String myIgnoreOnChars;
   private final boolean myTriggerAutoPopup;
 
   public AddSpaceInsertHandler(boolean triggerAutoPopup) {
+    this("", triggerAutoPopup);
+  }
+
+  public AddSpaceInsertHandler(String ignoreOnChars, boolean triggerAutoPopup) {
+    myIgnoreOnChars = ignoreOnChars;
     myTriggerAutoPopup = triggerAutoPopup;
   }
 
   public void handleInsert(InsertionContext context, LookupElement item) {
     Editor editor = context.getEditor();
-    if (context.getCompletionChar() == ' ') return;
+    char completionChar = context.getCompletionChar();
+    if (completionChar == ' ' || myIgnoreOnChars.indexOf(completionChar) >= 0) return;
     Project project = editor.getProject();
     if (project != null) {
       if (!isCharAtSpace(editor)) {

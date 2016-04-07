@@ -45,9 +45,7 @@ def _on_forked_process():
     pydevd.threadingCurrentThread().__pydevd_main_thread = True
     pydevd.settrace_forked()
 
-def _on_set_trace_for_new_thread():
-    from _pydevd_bundle.pydevd_comm import get_global_debugger
-    global_debugger = get_global_debugger()
+def _on_set_trace_for_new_thread(global_debugger):
     if global_debugger is not None:
         global_debugger.SetTrace(global_debugger.trace_dispatch)
 
@@ -78,7 +76,10 @@ def patch_args(args):
             try:
                 indC = args.index('-c')
             except ValueError:
-                indC = -1
+                try:
+                    indC = args.index('"-c"')
+                except ValueError:
+                    indC = -1
 
             if indC != -1:
                 host, port = _get_host_port()
@@ -120,12 +121,16 @@ def patch_args(args):
         #  '--vm_type', 'python', '--client', '127.0.0.1', '--port', '56352', '--file', 'x:\\snippet1.py']
         original = sys.original_argv[:]
         while i < len(args):
-            if args[i] == '-m':
+            if sys.platform == "win32" and args[i].endswith('"'):
+                arg = args[i].strip('"')
+            else:
+                arg = args[i]
+            if arg == '-m':
                 # Always insert at pos == 1 (i.e.: pydevd "--module" --multiprocess ...)
                 original.insert(1, '--module')
             else:
-                if args[i].startswith('-'):
-                    new_args.append(args[i])
+                if arg.startswith('-'):
+                    new_args.append(arg)
                 else:
                     break
             i += 1
@@ -534,11 +539,15 @@ class _NewThreadStartupWithTrace:
         self.original_func = original_func
         self.args = args
         self.kwargs = kwargs
+        self.global_debugger = self.get_debugger()
+
+    def get_debugger(self):
+        from _pydevd_bundle.pydevd_comm import get_global_debugger
+        return get_global_debugger()
 
     def __call__(self):
-        _on_set_trace_for_new_thread()
-        from _pydevd_bundle.pydevd_comm import get_global_debugger
-        global_debugger = get_global_debugger()
+        _on_set_trace_for_new_thread(self.global_debugger)
+        global_debugger = self.global_debugger
 
         if global_debugger is not None and global_debugger.thread_analyser is not None:
             # we can detect start_new_thread only here
@@ -567,7 +576,10 @@ _UseNewThreadStartup = _NewThreadStartupWithTrace
 def _get_threading_modules_to_patch():
     threading_modules_to_patch = []
 
-    from _pydev_imps._pydev_saved_modules import thread as _thread
+    try:
+        import thread as _thread
+    except:
+        import _thread
     threading_modules_to_patch.append(_thread)
 
     return threading_modules_to_patch

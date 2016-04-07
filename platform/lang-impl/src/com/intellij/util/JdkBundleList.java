@@ -43,6 +43,10 @@ public class JdkBundleList {
     }
   }
 
+  public JdkBundle getBundle(@NotNull String path) {
+    return bundleMap.get(path);
+  }
+
   private void addMostRecent(@NotNull JdkBundle bundleDescriptor, boolean forceOldVersion) {
     Pair<Version, Integer> versionUpdate = bundleDescriptor.getVersionUpdate();
     boolean updateVersionMap = versionUpdate != null;

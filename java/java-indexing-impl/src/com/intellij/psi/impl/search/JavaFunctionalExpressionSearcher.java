@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,9 +36,9 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.stubs.StubIndexKey;
 import com.intellij.psi.util.*;
-import com.intellij.util.CommonProcessors;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
+import com.intellij.util.Processors;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
@@ -174,7 +174,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
 
           final Set<String> usedMethodNames = newHashSet();
           FileBasedIndex.getInstance().processAllKeys(JavaFunctionalExpressionIndex.JAVA_FUNCTIONAL_EXPRESSION_INDEX_ID,
-                                                      new CommonProcessors.CollectProcessor<String>(usedMethodNames), candidateScope, null);
+                                                      Processors.cancelableCollectProcessor(usedMethodNames), candidateScope, null);
 
           final LinkedHashSet<PsiMethod> methods = newLinkedHashSet();
           Processor<PsiMethod> methodProcessor = new Processor<PsiMethod>() {
@@ -200,12 +200,9 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
   @NotNull
   private static GlobalSearchScope combineResolveScopes(Project project, Set<VirtualFile> candidateFiles) {
     final PsiManager psiManager = PsiManager.getInstance(project);
-    LinkedHashSet<GlobalSearchScope> resolveScopes = newLinkedHashSet(mapNotNull(candidateFiles, new Function<VirtualFile, GlobalSearchScope>() {
-      @Override
-      public GlobalSearchScope fun(VirtualFile file) {
-        PsiFile psiFile = file.isValid() ? psiManager.findFile(file) : null;
-        return psiFile == null ? null : psiFile.getResolveScope();
-      }
+    Set<GlobalSearchScope> resolveScopes = newLinkedHashSet(mapNotNull(candidateFiles, file -> {
+      PsiFile psiFile = file.isValid() ? psiManager.findFile(file) : null;
+      return psiFile == null ? null : psiFile.getResolveScope();
     }));
     return GlobalSearchScope.union(resolveScopes.toArray(new GlobalSearchScope[resolveScopes.size()]));
   }
@@ -214,7 +211,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
   private static Set<VirtualFile> getFilesWithFunctionalExpressionsScope(Project project, GlobalSearchScope useScope) {
     final Set<VirtualFile> files = newLinkedHashSet();
     final PsiSearchHelperImpl helper = (PsiSearchHelperImpl)PsiSearchHelper.SERVICE.getInstance(project);
-    final CommonProcessors.CollectProcessor<VirtualFile> processor = new CommonProcessors.CollectProcessor<VirtualFile>(files);
+    Processor<VirtualFile> processor = Processors.cancelableCollectProcessor(files);
     helper.processFilesWithText(useScope, UsageSearchContext.IN_CODE, true, "::", processor);
     helper.processFilesWithText(useScope, UsageSearchContext.IN_CODE, true, "->", processor);
     return files;

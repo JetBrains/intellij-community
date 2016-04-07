@@ -8,7 +8,6 @@
   <icon size32="/PyCharmCore32.png" size16="/PyCharmCore16.png" ico="PyCharmCore.ico"/>
   <package code="__PACKAGE_CODE__"/>
   <names product="PyCharm" fullname="PyCharm Community Edition" script="charm"/>
-  <install-over minbuild="0" maxbuild="0" version="4.x"/>
 
   <welcome-screen logo-url="/PyCharmCoreWelcomeScreen.png"/>
 

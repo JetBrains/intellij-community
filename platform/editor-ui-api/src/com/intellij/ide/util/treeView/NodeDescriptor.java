@@ -66,7 +66,7 @@ public abstract class NodeDescriptor<E> {
   public abstract E getElement();
 
   public String toString() {
-    return myName;
+    return String.valueOf(myName);
   }
 
   /**

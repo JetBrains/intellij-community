@@ -73,7 +73,7 @@ class TransactionTest extends LightPlatformTestCase {
   public void "test no current id inside invokeLater"() {
     SwingUtilities.invokeLater {
       log << '2'
-      assert !guard.currentMergeableTransaction
+      assert !guard.contextTransaction
     }
     TransactionGuard.submitTransaction testRootDisposable, {
       log << '1'
@@ -86,12 +86,12 @@ class TransactionTest extends LightPlatformTestCase {
   public void "test has id inside nested transaction"() {
     TransactionGuard.submitTransaction testRootDisposable, {
       log << '1'
-      def id = guard.currentMergeableTransaction
+      def id = guard.contextTransaction
       assert id
       TransactionGuard.submitTransaction testRootDisposable, {
         log << '2'
-        assert guard.currentMergeableTransaction
-        assert id != guard.currentMergeableTransaction
+        assert guard.contextTransaction
+        assert id != guard.contextTransaction
       }
       assert log == ['1', '2']
     }
@@ -101,11 +101,11 @@ class TransactionTest extends LightPlatformTestCase {
   public void "test modal progress started from inside a transaction has the same id"() {
     TransactionGuard.submitTransaction testRootDisposable, {
       log << '1'
-      def id = guard.currentMergeableTransaction
+      def id = guard.contextTransaction
       assert id
       ProgressManager.instance.runProcessWithProgressSynchronously({
                                                                      assert !ApplicationManager.application.dispatchThread
-                                                                     assert id == guard.currentMergeableTransaction
+                                                                     assert id == guard.contextTransaction
                                                                      log << '2'
                                                                    }, 'title', true, project)
     }
@@ -116,7 +116,7 @@ class TransactionTest extends LightPlatformTestCase {
       log << '1'
       ApplicationManager.application.executeOnPooledThread({
         assert !ApplicationManager.application.dispatchThread
-        assert !guard.currentMergeableTransaction
+        assert !guard.contextTransaction
         log << '2'
       }).get()
     }
@@ -138,7 +138,7 @@ class TransactionTest extends LightPlatformTestCase {
   public void "test do not merge into newly started nested transactions"() {
     TransactionGuard.submitTransaction testRootDisposable, {
       log << '1'
-      def id = guard.currentMergeableTransaction
+      def id = guard.contextTransaction
       SwingUtilities.invokeLater {
         guard.submitMergeableTransaction testRootDisposable, id, { log << '4' }
       }
@@ -147,7 +147,7 @@ class TransactionTest extends LightPlatformTestCase {
         log << '2'
         UIUtil.dispatchAllInvocationEvents()
         guard.submitMergeableTransaction testRootDisposable, id, { log << '5' }
-        def nestedId = guard.currentMergeableTransaction
+        def nestedId = guard.contextTransaction
         SwingUtilities.invokeLater {
           guard.submitMergeableTransaction testRootDisposable, nestedId, { log << '3' }
           assert log == ['1', '2']
@@ -157,6 +157,22 @@ class TransactionTest extends LightPlatformTestCase {
       assert log == ['1', '2', '3']
       UIUtil.dispatchAllInvocationEvents()
       assert log == ['1', '2', '3', '4', '5']
+    }
+  }
+
+  public void "test submit with finished transaction id"() {
+    TransactionGuard.submitTransaction testRootDisposable, {
+      log << '1'
+      TransactionId id = null
+      TransactionGuard.submitTransaction testRootDisposable, {
+        log << '2'
+        id = guard.contextTransaction
+      }
+      SwingUtilities.invokeLater {
+        guard.submitMergeableTransaction testRootDisposable, id, { log << '3' }
+      }
+      UIUtil.dispatchAllInvocationEvents()
+      assert log == ['1', '2', '3']
     }
   }
 

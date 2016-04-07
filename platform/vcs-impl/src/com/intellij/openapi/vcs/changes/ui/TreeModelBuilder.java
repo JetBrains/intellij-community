@@ -44,7 +44,7 @@ public class TreeModelBuilder {
   @NonNls public static final String ROOT_NODE_VALUE = "root";
   public static final String LOCALLY_DELETED_NODE = VcsBundle.message("changes.nodetitle.locally.deleted.files");
 
-  private final Project myProject;
+  @NotNull private final Project myProject;
   private final boolean showFlatten;
   @NotNull private DefaultTreeModel model;
   @NotNull private final ChangesBrowserNode root;
@@ -52,7 +52,7 @@ public class TreeModelBuilder {
   @Nullable private ChangesGroupingPolicy myPolicy;
   @NotNull private HashMap<String, ChangesBrowserNode> myFoldersCache;
 
-  public TreeModelBuilder(final Project project, final boolean showFlatten) {
+  public TreeModelBuilder(@NotNull Project project, final boolean showFlatten) {
     myProject = project;
     this.showFlatten = showFlatten;
     root = ChangesBrowserNode.create(myProject, ROOT_NODE_VALUE);

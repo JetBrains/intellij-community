@@ -37,11 +37,10 @@ import org.jetbrains.annotations.Nullable;
  * The recommended way to perform a transaction is to invoke {@link #submitTransaction(Disposable, Runnable)}. It either runs the transaction immediately
  * (if on UI thread and not inside invokeLater) or queues it to invoke at some later moment, when it becomes possible.<p/>
  *
- * Sometimes transactions need to be processed immediately, even if another transaction is already running. Example:
- * outer transaction has shown a dialog with an editor, and typing into that editor (which requires a transaction for changing document)
- * should be allowed. For such cases, the framework should be notified which transaction kinds are allowed to merged into
- * the main transaction and executed immediately. Use {@link #acceptNestedTransactions(TransactionKind...)} for that. Inner transactions
- * should be given some kind in such circumstances: {@link #submitMergeableTransaction(Disposable, TransactionKind, Runnable)}.
+ * Sometimes transactions need to be processed as soon as possible, even if another transaction is already running. Example:
+ * outer transaction has shown a dialog with a modal progress that performs a write action inside (which requires a transaction)
+ * and waits for it to be finished. For such cases, a context transaction id
+ * should be supplied to the nested transaction via {@link #submitMergeableTransaction(Disposable, TransactionId, Runnable)}.
  *
  * <p><h1>FAQ</h1></p>
  *
@@ -112,19 +111,6 @@ public abstract class TransactionGuard {
   }
 
   /**
-   * Runs the given code synchronously inside a transaction. Fails if transactions of given kind are not allowed at this moment.
-   * @see #startSynchronousTransaction(TransactionKind)
-   */
-  public static void syncTransaction(@NotNull TransactionKind kind, @NotNull Runnable transaction) {
-    AccessToken token = getInstance().startSynchronousTransaction(kind);
-    try {
-      transaction.run();
-    } finally {
-      token.finish();
-    }
-  }
-
-  /**
    * Schedules a given runnable to be executed inside a transaction later on Swing thread.
    * Same as {@link #submitTransaction(Disposable, Runnable)}, but the runnable is never executed immediately.
    */
@@ -136,7 +122,7 @@ public abstract class TransactionGuard {
    * @see #submitMergeableTransaction(Disposable, TransactionKind, Runnable)
    * @throws ProcessCanceledException if current thread is interrupted
    */
-  public abstract void submitTransactionAndWait(@NotNull TransactionKind kind, @NotNull Runnable transaction) throws ProcessCanceledException;
+  public abstract void submitTransactionAndWait(@NotNull Runnable transaction) throws ProcessCanceledException;
 
   /**
    * A synchronous version of {@link #submitMergeableTransaction(Disposable, TransactionKind, Runnable)}.
@@ -152,17 +138,7 @@ public abstract class TransactionGuard {
     submitMergeableTransaction(ApplicationManager.getApplication(), kind, transaction);
   }
 
-  /**
-   * When on UI thread and there's no other transaction running, executes the given runnable. If there is a transaction running,
-   * but the given {@code kind} is allowed via {@link #acceptNestedTransactions(TransactionKind...)}, merges two transactions
-   * and executes the provided code immediately. Otherwise
-   * adds the runnable to a queue. When all transactions scheduled before this one are finished, executes the given
-   * runnable under a transaction.
-   * @param parentDisposable an object whose disposing (via {@link com.intellij.openapi.util.Disposer} makes this transaction invalid,
-   *                         and so it won't be run after it has been disposed.
-   * @param kind a "kind" object for transaction merging
-   * @param transaction code to execute inside a transaction.
-   */
+  @Deprecated
   public abstract void submitMergeableTransaction(@NotNull Disposable parentDisposable, @NotNull TransactionKind kind, @NotNull Runnable transaction);
 
   /**
@@ -174,23 +150,9 @@ public abstract class TransactionGuard {
    *                         and so it won't be run after it has been disposed.
    * @param mergeInto an optional id of another transaction, to allow execution inside that transaction if it's still running
    * @param transaction code to execute inside a transaction.
-   * @see #getCurrentMergeableTransaction()
+   * @see #getContextTransaction()
    */
   public abstract void submitMergeableTransaction(@NotNull Disposable parentDisposable, @Nullable TransactionId mergeInto, @NotNull Runnable transaction);
-
-  /**
-   * Allow incoming transactions of the specified kinds to be executed immediately, instead of being queued until the current transaction is finished.<p/>
-   *
-   * Example: outer transaction has shown a dialog with an editor, and typing into that editor (which requires a transaction for changing document).
-   * should be allowed.<p/>
-   *
-   * For dialogs, consider using {@link AcceptNestedTransactions} annotation instead of explicit call to this method.
-   * @param kinds kinds of transactions to allow
-   * @return a token object for this session. Please call {@link AccessToken#finish()} (inside finally clause) when you don't want
-   * nested transactions anymore.
-   */
-  @NotNull
-  public abstract AccessToken acceptNestedTransactions(@NotNull TransactionKind... kinds);
 
   /**
    * Asserts that a transaction is currently running, or not. Callable only on Swing thread.
@@ -203,5 +165,5 @@ public abstract class TransactionGuard {
    * @return the id of the currently running transaction for using in {@link #submitMergeableTransaction(Disposable, TransactionId, Runnable)},
    * or null if there's no transaction running or merging is not allowed in the callee context (e.g. from invokeLater).
    */
-  public abstract TransactionId getCurrentMergeableTransaction();
+  public abstract TransactionId getContextTransaction();
 }

@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.util.SmartList;
 import com.intellij.util.Url;
 import com.intellij.util.Urls;
 import com.intellij.util.containers.ContainerUtil;
@@ -33,7 +34,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.BuiltInServerManager;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -44,18 +44,32 @@ public class BuiltInWebBrowserUrlProvider extends WebBrowserUrlProvider implemen
       return Collections.emptyList();
     }
 
-    String path = WebServerPathToFileManager.getInstance(project).getPath(file);
-    if (path == null) {
+    PathInfo info = WebServerPathToFileManager.getInstance(project).getPathInfo(file);
+    if (info == null) {
       return Collections.emptyList();
     }
 
     int effectiveBuiltInServerPort = BuiltInServerOptions.getInstance().getEffectiveBuiltInServerPort();
-    Url url = Urls.newHttpUrl(currentAuthority == null ? "localhost:" + effectiveBuiltInServerPort : currentAuthority, '/' + project.getName() + '/' + path);
-    int defaultPort = BuiltInServerManager.getInstance().getPort();
-    if (currentAuthority != null || defaultPort == effectiveBuiltInServerPort) {
-      return Collections.singletonList(url);
+    String path = info.getPath();
+
+    String authority = currentAuthority == null ? "localhost:" + effectiveBuiltInServerPort : currentAuthority;
+    List<Url> urls = new SmartList<>(Urls.newHttpUrl(authority, '/' + project.getName() + '/' + path));
+
+    String path2 = info.getRootLessPathIfPossible();
+    if (path2 != null) {
+      urls.add(Urls.newHttpUrl(authority, '/' + project.getName() + '/' + path2));
     }
-    return Arrays.asList(url, Urls.newHttpUrl("localhost:" + defaultPort, '/' + project.getName() + '/' + path));
+
+    int defaultPort = BuiltInServerManager.getInstance().getPort();
+    if (currentAuthority == null && defaultPort != effectiveBuiltInServerPort) {
+      String defaultAuthority = "localhost:" + defaultPort;
+      urls.add(Urls.newHttpUrl(defaultAuthority, '/' + project.getName() + '/' + path));
+      if (path2 != null) {
+        urls.add(Urls.newHttpUrl(defaultAuthority, '/' + project.getName() + '/' + path2));
+      }
+    }
+
+    return urls;
   }
 
   public static boolean compareAuthority(@Nullable String currentAuthority) {

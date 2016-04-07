@@ -16,7 +16,6 @@
 package com.intellij.codeInspection.ui;
 
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.containers.FactoryMap;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,19 +36,16 @@ public class ExcludedInspectionTreeNodesManager {
     }
   };
 
-  public boolean isExcluded(InspectionTreeNode node) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+  public synchronized boolean isExcluded(InspectionTreeNode node) {
     final Set<Object> excluded = myExcludedNodeObjects.get(node.getClass());
     return excluded.contains(node.getUserObject());
   }
 
-  public void exclude(InspectionTreeNode node) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+  public synchronized void exclude(InspectionTreeNode node) {
     myExcludedNodeObjects.get(node.getClass()).add(node.getUserObject());
   }
 
-  public void amnesty(InspectionTreeNode node) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+  public synchronized void amnesty(InspectionTreeNode node) {
     myExcludedNodeObjects.get(node.getClass()).remove(node.getUserObject());
   }
 }

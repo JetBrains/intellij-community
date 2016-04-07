@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,7 +87,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
           int ratioPercent = (int)((l1 - l2) * 100.0 / l1);
           String msg = "acquireReadActionLock(" + l2 + "ms) vs runReadAction(" + l1 + "ms). Ratio: " + ratioPercent + "%";
           System.out.println(msg);
-          if (Math.abs(ratioPercent) > 20) {
+          if (Math.abs(ratioPercent) > 40) {
             return "Suspiciously different times for " + msg +" (in "+(ratioPercent<0 ? "my" : "Maxim's") +" favor)";
           }
         }

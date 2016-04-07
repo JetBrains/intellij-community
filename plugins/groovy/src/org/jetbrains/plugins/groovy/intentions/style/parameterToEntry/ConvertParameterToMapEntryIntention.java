@@ -126,28 +126,23 @@ public class ConvertParameterToMapEntryIntention extends Intention {
         if (!ApplicationManager.getApplication().isUnitTestMode()) {
           final String[] possibleNames = generateValidNames(MY_POSSIBLE_NAMES, firstParam);
 
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
+          final GroovyMapParameterDialog dialog = new GroovyMapParameterDialog(project, possibleNames, true) {
             @Override
-            public void run() {
-              final GroovyMapParameterDialog dialog = new GroovyMapParameterDialog(project, possibleNames, true) {
-                @Override
-                protected void doOKAction() {
-                  String name = getEnteredName();
-                  MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
-                  assert name != null;
-                  GroovyValidationUtil.validateNewParameterName(firstParam, conflicts, name);
-                  if (isClosure) {
-                    findClosureConflictUsages(conflicts, occurrences);
-                  }
-                  if (reportConflicts(conflicts, project)) {
-                    performRefactoring(element, owner, occurrences, createNewFirst(), name, specifyTypeExplicitly());
-                  }
-                  super.doOKAction();
-                }
-              };
-              dialog.show();
+            protected void doOKAction() {
+              String name = getEnteredName();
+              MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
+              assert name != null;
+              GroovyValidationUtil.validateNewParameterName(firstParam, conflicts, name);
+              if (isClosure) {
+                findClosureConflictUsages(conflicts, occurrences);
+              }
+              if (reportConflicts(conflicts, project)) {
+                performRefactoring(element, owner, occurrences, createNewFirst(), name, specifyTypeExplicitly());
+              }
+              super.doOKAction();
             }
-          });
+          };
+          dialog.show();
         }
         else {
           //todo add statictics manager
@@ -170,6 +165,11 @@ public class ConvertParameterToMapEntryIntention extends Intention {
         conflicts.putValue(origin, GroovyIntentionsBundle.message("closure.used.as.variable"));
       }
     }
+  }
+
+  @Override
+  public boolean startInWriteAction() {
+    return false;
   }
 
   private static String[] generateValidNames(final String[] names, final GrParameter param) {

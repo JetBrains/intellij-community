@@ -166,6 +166,12 @@ public class IntroduceFieldInSameClassTest extends LightCodeInsightTestCase {
     checkResultByFile("/refactoring/introduceField/afterFromLambdaExpr.java");
   }
 
+  public void testSimplifyDiamond() throws Exception {
+    configureByFile("/refactoring/introduceField/beforeSimplifiedDiamond.java");
+    performRefactoring(BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION, false);
+    checkResultByFile("/refactoring/introduceField/afterSimplifiedDiamond.java");
+  }
+
   public void testStaticFieldInInnerClass() {
     configureByFile("/refactoring/introduceField/beforeStaticFieldInInnerClass.java");
     new MockIntroduceFieldHandler(BaseExpressionToFieldHandler.InitializationPlace.IN_CURRENT_METHOD, false) {

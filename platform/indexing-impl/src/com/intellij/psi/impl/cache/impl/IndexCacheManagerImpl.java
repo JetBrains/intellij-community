@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,8 +32,8 @@ import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.impl.cache.impl.id.IdIndex;
 import com.intellij.psi.impl.cache.impl.id.IdIndexEntry;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
+import com.intellij.util.Processors;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 
@@ -60,9 +60,11 @@ public class IndexCacheManagerImpl implements CacheManager{
     if (myProject.isDefault()) {
       return PsiFile.EMPTY_ARRAY;
     }
-    CommonProcessors.CollectProcessor<PsiFile> processor = new CommonProcessors.CollectProcessor<PsiFile>();
+    List<PsiFile> result = new ArrayList<>();
+    Processor<PsiFile> processor = Processors.cancelableCollectProcessor(result);
+
     processFilesWithWord(processor, word, occurenceMask, scope, caseSensitively);
-    return processor.getResults().isEmpty() ? PsiFile.EMPTY_ARRAY : processor.toArray(PsiFile.EMPTY_ARRAY);
+    return result.isEmpty() ? PsiFile.EMPTY_ARRAY : result.toArray(PsiFile.EMPTY_ARRAY);
   }
 
   @Override
@@ -72,18 +74,21 @@ public class IndexCacheManagerImpl implements CacheManager{
       return VirtualFile.EMPTY_ARRAY;
     }
 
-    final List<VirtualFile> vFiles = new ArrayList<VirtualFile>(5);
-    collectVirtualFilesWithWord(new CommonProcessors.CollectProcessor<VirtualFile>(vFiles), word, occurenceMask, scope, caseSensitively);
-    return vFiles.isEmpty() ? VirtualFile.EMPTY_ARRAY : vFiles.toArray(new VirtualFile[vFiles.size()]);
+    final List<VirtualFile> result = new ArrayList<VirtualFile>(5);
+    Processor<VirtualFile> processor = Processors.cancelableCollectProcessor(result);
+    collectVirtualFilesWithWord(word, occurenceMask, scope, caseSensitively, processor);
+    return result.isEmpty() ? VirtualFile.EMPTY_ARRAY : result.toArray(new VirtualFile[result.size()]);
   }
 
   // IMPORTANT!!!
   // Since implementation of virtualFileProcessor.process() may call indices directly or indirectly,
   // we cannot call it inside FileBasedIndex.processValues() method except in collecting form
   // If we do, deadlocks are possible (IDEADEV-42137). Process the files without not holding indices' read lock.
-  private boolean collectVirtualFilesWithWord(@NotNull final Processor<VirtualFile> fileProcessor,
-                                             @NotNull final String word, final short occurrenceMask,
-                                             @NotNull final GlobalSearchScope scope, final boolean caseSensitively) {
+  private boolean collectVirtualFilesWithWord(@NotNull final String word,
+                                              final short occurrenceMask,
+                                              @NotNull final GlobalSearchScope scope,
+                                              final boolean caseSensitively,
+                                              @NotNull final Processor<VirtualFile> fileProcessor) {
     if (myProject.isDefault()) {
       return true;
     }
@@ -114,9 +119,10 @@ public class IndexCacheManagerImpl implements CacheManager{
 
   @Override
   public boolean processFilesWithWord(@NotNull final Processor<PsiFile> psiFileProcessor, @NotNull final String word, final short occurrenceMask, @NotNull final GlobalSearchScope scope, final boolean caseSensitively) {
-    final List<VirtualFile> vFiles = new ArrayList<VirtualFile>(5);
-    collectVirtualFilesWithWord(new CommonProcessors.CollectProcessor<VirtualFile>(vFiles), word, occurrenceMask, scope, caseSensitively);
-    if (vFiles.isEmpty()) return true;
+    final List<VirtualFile> result = new ArrayList<VirtualFile>(5);
+    Processor<VirtualFile> processor = Processors.cancelableCollectProcessor(result);
+    collectVirtualFilesWithWord(word, occurrenceMask, scope, caseSensitively, processor);
+    if (result.isEmpty()) return true;
 
     final Processor<VirtualFile> virtualFileProcessor = new ReadActionProcessor<VirtualFile>() {
       @Override
@@ -135,7 +141,7 @@ public class IndexCacheManagerImpl implements CacheManager{
     // we cannot call it inside FileBasedIndex.processValues() method
     // If we do, deadlocks are possible (IDEADEV-42137). So first we obtain files with the word specified,
     // and then process them not holding indices' read lock.
-    for (VirtualFile vFile : vFiles) {
+    for (VirtualFile vFile : result) {
       ProgressIndicatorProvider.checkCanceled();
       if (!virtualFileProcessor.process(vFile)) {
         return false;

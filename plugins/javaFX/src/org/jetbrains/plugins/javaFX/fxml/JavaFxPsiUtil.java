@@ -438,8 +438,7 @@ public class JavaFxPsiUtil {
   }
 
   public static boolean isAbleToInstantiate(@NotNull PsiClass psiClass, @NotNull Consumer<String> messageConsumer) {
-    if (psiClass.getConstructors().length == 0) return true;
-    if (hasNamedArgOrNoArgConstructor(psiClass)) return true;
+    if (psiClass.isEnum() || hasNamedArgOrNoArgConstructor(psiClass)) return true;
     final PsiMethod valueOf = findValueOfMethod(psiClass);
     if (valueOf == null) {
       if (!hasBuilder(psiClass)) {
@@ -451,6 +450,7 @@ public class JavaFxPsiUtil {
   }
 
   private static boolean hasNamedArgOrNoArgConstructor(@NotNull PsiClass psiClass) {
+    if (psiClass.getConstructors().length == 0) return true;
     return CachedValuesManager.getCachedValue(psiClass, () -> {
       for (PsiMethod constructor : psiClass.getConstructors()) {
         final PsiParameter[] parameters = constructor.getParameterList().getParameters();
@@ -951,7 +951,7 @@ public class JavaFxPsiUtil {
     final PsiClass tagClass = getTagClass(xmlTag);
     if (tagClass != null) {
       final String tagFieldName = xmlTag.getAttributeValue(FxmlConstants.FX_ID);
-      if (tagFieldName != null) {
+      if (!StringUtil.isEmpty(tagFieldName)) {
         final PsiField tagField = controllerClass.findFieldByName(tagFieldName, true);
         if (tagField != null && !tagField.hasModifierProperty(PsiModifier.STATIC) && isVisibleInFxml(tagField)) {
           final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(tagField.getType());

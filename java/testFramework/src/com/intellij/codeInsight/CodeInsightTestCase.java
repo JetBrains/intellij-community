@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -192,20 +192,17 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     final EditorInfo editorInfo = new EditorInfo(document.getText());
 
     final String newFileText = editorInfo.getNewFileText();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        if (!document.getText().equals(newFileText)) {
-          document.setText(newFileText);
-        }
-
-        PsiFile file = myPsiManager.findFile(virtualFile);
-        if (myFile == null) myFile = file;
-
-        if (myEditor == null) myEditor = editor;
-
-        editorInfo.applyToEditor(editor);
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      if (!document.getText().equals(newFileText)) {
+        document.setText(newFileText);
       }
+
+      PsiFile file = myPsiManager.findFile(virtualFile);
+      if (myFile == null) myFile = file;
+
+      if (myEditor == null) myEditor = editor;
+
+      editorInfo.applyToEditor(editor);
     });
 
 
@@ -219,60 +216,57 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     final File toDirIO = createTempDirectory();
     final VirtualFile toDir = getVirtualFile(toDirIO);
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          final ModuleRootManager rootManager = ModuleRootManager.getInstance(myModule);
-          final ModifiableRootModel rootModel = rootManager.getModifiableModel();
-          if (clearModelBeforeConfiguring()) {
-            rootModel.clear();
-          }
-
-          // auxiliary files should be copied first
-          VirtualFile[] reversed = ArrayUtil.reverseArray(vFiles);
-          Map<VirtualFile, EditorInfo> editorInfos;
-          if (rawProjectRoot != null) {
-            final File projectRoot = rawProjectRoot.getCanonicalFile();
-            FileUtil.copyDir(projectRoot, toDirIO);
-            VirtualFile fromDir = getVirtualFile(projectRoot);
-            editorInfos =
-              copyFilesFillingEditorInfos(fromDir, toDir, ContainerUtil.map2Array(reversed, String.class, new Function<VirtualFile, String>() {
-                @Override
-                public String fun(final VirtualFile s) {
-                  return s.getPath().substring(projectRoot.getPath().length());
-                }
-              }));
-
-            toDir.refresh(false, true);
-          }
-          else {
-            editorInfos = new LinkedHashMap<VirtualFile, EditorInfo>();
-            for (final VirtualFile vFile : reversed) {
-              VirtualFile parent = vFile.getParent();
-              assert parent.isDirectory() : parent;
-              editorInfos.putAll(copyFilesFillingEditorInfos(parent, toDir, vFile.getName()));
-            }
-          }
-
-          boolean sourceRootAdded = false;
-          if (isAddDirToContentRoot()) {
-            final ContentEntry contentEntry = rootModel.addContentEntry(toDir);
-            if (isAddDirToSource()) {
-              sourceRootAdded = true;
-              contentEntry.addSourceFolder(toDir, isAddDirToTests());
-            }
-          }
-          doCommitModel(rootModel);
-          if (sourceRootAdded) {
-            sourceRootAdded(toDir);
-          }
-
-          openEditorsAndActivateLast(editorInfos);
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      try {
+        final ModuleRootManager rootManager = ModuleRootManager.getInstance(myModule);
+        final ModifiableRootModel rootModel = rootManager.getModifiableModel();
+        if (clearModelBeforeConfiguring()) {
+          rootModel.clear();
         }
-        catch (IOException e) {
-          LOG.error(e);
+
+        // auxiliary files should be copied first
+        VirtualFile[] reversed = ArrayUtil.reverseArray(vFiles);
+        Map<VirtualFile, EditorInfo> editorInfos;
+        if (rawProjectRoot != null) {
+          final File projectRoot = rawProjectRoot.getCanonicalFile();
+          FileUtil.copyDir(projectRoot, toDirIO);
+          VirtualFile fromDir = getVirtualFile(projectRoot);
+          editorInfos =
+            copyFilesFillingEditorInfos(fromDir, toDir, ContainerUtil.map2Array(reversed, String.class, new Function<VirtualFile, String>() {
+              @Override
+              public String fun(final VirtualFile s) {
+                return s.getPath().substring(projectRoot.getPath().length());
+              }
+            }));
+
+          toDir.refresh(false, true);
         }
+        else {
+          editorInfos = new LinkedHashMap<>();
+          for (final VirtualFile vFile : reversed) {
+            VirtualFile parent = vFile.getParent();
+            assert parent.isDirectory() : parent;
+            editorInfos.putAll(copyFilesFillingEditorInfos(parent, toDir, vFile.getName()));
+          }
+        }
+
+        boolean sourceRootAdded = false;
+        if (isAddDirToContentRoot()) {
+          final ContentEntry contentEntry = rootModel.addContentEntry(toDir);
+          if (isAddDirToSource()) {
+            sourceRootAdded = true;
+            contentEntry.addSourceFolder(toDir, isAddDirToTests());
+          }
+        }
+        doCommitModel(rootModel);
+        if (sourceRootAdded) {
+          sourceRootAdded(toDir);
+        }
+
+        openEditorsAndActivateLast(editorInfos);
+      }
+      catch (IOException e) {
+        LOG.error(e);
       }
     });
 
@@ -303,9 +297,9 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
   protected Map<VirtualFile, EditorInfo> copyFilesFillingEditorInfos(@NotNull VirtualFile fromDir,
                                                                      @NotNull VirtualFile toDir,
                                                                      @NotNull String... relativePaths) throws IOException {
-    Map<VirtualFile, EditorInfo> editorInfos = new LinkedHashMap<VirtualFile, EditorInfo>();
+    Map<VirtualFile, EditorInfo> editorInfos = new LinkedHashMap<>();
 
-    List<OutputStream> streamsToClose = new ArrayList<OutputStream>();
+    List<OutputStream> streamsToClose = new ArrayList<>();
 
     for (String relativePath : relativePaths) {
       relativePath = StringUtil.trimStart(relativePath, "/");
@@ -352,21 +346,18 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
 
   @NotNull
   protected final List<Editor> openEditors(@NotNull final Map<VirtualFile, EditorInfo> editorInfos) {
-    return ContainerUtil.map(editorInfos.keySet(), new Function<VirtualFile, Editor>() {
-      @Override
-      public Editor fun(final VirtualFile newVFile) {
-        PsiFile file = myPsiManager.findFile(newVFile);
-        if (myFile == null) myFile = file;
+    return ContainerUtil.map(editorInfos.keySet(), newVFile -> {
+      PsiFile file = myPsiManager.findFile(newVFile);
+      if (myFile == null) myFile = file;
 
-        Editor editor = createEditor(newVFile);
-        if (myEditor == null) myEditor = editor;
+      Editor editor = createEditor(newVFile);
+      if (myEditor == null) myEditor = editor;
 
-        EditorInfo editorInfo = editorInfos.get(newVFile);
-        if (editorInfo != null) {
-          editorInfo.applyToEditor(editor);
-        }
-        return editor;
+      EditorInfo editorInfo = editorInfos.get(newVFile);
+      if (editorInfo != null) {
+        editorInfo.applyToEditor(editor);
       }
+      return editor;
     });
   }
 

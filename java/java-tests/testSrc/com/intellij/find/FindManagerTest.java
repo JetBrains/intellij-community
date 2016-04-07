@@ -273,12 +273,18 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     findModel.setGlobal(true);
     findModel.setMultipleFiles(true);
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
-    final PsiClass baseClass = facade.findClass("A", GlobalSearchScope.allScope(getProject()));
-    final PsiClass implClass = facade.findClass("AImpl", GlobalSearchScope.allScope(getProject()));
+    final GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
+    final PsiClass baseClass = facade.findClass("A", scope);
+    final PsiClass implClass = facade.findClass("AImpl", scope);
     findModel.setCustomScope(new LocalSearchScope(new PsiElement[]{baseClass, implClass}));
 
     List<UsageInfo> usages = findUsages(findModel);
     assertEquals(2, usages.size());
+
+    final PsiClass aClass = facade.findClass("B", scope);
+    findModel.setCustomScope(new LocalSearchScope(aClass));
+
+    assertSize(1, findUsages(findModel));
   }
 
   public void testDollars() throws Exception {

@@ -53,7 +53,7 @@ public class StudySwingToolWindow extends StudyToolWindow {
     if (!UIUtil.isUnderDarcula()) {
       myTaskTextPane.setBackground(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
     }
-    myTaskTextPane.setBorder(new EmptyBorder(15, 20, 0, 100));
+    myTaskTextPane.setBorder(new EmptyBorder(20, 20, 0, 10));
     myTaskTextPane.setText(taskText);
     myTaskTextPane.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
     return myTaskTextPane;

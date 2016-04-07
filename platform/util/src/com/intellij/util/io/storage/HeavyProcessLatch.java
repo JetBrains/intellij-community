@@ -134,8 +134,12 @@ public class HeavyProcessLatch {
    * @return whether there is a prioritized thread, but not the current one
    */
   public boolean isInsideLowPriorityThread() {
-    Thread thread = myUiActivityThread;
-    if (thread != null && thread != Thread.currentThread()) {
+    Thread uiThread = myUiActivityThread;
+    if (uiThread != null && uiThread != Thread.currentThread()) {
+      Thread.State state = uiThread.getState();
+      if (state == Thread.State.WAITING || state == Thread.State.TIMED_WAITING || state == Thread.State.BLOCKED) {
+        return false;
+      }
       if (System.currentTimeMillis() > myPrioritizingDeadLine) {
         stopThreadPrioritizing();
         return false;

@@ -83,8 +83,10 @@ private class DefaultWebServerRootsProvider : WebServerRootsProvider() {
       }
 
       var root = info.sourceRoot
+      val isRootNameOptionalInPath: Boolean
       val isLibrary: Boolean
       if (root == null) {
+        isRootNameOptionalInPath = false
         root = info.contentRoot
         if (root == null) {
           root = info.libraryClassRoot
@@ -98,6 +100,7 @@ private class DefaultWebServerRootsProvider : WebServerRootsProvider() {
       }
       else {
         isLibrary = info.isInLibrarySource
+        isRootNameOptionalInPath = !isLibrary
       }
 
       var module = info.module
@@ -110,7 +113,7 @@ private class DefaultWebServerRootsProvider : WebServerRootsProvider() {
         }
       }
 
-      return PathInfo(null, file, root!!, getModuleNameQualifier(project, module), isLibrary)
+      return PathInfo(null, file, root!!, getModuleNameQualifier(project, module), isLibrary, isRootNameOptionalInPath = isRootNameOptionalInPath)
     }
   }
 }

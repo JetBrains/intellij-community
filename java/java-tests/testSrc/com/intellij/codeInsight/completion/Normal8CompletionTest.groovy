@@ -241,4 +241,6 @@ class Test88 {
     myFixture.assertPreferredCompletionItems(0, 'toString', 'wait')
   }
   public void testUnexpectedLambdaInAmbiguousCall() { doAntiTest() }
+
+  public void testNoCollectorsInComment() { doAntiTest() }
 }

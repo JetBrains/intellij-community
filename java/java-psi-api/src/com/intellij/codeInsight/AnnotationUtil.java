@@ -19,7 +19,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.CommonProcessors;
+import com.intellij.util.Processor;
+import com.intellij.util.Processors;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
@@ -197,14 +198,16 @@ public class AnnotationUtil {
       @Nullable
       @Override
       public Result<List<T>> compute() {
-        LinkedHashSet<PsiModifierListOwner> result = ContainerUtil.newLinkedHashSet();
+        Set<PsiModifierListOwner> result = ContainerUtil.newLinkedHashSet();
         if (element instanceof PsiMethod) {
           collectSuperMethods(result, ((PsiMethod)element).getHierarchicalMethodSignature(), element,
                               JavaPsiFacade.getInstance(element.getProject()).getResolveHelper());
-        } else if (element instanceof PsiClass) {
+        }
+        else if (element instanceof PsiClass) {
           //noinspection unchecked
-          InheritanceUtil.processSupers((PsiClass)element, false, new CommonProcessors.CollectProcessor<PsiClass>((Set)result));
-        } else if (element instanceof PsiParameter) {
+          InheritanceUtil.processSupers((PsiClass)element, false, (Processor)Processors.cancelableCollectProcessor(result));
+        }
+        else if (element instanceof PsiParameter) {
           collectSuperParameters(result, (PsiParameter)element);
         }
 
@@ -249,7 +252,7 @@ public class AnnotationUtil {
     return map.get(annotationNames);
   }
 
-  private static void collectSuperParameters(LinkedHashSet<PsiModifierListOwner> result, @NotNull PsiParameter parameter) {
+  private static void collectSuperParameters(@NotNull Set<PsiModifierListOwner> result, @NotNull PsiParameter parameter) {
     PsiElement scope = parameter.getDeclarationScope();
     if (!(scope instanceof PsiMethod)) {
       return;
@@ -269,7 +272,7 @@ public class AnnotationUtil {
     }
   }
 
-  private static void collectSuperMethods(LinkedHashSet<PsiModifierListOwner> result,
+  private static void collectSuperMethods(@NotNull Set<PsiModifierListOwner> result,
                                           @NotNull HierarchicalMethodSignature signature,
                                           @NotNull PsiElement place,
                                           @NotNull PsiResolveHelper resolveHelper) {

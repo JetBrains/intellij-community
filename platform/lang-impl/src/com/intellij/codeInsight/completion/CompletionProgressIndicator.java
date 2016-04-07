@@ -677,7 +677,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     phase.ignoreCurrentDocumentChange();
 
     final Project project = getProject();
-    AutoPopupController.runLaterWithEverythingCommitted(project, () -> {
+    AutoPopupController.runTransactionWithEverythingCommitted(project, () -> {
       if (phase.checkExpired()) return;
 
       CompletionAutoPopupHandler.invokeCompletion(myParameters.getCompletionType(),

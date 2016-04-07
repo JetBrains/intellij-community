@@ -5,8 +5,8 @@ import com.intellij.ProjectTopics
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ModuleRootAdapter
 import com.intellij.openapi.roots.ModuleRootEvent
+import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -45,7 +45,7 @@ class WebServerPathToFileManager(application: Application, private val project: 
         }
       }
     })
-    project.messageBus.connect().subscribe(ProjectTopics.PROJECT_ROOTS, object : ModuleRootAdapter() {
+    project.messageBus.connect().subscribe(ProjectTopics.PROJECT_ROOTS, object : ModuleRootListener {
       override fun rootsChanged(event: ModuleRootEvent) {
         clearCache()
       }
@@ -79,7 +79,7 @@ class WebServerPathToFileManager(application: Application, private val project: 
 
   fun getPath(file: VirtualFile) = getPathInfo(file)?.path
 
-  private fun getPathInfo(child: VirtualFile): PathInfo? {
+  fun getPathInfo(child: VirtualFile): PathInfo? {
     var result = virtualFileToPathInfo.getIfPresent(child)
     if (result == null) {
       result = WebServerRootsProvider.EP_NAME.extensions.computeOrNull { it.getPathInfo(child, project) }
@@ -92,8 +92,8 @@ class WebServerPathToFileManager(application: Application, private val project: 
 
   internal fun doFindByRelativePath(path: String): PathInfo? {
     val result = WebServerRootsProvider.EP_NAME.extensions.computeOrNull { it.resolve(path, project) } ?: return null
-    if (result.file != null) {
-      virtualFileToPathInfo.put(result.file, result)
+    result.file?.let {
+      virtualFileToPathInfo.put(it, result)
     }
     return result
   }

@@ -49,6 +49,7 @@ import com.intellij.util.*;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -420,7 +421,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     }
   }
 
-  private static boolean isFreeThreaded(@NotNull VirtualFile file) {
+  static boolean isFreeThreaded(@NotNull VirtualFile file) {
     return Boolean.TRUE.equals(file.getUserData(SingleRootFileViewProvider.FREE_THREADED));
   }
 
@@ -472,7 +473,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
             else {
               s1.down();
               s2.down();
-              TransactionGuard.getInstance().submitMergeableTransaction(TransactionKind.TEXT_EDITING, new Runnable() {
+              TransactionGuard.submitTransaction(myProject, new Runnable() {
                 @Override
                 public void run() {
                   commitAllDocuments();
@@ -532,6 +533,34 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       }
     }
     return false;
+  }
+
+  @Override
+  public void performLaterWhenAllCommitted(@NotNull final Runnable runnable) {
+    final ModalityState modalityState = ModalityState.current();
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        performWhenAllCommitted(new Runnable() {
+          @Override
+          public void run() {
+            // later because we may end up in write action here if there was a synchronous commit
+            ApplicationManager.getApplication().invokeLater(new Runnable() {
+              @Override
+              public void run() {
+                if (hasUncommitedDocuments()) {
+                  // no luck, will try later
+                  performLaterWhenAllCommitted(runnable);
+                }
+                else {
+                  runnable.run();
+                }
+              }
+            }, modalityState, myProject.getDisposed());
+          }
+        });
+      }
+    });
   }
 
   private static class CompositeRunnable extends ArrayList<Runnable> implements Runnable {

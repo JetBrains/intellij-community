@@ -58,7 +58,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.wm.WindowManager;
@@ -85,16 +84,12 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class ApplicationImpl extends PlatformComponentManagerImpl implements ApplicationEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.impl.ApplicationImpl");
-  private final ModalityState MODALITY_STATE_NONE = ModalityState.NON_MODAL;
 
   // about writer preference: the way the j.u.c.l.ReentrantReadWriteLock.NonfairSync is implemented, the
   // writer thread will be always at the queue head and therefore, j.u.c.l.ReentrantReadWriteLock.NonfairSync.readerShouldBlock()
@@ -108,7 +103,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private final boolean myTestModeFlag;
   private final boolean myHeadlessMode;
   private final boolean myCommandLineMode;
-  private static volatile Boolean ourIsRunningFromSources;
 
   private final boolean myIsInternal;
   private final String myName;
@@ -308,7 +302,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
         }
       }
     }
-    TransactionGuard.syncTransaction(TransactionKind.ANY_CHANGE, () -> runWriteAction(() -> Disposer.dispose(this)));
+    runWriteAction(() -> Disposer.dispose(this));
 
     Disposer.assertIsEmpty();
     return true;
@@ -360,11 +354,11 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     return myCommandLineMode;
   }
 
+  private static class Holder {
+    private static final boolean ourIsRunningFromSources = new File(PathManager.getHomePath(), ".idea").isDirectory();
+  }
   public static boolean isRunningFromSources() {
-    if (ourIsRunningFromSources == null) {
-      ourIsRunningFromSources = new File(PathManager.getHomePath(), ".idea").isDirectory();
-    }
-    return ourIsRunningFromSources;
+    return Holder.ourIsRunningFromSources;
   }
 
   @NotNull
@@ -749,8 +743,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @Override
   @NotNull
   public ModalityState getCurrentModalityState() {
-    Object[] entities = LaterInvocator.getCurrentModalEntities();
-    return entities.length > 0 ? new ModalityStateEx(entities) : getNoneModalityState();
+    return LaterInvocator.getCurrentModalityState();
   }
 
   @Override
@@ -780,7 +773,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @Override
   @NotNull
   public ModalityState getNoneModalityState() {
-    return MODALITY_STATE_NONE;
+    return ModalityState.NON_MODAL;
   }
 
   @Override
@@ -864,7 +857,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   private boolean doExit(boolean allowListenersToCancel, boolean restart) {
-    TransactionGuard.syncTransaction(TransactionKind.ANY_CHANGE, this::saveSettings);
+    saveSettings();
 
     if (allowListenersToCancel && !canExit()) {
       return false;
@@ -1229,7 +1222,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private void startWrite(/*@NotNull*/ Class clazz) {
     assertIsDispatchThread(getStatus(), "Write access is allowed from event dispatch thread only");
     HeavyProcessLatch.INSTANCE.stopThreadPrioritizing(); // let non-cancellable read actions complete faster, if present
-    if (!((TransactionGuardImpl)TransactionGuard.getInstance()).isWriteActionAllowed()) {
+    if (!isDisposed() && !isDisposeInProgress() && !((TransactionGuardImpl)TransactionGuard.getInstance()).isWriteActionAllowed()) {
       // please assign exceptions here to Peter
       LOG.error("Write access is allowed from model transactions only, see TransactionGuard documentation for details");
     }
@@ -1247,22 +1240,20 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
           assertNoPsiLock();
         }
         if (!myLock.writeLock().tryLock()) {
-          final AtomicBoolean lockAcquired = new AtomicBoolean(false);
+          final CountDownLatch lockAcquired = new CountDownLatch(1);
           if (ourDumpThreadsOnLongWriteActionWaiting > 0) {
-            executeOnPooledThread(new Runnable() {
-              @Override
-              public void run() {
-                while (!lockAcquired.get()) {
-                  TimeoutUtil.sleep(ourDumpThreadsOnLongWriteActionWaiting);
-                  if (!lockAcquired.get()) {
-                    PerformanceWatcher.getInstance().dumpThreads("waiting", true);
-                  }
+            executeOnPooledThread(() -> {
+              try {
+                while (!lockAcquired.await(ourDumpThreadsOnLongWriteActionWaiting, TimeUnit.MILLISECONDS)) {
+                  PerformanceWatcher.getInstance().dumpThreads("waiting", true);
                 }
+              }
+              catch (InterruptedException ignored) {
               }
             });
           }
           myLock.writeLock().lockInterruptibly();
-          lockAcquired.set(true);
+          lockAcquired.countDown();
         }
       }
       catch (InterruptedException e) {

@@ -44,6 +44,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.PathMacroManager;
@@ -356,8 +357,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
 
         final InspectionResultsView view;
         if (myView == null) {
-          view = new InspectionResultsView(GlobalInspectionContextImpl.this,
-                                           new InspectionRVContentProviderImpl(getProject()));
+          view = new InspectionResultsView(GlobalInspectionContextImpl.this, createContentProvider());
         } else {
           view = null;
         }
@@ -682,9 +682,12 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
       }
     }
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      final InspectionResultsView view = createViewIfNeed();
-      if (!view.isDisposed()) {
-        ReadAction.run(() -> view.addTools(globalTools));
+      if (myView == null && !InspectionResultsView.hasProblems(globalTools, this, createContentProvider())) {
+        return;
+      }
+      createViewIfNeed();
+      if (!myView.isDisposed()) {
+        ReadAction.run(() -> myView.addTools(globalTools));
       }
     }
   }
@@ -698,7 +701,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
         if (newView != null) {
           return newView;
         }
-        newView = new InspectionResultsView(this, new InspectionRVContentProviderImpl(getProject()));
+        newView = new InspectionResultsView(this, createContentProvider());
         addView(newView);
         return newView;
       });
@@ -1015,11 +1018,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
         }, title, null);
       }
     };
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      runnable.run();
-    } else {
-      ApplicationManager.getApplication().invokeLater(runnable);
-    }
+    TransactionGuard.submitTransaction(project, runnable);
   }
 
   private static boolean isBinary(@NotNull PsiFile file) {
@@ -1036,5 +1035,9 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
 
   public boolean isSingleInspectionRun() {
     return mySingleInspectionRun;
+  }
+
+  private InspectionRVContentProvider createContentProvider() {
+    return new InspectionRVContentProviderImpl(getProject());
   }
 }

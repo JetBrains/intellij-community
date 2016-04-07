@@ -40,6 +40,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.Problem;
 import com.intellij.problems.WolfTheProblemSolver;
@@ -473,7 +474,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       TextAttributes attributes = todoItem.getPattern().getAttributes().getTextAttributes();
       HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.TODO).range(range);
       builder.textAttributes(attributes);
-      builder.descriptionAndTooltip(description);
+      builder.description(description);
+      builder.unescapedToolTip(StringUtil.shortenPathWithEllipsis(description, 1024));
       HighlightInfo info = builder.createUnconditionally();
       (priorityRange.containsRange(info.getStartOffset(), info.getEndOffset()) ? insideResult : outsideResult).add(info);
     }

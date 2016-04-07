@@ -825,7 +825,7 @@ public class ArrayUtil extends ArrayUtilRt {
   }
 
   @Contract(pure=true)
-  public static boolean contains(@Nullable final Object o, @NotNull Object... objects) {
+  public static <T> boolean contains(@Nullable final T o, @NotNull T... objects) {
     return indexOf(objects, o) >= 0;
   }
 

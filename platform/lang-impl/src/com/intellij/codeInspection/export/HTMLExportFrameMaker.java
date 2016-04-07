@@ -54,13 +54,16 @@ public class HTMLExportFrameMaker {
   @SuppressWarnings({"HardCodedStringLiteral"})
   public void done() {
     StringBuffer buf = new StringBuffer();
-
-    for (InspectionToolWrapper toolWrapper : myInspectionToolWrappers) {
-      buf.append("<A HREF=\"");
-      buf.append(toolWrapper.getFolderName());
-      buf.append("-index.html\">");
-      buf.append(toolWrapper.getDisplayName());
-      buf.append("</A><BR>");
+    if (myInspectionToolWrappers.isEmpty()) {
+      buf.append("Everything is fine. Nothing is ruined.");
+    } else {
+      for (InspectionToolWrapper toolWrapper : myInspectionToolWrappers) {
+        buf.append("<A HREF=\"");
+        buf.append(toolWrapper.getFolderName());
+        buf.append("-index.html\">");
+        buf.append(toolWrapper.getDisplayName());
+        buf.append("</A><BR>");
+      }
     }
 
     HTMLExportUtil.writeFile(myRootFolder, "index.html", buf, myProject);

@@ -320,20 +320,23 @@ public abstract class JavaFxClassTagDescriptorBase implements XmlElementDescript
     }
     PsiClass aClass = getPsiClass();
     final XmlAttribute constAttr = context.getAttribute(FxmlConstants.FX_CONSTANT);
+    final XmlAttribute factoryAttr = context.getAttribute(FxmlConstants.FX_FACTORY);
     if (constAttr != null && aClass != null) {
       final PsiField constField = aClass.findFieldByName(constAttr.getValue(), true);
       if (constField != null) {
-        aClass = PsiUtil.resolveClassInType(constField.getType());
+        final PsiType constType = constField.getType();
+        aClass = PsiUtil.resolveClassInClassTypeOnly(
+          constType instanceof PsiPrimitiveType ? ((PsiPrimitiveType)constType).getBoxedType(context) : constType);
       }
     } else {
-      final XmlAttribute factoryAttr = context.getAttribute(FxmlConstants.FX_FACTORY);
       if (factoryAttr != null) {
         aClass = JavaFxPsiUtil.getFactoryProducedClass(aClass, factoryAttr.getValue());
       }
     }
     JavaFxPsiUtil.isClassAcceptable(parentTag, aClass, (errorMessage, errorType) ->
       host.addMessage(context.getNavigationElement(), errorMessage, errorType));
-    if (aClass != null && aClass.isValid()) {
+    boolean needInstantiate = constAttr == null && factoryAttr == null;
+    if (needInstantiate && aClass != null && aClass.isValid()) {
       JavaFxPsiUtil.isAbleToInstantiate(aClass, errorMessage ->
         host.addMessage(context, errorMessage, ValidationHost.ErrorType.ERROR));
     }

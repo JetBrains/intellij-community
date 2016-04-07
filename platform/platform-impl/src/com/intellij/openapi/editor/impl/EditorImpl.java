@@ -2150,15 +2150,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     }
 
-    if (myUpdateCursor) {
-      setCursorPosition();
-      myUpdateCursor = false;
-    }
-
     if (isReleased) {
       g.setColor(getDisposedBackground());
       g.fillRect(clip.x, clip.y, clip.width, clip.height);
       return;
+    }
+    if (myUpdateCursor) {
+      setCursorPosition();
+      myUpdateCursor = false;
     }
     if (myProject != null && myProject.isDisposed()) return;
 
@@ -3812,7 +3811,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   public int getPreferredHeight() {
-    if (myUseNewRendering) return myView.getPreferredHeight();
+    if (myUseNewRendering) return isReleased ? 0 : myView.getPreferredHeight();
     if (ourIsUnitTestMode && getUserData(DO_DOCUMENT_UPDATE_TEST) == null) {
       return 1;
     }

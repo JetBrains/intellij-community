@@ -22,6 +22,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.local.FileWatcherNotificationSink;
 import com.intellij.openapi.vfs.local.PluggableFileWatcher;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
@@ -37,6 +38,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 
 /**
  * @author max
@@ -75,6 +77,7 @@ public class FileWatcher {
     }
   }
 
+  private final ManagingFS myManagingFS;
   private final MyFileWatcherNotificationSink myNotificationSink;
   private final PluggableFileWatcher[] myWatchers;
   private final AtomicBoolean myFailureShown = new AtomicBoolean(false);
@@ -83,10 +86,11 @@ public class FileWatcher {
   private volatile List<Collection<String>> myManualWatchRoots = Collections.emptyList();
 
   FileWatcher(@NotNull ManagingFS managingFS) {
+    myManagingFS = managingFS;
     myNotificationSink = new MyFileWatcherNotificationSink();
     myWatchers = PluggableFileWatcher.EP_NAME.getExtensions();
     for (PluggableFileWatcher watcher : myWatchers) {
-      watcher.initialize(managingFS, myNotificationSink);
+      watcher.initialize(myManagingFS, myNotificationSink);
     }
   }
 
@@ -180,9 +184,7 @@ public class FileWatcher {
 
     @Override
     public void notifyManualWatchRoots(@NotNull Collection<String> roots) {
-      if (!roots.isEmpty()) {
-        myManualWatchRoots.add(ContainerUtil.newHashSet(roots));
-      }
+      myManualWatchRoots.add(roots.isEmpty() ? Collections.emptySet() : ContainerUtil.newHashSet(roots));
       notifyOnAnyEvent();
     }
 
@@ -249,6 +251,24 @@ public class FileWatcher {
     }
 
     @Override
+    public void notifyReset(@Nullable String path) {
+      if (path != null) {
+        synchronized (myLock) {
+          myDirtyPaths.addDirtyPathRecursive(path);
+        }
+      }
+      else {
+        VirtualFile[] roots = myManagingFS.getLocalRoots();
+        synchronized (myLock) {
+          for (VirtualFile root : roots) {
+            myDirtyPaths.addDirtyPathRecursive(root.getPresentableUrl());
+          }
+        }
+      }
+      notifyOnReset();
+    }
+
+    @Override
     public void notifyUserOnFailure(@NotNull String cause, @Nullable NotificationListener listener) {
       notifyOnFailure(cause, listener);
     }
@@ -256,12 +276,23 @@ public class FileWatcher {
 
   /* test data and methods */
 
-  private volatile Runnable myTestNotifier = null;
+  private volatile Consumer<Boolean> myTestNotifier = null;
 
   private void notifyOnAnyEvent() {
-    Runnable notifier = myTestNotifier;
-    if (notifier != null) {
-      notifier.run();
+    Consumer<Boolean> notifier = myTestNotifier;
+    if (notifier != null) notifier.accept(Boolean.FALSE);
+  }
+
+  private void notifyOnReset() {
+    Consumer<Boolean> notifier = myTestNotifier;
+    if (notifier != null) notifier.accept(Boolean.TRUE);
+  }
+
+  @TestOnly
+  public void startup(@Nullable Consumer<Boolean> notifier) throws IOException {
+    myTestNotifier = notifier;
+    for (PluggableFileWatcher watcher : myWatchers) {
+      watcher.startup();
     }
   }
 
@@ -271,13 +302,5 @@ public class FileWatcher {
       watcher.shutdown();
     }
     myTestNotifier = null;
-  }
-
-  @TestOnly
-  public void startup(@Nullable Runnable notifier) throws IOException {
-    myTestNotifier = notifier;
-    for (PluggableFileWatcher watcher : myWatchers) {
-      watcher.startup();
-    }
   }
 }

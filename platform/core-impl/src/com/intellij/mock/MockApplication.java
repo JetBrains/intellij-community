@@ -17,7 +17,6 @@ package com.intellij.mock;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
-import com.intellij.openapi.application.impl.ModalityStateEx;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.ThrowableComputable;
@@ -30,8 +29,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
 public class MockApplication extends MockComponentManager implements Application {
-  private ModalityState MODALITY_STATE_NONE;
-
   public static int INSTANCES_CREATED = 0;
 
   public MockApplication(@NotNull Disposable parentDisposable) {
@@ -194,20 +191,7 @@ public class MockApplication extends MockComponentManager implements Application
   @NotNull
   @Override
   public ModalityState getNoneModalityState() {
-    if (MODALITY_STATE_NONE == null) {
-      MODALITY_STATE_NONE = new ModalityStateEx() {
-        @Override
-        public boolean dominates(@NotNull ModalityState anotherState) {
-          return false;
-        }
-
-        @Override
-        public String toString() {
-          return "NONE";
-        }
-      };
-    }
-    return MODALITY_STATE_NONE;
+    return ModalityState.NON_MODAL;
   }
 
   @Override

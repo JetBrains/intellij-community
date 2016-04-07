@@ -54,7 +54,7 @@ public class InspectionTreeUpdater {
     private final TreeNode myNode;
 
     public MyTreeUpdate(TreeNode node) {
-      super("TreeRepaint");
+      super(node);
       myNode = node;
     }
 
@@ -68,15 +68,12 @@ public class InspectionTreeUpdater {
         tree.revalidate();
         tree.repaint();
         tree.restoreExpansionAndSelection((InspectionTreeNode)myNode);
+        myView.openRightPanelIfNeed();
         if (myDoUpdatePreviewPanel.compareAndSet(true, false)) {
           myView.updateRightPanelLoading();
         }
       } finally {
         tree.setQueueUpdate(false);
-        if (tree.getSelectionModel().getMinSelectionRow() == -1) {
-          TreeUtil.selectFirstNode(tree);
-          tree.expandRow(0);
-        }
       }
     }
 
@@ -92,6 +89,11 @@ public class InspectionTreeUpdater {
         currentNode = currentNode.getParent();
       }
       return false;
+    }
+
+    @Override
+    public String toString() {
+      return "Update for " + String.valueOf(myNode);
     }
   }
 }

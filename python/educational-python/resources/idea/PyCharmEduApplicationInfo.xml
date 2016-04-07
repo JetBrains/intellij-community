@@ -8,7 +8,6 @@
   <icon size32="/PyCharmEdu32.png" size16="/PyCharmEdu16.png" ico="PyCharmEdu.ico"/>
   <package code="__PACKAGE_CODE__"/>
   <names product="PyCharm" fullname="PyCharm Edu" script="charm"/>
-  <install-over minbuild="0" maxbuild="0" version="2.x"/>
 
   <welcome-screen logo-url="/PyCharmEduWelcomeScreen.png"/>
 

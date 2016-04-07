@@ -433,7 +433,7 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
           // as complete docstring, because we can't understand that closing quotes actually belong to another docstring.
           final String docstringIndent = PyIndentUtil.getLineIndent(document, document.getLineNumber(firstQuoteOffset));
           for (String line : LineTokenizer.tokenizeIntoList(nodeText, false)) {
-            final String lineIndent = (String)PyIndentUtil.getLineIndent(line);
+            final String lineIndent = PyIndentUtil.getLineIndent(line);
             final String lineContent = line.substring(lineIndent.length());
             if ((lineContent.startsWith("def ") || lineContent.startsWith("class ")) &&
                 docstringIndent.length() > lineIndent.length() && docstringIndent.startsWith(lineIndent)) {

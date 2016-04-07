@@ -210,6 +210,16 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
   }
 
   public static void doAllTests(QuickFixTestCase testCase) {
+    final File[] files = getBeforeTestFiles(testCase);
+
+    for (File file : files) {
+      final String testName = file.getName().substring(BEFORE_PREFIX.length());
+      doTestFor(testName, testCase);
+    }
+  }
+
+  @NotNull
+  public static File[] getBeforeTestFiles(QuickFixTestCase testCase) {
     assertNotNull("getBasePath() should not return null!", testCase.getBasePath());
 
     final String testDirPath = testCase.getTestDataPath().replace(File.separatorChar, '/') + testCase.getBasePath();
@@ -224,11 +234,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
     if (files == null || files.length == 0) {
       fail("Test files not found in " + testDirPath);
     }
-
-    for (File file : files) {
-      final String testName = file.getName().substring(BEFORE_PREFIX.length());
-      doTestFor(testName, testCase);
-    }
+    return files;
   }
 
   protected void doSingleTest(String fileSuffix) {

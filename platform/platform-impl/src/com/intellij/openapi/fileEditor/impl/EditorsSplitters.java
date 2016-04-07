@@ -255,27 +255,25 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     }
   }
 
-  private double myProgressMaximum;
-  private int myCurrentProgress;
-
-  private void initializeProgress() {
+  private static void initializeProgress() {
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
       indicator.setText(IdeBundle.message("loading.editors"));
-      indicator.setText2("");
-      indicator.setIndeterminate(false);
-      indicator.setFraction(0);
-
-      myProgressMaximum = countFiles(mySplittersElement);
-      myCurrentProgress = 0;
     }
   }
+
+  public int getEditorsCount() {
+    return mySplittersElement == null ? 0 : countFiles(mySplittersElement);
+  }
+
+  private double myProgressStep;
+
+  public void setProgressStep(double step) { myProgressStep = step; }
 
   private void updateProgress() {
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
-      myCurrentProgress++;
-      indicator.setFraction(myCurrentProgress / myProgressMaximum);
+      indicator.setFraction(indicator.getFraction() + myProgressStep);
     }
   }
 

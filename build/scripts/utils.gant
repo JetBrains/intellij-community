@@ -558,6 +558,7 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
   }
 
   ant.fixcrlf(srcdir: "$path/bin", includes: "*.sh", eol: "unix")
+  ant.fixcrlf(srcdir: "$path/bin", includes: "*.py", eol: "unix")
 })
 
 binding.setVariable("winScripts", { String target, String home, String name, Map args ->

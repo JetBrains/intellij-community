@@ -20,8 +20,10 @@ import com.intellij.concurrency.AsyncFuture;
 import com.intellij.openapi.util.Condition;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * @author max
@@ -57,9 +59,10 @@ public class FilteredQuery<T> implements Query<T> {
   @Override
   @NotNull
   public Collection<T> findAll() {
-    CommonProcessors.CollectProcessor<T> processor = new CommonProcessors.CollectProcessor<T>();
+    List<T> result = new ArrayList<T>();
+    Processor<T> processor = Processors.cancelableCollectProcessor(result);
     forEach(processor);
-    return processor.getResults();
+    return result;
   }
 
   @NotNull

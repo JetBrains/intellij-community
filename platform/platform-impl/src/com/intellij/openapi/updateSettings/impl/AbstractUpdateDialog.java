@@ -23,8 +23,6 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.LicensingFacade;
-import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,7 +31,6 @@ import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
-import java.util.Date;
 
 /**
  * @author anna
@@ -74,25 +71,6 @@ public abstract class AbstractUpdateDialog extends DialogWrapper {
     // do not stack several modal dialogs (native & swing)
     ApplicationEx app = ApplicationManagerEx.getApplicationEx();
     app.invokeLater(() -> app.restart(true));
-  }
-
-  protected void initLicensingInfo(@NotNull UpdateChannel channel, @SuppressWarnings("UnusedParameters") @NotNull BuildInfo build) {
-    LicensingFacade facade = LicensingFacade.getInstance();
-    if (facade != null) {
-      if (channel.getLicensing().equals(UpdateChannel.LICENSING_EAP)) {
-        myLicenseInfo = IdeBundle.message("updates.channel.bundled.key");
-      }
-      else {
-        Date buildDate = build.getReleaseDate();
-        Date expiration = facade.getLicenseExpirationDate();
-        if (buildDate != null && facade.isPerpetualForProduct(buildDate)) {
-          myLicenseInfo = IdeBundle.message("updates.fallback.build");
-        }
-        else if (expiration != null && expiration.after(new Date())) {
-          myLicenseInfo = IdeBundle.message("updates.subscription.active.till", DateFormatUtil.formatAboutDialogDate(expiration));
-        }
-      }
-    }
   }
 
   protected void configureMessageArea(@NotNull JEditorPane area) {

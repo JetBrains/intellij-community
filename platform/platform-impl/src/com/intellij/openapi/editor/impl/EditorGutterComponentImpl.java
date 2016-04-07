@@ -1824,14 +1824,14 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   private int convertPointToLineNumber(final Point p) {
+    DocumentEx document = myEditor.getDocument();
     int line = EditorUtil.yPositionToLogicalLine(myEditor, p);
+    if (!isValidLine(document, line)) return -1;
 
-    if (line >= myEditor.getDocument().getLineCount()) return -1;
-    int startOffset = myEditor.getDocument().getLineStartOffset(line);
+    int startOffset = document.getLineStartOffset(line);
     final FoldRegion region = myEditor.getFoldingModel().getCollapsedRegionAtOffset(startOffset);
     if (region != null) {
-      line = myEditor.getDocument().getLineNumber(region.getEndOffset());
-      if (line >= myEditor.getDocument().getLineCount()) return -1;
+      return document.getLineNumber(region.getEndOffset());
     }
     return line;
   }

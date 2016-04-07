@@ -279,7 +279,7 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
 
     try {
       FileContent outputContent = myContentFactory.createFile(project, output);
-      if (outputContent == null) throw new InvalidDiffRequestException("Can't create output content: " + output);
+      if (outputContent == null) throw new InvalidDiffRequestException("Can't process file: " + output);
       byte[] originalContent = output.contentsToByteArray();
 
       List<DiffContent> contents = new ArrayList<DiffContent>(3);
@@ -338,7 +338,7 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
         byteContents.add(file.contentsToByteArray());
       }
       catch (IOException e) {
-        throw new InvalidDiffRequestException("Can't get text content: " + file.getPresentableUrl(), e);
+        throw new InvalidDiffRequestException("Can't read from file: " + file.getPresentableUrl(), e);
       }
     }
 
@@ -358,14 +358,14 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
 
     try {
       FileContent outputContent = myContentFactory.createFile(project, output);
-      if (outputContent == null) throw new InvalidDiffRequestException("Can't create output content: " + output.getPresentableUrl());
+      if (outputContent == null) throw new InvalidDiffRequestException("Can't process file: " + output.getPresentableUrl());
       byte[] originalContent = output.contentsToByteArray();
 
       List<DiffContent> contents = new ArrayList<DiffContent>(3);
       List<byte[]> byteContents = new ArrayList<byte[]>(3);
       for (VirtualFile file : fileContents) {
         FileContent content = myContentFactory.createFile(project, file);
-        if (content == null) throw new InvalidDiffRequestException("Can't create content: " + file.getPresentableUrl());
+        if (content == null) throw new InvalidDiffRequestException("Can't process file: " + file.getPresentableUrl());
         contents.add(content);
         byteContents.add(file.contentsToByteArray()); // TODO: we can read contents from file when needed
       }

@@ -58,7 +58,7 @@ public abstract class DvcsTaskHandler<R extends Repository> extends VcsTaskHandl
     List<R> problems = ContainerUtil.filter(repositories, new Condition<R>() {
       @Override
       public boolean value(R repository) {
-        return hasBranch(repository, taskName);
+        return hasBranch(repository, new TaskInfo(taskName, Collections.emptyList()));
       }
     });
     List<R> map = new ArrayList<R>();
@@ -95,7 +95,7 @@ public abstract class DvcsTaskHandler<R extends Repository> extends VcsTaskHandl
     List<R> notFound = ContainerUtil.filter(repositories, new Condition<R>() {
       @Override
       public boolean value(R repository) {
-        return !hasBranch(repository, branchName);
+        return !hasBranch(repository, taskInfo);
       }
     });
     if (!notFound.isEmpty()) {
@@ -122,6 +122,7 @@ public abstract class DvcsTaskHandler<R extends Repository> extends VcsTaskHandl
     return myRepositoryManager.isSyncEnabled();
   }
 
+  @NotNull
   @Override
   public TaskInfo[] getCurrentTasks() {
     List<R> repositories = myRepositoryManager.getRepositories();
@@ -201,5 +202,5 @@ public abstract class DvcsTaskHandler<R extends Repository> extends VcsTaskHandl
 
   protected abstract void mergeAndClose(@NotNull String branch, @NotNull List<R> repositories);
 
-  protected abstract boolean hasBranch(@NotNull R repository, @NotNull String name);
+  protected abstract boolean hasBranch(@NotNull R repository, @NotNull TaskInfo name);
 }

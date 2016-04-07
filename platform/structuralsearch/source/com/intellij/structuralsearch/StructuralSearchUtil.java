@@ -5,8 +5,6 @@ import com.intellij.openapi.fileTypes.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.impl.matcher.MatchUtils;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
-import com.intellij.tokenindex.LanguageTokenizer;
-import com.intellij.tokenindex.Tokenizer;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -93,11 +91,6 @@ public class StructuralSearchUtil {
       }
     }
     return null;
-  }
-
-  @Nullable
-  public static Tokenizer getTokenizerForLanguage(@NotNull Language language) {
-    return LanguageTokenizer.INSTANCE.forLanguage(language);
   }
 
   public static boolean isTypedVariable(@NotNull final String name) {

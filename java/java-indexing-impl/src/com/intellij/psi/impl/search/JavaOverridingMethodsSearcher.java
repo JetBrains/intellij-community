@@ -20,8 +20,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
@@ -46,17 +48,21 @@ public class JavaOverridingMethodsSearcher implements QueryExecutor<PsiMethod, O
     final PsiMethod method = parameters.getMethod();
 
     Project project = ApplicationManager.getApplication().runReadAction((Computable<Project>)method::getProject);
+    final SearchScope searchScope = parameters.getScope();
+
+    if (searchScope instanceof LocalSearchScope) {
+      return processLocalScope((LocalSearchScope)searchScope, method, project, consumer);
+    }
+
     Collection<PsiMethod> cached = HighlightingCaches.getInstance(project).OVERRIDING_METHODS.get(method);
     if (cached == null) {
       cached = compute(method, project);
       HighlightingCaches.getInstance(project).OVERRIDING_METHODS.put(method, cached);
     }
 
-    final SearchScope scope = parameters.getScope();
-
     for (final PsiMethod subMethod : cached) {
       ProgressManager.checkCanceled();
-      if (!ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> PsiSearchScopeUtil.isInScope(scope, subMethod))) {
+      if (!ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> PsiSearchScopeUtil.isInScope(searchScope, subMethod))) {
         continue;
       }
       if (!consumer.process(subMethod) || !parameters.isCheckDeep()) {
@@ -64,6 +70,45 @@ public class JavaOverridingMethodsSearcher implements QueryExecutor<PsiMethod, O
       }
     }
     return true;
+  }
+
+  private static boolean processLocalScope(@NotNull LocalSearchScope searchScope,
+                                           @NotNull PsiMethod method,
+                                           @NotNull Project project,
+                                           @NotNull final Processor<PsiMethod> consumer) {
+    // optimisation: in case of local scope it's considered cheaper to enumerate all scope files and check if there is an inheritor there,
+    // instead of traversing the (potentially huge) class hierarchy and filter out almost everything by scope.
+    VirtualFile[] virtualFiles = searchScope.getVirtualFiles();
+    final PsiClass methodContainingClass = ApplicationManager.getApplication().runReadAction((Computable<PsiClass>)method::getContainingClass);
+    if (methodContainingClass == null) return true;
+
+    final boolean[] success = {true};
+    for (VirtualFile virtualFile : virtualFiles) {
+      ProgressManager.checkCanceled();
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        @Override
+        public void run() {
+          PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
+          if (psiFile != null) {
+            psiFile.accept(new JavaRecursiveElementVisitor() {
+              @Override
+              public void visitClass(PsiClass candidate) {
+                ProgressManager.checkCanceled();
+                if (!success[0]) return;
+                PsiMethod overridingMethod = candidate == methodContainingClass ? null : findOverridingMethod(project, candidate, method, methodContainingClass);
+                if (overridingMethod != null && !consumer.process(overridingMethod)) {
+                  success[0] = false;
+                }
+                else {
+                  super.visitClass(candidate);
+                }
+              }
+            });
+          }
+        }
+      });
+    }
+    return success[0];
   }
 
   @NotNull

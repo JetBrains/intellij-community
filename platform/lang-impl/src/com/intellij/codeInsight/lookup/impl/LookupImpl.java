@@ -80,6 +80,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   private final LookupOffsets myOffsets;
   private final Project myProject;
   private final Editor myEditor;
+  private final Object myLock = new Object();
   private final JBList myList = new JBList(new CollectionListModel<LookupElement>()) {
     @Override
     protected void processKeyEvent(@NotNull final KeyEvent e) {
@@ -1156,7 +1157,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     if (ApplicationManager.getApplication().isDispatchThread()) {
       HeavyProcessLatch.INSTANCE.stopThreadPrioritizing();
     }
-    synchronized (myList) {
+    synchronized (myLock) {
       return computable.compute();
     }
   }

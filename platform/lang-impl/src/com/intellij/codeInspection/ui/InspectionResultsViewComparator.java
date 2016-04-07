@@ -129,6 +129,10 @@ public class InspectionResultsViewComparator implements Comparator {
       }
       return -compareEntities(((RefElementNode)node2).getElement(), ((ProblemDescriptionNode)node1).getElement());
     }
+    if (node1 instanceof InspectionRootNode && node2 instanceof InspectionRootNode) {
+      //TODO Dmitry Batkovich: optimization, because only one root node is existed
+      return 0;
+    }
 
     LOG.error("node1: " + node1 + ", node2: " + node2);
     return 0;

@@ -38,12 +38,14 @@ import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.Semaphore
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.After
+import org.junit.Assume.assumeFalse
 import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import java.io.File
 import java.util.*
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
@@ -69,6 +71,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   private lateinit var alarm: Alarm
 
   private val watcherEvents = Semaphore()
+  private val resetHappened = AtomicBoolean()
 
   @Before fun setUp() {
     LOG.debug("================== setting up " + getTestName(false) + " ==================")
@@ -80,9 +83,10 @@ class FileWatcherTest : BareTestFixtureTestCase() {
 
     watcher = (fs as LocalFileSystemImpl).fileWatcher
     assertFalse(watcher.isOperational)
-    watcher.startup {
+    watcher.startup { reset ->
       alarm.cancelAllRequests()
       alarm.addRequest({ watcherEvents.up() }, INTER_RESPONSE_DELAY)
+      if (reset) resetHappened.set(true)
     }
     wait { !watcher.isOperational }
 
@@ -556,9 +560,11 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     LOG.debug("** waiting for ${expectedOps}")
     watcherEvents.down()
     alarm.cancelAllRequests()
+    resetHappened.set(false)
     action()
     watcherEvents.waitFor(timeout)
     watcherEvents.up()
+    assumeFalse("reset happened", resetHappened.get())
     LOG.debug("** done waiting")
 
     val events = VfsTestUtil.getEvents { fs.refresh(false) }

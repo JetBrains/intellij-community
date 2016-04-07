@@ -60,7 +60,7 @@ class ProgressDialog implements Disposable {
 
       if (myProgressBar.isShowing()) {
         final int perc = (int)(fraction * 100);
-        myProgressBar.setIndeterminate(perc == 0 || myProgressWindow.isIndeterminate());
+        myProgressBar.setIndeterminate(myProgressWindow.isIndeterminate());
         myProgressBar.setValue(perc);
       }
 

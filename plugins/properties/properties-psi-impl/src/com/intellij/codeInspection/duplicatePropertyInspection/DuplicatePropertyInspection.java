@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,8 +40,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.search.LowLevelSearchUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
-import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
+import com.intellij.util.Processors;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.StringSearcher;
 import gnu.trove.THashSet;
@@ -341,7 +341,7 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
     });
     for (String word : words) {
       final Set<PsiFile> files = new THashSet<PsiFile>();
-      searchHelper.processAllFilesWithWord(word, scope, new CommonProcessors.CollectProcessor<PsiFile>(files), true);
+      searchHelper.processAllFilesWithWord(word, scope, Processors.cancelableCollectProcessor(files), true);
       if (resultFiles.isEmpty()) {
         resultFiles.addAll(files);
       }

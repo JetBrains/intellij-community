@@ -306,14 +306,11 @@ public class HgBranchPopupActions {
 
       @Override
       public void actionPerformed(AnActionEvent e) {
-        for (HgRepository repository : myRepositories) {
-          try {
-            new HgBookmarkCommand(myProject, repository.getRoot(), myBranchName).deleteBookmark();
+        HgUtil.executeOnPooledThread(() -> {
+          for (HgRepository repository : myRepositories) {
+            HgBookmarkCommand.deleteBookmarkSynchronously(myProject, repository.getRoot(), myBranchName);
           }
-          catch (HgCommandException exception) {
-            HgErrorUtil.handleException(myProject, exception);
-          }
-        }
+        }, myProject);
       }
     }
   }

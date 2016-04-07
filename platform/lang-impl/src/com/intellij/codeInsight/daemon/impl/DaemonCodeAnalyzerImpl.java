@@ -169,8 +169,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
   @TestOnly
   public static List<HighlightInfo> getHighlights(@NotNull Document document, HighlightSeverity minSeverity, @NotNull Project project) {
     List<HighlightInfo> infos = new ArrayList<>();
-    processHighlights(document, project, minSeverity, 0, document.getTextLength(),
-                      new CommonProcessors.CollectProcessor<>(infos));
+    processHighlights(document, project, minSeverity, 0, document.getTextLength(), Processors.cancelableCollectProcessor(infos));
     return infos;
   }
 

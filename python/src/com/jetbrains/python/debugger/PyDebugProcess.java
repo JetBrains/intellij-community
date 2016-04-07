@@ -729,7 +729,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
         if (breakpoint != null) {
           if (!getSession().breakpointReached(breakpoint, threadInfo.getMessage(), suspendContext)) {
-            resume();
+            resume(suspendContext);
           }
         }
         else {

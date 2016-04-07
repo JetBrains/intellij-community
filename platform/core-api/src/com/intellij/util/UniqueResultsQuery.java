@@ -74,9 +74,10 @@ public class UniqueResultsQuery<T, M> implements Query<T> {
   @Override
   @NotNull
   public Collection<T> findAll() {
-    final CommonProcessors.CollectProcessor<T> processor = new CommonProcessors.CollectProcessor<T>(Collections.synchronizedList(new ArrayList<T>()));
+    List<T> result = Collections.synchronizedList(new ArrayList<T>());
+    Processor<T> processor = Processors.cancelableCollectProcessor(result);
     forEach(processor);
-    return processor.getResults();
+    return result;
   }
 
   @NotNull

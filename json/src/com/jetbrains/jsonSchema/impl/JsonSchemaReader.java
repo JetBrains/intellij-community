@@ -162,7 +162,7 @@ public class JsonSchemaReader {
   }
 
   @Nullable
-  static JsonSchemaObject findDefinition(@NotNull Pair<SchemaType, ?> key,
+  public static JsonSchemaObject findDefinition(@NotNull Pair<SchemaType, ?> key,
                                          @NotNull String ref,
                                          @NotNull final JsonSchemaObject root,
                                          @NotNull final Map<String, JsonSchemaObject> ids,

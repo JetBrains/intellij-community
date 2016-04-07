@@ -44,8 +44,8 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
+import com.intellij.util.Processors;
 import com.intellij.util.SmartList;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
@@ -81,7 +81,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
   private final StubProcessingHelper myStubProcessingHelper;
   private final IndexAccessValidator myAccessValidator = new IndexAccessValidator();
   private volatile Future<AsyncState> myStateFuture;
-  private AsyncState myState;
+  private volatile AsyncState myState;
   private volatile boolean myInitialized;
 
   private StubIndexState myPreviouslyRegistered;
@@ -99,11 +99,11 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
   }
 
   private AsyncState getAsyncState() {
-    if (!myInitialized) { // memory barrier
-      //throw new IndexNotReadyException();
-      LOG.error("Unexpected initialization problem");
-    }
-    AsyncState state = myState;
+    //if (!myInitialized) { // memory barrier
+    //  //throw new IndexNotReadyException();
+    //  LOG.error("Unexpected initialization problem");
+    //}
+    AsyncState state = myState; // memory barrier
     if (state == null) {
       try {
         myState = state = myStateFuture.get();
@@ -268,8 +268,8 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
                                                            @NotNull Project project,
                                                            @Nullable GlobalSearchScope scope,
                                                            IdFilter filter) {
-    final List<Psi> result = new SmartList<Psi>();
-    process(indexKey, key, project, scope, filter, new CommonProcessors.CollectProcessor<Psi>(result));
+    final List<Psi> result = new SmartList<>();
+    process(indexKey, key, project, scope, filter, Processors.cancelableCollectProcessor(result));
     return result;
   }
 
@@ -364,7 +364,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
   @NotNull
   public <K> Collection<K> getAllKeys(@NotNull StubIndexKey<K, ?> indexKey, @NotNull Project project) {
     Set<K> allKeys = ContainerUtil.newTroveSet();
-    processAllKeys(indexKey, project, new CommonProcessors.CollectProcessor<K>(allKeys));
+    processAllKeys(indexKey, project, Processors.cancelableCollectProcessor(allKeys));
     return allKeys;
   }
 
@@ -512,9 +512,9 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     }
   }
 
-  @NotNull
   @Override
   public StubIndexState getState() {
+    if (!myInitialized) return null;
     return new StubIndexState(getAsyncState().myIndices.keySet());
   }
 

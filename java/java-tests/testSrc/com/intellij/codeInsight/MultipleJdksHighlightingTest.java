@@ -57,10 +57,17 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
     myFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(projectBuilder.getFixture());
     myFixture.setTestDataPath(PathManagerEx.getTestDataPath() + "/codeInsight/multipleJdks");
     final JavaModuleFixtureBuilder[] builders = new JavaModuleFixtureBuilder[3];
+
     builders[0] = projectBuilder.addModule(JavaModuleFixtureBuilder.class);
     builders[0].setLanguageLevel(LanguageLevel.JDK_1_3);
+    builders[0].addJdk(IdeaTestUtil.getMockJdk14Path().getPath());
+
     builders[1] = projectBuilder.addModule(JavaModuleFixtureBuilder.class);
+    builders[1].addJdk(IdeaTestUtil.getMockJdk17Path().getPath());
+
     builders[2] = projectBuilder.addModule(JavaModuleFixtureBuilder.class);
+    builders[2].addJdk(IdeaTestUtil.getMockJdk18Path().getPath());
+
     myFixture.setUp();
     myJava3Module = builders[0].getFixture().getModule();
     myJava7Module = builders[1].getFixture().getModule();
@@ -68,7 +75,6 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
     ModuleRootModificationUtil.updateModel(myJava3Module, new Consumer<ModifiableRootModel>() {
       @Override
       public void consume(ModifiableRootModel model) {
-        model.setSdk(IdeaTestUtil.getMockJdk14());
         String contentUrl = VfsUtilCore.pathToUrl(myFixture.getTempDirPath()) + "/java3";
         model.addContentEntry(contentUrl).addSourceFolder(contentUrl, false);
       }
@@ -77,7 +83,6 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
     ModuleRootModificationUtil.updateModel(myJava7Module, new Consumer<ModifiableRootModel>() {
       @Override
       public void consume(ModifiableRootModel model) {
-        model.setSdk(IdeaTestUtil.getMockJdk17());
         String contentUrl = VfsUtilCore.pathToUrl(myFixture.getTempDirPath()) + "/java7";
         model.addContentEntry(contentUrl).addSourceFolder(contentUrl, false);
       }
@@ -86,7 +91,6 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
     ModuleRootModificationUtil.updateModel(myJava8Module, new Consumer<ModifiableRootModel>() {
       @Override
       public void consume(ModifiableRootModel model) {
-        model.setSdk(IdeaTestUtil.getMockJdk18());
         String contentUrl = VfsUtilCore.pathToUrl(myFixture.getTempDirPath()) + "/java8";
         model.addContentEntry(contentUrl).addSourceFolder(contentUrl, false);
       }
@@ -167,6 +171,11 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
   public void testStaticCallOnChildWithNotAccessibleParent() throws Exception {
     addDependencies_37_78();
     doTest3Modules();
+  }
+
+  public void testBoxedTypesWhenPreGenericJDKPresentInProject() throws Exception {
+    myFixture.configureByFiles("java8/p/" + getTestName(false) + ".java");
+    myFixture.checkHighlighting();
   }
 
   public void testRawAssignmentToGenerics() throws Exception {

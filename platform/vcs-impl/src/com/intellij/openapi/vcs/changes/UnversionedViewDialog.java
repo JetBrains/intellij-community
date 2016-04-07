@@ -30,7 +30,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -54,7 +53,6 @@ public class UnversionedViewDialog extends DialogWrapper {
   private final ChangeListManager myChangeListManager;
   private boolean myInRefresh;
   private final Project myProject;
-  private boolean myFlattenState;
 
   public UnversionedViewDialog(final Project project) {
     super(project, true);
@@ -98,10 +96,9 @@ public class UnversionedViewDialog extends DialogWrapper {
   private void initData(final List<VirtualFile> files) {
     final TreeState state = TreeState.createOn(myView, (ChangesBrowserNode)myView.getModel().getRoot());
 
-    TreeModelBuilder builder = new TreeModelBuilder(myProject, myFlattenState);
+    TreeModelBuilder builder = new TreeModelBuilder(myProject, myView.isShowFlatten());
     final DefaultTreeModel model = builder.buildModelFromFiles(files);
     myView.setModel(model);
-    myView.setCellRenderer(new ChangesBrowserNodeRenderer(myProject, myFlattenState, true));
     myView.expandPath(new TreePath(((ChangesBrowserNode)model.getRoot()).getPath()));
 
     state.applyTo(myView);
@@ -216,16 +213,14 @@ public class UnversionedViewDialog extends DialogWrapper {
       super(VcsBundle.message("changes.action.show.directories.text"),
             VcsBundle.message("changes.action.show.directories.description"),
             AllIcons.Actions.GroupByPackage);
-      myFlattenState = false;
     }
 
     public boolean isSelected(AnActionEvent e) {
-      return !myFlattenState;
+      return !myView.isShowFlatten();
     }
 
     public void setSelected(AnActionEvent e, boolean state) {
-      myFlattenState = !state;
-      myView.setShowFlatten(myFlattenState);
+      myView.setShowFlatten(!state);
       refreshView();
     }
   }

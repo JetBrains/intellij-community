@@ -164,7 +164,7 @@ public class GroovyTestGenerator implements TestGenerator {
     });
   }
 
-  private static void generateMethod(TestIntegrationUtils.MethodKind methodKind,
+  private static void generateMethod(@NotNull TestIntegrationUtils.MethodKind methodKind,
                                      TestFramework descriptor,
                                      PsiClass targetClass,
                                      Editor editor,

@@ -19,7 +19,6 @@ import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
 import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -105,10 +104,10 @@ public class TraceableDisposable {
     public Attachment[] getAttachments() {
       List<Attachment> answer = ContainerUtil.newSmartList();
       if (CREATE_TRACE != null) {
-        answer.add(new Attachment("creation.trace", ExceptionUtil.getThrowableText(CREATE_TRACE)));
+        answer.add(new Attachment("creation", CREATE_TRACE));
       }
       if (KILL_TRACE != null) {
-        answer.add(new Attachment("kill.trace", ExceptionUtil.getThrowableText(KILL_TRACE)));
+        answer.add(new Attachment("kill", KILL_TRACE));
       }
       return answer.toArray(Attachment.EMPTY_ARRAY);
     }

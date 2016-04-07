@@ -155,7 +155,7 @@ public class MethodCandidateInfo extends CandidateInfo{
         }
         return level;
       }
-    }, substitutor);
+    }, substitutor, isVarargs(), true);
     if (level > ApplicabilityLevel.NOT_APPLICABLE && !isTypeArgumentsApplicable(new Computable<PsiSubstitutor>() {
       @Override
       public PsiSubstitutor compute() {
@@ -236,15 +236,17 @@ public class MethodCandidateInfo extends CandidateInfo{
     return true;
   }
 
-  private <T> T computeForOverloadedCandidate(final Computable<T> computable, final PsiSubstitutor substitutor) {
+  private <T> T computeForOverloadedCandidate(final Computable<T> computable,
+                                              final PsiSubstitutor substitutor,
+                                              boolean varargs, boolean applicabilityCheck) {
     Map<PsiElement, CurrentCandidateProperties> map = CURRENT_CANDIDATE.get();
     if (map == null) {
       map = ContainerUtil.createConcurrentWeakMap();
       CURRENT_CANDIDATE.set(map);
     }
     final PsiElement argumentList = getMarkerList();
-    final CurrentCandidateProperties alreadyThere = map.put(argumentList,
-                                                            new CurrentCandidateProperties(this, substitutor, isVarargs(), true));
+    final CurrentCandidateProperties alreadyThere =
+      map.put(argumentList, new CurrentCandidateProperties(this, substitutor, varargs, applicabilityCheck));
     try {
       return computable.compute();
     }
@@ -369,40 +371,32 @@ public class MethodCandidateInfo extends CandidateInfo{
     }
   }
 
+  /**
+   * If iterated through all candidates, should be called under {@link #ourOverloadGuard} guard so results won't be cached on the top level call
+   */
   @NotNull
-  public PsiSubstitutor inferTypeArguments(@NotNull ParameterTypeInferencePolicy policy,
-                                           @NotNull PsiExpression[] arguments, 
+  public PsiSubstitutor inferTypeArguments(@NotNull final ParameterTypeInferencePolicy policy,
+                                           @NotNull final PsiExpression[] arguments,
                                            boolean includeReturnConstraint) {
-    Map<PsiElement, CurrentCandidateProperties> map = CURRENT_CANDIDATE.get();
-    if (map == null) {
-      map = ContainerUtil.createConcurrentWeakMap();
-      CURRENT_CANDIDATE.set(map);
-    }
-    final PsiMethod method = getElement();
-    final PsiElement argumentList = getMarkerList();
-    final CurrentCandidateProperties alreadyThere =
-      map.put(argumentList, new CurrentCandidateProperties(this, super.getSubstitutor(), policy.isVarargsIgnored() || isVarargs(), !includeReturnConstraint));
-    try {
-      PsiTypeParameter[] typeParameters = method.getTypeParameters();
+    return computeForOverloadedCandidate(new Computable<PsiSubstitutor>() {
+      @Override
+      public PsiSubstitutor compute() {
+        final PsiMethod method = MethodCandidateInfo.this.getElement();
+        PsiTypeParameter[] typeParameters = method.getTypeParameters();
 
-      if (isRawSubstitution()) {
-        return JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createRawSubstitutor(mySubstitutor, typeParameters);
-      }
+        if (MethodCandidateInfo.this.isRawSubstitution()) {
+          return JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createRawSubstitutor(mySubstitutor, typeParameters);
+        }
 
-      final PsiElement parent = getParent();
-      if (parent == null) return PsiSubstitutor.EMPTY;
-      Project project = method.getProject();
-      JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(project);
-      return javaPsiFacade.getResolveHelper()
-        .inferTypeArguments(typeParameters, method.getParameterList().getParameters(), arguments, mySubstitutor, parent, policy, myLanguageLevel);
-    }
-    finally {
-      if (alreadyThere == null) {
-        map.remove(argumentList);
-      } else {
-        map.put(argumentList, alreadyThere);
+        final PsiElement parent = MethodCandidateInfo.this.getParent();
+        if (parent == null) return PsiSubstitutor.EMPTY;
+        Project project = method.getProject();
+        JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(project);
+        return javaPsiFacade.getResolveHelper()
+          .inferTypeArguments(typeParameters, method.getParameterList().getParameters(), arguments, mySubstitutor, parent, policy,
+                              myLanguageLevel);
       }
-    }
+    }, super.getSubstitutor(), policy.isVarargsIgnored() || isVarargs(), !includeReturnConstraint);
   }
 
   private boolean isRawSubstitution() {

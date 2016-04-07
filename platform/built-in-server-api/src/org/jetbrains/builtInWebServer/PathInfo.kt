@@ -7,7 +7,7 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import java.io.File
 
-class PathInfo(val ioFile: File?, val file: VirtualFile?, val root: VirtualFile, moduleName: String? = null, val isLibrary: Boolean = false) {
+class PathInfo(val ioFile: File?, val file: VirtualFile?, val root: VirtualFile, moduleName: String? = null, val isLibrary: Boolean = false, val isRootNameOptionalInPath: Boolean = false) {
   var moduleName: String? = moduleName
     set
 
@@ -15,6 +15,14 @@ class PathInfo(val ioFile: File?, val file: VirtualFile?, val root: VirtualFile,
    * URL path.
    */
   val path: String by lazy {
+    buildPath(true)
+  }
+
+  val rootLessPathIfPossible: String? by lazy {
+    if (isRootNameOptionalInPath) buildPath(false) else null
+  }
+
+  private fun buildPath(useRootName: Boolean): String {
     val builder = StringBuilder()
     if (moduleName != null) {
       builder.append(moduleName).append('/')
@@ -24,13 +32,14 @@ class PathInfo(val ioFile: File?, val file: VirtualFile?, val root: VirtualFile,
       builder.append(root.name).append('/')
     }
 
+    val relativeTo = if (useRootName) root else root.parent ?: root
     if (file == null) {
-      builder.append(FileUtilRt.getRelativePath(root.path, FileUtilRt.toSystemIndependentName(ioFile!!.path), '/'))
+      builder.append(FileUtilRt.getRelativePath(relativeTo.path, FileUtilRt.toSystemIndependentName(ioFile!!.path), '/'))
     }
     else {
-      builder.append(VfsUtilCore.getRelativePath(file, root, '/'))
+      builder.append(VfsUtilCore.getRelativePath(file, relativeTo, '/'))
     }
-    builder.toString()
+    return builder.toString()
   }
 
   /**

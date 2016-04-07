@@ -1,12 +1,9 @@
 package org.jetbrains.plugins.github.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.util.ThrowableConvertor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.github.api.GithubUser;
 import org.jetbrains.plugins.github.util.GithubAuthData;
 import org.jetbrains.plugins.github.util.GithubAuthDataHolder;
 import org.jetbrains.plugins.github.util.GithubSettings;
@@ -80,13 +77,8 @@ public class GithubLoginDialog extends DialogWrapper {
   protected void doOKAction() {
     final GithubAuthDataHolder authHolder = new GithubAuthDataHolder(myGithubLoginPanel.getAuthData());
     try {
-      GithubUtil.computeValueInModal(myProject, "Access to GitHub", new ThrowableConvertor<ProgressIndicator, GithubUser, IOException>() {
-        @NotNull
-        @Override
-        public GithubUser convert(ProgressIndicator indicator) throws IOException {
-          return GithubUtil.checkAuthData(myProject, authHolder, indicator);
-        }
-      });
+      GithubUtil.computeValueInModalIO(myProject, "Access to GitHub", indicator ->
+        GithubUtil.checkAuthData(myProject, authHolder, indicator));
 
       myAuthData = authHolder.getAuthData();
 

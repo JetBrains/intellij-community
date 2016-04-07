@@ -15,13 +15,13 @@
  */
 package com.jetbrains.jsonSchema.extension;
 
-import com.intellij.json.JsonFileType;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ResourceUtil;
+import com.jetbrains.jsonSchema.JsonSchemaFileType;
 import com.jetbrains.jsonSchema.JsonSchemaMappingsProjectConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,6 +38,7 @@ import java.util.List;
  */
 public class JsonSchemaProjectSelfProviderFactory {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.jsonSchema.extension.JsonSchemaProjectSelfProviderFactory");
+  public static final String SCHEMA_JSON_FILE_NAME = "schema.json";
   private final List<JsonSchemaFileProvider<Object>> myProviders;
 
   public static JsonSchemaProjectSelfProviderFactory getInstance(final Project project) {
@@ -62,7 +63,7 @@ public class JsonSchemaProjectSelfProviderFactory {
 
     @Override
     public boolean isAvailable(@NotNull VirtualFile file) {
-      if (myProject == null || !JsonFileType.INSTANCE.equals(file.getFileType())) return false;
+      if (myProject == null || !JsonSchemaFileType.INSTANCE.equals(file.getFileType())) return false;
       return JsonSchemaMappingsProjectConfiguration.getInstance(myProject).isRegisteredSchemaFile(file);
     }
 
@@ -76,7 +77,7 @@ public class JsonSchemaProjectSelfProviderFactory {
     @NotNull
     @Override
     public String getName() {
-      return "schema.json";
+      return SCHEMA_JSON_FILE_NAME;
     }
 
     @NotNull

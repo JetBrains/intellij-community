@@ -18,8 +18,6 @@ package com.intellij.openapi.progress.util;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.application.TransactionGuardImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -95,9 +93,6 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     myShouldShowCancel = shouldShowCancel;
     myCancelText = cancelText;
     setModalityProgress(shouldShowBackground ? null : this);
-    TransactionGuardImpl guard = (TransactionGuardImpl)TransactionGuard.getInstance();
-    guard.registerProgress(this, guard.getCurrentMergeableTransaction());
-
     myFocusTrackback = new FocusTrackback(this, WindowManager.getInstance().suggestParentWindow(project), false);
 
     Component parent = parentComponent;
@@ -419,5 +414,10 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     if (myDialog != null) {
       myDialog.enableCancelButtonIfNeeded(enable);
     }
+  }
+
+  @Override
+  public String toString() {
+    return getTitle() + " " + System.identityHashCode(this) + ": running="+isRunning()+"; canceled="+isCanceled();
   }
 }

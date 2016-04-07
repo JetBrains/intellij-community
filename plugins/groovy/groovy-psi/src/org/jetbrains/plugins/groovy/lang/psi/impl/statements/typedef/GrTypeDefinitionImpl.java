@@ -158,6 +158,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
     return getStubOrPsiChild(GroovyElementTypes.IMPLEMENTS_CLAUSE);
   }
 
+  @NotNull
   @Override
   public String[] getSuperClassNames() {
     final GrTypeDefinitionStub stub = getStub();

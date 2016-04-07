@@ -27,10 +27,8 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Queue;
-import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -40,19 +38,20 @@ import java.util.concurrent.atomic.AtomicLong;
 public class TransactionGuardImpl extends TransactionGuard {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.application.TransactionGuardImpl");
   private final Queue<Transaction> myQueue = new LinkedBlockingQueue<Transaction>();
-  private final Set<TransactionKind> myMergeableKinds = ContainerUtil.newHashSet();
-  private final Map<ProgressIndicator, TransactionIdImpl> myProgresses = ContainerUtil.createConcurrentWeakMap();
+  private final Map<ModalityState, TransactionIdImpl> myModalities = ContainerUtil.createConcurrentWeakMap();
   private TransactionIdImpl myCurrentTransaction;
   private boolean myWritingAllowed;
 
   @Override
   @NotNull
   public AccessToken startSynchronousTransaction(@NotNull TransactionKind kind) throws IllegalStateException {
-    if (isInsideTransaction() && !myWritingAllowed && !myMergeableKinds.contains(kind)) {
+    if (isInsideTransaction() && !myWritingAllowed) {
       // please assign exceptions that occur here to Peter
+      /*
       LOG.error("Synchronous transactions are allowed only from user actions. " +
                 "Please use submit*Transaction instead of invokeLater. " +
                 "See FAQ in TransactionGuard class javadoc.");
+      */
       return AccessToken.EMPTY_ACCESS_TOKEN;
     }
 
@@ -83,14 +82,20 @@ public class TransactionGuardImpl extends TransactionGuard {
   }
 
   @NotNull
-  private Queue<Transaction> getQueue(@Nullable TransactionIdImpl prevTransaction) {
-    return prevTransaction == null ? myQueue : prevTransaction.myQueue;
+  private Queue<Transaction> getQueue(@Nullable TransactionIdImpl transaction) {
+    if (transaction == null) {
+      return myQueue;
+    }
+    if (myCurrentTransaction != null && transaction.myStartCounter > myCurrentTransaction.myStartCounter) {
+      // transaction is finished already, it makes no sense to add to its queue
+      return myCurrentTransaction.myQueue;
+    }
+    return transaction.myQueue;
   }
 
   private void pollQueueLater() {
     //todo replace with SwingUtilities when write actions are required to run under a guard
-    final Application app = ApplicationManager.getApplication();
-    app.invokeLater(new Runnable() {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
         Queue<Transaction> queue = getQueue(myCurrentTransaction);
@@ -100,15 +105,15 @@ public class TransactionGuardImpl extends TransactionGuard {
           runSyncTransaction(next);
         }
       }
-    }, app.getDisposed());
+    });
   }
 
   private void runSyncTransaction(@NotNull Transaction transaction) {
+    if (Disposer.isDisposed(transaction.parentDisposable)) return;
+
     AccessToken token = startTransactionUnchecked();
     try {
-      if (!Disposer.isDisposed(transaction.parentDisposable)) {
-        transaction.runnable.run();
-      }
+      transaction.runnable.run();
     }
     finally {
       token.finish();
@@ -122,7 +127,7 @@ public class TransactionGuardImpl extends TransactionGuard {
 
   @Override
   public void submitMergeableTransaction(@NotNull final Disposable parentDisposable, @NotNull final TransactionKind kind, @NotNull final Runnable _transaction) {
-    submitMergeableTransaction(parentDisposable, kind, getCurrentMergeableTransaction(), _transaction);
+    submitMergeableTransaction(parentDisposable, kind, getContextTransaction(), _transaction);
   }
 
   @Override
@@ -154,13 +159,13 @@ public class TransactionGuardImpl extends TransactionGuard {
       runnable.run();
     } else {
       //todo add ModalityState.any() when write actions are required to run under a guard
-      app.invokeLater(runnable, app.getDisposed());
+      app.invokeLater(runnable);
     }
   }
 
   private boolean canRunTransactionNow(Transaction transaction, boolean sync) {
     TransactionIdImpl currentId = myCurrentTransaction;
-    if (currentId == null || myMergeableKinds.contains(transaction.kind)) {
+    if (currentId == null) {
       return true;
     }
 
@@ -172,29 +177,6 @@ public class TransactionGuardImpl extends TransactionGuard {
   }
 
   @Override
-  @NotNull
-  public AccessToken acceptNestedTransactions(@NotNull TransactionKind... kinds) {
-    //todo enable when transactions are mandatory
-    /*
-    if (!isInsideTransaction()) {
-      throw new IllegalStateException("acceptNestedTransactions must be called inside a transaction");
-    }
-    */
-    final List<TransactionKind> toRemove = ContainerUtil.newArrayList();
-    for (TransactionKind kind : kinds) {
-      if (myMergeableKinds.add(kind)) {
-        toRemove.add(kind);
-      }
-    }
-    return new AccessToken() {
-      @Override
-      public void finish() {
-        myMergeableKinds.removeAll(toRemove);
-      }
-    };
-  }
-
-  @Override
   public void assertInsideTransaction(boolean transactionRequired, @NotNull String errorMessage) {
     if (transactionRequired != isInsideTransaction()) {
       LOG.error(errorMessage);
@@ -202,10 +184,10 @@ public class TransactionGuardImpl extends TransactionGuard {
   }
 
   @Override
-  public void submitTransactionAndWait(@NotNull TransactionKind kind, @NotNull final Runnable runnable) throws ProcessCanceledException {
+  public void submitTransactionAndWait(@NotNull final Runnable runnable) throws ProcessCanceledException {
     Application app = ApplicationManager.getApplication();
     if (app.isDispatchThread()) {
-      Transaction transaction = new Transaction(runnable, getCurrentMergeableTransaction(), kind, app);
+      Transaction transaction = new Transaction(runnable, getContextTransaction(), TransactionKind.ANY_CHANGE, app);
       if (!canRunTransactionNow(transaction, true)) {
         throw new AssertionError("Cannot run synchronous submitTransactionAndWait from invokeLater. " +
                                  "Please use asynchronous submit*Transaction. " +
@@ -219,7 +201,7 @@ public class TransactionGuardImpl extends TransactionGuard {
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
     final Throwable[] exception = {null};
-    submitMergeableTransaction(ApplicationManager.getApplication(), kind, new Runnable() {
+    submitMergeableTransaction(Disposer.newDisposable("never disposed"), TransactionKind.ANY_CHANGE, new Runnable() {
       @Override
       public void run() {
         try {
@@ -286,30 +268,36 @@ public class TransactionGuardImpl extends TransactionGuard {
 
   @Override
   public void submitTransactionLater(@NotNull final Disposable parentDisposable, @NotNull final Runnable transaction) {
-    final TransactionIdImpl id = getCurrentMergeableTransaction();
+    final TransactionIdImpl id = getContextTransaction();
     Application app = ApplicationManager.getApplication();
     app.invokeLater(new Runnable() {
       @Override
       public void run() {
         submitMergeableTransaction(parentDisposable, id, transaction);
       }
-    }, app.getDisposed());
+    });
   }
 
   @Override
-  public TransactionIdImpl getCurrentMergeableTransaction() {
+  public TransactionIdImpl getContextTransaction() {
     if (!ApplicationManager.getApplication().isDispatchThread()) {
       ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
-      return indicator != null ? myProgresses.get(indicator) : null;
+      return indicator != null ? myModalities.get(indicator.getModalityState()) : null;
     }
 
     return myWritingAllowed ? myCurrentTransaction : null;
   }
 
-  public void registerProgress(@NotNull ProgressIndicator indicator, @Nullable TransactionIdImpl contextTransaction) {
+  public void enteredModality(@NotNull ModalityState modality) {
+    TransactionIdImpl contextTransaction = getContextTransaction();
     if (contextTransaction != null) {
-      myProgresses.put(indicator, contextTransaction);
+      myModalities.put(modality, contextTransaction);
     }
+  }
+
+  @Nullable
+  public TransactionIdImpl getModalityTransaction(@NotNull ModalityState modalityState) {
+    return myModalities.get(modalityState);
   }
 
   private static class Transaction {

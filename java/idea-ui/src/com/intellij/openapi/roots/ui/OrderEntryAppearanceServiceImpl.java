@@ -110,7 +110,8 @@ public class OrderEntryAppearanceServiceImpl extends OrderEntryAppearanceService
     }
 
     final String url = StringUtil.trimEnd(files[0], JarFileSystem.JAR_SEPARATOR);
-    return SimpleTextCellAppearance.regular(PathUtil.getFileName(url), PlatformIcons.LIBRARY_ICON);
+    String text = ProjectBundle.message("library.unnamed.text", PathUtil.getFileName(url), files.length - 1);
+    return SimpleTextCellAppearance.regular(text, PlatformIcons.LIBRARY_ICON);
   }
 
   @NotNull

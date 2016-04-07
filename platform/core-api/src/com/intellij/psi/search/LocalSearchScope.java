@@ -138,12 +138,14 @@ public class LocalSearchScope extends SearchScope {
     return result;
   }
 
-  @NotNull public LocalSearchScope intersectWith(@NotNull LocalSearchScope scope2){
+  @NotNull
+  public LocalSearchScope intersectWith(@NotNull LocalSearchScope scope2){
     if (equals(scope2)) return this;
     return intersection(this, scope2);
   }
 
-  private static LocalSearchScope intersection(LocalSearchScope scope1, LocalSearchScope scope2) {
+  @NotNull
+  private static LocalSearchScope intersection(@NotNull LocalSearchScope scope1, @NotNull LocalSearchScope scope2) {
     List<PsiElement> result = new ArrayList<PsiElement>();
     final PsiElement[] elements1 = scope1.myScope;
     final PsiElement[] elements2 = scope2.myScope;
@@ -184,7 +186,7 @@ public class LocalSearchScope extends SearchScope {
   }
 
   @Nullable
-  private static PsiElement intersectScopeElements(PsiElement element1, PsiElement element2) {
+  private static PsiElement intersectScopeElements(@NotNull PsiElement element1, @NotNull PsiElement element2) {
     if (PsiTreeUtil.isContextAncestor(element1, element2, false)) return element2;
     if (PsiTreeUtil.isContextAncestor(element2, element1, false)) return element1;
     if (PsiTreeUtil.isAncestor(element1, element2, false)) return element2;
@@ -212,7 +214,8 @@ public class LocalSearchScope extends SearchScope {
     return ((GlobalSearchScope)scope).union(this);
   }
 
-  public SearchScope union(LocalSearchScope scope2) {
+  @NotNull
+  public SearchScope union(@NotNull LocalSearchScope scope2) {
     if (equals(scope2)) return this;
     PsiElement[] elements1 = getScope();
     PsiElement[] elements2 = scope2.getScope();
@@ -240,7 +243,7 @@ public class LocalSearchScope extends SearchScope {
     return new LocalSearchScope(PsiUtilCore.toPsiElementArray(result));
   }
 
-  private static PsiElement scopeElementsUnion(PsiElement element1, PsiElement element2) {
+  private static PsiElement scopeElementsUnion(@NotNull PsiElement element1, @NotNull PsiElement element2) {
     if (PsiTreeUtil.isAncestor(element1, element2, false)) return element1;
     if (PsiTreeUtil.isAncestor(element2, element1, false)) return element2;
     PsiElement commonParent = PsiTreeUtil.findCommonParent(element1, element2);
