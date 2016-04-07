@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,12 @@ package com.intellij.refactoring.util;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -67,7 +67,7 @@ public abstract class FixableUsagesRefactoringProcessor extends BaseRefactoringP
     for (UsageInfo info : refUsages.get()) {
       final String conflict = ((FixableUsageInfo)info).getConflictMessage();
       if (conflict != null) {
-        conflicts.putValue(info.getElement(), XmlUtil.escape(conflict));
+        conflicts.putValue(info.getElement(), StringUtil.escapeXml(conflict));
       }
     }
   }

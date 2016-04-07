@@ -21,50 +21,40 @@
 package com.intellij.refactoring.introduceparameterobject.usageInfo;
 
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiParameter;
-import com.intellij.refactoring.introduceparameterobject.ParameterChunk;
+import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.util.IncorrectOperationException;
-
-import java.util.List;
 
 public class AppendAccessorsUsageInfo extends FixableUsageInfo{
   private final PsiClass myExistingClass;
   private final boolean myGenerateAccessors;
-  private final PsiParameter myParameter;
+  private final ParameterInfoImpl myParameter;
   private final boolean myGetter;
-  private final List<ParameterChunk> parameters;
-  private static final Logger LOGGER = Logger.getInstance("#" + AppendAccessorsUsageInfo.class.getName());
+  private final PsiField myField;
 
-  public AppendAccessorsUsageInfo(PsiClass existingClass,
+  public AppendAccessorsUsageInfo(PsiParameter psiParameter,
+                                  PsiClass existingClass,
                                   boolean generateAccessors,
-                                  PsiParameter parameter,
+                                  ParameterInfoImpl parameter,
                                   boolean isGetter,
-                                  List<ParameterChunk> parameters) {
-    super(parameter);
+                                  PsiField field) {
+    super(psiParameter);
     myExistingClass = existingClass;
     myGenerateAccessors = generateAccessors;
     myParameter = parameter;
     myGetter = isGetter;
-    this.parameters = parameters;
+    myField = field;
   }
 
   @Override
   public void fixUsage() throws IncorrectOperationException {
-    if (myGenerateAccessors) {
-      if (myExistingClass != null) {
-        final ParameterChunk parameterChunk = ParameterChunk.getChunkByParameter(myParameter, parameters);
-        LOGGER.assertTrue(parameterChunk != null);
-        final PsiField field = parameterChunk.getField();
-        if (field != null) {
-          myExistingClass.add(myGetter
-                              ? GenerateMembersUtil.generateGetterPrototype(field)
-                              : GenerateMembersUtil.generateSetterPrototype(field));
-        }
-      }
+    if (myGenerateAccessors && myField != null) {
+      myExistingClass.add(myGetter
+                          ? GenerateMembersUtil.generateGetterPrototype(myField)
+                          : GenerateMembersUtil.generateSetterPrototype(myField));
     }
   }
 
@@ -72,7 +62,7 @@ public class AppendAccessorsUsageInfo extends FixableUsageInfo{
     return myGetter;
   }
 
-  public PsiParameter getParameter() {
+  public ParameterInfoImpl getParameter() {
     return myParameter;
   }
 
@@ -80,12 +70,8 @@ public class AppendAccessorsUsageInfo extends FixableUsageInfo{
   public String getConflictMessage() {
     if (!myGenerateAccessors) {
       String fieldName = myParameter.getName();
-      final ParameterChunk chunk = ParameterChunk.getChunkByParameter(myParameter, parameters);
-      if (chunk != null) {
-        final PsiField field = chunk.getField();
-        if (field != null) {
-          fieldName = field.getName();
-        }
+      if (myField != null) {
+        fieldName = myField.getName();
       }
       return (myGetter ? "Getter" : "Setter") + " for field \'" + fieldName + "\' is required";
     }
