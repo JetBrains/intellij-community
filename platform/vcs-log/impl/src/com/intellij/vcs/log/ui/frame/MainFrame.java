@@ -100,8 +100,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     myChangesLoadingPane = new JBLoadingPanel(new BorderLayout(), project, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
     myChangesLoadingPane.add(myChangesBrowser);
 
-    final CommitSelectionListener selectionChangeListener = new CommitSelectionListener(myChangesBrowser);
-    myGraphTable.getSelectionModel().addListSelectionListener(selectionChangeListener);
+    myGraphTable.getSelectionModel().addListSelectionListener(new CommitSelectionListener(myChangesBrowser));
     myGraphTable.getSelectionModel().addListSelectionListener(myDetailsPanel);
     updateWhenDetailsAreLoaded();
 
@@ -176,6 +175,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     myDetailsSplitter.setSecondComponent(state ? myDetailsPanel : null);
   }
 
+  @NotNull
   private JScrollPane setupScrolledGraph() {
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myGraphTable, SideBorder.TOP);
     myGraphTable.viewportSet(scrollPane.getViewport());
@@ -235,6 +235,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     return toolbar;
   }
 
+  @NotNull
   public JComponent getMainComponent() {
     return this;
   }

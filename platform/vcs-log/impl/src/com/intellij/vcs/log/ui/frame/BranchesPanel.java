@@ -92,7 +92,8 @@ public class BranchesPanel extends JPanel {
     return groups;
   }
 
-  private static List<RefGroup> expandExpandableGroups(List<RefGroup> refGroups) {
+  @NotNull
+  private static List<RefGroup> expandExpandableGroups(@NotNull List<RefGroup> refGroups) {
     List<RefGroup> groups = ContainerUtil.newArrayList();
     for (RefGroup group : refGroups) {
       if (group.isExpanded() || group.getRefs().size() == 1) {
