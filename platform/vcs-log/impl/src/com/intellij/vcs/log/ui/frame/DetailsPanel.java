@@ -98,7 +98,8 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
   DetailsPanel(@NotNull VcsLogDataManager logDataManager,
                @NotNull VcsLogGraphTable graphTable,
                @NotNull VcsLogColorManager colorManager,
-               @NotNull VisiblePack initialDataPack) {
+               @NotNull VisiblePack initialDataPack,
+               @NotNull Disposable parent) {
     myLogDataManager = logDataManager;
     myGraphTable = graphTable;
     myColorManager = colorManager;
@@ -129,7 +130,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
     myMainContentPanel.add(myReferencesPanel, "");
     myMainContentPanel.add(myCommitDetailsPanel, "");
 
-    myLoadingPanel = new JBLoadingPanel(new BorderLayout(), logDataManager, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS) {
+    myLoadingPanel = new JBLoadingPanel(new BorderLayout(), parent, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS) {
       @Override
       public Color getBackground() {
         return getDetailsBackground();
