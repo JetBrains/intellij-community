@@ -59,6 +59,7 @@
     <action id="AddTaskFile" class="com.jetbrains.edu.coursecreator.actions.CCAddAsTaskFile" text="Add As Task File">
       <add-to-group group-id="ProjectViewPopupMenu" anchor="first"/>
     </action>
+
     <group id="CCProjectViewGroup">
       <action id="DeleteAllPlaceholders" class="com.jetbrains.edu.coursecreator.actions.CCDeleteAllAnswerPlaceholdersAction"/>
       <separator/>
@@ -66,11 +67,13 @@
     </group>
 
     <group id="AnswerPlaceholderGroup">
+      <action id="EditAnswerPlaceholder" class="com.jetbrains.edu.coursecreator.actions.CCEditAnswerPlaceholder"/>
       <action id="AddTaskWindow" class="com.jetbrains.edu.coursecreator.actions.CCAddAnswerPlaceholder"/>
       <reference ref="DeleteAllPlaceholders"/>
       <separator/>
       <add-to-group group-id="EditorPopupMenu" anchor="first"/>
     </group>
+
     <action id="ShowTaskWindowDetails" class="com.jetbrains.edu.coursecreator.actions.CCShowAnswerPlaceholderDetails">
       <add-to-group group-id="EditorPopupMenu" anchor="before" relative-to-action="CopyReference"/>
     </action>
