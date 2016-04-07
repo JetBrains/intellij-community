@@ -773,11 +773,11 @@ class DependencyResolverImpl implements DependencyResolver {
                   dependency.projectDependencyArtifacts = artifactMap.get(componentResult.moduleVersion).collect { it.file }
                   dependency.projectDependencyArtifacts.each { resolvedDepsFiles.add(it) }
 
-//                  if (componentResult != dependencyResult.from) {
-//                    dependency.dependencies.addAll(
-//                      transform(componentResult.dependencies)
-//                    )
-//                  }
+                  if (componentResult != dependencyResult.from) {
+                    dependency.dependencies.addAll(
+                      transform(componentResult.dependencies)
+                    )
+                  }
                   dependencies.add(dependency)
 
                   def files = []

@@ -126,6 +126,46 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   }
 
   @Test
+  @TargetVersions("2.0+")
+  public void testProvidedDependencyScopeMerge() throws Exception {
+    createSettingsFile("include 'web'\n" +
+                       "include 'user'");
+
+    importProject(
+      "subprojects {\n" +
+      "  apply plugin: 'java'\n" +
+      "  configurations {\n" +
+      "    provided\n" +
+      "  }\n" +
+      "}\n" +
+      "\n" +
+      "project(':web') {\n" +
+      "  dependencies {\n" +
+      "    provided 'junit:junit:4.11'\n" +
+      "  }\n" +
+      "}\n" +
+      "project(':user') {\n" +
+      "  apply plugin: 'war'\n" +
+      "  dependencies {\n" +
+      "    compile project(':web')\n" +
+      "    providedCompile project(path: ':web', configuration: 'provided')\n" +
+      "  }\n" +
+      "}"
+    );
+
+    assertModules("project", "web", "web_main", "web_test", "user", "user_main", "user_test");
+
+    assertModuleLibDeps("web");
+    assertModuleLibDeps("web_main");
+    assertModuleLibDeps("web_test");
+
+    assertModuleModuleDeps("user_main", "web_main");
+    assertModuleModuleDepScope("user_main", "web_main", DependencyScope.COMPILE);
+    assertModuleLibDepScope("user_main", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.PROVIDED);
+    assertModuleLibDepScope("user_main", "Gradle: junit:junit:4.11", DependencyScope.PROVIDED);
+  }
+
+  @Test
   public void testCustomSourceSetsDependencies() throws Exception {
     createSettingsFile("include 'api', 'impl' ");
 
