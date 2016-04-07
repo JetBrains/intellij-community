@@ -569,7 +569,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
 
         if (LOG.isDebugEnabled()) {
           LOG.debug(String.format("Using tunneled communication for Python console: port %d (=> %d) on IDE side, " +
-                                  "port %d (=> %d) on PyDev side", myPorts[1], remotePorts.second, myPorts[0], remotePorts.first));
+                                  "port %d (=> %d) on pydevconsole.py side", myPorts[1], remotePorts.second, myPorts[0], remotePorts.first));
         }
 
         myPydevConsoleCommunication = new PydevRemoteConsoleCommunication(getProject(), myPorts[0], remoteProcess, myPorts[1]);
