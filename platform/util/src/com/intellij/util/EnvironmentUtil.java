@@ -53,6 +53,7 @@ public class EnvironmentUtil {
   private static final String LC_CTYPE = "LC_CTYPE";
 
   private static final Future<Map<String, String>> ourEnvGetter;
+
   static {
     if (SystemInfo.isMac && "unlocked".equals(System.getProperty("__idea.mac.env.lock")) && Registry.is("idea.fix.mac.env")) {
       ourEnvGetter = AppExecutorUtil.getAppExecutorService().submit(new Callable<Map<String, String>>() {
@@ -149,6 +150,8 @@ public class EnvironmentUtil {
     return array;
   }
 
+  private static final String DISABLE_OMZ_AUTO_UPDATE = "DISABLE_AUTO_UPDATE";
+
   private static Map<String, String> getShellEnv() throws Exception {
     String shell = System.getenv("SHELL");
     if (shell == null || !new File(shell).canExecute()) {
@@ -168,15 +171,16 @@ public class EnvironmentUtil {
       String[] command = {shell, "-l", "-i", "-c", "'" + reader.getAbsolutePath() + "' '" + envFile.getAbsolutePath() + "'"};
       LOG.info("loading shell env: " + StringUtil.join(command, " "));
 
-      Process process = new ProcessBuilder(command).redirectErrorStream(true).start();
+      ProcessBuilder builder = new ProcessBuilder(command).redirectErrorStream(true);
+      builder.environment().put(DISABLE_OMZ_AUTO_UPDATE, "true");
+      Process process = builder.start();
       StreamGobbler gobbler = new StreamGobbler(process.getInputStream());
       int rv = waitAndTerminateAfter(process, SHELL_ENV_READING_TIMEOUT);
       gobbler.stop();
 
       String lines = FileUtil.loadFile(envFile);
       if (rv != 0 || lines.isEmpty()) {
-        LOG.info("shell process output: " + StringUtil.trimEnd(gobbler.getText(), '\n'));
-        throw new Exception("rv:" + rv + " text:" + lines.length());
+        throw new Exception("rv:" + rv + " text:" + lines.length() + " out:" + StringUtil.trimEnd(gobbler.getText(), '\n'));
       }
       return parseEnv(lines);
     }
@@ -186,7 +190,7 @@ public class EnvironmentUtil {
   }
 
   private static Map<String, String> parseEnv(String text) throws Exception {
-    Set<String> toIgnore = new HashSet<String>(Arrays.asList("_", "PWD", "SHLVL"));
+    Set<String> toIgnore = new HashSet<String>(Arrays.asList("_", "PWD", "SHLVL", DISABLE_OMZ_AUTO_UPDATE));
     Map<String, String> env = System.getenv();
     Map<String, String> newEnv = new HashMap<String, String>();
 
@@ -299,7 +303,6 @@ public class EnvironmentUtil {
   }
 
   private static class StreamGobbler extends BaseOutputReader {
-
     private final StringBuffer myBuffer;
 
     public StreamGobbler(@NotNull InputStream stream) {
