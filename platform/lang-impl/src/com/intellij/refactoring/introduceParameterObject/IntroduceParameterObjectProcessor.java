@@ -16,7 +16,6 @@
 package com.intellij.refactoring.introduceParameterObject;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
@@ -42,35 +41,27 @@ public class IntroduceParameterObjectProcessor<M extends PsiNamedElement, P exte
   private static final Logger LOG = Logger.getInstance("#" + IntroduceParameterObjectProcessor.class.getName());
   private final C myClassDescriptor;
   private final M myMethod;
-  private final P[] myParameterInfos;
   private final ChangeInfo myChangeInfo;
   private final P myMergedParameterInfo;
   private final IntroduceParameterObjectDelegate<M, P, C> myDelegate;
   private final IntroduceParameterObjectDelegate.Accessor[] myAccessors;
 
-  public IntroduceParameterObjectProcessor(Project project,
+  public IntroduceParameterObjectProcessor(M method,
                                            C classDescriptor,
-                                           M method,
-                                           P[] parameterInfos,
-                                           List<P> parameters,
+                                           List<P> oldMethodParameters,
                                            boolean keepMethodAsDelegate) {
-    super(project);
+    super(method.getProject());
     myClassDescriptor = classDescriptor;
     myMethod = method;
-    myParameterInfos = parameterInfos;
 
-    int[] paramsToMerge = new int[parameterInfos.length];
-    for (int i = 0; i < paramsToMerge.length; i++) {
-      paramsToMerge[i] = parameterInfos[i].getOldIndex();
-    }
-
+    final P[] paramsToMerge = classDescriptor.getParamsToMerge();
     List<P> newParams = new ArrayList<>();
     int anchor = -1;
-    for (P param : parameters) {
-      final int i = ArrayUtil.find(paramsToMerge, param.getOldIndex());
-      if (i > -1) {
+    for (P param : oldMethodParameters) {
+      final P mergedParameterInfo = classDescriptor.getParameterInfo(param.getOldIndex());
+      if (mergedParameterInfo != null) {
         if (anchor == -1) {
-          anchor = i;
+          anchor = ArrayUtil.find(paramsToMerge, mergedParameterInfo);
         }
       }
       else {
@@ -80,11 +71,11 @@ public class IntroduceParameterObjectProcessor<M extends PsiNamedElement, P exte
 
     myDelegate = IntroduceParameterObjectDelegate.findDelegate(method);
     LOG.assertTrue(myDelegate != null);
-    myMergedParameterInfo = myDelegate.createMergedParameterInfo(project, classDescriptor, paramsToMerge, method);
+    myMergedParameterInfo = myDelegate.createMergedParameterInfo(method.getProject(), classDescriptor, method);
     newParams.add(anchor, myMergedParameterInfo);
 
     myChangeInfo = myDelegate.createChangeSignatureInfo(myMethod, newParams, keepMethodAsDelegate);
-    myAccessors = new IntroduceParameterObjectDelegate.Accessor[parameterInfos.length];
+    myAccessors = new IntroduceParameterObjectDelegate.Accessor[paramsToMerge.length];
   }
 
   @Override
@@ -101,13 +92,13 @@ public class IntroduceParameterObjectProcessor<M extends PsiNamedElement, P exte
       usages.add(new ChangeSignatureUsageWrapper(info));
     }
 
+    final P[] paramsToMerge = myClassDescriptor.getParamsToMerge();
     for (PsiElement element : methodHierarchy) {
       final IntroduceParameterObjectDelegate delegate = IntroduceParameterObjectDelegate.findDelegate(element);
       if (delegate != null) {
-        for (int i = 0; i < myParameterInfos.length; i++) {
-          P parameterInfo = myParameterInfos[i];
+        for (int i = 0; i < paramsToMerge.length; i++) {
           final IntroduceParameterObjectDelegate.Accessor accessor =
-            delegate.collectInternalUsages(usages, (PsiNamedElement)element, myMethod, myClassDescriptor, parameterInfo.getOldIndex(),
+            delegate.collectInternalUsages(usages, (PsiNamedElement)element, myClassDescriptor, paramsToMerge[i],
                                            myMergedParameterInfo.getName());
           if (myAccessors[i] == null || accessor == IntroduceParameterObjectDelegate.Accessor.Setter) {
             myAccessors[i] = accessor;

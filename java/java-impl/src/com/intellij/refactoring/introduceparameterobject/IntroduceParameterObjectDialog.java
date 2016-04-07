@@ -186,14 +186,10 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
                                                       newVisibility, infos, sourceMethod,
                                                       myGenerateAccessorsCheckBox.isSelected());
     invokeRefactoring(
-      new IntroduceParameterObjectProcessor<PsiMethod, ParameterInfoImpl, JavaIntroduceParameterObjectClassDescriptor>(getProject(),
-                                                                                                                       classDescriptor,
-                                                                                                                       sourceMethod,
-                                                                                                                       infos,
-                                                                                                                       new JavaMethodDescriptor(
-                                                                                                                         sourceMethod)
-                                                                                                                         .getParameters(),
-                                                                                                                       keepMethod));
+      new IntroduceParameterObjectProcessor<PsiMethod, ParameterInfoImpl, JavaIntroduceParameterObjectClassDescriptor>(
+        sourceMethod, classDescriptor,
+        new JavaMethodDescriptor(sourceMethod).getParameters(),
+        keepMethod));
   }
 
   @Override

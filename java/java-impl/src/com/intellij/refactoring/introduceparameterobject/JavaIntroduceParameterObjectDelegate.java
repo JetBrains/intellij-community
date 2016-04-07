@@ -32,7 +32,6 @@ import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.VisibilityUtil;
@@ -49,7 +48,6 @@ public class JavaIntroduceParameterObjectDelegate
   @Override
   public ParameterInfoImpl createMergedParameterInfo(Project project,
                                                      JavaIntroduceParameterObjectClassDescriptor descriptor,
-                                                     int[] paramsToMerge,
                                                      PsiMethod method) {
     final PsiCodeBlock body = method.getBody();
     final String baseParameterName = StringUtil.decapitalize(descriptor.getClassName());
@@ -61,7 +59,7 @@ public class JavaIntroduceParameterObjectDelegate
                                .propertyNameToVariableName(baseParameterName, VariableKind.PARAMETER);
 
     final boolean lastVarargsToMerge =
-      method.isVarArgs() && ArrayUtil.find(paramsToMerge, method.getParameterList().getParametersCount() - 1) > -1;
+      method.isVarArgs() && descriptor.getParameterInfo(method.getParameterList().getParametersCount() - 1) != null;
     final String classTypeText = descriptor.createFakeClassTypeText();
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
     return new ParameterInfoImpl(-1, paramName, facade.getElementFactory().createTypeFromText(classTypeText, method), null) {
@@ -70,7 +68,7 @@ public class JavaIntroduceParameterObjectDelegate
         final String qualifiedName = StringUtil.getQualifiedName(descriptor.getPackageName(), descriptor.getClassName());
         final PsiClass existingClass = facade.findClass(qualifiedName, expr.getResolveScope());
         if (existingClass == null) return null;
-        final String mergedParam = getMergedParam(expr, existingClass, paramsToMerge, method, lastVarargsToMerge);
+        final String mergedParam = getMergedParam(expr, existingClass, descriptor.getParamsToMerge(), method, lastVarargsToMerge);
         return (PsiExpression)JavaCodeStyleManager.getInstance(project)
           .shortenClassReferences(facade.getElementFactory().createExpressionFromText(mergedParam, expr));
       }
@@ -79,7 +77,7 @@ public class JavaIntroduceParameterObjectDelegate
 
   private static String getMergedParam(PsiCallExpression call,
                                        PsiClass existingClass,
-                                       int[] paramsToMerge,
+                                       ParameterInfo[] paramsToMerge,
                                        PsiMethod method,
                                        boolean lastVarargsToMerge) {
     final PsiExpression[] args = call.getArgumentList().getExpressions();
@@ -90,15 +88,15 @@ public class JavaIntroduceParameterObjectDelegate
       .append(JavaPsiFacade.getElementFactory(call.getProject()).createType(existingClass, substitutor).getCanonicalText());
     newExpression.append('(');
     boolean isFirst = true;
-    for (int index : paramsToMerge) {
+    for (ParameterInfo info : paramsToMerge) {
       if (!isFirst) {
         newExpression.append(", ");
       }
       isFirst = false;
-      newExpression.append(getArgument(args, index, method));
+      newExpression.append(getArgument(args, info.getOldIndex(), method));
     }
     if (lastVarargsToMerge) {
-      final int lastArg = paramsToMerge[paramsToMerge.length - 1];
+      final int lastArg = paramsToMerge[paramsToMerge.length - 1].getOldIndex();
       for (int i = lastArg + 1; i < args.length; i++) {
         newExpression.append(',');
         newExpression.append(getArgument(args, i, method));
@@ -135,14 +133,12 @@ public class JavaIntroduceParameterObjectDelegate
   @Override
   public <M1 extends PsiNamedElement, P1 extends ParameterInfo> Accessor collectInternalUsages(Collection<FixableUsageInfo> usages,
                                                                                                PsiMethod overridingMethod,
-                                                                                               M1 element,
                                                                                                IntroduceParameterObjectClassDescriptor<M1, P1> classDescriptor,
-                                                                                               int parameterIdx,
+                                                                                               P1 parameterInfo,
                                                                                                String mergedParamName) {
     final LocalSearchScope localSearchScope = new LocalSearchScope(overridingMethod);
     final PsiParameter[] params = overridingMethod.getParameterList().getParameters();
-    final PsiParameter parameter = params[parameterIdx];
-    final P1 parameterInfo = classDescriptor.getParameterInfo(parameterIdx);
+    final PsiParameter parameter = params[parameterInfo.getOldIndex()];
     final String setter = classDescriptor.getSetterName(parameterInfo, overridingMethod);
     final String getter = classDescriptor.getGetterName(parameterInfo, overridingMethod);
     final Accessor[] accessor = new Accessor[]{null};

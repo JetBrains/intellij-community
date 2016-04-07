@@ -50,23 +50,22 @@ public abstract class IntroduceParameterObjectDelegate<M extends PsiNamedElement
 
   public abstract P createMergedParameterInfo(Project project,
                                               C descriptor,
-                                              int[] paramsToMerge,
                                               M method);
 
   public abstract ChangeInfo createChangeSignatureInfo(M method,
-                                                       List<P> infos, boolean delegate);
+                                                       List<P> infos,
+                                                       boolean delegate);
 
   public abstract <M1 extends PsiNamedElement, P1 extends ParameterInfo>
   Accessor collectInternalUsages(Collection<FixableUsageInfo> usages,
                                  M overridingMethod,
-                                 M1 element,
-                                 IntroduceParameterObjectClassDescriptor<M1, P1> classDescriptor, int parameterIdx,
+                                 IntroduceParameterObjectClassDescriptor<M1, P1> classDescriptor,
+                                 P1 parameterInfo,
                                  String mergedParamName);
 
   public abstract void collectAccessibilityUsages(Collection<FixableUsageInfo> usages,
                                                   M method, C descriptor,
                                                   Accessor[] accessors);
 
-  public abstract void collectConflicts(MultiMap<PsiElement, String> conflicts,
-                                        UsageInfo[] infos, M method, C classDescriptor);
+  public abstract void collectConflicts(MultiMap<PsiElement, String> conflicts, UsageInfo[] infos, M method, C classDescriptor);
 }

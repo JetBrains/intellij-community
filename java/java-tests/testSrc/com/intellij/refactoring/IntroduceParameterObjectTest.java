@@ -69,12 +69,10 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase{
         new JavaIntroduceParameterObjectClassDescriptor("Param", "", null, false, createInner, null, datas, method, false);
       final List<ParameterInfoImpl> parameters = new JavaMethodDescriptor(method).getParameters();
       IntroduceParameterObjectProcessor processor =
-        new IntroduceParameterObjectProcessor<PsiMethod, ParameterInfoImpl, JavaIntroduceParameterObjectClassDescriptor>(getProject(),
-                                                                                                                         classDescriptor,
-                                                                                                                         method,
-                                                                                                                         datas,
-                                                                                                                         parameters,
-                                                                                                                         delegate);
+        new IntroduceParameterObjectProcessor<PsiMethod, ParameterInfoImpl, JavaIntroduceParameterObjectClassDescriptor>(
+          method, classDescriptor,
+          parameters,
+          delegate);
       processor.run();
     });
   }
@@ -198,12 +196,10 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase{
                                                         mergedParams, method, generateAccessors);
       final List<ParameterInfoImpl> parameters = new JavaMethodDescriptor(method).getParameters();
       IntroduceParameterObjectProcessor processor =
-        new IntroduceParameterObjectProcessor<PsiMethod, ParameterInfoImpl, JavaIntroduceParameterObjectClassDescriptor>(getProject(),
-                                                                                                                         classDescriptor,
-                                                                                                                         method,
-                                                                                                                         mergedParams,
-                                                                                                                         parameters,
-                                                                                                                         false);
+        new IntroduceParameterObjectProcessor<PsiMethod, ParameterInfoImpl, JavaIntroduceParameterObjectClassDescriptor>(
+          method, classDescriptor,
+          parameters,
+          false);
       processor.run();
       LocalFileSystem.getInstance().refresh(false);
       FileDocumentManager.getInstance().saveAllDocuments();
