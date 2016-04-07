@@ -34,7 +34,7 @@ public class BuildNumber implements Comparable<BuildNumber> {
   private static final String BUILD_NUMBER = "__BUILD_NUMBER__";
   private static final String STAR = "*";
   private static final String SNAPSHOT = "SNAPSHOT";
-  private static final String FALLBACK_VERSION = "2999.1.SNAPSHOT";
+  private static final String FALLBACK_VERSION = "9999.SNAPSHOT";
 
   public static final int SNAPSHOT_VALUE = Integer.MAX_VALUE;
 
@@ -117,49 +117,24 @@ public class BuildNumber implements Comparable<BuildNumber> {
     if (baselineVersionSeparator > 0) {
       String baselineVersionString = code.substring(0, baselineVersionSeparator);
       if (baselineVersionString.trim().isEmpty()) return null;
-      try {
-        baselineVersion = Integer.parseInt(baselineVersionString);
-      }
-      catch (NumberFormatException e) {
-        throw new RuntimeException("Invalid version number: " + version + "; plugin name: " + name);
+
+      List<String> stringComponents = StringUtil.split(code, ".");
+      TIntArrayList intComponentsList = new TIntArrayList();
+
+      for (String stringComponent : stringComponents) {
+        int comp = parseBuildNumber(version, stringComponent, name);
+        intComponentsList.add(comp);
+        if (comp == SNAPSHOT_VALUE) break;
       }
 
-      if (isYearBased(baselineVersion)) {
-        List<String> stringComponents = StringUtil.split(code, ".");
-        TIntArrayList intComponentsList = new TIntArrayList();
-        
-        for (String stringComponent : stringComponents) {
-          int comp = parseBuildNumber(version, stringComponent, name);
-          intComponentsList.add(comp);
-          if (comp == SNAPSHOT_VALUE) break;
-        }
-
-        int[] intComponents = intComponentsList.toNativeArray();
+      int[] intComponents = intComponentsList.toNativeArray();
+      if (isYearBased(intComponents[0])) {
         if (intComponents[1] != SNAPSHOT_VALUE) {
           intComponents[1] = normalizedYearRevision(intComponents);
         }
-
-        return new BuildNumber(productCode, intComponents);
       }
-      else {
-        code = code.substring(baselineVersionSeparator + 1);
 
-        int minorBuildSeparator = code.indexOf('.'); // allow <BuildNumber>.<BuildAttemptNumber> skipping BuildAttemptNumber
-
-        Integer attemptInfo = null;
-        if (minorBuildSeparator > 0) {
-          attemptInfo = parseBuildNumber(version, code.substring(minorBuildSeparator + 1), name);
-          code = code.substring(0, minorBuildSeparator);
-        }
-        buildNumber = parseBuildNumber(version, code, name);
-
-        if (attemptInfo != null) {
-          return new BuildNumber(productCode, baselineVersion, buildNumber, attemptInfo);
-        }
-        else {
-          return new BuildNumber(productCode, baselineVersion, buildNumber);
-        }
-      }
+      return new BuildNumber(productCode, intComponents);
     }
     else {
       buildNumber = parseBuildNumber(version, code, name);
