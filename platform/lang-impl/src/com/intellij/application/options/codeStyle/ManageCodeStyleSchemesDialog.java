@@ -19,9 +19,6 @@ import com.intellij.application.options.ImportSourceChooserDialog;
 import com.intellij.application.options.SaveSchemeDialog;
 import com.intellij.application.options.SchemesToImportPopup;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserDialog;
-import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -44,7 +41,8 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -154,7 +152,8 @@ public class ManageCodeStyleSchemesDialog extends DialogWrapper {
 
   @Nullable
   private CodeStyleScheme importExternalCodeStyle(final SchemeImporter<CodeStyleScheme> importer) throws SchemeImportException {
-    final VirtualFile selectedFile = selectImportSource(importer.getSourceExtensions());
+    final VirtualFile selectedFile = SchemeImportUtil
+      .selectImportSource(importer.getSourceExtensions(), myContentPane, CodeStyleSchemesUIConfiguration.Util.getRecentImportFile());
     if (selectedFile != null) {
       CodeStyleSchemesUIConfiguration.Util.setRecentImportFile(selectedFile);
       final SchemeCreator schemeCreator = new SchemeCreator();
@@ -167,27 +166,6 @@ public class ManageCodeStyleSchemesDialog extends DialogWrapper {
       }
     }
     return null;
-  }
-
-  @Nullable
-  private VirtualFile selectImportSource(final String[] sourceExtensions) {
-    final Set<String> extensions = new HashSet<String>(Arrays.asList(sourceExtensions));
-    FileChooserDialog fileChooser = FileChooserFactory.getInstance()
-      .createFileChooser(new FileChooserDescriptor(true, false, false, false, false, false) {
-        @Override
-        public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
-          return file.isDirectory() || extensions.contains(file.getExtension());
-        }
-
-        @Override
-        public boolean isFileSelectable(VirtualFile file) {
-          return !file.isDirectory() && extensions.contains(file.getExtension());
-        }
-      }, null, myContentPane);
-    final VirtualFile[] virtualFiles = fileChooser.choose(null, CodeStyleSchemesUIConfiguration.Util.getRecentImportFile());
-    if (virtualFiles.length != 1) return null;
-    virtualFiles[0].refresh(false, false);
-    return virtualFiles[0];
   }
 
   private void updateActions() {

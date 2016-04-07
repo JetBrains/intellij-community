@@ -32,11 +32,19 @@ public class EmptyColorScheme extends DefaultColorsScheme {
   public final static String NAME = "Empty";
   public final static EmptyColorScheme INSTANCE = new EmptyColorScheme();
 
-  private final static TextAttributes EMPTY_TEXT = new TextAttributes(Color.BLACK, Color.white, null, EffectType.BOXED, Font.PLAIN); 
+  private final static TextAttributes EMPTY_TEXT = new TextAttributes(Color.BLACK, Color.white, null, EffectType.BOXED, Font.PLAIN);
+  private final static TextAttributes DEFAULT_ATTRS = new TextAttributes(Color.GRAY, null, null, EffectType.BOXED, Font.PLAIN);
 
   private EmptyColorScheme() {
     myAttributesMap.put(HighlighterColors.TEXT, EMPTY_TEXT);
     initFonts();
+  }
+
+  @Nullable
+  @Override
+  public TextAttributes getAttributes(TextAttributesKey key) {
+    TextAttributes attributes = super.getAttributes(key);
+    return attributes == null ? DEFAULT_ATTRS : attributes;
   }
 
   @Nullable

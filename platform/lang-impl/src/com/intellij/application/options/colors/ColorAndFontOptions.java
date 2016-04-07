@@ -57,8 +57,6 @@ import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.HashMap;
-import com.intellij.util.diff.FilesTooBigForDiffException;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -136,6 +134,23 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
   private MyColorScheme getScheme(String name) {
     return mySchemes.get(name);
+  }
+  
+  @NotNull
+  public String getUniqueName(@NotNull String preferredName) {
+    String name;
+    if (mySchemes.containsKey(preferredName)) {
+      for (int i = 1; ; i++) {
+        name = preferredName + " (" + i + ")";
+        if (!mySchemes.containsKey(name)) {
+          break;
+        }
+      }
+    }
+    else {
+      name = preferredName;
+    }
+    return name;
   }
 
   public EditorColorsScheme getSelectedScheme() {
