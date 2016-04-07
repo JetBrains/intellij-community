@@ -103,9 +103,9 @@ public abstract class BaseOutputReader extends BaseDataReader {
         processLine(myInputBuffer, myLineBuffer, n);
       }
 
-      boolean isReady = availableUnsupported || myReader.ready();
+      boolean isReady = myReader.ready();
 
-      if (!isReady) {
+      if (!availableUnsupported && !isReady) {
         TimeoutUtil.sleep(mySleepingPolicy.getTimeToSleep(n > 0));
         isReady = myReader.ready();
       }
