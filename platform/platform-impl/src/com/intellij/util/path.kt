@@ -141,7 +141,7 @@ fun Path.refreshVfs() {
 
 inline fun <R> Path.directoryStreamIfExists(task: (stream: DirectoryStream<Path>) -> R): R? {
   try {
-    Files.newDirectoryStream(this).use(task)
+    return Files.newDirectoryStream(this).use(task)
   }
   catch (ignored: NoSuchFileException) {
   }
@@ -150,7 +150,7 @@ inline fun <R> Path.directoryStreamIfExists(task: (stream: DirectoryStream<Path>
 
 inline fun <R> Path.directoryStreamIfExists(noinline filter: ((path: Path) -> Boolean), task: (stream: DirectoryStream<Path>) -> R): R? {
   try {
-    Files.newDirectoryStream(this, { filter.invoke(it) }).use(task)
+    return Files.newDirectoryStream(this, { filter.invoke(it) }).use(task)
   }
   catch (ignored: NoSuchFileException) {
   }

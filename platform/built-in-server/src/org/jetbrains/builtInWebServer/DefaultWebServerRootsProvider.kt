@@ -60,10 +60,9 @@ private class DefaultWebServerRootsProvider : WebServerRootsProvider() {
       runReadAction { ModuleManager.getInstance(project).modules }
         .computeOrNull { module ->
           if (!module.isDisposed) {
-            val result = findByRelativePath(path, rootProvider.getRoots(ModuleRootManager.getInstance(module)), resolver, null)
-            if (result != null) {
-              result.moduleName = getModuleNameQualifier(project, module)
-              return result
+            findByRelativePath(path, rootProvider.getRoots(ModuleRootManager.getInstance(module)), resolver, null)?.let {
+              it.moduleName = getModuleNameQualifier(project, module)
+              return it
             }
           }
           null

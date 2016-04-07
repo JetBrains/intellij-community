@@ -11,9 +11,9 @@ import com.intellij.util.writeChild
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 
-private class BuiltInWebServerTest : BuiltInServerTestCase() {
+internal class BuiltInWebServerTest : BuiltInServerTestCase() {
   override val urlPathPrefix: String
-    get() = "/${BuiltInServerTestCase.projectRule.project.name}"
+    get() = "/${projectRule.project.name}"
 
   @Test
   @TestManager.TestDescriptor(filePath = "foo/index.html", doNotCreate = true, status = 200)
@@ -34,7 +34,7 @@ private class BuiltInWebServerTest : BuiltInServerTestCase() {
   }
 
   private fun testIndex(vararg paths: String) {
-    val project = BuiltInServerTestCase.projectRule.project
+    val project = projectRule.project
     val newPath = tempDirManager.newPath()
     newPath.writeChild(manager.filePath!!, "hello")
     newPath.refreshVfs()

@@ -93,7 +93,10 @@ public class FxmlReferencesContributor extends PsiReferenceContributor {
     registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().withValue(string().startsWith("@")).and(attributeValueInFxml),
                                         new JavaFxLocationReferenceProvider());
 
-    registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().withValue(string().startsWith("$")).and(attributeValueInFxml),
+    registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().withValue(string().startsWith("$"))
+                                          .withParent(XmlPatterns.xmlAttribute()
+                                                        .andNot(XmlPatterns.xmlAttribute().withName(FxmlConstants.FX_VALUE)))
+                                          .and(attributeValueInFxml),
                                         new JavaFxComponentIdReferenceProvider());
 
     registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().withParent(XmlPatterns.xmlAttribute().withName("url")).and(attributeValueInFxml),
