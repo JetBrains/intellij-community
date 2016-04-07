@@ -90,7 +90,7 @@ public class StudyProjectGenerator {
       final File courseFile = new File(new File(ourCoursesDir, mySelectedCourseInfo.getName()), EduNames.COURSE_META_FILE);
       if (courseFile.exists()) {
         reader = new InputStreamReader(new FileInputStream(courseFile), "UTF-8");
-        Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
+        Gson gson = new GsonBuilder().create();
         final Course course = gson.fromJson(reader, Course.class);
         course.initCourse(false);
         return course;

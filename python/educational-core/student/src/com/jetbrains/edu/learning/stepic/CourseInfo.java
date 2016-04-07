@@ -21,8 +21,7 @@ public class CourseInfo {
   @SerializedName("course_format")
   //course type in format "pycharm <language>"
   private String myType = "pycharm Python";
-  
-  @SerializedName("is_adaptive")
+
   private boolean isAdaptive;
   
   int id;
@@ -120,8 +119,12 @@ public class CourseInfo {
   public void setType(String type) {
     myType = type;
   }
-  
+
   public boolean isAdaptive() {
     return isAdaptive;
+  }
+
+  public void setAdaptive(boolean adaptive) {
+    isAdaptive = adaptive;
   }
 }
