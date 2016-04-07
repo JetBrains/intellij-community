@@ -95,6 +95,8 @@ fun Path.write(data: ByteArray, offset: Int = 0, length: Int = data.size): Path 
 }
 
 fun Path.write(data: String): Path {
+  parent?.createDirectories()
+
   Files.write(this, data.toByteArray())
   return this
 }

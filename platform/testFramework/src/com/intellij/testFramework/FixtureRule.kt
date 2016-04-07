@@ -226,6 +226,19 @@ inline fun <T> Project.runInLoadComponentStateMode(task: () -> T): T {
   }
 }
 
+fun createHeavyProject(path: String, useDefaultProjectSettings: Boolean = false) = ProjectManagerEx.getInstanceEx().newProject(null, path, useDefaultProjectSettings, false)!!
+
+fun Project.use(task: (Project) -> Unit) {
+  val projectManager = ProjectManagerEx.getInstanceEx() as ProjectManagerImpl
+  try {
+    runInEdtAndWait { projectManager.openTestProject(this) }
+    task(this)
+  }
+  finally {
+    runInEdtAndWait { projectManager.closeProject(this, false, true, false) }
+  }
+}
+
 class DisposeNonLightProjectsRule() : ExternalResource() {
   override fun after() {
     val projectManager = if (ApplicationManager.getApplication().isDisposed) null else ProjectManager.getInstance() as ProjectManagerImpl

@@ -19,8 +19,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.project.DumbAware;
@@ -54,6 +54,7 @@ public abstract class AbstractToggleUseSoftWrapsAction extends ToggleAction impl
 
   @Override
   public boolean isSelected(AnActionEvent e) {
+    if (myGlobal) return EditorSettingsExternalizable.getInstance().isUseSoftWraps();
     Editor editor = getEditor(e);
     return editor != null && editor.getSettings().isUseSoftWraps();
   }
@@ -71,15 +72,12 @@ public abstract class AbstractToggleUseSoftWrapsAction extends ToggleAction impl
     
     if (myGlobal) {
       EditorSettingsExternalizable.getInstance().setUseSoftWraps(state, myAppliancePlace);
+      EditorFactory.getInstance().refreshAllEditors();
     }
-    else {
+    if (editor.getSettings().isUseSoftWraps() != state) {
       editor.getSettings().setUseSoftWraps(state);
     }
     
-    if (editor instanceof EditorEx) {
-      ((EditorEx)editor).reinitSettings();
-    }
-
     editor.getScrollingModel().disableAnimation();
     editor.getScrollingModel().scrollVertically(editor.logicalPositionToXY(anchorPosition).y + intraLineShift);
     editor.getScrollingModel().enableAnimation();

@@ -603,9 +603,11 @@
     </group>
 
     <group id="EditorGutterPopupMenu">
-      <reference ref="EditorToggleShowLineNumbers"/>
-      <reference ref="EditorToggleShowIndentLines" />
-      <reference ref="EditorToggleUseSoftWraps" />
+      <action id="EditorGutterToggleGlobalLineNumbers" class="com.intellij.openapi.editor.actions.ToggleShowLineNumbersGloballyAction"/>
+      <action id="EditorGutterToggleGlobalIndentLines" class="com.intellij.openapi.editor.actions.ToggleShowIndentLinesGloballyAction"/>
+      <separator/>
+      <action id="EditorGutterToggleGlobalSoftWraps" class="com.intellij.openapi.editor.actions.ToggleSoftWrapsGloballyAction"/>
+      <reference ref="EditorToggleUseSoftWraps"/>
     </group>
 
     <group id="FileChooserToolbar">

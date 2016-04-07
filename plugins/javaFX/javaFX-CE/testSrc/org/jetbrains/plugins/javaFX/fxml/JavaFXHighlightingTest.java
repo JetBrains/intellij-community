@@ -428,6 +428,10 @@ public class JavaFXHighlightingTest extends AbstractJavaFXTestCase {
     myFixture.testHighlighting(true, false, false, getTestName(false) + ".java");
   }
 
+  public void testAbsoluteRemoteUrl() throws Exception {
+    doTest();
+  }
+
   private void doTest() throws Exception {
     myFixture.testHighlighting(false, false, false, getTestName(true) + ".fxml");
   }

@@ -95,7 +95,7 @@ fun Bootstrap.connect(remoteAddress: InetSocketAddress, promise: AsyncPromise<*>
 val Channel.uriScheme: String
   get() = if (pipeline().get(SslHandler::class.java) == null) "http" else "https"
 
-val HttpRequest.host: String
+val HttpRequest.host: String?
   get() = headers().getAsString(HttpHeaderNames.HOST)
 
 inline fun <T> ByteBuf.releaseIfError(task: () -> T): T {
