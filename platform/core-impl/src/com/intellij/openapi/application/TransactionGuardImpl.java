@@ -27,8 +27,10 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -38,9 +40,14 @@ import java.util.concurrent.atomic.AtomicLong;
 public class TransactionGuardImpl extends TransactionGuard {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.application.TransactionGuardImpl");
   private final Queue<Transaction> myQueue = new LinkedBlockingQueue<Transaction>();
-  private final Map<ModalityState, TransactionIdImpl> myModalities = ContainerUtil.createConcurrentWeakMap();
+  private final Map<ModalityState, TransactionIdImpl> myModality2Transaction = ContainerUtil.createConcurrentWeakMap();
+  private final Set<ModalityState> myWriteSafeModalities = Collections.newSetFromMap(ContainerUtil.<ModalityState, Boolean>createConcurrentWeakMap());
   private TransactionIdImpl myCurrentTransaction;
   private boolean myWritingAllowed;
+
+  public TransactionGuardImpl() {
+    myWriteSafeModalities.add(ModalityState.NON_MODAL);
+  }
 
   @Override
   @NotNull
@@ -263,7 +270,7 @@ public class TransactionGuardImpl extends TransactionGuard {
   }
 
   public boolean isWriteActionAllowed() {
-    return !Registry.is("ide.require.transaction.for.model.changes", false) || isInsideTransaction() || myWritingAllowed;
+    return !Registry.is("ide.require.transaction.for.model.changes", false) || myWritingAllowed;
   }
 
   @Override
@@ -282,7 +289,7 @@ public class TransactionGuardImpl extends TransactionGuard {
   public TransactionIdImpl getContextTransaction() {
     if (!ApplicationManager.getApplication().isDispatchThread()) {
       ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
-      return indicator != null ? myModalities.get(indicator.getModalityState()) : null;
+      return indicator != null ? myModality2Transaction.get(indicator.getModalityState()) : null;
     }
 
     return myWritingAllowed ? myCurrentTransaction : null;
@@ -291,13 +298,36 @@ public class TransactionGuardImpl extends TransactionGuard {
   public void enteredModality(@NotNull ModalityState modality) {
     TransactionIdImpl contextTransaction = getContextTransaction();
     if (contextTransaction != null) {
-      myModalities.put(modality, contextTransaction);
+      myModality2Transaction.put(modality, contextTransaction);
+    }
+    if (myWritingAllowed) {
+      myWriteSafeModalities.add(modality);
     }
   }
 
   @Nullable
   public TransactionIdImpl getModalityTransaction(@NotNull ModalityState modalityState) {
-    return myModalities.get(modalityState);
+    return myModality2Transaction.get(modalityState);
+  }
+
+  @NotNull
+  public Runnable wrapLaterInvocation(@NotNull final Runnable runnable, @NotNull ModalityState modalityState) {
+    if (myWriteSafeModalities.contains(modalityState)) {
+      return new Runnable() {
+        @Override
+        public void run() {
+          final boolean prev = myWritingAllowed;
+          myWritingAllowed = true;
+          try {
+            runnable.run();
+          } finally {
+            myWritingAllowed = prev;
+          }
+        }
+      };
+    }
+
+    return runnable;
   }
 
   private static class Transaction {

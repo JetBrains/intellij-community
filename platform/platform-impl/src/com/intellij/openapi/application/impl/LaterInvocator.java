@@ -236,7 +236,7 @@ public class LaterInvocator {
   }
 
   @TestOnly
-  static void leaveAllModals() {
+  public static void leaveAllModals() {
     ourModalEntities.clear();
     while (ourModalityStack.size() > 1) {
       ourModalityStack.pop();

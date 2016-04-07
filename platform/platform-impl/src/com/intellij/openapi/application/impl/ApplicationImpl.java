@@ -435,22 +435,22 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public void invokeLater(@NotNull final Runnable runnable) {
-    myInvokator.invokeLater(runnable);
+    invokeLater(runnable, getDisposed());
   }
 
   @Override
   public void invokeLater(@NotNull final Runnable runnable, @NotNull final Condition expired) {
-    myInvokator.invokeLater(runnable, expired);
+    invokeLater(runnable, ModalityState.defaultModalityState(), expired);
   }
 
   @Override
   public void invokeLater(@NotNull final Runnable runnable, @NotNull final ModalityState state) {
-    myInvokator.invokeLater(runnable, state);
+    invokeLater(runnable, state, getDisposed());
   }
 
   @Override
   public void invokeLater(@NotNull final Runnable runnable, @NotNull final ModalityState state, @NotNull final Condition expired) {
-    myInvokator.invokeLater(runnable, state, expired);
+    myInvokator.invokeLater(((TransactionGuardImpl)TransactionGuard.getInstance()).wrapLaterInvocation(runnable, state), state, expired);
   }
 
   @Override
@@ -737,7 +737,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       LOG.error("Calling invokeAndWait from read-action leads to possible deadlock.");
     }
 
-    LaterInvocator.invokeAndWait(runnable, modalityState);
+    LaterInvocator.invokeAndWait(((TransactionGuardImpl)TransactionGuard.getInstance()).wrapLaterInvocation(runnable, modalityState), modalityState);
   }
 
   @Override
