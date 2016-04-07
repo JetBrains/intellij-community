@@ -65,4 +65,8 @@ public class LightAdvHighlightingJdk6Test extends LightDaemonAnalyzerTestCase {
   public void testAssignmentFromStringToObject() {
     doTest(true, false);
   }
+
+  public void testUnhandledErrorsFromEnumConstructors() {
+    doTest(true, false);
+  }
 }
