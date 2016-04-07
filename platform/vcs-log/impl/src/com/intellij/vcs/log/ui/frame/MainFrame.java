@@ -25,7 +25,6 @@ import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
 import com.intellij.vcs.CommittedChangeListForRevision;
 import com.intellij.vcs.log.*;
@@ -90,8 +89,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     // initialize components
     myGraphTable = new VcsLogGraphTable(ui, logDataManager, initialDataPack);
     myBranchesPanel = new BranchesPanel(logDataManager, ui, initialDataPack.getRefs());
-    JComponent branchScrollPane = myBranchesPanel.createScrollPane();
-    branchScrollPane.setVisible(uiProperties.isShowBranchesPanel());
+    setBranchesPanelVisible(uiProperties.isShowBranchesPanel());
     myDetailsPanel = new DetailsPanel(logDataManager, myGraphTable, ui.getColorManager(), initialDataPack);
 
     myChangesBrowser = new RepositoryChangesBrowser(project, null, Collections.<Change>emptyList(), null);
@@ -116,7 +114,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
     JComponent toolbars = new JPanel(new BorderLayout());
     toolbars.add(myToolbar, BorderLayout.NORTH);
-    toolbars.add(branchScrollPane, BorderLayout.CENTER);
+    toolbars.add(myBranchesPanel.getMainComponent(), BorderLayout.CENTER);
     JComponent toolbarsAndTable = new JPanel(new BorderLayout());
     toolbarsAndTable.add(toolbars, BorderLayout.NORTH);
     toolbarsAndTable.add(myDetailsSplitter, BorderLayout.CENTER);
@@ -242,13 +240,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   }
 
   public void setBranchesPanelVisible(boolean visible) {
-    JScrollPane scrollPane = UIUtil.getParentOfType(JScrollPane.class, myBranchesPanel);
-    if (scrollPane != null) {
-      scrollPane.setVisible(visible);
-    }
-    else {
-      myBranchesPanel.setVisible(visible);
-    }
+    myBranchesPanel.setBranchPanelVisible(visible);
   }
 
   @Nullable
@@ -273,7 +265,8 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
         .map2Array(details, CommittedChangeListForRevision.class, new Function<VcsFullCommitDetails, CommittedChangeListForRevision>() {
           @Override
           public CommittedChangeListForRevision fun(@NotNull VcsFullCommitDetails details) {
-            return new CommittedChangeListForRevision(details.getSubject(), details.getFullMessage(), VcsUserUtil.getShortPresentation(details.getCommitter()),
+            return new CommittedChangeListForRevision(details.getSubject(), details.getFullMessage(),
+                                                      VcsUserUtil.getShortPresentation(details.getCommitter()),
                                                       new Date(details.getCommitTime()), details.getChanges(),
                                                       convertToRevisionNumber(details.getId()));
           }
