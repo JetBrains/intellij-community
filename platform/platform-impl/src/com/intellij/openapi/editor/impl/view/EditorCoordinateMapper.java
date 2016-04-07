@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.editor.impl.view;
 
+import com.intellij.openapi.diagnostic.Attachment;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorImpl;
@@ -34,6 +36,8 @@ import java.util.List;
  * @see VisualPosition
  */
 class EditorCoordinateMapper {
+  private static final Logger LOG = Logger.getInstance(EditorCoordinateMapper.class);
+
   private final EditorView myView;
   private final Document myDocument;
   private final FoldingModelImpl myFoldingModel;
@@ -106,8 +110,17 @@ class EditorCoordinateMapper {
       maxVisualColumn = fragment.getEndVisualColumn();
     }
     int resultColumn = column - maxLogicalColumn + maxVisualColumn;
-    if (resultColumn < 0 && maxVisualColumn > maxLogicalColumn) {
-      resultColumn = Integer.MAX_VALUE; // guarding against overflow
+    if (resultColumn < 0) {
+      if (maxVisualColumn > maxLogicalColumn) {
+        resultColumn = Integer.MAX_VALUE; // guarding against overflow
+      }
+      else {
+        LOG.error("Error converting " + pos + " to visual position",
+                  new Attachment("details.txt", String.format("offset: %d, visual line: %d, max logical column: %d, max visual column: %d",
+                                                              offset, visualLine, maxLogicalColumn, maxVisualColumn)),
+                  new Attachment("dump.txt", myView.getEditor().dumpState()));
+        resultColumn = 0;
+      }
     }
     return new VisualPosition(visualLine, resultColumn, pos.leansForward);
   }
