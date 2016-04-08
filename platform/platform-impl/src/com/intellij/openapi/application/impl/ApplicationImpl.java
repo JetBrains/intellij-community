@@ -18,6 +18,7 @@ package com.intellij.openapi.application.impl;
 import com.intellij.BundleBase;
 import com.intellij.CommonBundle;
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
+import com.intellij.concurrency.JobScheduler;
 import com.intellij.diagnostic.LogEventException;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.diagnostic.ThreadDumper;
@@ -84,7 +85,10 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ApplicationImpl extends PlatformComponentManagerImpl implements ApplicationEx {
@@ -1117,20 +1121,13 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       if (!myLock.isWriteLocked()) {
         assertNoPsiLock();
         if (!myLock.tryWriteLock()) {
-          final CountDownLatch lockAcquired = new CountDownLatch(1);
-          if (ourDumpThreadsOnLongWriteActionWaiting > 0) {
-            executeOnPooledThread(() -> {
-              try {
-                while (!lockAcquired.await(ourDumpThreadsOnLongWriteActionWaiting, TimeUnit.MILLISECONDS)) {
-                  PerformanceWatcher.getInstance().dumpThreads("waiting", true);
-                }
-              }
-              catch (InterruptedException ignored) {
-              }
-            });
-          }
+          Future<?> reportSlowWrite = ourDumpThreadsOnLongWriteActionWaiting > 0 ?
+            JobScheduler.getScheduler().scheduleWithFixedDelay(() -> PerformanceWatcher.getInstance().dumpThreads("waiting", true),
+            ourDumpThreadsOnLongWriteActionWaiting, ourDumpThreadsOnLongWriteActionWaiting, TimeUnit.MILLISECONDS) : null;
           myLock.writeLock();
-          lockAcquired.countDown();
+          if (reportSlowWrite != null) {
+            reportSlowWrite.cancel(false);
+          }
         }
       }
     }

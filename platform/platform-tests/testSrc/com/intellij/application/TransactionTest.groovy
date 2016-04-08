@@ -26,6 +26,7 @@ class TransactionTest extends LightPlatformTestCase {
 
   @Override
   protected void setUp() throws Exception {
+    assert LaterInvocator.currentModalityState == ModalityState.NON_MODAL
     super.setUp()
     Registry.get("ide.require.transaction.for.model.changes").setValue(true)
     LoggedErrorProcessor.instance.disableStderrDumping(testRootDisposable)

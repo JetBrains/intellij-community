@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
+import com.intellij.openapi.vcs.ui.FontUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.IdeBorderFactory;
@@ -97,7 +98,8 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
   DetailsPanel(@NotNull VcsLogDataManager logDataManager,
                @NotNull VcsLogGraphTable graphTable,
                @NotNull VcsLogColorManager colorManager,
-               @NotNull VisiblePack initialDataPack) {
+               @NotNull VisiblePack initialDataPack,
+               @NotNull Disposable parent) {
     myLogDataManager = logDataManager;
     myGraphTable = graphTable;
     myColorManager = colorManager;
@@ -128,7 +130,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
     myMainContentPanel.add(myReferencesPanel, "");
     myMainContentPanel.add(myCommitDetailsPanel, "");
 
-    myLoadingPanel = new JBLoadingPanel(new BorderLayout(), logDataManager, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS) {
+    myLoadingPanel = new JBLoadingPanel(new BorderLayout(), parent, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS) {
       @Override
       public Color getBackground() {
         return getDetailsBackground();
@@ -288,12 +290,27 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
         myMainText = null;
       }
       else {
-        String header = commit.getId().toShortString() + " " + getAuthorText(commit) +
-                        (myMultiRoot ? " [" + commit.getRoot().getName() + "]" : "");
+        String header = getHtmlWithFonts(commit.getId().toShortString() + " " + getAuthorText(commit) +
+                                         (myMultiRoot ? " [" + commit.getRoot().getName() + "]" : ""));
         String body = getMessageText(commit);
         myMainText = header + "<br/>" + body;
       }
       update();
+    }
+
+    @NotNull
+    private static String getHtmlWithFonts(@NotNull String input) {
+      return getHtmlWithFonts(input, getBaseFont().getStyle());
+    }
+
+    @NotNull
+    private static String getHtmlWithFonts(@NotNull String input, int style) {
+      return FontUtil.getHtmlWithFonts(input, style, getBaseFont());
+    }
+
+    @NotNull
+    private static Font getBaseFont() {
+      return EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN);
     }
 
     void setBranches(@Nullable List<String> branches) {
@@ -313,7 +330,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       }
       else {
         setText("<html><head>" +
-                UIUtil.getCssFontDeclaration(EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN)) +
+                UIUtil.getCssFontDeclaration(getBaseFont()) +
                 "</head><body>" +
                 myMainText +
                 "<br/>" +
@@ -413,8 +430,8 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       int separator = fullMessage.indexOf("\n\n");
       String subject = separator > 0 ? fullMessage.substring(0, separator) : fullMessage;
       String description = fullMessage.substring(subject.length());
-      return "<b>" + escapeMultipleSpaces(IssueLinkHtmlRenderer.formatTextWithLinks(myProject, subject)) + "</b>" +
-             escapeMultipleSpaces(IssueLinkHtmlRenderer.formatTextWithLinks(myProject, description));
+      return "<b>" + getHtmlWithFonts(escapeMultipleSpaces(IssueLinkHtmlRenderer.formatTextWithLinks(myProject, subject)), Font.BOLD) + "</b>" +
+             getHtmlWithFonts(escapeMultipleSpaces(IssueLinkHtmlRenderer.formatTextWithLinks(myProject, description)));
     }
 
     @NotNull

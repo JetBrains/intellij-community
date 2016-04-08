@@ -109,7 +109,7 @@ public class DuplicateAction extends EditorAction {
   public void update(final Editor editor, final Presentation presentation, final DataContext dataContext) {
     super.update(editor, presentation, dataContext);
     if (editor.getSelectionModel().hasSelection()) {
-      presentation.setText(EditorBundle.message("action.duplicate.block"), true);
+      presentation.setText(EditorBundle.message("action.duplicate.selection"), true);
     }
     else {
       presentation.setText(EditorBundle.message("action.duplicate.line"), true);

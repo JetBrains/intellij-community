@@ -78,12 +78,12 @@ public class VcsLogHashMapImpl implements Disposable, VcsLogHashMap {
   @NotNull private final PersistentEnumerator<CommitId> myPersistentEnumerator;
   @NotNull private final Consumer<Exception> myExceptionReporter;
 
-  public VcsLogHashMapImpl(@NotNull final Project project, @NotNull Map<VirtualFile, VcsLogProvider> logProviders, @NotNull Consumer<Exception> exceptionReporter) throws IOException {
+  public VcsLogHashMapImpl(@NotNull final Project project, @NotNull Map<VirtualFile, VcsLogProvider> logProviders, @NotNull Consumer<Exception> exceptionReporter, @NotNull Disposable parent) throws IOException {
     myExceptionReporter = exceptionReporter;
     myPersistentEnumerator =
       PersistentUtil.createPersistentEnumerator(new MyCommitIdKeyDescriptor(project), LOG_KIND,
                                                 PersistentUtil.calcLogId(project, logProviders), VERSION);
-    Disposer.register(project, this);
+    Disposer.register(parent, this);
   }
 
   @Nullable

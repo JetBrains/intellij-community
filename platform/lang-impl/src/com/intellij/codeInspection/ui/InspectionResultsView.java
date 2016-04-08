@@ -56,7 +56,10 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
@@ -798,6 +801,10 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
 
     InspectionTreeNode selectedNode = (InspectionTreeNode)path.getLastPathComponent();
 
+    if (!CommonDataKeys.NAVIGATABLE.is(dataId) && !CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+      return null;
+    }
+
     if (selectedNode instanceof RefElementNode) {
       final RefElementNode refElementNode = (RefElementNode)selectedNode;
       RefEntity refElement = refElementNode.getElement();
@@ -812,8 +819,15 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       final CommonProblemDescriptor problem = refElementNode.getProblem();
       if (problem != null) {
         if (problem instanceof ProblemDescriptor) {
-          psiElement = ((ProblemDescriptor)problem).getPsiElement();
-          if (psiElement == null) return null;
+          PsiElement elementFromDescriptor = ((ProblemDescriptor)problem).getPsiElement();
+          if (elementFromDescriptor == null) {
+            final InspectionTreeNode node = (InspectionTreeNode)refElementNode.getChildAt(0);
+            if (node.isValid()) {
+              return null;
+            }
+          } else {
+            psiElement = elementFromDescriptor;
+          }
         }
         else {
           return null;

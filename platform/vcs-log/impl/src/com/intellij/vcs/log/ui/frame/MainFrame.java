@@ -90,14 +90,14 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     myGraphTable = new VcsLogGraphTable(ui, logDataManager, initialDataPack);
     myBranchesPanel = new BranchesPanel(logDataManager, ui, initialDataPack.getRefs());
     setBranchesPanelVisible(uiProperties.isShowBranchesPanel());
-    myDetailsPanel = new DetailsPanel(logDataManager, myGraphTable, ui.getColorManager(), initialDataPack);
+    myDetailsPanel = new DetailsPanel(logDataManager, myGraphTable, ui.getColorManager(), initialDataPack, this);
 
     myChangesBrowser = new RepositoryChangesBrowser(project, null, Collections.<Change>emptyList(), null);
     myChangesBrowser.getViewer().setScrollPaneBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
     myChangesBrowser.getDiffAction().registerCustomShortcutSet(myChangesBrowser.getDiffAction().getShortcutSet(), getGraphTable());
     myChangesBrowser.getEditSourceAction().registerCustomShortcutSet(CommonShortcuts.getEditSource(), getGraphTable());
     myChangesBrowser.getViewer().setEmptyText("");
-    myChangesLoadingPane = new JBLoadingPanel(new BorderLayout(), project, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
+    myChangesLoadingPane = new JBLoadingPanel(new BorderLayout(), this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
     myChangesLoadingPane.add(myChangesBrowser);
 
     myGraphTable.getSelectionModel().addListSelectionListener(new CommitSelectionListener());
@@ -125,7 +125,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     setLayout(new BorderLayout());
     add(myChangesBrowserSplitter);
 
-    Disposer.register(logDataManager, this);
+    Disposer.register(ui, this);
     myGraphTable.resetDefaultFocusTraversalKeys();
     setFocusTraversalPolicyProvider(true);
     setFocusTraversalPolicy(new MyFocusPolicy());
