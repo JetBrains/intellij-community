@@ -24,6 +24,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeElement;
 import com.intellij.util.Processor;
@@ -35,8 +36,10 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * An extension that enables plugins to alter a behavior of Java PSI elements.
- * During indexing, only {@link DumbAware} augment providers are run.
+ * Some code is not what it seems to be!
+ * This extension allows plugins <strike>augment a reality</strike> alter a behavior of Java PSI elements.
+ * <p>
+ * N.B. during indexing, only {@link DumbAware} providers are run.
  */
 public abstract class PsiAugmentProvider {
   public static final ExtensionPointName<PsiAugmentProvider> EP_NAME = ExtensionPointName.create("com.intellij.lang.psiAugmentProvider");
@@ -63,6 +66,16 @@ public abstract class PsiAugmentProvider {
    */
   @Nullable
   protected PsiType inferType(@NotNull PsiTypeElement typeElement) {
+    return null;
+  }
+
+  /**
+   * Intercepts {@link PsiModifierList#hasModifierProperty(String)}, so that plugins can add imaginary modifiers or hide existing ones.
+   *
+   * @since 2016.2
+   */
+  @Nullable
+  protected Boolean hasModifierProperty(@NotNull PsiModifierList modifierList, @NotNull String name) {
     return null;
   }
 
@@ -95,6 +108,27 @@ public abstract class PsiAugmentProvider {
         PsiType type = provider.inferType(typeElement);
         if (type != null) {
           result.set(type);
+          return false;
+        }
+        else {
+          return true;
+        }
+      }
+    });
+
+    return result.get();
+  }
+
+  @Nullable
+  public static Boolean checkModifierProperty(@NotNull final PsiModifierList modifierList, @NotNull final String name) {
+    final Ref<Boolean> result = Ref.create();
+
+    forEach(modifierList.getProject(), new Processor<PsiAugmentProvider>() {
+      @Override
+      public boolean process(PsiAugmentProvider provider) {
+        Boolean property = provider.hasModifierProperty(modifierList, name);
+        if (property != null) {
+          result.set(property);
           return false;
         }
         else {
