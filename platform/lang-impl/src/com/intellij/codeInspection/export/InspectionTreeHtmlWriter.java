@@ -42,6 +42,7 @@ public class InspectionTreeHtmlWriter {
   private final StringBuffer myBuilder = new StringBuffer();
   private final InspectionProfile myProfile;
   private final RefManager myManager;
+  private final ExcludedInspectionTreeNodesManager myExcludedManager;
 
   public InspectionTreeHtmlWriter(InspectionTree tree,
                                   String outputDir) {
@@ -49,12 +50,16 @@ public class InspectionTreeHtmlWriter {
     myOutputDir = outputDir;
     myProfile = tree.getContext().getCurrentProfile();
     myManager = tree.getContext().getRefManager();
+    myExcludedManager = tree.getContext().getView().getExcludedManager();
     serializeTreeToHtml();
   }
 
-  private static void traverseInspectionTree(final InspectionTreeNode node,
+  private void traverseInspectionTree(final InspectionTreeNode node,
                                              final Consumer<InspectionTreeNode> preAction,
                                              final Consumer<InspectionTreeNode> postAction) {
+    if (node.isResolved(myExcludedManager)) {
+      return;
+    }
     preAction.accept(node);
     for (int i = 0; i < node.getChildCount(); i++) {
       traverseInspectionTree((InspectionTreeNode)node.getChildAt(i), preAction, postAction);
@@ -104,7 +109,7 @@ public class InspectionTreeHtmlWriter {
     });
 
     HTMLExportUtil.writeFile(myOutputDir, "index.html", myBuilder, myTree.getContext().getProject());
-    HTMLExportUtil.writeFile(myOutputDir, "styles.css", InspectionTreeCss.CSS_TEXT, myTree.getContext().getProject());
+    InspectionTreeHtmlExportResources.copyInspectionReportResources(myOutputDir);
   }
 
   private String convertNodeToHtml(InspectionTreeNode node) {
@@ -161,17 +166,11 @@ public class InspectionTreeHtmlWriter {
     myBuilder.append("<html><head>" +
                      "<meta http-equiv=\"Content-Type\" content=\"text/html;charset=utf-8\">" +
                      "<meta name=\"author\" content=\"JetBrains\">" +
-                     "<link rel=\"stylesheet\" type=\"text/css\" href=\"styles.css\">" +
+                     "<script type=\"text/javascript\" src=\"script.js\"></script>" +
+                     "<link rel=\"stylesheet\" type=\"text/css\" href=\"styles.css\"/>" +
                      "<title>")
-      .append(title).append("</title><script>function navigate(an_id) {" +
-                            "problem_div = document.getElementById(\"d\" + an_id); " +
-                            "preview_div = document.getElementById(\"preview\");" +
-                            "if (problem_div == null) {" +
-                            "preview_div.innerHTML = \"Select a problem element in tree\"" +
-                            "} else { " +
-                            "preview_div.innerHTML = problem_div.innerHTML; " +
-                            "}" +
-                            "}</script></head><body><h3>")
+      .append(title)
+      .append("</title></head><body><h3>")
       .append(title)
       .append(":</h3>");
   }
