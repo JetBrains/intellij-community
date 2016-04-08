@@ -18,7 +18,7 @@ package com.intellij.codeInspection;
 import com.intellij.JavaTestUtil;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
-public class NumericOverflowTest extends LightCodeInsightFixtureTestCase {
+public class NumericOverflowInspectionTest extends LightCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
     return JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/numericOverflow";
