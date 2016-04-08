@@ -43,6 +43,7 @@ class c {
     i1 = INTEGER_MAX_VALUE * -1;
     <warning descr="Numeric overflow in expression">i1 = <warning descr="Numeric overflow in expression">2 / 0</warning></warning>;
     <warning descr="Numeric overflow in expression">i1 = <warning descr="Numeric overflow in expression">INTEGER_MIN_VALUE / -1</warning></warning>;
+    <warning descr="Numeric overflow in expression">i1 = <warning descr="Numeric overflow in expression">1000 << 30</warning></warning>;
     System.out.println(i1);
 
     long l1 = <warning descr="Numeric overflow in expression">LONG_MAX_VALUE + 1</warning>;
@@ -64,10 +65,9 @@ class c {
     <warning descr="Numeric overflow in expression">l1 = <warning descr="Numeric overflow in expression">2 / 0L</warning></warning>;
     <warning descr="Numeric overflow in expression">l1 = <warning descr="Numeric overflow in expression">2 % 0L</warning></warning>;
     <warning descr="Numeric overflow in expression">l1 = <warning descr="Numeric overflow in expression">LONG_MIN_VALUE / -1</warning></warning>;
-
     <warning descr="Numeric overflow in expression">l1 = <warning descr="Numeric overflow in expression">30 * 24 * 60 * 60 * 1000</warning></warning>;
     <warning descr="Numeric overflow in expression">l1 = <warning descr="Numeric overflow in expression"><warning descr="Numeric overflow in expression">30000000 * 243232323 * <warning descr="Numeric overflow in expression">(<warning descr="Numeric overflow in expression">LONG_MAX_VALUE +3</warning>)</warning></warning> / 5</warning></warning>;
-
+    <warning descr="Numeric overflow in expression">l1 = <warning descr="Numeric overflow in expression">1000 << 62</warning></warning>;
     System.out.println(l1);
   }
 

@@ -351,10 +351,16 @@ class ConstantExpressionVisitor extends JavaElementVisitor implements PsiConstan
       if (rOperandValue instanceof Character) rOperandValue = Integer.valueOf(((Character)rOperandValue).charValue());
       if (isIntegral(lOperandValue) && isIntegral(rOperandValue)) {
         if (lOperandValue instanceof Long) {
-          value = Long.valueOf(((Number)lOperandValue).longValue() << ((Number)rOperandValue).longValue());
+          long l = ((Number)lOperandValue).longValue();
+          long r = ((Number)rOperandValue).longValue();
+          value = Long.valueOf(l << r);
+          checkMultiplicationOverflow(((Long)value).longValue(), l, (long)Math.pow(2, r & 0x3F), expression);
         }
         else {
-          value = Integer.valueOf(((Number)lOperandValue).intValue() << ((Number)rOperandValue).intValue());
+          int l = ((Number)lOperandValue).intValue();
+          int r = ((Number)rOperandValue).intValue();
+          value = Integer.valueOf(l << r);
+          checkMultiplicationOverflow(((Integer)value).intValue(), l, (long)Math.pow(2, r & 0x1F), expression);
         }
       }
     }
