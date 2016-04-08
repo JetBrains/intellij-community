@@ -7,33 +7,19 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.RecursionManager;
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiArrayInitializerExpression;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiDeclarationStatement;
-import com.intellij.psi.PsiDiamondType;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiForStatement;
-import com.intellij.psi.PsiForeachStatement;
-import com.intellij.psi.PsiJavaCodeReferenceElement;
-import com.intellij.psi.PsiLambdaExpression;
-import com.intellij.psi.PsiLocalVariable;
-import com.intellij.psi.PsiNewExpression;
-import com.intellij.psi.PsiParameter;
-import com.intellij.psi.PsiReferenceParameterList;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.TypeConversionUtil;
-import de.plushnikov.intellij.plugin.problem.LombokProblem;
-import de.plushnikov.intellij.plugin.settings.ProjectSettings;
-import lombok.val;
+
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
+
+import de.plushnikov.intellij.plugin.problem.LombokProblem;
+import de.plushnikov.intellij.plugin.settings.ProjectSettings;
+import lombok.val;
 
 public class ValProcessor extends AbstractProcessor {
 
@@ -102,6 +88,17 @@ public class ValProcessor extends AbstractProcessor {
 
   private static boolean isSameName(String className) {
     return LOMBOK_VAL_SHORT_NAME.equals(className) || LOMBOK_VAL_FQN.equals(className);
+  }
+
+  public Boolean hasModifierProperty(@NotNull PsiModifierList modifierList, @NotNull String name) {
+    final PsiElement parent = modifierList.getParent();
+
+    //Only apply final modifier to val local variables
+    if (parent instanceof PsiLocalVariable && isVal((PsiLocalVariable) parent)) {
+      return PsiModifier.FINAL.equals(name) ? Boolean.TRUE : null;
+    }
+
+    return null;
   }
 
   @Nullable
