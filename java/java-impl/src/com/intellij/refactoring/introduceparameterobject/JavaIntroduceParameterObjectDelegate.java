@@ -32,9 +32,7 @@ import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.Nullable;
@@ -66,8 +64,7 @@ public class JavaIntroduceParameterObjectDelegate
       @Nullable
       @Override
       public PsiElement getActualValue(PsiElement exp) {
-        final IntroduceParameterObjectDelegate<PsiNamedElement, ParameterInfo, IntroduceParameterObjectClassDescriptor<PsiNamedElement, ParameterInfo>>
-          delegate = findDelegate(exp);
+        final IntroduceParameterObjectDelegate<PsiNamedElement, ParameterInfo, IntroduceParameterObjectClassDescriptor<PsiNamedElement, ParameterInfo>> delegate = findDelegate(exp);
         return delegate != null ? delegate.createNewParameterInitializerAtCallSite(exp, descriptor, oldMethodParameters) : null;
       }
     };
@@ -108,13 +105,7 @@ public class JavaIntroduceParameterObjectDelegate
                                      final PsiElement[] args) {
     final StringBuilder newExpression = new StringBuilder();
     final ParameterInfo[] paramsToMerge = descriptor.getParamsToMerge();
-    newExpression.append(StringUtil.join(paramsToMerge, new Function<ParameterInfo, String>() {
-      @Override
-      public String fun(ParameterInfo info) {
-        return getArgument(args, info.getOldIndex(), oldMethodParameters);
-      }
-    }, ", "));
-
+    newExpression.append(StringUtil.join(paramsToMerge, parameterInfo -> getArgument(args, parameterInfo.getOldIndex(), oldMethodParameters), ", "));
     final ParameterInfo lastParam = paramsToMerge[paramsToMerge.length - 1];
     if (lastParam instanceof JavaParameterInfo && ((JavaParameterInfo)lastParam).isVarargType()) {
       final int lastArg = lastParam.getOldIndex();
@@ -161,11 +152,9 @@ public class JavaIntroduceParameterObjectDelegate
     final String setter = classDescriptor.getSetterName(parameterInfo, overridingMethod);
     final String getter = classDescriptor.getGetterName(parameterInfo, overridingMethod);
     final Accessor[] accessor = new Accessor[]{null};
-    ReferencesSearch.search(parameter, localSearchScope).forEach(new Processor<PsiReference>() {
-      @Override
-      public boolean process(PsiReference reference) {
-        final PsiElement refElement = reference.getElement();
-        if (refElement instanceof PsiReferenceExpression) {
+    ReferencesSearch.search(parameter, localSearchScope).forEach(reference -> {
+      final PsiElement refElement = reference.getElement();
+      if (refElement instanceof PsiReferenceExpression) {
           final PsiReferenceExpression paramUsage = (PsiReferenceExpression)refElement;
           if (RefactoringUtil.isPlusPlusOrMinusMinus(paramUsage.getParent())) {
             accessor[0] = Accessor.Setter;
@@ -184,7 +173,7 @@ public class JavaIntroduceParameterObjectDelegate
         }
         return true;
       }
-    });
+    );
     return accessor[0];
   }
 
