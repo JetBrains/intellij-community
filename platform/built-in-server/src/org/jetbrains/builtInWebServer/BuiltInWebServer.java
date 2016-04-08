@@ -172,7 +172,8 @@ public final class BuiltInWebServer extends HttpRequestHandler {
       return true;
     }
 
-    final String path = FileUtil.toCanonicalPath(decodedPath.substring(offset + 1), '/');
+    // must be absolute path (relative to DOCUMENT_ROOT, i.e. scheme://authority/) to properly canonicalize
+    final String path = FileUtil.toCanonicalPath(decodedPath.substring(offset), '/').substring(1);
     for (WebServerPathHandler pathHandler : WebServerPathHandler.EP_NAME.getExtensions()) {
       try {
         if (pathHandler.process(path, project, request, context, projectName, decodedPath, isCustomHost)) {
