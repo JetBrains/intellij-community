@@ -1579,6 +1579,8 @@
     <applicationService serviceImplementation="org.jetbrains.plugins.groovy.dsl.DslActivationStatus"/>
     <projectService serviceImplementation="org.jetbrains.plugins.groovy.console.GroovyConsoleStateService"/>
 
+    <refactoring.introduceParameterObject language="Groovy"
+                                          implementationClass="org.jetbrains.plugins.groovy.refactoring.introduceParameterObject.GroovyIntroduceParameterObjectDelegate"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.debugger">

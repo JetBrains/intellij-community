@@ -18,6 +18,7 @@ package com.intellij.refactoring.introduceParameterObject;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.ChangeInfo;
@@ -34,7 +35,9 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class IntroduceParameterObjectProcessor<M extends PsiNamedElement, P extends ParameterInfo, C extends IntroduceParameterObjectClassDescriptor<M, P>>
   extends FixableUsagesRefactoringProcessor {
@@ -71,7 +74,7 @@ public class IntroduceParameterObjectProcessor<M extends PsiNamedElement, P exte
 
     myDelegate = IntroduceParameterObjectDelegate.findDelegate(method);
     LOG.assertTrue(myDelegate != null);
-    myMergedParameterInfo = myDelegate.createMergedParameterInfo(method.getProject(), classDescriptor, method);
+    myMergedParameterInfo = myDelegate.createMergedParameterInfo(classDescriptor, method, oldMethodParameters);
     newParams.add(anchor, myMergedParameterInfo);
 
     myChangeInfo = myDelegate.createChangeSignatureInfo(myMethod, newParams, keepMethodAsDelegate);
@@ -117,13 +120,15 @@ public class IntroduceParameterObjectProcessor<M extends PsiNamedElement, P exte
     myDelegate.collectConflicts(conflicts, usageInfos, myMethod, myClassDescriptor);
 
     List<UsageInfo> changeSignatureUsages = new ArrayList<>();
+    Set<PsiFile> filesWithUsages = new HashSet<>();
     for (UsageInfo usageInfo : usageInfos) {
       if (usageInfo instanceof ChangeSignatureUsageWrapper) {
         final UsageInfo info = ((ChangeSignatureUsageWrapper)usageInfo).getInfo();
-        if (info instanceof OverriderMethodUsageInfo) {
-          final PsiElement overridingMethod = ((OverriderMethodUsageInfo)info).getOverridingMethod();
-          if (IntroduceParameterObjectDelegate.findDelegate(overridingMethod) == null) {
-            conflicts.putValue(overridingMethod, "Not supported overrider detected");
+        final PsiElement element = info.getElement();
+        if (element != null && IntroduceParameterObjectDelegate.findDelegate(element) == null) {
+          final PsiFile containingFile = element.getContainingFile();
+          if (filesWithUsages.add(containingFile)) {
+            conflicts.putValue(element, "Usage in not supported language is detected: " + containingFile.getName());
           }
         }
         changeSignatureUsages.add(info);

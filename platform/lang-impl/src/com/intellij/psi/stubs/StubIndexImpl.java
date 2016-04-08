@@ -654,20 +654,19 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     private final AsyncState state = new AsyncState();
     private final StringBuilder updated = new StringBuilder();
     private final StubIndexExtension<?, ?>[] myExtensions;
-    private final boolean myForceClean;
 
     public StubIndexInitialization(StubIndexExtension<?, ?>[] extensions) {
       myExtensions = extensions;
-      myForceClean = Boolean.TRUE == ourForcedClean.getAndSet(Boolean.FALSE);
     }
 
     @Override
     protected void prepare() {
+      boolean forceClean = Boolean.TRUE == ourForcedClean.getAndSet(Boolean.FALSE);
       for (StubIndexExtension extension : myExtensions) {
         addNestedInitializationTask(new ThrowableRunnable<IOException>() {
           @Override
           public void run() throws IOException {
-            @SuppressWarnings("unchecked") boolean rebuildRequested = registerIndexer(extension, myForceClean, state);
+            @SuppressWarnings("unchecked") boolean rebuildRequested = registerIndexer(extension, forceClean, state);
             if (rebuildRequested) {
               synchronized (updated) {
                 updated.append(extension).append(' ');
