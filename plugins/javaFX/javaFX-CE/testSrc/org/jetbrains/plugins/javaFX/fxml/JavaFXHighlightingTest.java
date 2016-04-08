@@ -432,6 +432,18 @@ public class JavaFXHighlightingTest extends AbstractJavaFXTestCase {
     doTest();
   }
 
+  public void testMultipleStylesheetsAttribute() throws Exception {
+    myFixture.addFileToProject("mystyle.css", ".myStyle {}");
+    myFixture.addFileToProject("very/deeply/located/small.css", ".small {}");
+    doTest();
+  }
+
+  public void testMultipleStylesheetsTag() throws Exception {
+    myFixture.addFileToProject("mystyle.css", ".myStyle {}");
+    myFixture.addFileToProject("very/deeply/located/small.css", ".small {}");
+    doTest();
+  }
+
   private void doTest() throws Exception {
     myFixture.testHighlighting(false, false, false, getTestName(true) + ".fxml");
   }

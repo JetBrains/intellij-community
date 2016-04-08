@@ -91,7 +91,7 @@ public class FxmlReferencesContributor extends PsiReferenceContributor {
                                         new JavaFxEventHandlerReferenceProvider());
 
     registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().withValue(string().startsWith("@")).and(attributeValueInFxml),
-                                        new JavaFxLocationReferenceProvider());
+                                        new JavaFxLocationReferenceProvider(), PsiReferenceRegistrar.LOWER_PRIORITY);
 
     registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().withValue(string().startsWith("$"))
                                           .withParent(XmlPatterns.xmlAttribute()
@@ -99,12 +99,20 @@ public class FxmlReferencesContributor extends PsiReferenceContributor {
                                           .and(attributeValueInFxml),
                                         new JavaFxComponentIdReferenceProvider());
 
-    registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().withParent(XmlPatterns.xmlAttribute().withName(FxmlConstants.URL))
-                                          .andNot(XmlPatterns.xmlAttributeValue().withValue(string().matches("^http(s)?://.*")))
+    registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue()
+                                          .withParent(XmlPatterns.xmlAttribute().withName(FxmlConstants.URL_ATTR))
+                                          .andNot(XmlPatterns.xmlAttributeValue().withValue(string().matches("^https?://.*")))
                                           .and(attributeValueInFxml),
                                         new JavaFxLocationReferenceProvider(false, "png", "jpg", "gif", "bmp"));
     registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().withParent(XmlPatterns.xmlAttribute().withName(FxmlConstants.STYLESHEETS)).and(attributeValueInFxml),
                                         new JavaFxLocationReferenceProvider(true, "css"));
+
+    registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().withValue(string().startsWith("@"))
+                                          .withParent(XmlPatterns.xmlAttribute().withName(FxmlConstants.VALUE)
+                                                        .withParent(XmlPatterns.xmlTag().withName(FxmlConstants.URL_TAG)
+                                                                      .withParent(XmlPatterns.xmlTag().withName(FxmlConstants.STYLESHEETS))))
+                                          .and(attributeValueInFxml),
+                                        new JavaFxLocationReferenceProvider(false, "css"));
 
     registrar.registerReferenceProvider(PlatformPatterns.psiElement(XmlProcessingInstruction.class).inVirtualFile(virtualFile().withExtension(JavaFxFileTypeFactory.FXML_EXTENSION)),
                                         new ImportReferenceProvider());
