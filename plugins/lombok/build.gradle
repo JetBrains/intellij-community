@@ -124,7 +124,12 @@ tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
 
     if (!Boolean.valueOf(System.getenv('CI'))) {
-        options.bootClasspath = "$JDK6_HOME/jre/lib/rt.jar"
+        def javaHome = System.getenv("JAVA_HOME")
+        if (null == javaHome || "".equals(javaHome)) {
+            javaHome = JDK6_HOME
+        }
+
+        options.bootClasspath = "$javaHome/jre/lib/rt.jar"
     }
 }
 
