@@ -84,6 +84,7 @@ public class EditorStressTest extends AbstractEditorTest {
     for (SoftWrap wrap : softWraps) {
       int softWrapOffset = wrap.getStart();
       assertTrue("Soft wraps are not ordered", softWrapOffset > lastSoftWrapOffset);
+      assertTrue("Soft wrap is after document's end", softWrapOffset < document.getTextLength());
       FoldRegion foldRegion = foldingModel.getCollapsedRegionAtOffset(softWrapOffset);
       assertTrue("Soft wrap is inside fold region", foldRegion == null || foldRegion.getStartOffset() == softWrapOffset);
       assertFalse("Soft wrap before line break", softWrapOffset == DocumentUtil.getLineEndOffset(softWrapOffset, document) &&
