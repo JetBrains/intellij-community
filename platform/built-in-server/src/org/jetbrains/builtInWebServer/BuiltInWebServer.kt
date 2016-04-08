@@ -132,7 +132,8 @@ private fun doProcess(request: FullHttpRequest, context: ChannelHandlerContext, 
     return true
   }
 
-  val path = FileUtil.toCanonicalPath(decodedPath.substring(offset + 1), '/')
+  // must be absolute path (relative to DOCUMENT_ROOT, i.e. scheme://authority/) to properly canonicalize
+  val path = FileUtil.toCanonicalPath(decodedPath.substring(offset), '/').substring(1)
   for (pathHandler in WebServerPathHandler.EP_NAME.extensions) {
     LOG.catchAndLog {
       if (pathHandler.process(path, project, request, context, projectName, decodedPath, isCustomHost)) {
