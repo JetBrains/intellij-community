@@ -51,6 +51,7 @@ public class EditorStressTest extends AbstractEditorTest {
   private long mySeed;
 
   public void testRandomActions() {
+    System.out.println("Seed is " + mySeed);
     int i = 0;
     try {
       initText("");
