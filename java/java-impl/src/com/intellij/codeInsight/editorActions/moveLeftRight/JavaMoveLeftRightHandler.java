@@ -63,13 +63,8 @@ public class JavaMoveLeftRightHandler extends MoveElementLeftRightHandler {
       return ((PsiTypeParameterList)element).getTypeParameters();
     }
     else if (element instanceof PsiModifierList) {
-      final List<PsiElement> result = ContainerUtil.newSmartList();
-      for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
-        if (child instanceof PsiKeyword || child instanceof PsiAnnotation) {
-          result.add(child);
-        }
-      }
-      return result.toArray(PsiElement.EMPTY_ARRAY);
+      final List<PsiElement> elements = PsiTreeUtil.getChildrenOfAnyType(element, PsiKeyword.class, PsiAnnotation.class);
+      return elements.toArray(PsiElement.EMPTY_ARRAY);
     }
     return PsiElement.EMPTY_ARRAY;
   }
