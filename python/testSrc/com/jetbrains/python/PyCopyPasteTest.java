@@ -421,5 +421,14 @@ public class PyCopyPasteTest extends PyTestCase {
   public void testAmbiguousParentBlockMidIndent() {
     doTest();
   }
-  
+
+  // PY-19100
+  public void testTopLevelFunctionWithMultilineParameterList() {
+    doTest();
+  }
+
+  // PY-19100
+  public void testTopLevelIfStatementWithMultilineCondition() {
+    doTest();
+  }
 }
