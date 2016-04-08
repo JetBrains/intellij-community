@@ -408,9 +408,11 @@ public final class ActionMenu extends JMenu {
           return false;
         }
         Point point = ((MouseEvent)e).getLocationOnScreen();
+        Rectangle bounds = myComponent.getBounds();
+        bounds.setLocation(myComponent.getLocationOnScreen());
 
         myCallbackAlarm.cancel();
-        boolean isMouseMovingTowardsSubmenu = new Polygon(
+        boolean isMouseMovingTowardsSubmenu = bounds.contains(point) || new Polygon(
           new int[]{myLastMousePoint.x, myUpperTargetPoint.x, myLowerTargetPoint.x},
           new int[]{myLastMousePoint.y, myUpperTargetPoint.y, myLowerTargetPoint.y},
           3).contains(point);
