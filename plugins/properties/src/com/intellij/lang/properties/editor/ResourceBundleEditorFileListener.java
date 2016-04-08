@@ -15,101 +15,220 @@
  */
 package com.intellij.lang.properties.editor;
 
-import com.intellij.lang.properties.PropertiesImplUtil;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
+import com.intellij.openapi.progress.util.ReadTask;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
+import com.intellij.util.ui.update.MergingUpdateQueue;
+import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Map;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author Dmitry Batkovich
  */
 class ResourceBundleEditorFileListener extends VirtualFileAdapter {
-  private final Project myProject;
-  private ResourceBundleEditor myEditor;
+  private final ResourceBundleEditor myEditor;
+  private final MyVfsEventsProcessor myEventsProcessor;
 
-  public ResourceBundleEditorFileListener(ResourceBundleEditor editor, Project project) {
+  public ResourceBundleEditorFileListener(ResourceBundleEditor editor) {
     myEditor = editor;
-    myProject = project;
+    myEventsProcessor = new MyVfsEventsProcessor();
   }
 
   @Override
   public void fileCreated(@NotNull VirtualFileEvent event) {
-    final VirtualFile file = event.getFile();
-    if (PropertiesImplUtil.isPropertiesFile(file, myProject)) {
-      asyncUpdateUiIfNeed(() -> {
-        if (file.isValid()) {
-          for (PropertiesFile f : myEditor.getResourceBundle().getPropertiesFiles()) {
-            if (Comparing.equal(f.getVirtualFile(), file)) {
-              return f;
-            }
-          }
-        }
-        return null;
-      }, (f) -> myEditor.recreateEditorsPanel());
-    }
+    myEventsProcessor.queue(event, EventType.FILE_CREATED);
   }
 
   @Override
   public void fileDeleted(@NotNull VirtualFileEvent event) {
-    final VirtualFile eventFile = event.getFile();
-    for (PropertiesFile file : myEditor.getTranslationEditors().keySet()) {
-      if (Comparing.equal(file.getVirtualFile(), eventFile)) {
-        myEditor.recreateEditorsPanel();
-        return;
-      }
-    }
+    myEventsProcessor.queue(event, EventType.FILE_DELETED);
   }
 
   @Override
   public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
-    final VirtualFile eventFile = event.getFile();
-    if (PropertiesImplUtil.isPropertiesFile(eventFile, myProject)) {
-      asyncUpdateUiIfNeed(() -> {
-        for (Map.Entry<PropertiesFile, EditorEx> e : myEditor.getTranslationEditors().entrySet()) {
-          if (eventFile.equals(e.getKey().getVirtualFile())) {
-            return e.getValue();
-          }
+    myEventsProcessor.queue(event, EventType.PROPERTY_CHANGED);
+  }
+
+  @Override
+  public void contentsChanged(@NotNull VirtualFileEvent event) {
+    myEventsProcessor.queue(event, EventType.CONTENT_CHANGED);
+  }
+
+  private class MyVfsEventsProcessor {
+    private final MergingUpdateQueue myMergeQueue =
+      new MergingUpdateQueue("rbe.vfs.listener.queue", 200, true, myEditor.getComponent(), myEditor, myEditor.getComponent(), false) {
+        @Override
+        protected void execute(@NotNull Update[] updates) {
+          final ReadTask task = new ReadTask() {
+            private final EventWithType[] myEvents =
+              Arrays.stream(updates).map(u -> (EventWithType)u.getEqualityObjects()[0]).toArray(EventWithType[]::new);
+
+            @Nullable
+            @Override
+            public Continuation performInReadAction(@NotNull ProgressIndicator indicator) throws ProcessCanceledException {
+              if (!myEditor.isValid()) return null;
+              Runnable toDo = null;
+              for (EventWithType e : myEvents) {
+                NotNullLazyValue<Set<VirtualFile>> resourceBundleAsSet = new NotNullLazyValue<Set<VirtualFile>>() {
+                  @NotNull
+                  @Override
+                  protected Set<VirtualFile> compute() {
+                    return myEditor.getResourceBundle().getPropertiesFiles().stream().map(PropertiesFile::getVirtualFile)
+                      .collect(Collectors.toSet());
+                  }
+                };
+                if (e.getType() == EventType.FILE_DELETED) {
+                  if (myEditor.getTranslationEditors().containsKey(e.getEvent().getFile())) {
+                    toDo = myEditor::recreateEditorsPanel;
+                    break;
+                  }
+                }
+                else if (e.getType() == EventType.FILE_CREATED) {
+                  if (resourceBundleAsSet.getValue().contains(e.getEvent().getFile())) {
+                    toDo = myEditor::recreateEditorsPanel;
+                    break;
+                  }
+                }
+                else if (e.getType() == EventType.PROPERTY_CHANGED &&
+                    ((VirtualFilePropertyEvent)e.getEvent()).getPropertyName().equals(VirtualFile.PROP_NAME)) {
+                  if (myEditor.getTranslationEditors().containsKey(e.getEvent().getFile())) {
+                    toDo = myEditor::recreateEditorsPanel;
+                    break;
+                  }
+                }
+                else if (e.getType() == EventType.PROPERTY_CHANGED &&
+                    ((VirtualFilePropertyEvent)e.getEvent()).getPropertyName().equals(VirtualFile.PROP_WRITABLE)) {
+                  if (myEditor.getTranslationEditors().containsKey(e.getEvent().getFile())) {
+                    if (toDo == null) {
+                      toDo = new SetViewerPropertyRunnable();
+                    }
+                    ((SetViewerPropertyRunnable)toDo)
+                      .addFile(e.getEvent().getFile(), !(Boolean)((VirtualFilePropertyEvent)e.getEvent()).getNewValue());
+                  }
+                }
+                else {
+                  if (myEditor.getTranslationEditors().containsKey(e.getEvent().getFile())) {
+                    toDo = () -> myEditor.updateEditorsFromProperties(true);
+                  }
+                }
+              }
+
+              if (toDo == null) {
+                return null;
+              }
+              else {
+                Runnable toDoCopy = toDo;
+                return new Continuation(() -> {
+                  if (myEditor.isValid()) {
+                    toDoCopy.run();
+                  }
+                }, ModalityState.NON_MODAL);
+              }
+            }
+
+            @Override
+            public void onCanceled(@NotNull ProgressIndicator indicator) {
+              for (EventWithType event : myEvents) {
+                queue(new MyUpdate(event));
+              }
+            }
+          };
+          ProgressIndicatorUtils.scheduleWithWriteActionPriority(task);
         }
-        return null;
-      }, (editor) -> {
-        final String propertyName = event.getPropertyName();
-        if (VirtualFile.PROP_WRITABLE.equals(propertyName)) {
-          if (!editor.isDisposed()) {
-            editor.setViewer((Boolean)event.getNewValue());
-          }
-          return;
-        }
-        if (VirtualFile.PROP_NAME.equals(propertyName)) {
-          myEditor.recreateEditorsPanel();
-        }
-        else {
-          myEditor.updateEditorsFromProperties(true);
-        }
-      });
+      };
+
+    public void queue(VirtualFileEvent event, EventType type) {
+      myMergeQueue.queue(new MyUpdate(new EventWithType(type, event)));
+    }
+
+    private class MyUpdate extends Update {
+      public MyUpdate(EventWithType identity) {
+        super(identity);
+      }
+
+      @Override
+      public void run() {
+        throw new IllegalStateException();
+      }
     }
   }
 
-  private <T> void asyncUpdateUiIfNeed(Supplier<T> uiUpdateCondition, Consumer<T> uiUpdate) {
-    ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      final T obj = uiUpdateCondition.get();
-      if (obj != null) {
-        ApplicationManager.getApplication().invokeLater(() -> {
-          if (myEditor.isValid()) {
-            uiUpdate.accept(obj);
-          }
-        });
+  private class SetViewerPropertyRunnable implements Runnable {
+    private final List<VirtualFile> myFiles = new ArrayList<>();
+    private final List<Boolean> myIsViewer = new ArrayList<>();
+
+    public void addFile(VirtualFile virtualFile, boolean isViewer) {
+      myFiles.add(virtualFile);
+      myIsViewer.add(isViewer);
+    }
+
+    @Override
+    public void run() {
+      for (int i = 0; i < myFiles.size(); i++) {
+        VirtualFile file = myFiles.get(i);
+        final Boolean viewer = myIsViewer.get(i);
+        final EditorEx editor = myEditor.getTranslationEditors().get(file);
+        if (editor != null) {
+          editor.setViewer(viewer);
+        }
       }
-    });
+    }
+  }
+
+  private enum EventType {
+    FILE_CREATED,
+    FILE_DELETED,
+    CONTENT_CHANGED, PROPERTY_CHANGED
+  }
+
+  private static class EventWithType {
+    private final EventType myType;
+    private final VirtualFileEvent myEvent;
+
+    private EventWithType(EventType type, VirtualFileEvent event) {
+      myType = type;
+      myEvent = event;
+    }
+
+    public EventType getType() {
+      return myType;
+    }
+
+    public VirtualFileEvent getEvent() {
+      return myEvent;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      EventWithType type = (EventWithType)o;
+
+      if (myType != type.myType) return false;
+      if (!myEvent.equals(type.myEvent)) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = myType.hashCode();
+      result = 31 * result + myEvent.hashCode();
+      return result;
+    }
   }
 }
