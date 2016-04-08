@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -195,10 +195,8 @@ class ConstantExpressionVisitor extends JavaElementVisitor implements PsiConstan
       }
     }
     else if (tokenType == JavaTokenType.ANDAND) {
-      if (lOperandValue instanceof Boolean && !((Boolean)lOperandValue).booleanValue()) {
-        value = Boolean.FALSE;
-      }
-      else if (rOperandValue instanceof Boolean && !((Boolean)rOperandValue).booleanValue()) {
+      if (lOperandValue instanceof Boolean && !((Boolean)lOperandValue).booleanValue() ||
+          rOperandValue instanceof Boolean && !((Boolean)rOperandValue).booleanValue()) {
         value = Boolean.FALSE;
       }
       else if (lOperandValue instanceof Boolean && rOperandValue instanceof Boolean) {
@@ -206,10 +204,8 @@ class ConstantExpressionVisitor extends JavaElementVisitor implements PsiConstan
       }
     }
     else if (tokenType == JavaTokenType.OROR) {
-      if (lOperandValue instanceof Boolean && ((Boolean)lOperandValue).booleanValue()) {
-        value = Boolean.TRUE;
-      }
-      else if (rOperandValue instanceof Boolean && ((Boolean)rOperandValue).booleanValue()) {
+      if (lOperandValue instanceof Boolean && ((Boolean)lOperandValue).booleanValue() ||
+          rOperandValue instanceof Boolean && ((Boolean)rOperandValue).booleanValue()) {
         value = Boolean.TRUE;
       }
       else if (lOperandValue instanceof Boolean && rOperandValue instanceof Boolean) {
@@ -524,6 +520,8 @@ class ConstantExpressionVisitor extends JavaElementVisitor implements PsiConstan
 
     PsiElement resolvedExpression = expression.resolve();
     if (resolvedExpression instanceof PsiEnumConstant) {
+      String constant = ((PsiEnumConstant)resolvedExpression).getName();
+      if (constant == null) return;
       PsiReferenceExpression qualifier = (PsiReferenceExpression)expression.getQualifier();
       if (qualifier == null) return;
       PsiElement element = qualifier.resolve();
@@ -531,10 +529,9 @@ class ConstantExpressionVisitor extends JavaElementVisitor implements PsiConstan
       String name = ClassUtil.getJVMClassName((PsiClass)element);
       try {
         Class aClass = Class.forName(name);
-        myResult = Enum.valueOf(aClass, ((PsiEnumConstant)resolvedExpression).getName());
+        myResult = Enum.valueOf(aClass, constant);
       }
-      catch (Throwable ignore) {
-      }
+      catch (Throwable ignore) { }
       return;
     }
     else if (resolvedExpression instanceof PsiVariable) {
@@ -579,25 +576,21 @@ class ConstantExpressionVisitor extends JavaElementVisitor implements PsiConstan
     if (result / r != l || ((l < 0) ^ (r < 0) != (result < 0))) throw new ConstantEvaluationOverflowException(expression);
   }
 
-  private void checkAdditionOverflow(boolean resultPositive,
-                                     boolean lPositive,
-                                     boolean rPositive, PsiElement expression) {
+  private void checkAdditionOverflow(boolean resultPositive, boolean lPositive, boolean rPositive, PsiElement expression) {
     if (!myThrowExceptionOnOverflow) return;
     boolean overflow = lPositive == rPositive && lPositive != resultPositive;
     if (overflow) throw new ConstantEvaluationOverflowException(expression);
   }
 
-  private void checkRealNumberOverflow(Object result,
-                                       Object lOperandValue,
-                                       Object rOperandValue, PsiElement expression) {
+  private void checkRealNumberOverflow(Object result, Object lOperandValue, Object rOperandValue, PsiElement expression) {
     if (!myThrowExceptionOnOverflow) return;
     if (lOperandValue instanceof Float && ((Float) lOperandValue).isInfinite()) return;
     if (lOperandValue instanceof Double && ((Double) lOperandValue).isInfinite()) return;
     if (rOperandValue instanceof Float && ((Float) rOperandValue).isInfinite()) return;
     if (rOperandValue instanceof Double && ((Double) rOperandValue).isInfinite()) return;
 
-    if (result instanceof Float && ((Float) result).isInfinite()) throw new ConstantEvaluationOverflowException(expression);
-    if (result instanceof Double && ((Double) result).isInfinite()) throw new ConstantEvaluationOverflowException(expression);
+    if (result instanceof Float && ((Float)result).isInfinite()) throw new ConstantEvaluationOverflowException(expression);
+    if (result instanceof Double && ((Double)result).isInfinite()) throw new ConstantEvaluationOverflowException(expression);
   }
 
   @Override
