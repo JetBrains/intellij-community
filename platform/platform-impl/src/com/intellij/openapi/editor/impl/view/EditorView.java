@@ -31,6 +31,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import java.awt.*;
 import java.awt.font.FontRenderContext;
@@ -484,5 +485,11 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable {
            " ,size manager: " + mySizeManager.dumpState() + 
            " ,logical position cache: " + myLogicalPositionCache.dumpState() +
            "]";
+  }
+
+  @TestOnly
+  public void validateState() {
+    myLogicalPositionCache.validateState();
+    mySizeManager.validateState();
   }
 }

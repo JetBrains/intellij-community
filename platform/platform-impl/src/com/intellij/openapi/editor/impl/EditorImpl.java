@@ -7107,6 +7107,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @TestOnly
   public void validateState() {
+    myView.validateState();
+
     if (myDocument.isInBulkUpdate()) return;
     List<? extends SoftWrap> softWraps = mySoftWrapModel.getRegisteredSoftWraps();
     int lastSoftWrapOffset = -1;

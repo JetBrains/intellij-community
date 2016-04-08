@@ -67,7 +67,7 @@ public class LogicalPositionCacheStressTest extends AbstractEditorTest {
   }
 
   private static void checkLogicalPositionCache(Editor editor) {
-    EditorViewAccessor.getView(editor).getLogicalPositionCache().validate();
+    EditorViewAccessor.getView(editor).getLogicalPositionCache().validateState();
   }
 
   private static CharSequence generateText(Random random) {
