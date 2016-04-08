@@ -139,6 +139,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable {
   @NotNull
   public VisualPosition logicalToVisualPosition(@NotNull LogicalPosition pos, boolean beforeSoftWrap) {
     assertIsDispatchThread();
+    assertNotInBulkMode();
     myEditor.getSoftWrapModel().prepareToMapping();
     return myMapper.logicalToVisualPosition(pos, beforeSoftWrap);
   }
@@ -146,6 +147,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable {
   @NotNull
   public LogicalPosition visualToLogicalPosition(@NotNull VisualPosition pos) {
     assertIsDispatchThread();
+    assertNotInBulkMode();
     myEditor.getSoftWrapModel().prepareToMapping();
     return myMapper.visualToLogicalPosition(pos);
   }
@@ -153,24 +155,28 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable {
   @NotNull
   public VisualPosition offsetToVisualPosition(int offset, boolean leanTowardsLargerOffsets, boolean beforeSoftWrap) {
     assertIsDispatchThread();
+    assertNotInBulkMode();
     myEditor.getSoftWrapModel().prepareToMapping();
     return myMapper.offsetToVisualPosition(offset, leanTowardsLargerOffsets, beforeSoftWrap);
   }
 
   public int visualPositionToOffset(VisualPosition visualPosition) {
     assertIsDispatchThread();
+    assertNotInBulkMode();
     myEditor.getSoftWrapModel().prepareToMapping();
     return myMapper.visualPositionToOffset(visualPosition);
   }
 
   public int offsetToVisualLine(int offset, boolean beforeSoftWrap) {
     assertIsDispatchThread();
+    assertNotInBulkMode();
     myEditor.getSoftWrapModel().prepareToMapping();
     return myMapper.offsetToVisualLine(offset, beforeSoftWrap);
   }
   
   public int visualLineToOffset(int visualLine) {
     assertIsDispatchThread();
+    assertNotInBulkMode();
     myEditor.getSoftWrapModel().prepareToMapping();
     return myMapper.visualLineToOffset(visualLine);
   }
@@ -178,6 +184,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable {
   @NotNull
   public VisualPosition xyToVisualPosition(@NotNull Point p) {
     assertIsDispatchThread();
+    assertNotInBulkMode();
     myEditor.getSoftWrapModel().prepareToMapping();
     return myMapper.xyToVisualPosition(p);
   }
@@ -185,6 +192,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable {
   @NotNull
   public Point visualPositionToXY(@NotNull VisualPosition pos) {
     assertIsDispatchThread();
+    assertNotInBulkMode();
     myEditor.getSoftWrapModel().prepareToMapping();
     return myMapper.visualPositionToXY(pos);
   }
@@ -192,6 +200,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable {
   @NotNull
   public Point offsetToXY(int offset, boolean leanTowardsLargerOffsets, boolean beforeSoftWrap) {
     assertIsDispatchThread();
+    assertNotInBulkMode();
     myEditor.getSoftWrapModel().prepareToMapping();
     return myMapper.offsetToXY(offset, leanTowardsLargerOffsets, beforeSoftWrap);
   }
@@ -491,5 +500,9 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable {
   public void validateState() {
     myLogicalPositionCache.validateState();
     mySizeManager.validateState();
+  }
+
+  private void assertNotInBulkMode() {
+    if (myDocument.isInBulkUpdate()) throw new IllegalStateException("Current operation is not available in bulk mode");
   }
 }
