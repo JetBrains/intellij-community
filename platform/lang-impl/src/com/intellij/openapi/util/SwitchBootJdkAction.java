@@ -182,7 +182,10 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
               }
             });
           }
-          setOKActionEnabled(!((JdkBundle)myComboBox.getSelectedItem()).isBoot());
+          if (myComboBox.getSelectedItem() == null) {
+            myComboBox.setSelectedItem(model.getElementAt(0));
+          }
+          setOKActionEnabled(myComboBox.getSelectedItem() != null && !((JdkBundle)myComboBox.getSelectedItem()).isBoot());
         }
       });
 
