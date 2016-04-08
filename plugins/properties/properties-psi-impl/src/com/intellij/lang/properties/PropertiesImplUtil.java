@@ -122,11 +122,16 @@ public class PropertiesImplUtil extends PropertiesUtil {
   }
 
   public static boolean isPropertiesFile(@NotNull VirtualFile file, @NotNull Project project) {
-    return getPropertiesFile(PsiManager.getInstance(project).findFile(file)) != null;
+    return getPropertiesFile(file, project) != null;
   }
 
   public static boolean isPropertiesFile(@Nullable PsiFile file) {
     return getPropertiesFile(file) != null;
+  }
+
+  @Nullable
+  public static PropertiesFile getPropertiesFile(@NotNull VirtualFile file, @NotNull Project project) {
+    return getPropertiesFile(PsiManager.getInstance(project).findFile(file));
   }
 
   @Nullable
