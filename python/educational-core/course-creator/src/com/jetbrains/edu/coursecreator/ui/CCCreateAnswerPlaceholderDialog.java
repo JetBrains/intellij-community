@@ -53,6 +53,8 @@ public class CCCreateAnswerPlaceholderDialog extends DialogWrapper {
     myAnswerPlaceholder.setTaskText(StringUtil.notNullize(answerPlaceholderText));
     myAnswerPlaceholder.setLength(StringUtil.notNullize(answerPlaceholderText).length());
     myAnswerPlaceholder.setHint(myPanel.getHintText());
+    AnswerPlaceholder.MyInitialState initialState = new AnswerPlaceholder.MyInitialState(myAnswerPlaceholder.getLine(), answerPlaceholderText.length(), myAnswerPlaceholder.getStart());
+    myAnswerPlaceholder.setInitialState(initialState);
     super.doOKAction();
   }
 
