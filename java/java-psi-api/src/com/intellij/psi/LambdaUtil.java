@@ -60,6 +60,7 @@ public class LambdaUtil {
     return null;
   }
 
+  @Contract("null -> null")
   @Nullable
   public static PsiMethod getFunctionalInterfaceMethod(@Nullable PsiType functionalInterfaceType) {
     return getFunctionalInterfaceMethod(PsiUtil.resolveGenericsClassInType(functionalInterfaceType));
@@ -78,6 +79,7 @@ public class LambdaUtil {
     return getFunctionalInterfaceMethod(result.getElement());
   }
 
+  @Contract("null -> null")
   @Nullable
   public static PsiMethod getFunctionalInterfaceMethod(PsiClass aClass) {
     final MethodSignature methodSignature = getFunction(aClass);
