@@ -284,6 +284,9 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
         }
       }
       currentlyProcessingClasses.waitFor(); // wait until other threads process their classes before giving up
+      // The first thread comes and takes a class off the queue to search for inheritors,
+      // the second thread comes and sees there is no classes in the queue.
+      // The second thread should not return nothing, it should wait for the first thread to finish
     }
   }
 }
