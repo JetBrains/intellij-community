@@ -90,7 +90,8 @@ class ResourceBundleEditorFileListener extends VirtualFileAdapter {
                       .collect(Collectors.toSet());
                   }
                 };
-                if (e.getType() == EventType.FILE_DELETED) {
+                if (e.getType() == EventType.FILE_DELETED || (e.getType() == EventType.PROPERTY_CHANGED &&
+                                                              ((VirtualFilePropertyEvent)e.getEvent()).getPropertyName().equals(VirtualFile.PROP_NAME))) {
                   if (myEditor.getTranslationEditors().containsKey(e.getEvent().getFile())) {
                     toDo = myEditor::recreateEditorsPanel;
                     break;
@@ -103,25 +104,29 @@ class ResourceBundleEditorFileListener extends VirtualFileAdapter {
                   }
                 }
                 else if (e.getType() == EventType.PROPERTY_CHANGED &&
-                    ((VirtualFilePropertyEvent)e.getEvent()).getPropertyName().equals(VirtualFile.PROP_NAME)) {
-                  if (myEditor.getTranslationEditors().containsKey(e.getEvent().getFile())) {
-                    toDo = myEditor::recreateEditorsPanel;
-                    break;
-                  }
-                }
-                else if (e.getType() == EventType.PROPERTY_CHANGED &&
                     ((VirtualFilePropertyEvent)e.getEvent()).getPropertyName().equals(VirtualFile.PROP_WRITABLE)) {
                   if (myEditor.getTranslationEditors().containsKey(e.getEvent().getFile())) {
                     if (toDo == null) {
                       toDo = new SetViewerPropertyRunnable();
                     }
-                    ((SetViewerPropertyRunnable)toDo)
-                      .addFile(e.getEvent().getFile(), !(Boolean)((VirtualFilePropertyEvent)e.getEvent()).getNewValue());
+                    if (toDo instanceof SetViewerPropertyRunnable) {
+                      ((SetViewerPropertyRunnable)toDo)
+                        .addFile(e.getEvent().getFile(), !(Boolean)((VirtualFilePropertyEvent)e.getEvent()).getNewValue());
+                    } else {
+                      toDo = myEditor::recreateEditorsPanel;
+                      break;
+                    }
                   }
                 }
                 else {
                   if (myEditor.getTranslationEditors().containsKey(e.getEvent().getFile())) {
-                    toDo = () -> myEditor.updateEditorsFromProperties(true);
+                    if ((toDo instanceof SetViewerPropertyRunnable)) {
+                      toDo = myEditor::recreateEditorsPanel;
+                      break;
+                    }
+                    else if (toDo == null) {
+                      toDo = () -> myEditor.updateEditorsFromProperties(true);
+                    }
                   }
                 }
               }
