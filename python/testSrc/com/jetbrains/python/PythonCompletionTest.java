@@ -864,28 +864,67 @@ public class PythonCompletionTest extends PyTestCase {
     doTest();
   }
 
-  //PY-3077
+  // PY-3077
   public void testFormatString() {
     doTest();
   }
 
-  //PY-3077
+  // PY-3077
   public void testFormatFuncArgument() {
     doTest();
   }
 
-  //PY-3077
+  // PY-3077
   public void testFormatStringFromStarArg() {
     doTest();
   }
 
-  //PY-3077
+  // PY-3077
   public void testFormatStringOutsideBraces() {
     doTest();
   }
 
-  //PY-3077
+  // PY-3077
   public void testFormatStringFromRef() {
+    doTest();
+  }
+
+  // PY-3077
+  public void testFormatStringWithFormatModifier() {
+    doTest();
+  }
+  
+  // PY-3077
+  public void testPercentStringWithDictLiteralArg() {
+    doTest();
+  }
+
+  // PY-3077
+  public void testPercentStringWithDictCallArg() {
+    doTest();
+  }
+  
+  // PY-3077
+  public void testPercentStringWithParenDictCallArg() {
+    doTest();
+  }
+
+  // PY-3077
+  public void testPercentStringWithModifiers() {
+    doTest();
+  }
+
+  // PY-3077
+  public void testPercentStringDictLiteralStringKey() {
+    doTest();
+  }
+  
+  // PY-3077
+  public void testPercentStringDictCallStringKey() {
+    doTest();
+  }
+  
+  public void testPercentStringDictLiteralArgument() {
     doTest();
   }
 
