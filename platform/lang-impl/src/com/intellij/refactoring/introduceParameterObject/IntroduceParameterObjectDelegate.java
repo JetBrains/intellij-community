@@ -17,7 +17,6 @@ package com.intellij.refactoring.introduceParameterObject;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.refactoring.changeSignature.ChangeInfo;
@@ -48,12 +47,16 @@ public abstract class IntroduceParameterObjectDelegate<M extends PsiNamedElement
     return EP_NAME.forLanguage(language);
   }
 
-  public abstract P createMergedParameterInfo(Project project,
-                                              C descriptor,
-                                              M method);
+  public abstract P createMergedParameterInfo(C descriptor,
+                                              M method,
+                                              List<P> oldMethodParameters);
+
+  public abstract PsiElement createNewParameterInitializerAtCallSite(PsiElement callExpression,
+                                                                     IntroduceParameterObjectClassDescriptor descriptor,
+                                                                     List<? extends ParameterInfo> oldMethodParameters);
 
   public abstract ChangeInfo createChangeSignatureInfo(M method,
-                                                       List<P> infos,
+                                                       List<P> newParameterInfos,
                                                        boolean delegate);
 
   public abstract <M1 extends PsiNamedElement, P1 extends ParameterInfo>

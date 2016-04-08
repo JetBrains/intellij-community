@@ -593,8 +593,8 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
     }
     final PsiCallExpression callExpression = PsiTreeUtil.getParentOfType(list, PsiCallExpression.class);
     final String defaultValue = info.getDefaultValue();
-    return callExpression != null ? info.getValue(callExpression) : !defaultValue.isEmpty()
-                                                                    ? factory.createExpressionFromText(defaultValue, list) : null;
+    return callExpression != null ? (PsiExpression)info.getActualValue(callExpression)
+                                  : !StringUtil.isEmpty(defaultValue) ? factory.createExpressionFromText(defaultValue, list) : null;
   }
 
 
@@ -713,7 +713,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
         actualArg = factory.createExpressionFromText(oldParameterNames[newParm.getOldIndex()], callExpression);
       }
       else {
-        actualArg = changeInfo.getValue(i, callExpression);
+        actualArg = (PsiExpression)changeInfo.getActualValue(i, callExpression);
       }
       final PsiExpressionList argumentList = callExpression.getArgumentList();
       if (actualArg != null && argumentList != null) {
