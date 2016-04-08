@@ -156,6 +156,10 @@ public class AnswerPlaceholder {
     mySelected = selected;
   }
 
+  public void init() {
+    setInitialState(new MyInitialState(line, possibleAnswer.length(), start));
+  }
+
   public static class MyInitialState {
     public int myLine = -1;
     public int myLength = -1;
