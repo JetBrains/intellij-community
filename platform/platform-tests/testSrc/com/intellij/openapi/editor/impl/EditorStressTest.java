@@ -56,10 +56,12 @@ public class EditorStressTest extends AbstractEditorTest {
     try {
       initText("");
       configureSoftWraps(10);
+      EditorImpl editor = (EditorImpl)myEditor;
       for (i = 1; i <= ITERATIONS; i++) {
-        doRandomAction();
-        ((EditorImpl)myEditor).validateState();
+        doRandomAction(editor);
+        editor.validateState();
       }
+      if (editor.getDocument().isInBulkUpdate()) editor.getDocument().setInBulkUpdate(false);
     }
     catch (Throwable t) {
       String message = "Failed when run with seed=" + mySeed + " in iteration " + i;
@@ -68,8 +70,8 @@ public class EditorStressTest extends AbstractEditorTest {
     }
   }
 
-  private void doRandomAction() {
-    ourActions.get(myRandom.nextInt(ourActions.size())).perform((EditorEx)myEditor, myRandom);
+  private void doRandomAction(EditorEx editor) {
+    ourActions.get(myRandom.nextInt(ourActions.size())).perform(editor, myRandom);
   }
 
   interface Action {
