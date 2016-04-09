@@ -7,6 +7,7 @@ import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ProcessingContext;
 import de.plushnikov.intellij.plugin.language.psi.LombokConfigProperty;
@@ -48,7 +49,7 @@ public class LombokConfigCompletionContributor extends CompletionContributor {
     allOptions.addAll(otherOptions);
 
     extend(CompletionType.BASIC,
-        psiElement(LombokConfigTypes.VALUE).withLanguage(LombokConfigLanguage.INSTANCE),
+        PsiJavaPatterns.psiElement(LombokConfigTypes.VALUE).withLanguage(LombokConfigLanguage.INSTANCE),
         new CompletionProvider<CompletionParameters>() {
           public void addCompletions(@NotNull CompletionParameters parameters, ProcessingContext context, @NotNull CompletionResultSet resultSet) {
             PsiElement psiElement = parameters.getPosition().getParent();
@@ -71,7 +72,7 @@ public class LombokConfigCompletionContributor extends CompletionContributor {
     );
 
     extend(CompletionType.BASIC,
-        psiElement(LombokConfigTypes.KEY).withLanguage(LombokConfigLanguage.INSTANCE),
+        PsiJavaPatterns.psiElement(LombokConfigTypes.KEY).withLanguage(LombokConfigLanguage.INSTANCE),
         new CompletionProvider<CompletionParameters>() {
           public void addCompletions(@NotNull CompletionParameters parameters, ProcessingContext context, @NotNull CompletionResultSet resultSet) {
             for (String contribution : allOptions) {
