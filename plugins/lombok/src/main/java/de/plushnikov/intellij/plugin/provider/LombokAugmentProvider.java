@@ -17,6 +17,7 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import de.plushnikov.intellij.plugin.processor.Processor;
 import de.plushnikov.intellij.plugin.processor.ValProcessor;
+import de.plushnikov.intellij.plugin.processor.clazz.UtilityClassProcessor;
 import de.plushnikov.intellij.plugin.settings.ProjectSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,9 +37,12 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
 
   private ValProcessor valProcessor;
 
+  private UtilityClassProcessor utilityClassProcessor;
+
   public LombokAugmentProvider() {
     log.debug("LombokAugmentProvider created");
     valProcessor = new ValProcessor();
+    utilityClassProcessor = new UtilityClassProcessor();
   }
 
   @Nullable
@@ -48,7 +52,10 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
       return null;
     }
 
-    return valProcessor.hasModifierProperty(modifierList, name);
+    Boolean valResult = valProcessor.hasModifierProperty(modifierList, name);
+    if(valResult != null) return valResult;
+
+    return utilityClassProcessor.hasModifierProperty(modifierList, name);
   }
 
   @Nullable
