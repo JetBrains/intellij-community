@@ -39,13 +39,13 @@ import java.util.List;
 public class LombokAugmentProvider extends PsiAugmentProvider {
   private static final Logger log = Logger.getInstance(LombokAugmentProvider.class.getName());
 
-  private ValProcessor valProcessor;
-  private Collection<ModifierProcessor> modifierProcessors;
+  private final ValProcessor valProcessor = new ValProcessor();
+  private final Collection<ModifierProcessor> modifierProcessors;
 
   public LombokAugmentProvider() {
     log.debug("LombokAugmentProvider created");
-    valProcessor = new ValProcessor();
-    modifierProcessors = Arrays.asList(LombokProcessorExtensionPoint.EP_NAME_MODIFIER_PROCESSOR.getExtensions());
+
+    modifierProcessors = Arrays.asList(getModifierProcessors());
   }
 
   @Nullable
@@ -56,14 +56,12 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
       return null;
     }
 
-    PsiElement parent = modifierList.getParent();
-
     // Loop through all available processors and give all of them a chance to respond
     for (ModifierProcessor processor: modifierProcessors) {
       if (processor.isSupported(modifierList, name)) {
         Boolean valueProcessorResult = processor.hasModifierProperty(modifierList, name);
 
-        // We found a match (non-null value = authoritative response)
+        // We found a match with a 'non-null' value, it is authoritative response
         if (valueProcessorResult != null) {
           return valueProcessorResult;
         }
@@ -117,6 +115,10 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
     } else {
       return emptyResult;
     }
+  }
+
+  private ModifierProcessor[] getModifierProcessors() {
+    return LombokProcessorExtensionPoint.EP_NAME_MODIFIER_PROCESSOR.getExtensions();
   }
 
   private static class FieldLombokCachedValueProvider<Psi extends PsiElement> extends LombokCachedValueProvider<Psi> {
