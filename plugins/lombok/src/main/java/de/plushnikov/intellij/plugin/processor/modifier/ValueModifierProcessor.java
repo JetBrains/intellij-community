@@ -16,9 +16,10 @@ public class ValueModifierProcessor implements ModifierProcessor {
 
 
   @Override
+  @SuppressWarnings("unchecked")
   public boolean isSupported(@NotNull PsiModifierList modifierList, @NotNull String name) {
 
-    // Fast check if the requested modifier is even supported
+    // @Value makes things final and private
     if (!PsiModifier.FINAL.equals(name) || PsiModifier.PRIVATE.equals(name)) {
       return false;
     }
@@ -32,12 +33,8 @@ public class ValueModifierProcessor implements ModifierProcessor {
       searchableClass = ((PsiField) parent).getContainingClass();
     }
 
-    if (null != searchableClass) {
+    return null != searchableClass && PsiAnnotationSearchUtil.isAnnotatedWith(searchableClass, lombok.Value.class, lombok.experimental.Value.class);
 
-      return PsiAnnotationSearchUtil.isAnnotatedWith(searchableClass, lombok.Value.class, lombok.experimental.Value.class);
-    }
-
-    return false;
   }
 
   @Override

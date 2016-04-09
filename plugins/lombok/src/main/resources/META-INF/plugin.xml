@@ -152,6 +152,7 @@
     <processor implementation="pl.mg6.hrisey.intellij.plugin.processor.clazz.ParcelableFieldsProcessor"/>
 
     <modifierProcessor implementation="de.plushnikov.intellij.plugin.processor.modifier.ValueModifierProcessor" />
+    <modifierProcessor implementation="de.plushnikov.intellij.plugin.processor.modifier.ValModifierProcessor" />
   </extensions>
 
   <actions>
