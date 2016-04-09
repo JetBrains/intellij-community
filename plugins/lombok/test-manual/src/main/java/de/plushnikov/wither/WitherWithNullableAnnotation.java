@@ -6,18 +6,18 @@ import javax.annotation.Nullable;
 
 @Wither
 public class WitherWithNullableAnnotation {
-    @Wither(lombok.AccessLevel.NONE)
-    private boolean isNone;
+  @Wither(lombok.AccessLevel.NONE)
+  private boolean isNone;
 
-    @Nullable
-    private String myPublic;
+  @Nullable
+  private String myPublic;
 
-    public WitherWithNullableAnnotation(boolean isNone, String isPublic) {
-        System.out.println("ssss");
-    }
+  public WitherWithNullableAnnotation(boolean isNone, String isPublic) {
+    System.out.println("ssss");
+  }
 
-    public static void main(String[] args) {
-        WitherWithNullableAnnotation wither = new WitherWithNullableAnnotation(true, "").withMyPublic("aaa");
-        wither.withMyPublic("bbb");
-    }
+  public static void main(String[] args) {
+    WitherWithNullableAnnotation wither = new WitherWithNullableAnnotation(true, "").withMyPublic("aaa");
+    wither.withMyPublic("bbb");
+  }
 }

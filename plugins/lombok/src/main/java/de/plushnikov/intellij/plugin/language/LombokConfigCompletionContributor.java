@@ -18,8 +18,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 
-import static com.intellij.patterns.PlatformPatterns.psiElement;
-
 public class LombokConfigCompletionContributor extends CompletionContributor {
 
   private static final String LOMBOK_EQUALS_AND_HASH_CODE_CALL_SUPER = "lombok.equalsAndHashCode.callSuper";

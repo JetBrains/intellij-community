@@ -1,6 +1,6 @@
 package de.plushnikov.accessors;
+
 import lombok.Builder;
-import lombok.Getter;
 import lombok.ToString;
 import lombok.experimental.Accessors;
 
@@ -9,15 +9,15 @@ import lombok.experimental.Accessors;
 @ToString
 public class SecondExample151 {
 
-    public static class SecondExample151Builder {
-        private String field = "default";
-    }
+  public static class SecondExample151Builder {
+    private String field = "default";
+  }
 
-    private final String mField;
-    private final String mField2;
-    private final String mField3;
+  private final String mField;
+  private final String mField2;
+  private final String mField3;
 
-    public static void main(String[] args) {
-        System.out.println(builder().field("abcd").build());
-    }
+  public static void main(String[] args) {
+    System.out.println(builder().field("abcd").build());
+  }
 }

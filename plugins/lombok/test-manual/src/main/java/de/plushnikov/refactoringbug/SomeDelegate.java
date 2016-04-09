@@ -3,11 +3,11 @@ package de.plushnikov.refactoringbug;
 import lombok.Delegate;
 
 public class SomeDelegate {
-    @Delegate
-    private SomeApi someApi = new SomeApiImpl();
+  @Delegate
+  private SomeApi someApi = new SomeApiImpl();
 
-    public static void main(String[] args) {
-        SomeDelegate delegate = new SomeDelegate();
-        System.out.println(delegate.makeSomething(10));
-    }
+  public static void main(String[] args) {
+    SomeDelegate delegate = new SomeDelegate();
+    System.out.println(delegate.makeSomething(10));
+  }
 }

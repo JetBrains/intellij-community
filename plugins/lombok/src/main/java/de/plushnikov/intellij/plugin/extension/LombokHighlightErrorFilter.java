@@ -21,12 +21,12 @@ public class LombokHighlightErrorFilter implements HighlightInfoFilter {
     if (null != file && HighlightSeverity.ERROR.equals(highlightInfo.getSeverity())) {
 
       String description = StringUtil.notNullize(highlightInfo.getDescription());
-      
+
       // Handling LazyGetter
       if (uninitializedField(description) && LazyGetterHandler.isLazyGetterHandled(highlightInfo, file)) {
         return false;
       }
-      
+
       //Handling onX parameters
       if (OnXAnnotationHandler.isOnXParameterAnnotation(highlightInfo, file)
           || OnXAnnotationHandler.isOnXParameterValue(highlightInfo, file)

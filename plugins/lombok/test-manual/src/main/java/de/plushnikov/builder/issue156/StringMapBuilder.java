@@ -6,14 +6,14 @@ import lombok.Singular;
 import java.util.HashMap;
 import java.util.Map;
 
-public class StringMapBuilder<R> extends HashMap<String, R>{
+public class StringMapBuilder<R> extends HashMap<String, R> {
 
-    @Builder
-    StringMapBuilder(@Singular Map<String, ? extends R> entries) {
-        super(entries);
-    }
+  @Builder
+  StringMapBuilder(@Singular Map<String, ? extends R> entries) {
+    super(entries);
+  }
 
-    public static void main(String[] args) {
+  public static void main(String[] args) {
 
-    }
+  }
 }

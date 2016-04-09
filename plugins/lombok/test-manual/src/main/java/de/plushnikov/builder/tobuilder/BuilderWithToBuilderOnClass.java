@@ -5,29 +5,29 @@ import java.util.Arrays;
 @lombok.Builder(toBuilder = true)
 @lombok.experimental.Accessors(prefix = "m")
 public class BuilderWithToBuilderOnClass<T> {
-	private String mOne, mTwo;
+  private String mOne, mTwo;
 
-	@lombok.Builder.ObtainVia(method = "rrr", isStatic = true)
-	private T foo;
+  @lombok.Builder.ObtainVia(method = "rrr", isStatic = true)
+  private T foo;
 
-	@lombok.Singular
-	private java.util.List<T> bars;
+  @lombok.Singular
+  private java.util.List<T> bars;
 
-	public static <K> K rrr(BuilderWithToBuilderOnClass<K> x) {
-		return x.foo;
-	}
+  public static <K> K rrr(BuilderWithToBuilderOnClass<K> x) {
+    return x.foo;
+  }
 
-	public static void main(String[] args) {
-		BuilderWithToBuilderOnClass<String> bean = new BuilderWithToBuilderOnClass<String>("mOneParam", "mTwoParam", "fooParam", Arrays.asList("barsParam1"));
-		bean.mOne = "mOne";
-		bean.mTwo = "mTwo";
-		bean.foo = "foo";
+  public static void main(String[] args) {
+    BuilderWithToBuilderOnClass<String> bean = new BuilderWithToBuilderOnClass<String>("mOneParam", "mTwoParam", "fooParam", Arrays.asList("barsParam1"));
+    bean.mOne = "mOne";
+    bean.mTwo = "mTwo";
+    bean.foo = "foo";
 
-		BuilderWithToBuilderOnClass.BuilderWithToBuilderOnClassBuilder x = bean.toBuilder();
-		System.out.println(x);
+    BuilderWithToBuilderOnClass.BuilderWithToBuilderOnClassBuilder x = bean.toBuilder();
+    System.out.println(x);
 
-		x.one("builderOne");
-		x.bar("builderBar");
-		System.out.println(x);
-	}
+    x.one("builderOne");
+    x.bar("builderBar");
+    System.out.println(x);
+  }
 }

@@ -11,33 +11,33 @@ import java.util.Map;
  */
 @Data
 public class DataClass {
-    private int intProperty;
+  private int intProperty;
 
-    private float floatProperty;
+  private float floatProperty;
 
-    private String stringProperty;
+  private String stringProperty;
 
-    public void macheWas() {
+  public void macheWas() {
 
-    }
+  }
 
-    public static void main(String[] args) {
-        DataClass dataClass = new DataClass();
-        dataClass.getFloatProperty();
-    }
+  public static void main(String[] args) {
+    DataClass dataClass = new DataClass();
+    dataClass.getFloatProperty();
+  }
 }
 
 @Data
 class Blah {
 
-    private Map<String, String> map;
+  private Map<String, String> map;
 
-    public String getMap(String key) {
-        return map.get(key);
-    }
+  public String getMap(String key) {
+    return map.get(key);
+  }
 
-    public static void main(String[] args) {
-        Blah blah = new Blah();
-        blah.getMap();
-    }
+  public static void main(String[] args) {
+    Blah blah = new Blah();
+    blah.getMap();
+  }
 }

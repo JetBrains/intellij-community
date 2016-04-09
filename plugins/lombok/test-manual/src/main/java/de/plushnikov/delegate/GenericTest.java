@@ -4,11 +4,11 @@ import lombok.Delegate;
 
 public class GenericTest implements GenericInterface {
 
-    @Delegate
-    private GenericInterface someVar;
+  @Delegate
+  private GenericInterface someVar;
 
-    public void doIt2e() {
+  public void doIt2e() {
 
-    }
+  }
 
 }

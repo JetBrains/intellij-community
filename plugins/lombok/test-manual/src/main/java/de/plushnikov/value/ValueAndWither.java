@@ -6,9 +6,9 @@ import lombok.experimental.Wither;
 @Wither
 @Value
 public class ValueAndWither {
-    private final String myField;
+  private final String myField;
 
-    public void methodCallingWith() {
-        this.withMyField("");
-    }
+  public void methodCallingWith() {
+    this.withMyField("");
+  }
 }

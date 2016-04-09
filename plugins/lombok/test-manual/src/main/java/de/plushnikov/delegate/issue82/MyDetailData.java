@@ -6,7 +6,7 @@ import lombok.Setter;
 import java.io.Serializable;
 
 public class MyDetailData<T> extends AbstractDetailData<Integer> implements Serializable {
-    @Getter
-    @Setter
-    private String something;
+  @Getter
+  @Setter
+  private String something;
 }

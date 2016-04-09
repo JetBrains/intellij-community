@@ -1,6 +1,5 @@
 package de.plushnikov.value;
 
-import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.Value;
 import lombok.experimental.NonFinal;
@@ -9,7 +8,7 @@ import lombok.experimental.NonFinal;
 @RequiredArgsConstructor
 public class Val {
 
-//  @NonNull
+  //  @NonNull
   @NonFinal
   String s1;
 
@@ -19,9 +18,9 @@ public class Val {
     Val val = new Val("other");
   }
 
-    public static void main(String[] args) {
-        Val aaa = new Val("aaa");
-        System.out.println(aaa.getS1());
-    }
+  public static void main(String[] args) {
+    Val aaa = new Val("aaa");
+    System.out.println(aaa.getS1());
+  }
 }
 

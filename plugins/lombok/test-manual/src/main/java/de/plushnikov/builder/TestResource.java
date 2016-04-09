@@ -6,10 +6,10 @@ import lombok.Value;
 @Value
 @Builder
 public class TestResource {
-    private String field1;
+  private String field1;
 
-    public static void main(String[] args) {
-        TestResource.TestResourceBuilder builder = TestResource.builder();
-        System.out.println(builder.field1("something"));
-    }
+  public static void main(String[] args) {
+    TestResource.TestResourceBuilder builder = TestResource.builder();
+    System.out.println(builder.field1("something"));
+  }
 }
