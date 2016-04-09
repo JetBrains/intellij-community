@@ -60,7 +60,7 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
 
     // Loop through all available processors and give all of them a chance to respond
     for (ModifierProcessor processor: modifierProcessors) {
-      if (processor.isSupported(modifierList)) {
+      if (processor.isSupported(modifierList, name)) {
         Boolean valueProcessorResult = processor.hasModifierProperty(modifierList, name);
 
         // We found a match (non-null value = authoritative response)
