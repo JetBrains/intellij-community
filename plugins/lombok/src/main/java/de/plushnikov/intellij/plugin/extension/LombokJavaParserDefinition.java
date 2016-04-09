@@ -16,11 +16,11 @@ public class LombokJavaParserDefinition extends JavaParserDefinition {
 
     if (elementType == JavaStubElementTypes.MODIFIER_LIST) {
       final ASTNode treeParent = node.getTreeParent();
-//      if (null != treeParent &&
-//          (treeParent.getElementType() == JavaStubElementTypes.CLASS ||
-//              treeParent.getElementType() == JavaStubElementTypes.FIELD)) {
-      return new LombokPsiModifierListImpl(node);
-//      }
+      if (null != treeParent &&
+          (treeParent.getElementType() == JavaStubElementTypes.CLASS ||
+              treeParent.getElementType() == JavaStubElementTypes.FIELD)) {
+        return new LombokPsiModifierListImpl(node);
+      }
     }
 
     return super.createElement(node);

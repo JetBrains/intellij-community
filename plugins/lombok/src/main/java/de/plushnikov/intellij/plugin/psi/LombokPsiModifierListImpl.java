@@ -72,6 +72,7 @@ public class LombokPsiModifierListImpl extends PsiModifierListImpl {
 
   private boolean hasVisibilityProperty(String name) {
     return defaultModifier(name);
+//    return PsiModifier.PRIVATE.equals(name) && new LombokPrivatePropertyCachedValueProvider(getParent(), defaultModifier(name)).compute().getValue();
   }
 
   private boolean defaultModifier(@NotNull String name) {
@@ -121,6 +122,50 @@ public class LombokPsiModifierListImpl extends PsiModifierListImpl {
             } else {
               dependencies.add(nonFinalAnnotation);
             }
+          }
+        }
+      }
+
+      return Result.create(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+    }
+  }
+
+  private static class LombokPrivatePropertyCachedValueProvider implements CachedValueProvider<Boolean> {
+    private final PsiElement parentElement;
+    private final boolean defaultModifier;
+
+    public LombokPrivatePropertyCachedValueProvider(PsiElement parentElement, boolean defaultModifier) {
+      this.parentElement = parentElement;
+      this.defaultModifier = defaultModifier;
+    }
+
+    @Nullable
+    @Override
+    public Result<Boolean> compute() {
+      log.info("Computed for " + ((PsiNamedElement) parentElement).getName());
+
+      boolean result = defaultModifier;
+
+      Collection<PsiElement> dependencies = new ArrayList<PsiElement>();
+      dependencies.add(parentElement);
+
+      final PsiClass parentClass = PsiTreeUtil.getParentOfType(parentElement, PsiClass.class, true);
+      if (null != parentClass) {
+        PsiAnnotation lombokAnnotation = PsiAnnotationSearchUtil.findAnnotation(parentClass, Value.class);
+        boolean hasLombokFinalProperty = null != lombokAnnotation;
+        if (!hasLombokFinalProperty) {
+          lombokAnnotation = PsiAnnotationSearchUtil.findAnnotation(parentClass, FieldDefaults.class);
+          hasLombokFinalProperty = null != lombokAnnotation && PsiAnnotationUtil.getBooleanAnnotationValue(lombokAnnotation, "makeFinal", false);
+        }
+
+        if (null != lombokAnnotation) {
+          dependencies.add(lombokAnnotation);
+        }
+
+        if (hasLombokFinalProperty) {
+          final PsiField parentField = PsiTreeUtil.getParentOfType(parentElement, PsiField.class, false);
+          if (parentField != null) {
+              result = true;
           }
         }
       }

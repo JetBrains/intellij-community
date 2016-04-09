@@ -8,7 +8,7 @@ import lombok.experimental.NonFinal;
 @RequiredArgsConstructor
 public class Val {
 
-  //  @NonNull
+//  @NonNull
   @NonFinal
   String s1;
 
@@ -16,6 +16,8 @@ public class Val {
 
   public void test() {
     Val val = new Val("other");
+    s1 = "";
+//    other = "";
   }
 
   public static void main(String[] args) {
