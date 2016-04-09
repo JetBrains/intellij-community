@@ -107,7 +107,7 @@ public class UtilityClassProcessor extends AbstractClassProcessor {
   }
 
   private boolean isElementFieldMethodOrInnerClass(PsiElement element) {
-    return element instanceof PsiField || element instanceof PsiMethod || element.getParent() instanceof PsiClass;
+    return element instanceof PsiField || element instanceof PsiMethod || (element instanceof PsiClass && element.getParent() instanceof PsiClass);
   }
 
   private boolean parentClassOfElementIsUtilityClass(PsiElement element) {
