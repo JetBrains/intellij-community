@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.util.PsiTreeUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,14 +25,7 @@ public class ValueModifierProcessor implements ModifierProcessor {
       return false;
     }
 
-    PsiElement parent = modifierList.getParent();
-    PsiClass searchableClass = null;
-
-    if (parent instanceof PsiClass) {
-      searchableClass = (PsiClass) parent;
-    } else if (parent instanceof PsiField) {
-      searchableClass = ((PsiField) parent).getContainingClass();
-    }
+    PsiClass searchableClass = PsiTreeUtil.getParentOfType(modifierList, PsiClass.class, true);
 
     return null != searchableClass && PsiAnnotationSearchUtil.isAnnotatedWith(searchableClass, lombok.Value.class, lombok.experimental.Value.class);
 
