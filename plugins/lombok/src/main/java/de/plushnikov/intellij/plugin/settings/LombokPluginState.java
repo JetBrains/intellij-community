@@ -1,13 +1,13 @@
 package de.plushnikov.intellij.plugin.settings;
 
 public class LombokPluginState {
-  private String donationShown = "";
+  private String pluginVersion = "";
 
-  public String getDonationShown() {
-    return donationShown;
+  public String getPluginVersion() {
+    return pluginVersion;
   }
 
-  public void setDonationShown(String donationShown) {
-    this.donationShown = donationShown;
+  public void setPluginVersion(String pluginVersion) {
+    this.pluginVersion = pluginVersion;
   }
 }

@@ -54,9 +54,15 @@
 
   <application-components>
     <component>
-      <implementation-class>de.plushnikov.intellij.plugin.LombokLoader</implementation-class>
+      <implementation-class>de.plushnikov.intellij.plugin.LombokPluginApplicationComponent</implementation-class>
     </component>
   </application-components>
+
+  <project-components>
+    <component>
+      <implementation-class>de.plushnikov.intellij.plugin.LombokPluginUpdateProjectComponent</implementation-class>
+    </component>
+  </project-components>
 
   <extensionPoints>
     <extensionPoint name="processor" interface="de.plushnikov.intellij.plugin.processor.Processor"/>

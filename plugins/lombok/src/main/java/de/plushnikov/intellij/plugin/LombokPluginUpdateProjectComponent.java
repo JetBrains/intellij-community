@@ -6,38 +6,34 @@ import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
-import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.diagnostic.Logger;
-import de.plushnikov.intellij.plugin.settings.LombokSettings;
+import com.intellij.openapi.components.ProjectComponent;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Main application component, that loads Lombok support
+ * Shows update notification
  */
-public class LombokLoader implements ApplicationComponent {
-  private static final Logger LOG = Logger.getInstance(LombokLoader.class.getName());
-
-  @NotNull
-  @Override
-  public String getComponentName() {
-    return "Lombok plugin for IntelliJ";
-  }
+public class LombokPluginUpdateProjectComponent implements ProjectComponent {
+  private LombokPluginApplicationComponent application;
 
   @Override
   public void initComponent() {
-    LOG.info("Lombok plugin initialized for IntelliJ");
-
-    showDonate();
+    application = LombokPluginApplicationComponent.getInstance();
   }
 
   @Override
   public void disposeComponent() {
-    LOG.info("Lombok plugin disposed for IntelliJ");
   }
 
-  private void showDonate() {
-    LombokSettings settings = LombokSettings.getInstance();
-    if (!settings.isDonationShown()) {
+  @NotNull
+  @Override
+  public String getComponentName() {
+    return "UpdateComponent";
+  }
+
+  @Override
+  public void projectOpened() {
+    if (application.isUpdated() && !application.isUpdateNotificationShown()) {
+      application.setUpdateNotificationShown(true);
 
       NotificationGroup group = new NotificationGroup("Lombok plugin", NotificationDisplayType.STICKY_BALLOON, true);
       Notification notification = group.createNotification(
@@ -48,8 +44,11 @@ public class LombokLoader implements ApplicationComponent {
       );
 
       Notifications.Bus.notify(notification);
-
-      settings.setDonationShown();
     }
+  }
+
+  @Override
+  public void projectClosed() {
+
   }
 }
