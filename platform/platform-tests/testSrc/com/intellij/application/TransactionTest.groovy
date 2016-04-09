@@ -29,11 +29,11 @@ class TransactionTest extends LightPlatformTestCase {
     assert LaterInvocator.currentModalityState == ModalityState.NON_MODAL
     super.setUp()
     Registry.get("ide.require.transaction.for.model.changes").setValue(true)
-    LoggedErrorProcessor.instance.disableStderrDumping(testRootDisposable)
   }
 
   @Override
   protected void tearDown() throws Exception {
+    UIUtil.dispatchAllInvocationEvents()
     Registry.get("ide.require.transaction.for.model.changes").resetToDefault()
     log.clear()
     LaterInvocator.leaveAllModals()
@@ -50,11 +50,16 @@ class TransactionTest extends LightPlatformTestCase {
 
   private void assertWritingProhibited() {
     boolean writeActionFailed = false
+    def disposable = Disposer.newDisposable('assertWritingProhibited')
+    LoggedErrorProcessor.instance.disableStderrDumping(disposable)
     try {
       app.runWriteAction { log << 'writing' }
     }
     catch (AssertionError ignore) {
       writeActionFailed = true
+    }
+    finally {
+      Disposer.dispose(disposable)
     }
     if (!writeActionFailed) {
       fail('write action should fail')
@@ -205,10 +210,10 @@ class TransactionTest extends LightPlatformTestCase {
         app.invokeLater({ app.runWriteAction { log << '5' } }, ModalityState.NON_MODAL)
       }).get()
       UIUtil.dispatchAllInvocationEvents()
-      LaterInvocator.leaveAllModals()
-      UIUtil.dispatchAllInvocationEvents()
-      assert log == ['1', '2', '3', '4', '5']
     }
+    LaterInvocator.leaveAllModals()
+    UIUtil.dispatchAllInvocationEvents()
+    assert log == ['1', '2', '3', '4', '5']
   }
 
 }
