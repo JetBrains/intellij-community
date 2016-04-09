@@ -66,6 +66,7 @@
 
   <extensionPoints>
     <extensionPoint name="processor" interface="de.plushnikov.intellij.plugin.processor.Processor"/>
+    <extensionPoint name="modifierProcessor" interface="de.plushnikov.intellij.plugin.processor.modifier.ModifierProcessor"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -149,6 +150,8 @@
     <!-- hrisey -->
     <processor implementation="pl.mg6.hrisey.intellij.plugin.processor.clazz.ParcelableMethodsProcessor"/>
     <processor implementation="pl.mg6.hrisey.intellij.plugin.processor.clazz.ParcelableFieldsProcessor"/>
+
+    <modifierProcessor implementation="de.plushnikov.intellij.plugin.processor.modifier.ValueModifierProcessor" />
   </extensions>
 
   <actions>

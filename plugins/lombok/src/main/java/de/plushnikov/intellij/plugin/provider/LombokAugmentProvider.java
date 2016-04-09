@@ -3,6 +3,7 @@ package de.plushnikov.intellij.plugin.provider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
@@ -15,13 +16,17 @@ import com.intellij.psi.impl.source.PsiExtensibleClass;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
+import de.plushnikov.intellij.plugin.extension.LombokProcessorExtensionPoint;
 import de.plushnikov.intellij.plugin.processor.Processor;
 import de.plushnikov.intellij.plugin.processor.ValProcessor;
+import de.plushnikov.intellij.plugin.processor.modifier.ModifierProcessor;
+import de.plushnikov.intellij.plugin.processor.modifier.ValueModifierProcessor;
 import de.plushnikov.intellij.plugin.settings.ProjectSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -35,17 +40,34 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
   private static final Logger log = Logger.getInstance(LombokAugmentProvider.class.getName());
 
   private ValProcessor valProcessor;
+  private Collection<ModifierProcessor> modifierProcessors;
 
   public LombokAugmentProvider() {
     log.debug("LombokAugmentProvider created");
     valProcessor = new ValProcessor();
+    modifierProcessors = Arrays.asList(LombokProcessorExtensionPoint.EP_NAME_MODIFIER_PROCESSOR.getExtensions());
   }
 
   @Nullable
   //@Override //May cause issues with older versions of IDEA SDK that are currently supported
   protected Boolean hasModifierProperty(@NotNull PsiModifierList modifierList, @NotNull String name) {
+
     if (DumbService.isDumb(modifierList.getProject()) || !valProcessor.isEnabled(modifierList.getProject())) {
       return null;
+    }
+
+    PsiElement parent = modifierList.getParent();
+
+    // Loop through all available processors and give all of them a chance to respond
+    for (ModifierProcessor processor: modifierProcessors) {
+      if (processor.isSupported(modifierList)) {
+        Boolean valueProcessorResult = processor.hasModifierProperty(modifierList, name);
+
+        // We found a match (non-null value = authoritative response)
+        if (valueProcessorResult != null) {
+          return valueProcessorResult;
+        }
+      }
     }
 
     return valProcessor.hasModifierProperty(modifierList, name);
