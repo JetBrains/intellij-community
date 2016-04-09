@@ -19,8 +19,8 @@ public class ValueModifierProcessor implements ModifierProcessor {
   @SuppressWarnings("unchecked")
   public boolean isSupported(@NotNull PsiModifierList modifierList, @NotNull String name) {
 
-    // @Value makes things final and private
-    if (!PsiModifier.FINAL.equals(name) || PsiModifier.PRIVATE.equals(name)) {
+    // @Value makes things final and private, everything else is to be skipped quickly
+    if (!PsiModifier.FINAL.equals(name) || !PsiModifier.PRIVATE.equals(name)) {
       return false;
     }
 
@@ -39,6 +39,8 @@ public class ValueModifierProcessor implements ModifierProcessor {
 
   @Override
   public Boolean hasModifierProperty(@NotNull PsiModifierList modifierList, @NotNull String name) {
+
+    //TODO: Take care of @Wither, and similar
 
     if (PsiModifier.FINAL.equals(name)) {
       return Boolean.TRUE;
