@@ -475,7 +475,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
 
     if (data == null) {
       data = content != null ? myIndexer.map(content) : Collections.<Key, Value>emptyMap();
-      if (DebugAssertions.EXTRA_SANITY_CHECKS) {
+      if (DebugAssertions.DEBUG) {
         checkValuesHaveProperEqualsAndHashCode(data);
       }
     }
