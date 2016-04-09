@@ -69,6 +69,7 @@ Developed By
 [**@mplushnikov** Michail Plushnikov] (https://github.com/mplushnikov)
 
 **Contributors**
+- [**@AlexejK** Alexej Kubarev](https://github.com/AlexejK)
 - [**@twillouer** William Delanoue](https://github.com/twillouer)
 - [**@uvpoblotzki** Ulrich von Poblotzki](https://github.com/uvpoblotzki)
 - [**@toadzky** David Harris](https://github.com/toadzky)
