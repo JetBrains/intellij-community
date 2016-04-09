@@ -38,7 +38,7 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
   }
 
   @Nullable
-  //@Override //Not available in latest trunk at the moment
+  //@Override //May vause issues with older versions of IDEA SDK that are currently supported
   protected Boolean hasModifierProperty(@NotNull PsiModifierList modifierList, @NotNull String name) {
 
     if (DumbService.isDumb(modifierList.getProject()) || !valProcessor.isEnabled(modifierList.getProject())) {
