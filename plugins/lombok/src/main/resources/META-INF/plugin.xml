@@ -140,6 +140,8 @@
 
     <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.ValueProcessor"/>
 
+    <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.UtilityClassProcessor"/>
+
     <processor implementation="de.plushnikov.intellij.plugin.processor.field.DelegateFieldProcessor"/>
     <processor implementation="de.plushnikov.intellij.plugin.processor.field.GetterFieldProcessor"/>
     <processor implementation="de.plushnikov.intellij.plugin.processor.field.SetterFieldProcessor"/>
@@ -153,6 +155,7 @@
 
     <modifierProcessor implementation="de.plushnikov.intellij.plugin.processor.modifier.ValueModifierProcessor" />
     <modifierProcessor implementation="de.plushnikov.intellij.plugin.processor.modifier.ValModifierProcessor" />
+    <modifierProcessor implementation="de.plushnikov.intellij.plugin.processor.modifier.UtilityClassModifierProcessor"/>
   </extensions>
 
   <actions>
