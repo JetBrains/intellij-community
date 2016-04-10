@@ -3,7 +3,6 @@ package de.plushnikov;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
-import com.intellij.util.ReflectionUtil;
 
 /**
  * Simple extension of {@link LightCodeInsightFixtureTestCase} that allows skipping test cases
@@ -18,7 +17,7 @@ public abstract class ApiVersionAwareLightCodeInsightFixureTestCase extends Ligh
     if (requiredVersionAnnotation != null) {
       return requiredVersionAnnotation.value();
     }
-    return getCurrentVersion().asStringWithoutProductCodeAndSnapshot();
+    return getCurrentVersion().asStringWithoutProductCode();
   }
 
   @Override
