@@ -1,6 +1,5 @@
 package de.plushnikov.intellij.plugin.processor.modifier;
 
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiModifier;
@@ -11,7 +10,6 @@ import com.intellij.testFramework.PlatformTestUtil;
 import de.plushnikov.ApiVersionAwareLightCodeInsightFixureTestCase;
 import de.plushnikov.RequiredApiVersion;
 import de.plushnikov.intellij.plugin.provider.LombokAugmentProvider;
-import lombok.NonNull;
 import org.jetbrains.annotations.NotNull;
 
 /**
