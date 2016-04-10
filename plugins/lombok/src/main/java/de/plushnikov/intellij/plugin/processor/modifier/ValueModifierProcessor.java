@@ -1,8 +1,6 @@
 package de.plushnikov.intellij.plugin.processor.modifier;
 
-import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
@@ -36,12 +34,9 @@ public class ValueModifierProcessor implements ModifierProcessor {
   @SuppressWarnings("unchecked")
   public Boolean hasModifierProperty(@NotNull PsiModifierList modifierList, @NotNull String name) {
 
-    //TODO: Take care of @Wither, and similar
+    /* FINAL */
     PsiModifierListOwner searchableClass = PsiTreeUtil.getParentOfType(modifierList, PsiModifierListOwner.class, false);
-
-
     if (PsiModifier.FINAL.equals(name)) {
-
       if ( null != searchableClass && !PsiAnnotationSearchUtil.isAnnotatedWith(searchableClass, lombok.experimental.NonFinal.class)) {
         return Boolean.TRUE;
       }
@@ -49,12 +44,16 @@ public class ValueModifierProcessor implements ModifierProcessor {
       return null;
     }
 
+    /* PRIVATE */
     if (PsiModifier.PRIVATE.equals(name)) {
       if (modifierList.getParent() instanceof PsiField) {
         return Boolean.TRUE;
       }
+
+      return null;
     }
 
+    /* _default_ */
     return null;
   }
 }
