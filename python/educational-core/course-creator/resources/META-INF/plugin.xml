@@ -27,10 +27,6 @@
     <studyActionsProvider implementation="com.jetbrains.edu.coursecreator.CCStudyActionsProvider"/>
   </extensions>
 
-  <application-components>
-    <!-- Add your application components here -->
-  </application-components>
-
   <project-components>
     <component>
       <implementation-class>com.jetbrains.edu.coursecreator.CCProjectComponent</implementation-class>
@@ -47,21 +43,29 @@
     <action id="CreateLesson" class="com.jetbrains.edu.coursecreator.actions.CCCreateLesson">
       <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFile"/>
     </action>
-    <action id="ChangeCourseInfo" class="com.jetbrains.edu.coursecreator.actions.CCChangeCourseInfo">
-      <add-to-group group-id="ProjectViewPopupMenu" anchor="before" relative-to-action="PackCourse"/>
-    </action>
     <action id="CreateTask" class="com.jetbrains.edu.coursecreator.actions.CCCreateTask">
       <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFile"/>
     </action>
     <action id="CreateTaskFile" class="com.jetbrains.edu.coursecreator.actions.CCCreateTaskFile">
       <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFile"/>
     </action>
-    <action id="AddTaskFile" class="com.jetbrains.edu.coursecreator.actions.CCAddAsTaskFile" text="Add As Task File">
-      <add-to-group group-id="ProjectViewPopupMenu" anchor="first"/>
-    </action>
 
     <group id="CCProjectViewGroup">
+      <action id="AddTaskFile" class="com.jetbrains.edu.coursecreator.actions.CCAddAsTaskFile" text="Add As Task File"/>
+      <action id="ShowPreview" class="com.jetbrains.edu.coursecreator.actions.CCShowPreview">
+        <add-to-group group-id="EditorTabPopupMenu"/>
+      </action>
       <action id="DeleteAllPlaceholders" class="com.jetbrains.edu.coursecreator.actions.CCDeleteAllAnswerPlaceholdersAction"/>
+      <action id="PackCourse" class="com.jetbrains.edu.coursecreator.actions.CCCreateCourseArchive">
+        <add-to-group group-id="FileMenu" relative-to-action="FileMainSettingsGroup" anchor="before"/>
+      </action>
+      <action id="PushLesson" class="com.jetbrains.edu.coursecreator.actions.CCPushLesson">
+      <add-to-group group-id="FileMenu" relative-to-action="FileMainSettingsGroup" anchor="before"/>
+      </action>
+      <action id="PushCourse" class="com.jetbrains.edu.coursecreator.actions.CCPushCourse">
+      <add-to-group group-id="FileMenu" relative-to-action="FileMainSettingsGroup" anchor="before"/>
+      </action>
+      <action id="ChangeCourseInfo" class="com.jetbrains.edu.coursecreator.actions.CCChangeCourseInfo"/>
       <separator/>
       <add-to-group group-id="ProjectViewPopupMenu" anchor="before" relative-to-action="CutCopyPasteGroup"/>
     </group>
@@ -74,26 +78,7 @@
       <add-to-group group-id="EditorPopupMenu" anchor="first"/>
     </group>
 
-    <action id="ShowTaskWindowDetails" class="com.jetbrains.edu.coursecreator.actions.CCShowAnswerPlaceholderDetails">
-      <add-to-group group-id="EditorPopupMenu" anchor="before" relative-to-action="CopyReference"/>
-    </action>
-    <action id="ShowPreview" class="com.jetbrains.edu.coursecreator.actions.CCShowPreview">
-      <add-to-group group-id="ProjectViewPopupMenu" anchor="first"/>
-      <add-to-group group-id="EditorTabPopupMenu"/>
-    </action>
-    <action id="PackCourse" class="com.jetbrains.edu.coursecreator.actions.CCCreateCourseArchive">
-      <add-to-group group-id="ProjectViewPopupMenu" anchor="before" relative-to-action="CutCopyPasteGroup"/>
-      <add-to-group group-id="FileMenu" relative-to-action="FileMainSettingsGroup" anchor="before"/>
-    </action>
     <action id="UnpackCourse" class="com.jetbrains.edu.coursecreator.actions.CCFromCourseArchive"/>
-    <action id="PushLesson" class="com.jetbrains.edu.coursecreator.actions.CCPushLesson">
-      <add-to-group group-id="ProjectViewPopupMenu" anchor="before" relative-to-action="CutCopyPasteGroup"/>
-      <add-to-group group-id="FileMenu" relative-to-action="FileMainSettingsGroup" anchor="before"/>
-    </action>
-    <action id="PushCourse" class="com.jetbrains.edu.coursecreator.actions.CCPushCourse">
-      <add-to-group group-id="ProjectViewPopupMenu" anchor="before" relative-to-action="CutCopyPasteGroup"/>
-      <add-to-group group-id="FileMenu" relative-to-action="FileMainSettingsGroup" anchor="before"/>
-    </action>
   </actions>
 
 </idea-plugin>
