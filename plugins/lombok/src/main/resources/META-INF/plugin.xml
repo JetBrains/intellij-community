@@ -156,6 +156,7 @@
     <modifierProcessor implementation="de.plushnikov.intellij.plugin.processor.modifier.ValueModifierProcessor" />
     <modifierProcessor implementation="de.plushnikov.intellij.plugin.processor.modifier.ValModifierProcessor" />
     <modifierProcessor implementation="de.plushnikov.intellij.plugin.processor.modifier.UtilityClassModifierProcessor"/>
+    <modifierProcessor implementation="de.plushnikov.intellij.plugin.processor.modifier.FieldDefaultsModifierProcessor" />
   </extensions>
 
   <actions>
