@@ -68,24 +68,40 @@ public class FieldDefaultsModifierTest extends ApiVersionAwareLightCodeInsightFi
 
   //<editor-fold desc="Handling of visibility modifiers">
 
+  public void testFieldDefaultsNone() {
+
+    PsiModifierList modifierList = getFieldModifierListAtCaret();
+
+    assertFalse("@FieldDefaults should not make fields public", modifierList.hasModifierProperty(PsiModifier.PUBLIC));
+    assertFalse("@FieldDefaults should not make fields protected", modifierList.hasModifierProperty(PsiModifier.PROTECTED));
+    assertFalse("@FieldDefaults should not make fields private", modifierList.hasModifierProperty(PsiModifier.PRIVATE));
+    assertTrue("@FieldDefaults should keep fields as package-private", modifierList.hasModifierProperty(PsiModifier.PACKAGE_LOCAL));
+  }
+
   public void testFieldDefaultsPublic() {
 
     PsiModifierList modifierList = getFieldModifierListAtCaret();
 
     assertTrue("@FieldDefaults(level = AccessLevel.PUBLIC) should make non-@PackagePrivate fields public", modifierList.hasModifierProperty(PsiModifier.PUBLIC));
+    assertFalse("@FieldDefaults(level = AccessLevel.PUBLIC) should not make fields protected", modifierList.hasModifierProperty(PsiModifier.PROTECTED));
+    assertFalse("@FieldDefaults(level = AccessLevel.PUBLIC) should not make fields private", modifierList.hasModifierProperty(PsiModifier.PRIVATE));
   }
 
   public void testFieldDefaultsProtected() {
 
     PsiModifierList modifierList = getFieldModifierListAtCaret();
 
+    assertFalse("@FieldDefaults(level = AccessLevel.PROTECTED) should not make fields public", modifierList.hasModifierProperty(PsiModifier.PUBLIC));
     assertTrue("@FieldDefaults(level = AccessLevel.PROTECTED) should non-@PackagePrivate make fields protected", modifierList.hasModifierProperty(PsiModifier.PROTECTED));
+    assertFalse("@FieldDefaults(level = AccessLevel.PROTECTED) should not make fields private", modifierList.hasModifierProperty(PsiModifier.PRIVATE));
   }
 
   public void testFieldDefaultsPrivate() {
 
     PsiModifierList modifierList = getFieldModifierListAtCaret();
 
+    assertFalse("@FieldDefaults(level = AccessLevel.PRIVATE) should not make fields public", modifierList.hasModifierProperty(PsiModifier.PUBLIC));
+    assertFalse("@FieldDefaults(level = AccessLevel.PRIVATE) should not make fields protected", modifierList.hasModifierProperty(PsiModifier.PROTECTED));
     assertTrue("@FieldDefaults(level = AccessLevel.PRIVATE) should make non-@PackagePrivate fields private", modifierList.hasModifierProperty(PsiModifier.PRIVATE));
   }
 
