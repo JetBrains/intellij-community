@@ -11,7 +11,7 @@ public class UtilityClassTest extends AbstractLombokParsingTestCase {
     return ApplicationInfo.getInstance().getBuild().compareTo(BuildNumber.fromString("146.1154")) >= 0;
   }
 
-  public void testUtilityClassPlain() throws IOException {
+  public void testUtilityclass$UtilityClassPlain() throws IOException {
     doTest(true);
   }
 }

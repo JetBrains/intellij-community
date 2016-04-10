@@ -88,7 +88,7 @@ public class UtilityClassProcessor extends AbstractClassProcessor {
                 .withNavigationElement(psiAnnotation)
                 .withModifier(PsiModifier.PRIVATE);
 
-        String methodBody = String.format("throw new %s(%s)", "java.lang.UnsupportedOperationException", "\"This is a utility class and cannot be instantiated\"");
+        String methodBody = String.format("throw new %s(%s);", "java.lang.UnsupportedOperationException", "\"This is a utility class and cannot be instantiated\"");
 
         constructor.withBody(PsiMethodUtil.createCodeBlockFromText(methodBody, psiClass));
         target.add(constructor);
