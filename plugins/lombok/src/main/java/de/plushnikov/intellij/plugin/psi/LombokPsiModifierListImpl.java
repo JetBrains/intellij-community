@@ -2,11 +2,13 @@ package de.plushnikov.intellij.plugin.psi;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.impl.cache.ModifierFlags;
 import com.intellij.psi.impl.java.stubs.PsiModifierListStub;
@@ -16,6 +18,8 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
+import de.plushnikov.intellij.plugin.extension.LombokProcessorExtensionPoint;
+import de.plushnikov.intellij.plugin.processor.modifier.ModifierProcessor;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import lombok.Value;
@@ -42,8 +46,35 @@ public class LombokPsiModifierListImpl extends PsiModifierListImpl {
     super(node);
   }
 
-  private static final Set<String> VISIBILITIES = new HashSet<String>(Arrays.asList(PsiModifier.PUBLIC, PsiModifier.PROTECTED, PsiModifier.PRIVATE));
-//
+  @Override
+  public boolean hasModifierProperty(@NotNull String name) {
+    final Boolean result = processAugments(this, name);
+    if(null!=result) {
+      return result;
+    }else {
+      return super.hasModifierProperty(name);
+    }
+  }
+
+  private Boolean processAugments(@NotNull PsiModifierList modifierList, @NotNull String name) {
+    if (DumbService.isDumb(modifierList.getProject())) {
+      return null;
+    }
+
+    // Loop through all available processors and give all of them a chance to respond
+    for (ModifierProcessor processor: LombokProcessorExtensionPoint.EP_NAME_MODIFIER_PROCESSOR.getExtensions()) {
+      if (processor.isSupported(modifierList, name)) {
+        Boolean valueProcessorResult = processor.hasModifierProperty(modifierList, name);
+
+        // We found a match with a 'non-null' value, it is authoritative response
+        if (valueProcessorResult != null) {
+          return valueProcessorResult;
+        }
+      }
+    }
+    return null;
+  }
+
 //  @Override
 //  public PsiModifierListStub getStub() {
 //    final PsiModifierListStub stub = super.getStub();
@@ -54,123 +85,68 @@ public class LombokPsiModifierListImpl extends PsiModifierListImpl {
 //    }
 //  }
 
-  @Override
-  public boolean hasModifierProperty(@NotNull String name) {
-    if (PsiModifier.FINAL.equals(name)) {
-      return hasFinalProperty(name);
-    } else if (VISIBILITIES.contains(name)) {
-      return hasVisibilityProperty(name);
-    } else {
-      return defaultModifier(name);
-    }
-  }
-
-  private boolean hasFinalProperty(String name) {
-    return new LombokFinalPropertyCachedValueProvider(getParent(), defaultModifier(name)).compute().getValue();
-//    return CachedValuesManager.getCachedValue(this, new LombokFinalPropertyCachedValueProvider(getParent(), defaultModifier(name)));
-  }
-
-  private boolean hasVisibilityProperty(String name) {
-    return defaultModifier(name);
-//    return PsiModifier.PRIVATE.equals(name) && new LombokPrivatePropertyCachedValueProvider(getParent(), defaultModifier(name)).compute().getValue();
-  }
-
-  private boolean defaultModifier(@NotNull String name) {
-    return super.hasModifierProperty(name);
-  }
-
-  private static final Logger log = Logger.getInstance(LombokPsiModifierListImpl.class.getName());
-
-  private static class LombokFinalPropertyCachedValueProvider implements CachedValueProvider<Boolean> {
-    private final PsiElement parentElement;
-    private final boolean defaultModifier;
-
-    public LombokFinalPropertyCachedValueProvider(PsiElement parentElement, boolean defaultModifier) {
-      this.parentElement = parentElement;
-      this.defaultModifier = defaultModifier;
-    }
-
-    @Nullable
-    @Override
-    public Result<Boolean> compute() {
-      log.info("Computed for " + ((PsiNamedElement) parentElement).getName());
-
-      boolean result = defaultModifier;
-
-      Collection<PsiElement> dependencies = new ArrayList<PsiElement>();
-      dependencies.add(parentElement);
-
-      final PsiClass parentClass = PsiTreeUtil.getParentOfType(parentElement, PsiClass.class, true);
-      if (null != parentClass) {
-        PsiAnnotation lombokAnnotation = PsiAnnotationSearchUtil.findAnnotation(parentClass, Value.class);
-        boolean hasLombokFinalProperty = null != lombokAnnotation;
-        if (!hasLombokFinalProperty) {
-          lombokAnnotation = PsiAnnotationSearchUtil.findAnnotation(parentClass, FieldDefaults.class);
-          hasLombokFinalProperty = null != lombokAnnotation && PsiAnnotationUtil.getBooleanAnnotationValue(lombokAnnotation, "makeFinal", false);
-        }
-
-        if (null != lombokAnnotation) {
-          dependencies.add(lombokAnnotation);
-        }
-
-        if (hasLombokFinalProperty) {
-          final PsiField parentField = PsiTreeUtil.getParentOfType(parentElement, PsiField.class, false);
-          if (parentField != null) {
-            final PsiAnnotation nonFinalAnnotation = PsiAnnotationSearchUtil.findAnnotation(parentField, NonFinal.class);
-            if (null == nonFinalAnnotation) {
-              result = true;
-            } else {
-              dependencies.add(nonFinalAnnotation);
-            }
-          }
-        }
-      }
-
-      return Result.create(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
-    }
-  }
-
-  private static class LombokPrivatePropertyCachedValueProvider implements CachedValueProvider<Boolean> {
-    private final PsiElement parentElement;
-    private final boolean defaultModifier;
-
-    public LombokPrivatePropertyCachedValueProvider(PsiElement parentElement, boolean defaultModifier) {
-      this.parentElement = parentElement;
-      this.defaultModifier = defaultModifier;
-    }
-
-    @Nullable
-    @Override
-    public Result<Boolean> compute() {
-      log.info("Computed for " + ((PsiNamedElement) parentElement).getName());
-
-      boolean result = defaultModifier;
-
-      Collection<PsiElement> dependencies = new ArrayList<PsiElement>();
-      dependencies.add(parentElement);
-
-      final PsiClass parentClass = PsiTreeUtil.getParentOfType(parentElement, PsiClass.class, true);
-      if (null != parentClass) {
-        PsiAnnotation lombokAnnotation = PsiAnnotationSearchUtil.findAnnotation(parentClass, Value.class);
-        boolean hasLombokFinalProperty = null != lombokAnnotation;
-        if (!hasLombokFinalProperty) {
-          lombokAnnotation = PsiAnnotationSearchUtil.findAnnotation(parentClass, FieldDefaults.class);
-          hasLombokFinalProperty = null != lombokAnnotation && PsiAnnotationUtil.getBooleanAnnotationValue(lombokAnnotation, "makeFinal", false);
-        }
-
-        if (null != lombokAnnotation) {
-          dependencies.add(lombokAnnotation);
-        }
-
-        if (hasLombokFinalProperty) {
-          final PsiField parentField = PsiTreeUtil.getParentOfType(parentElement, PsiField.class, false);
-          if (parentField != null) {
-              result = true;
-          }
-        }
-      }
-
-      return Result.create(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
-    }
-  }
+//  private boolean hasFinalProperty(String name) {
+//    return new LombokFinalPropertyCachedValueProvider(getParent(), defaultModifier(name)).compute().getValue();
+////    return CachedValuesManager.getCachedValue(this, new LombokFinalPropertyCachedValueProvider(getParent(), defaultModifier(name)));
+//  }
+//
+//  private boolean hasVisibilityProperty(String name) {
+//    return defaultModifier(name);
+////    return PsiModifier.PRIVATE.equals(name) && new LombokPrivatePropertyCachedValueProvider(getParent(), defaultModifier(name)).compute().getValue();
+//  }
+//
+//  private boolean defaultModifier(@NotNull String name) {
+//    return super.hasModifierProperty(name);
+//  }
+//
+//  private static final Logger log = Logger.getInstance(LombokPsiModifierListImpl.class.getName());
+//
+//  private static class LombokFinalPropertyCachedValueProvider implements CachedValueProvider<Boolean> {
+//    private final PsiElement parentElement;
+//    private final boolean defaultModifier;
+//
+//    public LombokFinalPropertyCachedValueProvider(PsiElement parentElement, boolean defaultModifier) {
+//      this.parentElement = parentElement;
+//      this.defaultModifier = defaultModifier;
+//    }
+//
+//    @Nullable
+//    @Override
+//    public Result<Boolean> compute() {
+//      log.info("Computed for " + ((PsiNamedElement) parentElement).getName());
+//
+//      boolean result = defaultModifier;
+//
+//      Collection<PsiElement> dependencies = new ArrayList<PsiElement>();
+//      dependencies.add(parentElement);
+//
+//      final PsiClass parentClass = PsiTreeUtil.getParentOfType(parentElement, PsiClass.class, true);
+//      if (null != parentClass) {
+//        PsiAnnotation lombokAnnotation = PsiAnnotationSearchUtil.findAnnotation(parentClass, Value.class);
+//        boolean hasLombokFinalProperty = null != lombokAnnotation;
+//        if (!hasLombokFinalProperty) {
+//          lombokAnnotation = PsiAnnotationSearchUtil.findAnnotation(parentClass, FieldDefaults.class);
+//          hasLombokFinalProperty = null != lombokAnnotation && PsiAnnotationUtil.getBooleanAnnotationValue(lombokAnnotation, "makeFinal", false);
+//        }
+//
+//        if (null != lombokAnnotation) {
+//          dependencies.add(lombokAnnotation);
+//        }
+//
+//        if (hasLombokFinalProperty) {
+//          final PsiField parentField = PsiTreeUtil.getParentOfType(parentElement, PsiField.class, false);
+//          if (parentField != null) {
+//            final PsiAnnotation nonFinalAnnotation = PsiAnnotationSearchUtil.findAnnotation(parentField, NonFinal.class);
+//            if (null == nonFinalAnnotation) {
+//              result = true;
+//            } else {
+//              dependencies.add(nonFinalAnnotation);
+//            }
+//          }
+//        }
+//      }
+//
+//      return Result.create(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+//    }
+//  }
 }
