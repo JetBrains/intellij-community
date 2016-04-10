@@ -1,6 +1,5 @@
 package de.plushnikov.intellij.plugin.processor.modifier;
 
-import com.intellij.JavaTestUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLocalVariable;
@@ -9,19 +8,20 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import de.plushnikov.ApiVersionAwareLightCodeInsightFixureTestCase;
+import de.plushnikov.RequiredApiVersion;
 import de.plushnikov.intellij.plugin.provider.LombokAugmentProvider;
 
 /**
  * @author Alexej Kubarev
  */
-public class ValModifierTest extends LightCodeInsightFixtureTestCase {
+@RequiredApiVersion("146.1154") // Modifier augmentation has been added in build 146.1154
+public class ValModifierTest extends ApiVersionAwareLightCodeInsightFixureTestCase {
 
   @Override
   protected String getTestDataPath() {
     return "testData/augment/modifier";
   }
-
 
   @Override
   public void setUp() throws Exception {
