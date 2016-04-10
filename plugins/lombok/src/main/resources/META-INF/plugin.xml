@@ -111,6 +111,7 @@
                      groupName="Java language level migration aids" enabledByDefault="true" level="WARNING"
                      implementationClass="de.plushnikov.intellij.plugin.inspection.LombokExplicitTypeCanBeDiamondInspection" order="last"/>
 
+    <!--Only use it until Build 146.1154-->
 		<lang.parserDefinition language="JAVA" implementationClass="de.plushnikov.intellij.plugin.extension.LombokJavaParserDefinition" order="first"/>
   </extensions>
 
