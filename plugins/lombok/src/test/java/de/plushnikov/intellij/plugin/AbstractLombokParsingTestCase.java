@@ -54,7 +54,11 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
   }
 
   public void doTest() throws IOException {
-    final String fileName = getTestName(false).replace('$', '/') + ".java";
+    doTest(false);
+  }
+
+  public void doTest(final boolean lowercaseFirstLetter) throws IOException {
+    final String fileName = getTestName(lowercaseFirstLetter).replace('$', '/') + ".java";
     final String beforeFileName = "before/" + fileName;
     final String afterFileName = "after/" + fileName;
     doTest(beforeFileName, afterFileName);
