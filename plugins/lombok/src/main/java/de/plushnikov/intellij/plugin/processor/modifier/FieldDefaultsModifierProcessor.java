@@ -14,11 +14,13 @@ import lombok.AccessLevel;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Set;
 
 /**
+ * Processor for <strong>experimental</strong> {@literal @FieldDefaults} feature of Lombok.
+ *
  * @author Alexej Kubarev
+ * @see <a href="https://projectlombok.org/features/experimental/FieldDefaults.html">Lombok Feature: Field Defaults</a>
  */
 public class FieldDefaultsModifierProcessor implements ModifierProcessor {
 
@@ -56,10 +58,6 @@ public class FieldDefaultsModifierProcessor implements ModifierProcessor {
       return null; // Should not get here, but safer to check
     }
 
-    if (!(modifierList.getParent() instanceof PsiField)) {
-      return null; // Should not get here, but safer to check
-    }
-
     PsiField parentElement = (PsiField) modifierList.getParent();
 
     // FINAL
@@ -68,6 +66,9 @@ public class FieldDefaultsModifierProcessor implements ModifierProcessor {
       if (!PsiAnnotationSearchUtil.isAnnotatedWith(parentElement, lombok.experimental.NonFinal.class)) {
         return Boolean.TRUE;
       }
+
+      // We can't answer to FINAL at this point
+      return null;
     }
 
     // VISIBILITY
@@ -99,6 +100,7 @@ public class FieldDefaultsModifierProcessor implements ModifierProcessor {
       return Boolean.TRUE;
     }
 
+    // _default_
     return null;
   }
 
