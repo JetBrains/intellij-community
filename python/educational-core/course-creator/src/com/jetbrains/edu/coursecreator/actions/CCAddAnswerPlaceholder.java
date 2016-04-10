@@ -5,15 +5,18 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.JBColor;
+import com.intellij.util.DocumentUtil;
 import com.jetbrains.edu.coursecreator.ui.CCCreateAnswerPlaceholderDialog;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduAnswerPlaceholderPainter;
 import com.jetbrains.edu.learning.core.EduNames;
+import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import org.jetbrains.annotations.NotNull;
@@ -57,6 +60,7 @@ public class CCAddAnswerPlaceholder extends CCAnswerPlaceholderAction {
     final AnswerPlaceholder answerPlaceholder = new AnswerPlaceholder();
     answerPlaceholder.setLine(lineNumber);
     answerPlaceholder.setStart(realStart);
+    answerPlaceholder.setUseLength(false);
     String selectedText = model.getSelectedText();
     answerPlaceholder.setPossibleAnswer(selectedText);
 
@@ -70,9 +74,37 @@ public class CCAddAnswerPlaceholder extends CCAnswerPlaceholderAction {
     int index = taskFile.getAnswerPlaceholders().size() + 1;
     answerPlaceholder.setIndex(index);
     taskFile.addAnswerPlaceholder(answerPlaceholder);
+    answerPlaceholder.setTaskFile(taskFile);
     taskFile.sortAnswerPlaceholders();
-    EduAnswerPlaceholderPainter.drawAnswerPlaceholder(editor, answerPlaceholder, false, JBColor.BLUE);
-    EduAnswerPlaceholderPainter.createGuardedBlocks(editor, answerPlaceholder, false);
+
+
+    computeInitialState(project, file, taskFile, document);
+
+    EduAnswerPlaceholderPainter.drawAnswerPlaceholder(editor, answerPlaceholder, JBColor.BLUE);
+    EduAnswerPlaceholderPainter.createGuardedBlocks(editor, answerPlaceholder);
+  }
+
+  private static void computeInitialState(Project project, PsiFile file, TaskFile taskFile, Document document) {
+    Document patternDocument = StudyUtils.getPatternDocument(taskFile, file.getName());
+    if (patternDocument == null) {
+      return;
+    }
+    DocumentUtil.writeInRunUndoTransparentAction(() -> {
+      patternDocument.replaceString(0, patternDocument.getTextLength(), document.getCharsSequence());
+      FileDocumentManager.getInstance().saveDocument(patternDocument);
+    });
+    TaskFile target = new TaskFile();
+    TaskFile.copy(taskFile, target);
+    List<AnswerPlaceholder> placeholders = target.getAnswerPlaceholders();
+    for (AnswerPlaceholder placeholder : placeholders) {
+      placeholder.setUseLength(false);
+    }
+    EduUtils.createStudentDocument(project, target, file.getVirtualFile(), patternDocument);
+
+    for (int i = 0; i < placeholders.size(); i++) {
+      AnswerPlaceholder fromPlaceholder = placeholders.get(i);
+      taskFile.getAnswerPlaceholders().get(i).setInitialState(fromPlaceholder);
+    }
   }
 
   @Override
@@ -98,8 +130,8 @@ public class CCAddAnswerPlaceholder extends CCAnswerPlaceholderAction {
       answerPlaceholders.remove(answerPlaceholder);
       final Editor editor = state.getEditor();
       editor.getMarkupModel().removeAllHighlighters();
-      StudyUtils.drawAllWindows(editor, taskFile, false);
-      EduAnswerPlaceholderPainter.createGuardedBlocks(editor, taskFile, false);
+      StudyUtils.drawAllWindows(editor, taskFile);
+      EduAnswerPlaceholderPainter.createGuardedBlocks(editor, taskFile);
     }
   }
 

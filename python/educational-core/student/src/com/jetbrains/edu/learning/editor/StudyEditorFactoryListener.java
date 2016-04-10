@@ -16,12 +16,12 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.jetbrains.edu.learning.StudyTaskManager;
+import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduDocumentListener;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
-import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.navigation.StudyNavigator;
 import com.jetbrains.edu.learning.ui.StudyToolWindowFactory;
 import org.jetbrains.annotations.NotNull;
@@ -48,7 +48,7 @@ public class StudyEditorFactoryListener implements EditorFactoryListener {
         return;
       }
       int startOffset = answerPlaceholder.getRealStartOffset(editor.getDocument());
-      editor.getSelectionModel().setSelection(startOffset, startOffset + answerPlaceholder.getLength());
+      editor.getSelectionModel().setSelection(startOffset, startOffset + answerPlaceholder.getRealLength());
       answerPlaceholder.setSelected(true);
     }
   }
@@ -84,12 +84,12 @@ public class StudyEditorFactoryListener implements EditorFactoryListener {
                     return;
                   }
 
+                  StudyEditor.addDocumentListener(document, new EduDocumentListener(taskFile, true));
+
                   if (!taskFile.getAnswerPlaceholders().isEmpty()) {
                     StudyNavigator.navigateToFirstAnswerPlaceholder(editor, taskFile);
                     boolean isStudyProject = EduNames.STUDY.equals(course.getCourseType());
-                    StudyEditor.addDocumentListener(document, new EduDocumentListener(taskFile, true,
-                                                                                      !isStudyProject));
-                    StudyUtils.drawAllWindows(editor, taskFile, isStudyProject);
+                    StudyUtils.drawAllWindows(editor, taskFile);
                     if (isStudyProject) {
                       editor.addEditorMouseListener(new WindowSelectionListener(taskFile));
                     }

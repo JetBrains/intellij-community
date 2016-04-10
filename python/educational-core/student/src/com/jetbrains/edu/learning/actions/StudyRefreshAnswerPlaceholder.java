@@ -6,9 +6,11 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.jetbrains.edu.learning.StudyActionListener;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.StudyState;
@@ -29,6 +31,9 @@ public class StudyRefreshAnswerPlaceholder extends DumbAwareAction {
     Project project = e.getProject();
     if (project == null) {
       return;
+    }
+    for (StudyActionListener listener : Extensions.getExtensions(StudyActionListener.EP_NAME)) {
+      listener.beforeCheck(e);
     }
     final AnswerPlaceholder answerPlaceholder = getAnswerPlaceholder(e);
     if (answerPlaceholder == null) {
@@ -51,7 +56,7 @@ public class StudyRefreshAnswerPlaceholder extends DumbAwareAction {
           public void run() {
             Document document = studyState.getEditor().getDocument();
             int offset = answerPlaceholder.getRealStartOffset(document);
-            document.deleteString(offset, offset + answerPlaceholder.getLength());
+            document.deleteString(offset, offset + answerPlaceholder.getRealLength());
             document.insertString(offset, text);
           }
         });

@@ -9,7 +9,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Ref;
-import com.jetbrains.edu.learning.StudyCheckActionListener;
+import com.jetbrains.edu.learning.StudyActionListener;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.checker.StudyCheckUtils;
 import icons.InteractiveLearningIcons;
@@ -38,7 +38,7 @@ public abstract class StudyCheckAction extends StudyActionWithShortcut {
       StudyCheckUtils.showTestResultPopUp("Checking is not available while indexing is in progress", MessageType.WARNING.getPopupBackground(), project);
       return;
     }
-    for (StudyCheckActionListener listener : Extensions.getExtensions(StudyCheckActionListener.EP_NAME)) {
+    for (StudyActionListener listener : Extensions.getExtensions(StudyActionListener.EP_NAME)) {
       listener.beforeCheck(e);
     }
     check(project);

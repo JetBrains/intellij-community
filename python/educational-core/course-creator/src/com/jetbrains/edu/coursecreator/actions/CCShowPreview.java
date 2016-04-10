@@ -148,7 +148,7 @@ public class CCShowPreview extends DumbAwareAction {
       }
     });
     for (AnswerPlaceholder answerPlaceholder : taskFileCopy.getAnswerPlaceholders()) {
-      EduAnswerPlaceholderPainter.drawAnswerPlaceholder(createdEditor, answerPlaceholder, true, JBColor.BLUE);
+      EduAnswerPlaceholderPainter.drawAnswerPlaceholder(createdEditor, answerPlaceholder, JBColor.BLUE);
     }
     JPanel header = new JPanel();
     header.setLayout(new BoxLayout(header, BoxLayout.Y_AXIS));

@@ -184,7 +184,7 @@ public class CCFromCourseArchive extends DumbAwareAction {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           @Override
           public void run() {
-            final String text = document.getText(TextRange.create(offset, offset + answerPlaceholder.getLength()));
+            final String text = document.getText(TextRange.create(offset, offset + answerPlaceholder.getRealLength()));
             answerPlaceholder.setTaskText(text);
             answerPlaceholder.init();
             final VirtualFile hints = project.getBaseDir().findChild(EduNames.HINTS);
@@ -200,7 +200,7 @@ public class CCFromCourseArchive extends DumbAwareAction {
               }
             }
 
-            document.replaceString(offset, offset + answerPlaceholder.getLength(), answerPlaceholder.getPossibleAnswer());
+            document.replaceString(offset, offset + answerPlaceholder.getRealLength(), answerPlaceholder.getPossibleAnswer());
             FileDocumentManager.getInstance().saveDocument(document);
           }
         });

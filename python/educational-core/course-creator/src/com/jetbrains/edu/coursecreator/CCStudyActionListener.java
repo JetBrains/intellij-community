@@ -7,14 +7,16 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.DocumentUtil;
-import com.jetbrains.edu.learning.StudyCheckActionListener;
+import com.jetbrains.edu.learning.StudyActionListener;
 import com.jetbrains.edu.learning.StudyUtils;
+import com.jetbrains.edu.learning.core.EduUtils;
+import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.learning.courseFormat.Task;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
 
 import java.util.Map;
 
-public class CCStudyCheckActionListener implements StudyCheckActionListener {
+public class CCStudyActionListener implements StudyActionListener {
   @Override
   public void beforeCheck(AnActionEvent event) {
     Project project = event.getProject();
@@ -52,6 +54,12 @@ public class CCStudyCheckActionListener implements StudyCheckActionListener {
         patternDocument.replaceString(0, patternDocument.getTextLength(), document.getCharsSequence());
         FileDocumentManager.getInstance().saveDocument(patternDocument);
       });
+      TaskFile target = new TaskFile();
+      TaskFile.copy(taskFile, target);
+      for (AnswerPlaceholder placeholder : target.getAnswerPlaceholders()) {
+        placeholder.setUseLength(false);
+      }
+      EduUtils.createStudentDocument(project, target, child, patternDocument);
     }
   }
 }

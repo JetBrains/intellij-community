@@ -41,7 +41,8 @@ public class CCVirtualFileListener extends VirtualFileAdapter {
     if (CCUtils.isTestsFile(project, createdFile)
         || EduNames.TASK_HTML.equals(name)
         || name.contains(EduNames.WINDOW_POSTFIX)
-        || name.contains(EduNames.WINDOWS_POSTFIX)) {
+        || name.contains(EduNames.WINDOWS_POSTFIX)
+        || name.contains(EduNames.ANSWERS_POSTFIX)) {
       return;
     }
 
