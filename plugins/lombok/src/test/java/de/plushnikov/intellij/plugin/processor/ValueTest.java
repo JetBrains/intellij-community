@@ -54,4 +54,8 @@ public class ValueTest extends AbstractLombokParsingTestCase {
   public void testValue$ValueWithGeneric176() throws IOException {
     doTest(true);
   }
+
+  public void testValue$ValueWithPackagePrivate() throws IOException {
+    doTest(true);
+  }
 }

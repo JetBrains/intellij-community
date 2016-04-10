@@ -36,32 +36,35 @@ public class ValueModifierProcessor implements ModifierProcessor {
   }
 
   @Override
-  @SuppressWarnings("unchecked")
   public Boolean hasModifierProperty(@NotNull PsiModifierList modifierList, @NotNull String name) {
 
-    /* FINAL */
-    if (PsiModifier.FINAL.equals(name)) {
-      PsiModifierListOwner searchableElement = PsiTreeUtil.getParentOfType(modifierList, PsiModifierListOwner.class, false);
-      if (null != searchableElement && !PsiAnnotationSearchUtil.isAnnotatedWith(searchableElement, lombok.experimental.NonFinal.class)) {
-        return Boolean.TRUE;
+    final PsiModifierListOwner parentElement = PsiTreeUtil.getParentOfType(modifierList, PsiModifierListOwner.class, false);
+    if (null != parentElement) {
+
+      // FINAL
+      if (PsiModifier.FINAL.equals(name)) {
+        if (!PsiAnnotationSearchUtil.isAnnotatedWith(parentElement, lombok.experimental.NonFinal.class)) {
+          return Boolean.TRUE;
+        }
       }
 
-      return null;
-    }
-
-    if (modifierList.getParent() instanceof PsiField &&
-        // Visibility is only changed for not package private fields
-        // TODO add support for @PackagePrivate
-        !(modifierList.hasExplicitModifier(PsiModifier.PUBLIC) ||
-            modifierList.hasExplicitModifier(PsiModifier.PRIVATE) ||
-            modifierList.hasExplicitModifier(PsiModifier.PRIVATE))) {
-        /* PRIVATE */
+      // PRIVATE
       if (PsiModifier.PRIVATE.equals(name)) {
-        return Boolean.TRUE;
+        if (modifierList.getParent() instanceof PsiField &&
+            // Visibility is only changed for package private fields
+            hasPackagePrivateModifier(modifierList) &&
+            // except they are annotated with @PackagePrivate
+            !PsiAnnotationSearchUtil.isAnnotatedWith(parentElement, lombok.experimental.PackagePrivate.class)) {
+          return Boolean.TRUE;
+        }
       }
     }
-
-    /* _default_ */
+    // _default_
     return null;
+  }
+
+  private boolean hasPackagePrivateModifier(@NotNull PsiModifierList modifierList) {
+    return !(modifierList.hasExplicitModifier(PsiModifier.PUBLIC) || modifierList.hasExplicitModifier(PsiModifier.PRIVATE) ||
+        modifierList.hasExplicitModifier(PsiModifier.PROTECTED));
   }
 }

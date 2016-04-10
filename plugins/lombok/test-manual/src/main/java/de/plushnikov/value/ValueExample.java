@@ -12,6 +12,6 @@ public class ValueExample {
   double score;
 
   public void la() {
-    ValueExample.builder().age(1).build();
+//    ValueExample.builder().age(1).build();
   }
 }
