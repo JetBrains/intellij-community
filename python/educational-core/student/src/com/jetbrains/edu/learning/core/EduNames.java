@@ -43,6 +43,7 @@ public class EduNames {
   public static final String PYCHARM = "PyCharm";
 
   public static String PLACEHOLDER = "Answer Placeholder";
+  public  static String SRC = "src";
   private EduNames() {
   }
 

@@ -3,11 +3,13 @@ package com.jetbrains.edu.learning.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Ref;
+import com.jetbrains.edu.learning.StudyCheckActionListener;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.checker.StudyCheckUtils;
 import icons.InteractiveLearningIcons;
@@ -35,6 +37,9 @@ public abstract class StudyCheckAction extends StudyActionWithShortcut {
     if (DumbService.isDumb(project)) {
       StudyCheckUtils.showTestResultPopUp("Checking is not available while indexing is in progress", MessageType.WARNING.getPopupBackground(), project);
       return;
+    }
+    for (StudyCheckActionListener listener : Extensions.getExtensions(StudyCheckActionListener.EP_NAME)) {
+      listener.beforeCheck(e);
     }
     check(project);
   }

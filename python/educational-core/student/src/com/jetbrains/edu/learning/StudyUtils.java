@@ -529,4 +529,20 @@ public class StudyUtils {
     }
     return lesson.getTask(taskVF.getName());
   }
+
+  @Nullable
+  public static VirtualFile getTaskDir(@NotNull VirtualFile taskFile) {
+    VirtualFile parent = taskFile.getParent();
+    if (parent == null) {
+      return null;
+    }
+    String name = parent.getName();
+    if (name.contains(EduNames.TASK)) {
+      return parent;
+    }
+    if (EduNames.SRC.equals(name)) {
+      return parent.getParent();
+    }
+    return null;
+  }
 }

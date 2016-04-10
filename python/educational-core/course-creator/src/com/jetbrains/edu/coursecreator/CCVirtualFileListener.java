@@ -37,7 +37,11 @@ public class CCVirtualFileListener extends VirtualFileAdapter {
       return;
     }
 
-    if (CCUtils.isTestsFile(project, createdFile) || EduNames.TASK_HTML.equals(createdFile.getName())) {
+    String name = createdFile.getName();
+    if (CCUtils.isTestsFile(project, createdFile)
+        || EduNames.TASK_HTML.equals(name)
+        || name.contains(EduNames.WINDOW_POSTFIX)
+        || name.contains(EduNames.WINDOWS_POSTFIX)) {
       return;
     }
 
@@ -45,14 +49,14 @@ public class CCVirtualFileListener extends VirtualFileAdapter {
     if (taskVF == null) {
       return;
     }
-    Task task = StudyUtils.getTask(project,taskVF);
+    Task task = StudyUtils.getTask(project, taskVF);
     if (task == null) {
       return;
     }
 
     createResourceFile(createdFile, course, taskVF);
 
-    task.addTaskFile(createdFile.getName(), 1);
+    task.addTaskFile(name, 1);
   }
 
   private static void createResourceFile(VirtualFile createdFile, Course course, VirtualFile taskVF) {
@@ -77,76 +81,76 @@ public class CCVirtualFileListener extends VirtualFileAdapter {
     }
   }
 
-    @Override
-    public void fileDeleted(@NotNull VirtualFileEvent event) {
-      VirtualFile removedFile = event.getFile();
-      if (removedFile.getPath().contains(CCUtils.GENERATED_FILES_FOLDER)) {
-        return;
-      }
-
-      Project project = ProjectUtil.guessProjectForFile(removedFile);
-      if (project == null) {
-        return;
-      }
-      Course course = StudyTaskManager.getInstance(project).getCourse();
-      if (course == null) {
-        return;
-      }
-      final TaskFile taskFile = StudyUtils.getTaskFile(project, removedFile);
-      if (taskFile != null) {
-        deleteTaskFile(removedFile, taskFile);
-        return;
-      }
-      if (removedFile.getName().contains(EduNames.TASK)) {
-        deleteTask(course, removedFile);
-      }
-      if (removedFile.getName().contains(EduNames.LESSON)) {
-        deleteLesson(course, removedFile, project);
-      }
+  @Override
+  public void fileDeleted(@NotNull VirtualFileEvent event) {
+    VirtualFile removedFile = event.getFile();
+    if (removedFile.getPath().contains(CCUtils.GENERATED_FILES_FOLDER)) {
+      return;
     }
 
-    private static void deleteLesson(@NotNull final Course course, @NotNull final VirtualFile removedLessonFile, Project project) {
-      Lesson removedLesson = course.getLesson(removedLessonFile.getName());
-      if (removedLesson == null) {
-        return;
-      }
-      VirtualFile courseDir = project.getBaseDir();
-      CCUtils.updateHigherElements(courseDir.getChildren(), new Function<VirtualFile, StudyItem>() {
-        @Override
-        public StudyItem fun(VirtualFile file) {
-          return course.getLesson(file.getName());
-        }
-      }, removedLesson.getIndex(), EduNames.LESSON, -1);
-      course.getLessons().remove(removedLesson);
+    Project project = ProjectUtil.guessProjectForFile(removedFile);
+    if (project == null) {
+      return;
     }
+    Course course = StudyTaskManager.getInstance(project).getCourse();
+    if (course == null) {
+      return;
+    }
+    final TaskFile taskFile = StudyUtils.getTaskFile(project, removedFile);
+    if (taskFile != null) {
+      deleteTaskFile(removedFile, taskFile);
+      return;
+    }
+    if (removedFile.getName().contains(EduNames.TASK)) {
+      deleteTask(course, removedFile);
+    }
+    if (removedFile.getName().contains(EduNames.LESSON)) {
+      deleteLesson(course, removedFile, project);
+    }
+  }
 
-    private static void deleteTask(@NotNull final Course course, @NotNull final VirtualFile removedTask) {
-      VirtualFile lessonDir = removedTask.getParent();
-      if (lessonDir == null || !lessonDir.getName().contains(EduNames.LESSON)) {
-        return;
-      }
-      final Lesson lesson = course.getLesson(lessonDir.getName());
-      if (lesson == null) {
-        return;
-      }
-      Task task = lesson.getTask(removedTask.getName());
-      if (task == null) {
-        return;
-      }
-      CCUtils.updateHigherElements(lessonDir.getChildren(), new Function<VirtualFile, StudyItem>() {
-        @Override
-        public StudyItem fun(VirtualFile file) {
-          return lesson.getTask(file.getName());
-        }
-      }, task.getIndex(), EduNames.TASK, -1);
-      lesson.getTaskList().remove(task);
+  private static void deleteLesson(@NotNull final Course course, @NotNull final VirtualFile removedLessonFile, Project project) {
+    Lesson removedLesson = course.getLesson(removedLessonFile.getName());
+    if (removedLesson == null) {
+      return;
     }
+    VirtualFile courseDir = project.getBaseDir();
+    CCUtils.updateHigherElements(courseDir.getChildren(), new Function<VirtualFile, StudyItem>() {
+      @Override
+      public StudyItem fun(VirtualFile file) {
+        return course.getLesson(file.getName());
+      }
+    }, removedLesson.getIndex(), EduNames.LESSON, -1);
+    course.getLessons().remove(removedLesson);
+  }
 
-    private static void deleteTaskFile(@NotNull final VirtualFile removedTaskFile, TaskFile taskFile) {
-      Task task = taskFile.getTask();
-      if (task == null) {
-        return;
-      }
-      task.getTaskFiles().remove(removedTaskFile.getName());
+  private static void deleteTask(@NotNull final Course course, @NotNull final VirtualFile removedTask) {
+    VirtualFile lessonDir = removedTask.getParent();
+    if (lessonDir == null || !lessonDir.getName().contains(EduNames.LESSON)) {
+      return;
     }
+    final Lesson lesson = course.getLesson(lessonDir.getName());
+    if (lesson == null) {
+      return;
+    }
+    Task task = lesson.getTask(removedTask.getName());
+    if (task == null) {
+      return;
+    }
+    CCUtils.updateHigherElements(lessonDir.getChildren(), new Function<VirtualFile, StudyItem>() {
+      @Override
+      public StudyItem fun(VirtualFile file) {
+        return lesson.getTask(file.getName());
+      }
+    }, task.getIndex(), EduNames.TASK, -1);
+    lesson.getTaskList().remove(task);
+  }
+
+  private static void deleteTaskFile(@NotNull final VirtualFile removedTaskFile, TaskFile taskFile) {
+    Task task = taskFile.getTask();
+    if (task == null) {
+      return;
+    }
+    task.getTaskFiles().remove(removedTaskFile.getName());
+  }
 }

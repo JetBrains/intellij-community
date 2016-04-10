@@ -25,6 +25,7 @@
   </extensions>
   <extensions defaultExtensionNs="Edu">
     <studyActionsProvider implementation="com.jetbrains.edu.coursecreator.CCStudyActionsProvider"/>
+    <studyCheckActionListener implementation="com.jetbrains.edu.coursecreator.CCStudyCheckActionListener"/>
   </extensions>
 
   <project-components>
