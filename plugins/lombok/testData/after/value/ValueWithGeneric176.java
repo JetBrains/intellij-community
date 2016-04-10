@@ -1,6 +1,6 @@
-public class ValueWithGeneric176<T> {
-    private T name;
-    private int count;
+public final class ValueWithGeneric176<T> {
+    private final T name;
+    private final int count;
 
     @java.beans.ConstructorProperties({"name", "count"})
     private ValueWithGeneric176(T name, int count) {

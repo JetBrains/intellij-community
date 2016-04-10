@@ -1,58 +1,61 @@
 package de.plushnikov.intellij.plugin.processor;
 
+import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.util.BuildNumber;
 import de.plushnikov.intellij.plugin.AbstractLombokParsingTestCase;
 
 import java.io.IOException;
 
 public class ValueTest extends AbstractLombokParsingTestCase {
   protected boolean shouldCompareModifiers() {
-    return false;
+    return ApplicationInfo.getInstance().getBuild().compareTo(BuildNumber.fromString("146.1154")) >= 0;
   }
 
   protected boolean shouldCompareCodeBlocks() {
     return false;
   }
 
-  public void testValueIssue78() throws IOException {
-    //TODO After adding support for final Modifier on class/fields -> adapt test
-    doTest();
+  public void testValue$ValueIssue78() throws IOException {
+    doTest(true);
   }
 
-  public void testValueIssue94() throws IOException {
-    //TODO After adding support for final Modifier on class/fields -> adapt test
-    doTest();
+  public void testValue$ValueIssue94() throws IOException {
+    doTest(true);
   }
 
-  public void testValuePlain() throws IOException {
-    //TODO add support for final Modifier on class
-    doTest();
+  public void testValue$ValuePlain() throws IOException {
+    doTest(true);
   }
 
-  public void testValueExperimental() throws IOException {
-    doTest();
+  public void testValue$ValueExperimental() throws IOException {
+    doTest(true);
   }
 
-  public void testValueExperimentalStarImport() throws IOException {
-    doTest();
+  public void testValue$ValueExperimentalStarImport() throws IOException {
+    doTest(true);
   }
 
-  public void testValueBuilder() throws IOException {
-    doTest();
+  public void testValue$ValueBuilder() throws IOException {
+    doTest(true);
   }
 
-  public void testValueAndBuilder93() throws IOException {
-    doTest();
+  public void testValue$ValueAndBuilder93() throws IOException {
+    doTest(true);
   }
 
-  public void testValueAndWither() throws IOException {
-    doTest();
+  public void testValue$ValueAndWither() throws IOException {
+    doTest(true);
   }
 
-  public void testValueAndWitherAndRequiredConstructor() throws IOException {
-    doTest();
+  public void testValue$ValueAndWitherAndRequiredConstructor() throws IOException {
+    doTest(true);
   }
 
-  public void testValueWithGeneric176() throws IOException {
-    doTest();
+  public void testValue$ValueWithGeneric176() throws IOException {
+    doTest(true);
+  }
+
+  public void testValue$ValueWithPackagePrivate() throws IOException {
+    doTest(true);
   }
 }

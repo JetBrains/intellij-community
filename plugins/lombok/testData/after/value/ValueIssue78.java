@@ -1,8 +1,8 @@
 import lombok.Value;
 
-public class Foo {
-  String one;
-  String two = "foo";
+public final class Foo {
+  private final String one;
+  private final String two = "foo";
 
   @java.beans.ConstructorProperties({"one"})
   public Foo(String one) {

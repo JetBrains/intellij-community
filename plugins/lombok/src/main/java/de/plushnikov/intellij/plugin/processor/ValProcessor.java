@@ -108,17 +108,6 @@ public class ValProcessor extends AbstractProcessor {
     return LOMBOK_VAL_SHORT_NAME.equals(className) || LOMBOK_VAL_FQN.equals(className);
   }
 
-  public Boolean hasModifierProperty(@NotNull PsiModifierList modifierList, @NotNull String name) {
-    final PsiElement parent = modifierList.getParent();
-
-    //Only apply final modifier to val local variables
-    if (PsiModifier.FINAL.equals(name) && parent instanceof PsiLocalVariable && isVal((PsiLocalVariable) parent)) {
-      return Boolean.TRUE;
-    }
-
-    return null;
-  }
-
   @Nullable
   public PsiType inferType(PsiTypeElement typeElement) {
     PsiType psiType = null;

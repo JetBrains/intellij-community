@@ -1,9 +1,9 @@
-public class Zoo {
-  private String meerkat;
-  private String warthog;
+public final class Zoo {
+  private final String meerkat;
+  private final String warthog;
 
   @java.beans.ConstructorProperties({"meerkat", "warthog"})
-  public Zoo(String meerkat, String warthog) {
+  Zoo(String meerkat, String warthog) {
     this.meerkat = meerkat;
     this.warthog = warthog;
   }
