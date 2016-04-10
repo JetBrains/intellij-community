@@ -1,58 +1,57 @@
 package de.plushnikov.intellij.plugin.processor;
 
+import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.util.BuildNumber;
 import de.plushnikov.intellij.plugin.AbstractLombokParsingTestCase;
 
 import java.io.IOException;
 
 public class ValueTest extends AbstractLombokParsingTestCase {
   protected boolean shouldCompareModifiers() {
-    return false;
+    return ApplicationInfo.getInstance().getBuild().compareTo(BuildNumber.fromString("146.1154")) >= 0;
   }
 
   protected boolean shouldCompareCodeBlocks() {
     return false;
   }
 
-  public void testValueIssue78() throws IOException {
-    //TODO After adding support for final Modifier on class/fields -> adapt test
+  public void testValue$ValueIssue78() throws IOException {
     doTest();
   }
 
-  public void testValueIssue94() throws IOException {
-    //TODO After adding support for final Modifier on class/fields -> adapt test
+  public void testValue$ValueIssue94() throws IOException {
     doTest();
   }
 
-  public void testValuePlain() throws IOException {
-    //TODO add support for final Modifier on class
+  public void testValue$ValuePlain() throws IOException {
     doTest();
   }
 
-  public void testValueExperimental() throws IOException {
+  public void testValue$ValueExperimental() throws IOException {
     doTest();
   }
 
-  public void testValueExperimentalStarImport() throws IOException {
+  public void testValue$ValueExperimentalStarImport() throws IOException {
     doTest();
   }
 
-  public void testValueBuilder() throws IOException {
+  public void testValue$ValueBuilder() throws IOException {
     doTest();
   }
 
-  public void testValueAndBuilder93() throws IOException {
+  public void testValue$ValueAndBuilder93() throws IOException {
     doTest();
   }
 
-  public void testValueAndWither() throws IOException {
+  public void testValue$ValueAndWither() throws IOException {
     doTest();
   }
 
-  public void testValueAndWitherAndRequiredConstructor() throws IOException {
+  public void testValue$ValueAndWitherAndRequiredConstructor() throws IOException {
     doTest();
   }
 
-  public void testValueWithGeneric176() throws IOException {
+  public void testValue$ValueWithGeneric176() throws IOException {
     doTest();
   }
 }

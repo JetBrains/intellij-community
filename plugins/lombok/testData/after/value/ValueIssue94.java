@@ -2,11 +2,11 @@ import java.lang.Override;
 import java.lang.String;
 import java.lang.StringBuilder;
 
-public /*final*/ class Val {
+public final class Val {
 
-  String nonFinal;
+  private String nonFinal;
 
-  /*final*/ String otherFinal;
+  private final String otherFinal;
 
   public Val(String otherFinal) {
     this.otherFinal = otherFinal;

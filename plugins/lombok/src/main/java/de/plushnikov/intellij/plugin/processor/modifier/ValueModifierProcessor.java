@@ -1,6 +1,7 @@
 package de.plushnikov.intellij.plugin.processor.modifier;
 
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
@@ -14,7 +15,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ValueModifierProcessor implements ModifierProcessor {
 
-
   @Override
   @SuppressWarnings("unchecked")
   public boolean isSupported(@NotNull PsiModifierList modifierList, @NotNull String name) {
@@ -24,10 +24,15 @@ public class ValueModifierProcessor implements ModifierProcessor {
       return false;
     }
 
+    // @Value only makes fields and class final, methods are to be skipped
+    final PsiElement modifierListParent = modifierList.getParent();
+    if (!(modifierListParent instanceof PsiField || modifierListParent instanceof PsiClass)) {
+      return false;
+    }
+
     PsiClass searchableClass = PsiTreeUtil.getParentOfType(modifierList, PsiClass.class, true);
 
     return null != searchableClass && PsiAnnotationSearchUtil.isAnnotatedWith(searchableClass, lombok.Value.class, lombok.experimental.Value.class);
-
   }
 
   @Override
@@ -35,22 +40,25 @@ public class ValueModifierProcessor implements ModifierProcessor {
   public Boolean hasModifierProperty(@NotNull PsiModifierList modifierList, @NotNull String name) {
 
     /* FINAL */
-    PsiModifierListOwner searchableClass = PsiTreeUtil.getParentOfType(modifierList, PsiModifierListOwner.class, false);
     if (PsiModifier.FINAL.equals(name)) {
-      if ( null != searchableClass && !PsiAnnotationSearchUtil.isAnnotatedWith(searchableClass, lombok.experimental.NonFinal.class)) {
+      PsiModifierListOwner searchableElement = PsiTreeUtil.getParentOfType(modifierList, PsiModifierListOwner.class, false);
+      if (null != searchableElement && !PsiAnnotationSearchUtil.isAnnotatedWith(searchableElement, lombok.experimental.NonFinal.class)) {
         return Boolean.TRUE;
       }
 
       return null;
     }
 
-    /* PRIVATE */
-    if (PsiModifier.PRIVATE.equals(name)) {
-      if (modifierList.getParent() instanceof PsiField) {
+    if (modifierList.getParent() instanceof PsiField &&
+        // Visibility is only changed for not package private fields
+        // TODO add support for @PackagePrivate
+        !(modifierList.hasExplicitModifier(PsiModifier.PUBLIC) ||
+            modifierList.hasExplicitModifier(PsiModifier.PRIVATE) ||
+            modifierList.hasExplicitModifier(PsiModifier.PRIVATE))) {
+        /* PRIVATE */
+      if (PsiModifier.PRIVATE.equals(name)) {
         return Boolean.TRUE;
       }
-
-      return null;
     }
 
     /* _default_ */

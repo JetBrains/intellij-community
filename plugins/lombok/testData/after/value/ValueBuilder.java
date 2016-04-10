@@ -1,9 +1,9 @@
 import lombok.Value;
 import lombok.experimental.Builder;
 
-public class ValueBuilder {
-  String o1;
-  private int o2;
+public final class ValueBuilder {
+  private final String o1;
+  private final int o2;
   private final double o3;
 
   public static void main(String[] args) {

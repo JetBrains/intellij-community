@@ -1,8 +1,8 @@
-public class ValueAndWither {
+public final class ValueAndWither {
   private final String myField;
 
   @java.beans.ConstructorProperties({"myField"})
-  protected ValueAndWither(String myField) {
+  public ValueAndWither(String myField) {
     this.myField = myField;
   }
 

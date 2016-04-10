@@ -76,12 +76,6 @@ public class ValueProcessor extends AbstractClassProcessor {
 
   @SuppressWarnings("deprecation")
   protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
-    //TODO add support for final Modifier on class
-    /*//@Value class are final
-    if (!PsiClassUtil.isFinalClass(psiClass) && !PsiAnnotationUtil.isAnnotatedWith(psiClass, NonFinal.class)) {
-      PsiUtil.setModifierProperty(psiClass, PsiModifier.FINAL, true);
-    }
-    */
 
     if (PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, Getter.class)) {
       target.addAll(getterProcessor.createFieldGetters(psiClass, PsiModifier.PUBLIC));

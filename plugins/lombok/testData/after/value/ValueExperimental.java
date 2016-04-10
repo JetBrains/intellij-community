@@ -1,4 +1,4 @@
-final class ValueExperimental1 {
+final final class ValueExperimental1 {
 	@java.lang.SuppressWarnings("all")
 	public ValueExperimental1() {
 	}

@@ -1,5 +1,6 @@
 package de.plushnikov.value;
 
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.Value;
 import lombok.experimental.NonFinal;
@@ -8,7 +9,7 @@ import lombok.experimental.NonFinal;
 @RequiredArgsConstructor
 public class Val {
 
-  //  @NonNull
+//  @NonNull
   @NonFinal
   String s1;
 
@@ -16,6 +17,8 @@ public class Val {
 
   public void test() {
     Val val = new Val("other");
+    s1 = "this is possible";
+//    other = "this is not possible";
   }
 
   public static void main(String[] args) {
