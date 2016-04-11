@@ -107,7 +107,8 @@ public abstract class TransactionGuard {
    * @param transaction code to execute inside a transaction.
    */
   public static void submitTransaction(@NotNull Disposable parentDisposable, @NotNull Runnable transaction) {
-    getInstance().submitMergeableTransaction(parentDisposable, TransactionKind.ANY_CHANGE, transaction);
+    TransactionGuard guard = getInstance();
+    guard.submitMergeableTransaction(parentDisposable, guard.getContextTransaction(), transaction);
   }
 
   /**
@@ -119,27 +120,10 @@ public abstract class TransactionGuard {
   /**
    * Schedules a transaction and waits for it to be completed. Fails if invoked on UI thread inside an incompatible transaction,
    * or inside a read action on non-UI thread.
-   * @see #submitMergeableTransaction(Disposable, TransactionKind, Runnable)
+   * @see #submitMergeableTransaction(Disposable, TransactionId, Runnable)
    * @throws ProcessCanceledException if current thread is interrupted
    */
   public abstract void submitTransactionAndWait(@NotNull Runnable transaction) throws ProcessCanceledException;
-
-  /**
-   * A synchronous version of {@link #submitMergeableTransaction(Disposable, TransactionKind, Runnable)}.
-   * @return a token object for this transaction. Call {@link AccessToken#finish()} (inside finally) when the transaction is complete.
-   */
-  @NotNull
-  public abstract AccessToken startSynchronousTransaction(@NotNull TransactionKind kind);
-
-  /**
-   * Same as {@link #submitMergeableTransaction(Disposable, TransactionKind, Runnable)} with no parent disposable.
-   */
-  public void submitMergeableTransaction(@NotNull TransactionKind kind, @NotNull Runnable transaction) {
-    submitMergeableTransaction(ApplicationManager.getApplication(), kind, transaction);
-  }
-
-  @Deprecated
-  public abstract void submitMergeableTransaction(@NotNull Disposable parentDisposable, @NotNull TransactionKind kind, @NotNull Runnable transaction);
 
   /**
    * Executes the given runnable inside a transaction as soon as possible on the UI thread. The runnable is executed either when there's
@@ -153,13 +137,6 @@ public abstract class TransactionGuard {
    * @see #getContextTransaction()
    */
   public abstract void submitMergeableTransaction(@NotNull Disposable parentDisposable, @Nullable TransactionId mergeInto, @NotNull Runnable transaction);
-
-  /**
-   * Asserts that a transaction is currently running, or not. Callable only on Swing thread.
-   * @param transactionRequired whether the assertion should check that the application is inside transaction or not
-   * @param errorMessage the message that will be logged if current transaction status differs from the expected one
-   */
-  public abstract void assertInsideTransaction(boolean transactionRequired, @NotNull String errorMessage);
 
   /**
    * @return the id of the currently running transaction for using in {@link #submitMergeableTransaction(Disposable, TransactionId, Runnable)},
