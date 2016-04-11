@@ -105,6 +105,9 @@ val HttpRequest.host: String?
 val HttpRequest.origin: String?
   get() = headers().getAsString(HttpHeaderNames.ORIGIN)
 
+val HttpRequest.referrer: String?
+  get() = headers().getAsString(HttpHeaderNames.REFERER)
+
 inline fun <T> ByteBuf.releaseIfError(task: () -> T): T {
   try {
     return task()

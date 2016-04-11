@@ -40,17 +40,8 @@ internal class DelegatingHttpRequestHandler : DelegatingHttpRequestHandlerBase()
                        request: FullHttpRequest,
                        urlDecoder: QueryStringDecoder): Boolean {
     fun HttpRequestHandler.checkAndProcess(): Boolean {
-      if (isAllowRequestOnlyFromLocalOrigin) {
-        request.origin?.let {
-          try {
-            if (!isOwnHostName(URI(it).host)) {
-              return false
-            }
-          }
-          catch (e: Exception) {
-            return false
-          }
-        }
+      if (isAllowRequestOnlyFromLocalOrigin && (!parseAndCheckIsOwnHostName(request.origin) || !parseAndCheckIsOwnHostName(request.referrer))) {
+        return false
       }
 
       return process(urlDecoder, request, context)
@@ -102,4 +93,15 @@ internal class DelegatingHttpRequestHandler : DelegatingHttpRequestHandlerBase()
       super.exceptionCaught(context, cause)
     }
   }
+}
+
+private fun parseAndCheckIsOwnHostName(uri: String?): Boolean {
+  try {
+    if (uri == null || isOwnHostName(URI(uri).host)) {
+      return true
+    }
+  }
+  catch (ignored: Exception) {
+  }
+  return false
 }
