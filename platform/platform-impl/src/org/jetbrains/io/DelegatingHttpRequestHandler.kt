@@ -96,11 +96,11 @@ internal class DelegatingHttpRequestHandler : DelegatingHttpRequestHandlerBase()
   }
 }
 
-fun HttpRequest.isLocalOrigin() = parseAndCheckIsOwnHostName(origin) && parseAndCheckIsOwnHostName(referrer)
+fun HttpRequest.isLocalOrigin() = parseAndCheckIsLocalHost(origin) && parseAndCheckIsLocalHost(referrer)
 
-private fun parseAndCheckIsOwnHostName(uri: String?): Boolean {
+private fun parseAndCheckIsLocalHost(uri: String?): Boolean {
   try {
-    if (uri == null || isOwnHostName(URI(uri).host)) {
+    if (uri == null || isLocalHost(URI(uri).host)) {
       return true
     }
   }
