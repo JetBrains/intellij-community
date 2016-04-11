@@ -37,11 +37,11 @@ class OpenFileXmlRpcHandler {
   }
 
   private static boolean doOpen(@NotNull String path, int line, int column) {
-    OpenFileHttpService.OpenFileRequest request = new OpenFileHttpService.OpenFileRequest();
-    request.file = path;
-    request.line = line;
-    request.column = column;
-    request.focused = false;
+    OpenFileRequest request = new OpenFileRequest();
+    request.setFile(path);
+    request.setLine(line);
+    request.setColumn(column);
+    request.setFocused(false);
     return HttpRequestHandler.EP_NAME.findExtension(OpenFileHttpService.class).openFile(request).getState() != Promise.State.REJECTED;
   }
 }
