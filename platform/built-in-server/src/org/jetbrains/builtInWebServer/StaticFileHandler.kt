@@ -1,6 +1,7 @@
 package org.jetbrains.builtInWebServer
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VFileProperty
 import com.intellij.util.PathUtilRt
 import com.intellij.util.isDirectory
 import io.netty.buffer.ByteBufUtf8Writer
@@ -30,10 +31,15 @@ private class StaticFileHandler : WebServerFileHandler() {
         return true
       }
 
-      sendIoFile(channel, ioFile, request)
+      sendIoFile(channel, ioFile, Paths.get(pathInfo.root.path), request)
     }
     else {
       val file = pathInfo.file!!
+      if (file.`is`(VFileProperty.HIDDEN)) {
+        HttpResponseStatus.FORBIDDEN.send(channel, request)
+        return true
+      }
+
       val response = FileResponses.prepareSend(request, channel, file.timeStamp, file.name) ?: return true
 
       val keepAlive = response.addKeepAliveIfNeed(request)
@@ -92,14 +98,27 @@ private class StaticFileHandler : WebServerFileHandler() {
   }
 }
 
-fun sendIoFile(channel: Channel, ioFile: Path, request: HttpRequest) {
-  if (hasAccess(ioFile)) {
-    FileResponses.sendFile(request, channel, ioFile)
-  }
-  else {
+private fun sendIoFile(channel: Channel, file: Path, root: Path, request: HttpRequest) {
+  if (file.isDirectory()) {
     HttpResponseStatus.FORBIDDEN.send(channel, request)
+  }
+  else if (checkAccess(channel, file, request, root)) {
+    FileResponses.sendFile(request, channel, file)
   }
 }
 
+fun checkAccess(channel: Channel, file: Path, request: HttpRequest, root: Path): Boolean {
+  var parent = file
+  do {
+    if (!hasAccess(parent)) {
+      HttpResponseStatus.FORBIDDEN.send(channel, request)
+      return false
+    }
+    parent = parent.parent ?: break
+  }
+  while (parent != root)
+  return true
+}
+
 // deny access to .htaccess files
-private fun hasAccess(result: Path) = !result.isDirectory() && Files.isReadable(result) && !(Files.isHidden(result) || result.fileName.toString().startsWith(".ht"))
+private fun hasAccess(result: Path) = Files.isReadable(result) && !(Files.isHidden(result) || result.fileName.toString().startsWith(".ht"))
