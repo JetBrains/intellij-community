@@ -80,7 +80,7 @@ public class UpdateCheckerComponent implements ApplicationComponent {
       if (!ConfigImportHelper.isFirstSession()) {
         String title = IdeBundle.message("update.notifications.title");
         String message = IdeBundle.message("update.channel.enforced", ChannelStatus.EAP);
-        notify(app, UpdateChecker.NOTIFICATIONS.createNotification(title, message, NotificationType.INFORMATION, null));
+        UpdateChecker.NOTIFICATIONS.createNotification(title, message, NotificationType.INFORMATION, null).notify(null);
       }
     }
 
@@ -97,18 +97,18 @@ public class UpdateCheckerComponent implements ApplicationComponent {
       boolean tooOld = !SystemInfo.isJavaVersionAtLeast("1.7");
       String title = IdeBundle.message("update.notifications.title");
       String message = IdeBundle.message(tooOld ? "update.sni.not.available.message" : "update.sni.disabled.message");
-      notify(app, UpdateChecker.NOTIFICATIONS.createNotification(title, message, NotificationType.WARNING, new NotificationListener.Adapter() {
-        @Override
-        protected void hyperlinkActivated(@NotNull Notification notification1, @NotNull HyperlinkEvent e) {
-          notification1.expire();
-          app.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              ShowSettingsUtil.getInstance().showSettingsDialog(null, UpdateSettingsConfigurable.class);
-            }
-          }, ModalityState.NON_MODAL);
-        }
-      }));
+      UpdateChecker.NOTIFICATIONS.createNotification(title, message, NotificationType.WARNING, new NotificationListener.Adapter() {
+          @Override
+          protected void hyperlinkActivated(@NotNull Notification notification1, @NotNull HyperlinkEvent e) {
+            notification1.expire();
+            app.invokeLater(new Runnable() {
+              @Override
+              public void run() {
+                ShowSettingsUtil.getInstance().showSettingsDialog(null, UpdateSettingsConfigurable.class);
+              }
+            }, ModalityState.NON_MODAL);
+          }
+        }).notify(null);
     }
   }
 
@@ -136,15 +136,6 @@ public class UpdateCheckerComponent implements ApplicationComponent {
 
   private void queueNextCheck(long interval) {
     myCheckForUpdatesAlarm.addRequest(myCheckRunnable, interval);
-  }
-
-  private static void notify(Application app, final Notification notification) {
-    app.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        notification.notify(null);
-      }
-    }, ModalityState.NON_MODAL);
   }
 
   @Override
