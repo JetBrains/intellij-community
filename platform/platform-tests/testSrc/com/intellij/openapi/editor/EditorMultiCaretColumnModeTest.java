@@ -298,6 +298,21 @@ public class EditorMultiCaretColumnModeTest extends AbstractEditorTest {
                       "ccccc");
   }
 
+  public void testPasteOfSeveralLinesCopiedFromIdeaToASingleCaret() throws Exception {
+    init("a\n" +
+         "bbb\n" +
+         "ccccc");
+    ((EditorEx)myEditor).setColumnMode(false);
+    mouse().pressAt(0, 0).dragTo(1, 1).release();
+    copy();
+    ((EditorEx)myEditor).setColumnMode(true);
+    mouse().clickAt(1, 0);
+    paste();
+    checkResultByText("a\n" +
+                      "a<caret>bbb\n" +
+                      "b<caret>ccccc");
+  }
+
   public void testSelectToDocumentStart() throws Exception {
     init("line1\n" +
          "line2\n" +
