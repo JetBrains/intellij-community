@@ -1,0 +1,14 @@
+<products>
+    <product name="IntelliJ IDEA">
+        <code>IU</code>
+        <code>IC</code>
+
+        <channel id="IDEA_EAP" name="IntelliJ IDEA EAP" status="eap" url="" feedback="" majorVersion="2016" licensing="eap">
+            <build number="162.128" version="2016.2 EAP">
+                <message/>
+                <button name="Download" url="" download="true" />
+                <button name="Release Notes" url="" />
+            </build>
+        </channel>
+    </product>
+</products>
