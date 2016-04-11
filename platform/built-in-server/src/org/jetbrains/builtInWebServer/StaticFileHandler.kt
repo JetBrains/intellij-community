@@ -12,7 +12,8 @@ import io.netty.handler.stream.ChunkedStream
 import org.jetbrains.builtInWebServer.ssi.SsiExternalResolver
 import org.jetbrains.builtInWebServer.ssi.SsiProcessor
 import org.jetbrains.io.FileResponses
-import org.jetbrains.io.Responses
+import org.jetbrains.io.addKeepAliveIfNeed
+import org.jetbrains.io.sendStatus
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -37,7 +38,7 @@ private class StaticFileHandler : WebServerFileHandler() {
       val file = pathInfo.file!!
       val response = FileResponses.prepareSend(request, channel, file.timeStamp, file.name) ?: return true
 
-      val keepAlive = Responses.addKeepAliveIfNeed(response, request)
+      val keepAlive = response.addKeepAliveIfNeed(request)
       if (request.method() != HttpMethod.HEAD) {
         HttpUtil.setContentLength(response, file.length)
       }
@@ -68,7 +69,7 @@ private class StaticFileHandler : WebServerFileHandler() {
     try {
       val lastModified = ssiProcessor!!.process(SsiExternalResolver(project, request, path, file.parent), file, ByteBufUtf8Writer(buffer))
       val response = FileResponses.prepareSend(request, channel, lastModified, file.fileName.toString()) ?: return
-      keepAlive = Responses.addKeepAliveIfNeed(response, request)
+      keepAlive = response.addKeepAliveIfNeed(request)
       if (request.method() != HttpMethod.HEAD) {
         HttpUtil.setContentLength(response, buffer.readableBytes().toLong())
       }
@@ -98,7 +99,7 @@ fun sendIoFile(channel: Channel, ioFile: Path, request: HttpRequest) {
     FileResponses.sendFile(request, channel, ioFile)
   }
   else {
-    Responses.sendStatus(HttpResponseStatus.FORBIDDEN, channel, request)
+    HttpResponseStatus.FORBIDDEN.sendStatus(channel, request)
   }
 }
 
