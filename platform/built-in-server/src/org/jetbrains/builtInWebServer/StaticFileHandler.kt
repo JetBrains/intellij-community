@@ -1,7 +1,6 @@
 package org.jetbrains.builtInWebServer
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.util.PathUtilRt
 import com.intellij.util.isDirectory
 import io.netty.buffer.ByteBufUtf8Writer
@@ -24,10 +23,9 @@ private class StaticFileHandler : WebServerFileHandler() {
   override fun process(pathInfo: PathInfo, canonicalPath: CharSequence, project: Project, request: FullHttpRequest, channel: Channel, projectNameIfNotCustomHost: String?): Boolean {
     if (pathInfo.ioFile != null || pathInfo.file!!.isInLocalFileSystem) {
       val ioFile = pathInfo.ioFile ?: Paths.get(pathInfo.file!!.path)
-
-      val nameSequence = pathInfo.name
+      val nameSequence = ioFile.fileName.toString()
       //noinspection SpellCheckingInspection
-      if (StringUtilRt.endsWithIgnoreCase(nameSequence, ".shtml") || StringUtilRt.endsWithIgnoreCase(nameSequence, ".stm") || StringUtilRt.endsWithIgnoreCase(nameSequence, ".shtm")) {
+      if (nameSequence.endsWith(".shtml", true) || nameSequence.endsWith(".stm", true) || nameSequence.endsWith(".shtm", true)) {
         processSsi(ioFile, PathUtilRt.getParentPath(canonicalPath.toString()), project, request, channel)
         return true
       }
