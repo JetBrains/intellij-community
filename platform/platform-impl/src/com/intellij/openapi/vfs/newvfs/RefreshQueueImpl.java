@@ -77,7 +77,7 @@ public class RefreshQueueImpl extends RefreshQueue implements Disposable {
         Application app = ApplicationManager.getApplication();
         // invokeLater might be not necessary once transactions are enforced
         app.invokeLater(
-          () -> TransactionGuard.getInstance().submitMergeableTransaction(app, transaction, session::fireEvents),
+          () -> TransactionGuard.getInstance().submitTransaction(app, transaction, session::fireEvents),
           modality);
       }
     });

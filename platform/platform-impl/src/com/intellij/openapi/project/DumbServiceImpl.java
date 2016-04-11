@@ -546,7 +546,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     //todo remove invokeLater when transactions are executed in "any" modality state
     //noinspection SSBasedInspection
     SwingUtilities.invokeLater(
-      () -> TransactionGuard.getInstance().submitMergeableTransaction(app, myDumbStartTransaction, () -> {
+      () -> TransactionGuard.getInstance().submitTransaction(app, myDumbStartTransaction, () -> {
         try {
           runnable.run();
         } finally {

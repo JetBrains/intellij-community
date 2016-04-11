@@ -429,7 +429,7 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
         myApplication.invokeLater(new Runnable() {
           @Override
           public void run() {
-            guard.submitMergeableTransaction(finalProject, transaction, finalFinishRunnable);
+            guard.submitTransaction(finalProject, transaction, finalFinishRunnable);
           }
         }, task.myCreationModalityState);
       }

@@ -110,8 +110,8 @@ public class TransactionGuardImpl extends TransactionGuard {
   }
 
   @Override
-  public void submitMergeableTransaction(@NotNull Disposable parentDisposable, @Nullable TransactionId mergeInto, @NotNull Runnable _transaction) {
-    final TransactionIdImpl expectedId = (TransactionIdImpl)mergeInto;
+  public void submitTransaction(@NotNull Disposable parentDisposable, @Nullable TransactionId expectedContext, @NotNull Runnable _transaction) {
+    final TransactionIdImpl expectedId = (TransactionIdImpl)expectedContext;
     final Transaction transaction = new Transaction(_transaction, expectedId, parentDisposable);
     final Application app = ApplicationManager.getApplication();
     final boolean isDispatchThread = app.isDispatchThread();
@@ -146,7 +146,7 @@ public class TransactionGuardImpl extends TransactionGuard {
       return false;
     }
 
-    return transaction.mergeInto != null && currentId.myStartCounter <= transaction.mergeInto.myStartCounter;
+    return transaction.expectedContext != null && currentId.myStartCounter <= transaction.expectedContext.myStartCounter;
   }
 
   @Override
@@ -167,7 +167,7 @@ public class TransactionGuardImpl extends TransactionGuard {
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
     final Throwable[] exception = {null};
-    submitMergeableTransaction(Disposer.newDisposable("never disposed"), getContextTransaction(), new Runnable() {
+    submitTransaction(Disposer.newDisposable("never disposed"), getContextTransaction(), new Runnable() {
       @Override
       public void run() {
         try {
@@ -239,7 +239,7 @@ public class TransactionGuardImpl extends TransactionGuard {
     app.invokeLater(new Runnable() {
       @Override
       public void run() {
-        submitMergeableTransaction(parentDisposable, id, transaction);
+        submitTransaction(parentDisposable, id, transaction);
       }
     });
   }
@@ -291,12 +291,12 @@ public class TransactionGuardImpl extends TransactionGuard {
 
   private static class Transaction {
     @NotNull  final Runnable runnable;
-    @Nullable final TransactionIdImpl mergeInto;
+    @Nullable final TransactionIdImpl expectedContext;
     @NotNull  final Disposable parentDisposable;
 
-    Transaction(@NotNull Runnable runnable, @Nullable TransactionIdImpl mergeInto, @NotNull Disposable parentDisposable) {
+    Transaction(@NotNull Runnable runnable, @Nullable TransactionIdImpl expectedContext, @NotNull Disposable parentDisposable) {
       this.runnable = runnable;
-      this.mergeInto = mergeInto;
+      this.expectedContext = expectedContext;
       this.parentDisposable = parentDisposable;
     }
   }

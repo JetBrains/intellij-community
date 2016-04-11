@@ -135,7 +135,7 @@ class TransactionTest extends LightPlatformTestCase {
   public void "test do not merge transactions with null id"() {
     TransactionGuard.submitTransaction testRootDisposable, {
       log << '1'
-      guard.submitMergeableTransaction testRootDisposable, (TransactionId)null, { log << '2' }
+      guard.submitTransaction testRootDisposable, (TransactionId)null, { log << '2' }
       UIUtil.dispatchAllInvocationEvents()
       assert log == ['1']
     }
@@ -149,16 +149,16 @@ class TransactionTest extends LightPlatformTestCase {
       log << '1'
       def id = guard.contextTransaction
       SwingUtilities.invokeLater {
-        guard.submitMergeableTransaction testRootDisposable, id, { log << '4' }
+        guard.submitTransaction testRootDisposable, id, { log << '4' }
       }
-      guard.submitMergeableTransaction testRootDisposable, id, {
+      guard.submitTransaction testRootDisposable, id, {
         UIUtil.dispatchAllInvocationEvents()
         log << '2'
         UIUtil.dispatchAllInvocationEvents()
-        guard.submitMergeableTransaction testRootDisposable, id, { log << '5' }
+        guard.submitTransaction testRootDisposable, id, { log << '5' }
         def nestedId = guard.contextTransaction
         SwingUtilities.invokeLater {
-          guard.submitMergeableTransaction testRootDisposable, nestedId, { log << '3' }
+          guard.submitTransaction testRootDisposable, nestedId, { log << '3' }
           assert log == ['1', '2']
         }
         UIUtil.dispatchAllInvocationEvents()
@@ -178,7 +178,7 @@ class TransactionTest extends LightPlatformTestCase {
         id = guard.contextTransaction
       }
       SwingUtilities.invokeLater {
-        guard.submitMergeableTransaction testRootDisposable, id, { log << '3' }
+        guard.submitTransaction testRootDisposable, id, { log << '3' }
       }
       UIUtil.dispatchAllInvocationEvents()
       assert log == ['1', '2', '3']
