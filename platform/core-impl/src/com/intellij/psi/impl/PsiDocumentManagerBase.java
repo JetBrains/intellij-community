@@ -214,6 +214,11 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   @Override
   public void commitAllDocuments() {
     ApplicationManager.getApplication().assertIsDispatchThread();
+    if (!((TransactionGuardImpl)TransactionGuard.getInstance()).isWriteActionAllowed()) {
+      // please assign exceptions here to Peter
+      LOG.error("Write access is not allowed in this context, see TransactionGuard documentation for details");
+    }
+
     if (myUncommittedDocuments.isEmpty()) return;
 
     final Document[] documents = getUncommittedDocuments();
@@ -286,6 +291,11 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
   @Override
   public void commitDocument(@NotNull final Document doc) {
+    if (!((TransactionGuardImpl)TransactionGuard.getInstance()).isWriteActionAllowed()) {
+      // please assign exceptions here to Peter
+      LOG.error("Write access is not allowed in this context, see TransactionGuard documentation for details");
+    }
+
     final Document document = doc instanceof DocumentWindow ? ((DocumentWindow)doc).getDelegate() : doc;
     if (!isCommitted(document)) {
       doCommit(document);

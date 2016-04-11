@@ -28,6 +28,8 @@ import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.TransactionGuardImpl;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
@@ -298,6 +300,10 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
    */
   public void saveAllDocuments(boolean isExplicit) {
     ApplicationManager.getApplication().assertIsDispatchThread();
+    if (!((TransactionGuardImpl)TransactionGuard.getInstance()).isWriteActionAllowed()) {
+      // please assign exceptions here to Peter
+      LOG.error("Write access is not allowed in this context, see TransactionGuard documentation for details");
+    }
 
     myMultiCaster.beforeAllDocumentsSaving();
     if (myUnsavedDocuments.isEmpty()) return;
@@ -338,6 +344,11 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
 
   public void saveDocument(@NotNull final Document document, final boolean explicit) {
     ApplicationManager.getApplication().assertIsDispatchThread();
+    if (!((TransactionGuardImpl)TransactionGuard.getInstance()).isWriteActionAllowed()) {
+      // please assign exceptions here to Peter
+      LOG.error("Write access is not allowed in this context, see TransactionGuard documentation for details");
+    }
+
     if (!myUnsavedDocuments.contains(document)) return;
 
     try {
