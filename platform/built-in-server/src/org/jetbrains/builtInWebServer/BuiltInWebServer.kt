@@ -28,7 +28,6 @@ import com.intellij.util.UriUtil
 import com.intellij.util.directoryStreamIfExists
 import com.intellij.util.io.URLUtil
 import com.intellij.util.isDirectory
-import com.intellij.util.net.NetUtils
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.FullHttpRequest
 import io.netty.handler.codec.http.HttpMethod
@@ -36,9 +35,8 @@ import io.netty.handler.codec.http.HttpResponseStatus
 import io.netty.handler.codec.http.QueryStringDecoder
 import org.jetbrains.ide.HttpRequestHandler
 import org.jetbrains.io.host
+import org.jetbrains.io.isOwnHostName
 import org.jetbrains.io.send
-import java.net.InetAddress
-import java.net.UnknownHostException
 import java.nio.file.Path
 
 internal val LOG = Logger.getInstance(BuiltInWebServer::class.java)
@@ -219,25 +217,4 @@ fun findIndexFile(basedir: Path): Path? {
     }
   }
   return null
-}
-
-fun isOwnHostName(host: String): Boolean {
-  if (NetUtils.isLocalhost(host)) {
-    return true
-  }
-
-  try {
-    val address = InetAddress.getByName(host)
-    if (host == address.hostAddress || host.equals(address.canonicalHostName, ignoreCase = true)) {
-      return true
-    }
-
-    val localHostName = InetAddress.getLocalHost().hostName
-    // WEB-8889
-    // develar.local is own host name: develar. equals to "develar.labs.intellij.net" (canonical host name)
-    return localHostName.equals(host, ignoreCase = true) || (host.endsWith(".local") && localHostName.regionMatches(0, host, 0, host.length - ".local".length, true))
-  }
-  catch (ignored: UnknownHostException) {
-    return false
-  }
 }

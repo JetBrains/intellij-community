@@ -17,6 +17,7 @@ package org.jetbrains.io
 
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Conditions
+import com.intellij.util.net.NetUtils
 import io.netty.bootstrap.Bootstrap
 import io.netty.bootstrap.ServerBootstrap
 import io.netty.buffer.ByteBuf
@@ -32,7 +33,9 @@ import io.netty.handler.ssl.SslHandler
 import io.netty.util.concurrent.GenericFutureListener
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.ide.PooledThreadExecutor
+import java.net.InetAddress
 import java.net.InetSocketAddress
+import java.net.UnknownHostException
 import java.util.concurrent.TimeUnit
 
 inline fun Bootstrap.handler(crossinline task: (Channel) -> Unit): Bootstrap {
@@ -59,6 +62,7 @@ fun oioClientBootstrap(): Bootstrap {
 }
 
 inline fun ChannelFuture.addChannelListener(crossinline listener: (future: ChannelFuture) -> Unit) {
+  @Suppress("RedundantSamConstructor")
   addListener(GenericFutureListener<ChannelFuture> { listener(it) })
 }
 
@@ -98,6 +102,9 @@ val Channel.uriScheme: String
 val HttpRequest.host: String?
   get() = headers().getAsString(HttpHeaderNames.HOST)
 
+val HttpRequest.origin: String?
+  get() = headers().getAsString(HttpHeaderNames.ORIGIN)
+
 inline fun <T> ByteBuf.releaseIfError(task: () -> T): T {
   try {
     return task()
@@ -109,5 +116,26 @@ inline fun <T> ByteBuf.releaseIfError(task: () -> T): T {
     finally {
       throw e
     }
+  }
+}
+
+fun isOwnHostName(host: String): Boolean {
+  if (NetUtils.isLocalhost(host)) {
+    return true
+  }
+
+  try {
+    val address = InetAddress.getByName(host)
+    if (host == address.hostAddress || host.equals(address.canonicalHostName, ignoreCase = true)) {
+      return true
+    }
+
+    val localHostName = InetAddress.getLocalHost().hostName
+    // WEB-8889
+    // develar.local is own host name: develar. equals to "develar.labs.intellij.net" (canonical host name)
+    return localHostName.equals(host, ignoreCase = true) || (host.endsWith(".local") && localHostName.regionMatches(0, host, 0, host.length - ".local".length, true))
+  }
+  catch (ignored: UnknownHostException) {
+    return false
   }
 }

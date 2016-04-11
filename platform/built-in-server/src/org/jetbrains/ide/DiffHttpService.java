@@ -169,4 +169,9 @@ final class DiffHttpService extends RestService {
     reader.endArray();
     return null;
   }
+
+  @Override
+  public boolean isAllowRequestOnlyFromLocalOrigin() {
+    return false;
+  }
 }

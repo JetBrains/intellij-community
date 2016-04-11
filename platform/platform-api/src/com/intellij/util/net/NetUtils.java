@@ -49,13 +49,7 @@ public class NetUtils {
   }
 
   public static InetAddress getLoopbackAddress() {
-    try {
-      //  todo use JDK 7 InetAddress.getLoopbackAddress()
-      return InetAddress.getByName(null);
-    }
-    catch (UnknownHostException e) {
-      throw new RuntimeException(e);
-    }
+    return InetAddress.getLoopbackAddress();
   }
 
   public static boolean isLocalhost(@NotNull String host) {

@@ -347,4 +347,9 @@ class OpenFileHttpService extends RestService {
 
     public boolean focused = true;
   }
+
+  @Override
+  public boolean isAllowRequestOnlyFromLocalOrigin() {
+    return false;
+  }
 }

@@ -33,6 +33,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.BuiltInServerManager;
+import org.jetbrains.io.NettyKt;
 
 import java.util.Collections;
 import java.util.List;
@@ -83,7 +84,7 @@ public class BuiltInWebBrowserUrlProvider extends WebBrowserUrlProvider implemen
     }
 
     String host = currentAuthority.substring(0, portIndex);
-    if (!BuiltInWebServerKt.isOwnHostName(host)) {
+    if (!NettyKt.isOwnHostName(host)) {
       return false;
     }
 

@@ -74,4 +74,9 @@ public class ProjectSetRequestHandler extends RestService {
     sendOk(request, context);
     return null;
   }
+
+  @Override
+  public boolean isAllowRequestOnlyFromLocalOrigin() {
+    return false;
+  }
 }

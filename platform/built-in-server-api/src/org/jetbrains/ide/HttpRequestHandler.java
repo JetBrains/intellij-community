@@ -50,4 +50,8 @@ public abstract class HttpRequestHandler {
    */
   public abstract boolean process(@NotNull QueryStringDecoder urlDecoder, @NotNull FullHttpRequest request, @NotNull ChannelHandlerContext context)
     throws IOException;
+
+  public boolean isAllowRequestOnlyFromLocalOrigin() {
+    return true;
+  }
 }
