@@ -33,19 +33,14 @@ import static org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute.A
  * @since March 07, 2016
  */
 public final class StructUtils {
-
-  private StructUtils() {
-  }
+  private StructUtils() { }
 
   /**
    * @return the local variables of the current method
    */
   public static List<String> getCurrentMethodLocalVariableNames() {
     final MethodWrapper method = (MethodWrapper) DecompilerContext.getProperty(CURRENT_METHOD_WRAPPER);
-    if (null == method) {
-      return Collections.emptyList();
-    }
-    return getLocalVariables(method.methodStruct);
+    return method == null ? Collections.emptyList() : getLocalVariables(method.methodStruct);
   }
 
   /**
@@ -56,10 +51,9 @@ public final class StructUtils {
     final VBStyleCollection<StructGeneralAttribute, String> methodStruct = structMember.getAttributes();
     final StructGeneralAttribute generalAttribute = methodStruct.getWithKey(ATTRIBUTE_LOCAL_VARIABLE_TABLE);
     if (generalAttribute instanceof StructLocalVariableTableAttribute) {
-      final StructLocalVariableTableAttribute table = (StructLocalVariableTableAttribute) generalAttribute;
+      final StructLocalVariableTableAttribute table = (StructLocalVariableTableAttribute)generalAttribute;
       return Collections.unmodifiableList(new ArrayList<>(table.getMapVarNames().values()));
     }
     return Collections.emptyList();
   }
-
 }
