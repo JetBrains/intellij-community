@@ -255,7 +255,8 @@
 				     <li>Added support for transparent changing of visibility of existing fields and variables</li>
 				     <li>Fixed #56: Missing auto-generated modifiers on fields and class shown in the "Structure" window when using `@Value`</li>
 				     <li>Fixed #137: Private visibility added by @Value not respected by IDE.</li>
-                                     <li>Fixed #147: @FieldDefaults(makeFinal = true) and bitwise operators produce an error message</li>
+				     <li>Fixed #143: Support UtilityClass</li>
+             <li>Fixed #147: @FieldDefaults(makeFinal = true) and bitwise operators produce an error message</li>
 				     <li>Fixed #158: val causes intellij to show an invalid error when used alongside an anonymous class</li>
 				     <li>Fixed #202: @Builder supports setter for final field (@Value)</li>
 				</ol>
