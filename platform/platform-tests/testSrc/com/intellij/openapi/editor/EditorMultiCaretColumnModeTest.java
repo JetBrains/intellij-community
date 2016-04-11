@@ -174,10 +174,10 @@ public class EditorMultiCaretColumnModeTest extends AbstractEditorTest {
     init("aaa aaa<caret>\n" +
          "bbbb bbbb");
     executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN_WITH_SELECTION);
-    executeAction("EditorPreviousWordWithSelection");
+    moveCaretToPreviousWordWithSelection();
     checkResultByText("aaa <selection><caret>aaa</selection>\n" +
                       "bbbb <selection><caret>bb</selection>bb");
-    executeAction("EditorNextWordWithSelection");
+    moveCaretToNextWordWithSelection();
     checkResultByText("aaa aaa<caret>\n" +
                       "bbbb bb<selection>bb<caret></selection>");
   }
@@ -187,7 +187,7 @@ public class EditorMultiCaretColumnModeTest extends AbstractEditorTest {
     mouse().clickAt(0, 2).dragTo(0, 4).release();
     verifyCaretsAndSelections(0, 4, 2, 4);
 
-    executeAction("EditorLeft");
+    left();
     verifyCaretsAndSelections(0, 2, 2, 2);
   }
 
@@ -196,7 +196,7 @@ public class EditorMultiCaretColumnModeTest extends AbstractEditorTest {
     mouse().clickAt(0, 4).dragTo(0, 2).release();
     verifyCaretsAndSelections(0, 2, 2, 4);
 
-    executeAction("EditorRight");
+    right();
     verifyCaretsAndSelections(0, 4, 4, 4);
   }
 
@@ -277,9 +277,9 @@ public class EditorMultiCaretColumnModeTest extends AbstractEditorTest {
          "bbb\n" +
          "ccccc");
     mouse().clickAt(0, 2).dragTo(2, 4).release();
-    executeAction("EditorCopy");
-    executeAction("EditorLineStart");
-    executeAction("EditorPaste");
+    copy();
+    home();
+    paste();
     checkResultByText("  <caret>a\n" +
                       "b <caret>bbb\n" +
                       "cc<caret>ccccc");
@@ -290,9 +290,9 @@ public class EditorMultiCaretColumnModeTest extends AbstractEditorTest {
          "bbb\n" +
          "ccccc");
     mouse().clickAt(1, 2).dragTo(2, 4).release();
-    executeAction("EditorCopy");
+    copy();
     mouse().clickAt(0, 2);
-    executeAction("EditorPaste");
+    paste();
     checkResultByText("a b <caret>\n" +
                       "bbcc<caret>b\n" +
                       "ccccc");
@@ -319,7 +319,7 @@ public class EditorMultiCaretColumnModeTest extends AbstractEditorTest {
          "line3\n" +
          "line4");
     mouse().clickAt(1, 1).dragTo(2, 2).release();
-    executeAction("EditorTextStartWithSelection");
+    executeAction(IdeActions.ACTION_EDITOR_TEXT_START_WITH_SELECTION);
     checkResultByText("<selection><caret>l</selection>ine1\n" +
                       "<selection><caret>l</selection>ine2\n" +
                       "line3\n" +
@@ -332,7 +332,7 @@ public class EditorMultiCaretColumnModeTest extends AbstractEditorTest {
          "line3\n" +
          "line4");
     mouse().clickAt(1, 1).dragTo(2, 2).release();
-    executeAction("EditorTextEndWithSelection");
+    executeAction(IdeActions.ACTION_EDITOR_TEXT_END_WITH_SELECTION);
     checkResultByText("line1\n" +
                       "l<selection>ine2<caret></selection>\n" +
                       "l<selection>ine3<caret></selection>\n" +
