@@ -18,7 +18,6 @@ package com.jetbrains.python.debugger;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import com.google.common.collect.Lists;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -40,10 +39,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 /**
  * @author traff
@@ -54,7 +51,6 @@ public class PySignatureCacheManagerImpl extends PySignatureCacheManager {
   private final static boolean SHOULD_OVERWRITE_TYPES = false;
 
   public static final FileAttribute CALL_SIGNATURES_ATTRIBUTE = new FileAttribute("call.signatures.attribute", 1, true);
-  private static final String RETURN_TYPE = "<RETURN_TYPE>";
 
   private final Project myProject;
 
@@ -143,21 +139,6 @@ public class PySignatureCacheManagerImpl extends PySignatureCacheManager {
     catch (IOException e) {
       LOG.warn("Can't write attribute " + file.getCanonicalPath() + " " + attrString);
     }
-  }
-
-  static String signatureToString(PySignature signature) {
-    return signature.getFunctionName() + "\t" + StringUtil.join(arguments(signature), "\t") +
-           (signature.getReturnType() != null
-            ? "\t" + StringUtil.join(
-             signature.getReturnType().getTypesList().stream().map(s -> RETURN_TYPE + ":" + s).collect(Collectors.toList()), "\t") : "");
-  }
-
-  private static List<String> arguments(PySignature signature) {
-    List<String> res = Lists.newArrayList();
-    for (PySignature.NamedParameter param : signature.getArgs()) {
-      res.add(param.getName() + ":" + param.getTypeQualifiedName());
-    }
-    return res;
   }
 
   @Nullable
