@@ -100,14 +100,8 @@ public class PySignatureCacheManagerImpl extends PySignatureCacheManager {
       String[] parts = sign.split("\t");
       if (parts.length > 0 && parts[0].equals(signature.getFunctionName())) {
         found = true;
-        if (SHOULD_OVERWRITE_TYPES) {
-          lines[i] = signatureToString(signature);
-        }
-        else {
-          //noinspection ConstantConditions
-          lines[i] = signatureToString(stringToSignature(file.
-            getCanonicalPath(), lines[i]).addAllArgs(signature).addReturnType(signature.getReturnTypeQualifiedName()));
-        }
+
+        lines[i] = changeSignatureString(file.getCanonicalPath(), signature, lines[i]);
       }
       i++;
     }
@@ -122,6 +116,16 @@ public class PySignatureCacheManagerImpl extends PySignatureCacheManager {
     String attrString = StringUtil.join(lines, "\n");
 
     writeAttribute(file, attrString);
+  }
+
+  static String changeSignatureString(@NotNull String filePath, @NotNull PySignature signature, @NotNull String oldSignatureString) {
+    if (SHOULD_OVERWRITE_TYPES) {
+      return signatureToString(signature);
+    }
+    else {
+      //noinspection ConstantConditions
+      return signatureToString(stringToSignature(filePath, oldSignatureString).addAllArgs(signature).addReturnType(signature.getReturnTypeQualifiedName()));
+    }
   }
 
   private void writeAttribute(@NotNull VirtualFile file, @NotNull String attrString) {
@@ -141,7 +145,7 @@ public class PySignatureCacheManagerImpl extends PySignatureCacheManager {
     }
   }
 
-  private static String signatureToString(PySignature signature) {
+  static String signatureToString(PySignature signature) {
     return signature.getFunctionName() + "\t" + StringUtil.join(arguments(signature), "\t") +
            (signature.getReturnType() != null
             ? "\t" + StringUtil.join(
@@ -244,7 +248,7 @@ public class PySignatureCacheManagerImpl extends PySignatureCacheManager {
 
 
   @Nullable
-  private static PySignature stringToSignature(String path, String string) {
+  private static PySignature stringToSignature(@NotNull String path, @NotNull String string) {
     String[] parts = string.split("\t");
     if (parts.length > 0) {
       PySignature signature = new PySignature(path, parts[0]);
