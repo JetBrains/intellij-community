@@ -32,9 +32,11 @@ import com.intellij.util.net.NetUtils
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.FullHttpRequest
 import io.netty.handler.codec.http.HttpMethod
+import io.netty.handler.codec.http.HttpResponseStatus
 import io.netty.handler.codec.http.QueryStringDecoder
 import org.jetbrains.ide.HttpRequestHandler
 import org.jetbrains.io.host
+import org.jetbrains.io.sendStatus
 import java.net.InetAddress
 import java.net.UnknownHostException
 import java.nio.file.Path
@@ -112,7 +114,7 @@ private fun doProcess(request: FullHttpRequest, context: ChannelHandlerContext, 
     else {
       // WEB-17839 Internal web server reports 404 when serving files from project with slashes in name
       if (decodedPath.regionMatches(1, name, 0, name.length, !SystemInfoRt.isFileSystemCaseSensitive)) {
-        var isEmptyPathCandidate = decodedPath.length == (name.length + 1)
+        val isEmptyPathCandidate = decodedPath.length == (name.length + 1)
         if (isEmptyPathCandidate || decodedPath[name.length + 1] == '/') {
           projectName = name
           offset = name.length + 1
@@ -135,6 +137,11 @@ private fun doProcess(request: FullHttpRequest, context: ChannelHandlerContext, 
   }
 
   val path = toIdeaPath(decodedPath, offset)
+  if (path == null) {
+    HttpResponseStatus.BAD_REQUEST.sendStatus(context.channel(), request)
+    return true
+  }
+
   for (pathHandler in WebServerPathHandler.EP_NAME.extensions) {
     LOG.catchAndLog {
       if (pathHandler.process(path, project, request, context, projectName, decodedPath, isCustomHost)) {
@@ -145,11 +152,11 @@ private fun doProcess(request: FullHttpRequest, context: ChannelHandlerContext, 
   return false
 }
 
-private fun toIdeaPath(decodedPath: String, offset: Int): String {
+private fun toIdeaPath(decodedPath: String, offset: Int): String? {
   // must be absolute path (relative to DOCUMENT_ROOT, i.e. scheme://authority/) to properly canonicalize
   val path = decodedPath.substring(offset)
   if (!path.startsWith('/')) {
-    throw AssertionError("Path must be absolute")
+    return null
   }
   return FileUtil.toCanonicalPath(path, '/').substring(1)
 }
