@@ -13,33 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.io;
+package org.jetbrains.io
 
-import com.intellij.openapi.diagnostic.Logger;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.http.FullHttpRequest;
-import io.netty.handler.codec.http.HttpResponseStatus;
-import io.netty.handler.codec.http.QueryStringDecoder;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.diagnostic.Logger
+import io.netty.channel.ChannelHandlerContext
+import io.netty.handler.codec.http.FullHttpRequest
+import io.netty.handler.codec.http.HttpResponseStatus
+import io.netty.handler.codec.http.QueryStringDecoder
 
-abstract class DelegatingHttpRequestHandlerBase extends SimpleChannelInboundHandlerAdapter<FullHttpRequest> {
-  @Override
-  protected void messageReceived(ChannelHandlerContext context, FullHttpRequest message) throws Exception {
-    if (Logger.getInstance(BuiltInServer.class).isDebugEnabled()) {
-      Logger.getInstance(BuiltInServer.class).debug("IN HTTP: " + message.uri());
+internal abstract class DelegatingHttpRequestHandlerBase : SimpleChannelInboundHandlerAdapter<FullHttpRequest>() {
+  @Throws(Exception::class)
+  override fun messageReceived(context: ChannelHandlerContext, message: FullHttpRequest) {
+    if (Logger.getInstance(BuiltInServer::class.java).isDebugEnabled) {
+      Logger.getInstance(BuiltInServer::class.java).debug("IN HTTP: " + message.uri())
     }
 
-    if (!process(context, message, new QueryStringDecoder(message.uri()))) {
-      Responses.sendStatus(HttpResponseStatus.NOT_FOUND, context.channel(), message);
+    if (!process(context, message, QueryStringDecoder(message.uri()))) {
+      HttpResponseStatus.NOT_FOUND.sendStatus(context.channel(), message)
     }
   }
 
-  protected abstract boolean process(@NotNull ChannelHandlerContext context,
-                                     @NotNull FullHttpRequest request,
-                                     @NotNull QueryStringDecoder urlDecoder) throws Exception;
+  @Throws(Exception::class)
+  protected abstract fun process(context: ChannelHandlerContext,
+                                 request: FullHttpRequest,
+                                 urlDecoder: QueryStringDecoder): Boolean
 
-  @Override
-  public void exceptionCaught(@NotNull ChannelHandlerContext context, @NotNull Throwable cause) {
-    NettyUtil.logAndClose(cause, Logger.getInstance(BuiltInServer.class), context.channel());
+  override fun exceptionCaught(context: ChannelHandlerContext, cause: Throwable) {
+    NettyUtil.logAndClose(cause, Logger.getInstance(BuiltInServer::class.java), context.channel())
   }
 }

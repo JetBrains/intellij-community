@@ -13,102 +13,91 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.io;
+package org.jetbrains.io
 
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelFutureListener;
-import io.netty.channel.DefaultFileRegion;
-import io.netty.handler.codec.http.*;
-import io.netty.handler.ssl.SslHandler;
-import io.netty.handler.stream.ChunkedFile;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import io.netty.channel.Channel
+import io.netty.channel.ChannelFutureListener
+import io.netty.channel.DefaultFileRegion
+import io.netty.handler.codec.http.*
+import io.netty.handler.ssl.SslHandler
+import io.netty.handler.stream.ChunkedFile
+import java.io.FileNotFoundException
+import java.io.RandomAccessFile
+import java.nio.file.Files
+import java.nio.file.Path
+import java.util.*
+import javax.activation.MimetypesFileTypeMap
 
-import javax.activation.MimetypesFileTypeMap;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Date;
+private val FILE_MIMETYPE_MAP = MimetypesFileTypeMap()
 
-import static org.jetbrains.io.Responses.*;
-
-public class FileResponses {
-  private static final MimetypesFileTypeMap FILE_MIMETYPE_MAP = new MimetypesFileTypeMap();
-
-  public static String getContentType(String path) {
-    return FILE_MIMETYPE_MAP.getContentType(path);
+object FileResponses {
+  fun getContentType(path: String): String {
+    return FILE_MIMETYPE_MAP.getContentType(path)
   }
 
-  private static boolean checkCache(@NotNull HttpRequest request, @NotNull Channel channel, long lastModified) {
-    Long ifModified = request.headers().getTimeMillis(HttpHeaderNames.IF_MODIFIED_SINCE);
+  private fun checkCache(request: HttpRequest, channel: Channel, lastModified: Long): Boolean {
+    val ifModified = request.headers().getTimeMillis(HttpHeaderNames.IF_MODIFIED_SINCE)
     if (ifModified != null && ifModified >= lastModified) {
-      send(response(HttpResponseStatus.NOT_MODIFIED), channel, request);
-      return true;
+      response(HttpResponseStatus.NOT_MODIFIED).send(channel, request)
+      return true
     }
-    return false;
+    return false
   }
 
-  @Nullable
-  public static HttpResponse prepareSend(@NotNull HttpRequest request, @NotNull Channel channel, long lastModified, @NotNull String filename) {
+  fun prepareSend(request: HttpRequest, channel: Channel, lastModified: Long, filename: String): HttpResponse? {
     if (checkCache(request, channel, lastModified)) {
-      return null;
+      return null
     }
 
-    HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
-    response.headers().set(HttpHeaderNames.CONTENT_TYPE, getContentType(filename));
-    addCommonHeaders(response);
-    response.headers().set(HttpHeaderNames.CACHE_CONTROL, "private, must-revalidate");
-    response.headers().set(HttpHeaderNames.LAST_MODIFIED, new Date(lastModified));
-    return response;
+    val response = DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK)
+    response.headers().set(HttpHeaderNames.CONTENT_TYPE, getContentType(filename))
+    response.addCommonHeaders()
+    response.headers().set(HttpHeaderNames.CACHE_CONTROL, "private, must-revalidate")
+    response.headers().set(HttpHeaderNames.LAST_MODIFIED, Date(lastModified))
+    return response
   }
 
-  public static void sendFile(@NotNull HttpRequest request, @NotNull Channel channel, @NotNull Path file) throws IOException {
-    HttpResponse response = prepareSend(request, channel, Files.getLastModifiedTime(file).toMillis(), file.getFileName().toString());
-    if (response == null) {
-      return;
-    }
+  fun sendFile(request: HttpRequest, channel: Channel, file: Path) {
+    val response = prepareSend(request, channel, Files.getLastModifiedTime(file).toMillis(), file.fileName.toString()) ?: return
 
-    boolean keepAlive = addKeepAliveIfNeed(response, request);
+    val keepAlive = response.addKeepAliveIfNeed(request)
 
-    boolean fileWillBeClosed = false;
-    RandomAccessFile raf;
+    var fileWillBeClosed = false
+    val raf: RandomAccessFile
     try {
-      raf = new RandomAccessFile(file.toFile(), "r");
+      raf = RandomAccessFile(file.toFile(), "r")
     }
-    catch (FileNotFoundException ignored) {
-      send(response(HttpResponseStatus.NOT_FOUND), channel, request);
-      return;
+    catch (ignored: FileNotFoundException) {
+      response(HttpResponseStatus.NOT_FOUND).send(channel, request)
+      return
     }
 
     try {
-      long fileLength = raf.length();
-      HttpUtil.setContentLength(response, fileLength);
+      val fileLength = raf.length()
+      HttpUtil.setContentLength(response, fileLength)
 
-      channel.write(response);
-      if (request.method() != HttpMethod.HEAD) {
-        if (channel.pipeline().get(SslHandler.class) == null) {
+      channel.write(response)
+      if (request.method() !== HttpMethod.HEAD) {
+        if (channel.pipeline().get(SslHandler::class.java) == null) {
           // no encryption - use zero-copy
-          channel.write(new DefaultFileRegion(raf.getChannel(), 0, fileLength));
+          channel.write(DefaultFileRegion(raf.channel, 0, fileLength))
         }
         else {
           // cannot use zero-copy with HTTPS
-          channel.write(new ChunkedFile(raf));
+          channel.write(ChunkedFile(raf))
         }
       }
-      fileWillBeClosed = true;
+      fileWillBeClosed = true
     }
     finally {
       if (!fileWillBeClosed) {
-        raf.close();
+        raf.close()
       }
     }
 
-    ChannelFuture future = channel.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
+    val future = channel.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT)
     if (!keepAlive) {
-      future.addListener(ChannelFutureListener.CLOSE);
+      future.addListener(ChannelFutureListener.CLOSE)
     }
   }
 }
