@@ -127,31 +127,33 @@ public class CapturingProcessHandler extends OSProcessHandler {
   public ProcessOutput runProcessWithProgressIndicator(@NotNull ProgressIndicator indicator, int timeoutInMilliseconds, boolean destroyOnTimeout) {
     final int WAIT_INTERVAL = 100;
     int waitingTime = 0;
-    boolean destroying = false;
+    boolean setExitCode = true;
 
     startNotify();
     while (!waitFor(WAIT_INTERVAL)) {
       waitingTime += WAIT_INTERVAL;
 
       boolean timeout = waitingTime >= timeoutInMilliseconds;
+      boolean canceled = indicator.isCanceled();
 
-      if (indicator.isCanceled() || timeout) {
-        destroying = !timeout || destroyOnTimeout;
+      if (canceled || timeout) {
+        boolean destroying = canceled || destroyOnTimeout;
+        setExitCode = destroying;
 
         if (destroying && !isProcessTerminating() && !isProcessTerminated()) {
           destroyProcess();
         }
 
-        if (timeout) {
-          myOutput.setTimeout();
+        if (canceled) {
+          myOutput.setCancelled();
         }
         else {
-          myOutput.setCancelled();
+          myOutput.setTimeout();
         }
         break;
       }
     }
-    if (destroying) {
+    if (setExitCode) {
       if (waitFor()) {
         myOutput.setExitCode(getProcess().exitValue());
       }
