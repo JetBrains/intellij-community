@@ -68,6 +68,10 @@ class Test {
                 return ResponseData(200)
             }
 
+            override fun post(url: String, file: File): ResponseData? {
+                throw UnsupportedOperationException()
+            }
+
             override fun get(url: String): ResponseData? {
                 throw UnsupportedOperationException()
             }

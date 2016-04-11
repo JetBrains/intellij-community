@@ -3,9 +3,12 @@ package com.intellij.stats.completion
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.UsefulTestCase
-import org.mockito.*
+import org.mockito.ArgumentCaptor
+import org.mockito.Captor
+import org.mockito.Mockito.`when`
+import org.mockito.Mockito.mock
+import org.mockito.MockitoAnnotations
 import org.picocontainer.MutablePicoContainer
-import org.mockito.Mockito.*
 import java.io.File
 
 
@@ -52,6 +55,10 @@ class StatisticsSenderTest: LightPlatformTestCase() {
                 lastSendData = params
                 lastSendDataUrl = url
                 return ResponseData(200)
+            }
+
+            override fun post(url: String, file: File): ResponseData? {
+                throw UnsupportedOperationException()
             }
 
             override fun get(url: String): ResponseData? {

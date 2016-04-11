@@ -11,6 +11,7 @@ import com.intellij.util.Alarm
 import com.intellij.util.Time
 import org.apache.http.client.fluent.Form
 import org.apache.http.client.fluent.Request
+import org.apache.http.entity.ContentType
 import org.apache.http.util.EntityUtils
 import java.io.File
 import java.io.IOException
@@ -92,6 +93,7 @@ class StatisticSender(val urlProvider: UrlProvider, val logFileManager: LogFileM
 
 abstract class RequestService {
     abstract fun post(url: String, params: Map<String, String>): ResponseData?
+    abstract fun post(url: String, file: File): ResponseData?
     abstract fun get(url: String): ResponseData?
     
     companion object {
@@ -110,6 +112,18 @@ class SimpleRequestService: RequestService() {
             val httpResponse = response.returnResponse()
             return ResponseData(httpResponse.statusLine.statusCode)
         } catch (e: IOException) {
+            LOG.debug(e)
+            return null
+        }
+    }
+
+    override fun post(url: String, file: File): ResponseData? {
+        try {
+            val response = Request.Post(url).bodyFile(file, ContentType.TEXT_HTML).execute()
+            val httpResponse = response.returnResponse()
+            return ResponseData(httpResponse.statusLine.statusCode)
+        }
+        catch (e: IOException) {
             LOG.debug(e)
             return null
         }
