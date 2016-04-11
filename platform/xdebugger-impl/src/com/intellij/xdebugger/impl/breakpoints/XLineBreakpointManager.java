@@ -35,6 +35,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
@@ -120,7 +121,7 @@ public class XLineBreakpointManager {
   public void updateBreakpointsUI() {
     if (myProject.isDefault()) return;
 
-    Runnable runnable = () -> {
+    DumbAwareRunnable runnable = () -> {
       for (XLineBreakpointImpl breakpoint : myBreakpoints.keySet()) {
         breakpoint.updateUI();
       }
