@@ -1144,7 +1144,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private void endWrite(/*@NotNull*/ Class clazz) {
     try {
       fireWriteActionFinished(clazz);
-      // after fireWriteActionFinished() in case somebody starts write action there
+      // fire listeners before popping stack because if somebody starts write action in a listener,
+      // there is a danger of unlocking the write lock before other listeners have been run (since write lock became non-reentrant).
       myWriteActionsStack.pop();
       if (gatherWriteActionStatistics && myWriteActionsStack.isEmpty() && !myWriteActionPending) {
         writePauses.finished("write action ("+clazz+")");
