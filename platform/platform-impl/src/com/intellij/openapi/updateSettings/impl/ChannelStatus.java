@@ -20,7 +20,7 @@ package com.intellij.openapi.updateSettings.impl;
  */
 public enum ChannelStatus {
   EAP("eap", "Early Access Program"),
-  MILESTONE("milestone", "Milestone Releases"),
+  MILESTONE("milestone", "Milestone EAP Builds"),
   BETA("beta", "Beta Releases or Public Previews"),
   RELEASE("release", "Stable Releases");
 
