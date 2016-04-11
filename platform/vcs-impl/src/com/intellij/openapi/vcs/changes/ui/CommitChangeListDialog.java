@@ -1173,7 +1173,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   @Override
   public boolean hasDiffs() {
-    return !getIncludedChanges().isEmpty();
+    return !getIncludedChanges().isEmpty() || !myBrowser.getIncludedUnversionedFiles().isEmpty();
   }
 
   @Override
