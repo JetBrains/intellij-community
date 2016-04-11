@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -618,7 +618,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     final JBLabel label = new JBLabel(myProjectMessage);
     label.setComponentStyle(UIUtil.ComponentStyle.SMALL);
     label.setFontColor(UIUtil.FontColor.BRIGHTER);
-    label.setBorder(BorderFactory.createEmptyBorder(2, 5, 2, 0));
+    label.setBorder(JBUI.Borders.empty(2, 5, 2, 0));
     return label;
   }
 
@@ -626,7 +626,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     final JBLabel noteLabel = new JBLabel("File texts bigger than " + ourMaximumFileForBaseRevisionSize / 1000 + "K are not stored");
     noteLabel.setComponentStyle(UIUtil.ComponentStyle.SMALL);
     noteLabel.setFontColor(UIUtil.FontColor.BRIGHTER);
-    noteLabel.setBorder(BorderFactory.createEmptyBorder(2, 25, 5, 0));
+    noteLabel.setBorder(JBUI.Borders.empty(2, 25, 5, 0));
 
     final JPanel panel = new JPanel(new BorderLayout());
     panel.add(myBaseRevisionTexts, BorderLayout.NORTH);
