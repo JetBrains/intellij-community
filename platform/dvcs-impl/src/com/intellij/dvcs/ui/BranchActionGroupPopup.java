@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.WizardPopup;
 import com.intellij.ui.popup.list.PopupListElementRenderer;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -94,11 +95,11 @@ public class BranchActionGroupPopup extends PopupFactoryImpl.ActionGroupPopup {
       protected JComponent createItemComponent() {
         myTextLabel = new ErrorLabel();
         myTextLabel.setOpaque(true);
-        myTextLabel.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
+        myTextLabel.setBorder(JBUI.Borders.empty(1));
 
         myBranchLabel = new ErrorLabel();
         myBranchLabel.setOpaque(true);
-        myBranchLabel.setBorder(BorderFactory.createEmptyBorder(1, UIUtil.DEFAULT_HGAP, 1, 1));
+        myBranchLabel.setBorder(JBUI.Borders.empty(1, UIUtil.DEFAULT_HGAP, 1, 1));
 
         JPanel compoundPanel = new OpaquePanel(new BorderLayout(), JBColor.WHITE);
         compoundPanel.add(myTextLabel, BorderLayout.CENTER);
