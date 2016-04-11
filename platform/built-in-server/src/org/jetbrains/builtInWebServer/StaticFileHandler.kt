@@ -13,7 +13,7 @@ import org.jetbrains.builtInWebServer.ssi.SsiExternalResolver
 import org.jetbrains.builtInWebServer.ssi.SsiProcessor
 import org.jetbrains.io.FileResponses
 import org.jetbrains.io.addKeepAliveIfNeed
-import org.jetbrains.io.sendStatus
+import org.jetbrains.io.send
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -99,7 +99,7 @@ fun sendIoFile(channel: Channel, ioFile: Path, request: HttpRequest) {
     FileResponses.sendFile(request, channel, ioFile)
   }
   else {
-    HttpResponseStatus.FORBIDDEN.sendStatus(channel, request)
+    HttpResponseStatus.FORBIDDEN.send(channel, request)
   }
 }
 

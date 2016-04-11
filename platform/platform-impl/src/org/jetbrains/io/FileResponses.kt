@@ -38,7 +38,7 @@ object FileResponses {
   private fun checkCache(request: HttpRequest, channel: Channel, lastModified: Long): Boolean {
     val ifModified = request.headers().getTimeMillis(HttpHeaderNames.IF_MODIFIED_SINCE)
     if (ifModified != null && ifModified >= lastModified) {
-      response(HttpResponseStatus.NOT_MODIFIED).send(channel, request)
+      HttpResponseStatus.NOT_MODIFIED.send(channel, request)
       return true
     }
     return false
@@ -68,7 +68,7 @@ object FileResponses {
       raf = RandomAccessFile(file.toFile(), "r")
     }
     catch (ignored: FileNotFoundException) {
-      response(HttpResponseStatus.NOT_FOUND).send(channel, request)
+      HttpResponseStatus.NOT_FOUND.send(channel, request)
       return
     }
 

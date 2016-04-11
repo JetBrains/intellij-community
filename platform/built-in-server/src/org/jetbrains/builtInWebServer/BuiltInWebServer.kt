@@ -36,7 +36,7 @@ import io.netty.handler.codec.http.HttpResponseStatus
 import io.netty.handler.codec.http.QueryStringDecoder
 import org.jetbrains.ide.HttpRequestHandler
 import org.jetbrains.io.host
-import org.jetbrains.io.sendStatus
+import org.jetbrains.io.send
 import java.net.InetAddress
 import java.net.UnknownHostException
 import java.nio.file.Path
@@ -138,7 +138,7 @@ private fun doProcess(request: FullHttpRequest, context: ChannelHandlerContext, 
 
   val path = toIdeaPath(decodedPath, offset)
   if (path == null) {
-    HttpResponseStatus.BAD_REQUEST.sendStatus(context.channel(), request)
+    HttpResponseStatus.BAD_REQUEST.send(context.channel(), request)
     return true
   }
 

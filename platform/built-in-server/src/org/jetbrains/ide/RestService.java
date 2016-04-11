@@ -117,7 +117,7 @@ public abstract class RestService extends HttpRequestHandler {
     try {
       String error = execute(urlDecoder, request, context);
       if (error != null) {
-        Responses.sendStatus(HttpResponseStatus.BAD_REQUEST, context.channel(), request, error);
+        Responses.send(HttpResponseStatus.BAD_REQUEST, context.channel(), request, error);
       }
     }
     catch (Throwable e) {
@@ -132,7 +132,7 @@ public abstract class RestService extends HttpRequestHandler {
         LOG.error(e);
         status = HttpResponseStatus.INTERNAL_SERVER_ERROR;
       }
-      Responses.sendStatus(status, context.channel(), request, ExceptionUtil.getThrowableText(e));
+      Responses.send(status, context.channel(), request, ExceptionUtil.getThrowableText(e));
     }
     return true;
   }

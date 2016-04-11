@@ -128,7 +128,7 @@ abstract class FastCgiService(project: Project) : SingleConnectionNetService(pro
     }
 
     if (buffer == null) {
-      HttpResponseStatus.BAD_GATEWAY.sendStatus(channel)
+      HttpResponseStatus.BAD_GATEWAY.send(channel)
       return
     }
 
@@ -146,7 +146,7 @@ abstract class FastCgiService(project: Project) : SingleConnectionNetService(pro
         LOG.error(e)
       }
       finally {
-        HttpResponseStatus.INTERNAL_SERVER_ERROR.sendStatus(channel)
+        HttpResponseStatus.INTERNAL_SERVER_ERROR.send(channel)
       }
       return
     }
@@ -158,7 +158,7 @@ abstract class FastCgiService(project: Project) : SingleConnectionNetService(pro
 private fun sendBadGateway(channel: Channel) {
   try {
     if (channel.isActive) {
-      HttpResponseStatus.BAD_GATEWAY.sendStatus(channel)
+      HttpResponseStatus.BAD_GATEWAY.send(channel)
     }
   }
   catch (e: Throwable) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,14 +22,13 @@ import io.netty.handler.codec.http.HttpResponseStatus
 import io.netty.handler.codec.http.QueryStringDecoder
 
 internal abstract class DelegatingHttpRequestHandlerBase : SimpleChannelInboundHandlerAdapter<FullHttpRequest>() {
-  @Throws(Exception::class)
   override fun messageReceived(context: ChannelHandlerContext, message: FullHttpRequest) {
     if (Logger.getInstance(BuiltInServer::class.java).isDebugEnabled) {
       Logger.getInstance(BuiltInServer::class.java).debug("IN HTTP: " + message.uri())
     }
 
     if (!process(context, message, QueryStringDecoder(message.uri()))) {
-      HttpResponseStatus.NOT_FOUND.sendStatus(context.channel(), message)
+      HttpResponseStatus.NOT_FOUND.send(context.channel(), message)
     }
   }
 

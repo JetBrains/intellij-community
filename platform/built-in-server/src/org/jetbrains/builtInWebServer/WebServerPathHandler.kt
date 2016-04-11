@@ -50,7 +50,7 @@ abstract class WebServerPathHandler {
 }
 
 fun redirectToDirectory(request: HttpRequest, channel: Channel, path: String) {
-  val response = response(HttpResponseStatus.MOVED_PERMANENTLY)
+  val response = HttpResponseStatus.MOVED_PERMANENTLY.response()
   val url = VfsUtil.toUri("${channel.uriScheme}://${request.host!!}/$path/")!!
   response.headers().add(HttpHeaderNames.LOCATION, url.toASCIIString())
   response.send(channel, request)
