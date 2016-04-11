@@ -68,7 +68,7 @@ public class IterationStateTest extends LightPlatformCodeInsightFixtureTestCase 
          "bbb\n" +
          "ccccc");
     setColumnModeOn();
-    mouse().clickAt(0, 2).dragTo(2, 4).release();
+    mouse().pressAt(0, 2).dragTo(2, 4).release();
     verifySplitting(false,
                     new Segment(0, 1, DEFAULT_BACKGROUND),
                     new Segment(1, 2, DEFAULT_BACKGROUND).plus(1, DEFAULT_BACKGROUND).plus(2, SELECTION_BACKGROUND),
@@ -85,7 +85,7 @@ public class IterationStateTest extends LightPlatformCodeInsightFixtureTestCase 
          "bbb\n" +
          "ccccc");
     setColumnModeOn();
-    mouse().clickAt(0, 2).dragTo(2, 6).release();
+    mouse().pressAt(0, 2).dragTo(2, 6).release();
     verifySplitting(false,
                     new Segment(0, 1, DEFAULT_BACKGROUND),
                     new Segment(1, 2, DEFAULT_BACKGROUND).plus(1, DEFAULT_BACKGROUND).plus(4, SELECTION_BACKGROUND),
@@ -101,7 +101,7 @@ public class IterationStateTest extends LightPlatformCodeInsightFixtureTestCase 
     init("a\n" +
          "");
     setColumnModeOn();
-    mouse().clickAt(1, 1).dragTo(1, 2).release();
+    mouse().pressAt(1, 1).dragTo(1, 2).release();
     verifySplitting(false,
                     new Segment(0, 1, DEFAULT_BACKGROUND),
                     new Segment(1, 2, DEFAULT_BACKGROUND),
@@ -111,7 +111,7 @@ public class IterationStateTest extends LightPlatformCodeInsightFixtureTestCase 
   public void testColumnModeBlockSelectionAtEmptyLines() {
     init("\n");
     setColumnModeOn();
-    mouse().clickAt(0, 1).dragTo(1, 2).release();
+    mouse().pressAt(0, 1).dragTo(1, 2).release();
     verifySplitting(false,
                     new Segment(0, 1, DEFAULT_BACKGROUND).plus(1, DEFAULT_BACKGROUND).plus(1, SELECTION_BACKGROUND),
                     new Segment(1, 1, null).plus(1, CARET_ROW_BACKGROUND).plus(1, SELECTION_BACKGROUND));
@@ -131,7 +131,7 @@ public class IterationStateTest extends LightPlatformCodeInsightFixtureTestCase 
                                                               HighlighterLayer.SELECTION - 1,
                                                               new TextAttributes(null, currentDebuggingLineColor, null, null, 0));
 
-    mouse().clickAt(0, 4).dragTo(0, 6).release();
+    mouse().pressAt(0, 4).dragTo(0, 6).release();
     verifySplitting(false,
                     new Segment(0, 4, currentDebuggingLineColor),
                     new Segment(4, 5, SELECTION_BACKGROUND),

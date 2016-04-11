@@ -184,7 +184,7 @@ public class EditorMultiCaretColumnModeTest extends AbstractEditorTest {
 
   public void testMoveToSelectionStart() throws Exception {
     init("a");
-    mouse().clickAt(0, 2).dragTo(0, 4).release();
+    mouse().pressAt(0, 2).dragTo(0, 4).release();
     verifyCaretsAndSelections(0, 4, 2, 4);
 
     left();
@@ -193,7 +193,7 @@ public class EditorMultiCaretColumnModeTest extends AbstractEditorTest {
 
   public void testMoveToSelectionEnd() throws Exception {
     init("a");
-    mouse().clickAt(0, 4).dragTo(0, 2).release();
+    mouse().pressAt(0, 4).dragTo(0, 2).release();
     verifyCaretsAndSelections(0, 2, 2, 4);
 
     right();
@@ -202,7 +202,7 @@ public class EditorMultiCaretColumnModeTest extends AbstractEditorTest {
 
   public void testReverseBlockSelection() throws Exception {
     init("a");
-    mouse().clickAt(0, 4).dragTo(0, 3).release();
+    mouse().pressAt(0, 4).dragTo(0, 3).release();
     verifyCaretsAndSelections(0, 3, 3, 4);
 
     executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT_WITH_SELECTION);
@@ -255,7 +255,7 @@ public class EditorMultiCaretColumnModeTest extends AbstractEditorTest {
     init("a\n" +
          "bbb\n" +
          "ccccc");
-    mouse().clickAt(2, 4).dragTo(0, 1).release();
+    mouse().pressAt(2, 4).dragTo(0, 1).release();
     verifyCaretsAndSelections(0, 1, 1, 4,
                               1, 1, 1, 4,
                               2, 1, 1, 4);
@@ -265,7 +265,7 @@ public class EditorMultiCaretColumnModeTest extends AbstractEditorTest {
     init("a\n" +
          "bbb\n" +
          "ccccc");
-    mouse().clickAt(0, 2).dragTo(2, 3).release();
+    mouse().pressAt(0, 2).dragTo(2, 3).release();
     type('S');
     checkResultByText("a S<caret>\n" +
                       "bbS<caret>\n" +
@@ -276,7 +276,7 @@ public class EditorMultiCaretColumnModeTest extends AbstractEditorTest {
     init("a\n" +
          "bbb\n" +
          "ccccc");
-    mouse().clickAt(0, 2).dragTo(2, 4).release();
+    mouse().pressAt(0, 2).dragTo(2, 4).release();
     copy();
     home();
     paste();
@@ -289,7 +289,7 @@ public class EditorMultiCaretColumnModeTest extends AbstractEditorTest {
     init("a\n" +
          "bbb\n" +
          "ccccc");
-    mouse().clickAt(1, 2).dragTo(2, 4).release();
+    mouse().pressAt(1, 2).dragTo(2, 4).release();
     copy();
     mouse().clickAt(0, 2);
     paste();
@@ -318,7 +318,7 @@ public class EditorMultiCaretColumnModeTest extends AbstractEditorTest {
          "line2\n" +
          "line3\n" +
          "line4");
-    mouse().clickAt(1, 1).dragTo(2, 2).release();
+    mouse().pressAt(1, 1).dragTo(2, 2).release();
     executeAction(IdeActions.ACTION_EDITOR_TEXT_START_WITH_SELECTION);
     checkResultByText("<selection><caret>l</selection>ine1\n" +
                       "<selection><caret>l</selection>ine2\n" +
@@ -331,7 +331,7 @@ public class EditorMultiCaretColumnModeTest extends AbstractEditorTest {
          "line2\n" +
          "line3\n" +
          "line4");
-    mouse().clickAt(1, 1).dragTo(2, 2).release();
+    mouse().pressAt(1, 1).dragTo(2, 2).release();
     executeAction(IdeActions.ACTION_EDITOR_TEXT_END_WITH_SELECTION);
     checkResultByText("line1\n" +
                       "l<selection>ine2<caret></selection>\n" +
@@ -343,7 +343,7 @@ public class EditorMultiCaretColumnModeTest extends AbstractEditorTest {
     init("a\n" +
          "BBB\n" +
          "ccccc");
-    mouse().clickAt(1, 2).dragTo(2, 4).release();
+    mouse().pressAt(1, 2).dragTo(2, 4).release();
     executeAction("EditorToggleCase");
     checkResultByText("a\n" +
                       "BBb\n" +
@@ -356,7 +356,7 @@ public class EditorMultiCaretColumnModeTest extends AbstractEditorTest {
     init("a\n" +
          "BBb\n" +
          "ccccc");
-    mouse().clickAt(1, 2).dragTo(2, 4).release();
+    mouse().pressAt(1, 2).dragTo(2, 4).release();
     executeAction("EditorToggleCase");
     checkResultByText("a\n" +
                       "BBB\n" +
