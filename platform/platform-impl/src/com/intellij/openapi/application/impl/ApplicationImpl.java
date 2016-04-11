@@ -1122,8 +1122,10 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
         assertNoPsiLock();
         if (!myLock.tryWriteLock()) {
           Future<?> reportSlowWrite = ourDumpThreadsOnLongWriteActionWaiting > 0 ?
-            JobScheduler.getScheduler().scheduleWithFixedDelay(() -> PerformanceWatcher.getInstance().dumpThreads("waiting", true),
-            ourDumpThreadsOnLongWriteActionWaiting, ourDumpThreadsOnLongWriteActionWaiting, TimeUnit.MILLISECONDS) : null;
+                                      JobScheduler.getScheduler()
+                                        .scheduleWithFixedDelay(() -> PerformanceWatcher.getInstance().dumpThreads("waiting", true),
+                                                                ourDumpThreadsOnLongWriteActionWaiting,
+                                                                ourDumpThreadsOnLongWriteActionWaiting, TimeUnit.MILLISECONDS) : null;
           myLock.writeLock();
           if (reportSlowWrite != null) {
             reportSlowWrite.cancel(false);
