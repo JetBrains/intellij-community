@@ -23,6 +23,7 @@ import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelHandler
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.FullHttpRequest
+import io.netty.handler.codec.http.HttpRequest
 import io.netty.handler.codec.http.QueryStringDecoder
 import io.netty.util.AttributeKey
 import org.apache.sanselan.ImageFormat
@@ -40,7 +41,7 @@ internal class DelegatingHttpRequestHandler : DelegatingHttpRequestHandlerBase()
                        request: FullHttpRequest,
                        urlDecoder: QueryStringDecoder): Boolean {
     fun HttpRequestHandler.checkAndProcess(): Boolean {
-      if (isAllowRequestOnlyFromLocalOrigin && (!parseAndCheckIsOwnHostName(request.origin) || !parseAndCheckIsOwnHostName(request.referrer))) {
+      if (isAllowRequestOnlyFromLocalOrigin && !request.isLocalOrigin()) {
         return false
       }
 
@@ -94,6 +95,8 @@ internal class DelegatingHttpRequestHandler : DelegatingHttpRequestHandlerBase()
     }
   }
 }
+
+fun HttpRequest.isLocalOrigin() = parseAndCheckIsOwnHostName(origin) && parseAndCheckIsOwnHostName(referrer)
 
 private fun parseAndCheckIsOwnHostName(uri: String?): Boolean {
   try {
