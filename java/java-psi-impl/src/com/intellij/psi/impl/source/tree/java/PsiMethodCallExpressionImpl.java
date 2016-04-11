@@ -244,6 +244,7 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
       // 18.5.2
       // if unchecked conversion was necessary, then this substitution provides the parameter types of the invocation type, 
       // while the return type and thrown types are given by the erasure of m's type (without applying θ').
+      //due to https://bugs.openjdk.java.net/browse/JDK-8135087 erasure is called on substitutedReturnType and not on ret type itself as by spec
       return TypeConversionUtil.erasure(substitutedReturnType);
     }
 

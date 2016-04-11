@@ -117,7 +117,8 @@ public class InitializerProcessor {
     StructClass cl = wrapper.getClassStruct();
     Statement firstData = Statements.findFirstData(root);
     if (firstData != null) {
-      boolean isInterface = cl.hasModifier(CodeConstants.ACC_INTERFACE);
+      boolean inlineInitializers = cl.hasModifier(CodeConstants.ACC_INTERFACE) || cl.hasModifier(CodeConstants.ACC_ENUM);
+
       while (!firstData.getExprents().isEmpty()) {
         Exprent exprent = firstData.getExprents().get(0);
 
@@ -131,8 +132,7 @@ public class InitializerProcessor {
                 cl.hasField(fExpr.getName(), fExpr.getDescriptor().descriptorString)) {
 
               // interfaces fields should always be initialized inline
-              if (isInterface || isExprentIndependent(assignExpr.getRight(), method)) {
-
+              if (inlineInitializers || isExprentIndependent(assignExpr.getRight(), method)) {
                 String keyField = InterpreterUtil.makeUniqueKey(fExpr.getName(), fExpr.getDescriptor().descriptorString);
                 if (!wrapper.getStaticFieldInitializers().containsKey(keyField)) {
                   wrapper.getStaticFieldInitializers().addWithKey(assignExpr.getRight(), keyField);

@@ -291,7 +291,7 @@ public class UIUtil {
   }
 
   @NotNull
-  static JComponent createCompleteMatchInfo(final Producer<Configuration> configurationProducer) {
+  public static JComponent createCompleteMatchInfo(final Producer<Configuration> configurationProducer) {
     final JLabel completeMatchInfo = new JLabel(AllIcons.RunConfigurations.Variables);
     final Point location = completeMatchInfo.getLocation();
     final JLabel label = new JLabel(SSRBundle.message("complete.match.variable.tooltip.message",
