@@ -13,45 +13,41 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.ide;
+package org.jetbrains.ide
 
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectUtil;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.text.StringUtilRt;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsRoot;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.ManagingFS;
-import com.intellij.openapi.vfs.newvfs.RefreshQueue;
-import com.intellij.openapi.vfs.newvfs.RefreshSession;
-import com.intellij.ui.AppUIUtil;
-import com.intellij.util.Consumer;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.http.*;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.builtInWebServer.WebServerPathToFileManager;
-import org.jetbrains.concurrency.AsyncPromise;
-import org.jetbrains.concurrency.Promise;
-import org.jetbrains.io.DelegatingHttpRequestHandlerKt;
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.fileEditor.OpenFileDescriptor
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.ProjectUtil
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.util.text.StringUtilRt
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.newvfs.ManagingFS
+import com.intellij.openapi.vfs.newvfs.RefreshQueue
+import com.intellij.ui.AppUIUtil
+import com.intellij.util.exists
+import com.intellij.util.systemIndependentPath
+import io.netty.channel.ChannelHandlerContext
+import io.netty.handler.codec.http.*
+import org.jetbrains.builtInWebServer.WebServerPathToFileManager
+import org.jetbrains.concurrency.AsyncPromise
+import org.jetbrains.concurrency.Promise
+import org.jetbrains.concurrency.catchError
+import org.jetbrains.concurrency.rejectedPromise
+import org.jetbrains.io.isLocalOrigin
+import java.nio.file.Path
+import java.nio.file.Paths
+import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.regex.Pattern
 
-import javax.swing.*;
-import java.io.File;
-import java.io.IOException;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+private val NOT_FOUND = Promise.createError("not found")
+private val LINE_AND_COLUMN = Pattern.compile("^(.*?)(?::(\\d+))?(?::(\\d+))?$")
 
 /**
  * @api {get} /file Open file
@@ -75,283 +71,183 @@ import java.util.regex.Pattern;
  * @apiExample {curl} Query parameters
  * curl http://localhost:63342/api/file?file=path/to/file.kt&line=100&column=34
  */
-class OpenFileHttpService extends RestService {
-  private static final RuntimeException NOT_FOUND = Promise.createError("not found");
-  private static final Pattern LINE_AND_COLUMN = Pattern.compile("^(.*?)(?::(\\d+))?(?::(\\d+))?$");
-  private long lastTimeRejected = -1;
-  private long waitUntilNextRequestTimeout = 0;
+internal class OpenFileHttpService : RestService() {
+  @Volatile private var refreshSessionId: Long = 0
+  private val requests = ConcurrentLinkedQueue<OpenFileTask>()
 
-  private volatile long refreshSessionId = 0;
-  private final ConcurrentLinkedQueue<OpenFileTask> requests = new ConcurrentLinkedQueue<OpenFileTask>();
+  override fun getServiceName() = "file"
 
-  @NotNull
-  @Override
-  protected String getServiceName() {
-    return "file";
-  }
+  override fun isMethodSupported(method: HttpMethod) = method === HttpMethod.GET || method === HttpMethod.POST
 
-  @Override
-  protected boolean isMethodSupported(@NotNull HttpMethod method) {
-    return method == HttpMethod.GET || method == HttpMethod.POST;
-  }
+  override fun execute(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): String? {
+    val keepAlive = HttpUtil.isKeepAlive(request)
+    val channel = context.channel()
 
-  @Nullable
-  @Override
-  public String execute(@NotNull QueryStringDecoder urlDecoder, @NotNull FullHttpRequest request, @NotNull ChannelHandlerContext context) throws IOException {
-    final boolean keepAlive = HttpUtil.isKeepAlive(request);
-    final Channel channel = context.channel();
-
-    OpenFileRequest apiRequest;
-    if (request.method() == HttpMethod.POST) {
-      apiRequest = gson.getValue().fromJson(createJsonReader(request), OpenFileRequest.class);
+    val apiRequest: OpenFileRequest
+    if (request.method() === HttpMethod.POST) {
+      apiRequest = gson.value.fromJson(RestService.createJsonReader(request), OpenFileRequest::class.java)
     }
     else {
-      apiRequest = new OpenFileRequest();
-      apiRequest.file = StringUtil.nullize(getStringParameter("file", urlDecoder), true);
-      apiRequest.line = getIntParameter("line", urlDecoder);
-      apiRequest.column = getIntParameter("column", urlDecoder);
-      apiRequest.focused = getBooleanParameter("focused", urlDecoder, true);
+      apiRequest = OpenFileRequest()
+      apiRequest.file = StringUtil.nullize(RestService.getStringParameter("file", urlDecoder), true)
+      apiRequest.line = RestService.getIntParameter("line", urlDecoder)
+      apiRequest.column = RestService.getIntParameter("column", urlDecoder)
+      apiRequest.focused = RestService.getBooleanParameter("focused", urlDecoder, true)
     }
 
-    int prefixLength = 1 + PREFIX.length() + 1 + getServiceName().length() + 1;
-    String path = urlDecoder.path();
-    if (path.length() > prefixLength) {
-      Matcher matcher = LINE_AND_COLUMN.matcher(path).region(prefixLength, path.length());
-      LOG.assertTrue(matcher.matches());
+    val prefixLength = 1 + RestService.PREFIX.length + 1 + serviceName.length + 1
+    val path = urlDecoder.path()
+    if (path.length > prefixLength) {
+      val matcher = LINE_AND_COLUMN.matcher(path).region(prefixLength, path.length)
+      RestService.LOG.assertTrue(matcher.matches())
       if (apiRequest.file == null) {
-        apiRequest.file = matcher.group(1).trim();
+        apiRequest.file = matcher.group(1).trim { it <= ' ' }
       }
       if (apiRequest.line == -1) {
-        apiRequest.line = StringUtilRt.parseInt(matcher.group(2), 1);
+        apiRequest.line = StringUtilRt.parseInt(matcher.group(2), 1)
       }
       if (apiRequest.column == -1) {
-        apiRequest.column = StringUtilRt.parseInt(matcher.group(3), 1);
+        apiRequest.column = StringUtilRt.parseInt(matcher.group(3), 1)
       }
     }
 
     if (apiRequest.file == null) {
-      sendStatus(HttpResponseStatus.BAD_REQUEST, keepAlive, channel);
-      return null;
+      RestService.sendStatus(HttpResponseStatus.BAD_REQUEST, keepAlive, channel)
+      return null
     }
 
-    openFile(apiRequest)
-      .done(new Consumer<Void>() {
-        @Override
-        public void consume(Void aVoid) {
-          sendStatus(HttpResponseStatus.OK, keepAlive, channel);
+    openFile(apiRequest).done { RestService.sendStatus(HttpResponseStatus.OK, keepAlive, channel) }
+      .rejected { throwable ->
+        if (throwable === NOT_FOUND) {
+          // don't expose file status if not local origin
+          RestService.sendStatus(if (request.isLocalOrigin()) HttpResponseStatus.NOT_FOUND else HttpResponseStatus.OK, keepAlive, channel)
         }
-      })
-      .rejected(new Consumer<Throwable>() {
-        @Override
-        public void consume(Throwable throwable) {
-          if (throwable == NOT_FOUND) {
-            // don't expose file status if not local origin
-            sendStatus(DelegatingHttpRequestHandlerKt.isLocalOrigin(request) ? HttpResponseStatus.NOT_FOUND : HttpResponseStatus.OK, keepAlive, channel);
-          }
-          else {
-            // todo send error
-            sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR, keepAlive, channel);
-            LOG.error(throwable);
-          }
-        }
-      });
-    return null;
-  }
-
-  private static void navigate(@Nullable Project project, @NotNull VirtualFile file, @NotNull OpenFileRequest request) {
-    if (project == null) {
-      project = getLastFocusedOrOpenedProject();
-      if (project == null) {
-        project = ProjectManager.getInstance().getDefaultProject();
-      }
-    }
-
-    // OpenFileDescriptor line and column number are 0-based.
-    new OpenFileDescriptor(project, file, Math.max(request.line - 1, 0), Math.max(request.column - 1, 0)).navigate(true);
-    if (request.focused) {
-      com.intellij.ide.impl.ProjectUtil.focusProjectWindow(project, true);
-    }
-  }
-
-  @NotNull
-  Promise<Void> openFile(@NotNull OpenFileRequest request) {
-    String systemIndependentName = FileUtil.toSystemIndependentName(FileUtil.expandUserHome(request.file));
-    final File file = new File(systemIndependentName);
-
-    if (file.isAbsolute()) {
-      if (com.intellij.ide.impl.ProjectUtil.isRemotePath(systemIndependentName)) {
-        final Ref<Promise<Void>> result = new Ref<>();
-        try {
-          SwingUtilities.invokeAndWait(new Runnable() {
-            @Override
-            public void run() {
-              if (System.currentTimeMillis() - lastTimeRejected < waitUntilNextRequestTimeout) {
-                return;
-              }
-              boolean value = com.intellij.ide.impl.ProjectUtil
-                .confirmLoadingFromRemotePath(systemIndependentName, "warning.load.file.from.share", "title.load.file.from.share");
-
-              if (value != Boolean.TRUE) {
-                lastTimeRejected = System.currentTimeMillis();
-                waitUntilNextRequestTimeout = Math.min(2 * Math.max(waitUntilNextRequestTimeout, 2000), 60 * 60 * 1000); //to avoid negative values
-                result.set(Promise.reject(NOT_FOUND));
-              } else {
-                waitUntilNextRequestTimeout = 0;
-              }
-            }
-          });
-        } catch (Throwable ignored) {}
-
-        if (result.get() != null) {
-          return result.get();
+        else {
+          // todo send error
+          RestService.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR, keepAlive, channel)
+          RestService.LOG.error(throwable)
         }
       }
+    return null
+  }
 
-      return openAbsolutePath(file, request);
+  fun openFile(request: OpenFileRequest): Promise<Void> {
+    val path = FileUtil.expandUserHome(request.file!!)
+    val file = Paths.get(FileUtil.toSystemDependentName(path))
+    if (file.isAbsolute) {
+      return openAbsolutePath(file, request)
     }
 
     // we don't want to call refresh for each attempt on findFileByRelativePath call, so, we do what ourSaveAndSyncHandlerImpl does on frame activation
-    RefreshQueue queue = RefreshQueue.getInstance();
-    queue.cancelSession(refreshSessionId);
-    OpenFileTask task = new OpenFileTask(FileUtil.toCanonicalPath(systemIndependentName, '/'), request);
-    requests.offer(task);
-    RefreshSession session = queue.createSession(true, true, new Runnable() {
-      @Override
-      public void run() {
-        OpenFileTask task;
-        while ((task = requests.poll()) != null) {
-          try {
-            if (openRelativePath(task.path, task.request)) {
-              task.promise.setResult(null);
-            }
-            else {
-              task.promise.setError(NOT_FOUND);
-            }
-          }
-          catch (Throwable e) {
-            task.promise.setError(e);
-          }
-        }
-      }
-    }, ModalityState.NON_MODAL);
-
-    session.addAllFiles(ManagingFS.getInstance().getLocalRoots());
-    refreshSessionId = session.getId();
-    session.launch();
-    return task.promise;
-  }
-
-  // path must be normalized
-  private static boolean openRelativePath(@NotNull final String path, @NotNull final OpenFileRequest request) {
-    VirtualFile virtualFile = null;
-    Project project = null;
-
-    Project[] projects = ProjectManager.getInstance().getOpenProjects();
-    for (Project openedProject : projects) {
-      VirtualFile openedProjectBaseDir = openedProject.getBaseDir();
-      if (openedProjectBaseDir != null) {
-        virtualFile = openedProjectBaseDir.findFileByRelativePath(path);
-      }
-
-      if (virtualFile == null) {
-        virtualFile = WebServerPathToFileManager.getInstance(openedProject).findVirtualFile(path);
-      }
-      if (virtualFile != null) {
-        project = openedProject;
-        break;
-      }
-    }
-
-    if (virtualFile == null) {
-      for (Project openedProject : projects) {
-        for (VcsRoot vcsRoot : ProjectLevelVcsManager.getInstance(openedProject).getAllVcsRoots()) {
-          VirtualFile root = vcsRoot.getPath();
-          if (root != null) {
-            virtualFile = root.findFileByRelativePath(path);
-            if (virtualFile != null) {
-              project = openedProject;
-              break;
-            }
-          }
-        }
-      }
-    }
-
-    if (virtualFile == null) {
-      return false;
-    }
-
-    final Project finalProject = project;
-    final VirtualFile finalVirtualFile = virtualFile;
-    AppUIUtil.invokeLaterIfProjectAlive(project, new Runnable() {
-      @Override
-      public void run() {
-        navigate(finalProject, finalVirtualFile, request);
-      }
-    });
-    return true;
-  }
-
-  @NotNull
-  private static Promise<Void> openAbsolutePath(@NotNull final File file, @NotNull final OpenFileRequest request) {
-    if (!file.exists()) {
-      return Promise.reject(NOT_FOUND);
-    }
-
-    final AsyncPromise<Void> promise = new AsyncPromise<Void>();
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          VirtualFile virtualFile;
-          AccessToken token = WriteAction.start();
-          try {
-            virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
-          }
-          finally {
-            token.finish();
-          }
-
-          if (virtualFile == null) {
-            promise.setError(NOT_FOUND);
+    val queue = RefreshQueue.getInstance()
+    queue.cancelSession(refreshSessionId)
+    val mainTask = OpenFileTask(FileUtil.toCanonicalPath(FileUtil.toSystemIndependentName(path), '/'), request)
+    requests.offer(mainTask)
+    val session = queue.createSession(true, true, {
+      while (true) {
+        val task = requests.poll() ?: break
+        task.promise.catchError {
+          if (openRelativePath(task.path, task.request)) {
+            task.promise.setResult(null)
           }
           else {
-            navigate(ProjectUtil.guessProjectForContentFile(virtualFile), virtualFile, request);
-            promise.setResult(null);
+            task.promise.setError(NOT_FOUND)
           }
         }
-        catch (Throwable e) {
-          promise.setError(e);
-        }
       }
-    });
-    return promise;
+    }, ModalityState.NON_MODAL)
+
+    session.addAllFiles(*ManagingFS.getInstance().localRoots)
+    refreshSessionId = session.id
+    session.launch()
+    return mainTask.promise
   }
 
-  private static final class OpenFileTask {
-    final String path;
-    final OpenFileRequest request;
+  override fun isAllowRequestOnlyFromLocalOrigin() = false
+}
 
-    final AsyncPromise<Void> promise = new AsyncPromise<Void>();
+internal class OpenFileRequest {
+  var file: String? = null
+  // The line number of the file (1-based)
+  var line = 0
+  // The column number of the file (1-based)
+  var column = 0
 
-    OpenFileTask(@NotNull String path, @NotNull OpenFileRequest request) {
-      this.path = path;
-      this.request = request;
+  var focused = true
+}
+
+private class OpenFileTask(internal val path: String, internal val request: OpenFileRequest) {
+  internal val promise = AsyncPromise<Void>()
+}
+
+private fun navigate(project: Project?, file: VirtualFile, request: OpenFileRequest) {
+  val effectiveProject = project ?: RestService.getLastFocusedOrOpenedProject() ?: ProjectManager.getInstance().defaultProject
+  // OpenFileDescriptor line and column number are 0-based.
+  OpenFileDescriptor(effectiveProject, file, Math.max(request.line - 1, 0), Math.max(request.column - 1, 0)).navigate(true)
+  if (request.focused) {
+    com.intellij.ide.impl.ProjectUtil.focusProjectWindow(project, true)
+  }
+}
+
+// path must be normalized
+private fun openRelativePath(path: String, request: OpenFileRequest): Boolean {
+  var virtualFile: VirtualFile? = null
+  var project: Project? = null
+
+  val projects = ProjectManager.getInstance().openProjects
+  for (openedProject in projects) {
+    openedProject.baseDir?.let {
+      virtualFile = it.findFileByRelativePath(path)
+    }
+
+    if (virtualFile == null) {
+      virtualFile = WebServerPathToFileManager.getInstance(openedProject).findVirtualFile(path)
+    }
+    if (virtualFile != null) {
+      project = openedProject
+      break
     }
   }
 
-  static final class OpenFileRequest {
-    public String file;
-    // The line number of the file (1-based)
-    public int line;
-    // The column number of the file (1-based)
-    public int column;
-
-    public boolean focused = true;
+  if (virtualFile == null) {
+    for (openedProject in projects) {
+      for (vcsRoot in ProjectLevelVcsManager.getInstance(openedProject).allVcsRoots) {
+        val root = vcsRoot.path
+        if (root != null) {
+          virtualFile = root.findFileByRelativePath(path)
+          if (virtualFile != null) {
+            project = openedProject
+            break
+          }
+        }
+      }
+    }
   }
 
-  @Override
-  public boolean isAllowRequestOnlyFromLocalOrigin() {
-    return false;
+  virtualFile?.let {
+    AppUIUtil.invokeLaterIfProjectAlive(project!!, Runnable { navigate(project, it, request) })
+    return true
   }
+  return false
+}
+
+private fun openAbsolutePath(file: Path, request: OpenFileRequest): Promise<Void> {
+  if (!file.exists()) {
+    return rejectedPromise(NOT_FOUND)
+  }
+
+  val promise = AsyncPromise<Void>()
+  ApplicationManager.getApplication().invokeLater {
+    promise.catchError {
+      val virtualFile = runWriteAction {  LocalFileSystem.getInstance().refreshAndFindFileByPath(file.systemIndependentPath) }
+      if (virtualFile == null) {
+        promise.setError(NOT_FOUND)
+      }
+      else {
+        navigate(ProjectUtil.guessProjectForContentFile(virtualFile), virtualFile, request)
+        promise.setResult(null)
+      }
+    }
+  }
+  return promise
 }
