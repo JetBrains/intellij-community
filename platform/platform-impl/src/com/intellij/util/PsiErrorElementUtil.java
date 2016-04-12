@@ -39,13 +39,10 @@ public class PsiErrorElementUtil {
   private PsiErrorElementUtil() {}
 
   public static boolean hasErrors(@NotNull final Project project, @NotNull final VirtualFile virtualFile) {
-    if (project.isDisposed() || !virtualFile.isValid()) {
-      return false;
-    }
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       @Override
       public Boolean compute() {
-        if (project.isDisposed()) {
+        if (project.isDisposed() || !virtualFile.isValid()) {
           return false;
         }
         PsiManagerEx psiManager = (PsiManagerEx)PsiManager.getInstance(project);
