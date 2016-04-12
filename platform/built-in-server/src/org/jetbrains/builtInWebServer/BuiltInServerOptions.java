@@ -49,10 +49,12 @@ public class BuiltInServerOptions implements PersistentStateComponent<BuiltInSer
     @NotNull
     @Override
     public Collection<? extends Configurable> getConfigurables(@NotNull DebuggerSettingsCategory category) {
+      /* Android Studio: Disable the Built-in Server (not needed and a potential security hole)
       if (category == DebuggerSettingsCategory.GENERAL) {
         return Collections.singletonList(SimpleConfigurable.create("builtInServer", XmlBundle
           .message("setting.builtin.server.category.label"), BuiltInServerConfigurableUi.class, getInstance()));
       }
+      */
       return Collections.emptyList();
     }
   }
