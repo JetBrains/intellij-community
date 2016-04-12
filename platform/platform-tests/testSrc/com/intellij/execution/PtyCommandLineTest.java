@@ -36,19 +36,4 @@ public class PtyCommandLineTest extends GeneralCommandLineTest {
 
     return cmd;
   }
-
-  @Override
-  public void passingArgumentsToJavaApp() {
-    assumeFalse(SystemInfo.isWindows);
-  }
-
-  @Override
-  public void passingArgumentsToJavaAppThroughWinShell()  {
-    assumeFalse(SystemInfo.isWindows);
-  }
-
-  @Override
-  public void passingArgumentsToJavaAppThroughCmdScriptAndWinShell()  {
-    assumeFalse(SystemInfo.isWindows);
-  }
 }
