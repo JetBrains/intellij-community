@@ -15,15 +15,15 @@ import java.security.ProtectionDomain;
 public class IdeaPatcher {
 
   public static void agentmain(String agentArgs, Instrumentation instrumentation) throws Throwable {
-    System.out.println("Started Agent main");
+    System.out.println("Started IntelliJ Lombok Agent main");
     new IdeaPatcher().runAgent(agentArgs, instrumentation, true);
-    System.out.println("Finished Agent");
+    System.out.println("Finished IntelliJ Lombok Agent");
   }
 
   public static void premain(String agentArgs, Instrumentation instrumentation) throws Throwable {
-    System.out.println("Started Agent pre main");
+    System.out.println("Started IntelliJ Lombok Agent pre main");
     new IdeaPatcher().runAgent(agentArgs, instrumentation, false);
-    System.out.println("Finished Agent");
+    System.out.println("Finished IntelliJ Lombok Agent");
   }
 
   protected void runAgent(String agentArgs, Instrumentation instrumentation, boolean injected) throws Exception {
@@ -44,7 +44,7 @@ public class IdeaPatcher {
     }
 
     private byte[] doClass(String name, Class clazz, byte[] b) {
-      System.out.println("Modifying class! " + name);
+      System.out.println("Modifying class: " + name);
       ClassPool pool = ClassPool.getDefault();
       CtClass cl = null;
       try {
