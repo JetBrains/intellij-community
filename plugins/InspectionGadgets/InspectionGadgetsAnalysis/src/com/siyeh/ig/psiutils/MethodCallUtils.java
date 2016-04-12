@@ -149,7 +149,7 @@ public class MethodCallUtils {
   }
 
   public static boolean isCallDuringObjectConstruction(PsiMethodCallExpression expression) {
-    final PsiMember member = PsiTreeUtil.getParentOfType(expression, PsiMethod.class, PsiClassInitializer.class, PsiField.class);
+    final PsiMember member = PsiTreeUtil.getParentOfType(expression, PsiMember.class, true, PsiClass.class, PsiLambdaExpression.class);
     if (member == null) {
       return false;
     }
