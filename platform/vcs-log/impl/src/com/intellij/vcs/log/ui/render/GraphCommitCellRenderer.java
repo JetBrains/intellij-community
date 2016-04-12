@@ -24,9 +24,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-public class GraphCommitCellRender extends ColoredTableCellRenderer {
+public class GraphCommitCellRenderer extends ColoredTableCellRenderer {
 
-  private static final Logger LOG = Logger.getInstance(GraphCommitCellRender.class);
+  private static final Logger LOG = Logger.getInstance(GraphCommitCellRenderer.class);
 
   @NotNull private final VcsLogDataManager myDataManager;
   @NotNull private final GraphCellPainter myPainter;
@@ -39,9 +39,9 @@ public class GraphCommitCellRender extends ColoredTableCellRenderer {
   @NotNull private Font myFont;
   private int myHeight;
 
-  public GraphCommitCellRender(@NotNull VcsLogDataManager dataManager,
-                               @NotNull GraphCellPainter painter,
-                               @NotNull VcsLogGraphTable table) {
+  public GraphCommitCellRenderer(@NotNull VcsLogDataManager dataManager,
+                                 @NotNull GraphCellPainter painter,
+                                 @NotNull VcsLogGraphTable table) {
     myDataManager = dataManager;
     myPainter = painter;
     myGraphTable = table;

@@ -1080,7 +1080,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
    * @param fontSize new font size
    * @param zoomCenter zoom point, relative to viewport
    */
-  private void setFontSize(final int fontSize, @Nullable Point zoomCenter) {
+  private void setFontSize(int fontSize, @Nullable Point zoomCenter) {
     int oldFontSize = myScheme.getEditorFontSize();
 
     Rectangle visibleArea = myScrollingModel.getVisibleArea();
@@ -1091,6 +1091,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     int intraLineOffset = zoomCenterAbsolute.y % oldLineHeight;
 
     myScheme.setEditorFontSize(fontSize);
+    fontSize = myScheme.getEditorFontSize(); // resulting font size might be different due to applied min/max limits
     myPropertyChangeSupport.firePropertyChange(PROP_FONT_SIZE, oldFontSize, fontSize);
     // Update vertical scroll bar bounds if necessary (we had a problem that use increased editor font size and it was not possible
     // to scroll to the bottom of the document).

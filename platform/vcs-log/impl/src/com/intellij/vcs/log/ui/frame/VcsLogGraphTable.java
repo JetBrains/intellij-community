@@ -55,7 +55,7 @@ import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.VcsLogColorManagerImpl;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.render.GraphCommitCell;
-import com.intellij.vcs.log.ui.render.GraphCommitCellRender;
+import com.intellij.vcs.log.ui.render.GraphCommitCellRenderer;
 import com.intellij.vcs.log.ui.tables.GraphTableModel;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import gnu.trove.TIntHashSet;
@@ -92,7 +92,7 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
   @NotNull private final VcsLogDataManager myLogDataManager;
   @NotNull private final MyDummyTableCellEditor myDummyEditor = new MyDummyTableCellEditor();
   @NotNull private final TableCellRenderer myDummyRenderer = new DefaultTableCellRenderer();
-  @NotNull private final GraphCommitCellRender myGraphCommitCellRenderer;
+  @NotNull private final GraphCommitCellRenderer myGraphCommitCellRenderer;
   private boolean myColumnsSizeInitialized = false;
   @Nullable private Selection mySelection = null;
 
@@ -109,7 +109,7 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
     super(new GraphTableModel(initialDataPack, logDataManager, ui));
     myUi = ui;
     myLogDataManager = logDataManager;
-    myGraphCommitCellRenderer = new GraphCommitCellRender(logDataManager, myGraphCellPainter, this);
+    myGraphCommitCellRenderer = new GraphCommitCellRenderer(logDataManager, myGraphCellPainter, this);
 
     setDefaultRenderer(VirtualFile.class, new RootCellRenderer(myUi));
     setDefaultRenderer(GraphCommitCell.class, myGraphCommitCellRenderer);

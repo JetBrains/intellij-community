@@ -87,6 +87,8 @@ public class HighlightUtil extends HighlightUtilBase {
   @NonNls private static final String SERIAL_PERSISTENT_FIELDS_FIELD_NAME = "serialPersistentFields";
   private static final QuickFixFactory QUICK_FIX_FACTORY = QuickFixFactory.getInstance();
 
+  public static final Key<Boolean> DISABLE_RETURN_CHECK_IN_CODE_FRAGMENT = Key.create("DISABLE_RETURN_CHECK_IN_CODE_FRAGMENT");
+
   private HighlightUtil() { }
 
   static {
@@ -593,6 +595,9 @@ public class HighlightUtil extends HighlightUtilBase {
         break;
       }
       parent = parent.getParent();
+    }
+    if (parent instanceof PsiCodeFragment && parent.getUserData(DISABLE_RETURN_CHECK_IN_CODE_FRAGMENT) != null) {
+      return null;
     }
     String description;
     HighlightInfo errorResult = null;

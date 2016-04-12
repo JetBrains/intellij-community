@@ -175,6 +175,9 @@ public class NotificationTestAction extends AnAction implements DumbAware {
             notification.setActions(StringUtil.split(value, ","));
           }
         }
+        else if (line.startsWith("Type:")) {
+          notification.setType(StringUtil.substringAfter(line, ":"));
+        }
         else if (line.startsWith("Sticky:")) {
           notification.setSticky("true".equals(StringUtil.substringAfter(line, ":")));
         }
@@ -200,6 +203,7 @@ public class NotificationTestAction extends AnAction implements DumbAware {
     private String mySubtitle;
     private List<String> myContent;
     private List<String> myActions;
+    private NotificationType myType = NotificationType.INFORMATION;
     private boolean mySticky;
     private boolean myAddListener;
 
@@ -218,10 +222,10 @@ public class NotificationTestAction extends AnAction implements DumbAware {
         String content = myContent == null ? "" : StringUtil.join(myContent, "\n");
         if (icon == null) {
           myNotification =
-            new Notification(displayId, StringUtil.notNullize(myTitle), content, NotificationType.INFORMATION, getListener());
+            new Notification(displayId, StringUtil.notNullize(myTitle), content, myType, getListener());
         }
         else {
-          myNotification = new Notification(displayId, icon, myTitle, mySubtitle, content, NotificationType.INFORMATION, getListener());
+          myNotification = new Notification(displayId, icon, myTitle, mySubtitle, content, myType, getListener());
           if (myActions != null) {
             for (String action : myActions) {
               myNotification.addAction(new MyAnAction(action));
@@ -266,6 +270,18 @@ public class NotificationTestAction extends AnAction implements DumbAware {
 
     public void setSticky(boolean sticky) {
       mySticky = sticky;
+    }
+
+    public void setType(@Nullable String type) {
+      if ("info".equals(type)) {
+        myType = NotificationType.INFORMATION;
+      }
+      else if ("error".equals(type)) {
+        myType = NotificationType.ERROR;
+      }
+      else if ("warn".equals(type)) {
+        myType = NotificationType.WARNING;
+      }
     }
 
     @Override
