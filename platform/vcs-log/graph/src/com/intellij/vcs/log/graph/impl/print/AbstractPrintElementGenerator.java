@@ -118,7 +118,7 @@ public abstract class AbstractPrintElementGenerator implements PrintElementGener
 
   @NotNull
   @Override
-  public PrintElementWithGraphElement toPrintElementWithGraphElement(@NotNull PrintElement printElement) {
+  public PrintElementWithGraphElement withGraphElement(@NotNull PrintElement printElement) {
     if (printElement instanceof PrintElementWithGraphElement) {
       return (PrintElementWithGraphElement)printElement;
     }
