@@ -158,7 +158,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
                   : InspectionsBundle.message(mySingleInspectionRun ?
                                               "inspection.results.for.inspection.toolwindow.title" :
                                               "inspection.results.for.profile.toolwindow.title",
-                                              view.getCurrentProfileName()), false);
+                                              view.getCurrentProfileName(), getCurrentScope().getDisplayName()), false);
 
   }
 

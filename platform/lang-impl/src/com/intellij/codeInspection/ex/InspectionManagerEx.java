@@ -34,9 +34,7 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.ui.content.ContentFactory;
-import com.intellij.ui.content.ContentManager;
-import com.intellij.ui.content.TabbedPaneContentUI;
+import com.intellij.ui.content.*;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -73,6 +71,32 @@ public class InspectionManagerEx extends InspectionManagerBase {
           ContentManager contentManager = toolWindow.getContentManager();
           toolWindow.setIcon(AllIcons.Toolwindows.ToolWindowInspection);
           new ContentManagerWatcher(toolWindow, contentManager);
+          contentManager.addContentManagerListener(new ContentManagerAdapter() {
+            @Override
+            public void contentAdded(ContentManagerEvent event) {
+              handleContentSizeChanged();
+            }
+
+            @Override
+            public void contentRemoved(ContentManagerEvent event) {
+              handleContentSizeChanged();
+            }
+
+            private void handleContentSizeChanged() {
+              final int count = contentManager.getContentCount();
+              String newStripeTitle = null;
+              if (count == 1) {
+                newStripeTitle = InspectionsBundle.message("inspection.tool.window.stripe.title.single.content");
+              }
+              else if (count > 1) {
+                newStripeTitle = InspectionsBundle.message("inspection.tool.window.stripe.title.multiple.content");
+              }
+              final String stripeTitle = toolWindow.getStripeTitle();
+              if (newStripeTitle != null && !stripeTitle.equals(newStripeTitle)) {
+                toolWindow.setStripeTitle(newStripeTitle);
+              }
+            }
+          });
           return contentManager;
         }
       };
@@ -90,7 +114,7 @@ public class InspectionManagerEx extends InspectionManagerBase {
       final Language language = Language.findLanguageByID(toolWrapper.getLanguage());
       if (language != null) {
         final List<InspectionSuppressor> suppressors = LanguageInspectionSuppressors.INSTANCE.allForLanguage(language);
-        for (InspectionSuppressor suppressor : suppressors) {
+            for (InspectionSuppressor suppressor : suppressors) {
           final SuppressQuickFix[] suppressActions = suppressor.getSuppressActions(null, toolWrapper.getID());
           Collections.addAll(actions, suppressActions);
         }
