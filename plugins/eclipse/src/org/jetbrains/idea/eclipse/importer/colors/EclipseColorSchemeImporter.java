@@ -89,7 +89,11 @@ public class EclipseColorSchemeImporter implements SchemeImporter<EditorColorsSc
     DiffColors.DIFF_INSERTED,
     DiffColors.DIFF_MODIFIED,
 
-    DefaultLanguageHighlighterColors.INVALID_STRING_ESCAPE
+    DefaultLanguageHighlighterColors.INVALID_STRING_ESCAPE,
+    
+    EditorColors.REFERENCE_HYPERLINK_COLOR,
+    CodeInsightColors.HYPERLINK_ATTRIBUTES,
+    CodeInsightColors.FOLLOWED_HYPERLINK_ATTRIBUTES
   };
   
   //
