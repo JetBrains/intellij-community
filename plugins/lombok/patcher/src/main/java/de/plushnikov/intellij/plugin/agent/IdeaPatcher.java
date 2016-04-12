@@ -15,87 +15,71 @@ import java.security.ProtectionDomain;
 public class IdeaPatcher {
 
   public static void agentmain(String agentArgs, Instrumentation instrumentation) throws Throwable {
-    System.out.println("EXECUTED AGENT_MAIN");
+    System.out.println("Started Agent main");
     new IdeaPatcher().runAgent(agentArgs, instrumentation, true);
+    System.out.println("Finished Agent");
   }
 
   public static void premain(String agentArgs, Instrumentation instrumentation) throws Throwable {
-    System.out.println("EXECUTED AGENT_PRE_MAIN");
+    System.out.println("Started Agent pre main");
     new IdeaPatcher().runAgent(agentArgs, instrumentation, false);
+    System.out.println("Finished Agent");
   }
 
   protected void runAgent(String agentArgs, Instrumentation instrumentation, boolean injected) throws Exception {
-    System.out.println("Enter runAgent");
-//    ScriptManager sm = new ScriptManager();
-//    sm.registerTransformer(instrumentation);
+    instrumentation.addTransformer(new ModifierVisibilityClassFileTransformer(), true);
 
-    System.out.println("Before patching");
-//    patchIntellij(sm);
-
-//    instrumentation.appendToSystemClassLoaderSearch();
-    instrumentation.addTransformer(new ClassFileTransformer() {
-      @Override
-      public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined, ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException {
-        return doClass(className, classBeingRedefined, classfileBuffer);
-      }
-    }, true);
-    instrumentation.retransformClasses(String.class);
-
-    System.out.println("After patching");
-
-//    sm.reloadClasses(instrumentation);
-//    sm.registerTransformer(instrumentation);
-    System.out.println("Finished runAgent");
+//    final Class<?> classForName = Class.forName("com.intellij.psi.impl.source.PsiModifierListImpl");
+//    instrumentation.retransformClasses(classForName);
   }
 
-  private byte[] doClass(String name, Class clazz, byte[] b) {
-    System.out.println("modufy! "+name);
-    ClassPool pool = ClassPool.getDefault();
-    CtClass cl = null;
-    try {
-      cl = pool.makeClass(new java.io.ByteArrayInputStream(b));
-      CtMethod m = cl.getDeclaredMethod(GET_WM_NAME);
-      m.setBody("{ return \""+wmName+"\"; }");
-      b = cl.toBytecode();
-    } catch (Exception e) {
-      System.err.println("Could not instrument  " + name + ",  exception : " + e.getMessage());
-    } finally {
-      if (cl != null) {
-        cl.detach();
+  private static class ModifierVisibilityClassFileTransformer implements ClassFileTransformer {
+    @Override
+    public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined, ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException {
+      if (className.equals("com/intellij/psi/impl/source/PsiModifierListImpl")) {
+        return doClass(className, classBeingRedefined, classfileBuffer);
+      } else {
+        return null;
       }
     }
-    return b;
-  }
 
-//  private static void patchIntellij(ScriptManager sm) {
-//    System.out.println("patching ....");
-//
-//    sm.addScript(ScriptBuilder.wrapReturnValue()
-//        .target(new MethodTarget("com.intellij.codeInsight.ExceptionUtil", "isHandled", "boolean", "com.intellij.psi.PsiElement", "com.intellij.psi.PsiClassType", "com.intellij.psi.PsiElement"))
-//        .wrapMethod(new Hook("de.plushnikov.intellij.plugin.handler.SneakyTrowsExceptionHandler", "wrapReturnValue", "boolean", "boolean", "com.intellij.psi.PsiElement", "com.intellij.psi.PsiClassType", "com.intellij.psi.PsiElement"))
-//        .request(StackRequest.RETURN_VALUE, StackRequest.PARAM1, StackRequest.PARAM2, StackRequest.PARAM3)
-//        .build());
-//
-////    sm.addScript(ScriptBuilder.exitEarly()
-////        .target(new MethodTarget("com.intellij.codeInsight.ExceptionUtil", "isHandled", "boolean", "com.intellij.psi.PsiElement", "com.intellij.psi.PsiClassType", "com.intellij.psi.PsiElement"))
-////        .decisionMethod(new Hook("de.plushnikov.intellij.plugin.handler.ExtraExceptionHandlerLogik", "decisionMethod", "boolean", "com.intellij.psi.PsiElement", "com.intellij.psi.PsiClassType", "com.intellij.psi.PsiElement"))
-////        .valueMethod(new Hook("de.plushnikov.intellij.plugin.handler.ExtraExceptionHandlerLogik", "valueMethod", "boolean", "com.intellij.psi.PsiElement", "com.intellij.psi.PsiClassType", "com.intellij.psi.PsiElement"))
-////        .request(StackRequest.PARAM1, StackRequest.PARAM2, StackRequest.PARAM3)
-////        .build());
-//
-////    sm.addScript(ScriptBuilder.replaceMethodCall()
-////        .target(new MethodTarget("com.intellij.codeInsight.ExceptionUtil", "collectUnhandledExceptions"))
-////        .target(new MethodTarget("com.intellij.codeInsight.ExceptionUtil", "getUnhandledExceptions"))
-////        .target(new MethodTarget("com.intellij.codeInsight.ExceptionUtil", "getUnhandledExceptions"))
-////        .target(new MethodTarget("com.intellij.codeInsight.isHandled", "getUnhandledExceptions", "boolean", "com.intellij.psi.PsiClassType", "com.intellij.psi.PsiElement"))
-////        .methodToReplace(new Hook("com.intellij.codeInsight.ExceptionUtil", "isHandled", "boolean", "com.intellij.psi.PsiElement", "com.intellij.psi.PsiClassType", "com.intellij.psi.PsiElement"))
-////        .replacementMethod(new Hook("de.plushnikov.intellij.plugin.handler.ExtraExceptionHandlerLogik", "replacementMethod", "boolean", "com.intellij.psi.PsiElement", "com.intellij.psi.PsiClassType", "com.intellij.psi.PsiElement"))
-////        .build());
-////
-////    sm.addScript(ScriptBuilder.replaceMethodCall()
-////        .target(new MethodTarget("de.plushnikov.intellij.plugin.patcher.MeinTest", "calcSumme"))
-////        .methodToReplace(new Hook("de.plushnikov.intellij.plugin.patcher.SummeCalculator", "calcSummePrimitive", "int", "int", "int"))
-////        .replacementMethod(new Hook("de.plushnikov.intellij.plugin.patcher.MeinAgentTest", "calcDifferencePrimitive", "int", "de.plushnikov.intellij.plugin.patcher.SummeCalculator", "int", "int"))
-////        .build());
-//  }
+    private byte[] doClass(String name, Class clazz, byte[] b) {
+      System.out.println("Modifying class! " + name);
+      ClassPool pool = ClassPool.getDefault();
+      CtClass cl = null;
+      try {
+        cl = pool.makeClass(new java.io.ByteArrayInputStream(b));
+        CtMethod m = cl.getDeclaredMethod("hasModifierProperty");
+//          m.insertBefore("System.out.println(\"Inside of hasModifierProperty: \" + $1);");
+        m.insertBefore(
+            "{\n" +
+                "      com.intellij.openapi.extensions.ExtensionPointName pointName = com.intellij.openapi.extensions.ExtensionPointName.create(\"com.intellij.lang.psiAugmentProvider\");\n" +
+                "      java.lang.Object[] extensions = com.intellij.openapi.extensions.Extensions.getExtensions(pointName);\n" +
+                "      for (int i = 0; i < extensions.length; i++) {\n" +
+                "        Object extension = extensions[i];\n" +
+                "        if(extension.getClass().getName().equals(\"de.plushnikov.intellij.plugin.provider.LombokAugmentProvider\")) {\n" +
+                "         try {\n" +
+                "            java.lang.reflect.Method method = extension.getClass().getDeclaredMethod(\"doItHard\", new java.lang.Class[]{com.intellij.psi.PsiModifierList.class, java.lang.String.class});\n" +
+                "            java.lang.Boolean augmentation = (java.lang.Boolean)method.invoke(extension, new Object[]{$0, $1});\n" +
+                "            if (augmentation != null) {" +
+                "               return augmentation.booleanValue();" +
+                "            }" +
+                "          } catch (Exception e) {\n" +
+                "            System.err.println(e.getMessage());\n" +
+                "          }" +
+                "        }" +
+                "      }\n" +
+                "    }");
+
+        return cl.toBytecode();
+      } catch (Exception e) {
+        System.err.println("Could not instrument  " + name + ",  exception : " + e.getMessage());
+        return null;
+      } finally {
+        if (cl != null) {
+          cl.detach();
+        }
+      }
+    }
+  }
 }

@@ -1,8 +1,10 @@
 package de.plushnikov.intellij.plugin;
 
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.BuildNumber;
 import de.plushnikov.intellij.lombok.patcher.inject.ClassRootFinder;
 import de.plushnikov.intellij.lombok.patcher.inject.LiveInjector;
 import de.plushnikov.intellij.plugin.agent.IdeaPatcher;
@@ -67,20 +69,22 @@ public class LombokPluginApplicationComponent implements ApplicationComponent {
       settings.setVersion(Version.PLUGIN_VERSION);
     }
 
-    injectAgent();
+    final BuildNumber currentBuild = ApplicationInfo.getInstance().getBuild();
+    if(currentBuild.compareTo(BuildNumber.fromString("146.1154")) < 0) {
+      LOG.info("Starting injection of IntelliJ-Patch");
+      injectAgent();
+    }
   }
 
   private void injectAgent() {
     LOG.info("pre injection");
-    System.setProperty("lombok.patcher.safeInject", "true");
-    String rootOfClass = ClassRootFinder.findClassRootOfClass(IdeaPatcher.class);
-    rootOfClass = rootOfClass.substring(1);
-    System.out.println("Use RootOfClass: " + rootOfClass);
+    String rootOfClass = ClassRootFinder.findClassRootOfClass(IdeaPatcher.class).substring(1);
+    LOG.info("Injector use rootOfClass: " + rootOfClass);
     try {
       LiveInjector liveInjector = new LiveInjector();
-      liveInjector.inject(rootOfClass);
+      liveInjector.inject(rootOfClass, true);
     } catch (Exception ex) {
-      LOG.error(ex);
+      LOG.error("Error agent injection", ex);
     }
     LOG.info("post injection");
   }

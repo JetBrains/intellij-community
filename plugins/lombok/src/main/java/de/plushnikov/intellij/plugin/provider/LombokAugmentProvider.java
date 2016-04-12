@@ -3,7 +3,6 @@ package de.plushnikov.intellij.plugin.provider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
@@ -20,7 +19,6 @@ import de.plushnikov.intellij.plugin.extension.LombokProcessorExtensionPoint;
 import de.plushnikov.intellij.plugin.processor.Processor;
 import de.plushnikov.intellij.plugin.processor.ValProcessor;
 import de.plushnikov.intellij.plugin.processor.modifier.ModifierProcessor;
-import de.plushnikov.intellij.plugin.processor.modifier.ValueModifierProcessor;
 import de.plushnikov.intellij.plugin.settings.ProjectSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,6 +46,11 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
     modifierProcessors = Arrays.asList(getModifierProcessors());
   }
 
+  public Boolean doItHard(PsiModifierList modifierList, String name) {
+//    System.out.println("I did it hard way!");
+    return hasModifierProperty(modifierList, name);
+  }
+
   @Nullable
   //@Override //May cause issues with older versions of IDEA SDK that are currently supported
   protected Boolean hasModifierProperty(@NotNull PsiModifierList modifierList, @NotNull String name) {
@@ -57,7 +60,7 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
     }
 
     // Loop through all available processors and give all of them a chance to respond
-    for (ModifierProcessor processor: modifierProcessors) {
+    for (ModifierProcessor processor : modifierProcessors) {
       if (processor.isSupported(modifierList, name)) {
         Boolean valueProcessorResult = processor.hasModifierProperty(modifierList, name);
 
