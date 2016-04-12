@@ -13,6 +13,7 @@ import org.jetbrains.builtInWebServer.ssi.SsiExternalResolver
 import org.jetbrains.builtInWebServer.ssi.SsiProcessor
 import org.jetbrains.io.FileResponses
 import org.jetbrains.io.addKeepAliveIfNeed
+import org.jetbrains.io.isLocalOrigin
 import org.jetbrains.io.send
 import java.nio.file.Files
 import java.nio.file.Path
@@ -107,11 +108,12 @@ private fun sendIoFile(channel: Channel, file: Path, root: Path, request: HttpRe
   }
 }
 
-fun checkAccess(channel: Channel, file: Path, request: HttpRequest, root: Path): Boolean {
+fun checkAccess(channel: Channel, file: Path, request: HttpRequest, root: Path = file.root, doNotExposeStatusIfNotLocalOrigin: Boolean = false): Boolean {
   var parent = file
   do {
     if (!hasAccess(parent)) {
-      HttpResponseStatus.FORBIDDEN.send(channel, request)
+      (if (doNotExposeStatusIfNotLocalOrigin && !request.isLocalOrigin()) HttpResponseStatus.OK else HttpResponseStatus.FORBIDDEN)
+        .send(channel, request)
       return false
     }
     parent = parent.parent ?: break

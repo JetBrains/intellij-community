@@ -42,6 +42,7 @@ class OpenFileXmlRpcHandler {
     request.setLine(line);
     request.setColumn(column);
     request.setFocused(false);
-    return HttpRequestHandler.EP_NAME.findExtension(OpenFileHttpService.class).openFile(request).getState() != Promise.State.REJECTED;
+    Promise<Void> promise = HttpRequestHandler.EP_NAME.findExtension(OpenFileHttpService.class).openFile(request, null, null);
+    return promise != null && promise.getState() != Promise.State.REJECTED;
   }
 }

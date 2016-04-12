@@ -15,6 +15,7 @@
  */
 package org.jetbrains.ide
 
+import com.intellij.ide.impl.ProjectUtil.focusProjectWindow
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runWriteAction
@@ -36,6 +37,7 @@ import com.intellij.util.systemIndependentPath
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.*
 import org.jetbrains.builtInWebServer.WebServerPathToFileManager
+import org.jetbrains.builtInWebServer.checkAccess
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.catchError
@@ -85,21 +87,21 @@ internal class OpenFileHttpService : RestService() {
 
     val apiRequest: OpenFileRequest
     if (request.method() === HttpMethod.POST) {
-      apiRequest = gson.value.fromJson(RestService.createJsonReader(request), OpenFileRequest::class.java)
+      apiRequest = gson.value.fromJson(createJsonReader(request), OpenFileRequest::class.java)
     }
     else {
       apiRequest = OpenFileRequest()
-      apiRequest.file = StringUtil.nullize(RestService.getStringParameter("file", urlDecoder), true)
-      apiRequest.line = RestService.getIntParameter("line", urlDecoder)
-      apiRequest.column = RestService.getIntParameter("column", urlDecoder)
-      apiRequest.focused = RestService.getBooleanParameter("focused", urlDecoder, true)
+      apiRequest.file = StringUtil.nullize(getStringParameter("file", urlDecoder), true)
+      apiRequest.line = getIntParameter("line", urlDecoder)
+      apiRequest.column = getIntParameter("column", urlDecoder)
+      apiRequest.focused = getBooleanParameter("focused", urlDecoder, true)
     }
 
-    val prefixLength = 1 + RestService.PREFIX.length + 1 + serviceName.length + 1
+    val prefixLength = 1 + PREFIX.length + 1 + serviceName.length + 1
     val path = urlDecoder.path()
     if (path.length > prefixLength) {
       val matcher = LINE_AND_COLUMN.matcher(path).region(prefixLength, path.length)
-      RestService.LOG.assertTrue(matcher.matches())
+      LOG.assertTrue(matcher.matches())
       if (apiRequest.file == null) {
         apiRequest.file = matcher.group(1).trim { it <= ' ' }
       }
@@ -112,30 +114,34 @@ internal class OpenFileHttpService : RestService() {
     }
 
     if (apiRequest.file == null) {
-      RestService.sendStatus(HttpResponseStatus.BAD_REQUEST, keepAlive, channel)
+      sendStatus(HttpResponseStatus.BAD_REQUEST, keepAlive, channel)
       return null
     }
 
-    openFile(apiRequest).done { RestService.sendStatus(HttpResponseStatus.OK, keepAlive, channel) }
-      .rejected { throwable ->
-        if (throwable === NOT_FOUND) {
+    val promise = openFile(apiRequest, context, request) ?: return null
+    promise.done { sendStatus(HttpResponseStatus.OK, keepAlive, channel) }
+      .rejected {
+        if (it === NOT_FOUND) {
           // don't expose file status if not local origin
-          RestService.sendStatus(if (request.isLocalOrigin()) HttpResponseStatus.NOT_FOUND else HttpResponseStatus.OK, keepAlive, channel)
+          sendStatus(if (request.isLocalOrigin()) HttpResponseStatus.NOT_FOUND else HttpResponseStatus.OK, keepAlive, channel)
         }
         else {
           // todo send error
-          RestService.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR, keepAlive, channel)
-          RestService.LOG.error(throwable)
+          sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR, keepAlive, channel)
+          LOG.error(it)
         }
       }
     return null
   }
 
-  fun openFile(request: OpenFileRequest): Promise<Void> {
+  fun openFile(request: OpenFileRequest, context: ChannelHandlerContext?, httpRequest: HttpRequest?): Promise<Void>? {
     val path = FileUtil.expandUserHome(request.file!!)
     val file = Paths.get(FileUtil.toSystemDependentName(path))
     if (file.isAbsolute) {
-      return openAbsolutePath(file, request)
+      if (!file.exists()) {
+        return rejectedPromise(NOT_FOUND)
+      }
+      return if (context == null || checkAccess(context.channel(), file, httpRequest!!, doNotExposeStatusIfNotLocalOrigin = true)) openAbsolutePath(file, request) else null
     }
 
     // we don't want to call refresh for each attempt on findFileByRelativePath call, so, we do what ourSaveAndSyncHandlerImpl does on frame activation
@@ -185,7 +191,7 @@ private fun navigate(project: Project?, file: VirtualFile, request: OpenFileRequ
   // OpenFileDescriptor line and column number are 0-based.
   OpenFileDescriptor(effectiveProject, file, Math.max(request.line - 1, 0), Math.max(request.column - 1, 0)).navigate(true)
   if (request.focused) {
-    com.intellij.ide.impl.ProjectUtil.focusProjectWindow(project, true)
+    focusProjectWindow(project, true)
   }
 }
 
@@ -224,18 +230,13 @@ private fun openRelativePath(path: String, request: OpenFileRequest): Boolean {
     }
   }
 
-  virtualFile?.let {
+  return virtualFile?.let {
     AppUIUtil.invokeLaterIfProjectAlive(project!!, Runnable { navigate(project, it, request) })
-    return true
-  }
-  return false
+    true
+  } ?: false
 }
 
 private fun openAbsolutePath(file: Path, request: OpenFileRequest): Promise<Void> {
-  if (!file.exists()) {
-    return rejectedPromise(NOT_FOUND)
-  }
-
   val promise = AsyncPromise<Void>()
   ApplicationManager.getApplication().invokeLater {
     promise.catchError {
