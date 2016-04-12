@@ -31,7 +31,10 @@ public abstract class ComponentsListFocusTraversalPolicy extends FocusTraversalP
     if (i != -1) {
       i++;
       if (i >= components.size()) {
-        i = 0;
+        if (isFocusCycleRoot())
+          i = 0;
+        else
+          return null; // fallback to default behavior
       }
       return components.get(i);
     }
@@ -45,7 +48,10 @@ public abstract class ComponentsListFocusTraversalPolicy extends FocusTraversalP
     if (i != -1) {
       i--;
       if (i == -1) {
-        i = components.size() - 1;
+        if (isFocusCycleRoot())
+          i = components.size() - 1;
+        else
+          return null; // fallback to default behavior
       }
       return components.get(i);
     }
@@ -72,4 +78,12 @@ public abstract class ComponentsListFocusTraversalPolicy extends FocusTraversalP
 
   @NotNull
   protected abstract List<Component> getOrderedComponents();
+
+  /**
+   * Returns {@code true} to keep the focus cycling only through the components of the {@link #getOrderedComponents} list.
+   * Returns {@code false} to allows the focus to cycle through components outside of the {@link #getOrderedComponents} list.
+   */
+  protected boolean isFocusCycleRoot() {
+    return true;
+  }
 }
