@@ -98,11 +98,18 @@ internal class DelegatingHttpRequestHandler : DelegatingHttpRequestHandlerBase()
 
 fun HttpRequest.isLocalOrigin() = parseAndCheckIsLocalHost(origin) && parseAndCheckIsLocalHost(referrer)
 
+private fun isTrustedChromeExtension(uri: URI): Boolean {
+  return uri.scheme == "chrome-extension" && (uri.host == "hmhgeddbohgjknpmjagkdomcpobmllji" || uri.host == "offnedcbhjldheanlbojaefbfbllddna")
+}
+
 private fun parseAndCheckIsLocalHost(uri: String?): Boolean {
+  if (uri == null) {
+    return true
+  }
+
   try {
-    if (uri == null || isLocalHost(URI(uri).host)) {
-      return true
-    }
+    val parsedUri = URI(uri)
+    return isTrustedChromeExtension(parsedUri) || isLocalHost(parsedUri.host)
   }
   catch (ignored: Exception) {
   }
