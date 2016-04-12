@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,14 +56,13 @@ public final class ShortcutTextField extends JTextField {
   protected void processKeyEvent(KeyEvent e) {
     if (e.getID() == KeyEvent.KEY_PRESSED) {
       int keyCode = e.getKeyCode();
-      if (
-        keyCode == KeyEvent.VK_SHIFT ||
-        keyCode == KeyEvent.VK_ALT ||
-        keyCode == KeyEvent.VK_CONTROL ||
-        keyCode == KeyEvent.VK_ALT_GRAPH ||
-        keyCode == KeyEvent.VK_META ||
-        absolutelyUnknownKey(e)
-      ){
+
+      if (keyCode == KeyEvent.VK_SHIFT ||
+          keyCode == KeyEvent.VK_ALT ||
+          keyCode == KeyEvent.VK_CONTROL ||
+          keyCode == KeyEvent.VK_ALT_GRAPH ||
+          keyCode == KeyEvent.VK_META ||
+          absolutelyUnknownKey(e)) {
         return;
       }
       setKeyStroke(KeyStrokeAdapter.getDefaultKeyStroke(e));
