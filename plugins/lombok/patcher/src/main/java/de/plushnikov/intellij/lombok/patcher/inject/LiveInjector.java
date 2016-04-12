@@ -66,7 +66,7 @@ public class LiveInjector {
    * @throws IllegalStateException If this is not a sun-derived v1.6 VM.
    */
   public void injectSelf() throws IllegalStateException {
-    inject(ClassRootFinder.findClassRootOfSelf());
+    inject(ClassRootFinder.findClassRootOfSelf(), true);
   }
 
   /**
@@ -76,12 +76,12 @@ public class LiveInjector {
    *
    * @throws IllegalStateException If this is not a sun-derived v1.6 VM.
    */
-  public void inject(String jarFile) throws IllegalStateException {
+  public void inject(String jarFile, boolean slowInject) throws IllegalStateException {
     File f = new File(jarFile);
     if (!f.isFile()) {
       throw new IllegalArgumentException("Live Injection is not possible unless the classpath root to inject is a jar file.");
     }
-    if (System.getProperty("lombok.patcher.safeInject", null) != null) {
+    if (slowInject) {
       slowInject(jarFile);
     } else {
       fastInject(jarFile);
