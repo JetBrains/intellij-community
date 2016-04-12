@@ -388,7 +388,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         }
 
         state.registerIndex(name,
-                            createIndex(extension, new MemoryIndexStorage<K, V>(storage)),
+                            createIndex(extension, new MemoryIndexStorage<K, V>(storage, name)),
                             new FileBasedIndex.InputFilter() {
 
                               @Override
