@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.ui.components;
 import com.intellij.util.ui.JBFont;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.JBComponent;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -72,6 +73,11 @@ public class JBPanel<T extends JBPanel> extends JPanel implements JBComponent<T>
   @Override
   public T andOpaque() {
     setOpaque(true);
+    return (T)this;
+  }
+
+  public T withBackground(@Nullable Color background) {
+    setBackground(background);
     return (T)this;
   }
 
