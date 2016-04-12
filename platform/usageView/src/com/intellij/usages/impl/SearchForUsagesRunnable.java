@@ -308,9 +308,7 @@ class SearchForUsagesRunnable implements Runnable {
       @Override
       public void run() {
         if (myProject.isDisposed()) return;
-        if(usageView instanceof  UsageViewImpl) {
-          myUsageViewManager.addContent((UsageViewImpl)usageView, myPresentation);
-        }
+        myUsageViewManager.addContent(usageView, myPresentation);
         if (myListener != null) {
           myListener.usageViewCreated(usageView);
         }

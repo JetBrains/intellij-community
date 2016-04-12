@@ -88,7 +88,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
     return showUsages(searchedFor, foundUsages, presentation, null);
   }
 
-  void addContent(@NotNull UsageViewImpl usageView, @NotNull UsageViewPresentation presentation) {
+  void addContent(@NotNull UsageView usageView, @NotNull UsageViewPresentation presentation) {
     Content content = com.intellij.usageView.UsageViewManager.getInstance(myProject).addContent(
       presentation.getTabText(),
       presentation.getTabName(),
@@ -98,7 +98,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
       presentation.isOpenInNewTab(),
       true
     );
-    usageView.setContent(content);
+    ((UsageViewImpl)usageView).setContent(content);
     content.putUserData(USAGE_VIEW_KEY, usageView);
   }
 
