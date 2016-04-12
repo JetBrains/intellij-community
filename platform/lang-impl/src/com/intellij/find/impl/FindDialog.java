@@ -396,7 +396,7 @@ public class FindDialog extends DialogWrapper {
     component.getActionMap().put(newActionKey, new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        if(isResultsPreviewTabActive()) {
+        if(isResultsPreviewTabActive() && !component.isPopupVisible()) {
           newAction.run();
           return;
         }
