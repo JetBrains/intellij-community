@@ -192,7 +192,7 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
       myComponent = component;
       myTextColor = textColor;
       myFont = new Font(NotificationsUtil.getFontName(), Font.BOLD, 9);
-      myWidth = myComponent.getFontMetrics(myFont).stringWidth(myStr) + 1;
+      myWidth = myComponent.getFontMetrics(myFont).stringWidth(myStr);
     }
 
     @Override
