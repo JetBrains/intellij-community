@@ -54,7 +54,7 @@ public class JavaOverridingMethodsSearcher implements QueryExecutor<PsiMethod, O
       return processLocalScope((LocalSearchScope)searchScope, method, project, consumer);
     }
 
-    Collection<PsiMethod> cached = HighlightingCaches.getInstance(project).OVERRIDING_METHODS.get(method);
+    Iterable<PsiMethod> cached = HighlightingCaches.getInstance(project).OVERRIDING_METHODS.get(method);
     if (cached == null) {
       cached = compute(method, project);
       HighlightingCaches.getInstance(project).OVERRIDING_METHODS.put(method, cached);
@@ -112,7 +112,7 @@ public class JavaOverridingMethodsSearcher implements QueryExecutor<PsiMethod, O
   }
 
   @NotNull
-  private static Collection<PsiMethod> compute(@NotNull PsiMethod method, @NotNull Project project) {
+  private static Iterable<PsiMethod> compute(@NotNull PsiMethod method, @NotNull Project project) {
     Collection<PsiMethod> result = new LinkedHashSet<>();
 
     Application application = ApplicationManager.getApplication();
