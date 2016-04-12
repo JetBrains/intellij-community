@@ -1463,7 +1463,7 @@ public class BuildManager implements Disposable {
       String text;
 
       synchronized (this) {
-        if (myStoredLength > 2048) {
+        if (myStoredLength > 16384) {
           return;
         }
         text = event.getText();
