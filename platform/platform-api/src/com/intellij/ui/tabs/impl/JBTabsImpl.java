@@ -3554,16 +3554,16 @@ public class JBTabsImpl extends JComponent
     }
 
     @Override
-    public int getAccessibleChildrenCount() {
-      return getTabCount();
-    }
-
-    @Override
     public Accessible getAccessibleChild(int i) {
-      if (i < 0 || i >= getTabCount()) {
-        return null;
+      Accessible accessibleChild = super.getAccessibleChild(i);
+      // Note: Unlike a JTabbedPane, JBTabsImpl has many more child types than just pages.
+      // So we wrap TabLabel instances with their corresponding AccessibleTabPage, while
+      // leaving other types of children untouched.
+      if (accessibleChild instanceof TabLabel) {
+        TabLabel label = (TabLabel)accessibleChild;
+        return myInfo2Page.get(label.getInfo());
       }
-      return JBTabsImpl.this.myInfo2Page.get(JBTabsImpl.this.getTabAt(i));
+      return accessibleChild;
     }
 
     @Override
@@ -3632,6 +3632,7 @@ public class JBTabsImpl extends JComponent
       myParent = JBTabsImpl.this;
       myTabInfo = tabInfo;
       myComponent = tabInfo.getComponent();
+      setAccessibleParent(myParent);
       initAccessibleContext();
     }
 
