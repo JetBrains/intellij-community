@@ -503,4 +503,8 @@ public class FileReferenceSet {
   public void setEmptyPathAllowed(boolean emptyPathAllowed) {
     myEmptyPathAllowed = emptyPathAllowed;
   }
+
+  public boolean supportsExtendedCompletion() {
+    return true;
+  }
 }
