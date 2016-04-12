@@ -195,7 +195,9 @@ public class PsiDiamondTypeUtil {
       final PsiFile fileCopy = (PsiFile)containingFile.copy();
       copy = fileCopy.findElementAt(offset);
       if (method != null && method.getContainingFile() == containingFile) {
-        method = PsiTreeUtil.getParentOfType(fileCopy.findElementAt(method.getTextOffset()), PsiMethod.class);
+        final PsiElement startMethodElementInCopy = fileCopy.findElementAt(method.getTextOffset());
+        method = PsiTreeUtil.getParentOfType(startMethodElementInCopy, PsiMethod.class);
+        LOG.assertTrue(method != null, startMethodElementInCopy);
       }
     }
     final PsiCallExpression exprCopy = PsiTreeUtil.getParentOfType(copy, PsiCallExpression.class, false);
