@@ -41,4 +41,5 @@ public interface JavaParameterInfo extends ParameterInfo {
 
   boolean isVarargType();
 
+  default void setType(@Nullable PsiType type) {}
 }

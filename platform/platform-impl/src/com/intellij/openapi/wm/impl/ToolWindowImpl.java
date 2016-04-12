@@ -18,6 +18,7 @@ package com.intellij.openapi.wm.impl;
 import com.intellij.ide.UiActivity;
 import com.intellij.ide.UiActivityMonitor;
 import com.intellij.ide.impl.ContentManagerWatcher;
+import com.intellij.notification.EventLog;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
@@ -393,8 +394,10 @@ public final class ToolWindowImpl implements ToolWindowEx {
   public final void setIcon(final Icon icon) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     final Icon oldIcon = getIcon();
-    if (oldIcon != icon && icon != null && !(icon instanceof LayeredIcon) && (icon.getIconHeight() != JBUI.scale(13) || icon.getIconWidth() != JBUI.scale(13))) {
-      LOG.warn("ToolWindow icons should be 13x13. Please fix ToolWindow (ID:  " + getId() + ") or icon " + icon);
+    if (!EventLog.LOG_TOOL_WINDOW_ID.equals(getId())) {
+      if (oldIcon != icon && icon != null && !(icon instanceof LayeredIcon) && (icon.getIconHeight() != JBUI.scale(13) || icon.getIconWidth() != JBUI.scale(13))) {
+        LOG.warn("ToolWindow icons should be 13x13. Please fix ToolWindow (ID:  " + getId() + ") or icon " + icon);
+      }
     }
     //getSelectedContent().setIcon(icon);
     myIcon = icon;
