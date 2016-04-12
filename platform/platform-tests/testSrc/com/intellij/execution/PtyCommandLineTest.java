@@ -38,16 +38,6 @@ public class PtyCommandLineTest extends GeneralCommandLineTest {
   }
 
   @Override
-  public void unicodePath() {
-    assumeFalse(SystemInfo.isWindows);
-  }
-
-  @Override
-  public void unicodeClassPath() {
-    assumeFalse(SystemInfo.isWindows);
-  }
-
-  @Override
   public void passingArgumentsToJavaApp() {
     assumeFalse(SystemInfo.isWindows);
   }
