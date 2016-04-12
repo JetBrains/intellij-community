@@ -29,7 +29,7 @@ class InternalUrlProvider: UrlProvider() {
     private val internalHost = "http://unit-617.labs.intellij.net"
 
     private val host: String
-        get() = if (isPropertyExists("stats.collector.internal")) localhost else internalHost
+        get() = if (isPropertyExists("stats.collector.localhost.server")) localhost else internalHost
     
     
     override val statsServerPostUrl = "$host:8080/stats/upload"

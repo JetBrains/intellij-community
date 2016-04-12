@@ -51,25 +51,23 @@ class SenderComponent(val sender: StatisticSender) : ApplicationComponent.Adapte
 
 class StatisticSender(val urlProvider: UrlProvider, val logFileManager: LogFileManager, val requestService: RequestService) {
     
-    private fun prepareTextToSend(fileToSend: File): String {
+    private fun fillSwapFileIfNeeded(fileToSend: File) {
         if (fileToSend.exists()) {
-            val text = fileToSend.readText()
-            if (text.isNotEmpty()) {
-                return text
+            if (fileToSend.length() > 0) {
+                return
             }
             fileToSend.delete()
         }
-        val renamed = logFileManager.renameLogFile(fileToSend)
-        return if (renamed) fileToSend.readText() else ""
+        logFileManager.renameLogFile(fileToSend)
     }
 
     fun sendStatsData(uid: String) {
         assertNotEDT()
         val fileToSend = File(FilePathProvider.getInstance().swapFile)
-        var textToSend = prepareTextToSend(fileToSend)
-        if (textToSend.isNotEmpty()) {
+        fillSwapFileIfNeeded(fileToSend)
+        if (fileToSend.length() > 0) {
             val url = urlProvider.statsServerPostUrl
-            sendContent(url, uid, textToSend, onSendAction = Runnable {
+            sendContent(url, uid, fileToSend, onSendAction = Runnable {
                 fileToSend.delete()
             })
         }
@@ -80,9 +78,8 @@ class StatisticSender(val urlProvider: UrlProvider, val logFileManager: LogFileM
         assert(!SwingUtilities.isEventDispatchThread() || isInTestMode)
     }
 
-    private fun sendContent(url: String, uid: String, content: String, onSendAction: Runnable) {
-        val map = mapOf(Pair("uid", uid), Pair("content", content))
-        val data = requestService.post(url, map)
+    private fun sendContent(url: String, uid: String, file: File, onSendAction: Runnable) {
+        val data = requestService.post("$url/$uid", file)
         if (data != null && data.code >= 200 && data.code < 300) {
             onSendAction.run()
         }
