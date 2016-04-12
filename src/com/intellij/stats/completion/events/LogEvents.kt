@@ -155,11 +155,7 @@ class TypeEvent(
         completionListIds: List<Int>,
         newCompletionListItems: List<LookupEntryInfo>,
         selectedPosition: Int) : LookupStateLogData(userId, sessionId, Action.TYPE, completionListIds, newCompletionListItems, selectedPosition) {
-
-    init {
-        assert(completionListIds.isNotEmpty())
-    }
-
+    
     override fun accept(visitor: LogEventVisitor) {
         visitor.visit(this)
     }
