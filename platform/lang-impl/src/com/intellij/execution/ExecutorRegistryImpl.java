@@ -232,7 +232,23 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
 
         ExecutionTarget target = ExecutionTargetManager.getActiveTarget(project);
         enabled = ExecutionTargetManager.canRun(selectedConfiguration, target)
-                  && runner != null && !isStarting(project, myExecutor.getId(), runner.getRunnerId());
+                  && runner != null;
+
+        // Android Studio: don't enable any executor when a different executor is starting..
+        if (enabled) {
+          if (isStarting(project, myExecutor.getId(), runner.getRunnerId())) {
+            enabled = false;
+          }
+
+          if (enabled) {
+            for (Executor executor : Executor.EXECUTOR_EXTENSION_NAME.getExtensions()) {
+              if (isStarting(project, executor.getId(), runner.getRunnerId())) {
+                enabled = false;
+                break;
+              }
+            }
+          }
+        }
 
         if (enabled) {
           presentation.setDescription(myExecutor.getDescription());
