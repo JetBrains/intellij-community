@@ -48,7 +48,7 @@ public abstract class HttpRequestHandler {
     String host = NettyKt.getHost(request);
     // If attacker.com DNS rebound to 127.0.0.1 and user open site directly — no Origin or Referer headers.
     // So we should check Host header.
-    return host != null && NettyKt.isLocalOrigin(request) && NettyKt.parseAndCheckIsLocalHost(host);
+    return host != null && NettyKt.isLocalOrigin(request) && NettyKt.parseAndCheckIsLocalHost("http://" + host);
   }
 
   public boolean isSupported(@NotNull FullHttpRequest request) {
