@@ -991,7 +991,7 @@
 
     <group id="TreeNodeExclusion">
       <action id="TreeNodeExclusionInclude" class="com.intellij.ide.actions.TreeNodeExclusionAction$Include"/>
-      <action id="TreeNodeExclusionExclude" class="com.intellij.ide.actions.TreeNodeExclusionAction$Exclude"/>
+      <action id="TreeNodeExclusionExclude" class="com.intellij.ide.actions.TreeNodeExclusionAction$Exclude" use-shortcut-of="$Delete"/>
     </group>>
 
     <group id="InspectionToolWindow.TreePopup">

@@ -61,7 +61,6 @@ public class TreeNodeExclusionAction<T extends MutableTreeNode> extends AnAction
   private TreeNodeExclusionAction(boolean isExclude) {
     myIsExclude = isExclude;
     getTemplatePresentation().setText(getActionText());
-    copyShortcutFrom(ActionManager.getInstance().getAction(myIsExclude ? "$Delete" : "EditorToggleInsertState"));
   }
 
   @Override
@@ -93,11 +92,13 @@ public class TreeNodeExclusionAction<T extends MutableTreeNode> extends AnAction
       }
     }
     presentation.setEnabledAndVisible(isEnabled);
-    String text = getActionText();
-    if (selection.length > 1) {
-      text += " All";
+    if (isEnabled) {
+      String text = getActionText();
+      if (selection.length > 1) {
+        text += " All";
+      }
+      presentation.setText(text);
     }
-    presentation.setText(text);
   }
 
   @Override
