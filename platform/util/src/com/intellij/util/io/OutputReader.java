@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,17 +44,14 @@ public abstract class OutputReader extends BaseOutputReader {
     this(inputStream, charset, sleepingPolicy, "");
   }
 
-  public OutputReader(@NotNull InputStream inputStream, @Nullable Charset charset, @NotNull String presentableName) {
-    super(inputStream, charset);
-    start(presentableName);
+  public OutputReader(@NotNull InputStream stream, @Nullable Charset charset, @NotNull String name) {
+    super(stream, charset);
+    start(name);
   }
 
-  public OutputReader(@NotNull InputStream inputStream,
-                      @Nullable Charset charset,
-                      @Nullable SleepingPolicy sleepingPolicy,
-                      @NotNull String presentableName) {
-    super(inputStream, charset, sleepingPolicy);
-    start(presentableName);
+  public OutputReader(@NotNull InputStream stream, @Nullable Charset charset, @Nullable SleepingPolicy policy, @NotNull String name) {
+    super(stream, charset, Options.withPolicy(policy));
+    start(name);
   }
 
   /** @deprecated to be removed in IDEA 16 */
