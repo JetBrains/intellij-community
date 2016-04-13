@@ -770,6 +770,13 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       final PsiClassType[] newExceptions = getPrimaryChangedExceptionInfo(changeInfo);
       fixPrimaryThrowsLists(method, newExceptions);
     }
+
+    if (baseMethod == null && method.findSuperMethods().length == 0) {
+      final PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, true, Override.class.getName());
+      if (annotation != null) {
+        annotation.delete();
+      }
+    }
   }
 
   private static int processMethodParams(JavaChangeInfo changeInfo,
