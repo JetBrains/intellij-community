@@ -153,7 +153,8 @@ private fun isTrustedChromeExtension(uri: URI): Boolean {
   return uri.scheme == "chrome-extension" && (uri.host == "hmhgeddbohgjknpmjagkdomcpobmllji" || uri.host == "offnedcbhjldheanlbojaefbfbllddna")
 }
 
-private fun parseAndCheckIsLocalHost(uri: String?, onlyAnyOrLoopback: Boolean): Boolean {
+@JvmOverloads
+fun parseAndCheckIsLocalHost(uri: String?, onlyAnyOrLoopback: Boolean = true): Boolean {
   if (uri == null) {
     return true
   }

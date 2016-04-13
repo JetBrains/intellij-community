@@ -43,8 +43,12 @@ public abstract class HttpRequestHandler {
     return false;
   }
 
+  @SuppressWarnings("SpellCheckingInspection")
   public boolean isAccessible(@NotNull HttpRequest request) {
-    return NettyKt.isLocalOrigin(request);
+    String host = NettyKt.getHost(request);
+    // If attacker.com DNS rebound to 127.0.0.1 and user open site directly — no Origin or Referer headers.
+    // So we should check Host header.
+    return host != null && NettyKt.isLocalOrigin(request) && NettyKt.parseAndCheckIsLocalHost(host);
   }
 
   public boolean isSupported(@NotNull FullHttpRequest request) {
