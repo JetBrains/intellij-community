@@ -261,7 +261,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
     ApplicationManager.getApplication().addApplicationListener(new ApplicationAdapter() {
       @Override
-      public void writeActionStarted(Object action) {
+      public void writeActionStarted(@NotNull Object action) {
         myUpToDateIndicesForUnsavedOrTransactedDocuments.clear();
       }
     });
