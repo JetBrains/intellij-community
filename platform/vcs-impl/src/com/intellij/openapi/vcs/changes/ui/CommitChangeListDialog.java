@@ -37,6 +37,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction;
 import com.intellij.openapi.vcs.checkin.*;
 import com.intellij.openapi.vcs.impl.CheckinHandlersManager;
 import com.intellij.openapi.vcs.ui.CommitMessage;
@@ -50,7 +51,6 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SplitterWithSecondHideable;
 import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.util.Alarm;
-import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.OnOffListener;
 import com.intellij.util.containers.ContainerUtil;
@@ -612,29 +612,9 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   private boolean addUnversionedFiles() {
-    boolean isSuccessful = true;
-    final List<VirtualFile> files = myBrowser.getIncludedUnversionedFiles();
-
-    if (!files.isEmpty()) {
-      FileDocumentManager.getInstance().saveAllDocuments();
-
-      ChangeListManagerImpl manager = ChangeListManagerImpl.getInstanceImpl(myProject);
-      LocalChangeList targetChangeList = (LocalChangeList)myBrowser.getSelectedChangeList();
-      List<VcsException> exceptions =
-        manager.addUnversionedFiles(targetChangeList, files, ChangeListManagerImpl.getDefaultUnversionedFileCondition(),
-                                    new Consumer<List<Change>>() {
-                                      @SuppressWarnings("unchecked")
-                                      @Override
-                                      public void consume(@NotNull List<Change> changes) {
-                                        myBrowser.rebuildList();
-                                        myBrowser.getViewer().excludeChanges((List)files);
-                                        myBrowser.getViewer().includeChanges((List)changes);
-                                      }
-                                    });
-      isSuccessful = exceptions.isEmpty();
-    }
-
-    return isSuccessful;
+    return ScheduleForAdditionAction
+      .addUnversioned(myProject, myBrowser.getIncludedUnversionedFiles(), ChangeListManagerImpl.getDefaultUnversionedFileCondition(),
+                      myBrowser);
   }
 
   @NotNull

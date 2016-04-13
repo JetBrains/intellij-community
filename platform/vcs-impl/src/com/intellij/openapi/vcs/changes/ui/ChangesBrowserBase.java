@@ -47,6 +47,8 @@ import java.io.File;
 import java.util.*;
 import java.util.List;
 
+import static com.intellij.openapi.vcs.changes.ui.ChangesListView.*;
+
 public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDataProvider, Disposable {
   private static final Logger LOG = Logger.getInstance(ChangesBrowserBase.class);
 
@@ -214,6 +216,9 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
     else if (VcsDataKeys.SELECTED_CHANGES_IN_DETAILS.equals(key)) {
       final List<Change> selectedChanges = getSelectedChanges();
       sink.put(VcsDataKeys.SELECTED_CHANGES_IN_DETAILS, selectedChanges.toArray(new Change[selectedChanges.size()]));
+    }
+    else if (UNVERSIONED_FILES_DATA_KEY.equals(key)) {
+      sink.put(UNVERSIONED_FILES_DATA_KEY, getVirtualFiles(myViewer.getSelectionPaths(), ChangesBrowserNode.UNVERSIONED_FILES_TAG));
     }
   }
 
@@ -462,6 +467,6 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
   }
 
   static boolean isUnderUnversioned(@NotNull ChangesBrowserNode node) {
-    return ChangesListView.isUnderTag(new TreePath(node.getPath()), ChangesBrowserNode.UNVERSIONED_FILES_TAG);
+    return isUnderTag(new TreePath(node.getPath()), ChangesBrowserNode.UNVERSIONED_FILES_TAG);
   }
 }

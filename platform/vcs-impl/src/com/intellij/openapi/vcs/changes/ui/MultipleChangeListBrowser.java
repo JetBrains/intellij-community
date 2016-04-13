@@ -23,6 +23,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -307,6 +308,9 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
         rebuildList();
       }
     });
+    if (Registry.is("vcs.unversioned.files.in.commit")) {
+      toolBarGroup.add(ActionManager.getInstance().getAction("ChangesView.AddUnversioned.From.Dialog"));
+    }
     RollbackDialogAction rollback = new RollbackDialogAction();
     EmptyAction.setupAction(rollback, IdeActions.CHANGES_VIEW_ROLLBACK, this);
     toolBarGroup.add(rollback);
