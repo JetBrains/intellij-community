@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,10 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpMethod;
+import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.QueryStringDecoder;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.io.NettyKt;
 
 import java.io.IOException;
 
@@ -41,6 +43,10 @@ public abstract class HttpRequestHandler {
     return false;
   }
 
+  public boolean isAccessible(@NotNull HttpRequest request) {
+    return NettyKt.isLocalOrigin(request);
+  }
+
   public boolean isSupported(@NotNull FullHttpRequest request) {
     return request.method() == HttpMethod.GET || request.method() == HttpMethod.HEAD;
   }
@@ -50,8 +56,4 @@ public abstract class HttpRequestHandler {
    */
   public abstract boolean process(@NotNull QueryStringDecoder urlDecoder, @NotNull FullHttpRequest request, @NotNull ChannelHandlerContext context)
     throws IOException;
-
-  public boolean isAllowRequestOnlyFromLocalOrigin() {
-    return true;
-  }
 }

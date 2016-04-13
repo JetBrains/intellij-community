@@ -169,7 +169,7 @@ internal class OpenFileHttpService : RestService() {
     return mainTask.promise
   }
 
-  override fun isAllowRequestOnlyFromLocalOrigin() = false
+  override fun isAccessible(request: HttpRequest) = true
 }
 
 internal class OpenFileRequest {

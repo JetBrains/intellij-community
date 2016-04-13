@@ -38,17 +38,13 @@ internal class DelegatingHttpRequestHandler : DelegatingHttpRequestHandlerBase()
                        request: FullHttpRequest,
                        urlDecoder: QueryStringDecoder): Boolean {
     fun HttpRequestHandler.checkAndProcess(): Boolean {
-      if (isAllowRequestOnlyFromLocalOrigin && !request.isLocalOrigin()) {
-        return false
-      }
-
-      return process(urlDecoder, request, context)
+      return isSupported(request) && isAccessible(request) && process(urlDecoder, request, context)
     }
 
     val prevHandlerAttribute = context.attr(PREV_HANDLER)
     val connectedHandler = prevHandlerAttribute.get()
     if (connectedHandler != null) {
-      if (connectedHandler.isSupported(request) && connectedHandler.checkAndProcess()) {
+      if (connectedHandler.checkAndProcess()) {
         return true
       }
       // prev cached connectedHandler is not suitable for this request, so, let's find it again
@@ -57,7 +53,7 @@ internal class DelegatingHttpRequestHandler : DelegatingHttpRequestHandlerBase()
 
     for (handler in HttpRequestHandler.EP_NAME.extensions) {
       try {
-        if (handler.isSupported(request) && handler.checkAndProcess()) {
+        if (handler.checkAndProcess()) {
           prevHandlerAttribute.set(handler)
           return true
         }

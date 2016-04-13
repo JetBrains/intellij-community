@@ -30,12 +30,10 @@ import com.intellij.util.io.URLUtil
 import com.intellij.util.isDirectory
 import com.intellij.util.net.NetUtils
 import io.netty.channel.ChannelHandlerContext
-import io.netty.handler.codec.http.FullHttpRequest
-import io.netty.handler.codec.http.HttpMethod
-import io.netty.handler.codec.http.HttpResponseStatus
-import io.netty.handler.codec.http.QueryStringDecoder
+import io.netty.handler.codec.http.*
 import org.jetbrains.ide.HttpRequestHandler
 import org.jetbrains.io.host
+import org.jetbrains.io.isLocalOrigin
 import org.jetbrains.io.send
 import java.io.IOException
 import java.net.InetAddress
@@ -44,6 +42,8 @@ import java.nio.file.Path
 internal val LOG = Logger.getInstance(BuiltInWebServer::class.java)
 
 class BuiltInWebServer : HttpRequestHandler() {
+  override fun isAccessible(request: HttpRequest) = request.isLocalOrigin(false)
+
   override fun isSupported(request: FullHttpRequest) = super.isSupported(request) || request.method() == HttpMethod.POST
 
   override fun process(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): Boolean {
