@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.javaFX.packaging;
 
-import com.intellij.openapi.util.Pair;
 import com.intellij.testFramework.UsefulTestCase;
 
 import java.io.File;
@@ -32,6 +31,7 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
 
   private static final String PRELOADER_CLASS = "preloaderClass";
   private static final String TITLE = "title";
+  private static final String ICONS = "icons";
   private static final String PRELOADER_JAR = "preloaderJar";
   private static final String SIGNED = "signed";
 
@@ -93,6 +93,57 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
            "</fx:fileset>\n" +
            "</fx:resources>\n" +
            "</fx:deploy>\n", Collections.singletonMap(TITLE, "My App"));
+  }
+
+  public void testJarDeployIcon() throws Exception {
+    doTest("<fx:fileset id=\"all_but_jarDeployIcon\" dir=\"temp\" includes=\"**/*.jar\">\n" +
+           "<exclude name=\"jarDeployIcon.jar\">\n" +
+           "</exclude>\n" +
+           "</fx:fileset>\n" +
+           "<fx:fileset id=\"all_jarDeployIcon\" dir=\"temp\" includes=\"**/*.jar\">\n" +
+           "</fx:fileset>\n" +
+           "<fx:application id=\"jarDeployIcon_id\" name=\"jarDeployIcon\" mainClass=\"Main\">\n" +
+           "</fx:application>\n" +
+           "<fx:jar destfile=\"temp/jarDeployIcon.jar\">\n" +
+           "<fx:application refid=\"jarDeployIcon_id\">\n" +
+           "</fx:application>\n" +
+           "<fileset dir=\"temp\" excludes=\"**/*.jar\">\n" +
+           "</fileset>\n" +
+           "<fx:resources>\n" +
+           "<fx:fileset refid=\"all_but_jarDeployIcon\">\n" +
+           "</fx:fileset>\n" +
+           "</fx:resources>\n" +
+           "</fx:jar>\n" +
+           "<condition property=\"app.icon.path\" value=\"${basedir}/app_icon.png\">\n" +
+           "<and>\n" +
+           "<os family=\"unix\">\n" +
+           "</os>\n" +
+           "<not>\n" +
+           "<os family=\"mac\">\n" +
+           "</os>\n" +
+           "</not>\n" +
+           "</and>\n" +
+           "</condition>\n" +
+           "<condition property=\"app.icon.path\" value=\"${basedir}/app_icon.icns\">\n" +
+           "<os family=\"mac\">\n" +
+           "</os>\n" +
+           "</condition>\n" +
+           "<condition property=\"app.icon.path\" value=\"${basedir}/app_icon.ico\">\n" +
+           "<os family=\"windows\">\n" +
+           "</os>\n" +
+           "</condition>\n" +
+           "<fx:deploy width=\"800\" height=\"400\" updatemode=\"background\" outdir=\"temp/deploy\" outfile=\"jarDeployIcon\" nativeBundles=\"all\">\n" +
+           "<fx:application refid=\"jarDeployIcon_id\">\n" +
+           "</fx:application>\n" +
+           "<fx:info>\n" +
+           "<fx:icon href=\"${app.icon.path}\">\n" +
+           "</fx:icon>\n" +
+           "</fx:info>\n" +
+           "<fx:resources>\n" +
+           "<fx:fileset refid=\"all_jarDeployIcon\">\n" +
+           "</fx:fileset>\n" +
+           "</fx:resources>\n" +
+           "</fx:deploy>\n", Collections.singletonMap(ICONS, "app_icon.png,app_icon.icns,app_icon.ico"));
   }
 
   public void testJarDeploySigned() throws Exception {
@@ -178,6 +229,17 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
       packager.setTitle(title);
     }
 
+    final String icon = options.get(ICONS);
+    if (icon != null) {
+      final String[] icons = icon.split(",");
+      final JavaFxApplicationIcons appIcons = new JavaFxApplicationIcons();
+      appIcons.setLinuxIcon(icons[0]);
+      appIcons.setMacIcon(icons[1]);
+      appIcons.setWindowsIcon(icons[2]);
+      packager.setIcons(appIcons);
+      packager.setNativeBundle(JavaFxPackagerConstants.NativeBundles.all);
+    }
+
     final String preloaderClass = options.get(PRELOADER_CLASS);
     if (preloaderClass != null) {
       packager.setPreloaderClass(preloaderClass);
@@ -217,6 +279,9 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
     private boolean myConvertCss2Bin;
     private boolean mySigned;
     private List<JavaFxManifestAttribute> myCustomManifestAttributes;
+    private JavaFxApplicationIcons myIcons;
+    private JavaFxPackagerConstants.NativeBundles myNativeBundle = JavaFxPackagerConstants.NativeBundles.none;
+    ;
 
     private MockJavaFxPackager(String outputPath) {
       myOutputPath = outputPath;
@@ -252,6 +317,14 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
 
     public void setSigned(boolean signed) {
       mySigned = signed;
+    }
+
+    public void setIcons(JavaFxApplicationIcons icons) {
+      myIcons = icons;
+    }
+
+    public void setNativeBundle(JavaFxPackagerConstants.NativeBundles nativeBundle) {
+      myNativeBundle = nativeBundle;
     }
 
     @Override
@@ -316,7 +389,7 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
 
     @Override
     protected JavaFxPackagerConstants.NativeBundles getNativeBundle() {
-      return JavaFxPackagerConstants.NativeBundles.none;
+      return myNativeBundle;
     }
 
     @Override
@@ -371,6 +444,11 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
     @Override
     public List<JavaFxManifestAttribute> getCustomManifestAttributes() {
       return myCustomManifestAttributes;
+    }
+
+    @Override
+    public JavaFxApplicationIcons getIcons() {
+      return myIcons;
     }
   }
 }

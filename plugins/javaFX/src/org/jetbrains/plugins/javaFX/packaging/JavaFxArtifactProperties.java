@@ -25,7 +25,6 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Pair;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.artifacts.ArtifactProperties;
@@ -36,7 +35,6 @@ import com.intellij.packaging.impl.elements.ArtifactPackagingElement;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.ArtifactPropertiesEditor;
 import com.intellij.util.xmlb.XmlSerializerUtil;
-import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.packaging.preloader.JavaFxPreloaderArtifactProperties;
@@ -74,6 +72,7 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
   private boolean myConvertCss2Bin;
   private String myNativeBundle = JavaFxPackagerConstants.NativeBundles.none.name();
   private List<JavaFxManifestAttribute> myCustomManifestAttributes = new ArrayList<JavaFxManifestAttribute>();
+  private JavaFxApplicationIcons myIcons = new JavaFxApplicationIcons();
 
   @Override
   public void onBuildFinished(@NotNull final Artifact artifact, @NotNull final CompileContext compileContext) {
@@ -311,6 +310,14 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
     myCustomManifestAttributes = customManifestAttributes;
   }
 
+  public JavaFxApplicationIcons getIcons() {
+    return myIcons;
+  }
+
+  public void setIcons(JavaFxApplicationIcons icons) {
+    myIcons = icons;
+  }
+
   public static abstract class JavaFxPackager extends AbstractJavaFxPackager {
     private final Artifact myArtifact;
     private final JavaFxArtifactProperties myProperties;
@@ -360,6 +367,11 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
     @Override
     protected String getDescription() {
       return myProperties.getDescription();
+    }
+
+    @Override
+    protected JavaFxApplicationIcons getIcons() {
+      return myProperties.getIcons();
     }
 
     @Override

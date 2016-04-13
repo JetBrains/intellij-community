@@ -73,6 +73,7 @@ public abstract class AbstractJavaFxPackager {
 
   protected abstract void registerJavaFxPackagerError(final String message);
 
+  protected abstract JavaFxApplicationIcons getIcons();
 
   public void buildJavaFxArtifact(final String homePath) {
     if (!checkNotEmpty(getAppClass(), "Application class")) return;

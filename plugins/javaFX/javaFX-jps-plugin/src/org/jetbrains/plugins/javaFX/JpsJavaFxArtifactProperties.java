@@ -2,6 +2,7 @@ package org.jetbrains.plugins.javaFX;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.ex.JpsElementBase;
+import org.jetbrains.plugins.javaFX.packaging.JavaFxApplicationIcons;
 import org.jetbrains.plugins.javaFX.packaging.JavaFxManifestAttribute;
 import org.jetbrains.plugins.javaFX.packaging.JavaFxPackagerConstants;
 
@@ -41,6 +42,7 @@ public class JpsJavaFxArtifactProperties extends JpsElementBase<JpsJavaFxArtifac
     myState.setConvertCss2Bin(state.myConvertCss2Bin);
     myState.setNativeBundle(state.myNativeBundle);
     myState.setCustomManifestAttributes(state.myCustomManifestAttributes);
+    myState.setIcons(state.myIcons);
   }
 
   @NotNull
@@ -73,6 +75,7 @@ public class JpsJavaFxArtifactProperties extends JpsElementBase<JpsJavaFxArtifac
     private boolean myConvertCss2Bin;
     public JavaFxPackagerConstants.NativeBundles myNativeBundle = JavaFxPackagerConstants.NativeBundles.none;
     private List<JavaFxManifestAttribute> myCustomManifestAttributes = new ArrayList<JavaFxManifestAttribute>();
+    private JavaFxApplicationIcons myIcons = new JavaFxApplicationIcons();
 
     public String getTitle() {
       return myTitle;
@@ -96,6 +99,14 @@ public class JpsJavaFxArtifactProperties extends JpsElementBase<JpsJavaFxArtifac
 
     public void setDescription(String description) {
       myDescription = description;
+    }
+
+    public JavaFxApplicationIcons getIcons() {
+      return myIcons;
+    }
+
+    public void setIcons(JavaFxApplicationIcons icons) {
+      myIcons = icons;
     }
 
     public String getAppClass() {
