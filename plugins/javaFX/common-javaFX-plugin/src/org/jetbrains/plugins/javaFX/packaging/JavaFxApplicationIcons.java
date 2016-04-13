@@ -17,8 +17,8 @@ public class JavaFxApplicationIcons {
     return myLinuxIcon;
   }
 
-  public String getRelativeLinuxIcon() {
-    return getRelativeIcon(myLinuxIcon);
+  public String getLinuxIcon(boolean isRelative) {
+    return isRelative ? getRelativeIcon(myLinuxIcon) : myLinuxIcon;
   }
 
   public void setLinuxIcon(String linuxIcon) {
@@ -29,8 +29,8 @@ public class JavaFxApplicationIcons {
     return myMacIcon;
   }
 
-  public String getRelativeMacIcon() {
-    return getRelativeIcon(myMacIcon);
+  public String getMacIcon(boolean isRelative) {
+    return isRelative ? getRelativeIcon(myMacIcon) : myMacIcon;
   }
 
   public void setMacIcon(String macIcon) {
@@ -41,8 +41,8 @@ public class JavaFxApplicationIcons {
     return myWindowsIcon;
   }
 
-  public String getRelativeWindowsIcon() {
-    return getRelativeIcon(myWindowsIcon);
+  public String getWindowsIcon(boolean isRelative) {
+    return isRelative ? getRelativeIcon(myWindowsIcon) : myWindowsIcon;
   }
 
   public void setWindowsIcon(String windowsIcon) {

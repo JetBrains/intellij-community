@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.javaFX.packaging;
 
 import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.util.containers.ContainerUtil;
 
 import java.io.File;
 import java.util.Collections;
@@ -32,6 +33,7 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
   private static final String PRELOADER_CLASS = "preloaderClass";
   private static final String TITLE = "title";
   private static final String ICONS = "icons";
+  private static final String RELATIVE_PATH = "relativePath";
   private static final String PRELOADER_JAR = "preloaderJar";
   private static final String SIGNED = "signed";
 
@@ -143,7 +145,64 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
            "<fx:fileset refid=\"all_jarDeployIcon\">\n" +
            "</fx:fileset>\n" +
            "</fx:resources>\n" +
-           "</fx:deploy>\n", Collections.singletonMap(ICONS, "app_icon.png,app_icon.icns,app_icon.ico"));
+           "</fx:deploy>\n", new ContainerUtil.ImmutableMapBuilder<String, String>()
+             .put(ICONS, "/project_dir/app_icon.png,/project_dir/app_icon.icns,/project_dir/app_icon.ico,/project_dir")
+             .put(RELATIVE_PATH, "true")
+             .build());
+  }
+
+  public void testJarDeployIconAbsolute() throws Exception {
+    doTest("<fx:fileset id=\"all_but_jarDeployIconAbsolute\" dir=\"temp\" includes=\"**/*.jar\">\n" +
+           "<exclude name=\"jarDeployIconAbsolute.jar\">\n" +
+           "</exclude>\n" +
+           "</fx:fileset>\n" +
+           "<fx:fileset id=\"all_jarDeployIconAbsolute\" dir=\"temp\" includes=\"**/*.jar\">\n" +
+           "</fx:fileset>\n" +
+           "<fx:application id=\"jarDeployIconAbsolute_id\" name=\"jarDeployIconAbsolute\" mainClass=\"Main\">\n" +
+           "</fx:application>\n" +
+           "<fx:jar destfile=\"temp/jarDeployIconAbsolute.jar\">\n" +
+           "<fx:application refid=\"jarDeployIconAbsolute_id\">\n" +
+           "</fx:application>\n" +
+           "<fileset dir=\"temp\" excludes=\"**/*.jar\">\n" +
+           "</fileset>\n" +
+           "<fx:resources>\n" +
+           "<fx:fileset refid=\"all_but_jarDeployIconAbsolute\">\n" +
+           "</fx:fileset>\n" +
+           "</fx:resources>\n" +
+           "</fx:jar>\n" +
+           "<condition property=\"app.icon.path\" value=\"/project_dir/app_icon.png\">\n" +
+           "<and>\n" +
+           "<os family=\"unix\">\n" +
+           "</os>\n" +
+           "<not>\n" +
+           "<os family=\"mac\">\n" +
+           "</os>\n" +
+           "</not>\n" +
+           "</and>\n" +
+           "</condition>\n" +
+           "<condition property=\"app.icon.path\" value=\"/project_dir/app_icon.icns\">\n" +
+           "<os family=\"mac\">\n" +
+           "</os>\n" +
+           "</condition>\n" +
+           "<condition property=\"app.icon.path\" value=\"/project_dir/app_icon.ico\">\n" +
+           "<os family=\"windows\">\n" +
+           "</os>\n" +
+           "</condition>\n" +
+           "<fx:deploy width=\"800\" height=\"400\" updatemode=\"background\" outdir=\"temp/deploy\" outfile=\"jarDeployIconAbsolute\" nativeBundles=\"all\">\n" +
+           "<fx:application refid=\"jarDeployIconAbsolute_id\">\n" +
+           "</fx:application>\n" +
+           "<fx:info>\n" +
+           "<fx:icon href=\"${app.icon.path}\">\n" +
+           "</fx:icon>\n" +
+           "</fx:info>\n" +
+           "<fx:resources>\n" +
+           "<fx:fileset refid=\"all_jarDeployIconAbsolute\">\n" +
+           "</fx:fileset>\n" +
+           "</fx:resources>\n" +
+           "</fx:deploy>\n", new ContainerUtil.ImmutableMapBuilder<String, String>()
+             .put(ICONS, "/project_dir/app_icon.png,/project_dir/app_icon.icns,/project_dir/app_icon.ico,/project_dir")
+             .put(RELATIVE_PATH, "false")
+             .build());
   }
 
   public void testJarDeploySigned() throws Exception {
@@ -229,6 +288,7 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
       packager.setTitle(title);
     }
 
+    boolean isRelativeIconPath = Boolean.valueOf(options.get(RELATIVE_PATH));
     final String icon = options.get(ICONS);
     if (icon != null) {
       final String[] icons = icon.split(",");
@@ -236,6 +296,7 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
       appIcons.setLinuxIcon(icons[0]);
       appIcons.setMacIcon(icons[1]);
       appIcons.setWindowsIcon(icons[2]);
+      appIcons.setBaseDir(icons[3]);
       packager.setIcons(appIcons);
       packager.setNativeBundle(JavaFxPackagerConstants.NativeBundles.all);
     }
@@ -255,7 +316,7 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
     }
 
     final List<JavaFxAntGenerator.SimpleTag> temp = JavaFxAntGenerator
-      .createJarAndDeployTasks(packager, artifactFileName, artifactName, "temp");
+      .createJarAndDeployTasks(packager, artifactFileName, artifactName, "temp", isRelativeIconPath);
     final StringBuilder buf = new StringBuilder();
     for (JavaFxAntGenerator.SimpleTag tag : temp) {
       tag.generate(buf);

@@ -104,7 +104,7 @@ public abstract class AbstractJavaFxPackager {
       buf.append("<target name=\"build artifact\" xmlns:fx=\"javafx:com.sun.javafx.tools.ant\">");
       final String artifactFileName = getArtifactRootName();
       final List<JavaFxAntGenerator.SimpleTag> tags =
-        JavaFxAntGenerator.createJarAndDeployTasks(this, artifactFileName, getArtifactName(), tempUnzippedArtifactOutput.getPath());
+        JavaFxAntGenerator.createJarAndDeployTasks(this, artifactFileName, getArtifactName(), tempUnzippedArtifactOutput.getPath(), false);
       for (JavaFxAntGenerator.SimpleTag tag : tags) {
         tag.generate(buf);
       }

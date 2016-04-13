@@ -33,7 +33,8 @@ public class JavaFxAntGenerator {
   public static List<SimpleTag> createJarAndDeployTasks(AbstractJavaFxPackager packager,
                                                         String artifactFileName,
                                                         String artifactName,
-                                                        String tempDirPath) {
+                                                        String tempDirPath,
+                                                        boolean isRelativeIconPath) {
     final String artifactFileNameWithoutExtension = FileUtil.getNameWithoutExtension(artifactFileName);
     final List<SimpleTag> topLevelTagsCollector = new ArrayList<SimpleTag>(); 
     final String preloaderJar = packager.getPreloaderJar();
@@ -119,7 +120,7 @@ public class JavaFxAntGenerator {
     topLevelTagsCollector.add(createJarTag);
 
     final JavaFxPackagerConstants.NativeBundles bundle = packager.getNativeBundle();
-    final SimpleTag iconTag = appendApplicationIconPath(topLevelTagsCollector, bundle, packager.getIcons());
+    final SimpleTag iconTag = appendApplicationIconPath(topLevelTagsCollector, bundle, packager.getIcons(), isRelativeIconPath);
 
     //deploy task
     final SimpleTag deployTag = new SimpleTag("fx:deploy",
@@ -155,32 +156,33 @@ public class JavaFxAntGenerator {
 
   private static SimpleTag appendApplicationIconPath(List<SimpleTag> topLevelTagsCollector,
                                                      JavaFxPackagerConstants.NativeBundles bundle,
-                                                     JavaFxApplicationIcons appIcons) {
+                                                     JavaFxApplicationIcons appIcons,
+                                                     boolean isRelativeIconPath) {
     boolean haveAppIcon = false;
     if (appIcons == null || bundle == null || appIcons.isEmpty()) return null;
     if (bundle.isOnLinux()) {
-      String iconPath = appIcons.getRelativeLinuxIcon();
+      String iconPath = appIcons.getLinuxIcon(isRelativeIconPath);
       if (!StringUtil.isEmpty(iconPath)) {
         final SimpleTag and = new SimpleTag("and");
         and.add(new SimpleTag("os", Couple.of("family", "unix")));
         final SimpleTag not = new SimpleTag("not");
         not.add(new SimpleTag("os", Couple.of("family", "mac")));
         and.add(not);
-        appendIconPropertyTag(topLevelTagsCollector, iconPath, and);
+        appendIconPropertyTag(topLevelTagsCollector, iconPath, isRelativeIconPath, and);
         haveAppIcon = true;
       }
     }
     if (bundle.isOnMac()) {
-      String iconPath = appIcons.getRelativeMacIcon();
+      String iconPath = appIcons.getMacIcon(isRelativeIconPath);
       if (!StringUtil.isEmpty(iconPath)) {
-        appendIconPropertyTag(topLevelTagsCollector, iconPath, new SimpleTag("os", Couple.of("family", "mac")));
+        appendIconPropertyTag(topLevelTagsCollector, iconPath, isRelativeIconPath, new SimpleTag("os", Couple.of("family", "mac")));
         haveAppIcon = true;
       }
     }
     if (bundle.isOnWindows()) {
-      String iconPath = appIcons.getRelativeWindowsIcon();
+      String iconPath = appIcons.getWindowsIcon(isRelativeIconPath);
       if (!StringUtil.isEmpty(iconPath)) {
-        appendIconPropertyTag(topLevelTagsCollector, iconPath, new SimpleTag("os", Couple.of("family", "windows")));
+        appendIconPropertyTag(topLevelTagsCollector, iconPath, isRelativeIconPath, new SimpleTag("os", Couple.of("family", "windows")));
         haveAppIcon = true;
       }
     }
@@ -190,10 +192,13 @@ public class JavaFxAntGenerator {
     return null;
   }
 
-  private static void appendIconPropertyTag(List<SimpleTag> tagsCollector, String iconPath, SimpleTag osFamily) {
+  private static void appendIconPropertyTag(List<SimpleTag> tagsCollector,
+                                            String iconPath,
+                                            boolean isRelativeIconPath,
+                                            SimpleTag osFamily) {
     final SimpleTag condition = new SimpleTag("condition",
                                               Couple.of("property", "app.icon.path"),
-                                              Couple.of("value", "${basedir}/" + iconPath));
+                                              Couple.of("value", isRelativeIconPath ? "${basedir}/" + iconPath : iconPath));
     condition.add(osFamily);
     tagsCollector.add(condition);
   }
