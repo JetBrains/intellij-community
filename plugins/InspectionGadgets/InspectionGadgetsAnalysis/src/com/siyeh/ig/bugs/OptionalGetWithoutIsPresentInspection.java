@@ -109,6 +109,14 @@ public class OptionalGetWithoutIsPresentInspection extends BaseInspection {
           }
         }
       }
+      else if (sibling instanceof PsiWhileStatement) {
+        final PsiWhileStatement whileStatement = (PsiWhileStatement)sibling;
+        final PsiExpression condition = whileStatement.getCondition();
+        checker.negate = true;
+        if (checker.checkExpression(condition)) {
+          return true;
+        }
+      }
       else if (sibling instanceof PsiAssertStatement) {
         final PsiAssertStatement assertStatement = (PsiAssertStatement)sibling;
         final PsiExpression condition = assertStatement.getAssertCondition();
@@ -140,15 +148,15 @@ public class OptionalGetWithoutIsPresentInspection extends BaseInspection {
       sibling = PsiTreeUtil.getPrevSiblingOfType(sibling, PsiStatement.class);
     }
     checker.negate = false;
-    PsiElement parent = PsiTreeUtil.getParentOfType(context, PsiIfStatement.class, PsiConditionalExpression.class,
+    PsiElement parent = PsiTreeUtil.getParentOfType(context, PsiIfStatement.class, PsiWhileStatement.class, PsiConditionalExpression.class,
                                                     PsiPolyadicExpression.class);
     while (parent != null) {
       parent.accept(checker);
       if (checker.hasIsPresentCall()) {
         return true;
       }
-      parent = PsiTreeUtil.getParentOfType(parent, PsiPolyadicExpression.class, PsiIfStatement.class,
-                                           PsiConditionalExpression.class);
+      parent = PsiTreeUtil.getParentOfType(parent, PsiIfStatement.class, PsiWhileStatement.class, PsiConditionalExpression.class,
+                                           PsiPolyadicExpression.class);
     }
     return checker.hasIsPresentCall();
   }
@@ -186,6 +194,11 @@ public class OptionalGetWithoutIsPresentInspection extends BaseInspection {
           return;
         }
       }
+    }
+
+    @Override
+    public void visitWhileStatement(PsiWhileStatement statement) {
+      checkExpression(statement.getCondition());
     }
 
     @Override
