@@ -366,11 +366,11 @@ def get_abs_path_real_path_and_base_from_frame(frame):
     except:
         #This one is just internal (so, does not need any kind of client-server translation)
         f = frame.f_code.co_filename
-        if f is not None and f.startswith('build/bdist.'):
+        if f is not None and f.startswith (('build/bdist.','build\\bdist.')):
             # files from eggs in Python 2.7 have paths like build/bdist.linux-x86_64/egg/<path-inside-egg>
             f = frame.f_globals['__file__']
-            if f.endswith('.pyc'):
-                f = f[:-1]
+        if f is not None and f.endswith('.pyc'):
+            f = f[:-1]
         ret = get_abs_path_real_path_and_base_from_file(f)
         # Also cache based on the frame.f_code.co_filename (if we had it inside build/bdist it can make a difference).
         NORM_PATHS_AND_BASE_CONTAINER[frame.f_code.co_filename] = ret
