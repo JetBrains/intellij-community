@@ -60,6 +60,7 @@ public class TreeNodeExclusionAction<T extends MutableTreeNode> extends AnAction
 
   private TreeNodeExclusionAction(boolean isExclude) {
     myIsExclude = isExclude;
+    getTemplatePresentation().setText(getActionText());
     copyShortcutFrom(ActionManager.getInstance().getAction(myIsExclude ? "$Delete" : "EditorToggleInsertState"));
   }
 
