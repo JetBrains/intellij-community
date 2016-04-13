@@ -325,6 +325,10 @@ public final class SocketLock {
             }
 
             contentLength = buffer.readUnsignedShort();
+            if (contentLength > 8192) {
+              context.close();
+              return;
+            }
             myState = State.CONTENT;
           }
           break;
