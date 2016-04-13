@@ -143,7 +143,7 @@ def _NormPaths(filename):
 
 
 def _NormPath(filename, normpath):
-    r = normcase(normpath(filename))
+    r = normpath(filename)
     #cache it for fast access later
     ind = r.find('.zip')
     if ind == -1:
@@ -156,7 +156,9 @@ def _NormPath(filename, normpath):
         inner_path = r[ind:]
         if inner_path.startswith('/') or inner_path.startswith('\\'):
             inner_path = inner_path[1:]
-        r = join(zip_path, inner_path)
+        r = join(normcase(zip_path), inner_path)
+    else:
+        r = normcase(r)
     return r
 
 
