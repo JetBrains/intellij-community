@@ -46,15 +46,9 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
     modifierProcessors = Arrays.asList(getModifierProcessors());
   }
 
-  public Boolean doItHard(PsiModifierList modifierList, String name) {
-//    System.out.println("I did it hard way!");
-    return hasModifierProperty(modifierList, name);
-  }
-
   @Nullable
   //@Override //May cause issues with older versions of IDEA SDK that are currently supported
   protected Boolean hasModifierProperty(@NotNull PsiModifierList modifierList, @NotNull String name) {
-
     if (DumbService.isDumb(modifierList.getProject())) {
       return null;
     }
