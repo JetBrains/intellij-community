@@ -31,6 +31,7 @@ import io.netty.channel.socket.oio.OioSocketChannel
 import io.netty.handler.codec.http.HttpHeaderNames
 import io.netty.handler.codec.http.HttpRequest
 import io.netty.handler.ssl.SslHandler
+import io.netty.resolver.HostsFileEntriesResolver
 import io.netty.util.concurrent.GenericFutureListener
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.ide.PooledThreadExecutor
@@ -125,7 +126,7 @@ inline fun <T> ByteBuf.releaseIfError(task: () -> T): T {
   }
 }
 
-fun isLocalHost(host: String, onlyAnyOrLoopback: Boolean): Boolean {
+fun isLocalHost(host: String, onlyAnyOrLoopback: Boolean, hostsOnly: Boolean = false): Boolean {
   if (onlyAnyOrLoopback) {
     if (NetUtils.isLocalhost(host)) {
       return true
@@ -137,9 +138,20 @@ fun isLocalHost(host: String, onlyAnyOrLoopback: Boolean): Boolean {
     // if IP address, it is safe to use getByName (not affected by DNS rebinding)
   }
 
+  fun InetAddress.isLocal() = isAnyLocalAddress || isLoopbackAddress || NetworkInterface.getByInetAddress(this) != null
+
   try {
     val address = InetAddress.getByName(host)
-    return address.isAnyLocalAddress || address.isLoopbackAddress || NetworkInterface.getByInetAddress(address) != null
+    if (!address.isLocal()) {
+      return false
+    }
+    // hosts can contain remote addresses, so, we check it
+    if (hostsOnly && !InetAddresses.isInetAddress(host)) {
+      return HostsFileEntriesResolver.DEFAULT.address(host).let { it != null && it.isLocal() }
+    }
+    else {
+      return true
+    }
   }
   catch (ignored: IOException) {
     return false
@@ -147,21 +159,21 @@ fun isLocalHost(host: String, onlyAnyOrLoopback: Boolean): Boolean {
 }
 
 @JvmOverloads
-fun HttpRequest.isLocalOrigin(onlyAnyOrLoopback: Boolean = true) = parseAndCheckIsLocalHost(origin, onlyAnyOrLoopback) && parseAndCheckIsLocalHost(referrer, onlyAnyOrLoopback)
+fun HttpRequest.isLocalOrigin(onlyAnyOrLoopback: Boolean = true, hostsOnly: Boolean = false) = parseAndCheckIsLocalHost(origin, onlyAnyOrLoopback, hostsOnly) && parseAndCheckIsLocalHost(referrer, onlyAnyOrLoopback, hostsOnly)
 
 private fun isTrustedChromeExtension(uri: URI): Boolean {
   return uri.scheme == "chrome-extension" && (uri.host == "hmhgeddbohgjknpmjagkdomcpobmllji" || uri.host == "offnedcbhjldheanlbojaefbfbllddna")
 }
 
 @JvmOverloads
-fun parseAndCheckIsLocalHost(uri: String?, onlyAnyOrLoopback: Boolean = true): Boolean {
+fun parseAndCheckIsLocalHost(uri: String?, onlyAnyOrLoopback: Boolean = true, hostsOnly: Boolean = false): Boolean {
   if (uri == null) {
     return true
   }
 
   try {
     val parsedUri = URI(uri)
-    return isTrustedChromeExtension(parsedUri) || isLocalHost(parsedUri.host, onlyAnyOrLoopback)
+    return isTrustedChromeExtension(parsedUri) || isLocalHost(parsedUri.host, onlyAnyOrLoopback, hostsOnly)
   }
   catch (ignored: Exception) {
   }

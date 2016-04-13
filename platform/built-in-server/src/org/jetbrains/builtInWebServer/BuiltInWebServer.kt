@@ -42,7 +42,7 @@ import java.nio.file.Path
 internal val LOG = Logger.getInstance(BuiltInWebServer::class.java)
 
 class BuiltInWebServer : HttpRequestHandler() {
-  override fun isAccessible(request: HttpRequest) = request.isLocalOrigin(false)
+  override fun isAccessible(request: HttpRequest) = request.isLocalOrigin(onlyAnyOrLoopback = false, hostsOnly = true)
 
   override fun isSupported(request: FullHttpRequest) = super.isSupported(request) || request.method() == HttpMethod.POST
 
