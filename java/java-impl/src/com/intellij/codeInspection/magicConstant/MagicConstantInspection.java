@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,6 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.slicer.*;
-import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
@@ -55,7 +54,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
-  public static final Key<Boolean> NO_ANNOTATIONS_FOUND = Key.create("REPORTED_NO_ANNOTATIONS_FOUND");
+  private static final Key<Boolean> NO_ANNOTATIONS_FOUND = Key.create("REPORTED_NO_ANNOTATIONS_FOUND");
 
   @Nls
   @NotNull
@@ -156,7 +155,7 @@ public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
   }
 
   @Override
-  public void cleanup(Project project) {
+  public void cleanup(@NotNull Project project) {
     super.cleanup(project);
     project.putUserData(NO_ANNOTATIONS_FOUND, null);
   }
@@ -211,13 +210,10 @@ public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
 
       @Override
       public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            SdkModificator modificator = finalJdk.getSdkModificator();
-            JavaSdkImpl.attachJdkAnnotations(modificator);
-            modificator.commitChanges();
-          }
+        ApplicationManager.getApplication().runWriteAction(() -> {
+          SdkModificator modificator = finalJdk.getSdkModificator();
+          JavaSdkImpl.attachJdkAnnotations(modificator);
+          modificator.commitChanges();
         });
       }
     });
@@ -272,8 +268,8 @@ public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
       if (canBeOred != a2.canBeOred) {
         return false;
       }
-      Set<PsiAnnotationMemberValue> v1 = new THashSet<PsiAnnotationMemberValue>(Arrays.asList(values));
-      Set<PsiAnnotationMemberValue> v2 = new THashSet<PsiAnnotationMemberValue>(Arrays.asList(a2.values));
+      Set<PsiAnnotationMemberValue> v1 = new THashSet<>(Arrays.asList(values));
+      Set<PsiAnnotationMemberValue> v2 = new THashSet<>(Arrays.asList(a2.values));
       if (v1.size() != v2.size()) {
         return false;
       }
@@ -294,7 +290,7 @@ public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
       return result;
     }
 
-    public boolean isSubsetOf(@NotNull AllowedValues other, @NotNull PsiManager manager) {
+    boolean isSubsetOf(@NotNull AllowedValues other, @NotNull PsiManager manager) {
       for (PsiAnnotationMemberValue value : values) {
         boolean found = false;
         for (PsiAnnotationMemberValue otherValue : other.values) {
@@ -361,7 +357,7 @@ public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
     if (fromClass == null) return null;
     String fqn = fromClass.getQualifiedName();
     if (fqn == null) return null;
-    List<PsiAnnotationMemberValue> constants = new ArrayList<PsiAnnotationMemberValue>();
+    List<PsiAnnotationMemberValue> constants = new ArrayList<>();
     for (PsiField field : fromClass.getFields()) {
       if (!field.hasModifierProperty(PsiModifier.PUBLIC) || !field.hasModifierProperty(PsiModifier.STATIC) || !field.hasModifierProperty(PsiModifier.FINAL)) continue;
       PsiType fieldType = field.getType();
@@ -390,7 +386,7 @@ public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
       PsiElement resolved = ref == null ? null : ref.resolve();
       if (!(resolved instanceof PsiClass) || !((PsiClass)resolved).isAnnotationType()) continue;
       PsiClass aClass = (PsiClass)resolved;
-      if (visited == null) visited = new THashSet<PsiClass>();
+      if (visited == null) visited = new THashSet<>();
       if (!visited.add(aClass)) continue;
       values = getAllowedValues(aClass, type, visited);
       if (values != null) return values;
@@ -400,14 +396,9 @@ public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
   }
 
   private static PsiAnnotation[] getAllAnnotations(final PsiModifierListOwner element) {
-    return CachedValuesManager.getCachedValue(element, new CachedValueProvider<PsiAnnotation[]>() {
-      @Nullable
-      @Override
-      public Result<PsiAnnotation[]> compute() {
-        return Result.create(AnnotationUtil.getAllAnnotations(element, true, null),
-                             PsiModificationTracker.MODIFICATION_COUNT);
-      }
-    });
+    return CachedValuesManager.getCachedValue(element,
+                                              () -> CachedValueProvider.Result.create(AnnotationUtil.getAllAnnotations(element, true, null),
+                                                                                      PsiModificationTracker.MODIFICATION_COUNT));
   }
 
   private static AllowedValues parseBeanInfo(@NotNull PsiModifierListOwner owner, @NotNull PsiManager manager) {
@@ -461,12 +452,7 @@ public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
     if (doc == null) return null;
     PsiDocTag beaninfo = doc.findTagByName("beaninfo");
     if (beaninfo == null) return null;
-    String data = StringUtil.join(beaninfo.getDataElements(), new Function<PsiElement, String>() {
-      @Override
-      public String fun(PsiElement element) {
-        return element.getText();
-      }
-    }, "\n");
+    String data = StringUtil.join(beaninfo.getDataElements(), PsiElement::getText, "\n");
     int enumIndex = StringUtil.indexOfSubstringEnd(data, "enum:");
     if (enumIndex == -1) return null;
     data = data.substring(enumIndex);
@@ -474,7 +460,7 @@ public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
     int last = colon == -1 ? data.length() : data.substring(0,colon).lastIndexOf("\n");
     data = data.substring(0, last);
 
-    List<PsiAnnotationMemberValue> values = new ArrayList<PsiAnnotationMemberValue>();
+    List<PsiAnnotationMemberValue> values = new ArrayList<>();
     for (String line : StringUtil.splitByLines(data)) {
       List<String> words = StringUtil.split(line, " ", true, true);
       if (words.size() != 2) continue;
@@ -506,18 +492,15 @@ public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
 
   private static void registerProblem(@NotNull PsiExpression argument, @NotNull AllowedValues allowedValues, @NotNull ProblemsHolder holder) {
     String values = StringUtil.join(allowedValues.values,
-                                    new Function<PsiAnnotationMemberValue, String>() {
-                                      @Override
-                                      public String fun(PsiAnnotationMemberValue value) {
-                                        if (value instanceof PsiReferenceExpression) {
-                                          PsiElement resolved = ((PsiReferenceExpression)value).resolve();
-                                          if (resolved instanceof PsiVariable) {
-                                            return PsiFormatUtil.formatVariable((PsiVariable)resolved, PsiFormatUtilBase.SHOW_NAME |
-                                                                                                       PsiFormatUtilBase.SHOW_CONTAINING_CLASS, PsiSubstitutor.EMPTY);
-                                          }
+                                    value -> {
+                                      if (value instanceof PsiReferenceExpression) {
+                                        PsiElement resolved = ((PsiReferenceExpression)value).resolve();
+                                        if (resolved instanceof PsiVariable) {
+                                          return PsiFormatUtil.formatVariable((PsiVariable)resolved, PsiFormatUtilBase.SHOW_NAME |
+                                                                                                     PsiFormatUtilBase.SHOW_CONTAINING_CLASS, PsiSubstitutor.EMPTY);
                                         }
-                                        return value.getText();
                                       }
+                                      return value.getText();
                                     }, ", ");
     holder.registerProblem(argument, "Must be one of: "+ values);
   }
@@ -529,12 +512,8 @@ public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
                                    final Set<PsiExpression> visited) {
     if (isGoodExpression(argument, allowedValues, scope, manager, visited)) return true;
 
-    return processValuesFlownTo(argument, scope, manager, new Processor<PsiExpression>() {
-      @Override
-      public boolean process(PsiExpression expression) {
-        return isGoodExpression(expression, allowedValues, scope, manager, visited);
-      }
-    });
+    return processValuesFlownTo(argument, scope, manager,
+                                expression -> isGoodExpression(expression, allowedValues, scope, manager, visited));
   }
 
   private static boolean isGoodExpression(@NotNull PsiExpression e,
@@ -544,7 +523,7 @@ public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
                                           @Nullable Set<PsiExpression> visited) {
     PsiExpression expression = PsiUtil.deparenthesizeExpression(e);
     if (expression == null) return true;
-    if (visited == null) visited = new THashSet<PsiExpression>();
+    if (visited == null) visited = new THashSet<>();
     if (!visited.add(expression)) return true;
     if (expression instanceof PsiConditionalExpression) {
       PsiExpression thenExpression = ((PsiConditionalExpression)expression).getThenExpression();
