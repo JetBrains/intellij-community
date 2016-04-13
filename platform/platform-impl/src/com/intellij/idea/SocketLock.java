@@ -27,7 +27,6 @@ import com.intellij.util.Consumer;
 import com.intellij.util.NotNullProducer;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.net.NetUtils;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufOutputStream;
 import io.netty.channel.ChannelHandler;
@@ -40,6 +39,7 @@ import org.jetbrains.io.MessageDecoder;
 import java.io.*;
 import java.lang.management.ManagementFactory;
 import java.net.ConnectException;
+import java.net.InetAddress;
 import java.net.Socket;
 import java.util.Collection;
 import java.util.List;
@@ -189,7 +189,7 @@ public final class SocketLock {
     log("trying: port=%s", portNumber);
     args = checkForJetBrainsProtocolCommand(args);
     try {
-      Socket socket = new Socket(NetUtils.getLoopbackAddress(), portNumber);
+      Socket socket = new Socket(InetAddress.getLoopbackAddress(), portNumber);
       try {
         socket.setSoTimeout(1000);
 
@@ -249,7 +249,7 @@ public final class SocketLock {
 
   private static void printPID(int port) {
     try {
-      Socket socket = new Socket(NetUtils.getLoopbackAddress(), port);
+      Socket socket = new Socket(InetAddress.getLoopbackAddress(), port);
       socket.setSoTimeout(1000);
       @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") DataOutputStream out = new DataOutputStream(socket.getOutputStream());
       out.writeUTF(PID_COMMAND);

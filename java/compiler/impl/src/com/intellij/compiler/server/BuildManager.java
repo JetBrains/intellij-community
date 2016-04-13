@@ -112,6 +112,7 @@ import java.awt.*;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
@@ -1205,7 +1206,7 @@ public class BuildManager implements Disposable {
     catch (Throwable e) {
       LOG.error(e);
     }
-    
+
     final OSProcessHandler processHandler = new OSProcessHandler(cmdLine) {
       @Override
       protected boolean shouldDestroyProcessRecursively() {
@@ -1336,7 +1337,7 @@ public class BuildManager implements Disposable {
                                    myMessageDispatcher);
       }
     });
-    Channel serverChannel = bootstrap.bind(NetUtils.getLoopbackAddress(), 0).syncUninterruptibly().channel();
+    Channel serverChannel = bootstrap.bind(InetAddress.getLoopbackAddress(), 0).syncUninterruptibly().channel();
     myChannelRegistrar.add(serverChannel);
     return ((InetSocketAddress)serverChannel.localAddress()).getPort();
   }

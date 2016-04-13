@@ -33,12 +33,6 @@ public class NetUtils {
 
   private NetUtils() { }
 
-  /** @deprecated use {@link #canConnectToSocket(String, int)} (to be remove in IDEA 17) */
-  @SuppressWarnings("unused")
-  public static boolean canConnectToSocketOpenedByJavaProcess(String host, int port) {
-    return canConnectToSocket(host, port);
-  }
-
   public static boolean canConnectToSocket(String host, int port) {
     if (isLocalhost(host)) {
       return !canBindToLocalSocket(host, port);
@@ -48,6 +42,7 @@ public class NetUtils {
     }
   }
 
+  @Deprecated
   public static InetAddress getLoopbackAddress() {
     return InetAddress.getLoopbackAddress();
   }
@@ -218,6 +213,6 @@ public class NetUtils {
   }
 
   public static boolean isSniEnabled() {
-    return SystemInfo.isJavaVersionAtLeast("1.7") && SystemProperties.getBooleanProperty("jsse.enableSNIExtension", true);
+    return SystemProperties.getBooleanProperty("jsse.enableSNIExtension", true);
   }
 }
