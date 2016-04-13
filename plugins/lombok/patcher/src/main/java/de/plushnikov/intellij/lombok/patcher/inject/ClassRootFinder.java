@@ -22,6 +22,7 @@
 package de.plushnikov.intellij.lombok.patcher.inject;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLDecoder;
@@ -92,6 +93,16 @@ public class ClassRootFinder {
 
     if (self.isEmpty()) {
       self = "/";
+    }
+
+    // Attempt to fix system differences with pathing
+    try {
+      File file = new File(self);
+      if (file.exists()) {
+        self = file.getCanonicalPath();
+      }
+    } catch (IOException ex) {
+      throw new IllegalArgumentException("Failed to resolve to a canonical path: " + self);
     }
 
     return self;
