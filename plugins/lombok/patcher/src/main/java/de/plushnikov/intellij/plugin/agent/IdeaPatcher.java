@@ -36,15 +36,10 @@ public class IdeaPatcher {
     IdeaPatcherOptionsHolder optionsHolder = IdeaPatcherOptionsHolder.getInstance();
     optionsHolder.addAll(agentArgs);
 
-    List<IdeaPatcherTransformer> knownTransformers = new ArrayList<IdeaPatcherTransformer>();
-    knownTransformers.add(new ModifierVisibilityClassFileTransformer());
-
     for (IdeaPatcherTransformer transformer: KNOWN_TRANSFORMERS) {
       if (transformer.supported()) {
         instrumentation.addTransformer(transformer, transformer.canRetransform());
       }
     }
-
-    instrumentation.addTransformer(new ModifierVisibilityClassFileTransformer(), true);
   }
 }
