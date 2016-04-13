@@ -539,6 +539,50 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     });
   }
 
+
+  public void testWinEggDebug() throws Exception {
+    if (!SystemInfo.isWindows)
+    {
+       return; // Only needs to run on windows
+    }
+    runPythonTest(new PyDebuggerTask("/debug", "test_winegg.py") {
+      @Override
+      public void before() throws Exception {
+        String egg = getFilePath("wintestegg-0.1.egg");
+        toggleBreakpointInEgg(egg, "eggxample/lower_case.py", 2);
+        toggleBreakpointInEgg(egg, "eggxample/MIXED_case.py", 2);
+
+        PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(getRunConfiguration().getSdkHome());
+        if (flavor != null) {
+          flavor.initPythonPath(Lists.newArrayList(egg), getRunConfiguration().getEnvs());
+        }
+        else {
+          getRunConfiguration().getEnvs().put("PYTHONPATH", egg);
+        }
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        eval("ret").hasValue("16");
+        resume();
+
+        waitForPause();
+        eval("ret").hasValue("17");
+        resume();
+      }
+
+      @NotNull
+      @Override
+      public Set<String> getTags() {
+        return ImmutableSet.of("-jython"); //TODO: fix that for Jython if anybody needs it
+      }
+
+
+    });
+  }
+
+
   public void testStepOverConditionalBreakpoint() throws Exception {
     runPythonTest(new PyDebuggerTask("/debug", "test_stepOverCondition.py") {
       @Override
