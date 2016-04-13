@@ -148,7 +148,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
           extension instanceof StringStubIndexExtension && ((StringStubIndexExtension)extension).traceKeyHashToVirtualFileMapping()
         );
 
-        final MemoryIndexStorage<K, StubIdList> memStorage = new MemoryIndexStorage<K, StubIdList>(storage);
+        final MemoryIndexStorage<K, StubIdList> memStorage = new MemoryIndexStorage<K, StubIdList>(storage, indexKey);
         MyIndex<K> index = new MyIndex<>(new IndexExtension<K, StubIdList, Void>() {
           @NotNull
           @Override

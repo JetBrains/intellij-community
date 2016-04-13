@@ -26,7 +26,7 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.keymap.impl.KeymapManagerImpl;
+import com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler;
 import com.intellij.openapi.options.CompositeConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
@@ -95,7 +95,7 @@ public class EditorSmartKeysConfigurable extends CompositeConfigurable<UnnamedCo
     
     myCbEnableAddingCaretsOnDoubleCtrlArrows.setText(
       ApplicationBundle.message("checkbox.enable.double.ctrl",
-                                KeyEvent.getKeyText(KeymapManagerImpl.getMultiCaretActionModifier())));
+                                KeyEvent.getKeyText(ModifierKeyDoubleClickHandler.getMultiCaretActionModifier())));
   }
 
   private static boolean hasAnyDocAwareCommenters() {

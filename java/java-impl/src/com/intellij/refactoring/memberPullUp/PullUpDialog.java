@@ -156,8 +156,8 @@ public class PullUpDialog extends PullUpDialogBase<MemberInfoStorage, MemberInfo
     boolean hasJavadoc = false;
     for (MemberInfo info : myMemberInfos) {
       final PsiMember member = info.getMember();
+      info.setToAbstract(myMemberInfoModel.isAbstractWhenDisabled(info));
       if (myMemberInfoModel.isAbstractEnabled(info)) {
-        info.setToAbstract(myMemberInfoModel.isAbstractWhenDisabled(info));
         if (!hasJavadoc &&
             member instanceof PsiDocCommentOwner && 
             ((PsiDocCommentOwner)member).getDocComment() != null) {

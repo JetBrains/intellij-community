@@ -33,6 +33,7 @@ import com.intellij.openapi.fileEditor.impl.text.CodeFoldingState;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -67,7 +68,7 @@ class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState {
   @NonNls private static final String EXPANDED_ATT = "expanded";
   @NonNls private static final String MARKER_TAG = "marker";
   @NonNls private static final String DATE_ATT = "date";
-  @NonNls private static final String PLACEHOLDER_ATT = "placeholder";
+  @NonNls private static final String PLACEHOLDER_ATT = "ph";
 
   DocumentFoldingInfo(@NotNull Project project, @NotNull Document document) {
     myProject = project;
@@ -274,7 +275,7 @@ class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState {
       String signature = Integer.valueOf(marker.getStartOffset()) + ":" + Integer.valueOf(marker.getEndOffset());
       e.setAttribute(SIGNATURE_ATT, signature);
       String placeHolderText = fi == null ? DEFAULT_PLACEHOLDER : fi.placeHolder;
-      e.setAttribute(PLACEHOLDER_ATT, placeHolderText);
+      e.setAttribute(PLACEHOLDER_ATT, StringUtil.escapeIllegalXmlChars(placeHolderText));
       element.addContent(e);
     }
   }
@@ -331,8 +332,9 @@ class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState {
               if (start < 0 || end >= document.getTextLength() || start > end) continue;
               RangeMarker marker = document.createRangeMarker(start, end);
               myRangeMarkers.add(marker);
-              String placeHolderText = e.getAttributeValue(PLACEHOLDER_ATT);
-              if (placeHolderText == null) placeHolderText = DEFAULT_PLACEHOLDER;
+              String placeholderAttributeValue = e.getAttributeValue(PLACEHOLDER_ATT);
+              String placeHolderText = placeholderAttributeValue == null ? DEFAULT_PLACEHOLDER
+                                                                         : StringUtil.unescapeIllegalXmlChars(placeholderAttributeValue);
               FoldingInfo fi = new FoldingInfo(placeHolderText, expanded);
               marker.putUserData(FOLDING_INFO_KEY, fi);
             }

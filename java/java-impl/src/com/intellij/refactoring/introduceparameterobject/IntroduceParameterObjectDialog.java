@@ -259,7 +259,7 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
 
   protected JComponent createCenterPanel() {
     sourceMethodTextField.setEditable(false);
-    final ParameterTablePanel paramsPanel = new ParameterTablePanel(myProject, parameterInfo, sourceMethod) {
+    final ParameterTablePanel paramsPanel = new ParameterTablePanel(myProject, parameterInfo) {
       protected void updateSignature() {}
 
       protected void doEnterAction() {}

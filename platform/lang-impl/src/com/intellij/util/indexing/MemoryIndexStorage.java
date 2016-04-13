@@ -36,6 +36,7 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
   @NotNull
   private final IndexStorage<Key, Value> myBackendStorage;
   private final List<BufferingStateListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final ID<?, ?> myIndexId;
   private boolean myBufferingEnabled;
 
   public interface BufferingStateListener {
@@ -45,7 +46,12 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
   }
 
   public MemoryIndexStorage(@NotNull IndexStorage<Key, Value> backend) {
+    this(backend, null);
+  }
+
+  public MemoryIndexStorage(@NotNull IndexStorage<Key, Value> backend, ID<?, ?> indexId) {
     myBackendStorage = backend;
+    myIndexId = indexId;
   }
 
   @NotNull
@@ -82,6 +88,16 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
   public void fireMemoryStorageCleared() {
     for (BufferingStateListener listener : myListeners) {
       listener.memoryStorageCleared();
+    }
+  }
+
+  void clearCaches() {
+    if (myMap.size() == 0) return;
+    String message = "Dropping caches for " + (myIndexId != null ? myIndexId:this) + ", number of items:" + myMap.size();
+    FileBasedIndexImpl.LOG.info(message);
+
+    for(ChangeTrackingValueContainer<Value> v:myMap.values()) {
+      v.dropMergedData();
     }
   }
 
