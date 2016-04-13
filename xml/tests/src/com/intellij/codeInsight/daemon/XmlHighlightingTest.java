@@ -2126,6 +2126,11 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     doHighlighting();
   }
 
+  public void testSchemaVersioning() throws Exception {
+    configureByFiles(null, BASE_PATH + "Versioning.xsd");
+    doDoTest(true, false);
+  }
+
   @Override
   protected void setUp() throws Exception {
     super.setUp();
