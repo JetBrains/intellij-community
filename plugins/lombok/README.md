@@ -44,6 +44,7 @@ Features / Supports
 
 Installation
 ------------
+### Plugin Installation
 - Using IDE built-in plugin system on Windows:
   - <kbd>File</kbd> > <kbd>Settings</kbd> > <kbd>Plugins</kbd> > <kbd>Browse repositories...</kbd> > <kbd>Search for "lombok"</kbd> > <kbd>Install Plugin</kbd>
 - Using IDE built-in plugin system on MacOs:
@@ -53,12 +54,46 @@ Installation
   
 Restart IDE.
 
+### Required IntelliJ Configuration
 In your project: Click Preferences, "Build, Execution, Deployment", Compiler, Annotation Processors. Click Enable Annotation Processing
+
+### Lombok project dependency
+Make sure you have Lombok dependency added to your project. This plugin **does not** automatically add it for you.
+
+If you are using Gradle/Maven/Ivy, see example below:
+
+##### Gradle
+In your `build.gradle`:
+```groovy
+//'compile' can be changed to 'compileOnly' for Gradle 2.12+
+// or 'provided' if using 'propdeps' plugin from SpringSource
+compile "org.projectlombok:lombok:1.16.8"
+```
+
+##### Maven
+In your `pom.xml`:
+```xml
+<dependencies>
+	<dependency>
+		<groupId>org.projectlombok</groupId>
+		<artifactId>lombok</artifactId>
+		<version>1.16.8</version>
+		<scope>provided</scope>
+	</dependency>
+</dependencies>
+```
+
+##### Ivy
+In your `ivy.xml`:
+```xml
+<dependency org="org.projectlombok" name="lombok" rev="1.16.8" conf="build" />
+```
 
 IntelliJ and Eclipse compiler
 -----------------------------
 If you're using Eclipse compiler with lombok, try this setup:
 - install plugin
+- make sure Lombok dependency is added to the project
 - change compiler setting:
   - <kbd>...</kbd> > <kbd>Compiler</kbd> > <kbd>Java Compiler</kbd> > <kbd>Use Compiler: Eclipse</kbd>
   - <kbd>...</kbd> > <kbd>Compiler</kbd> > <kbd>Annotation Processors</kbd> > <kbd>Enable annotation processing: checked (default configuration)</kbd>
