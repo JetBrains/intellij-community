@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.refactoring.extractMethod;
+package com.intellij.refactoring.util;
 
-import com.intellij.refactoring.util.AbstractVariableData;
+public class AbstractVariableData {
+  public String originalName;
+  public String name;
+  public boolean passAsParameter;
 
-/**
- * @author oleg
- */
-public interface ExtractMethodSettings {
-  String getMethodName();
-  AbstractVariableData[] getAbstractVariableData();
+  public String getName() {
+    return name;
+  }
 
-  @Deprecated
-  default com.intellij.refactoring.extractMethod.AbstractVariableData[] getVariableData() {
-    return com.intellij.refactoring.extractMethod.AbstractVariableData.copy(getAbstractVariableData());
+  public String getOriginalName() {
+    return originalName;
+  }
+
+  public boolean isPassAsParameter() {
+    return passAsParameter;
   }
 }
