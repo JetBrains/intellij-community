@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,7 +63,6 @@ import com.intellij.ui.LightweightHint;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
 import com.intellij.usages.impl.UsageViewImpl;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -925,26 +924,22 @@ public class FindUtil {
   }
 
   @Nullable
-  public static UsageView showInUsageView(PsiElement sourceElement, @NotNull PsiElement[] targets, @NotNull String title, @NotNull final Project project) {
+  public static UsageView showInUsageView(@Nullable PsiElement sourceElement,
+                                          @NotNull PsiElement[] targets,
+                                          @NotNull String title,
+                                          @NotNull final Project project) {
     if (targets.length == 0) return null;
     final UsageViewPresentation presentation = new UsageViewPresentation();
     presentation.setCodeUsagesString(title);
     presentation.setTabName(title);
     presentation.setTabText(title);
-    final UsageTarget[] usageTargets =
-      sourceElement == null ? UsageTarget.EMPTY_ARRAY : new UsageTarget[]{new PsiElement2UsageTargetAdapter(sourceElement)};
+    UsageTarget[] usageTargets = sourceElement == null ? UsageTarget.EMPTY_ARRAY : new UsageTarget[]{new PsiElement2UsageTargetAdapter(sourceElement)};
 
-    final PsiElement[] primary = sourceElement == null ? PsiElement.EMPTY_ARRAY : new PsiElement[]{sourceElement};
-    final Usage[] usages = {UsageInfoToUsageConverter.convert(primary, new UsageInfo(targets[0]))};
-    final UsageView view =
-      UsageViewManager.getInstance(project).showUsages(usageTargets, usages, presentation);
+    PsiElement[] primary = sourceElement == null ? PsiElement.EMPTY_ARRAY : new PsiElement[]{sourceElement};
+    UsageView view = UsageViewManager.getInstance(project).showUsages(usageTargets, Usage.EMPTY_ARRAY, presentation);
 
-    final List<SmartPsiElementPointer> pointers = ContainerUtil.map(targets, new Function<PsiElement, SmartPsiElementPointer>() {
-      @Override
-      public SmartPsiElementPointer fun(PsiElement psiElement) {
-        return SmartPointerManager.getInstance(project).createSmartPsiElementPointer(psiElement);
-      }
-    });
+    SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(project);
+    List<SmartPsiElementPointer> pointers = ContainerUtil.map(targets, smartPointerManager::createSmartPsiElementPointer);
 
     // usage view will load document/AST so still referencing all these PSI elements might lead to out of memory
     //noinspection UnusedAssignment
@@ -955,13 +950,10 @@ public class FindUtil {
       public void run(@NotNull ProgressIndicator indicator) {
         for (final SmartPsiElementPointer pointer : pointers) {
           if (((UsageViewImpl)view).isDisposed()) break;
-          ApplicationManager.getApplication().runReadAction(new Runnable() {
-            @Override
-            public void run() {
-              final PsiElement target = pointer.getElement();
-              if (target != null) {
-                view.appendUsage(UsageInfoToUsageConverter.convert(primary, new UsageInfo(target)));
-              }
+          ApplicationManager.getApplication().runReadAction(() -> {
+            final PsiElement target = pointer.getElement();
+            if (target != null) {
+              view.appendUsage(UsageInfoToUsageConverter.convert(primary, new UsageInfo(target)));
             }
           });
         }
