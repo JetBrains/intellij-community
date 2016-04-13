@@ -996,7 +996,8 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
       }
       return text;
     }
-
+    // NB!: this point is achievable if the following method returns null
+    // see com.intellij.ide.util.treeView.NodeDescriptor.toString
     if (userObject instanceof StructureViewComponent.StructureViewTreeElementWrapper) {
       return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
         @Nullable
