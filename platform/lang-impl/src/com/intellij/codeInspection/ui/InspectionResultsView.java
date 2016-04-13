@@ -32,7 +32,7 @@ import com.intellij.diff.util.DiffUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
 import com.intellij.ide.actions.ContextHelpAction;
-import com.intellij.ide.actions.TreeNodeExclusionAction;
+import com.intellij.ide.actions.exclusion.ExclusionHandler;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -119,7 +119,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
 
   @NotNull
   private final InspectionRVContentProvider myProvider;
-  private final TreeNodeExclusionAction.ExclusionHandler<InspectionTreeNode> myExclusionHandler;
+  private final ExclusionHandler<InspectionTreeNode> myExclusionHandler;
   private EditorEx myPreviewEditor;
   private InspectionTreeLoadingProgressAware myLoadingProgressPreview;
   private final ExcludedInspectionTreeNodesManager myExcludedInspectionTreeNodesManager = new ExcludedInspectionTreeNodesManager();
@@ -150,19 +150,20 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       }
     });
     add(mySplitter, BorderLayout.CENTER);
-    myExclusionHandler = new TreeNodeExclusionAction.ExclusionHandler<InspectionTreeNode>() {
+    myExclusionHandler = new ExclusionHandler<InspectionTreeNode>() {
       @Override
       public boolean isNodeExcluded(@NotNull InspectionTreeNode node) {
         return node.isResolved(myExcludedInspectionTreeNodesManager);
       }
 
       @Override
-      public void excludeNode(@NotNull InspectionTreeNode node, boolean isExcluded) {
-        if (isExcluded) {
-          node.ignoreElement(myExcludedInspectionTreeNodesManager);
-        } else {
-          node.amnesty(myExcludedInspectionTreeNodesManager);
-        }
+      public void excludeNode(@NotNull InspectionTreeNode node) {
+        node.ignoreElement(myExcludedInspectionTreeNodesManager);
+      }
+
+      @Override
+      public void includeNode(@NotNull InspectionTreeNode node) {
+        node.amnesty(myExcludedInspectionTreeNodesManager);
       }
 
       @Override
@@ -171,7 +172,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       }
 
       @Override
-      public void updateUiWhenActionWasPerformed(boolean isExcludeAction) {
+      public void onDone(boolean isExcludeAction) {
         if (isExcludeAction && myGlobalInspectionContext.getUIOptions().FILTER_RESOLVED_ITEMS) {
           update();
         }
@@ -181,10 +182,11 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       }
 
       @Override
-      public boolean isValid() {
-        return !isDisposed();
+      public void dispose() {
+
       }
     };
+    Disposer.register(this, myExclusionHandler);
     createActionsToolbar();
   }
 
@@ -762,7 +764,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   public Object getData(String dataId) {
     if (PlatformDataKeys.HELP_ID.is(dataId)) return HELP_ID;
     if (DATA_KEY.is(dataId)) return this;
-    if (TreeNodeExclusionAction.EXCLUSION_HANDLER.is(dataId)) return myExclusionHandler;
+    if (ExclusionHandler.EXCLUSION_HANDLER.is(dataId)) return myExclusionHandler;
     if (myTree == null) return null;
     TreePath[] paths = myTree.getSelectionPaths();
 

@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.actions;
+package com.intellij.ide.actions.exclusion;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.util.Disposer;
 
 import javax.swing.*;
 import javax.swing.tree.MutableTreeNode;
@@ -27,46 +27,20 @@ import java.awt.*;
 /**
  * @author Dmitry Batkovich.
  */
-public class TreeNodeExclusionAction<T extends MutableTreeNode> extends AnAction {
+class TreeNodeExclusionAction<T extends MutableTreeNode> extends AnAction {
   private final static Logger LOG = Logger.getInstance(TreeNodeExclusionAction.class);
-
-  public static final DataKey<ExclusionHandler> EXCLUSION_HANDLER = DataKey.create("tree.exclusion.handler");
 
   private final boolean myIsExclude;
 
-  public interface ExclusionHandler<T extends MutableTreeNode> {
-    boolean isNodeExcluded(@NotNull T node);
-
-    void excludeNode(@NotNull T node, boolean isExcluded);
-
-    boolean isActionEnabled(boolean isExcludeAction);
-
-    void updateUiWhenActionWasPerformed(boolean isExcludeAction);
-
-    boolean isValid();
-  }
-
-  public static class Exclude<T extends MutableTreeNode> extends TreeNodeExclusionAction<T> {
-    public Exclude() {
-      super(true);
-    }
-  }
-
-  public static class Include<T extends MutableTreeNode> extends TreeNodeExclusionAction<T> {
-    public Include() {
-      super(false);
-    }
-  }
-
-  private TreeNodeExclusionAction(boolean isExclude) {
+  TreeNodeExclusionAction(boolean isExclude) {
     myIsExclude = isExclude;
     getTemplatePresentation().setText(getActionText());
   }
 
   @Override
   public void update(AnActionEvent e) {
-    final ExclusionHandler<T> exclusionProcessor = EXCLUSION_HANDLER.getData(e.getDataContext());
-    if (exclusionProcessor == null || !exclusionProcessor.isValid()) {
+    final ExclusionHandler<T> exclusionProcessor = ExclusionHandler.EXCLUSION_HANDLER.getData(e.getDataContext());
+    if (exclusionProcessor == null || Disposer.isDisposed(exclusionProcessor)) {
       e.getPresentation().setEnabledAndVisible(false);
       return;
     }
@@ -107,15 +81,19 @@ public class TreeNodeExclusionAction<T extends MutableTreeNode> extends AnAction
     LOG.assertTrue(tree != null);
     final TreePath[] paths = tree.getSelectionPaths();
     LOG.assertTrue(paths != null);
-    final ExclusionHandler<T> exclusionProcessor = EXCLUSION_HANDLER.getData(e.getDataContext());
+    final ExclusionHandler<T> exclusionProcessor = ExclusionHandler.EXCLUSION_HANDLER.getData(e.getDataContext());
     LOG.assertTrue(exclusionProcessor != null);
     for (TreePath path : paths) {
       final T node = (T)path.getLastPathComponent();
       if (Boolean.valueOf(myIsExclude) != exclusionProcessor.isNodeExcluded(node)) {
-        exclusionProcessor.excludeNode(node, myIsExclude);
+        if (myIsExclude) {
+          exclusionProcessor.excludeNode(node);
+        } else {
+          exclusionProcessor.includeNode(node);
+        }
       }
     }
-    exclusionProcessor.updateUiWhenActionWasPerformed(myIsExclude);
+    exclusionProcessor.onDone(myIsExclude);
   }
 
   private String getActionText() {

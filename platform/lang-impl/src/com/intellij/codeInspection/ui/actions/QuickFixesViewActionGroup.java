@@ -29,7 +29,7 @@ import static com.intellij.codeInspection.ui.actions.InspectionViewActionBase.ge
 /**
  * @author Dmitry Batkovich
  */
-public class QuickFixesActionGroup extends ActionGroup {
+public class QuickFixesViewActionGroup extends ActionGroup {
   @NotNull
   @Override
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
