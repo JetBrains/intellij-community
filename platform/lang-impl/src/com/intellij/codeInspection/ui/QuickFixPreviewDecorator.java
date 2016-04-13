@@ -154,7 +154,7 @@ public class QuickFixPreviewDecorator extends JPanel implements InspectionTreeLo
       @NotNull
       @Override
       protected DefaultActionGroup createPopupActionGroup(JComponent button) {
-        DefaultActionGroup group = new DefaultActionGroup();
+        DefaultActionGroup group = new DefaultCompactActionGroup();
         group.addAll(suppressors);
         return group;
       }

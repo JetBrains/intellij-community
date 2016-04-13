@@ -41,20 +41,11 @@ public abstract class InspectionViewActionBase extends AnAction {
     final InspectionResultsView view = getView(e);
     final boolean enabled = view != null && isEnabled(view);
     final Presentation presentation = e.getPresentation();
-    if (hideIfDisabled()) {
-      presentation.setEnabledAndVisible(enabled);
-    }
-    else {
-      presentation.setEnabled(enabled);
-    }
+    presentation.setEnabled(enabled);
   }
 
   protected boolean isEnabled(@NotNull InspectionResultsView view) {
     return true;
-  }
-
-  protected boolean hideIfDisabled() {
-    return false;
   }
 
   public static InspectionResultsView getView(@Nullable AnActionEvent event) {

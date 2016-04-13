@@ -56,7 +56,7 @@ import java.util.Set;
 
 import static com.intellij.codeInspection.ui.actions.InspectionViewActionBase.getView;
 
-public class SuppressActionWrapper extends ActionGroup {
+public class SuppressActionWrapper extends ActionGroup implements CompactActionGroup {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.actions.SuppressActionWrapper");
 
   public SuppressActionWrapper() {
@@ -207,11 +207,6 @@ public class SuppressActionWrapper extends ActionGroup {
         }
       }
       return false;
-    }
-
-    @Override
-    protected boolean hideIfDisabled() {
-      return true;
     }
 
     public boolean isSuppressAll() {
