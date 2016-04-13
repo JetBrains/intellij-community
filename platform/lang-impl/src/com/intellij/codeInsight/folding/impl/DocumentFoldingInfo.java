@@ -33,11 +33,11 @@ import com.intellij.openapi.fileEditor.impl.text.CodeFoldingState;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.StringTokenizer;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -276,7 +276,7 @@ class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState {
       String signature = Integer.valueOf(marker.getStartOffset()) + ":" + Integer.valueOf(marker.getEndOffset());
       e.setAttribute(SIGNATURE_ATT, signature);
       String placeHolderText = fi == null ? DEFAULT_PLACEHOLDER : fi.placeHolder;
-      e.setAttribute(PLACEHOLDER_ATT, StringUtil.escapeIllegalXmlChars(placeHolderText));
+      e.setAttribute(PLACEHOLDER_ATT, XmlStringUtil.escapeIllegalXmlChars(placeHolderText));
       element.addContent(e);
     }
   }
@@ -335,7 +335,7 @@ class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState {
               myRangeMarkers.add(marker);
               String placeholderAttributeValue = e.getAttributeValue(PLACEHOLDER_ATT);
               String placeHolderText = placeholderAttributeValue == null ? e.getAttributeValue(PLACEHOLDER_OLD_ATT)
-                                                                         : StringUtil.unescapeIllegalXmlChars(placeholderAttributeValue);
+                                                                         : XmlStringUtil.unescapeIllegalXmlChars(placeholderAttributeValue);
               if (placeHolderText == null) placeHolderText = DEFAULT_PLACEHOLDER;
               FoldingInfo fi = new FoldingInfo(placeHolderText, expanded);
               marker.putUserData(FOLDING_INFO_KEY, fi);
