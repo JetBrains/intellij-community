@@ -18,7 +18,6 @@ package com.intellij.debugger.engine.evaluation;
 import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.codeInsight.completion.CompletionService;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.codeinsight.RuntimeTypeEvaluator;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilder;
@@ -76,7 +75,6 @@ public class DefaultCodeFragmentFactory extends CodeFragmentFactory {
     fragment.setVisibilityChecker(JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
     //noinspection HardCodedStringLiteral
     fragment.putUserData(KEY, "DebuggerComboBoxEditor.IS_DEBUGGER_EDITOR");
-    fragment.putUserData(HighlightUtil.DISABLE_RETURN_CHECK_IN_CODE_FRAGMENT, true);
     fragment.putCopyableUserData(JavaCompletionUtil.DYNAMIC_TYPE_EVALUATOR, new PairFunction<PsiExpression, CompletionParameters, PsiType>() {
       public PsiType fun(PsiExpression expression, CompletionParameters parameters) {
         if (!RuntimeTypeEvaluator.isSubtypeable(expression)) {
