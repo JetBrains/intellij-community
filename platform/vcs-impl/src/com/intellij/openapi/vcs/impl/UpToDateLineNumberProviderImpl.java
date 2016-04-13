@@ -19,46 +19,26 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.localVcs.UpToDateLineNumberProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ex.LineStatusTracker;
-import com.intellij.openapi.vcs.ex.Range;
-
-import java.util.List;
 
 /**
  * author: lesya
  */
 public class UpToDateLineNumberProviderImpl implements UpToDateLineNumberProvider {
   private final Document myDocument;
-  private final Project myProject;
   private final LineStatusTrackerManagerI myLineStatusTrackerManagerI;
 
   public UpToDateLineNumberProviderImpl(Document document, Project project) {
     myDocument = document;
-    myProject = project;
-    myLineStatusTrackerManagerI = LineStatusTrackerManager.getInstance(myProject);
+    myLineStatusTrackerManagerI = LineStatusTrackerManager.getInstance(project);
   }
 
+  @Override
   public boolean isRangeChanged(final int start, final int end) {
     LineStatusTracker tracker = myLineStatusTrackerManagerI.getLineStatusTracker(myDocument);
     if (tracker == null) {
       return false;
     }
-    List<Range> ranges = tracker.getRanges();
-    if (ranges == null) {
-      return false;
-    }
-    for (Range range : ranges) {
-      if (lineInRange(range, start) || lineInRange(range, end)) {
-        return true;
-      }
-      if (range.getLine1() > start) {
-        return range.getLine1() < end;
-      }
-    }
-    return false;
-  }
-
-  private static boolean lineInRange(final Range range, final int currentNumber) {
-    return range.getLine1() <= currentNumber && range.getLine2() >= currentNumber;
+    return tracker.isRangeModified(start, end);
   }
 
   @Override
@@ -67,48 +47,15 @@ public class UpToDateLineNumberProviderImpl implements UpToDateLineNumberProvide
     if (tracker == null) {
       return false;
     }
-    List<Range> ranges = tracker.getRanges();
-    if (ranges == null) {
-      return false;
-    }
-    for (Range range : ranges) {
-      if (range.getLine1() <= currentNumber && range.getLine2() >= currentNumber) {
-        return true;
-      }
-    }
-    return false;
+    return tracker.isLineModified(currentNumber);
   }
 
+  @Override
   public int getLineNumber(int currentNumber) {
     LineStatusTracker tracker = myLineStatusTrackerManagerI.getLineStatusTracker(myDocument);
     if (tracker == null) {
       return currentNumber;
     }
-    List<Range> ranges = tracker.getRanges();
-    if (ranges == null) {
-      return currentNumber;
-    }
-    int result = currentNumber;
-
-    for (final Range range : ranges) {
-      int startLine = range.getLine1();
-      int endLine = range.getLine2();
-
-      if ((startLine <= currentNumber) && (endLine > currentNumber)) {
-        return ABSENT_LINE_NUMBER;
-      }
-
-      if (endLine > currentNumber) return result;
-
-      int currentRangeLength = endLine - startLine;
-      int vcsRangeLength = range.getVcsLine2() - range.getVcsLine1();
-
-      result += vcsRangeLength - currentRangeLength;
-    }
-    return result;
-
+    return tracker.transferLineToVcs(currentNumber, false);
   }
-
 }
-
-

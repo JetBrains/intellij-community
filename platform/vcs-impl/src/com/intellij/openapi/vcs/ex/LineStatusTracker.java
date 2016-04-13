@@ -56,6 +56,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.diff.util.DiffUtil.getLineCount;
+import static com.intellij.openapi.localVcs.UpToDateLineNumberProvider.ABSENT_LINE_NUMBER;
 
 /**
  * @author irengrig
@@ -892,6 +893,58 @@ public class LineStatusTracker {
         LOG.warn("Vcs TextRange of invalid range");
       }
       return DiffUtil.getLinesRange(myVcsDocument, range.getVcsLine1(), range.getVcsLine2());
+    }
+  }
+
+  public boolean isLineModified(int line) {
+    return isRangeModified(line, line + 1);
+  }
+
+  public boolean isRangeModified(int line1, int line2) {
+    synchronized (LOCK) {
+      if (!isValid()) return false;
+      if (line1 == line2) return false;
+      assert line1 < line2;
+
+      for (Range range : myRanges) {
+        if (range.getLine1() >= line2) return false;
+        if (range.getLine2() > line1) return true;
+      }
+      return false;
+    }
+  }
+
+  public int transferLineToFromVcs(int line, boolean approximate) {
+    return transferLine(line, approximate, true);
+  }
+
+  public int transferLineToVcs(int line, boolean approximate) {
+    return transferLine(line, approximate, false);
+  }
+
+  private int transferLine(int line, boolean approximate, boolean fromVcs) {
+    synchronized (LOCK) {
+      if (!isValid()) return approximate ? line : ABSENT_LINE_NUMBER;
+
+      int result = line;
+
+      for (Range range : myRanges) {
+        int startLine1 = fromVcs ? range.getVcsLine1() : range.getLine1();
+        int endLine1 = fromVcs ? range.getVcsLine2() : range.getLine2();
+        int startLine2 = fromVcs ? range.getLine1() : range.getVcsLine1();
+        int endLine2 = fromVcs ? range.getLine2() : range.getVcsLine2();
+
+        if (startLine1 <= line && endLine1 > line) {
+          return approximate ? startLine2 : ABSENT_LINE_NUMBER;
+        }
+
+        if (endLine1 > line) return result;
+
+        int length1 = endLine1 - startLine1;
+        int length2 = endLine2 - startLine2;
+        result += length2 - length1;
+      }
+      return result;
     }
   }
 
