@@ -497,9 +497,9 @@ public class StringUtilTest {
   @Test
   public void testEscapingIllegalXmlChars() {
     for (String s : new String[]{"ab\n\0\r\tde", "\\abc\1\2\3\uFFFFdef"}) {
-      String escapedText = StringUtil.escapeIllegalXmlChars(s);
+      String escapedText = XmlStringUtil.escapeIllegalXmlChars(s);
       assertNull(Verifier.checkCharacterData(escapedText));
-      assertEquals(s, StringUtil.unescapeIllegalXmlChars(escapedText));
+      assertEquals(s, XmlStringUtil.unescapeIllegalXmlChars(escapedText));
     }
   }
 }
