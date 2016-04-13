@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ import static com.intellij.openapi.util.Pair.pair;
  * @author oleg
  * @since 30.09.2010
  */
-public abstract class ListCellRendererWrapper<T> implements ListCellRenderer {
+public abstract class ListCellRendererWrapper<T> implements ListCellRenderer<T> {
   private final ListCellRenderer myDefaultRenderer;
 
   private boolean mySeparator;

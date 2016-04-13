@@ -62,15 +62,11 @@ public final class EmptyAction extends AnAction {
   }
 
   public static void setupAction(@NotNull AnAction action, @NotNull String id, @Nullable JComponent component) {
-    final AnAction emptyAction = ActionManager.getInstance().getAction(id);
-    action.copyFrom(emptyAction);
-    action.registerCustomShortcutSet(action.getShortcutSet(), component);
+    ActionUtil.mergeFrom(action, id).registerCustomShortcutSet(component, null);
   }
 
-  public static void registerActionShortcuts(JComponent component, final JComponent fromComponent) {
-    for (AnAction anAction : ActionUtil.getActions(fromComponent)) {
-      anAction.registerCustomShortcutSet(anAction.getShortcutSet(), component);
-    }
+  public static void registerActionShortcuts(@NotNull JComponent component, @NotNull JComponent fromComponent) {
+    ActionUtil.copyRegisteredShortcuts(component, fromComponent);
   }
 
   /**

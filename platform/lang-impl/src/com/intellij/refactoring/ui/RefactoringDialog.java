@@ -15,9 +15,6 @@
  */
 package com.intellij.refactoring.ui;
 
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.application.TransactionKind;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbModePermission;
 import com.intellij.openapi.project.DumbService;

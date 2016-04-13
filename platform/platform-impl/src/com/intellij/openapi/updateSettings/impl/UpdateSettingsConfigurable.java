@@ -30,7 +30,6 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.updateSettings.UpdateStrategyCustomization;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.JBColor;
@@ -97,9 +96,7 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
   @Override
   public void apply() throws ConfigurationException {
     if (myPanel.myUseSecureConnection.isSelected() && !NetUtils.isSniEnabled()) {
-      boolean tooOld = !SystemInfo.isJavaVersionAtLeast("1.7");
-      String message = IdeBundle.message(tooOld ? "update.sni.not.available.error" : "update.sni.disabled.error");
-      throw new ConfigurationException(message);
+      throw new ConfigurationException(IdeBundle.message("update.sni.disabled.error"));
     }
 
     boolean wasEnabled = mySettings.isCheckNeeded();

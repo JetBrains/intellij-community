@@ -302,10 +302,15 @@ public class EnvironmentUtil {
   }
 
   private static class StreamGobbler extends BaseOutputReader {
+    private static final Options OPTIONS = new Options() {
+      @Override public SleepingPolicy policy() { return SleepingPolicy.BLOCKING; }
+      @Override public boolean splitToLines() { return false; }
+    };
+
     private final StringBuffer myBuffer;
 
     public StreamGobbler(@NotNull InputStream stream) {
-      super(stream, CharsetToolkit.getDefaultSystemCharset());
+      super(stream, CharsetToolkit.getDefaultSystemCharset(), OPTIONS);
       myBuffer = new StringBuffer();
       start("stdout/stderr streams of shell env loading process");
     }

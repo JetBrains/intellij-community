@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -163,7 +163,8 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     PsiFile fromFile = element.getContainingFile();
     List<PsiClass> result = new ArrayList<PsiClass>();
     for (PsiClass psiClass : classes) {
-      if (dependencyValidationManager.getViolatorDependencyRule(fromFile, psiClass.getContainingFile()) == null) {
+      PsiFile containingFile = psiClass.getContainingFile();
+      if (containingFile != null && dependencyValidationManager.getViolatorDependencyRule(fromFile, containingFile) == null) {
         result.add(psiClass);
       }
     }

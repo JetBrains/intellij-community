@@ -23,11 +23,14 @@ import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.impl.ConsoleViewImpl;
-import com.intellij.execution.ui.*;
+import com.intellij.execution.impl.ConsoleViewUtil;
+import com.intellij.execution.ui.ConsoleView;
+import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.execution.ui.ExecutionConsole;
+import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
@@ -38,19 +41,15 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.playback.commands.ActionCommand;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 /**
  * @author yole
@@ -105,13 +104,13 @@ public class AnalyzeStacktraceUtil {
         return true;
       }
     };
-    registerReplaceAction(project, descriptor, consoleView, text);
 
     final Executor executor = DefaultRunExecutor.getRunExecutorInstance();
     for (AnAction action: consoleView.createConsoleActions()) {
       toolbarActions.add(action);
     }
     final ConsoleViewImpl console = (ConsoleViewImpl)consoleView;
+    ConsoleViewUtil.enableReplaceActionForConsoleViewEditor(console.getEditor());
     console.getEditor().getSettings().setCaretRowShown(true);
     toolbarActions.add(new AnnotateStackTraceAction(console.getEditor(), console.getHyperlinks()));
     toolbarActions.add(new CloseAction(executor, descriptor, project));
@@ -121,54 +120,6 @@ public class AnalyzeStacktraceUtil {
       printStacktrace(consoleView, text);
     }
     return descriptor;
-  }
-
-  /**
-   * Regular "Replace" editor action is unavailable for console editors (see com.intellij.openapi.editor.actions.IncrementalFindAction.Handler#isEnabled).
-   * However, it can be convenient to be able to replace user-specific paths with local paths
-   * if stacktrace links involves absolute paths (e.g. Node.js stack-traces contain absolute paths).
-   *
-   * @param consoleView
-   */
-  private static void registerReplaceAction(@NotNull Project project,
-                                            @NotNull RunContentDescriptor descriptor,
-                                            @NotNull ConsoleView consoleView,
-                                            @NotNull String stacktrace) {
-    AnAction replaceAction = ActionManager.getInstance().getAction(IdeActions.ACTION_REPLACE);
-    if (replaceAction == null) {
-      return;
-    }
-    ActionUtil.registerForEveryKeyboardShortcut(consoleView.getComponent(), new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        AnalyzeStacktraceDialog dialog = new AnalyzeStacktraceDialog(project) {
-          @Override
-          protected JComponent createCenterPanel() {
-            JComponent result = super.createCenterPanel();
-            myEditorPanel.setText(stacktrace);
-            UiNotifyConnector.doWhenFirstShown(myEditorPanel, new Runnable() {
-              @Override
-              public void run() {
-                ActionManager.getInstance().tryToExecute(replaceAction,
-                                                         ActionCommand.getInputEvent(IdeActions.ACTION_REPLACE),
-                                                         myEditorPanel,
-                                                         ActionPlaces.UNKNOWN,
-                                                         false);
-              }
-            });
-            return result;
-          }
-
-          @Override
-          protected void doOKAction() {
-            super.doOKAction();
-            RunContentManager contentManager = ExecutionManager.getInstance(project).getContentManager();
-            contentManager.removeRunContent(DefaultRunExecutor.getRunExecutorInstance(), descriptor);
-          }
-        };
-        dialog.show();
-      }
-    }, replaceAction.getShortcutSet());
   }
 
   private static final class MyConsolePanel extends JPanel {

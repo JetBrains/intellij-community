@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.application;
 
+import org.jetbrains.annotations.NotNull;
+
 public abstract class ApplicationAdapter implements ApplicationListener {
   @Override
   public boolean canExitApplication() {
@@ -26,14 +28,14 @@ public abstract class ApplicationAdapter implements ApplicationListener {
   }
 
   @Override
-  public void beforeWriteActionStart(Object action) {
+  public void beforeWriteActionStart(@NotNull Object action) {
   }
 
   @Override
-  public void writeActionStarted(Object action) {
+  public void writeActionStarted(@NotNull Object action) {
   }
 
   @Override
-  public void writeActionFinished(Object action) {
+  public void writeActionFinished(@NotNull Object action) {
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -244,7 +244,7 @@ public class VcsStructureChooser extends DialogWrapper {
     JBPanel panel = new JBPanel(new BorderLayout());
     panel.add(new JBScrollPane(fileSystemTree.getTree()), BorderLayout.CENTER);
     final JLabel selectedLabel = new JLabel("");
-    selectedLabel.setBorder(BorderFactory.createEmptyBorder(2, 0, 2, 0));
+    selectedLabel.setBorder(JBUI.Borders.empty(2, 0));
     panel.add(selectedLabel, BorderLayout.SOUTH);
 
     mySelectionManager.setSelectionChangeListener(new PlusMinus<VirtualFile>() {

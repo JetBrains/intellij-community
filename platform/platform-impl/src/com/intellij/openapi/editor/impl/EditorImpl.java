@@ -1080,7 +1080,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
    * @param fontSize new font size
    * @param zoomCenter zoom point, relative to viewport
    */
-  private void setFontSize(final int fontSize, @Nullable Point zoomCenter) {
+  private void setFontSize(int fontSize, @Nullable Point zoomCenter) {
     int oldFontSize = myScheme.getEditorFontSize();
 
     Rectangle visibleArea = myScrollingModel.getVisibleArea();
@@ -1091,6 +1091,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     int intraLineOffset = zoomCenterAbsolute.y % oldLineHeight;
 
     myScheme.setEditorFontSize(fontSize);
+    fontSize = myScheme.getEditorFontSize(); // resulting font size might be different due to applied min/max limits
     myPropertyChangeSupport.firePropertyChange(PROP_FONT_SIZE, oldFontSize, fontSize);
     // Update vertical scroll bar bounds if necessary (we had a problem that use increased editor font size and it was not possible
     // to scroll to the bottom of the document).
@@ -1862,6 +1863,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (myUseNewRendering) {
       myView.getPreferredSize(); // make sure size is calculated (in case it will be required while bulk mode is active)
     }
+
+    myScrollingModel.onBulkDocumentUpdateStarted();
     
     saveCaretRelativePosition();
 
@@ -7102,6 +7105,27 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         }
         e.consume();
       }
+    }
+  }
+
+  @TestOnly
+  public void validateState() {
+    myView.validateState();
+
+    if (myDocument.isInBulkUpdate()) return;
+    List<? extends SoftWrap> softWraps = mySoftWrapModel.getRegisteredSoftWraps();
+    int lastSoftWrapOffset = -1;
+    for (SoftWrap wrap : softWraps) {
+      int softWrapOffset = wrap.getStart();
+      LOG.assertTrue(softWrapOffset > lastSoftWrapOffset, "Soft wraps are not ordered");
+      LOG.assertTrue(softWrapOffset < myDocument.getTextLength(), "Soft wrap is after document's end");
+      FoldRegion foldRegion = myFoldingModel.getCollapsedRegionAtOffset(softWrapOffset);
+      LOG.assertTrue(foldRegion == null || foldRegion.getStartOffset() == softWrapOffset, "Soft wrap is inside fold region");
+      LOG.assertTrue(softWrapOffset != DocumentUtil.getLineEndOffset(softWrapOffset, myDocument)
+                     || foldRegion != null, "Soft wrap before line break");
+      LOG.assertTrue(softWrapOffset != DocumentUtil.getLineStartOffset(softWrapOffset, myDocument) ||
+                     myFoldingModel.isOffsetCollapsed(softWrapOffset - 1), "Soft wrap after line break");
+      lastSoftWrapOffset = softWrapOffset;
     }
   }
 

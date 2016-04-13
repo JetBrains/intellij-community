@@ -32,6 +32,7 @@ import com.intellij.ui.SeparatorWithText;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.ClosableByLeftArrow;
 import com.intellij.ui.popup.WizardPopup;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -525,13 +526,16 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
 
     @Override
     public Dimension getPreferredScrollableViewportSize() {
+      Dimension result = super.getPreferredScrollableViewportSize();
+      result.width += JBUI.scale(14); // support possible scroll bar
       int rowCount = getVisibleRowCount();
       int size = getModel().getSize();
       if (rowCount < size) {
         // Note: labeled separators are not counted in this branch
-        return super.getPreferredScrollableViewportSize();
+        return result;
       }
-      return new Dimension(super.getPreferredScrollableViewportSize().width, getPreferredSize().height);
+      result.height = getPreferredSize().height;
+      return result;
     }
 
     @Override

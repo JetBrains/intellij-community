@@ -41,6 +41,7 @@ class LibrarySourceNotificationProvider(private val project: Project, notificati
 
   private companion object {
     private val KEY = Key.create<EditorNotificationPanel>("library.source.mismatch.panel")
+    private val ANDROID_SDK_PATTERN = ".*/platforms/android-\\d+/android.jar!/.*".toRegex()
   }
 
   init {
@@ -57,11 +58,10 @@ class LibrarySourceNotificationProvider(private val project: Project, notificati
       if (psiFile is PsiJavaFile) {
         val offender = psiFile.classes.find { differs(it) }
         if (offender != null) {
-          val panel = ColoredNotificationPanel(LightColors.RED)
-          panel.setText(ProjectBundle.message("library.source.mismatch", offender.name))
-
           val clsFile = offender.originalElement.containingFile?.virtualFile
-          if (clsFile != null) {
+          if (clsFile != null && !clsFile.path.matches(ANDROID_SDK_PATTERN)) {
+            val panel = ColoredNotificationPanel(LightColors.RED)
+            panel.setText(ProjectBundle.message("library.source.mismatch", offender.name))
             panel.createActionLabel(ProjectBundle.message("library.source.open.class"), {
               OpenFileDescriptor(project, clsFile, -1).navigate(true)
             })
@@ -70,9 +70,8 @@ class LibrarySourceNotificationProvider(private val project: Project, notificati
               val request = SimpleDiffRequest(null, cf.create(project, clsFile), cf.create(project, file), clsFile.path, file.path)
               DiffManager.getInstance().showDiff(project, request)
             })
+            return panel
           }
-
-          return panel
         }
       }
     }

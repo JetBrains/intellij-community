@@ -628,7 +628,10 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
                                               @NotNull DataNode<? extends ModuleData> moduleNode) {
     final File buildDir = externalProject.getBuildDir();
     final MultiMap<String, ContentRootData> sourceSetRoots = MultiMap.create();
-    for (DataNode<ContentRootData> contentRootNode : ExternalSystemApiUtil.findAll(moduleNode, ProjectKeys.CONTENT_ROOT)) {
+    Collection<DataNode<ContentRootData>> contentRootNodes = ExternalSystemApiUtil.findAll(moduleNode, ProjectKeys.CONTENT_ROOT);
+    if(contentRootNodes.size() <= 1) return;
+
+    for (DataNode<ContentRootData> contentRootNode : contentRootNodes) {
       File root = new File(contentRootNode.getData().getRootPath());
       if (FileUtil.isAncestor(buildDir, root, true)) continue;
 

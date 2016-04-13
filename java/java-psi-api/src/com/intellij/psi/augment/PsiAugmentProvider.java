@@ -38,6 +38,7 @@ import java.util.List;
 /**
  * Some code is not what it seems to be!
  * This extension allows plugins <strike>augment a reality</strike> alter a behavior of Java PSI elements.
+ * To get an insight of how the extension may be used see {@code PsiAugmentProviderTest}.
  * <p>
  * N.B. during indexing, only {@link DumbAware} providers are run.
  */

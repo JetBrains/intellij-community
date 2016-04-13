@@ -17,6 +17,7 @@ package git4idea.branch;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogUi;
 import git4idea.repo.GitRepositoryManager;
@@ -45,6 +46,15 @@ public class DeepComparatorHolder implements Disposable {
     if (comparator == null) {
       comparator = new DeepComparator(myProject, myRepositoryManager, ui, this);
       myComparators.put(ui, comparator);
+      if (ui instanceof Disposable) {
+        Disposer.register((Disposable)ui, new Disposable() {
+          @Override
+          public void dispose() {
+            DeepComparator removed = myComparators.remove(ui);
+            if (removed != null) Disposer.dispose(removed); // check for null in case we dispose DeepComparatorHolder before ui
+          }
+        });
+      }
     }
     return comparator;
   }
@@ -53,5 +63,4 @@ public class DeepComparatorHolder implements Disposable {
   public void dispose() {
     myComparators.clear();
   }
-
 }

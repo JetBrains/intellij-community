@@ -33,7 +33,6 @@ import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.Nullable;
@@ -46,11 +45,12 @@ public class JavaIntroduceParameterObjectDelegate
   extends IntroduceParameterObjectDelegate<PsiMethod, ParameterInfoImpl, JavaIntroduceParameterObjectClassDescriptor> {
 
   @Override
-  public ParameterInfoImpl createMergedParameterInfo(Project project,
-                                                     JavaIntroduceParameterObjectClassDescriptor descriptor,
-                                                     PsiMethod method) {
+  public ParameterInfoImpl createMergedParameterInfo(JavaIntroduceParameterObjectClassDescriptor descriptor,
+                                                     PsiMethod method,
+                                                     List<ParameterInfoImpl> oldMethodParameters) {
     final PsiCodeBlock body = method.getBody();
     final String baseParameterName = StringUtil.decapitalize(descriptor.getClassName());
+    final Project project = method.getProject();
 
     final String paramName = body != null
                              ? JavaCodeStyleManager.getInstance(project)
@@ -58,72 +58,82 @@ public class JavaIntroduceParameterObjectDelegate
                              : JavaCodeStyleManager.getInstance(project)
                                .propertyNameToVariableName(baseParameterName, VariableKind.PARAMETER);
 
-    final boolean lastVarargsToMerge =
-      method.isVarArgs() && descriptor.getParameterInfo(method.getParameterList().getParametersCount() - 1) != null;
     final String classTypeText = descriptor.createFakeClassTypeText();
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
     return new ParameterInfoImpl(-1, paramName, facade.getElementFactory().createTypeFromText(classTypeText, method), null) {
+      @Nullable
       @Override
-      public PsiExpression getValue(final PsiCallExpression expr) throws IncorrectOperationException {
-        final String qualifiedName = StringUtil.getQualifiedName(descriptor.getPackageName(), descriptor.getClassName());
-        final PsiClass existingClass = facade.findClass(qualifiedName, expr.getResolveScope());
-        if (existingClass == null) return null;
-        final String mergedParam = getMergedParam(expr, existingClass, descriptor.getParamsToMerge(), method, lastVarargsToMerge);
-        return (PsiExpression)JavaCodeStyleManager.getInstance(project)
-          .shortenClassReferences(facade.getElementFactory().createExpressionFromText(mergedParam, expr));
+      public PsiElement getActualValue(PsiElement exp) {
+        final IntroduceParameterObjectDelegate<PsiNamedElement, ParameterInfo, IntroduceParameterObjectClassDescriptor<PsiNamedElement, ParameterInfo>> delegate = findDelegate(exp);
+        return delegate != null ? delegate.createNewParameterInitializerAtCallSite(exp, descriptor, oldMethodParameters) : null;
       }
     };
   }
 
-  private static String getMergedParam(PsiCallExpression call,
-                                       PsiClass existingClass,
-                                       ParameterInfo[] paramsToMerge,
-                                       PsiMethod method,
-                                       boolean lastVarargsToMerge) {
-    final PsiExpression[] args = call.getArgumentList().getExpressions();
-    StringBuilder newExpression = new StringBuilder();
-    final JavaResolveResult resolvant = call.resolveMethodGenerics();
-    final PsiSubstitutor substitutor = resolvant.getSubstitutor();
-    newExpression.append("new ")
-      .append(JavaPsiFacade.getElementFactory(call.getProject()).createType(existingClass, substitutor).getCanonicalText());
-    newExpression.append('(');
-    boolean isFirst = true;
-    for (ParameterInfo info : paramsToMerge) {
-      if (!isFirst) {
-        newExpression.append(", ");
-      }
-      isFirst = false;
-      newExpression.append(getArgument(args, info.getOldIndex(), method));
+  @Override
+  public PsiElement createNewParameterInitializerAtCallSite(PsiElement callExpression,
+                                                            IntroduceParameterObjectClassDescriptor descriptor,
+                                                            List<? extends ParameterInfo> oldMethodParameters) {
+    if (callExpression instanceof PsiCallExpression) {
+      final PsiCallExpression expr = (PsiCallExpression)callExpression;
+      final JavaPsiFacade facade = JavaPsiFacade.getInstance(expr.getProject());
+      final String qualifiedName = StringUtil.getQualifiedName(descriptor.getPackageName(), descriptor.getClassName());
+      final PsiClass existingClass = facade.findClass(qualifiedName, expr.getResolveScope());
+      if (existingClass == null) return null;
+
+      final PsiExpressionList argumentList = expr.getArgumentList();
+      if (argumentList == null) return null;
+
+      final PsiExpression[] args = argumentList.getExpressions();
+      StringBuilder newExpression = new StringBuilder();
+      final JavaResolveResult resolvant = expr.resolveMethodGenerics();
+      final PsiSubstitutor substitutor = resolvant.getSubstitutor();
+      newExpression.append("new ")
+        .append(JavaPsiFacade.getElementFactory(expr.getProject()).createType(existingClass, substitutor).getCanonicalText());
+      newExpression.append('(');
+      newExpression.append(getMergedArgs(descriptor, oldMethodParameters, args));
+      newExpression.append(')');
+
+      return JavaCodeStyleManager.getInstance(callExpression.getProject())
+        .shortenClassReferences(facade.getElementFactory().createExpressionFromText(newExpression.toString(), expr));
     }
-    if (lastVarargsToMerge) {
-      final int lastArg = paramsToMerge[paramsToMerge.length - 1].getOldIndex();
+    return null;
+  }
+
+  public static String getMergedArgs(IntroduceParameterObjectClassDescriptor descriptor,
+                                     final List<? extends ParameterInfo> oldMethodParameters,
+                                     final PsiElement[] args) {
+    final StringBuilder newExpression = new StringBuilder();
+    final ParameterInfo[] paramsToMerge = descriptor.getParamsToMerge();
+    newExpression.append(StringUtil.join(paramsToMerge, parameterInfo -> getArgument(args, parameterInfo.getOldIndex(), oldMethodParameters), ", "));
+    final ParameterInfo lastParam = paramsToMerge[paramsToMerge.length - 1];
+    if (lastParam instanceof JavaParameterInfo && ((JavaParameterInfo)lastParam).isVarargType()) {
+      final int lastArg = lastParam.getOldIndex();
       for (int i = lastArg + 1; i < args.length; i++) {
         newExpression.append(',');
-        newExpression.append(getArgument(args, i, method));
+        newExpression.append(getArgument(args, i, oldMethodParameters));
       }
     }
-    newExpression.append(')');
+
     return newExpression.toString();
   }
 
   @Nullable
-  private static String getArgument(PsiExpression[] args, int i, PsiMethod method) {
+  private static String getArgument(PsiElement[] args, int i, List<? extends ParameterInfo> oldParameters) {
     if (i < args.length) {
       return args[i].getText();
     }
-    final PsiParameter[] parameters = method.getParameterList().getParameters();
-    if (i < parameters.length) return parameters[i].getName();
-    return null;
+    return i < oldParameters.size() ? oldParameters.get(i).getName() : null;
   }
 
   @Override
-  public ChangeInfo createChangeSignatureInfo(PsiMethod method, List<ParameterInfoImpl> infos, boolean delegate) {
+  public ChangeInfo createChangeSignatureInfo(PsiMethod method, List<ParameterInfoImpl> newParameterInfos, boolean delegate) {
     PsiType returnType = method.getReturnType();
     return new JavaChangeInfoImpl(VisibilityUtil.getVisibilityModifier(method.getModifierList()),
                                   method,
                                   method.getName(),
                                   returnType != null ? CanonicalTypes.createTypeWrapper(returnType) : null,
-                                  infos.toArray(new ParameterInfoImpl[infos.size()]),
+                                  newParameterInfos.toArray(new ParameterInfoImpl[newParameterInfos.size()]),
                                   null,
                                   delegate,
                                   Collections.emptySet(),
@@ -142,11 +152,9 @@ public class JavaIntroduceParameterObjectDelegate
     final String setter = classDescriptor.getSetterName(parameterInfo, overridingMethod);
     final String getter = classDescriptor.getGetterName(parameterInfo, overridingMethod);
     final Accessor[] accessor = new Accessor[]{null};
-    ReferencesSearch.search(parameter, localSearchScope).forEach(new Processor<PsiReference>() {
-      @Override
-      public boolean process(PsiReference reference) {
-        final PsiElement refElement = reference.getElement();
-        if (refElement instanceof PsiReferenceExpression) {
+    ReferencesSearch.search(parameter, localSearchScope).forEach(reference -> {
+      final PsiElement refElement = reference.getElement();
+      if (refElement instanceof PsiReferenceExpression) {
           final PsiReferenceExpression paramUsage = (PsiReferenceExpression)refElement;
           if (RefactoringUtil.isPlusPlusOrMinusMinus(paramUsage.getParent())) {
             accessor[0] = Accessor.Setter;
@@ -165,7 +173,7 @@ public class JavaIntroduceParameterObjectDelegate
         }
         return true;
       }
-    });
+    );
     return accessor[0];
   }
 

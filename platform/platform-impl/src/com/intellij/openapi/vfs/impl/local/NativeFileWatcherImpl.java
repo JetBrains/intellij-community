@@ -16,8 +16,6 @@
 package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.execution.process.OSProcessHandler;
-import com.intellij.execution.process.ProcessAdapter;
-import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.ide.actions.ShowFilePathAction;
 import com.intellij.notification.NotificationListener;
@@ -37,6 +35,8 @@ import com.intellij.openapi.vfs.local.PluggableFileWatcher;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.BaseDataReader;
+import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -195,7 +195,6 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     ProcessBuilder processBuilder = new ProcessBuilder(myExecutable.getAbsolutePath());
     Process process = processBuilder.start();
     myProcessHandler = new MyProcessHandler(process, myExecutable.getName());
-    myProcessHandler.addProcessListener(new MyProcessAdapter());
     myProcessHandler.startNotify();
 
     if (restart) {
@@ -275,10 +274,21 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     }
   }
 
-  private static class MyProcessHandler extends OSProcessHandler {
-    private static final Charset CHARSET = SystemInfo.isWindows | SystemInfo.isMac ? CharsetToolkit.UTF8_CHARSET : null;
+  private static final Charset CHARSET = SystemInfo.isWindows | SystemInfo.isMac ? CharsetToolkit.UTF8_CHARSET : null;
 
+  private static final BaseOutputReader.Options READER_OPTIONS = new BaseOutputReader.Options() {
+    @Override public BaseDataReader.SleepingPolicy policy() { return BaseDataReader.SleepingPolicy.BLOCKING; }
+    @Override public boolean sendIncompleteLines() { return false; }
+    @Override public boolean withSeparators() { return false; }
+  };
+
+  @SuppressWarnings("SpellCheckingInspection")
+  private enum WatcherOp { GIVEUP, RESET, UNWATCHEABLE, REMAP, MESSAGE, CREATE, DELETE, STATS, CHANGE, DIRTY, RECDIRTY }
+
+  private class MyProcessHandler extends OSProcessHandler {
     private final BufferedWriter myWriter;
+    private WatcherOp myLastOp = null;
+    private final List<String> myLines = ContainerUtil.newArrayList();
 
     @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
     private MyProcessHandler(@NotNull Process process, @NotNull String commandLine) {
@@ -286,7 +296,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
       myWriter = new BufferedWriter(writer(process.getOutputStream()));
     }
 
-    private static OutputStreamWriter writer(OutputStream stream) {
+    private OutputStreamWriter writer(OutputStream stream) {
       return CHARSET != null ? new OutputStreamWriter(stream, CHARSET) :  new OutputStreamWriter(stream);
     }
 
@@ -296,24 +306,17 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
       myWriter.flush();
     }
 
+    @NotNull
     @Override
-    protected boolean useNonBlockingRead() {
-      return false;
+    protected BaseOutputReader.Options readerOptions() {
+      return READER_OPTIONS;
     }
-  }
-
-  @SuppressWarnings("SpellCheckingInspection")
-  private enum WatcherOp {
-    GIVEUP, RESET, UNWATCHEABLE, REMAP, MESSAGE, CREATE, DELETE, STATS, CHANGE, DIRTY, RECDIRTY
-  }
-
-  private class MyProcessAdapter extends ProcessAdapter {
-    private WatcherOp myLastOp = null;
-    private final List<String> myLines = ContainerUtil.newArrayList();
 
     @Override
-    public void processTerminated(ProcessEvent event) {
-      String message = "Watcher terminated with exit code " + event.getExitCode();
+    protected void notifyProcessTerminated(int exitCode) {
+      super.notifyProcessTerminated(exitCode);
+
+      String message = "Watcher terminated with exit code " + exitCode;
       if (myIsShuttingDown) LOG.info(message); else LOG.warn(message);
 
       myProcessHandler = null;
@@ -328,15 +331,14 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     }
 
     @Override
-    public void onTextAvailable(ProcessEvent event, Key outputType) {
+    public void notifyTextAvailable(String line, Key outputType) {
       if (outputType == ProcessOutputTypes.STDERR) {
-        LOG.warn(event.getText().trim());
+        LOG.warn(line);
       }
       if (outputType != ProcessOutputTypes.STDOUT) {
         return;
       }
 
-      String line = event.getText().trim();
       if (LOG.isTraceEnabled()) LOG.trace(">> " + line);
 
       if (myLastOp == null) {

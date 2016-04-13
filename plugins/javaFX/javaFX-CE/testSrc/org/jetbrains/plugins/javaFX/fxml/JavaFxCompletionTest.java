@@ -271,6 +271,18 @@ public class JavaFxCompletionTest extends LightFixtureCompletionTestCase {
     assertSameElements(myFixture.getLookupElementStrings(), "MY_TEXT", "SUPER_TEXT");
   }
 
+  public void testMultipleStylesheetsAttribute() throws Exception {
+    myFixture.addFileToProject("mystyle.css", ".myStyle {}");
+    myFixture.addFileToProject("very/deeply/located/small.css", ".small {}");
+    doTest();
+  }
+
+  public void testMultipleStylesheetsTag() throws Exception {
+    myFixture.addFileToProject("mystyle.css", ".myStyle {}");
+    myFixture.addFileToProject("very/deeply/located/small.css", ".small {}");
+    doTest();
+  }
+
   private void configureAndComplete(final String... extraFiles) {
     final String fxmlFileName = getTestName(true) + ".fxml";
     if (extraFiles.length != 0) {

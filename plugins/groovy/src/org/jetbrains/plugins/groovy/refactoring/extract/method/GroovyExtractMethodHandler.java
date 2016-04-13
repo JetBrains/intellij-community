@@ -275,7 +275,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
 
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(helper.getProject());
     for (ParameterInfo info : helper.getParameterInfos()) {
-      final String oldName = info.getOldName();
+      final String oldName = info.getOriginalName();
       final String newName = info.getName();
       final ArrayList<GrExpression> result = new ArrayList<GrExpression>();
       if (!oldName.equals(newName)) {

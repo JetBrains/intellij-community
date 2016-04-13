@@ -197,7 +197,7 @@ public class AutoPopupController implements Disposable {
     TransactionId id = guard.getContextTransaction();
     final PsiDocumentManager pdm = PsiDocumentManager.getInstance(project);
     pdm.performLaterWhenAllCommitted(() -> {
-      guard.submitMergeableTransaction(project, id, () -> {
+      guard.submitTransaction(project, id, () -> {
         if (pdm.hasUncommitedDocuments()) {
           // no luck, will try later
           runTransactionWithEverythingCommitted(project, runnable);

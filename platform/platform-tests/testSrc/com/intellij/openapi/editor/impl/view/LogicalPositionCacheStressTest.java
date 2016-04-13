@@ -42,6 +42,7 @@ public class LogicalPositionCacheStressTest extends AbstractEditorTest {
   private long mySeed;
 
   public void testRandomActions() {
+    System.out.println("Seed is " + mySeed);
     int i = 0;
     try {
       initText("");
@@ -66,7 +67,7 @@ public class LogicalPositionCacheStressTest extends AbstractEditorTest {
   }
 
   private static void checkLogicalPositionCache(Editor editor) {
-    EditorViewAccessor.getView(editor).getLogicalPositionCache().validate();
+    EditorViewAccessor.getView(editor).getLogicalPositionCache().validateState();
   }
 
   private static CharSequence generateText(Random random) {

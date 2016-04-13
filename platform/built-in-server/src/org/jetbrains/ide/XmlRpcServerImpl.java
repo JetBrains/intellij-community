@@ -98,7 +98,7 @@ public class XmlRpcServerImpl implements XmlRpcServer {
       ByteBuf result;
       ByteBuf content = request.content();
       if (content.readableBytes() == 0) {
-        Responses.sendStatus(HttpResponseStatus.BAD_REQUEST, context.channel(), request);
+        Responses.send(HttpResponseStatus.BAD_REQUEST, context.channel(), request);
         return true;
       }
 
@@ -115,7 +115,7 @@ public class XmlRpcServerImpl implements XmlRpcServer {
       }
       catch (SAXParseException e) {
         LOG.warn(e);
-        Responses.sendStatus(HttpResponseStatus.BAD_REQUEST, context.channel(), request);
+        Responses.send(HttpResponseStatus.BAD_REQUEST, context.channel(), request);
         return true;
       }
       catch (Throwable e) {

@@ -40,7 +40,7 @@ import org.jetbrains.annotations.Nullable;
  * Sometimes transactions need to be processed as soon as possible, even if another transaction is already running. Example:
  * outer transaction has shown a dialog with a modal progress that performs a write action inside (which requires a transaction)
  * and waits for it to be finished. For such cases, a context transaction id
- * should be supplied to the nested transaction via {@link #submitMergeableTransaction(Disposable, TransactionId, Runnable)}.
+ * should be supplied to the nested transaction via {@link #submitTransaction(Disposable, TransactionId, Runnable)}.
  *
  * <p><h1>FAQ</h1></p>
  *
@@ -69,7 +69,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * Q: I've got <b>"Write access is allowed from model transactions only"</b> exception, what do I do?<br/>
  * A: You're likely inside an "invokeLater"-like call. Please consider replacing it with {@link #submitTransaction(Disposable, Runnable)}  or
- * {@link #submitMergeableTransaction(Disposable, TransactionId, Runnable)}
+ * {@link #submitTransaction(Disposable, TransactionId, Runnable)}
  * <p/>
  *
  * Q: What's the difference between transactions and read/write actions and commands ({@link com.intellij.openapi.command.CommandProcessor})?<br/>
@@ -89,25 +89,19 @@ public abstract class TransactionGuard {
   }
 
   /**
-   * Same as {@link #submitTransaction(Disposable, Runnable)}, but without any parent disposable.
-   */
-  public static void submitTransaction(@NotNull Runnable transaction) {
-    submitTransaction(ApplicationManager.getApplication(), transaction);
-  }
-
-  /**
    * Ensures that some code will be run in a transaction. It's guaranteed that no other transactions can run at the same time,
    * except for the ones started from within this runnable. The code will be run on Swing thread immediately
    * or after other queued transactions (if any) have been completed.<p/>
    *
-   * For more advanced version, see {@link #submitMergeableTransaction(Disposable, TransactionId, Runnable)}.
+   * For more advanced version, see {@link #submitTransaction(Disposable, TransactionId, Runnable)}.
    *
    * @param parentDisposable an object whose disposing (via {@link com.intellij.openapi.util.Disposer} makes this transaction invalid,
    *                         and so it won't be run after it has been disposed
    * @param transaction code to execute inside a transaction.
    */
   public static void submitTransaction(@NotNull Disposable parentDisposable, @NotNull Runnable transaction) {
-    getInstance().submitMergeableTransaction(parentDisposable, TransactionKind.ANY_CHANGE, transaction);
+    TransactionGuard guard = getInstance();
+    guard.submitTransaction(parentDisposable, guard.getContextTransaction(), transaction);
   }
 
   /**
@@ -119,51 +113,27 @@ public abstract class TransactionGuard {
   /**
    * Schedules a transaction and waits for it to be completed. Fails if invoked on UI thread inside an incompatible transaction,
    * or inside a read action on non-UI thread.
-   * @see #submitMergeableTransaction(Disposable, TransactionKind, Runnable)
+   * @see #submitTransaction(Disposable, TransactionId, Runnable)
    * @throws ProcessCanceledException if current thread is interrupted
    */
   public abstract void submitTransactionAndWait(@NotNull Runnable transaction) throws ProcessCanceledException;
 
   /**
-   * A synchronous version of {@link #submitMergeableTransaction(Disposable, TransactionKind, Runnable)}.
-   * @return a token object for this transaction. Call {@link AccessToken#finish()} (inside finally) when the transaction is complete.
-   */
-  @NotNull
-  public abstract AccessToken startSynchronousTransaction(@NotNull TransactionKind kind);
-
-  /**
-   * Same as {@link #submitMergeableTransaction(Disposable, TransactionKind, Runnable)} with no parent disposable.
-   */
-  public void submitMergeableTransaction(@NotNull TransactionKind kind, @NotNull Runnable transaction) {
-    submitMergeableTransaction(ApplicationManager.getApplication(), kind, transaction);
-  }
-
-  @Deprecated
-  public abstract void submitMergeableTransaction(@NotNull Disposable parentDisposable, @NotNull TransactionKind kind, @NotNull Runnable transaction);
-
-  /**
    * Executes the given runnable inside a transaction as soon as possible on the UI thread. The runnable is executed either when there's
-   * no active transaction running, or when the running transaction has the same (or compatible) id as {@code mergeInto}. If the id of
+   * no active transaction running, or when the running transaction has the same (or compatible) id as {@code expectedContext}. If the id of
    * the current transaction is passed, the transaction is executed immediately. Otherwise adds the runnable to a queue,
    * to execute after all transactions scheduled before this one are finished.
    * @param parentDisposable an object whose disposing (via {@link com.intellij.openapi.util.Disposer} makes this transaction invalid,
    *                         and so it won't be run after it has been disposed.
-   * @param mergeInto an optional id of another transaction, to allow execution inside that transaction if it's still running
+   * @param expectedContext an optional id of another transaction, to allow execution inside that transaction if it's still running
    * @param transaction code to execute inside a transaction.
    * @see #getContextTransaction()
    */
-  public abstract void submitMergeableTransaction(@NotNull Disposable parentDisposable, @Nullable TransactionId mergeInto, @NotNull Runnable transaction);
+  public abstract void submitTransaction(@NotNull Disposable parentDisposable, @Nullable TransactionId expectedContext, @NotNull Runnable transaction);
 
   /**
-   * Asserts that a transaction is currently running, or not. Callable only on Swing thread.
-   * @param transactionRequired whether the assertion should check that the application is inside transaction or not
-   * @param errorMessage the message that will be logged if current transaction status differs from the expected one
-   */
-  public abstract void assertInsideTransaction(boolean transactionRequired, @NotNull String errorMessage);
-
-  /**
-   * @return the id of the currently running transaction for using in {@link #submitMergeableTransaction(Disposable, TransactionId, Runnable)},
-   * or null if there's no transaction running or merging is not allowed in the callee context (e.g. from invokeLater).
+   * @return the id of the currently running transaction for using in {@link #submitTransaction(Disposable, TransactionId, Runnable)},
+   * or null if there's no transaction running or transaction nesting is not allowed in the callee context (e.g. from invokeLater).
    */
   public abstract TransactionId getContextTransaction();
 }

@@ -346,7 +346,7 @@ public class PsiTreeUtil {
     return result == null ? null : ArrayUtil.toObjectArray(result, aClass);
   }
 
-  @Nullable
+  @NotNull
   public static <T extends PsiElement> List<T> getChildrenOfAnyType(@Nullable PsiElement element, @NotNull Class<? extends T>... classes) {
     if (element == null) return ContainerUtil.emptyList();
 
@@ -357,6 +357,9 @@ public class PsiTreeUtil {
         //noinspection unchecked
         result.add((T)child);
       }
+    }
+    if (result == null) {
+      return ContainerUtil.emptyList();
     }
     return result;
   }

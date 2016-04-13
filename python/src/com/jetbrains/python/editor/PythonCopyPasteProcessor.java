@@ -155,8 +155,7 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
     final String userIndent = document.getText(TextRange.create(lineStartOffset, caretOffset));
     if (ws != null) {
       PyStatementList statementList = findEmptyStatementListNearby(ws);
-
-      if (statementList != null && statementList.getStatements().length == 0) {
+      if (statementList != null) {
         return PyIndentUtil.getElementIndent(statementList);
       }
 
@@ -190,7 +189,7 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
         statementList = as(prevLeaf.getParent(), PyStatementList.class);
       }
     }
-    return statementList;
+    return statementList != null && statementList.getStatements().length == 0 ? statementList : null;
   }
 
   @Nullable

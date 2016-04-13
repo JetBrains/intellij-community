@@ -127,7 +127,7 @@ public abstract class SmartEnterProcessorWithFixers extends SmartEnterProcessor 
       }
 
       OrderedSet<PsiElement> queue = new OrderedSet<PsiElement>();
-      collectAllElements(atCaret, queue, true);
+      collectAllElements(atCaret, queue, collectChildrenRecursively(atCaret));
       queue.add(atCaret);
 
       for (PsiElement psiElement : queue) {
@@ -149,6 +149,10 @@ public abstract class SmartEnterProcessorWithFixers extends SmartEnterProcessor 
     catch (IncorrectOperationException e) {
       LOG.error(e);
     }
+  }
+
+  protected boolean collectChildrenRecursively(@NotNull PsiElement atCaret) {
+    return true;
   }
 
   protected void processDefaultEnter(@NotNull final Project project,

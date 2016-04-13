@@ -28,7 +28,7 @@ public enum AnnotationSource {
     }},
   MERGE() {
     public ColorKey getColor() {
-      return EditorColors.ANNOTATIONS_MERGED_COLOR;
+      return EditorColors.ANNOTATIONS_COLOR;
     }
     public boolean showMerged() {
       return true;

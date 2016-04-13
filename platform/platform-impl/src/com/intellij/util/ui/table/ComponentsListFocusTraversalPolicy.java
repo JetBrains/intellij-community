@@ -28,13 +28,7 @@ public abstract class ComponentsListFocusTraversalPolicy extends FocusTraversalP
   public Component getComponentAfter(Container aContainer, Component aComponent) {
     final List<Component> components = getOrderedComponents();
     int i = components.indexOf(aComponent);
-    if (i != -1) {
-      i++;
-      if (i >= components.size()) {
-        i = 0;
-      }
-      return components.get(i);
-    }
+    if (i != -1) return searchShowing(components, i + 1, true);
     return null;
   }
 
@@ -42,34 +36,43 @@ public abstract class ComponentsListFocusTraversalPolicy extends FocusTraversalP
   public Component getComponentBefore(Container aContainer, Component aComponent) {
     final List<Component> components = getOrderedComponents();
     int i = components.indexOf(aComponent);
-    if (i != -1) {
-      i--;
-      if (i == -1) {
-        i = components.size() - 1;
-      }
-      return components.get(i);
-    }
+    if (i != -1) return searchShowing(components, i - 1, false);
     return null;
   }
 
   @Override
   public Component getFirstComponent(Container aContainer) {
     final List<Component> components = getOrderedComponents();
-    return components.isEmpty() ? null : components.get(0);
+    return components.isEmpty() ? null : searchShowing(components, 0, true);
   }
 
   @Override
   public Component getLastComponent(Container aContainer) {
     final List<Component> components = getOrderedComponents();
-    return components.isEmpty() ? null : components.get(components.size() - 1);
+    return components.isEmpty() ? null : searchShowing(components, -1, false);
   }
 
   @Override
   public Component getDefaultComponent(Container aContainer) {
     final List<Component> components = getOrderedComponents();
-    return components.isEmpty() ? null : components.get(0);
+    return components.isEmpty() ? null : searchShowing(components, 0, true);
   }
 
   @NotNull
   protected abstract List<Component> getOrderedComponents();
+
+  private static Component searchShowing(@NotNull List<Component> components, int start, boolean fwd) {
+    for (int k = 0; k < components.size(); ++k) {
+      Component c = getCycled(components, start + (fwd ? 1 : -1)*k);
+      if (c != null && c.isShowing()) return c;
+    }
+    return null;
+  }
+
+  private static Component getCycled(@NotNull List<Component> components, int i) {
+    if (components.isEmpty()) return null;
+    int s = components.size();
+    i = (s + i % s) % s;
+    return components.get(i);
+  }
 }

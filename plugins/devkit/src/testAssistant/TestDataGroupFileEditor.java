@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.reference.SoftReference;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -66,7 +67,7 @@ public class TestDataGroupFileEditor extends UserDataHolderBase implements FileE
   private static JComponent wrapWithTitle(String name, final FileEditor beforeEditor) {
     JPanel panel = new JPanel(new BorderLayout());
     final JLabel label = new JLabel(name);
-    label.setBorder(BorderFactory.createEmptyBorder(1, 4, 2, 0));
+    label.setBorder(JBUI.Borders.empty(1, 4, 2, 0));
     label.setFont(label.getFont().deriveFont(Font.BOLD));
     panel.add(BorderLayout.NORTH, label);
     panel.add(BorderLayout.CENTER, beforeEditor.getComponent());

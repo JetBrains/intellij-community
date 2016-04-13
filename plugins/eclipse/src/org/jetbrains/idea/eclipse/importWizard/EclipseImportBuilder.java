@@ -20,7 +20,6 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -209,28 +208,23 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
       return false;
     }
 
-    final Runnable runnable = new Runnable() {
-      public void run() {
-        if (!naturesNames.isEmpty()) {
-          final String title = "Unknown Natures Detected";
-          final String naturesByProject;
-          if (oneProjectToConvert) {
-            naturesByProject = naturesNames.values().iterator().next();
-          }
-          else {
-            naturesByProject = StringUtil.join(naturesNames.keySet(), new Function<String, String>() {
-              @Override
-              public String fun(String projectPath) {
-                return projectPath + "(" + naturesNames.get(projectPath) + ")";
-              }
-            }, "<br>");
-          }
-          Notifications.Bus.notify(new Notification(title, title, "Imported projects contain unknown natures:<br>" + naturesByProject + "<br>" +
-                                                                  "Some settings may be lost after import.", NotificationType.WARNING));
-        }
+    if (!naturesNames.isEmpty()) {
+      final String title = "Unknown Natures Detected";
+      final String naturesByProject;
+      if (oneProjectToConvert) {
+        naturesByProject = naturesNames.values().iterator().next();
       }
-    };
-    ApplicationManager.getApplication().invokeLater(runnable, ModalityState.NON_MODAL);
+      else {
+        naturesByProject = StringUtil.join(naturesNames.keySet(), new Function<String, String>() {
+          @Override
+          public String fun(String projectPath) {
+            return projectPath + "(" + naturesNames.get(projectPath) + ")";
+          }
+        }, "<br>");
+      }
+      Notifications.Bus.notify(new Notification(title, title, "Imported projects contain unknown natures:<br>" + naturesByProject + "<br>" +
+                                                              "Some settings may be lost after import.", NotificationType.WARNING));
+    }
 
     return true;
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.intellij.openapi.vcs.history.VcsRevisionDescription;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.DateFormatUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -113,7 +114,7 @@ public class ShowBaseRevisionAction extends AbstractVcsAction {
       myLabel.setEditable(false);
       myLabel.setFont(UIUtil.getToolTipFont());
 
-      setBorder(BorderFactory.createEmptyBorder(1, 15, 1, 15));
+      setBorder(JBUI.Borders.empty(1, 15));
 
       add(myLabel, BorderLayout.CENTER);
       myLabel.setBackground(getBackground());

@@ -60,11 +60,12 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
   private JCheckBox myEnableSigningCB;
   private JButton myEditSignCertificateButton;
   private JCheckBox myConvertCssToBinCheckBox;
-  private JComboBox myNativeBundleCB;
+  private JComboBox<String> myNativeBundleCB;
   private JButton myEditAttributesButton;
+  private JButton myEditIconsButton;
   private JavaFxEditCertificatesDialog myDialog;
-  private CustomManifestAttributesDialog myManifestAttributesDialog;
   private List<JavaFxManifestAttribute> myCustomManifestAttributes;
+  private JavaFxApplicationIcons myIcons;
 
   public JavaFxArtifactPropertiesEditor(JavaFxArtifactProperties properties, final Project project, Artifact artifact) {
     super();
@@ -87,13 +88,17 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
       }
     });
 
-    myEditAttributesButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        myManifestAttributesDialog = new CustomManifestAttributesDialog(myWholePanel, myCustomManifestAttributes);
-        if (myManifestAttributesDialog.showAndGet()) {
-          myCustomManifestAttributes = myManifestAttributesDialog.getAttrs();
-        }
+    myEditAttributesButton.addActionListener(e -> {
+      final CustomManifestAttributesDialog customManifestAttributesDialog =
+        new CustomManifestAttributesDialog(myWholePanel, myCustomManifestAttributes);
+      if (customManifestAttributesDialog.showAndGet()) {
+        myCustomManifestAttributes = customManifestAttributesDialog.getAttrs();
+      }
+    });
+    myEditIconsButton.addActionListener(e -> {
+      final JavaFxApplicationIconsDialog iconsDialog = new JavaFxApplicationIconsDialog(myWholePanel, myIcons, project);
+      if (iconsDialog.showAndGet()) {
+        myIcons = iconsDialog.getIcons();
       }
     });
 
@@ -101,7 +106,7 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
     for (JavaFxPackagerConstants.NativeBundles bundle : JavaFxPackagerConstants.NativeBundles.values()) {
       bundleNames.add(bundle.name());
     }
-    myNativeBundleCB.setModel(new DefaultComboBoxModel(ArrayUtil.toObjectArray(bundleNames)));
+    myNativeBundleCB.setModel(new DefaultComboBoxModel<>(ArrayUtil.toStringArray(bundleNames)));
   }
 
   @Override
@@ -140,9 +145,8 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
       if (myProperties.isSelfSigning() != myDialog.myPanel.mySelfSignedRadioButton.isSelected()) return true;
     }
 
-    if (myManifestAttributesDialog != null) {
-      if (!Comparing.equal(myManifestAttributesDialog.getAttrs(), myProperties.getCustomManifestAttributes())) return true;
-    }
+    if (!Comparing.equal(myCustomManifestAttributes, myProperties.getCustomManifestAttributes())) return true;
+    if (!Comparing.equal(myIcons, myProperties.getIcons())) return true;
     return false;
   }
 
@@ -179,9 +183,8 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
       myProperties.setStorepass(!StringUtil.isEmptyOrSpaces(storePass) ? Base64Converter.encode(storePass) : null);
     }
 
-    if (myManifestAttributesDialog != null) {
-      myProperties.setCustomManifestAttributes(myManifestAttributesDialog.getAttrs());
-    }
+    myProperties.setCustomManifestAttributes(myCustomManifestAttributes);
+    myProperties.setIcons(myIcons);
   }
 
   @Nullable
@@ -206,6 +209,7 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
     myConvertCssToBinCheckBox.setSelected(myProperties.isConvertCss2Bin());
     myEditSignCertificateButton.setEnabled(myProperties.isEnabledSigning());
     myCustomManifestAttributes = myProperties.getCustomManifestAttributes();
+    myIcons = myProperties.getIcons();
   }
 
   private static void setText(TextFieldWithBrowseButton tf, final String title) {

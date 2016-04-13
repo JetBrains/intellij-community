@@ -52,4 +52,13 @@ public interface ChangeInfo {
   String getNewName();
 
   Language getLanguage();
+
+  /**
+   * For added parameters, return expression to be inserted as argument at the parameter position in callExpression.
+   * Based on parameter default value {@link ParameterInfo#getActualValue(PsiElement)}
+   */
+  default PsiElement getActualValue(int i, PsiElement callExpression) {
+    final ParameterInfo[] parameters = getNewParameters();
+    return i < parameters.length ? parameters[i].getActualValue(callExpression) : null;
+  }
 }

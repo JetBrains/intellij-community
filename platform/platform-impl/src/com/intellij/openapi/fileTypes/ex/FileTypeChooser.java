@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,13 +40,12 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.event.MouseEvent;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
 
 public class FileTypeChooser extends DialogWrapper {
-  private JList myList;
+  private JList<FileType> myList;
   private JLabel myTitleLabel;
-  private ComboBox myPattern;
+  private ComboBox<String> myPattern;
   private JPanel myPanel;
   private JRadioButton myOpenInIdea;
   private JRadioButton myOpenAsNative;
@@ -54,32 +53,21 @@ public class FileTypeChooser extends DialogWrapper {
 
   private FileTypeChooser(@NotNull List<String> patterns, @NotNull String fileName) {
     super(true);
-    myFileName = fileName;
 
-    myOpenInIdea.setText("Open matching files in " + ApplicationNamesInfo.getInstance().getFullProductName() + ":");
+    myFileName = fileName;
+    myOpenInIdea.setText(FileTypesBundle.message("filetype.chooser.association", ApplicationNamesInfo.getInstance().getFullProductName()));
 
     FileType[] fileTypes = FileTypeManager.getInstance().getRegisteredFileTypes();
-    Arrays.sort(fileTypes, new Comparator<FileType>() {
-      @Override
-      public int compare(final FileType fileType1, final FileType fileType2) {
-        if (fileType1 == null) {
-          return 1;
-        }
-        if (fileType2 == null) {
-          return -1;
-        }
-        return fileType1.getDescription().compareToIgnoreCase(fileType2.getDescription());
-      }
-    });
+    Arrays.sort(fileTypes, (ft1, ft2) -> ft1 == null ? 1 : ft2 == null ? -1 : ft1.getDescription().compareToIgnoreCase(ft2.getDescription()));
 
-    final DefaultListModel model = new DefaultListModel();
+    final DefaultListModel<FileType> model = new DefaultListModel<>();
     for (FileType type : fileTypes) {
       if (!type.isReadOnly() && type != FileTypes.UNKNOWN && !(type instanceof NativeFileType)) {
         model.addElement(type);
       }
     }
     myList.setModel(model);
-    myPattern.setModel(new CollectionComboBoxModel(ContainerUtil.map(patterns, FunctionUtil.<String>id()), patterns.get(0)));
+    myPattern.setModel(new CollectionComboBoxModel<>(ContainerUtil.map(patterns, FunctionUtil.id()), patterns.get(0)));
 
     setTitle(FileTypesBundle.message("filetype.chooser.title"));
     init();
@@ -129,13 +117,13 @@ public class FileTypeChooser extends DialogWrapper {
   }
 
   public FileType getSelectedType() {
-    return myOpenAsNative.isSelected() ? NativeFileType.INSTANCE : (FileType) myList.getSelectedValue();
+    return myOpenAsNative.isSelected() ? NativeFileType.INSTANCE : myList.getSelectedValue();
   }
 
   /**
    * If fileName is already associated any known file type returns it.
    * Otherwise asks user to select file type and associates it with fileName extension if any selected.
-   * @return Known file type or null. Never returns {@link com.intellij.openapi.fileTypes.FileTypes#UNKNOWN}.
+   * @return Known file type or null. Never returns {@link FileTypes#UNKNOWN}.
    */
   @Nullable
   public static FileType getKnownFileTypeOrAssociate(@NotNull VirtualFile file, @Nullable Project project) {

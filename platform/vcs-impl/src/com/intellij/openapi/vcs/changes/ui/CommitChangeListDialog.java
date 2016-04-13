@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1049,7 +1049,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       mainPanel = mySplitter;
     }
 
-    myWarningLabel.setBorder(BorderFactory.createEmptyBorder(5, 5, 0, 5));
+    myWarningLabel.setBorder(JBUI.Borders.empty(5, 5, 0, 5));
     final JPanel panel = new JPanel(new GridBagLayout());
     panel.add(myWarningLabel, new GridBag().anchor(GridBagConstraints.NORTHWEST).weightx(1));
 

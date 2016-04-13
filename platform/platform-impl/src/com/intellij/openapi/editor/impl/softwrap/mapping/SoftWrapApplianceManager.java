@@ -1013,6 +1013,11 @@ public class SoftWrapApplianceManager implements Dumpable {
     myPainter = painter;
   }
 
+  public Rectangle getAvailableArea() {
+    Rectangle visibleArea = myEditor.getScrollingModel().getVisibleArea();
+    return new Rectangle(myWidthProvider.getVisibleAreaWidth(), visibleArea.height);
+  }
+
   /**
    * We need to use correct indent for soft-wrapped lines, i.e. they should be indented to the start of the logical line.
    * This class stores information about logical line start indent. 

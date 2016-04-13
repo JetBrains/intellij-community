@@ -45,6 +45,9 @@ public class ReopenProjectAction extends AnAction implements DumbAware {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
+    //Force move focus to IdeFrame
+    IdeEventQueue.getInstance().getPopupManager().closeAllPopups();
+
     final int modifiers = e.getModifiers();
     final boolean forceOpenInNewFrame = BitUtil.isSet(modifiers, InputEvent.CTRL_MASK)
                                         || BitUtil.isSet(modifiers, InputEvent.SHIFT_MASK)

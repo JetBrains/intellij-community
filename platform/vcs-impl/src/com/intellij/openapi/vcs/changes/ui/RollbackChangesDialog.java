@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.RollbackUtil;
 import gnu.trove.THashSet;
@@ -192,13 +193,13 @@ public class RollbackChangesDialog extends DialogWrapper {
     JPanel panel = new JPanel(new GridBagLayout());
     final GridBagConstraints gb =
       new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
-                             new Insets(1, 1, 1, 1), 0, 0);
+                             JBUI.insets(1), 0, 0);
 
     gb.fill = GridBagConstraints.HORIZONTAL;
     gb.weightx = 1;
 
     final JPanel border = new JPanel(new BorderLayout());
-    border.setBorder(BorderFactory.createEmptyBorder(2, 0, 0, 0));
+    border.setBorder(JBUI.Borders.emptyTop(2));
     border.add(myBrowser, BorderLayout.CENTER);
     gb.fill = GridBagConstraints.BOTH;
     gb.weighty = 1;
@@ -206,7 +207,7 @@ public class RollbackChangesDialog extends DialogWrapper {
     panel.add(border, gb);
 
     final JComponent commitLegendPanel = myCommitLegendPanel.getComponent();
-    commitLegendPanel.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 0));
+    commitLegendPanel.setBorder(JBUI.Borders.emptyLeft(4));
     gb.fill = GridBagConstraints.NONE;
     gb.weightx = 0;
     gb.weighty = 0;

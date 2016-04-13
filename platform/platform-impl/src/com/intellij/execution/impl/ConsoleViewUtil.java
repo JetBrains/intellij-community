@@ -54,7 +54,7 @@ import static com.intellij.execution.ui.ConsoleViewContentType.registerNewConsol
 public class ConsoleViewUtil {
 
   public static final Key<Boolean> EDITOR_IS_CONSOLE_VIEW = Key.create("EDITOR_IS_CONSOLE_VIEW");
-
+  private static final Key<Boolean> REPLACE_ACTION_ENABLED = Key.create("REPLACE_ACTION_ENABLED");
 
   public static EditorEx setupConsoleEditor(Project project, final boolean foldingOutlineShown, final boolean lineMarkerAreaShown) {
     EditorFactory editorFactory = EditorFactory.getInstance();
@@ -139,6 +139,14 @@ public class ConsoleViewUtil {
 
   public static boolean isConsoleViewEditor(@NotNull Editor editor) {
     return editor.getUserData(EDITOR_IS_CONSOLE_VIEW) == Boolean.TRUE;
+  }
+
+  public static boolean isReplaceActionEnabledForConsoleViewEditor(@NotNull Editor editor) {
+    return editor.getUserData(REPLACE_ACTION_ENABLED) == Boolean.TRUE;
+  }
+
+  public static void enableReplaceActionForConsoleViewEditor(@NotNull Editor editor) {
+    editor.putUserData(REPLACE_ACTION_ENABLED, true);
   }
 
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
