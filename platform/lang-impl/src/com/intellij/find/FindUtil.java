@@ -68,7 +68,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 
 public class FindUtil {
   private static final Key<Direction> KEY = Key.create("FindUtil.KEY");
@@ -77,7 +80,7 @@ public class FindUtil {
   }
 
   @Nullable
-  static VirtualFile getVirtualFile(@NotNull Editor myEditor) {
+  private static VirtualFile getVirtualFile(@NotNull Editor myEditor) {
     Project project = myEditor.getProject();
     PsiFile file = project != null ? PsiDocumentManager.getInstance(project).getPsiFile(myEditor.getDocument()) : null;
     return file != null ? file.getVirtualFile() : null;
@@ -134,12 +137,7 @@ public class FindUtil {
       }
     }
     else {
-      if (firstSearch) {
-        stringToFind = "";
-      }
-      else {
-        stringToFind = model.getStringToFind();
-      }
+      stringToFind = firstSearch ? "" : model.getStringToFind();
     }
     model.setReplaceState(replace);
     model.setStringToFind(stringToFind);
@@ -233,48 +231,45 @@ public class FindUtil {
     model.setReplaceState(false);
     model.setFindAllEnabled(PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument()) != null);
 
-    findManager.showFindDialog(model, new Runnable() {
-      @Override
-      public void run() {
-        if (model.isFindAll()) {
-          findManager.setFindNextModel(model);
-          findAllAndShow(project, editor, model);
+    findManager.showFindDialog(model, () -> {
+      if (model.isFindAll()) {
+        findManager.setFindNextModel(model);
+        findAllAndShow(project, editor, model);
+        return;
+      }
+
+      if (!model.isGlobal() && editor.getSelectionModel().hasSelection()) {
+        int offset = model.isForward()
+                     ? editor.getSelectionModel().getSelectionStart()
+                     : editor.getSelectionModel().getSelectionEnd();
+        ScrollType scrollType = model.isForward() ? ScrollType.CENTER_DOWN : ScrollType.CENTER_UP;
+        moveCaretAndDontChangeSelection(editor, offset, scrollType);
+      }
+
+      int offset;
+      if (model.isGlobal()) {
+        if (model.isFromCursor()) {
+          offset = editor.getCaretModel().getOffset();
+        }
+        else {
+          offset = model.isForward() ? 0 : editor.getDocument().getTextLength();
+        }
+      }
+      else {
+        // in selection
+
+        if (!editor.getSelectionModel().hasSelection()) {
+          // TODO[anton] actually, this should never happen - Find dialog should not allow such combination
+          findManager.setFindNextModel(null);
           return;
         }
 
-        if (!model.isGlobal() && editor.getSelectionModel().hasSelection()) {
-          int offset = model.isForward()
-                       ? editor.getSelectionModel().getSelectionStart()
-                       : editor.getSelectionModel().getSelectionEnd();
-          ScrollType scrollType = model.isForward() ? ScrollType.CENTER_DOWN : ScrollType.CENTER_UP;
-          moveCaretAndDontChangeSelection(editor, offset, scrollType);
-        }
-
-        int offset;
-        if (model.isGlobal()) {
-          if (model.isFromCursor()) {
-            offset = editor.getCaretModel().getOffset();
-          }
-          else {
-            offset = model.isForward() ? 0 : editor.getDocument().getTextLength();
-          }
-        }
-        else {
-          // in selection
-
-          if (!editor.getSelectionModel().hasSelection()) {
-            // TODO[anton] actually, this should never happen - Find dialog should not allow such combination
-            findManager.setFindNextModel(null);
-            return;
-          }
-
-          offset = model.isForward() ? editor.getSelectionModel().getSelectionStart() : editor.getSelectionModel().getSelectionEnd();
-        }
-
-        findManager.setFindNextModel(null);
-        findManager.getFindInFileModel().copyFrom(model);
-        doSearch(project, editor, offset, true, model, true);
+        offset = model.isForward() ? editor.getSelectionModel().getSelectionStart() : editor.getSelectionModel().getSelectionEnd();
       }
+
+      findManager.setFindNextModel(null);
+      findManager.getFindInFileModel().copyFrom(model);
+      doSearch(project, editor, offset, true, model, true);
     });
   }
 
@@ -286,7 +281,7 @@ public class FindUtil {
 
     CharSequence text = document.getCharsSequence();
     int textLength = document.getTextLength();
-    final List<Usage> usages = new ArrayList<Usage>();
+    final List<Usage> usages = new ArrayList<>();
     FindManager findManager = FindManager.getInstance(project);
     findModel.setForward(true); // when find all there is no diff in direction
 
@@ -368,7 +363,7 @@ public class FindUtil {
     return searchAgain(project, editor, context);
   }
 
-  public static boolean searchAgain(final Project project, final Editor editor, @Nullable DataContext context) {
+  private static boolean searchAgain(final Project project, final Editor editor, @Nullable DataContext context) {
     FindManager findManager = FindManager.getInstance(project);
     if (!findManager.findWasPerformed() && !findManager.selectNextOccurrenceWasPerformed()) {
       new IncrementalFindAction().getHandler().execute(editor, context);
@@ -433,62 +428,54 @@ public class FindUtil {
     }
     model.setReplaceState(true);
 
-    findManager.showFindDialog(model, new Runnable() {
-      @Override
-      public void run() {
-        if (!model.isGlobal() && editor.getSelectionModel().hasSelection()) {
-          int offset = model.isForward()
-                       ? editor.getSelectionModel().getSelectionStart()
-                       : editor.getSelectionModel().getSelectionEnd();
-          ScrollType scrollType = model.isForward() ? ScrollType.CENTER_DOWN : ScrollType.CENTER_UP;
-          moveCaretAndDontChangeSelection(editor, offset, scrollType);
-        }
-        int offset;
-        if (model.isGlobal()) {
-          if (model.isFromCursor()) {
-            offset = editor.getCaretModel().getOffset();
-            if (!model.isForward()) {
-              offset++;
-            }
-          }
-          else {
-            offset = model.isForward() ? 0 : editor.getDocument().getTextLength();
+    findManager.showFindDialog(model, () -> {
+      if (!model.isGlobal() && editor.getSelectionModel().hasSelection()) {
+        int offset = model.isForward()
+                     ? editor.getSelectionModel().getSelectionStart()
+                     : editor.getSelectionModel().getSelectionEnd();
+        ScrollType scrollType = model.isForward() ? ScrollType.CENTER_DOWN : ScrollType.CENTER_UP;
+        moveCaretAndDontChangeSelection(editor, offset, scrollType);
+      }
+      int offset;
+      if (model.isGlobal()) {
+        if (model.isFromCursor()) {
+          offset = editor.getCaretModel().getOffset();
+          if (!model.isForward()) {
+            offset++;
           }
         }
         else {
-          // in selection
-
-          if (!editor.getSelectionModel().hasSelection()) {
-            // TODO[anton] actually, this should never happen - Find dialog should not allow such combination
-            findManager.setFindNextModel(null);
-            return;
-          }
-
-          offset = model.isForward() ? editor.getSelectionModel().getSelectionStart() : editor.getSelectionModel().getSelectionEnd();
+          offset = model.isForward() ? 0 : editor.getDocument().getTextLength();
         }
-
-        if (s != null && editor.getSelectionModel().hasSelection() && s.equals(model.getStringToFind())) {
-          if (model.isFromCursor() && model.isForward()) {
-            offset = Math.min(editor.getSelectionModel().getSelectionStart(), offset);
-          }
-          else if (model.isFromCursor() && !model.isForward()) {
-            offset = Math.max(editor.getSelectionModel().getSelectionEnd(), offset);
-          }
-        }
-        findManager.setFindNextModel(null);
-        findManager.getFindInFileModel().copyFrom(model);
-        replace(project, editor, offset, model);
       }
+      else {
+        // in selection
+
+        if (!editor.getSelectionModel().hasSelection()) {
+          // TODO[anton] actually, this should never happen - Find dialog should not allow such combination
+          findManager.setFindNextModel(null);
+          return;
+        }
+
+        offset = model.isForward() ? editor.getSelectionModel().getSelectionStart() : editor.getSelectionModel().getSelectionEnd();
+      }
+
+      if (s != null && editor.getSelectionModel().hasSelection() && s.equals(model.getStringToFind())) {
+        if (model.isFromCursor() && model.isForward()) {
+          offset = Math.min(editor.getSelectionModel().getSelectionStart(), offset);
+        }
+        else if (model.isFromCursor() && !model.isForward()) {
+          offset = Math.max(editor.getSelectionModel().getSelectionEnd(), offset);
+        }
+      }
+      findManager.setFindNextModel(null);
+      findManager.getFindInFileModel().copyFrom(model);
+      replace(project, editor, offset, model);
     });
   }
 
   public static boolean replace(Project project, Editor editor, int offset, FindModel model) {
-    return replace(project, editor, offset, model, new ReplaceDelegate() {
-      @Override
-      public boolean shouldReplace(TextRange range, String replace) {
-        return true;
-      }
-    });
+    return replace(project, editor, offset, model, (range, replace) -> true);
   }
 
   public static boolean replace(Project project, Editor editor, int offset, FindModel model, ReplaceDelegate delegate) {
@@ -520,7 +507,7 @@ public class FindUtil {
     final FindModel model = aModel.clone();
     int occurrences = 0;
 
-    List<Pair<TextRange, String>> rangesToChange = new ArrayList<Pair<TextRange, String>>();
+    List<Pair<TextRange, String>> rangesToChange = new ArrayList<>();
 
     boolean replaced = false;
     boolean reallyReplaced = false;
@@ -590,12 +577,7 @@ public class FindUtil {
       if (!toPrompt) {
         CharSequence text = document.getCharsSequence();
         final StringBuilder newText = new StringBuilder(document.getTextLength());
-        Collections.sort(rangesToChange, new Comparator<Pair<TextRange, String>>() {
-          @Override
-          public int compare(Pair<TextRange, String> o1, Pair<TextRange, String> o2) {
-            return o1.getFirst().getStartOffset() - o2.getFirst().getStartOffset();
-          }
-        });
+        Collections.sort(rangesToChange, (o1, o2) -> o1.getFirst().getStartOffset() - o2.getFirst().getStartOffset());
         int offsetBefore = 0;
         for (Pair<TextRange, String> pair : rangesToChange) {
           TextRange range = pair.getFirst();
@@ -617,21 +599,13 @@ public class FindUtil {
           caretOffset = newText.length();
         }
         final int finalCaretOffset = caretOffset;
-        CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-          @Override
-          public void run() {
-            ApplicationManager.getApplication().runWriteAction(new Runnable() {
-              @Override
-              public void run() {
-                document.setText(newText);
-                editor.getCaretModel().moveToOffset(finalCaretOffset);
-                if (model.isGlobal()) {
-                  editor.getSelectionModel().removeSelection();
-                }
-              }
-            });
+        CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> {
+          document.setText(newText);
+          editor.getCaretModel().moveToOffset(finalCaretOffset);
+          if (model.isGlobal()) {
+            editor.getSelectionModel().removeSelection();
           }
-        }, null, document);
+        }), null, document);
       }
       else {
         if (reallyReplaced) {
@@ -724,12 +698,9 @@ public class FindUtil {
         selection.removeSelection();
         scrollingModel.scrollToCaret(scrollType);
         scrollingModel.runActionOnScrollingFinished(
-          new Runnable() {
-            @Override
-            public void run() {
-              scrollingModel.scrollTo(editor.offsetToLogicalPosition(result.getStartOffset()), scrollType);
-              scrollingModel.scrollTo(editor.offsetToLogicalPosition(result.getEndOffset()), scrollType);
-            }
+          () -> {
+            scrollingModel.scrollTo(editor.offsetToLogicalPosition(result.getStartOffset()), scrollType);
+            scrollingModel.scrollTo(editor.offsetToLogicalPosition(result.getEndOffset()), scrollType);
           }
         );
       }
@@ -803,7 +774,7 @@ public class FindUtil {
           AnAction action = ActionManager.getInstance().getAction(
             modelForNextSearch.isForward() ? IdeActions.ACTION_FIND_NEXT : IdeActions.ACTION_FIND_PREVIOUS);
           String shortcutsText = KeymapUtil.getFirstKeyboardShortcutText(action);
-          if (shortcutsText.length() > 0) {
+          if (!shortcutsText.isEmpty()) {
             message = FindBundle.message("find.search.again.from.top.hotkey.message", message, shortcutsText);
           }
           else {
@@ -815,7 +786,7 @@ public class FindUtil {
           AnAction action = ActionManager.getInstance().getAction(
             modelForNextSearch.isForward() ? IdeActions.ACTION_FIND_PREVIOUS : IdeActions.ACTION_FIND_NEXT);
           String shortcutsText = KeymapUtil.getFirstKeyboardShortcutText(action);
-          if (shortcutsText.length() > 0) {
+          if (!shortcutsText.isEmpty()) {
             message = FindBundle.message("find.search.again.from.bottom.hotkey.message", message, shortcutsText);
           }
           else {
@@ -892,24 +863,16 @@ public class FindUtil {
     return new TextRange(start, end);
   }
 
-  public static int doReplace(Project project,
-                              final Document document,
-                              final int startOffset,
-                              final int endOffset,
-                              final String stringToReplace) {
+  private static int doReplace(Project project,
+                               final Document document,
+                               final int startOffset,
+                               final int endOffset,
+                               final String stringToReplace) {
     final String converted = StringUtil.convertLineSeparators(stringToReplace);
-    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            //[ven] I doubt converting is a good solution to SCR 21224
-            document.replaceString(startOffset, endOffset, converted);
-          }
-        });
-      }
-    }, null, null);
+    CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> {
+      //[ven] I doubt converting is a good solution to SCR 21224
+      document.replaceString(startOffset, endOffset, converted);
+    }), null, null);
     return startOffset + converted.length();
   }
 
@@ -919,6 +882,7 @@ public class FindUtil {
     editor.getScrollingModel().scrollToCaret(scrollType);
   }
 
+  @FunctionalInterface
   public interface ReplaceDelegate {
     boolean shouldReplace(TextRange range, String replace);
   }
@@ -974,7 +938,7 @@ public class FindUtil {
     if (!editor.getCaretModel().supportsMultipleCarets()) {
       return;
     }
-    ArrayList<CaretState> caretStates = new ArrayList<CaretState>();
+    ArrayList<CaretState> caretStates = new ArrayList<>();
     while (resultIterator.hasNext()) {
       FindResult findResult = resultIterator.next();
       int caretOffset = getCaretPosition(findResult, caretShiftFromSelectionStart);
