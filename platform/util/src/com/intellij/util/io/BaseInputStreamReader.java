@@ -28,13 +28,13 @@ import java.nio.charset.Charset;
 public class BaseInputStreamReader extends InputStreamReader {
   private final InputStream myInputStream;
 
-  public BaseInputStreamReader(@NotNull InputStream in, @NotNull Charset cs) {
-    super(in, cs);
+  public BaseInputStreamReader(@NotNull InputStream in) {
+    super(in);
     myInputStream = in;
   }
 
-  public BaseInputStreamReader(InputStream in) {
-    super(in);
+  public BaseInputStreamReader(@NotNull InputStream in, @NotNull Charset cs) {
+    super(in, cs);
     myInputStream = in;
   }
 

@@ -199,18 +199,9 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
 
   @NotNull
   private Reader createInputStreamReader(@NotNull InputStream streamToRead) {
-    Charset charset = charsetNotNull();
-    return new BaseInputStreamReader(streamToRead, charset);
-  }
-
-  @NotNull
-  private Charset charsetNotNull() {
     Charset charset = getCharset();
-    if (charset == null) {
-      // use default charset
-      charset = Charset.defaultCharset();
-    }
-    return charset;
+    if (charset == null) charset = Charset.defaultCharset();
+    return new BaseInputStreamReader(streamToRead, charset);
   }
 
   @Override
