@@ -333,8 +333,9 @@ class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState {
               if (start < 0 || end >= document.getTextLength() || start > end) continue;
               RangeMarker marker = document.createRangeMarker(start, end);
               myRangeMarkers.add(marker);
-              String placeHolderText = StringUtil.unescapeIllegalXmlChars(e.getAttributeValue(PLACEHOLDER_ATT));
-              if (placeHolderText == null) e.getAttributeValue(PLACEHOLDER_OLD_ATT);
+              String placeholderAttributeValue = e.getAttributeValue(PLACEHOLDER_ATT);
+              String placeHolderText = placeholderAttributeValue == null ? e.getAttributeValue(PLACEHOLDER_OLD_ATT)
+                                                                         : StringUtil.unescapeIllegalXmlChars(placeholderAttributeValue);
               if (placeHolderText == null) placeHolderText = DEFAULT_PLACEHOLDER;
               FoldingInfo fi = new FoldingInfo(placeHolderText, expanded);
               marker.putUserData(FOLDING_INFO_KEY, fi);

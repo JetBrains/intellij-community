@@ -2170,6 +2170,7 @@ public class StringUtil extends StringUtilRt {
    * @see <a href="https://www.w3.org/International/questions/qa-controls">https://www.w3.org/International/questions/qa-controls</a>
    * @see Verifier#isXMLCharacter(int)
    */
+  @NotNull
   public static String escapeIllegalXmlChars(@NotNull String text) {
     StringBuilder b = null;
     int lastPos = 0;
@@ -2193,6 +2194,7 @@ public class StringUtil extends StringUtilRt {
   /**
    * @see #escapeIllegalXmlChars(String)
    */
+  @NotNull
   public static String unescapeIllegalXmlChars(@NotNull String text) {
     StringBuilder b = null;
     int lastPos = 0;
