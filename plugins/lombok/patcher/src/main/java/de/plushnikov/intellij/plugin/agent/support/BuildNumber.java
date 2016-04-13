@@ -16,7 +16,7 @@
 
 package de.plushnikov.intellij.plugin.agent.support;
 
-import org.apache.commons.lang3.StringUtils;
+import de.plushnikov.intellij.util.StringUtils;
 
 /**
  * @author max

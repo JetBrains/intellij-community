@@ -1,7 +1,5 @@
 package de.plushnikov.intellij.plugin.agent;
 
-import org.apache.commons.lang3.StringUtils;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -30,8 +28,8 @@ public class IdeaPatcherOptionsHolder {
       return;
     }
 
-    for (String argString : StringUtils.split(args, ",")) {
-      String[] argKeyValue = StringUtils.split(argString, "=");
+    for (String argString : args.split(",")) {
+      String[] argKeyValue = argString.split("=");
       if (argKeyValue.length == 2) {
         options.put(argKeyValue[0], argKeyValue[1]);
       }

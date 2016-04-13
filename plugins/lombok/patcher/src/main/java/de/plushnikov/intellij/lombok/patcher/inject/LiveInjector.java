@@ -22,7 +22,7 @@
 package de.plushnikov.intellij.lombok.patcher.inject;
 
 import com.sun.tools.attach.VirtualMachine;
-import org.apache.commons.lang3.StringUtils;
+import de.plushnikov.intellij.util.StringUtils;
 
 import java.io.File;
 import java.lang.management.ManagementFactory;
