@@ -12,7 +12,7 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 public @interface SupportedBuild {
   /**
-   * Minumum supported version.
+   * Minimum supported version.
    */
   String min() default "";
 

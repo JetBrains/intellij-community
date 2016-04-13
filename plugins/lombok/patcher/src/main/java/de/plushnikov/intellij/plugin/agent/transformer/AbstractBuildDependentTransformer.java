@@ -1,10 +1,9 @@
 package de.plushnikov.intellij.plugin.agent.transformer;
 
-import org.apache.commons.lang3.StringUtils;
-
+import de.plushnikov.intellij.plugin.agent.IdeaPatcherOptionsHolder;
 import de.plushnikov.intellij.plugin.agent.support.BuildNumber;
 import de.plushnikov.intellij.plugin.agent.support.SupportedBuild;
-import de.plushnikov.intellij.plugin.agent.IdeaPatcherOptionsHolder;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * @author Alexej Kubarev

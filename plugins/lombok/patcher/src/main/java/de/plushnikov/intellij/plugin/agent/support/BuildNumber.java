@@ -66,8 +66,7 @@ public class BuildNumber implements Comparable<BuildNumber> {
 
     if (myBuildNumber != Integer.MAX_VALUE) {
       builder.append(myBuildNumber);
-    }
-    else {
+    } else {
       builder.append(SNAPSHOT);
     }
 
@@ -83,7 +82,9 @@ public class BuildNumber implements Comparable<BuildNumber> {
   }
 
   public static BuildNumber fromString(String version, String name) {
-    if (version == null) return null;
+    if (version == null) {
+      return null;
+    }
 
     if (BUILD_NUMBER.equals(version)) {
       final String productCode = name != null ? name : "";
@@ -96,8 +97,7 @@ public class BuildNumber implements Comparable<BuildNumber> {
     if (productSeparator > 0) {
       productCode = code.substring(0, productSeparator);
       code = code.substring(productSeparator + 1);
-    }
-    else {
+    } else {
       productCode = "";
     }
 
@@ -109,11 +109,12 @@ public class BuildNumber implements Comparable<BuildNumber> {
     if (baselineVersionSeparator > 0) {
       try {
         String baselineVersionString = code.substring(0, baselineVersionSeparator);
-        if (baselineVersionString.trim().isEmpty()) return null;
+        if (baselineVersionString.trim().isEmpty()) {
+          return null;
+        }
         baselineVersion = Integer.parseInt(baselineVersionString);
         code = code.substring(baselineVersionSeparator + 1);
-      }
-      catch (NumberFormatException e) {
+      } catch (NumberFormatException e) {
         throw new RuntimeException("Invalid version number: " + version + "; plugin name: " + name);
       }
 
@@ -123,8 +124,7 @@ public class BuildNumber implements Comparable<BuildNumber> {
         code = code.substring(0, minorBuildSeparator);
       }
       buildNumber = parseBuildNumber(version, code, name);
-    }
-    else {
+    } else {
       buildNumber = parseBuildNumber(version, code, name);
 
       if (buildNumber <= 2000) {
@@ -144,8 +144,7 @@ public class BuildNumber implements Comparable<BuildNumber> {
     }
     try {
       return Integer.parseInt(code);
-    }
-    catch (NumberFormatException e) {
+    } catch (NumberFormatException e) {
       throw new RuntimeException("Invalid version number: " + version + "; plugin name: " + name);
     }
   }
@@ -157,7 +156,9 @@ public class BuildNumber implements Comparable<BuildNumber> {
 
   @Override
   public int compareTo(BuildNumber o) {
-    if (myBaselineVersion == o.myBaselineVersion) return myBuildNumber - o.myBuildNumber;
+    if (myBaselineVersion == o.myBaselineVersion) {
+      return myBuildNumber - o.myBuildNumber;
+    }
     return myBaselineVersion - o.myBaselineVersion;
   }
 
@@ -172,14 +173,24 @@ public class BuildNumber implements Comparable<BuildNumber> {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
 
-    BuildNumber that = (BuildNumber)o;
+    BuildNumber that = (BuildNumber) o;
 
-    if (myBaselineVersion != that.myBaselineVersion) return false;
-    if (myBuildNumber != that.myBuildNumber) return false;
-    if (!myProductCode.equals(that.myProductCode)) return false;
+    if (myBaselineVersion != that.myBaselineVersion) {
+      return false;
+    }
+    if (myBuildNumber != that.myBuildNumber) {
+      return false;
+    }
+    if (!myProductCode.equals(that.myProductCode)) {
+      return false;
+    }
 
     return true;
   }
@@ -189,7 +200,9 @@ public class BuildNumber implements Comparable<BuildNumber> {
     int result = myProductCode.hashCode();
     result = 31 * result + myBaselineVersion;
     result = 31 * result + myBuildNumber;
-    if (myAttemptInfo != null) result = 31 * result + myAttemptInfo.hashCode();
+    if (myAttemptInfo != null) {
+      result = 31 * result + myAttemptInfo.hashCode();
+    }
     return result;
   }
 

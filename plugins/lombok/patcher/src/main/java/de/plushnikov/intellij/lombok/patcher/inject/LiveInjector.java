@@ -22,12 +22,12 @@
 package de.plushnikov.intellij.lombok.patcher.inject;
 
 import com.sun.tools.attach.VirtualMachine;
-
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
 import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -56,7 +56,6 @@ public class LiveInjector {
     inject(ClassRootFinder.findClassRootOfSelf());
   }
 
-
   public boolean isSupportedEnvironment() {
     try {
       Class.forName("com.sun.tools.attach.VirtualMachine");
@@ -81,7 +80,7 @@ public class LiveInjector {
    * @throws IllegalStateException If this is not a sun-derived v1.6 VM.
    */
   public void inject(String jarFile) throws IllegalStateException {
-    this.inject(jarFile, null);
+    this.inject(jarFile, Collections.<String, String>emptyMap());
   }
 
   public void inject(String jarFile, Map<String, String> options) throws IllegalStateException {
@@ -95,8 +94,6 @@ public class LiveInjector {
 
     String optionString = StringUtils.join(optionsList, ",");
 
-
-
     if (!this.isInjectable(jarFile)) {
       throw new IllegalArgumentException("Live Injection is not possible unless the classpath root to inject is a jar file.");
     }
@@ -109,12 +106,11 @@ public class LiveInjector {
     String ownPidS = ManagementFactory.getRuntimeMXBean().getName();
     ownPidS = ownPidS.substring(0, ownPidS.indexOf('@'));
     int ownPid = Integer.parseInt(ownPidS);
-    Throwable exception = null;
 
     try {
       VirtualMachine vm = VirtualMachine.attach(String.valueOf(ownPid));
       vm.loadAgent(jarFile, options);
-    } catch (Throwable t) {
+    } catch (Throwable exception) {
       throw new IllegalStateException("agent injection not supported on this platform due to unknown reason", exception);
     }
   }

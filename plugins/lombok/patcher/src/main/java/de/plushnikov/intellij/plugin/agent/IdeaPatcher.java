@@ -1,11 +1,11 @@
 package de.plushnikov.intellij.plugin.agent;
 
+import de.plushnikov.intellij.plugin.agent.transformer.IdeaPatcherTransformer;
+import de.plushnikov.intellij.plugin.agent.transformer.ModifierVisibilityClassFileTransformer;
+
 import java.lang.instrument.Instrumentation;
 import java.util.ArrayList;
 import java.util.List;
-
-import de.plushnikov.intellij.plugin.agent.transformer.IdeaPatcherTransformer;
-import de.plushnikov.intellij.plugin.agent.transformer.ModifierVisibilityClassFileTransformer;
 
 /**
  * This is a java-agent that patches some of idea's classes.
@@ -17,7 +17,6 @@ public class IdeaPatcher {
   static {
     KNOWN_TRANSFORMERS.add(new ModifierVisibilityClassFileTransformer());
   }
-
 
   public static void agentmain(String agentArgs, Instrumentation instrumentation) throws Throwable {
     System.out.println("Started IntelliJ Lombok Agent main");
@@ -36,7 +35,7 @@ public class IdeaPatcher {
     IdeaPatcherOptionsHolder optionsHolder = IdeaPatcherOptionsHolder.getInstance();
     optionsHolder.addAll(agentArgs);
 
-    for (IdeaPatcherTransformer transformer: KNOWN_TRANSFORMERS) {
+    for (IdeaPatcherTransformer transformer : KNOWN_TRANSFORMERS) {
       if (transformer.supported()) {
         instrumentation.addTransformer(transformer, transformer.canRetransform());
       }
