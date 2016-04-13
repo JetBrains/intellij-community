@@ -46,6 +46,7 @@ from _pydev_bundle._pydev_filesystem_encoding import getfilesystemencoding
 import os.path
 import sys
 import traceback
+import types
 
 os_normcase = os.path.normcase
 basename = os.path.basename
@@ -72,11 +73,31 @@ PATHS_FROM_ECLIPSE_TO_PYTHON = []
 
 
 normcase = os_normcase # May be rebound on set_ide_os
-
+import types
+str_to_unicode = types.UnicodeType
+def convert_to_long_pathname(filename):
+    return filename
+if os.name == 'nt':
+    try:
+        import ctypes
+    except ImportError:
+        pass
+    else:
+        def convert_to_long_pathname(filename):
+            buf = ctypes.create_unicode_buffer(260)
+            GetLongPathName = ctypes.windll.kernel32.GetLongPathNameW
+            rv = GetLongPathName(str_to_unicode(filename), buf , 260)
+            if rv == 0 or rv > 260:
+                return filename
+            else:
+                return buf.value.encode(getfilesystemencoding())
 
 def norm_case(filename):
     # `normcase` doesn't lower case on Python 2 for non-English locale, but Java side does it,
     # so we should do it manually
+    if '~' in filename:
+        filename = convert_to_long_pathname(filename)
+
     filename = os_normcase(filename)
     enc = getfilesystemencoding()
     if IS_PY3K or enc is None or enc.lower() == "utf-8":
