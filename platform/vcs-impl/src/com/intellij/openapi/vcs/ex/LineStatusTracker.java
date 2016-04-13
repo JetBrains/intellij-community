@@ -700,6 +700,7 @@ public class LineStatusTracker {
   @Nullable
   public Range getNextRange(Range range) {
     synchronized (LOCK) {
+      if (!isValid()) return null;
       final int index = myRanges.indexOf(range);
       if (index == myRanges.size() - 1) return null;
       return myRanges.get(index + 1);
@@ -709,6 +710,7 @@ public class LineStatusTracker {
   @Nullable
   public Range getPrevRange(Range range) {
     synchronized (LOCK) {
+      if (!isValid()) return null;
       final int index = myRanges.indexOf(range);
       if (index <= 0) return null;
       return myRanges.get(index - 1);
@@ -718,6 +720,7 @@ public class LineStatusTracker {
   @Nullable
   public Range getNextRange(int line) {
     synchronized (LOCK) {
+      if (!isValid()) return null;
       for (Range range : myRanges) {
         if (line < range.getLine2() && !range.isSelectedByLine(line)) {
           return range;
@@ -730,6 +733,7 @@ public class LineStatusTracker {
   @Nullable
   public Range getPrevRange(int line) {
     synchronized (LOCK) {
+      if (!isValid()) return null;
       for (int i = myRanges.size() - 1; i >= 0; i--) {
         Range range = myRanges.get(i);
         if (line > range.getLine1() && !range.isSelectedByLine(line)) {
@@ -743,6 +747,7 @@ public class LineStatusTracker {
   @Nullable
   public Range getRangeForLine(int line) {
     synchronized (LOCK) {
+      if (!isValid()) return null;
       for (final Range range : myRanges) {
         if (range.isSelectedByLine(line)) return range;
       }
@@ -854,27 +859,24 @@ public class LineStatusTracker {
 
   @NotNull
   public CharSequence getCurrentContent(@NotNull Range range) {
-    synchronized (LOCK) {
-      TextRange textRange = getCurrentTextRange(range);
-      final int startOffset = textRange.getStartOffset();
-      final int endOffset = textRange.getEndOffset();
-      return myDocument.getImmutableCharSequence().subSequence(startOffset, endOffset);
-    }
+    TextRange textRange = getCurrentTextRange(range);
+    final int startOffset = textRange.getStartOffset();
+    final int endOffset = textRange.getEndOffset();
+    return myDocument.getImmutableCharSequence().subSequence(startOffset, endOffset);
   }
 
   @NotNull
   public CharSequence getVcsContent(@NotNull Range range) {
-    synchronized (LOCK) {
-      TextRange textRange = getVcsTextRange(range);
-      final int startOffset = textRange.getStartOffset();
-      final int endOffset = textRange.getEndOffset();
-      return myVcsDocument.getImmutableCharSequence().subSequence(startOffset, endOffset);
-    }
+    TextRange textRange = getVcsTextRange(range);
+    final int startOffset = textRange.getStartOffset();
+    final int endOffset = textRange.getEndOffset();
+    return myVcsDocument.getImmutableCharSequence().subSequence(startOffset, endOffset);
   }
 
   @NotNull
   public TextRange getCurrentTextRange(@NotNull Range range) {
     synchronized (LOCK) {
+      assert isValid();
       if (!range.isValid()) {
         LOG.warn("Current TextRange of invalid range");
       }
@@ -885,6 +887,7 @@ public class LineStatusTracker {
   @NotNull
   public TextRange getVcsTextRange(@NotNull Range range) {
     synchronized (LOCK) {
+      assert isValid();
       if (!range.isValid()) {
         LOG.warn("Vcs TextRange of invalid range");
       }
