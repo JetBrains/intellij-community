@@ -7,16 +7,16 @@ import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.PlatformTestUtil;
-import de.plushnikov.ApiVersionAwareLightCodeInsightFixureTestCase;
-import de.plushnikov.RequiredApiVersion;
-import de.plushnikov.intellij.plugin.provider.LombokAugmentProvider;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+
 import org.jetbrains.annotations.NotNull;
+
+import de.plushnikov.intellij.plugin.provider.LombokAugmentProvider;
 
 /**
  * @author Alexej Kubarev
  */
-@RequiredApiVersion("146.1154") // Modifier augmentation has been added in build 146.1154
-public class FieldDefaultsModifierTest extends ApiVersionAwareLightCodeInsightFixureTestCase {
+public class FieldDefaultsModifierTest extends LightCodeInsightFixtureTestCase {
 
   @Override
   protected String getTestDataPath() {

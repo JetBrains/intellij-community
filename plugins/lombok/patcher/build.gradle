@@ -4,7 +4,6 @@ dependencies {
     // Should be available in the run-time
     compileOnly files(((URLClassLoader) ToolProvider.getSystemToolClassLoader()).getURLs())
 
-//    compile 'net.java.dev.jna:jna:4.2.2'
     compile 'org.javassist:javassist:3.20.0-GA'
 
     compile 'org.apache.commons:commons-lang3:3.4'
