@@ -37,15 +37,17 @@ public class AntResourcesClassLoader extends UrlClassLoader {
   }
 
   protected Class<?> loadClass(final String name, final boolean resolve) throws ClassNotFoundException {
-    if (myMisses.contains(name)) {
-      throw new ClassNotFoundException(name) {
-        @Override
-        public synchronized Throwable fillInStackTrace() {
-          return this;
-        }
-      };
+    synchronized (getClassLoadingLock(name)) {
+      if (myMisses.contains(name)) {
+        throw new ClassNotFoundException(name) {
+          @Override
+          public synchronized Throwable fillInStackTrace() {
+            return this;
+          }
+        };
+      }
+      return super.loadClass(name, resolve);
     }
-    return super.loadClass(name, resolve);
   }
 
   protected Class findClass(final String name) throws ClassNotFoundException {
