@@ -5,11 +5,16 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.BuildNumber;
+
+import org.jetbrains.annotations.NotNull;
+
+import java.util.HashMap;
+import java.util.Map;
+
 import de.plushnikov.intellij.lombok.patcher.inject.ClassRootFinder;
 import de.plushnikov.intellij.lombok.patcher.inject.LiveInjector;
 import de.plushnikov.intellij.plugin.agent.IdeaPatcher;
 import de.plushnikov.intellij.plugin.settings.LombokSettings;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * Main application component, that loads Lombok support
@@ -69,24 +74,41 @@ public class LombokPluginApplicationComponent implements ApplicationComponent {
       settings.setVersion(Version.PLUGIN_VERSION);
     }
 
-    final BuildNumber currentBuild = ApplicationInfo.getInstance().getBuild();
-    if(currentBuild.compareTo(BuildNumber.fromString("146.1154")) < 0) {
-      LOG.info("Starting injection of IntelliJ-Patch");
-      injectAgent();
-    }
+
+    injectAgent();
   }
 
   private void injectAgent() {
-    LOG.info("pre injection");
-    String rootOfClass = ClassRootFinder.findClassRootOfClass(IdeaPatcher.class).substring(1);
-    LOG.info("Injector use rootOfClass: " + rootOfClass);
-    try {
-      LiveInjector liveInjector = new LiveInjector();
-      liveInjector.inject(rootOfClass, true);
-    } catch (Exception ex) {
-      LOG.error("Error agent injection", ex);
+
+    LOG.info("Starting injection of IntelliJ-Patch");
+
+    LiveInjector liveInjector = new LiveInjector();
+
+    // Quick environment validation
+    if (!liveInjector.isSupportedEnvironment()) {
+      LOG.warn("Unsupported environment - agent injection only works on a sun-derived 1.6 or higher VM\"");
+      return;
     }
-    LOG.info("post injection");
+
+    String agentSourceFile = ClassRootFinder.findClassRootOfClass(IdeaPatcher.class);
+    LOG.info("Injector use agentSourceFile: " + agentSourceFile);
+    if (!liveInjector.isInjectable(agentSourceFile)) {
+      LOG.warn("Unable to inject Lombok Idea Patcher Agent as agent source is not valid");
+      return;
+    }
+
+    final BuildNumber currentBuild = ApplicationInfo.getInstance().getBuild();
+
+    Map<String, String> options = new HashMap<String, String>();
+    options.put("ideaBuild", currentBuild.asStringWithoutProductCode());
+
+    try {
+      liveInjector.inject(agentSourceFile, options);
+    } catch (Exception ex) {
+      LOG.error("Error injecting Lombok Agent", ex);
+    }
+
+
   }
 
   @Override

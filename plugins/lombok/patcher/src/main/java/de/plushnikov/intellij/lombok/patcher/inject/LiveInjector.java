@@ -21,15 +21,15 @@
  */
 package de.plushnikov.intellij.lombok.patcher.inject;
 
-import com.sun.jna.Library;
-import com.sun.jna.Native;
-import com.sun.jna.Pointer;
-import com.sun.jna.ptr.IntByReference;
-import com.sun.jna.ptr.PointerByReference;
+import com.sun.tools.attach.VirtualMachine;
+
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
 import java.lang.management.ManagementFactory;
-import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * This class allows you to inject a java agent 'on the fly' into your VM. This feature only works on sun-derived VMs, such as the openJDK, sun JVMs,
@@ -46,19 +46,6 @@ import java.lang.reflect.InvocationTargetException;
  * will be available because they, too, are in this unified jar file.
  */
 public class LiveInjector {
-  /**
-   * This interface is used internally by the {@code LiveInjector} to interface with the VM core.
-   */
-  public interface LibInstrument extends Library {
-    void Agent_OnAttach(Pointer vm, String name, Pointer Reserved);
-  }
-
-  /**
-   * This interface is used internally by the {@code LiveInjector} to interface with the VM core.
-   */
-  public interface LibJVM extends Library {
-    int JNI_GetCreatedJavaVMs(PointerByReference vms, int count, IntByReference found);
-  }
 
   /**
    * Injects the jar file that contains the code for {@code LiveInjector} as an agent. Its your job to make sure this jar is in fact an agent jar.
@@ -66,7 +53,24 @@ public class LiveInjector {
    * @throws IllegalStateException If this is not a sun-derived v1.6 VM.
    */
   public void injectSelf() throws IllegalStateException {
-    inject(ClassRootFinder.findClassRootOfSelf(), true);
+    inject(ClassRootFinder.findClassRootOfSelf());
+  }
+
+
+  public boolean isSupportedEnvironment() {
+    try {
+      Class.forName("com.sun.tools.attach.VirtualMachine");
+    } catch (ClassNotFoundException e) {
+      return false;
+    }
+
+    return true;
+  }
+
+  public boolean isInjectable(String jarFile) {
+    File f = new File(jarFile);
+
+    return f.isFile();
   }
 
   /**
@@ -76,61 +80,41 @@ public class LiveInjector {
    *
    * @throws IllegalStateException If this is not a sun-derived v1.6 VM.
    */
-  public void inject(String jarFile, boolean slowInject) throws IllegalStateException {
-    File f = new File(jarFile);
-    if (!f.isFile()) {
+  public void inject(String jarFile) throws IllegalStateException {
+    this.inject(jarFile, null);
+  }
+
+  public void inject(String jarFile, Map<String, String> options) throws IllegalStateException {
+
+    List<String> optionsList = new ArrayList<String>();
+
+    for (Map.Entry<String, String> entry : options.entrySet()) {
+      String option = entry.getKey() + "=" + entry.getValue();
+      optionsList.add(option);
+    }
+
+    String optionString = StringUtils.join(optionsList, ",");
+
+
+
+    if (!this.isInjectable(jarFile)) {
       throw new IllegalArgumentException("Live Injection is not possible unless the classpath root to inject is a jar file.");
     }
-    if (slowInject) {
-      slowInject(jarFile);
-    } else {
-      fastInject(jarFile);
-    }
+
+    injectInternal(jarFile, optionString);
   }
 
-  private void fastInject(String jarFile) throws IllegalStateException {
-    try {
-      Class.forName("sun.instrument.InstrumentationImpl");
-    } catch (ClassNotFoundException e) {
-      throw new IllegalStateException("agent injection only works on a sun-derived 1.6 or higher VM");
-    }
+  private void injectInternal(String jarFile, String options) throws IllegalStateException {
 
-    LibJVM libjvm = (LibJVM) Native.loadLibrary(LibJVM.class);
-    PointerByReference vms = new PointerByReference();
-    IntByReference found = new IntByReference();
-    libjvm.JNI_GetCreatedJavaVMs(vms, 1, found);
-    LibInstrument libinstrument = (LibInstrument) Native.loadLibrary(LibInstrument.class);
-    Pointer vm = vms.getValue();
-    libinstrument.Agent_OnAttach(vm, jarFile, null);
-  }
-
-  private void slowInject(String jarFile) throws IllegalStateException {
     String ownPidS = ManagementFactory.getRuntimeMXBean().getName();
     ownPidS = ownPidS.substring(0, ownPidS.indexOf('@'));
     int ownPid = Integer.parseInt(ownPidS);
-    boolean unsupportedEnvironment = false;
     Throwable exception = null;
-    try {
-      Class<?> vmClass = Class.forName("com.sun.tools.attach.VirtualMachine");
-      Object vm = vmClass.getMethod("attach", String.class).invoke(null, String.valueOf(ownPid));
-      vmClass.getMethod("loadAgent", String.class).invoke(vm, jarFile);
-    } catch (ClassNotFoundException e) {
-      unsupportedEnvironment = true;
-    } catch (NoSuchMethodException e) {
-      unsupportedEnvironment = true;
-    } catch (InvocationTargetException e) {
-      exception = e.getCause();
-      if (exception == null) {
-        exception = e;
-      }
-    } catch (Throwable t) {
-      exception = t;
-    }
 
-    if (unsupportedEnvironment) {
-      throw new IllegalStateException("agent injection only works on a sun-derived 1.6 or higher VM");
-    }
-    if (exception != null) {
+    try {
+      VirtualMachine vm = VirtualMachine.attach(String.valueOf(ownPid));
+      vm.loadAgent(jarFile, options);
+    } catch (Throwable t) {
       throw new IllegalStateException("agent injection not supported on this platform due to unknown reason", exception);
     }
   }

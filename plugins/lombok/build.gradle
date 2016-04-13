@@ -4,15 +4,24 @@ plugins {
 }
 
 apply plugin: 'org.jetbrains.intellij'
-apply plugin: 'java'
-apply plugin: 'idea'
-apply plugin: 'jacoco'
 
-sourceCompatibility = javaVersion
-targetCompatibility = javaTargetVersion
+allprojects {
 
-group pluginGroup
-version = pluginVersion
+    apply plugin: 'java'
+    apply plugin: 'idea'
+    apply plugin: 'jacoco'
+
+    group pluginGroup
+    version = pluginVersion
+
+    sourceCompatibility = javaVersion
+    targetCompatibility = javaTargetVersion
+
+    repositories {
+        mavenCentral()
+        mavenLocal()
+    }
+}
 
 tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
@@ -50,7 +59,7 @@ intellij {
     alternativeIdePath idePath
     updateSinceUntilBuild false
 
-    sandboxDirectory = "${project.projectDir}/idea-sandbox/idea-${version}"
+    sandboxDirectory = "${rootProject.projectDir}/idea-sandbox/idea-${version}"
 
     plugins 'coverage'
 
@@ -91,11 +100,6 @@ configurations {
 
     lombok
     hrisey
-}
-
-repositories {
-    mavenCentral()
-    mavenLocal()
 }
 
 dependencies {

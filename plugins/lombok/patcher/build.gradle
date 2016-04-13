@@ -1,20 +1,13 @@
-group 'de.plushnikov.intellij.plugin'
-version '0.12.16'
-
-apply plugin: 'java'
-
-sourceCompatibility = 1.6
-
-repositories {
-    mavenCentral()
-}
-
-//import javax.tools.ToolProvider
+import javax.tools.ToolProvider
 
 dependencies {
-//    compile (files(((URLClassLoader) ToolProvider.getSystemToolClassLoader()).getURLs()))
-    compile 'net.java.dev.jna:jna:4.2.2'
+    // Should be available in the run-time
+    compileOnly files(((URLClassLoader) ToolProvider.getSystemToolClassLoader()).getURLs())
+
+//    compile 'net.java.dev.jna:jna:4.2.2'
     compile 'org.javassist:javassist:3.20.0-GA'
+
+    compile 'org.apache.commons:commons-lang3:3.4'
 
     testCompile group: 'junit', name: 'junit', version: '4.12'
 }
