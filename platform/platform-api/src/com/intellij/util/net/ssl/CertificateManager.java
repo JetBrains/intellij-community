@@ -131,10 +131,7 @@ public class CertificateManager implements PersistentStateComponent<CertificateM
       // Don't do this: protocol created this way will ignore SSL tunnels. See IDEA-115708.
       // Protocol.registerProtocol("https", CertificateManager.createDefault().createProtocol());
       if (Registry.is("ide.certificate.manager")) {
-        SSLContext sslContext = getSslContext();
-        SSLContext.setDefault(sslContext);
-        HttpsURLConnection.setDefaultSSLSocketFactory(sslContext.getSocketFactory());
-        HttpsURLConnection.setDefaultHostnameVerifier(HOSTNAME_VERIFIER);
+        SSLContext.setDefault(getSslContext());
         LOG.debug("Default SSL context initialized");
       }
     }

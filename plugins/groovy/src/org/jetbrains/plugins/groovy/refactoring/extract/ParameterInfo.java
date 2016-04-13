@@ -17,27 +17,21 @@
 package org.jetbrains.plugins.groovy.refactoring.extract;
 
 import com.intellij.psi.PsiType;
+import com.intellij.refactoring.util.VariableData;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ilyas
 */
-public class ParameterInfo {
-  private final String myOldName;
-  private String myNewName;
+public class ParameterInfo extends VariableData {
   private int myPosition;
-  private boolean myPassAsParameter = true;
-  private PsiType myType;
 
   public ParameterInfo(@NotNull String oldName, int position, PsiType psiType){
-    myOldName = oldName;
-    setType(psiType);
-    myNewName = myOldName;
+    super(null, psiType);
+    name = oldName;
+    passAsParameter = true;
+    originalName = oldName;
     myPosition = position;
-  }
-
-  public String getOldName() {
-    return myOldName;
   }
 
   public int getPosition() {
@@ -46,29 +40,5 @@ public class ParameterInfo {
 
   public void setPosition(int position) {
     myPosition = position;
-  }
-
-  public String getName() {
-    return myNewName;
-  }
-
-  public PsiType getType() {
-    return myType;
-  }
-
-  public void setNewName(String newName) {
-    myNewName = newName;
-  }
-
-  public boolean passAsParameter() {
-    return myPassAsParameter;
-  }
-
-  public void setPassAsParameter(boolean passAsParameter) {
-    myPassAsParameter = passAsParameter;
-  }
-
-  public void setType(PsiType type) {
-    myType = type;
   }
 }

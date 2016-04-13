@@ -15,10 +15,17 @@
  */
 package com.intellij.refactoring.extractMethod;
 
+import com.intellij.refactoring.util.AbstractVariableData;
+
 /**
  * @author oleg
  */
 public interface ExtractMethodSettings {
   String getMethodName();
-  AbstractVariableData[] getVariableData();
+  AbstractVariableData[] getAbstractVariableData();
+
+  @Deprecated
+  default com.intellij.refactoring.extractMethod.AbstractVariableData[] getVariableData() {
+    return com.intellij.refactoring.extractMethod.AbstractVariableData.copy(getAbstractVariableData());
+  }
 }

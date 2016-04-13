@@ -49,7 +49,7 @@ public class ProgressIndicatorUtils {
   public static ProgressIndicator forceWriteActionPriority(@NotNull final ProgressIndicator progress, @NotNull final Disposable builder) {
     ApplicationManager.getApplication().addApplicationListener(new ApplicationAdapter() {
         @Override
-        public void beforeWriteActionStart(Object action) {
+        public void beforeWriteActionStart(@NotNull Object action) {
           if (progress.isRunning()) {
             progress.cancel();
           }
@@ -114,7 +114,7 @@ public class ProgressIndicatorUtils {
 
     final ApplicationAdapter listener = new ApplicationAdapter() {
       @Override
-      public void beforeWriteActionStart(Object action) {
+      public void beforeWriteActionStart(@NotNull Object action) {
         if (!progressIndicator.isCanceled()) progressIndicator.cancel();
       }
     };
@@ -162,7 +162,7 @@ public class ProgressIndicatorUtils {
       if (application.isDisposed()) return;
       final ApplicationAdapter listener = new ApplicationAdapter() {
         @Override
-        public void beforeWriteActionStart(Object action) {
+        public void beforeWriteActionStart(@NotNull Object action) {
           if (!progressIndicator.isCanceled()) {
             progressIndicator.cancel();
             readTask.onCanceled(progressIndicator);

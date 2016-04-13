@@ -124,6 +124,7 @@ public class ParameterInfoImpl implements JavaParameterInfo {
     }
   }
 
+  @Override
   public void setType(PsiType type) {
     myType = CanonicalTypes.createTypeWrapper(type);
   }

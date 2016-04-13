@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.eclipse.importer.colors;
 
+import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.highlighter.JavaHighlightingColors;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.HighlighterColors;
@@ -71,6 +72,7 @@ public class EclipseThemeOptionHandler implements EclipseThemeReader.OptionHandl
     if (BACKGROUND_TAG.equals(name)) {
       updateAttributes(HighlighterColors.TEXT, attributes);
       myColorsScheme.setColor(EditorColors.GUTTER_BACKGROUND, attributes.getBackgroundColor());
+      myColorsScheme.setColor(ConsoleViewContentType.CONSOLE_BACKGROUND_KEY, attributes.getBackgroundColor());
     }
     else if (FOREGROUND_TAG.equals(name)) {
       updateAttributes(HighlighterColors.TEXT, attributes);

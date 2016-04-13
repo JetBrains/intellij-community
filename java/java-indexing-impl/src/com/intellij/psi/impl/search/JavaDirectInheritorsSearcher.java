@@ -160,11 +160,11 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
       return cached;
     }
 
-    final String className = ApplicationManager.getApplication().runReadAction((Computable<String>)baseClass::getName);
-    if (StringUtil.isEmpty(className)) {
+    final String baseClassName = ApplicationManager.getApplication().runReadAction((Computable<String>)baseClass::getName);
+    if (StringUtil.isEmpty(baseClassName)) {
       return Pair.create(Collections.emptyList(), new AtomicIntegerArray(0));
     }
-    Pair<List<PsiClass>, AtomicIntegerArray> pair = calculateDirectSubClasses(project, baseClass, className);
+    Pair<List<PsiClass>, AtomicIntegerArray> pair = calculateDirectSubClasses(project, baseClass, baseClassName);
     HighlightingCaches.getInstance(project).DIRECT_SUB_CLASSES.put(baseClass, pair);
     return pair;
   }
@@ -172,11 +172,10 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
   @NotNull
   private static Pair<List<PsiClass>, AtomicIntegerArray> calculateDirectSubClasses(@NotNull Project project,
                                                                                     @NotNull PsiClass baseClass,
-                                                                                    @NotNull String className) {
+                                                                                    @NotNull String baseClassName) {
     GlobalSearchScope allScope = GlobalSearchScope.allScope(project);
     Collection<PsiReferenceList> candidates =
-      MethodUsagesSearcher
-        .resolveInReadAction(project, () -> JavaSuperClassNameOccurenceIndex.getInstance().get(className, project, allScope));
+      MethodUsagesSearcher.resolveInReadAction(project, () -> JavaSuperClassNameOccurenceIndex.getInstance().get(baseClassName, project, allScope));
 
     Map<String, List<PsiClass>> classes = new HashMap<>();
     int count = 0;
@@ -196,7 +195,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
     }
 
     Collection<PsiAnonymousClass> anonymousCandidates =
-      MethodUsagesSearcher.resolveInReadAction(project, () -> JavaAnonymousClassBaseRefOccurenceIndex.getInstance().get(className, project, allScope));
+      MethodUsagesSearcher.resolveInReadAction(project, () -> JavaAnonymousClassBaseRefOccurenceIndex.getInstance().get(baseClassName, project, allScope));
 
     List<PsiClass> result = new ArrayList<>(count + classes.size() + anonymousCandidates.size() + 1);
     for (Map.Entry<String, List<PsiClass>> entry : classes.entrySet()) {

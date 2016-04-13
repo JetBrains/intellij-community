@@ -72,6 +72,8 @@ public class InspectionManagerEx extends InspectionManagerBase {
           toolWindow.setIcon(AllIcons.Toolwindows.ToolWindowInspection);
           new ContentManagerWatcher(toolWindow, contentManager);
           contentManager.addContentManagerListener(new ContentManagerAdapter() {
+            private static final String PREFIX = "of ";
+
             @Override
             public void contentAdded(ContentManagerEvent event) {
               handleContentSizeChanged();
@@ -84,16 +86,19 @@ public class InspectionManagerEx extends InspectionManagerBase {
 
             private void handleContentSizeChanged() {
               final int count = contentManager.getContentCount();
-              String newStripeTitle = null;
               if (count == 1) {
-                newStripeTitle = InspectionsBundle.message("inspection.tool.window.stripe.title.single.content");
+                final Content content = contentManager.getContent(0);
+                final String displayName = content.getDisplayName();
+                if (!content.getDisplayName().startsWith(PREFIX)) {
+                  content.setDisplayName(PREFIX + displayName);
+                }
               }
               else if (count > 1) {
-                newStripeTitle = InspectionsBundle.message("inspection.tool.window.stripe.title.multiple.content");
-              }
-              final String stripeTitle = toolWindow.getStripeTitle();
-              if (newStripeTitle != null && !stripeTitle.equals(newStripeTitle)) {
-                toolWindow.setStripeTitle(newStripeTitle);
+                for (Content content : contentManager.getContents()) {
+                  if (content.getDisplayName().startsWith(PREFIX)) {
+                    content.setDisplayName(content.getDisplayName().substring(PREFIX.length()));
+                  }
+                }
               }
             }
           });

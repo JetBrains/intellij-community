@@ -557,7 +557,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
                                                      final JComponent parentComponent,
                                                      final String cancelText) {
     assertIsDispatchThread();
-    boolean writeAccessAllowed = isInsideWriteActionEDTOnly();
+    boolean writeAccessAllowed = isWriteAccessAllowed();
     if (writeAccessAllowed // Disallow running process in separate thread from under write action.
                            // The thread will deadlock trying to get read action otherwise.
         || isHeadlessEnvironment() && !isUnitTestMode()
@@ -614,7 +614,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
                                                                  final String cancelText, final JComponent parentComponent,
                                                                  @NotNull final Runnable process) {
     assertIsDispatchThread();
-    boolean writeAccessAllowed = isInsideWriteActionEDTOnly();
+    boolean writeAccessAllowed = isWriteAccessAllowed();
     if (writeAccessAllowed // Disallow running process in separate thread from under write action.
                            // The thread will deadlock trying to get read action otherwise.
       ) {
@@ -965,12 +965,12 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   @Override
-  public boolean hasWriteAction(@Nullable Class<?> actionClass) {
+  public boolean hasWriteAction(@NotNull Class<?> actionClass) {
     assertIsDispatchThread();
 
     for (int i = myWriteActionsStack.size() - 1; i >= 0; i--) {
       Class action = myWriteActionsStack.get(i);
-      if (actionClass == action || action != null && actionClass != null && ReflectionUtil.isAssignable(actionClass, action)) return true;
+      if (actionClass == action || ReflectionUtil.isAssignable(actionClass, action)) return true;
     }
     return false;
   }
@@ -1102,7 +1102,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private final boolean gatherWriteActionStatistics;
   private final PausesStat writePauses;
 
-  private void startWrite(/*@NotNull*/ Class clazz) {
+  private void startWrite(@NotNull Class clazz) {
     assertIsDispatchThread("Write access is allowed from event dispatch thread only");
     HeavyProcessLatch.INSTANCE.stopThreadPrioritizing(); // let non-cancellable read actions complete faster, if present
     if (!isDisposed() && !isDisposeInProgress() && !((TransactionGuardImpl)TransactionGuard.getInstance()).isWriteActionAllowed()) {
@@ -1141,7 +1141,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     fireWriteActionStarted(clazz);
   }
 
-  private void endWrite(/*@NotNull*/ Class clazz) {
+  private void endWrite(@NotNull Class clazz) {
     try {
       fireWriteActionFinished(clazz);
       // fire listeners before popping stack because if somebody starts write action in a listener,
@@ -1160,17 +1160,14 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @NotNull
   @Override
-  public AccessToken acquireWriteActionLock(/*@NotNull */Class clazz) {
-    if (clazz == null) {
-      LOG.warn("Parameter must be not null", new Throwable());
-    }
+  public AccessToken acquireWriteActionLock(@NotNull Class clazz) {
     return new WriteAccessToken(clazz);
   }
 
   private class WriteAccessToken extends AccessToken {
-    private final Class clazz;
+    @NotNull private final Class clazz;
 
-    public WriteAccessToken(/*@NotNull*/ Class clazz) {
+    public WriteAccessToken(@NotNull Class clazz) {
       this.clazz = clazz;
       startWrite(clazz);
       markThreadNameInStackTrace();
@@ -1253,11 +1250,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     return isDispatchThread() && myLock.isWriteLocked();
   }
 
-  // cheaper version of isWriteAccessAllowed(). must be called from EDT
-  private boolean isInsideWriteActionEDTOnly() {
-    return !myWriteActionsStack.isEmpty();
-  }
-
   @Override
   public boolean isWriteActionInProgress() {
     return myLock.isWriteLocked();
@@ -1291,15 +1283,15 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     myDispatcher.getMulticaster().applicationExiting();
   }
 
-  private void fireBeforeWriteActionStart(Class action) {
+  private void fireBeforeWriteActionStart(@NotNull Class action) {
     myDispatcher.getMulticaster().beforeWriteActionStart(action);
   }
 
-  private void fireWriteActionStarted(Class action) {
+  private void fireWriteActionStarted(@NotNull Class action) {
     myDispatcher.getMulticaster().writeActionStarted(action);
   }
 
-  private void fireWriteActionFinished(Class action) {
+  private void fireWriteActionFinished(@NotNull Class action) {
     myDispatcher.getMulticaster().writeActionFinished(action);
   }
 

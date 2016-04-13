@@ -147,7 +147,7 @@ class AccessCanBeTightenedInspection extends BaseJavaBatchLocalInspectionTool {
       final PsiPackage memberPackage = memberDirectory == null ? null : JavaDirectoryService.getInstance().getPackage(memberDirectory);
       log(member.getName()+ ": checking effective level for "+member);
 
-      UnusedSymbolUtil.processUsages(project, memberFile, member, new EmptyProgressIndicator(), null, info -> {
+      boolean proceed = UnusedSymbolUtil.processUsages(project, memberFile, member, new EmptyProgressIndicator(), null, info -> {
         PsiElement element = info.getElement();
         if (element == null) return true;
         PsiFile psiFile = info.getFile();
@@ -156,7 +156,7 @@ class AccessCanBeTightenedInspection extends BaseJavaBatchLocalInspectionTool {
         return handleUsage(member, memberClass, memberFile, maxLevel, memberPackage, element, psiFile, foundUsage);
       });
 
-      if (member instanceof PsiClass && ((PsiClass)member).isInterface()) {
+      if (proceed && member instanceof PsiClass && LambdaUtil.isFunctionalClass((PsiClass)member)) {
         // there can be lambda implementing this interface implicitly
         FunctionalExpressionSearch.search((PsiClass)member).forEach(functionalExpression -> {
           PsiFile psiFile = functionalExpression.getContainingFile();

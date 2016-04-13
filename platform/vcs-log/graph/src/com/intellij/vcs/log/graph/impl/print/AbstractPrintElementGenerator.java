@@ -93,14 +93,16 @@ public abstract class AbstractPrintElementGenerator implements PrintElementGener
     return result;
   }
 
-  private SimplePrintElementImpl createSimplePrintElement(int rowIndex, SimpleRowElement rowElement) {
+  @NotNull
+  private SimplePrintElementImpl createSimplePrintElement(int rowIndex, @NotNull SimpleRowElement rowElement) {
     return new SimplePrintElementImpl(rowIndex, rowElement.myPosition, rowElement.myElement, myPrintElementManager);
   }
 
+  @NotNull
   private EdgePrintElementImpl createEdgePrintElement(int rowIndex,
                                                       @NotNull ShortEdge shortEdge,
                                                       @NotNull EdgePrintElement.Type type,
-                                                      @NotNull boolean hasArrow) {
+                                                      boolean hasArrow) {
     int positionInCurrentRow, positionInOtherRow;
     if (type == EdgePrintElement.Type.DOWN) {
       positionInCurrentRow = shortEdge.myUpPosition;
@@ -116,7 +118,7 @@ public abstract class AbstractPrintElementGenerator implements PrintElementGener
 
   @NotNull
   @Override
-  public PrintElementWithGraphElement toPrintElementWithGraphElement(@NotNull PrintElement printElement) {
+  public PrintElementWithGraphElement withGraphElement(@NotNull PrintElement printElement) {
     if (printElement instanceof PrintElementWithGraphElement) {
       return (PrintElementWithGraphElement)printElement;
     }

@@ -105,7 +105,7 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
         assert !application.isWriteAccessAllowed() || application.isUnitTestMode(); // crazy stuff happens in tests, e.g. UIUtil.dispatchInvocationEvents() inside write action
         application.addApplicationListener(new ApplicationAdapter() {
           @Override
-          public void beforeWriteActionStart(Object action) {
+          public void beforeWriteActionStart(@NotNull Object action) {
             int writeActionsBefore = runningWriteActions++;
             if (writeActionsBefore == 0) {
               disable("Write action started: " + action);
@@ -113,7 +113,7 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
           }
 
           @Override
-          public void writeActionFinished(Object action) {
+          public void writeActionFinished(@NotNull Object action) {
             // crazy things happen when running tests, like starting write action in one thread but firing its end in the other
             int writeActionsAfter = runningWriteActions = Math.max(0,runningWriteActions-1);
             if (writeActionsAfter == 0) {

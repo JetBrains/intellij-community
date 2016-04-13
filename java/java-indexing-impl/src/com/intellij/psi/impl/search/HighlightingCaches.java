@@ -25,7 +25,6 @@ import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
@@ -57,9 +56,9 @@ class HighlightingCaches {
   // baseClass -> (list of direct subclasses, isInheritor flag array)
   final Map<PsiClass, Pair<List<PsiClass>, AtomicIntegerArray>> DIRECT_SUB_CLASSES = createWeakCache();
   // baseClass -> all sub classes transitively, including anonymous
-  final ConcurrentMap<PsiClass, Collection<PsiClass>> ALL_SUB_CLASSES = createWeakCache();
+  final ConcurrentMap<PsiClass, Iterable<PsiClass>> ALL_SUB_CLASSES = createWeakCache();
   // baseMethod -> all overriding methods
-  final Map<PsiMethod, Collection<PsiMethod>> OVERRIDING_METHODS = createWeakCache();
+  final Map<PsiMethod, Iterable<PsiMethod>> OVERRIDING_METHODS = createWeakCache();
 
   @NotNull
   private <T,V> ConcurrentMap<T,V> createWeakCache() {

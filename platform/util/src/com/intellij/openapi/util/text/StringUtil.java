@@ -24,6 +24,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceSubSequence;
 import com.intellij.util.text.StringFactory;
+import org.jdom.Verifier;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -579,6 +580,16 @@ public class StringUtil extends StringUtilRt {
                                                      @Nullable String additionalChars,
                                                      boolean escapeSlash,
                                                      @NotNull @NonNls StringBuilder buffer) {
+    return escapeStringCharacters(length, str, additionalChars, escapeSlash, true, buffer);
+  }
+  
+  @NotNull
+  public static StringBuilder escapeStringCharacters(int length,
+                                                     @NotNull String str,
+                                                     @Nullable String additionalChars,
+                                                     boolean escapeSlash,
+                                                     boolean escapeUnicode,
+                                                     @NotNull @NonNls StringBuilder buffer) {
     char prev = 0;
     for (int idx = 0; idx < length; idx++) {
       char ch = str.charAt(idx);
@@ -610,7 +621,7 @@ public class StringUtil extends StringUtilRt {
           else if (additionalChars != null && additionalChars.indexOf(ch) > -1 && (escapeSlash || prev != '\\')) {
             buffer.append("\\").append(ch);
           }
-          else if (!isPrintableUnicode(ch)) {
+          else if (escapeUnicode && !isPrintableUnicode(ch)) {
             CharSequence hexCode = StringUtilRt.toUpperCase(Integer.toHexString(ch));
             buffer.append("\\u");
             int paddingCount = 4 - hexCode.length();
@@ -2182,6 +2193,66 @@ public class StringUtil extends StringUtilRt {
 
       buf.append(ch);
     }
+  }
+
+  /**
+   * Some characters are illegal in XML even as numerical character references. This method performs escaping of them
+   * in a custom format, which is supposed to be unescaped on retrieving from XML using {@link #unescapeIllegalXmlChars(String)}.
+   * Resulting text can be part of XML version 1.0 document.
+   *
+   * @see <a href="https://www.w3.org/International/questions/qa-controls">https://www.w3.org/International/questions/qa-controls</a>
+   * @see Verifier#isXMLCharacter(int)
+   */
+  @NotNull
+  public static String escapeIllegalXmlChars(@NotNull String text) {
+    StringBuilder b = null;
+    int lastPos = 0;
+    for (int i = 0; i < text.length(); i++) {
+      int c = text.codePointAt(i);
+      if (Character.isSupplementaryCodePoint(c)) {
+        //noinspection AssignmentToForLoopParameter
+        i++;
+      }
+      if (c == '#' || !Verifier.isXMLCharacter(c)) {
+        if (b == null) b = new StringBuilder(text.length() + 5); // assuming there's one 'large' char (e.g. 0xFFFF) to escape numerically
+        b.append(text, lastPos, i).append('#');
+        if (c != '#') b.append(Integer.toHexString(c));
+        b.append('#');
+        lastPos = i + 1;
+      }
+    }
+    return b == null ? text : b.append(text, lastPos, text.length()).toString();
+  }
+
+  /**
+   * @see #escapeIllegalXmlChars(String)
+   */
+  @NotNull
+  public static String unescapeIllegalXmlChars(@NotNull String text) {
+    StringBuilder b = null;
+    int lastPos = 0;
+    for (int i = 0; i < text.length(); i++) {
+      int c = text.charAt(i);
+      if (c == '#') {
+        int numberEnd = text.indexOf('#', i + 1);
+        if (numberEnd > 0) {
+          int charCode;
+          try {
+            charCode = numberEnd == (i + 1) ? '#' : Integer.parseInt(text.substring(i + 1, numberEnd), 16);
+          }
+          catch (NumberFormatException e) {
+            continue;
+          }
+          if (b == null) b = new StringBuilder(text.length());
+          b.append(text, lastPos, i);
+          b.append((char) charCode);
+          //noinspection AssignmentToForLoopParameter
+          i = numberEnd;
+          lastPos = i + 1;
+        }
+      }
+    }
+    return b == null ? text : b.append(text, lastPos, text.length()).toString();
   }
 
   public static void quote(@NotNull final StringBuilder builder) {

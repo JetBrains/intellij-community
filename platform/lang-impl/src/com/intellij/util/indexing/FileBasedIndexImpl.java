@@ -261,7 +261,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
     ApplicationManager.getApplication().addApplicationListener(new ApplicationAdapter() {
       @Override
-      public void writeActionStarted(Object action) {
+      public void writeActionStarted(@NotNull Object action) {
         myUpToDateIndicesForUnsavedOrTransactedDocuments.clear();
       }
     });
@@ -388,7 +388,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         }
 
         state.registerIndex(name,
-                            createIndex(extension, new MemoryIndexStorage<K, V>(storage)),
+                            createIndex(extension, new MemoryIndexStorage<K, V>(storage, name)),
                             new FileBasedIndex.InputFilter() {
 
                               @Override
@@ -1791,8 +1791,8 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
         clearUpToDateStateForPsiIndicesOfUnsavedDocuments(file);
 
-        // the file is for sure not a dir and it was previously indexed by at least one index AND it belongs to some update set
-        if (!isTooLarge(file) && getIndexableSetForFile(file) != null) myChangedFilesCollector.scheduleForUpdate(file);
+        // the file is for sure not a dir and it was previously indexed by at least one index
+        if (!isTooLarge(file)) myChangedFilesCollector.scheduleForUpdate(file);
       }
     }
     else if (!fileIndexedStatesToUpdate.isEmpty()) { // file was removed, its data should be (lazily) wiped for every index
@@ -1854,10 +1854,10 @@ public class FileBasedIndexImpl extends FileBasedIndex {
               }
             }
 
-          if (scheduleForUpdate) {
-            if (resetStamp) IndexingStamp.flushCache(fileId);
-            myChangedFilesCollector.scheduleForUpdate(file);
-          }
+            if (scheduleForUpdate) {
+              if (resetStamp) IndexingStamp.flushCache(fileId);
+              myChangedFilesCollector.scheduleForUpdate(file);
+            }
 
             if (!myUpToDateIndicesForUnsavedOrTransactedDocuments.isEmpty()) {
               clearUpToDateStateForPsiIndicesOfUnsavedDocuments(file);
@@ -1922,6 +1922,12 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     }
 
     void scheduleForUpdate(VirtualFile file) {
+      if (!(file instanceof DeletedVirtualFileStub)) {
+        IndexableFileSet setForFile = getIndexableSetForFile(file);
+        if (setForFile == null) {
+          return;
+        }
+      }
       final int fileId = Math.abs(getIdMaskingNonIdBasedFile(file));
       final VirtualFile previousVirtualFile = myFilesToUpdate.put(fileId, file);
 

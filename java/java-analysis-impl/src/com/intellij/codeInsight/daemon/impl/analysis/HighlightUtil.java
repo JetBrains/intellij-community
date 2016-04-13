@@ -594,6 +594,9 @@ public class HighlightUtil extends HighlightUtilBase {
       }
       parent = parent.getParent();
     }
+    if (parent instanceof PsiCodeFragment) {
+      return null;
+    }
     String description;
     HighlightInfo errorResult = null;
     if (method == null && lambda != null) {
