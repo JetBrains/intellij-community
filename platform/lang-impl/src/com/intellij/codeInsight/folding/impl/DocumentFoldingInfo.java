@@ -68,7 +68,6 @@ class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState {
   @NonNls private static final String EXPANDED_ATT = "expanded";
   @NonNls private static final String MARKER_TAG = "marker";
   @NonNls private static final String DATE_ATT = "date";
-  @NonNls private static final String PLACEHOLDER_OLD_ATT = "placeholder";
   @NonNls private static final String PLACEHOLDER_ATT = "ph";
 
   DocumentFoldingInfo(@NotNull Project project, @NotNull Document document) {
@@ -334,7 +333,6 @@ class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState {
               RangeMarker marker = document.createRangeMarker(start, end);
               myRangeMarkers.add(marker);
               String placeHolderText = StringUtil.unescapeIllegalXmlChars(e.getAttributeValue(PLACEHOLDER_ATT));
-              if (placeHolderText == null) e.getAttributeValue(PLACEHOLDER_OLD_ATT);
               if (placeHolderText == null) placeHolderText = DEFAULT_PLACEHOLDER;
               FoldingInfo fi = new FoldingInfo(placeHolderText, expanded);
               marker.putUserData(FOLDING_INFO_KEY, fi);
