@@ -36,6 +36,7 @@ import java.io.IOException
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.NetworkInterface
+import java.net.URI
 import java.util.concurrent.TimeUnit
 
 inline fun Bootstrap.handler(crossinline task: (Channel) -> Unit): Bootstrap {
@@ -130,4 +131,24 @@ fun isLocalHost(host: String): Boolean {
   catch (ignored: IOException) {
     return false
   }
+}
+
+fun HttpRequest.isLocalOrigin() = parseAndCheckIsLocalHost(origin) && parseAndCheckIsLocalHost(referrer)
+
+private fun isTrustedChromeExtension(uri: URI): Boolean {
+  return uri.scheme == "chrome-extension" && (uri.host == "hmhgeddbohgjknpmjagkdomcpobmllji" || uri.host == "offnedcbhjldheanlbojaefbfbllddna")
+}
+
+private fun parseAndCheckIsLocalHost(uri: String?): Boolean {
+  if (uri == null) {
+    return true
+  }
+
+  try {
+    val parsedUri = URI(uri)
+    return isTrustedChromeExtension(parsedUri) || isLocalHost(parsedUri.host)
+  }
+  catch (ignored: Exception) {
+  }
+  return false
 }

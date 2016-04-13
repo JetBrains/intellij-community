@@ -23,15 +23,12 @@ import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelHandler
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.FullHttpRequest
-import io.netty.handler.codec.http.HttpRequest
 import io.netty.handler.codec.http.QueryStringDecoder
 import io.netty.util.AttributeKey
 import org.apache.sanselan.ImageFormat
 import org.apache.sanselan.Sanselan
 import org.jetbrains.ide.HttpRequestHandler
-
 import java.awt.image.BufferedImage
-import java.net.URI
 
 private val PREV_HANDLER = AttributeKey.valueOf<HttpRequestHandler>("DelegatingHttpRequestHandler.handler")
 
@@ -94,24 +91,4 @@ internal class DelegatingHttpRequestHandler : DelegatingHttpRequestHandlerBase()
       super.exceptionCaught(context, cause)
     }
   }
-}
-
-fun HttpRequest.isLocalOrigin() = parseAndCheckIsLocalHost(origin) && parseAndCheckIsLocalHost(referrer)
-
-private fun isTrustedChromeExtension(uri: URI): Boolean {
-  return uri.scheme == "chrome-extension" && (uri.host == "hmhgeddbohgjknpmjagkdomcpobmllji" || uri.host == "offnedcbhjldheanlbojaefbfbllddna")
-}
-
-private fun parseAndCheckIsLocalHost(uri: String?): Boolean {
-  if (uri == null) {
-    return true
-  }
-
-  try {
-    val parsedUri = URI(uri)
-    return isTrustedChromeExtension(parsedUri) || isLocalHost(parsedUri.host)
-  }
-  catch (ignored: Exception) {
-  }
-  return false
 }
