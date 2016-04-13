@@ -51,10 +51,6 @@ public class ValModifierTest extends LightCodeInsightFixtureTestCase {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     assertTrue(var.isValid());
 
-    PsiType type2 = var.getType();
-    assertNotNull(type2);
-    assertEquals(PsiType.INT.getCanonicalText(false), type2.getCanonicalText(false));
-
     assertNotNull(var.getModifierList());
     assertTrue("val should make variable final", var.getModifierList().hasModifierProperty(PsiModifier.FINAL));
   }
