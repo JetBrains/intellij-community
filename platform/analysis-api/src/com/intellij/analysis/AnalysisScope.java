@@ -156,10 +156,6 @@ public class AnalysisScope {
     myType = VIRTUAL_FILES;
   }
 
-  public void setScope(SearchScope scope) {
-    myScope = scope;
-  }
-
   public void setSearchInLibraries(final boolean searchInLibraries) {
     mySearchInLibraries = searchInLibraries;
   }

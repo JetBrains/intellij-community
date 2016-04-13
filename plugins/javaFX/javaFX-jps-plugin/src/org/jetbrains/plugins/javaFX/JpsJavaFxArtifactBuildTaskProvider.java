@@ -31,6 +31,7 @@ import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 import org.jetbrains.plugins.javaFX.packaging.AbstractJavaFxPackager;
+import org.jetbrains.plugins.javaFX.packaging.JavaFxApplicationIcons;
 import org.jetbrains.plugins.javaFX.packaging.JavaFxManifestAttribute;
 import org.jetbrains.plugins.javaFX.packaging.JavaFxPackagerConstants;
 import org.jetbrains.plugins.javaFX.preloader.JpsJavaFxPreloaderArtifactProperties;
@@ -147,6 +148,11 @@ public class JpsJavaFxArtifactBuildTaskProvider extends ArtifactBuildTaskProvide
     @Override
     protected String getDescription() {
       return myProperties.myState.getDescription();
+    }
+
+    @Override
+    protected JavaFxApplicationIcons getIcons() {
+      return myProperties.myState.getIcons();
     }
 
     @Override

@@ -82,19 +82,23 @@ import java.util.*;
  * @author Mike
  */
 public class XmlUtil {
-  @NonNls public static final String TAGLIB_1_2_URI = "http://java.sun.com/dtd/web-jsptaglibrary_1_2.dtd";
   @NonNls public static final String XML_SCHEMA_URI = "http://www.w3.org/2001/XMLSchema";
   @NonNls public static final String XML_SCHEMA_URI2 = "http://www.w3.org/1999/XMLSchema";
   @NonNls public static final String XML_SCHEMA_URI3 = "http://www.w3.org/2000/10/XMLSchema";
   public static final String[] SCHEMA_URIS = {XML_SCHEMA_URI, XML_SCHEMA_URI2, XML_SCHEMA_URI3};
   @NonNls public static final String XML_SCHEMA_INSTANCE_URI = "http://www.w3.org/2001/XMLSchema-instance";
+  @NonNls public static final String XML_SCHEMA_VERSIONING_URI = "http://www.w3.org/2007/XMLSchema-versioning";
   @NonNls public static final String XSLT_URI = "http://www.w3.org/1999/XSL/Transform";
   @NonNls public static final String XINCLUDE_URI = XmlPsiUtil.XINCLUDE_URI;
   @NonNls public static final String ANT_URI = "http://ant.apache.org/schema.xsd";
   @NonNls public static final String XHTML_URI = "http://www.w3.org/1999/xhtml";
   @NonNls public static final String HTML_URI = "http://www.w3.org/1999/html";
   @NonNls public static final String EMPTY_URI = "";
+
+  // todo remove it
   @NonNls public static final Key<String> TEST_PATH = Key.create("TEST PATH");
+
+  @NonNls public static final String TAGLIB_1_2_URI = "http://java.sun.com/dtd/web-jsptaglibrary_1_2.dtd";
   @NonNls public static final String JSP_URI = "http://java.sun.com/JSP/Page";
   @NonNls public static final String JSTL_CORE_URI = "http://java.sun.com/jsp/jstl/core";
   @NonNls public static final String JSTL_CORE_URI2 = "http://java.sun.com/jstl/core";

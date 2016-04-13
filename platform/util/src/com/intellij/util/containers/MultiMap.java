@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -285,6 +285,17 @@ public class MultiMap<K, V> implements Serializable {
       @Override
       protected Collection<V> createCollection() {
         return ContainerUtil.newLinkedHashSet();
+      }
+    };
+  }
+
+  @NotNull
+  public static <K, V> MultiMap<K, V> createOrderedSet() {
+    return new LinkedMultiMap<K, V>() {
+      @NotNull
+      @Override
+      protected Collection<V> createCollection() {
+        return new OrderedSet<V>();
       }
     };
   }

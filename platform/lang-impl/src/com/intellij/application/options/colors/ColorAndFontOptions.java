@@ -26,8 +26,6 @@ import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.impl.settings.DiffOptionsPanel;
-import com.intellij.openapi.diff.impl.settings.DiffPreviewPanel;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -78,7 +76,6 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
   private Map<String, MyColorScheme> mySchemes;
   private MyColorScheme mySelectedScheme;
-  public static final String DIFF_GROUP = ApplicationBundle.message("title.diff");
   public static final String FILE_STATUS_GROUP = ApplicationBundle.message("title.file.status");
   public static final String SCOPES_GROUP = ApplicationBundle.message("title.scope.based");
 
@@ -398,7 +395,6 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     });
     result.addAll(extensions);
 
-    result.add(new DiffColorsPageFactory());
     result.add(new FileStatusColorsPageFactory());
     result.add(new ScopeColorsPageFactory());
 
@@ -456,32 +452,6 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
      }
    }
 
-  private class DiffColorsPageFactory implements ColorAndFontPanelFactory {
-    @Override
-    @NotNull
-    public NewColorAndFontPanel createPanel(@NotNull ColorAndFontOptions options) {
-      final DiffOptionsPanel optionsPanel = new DiffOptionsPanel(options);
-      SchemesPanel schemesPanel = new SchemesPanel(options);
-      final DiffPreviewPanel previewPanel = new DiffPreviewPanel(myDisposable);
-
-      schemesPanel.addListener(new ColorAndFontSettingsListener.Abstract() {
-        @Override
-        public void schemeChanged(final Object source) {
-          previewPanel.setColorScheme(getSelectedScheme());
-          optionsPanel.updateOptionsList();
-        }
-      });
-
-      return new NewColorAndFontPanel(schemesPanel, optionsPanel, previewPanel, DIFF_GROUP, null, null);
-    }
-
-    @Override
-    @NotNull
-    public String getPanelDisplayName() {
-      return DIFF_GROUP;
-    }
-  }
-
   private void initAll() {
     mySchemes = new THashMap<String, MyColorScheme>();
     for (EditorColorsScheme allScheme : EditorColorsManager.getInstance().getAllSchemes()) {
@@ -497,7 +467,6 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
   private static void initScheme(@NotNull MyColorScheme scheme) {
     List<EditorSchemeAttributeDescriptor> descriptions = new ArrayList<EditorSchemeAttributeDescriptor>();
     initPluggedDescriptions(descriptions, scheme);
-    initDiffDescriptors(descriptions, scheme);
     initFileStatusDescriptors(descriptions, scheme);
     initScopesDescriptors(descriptions, scheme);
 
@@ -529,10 +498,6 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
       ColorKey fore = descriptor.getKind() == ColorDescriptor.Kind.FOREGROUND ? descriptor.getKey() : null;
       addEditorSettingDescription(descriptions, descriptor.getDisplayName(), group, back, fore, scheme);
     }
-  }
-
-  private static void initDiffDescriptors(@NotNull List<EditorSchemeAttributeDescriptor> descriptions, @NotNull MyColorScheme scheme) {
-    DiffOptionsPanel.addSchemeDescriptions(descriptions, scheme);
   }
 
   private static void initFileStatusDescriptors(@NotNull List<EditorSchemeAttributeDescriptor> descriptions, MyColorScheme scheme) {
