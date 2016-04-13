@@ -15,6 +15,7 @@
  */
 package com.intellij.util.io;
 
+import com.intellij.Patches;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationInfo;
@@ -353,7 +354,7 @@ public final class HttpRequests {
 
   private static <T> T process(RequestBuilderImpl builder, RequestProcessor<T> processor) throws IOException {
     ClassLoader contextLoader = Thread.currentThread().getContextClassLoader();
-    if (!UrlClassLoader.isRegisteredAsParallelCapable(contextLoader)) {
+    if (Patches.JDK_BUG_ID_8032832 && !UrlClassLoader.isRegisteredAsParallelCapable(contextLoader)) {
       // hack-around for class loader lock in sun.net.www.protocol.http.NegotiateAuthentication (IDEA-131621)
       try (URLClassLoader cl = new URLClassLoader(new URL[0], contextLoader)) {
         Thread.currentThread().setContextClassLoader(cl);
