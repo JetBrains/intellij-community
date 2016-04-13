@@ -79,6 +79,37 @@ public class OptionalGetWithoutIsPresentInspectionTest extends LightInspectionTe
            "}");
   }
 
+  public void testPolyadicExpression1() {
+    doTest("import java.util.Optional;" +
+           "class X {" +
+           "  public void demo(Optional<String> value) {\n" +
+           "    boolean flag = value.isPresent() && \"Yes\".equals(value.get());\n" +
+           "  }" +
+           "}");
+  }
+
+  public void testPolyadicExpression2() {
+    doTest("import java.util.Optional;" +
+           "class X {" +
+           "  boolean m(Optional<String> o) {" +
+           "    return !o.isPresent() || o.get().equals(\"j\");" +
+           "  }" +
+           "}");
+  }
+
+  public void testPolyadicExpression3() {
+    doTest("import java.util.Optional;" +
+           "class X {" +
+           "  String g() {" +
+           "    Optional<String> o = Optional.empty();" +
+           "    if(o == null || !o.isPresent()) {" +
+           "      return \"\";" +
+           "    }" +
+           "    return o.get();" +
+           "  }" +
+           "}");
+  }
+
   public void testOptionalGetWithoutIsPresent() {
     doTest();
   }
