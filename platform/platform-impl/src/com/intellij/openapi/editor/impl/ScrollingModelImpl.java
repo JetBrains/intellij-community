@@ -67,7 +67,9 @@ public class ScrollingModelImpl implements ScrollingModelEx {
   private final DocumentAdapter myDocumentListener = new DocumentAdapter() {
     @Override
     public void beforeDocumentChange(DocumentEvent e) {
-      cancelAnimatedScrolling(true);
+      if (!myEditor.getDocument().isInBulkUpdate()) {
+        cancelAnimatedScrolling(true);
+      }
     }
   };
 
@@ -430,6 +432,10 @@ public class ScrollingModelImpl implements ScrollingModelEx {
       myAccumulatedXOffset = myAccumulatedYOffset = -1;
       cancelAnimatedScrolling(true);
     }
+  }
+
+  void onBulkDocumentUpdateStarted() {
+    cancelAnimatedScrolling(true);
   }
 
   private class AnimatedScrollingRunnable {
