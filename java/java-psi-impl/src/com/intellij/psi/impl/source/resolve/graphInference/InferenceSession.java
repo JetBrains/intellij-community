@@ -625,8 +625,10 @@ public class InferenceSession {
     return mySiteSubstitutor;
   }
 
-  public InitialInferenceState createInitialState(InferenceSessionContainer container, PsiSubstitutor topInferenceSubstitutor) {
-    return new InitialInferenceState(myInferenceVariables,
+  public InitialInferenceState createInitialState(InferenceSessionContainer container,
+                                                  Collection<InferenceVariable> variables,
+                                                  PsiSubstitutor topInferenceSubstitutor) {
+    return new InitialInferenceState(variables,
                                      topInferenceSubstitutor,
                                      myContext, 
                                      myInferenceSubstitution, 
@@ -652,6 +654,7 @@ public class InferenceSession {
       final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(parameter.getProject());
       myInferenceSubstitution = myInferenceSubstitution.put(parameter, elementFactory.createType(variable));
       myRestoreNameSubstitution = myRestoreNameSubstitution.put(variable, elementFactory.createType(parameter));
+      myInferenceVariables.add(variable);
     }
     for (InferenceVariable variable : result) {
       PsiTypeParameter parameter = variable.getParameter();
@@ -669,7 +672,6 @@ public class InferenceSession {
                           InferenceBound.UPPER, null);
       }
     }
-    myInferenceVariables.addAll(result);
     return result.toArray(new InferenceVariable[result.size()]);
   }
 
@@ -893,10 +895,7 @@ public class InferenceSession {
 
   public InferenceVariable getInferenceVariable(PsiType psiType) {
     final PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(psiType);
-    if (psiClass instanceof InferenceVariable) {
-      return (InferenceVariable)psiClass;
-    }
-    return null;
+    return psiClass instanceof InferenceVariable ? getInferenceVariable((PsiTypeParameter)psiClass) : null;
   }
 
   public boolean isProperType(@Nullable PsiType type) {
@@ -1875,9 +1874,9 @@ public class InferenceSession {
     return myContext;
   }
 
-  public void propagateVariables(Collection<InferenceVariable> variables, PsiSubstitutor substitution) {
+  public void propagateVariables(Collection<InferenceVariable> variables, PsiSubstitutor restoreNamesSubstitution) {
     myInferenceVariables.addAll(variables);
-    myRestoreNameSubstitution = myRestoreNameSubstitution.putAll(substitution);
+    myRestoreNameSubstitution = myRestoreNameSubstitution.putAll(restoreNamesSubstitution);
   }
 
   public PsiType substituteWithInferenceVariables(PsiType type) {

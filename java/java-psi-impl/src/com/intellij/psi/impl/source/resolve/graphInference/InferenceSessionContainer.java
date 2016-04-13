@@ -54,6 +54,7 @@ public class InferenceSessionContainer {
         ExpressionCompatibilityConstraint.reduceExpressionCompatibilityConstraint(session, returnExpression, returnType);
       if (inferenceSession != null && inferenceSession != session) {
         registerNestedSession(inferenceSession);
+        session.propagateVariables(inferenceSession.getInferenceVariables(), inferenceSession.getRestoreNameSubstitution());
       }
     }
   }
@@ -159,7 +160,7 @@ public class InferenceSessionContainer {
     };
     final Map<PsiElement, InferenceSession> nestedSessions = topLevelSession.getInferenceSessionContainer().myNestedSessions;
     for (Map.Entry<PsiElement, InferenceSession> entry : nestedSessions.entrySet()) {
-      nestedStates.put(entry.getKey(), entry.getValue().createInitialState(copy, topInferenceSubstitutor));
+      nestedStates.put(entry.getKey(), entry.getValue().createInitialState(copy, topLevelSession.getInferenceVariables(), topInferenceSubstitutor));
     }
 
     PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
