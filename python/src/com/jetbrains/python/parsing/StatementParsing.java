@@ -807,7 +807,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
       inheritMarker.done(PyElementTypes.ARGUMENT_LIST);
     }
     final ParsingContext context = getParsingContext();
-    context.pushScope(context.getScope().withClass(true));
+    context.pushScope(context.getScope().withClass());
     parseColonAndSuite();
     context.popScope();
     classMarker.done(PyElementTypes.CLASS_DECLARATION);
@@ -874,14 +874,14 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
       }
       else {
         final ParsingContext context = getParsingContext();
-        context.pushScope(context.getScope().withSuite(true));
+        context.pushScope(context.getScope().withSuite());
         parseSimpleStatement();
         context.popScope();
         while (matchToken(PyTokenTypes.SEMICOLON)) {
           if (matchToken(PyTokenTypes.STATEMENT_BREAK)) {
             break;
           }
-          context.pushScope(context.getScope().withSuite(true));
+          context.pushScope(context.getScope().withSuite());
           parseSimpleStatement();
           context.popScope();
         }
