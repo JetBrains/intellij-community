@@ -361,14 +361,17 @@ public class JBScrollPane extends JScrollPane {
 
     public Corner(String pos) {
       myPos = pos;
+      ScrollColorProducer.setBackground(this);
+      ScrollColorProducer.setForeground(this);
     }
 
     @Override
     protected void paintComponent(Graphics g) {
-      g.setColor(ButtonlessScrollBarUI.getTrackBackgroundDefault());
+      g.setColor(getBackground());
       g.fillRect(0, 0, getWidth(), getHeight());
 
-      g.setColor(ButtonlessScrollBarUI.getTrackBorderColorDefault());
+      if (SystemInfo.isMac || !Registry.is("ide.scroll.track.border.paint")) return;
+      g.setColor(getForeground());
 
       int x2 = getWidth() - 1;
       int y2 = getHeight() - 1;

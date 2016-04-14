@@ -17,15 +17,11 @@ package com.intellij.ui.components;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.ui.ColorUtil;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBScrollPane.Alignment;
-import com.intellij.util.NotNullProducer;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.RegionPainter;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -36,7 +32,6 @@ import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
-import static com.intellij.ui.components.JBScrollPane.BRIGHTNESS_FROM_VIEW;
 import static java.awt.Adjustable.VERTICAL;
 
 /**
@@ -116,7 +111,7 @@ class DefaultScrollBarUI extends ScrollBarUI {
   }
 
   void paintTrack(Graphics2D g, int x, int y, int width, int height, JComponent c) {
-    RegionPainter<Float> p = isDark(c) ? JBScrollPane.TRACK_DARK_PAINTER : JBScrollPane.TRACK_PAINTER;
+    RegionPainter<Float> p = ScrollColorProducer.isDark(c) ? JBScrollPane.TRACK_DARK_PAINTER : JBScrollPane.TRACK_PAINTER;
     if (!isTrackExpandable() && Registry.is("ide.scroll.background.wide")) {
       p.paint(g, x, y, width, height, myTrackAnimator.myValue);
       return; // temporary registry key for designer
@@ -125,7 +120,7 @@ class DefaultScrollBarUI extends ScrollBarUI {
   }
 
   void paintThumb(Graphics2D g, int x, int y, int width, int height, JComponent c) {
-    RegionPainter<Float> p = isDark(c) ? JBScrollPane.THUMB_DARK_PAINTER : JBScrollPane.THUMB_PAINTER;
+    RegionPainter<Float> p = ScrollColorProducer.isDark(c) ? JBScrollPane.THUMB_DARK_PAINTER : JBScrollPane.THUMB_PAINTER;
     paint(p, g, x, y, width, height, c, myThumbAnimator.myValue, Registry.is("ide.scroll.thumb.small.if.opaque"));
   }
 
@@ -192,8 +187,8 @@ class DefaultScrollBarUI extends ScrollBarUI {
   @Override
   public void installUI(JComponent c) {
     myScrollBar = (JScrollBar)c;
-    myScrollBar.setBackground(new JBColor(new ColorProducer(c, 0xF5F5F5, 0x3C3F41)));
-    myScrollBar.setForeground(new JBColor(new ColorProducer(c, 0xE6E6E6, 0x3C3F41)));
+    ScrollColorProducer.setBackground(c);
+    ScrollColorProducer.setForeground(c);
     myScrollBar.setFocusable(false);
     myScrollBar.addMouseListener(myListener);
     myScrollBar.addMouseMotionListener(myListener);
@@ -232,15 +227,10 @@ class DefaultScrollBarUI extends ScrollBarUI {
     Alignment alignment = Alignment.get(c);
     if (alignment != null && g instanceof Graphics2D) {
       Container parent = c.getParent();
-      Color background = null;
-      if (c.isOpaque()) {
-        background = Registry.is("ide.scroll.background.auto") && parent instanceof JScrollPane
-                     ? JBScrollPane.getViewBackground((JScrollPane)parent)
-                     : c.getBackground();
-        if (background != null) {
-          g.setColor(background);
-          g.fillRect(0, 0, c.getWidth(), c.getHeight());
-        }
+      Color background = !c.isOpaque() ? null : c.getBackground();
+      if (background != null) {
+        g.setColor(background);
+        g.fillRect(0, 0, c.getWidth(), c.getHeight());
       }
       Rectangle bounds = new Rectangle(c.getWidth(), c.getHeight());
       JBInsets.removeFrom(bounds, c.getInsets());
@@ -629,43 +619,6 @@ class DefaultScrollBarUI extends ScrollBarUI {
       if (oldValue != newValue) {
         myScrollBar.setValue(newValue);
       }
-    }
-  }
-
-  static boolean isDark(JComponent c) {
-    if (c instanceof JScrollBar) {
-      Container parent = c.getParent();
-      if (parent instanceof JScrollPane) {
-        JScrollPane pane = (JScrollPane)parent;
-        Object property = c.getClientProperty(BRIGHTNESS_FROM_VIEW);
-        if (property == null) {
-          property = pane.getClientProperty(BRIGHTNESS_FROM_VIEW);
-        }
-        if (property instanceof Boolean && (Boolean)property) {
-          Color color = JBScrollPane.getViewBackground(pane);
-          if (color != null) return ColorUtil.isDark(color);
-        }
-      }
-    }
-    return UIUtil.isUnderDarcula();
-  }
-
-  private static final class ColorProducer implements NotNullProducer<Color> {
-    private final JComponent myComponent;
-    private final Color myBrightColor;
-    private final Color myDarkColor;
-
-    @SuppressWarnings("UseJBColor")
-    private ColorProducer(JComponent component, int bright, int dark) {
-      myComponent = component;
-      myBrightColor = new Color(bright);
-      myDarkColor = new Color(dark);
-    }
-
-    @NotNull
-    @Override
-    public Color produce() {
-      return isDark(myComponent) ? myDarkColor : myBrightColor;
     }
   }
 }
