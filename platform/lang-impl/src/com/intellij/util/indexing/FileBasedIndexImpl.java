@@ -1828,7 +1828,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     // can be client that used indices between before and after events, in such case indices are up to date due to force update
     // with old content)
     if (!fileIsDirectory) {
-      if (isTooLarge(file)) {
+      if (!file.isValid() || isTooLarge(file)) {
         // large file might be scheduled for update in before event when its size was not large
         myChangedFilesCollector.removeScheduledFileFromUpdate(file);
       }
