@@ -15,12 +15,10 @@
  */
 package com.intellij.ide.actions.exclusion;
 
-import javax.swing.tree.MutableTreeNode;
-
 /**
  * @author Dmitry Batkovich
  */
-public final class IncludeTreeNodeAction<T extends MutableTreeNode> extends TreeNodeExclusionAction<T> {
+public final class IncludeTreeNodeAction extends TreeNodeExclusionAction {
   public IncludeTreeNodeAction() {
     super(false);
   }
