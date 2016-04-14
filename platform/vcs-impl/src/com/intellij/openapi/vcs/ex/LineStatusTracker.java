@@ -266,6 +266,11 @@ public class LineStatusTracker {
     range.setHighlighter(highlighter);
   }
 
+  private boolean tryValidate() {
+    if (myApplication.isDispatchThread()) updateRanges();
+    return isValid();
+  }
+
   public boolean isValid() {
     synchronized (LOCK) {
       return !isSuppressed() && myDirtyRange == null;
@@ -328,7 +333,7 @@ public class LineStatusTracker {
   @Nullable
   public List<Range> getRanges() {
     synchronized (LOCK) {
-      if (!isValid()) return null;
+      if (!tryValidate()) return null;
       myApplication.assertReadAccessAllowed();
 
       List<Range> result = new ArrayList<>(myRanges.size());
@@ -369,22 +374,27 @@ public class LineStatusTracker {
     });
   }
 
+  @CalledInAwt
+  private void updateRanges() {
+    if (isSuppressed()) return;
+    if (myDirtyRange != null) {
+      synchronized (LOCK) {
+        try {
+          doUpdateRanges(myDirtyRange.line1, myDirtyRange.line2, myDirtyRange.lineShift, myDirtyRange.beforeTotalLines);
+          myDirtyRange = null;
+        }
+        catch (Exception e) {
+          LOG.error(e);
+          reinstallRanges();
+        }
+      }
+    }
+  }
+
   private class MyApplicationListener extends ApplicationAdapter {
     @Override
     public void writeActionFinished(@NotNull Object action) {
-      if (isSuppressed()) return;
-      if (myDirtyRange != null) {
-        synchronized (LOCK) {
-          try {
-            doUpdateRanges(myDirtyRange.line1, myDirtyRange.line2, myDirtyRange.lineShift, myDirtyRange.beforeTotalLines);
-            myDirtyRange = null;
-          }
-          catch (Exception e) {
-            LOG.error(e);
-            reinstallRanges();
-          }
-        }
-      }
+      updateRanges();
     }
   }
 
@@ -684,7 +694,7 @@ public class LineStatusTracker {
   @Nullable
   public Range getNextRange(Range range) {
     synchronized (LOCK) {
-      if (!isValid()) return null;
+      if (!tryValidate()) return null;
       final int index = myRanges.indexOf(range);
       if (index == myRanges.size() - 1) return null;
       return myRanges.get(index + 1);
@@ -694,7 +704,7 @@ public class LineStatusTracker {
   @Nullable
   public Range getPrevRange(Range range) {
     synchronized (LOCK) {
-      if (!isValid()) return null;
+      if (!tryValidate()) return null;
       final int index = myRanges.indexOf(range);
       if (index <= 0) return null;
       return myRanges.get(index - 1);
@@ -704,7 +714,7 @@ public class LineStatusTracker {
   @Nullable
   public Range getNextRange(int line) {
     synchronized (LOCK) {
-      if (!isValid()) return null;
+      if (!tryValidate()) return null;
       for (Range range : myRanges) {
         if (line < range.getLine2() && !range.isSelectedByLine(line)) {
           return range;
@@ -717,7 +727,7 @@ public class LineStatusTracker {
   @Nullable
   public Range getPrevRange(int line) {
     synchronized (LOCK) {
-      if (!isValid()) return null;
+      if (!tryValidate()) return null;
       for (int i = myRanges.size() - 1; i >= 0; i--) {
         Range range = myRanges.get(i);
         if (line > range.getLine1() && !range.isSelectedByLine(line)) {
@@ -731,7 +741,7 @@ public class LineStatusTracker {
   @Nullable
   public Range getRangeForLine(int line) {
     synchronized (LOCK) {
-      if (!isValid()) return null;
+      if (!tryValidate()) return null;
       for (final Range range : myRanges) {
         if (range.isSelectedByLine(line)) return range;
       }
@@ -823,7 +833,7 @@ public class LineStatusTracker {
   @CalledWithWriteLock
   private void runBulkRollback(@NotNull Runnable task) {
     myApplication.assertWriteAccessAllowed();
-    if (!isValid()) return;
+    if (!tryValidate()) return;
 
     synchronized (LOCK) {
       try {
@@ -885,7 +895,7 @@ public class LineStatusTracker {
 
   public boolean isRangeModified(int line1, int line2) {
     synchronized (LOCK) {
-      if (!isValid()) return false;
+      if (!tryValidate()) return false;
       if (line1 == line2) return false;
       assert line1 < line2;
 
@@ -907,7 +917,7 @@ public class LineStatusTracker {
 
   private int transferLine(int line, boolean approximate, boolean fromVcs) {
     synchronized (LOCK) {
-      if (!isValid()) return approximate ? line : ABSENT_LINE_NUMBER;
+      if (!tryValidate()) return approximate ? line : ABSENT_LINE_NUMBER;
 
       int result = line;
 
