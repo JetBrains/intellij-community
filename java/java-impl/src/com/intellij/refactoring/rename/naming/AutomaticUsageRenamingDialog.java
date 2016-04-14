@@ -24,16 +24,14 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.*;
 import com.intellij.ui.components.panels.ValidatingComponent;
 import com.intellij.ui.table.JBTable;
-import com.intellij.util.BitUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.*;
+import javax.swing.event.DocumentEvent;
 import javax.swing.table.AbstractTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.List;
 
@@ -94,7 +92,7 @@ public class AutomaticUsageRenamingDialog<T> extends DialogWrapper {
     super.show();
   }
 
-  protected void handleChanges() {
+  private void handleChanges() {
     updateRenamer();
 
     boolean okActionEnabled = true;
@@ -140,12 +138,7 @@ public class AutomaticUsageRenamingDialog<T> extends DialogWrapper {
     final Box box = Box.createVerticalBox();
     setupTable();
 
-    myTableModel.addTableModelListener(new TableModelListener() {
-      @Override
-      public void tableChanged(TableModelEvent e) {
-        handleChanges();
-      }
-    });
+    myTableModel.addTableModelListener(e -> handleChanges());
 
     TableUtil.setupCheckboxColumn(myTable, CHECK_COLUMN);
     setupOldNameColumn();
@@ -168,25 +161,19 @@ public class AutomaticUsageRenamingDialog<T> extends DialogWrapper {
     buttonBox.add(Box.createHorizontalStrut(4));
     final JButton deselectAllButton = new JButton(RefactoringBundle.message("unselect.all.button"));
     buttonBox.add(deselectAllButton);
-    selectAllButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        for (int i = 0; i < getElementCount(); i++) {
-          myShouldRename[i] = true;
-        }
-        myTableModel.fireTableDataChanged();
+    selectAllButton.addActionListener(e -> {
+      for (int i = 0; i < getElementCount(); i++) {
+        myShouldRename[i] = true;
       }
+      myTableModel.fireTableDataChanged();
     });
     selectAllButton.setMnemonic('S');
 
-    deselectAllButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        for (int i = 0; i < getElementCount(); i++) {
-          myShouldRename[i] = false;
-        }
-        myTableModel.fireTableDataChanged();
+    deselectAllButton.addActionListener(e -> {
+      for (int i = 0; i < getElementCount(); i++) {
+        myShouldRename[i] = false;
       }
+      myTableModel.fireTableDataChanged();
     });
     deselectAllButton.setMnemonic('U');
     box.add(Box.createVerticalStrut(4));
@@ -201,12 +188,7 @@ public class AutomaticUsageRenamingDialog<T> extends DialogWrapper {
     myTableModel = new MyTableModel();
     myTable.setModel(myTableModel);
 
-    myTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-      @Override
-      public void valueChanged(ListSelectionEvent e) {
-        refreshValidatingComponent();
-      }
-    });
+    myTable.getSelectionModel().addListSelectionListener(e -> refreshValidatingComponent());
     myTable.setCellSelectionEnabled(false);
     myTable.setColumnSelectionAllowed(false);
     myTable.setRowSelectionAllowed(false);
@@ -249,9 +231,10 @@ public class AutomaticUsageRenamingDialog<T> extends DialogWrapper {
             if (errorText != null) {
               textField.setForeground(SimpleTextAttributes.ERROR_ATTRIBUTES.getFgColor());
               textField.setFont(font.deriveFont(font.getStyle() | Font.ITALIC));
-            } else {
+            }
+            else {
               textField.setForeground(SimpleTextAttributes.REGULAR_ATTRIBUTES.getFgColor());
-              textField.setFont(font.deriveFont(BitUtil.clear(font.getStyle(), Font.ITALIC)));
+              textField.setFont(font.deriveFont(font.getStyle() & ~Font.ITALIC));
             }
             repaintTable();
           }
@@ -315,10 +298,6 @@ public class AutomaticUsageRenamingDialog<T> extends DialogWrapper {
 
   protected void setChecked(int rowIndex, boolean checked) {
     myTableModel.setValueAt(checked, rowIndex, CHECK_COLUMN);
-  }
-
-  protected String[] getNewNames() {
-    return myNewNames;
   }
 
   protected void setChecked(T element, boolean checked) {
