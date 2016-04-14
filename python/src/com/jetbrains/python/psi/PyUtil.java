@@ -54,9 +54,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.stubs.StubElement;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.psi.util.QualifiedName;
+import com.intellij.psi.util.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -845,6 +843,22 @@ public class PyUtil {
         }
       }
     });
+  }
+
+  public static <T, P> T getParameterizedCachedValue(@NotNull PsiElement element, @NotNull P param, @NotNull NotNullFunction<P, T> f) {
+    final Map<P, T> cache = CachedValuesManager.getCachedValue(element, new CachedValueProvider<Map<P, T>>() {
+      @Nullable
+      @Override
+      public Result<Map<P, T>> compute() {
+        return Result.create(Maps.newHashMap(), PsiModificationTracker.MODIFICATION_COUNT);
+      }
+    });
+    T result = cache.get(param);
+    if (result == null) {
+      result = f.fun(param);
+      cache.put(param, result);
+    }
+    return result;
   }
 
   public static class KnownDecoratorProviderHolder {

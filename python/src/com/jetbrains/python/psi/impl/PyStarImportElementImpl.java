@@ -41,7 +41,6 @@ import java.util.List;
  * @author dcheryasov
  */
 public class PyStarImportElementImpl extends PyBaseElementImpl<PyStarImportElementStub> implements PyStarImportElement {
-
   public PyStarImportElementImpl(ASTNode astNode) {
     super(astNode);
   }
@@ -80,7 +79,12 @@ public class PyStarImportElementImpl extends PyBaseElementImpl<PyStarImportEleme
   }
 
   @NotNull
-  public List<RatedResolveResult> multiResolveName(@NotNull final String name) {
+  public List<RatedResolveResult> multiResolveName(@NotNull String name) {
+    return PyUtil.getParameterizedCachedValue(this, name, this::calculateMultiResolveName);
+  }
+
+  @NotNull
+  private List<RatedResolveResult> calculateMultiResolveName(@NotNull String name) {
     if (PyUtil.isClassPrivateName(name)) {
       return Collections.emptyList();
     }
@@ -96,6 +100,9 @@ public class PyStarImportElementImpl extends PyBaseElementImpl<PyStarImportEleme
           final List<? extends RatedResolveResult> results = moduleType.resolveMember(name, null, AccessDirection.READ,
                                                                                       PyResolveContext.defaultContext());
           if (results != null && !results.isEmpty() && PyUtil.isStarImportableFrom(name, sourceFile)) {
+            if (results.isEmpty()) {
+              return Collections.emptyList();
+            }
             final List<RatedResolveResult> res = Lists.newArrayList();
             for (RatedResolveResult result : results) {
               res.add(result);
