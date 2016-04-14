@@ -1949,8 +1949,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (myDocument.getTextLength() > 0) {
       int startDocLine = myDocument.getLineNumber(e.getOffset());
       int endDocLine = myDocument.getLineNumber(e.getOffset() + e.getNewLength());
-      if (e.getOldLength() > e.getNewLength() || startDocLine != endDocLine || StringUtil.indexOf(e.getOldFragment(), '\n') != -1) {
-        updateGutterSize();
+      if (startDocLine != endDocLine || StringUtil.indexOf(e.getOldFragment(), '\n') != -1) {
+        myGutterComponent.clearLineToGutterRenderersCache();
       }
 
       if (countLineFeeds(e.getOldFragment()) != countLineFeeds(e.getNewFragment())) {
@@ -2036,7 +2036,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       dim = mySizeAdjustmentStrategy.adjust(dim, myPreferredSize, this);
       myPreferredSize = dim;
 
-      myGutterComponent.updateSize();
+      updateGutterSize();
 
       myEditorComponent.setSize(dim);
       myEditorComponent.fireResized();

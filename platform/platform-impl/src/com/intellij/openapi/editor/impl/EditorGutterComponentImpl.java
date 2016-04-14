@@ -128,7 +128,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   private final EditorImpl myEditor;
   private final FoldingAnchorsOverlayStrategy myAnchorsDisplayStrategy;
-  private TIntObjectHashMap<List<GutterMark>> myLineToGutterRenderers;
+  @Nullable private TIntObjectHashMap<List<GutterMark>> myLineToGutterRenderers;
   private int myIconsAreaWidth = 0;
   private int myLineNumberAreaWidth = 0;
   private int myAdditionalLineNumberAreaWidth = 0;
@@ -684,6 +684,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     int prevHash = sizeHash();
 
     if (!onLayout) {
+      clearLineToGutterRenderersCache();
       calcLineNumberAreaWidth();
       calcLineMarkerAreaWidth(canShrink);
       calcAnnotationsSize();
@@ -749,21 +750,15 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     }
   }
 
-  private void calcLineMarkerAreaWidth(boolean canShrink) {
-    myLineToGutterRenderers = new TIntObjectHashMap<>();
-    myLeftFreePaintersAreaShown = myForceLeftFreePaintersAreaShown;
-    myRightFreePaintersAreaShown = myForceRightFreePaintersAreaShown;
+  public void clearLineToGutterRenderersCache() {
+    myLineToGutterRenderers = null;
+  }
 
+  private void buildGutterRenderersCache() {
+    myLineToGutterRenderers = new TIntObjectHashMap<>();
     processRangeHighlighters(0, myEditor.getDocument().getTextLength(), new RangeHighlighterProcessor() {
       @Override
       public void process(@NotNull RangeHighlighter highlighter) {
-        LineMarkerRenderer lineMarkerRenderer = highlighter.getLineMarkerRenderer();
-        if (lineMarkerRenderer != null) {
-          LineMarkerRendererEx.Position position = getLineMarkerPosition(lineMarkerRenderer);
-          if (position == LineMarkerRendererEx.Position.LEFT && isLineMarkerVisible(highlighter)) myLeftFreePaintersAreaShown = true;
-          if (position == LineMarkerRendererEx.Position.RIGHT && isLineMarkerVisible(highlighter)) myRightFreePaintersAreaShown = true;
-        }
-
         GutterMark renderer = highlighter.getGutterIconRenderer();
         if (renderer == null) {
           return;
@@ -781,6 +776,23 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
         if (renderers.size() < 5) { // Don't allow more than 5 icons per line
           renderers.add(renderer);
+        }
+      }
+    });
+  }
+
+  private void calcLineMarkerAreaWidth(boolean canShrink) {
+    myLeftFreePaintersAreaShown = myForceLeftFreePaintersAreaShown;
+    myRightFreePaintersAreaShown = myForceRightFreePaintersAreaShown;
+
+    processRangeHighlighters(0, myEditor.getDocument().getTextLength(), new RangeHighlighterProcessor() {
+      @Override
+      public void process(@NotNull RangeHighlighter highlighter) {
+        LineMarkerRenderer lineMarkerRenderer = highlighter.getLineMarkerRenderer();
+        if (lineMarkerRenderer != null) {
+          LineMarkerRendererEx.Position position = getLineMarkerPosition(lineMarkerRenderer);
+          if (position == LineMarkerRendererEx.Position.LEFT && isLineMarkerVisible(highlighter)) myLeftFreePaintersAreaShown = true;
+          if (position == LineMarkerRendererEx.Position.RIGHT && isLineMarkerVisible(highlighter)) myRightFreePaintersAreaShown = true;
         }
       }
     });
@@ -815,10 +827,16 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   @Nullable
   private List<GutterMark> getGutterRenderers(int line) {
+    if (myLineToGutterRenderers == null) {
+      buildGutterRenderersCache();
+    }
     return myLineToGutterRenderers.get(line);
   }
 
   private void processGutterRenderers(@NotNull TIntObjectProcedure<List<GutterMark>> processor) {
+    if (myLineToGutterRenderers == null) {
+      buildGutterRenderersCache();
+    }
     myLineToGutterRenderers.forEachEntry(processor);
   }
 
