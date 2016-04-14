@@ -46,6 +46,7 @@ public class BinaryOSProcessHandler extends OSProcessHandler {
   private class SimpleBinaryReader extends BinaryOutputReader {
     private SimpleBinaryReader(InputStream stream, SleepingPolicy policy) {
       super(stream, policy);
+      start("output stream of " + myPresentableName);
     }
 
     @Override
