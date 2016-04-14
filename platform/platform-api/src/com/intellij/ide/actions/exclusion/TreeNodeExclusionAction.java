@@ -27,7 +27,7 @@ import java.awt.*;
 /**
  * @author Dmitry Batkovich.
  */
-class TreeNodeExclusionAction<T extends MutableTreeNode> extends AnAction {
+abstract class TreeNodeExclusionAction<T extends MutableTreeNode> extends AnAction {
   private final static Logger LOG = Logger.getInstance(TreeNodeExclusionAction.class);
 
   private final boolean myIsExclude;
