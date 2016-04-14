@@ -32,6 +32,7 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
 
   private static final String PRELOADER_CLASS = "preloaderClass";
   private static final String TITLE = "title";
+  private static final String VERSION = "version";
   private static final String ICONS = "icons";
   private static final String RELATIVE_PATH = "relativePath";
   private static final String PRELOADER_JAR = "preloaderJar";
@@ -205,6 +206,35 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
              .build());
   }
 
+  public void testJarDeployVersion() throws Exception {
+    doTest("<fx:fileset id=\"all_but_jarDeployVersion\" dir=\"temp\" includes=\"**/*.jar\">\n" +
+           "<exclude name=\"jarDeployVersion.jar\">\n" +
+           "</exclude>\n" +
+           "</fx:fileset>\n" +
+           "<fx:fileset id=\"all_jarDeployVersion\" dir=\"temp\" includes=\"**/*.jar\">\n" +
+           "</fx:fileset>\n" +
+           "<fx:application id=\"jarDeployVersion_id\" name=\"jarDeployVersion\" mainClass=\"Main\" version=\"4.2\">\n" +
+           "</fx:application>\n" +
+           "<fx:jar destfile=\"temp/jarDeployVersion.jar\">\n" +
+           "<fx:application refid=\"jarDeployVersion_id\">\n" +
+           "</fx:application>\n" +
+           "<fileset dir=\"temp\" excludes=\"**/*.jar\">\n" +
+           "</fileset>\n" +
+           "<fx:resources>\n" +
+           "<fx:fileset refid=\"all_but_jarDeployVersion\">\n" +
+           "</fx:fileset>\n" +
+           "</fx:resources>\n" +
+           "</fx:jar>\n" +
+           "<fx:deploy width=\"800\" height=\"400\" updatemode=\"background\" outdir=\"temp/deploy\" outfile=\"jarDeployVersion\">\n" +
+           "<fx:application refid=\"jarDeployVersion_id\">\n" +
+           "</fx:application>\n" +
+           "<fx:resources>\n" +
+           "<fx:fileset refid=\"all_jarDeployVersion\">\n" +
+           "</fx:fileset>\n" +
+           "</fx:resources>\n" +
+           "</fx:deploy>\n", Collections.singletonMap(VERSION, "4.2"));
+  }
+
   public void testJarDeploySigned() throws Exception {
     doTest("<fx:fileset id=\"all_but_jarDeploySigned\" dir=\"temp\" includes=\"**/*.jar\">\n" +
            "<exclude name=\"jarDeploySigned.jar\">\n" +
@@ -288,6 +318,11 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
       packager.setTitle(title);
     }
 
+    final String version = options.get(VERSION);
+    if (version != null) {
+      packager.setVersion(version);
+    }
+
     boolean isRelativeIconPath = Boolean.valueOf(options.get(RELATIVE_PATH));
     final String icon = options.get(ICONS);
     if (icon != null) {
@@ -333,6 +368,7 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
     private String myTitle;
     private String myVendor;
     private String myDescription;
+    private String myVersion;
     private String myHtmlParams;
     private String myParams;
     private String myPreloaderClass;
@@ -358,6 +394,10 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
 
     private void setDescription(String description) {
       myDescription = description;
+    }
+
+    private void setVersion(String version) {
+      myVersion = version;
     }
 
     private void setHtmlParams(String htmlParams) {
@@ -421,6 +461,11 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
     @Override
     protected String getDescription() {
       return myDescription;
+    }
+
+    @Override
+    public String getVersion() {
+      return myVersion;
     }
 
     @Override

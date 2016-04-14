@@ -151,6 +151,11 @@ public class JpsJavaFxArtifactBuildTaskProvider extends ArtifactBuildTaskProvide
     }
 
     @Override
+    protected String getVersion() {
+      return myProperties.myState.getVersion();
+    }
+
+    @Override
     protected JavaFxApplicationIcons getIcons() {
       return myProperties.myState.getIcons();
     }

@@ -28,6 +28,7 @@ public class JpsJavaFxArtifactProperties extends JpsElementBase<JpsJavaFxArtifac
     myState.setTitle(state.myTitle);
     myState.setVendor(state.myVendor);
     myState.setDescription(state.myDescription);
+    myState.setVersion(state.myVersion);
     myState.setWidth(state.myWidth);
     myState.setHeight(state.myHeight);
     myState.setHtmlParamFile(state.myHtmlParamFile);
@@ -61,6 +62,7 @@ public class JpsJavaFxArtifactProperties extends JpsElementBase<JpsJavaFxArtifac
     private String myVendor;
     private String myDescription;
     private String myAppClass;
+    private String myVersion;
     private String myWidth = JavaFxPackagerConstants.DEFAULT_WEIGHT;
     private String myHeight = JavaFxPackagerConstants.DEFAULT_HEIGHT;
     private String myHtmlParamFile;
@@ -99,6 +101,14 @@ public class JpsJavaFxArtifactProperties extends JpsElementBase<JpsJavaFxArtifac
 
     public void setDescription(String description) {
       myDescription = description;
+    }
+
+    public String getVersion() {
+      return myVersion;
+    }
+
+    public void setVersion(String version) {
+      myVersion = version;
     }
 
     public JavaFxApplicationIcons getIcons() {

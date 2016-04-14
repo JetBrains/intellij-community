@@ -59,6 +59,8 @@ public abstract class AbstractJavaFxPackager {
 
   protected abstract String getDescription();
 
+  protected abstract String getVersion();
+
   protected abstract String getWidth();
 
   protected abstract String getHeight();

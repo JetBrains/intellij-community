@@ -57,6 +57,7 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
   private String myVendor;
   private String myDescription;
   private String myAppClass;
+  private String myVersion;
   private String myWidth = JavaFxPackagerConstants.DEFAULT_WEIGHT;
   private String myHeight = JavaFxPackagerConstants.DEFAULT_HEIGHT;
   private String myHtmlParamFile;
@@ -164,6 +165,14 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
 
   public void setAppClass(String appClass) {
     myAppClass = appClass;
+  }
+
+  public String getVersion() {
+    return myVersion;
+  }
+
+  public void setVersion(String version) {
+    myVersion = version;
   }
 
   public String getWidth() {
@@ -367,6 +376,11 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
     @Override
     protected String getDescription() {
       return myProperties.getDescription();
+    }
+
+    @Override
+    protected String getVersion() {
+      return myProperties.getVersion();
     }
 
     @Override

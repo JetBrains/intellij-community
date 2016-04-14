@@ -81,6 +81,10 @@ public class JavaFxAntGenerator {
     if (preloaderFiles != null) {
       applicationTag.addAttribute(Couple.of("preloaderClass", preloaderClass));
     }
+    final String version = packager.getVersion();
+    if (!StringUtil.isEmptyOrSpaces(version)) {
+      applicationTag.addAttribute(Couple.of("version", version.trim().replaceAll("\\s", "-")));
+    }
 
     appendValuesFromPropertiesFile(applicationTag, packager.getHtmlParamFile(), "fx:htmlParam", false);
     //also loads fx:argument values

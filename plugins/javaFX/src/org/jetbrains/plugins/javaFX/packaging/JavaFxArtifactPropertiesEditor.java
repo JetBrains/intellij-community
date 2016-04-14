@@ -52,6 +52,7 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
   private JTextField myVendorTF;
   private JEditorPane myDescriptionEditorPane;
   private TextFieldWithBrowseButton myAppClass;
+  private JTextField myVersionTF;
   private JTextField myWidthTF;
   private JTextField myHeightTF;
   private TextFieldWithBrowseButton myHtmlParams;
@@ -128,6 +129,7 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
     if (isModified(myProperties.getWidth(), myWidthTF)) return true;
     if (isModified(myProperties.getHeight(), myHeightTF)) return true;
     if (isModified(myProperties.getAppClass(), myAppClass)) return true;
+    if (isModified(myProperties.getVersion(), myVersionTF)) return true;
     if (isModified(myProperties.getHtmlParamFile(), myHtmlParams)) return true;
     if (isModified(myProperties.getParamFile(), myParams)) return true;
     if (!Comparing.equal(myNativeBundleCB.getSelectedItem(), myProperties.getNativeBundle())) return true;
@@ -164,6 +166,7 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
     myProperties.setVendor(myVendorTF.getText());
     myProperties.setDescription(myDescriptionEditorPane.getText());
     myProperties.setAppClass(myAppClass.getText());
+    myProperties.setVersion(myVersionTF.getText());
     myProperties.setWidth(myWidthTF.getText());
     myProperties.setHeight(myHeightTF.getText());
     myProperties.setHtmlParamFile(myHtmlParams.getText());
@@ -201,6 +204,7 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
     setText(myWidthTF, myProperties.getWidth());
     setText(myHeightTF, myProperties.getHeight());
     setText(myAppClass, myProperties.getAppClass());
+    setText(myVersionTF, myProperties.getVersion());
     setText(myHtmlParams, myProperties.getHtmlParamFile());
     setText(myParams, myProperties.getParamFile());
     myNativeBundleCB.setSelectedItem(myProperties.getNativeBundle());
