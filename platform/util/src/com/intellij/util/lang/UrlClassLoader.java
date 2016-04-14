@@ -81,7 +81,7 @@ public class UrlClassLoader extends ClassLoader {
   }
 
   /**
-   * @see com.intellij.TestAll#getClassRoots()
+   * See com.intellij.TestAll#getClassRoots()
    */
   @SuppressWarnings("unused")
   public List<URL> getBaseUrls() {
@@ -139,9 +139,9 @@ public class UrlClassLoader extends ClassLoader {
       return this; 
     }
     
-    public Builder allowUnescaped() { myAcceptUnescaped = true; return this; }
+    public Builder allowUnescaped() { return allowUnescaped(true); }
     public Builder allowUnescaped(boolean acceptUnescaped) { myAcceptUnescaped = acceptUnescaped; return this; }
-    public Builder noPreload() { myPreload = false; return this; }
+    public Builder noPreload() { return preload(false); }
     public Builder preload(boolean preload) { myPreload = preload; return this; }
     public Builder allowBootstrapResources() { myAllowBootstrapResources = true; return this; }
 
@@ -352,14 +352,14 @@ public class UrlClassLoader extends ClassLoader {
 
   /**
    * An interface for a pool to store internal class loader caches, that can be shared between several different class loaders,
-   * if they contain the same URLs in their classpaths.<p/>
+   * if they contain the same URLs in their class paths.<p/>
    * 
    * The implementation is subject to change so one shouldn't rely on it.
    * 
    * @see #createCachePool()
    * @see Builder#useCache(CachePool, CachingCondition) 
    */
-  public interface CachePool {}
+  public interface CachePool { }
 
   /**
    * A condition to customize the caching policy when using {@link CachePool}. This might be needed when a class loader is used on a directory
@@ -368,7 +368,6 @@ public class UrlClassLoader extends ClassLoader {
    * with several module outputs.
    */
   public interface CachingCondition {
-
     /**
      * @return whether the internal information should be cached for files in a specific classpath component URL: inside the directory or
      * a jar.
@@ -378,7 +377,7 @@ public class UrlClassLoader extends ClassLoader {
 
   /**
    * @return a new pool to be able to share internal class loader caches between several different class loaders, if they contain the same URLs
-   * in their classpaths.
+   * in their class paths.
    */
   @NotNull 
   public static CachePool createCachePool() {
