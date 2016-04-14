@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,16 @@ package com.intellij.application.options.codeStyle;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Trinity;
-import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
+import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.psi.codeStyle.presentation.CodeStyleSettingPresentation;
 import com.intellij.ui.OptionGroup;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
@@ -70,21 +74,21 @@ public class CodeStyleBlankLinesPanel extends CustomizableLanguageCodeStylePanel
       keepBlankLinesOptionsGroup.setAnchor(keepBlankLinesOptionsGroup.findAnchor());
       optionsPanel.add(keepBlankLinesOptionsGroup.createPanel(),
                        new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
-                                              new Insets(0, 0, 0, 0), 0, 0));
+                                              JBUI.emptyInsets(), 0, 0));
     }
     if (blankLinesOptionsGroup != null) {
       blankLinesOptionsGroup.setAnchor(blankLinesOptionsGroup.findAnchor());
       optionsPanel.add(blankLinesOptionsGroup.createPanel(),
                        new GridBagConstraints(0, 1, 1, 1, 1, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
-                                              new Insets(0, 0, 0, 0), 0, 0));
+                                              JBUI.emptyInsets(), 0, 0));
     }
     UIUtil.mergeComponentsWithAnchor(keepBlankLinesOptionsGroup, blankLinesOptionsGroup);
 
     optionsPanel.add(new JPanel(),
-                     new GridBagConstraints(0, 2, 1, 1, 0, 1, GridBagConstraints.NORTH, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0,
+                     new GridBagConstraints(0, 2, 1, 1, 0, 1, GridBagConstraints.NORTH, GridBagConstraints.BOTH, JBUI.emptyInsets(), 0,
                                             0));
 
-    optionsPanel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
+    optionsPanel.setBorder(JBUI.Borders.empty(0, 10));
     JScrollPane scroll = ScrollPaneFactory.createScrollPane(optionsPanel, true);
     scroll.getVerticalScrollBar().setUnitIncrement(10);
     scroll.setMinimumSize(new Dimension(optionsPanel.getPreferredSize().width + scroll.getVerticalScrollBar().getPreferredSize().width + 5, -1));
@@ -92,12 +96,12 @@ public class CodeStyleBlankLinesPanel extends CustomizableLanguageCodeStylePanel
 
     myPanel
       .add(scroll,
-           new GridBagConstraints(0, 0, 1, 1, 0, 1, GridBagConstraints.NORTH, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+           new GridBagConstraints(0, 0, 1, 1, 0, 1, GridBagConstraints.NORTH, GridBagConstraints.BOTH, JBUI.emptyInsets(), 0, 0));
 
     final JPanel previewPanel = createPreviewPanel();
     myPanel
       .add(previewPanel,
-           new GridBagConstraints(1, 0, 1, 1, 1, 1, GridBagConstraints.NORTH, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+           new GridBagConstraints(1, 0, 1, 1, 1, 1, GridBagConstraints.NORTH, GridBagConstraints.BOTH, JBUI.emptyInsets(), 0, 0));
 
     installPreviewPanel(previewPanel);
     addPanelToWatch(myPanel);

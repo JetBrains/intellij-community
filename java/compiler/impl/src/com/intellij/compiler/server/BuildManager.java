@@ -81,6 +81,7 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.IntArrayList;
+import com.intellij.util.io.BaseOutputReader;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.NetUtils;
@@ -1156,6 +1157,8 @@ public class BuildManager implements Disposable {
     cmdLine.addParameter("-D" + PathManager.PROPERTY_PLUGINS_PATH + "=" + PathManager.getPluginsPath());
 
     cmdLine.addParameter("-D" + GlobalOptions.LOG_DIR_OPTION + "=" + FileUtil.toSystemIndependentName(getBuildLogDirectory().getAbsolutePath()));
+    cmdLine.addParameter("-D" + GlobalOptions.FALLBACK_JDK_HOME + "=" + FileUtil.toSystemIndependentName(SystemProperties.getJavaHome()));
+    cmdLine.addParameter("-D" + GlobalOptions.FALLBACK_JDK_VERSION + "=" + SystemProperties.getJavaVersion());
 
     final File workDirectory = getBuildSystemDirectory();
     //noinspection ResultOfMethodCallIgnored
@@ -1209,9 +1212,10 @@ public class BuildManager implements Disposable {
         return true;
       }
 
+      @NotNull
       @Override
-      protected boolean useNonBlockingRead() {
-        return false;
+      protected BaseOutputReader.Options readerOptions() {
+        return BaseOutputReader.Options.BLOCKING;
       }
     };
     processHandler.addProcessListener(new ProcessAdapter() {
@@ -1461,7 +1465,7 @@ public class BuildManager implements Disposable {
       String text;
 
       synchronized (this) {
-        if (myStoredLength > 2048) {
+        if (myStoredLength > 16384) {
           return;
         }
         text = event.getText();

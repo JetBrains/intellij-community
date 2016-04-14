@@ -34,7 +34,6 @@ import com.intellij.openapi.util.InvalidDataException
 import com.intellij.openapi.util.JDOMExternalizable
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.NamedJDOMExternalizable
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.ui.AppUIUtil
@@ -126,7 +125,7 @@ abstract class ComponentStoreImpl : IComponentStore {
       var timeLog = if (LOG.isDebugEnabled) StringBuilder(timeLogPrefix) else null
       for (name in names) {
         val start = if (timeLog == null) 0 else System.currentTimeMillis()
-        commitComponent(externalizationSession, components[name]!!, name)
+        commitComponent(externalizationSession, components.get(name)!!, name)
         timeLog?.let {
           val duration = System.currentTimeMillis() - start
           if (duration > 10) {
@@ -268,7 +267,8 @@ abstract class ComponentStoreImpl : IComponentStore {
         }
 
         val storage = storageManager.getStateStorage(storageSpec)
-        var stateGetter = if (isUseLoadedStateAsExisting(storage) && (ApplicationManager.getApplication().isUnitTestMode || Registry.`is`("use.loaded.state.as.existing", false))) {
+        // todo "ProjectModuleManager" investigate why after loadState we get empty state on getState, test CMakeWorkspaceContentRootsTest
+        var stateGetter = if (isUseLoadedStateAsExisting(storage) && name != "ProjectModuleManager") {
           (storage as? StorageBaseEx<*>)?.createGetSession(component, name, stateClass)
         }
         else {

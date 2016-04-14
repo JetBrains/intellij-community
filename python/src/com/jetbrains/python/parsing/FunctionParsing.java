@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -203,13 +203,8 @@ public class FunctionParsing extends Parsing {
       isStarParameter = true;
     }
     if (matchToken(PyTokenTypes.IDENTIFIER)) {
-      if (!isLambda && myContext.getLanguageLevel().isPy3K() && atToken(PyTokenTypes.COLON)) {
-        PsiBuilder.Marker annotationMarker = myBuilder.mark();
-        nextToken();
-        if (!getExpressionParser().parseSingleExpression(false)) {
-          myBuilder.error(message("PARSE.expected.expression"));
-        }
-        annotationMarker.done(PyElementTypes.ANNOTATION);
+      if (!isLambda) {
+        parseParameterAnnotation();
       }
       if (!isStarParameter && matchToken(PyTokenTypes.EQ)) {
         if (!getExpressionParser().parseSingleExpression(false)) {
@@ -235,6 +230,17 @@ public class FunctionParsing extends Parsing {
       return atToken(endToken) || atToken(PyTokenTypes.COMMA);
     }
     return true;
+  }
+
+  protected void parseParameterAnnotation() {
+    if (myContext.getLanguageLevel().isPy3K() && atToken(PyTokenTypes.COLON)) {
+      PsiBuilder.Marker annotationMarker = myBuilder.mark();
+      nextToken();
+      if (!getExpressionParser().parseSingleExpression(false)) {
+        myBuilder.error(message("PARSE.expected.expression"));
+      }
+      annotationMarker.done(PyElementTypes.ANNOTATION);
+    }
   }
 
   private void parseParameterSubList() {

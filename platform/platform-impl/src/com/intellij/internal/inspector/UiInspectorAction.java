@@ -48,6 +48,7 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
+import javax.swing.plaf.ColorUIResource;
 import javax.swing.plaf.UIResource;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellRenderer;
@@ -1056,8 +1057,8 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
                                            Integer.parseInt(s[4]), Integer.parseInt(s[4]));
     }
     else if (type == Color.class) {
-      if (s.length >= 5) return new Color(Integer.parseInt(s[1]), Integer.parseInt(s[2]),
-                                          Integer.parseInt(s[3]), Integer.parseInt(s[4]));
+      if (s.length >= 5) return new ColorUIResource(
+        new Color(Integer.parseInt(s[1]), Integer.parseInt(s[2]), Integer.parseInt(s[3]), Integer.parseInt(s[4])));
     }
     throw new UnsupportedOperationException(type.toString());
   }

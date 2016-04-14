@@ -1,6 +1,6 @@
 <component>
+  <version major="2016" minor="2" eap="true"/>
   <company name="JetBrains s.r.o." url="https://www.jetbrains.com/?fromIDE"/>
-  <version major="2016" minor="1" eap="true"/>
   <build number="__BUILD_NUMBER__" date="__BUILD_DATE__"/>
   <logo url="/pycharm_core_logo.png" textcolor="dddddd" progressColor="08f5d6" progressX="0" progressY="280" progressHeight="3"/>
   <about url="/pycharm_core_about.png" logoX="300" logoY="265" logoW="75" logoH="30" foreground="313131"
@@ -8,7 +8,6 @@
   <icon size32="/PyCharmCore32.png" size16="/PyCharmCore16.png" ico="PyCharmCore.ico"/>
   <package code="__PACKAGE_CODE__"/>
   <names product="PyCharm" fullname="PyCharm Community Edition" script="charm"/>
-  <install-over minbuild="0" maxbuild="0" version="4.x"/>
 
   <welcome-screen logo-url="/PyCharmCoreWelcomeScreen.png"/>
 

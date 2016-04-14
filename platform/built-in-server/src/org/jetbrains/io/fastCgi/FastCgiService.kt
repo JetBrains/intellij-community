@@ -128,14 +128,14 @@ abstract class FastCgiService(project: Project) : SingleConnectionNetService(pro
     }
 
     if (buffer == null) {
-      Responses.sendStatus(HttpResponseStatus.BAD_GATEWAY, channel)
+      HttpResponseStatus.BAD_GATEWAY.send(channel)
       return
     }
 
     val httpResponse = DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, buffer)
     try {
       parseHeaders(httpResponse, buffer)
-      Responses.addServer(httpResponse)
+      httpResponse.addServer()
       if (!HttpUtil.isContentLengthSet(httpResponse)) {
         HttpUtil.setContentLength(httpResponse, buffer.readableBytes().toLong())
       }
@@ -146,7 +146,7 @@ abstract class FastCgiService(project: Project) : SingleConnectionNetService(pro
         LOG.error(e)
       }
       finally {
-        Responses.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR, channel)
+        HttpResponseStatus.INTERNAL_SERVER_ERROR.send(channel)
       }
       return
     }
@@ -158,7 +158,7 @@ abstract class FastCgiService(project: Project) : SingleConnectionNetService(pro
 private fun sendBadGateway(channel: Channel) {
   try {
     if (channel.isActive) {
-      Responses.sendStatus(HttpResponseStatus.BAD_GATEWAY, channel)
+      HttpResponseStatus.BAD_GATEWAY.send(channel)
     }
   }
   catch (e: Throwable) {
@@ -208,10 +208,10 @@ private fun parseHeaders(response: HttpResponse, buffer: ByteBuf) {
       val index = value.indexOf(' ')
       if (index == -1) {
         LOG.warn("Cannot parse status: " + value)
-        response.setStatus(HttpResponseStatus.OK)
+        response.status = HttpResponseStatus.OK
       }
       else {
-        response.setStatus(HttpResponseStatus.valueOf(Integer.parseInt(value.substring(0, index))))
+        response.status = HttpResponseStatus.valueOf(Integer.parseInt(value.substring(0, index)))
       }
     }
     else if (!(key.startsWith("http") || key.startsWith("HTTP"))) {

@@ -82,6 +82,90 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   }
 
   @Test
+  @TargetVersions("2.0+")
+  public void testTransitiveNonTransitiveDependencyScopeMerge() throws Exception {
+    createSettingsFile("include 'project1'\n" +
+                       "include 'project2'\n");
+
+    importProject(
+      "project(':project1') {\n" +
+      "  apply plugin: 'java'\n" +
+      "  dependencies {\n" +
+      "    compile 'junit:junit:4.11'\n" +
+      "  }\n" +
+      "}\n" +
+      "\n" +
+      "project(':project2') {\n" +
+      "  apply plugin: 'java'\n" +
+      "  dependencies.ext.strict = { projectPath ->\n" +
+      "    dependencies.compile dependencies.project(path: projectPath, transitive: false)\n" +
+      "    dependencies.runtime dependencies.project(path: projectPath, transitive: true)\n" +
+      "    dependencies.testRuntime dependencies.project(path: projectPath, transitive: true)\n" +
+      "  }\n" +
+      "\n" +
+      "  dependencies {\n" +
+      "    strict ':project1'\n" +
+      "  }\n" +
+      "}\n"
+    );
+
+    assertModules("project", "project1", "project1_main", "project1_test", "project2", "project2_main", "project2_test");
+
+    assertModuleModuleDeps("project2_main", "project1_main");
+    assertModuleModuleDepScope("project2_main", "project1_main", DependencyScope.COMPILE);
+    assertModuleLibDepScope("project2_main", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.RUNTIME);
+    assertModuleLibDepScope("project2_main", "Gradle: junit:junit:4.11", DependencyScope.RUNTIME);
+
+    if(GradleVersion.version(gradleVersion).compareTo(GradleVersion.version("2.5")) >= 0) {
+      importProjectUsingSingeModulePerGradleProject();
+      assertModules("project", "project1", "project2");
+      assertModuleModuleDepScope("project2", "project1", DependencyScope.COMPILE);
+      assertModuleLibDepScope("project2", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.RUNTIME);
+      assertModuleLibDepScope("project2", "Gradle: junit:junit:4.11", DependencyScope.RUNTIME);
+    }
+  }
+
+  @Test
+  @TargetVersions("2.0+")
+  public void testProvidedDependencyScopeMerge() throws Exception {
+    createSettingsFile("include 'web'\n" +
+                       "include 'user'");
+
+    importProject(
+      "subprojects {\n" +
+      "  apply plugin: 'java'\n" +
+      "  configurations {\n" +
+      "    provided\n" +
+      "  }\n" +
+      "}\n" +
+      "\n" +
+      "project(':web') {\n" +
+      "  dependencies {\n" +
+      "    provided 'junit:junit:4.11'\n" +
+      "  }\n" +
+      "}\n" +
+      "project(':user') {\n" +
+      "  apply plugin: 'war'\n" +
+      "  dependencies {\n" +
+      "    compile project(':web')\n" +
+      "    providedCompile project(path: ':web', configuration: 'provided')\n" +
+      "  }\n" +
+      "}"
+    );
+
+    assertModules("project", "web", "web_main", "web_test", "user", "user_main", "user_test");
+
+    assertModuleLibDeps("web");
+    assertModuleLibDeps("web_main");
+    assertModuleLibDeps("web_test");
+
+    assertModuleModuleDeps("user_main", "web_main");
+    assertModuleModuleDepScope("user_main", "web_main", DependencyScope.COMPILE);
+    assertModuleLibDepScope("user_main", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.PROVIDED);
+    assertModuleLibDepScope("user_main", "Gradle: junit:junit:4.11", DependencyScope.PROVIDED);
+  }
+
+  @Test
   public void testCustomSourceSetsDependencies() throws Exception {
     createSettingsFile("include 'api', 'impl' ");
 

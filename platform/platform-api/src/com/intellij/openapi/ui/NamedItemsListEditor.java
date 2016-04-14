@@ -122,7 +122,7 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
     }
 
     @Nullable
-    private T findByName(String name) {
+    protected T findByName(String name) {
         for (T item : myItems) {
             if (Comparing.equal(name, myNamer.getName(item))) return item;
         }

@@ -23,7 +23,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -81,17 +80,23 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
 
     result.add(GlobalSearchScopes.openFilesScope(project));
 
+    final Editor selectedTextEditor = ApplicationManager.getApplication().isDispatchThread()
+                                      ? FileEditorManager.getInstance(project).getSelectedTextEditor()
+                                      : null;
+    final PsiFile psiFile =
+      (selectedTextEditor != null) ? PsiDocumentManager.getInstance(project).getPsiFile(selectedTextEditor.getDocument()) : null;
+    if (psiFile != null) {
+      result.add(new LocalSearchScope(psiFile, IdeBundle.message("scope.current.file")));
+    }
+
     if (dataContext != null) {
       PsiElement dataContextElement = CommonDataKeys.PSI_FILE.getData(dataContext);
       if (dataContextElement == null) {
         dataContextElement = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
       }
 
-      if (dataContextElement == null) {
-        final Editor selectedTextEditor = FileEditorManager.getInstance(project).getSelectedTextEditor();
-        if (selectedTextEditor != null) {
-          dataContextElement = PsiDocumentManager.getInstance(project).getPsiFile(selectedTextEditor.getDocument());
-        }
+      if (dataContextElement == null && psiFile != null) {
+        dataContextElement = psiFile;
       }
 
       if (dataContextElement != null) {
@@ -104,43 +109,36 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
             result.add(module.getModuleScope());
           }
         }
-        if (dataContextElement.getContainingFile() != null) {
+        if (psiFile == null && dataContextElement.getContainingFile() != null) {
           result.add(new LocalSearchScope(dataContextElement, IdeBundle.message("scope.current.file")));
         }
       }
     }
 
-    if (currentSelection) {
-      FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
-      final Editor selectedTextEditor = fileEditorManager.getSelectedTextEditor();
-      if (selectedTextEditor != null) {
-        final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(selectedTextEditor.getDocument());
-        if (psiFile != null) {
-          SelectionModel selectionModel = selectedTextEditor.getSelectionModel();
-          if (selectionModel.hasSelection()) {
-            int start = selectionModel.getSelectionStart();
-            final PsiElement startElement = psiFile.findElementAt(start);
-            if (startElement != null) {
-              int end = selectionModel.getSelectionEnd();
-              final PsiElement endElement = psiFile.findElementAt(end);
-              if (endElement != null) {
-                final PsiElement parent = PsiTreeUtil.findCommonParent(startElement, endElement);
-                if (parent != null) {
-                  final List<PsiElement> elements = new ArrayList<PsiElement>();
-                  final PsiElement[] children = parent.getChildren();
-                  TextRange selection = new TextRange(start, end);
-                  for (PsiElement child : children) {
-                    if (!(child instanceof PsiWhiteSpace) &&
-                        child.getContainingFile() != null &&
-                        selection.contains(child.getTextOffset())) {
-                      elements.add(child);
-                    }
-                  }
-                  if (!elements.isEmpty()) {
-                    SearchScope local = new LocalSearchScope(PsiUtilCore.toPsiElementArray(elements), IdeBundle.message("scope.selection"));
-                    result.add(local);
-                  }
+    if (currentSelection && selectedTextEditor != null && psiFile != null) {
+      SelectionModel selectionModel = selectedTextEditor.getSelectionModel();
+      if (selectionModel.hasSelection()) {
+        int start = selectionModel.getSelectionStart();
+        final PsiElement startElement = psiFile.findElementAt(start);
+        if (startElement != null) {
+          int end = selectionModel.getSelectionEnd();
+          final PsiElement endElement = psiFile.findElementAt(end);
+          if (endElement != null) {
+            final PsiElement parent = PsiTreeUtil.findCommonParent(startElement, endElement);
+            if (parent != null) {
+              final List<PsiElement> elements = new ArrayList<PsiElement>();
+              final PsiElement[] children = parent.getChildren();
+              TextRange selection = new TextRange(start, end);
+              for (PsiElement child : children) {
+                if (!(child instanceof PsiWhiteSpace) &&
+                    child.getContainingFile() != null &&
+                    selection.contains(child.getTextOffset())) {
+                  elements.add(child);
                 }
+              }
+              if (!elements.isEmpty()) {
+                SearchScope local = new LocalSearchScope(PsiUtilCore.toPsiElementArray(elements), IdeBundle.message("scope.selection"));
+                result.add(local);
               }
             }
           }

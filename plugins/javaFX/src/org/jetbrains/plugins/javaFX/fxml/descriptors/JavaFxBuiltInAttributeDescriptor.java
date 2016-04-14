@@ -17,9 +17,10 @@ package org.jetbrains.plugins.javaFX.fxml.descriptors;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlElement;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
@@ -35,24 +36,33 @@ public class JavaFxBuiltInAttributeDescriptor extends JavaFxPropertyAttributeDes
 
   private final String myParentTagName;
 
-  public JavaFxBuiltInAttributeDescriptor(String name, PsiClass psiClass) {
+  private JavaFxBuiltInAttributeDescriptor(String name, PsiClass psiClass) {
     super(name, psiClass);
     myParentTagName = null;
   }
 
-  public JavaFxBuiltInAttributeDescriptor(String name, String parentTagName) {
+  private JavaFxBuiltInAttributeDescriptor(String name, String parentTagName) {
     super(name, null);
     myParentTagName = parentTagName;
   }
 
-  @Override
-  public boolean hasIdType() {
-    return getName().equals(FxmlConstants.FX_ID);
+  public static JavaFxBuiltInAttributeDescriptor create(String name, PsiClass psiClass) {
+    if (FxmlConstants.FX_ID.equals(name)) return new FxIdAttributeDescriptor(psiClass);
+    if (FxmlConstants.FX_VALUE.equals(name)) return new FxValueAttributeDescriptor(psiClass);
+    if (FxmlConstants.FX_CONSTANT.equals(name)) return new FxConstantAttributeDescriptor(psiClass);
+    return new JavaFxBuiltInAttributeDescriptor(name, psiClass);
+  }
+
+  public static JavaFxBuiltInAttributeDescriptor create(String name, String parentTagName) {
+    if (FxmlConstants.FX_ID.equals(name)) return new FxIdAttributeDescriptor(parentTagName);
+    if (FxmlConstants.FX_VALUE.equals(name)) return new FxValueAttributeDescriptor(parentTagName);
+    if (FxmlConstants.FX_CONSTANT.equals(name)) return new FxConstantAttributeDescriptor(parentTagName);
+    return new JavaFxBuiltInAttributeDescriptor(name, parentTagName);
   }
 
   @Override
   public boolean isEnumerated() {
-    return getPsiClass() != null && getName().equals(FxmlConstants.FX_CONSTANT);
+    return false;
   }
 
   @Override
@@ -63,51 +73,120 @@ public class JavaFxBuiltInAttributeDescriptor extends JavaFxPropertyAttributeDes
   }
 
   @Override
-  protected PsiClass getEnum() {
-    return isEnumerated() ? getPsiClass() : null ;
-  }
-
-  protected boolean isConstant(PsiField field) {
-    return field.hasModifierProperty(PsiModifier.STATIC) && field.hasModifierProperty(PsiModifier.FINAL) && field.hasModifierProperty(PsiModifier.PUBLIC);
-  }
-
-  @Nullable
-  @Override
-  public String validateValue(XmlElement context, String value) {
-    if (context instanceof XmlAttributeValue) {
-      final PsiElement parent = context.getParent();
-      if (parent instanceof XmlAttribute) {
-        final XmlAttribute attribute = (XmlAttribute)parent;
-        final String attributeName = attribute.getName();
-        if (FxmlConstants.FX_VALUE.equals(attributeName)) {
-          final PsiClass tagClass = JavaFxPsiUtil.getTagClass((XmlAttributeValue)context);
-          if (tagClass != null) {
-            if (tagClass.isEnum()) {
-              return JavaFxPsiUtil.validateEnumConstant(tagClass, value);
-            }
-            final PsiMethod method = JavaFxPsiUtil.findValueOfMethod(tagClass);
-            if (method == null) {
-              return "Unable to coerce '" + value + "' to " + tagClass.getQualifiedName() + ".";
-            }
-          }
-        }
-        else if (FxmlConstants.FX_CONSTANT.equals(attributeName)) {
-          final PsiClass tagClass = JavaFxPsiUtil.getTagClass((XmlAttributeValue)context);
-          if (tagClass != null) {
-            final PsiField constField = tagClass.findFieldByName(value, true);
-            if (constField == null) {
-              return "Constant '" + value + "' is not found";
-            }
-          }
-          return null;
-        }
-      }
-    }
-    return super.validateValue(context, value);
-  }
-
-  @Override
   public String toString() {
     return myParentTagName != null ? myParentTagName + "#" + getName() : super.toString();
+  }
+
+
+  private static class FxIdAttributeDescriptor extends JavaFxBuiltInAttributeDescriptor {
+    private FxIdAttributeDescriptor(PsiClass psiClass) {
+      super(FxmlConstants.FX_ID, psiClass);
+    }
+
+    private FxIdAttributeDescriptor(String parentTagName) {
+      super(FxmlConstants.FX_ID, parentTagName);
+    }
+
+    @Override
+    public boolean hasIdType() {
+      return true;
+    }
+
+    @Nullable
+    @Override
+    protected String validateAttributeValue(@NotNull XmlAttributeValue xmlAttributeValue, @NotNull String value) {
+      final PsiClass controllerClass = JavaFxPsiUtil.getControllerClass(xmlAttributeValue.getContainingFile());
+      if (controllerClass != null) {
+        final PsiClass tagClass = JavaFxPsiUtil.getTagClass(xmlAttributeValue);
+        if (tagClass != null) {
+          final PsiField field = controllerClass.findFieldByName(value, true);
+          if (field != null && !InheritanceUtil.isInheritorOrSelf(tagClass, PsiUtil.resolveClassInType(field.getType()), true)) {
+            return "Cannot set " + tagClass.getQualifiedName() + " to field \'" + field.getName() + "\'";
+          }
+        }
+      }
+      return null;
+    }
+  }
+
+  private static class FxValueAttributeDescriptor extends JavaFxBuiltInAttributeDescriptor {
+    private FxValueAttributeDescriptor(PsiClass psiClass) {
+      super(FxmlConstants.FX_VALUE, psiClass);
+    }
+
+    private FxValueAttributeDescriptor(String parentTagName) {
+      super(FxmlConstants.FX_VALUE, parentTagName);
+    }
+
+    @Override
+    public boolean isEnumerated() {
+      final PsiClass psiClass = getPsiClass();
+      return psiClass != null && psiClass.isEnum();
+    }
+
+    @Override
+    protected PsiClass getEnum() {
+      final PsiClass psiClass = getPsiClass();
+      return psiClass.isEnum() ? psiClass : null;
+    }
+
+    protected boolean isConstant(PsiField field) {
+      return field instanceof PsiEnumConstant;
+    }
+
+    @Nullable
+    @Override
+    protected String validateAttributeValue(@NotNull XmlAttributeValue xmlAttributeValue, @NotNull String value) {
+      final PsiClass tagClass = JavaFxPsiUtil.getTagClass(xmlAttributeValue);
+      if (tagClass != null) {
+        if (tagClass.isEnum()) {
+          return JavaFxPsiUtil.validateEnumConstant(tagClass, value);
+        }
+        final PsiMethod method = JavaFxPsiUtil.findValueOfMethod(tagClass);
+        if (method == null) {
+          return "Unable to coerce '" + value + "' to " + tagClass.getQualifiedName() + ".";
+        }
+      }
+      return validateLiteral(xmlAttributeValue, value);
+    }
+  }
+
+  private static class FxConstantAttributeDescriptor extends JavaFxBuiltInAttributeDescriptor {
+    private FxConstantAttributeDescriptor(PsiClass psiClass) {
+      super(FxmlConstants.FX_CONSTANT, psiClass);
+    }
+
+    private FxConstantAttributeDescriptor(String parentTagName) {
+      super(FxmlConstants.FX_CONSTANT, parentTagName);
+    }
+
+    @Override
+    public boolean isEnumerated() {
+      return getPsiClass() != null;
+    }
+
+    @Override
+    protected PsiClass getEnum() {
+      return getPsiClass();
+    }
+
+    protected boolean isConstant(PsiField field) {
+      return field.hasModifierProperty(PsiModifier.STATIC) &&
+             field.hasModifierProperty(PsiModifier.FINAL) &&
+             field.hasModifierProperty(PsiModifier.PUBLIC);
+    }
+
+    @Nullable
+    @Override
+    protected String validateAttributeValue(@NotNull XmlAttributeValue xmlAttributeValue, @NotNull String value) {
+      final PsiClass tagClass = JavaFxPsiUtil.getTagClass(xmlAttributeValue);
+      if (tagClass != null) {
+        final PsiField constField = tagClass.findFieldByName(value, true);
+        if (constField == null || !isConstant(constField)) {
+          return "Constant '" + value + "' is not found";
+        }
+      }
+      return null;
+    }
   }
 }

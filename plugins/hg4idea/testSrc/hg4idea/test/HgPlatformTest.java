@@ -121,7 +121,7 @@ public abstract class HgPlatformTest extends VcsPlatformTest {
     hg("init");
     touch("file.txt");
     hg("add file.txt");
-    hg("commit -m initial");
+    hg("commit -m initial -u asd");
   }
 
   public void prepareSecondRepository() throws IOException {

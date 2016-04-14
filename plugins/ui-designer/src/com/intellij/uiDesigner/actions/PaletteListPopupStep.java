@@ -41,6 +41,7 @@ class PaletteListPopupStep implements ListPopupStep<ComponentItem>, SpeedSearchF
   private final Processor<ComponentItem> myRunnable;
   private final String myTitle;
   private final Project myProject;
+  private Runnable myFinalRunnable;
 
   PaletteListPopupStep(GuiEditor editor, ComponentItem initialSelection, final Processor<ComponentItem> runnable, final String title) {
     myInitialSelection = initialSelection;
@@ -93,12 +94,12 @@ class PaletteListPopupStep implements ListPopupStep<ComponentItem>, SpeedSearchF
   }
 
   public PopupStep onChosen(final ComponentItem selectedValue, final boolean finalChoice) {
-    myRunnable.process(selectedValue);
+    myFinalRunnable = () -> myRunnable.process(selectedValue);
     return PopupStep.FINAL_CHOICE;
   }
 
   public Runnable getFinalRunnable() {
-    return null;
+    return myFinalRunnable;
   }
 
   public boolean hasSubstep(final ComponentItem selectedValue) {

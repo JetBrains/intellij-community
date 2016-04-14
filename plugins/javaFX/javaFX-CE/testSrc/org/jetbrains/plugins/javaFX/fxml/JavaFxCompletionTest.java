@@ -80,6 +80,10 @@ public class JavaFxCompletionTest extends LightFixtureCompletionTestCase {
     doTest();
   }
 
+  public void testEnumConstantValue() throws Exception {
+    doTest("TOP_LEFT");
+  }
+
   public void testConstants() throws Exception {
     doTest("NEGATIVE_INFINITY");
   }
@@ -217,6 +221,16 @@ public class JavaFxCompletionTest extends LightFixtureCompletionTestCase {
     doTest("ColumnConstraints");
   }
 
+  public void testEventHandlerMethod() throws Exception {
+    configureAndComplete(getTestName(false) + ".java", getTestName(false) + "Super.java");
+    assertSameElements(myFixture.getLookupElementStrings(), "onMyKeyTyped", "onSuperKeyTyped");
+  }
+
+  public void testEventHandlerMethodTypeParam() throws Exception {
+    configureAndComplete(getTestName(false) + ".java", getTestName(false) + "Super.java");
+    assertSameElements(myFixture.getLookupElementStrings(), "onMyKeyTyped", "onSuperKeyTyped");
+  }
+
   public void testRawCollectionItem() throws Exception {
     configureAndComplete();
     assertDoesntContain(myFixture.getLookupElementStrings(), "T", "Object", "java.lang.Object");
@@ -255,6 +269,18 @@ public class JavaFxCompletionTest extends LightFixtureCompletionTestCase {
   public void testInheritedConstant() throws Exception {
     configureAndComplete("InheritedConstantData.java", "InheritedConstantSuperData.java");
     assertSameElements(myFixture.getLookupElementStrings(), "MY_TEXT", "SUPER_TEXT");
+  }
+
+  public void testMultipleStylesheetsAttribute() throws Exception {
+    myFixture.addFileToProject("mystyle.css", ".myStyle {}");
+    myFixture.addFileToProject("very/deeply/located/small.css", ".small {}");
+    doTest();
+  }
+
+  public void testMultipleStylesheetsTag() throws Exception {
+    myFixture.addFileToProject("mystyle.css", ".myStyle {}");
+    myFixture.addFileToProject("very/deeply/located/small.css", ".small {}");
+    doTest();
   }
 
   private void configureAndComplete(final String... extraFiles) {

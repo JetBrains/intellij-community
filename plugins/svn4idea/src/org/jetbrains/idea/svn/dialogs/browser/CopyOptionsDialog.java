@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.PopupHandler;
 import com.intellij.util.ui.GridBag;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -162,7 +163,7 @@ public class CopyOptionsDialog extends DialogWrapper {
     recentMessagesWrapper.add(new JLabel("Recent Messages:"), BorderLayout.NORTH);
     myMessagesBox = new JComboBox();
     recentMessagesWrapper.add(myMessagesBox, BorderLayout.SOUTH);
-    recentMessagesWrapper.setBorder(BorderFactory.createEmptyBorder(4,0,0,0));
+    recentMessagesWrapper.setBorder(JBUI.Borders.emptyTop(4));
     myMainPanel.add(recentMessagesWrapper, BorderLayout.SOUTH);
   }
 
@@ -179,7 +180,7 @@ public class CopyOptionsDialog extends DialogWrapper {
   private JPanel createBrowserPartWrapper() {
     final JPanel wrapper = new JPanel(new GridBagLayout());
     final GridBag gridBag = new GridBag().setDefaultAnchor(GridBagConstraints.NORTHWEST)
-      .setDefaultFill(GridBagConstraints.NONE).setDefaultInsets(1,1,1,1).setDefaultWeightX(1).setDefaultWeightY(0);
+      .setDefaultFill(GridBagConstraints.NONE).setDefaultInsets(JBUI.insets(1)).setDefaultWeightX(1).setDefaultWeightY(0);
 
     gridBag.nextLine().next();
     gridBag.weightx(0);

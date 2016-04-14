@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.Statements;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructField;
@@ -31,14 +32,11 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import java.util.ArrayList;
 import java.util.List;
 
-
 public class InitializerProcessor {
-
   public static void extractInitializers(ClassWrapper wrapper) {
-
-    MethodWrapper meth = wrapper.getMethodWrapper(CodeConstants.CLINIT_NAME, "()V");
-    if (meth != null && meth.root != null) {  // successfully decompiled static constructor
-      extractStaticInitializers(wrapper, meth);
+    MethodWrapper method = wrapper.getMethodWrapper(CodeConstants.CLINIT_NAME, "()V");
+    if (method != null && method.root != null) {  // successfully decompiled static constructor
+      extractStaticInitializers(wrapper, method);
     }
 
     extractDynamicInitializers(wrapper);
@@ -52,30 +50,26 @@ public class InitializerProcessor {
     }
   }
 
-
   private static void liftConstructor(ClassWrapper wrapper) {
-
-    for (MethodWrapper meth : wrapper.getMethods()) {
-      if (CodeConstants.INIT_NAME.equals(meth.methodStruct.getName()) && meth.root != null) {
-        Statement firstdata = findFirstData(meth.root);
-        if (firstdata == null) {
+    for (MethodWrapper method : wrapper.getMethods()) {
+      if (CodeConstants.INIT_NAME.equals(method.methodStruct.getName()) && method.root != null) {
+        Statement firstData = Statements.findFirstData(method.root);
+        if (firstData == null) {
           return;
         }
 
-
         int index = 0;
-        List<Exprent> lstExprents = firstdata.getExprents();
+        List<Exprent> lstExprents = firstData.getExprents();
 
         for (Exprent exprent : lstExprents) {
-
           int action = 0;
 
           if (exprent.type == Exprent.EXPRENT_ASSIGNMENT) {
-            AssignmentExprent asexpr = (AssignmentExprent)exprent;
-            if (asexpr.getLeft().type == Exprent.EXPRENT_FIELD && asexpr.getRight().type == Exprent.EXPRENT_VAR) {
-              FieldExprent fexpr = (FieldExprent)asexpr.getLeft();
-              if (fexpr.getClassname().equals(wrapper.getClassStruct().qualifiedName)) {
-                StructField structField = wrapper.getClassStruct().getField(fexpr.getName(), fexpr.getDescriptor().descriptorString);
+            AssignmentExprent assignExpr = (AssignmentExprent)exprent;
+            if (assignExpr.getLeft().type == Exprent.EXPRENT_FIELD && assignExpr.getRight().type == Exprent.EXPRENT_VAR) {
+              FieldExprent fExpr = (FieldExprent)assignExpr.getLeft();
+              if (fExpr.getClassname().equals(wrapper.getClassStruct().qualifiedName)) {
+                StructField structField = wrapper.getClassStruct().getField(fExpr.getName(), fExpr.getDescriptor().descriptorString);
                 if (structField != null && structField.hasModifier(CodeConstants.ACC_FINAL)) {
                   action = 1;
                 }
@@ -83,7 +77,7 @@ public class InitializerProcessor {
             }
           }
           else if (index > 0 && exprent.type == Exprent.EXPRENT_INVOCATION &&
-                   isInvocationInitConstructor((InvocationExprent)exprent, meth, wrapper, true)) {
+                   Statements.isInvocationInitConstructor((InvocationExprent)exprent, method, wrapper, true)) {
             // this() or super()
             lstExprents.add(0, lstExprents.remove(index));
             action = 2;
@@ -99,53 +93,50 @@ public class InitializerProcessor {
     }
   }
 
-
   private static void hideEmptySuper(ClassWrapper wrapper) {
-
-    for (MethodWrapper meth : wrapper.getMethods()) {
-      if (CodeConstants.INIT_NAME.equals(meth.methodStruct.getName()) && meth.root != null) {
-        Statement firstdata = findFirstData(meth.root);
-        if (firstdata == null || firstdata.getExprents().isEmpty()) {
+    for (MethodWrapper method : wrapper.getMethods()) {
+      if (CodeConstants.INIT_NAME.equals(method.methodStruct.getName()) && method.root != null) {
+        Statement firstData = Statements.findFirstData(method.root);
+        if (firstData == null || firstData.getExprents().isEmpty()) {
           return;
         }
 
-        Exprent exprent = firstdata.getExprents().get(0);
+        Exprent exprent = firstData.getExprents().get(0);
         if (exprent.type == Exprent.EXPRENT_INVOCATION) {
-          InvocationExprent invexpr = (InvocationExprent)exprent;
-          if (isInvocationInitConstructor(invexpr, meth, wrapper, false) && invexpr.getLstParameters().isEmpty()) {
-            firstdata.getExprents().remove(0);
+          InvocationExprent invExpr = (InvocationExprent)exprent;
+          if (Statements.isInvocationInitConstructor(invExpr, method, wrapper, false) && invExpr.getLstParameters().isEmpty()) {
+            firstData.getExprents().remove(0);
           }
         }
       }
     }
   }
 
-  private static void extractStaticInitializers(ClassWrapper wrapper, MethodWrapper meth) {
-
-    RootStatement root = meth.root;
+  private static void extractStaticInitializers(ClassWrapper wrapper, MethodWrapper method) {
+    RootStatement root = method.root;
     StructClass cl = wrapper.getClassStruct();
-    boolean isInterface = cl.hasModifier(CodeConstants.ACC_INTERFACE);
-    Statement firstdata = findFirstData(root);
-    if (firstdata != null) {
-      while (!firstdata.getExprents().isEmpty()) {
-        Exprent exprent = firstdata.getExprents().get(0);
+    Statement firstData = Statements.findFirstData(root);
+    if (firstData != null) {
+      boolean inlineInitializers = cl.hasModifier(CodeConstants.ACC_INTERFACE) || cl.hasModifier(CodeConstants.ACC_ENUM);
+
+      while (!firstData.getExprents().isEmpty()) {
+        Exprent exprent = firstData.getExprents().get(0);
 
         boolean found = false;
 
         if (exprent.type == Exprent.EXPRENT_ASSIGNMENT) {
-          AssignmentExprent asexpr = (AssignmentExprent)exprent;
-          if (asexpr.getLeft().type == Exprent.EXPRENT_FIELD) {
-            FieldExprent fexpr = (FieldExprent)asexpr.getLeft();
-            if (fexpr.isStatic() && fexpr.getClassname().equals(cl.qualifiedName) &&
-                cl.hasField(fexpr.getName(), fexpr.getDescriptor().descriptorString)) {
+          AssignmentExprent assignExpr = (AssignmentExprent)exprent;
+          if (assignExpr.getLeft().type == Exprent.EXPRENT_FIELD) {
+            FieldExprent fExpr = (FieldExprent)assignExpr.getLeft();
+            if (fExpr.isStatic() && fExpr.getClassname().equals(cl.qualifiedName) &&
+                cl.hasField(fExpr.getName(), fExpr.getDescriptor().descriptorString)) {
 
               // interfaces fields should always be initialized inline
-              if (isInterface || isExprentIndependent(asexpr.getRight(), meth)) {
-
-                String keyField = InterpreterUtil.makeUniqueKey(fexpr.getName(), fexpr.getDescriptor().descriptorString);
+              if (inlineInitializers || isExprentIndependent(assignExpr.getRight(), method)) {
+                String keyField = InterpreterUtil.makeUniqueKey(fExpr.getName(), fExpr.getDescriptor().descriptorString);
                 if (!wrapper.getStaticFieldInitializers().containsKey(keyField)) {
-                  wrapper.getStaticFieldInitializers().addWithKey(asexpr.getRight(), keyField);
-                  firstdata.getExprents().remove(0);
+                  wrapper.getStaticFieldInitializers().addWithKey(assignExpr.getRight(), keyField);
+                  firstData.getExprents().remove(0);
                   found = true;
                 }
               }
@@ -161,27 +152,26 @@ public class InitializerProcessor {
   }
 
   private static void extractDynamicInitializers(ClassWrapper wrapper) {
-
     StructClass cl = wrapper.getClassStruct();
 
     boolean isAnonymous = DecompilerContext.getClassProcessor().getMapRootClasses().get(cl.qualifiedName).type == ClassNode.CLASS_ANONYMOUS;
 
     List<List<Exprent>> lstFirst = new ArrayList<List<Exprent>>();
-    List<MethodWrapper> lstMethWrappers = new ArrayList<MethodWrapper>();
+    List<MethodWrapper> lstMethodWrappers = new ArrayList<MethodWrapper>();
 
-    for (MethodWrapper meth : wrapper.getMethods()) {
-      if (CodeConstants.INIT_NAME.equals(meth.methodStruct.getName()) && meth.root != null) { // successfully decompiled constructor
-        Statement firstdata = findFirstData(meth.root);
-        if (firstdata == null || firstdata.getExprents().isEmpty()) {
+    for (MethodWrapper method : wrapper.getMethods()) {
+      if (CodeConstants.INIT_NAME.equals(method.methodStruct.getName()) && method.root != null) { // successfully decompiled constructor
+        Statement firstData = Statements.findFirstData(method.root);
+        if (firstData == null || firstData.getExprents().isEmpty()) {
           return;
         }
-        lstFirst.add(firstdata.getExprents());
-        lstMethWrappers.add(meth);
+        lstFirst.add(firstData.getExprents());
+        lstMethodWrappers.add(method);
 
-        Exprent exprent = firstdata.getExprents().get(0);
+        Exprent exprent = firstData.getExprents().get(0);
         if (!isAnonymous) { // FIXME: doesn't make sense
           if (exprent.type != Exprent.EXPRENT_INVOCATION ||
-              !isInvocationInitConstructor((InvocationExprent)exprent, meth, wrapper, false)) {
+              !Statements.isInvocationInitConstructor((InvocationExprent)exprent, method, wrapper, false)) {
             return;
           }
         }
@@ -193,12 +183,10 @@ public class InitializerProcessor {
     }
 
     while (true) {
-
       String fieldWithDescr = null;
       Exprent value = null;
 
       for (int i = 0; i < lstFirst.size(); i++) {
-
         List<Exprent> lst = lstFirst.get(i);
 
         if (lst.size() < (isAnonymous ? 1 : 2)) {
@@ -210,22 +198,21 @@ public class InitializerProcessor {
         boolean found = false;
 
         if (exprent.type == Exprent.EXPRENT_ASSIGNMENT) {
-          AssignmentExprent asexpr = (AssignmentExprent)exprent;
-          if (asexpr.getLeft().type == Exprent.EXPRENT_FIELD) {
-            FieldExprent fexpr = (FieldExprent)asexpr.getLeft();
-            if (!fexpr.isStatic() && fexpr.getClassname().equals(cl.qualifiedName) &&
-                cl.hasField(fexpr.getName(), fexpr
-                  .getDescriptor().descriptorString)) { // check for the physical existence of the field. Could be defined in a superclass.
+          AssignmentExprent assignExpr = (AssignmentExprent)exprent;
+          if (assignExpr.getLeft().type == Exprent.EXPRENT_FIELD) {
+            FieldExprent fExpr = (FieldExprent)assignExpr.getLeft();
+            if (!fExpr.isStatic() && fExpr.getClassname().equals(cl.qualifiedName) &&
+                cl.hasField(fExpr.getName(), fExpr.getDescriptor().descriptorString)) { // check for the physical existence of the field. Could be defined in a superclass.
 
-              if (isExprentIndependent(asexpr.getRight(), lstMethWrappers.get(i))) {
-                String fieldKey = InterpreterUtil.makeUniqueKey(fexpr.getName(), fexpr.getDescriptor().descriptorString);
+              if (isExprentIndependent(assignExpr.getRight(), lstMethodWrappers.get(i))) {
+                String fieldKey = InterpreterUtil.makeUniqueKey(fExpr.getName(), fExpr.getDescriptor().descriptorString);
                 if (fieldWithDescr == null) {
                   fieldWithDescr = fieldKey;
-                  value = asexpr.getRight();
+                  value = assignExpr.getRight();
                 }
                 else {
                   if (!fieldWithDescr.equals(fieldKey) ||
-                      !value.equals(asexpr.getRight())) {
+                      !value.equals(assignExpr.getRight())) {
                     return;
                   }
                 }
@@ -253,19 +240,17 @@ public class InitializerProcessor {
     }
   }
 
-  private static boolean isExprentIndependent(Exprent exprent, MethodWrapper meth) {
-
+  private static boolean isExprentIndependent(Exprent exprent, MethodWrapper method) {
     List<Exprent> lst = exprent.getAllExprents(true);
     lst.add(exprent);
 
     for (Exprent expr : lst) {
       switch (expr.type) {
         case Exprent.EXPRENT_VAR:
-          VarVersionPair varpaar = new VarVersionPair((VarExprent)expr);
-          if (!meth.varproc.getExternalVars().contains(varpaar)) {
-            String varname = meth.varproc.getVarName(varpaar);
-
-            if (!varname.equals("this") && !varname.endsWith(".this")) { // FIXME: remove direct comparison with strings
+          VarVersionPair varPair = new VarVersionPair((VarExprent)expr);
+          if (!method.varproc.getExternalVars().contains(varPair)) {
+            String varName = method.varproc.getVarName(varPair);
+            if (!varName.equals("this") && !varName.endsWith(".this")) { // FIXME: remove direct comparison with strings
               return false;
             }
           }
@@ -276,49 +261,5 @@ public class InitializerProcessor {
     }
 
     return true;
-  }
-
-
-  private static Statement findFirstData(Statement stat) {
-
-    if (stat.getExprents() != null) {
-      return stat;
-    }
-    else {
-      if (stat.isLabeled()) { // FIXME: Why??
-        return null;
-      }
-
-      switch (stat.type) {
-        case Statement.TYPE_SEQUENCE:
-        case Statement.TYPE_IF:
-        case Statement.TYPE_ROOT:
-        case Statement.TYPE_SWITCH:
-        case Statement.TYPE_SYNCRONIZED:
-          return findFirstData(stat.getFirst());
-        default:
-          return null;
-      }
-    }
-  }
-
-  private static boolean isInvocationInitConstructor(InvocationExprent inv, MethodWrapper meth, ClassWrapper wrapper, boolean withThis) {
-
-    if (inv.getFunctype() == InvocationExprent.TYP_INIT) {
-      if (inv.getInstance().type == Exprent.EXPRENT_VAR) {
-        VarExprent instvar = (VarExprent)inv.getInstance();
-        VarVersionPair varpaar = new VarVersionPair(instvar);
-
-        String classname = meth.varproc.getThisVars().get(varpaar);
-
-        if (classname != null) { // any this instance. TODO: Restrict to current class?
-          if (withThis || !wrapper.getClassStruct().qualifiedName.equals(inv.getClassname())) {
-            return true;
-          }
-        }
-      }
-    }
-
-    return false;
   }
 }

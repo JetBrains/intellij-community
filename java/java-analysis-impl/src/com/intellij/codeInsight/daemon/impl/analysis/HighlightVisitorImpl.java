@@ -490,6 +490,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     super.visitEnumConstant(enumConstant);
     if (!myHolder.hasErrorResults()) GenericsHighlightUtil.checkEnumConstantForConstructorProblems(enumConstant, myHolder, myJavaSdkVersion);
     if (!myHolder.hasErrorResults()) registerConstructorCall(enumConstant);
+    if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkUnhandledExceptions(enumConstant, null));
   }
 
   @Override

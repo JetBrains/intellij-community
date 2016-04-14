@@ -126,7 +126,7 @@ public class PyAnnotateTypesIntention implements IntentionAction {
     replacementTextBuilder.append(returnType);
 
     final PyStatementList statements = function.getStatementList();
-    final String indentation = PyIndentUtil.getExpectedElementIndent(statements);
+    final String indentation = PyIndentUtil.getElementIndent(statements);
     replacementTextBuilder.insert(0, indentation);
     replacementTextBuilder.insert(0, "\n");
 

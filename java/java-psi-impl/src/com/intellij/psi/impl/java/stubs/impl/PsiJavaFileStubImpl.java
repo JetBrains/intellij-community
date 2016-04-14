@@ -75,4 +75,24 @@ public class PsiJavaFileStubImpl extends PsiFileStubImpl<PsiJavaFile> implements
   public String toString() {
     return "PsiJavaFileStub [" + myPackageName + "]";
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    PsiJavaFileStubImpl stub = (PsiJavaFileStubImpl)o;
+
+    if (myCompiled != stub.myCompiled) return false;
+    if (myPackageName != null ? !myPackageName.equals(stub.myPackageName) : stub.myPackageName != null) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myPackageName != null ? myPackageName.hashCode() : 0;
+    result = 31 * result + (myCompiled ? 1 : 0);
+    return result;
+  }
 }

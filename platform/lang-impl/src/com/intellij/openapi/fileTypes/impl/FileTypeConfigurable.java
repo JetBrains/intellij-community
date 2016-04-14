@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.options.*;
-import com.intellij.openapi.project.DumbModePermission;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -422,7 +420,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
         .disableUpDownActions();
 
       add(toolbarDecorator.createPanel(), BorderLayout.CENTER);
-      setBorder(IdeBorderFactory.createTitledBorder(FileTypesBundle.message("filetypes.recognized.group"), false));
+      setBorder(IdeBorderFactory.createTitledBorder(FileTypesBundle.message("filetype.recognized.group"), false));
 
       mySpeedSearch = new MySpeedSearch(myFileTypesList);
     }

@@ -16,7 +16,6 @@
 
 package com.intellij.codeInsight.hint;
 
-import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.ide.IdeTooltip;
@@ -260,7 +259,7 @@ public class ParameterInfoController implements Disposable {
   private void addAlarmRequest(){
     Runnable request = () -> {
       if (!myDisposed && !myProject.isDisposed()) {
-        AutoPopupController.runLaterWithEverythingCommitted(myProject, () ->
+        PsiDocumentManager.getInstance(myProject).performLaterWhenAllCommitted(() ->
           DumbService.getInstance(myProject).withAlternativeResolveEnabled(this::updateComponent)
         );
       }

@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.refactoring.introduce.parameter;
 import com.intellij.codeInsight.template.TextResult;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
@@ -203,8 +204,7 @@ public class GrInplaceParameterIntroducer extends GrAbstractInplaceIntroducer<Gr
       processor.run();
     }
     else {
-      GrIntroduceParameterProcessor processor = new GrIntroduceParameterProcessor(settings, wrapper);
-      processor.performRefactoring(UsageInfo.EMPTY_ARRAY);
+      WriteAction.run(() -> new GrIntroduceParameterProcessor(settings, wrapper).performRefactoring(UsageInfo.EMPTY_ARRAY));
     }
     GrParametersOwner owner = settings.getToReplaceIn();
     return ArrayUtil.getLastElement(owner.getParameters());

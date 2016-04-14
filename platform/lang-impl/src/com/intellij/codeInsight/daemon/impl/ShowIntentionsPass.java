@@ -50,9 +50,9 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.util.CommonProcessors;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.Processor;
+import com.intellij.util.Processors;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -321,12 +321,13 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
 
     final int line = hostDocument.getLineNumber(offset);
     MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(hostDocument, project, true);
-    CommonProcessors.CollectProcessor<RangeHighlighterEx> processor = new CommonProcessors.CollectProcessor<RangeHighlighterEx>();
+    List<RangeHighlighterEx> result = new ArrayList<>();
+    Processor<RangeHighlighterEx> processor = Processors.cancelableCollectProcessor(result);
     model.processRangeHighlightersOverlappingWith(hostDocument.getLineStartOffset(line),
                                                   hostDocument.getLineEndOffset(line),
                                                   processor);
 
-    for (RangeHighlighterEx highlighter : processor.getResults()) {
+    for (RangeHighlighterEx highlighter : result) {
       GutterIntentionAction.addActions(project, hostEditor, hostFile, highlighter, intentions.guttersToShow);
     }
 

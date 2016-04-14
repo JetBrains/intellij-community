@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,9 @@ package com.intellij.openapi.updateSettings.impl;
  */
 public enum ChannelStatus {
   EAP("eap", "Early Access Program"),
-  MILESTONE("milestone", "Milestone Releases"),
+  MILESTONE("milestone", "Milestone EAP Builds"),
   BETA("beta", "Beta Releases or Public Previews"),
-  RELEASE("release", "New Major Version Releases");
+  RELEASE("release", "Stable Releases");
 
   private final String myCode;
   private final String myDisplayName;

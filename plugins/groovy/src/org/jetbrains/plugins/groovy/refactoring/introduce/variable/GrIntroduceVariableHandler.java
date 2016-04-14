@@ -158,12 +158,7 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
     return new GrInplaceVariableIntroducer(getRefactoringName(), choice, contextRef.get()) {
       @Override
       protected GrVariable runRefactoring(GrIntroduceContext context, GroovyIntroduceVariableSettings settings, boolean processUsages) {
-        if (processUsages) {
-          return processExpression(context, settings);
-        }
-        else {
-          return addVariable(context, settings);
-        }
+        return refactorInWriteAction(() -> processUsages ? processExpression(context, settings) : addVariable(context, settings));
       }
 
       @Override

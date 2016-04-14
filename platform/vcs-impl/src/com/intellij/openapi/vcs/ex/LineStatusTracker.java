@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,9 @@ import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
-import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.editor.markup.MarkupEditorFilterFactory;
+import com.intellij.openapi.editor.markup.MarkupModel;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -37,7 +39,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -56,18 +57,23 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.diff.util.DiffUtil.getLineCount;
+import static com.intellij.openapi.localVcs.UpToDateLineNumberProvider.ABSENT_LINE_NUMBER;
 
 /**
  * @author irengrig
  *         author: lesya
  */
-@SuppressWarnings("MethodMayBeStatic")
+@SuppressWarnings({"MethodMayBeStatic", "FieldAccessedSynchronizedAndUnsynchronized"})
 public class LineStatusTracker {
   public enum Mode {DEFAULT, SMART, SILENT}
 
   public static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.ex.LineStatusTracker");
   private static final Key<CanNotCalculateDiffPanel> PANEL_KEY =
     new Key<CanNotCalculateDiffPanel>("LineStatusTracker.CanNotCalculateDiffPanel");
+
+  // all variables should be modified in EDT and under LOCK
+  // read access allowed from EDT or while holding LOCK
+  private final Object LOCK = new Object();
 
   @NotNull private final Project myProject;
   @NotNull private final Document myDocument;
@@ -116,7 +122,7 @@ public class LineStatusTracker {
 
     myRanges = new ArrayList<Range>();
 
-    myVcsDocument = new DocumentImpl("");
+    myVcsDocument = new DocumentImpl("", true);
     myVcsDocument.putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);
   }
 
@@ -129,11 +135,12 @@ public class LineStatusTracker {
 
   @CalledInAwt
   public void setBaseRevision(@NotNull final String vcsContent, @NotNull RevisionPack baseRevisionNumber) {
-    myApplication.runWriteAction(() -> {
-      try {
-        if (myReleased) return;
-        if (myBaseRevisionNumber != null && myBaseRevisionNumber.contains(baseRevisionNumber)) return;
+    myApplication.assertIsDispatchThread();
+    if (myReleased) return;
 
+    synchronized (LOCK) {
+      try {
+        if (myBaseRevisionNumber != null && myBaseRevisionNumber.contains(baseRevisionNumber)) return;
         myBaseRevisionNumber = baseRevisionNumber;
 
         myVcsDocument.setReadOnly(false);
@@ -145,10 +152,10 @@ public class LineStatusTracker {
       }
 
       reinstallRanges();
-    });
+    }
   }
 
-  @CalledWithWriteLock
+  @CalledInAwt
   private void reinstallRanges() {
     if (!myInitialized || myReleased || myBulkUpdate) return;
 
@@ -168,7 +175,7 @@ public class LineStatusTracker {
     }
   }
 
-  @CalledWithWriteLock
+  @CalledInAwt
   private void destroyRanges() {
     removeAnathema();
     for (Range range : myRanges) {
@@ -178,7 +185,7 @@ public class LineStatusTracker {
     myDirtyRange = null;
   }
 
-  @CalledWithWriteLock
+  @CalledInAwt
   private void installAnathema() {
     myAnathemaThrown = true;
     final FileEditor[] editors = myFileEditorManager.getAllEditors(myVirtualFile);
@@ -192,7 +199,7 @@ public class LineStatusTracker {
     }
   }
 
-  @CalledWithWriteLock
+  @CalledInAwt
   private void removeAnathema() {
     if (!myAnathemaThrown) return;
     myAnathemaThrown = false;
@@ -209,11 +216,10 @@ public class LineStatusTracker {
   @CalledInAwt
   public void setMode(@NotNull Mode mode) {
     if (myMode == mode) return;
-    myMode = mode;
-
-    myApplication.runWriteAction(() -> {
+    synchronized (LOCK) {
+      myMode = mode;
       reinstallRanges();
-    });
+    }
   }
 
   @CalledInAwt
@@ -245,43 +251,25 @@ public class LineStatusTracker {
 
     int first =
       range.getLine1() >= getLineCount(myDocument) ? myDocument.getTextLength() : myDocument.getLineStartOffset(range.getLine1());
-
     int second =
       range.getLine2() >= getLineCount(myDocument) ? myDocument.getTextLength() : myDocument.getLineStartOffset(range.getLine2());
 
-    final TextAttributes attr = LineStatusTrackerDrawing.getAttributesFor(range);
-    final RangeHighlighter highlighter = DocumentMarkupModel.forDocument(myDocument, myProject, true)
-      .addRangeHighlighter(first, second, HighlighterLayer.FIRST - 1, attr, HighlighterTargetArea.LINES_IN_RANGE);
+    MarkupModel markupModel = DocumentMarkupModel.forDocument(myDocument, myProject, true);
 
-    highlighter.setThinErrorStripeMark(true);
-    highlighter.setGreedyToLeft(true);
-    highlighter.setGreedyToRight(true);
-    highlighter.setLineMarkerRenderer(LineStatusTrackerDrawing.createRenderer(range, this));
+    RangeHighlighter highlighter = LineStatusMarkerRenderer.createRangeHighlighter(range, new TextRange(first, second), markupModel);
+    highlighter.setLineMarkerRenderer(LineStatusMarkerRenderer.createRenderer(range, (editor) -> {
+      return new LineStatusTrackerDrawing.MyLineStatusMarkerPopup(this, editor, range);
+    }));
+
     highlighter.setEditorFilter(MarkupEditorFilterFactory.createIsNotDiffFilter());
-
-    final String tooltip;
-    if (range.getLine1() == range.getLine2()) {
-      if (range.getVcsLine1() + 1 == range.getVcsLine2()) {
-        tooltip = VcsBundle.message("tooltip.text.line.before.deleted", range.getLine1() + 1);
-      }
-      else {
-        tooltip = VcsBundle.message("tooltip.text.lines.before.deleted", range.getLine1() + 1, range.getVcsLine2() - range.getVcsLine1());
-      }
-    }
-    else if (range.getLine1() + 1 == range.getLine2()) {
-      tooltip = VcsBundle.message("tooltip.text.line.changed", range.getLine1() + 1);
-    }
-    else {
-      tooltip = VcsBundle.message("tooltip.text.lines.changed", range.getLine1() + 1, range.getLine2());
-    }
-
-    highlighter.setErrorStripeTooltip(tooltip);
 
     range.setHighlighter(highlighter);
   }
 
   public boolean isValid() {
-    return myInitialized && !myReleased && !myAnathemaThrown && !myBulkUpdate && !myDuringRollback && myDirtyRange == null;
+    synchronized (LOCK) {
+      return myInitialized && !myReleased && !myAnathemaThrown && !myBulkUpdate && !myDuringRollback && myDirtyRange == null;
+    }
   }
 
   public void release() {
@@ -289,13 +277,13 @@ public class LineStatusTracker {
       if (myReleased) return;
       LOG.assertTrue(!myDuringRollback);
 
-      myApplication.runWriteAction(() -> {
+      synchronized (LOCK) {
         myReleased = true;
         myDocument.removeDocumentListener(myDocumentListener);
         ApplicationManager.getApplication().removeApplicationListener(myApplicationListener);
 
         destroyRanges();
-      });
+      }
     });
   }
 
@@ -330,29 +318,39 @@ public class LineStatusTracker {
     return myMode == Mode.SILENT;
   }
 
-  @NotNull
+  /**
+   * Ranges can be modified without taking the write lock, so calling this method twice not from EDT can produce different results.
+   */
+  @Nullable
   public List<Range> getRanges() {
-    return Collections.unmodifiableList(myRanges);
+    synchronized (LOCK) {
+      if (!isValid()) return null;
+      myApplication.assertReadAccessAllowed();
+
+      List<Range> result = new ArrayList<>(myRanges.size());
+      for (Range range : myRanges) {
+        result.add(new Range(range));
+      }
+      return result;
+    }
   }
 
   @CalledInAwt
   public void startBulkUpdate() {
     if (myReleased) return;
-
-    myApplication.runWriteAction(() -> {
+    synchronized (LOCK) {
       myBulkUpdate = true;
       destroyRanges();
-    });
+    }
   }
 
   @CalledInAwt
   public void finishBulkUpdate() {
     if (myReleased) return;
-
-    myApplication.runWriteAction(() -> {
+    synchronized (LOCK) {
       myBulkUpdate = false;
       reinstallRanges();
-    });
+    }
   }
 
   private void markFileUnchanged() {
@@ -369,16 +367,18 @@ public class LineStatusTracker {
 
   private class MyApplicationListener extends ApplicationAdapter {
     @Override
-    public void writeActionFinished(Object action) {
+    public void writeActionFinished(@NotNull Object action) {
       if (!myInitialized || myReleased || myBulkUpdate || myDuringRollback || myAnathemaThrown) return;
       if (myDirtyRange != null) {
-        try {
-          doUpdateRanges(myDirtyRange.line1, myDirtyRange.line2, myDirtyRange.lineShift, myDirtyRange.beforeTotalLines);
-          myDirtyRange = null;
-        }
-        catch (Exception e) {
-          LOG.error(e);
-          reinstallRanges();
+        synchronized (LOCK) {
+          try {
+            doUpdateRanges(myDirtyRange.line1, myDirtyRange.line2, myDirtyRange.lineShift, myDirtyRange.beforeTotalLines);
+            myDirtyRange = null;
+          }
+          catch (Exception e) {
+            LOG.error(e);
+            reinstallRanges();
+          }
         }
       }
     }
@@ -425,38 +425,40 @@ public class LineStatusTracker {
 
     @Override
     public void documentChanged(final DocumentEvent e) {
-      myApplication.assertWriteAccessAllowed();
+      myApplication.assertIsDispatchThread();
 
       if (!myInitialized || myReleased) return;
       if (myBulkUpdate || myDuringRollback || myAnathemaThrown) return;
       assert myDocument == e.getDocument();
 
-      int newLine1 = myLine1;
-      int newLine2;
-      if (e.getNewLength() == 0) {
-        newLine2 = newLine1 + 1;
-      }
-      else {
-        newLine2 = myDocument.getLineNumber(e.getOffset() + e.getNewLength()) + 1;
-      }
+      synchronized (LOCK) {
+        int newLine1 = myLine1;
+        int newLine2;
+        if (e.getNewLength() == 0) {
+          newLine2 = newLine1 + 1;
+        }
+        else {
+          newLine2 = myDocument.getLineNumber(e.getOffset() + e.getNewLength()) + 1;
+        }
 
-      int linesShift = (newLine2 - newLine1) - (myLine2 - myLine1);
+        int linesShift = (newLine2 - newLine1) - (myLine2 - myLine1);
 
-      int[] fixed = fixRanges(e, myLine1, myLine2);
-      int line1 = fixed[0];
-      int line2 = fixed[1];
+        int[] fixed = fixRanges(e, myLine1, myLine2);
+        int line1 = fixed[0];
+        int line2 = fixed[1];
 
-      if (myDirtyRange == null) {
-        myDirtyRange = new DirtyRange(line1, line2, linesShift, myBeforeTotalLines);
-      }
-      else {
-        int oldLine1 = myDirtyRange.line1;
-        int oldLine2 = myDirtyRange.line2 + myDirtyRange.lineShift;
+        if (myDirtyRange == null) {
+          myDirtyRange = new DirtyRange(line1, line2, linesShift, myBeforeTotalLines);
+        }
+        else {
+          int oldLine1 = myDirtyRange.line1;
+          int oldLine2 = myDirtyRange.line2 + myDirtyRange.lineShift;
 
-        int updatedLine1 = myDirtyRange.line1 - Math.max(oldLine1 - line1, 0);
-        int updatedLine2 = myDirtyRange.line2 + Math.max(line2 - oldLine2, 0);
+          int updatedLine1 = myDirtyRange.line1 - Math.max(oldLine1 - line1, 0);
+          int updatedLine2 = myDirtyRange.line2 + Math.max(line2 - oldLine2, 0);
 
-        myDirtyRange = new DirtyRange(updatedLine1, updatedLine2, linesShift + myDirtyRange.lineShift, myDirtyRange.beforeTotalLines);
+          myDirtyRange = new DirtyRange(updatedLine1, updatedLine2, linesShift + myDirtyRange.lineShift, myDirtyRange.beforeTotalLines);
+        }
       }
     }
   }
@@ -492,12 +494,10 @@ public class LineStatusTracker {
     return sequence.charAt(offset) == '\n';
   }
 
-  @CalledWithWriteLock
   private void doUpdateRanges(int beforeChangedLine1,
                               int beforeChangedLine2,
                               int linesShift,
                               int beforeTotalLines) {
-    myApplication.assertWriteAccessAllowed();
     LOG.assertTrue(!myReleased);
 
     List<Range> rangesBeforeChange = new ArrayList<Range>();
@@ -520,7 +520,6 @@ public class LineStatusTracker {
                    rangesBeforeChange, changedRanges, rangesAfterChange);
   }
 
-  @CalledWithWriteLock
   private void doUpdateRanges(int beforeChangedLine1,
                               int beforeChangedLine2,
                               int linesShift, // before -> after
@@ -682,45 +681,60 @@ public class LineStatusTracker {
 
   @Nullable
   public Range getNextRange(Range range) {
-    final int index = myRanges.indexOf(range);
-    if (index == myRanges.size() - 1) return null;
-    return myRanges.get(index + 1);
+    synchronized (LOCK) {
+      if (!isValid()) return null;
+      final int index = myRanges.indexOf(range);
+      if (index == myRanges.size() - 1) return null;
+      return myRanges.get(index + 1);
+    }
   }
 
   @Nullable
   public Range getPrevRange(Range range) {
-    final int index = myRanges.indexOf(range);
-    if (index <= 0) return null;
-    return myRanges.get(index - 1);
+    synchronized (LOCK) {
+      if (!isValid()) return null;
+      final int index = myRanges.indexOf(range);
+      if (index <= 0) return null;
+      return myRanges.get(index - 1);
+    }
   }
 
   @Nullable
   public Range getNextRange(int line) {
-    for (Range range : myRanges) {
-      if (line < range.getLine2() && !range.isSelectedByLine(line)) {
-        return range;
+    synchronized (LOCK) {
+      if (!isValid()) return null;
+      for (Range range : myRanges) {
+        if (line < range.getLine2() && !range.isSelectedByLine(line)) {
+          return range;
+        }
       }
+      return null;
     }
-    return null;
   }
 
   @Nullable
   public Range getPrevRange(int line) {
-    for (int i = myRanges.size() - 1; i >= 0; i--) {
-      Range range = myRanges.get(i);
-      if (line > range.getLine1() && !range.isSelectedByLine(line)) {
-        return range;
+    synchronized (LOCK) {
+      if (!isValid()) return null;
+      for (int i = myRanges.size() - 1; i >= 0; i--) {
+        Range range = myRanges.get(i);
+        if (line > range.getLine1() && !range.isSelectedByLine(line)) {
+          return range;
+        }
       }
+      return null;
     }
-    return null;
   }
 
   @Nullable
   public Range getRangeForLine(int line) {
-    for (final Range range : myRanges) {
-      if (range.isSelectedByLine(line)) return range;
+    synchronized (LOCK) {
+      if (!isValid()) return null;
+      for (final Range range : myRanges) {
+        if (range.isSelectedByLine(line)) return range;
+      }
+      return null;
     }
-    return null;
   }
 
   private void doRollbackRange(@NotNull Range range) {
@@ -759,68 +773,69 @@ public class LineStatusTracker {
   @CalledWithWriteLock
   private void rollbackChanges(@NotNull final List<Range> ranges) {
     runBulkRollback(() -> {
-      Range first = null;
-      Range last = null;
+        Range first = null;
+        Range last = null;
 
-      int shift = 0;
-      for (Range range : ranges) {
-        if (!range.isValid()) {
-          LOG.warn("Rollback of invalid range");
-          break;
+        int shift = 0;
+        for (Range range : ranges) {
+          if (!range.isValid()) {
+            LOG.warn("Rollback of invalid range");
+            break;
+          }
+
+          if (first == null) {
+            first = range;
+          }
+          last = range;
+
+          Range shiftedRange = new Range(range);
+          shiftedRange.shift(shift);
+
+          doRollbackRange(shiftedRange);
+
+          shift += (range.getVcsLine2() - range.getVcsLine1()) - (range.getLine2() - range.getLine1());
         }
 
-        if (first == null) {
-          first = range;
+        if (first != null) {
+          int beforeChangedLine1 = first.getLine1();
+          int beforeChangedLine2 = last.getLine2();
+
+          int beforeTotalLines = getLineCount(myDocument) - shift;
+
+          doUpdateRanges(beforeChangedLine1, beforeChangedLine2, shift, beforeTotalLines);
         }
-        last = range;
-
-        Range shiftedRange = new Range(range);
-        shiftedRange.shift(shift);
-
-        doRollbackRange(shiftedRange);
-
-        shift += (range.getVcsLine2() - range.getVcsLine1()) - (range.getLine2() - range.getLine1());
-      }
-
-      if (first != null) {
-        int beforeChangedLine1 = first.getLine1();
-        int beforeChangedLine2 = last.getLine2();
-
-        int beforeTotalLines = getLineCount(myDocument) - shift;
-
-        doUpdateRanges(beforeChangedLine1, beforeChangedLine2, shift, beforeTotalLines);
-      }
     });
   }
 
   @CalledWithWriteLock
   public void rollbackAllChanges() {
     runBulkRollback(() -> {
-      myDocument.setText(myVcsDocument.getText());
+        myDocument.setText(myVcsDocument.getText());
 
-      destroyRanges();
+        destroyRanges();
 
-      markFileUnchanged();
+        markFileUnchanged();
     });
   }
 
   @CalledWithWriteLock
   private void runBulkRollback(@NotNull Runnable task) {
     myApplication.assertWriteAccessAllowed();
-
     if (!isValid()) return;
 
-    try {
-      myDuringRollback = true;
+    synchronized (LOCK) {
+      try {
+        myDuringRollback = true;
 
-      task.run();
-    }
-    catch (Error | RuntimeException e) {
-      reinstallRanges();
-      throw e;
-    }
-    finally {
-      myDuringRollback = false;
+        task.run();
+      }
+      catch (Error | RuntimeException e) {
+        reinstallRanges();
+        throw e;
+      }
+      finally {
+        myDuringRollback = false;
+      }
     }
   }
 
@@ -842,18 +857,76 @@ public class LineStatusTracker {
 
   @NotNull
   public TextRange getCurrentTextRange(@NotNull Range range) {
-    if (!range.isValid()) {
-      LOG.warn("Current TextRange of invalid range");
+    synchronized (LOCK) {
+      assert isValid();
+      if (!range.isValid()) {
+        LOG.warn("Current TextRange of invalid range");
+      }
+      return DiffUtil.getLinesRange(myDocument, range.getLine1(), range.getLine2());
     }
-    return DiffUtil.getLinesRange(myDocument, range.getLine1(), range.getLine2());
   }
 
   @NotNull
   public TextRange getVcsTextRange(@NotNull Range range) {
-    if (!range.isValid()) {
-      LOG.warn("Vcs TextRange of invalid range");
+    synchronized (LOCK) {
+      assert isValid();
+      if (!range.isValid()) {
+        LOG.warn("Vcs TextRange of invalid range");
+      }
+      return DiffUtil.getLinesRange(myVcsDocument, range.getVcsLine1(), range.getVcsLine2());
     }
-    return DiffUtil.getLinesRange(myVcsDocument, range.getVcsLine1(), range.getVcsLine2());
+  }
+
+  public boolean isLineModified(int line) {
+    return isRangeModified(line, line + 1);
+  }
+
+  public boolean isRangeModified(int line1, int line2) {
+    synchronized (LOCK) {
+      if (!isValid()) return false;
+      if (line1 == line2) return false;
+      assert line1 < line2;
+
+      for (Range range : myRanges) {
+        if (range.getLine1() >= line2) return false;
+        if (range.getLine2() > line1) return true;
+      }
+      return false;
+    }
+  }
+
+  public int transferLineToFromVcs(int line, boolean approximate) {
+    return transferLine(line, approximate, true);
+  }
+
+  public int transferLineToVcs(int line, boolean approximate) {
+    return transferLine(line, approximate, false);
+  }
+
+  private int transferLine(int line, boolean approximate, boolean fromVcs) {
+    synchronized (LOCK) {
+      if (!isValid()) return approximate ? line : ABSENT_LINE_NUMBER;
+
+      int result = line;
+
+      for (Range range : myRanges) {
+        int startLine1 = fromVcs ? range.getVcsLine1() : range.getLine1();
+        int endLine1 = fromVcs ? range.getVcsLine2() : range.getLine2();
+        int startLine2 = fromVcs ? range.getLine1() : range.getVcsLine1();
+        int endLine2 = fromVcs ? range.getLine2() : range.getVcsLine2();
+
+        if (startLine1 <= line && endLine1 > line) {
+          return approximate ? startLine2 : ABSENT_LINE_NUMBER;
+        }
+
+        if (endLine1 > line) return result;
+
+        int length1 = endLine1 - startLine1;
+        int length2 = endLine2 - startLine2;
+        result += length2 - length1;
+      }
+      return result;
+    }
   }
 
   public static class RevisionPack {

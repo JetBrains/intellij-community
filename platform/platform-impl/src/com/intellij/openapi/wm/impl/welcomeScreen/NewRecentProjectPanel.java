@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.ui.speedSearch.NameFilteringListModel;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
@@ -52,11 +53,10 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
     JScrollPane scrollPane = UIUtil.findComponentOfType(this, JScrollPane.class);
     if (scrollPane != null) {
       scrollPane.setBackground(FlatWelcomeFrame.getProjectsBackground());
-      final int width = 300;
-      final int height = 460;
-      scrollPane.setSize(JBUI.size(width, height));
-      scrollPane.setMinimumSize(JBUI.size(width, height));
-      scrollPane.setPreferredSize(JBUI.size(width, height));
+      JBDimension size = JBUI.size(300, 460);
+      scrollPane.setSize(size);
+      scrollPane.setMinimumSize(size);
+      scrollPane.setPreferredSize(size);
     }
     ListWithFilter panel = UIUtil.findComponentOfType(this, ListWithFilter.class);
     if (panel != null) {
@@ -65,7 +65,7 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
   }
 
   protected Dimension getPreferredScrollableViewportSize() {
-    return null;//new Dimension(250, 430);
+    return null;
   }
 
   @Override
@@ -225,14 +225,12 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
 
             boolean isGroup = value instanceof ProjectGroupActionGroup;
             boolean isInsideGroup = false;
-            boolean isLastInGroup = false;
             if (value instanceof ReopenProjectAction) {
               final String path = ((ReopenProjectAction)value).getProjectPath();
               for (ProjectGroup group : RecentProjectsManager.getInstance().getGroups()) {
                 final List<String> projects = group.getProjects();
                 if (projects.contains(path)) {
                   isInsideGroup = true;
-                  isLastInGroup = path.equals(projects.get(projects.size() - 1));
                   break;
                 }
               }

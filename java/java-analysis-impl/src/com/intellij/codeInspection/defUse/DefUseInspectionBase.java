@@ -25,7 +25,6 @@ import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -54,12 +53,6 @@ public class DefUseInspectionBase extends BaseJavaBatchLocalInspectionTool {
         checkCodeBlock(initializer.getBody(), holder, isOnTheFly);
       }
     };
-  }
-
-  @Nullable
-  @Override
-  public String getAlternativeID() {
-    return "unused";
   }
 
   private void checkCodeBlock(final PsiCodeBlock body,

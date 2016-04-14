@@ -358,7 +358,19 @@ public class JavaFXHighlightingTest extends AbstractJavaFXTestCase {
     doTest();
   }
 
+  public void testEnumConstantValue() throws Exception {
+    doTest();
+  }
+
+  public void testNestedClassConstants() throws Exception {
+    doTest("model/" + getTestName(false) + "Model.java");
+  }
+
   public void testBoxedConstantValue() throws Exception {
+    doTest();
+  }
+
+  public void testLiteralValue() throws Exception {
     doTest();
   }
 
@@ -414,6 +426,22 @@ public class JavaFXHighlightingTest extends AbstractJavaFXTestCase {
                                               "  <Button fx:id=\"id1\" />\n" +
                                               "</AnchorPane>\n");
     myFixture.testHighlighting(true, false, false, getTestName(false) + ".java");
+  }
+
+  public void testAbsoluteRemoteUrl() throws Exception {
+    doTest();
+  }
+
+  public void testMultipleStylesheetsAttribute() throws Exception {
+    myFixture.addFileToProject("mystyle.css", ".myStyle {}");
+    myFixture.addFileToProject("very/deeply/located/small.css", ".small {}");
+    doTest();
+  }
+
+  public void testMultipleStylesheetsTag() throws Exception {
+    myFixture.addFileToProject("mystyle.css", ".myStyle {}");
+    myFixture.addFileToProject("very/deeply/located/small.css", ".small {}");
+    doTest();
   }
 
   private void doTest() throws Exception {

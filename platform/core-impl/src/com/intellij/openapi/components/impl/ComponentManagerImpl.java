@@ -100,10 +100,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     if (componentsRegistered != null) {
       componentsRegistered.run();
     }
-
-    if (indicator != null) {
-      indicator.setIndeterminate(false);
-    }
     createComponents(indicator);
     myComponentsCreated = true;
   }

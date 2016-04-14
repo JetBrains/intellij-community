@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,6 @@
 package com.maddyhome.idea.copyright.actions;
 
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
@@ -34,7 +32,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.PairConsumer;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,7 +42,7 @@ import java.util.Collection;
 import java.util.List;
 
 
-public class UpdateCopyrightCheckinHandlerFactory extends CheckinHandlerFactory {
+public class UpdateCopyrightCheckinHandlerFactory extends CheckinHandlerFactory  {
   @NotNull
   public CheckinHandler createHandler(@NotNull final CheckinProjectPanel panel, @NotNull CommitContext commitContext) {
     return new CheckinHandler() {
@@ -80,13 +77,13 @@ public class UpdateCopyrightCheckinHandlerFactory extends CheckinHandlerFactory 
       }
 
       private PsiFile[] getPsiFiles() {
-        Project project = panel.getProject();
         final Collection<VirtualFile> files = panel.getVirtualFiles();
         final List<PsiFile> psiFiles = new ArrayList<PsiFile>();
-        final PsiManager manager = PsiManager.getInstance(project);
+        final PsiManager manager = PsiManager.getInstance(panel.getProject());
         for (final VirtualFile file : files) {
-          if (!GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(file, project)) {
-            ContainerUtil.addIfNotNull(manager.findFile(file), psiFiles);
+          final PsiFile psiFile = manager.findFile(file);
+          if (psiFile != null) {
+            psiFiles.add(psiFile);
           }
         }
         return PsiUtilCore.toPsiFileArray(psiFiles);

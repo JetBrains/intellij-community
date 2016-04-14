@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.MouseShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
@@ -26,14 +27,13 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.util.ui.JBUI;
 
-import java.awt.BorderLayout;
-import java.awt.Component;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
+import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import java.awt.*;
+import java.awt.event.KeyEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 
 /**
  * @author Sergey.Malenkov
@@ -146,6 +146,20 @@ final class ShortcutFilteringPanel extends JPanel {
         .setCancelKeyEnabled(false)
         .setMovable(true)
         .createPopup();
+      IdeEventQueue.getInstance().addPostprocessor(new IdeEventQueue.EventDispatcher() {
+        boolean isEscWasPressed = false;
+        @Override
+        public boolean dispatch(AWTEvent e) {
+          if (e instanceof KeyEvent && e.getID() == KeyEvent.KEY_PRESSED) {
+            boolean isEsc =  ((KeyEvent)e).getKeyCode() == KeyEvent.VK_ESCAPE;
+            if (isEscWasPressed && isEsc) {
+              myPopup.cancel();
+            }
+            isEscWasPressed = isEsc;
+          }
+          return false;
+        }
+      }, myPopup);
     }
     myPopup.showUnderneathOf(component);
   }

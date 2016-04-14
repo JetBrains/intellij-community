@@ -179,6 +179,15 @@ public class JpsProjectSerializationTest extends JpsSerializationTestCase {
     doTestSaveModule(module, projectPath + "resourceRoots.iml");
   }
 
+  public void testMissingModuleSourcesOrderEntry() {
+    loadProject("/jps/model-serialization/testData/missingModuleSourcesOrderEntry/missingModuleSourcesOrderEntry.ipr");
+    JpsModule module = assertOneElement(myProject.getModules());
+    List<JpsDependencyElement> dependencies = module.getDependenciesList().getDependencies();
+    assertEquals(2, dependencies.size());
+    assertInstanceOf(dependencies.get(0), JpsSdkDependency.class);
+    assertInstanceOf(dependencies.get(1), JpsModuleSourceDependency.class);
+  }
+
   private static void checkResourceRoot(JpsModuleSourceRoot root, boolean forGenerated, String relativeOutput) {
     assertSame(JavaResourceRootType.RESOURCE, root.getRootType());
     JavaResourceRootProperties properties = root.getProperties(JavaResourceRootType.RESOURCE);

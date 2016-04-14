@@ -25,17 +25,21 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.endsWithName
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.UriUtil
+import com.intellij.util.directoryStreamIfExists
 import com.intellij.util.io.URLUtil
+import com.intellij.util.isDirectory
 import com.intellij.util.net.NetUtils
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.FullHttpRequest
 import io.netty.handler.codec.http.HttpMethod
+import io.netty.handler.codec.http.HttpResponseStatus
 import io.netty.handler.codec.http.QueryStringDecoder
 import org.jetbrains.ide.HttpRequestHandler
 import org.jetbrains.io.host
-import java.io.File
+import org.jetbrains.io.send
 import java.net.InetAddress
 import java.net.UnknownHostException
+import java.nio.file.Path
 
 internal val LOG = Logger.getInstance(BuiltInWebServer::class.java)
 
@@ -48,7 +52,7 @@ class BuiltInWebServer : HttpRequestHandler() {
       return false
     }
 
-    val portIndex = host.indexOf(':')
+    val portIndex = host!!.indexOf(':')
     if (portIndex > 0) {
       host = host.substring(0, portIndex)
     }
@@ -110,7 +114,7 @@ private fun doProcess(request: FullHttpRequest, context: ChannelHandlerContext, 
     else {
       // WEB-17839 Internal web server reports 404 when serving files from project with slashes in name
       if (decodedPath.regionMatches(1, name, 0, name.length, !SystemInfoRt.isFileSystemCaseSensitive)) {
-        var isEmptyPathCandidate = decodedPath.length == (name.length + 1)
+        val isEmptyPathCandidate = decodedPath.length == (name.length + 1)
         if (isEmptyPathCandidate || decodedPath[name.length + 1] == '/') {
           projectName = name
           offset = name.length + 1
@@ -132,7 +136,12 @@ private fun doProcess(request: FullHttpRequest, context: ChannelHandlerContext, 
     return true
   }
 
-  val path = FileUtil.toCanonicalPath(decodedPath.substring(offset + 1), '/')
+  val path = toIdeaPath(decodedPath, offset)
+  if (path == null) {
+    HttpResponseStatus.BAD_REQUEST.send(context.channel(), request)
+    return true
+  }
+
   for (pathHandler in WebServerPathHandler.EP_NAME.extensions) {
     LOG.catchAndLog {
       if (pathHandler.process(path, project, request, context, projectName, decodedPath, isCustomHost)) {
@@ -141,6 +150,15 @@ private fun doProcess(request: FullHttpRequest, context: ChannelHandlerContext, 
     }
   }
   return false
+}
+
+private fun toIdeaPath(decodedPath: String, offset: Int): String? {
+  // must be absolute path (relative to DOCUMENT_ROOT, i.e. scheme://authority/) to properly canonicalize
+  val path = decodedPath.substring(offset)
+  if (!path.startsWith('/')) {
+    return null
+  }
+  return FileUtil.toCanonicalPath(path, '/').substring(1)
 }
 
 fun compareNameAndProjectBasePath(projectName: String, project: Project): Boolean {
@@ -176,18 +194,18 @@ fun findIndexFile(basedir: VirtualFile): VirtualFile? {
   return null
 }
 
-fun findIndexFile(basedir: File): File? {
-  val children = basedir.listFiles { dir, name -> name.startsWith("index.") || name.startsWith("default.") }
-  if (children == null || children.isEmpty()) {
-    return null
-  }
+fun findIndexFile(basedir: Path): Path? {
+  val children = basedir.directoryStreamIfExists({
+    val name = it.fileName.toString()
+    name.startsWith("index.") || name.startsWith("default.")
+  }) { it.toList() } ?: return null
 
   for (indexNamePrefix in arrayOf("index.", "default.")) {
-    var index: File? = null
+    var index: Path? = null
     val preferredName = "${indexNamePrefix}html"
     for (child in children) {
-      if (!child.isDirectory) {
-        val name = child.name
+      if (!child.isDirectory()) {
+        val name = child.fileName.toString()
         if (name == preferredName) {
           return child
         }

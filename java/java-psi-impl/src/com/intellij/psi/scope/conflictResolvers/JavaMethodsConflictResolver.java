@@ -134,9 +134,6 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     checkPrimitiveVarargs(conflicts, getActualParametersLength());
     if (conflicts.size() == 1) return conflicts.get(0);
 
-    checkAccessStaticLevels(conflicts, false);
-    if (conflicts.size() == 1) return conflicts.get(0);
-
     Set<CandidateInfo> uniques = new THashSet<CandidateInfo>(conflicts);
     if (uniques.size() == 1) return uniques.iterator().next();
     return null;

@@ -566,6 +566,11 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     void increment() {
       count++;
     }
+
+    @Override
+    public String toString() {
+      return String.valueOf(count);
+    }
   }
 
   private static void mergeSourceSetContentRoots(@NotNull Map<String, Pair<DataNode<ModuleData>, IdeaModule>> moduleMap,
@@ -623,7 +628,10 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
                                               @NotNull DataNode<? extends ModuleData> moduleNode) {
     final File buildDir = externalProject.getBuildDir();
     final MultiMap<String, ContentRootData> sourceSetRoots = MultiMap.create();
-    for (DataNode<ContentRootData> contentRootNode : ExternalSystemApiUtil.findAll(moduleNode, ProjectKeys.CONTENT_ROOT)) {
+    Collection<DataNode<ContentRootData>> contentRootNodes = ExternalSystemApiUtil.findAll(moduleNode, ProjectKeys.CONTENT_ROOT);
+    if(contentRootNodes.size() <= 1) return;
+
+    for (DataNode<ContentRootData> contentRootNode : contentRootNodes) {
       File root = new File(contentRootNode.getData().getRootPath());
       if (FileUtil.isAncestor(buildDir, root, true)) continue;
 
@@ -635,14 +643,23 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       String rootPath = ExternalSystemApiUtil.toCanonicalPath(root.getAbsolutePath());
       Set<String> paths = ContainerUtil.newHashSet(sourceSetRoots.keySet());
       for (String path : paths) {
-        if (FileUtil.isAncestor(rootPath, path, false)) {
+        if (FileUtil.isAncestor(rootPath, path, true)) {
           Collection<ContentRootData> values = sourceSetRoots.remove(path);
           if (values != null) {
             sourceSetRoots.putValues(rootPath, values);
           }
         }
-        else if (FileUtil.isAncestor(path, rootPath, true)) {
-          mergedContentRoot = sourceSetRoots.get(path).iterator().next();
+        else if (FileUtil.isAncestor(path, rootPath, false)) {
+          Collection<ContentRootData> contentRoots = sourceSetRoots.get(path);
+          for (ContentRootData rootData : contentRoots) {
+            if (StringUtil.equals(rootData.getRootPath(), path)) {
+              mergedContentRoot = rootData;
+              break;
+            }
+          }
+          if (mergedContentRoot == null) {
+            mergedContentRoot = contentRoots.iterator().next();
+          }
           break;
         }
         if(sourceSetRoots.size() == 1) break;

@@ -309,7 +309,8 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
   @Nullable
   public PsiExpression getValue(int i, PsiCallExpression expr) throws IncorrectOperationException {
     if (defaultValues[i] != null) return defaultValues[i];
-    return newParms[i].getValue(expr);
+    final PsiElement valueAtCallSite = newParms[i].getActualValue(expr);
+    return valueAtCallSite instanceof PsiExpression ? (PsiExpression)valueAtCallSite : null;
   }
 
   public boolean isVisibilityChanged() {

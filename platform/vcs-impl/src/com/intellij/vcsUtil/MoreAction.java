@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,10 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -46,7 +46,7 @@ public abstract class MoreAction  extends AnAction implements CustomComponentAct
     final BoxLayout layout = new BoxLayout(myPanel, BoxLayout.X_AXIS);
     myPanel.setLayout(layout);
     myLoadMoreBtn = new JButton(name);
-    myLoadMoreBtn.setMargin(new Insets(2, 2, 2, 2));
+    myLoadMoreBtn.setMargin(JBUI.insets(2));
     myLoadMoreBtn.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -56,7 +56,7 @@ public abstract class MoreAction  extends AnAction implements CustomComponentAct
     myPanel.add(myLoadMoreBtn);
     myLabel = new JLabel("Loading...");
     myLabel.setForeground(UIUtil.getInactiveTextColor());
-    myLabel.setBorder(BorderFactory.createEmptyBorder(1, 3, 1, 1));
+    myLabel.setBorder(JBUI.Borders.empty(1, 3, 1, 1));
     myPanel.add(myLabel);
   }
 

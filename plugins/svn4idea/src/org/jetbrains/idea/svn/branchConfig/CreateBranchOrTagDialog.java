@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -96,7 +97,7 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     setResizable(true);
     setTitle(SvnBundle.message("dialog.title.branch"));
     getHelpAction().setEnabled(true);
-    myUseThisVariantToLabel.setBorder(BorderFactory.createEmptyBorder(0,0,10,0));
+    myUseThisVariantToLabel.setBorder(JBUI.Borders.emptyBottom(10));
     myProjectButton.setIcon(AllIcons.Nodes.IdeaProject);
     myBranchTagBaseComboBox.setPreferredSize(new Dimension(myBranchTagBaseComboBox.getPreferredSize().width,
                                                            myWorkingCopyField.getPreferredSize().height));

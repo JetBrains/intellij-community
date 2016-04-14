@@ -105,7 +105,7 @@ public class VcsLogDataManager implements Disposable, VcsLogDataProvider {
   private VcsLogHashMap createLogHashMap() {
     VcsLogHashMap hashMap;
     try {
-      hashMap = new VcsLogHashMapImpl(myProject, myLogProviders, myFatalErrorsConsumer);
+      hashMap = new VcsLogHashMapImpl(myProject, myLogProviders, myFatalErrorsConsumer, this);
     }
     catch (IOException e) {
       hashMap = new InMemoryHashMap();

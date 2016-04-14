@@ -21,5 +21,8 @@ class Test {
     for (val v : a) {
       String vStr = v;
     }
+
+    val x = 0;
+    <error descr="Cannot assign a value to final variable 'x'">x</error>++;
   }
 }

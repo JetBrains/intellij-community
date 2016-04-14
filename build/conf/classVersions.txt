@@ -63,3 +63,5 @@
 1.5 => plugins/xslt-debugger/lib/rt/xslt-debugger-engine-impl.jar
 
 1.6 => plugins/android/lib/android-rt.jar
+
+1.6 => plugins/cucumber-java/lib/cucumber-jvm-formatter.jar

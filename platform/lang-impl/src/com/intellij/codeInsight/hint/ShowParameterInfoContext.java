@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.hint;
 
-import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.parameterInfo.CreateParameterInfoContext;
@@ -27,6 +26,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.HintHint;
@@ -138,7 +138,7 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
     final ShowParameterInfoHandler.BestLocationPointProvider provider = new MyBestLocationPointProvider(editor);
     final Pair<Point, Short> pos = provider.getBestPointPosition(hint, element, elementStart, true, HintManager.UNDER);
 
-    AutoPopupController.runLaterWithEverythingCommitted(project, () -> {
+    PsiDocumentManager.getInstance(project).performLaterWhenAllCommitted(() -> {
       if (editor.isDisposed() || DumbService.isDumb(project)) return;
 
       final Document document = editor.getDocument();

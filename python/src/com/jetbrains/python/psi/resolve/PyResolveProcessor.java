@@ -23,7 +23,10 @@ import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyFromImportStatement;
+import com.jetbrains.python.psi.PyImportElement;
+import com.jetbrains.python.psi.PyImportedNameDefiner;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.ResolveResultList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -114,7 +117,7 @@ public class PyResolveProcessor implements PsiScopeProcessor {
       if (importElement != null) {
         return ResolveResultList.to(importElement.getElementNamed(myName, false));
       }
-      else if (definer instanceof PyStarImportElement) {
+      else {
         return Collections.emptyList();
       }
     }

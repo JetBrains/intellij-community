@@ -89,3 +89,13 @@ class TestAnonymousWithRefToTheTopLevelUninitializedField {
 
 }
 
+class TestThisQualified {
+  final String s;
+
+  final Runnable r = () -> System.out.println(<error descr="Variable 'this.s' might not have been initialized">this.s</error>.length());
+  final Runnable r2 = () -> System.out.println(this.r2);
+
+  public TestThisQualified() {
+    s = "";
+  }
+}

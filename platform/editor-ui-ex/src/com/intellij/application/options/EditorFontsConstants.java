@@ -37,8 +37,8 @@ public class EditorFontsConstants {
     return round(getMinEditorFontSize(), getMaxEditorFontSize(), size);
   }
 
-  public static float checkAndFixEditorLineSpacing(int size) {
-    return round(getMinEditorLineSpacing(), getMaxEditorLineSpacing(), size);
+  public static float checkAndFixEditorLineSpacing(float lineSpacing) {
+    return round(getMinEditorLineSpacing(), getMaxEditorLineSpacing(), lineSpacing);
   }
 
   private static int round(int min, int max, int val) {

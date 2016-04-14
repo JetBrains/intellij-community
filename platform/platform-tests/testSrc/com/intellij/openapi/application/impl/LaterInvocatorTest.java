@@ -534,4 +534,21 @@ public class LaterInvocatorTest extends PlatformTestCase {
       checkOrder(2);
     });
   }
+
+  public void testModalityStateStaysTheSameBetweenInvocations() {
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      Object modal1 = new Object();
+      Object modal2 = new Object();
+
+      LaterInvocator.enterModal(modal1);
+      ModalityState modalityState1 = ModalityState.current();
+      assertSame(modalityState1, ModalityState.current());
+
+      LaterInvocator.enterModal(modal2);
+      assertNotSame(modalityState1, ModalityState.current());
+      LaterInvocator.leaveModal(modal2);
+
+      assertSame(modalityState1, ModalityState.current());
+    });
+  }
 }

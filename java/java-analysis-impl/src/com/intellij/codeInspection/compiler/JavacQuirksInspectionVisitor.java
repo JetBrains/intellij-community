@@ -16,16 +16,21 @@
 package com.intellij.codeInspection.compiler;
 
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
-import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
+import com.intellij.codeInspection.*;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
+import com.siyeh.ig.PsiReplacementUtil;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 
@@ -74,6 +79,28 @@ public class JavacQuirksInspectionVisitor extends JavaElementVisitor {
   }
 
   @Override
+  public void visitAssignmentExpression(PsiAssignmentExpression assignment) {
+    super.visitAssignmentExpression(assignment);
+    final PsiType lType = assignment.getLExpression().getType();
+    PsiJavaToken operationSign = assignment.getOperationSign();
+    IElementType eqOpSign = operationSign.getTokenType();
+    IElementType opSign = TypeConversionUtil.convertEQtoOperation(eqOpSign);
+    if (opSign == null) return;
+    final PsiExpression rExpression = assignment.getRExpression();
+    if (rExpression == null) return;
+    if (JavaSdkVersion.JDK_1_6.equals(JavaVersionService.getInstance().getJavaSdkVersion(assignment)) &&
+        PsiType.getJavaLangObject(assignment.getManager(), assignment.getResolveScope()).equals(lType)) {
+      String operatorText = operationSign.getText().substring(0, operationSign.getText().length() - 1);
+      String message = JavaErrorMessages.message("binary.operator.not.applicable", operatorText,
+                                                 JavaHighlightUtil.formatType(lType),
+                                                 JavaHighlightUtil.formatType(rExpression.getType()));
+
+      myHolder.registerProblem(assignment, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                               new ReplaceAssignmentOperatorWithAssignmentFix(operationSign.getText()));
+    }
+  }
+
+  @Override
   public void visitIdentifier(PsiIdentifier identifier) {
     super.visitIdentifier(identifier);
     if ("_".equals(identifier.getText()) &&
@@ -81,6 +108,36 @@ public class JavacQuirksInspectionVisitor extends JavaElementVisitor {
         myLanguageLevel.isLessThan(LanguageLevel.JDK_1_9)) {
       final String message = JavaErrorMessages.message("underscore.identifier.warn");
       myHolder.registerProblem(identifier, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+    }
+  }
+
+  private static class ReplaceAssignmentOperatorWithAssignmentFix implements LocalQuickFix {
+    private final String myOperationSign;
+
+    public ReplaceAssignmentOperatorWithAssignmentFix(String operationSign) {
+      myOperationSign = operationSign;
+    }
+
+    @Nls
+    @NotNull
+    @Override
+    public String getName() {
+      return "Replace ''" + myOperationSign + "'' with ''=''";
+    }
+
+    @Nls
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Replace Operator Assignment with Assignment";
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      final PsiElement element = descriptor.getPsiElement();
+      if (element instanceof PsiAssignmentExpression) {
+        PsiReplacementUtil.replaceOperatorAssignmentWithAssignmentExpression((PsiAssignmentExpression)element);
+      }
     }
   }
 }

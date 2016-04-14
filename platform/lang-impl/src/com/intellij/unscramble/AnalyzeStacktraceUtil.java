@@ -23,6 +23,7 @@ import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.impl.ConsoleViewImpl;
+import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ExecutionConsole;
@@ -109,6 +110,7 @@ public class AnalyzeStacktraceUtil {
       toolbarActions.add(action);
     }
     final ConsoleViewImpl console = (ConsoleViewImpl)consoleView;
+    ConsoleViewUtil.enableReplaceActionForConsoleViewEditor(console.getEditor());
     console.getEditor().getSettings().setCaretRowShown(true);
     toolbarActions.add(new AnnotateStackTraceAction(console.getEditor(), console.getHyperlinks()));
     toolbarActions.add(new CloseAction(executor, descriptor, project));

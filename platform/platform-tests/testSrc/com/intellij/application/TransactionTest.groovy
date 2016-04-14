@@ -1,10 +1,7 @@
 package com.intellij.application
 
-import com.intellij.openapi.application.Application
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.TransactionGuard
-import com.intellij.openapi.application.TransactionGuardImpl
-import com.intellij.openapi.application.TransactionId
+import com.intellij.openapi.application.*
+import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
@@ -29,15 +26,17 @@ class TransactionTest extends LightPlatformTestCase {
 
   @Override
   protected void setUp() throws Exception {
+    assert LaterInvocator.currentModalityState == ModalityState.NON_MODAL
     super.setUp()
     Registry.get("ide.require.transaction.for.model.changes").setValue(true)
-    LoggedErrorProcessor.instance.disableStderrDumping(testRootDisposable)
   }
 
   @Override
   protected void tearDown() throws Exception {
+    UIUtil.dispatchAllInvocationEvents()
     Registry.get("ide.require.transaction.for.model.changes").resetToDefault()
     log.clear()
+    LaterInvocator.leaveAllModals()
     super.tearDown()
   }
 
@@ -45,16 +44,26 @@ class TransactionTest extends LightPlatformTestCase {
     assert app.isDispatchThread()
     assert !app.isWriteAccessAllowed()
 
-    SwingUtilities.invokeLater {
-      try {
-        app.runWriteAction {}
-        fail()
-      }
-      catch (AssertionError ignore) {
-        // a trace is also printed to stderr, which is expected
-      }
-    }
+    SwingUtilities.invokeLater { assertWritingProhibited() }
     UIUtil.dispatchAllInvocationEvents()
+  }
+
+  private void assertWritingProhibited() {
+    boolean writeActionFailed = false
+    def disposable = Disposer.newDisposable('assertWritingProhibited')
+    LoggedErrorProcessor.instance.disableStderrDumping(disposable)
+    try {
+      app.runWriteAction { log << 'writing' }
+    }
+    catch (AssertionError ignore) {
+      writeActionFailed = true
+    }
+    finally {
+      Disposer.dispose(disposable)
+    }
+    if (!writeActionFailed) {
+      fail('write action should fail')
+    }
   }
 
   public void "test parent disposable"() {
@@ -126,7 +135,7 @@ class TransactionTest extends LightPlatformTestCase {
   public void "test do not merge transactions with null id"() {
     TransactionGuard.submitTransaction testRootDisposable, {
       log << '1'
-      guard.submitMergeableTransaction testRootDisposable, (TransactionId)null, { log << '2' }
+      guard.submitTransaction testRootDisposable, (TransactionId)null, { log << '2' }
       UIUtil.dispatchAllInvocationEvents()
       assert log == ['1']
     }
@@ -140,16 +149,16 @@ class TransactionTest extends LightPlatformTestCase {
       log << '1'
       def id = guard.contextTransaction
       SwingUtilities.invokeLater {
-        guard.submitMergeableTransaction testRootDisposable, id, { log << '4' }
+        guard.submitTransaction testRootDisposable, id, { log << '4' }
       }
-      guard.submitMergeableTransaction testRootDisposable, id, {
+      guard.submitTransaction testRootDisposable, id, {
         UIUtil.dispatchAllInvocationEvents()
         log << '2'
         UIUtil.dispatchAllInvocationEvents()
-        guard.submitMergeableTransaction testRootDisposable, id, { log << '5' }
+        guard.submitTransaction testRootDisposable, id, { log << '5' }
         def nestedId = guard.contextTransaction
         SwingUtilities.invokeLater {
-          guard.submitMergeableTransaction testRootDisposable, nestedId, { log << '3' }
+          guard.submitTransaction testRootDisposable, nestedId, { log << '3' }
           assert log == ['1', '2']
         }
         UIUtil.dispatchAllInvocationEvents()
@@ -158,6 +167,53 @@ class TransactionTest extends LightPlatformTestCase {
       UIUtil.dispatchAllInvocationEvents()
       assert log == ['1', '2', '3', '4', '5']
     }
+  }
+
+  public void "test submit with finished transaction id"() {
+    TransactionGuard.submitTransaction testRootDisposable, {
+      log << '1'
+      TransactionId id = null
+      TransactionGuard.submitTransaction testRootDisposable, {
+        log << '2'
+        id = guard.contextTransaction
+      }
+      SwingUtilities.invokeLater {
+        guard.submitTransaction testRootDisposable, id, { log << '3' }
+      }
+      UIUtil.dispatchAllInvocationEvents()
+      assert log == ['1', '2', '3']
+    }
+  }
+
+  public void "test write access in modal invokeLater"() {
+    LaterInvocator.enterModal(new Object())
+    UIUtil.dispatchAllInvocationEvents()
+    def unsafeModality = ModalityState.current()
+
+    TransactionGuard.submitTransaction testRootDisposable, {
+      log << '1'
+
+      LaterInvocator.enterModal(new Object())
+      def safeModality = ModalityState.current()
+      app.executeOnPooledThread({
+        app.invokeLater({
+                          app.runWriteAction { log << '2' }
+                        }, safeModality)
+        app.invokeLater({
+                          assertWritingProhibited()
+                          log << '4'
+                        }, unsafeModality)
+        app.invokeLater({
+                          assertWritingProhibited()
+                          log << '3'
+                        }, ModalityState.any())
+        app.invokeLater({ app.runWriteAction { log << '5' } }, ModalityState.NON_MODAL)
+      }).get()
+      UIUtil.dispatchAllInvocationEvents()
+    }
+    LaterInvocator.leaveAllModals()
+    UIUtil.dispatchAllInvocationEvents()
+    assert log == ['1', '2', '3', '4', '5']
   }
 
 }

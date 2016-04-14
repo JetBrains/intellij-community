@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +24,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectAndLibrariesScope;
 import com.intellij.psi.search.ProjectScopeImpl;
-import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
+import com.intellij.util.Processors;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
@@ -393,7 +393,7 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
   @Override
   public Collection<Key> getKeys() throws StorageException {
     List<Key> keys = new ArrayList<Key>();
-    processKeys(new CommonProcessors.CollectProcessor<Key>(keys), null, null);
+    processKeys(Processors.cancelableCollectProcessor(keys), null, null);
     return keys;
   }
 

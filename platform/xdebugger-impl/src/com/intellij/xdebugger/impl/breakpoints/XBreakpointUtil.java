@@ -133,11 +133,11 @@ public class XBreakpointUtil {
    * - if folded, checks if line breakpoints could be toggled inside folded text
    */
   @NotNull
-  public static Promise<XLineBreakpoint> toggleLineBreakpoint(@NotNull Project project,
-                                                              @NotNull XSourcePosition position,
-                                                              @Nullable Editor editor,
-                                                              boolean temporary,
-                                                              boolean moveCarret) {
+  public static Promise toggleLineBreakpoint(@NotNull Project project,
+                                             @NotNull XSourcePosition position,
+                                             @Nullable Editor editor,
+                                             boolean temporary,
+                                             boolean moveCarret) {
     int lineStart = position.getLine();
     VirtualFile file = position.getFile();
     // for folded text check each line and find out type with the biggest priority

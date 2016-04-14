@@ -17,6 +17,7 @@ package com.intellij.find.findUsages;
 
 import com.intellij.find.FindBundle;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.search.SearchScope;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedHashSet;
@@ -33,6 +34,11 @@ public class JavaMethodFindUsagesOptions extends JavaFindUsagesOptions {
 
   public JavaMethodFindUsagesOptions(@NotNull Project project) {
     super(project);
+    isSearchForTextOccurrences = false;
+  }
+
+  public JavaMethodFindUsagesOptions(@NotNull SearchScope searchScope) {
+    super(searchScope);
     isSearchForTextOccurrences = false;
   }
 

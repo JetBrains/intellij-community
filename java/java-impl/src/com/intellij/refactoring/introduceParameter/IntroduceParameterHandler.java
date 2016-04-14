@@ -50,7 +50,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
@@ -267,12 +266,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
 
           final PsiMethod methodToSearchFor = superMethod.isEnabled() && superMethod.isSelected()
                                               ? methodToSearchIn.findDeepestSuperMethod() : methodToSearchIn;
-          Runnable runnable = new Runnable() {
-            public void run() {
-              consumer.consume(methodToSearchIn, methodToSearchFor);
-            }
-          };
-          IdeFocusManager.findInstance().doWhenFocusSettlesDown(runnable);
+          consumer.consume(methodToSearchIn, methodToSearchFor);
         }
       }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)));
     myEnclosingMethodsPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, list)

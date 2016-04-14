@@ -57,6 +57,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.continuation.ContinuationPause;
 import com.intellij.util.messages.Topic;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.CalledInAwt;
@@ -65,10 +66,7 @@ import org.jetbrains.annotations.*;
 import javax.swing.*;
 import java.io.File;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -1684,16 +1682,24 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   @TestOnly
   public void waitEverythingDoneInTestMode() {
     assert ApplicationManager.getApplication().isUnitTestMode();
-    Future future = ourUpdateAlarm.get();
-    if (future != null) {
+    while (true) {
+      Future future = ourUpdateAlarm.get();
+      if (future == null) break;
+
+      if (ApplicationManager.getApplication().isDispatchThread()) {
+        UIUtil.dispatchAllInvocationEvents();
+      }
       try {
-        future.get();
+        future.get(10, TimeUnit.MILLISECONDS);
+        break;
       }
       catch (InterruptedException e) {
         LOG.error(e);
       }
       catch (ExecutionException e) {
         LOG.error(e);
+      }
+      catch (TimeoutException ignore) {
       }
     }
   }

@@ -207,6 +207,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase {
     settings.setAdditionalColumnsCount(0);
     settings.setAdditionalLinesCount(0);
     settings.setVirtualSpace(true);
+    settings.setAnimatedScrolling(false);
   }
 
   @Override

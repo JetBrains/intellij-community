@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -130,7 +131,7 @@ class AddGradleDslPluginActionHandler implements CodeInsightActionHandler {
 
     public MyListCellRenderer() {
       myPanel = new JPanel(new BorderLayout());
-      myPanel.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 0));
+      myPanel.setBorder(JBUI.Borders.emptyLeft(2));
       myNameLabel = new JLabel();
 
       myPanel.add(myNameLabel, BorderLayout.WEST);

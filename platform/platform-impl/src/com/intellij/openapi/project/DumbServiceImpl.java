@@ -60,6 +60,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   private static Throwable ourForcedTrace;
   private volatile boolean myDumb = false;
   private volatile Throwable myDumbStart;
+  private volatile TransactionId myDumbStartTransaction;
   private boolean myUpdateFinishedQueued;
   private final DumbModeListener myPublisher;
   private long myModificationCount;
@@ -158,6 +159,8 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   @Override
   public void queueTask(@NotNull final DumbModeTask task) {
+    TransactionId contextTransaction = TransactionGuard.getInstance().getContextTransaction();
+
     final Throwable trace = ourForcedTrace != null ? ourForcedTrace : new Throwable(); // please report exceptions here to peter
     final DumbModePermission schedulerPermission = getExplicitPermission();
     if (LOG.isDebugEnabled()) LOG.debug("Scheduling task " + task, trace);
@@ -218,6 +221,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
                 myDumb = true;
               }
               myDumbStart = trace;
+              myDumbStartTransaction = contextTransaction;
               myModificationCount++;
               if (!myUpdateFinishedQueued) {
                 try {
@@ -407,25 +411,16 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   @Override
   public void smartInvokeLater(@NotNull final Runnable runnable) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        runWhenSmart(runnable);
-      }
-
-      @Override
-      public String toString() {
-        return runnable.toString();
-      }
-    }, myProject.getDisposed());
+    smartInvokeLater(runnable, ModalityState.defaultModalityState());
   }
 
   @Override
   public void smartInvokeLater(@NotNull final Runnable runnable, @NotNull ModalityState modalityState) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        runWhenSmart(runnable);
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (isDumb()) {
+        runWhenSmart(() -> smartInvokeLater(runnable, modalityState));
+      } else {
+        runnable.run();
       }
     }, modalityState, myProject.getDisposed());
   }
@@ -539,7 +534,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     return result.get();
   }
 
-  private static void invokeAndWaitIfNeeded(Runnable runnable) {
+  private void invokeAndWaitIfNeeded(Runnable runnable) {
     Application app = ApplicationManager.getApplication();
     if (app.isDispatchThread()) {
       runnable.run();
@@ -551,7 +546,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     //todo remove invokeLater when transactions are executed in "any" modality state
     //noinspection SSBasedInspection
     SwingUtilities.invokeLater(
-      () -> TransactionGuard.submitTransaction(app, () -> {
+      () -> TransactionGuard.getInstance().submitTransaction(app, myDumbStartTransaction, () -> {
         try {
           runnable.run();
         } finally {

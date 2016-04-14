@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,12 @@ package com.intellij.openapi.roots;
 import java.util.EventListener;
 
 /**
- *  @author dsl
+ * @author dsl
  */
-public interface ModuleRootListener extends EventListener{
-  void beforeRootsChange(ModuleRootEvent event);
-  void rootsChanged(ModuleRootEvent event);
+public interface ModuleRootListener extends EventListener {
+  default void beforeRootsChange(ModuleRootEvent event) {
+  }
+
+  default void rootsChanged(ModuleRootEvent event) {
+  }
 }

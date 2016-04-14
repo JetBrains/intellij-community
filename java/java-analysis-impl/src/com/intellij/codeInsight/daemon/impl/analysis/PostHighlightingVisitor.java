@@ -92,7 +92,12 @@ class PostHighlightingVisitor {
           }
         });
       };
-      Disposer.register((DaemonProgressIndicator)progress, invokeFixLater);
+      try {
+        Disposer.register((DaemonProgressIndicator)progress, invokeFixLater);
+      }
+      catch (Exception ignored) {
+        // suppress "parent already has been disposed" exception here
+      }
       if (progress.isCanceled()) {
         Disposer.dispose(invokeFixLater);
         Disposer.dispose((DaemonProgressIndicator)progress);

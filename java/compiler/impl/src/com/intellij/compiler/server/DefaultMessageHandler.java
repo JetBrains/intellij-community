@@ -20,7 +20,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ReadTask;
 import com.intellij.openapi.project.DumbService;
@@ -93,7 +92,7 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
   protected abstract void handleBuildEvent(UUID sessionId, CmdlineRemoteProto.Message.BuilderMessage.BuildEvent event);
 
   private void handleConstantSearchTask(final Channel channel, final UUID sessionId, final CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask task) {
-    ProgressIndicatorUtils.scheduleWithWriteActionPriority(new ProgressIndicatorBase(), myTaskExecutor, new ReadTask() {
+    ProgressIndicatorUtils.scheduleWithWriteActionPriority(myTaskExecutor, new ReadTask() {
       @Override
       public Continuation runBackgroundProcess(@NotNull ProgressIndicator indicator) throws ProcessCanceledException {
         return DumbService.getInstance(myProject).runReadActionInSmartMode(new Computable<Continuation>() {

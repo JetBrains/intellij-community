@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.util.SystemInfo;
@@ -21,37 +20,26 @@ import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Vector;
 
 public class ComboBoxWithWidePopup<E> extends JComboBox<E> {
-
   private boolean myLayingOut = false;
   private int myMinLength = 20;
 
+  public ComboBoxWithWidePopup() { }
+
   public ComboBoxWithWidePopup(final ComboBoxModel<E> aModel) {
     super(aModel);
-
     if (SystemInfo.isMac && UIUtil.isUnderAquaLookAndFeel()) setMaximumRowCount(25);
   }
 
   public ComboBoxWithWidePopup(final E[] items) {
     super(items);
-
     if (SystemInfo.isMac && UIUtil.isUnderAquaLookAndFeel()) setMaximumRowCount(25);
   }
 
-  public ComboBoxWithWidePopup(@SuppressWarnings("UseOfObsoleteCollectionType") final Vector<E> items) {
-    super(items);
-
-    if (SystemInfo.isMac && UIUtil.isUnderAquaLookAndFeel()) setMaximumRowCount(25);
-  }
-
-  public ComboBoxWithWidePopup() {
-  }
-  
   @SuppressWarnings("GtkPreferredJComboBoxRenderer")
   @Override
-  public void setRenderer(ListCellRenderer renderer) {
+  public void setRenderer(ListCellRenderer<? super E> renderer) {
     super.setRenderer(new AdjustingListCellRenderer(this, renderer));
   }
 
@@ -112,8 +100,8 @@ public class ComboBoxWithWidePopup<E> extends JComboBox<E> {
 
         if (size.width == 0) {
           if (stringValue.length() > minLength) {
-            //noinspection unchecked
-            _value = (E)stringValue.substring(0, minLength);
+            @SuppressWarnings("unchecked") E e = (E)stringValue.substring(0, minLength);
+            _value = e;
           }
         }
       }

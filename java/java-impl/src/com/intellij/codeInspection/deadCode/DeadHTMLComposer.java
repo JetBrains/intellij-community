@@ -65,7 +65,9 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
         appendHeading(buf, InspectionsBundle.message("inspection.problem.synopsis"));
         //noinspection HardCodedStringLiteral
         buf.append("<br>");
+        buf.append("<div class=\"problem-description\">");
         appendProblemSynopsis(refElement, buf);
+        buf.append("</div>");
 
         if (toExternalHtml) {
           buf.append("<br><br>");
@@ -100,7 +102,6 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
   }
 
   public static void appendProblemSynopsis(final RefElement refElement, final StringBuffer buf) {
-    buf.append("<div class=\"problem-description\">");
     refElement.accept(new RefJavaVisitor() {
       @Override public void visitField(@NotNull RefField field) {
         if (field.isUsedForReading() && !field.isUsedForWriting()) {
@@ -217,7 +218,6 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
         }
       }
     });
-    buf.append("</div>");
   }
 
   @Override

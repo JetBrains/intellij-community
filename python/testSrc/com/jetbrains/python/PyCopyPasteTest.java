@@ -396,4 +396,30 @@ public class PyCopyPasteTest extends PyTestCase {
   public void testSimpleExpressionPartCaretAtLineEnd() {
     doTest();
   }
+
+  // PY-18522
+  public void testEmptyBranchBlock() {
+    doTest();
+  }
+
+  // PY-18522
+  public void testEmptyParentBlockWithCommentInside() {
+    doTest();
+  }
+
+  // PY-19064
+  public void testAmbiguousParentBlockSmallestIndent() {
+    doTest();
+  }
+  
+  // PY-19064
+  public void testAmbiguousParentBlockLargestIndent() {
+    doTest();
+  }
+  
+  // PY-19064
+  public void testAmbiguousParentBlockMidIndent() {
+    doTest();
+  }
+  
 }

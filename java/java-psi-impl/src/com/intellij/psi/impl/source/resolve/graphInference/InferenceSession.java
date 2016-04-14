@@ -625,8 +625,10 @@ public class InferenceSession {
     return mySiteSubstitutor;
   }
 
-  public InitialInferenceState createInitialState(InferenceSessionContainer container, PsiSubstitutor topInferenceSubstitutor) {
-    return new InitialInferenceState(myInferenceVariables,
+  public InitialInferenceState createInitialState(InferenceSessionContainer container,
+                                                  Collection<InferenceVariable> variables,
+                                                  PsiSubstitutor topInferenceSubstitutor) {
+    return new InitialInferenceState(variables,
                                      topInferenceSubstitutor,
                                      myContext, 
                                      myInferenceSubstitution, 
@@ -652,6 +654,7 @@ public class InferenceSession {
       final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(parameter.getProject());
       myInferenceSubstitution = myInferenceSubstitution.put(parameter, elementFactory.createType(variable));
       myRestoreNameSubstitution = myRestoreNameSubstitution.put(variable, elementFactory.createType(parameter));
+      myInferenceVariables.add(variable);
     }
     for (InferenceVariable variable : result) {
       PsiTypeParameter parameter = variable.getParameter();
@@ -669,7 +672,6 @@ public class InferenceSession {
                           InferenceBound.UPPER, null);
       }
     }
-    myInferenceVariables.addAll(result);
     return result.toArray(new InferenceVariable[result.size()]);
   }
 
@@ -688,40 +690,49 @@ public class InferenceSession {
 
   public void registerReturnTypeConstraints(PsiType returnType, PsiType targetType) {
     returnType = substituteWithInferenceVariables(returnType);
-    final InferenceVariable inferenceVariable = shouldResolveAndInstantiate(returnType, targetType);
-    if (inferenceVariable != null) {
-      final PsiSubstitutor substitutor = resolveSubset(Collections.singletonList(inferenceVariable), mySiteSubstitutor);
-      final PsiType substitutedReturnType = substitutor.substitute(inferenceVariable);
-      if (substitutedReturnType != null) {
-        addConstraint(new TypeCompatibilityConstraint(targetType, PsiUtil.captureToplevelWildcards(substitutedReturnType, myContext)));
+    if (myErased) {
+      final InferenceVariable inferenceVariable = getInferenceVariable(returnType);
+      if (inferenceVariable != null) {
+        final PsiSubstitutor substitutor = resolveSubset(Collections.singletonList(inferenceVariable), mySiteSubstitutor);
+        returnType = substitutor.substitute(inferenceVariable);
+        if (returnType == null) return;
       }
-    } 
-    else {
-      if (FunctionalInterfaceParameterizationUtil.isWildcardParameterized(returnType)) {
-        final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(returnType);
-        final PsiClass psiClass = resolveResult.getElement();
-        if (psiClass != null) {
-          LOG.assertTrue(returnType instanceof PsiClassType);
-          PsiClassType substitutedCapture = (PsiClassType)PsiUtil.captureToplevelWildcards(returnType, myContext);
-          final PsiTypeParameter[] typeParameters = psiClass.getTypeParameters();
-          final InferenceVariable[] copy = initBounds(null, typeParameters);
+      addConstraint(new TypeCompatibilityConstraint(targetType, TypeConversionUtil.erasure(returnType)));
+    }
+    else if (FunctionalInterfaceParameterizationUtil.isWildcardParameterized(returnType)) {
+      final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(returnType);
+      final PsiClass psiClass = resolveResult.getElement();
+      if (psiClass != null) {
+        LOG.assertTrue(returnType instanceof PsiClassType);
+        PsiClassType substitutedCapture = (PsiClassType)PsiUtil.captureToplevelWildcards(returnType, myContext);
+        final PsiTypeParameter[] typeParameters = psiClass.getTypeParameters();
+        final InferenceVariable[] copy = initBounds(null, typeParameters);
 
-          final PsiType[] parameters = substitutedCapture.getParameters();
-          final PsiType[] newParameters = new PsiType[parameters.length];
-          final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myManager.getProject());
-          for (int i = 0; i < parameters.length; i++) {
-            newParameters[i] = parameters[i];
-            if (parameters[i] instanceof PsiCapturedWildcardType) {
-              newParameters[i] = elementFactory.createType(copy[i]);
-            }
+        final PsiType[] parameters = substitutedCapture.getParameters();
+        final PsiType[] newParameters = new PsiType[parameters.length];
+        final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myManager.getProject());
+        for (int i = 0; i < parameters.length; i++) {
+          newParameters[i] = parameters[i];
+          if (parameters[i] instanceof PsiCapturedWildcardType) {
+            newParameters[i] = elementFactory.createType(copy[i]);
           }
-          substitutedCapture = elementFactory.createType(psiClass, newParameters);
-
-          myIncorporationPhase.addCapture(copy, (PsiClassType)returnType);
-          addConstraint(new TypeCompatibilityConstraint(targetType, substitutedCapture));
         }
-      } else {
-        addConstraint(new TypeCompatibilityConstraint(targetType, myErased ? TypeConversionUtil.erasure(returnType) : returnType));
+        substitutedCapture = elementFactory.createType(psiClass, newParameters);
+
+        myIncorporationPhase.addCapture(copy, (PsiClassType)returnType);
+        addConstraint(new TypeCompatibilityConstraint(targetType, substitutedCapture));
+      }
+    } else {
+      final InferenceVariable inferenceVariable = shouldResolveAndInstantiate(returnType, targetType);
+      if (inferenceVariable != null) {
+        final PsiSubstitutor substitutor = resolveSubset(Collections.singletonList(inferenceVariable), mySiteSubstitutor);
+        final PsiType substitutedReturnType = substitutor.substitute(inferenceVariable);
+        if (substitutedReturnType != null) {
+          addConstraint(new TypeCompatibilityConstraint(targetType, PsiUtil.captureToplevelWildcards(substitutedReturnType, myContext)));
+        }
+      }
+      else {
+        addConstraint(new TypeCompatibilityConstraint(targetType, returnType));
       }
     }
   }
@@ -733,8 +744,7 @@ public class InferenceSession {
         return inferenceVariable;
       }
       if (targetType instanceof PsiClassType) {
-        if (myErased ||
-            hasUncheckedBounds(inferenceVariable, (PsiClassType)targetType) ||
+        if (hasUncheckedBounds(inferenceVariable, (PsiClassType)targetType) ||
             hasWildcardParameterization(inferenceVariable, (PsiClassType)targetType)) {
           return inferenceVariable;
         }
@@ -885,10 +895,7 @@ public class InferenceSession {
 
   public InferenceVariable getInferenceVariable(PsiType psiType) {
     final PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(psiType);
-    if (psiClass instanceof InferenceVariable) {
-      return (InferenceVariable)psiClass;
-    }
-    return null;
+    return psiClass instanceof InferenceVariable ? getInferenceVariable((PsiTypeParameter)psiClass) : null;
   }
 
   public boolean isProperType(@Nullable PsiType type) {
@@ -1298,6 +1305,9 @@ public class InferenceSession {
   }
 
   public GlobalSearchScope getScope() {
+    if (myContext != null) {
+      return myContext.getResolveScope();
+    }
     return GlobalSearchScope.allScope(myManager.getProject());
   }
 
@@ -1864,9 +1874,9 @@ public class InferenceSession {
     return myContext;
   }
 
-  public void propagateVariables(Collection<InferenceVariable> variables, PsiSubstitutor substitution) {
+  public void propagateVariables(Collection<InferenceVariable> variables, PsiSubstitutor restoreNamesSubstitution) {
     myInferenceVariables.addAll(variables);
-    myRestoreNameSubstitution = myRestoreNameSubstitution.putAll(substitution);
+    myRestoreNameSubstitution = myRestoreNameSubstitution.putAll(restoreNamesSubstitution);
   }
 
   public PsiType substituteWithInferenceVariables(PsiType type) {

@@ -252,12 +252,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
                           @NotNull final NotificationGroup group,
                           @NotNull final NotificationType type,
                           @Nullable final NotificationListener listener) {
-    AppUIUtil.invokeLaterIfProjectAlive(myProject, new Runnable() {
-      @Override
-      public void run() {
-        group.createNotification(title, message, type, listener).notify(myProject);
-      }
-    });
+    group.createNotification(title, message, type, listener).notify(myProject);
   }
 
   private void initMavenized() {

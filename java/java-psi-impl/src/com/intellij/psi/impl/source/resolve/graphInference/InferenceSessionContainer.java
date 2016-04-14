@@ -54,6 +54,7 @@ public class InferenceSessionContainer {
         ExpressionCompatibilityConstraint.reduceExpressionCompatibilityConstraint(session, returnExpression, returnType);
       if (inferenceSession != null && inferenceSession != session) {
         registerNestedSession(inferenceSession);
+        session.propagateVariables(inferenceSession.getInferenceVariables(), inferenceSession.getRestoreNameSubstitution());
       }
     }
   }
@@ -79,7 +80,7 @@ public class InferenceSessionContainer {
                                                                                           });
         if (topLevelCall != null) {
 
-          final InferenceSession session;
+          InferenceSession session;
           if (MethodCandidateInfo.isOverloadCheck() || !PsiDiamondType.ourDiamondGuard.currentStack().isEmpty() || LambdaUtil.isLambdaParameterCheck()) {
             session = startTopLevelInference(topLevelCall);
           }
@@ -91,6 +92,22 @@ public class InferenceSessionContainer {
                 return new Result<InferenceSession>(startTopLevelInference(topLevelCall), PsiModificationTracker.MODIFICATION_COUNT);
               }
             });
+
+            if (session != null) {
+              //reject cached top level session if it was based on wrong candidate: check nested session if candidate (it's type parameters) are the same
+              //such situations are avoided when overload resolution is performed (MethodCandidateInfo.isOverloadCheck above)
+              //but situations when client code iterates through PsiResolveHelper.getReferencedMethodCandidates or similar are impossible to guess
+              final Map<PsiElement, InferenceSession> sessions = session.getInferenceSessionContainer().myNestedSessions;
+              final InferenceSession childSession = sessions.get(parent);
+              if (childSession != null) {
+                for (PsiTypeParameter parameter : typeParameters) {
+                  if (!childSession.getInferenceSubstitution().getSubstitutionMap().containsKey(parameter)) {
+                    session = startTopLevelInference(topLevelCall);
+                    break;
+                  }
+                }
+              }
+            }
           }
 
           if (session != null) {
@@ -143,7 +160,7 @@ public class InferenceSessionContainer {
     };
     final Map<PsiElement, InferenceSession> nestedSessions = topLevelSession.getInferenceSessionContainer().myNestedSessions;
     for (Map.Entry<PsiElement, InferenceSession> entry : nestedSessions.entrySet()) {
-      nestedStates.put(entry.getKey(), entry.getValue().createInitialState(copy, topInferenceSubstitutor));
+      nestedStates.put(entry.getKey(), entry.getValue().createInitialState(copy, topLevelSession.getInferenceVariables(), topInferenceSubstitutor));
     }
 
     PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;

@@ -15,9 +15,11 @@
  */
 package com.intellij.openapi.editor.actions;
 
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Action that toggles <code>'show soft wraps at editor'</code> option and is expected to be used at various menus.
@@ -32,10 +34,13 @@ public class ToggleUseSoftWrapsMenuAction extends AbstractToggleUseSoftWrapsActi
   }
 
   @Override
-  public void update(AnActionEvent e){
+  public void update(@NotNull AnActionEvent e){
     super.update(e);
     if (!ActionPlaces.isToolbarPlace(e.getPlace())) {
       e.getPresentation().setIcon(null);
+    }
+    if (ActionPlaces.UNKNOWN.equals(e.getPlace())) {
+      e.getPresentation().setText(ActionsBundle.message("action.EditorGutterToggleLocalSoftWraps.gutterText"));
     }
     e.getPresentation().setEnabled(getEditor(e) != null);
   }

@@ -38,7 +38,6 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
-import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -205,12 +204,7 @@ public abstract class LRUPopupBuilder<T> {
             storeLRUItems(t);
           }
           if (myOnChosen != null) {
-            EdtInvocationManager.getInstance().invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                myOnChosen.consume(t);
-              }
-            });
+            doFinalStep(() -> myOnChosen.consume(t));
           }
           return null;
         }

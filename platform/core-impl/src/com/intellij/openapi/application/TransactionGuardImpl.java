@@ -16,7 +16,6 @@
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
@@ -27,7 +26,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
@@ -38,25 +37,14 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author peter
  */
 public class TransactionGuardImpl extends TransactionGuard {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.application.TransactionGuardImpl");
   private final Queue<Transaction> myQueue = new LinkedBlockingQueue<Transaction>();
-  private final Set<TransactionKind> myMergeableKinds = ContainerUtil.newHashSet();
-  private final Map<ProgressIndicator, TransactionIdImpl> myProgresses = ContainerUtil.createConcurrentWeakMap();
+  private final Map<ModalityState, TransactionIdImpl> myModality2Transaction = ContainerUtil.createConcurrentWeakMap();
+  private final Set<ModalityState> myWriteSafeModalities = Collections.newSetFromMap(ContainerUtil.<ModalityState, Boolean>createConcurrentWeakMap());
   private TransactionIdImpl myCurrentTransaction;
   private boolean myWritingAllowed;
 
-  @Override
-  @NotNull
-  public AccessToken startSynchronousTransaction(@NotNull TransactionKind kind) throws IllegalStateException {
-    if (isInsideTransaction() && !myWritingAllowed && !myMergeableKinds.contains(kind)) {
-      // please assign exceptions that occur here to Peter
-      LOG.error("Synchronous transactions are allowed only from user actions. " +
-                "Please use submit*Transaction instead of invokeLater. " +
-                "See FAQ in TransactionGuard class javadoc.");
-      return AccessToken.EMPTY_ACCESS_TOKEN;
-    }
-
-    return startTransactionUnchecked();
+  public TransactionGuardImpl() {
+    myWriteSafeModalities.add(ModalityState.NON_MODAL);
   }
 
   @NotNull
@@ -83,8 +71,15 @@ public class TransactionGuardImpl extends TransactionGuard {
   }
 
   @NotNull
-  private Queue<Transaction> getQueue(@Nullable TransactionIdImpl prevTransaction) {
-    return prevTransaction == null ? myQueue : prevTransaction.myQueue;
+  private Queue<Transaction> getQueue(@Nullable TransactionIdImpl transaction) {
+    if (transaction == null) {
+      return myQueue;
+    }
+    if (myCurrentTransaction != null && transaction.myStartCounter > myCurrentTransaction.myStartCounter) {
+      // transaction is finished already, it makes no sense to add to its queue
+      return myCurrentTransaction.myQueue;
+    }
+    return transaction.myQueue;
   }
 
   private void pollQueueLater() {
@@ -114,26 +109,10 @@ public class TransactionGuardImpl extends TransactionGuard {
     }
   }
 
-  private boolean isInsideTransaction() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    return myCurrentTransaction != null;
-  }
-
   @Override
-  public void submitMergeableTransaction(@NotNull final Disposable parentDisposable, @NotNull final TransactionKind kind, @NotNull final Runnable _transaction) {
-    submitMergeableTransaction(parentDisposable, kind, getContextTransaction(), _transaction);
-  }
-
-  @Override
-  public void submitMergeableTransaction(@NotNull Disposable parentDisposable, @Nullable TransactionId mergeInto, @NotNull Runnable transaction) {
-    submitMergeableTransaction(parentDisposable, TransactionKind.ANY_CHANGE, (TransactionIdImpl)mergeInto, transaction);
-  }
-
-  private void submitMergeableTransaction(@NotNull final Disposable parentDisposable,
-                                          @NotNull final TransactionKind kind,
-                                          @Nullable final TransactionIdImpl expectedId,
-                                          @NotNull final Runnable _transaction) {
-    @NotNull final Transaction transaction = new Transaction(_transaction, expectedId, kind, parentDisposable);
+  public void submitTransaction(@NotNull Disposable parentDisposable, @Nullable TransactionId expectedContext, @NotNull Runnable _transaction) {
+    final TransactionIdImpl expectedId = (TransactionIdImpl)expectedContext;
+    final Transaction transaction = new Transaction(_transaction, expectedId, parentDisposable);
     final Application app = ApplicationManager.getApplication();
     final boolean isDispatchThread = app.isDispatchThread();
     Runnable runnable = new Runnable() {
@@ -159,7 +138,7 @@ public class TransactionGuardImpl extends TransactionGuard {
 
   private boolean canRunTransactionNow(Transaction transaction, boolean sync) {
     TransactionIdImpl currentId = myCurrentTransaction;
-    if (currentId == null || myMergeableKinds.contains(transaction.kind)) {
+    if (currentId == null) {
       return true;
     }
 
@@ -167,44 +146,14 @@ public class TransactionGuardImpl extends TransactionGuard {
       return false;
     }
 
-    return transaction.mergeInto != null && currentId.myStartCounter <= transaction.mergeInto.myStartCounter;
-  }
-
-  @Override
-  @NotNull
-  public AccessToken acceptNestedTransactions(@NotNull TransactionKind... kinds) {
-    //todo enable when transactions are mandatory
-    /*
-    if (!isInsideTransaction()) {
-      throw new IllegalStateException("acceptNestedTransactions must be called inside a transaction");
-    }
-    */
-    final List<TransactionKind> toRemove = ContainerUtil.newArrayList();
-    for (TransactionKind kind : kinds) {
-      if (myMergeableKinds.add(kind)) {
-        toRemove.add(kind);
-      }
-    }
-    return new AccessToken() {
-      @Override
-      public void finish() {
-        myMergeableKinds.removeAll(toRemove);
-      }
-    };
-  }
-
-  @Override
-  public void assertInsideTransaction(boolean transactionRequired, @NotNull String errorMessage) {
-    if (transactionRequired != isInsideTransaction()) {
-      LOG.error(errorMessage);
-    }
+    return transaction.expectedContext != null && currentId.myStartCounter <= transaction.expectedContext.myStartCounter;
   }
 
   @Override
   public void submitTransactionAndWait(@NotNull final Runnable runnable) throws ProcessCanceledException {
     Application app = ApplicationManager.getApplication();
     if (app.isDispatchThread()) {
-      Transaction transaction = new Transaction(runnable, getContextTransaction(), TransactionKind.ANY_CHANGE, app);
+      Transaction transaction = new Transaction(runnable, getContextTransaction(), app);
       if (!canRunTransactionNow(transaction, true)) {
         throw new AssertionError("Cannot run synchronous submitTransactionAndWait from invokeLater. " +
                                  "Please use asynchronous submit*Transaction. " +
@@ -218,7 +167,7 @@ public class TransactionGuardImpl extends TransactionGuard {
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
     final Throwable[] exception = {null};
-    submitMergeableTransaction(Disposer.newDisposable("never disposed"), TransactionKind.ANY_CHANGE, new Runnable() {
+    submitTransaction(Disposer.newDisposable("never disposed"), getContextTransaction(), new Runnable() {
       @Override
       public void run() {
         try {
@@ -280,7 +229,7 @@ public class TransactionGuardImpl extends TransactionGuard {
   }
 
   public boolean isWriteActionAllowed() {
-    return !Registry.is("ide.require.transaction.for.model.changes", false) || isInsideTransaction() || myWritingAllowed;
+    return !Registry.is("ide.require.transaction.for.model.changes", false) || myWritingAllowed;
   }
 
   @Override
@@ -290,7 +239,7 @@ public class TransactionGuardImpl extends TransactionGuard {
     app.invokeLater(new Runnable() {
       @Override
       public void run() {
-        submitMergeableTransaction(parentDisposable, id, transaction);
+        submitTransaction(parentDisposable, id, transaction);
       }
     });
   }
@@ -299,31 +248,55 @@ public class TransactionGuardImpl extends TransactionGuard {
   public TransactionIdImpl getContextTransaction() {
     if (!ApplicationManager.getApplication().isDispatchThread()) {
       ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
-      return indicator != null ? myProgresses.get(indicator) : null;
+      return indicator != null ? myModality2Transaction.get(indicator.getModalityState()) : null;
     }
 
     return myWritingAllowed ? myCurrentTransaction : null;
   }
 
-  public void registerProgress(@NotNull ProgressIndicator indicator, @Nullable TransactionIdImpl contextTransaction) {
+  public void enteredModality(@NotNull ModalityState modality) {
+    TransactionIdImpl contextTransaction = getContextTransaction();
     if (contextTransaction != null) {
-      myProgresses.put(indicator, contextTransaction);
+      myModality2Transaction.put(modality, contextTransaction);
     }
+    if (myWritingAllowed) {
+      myWriteSafeModalities.add(modality);
+    }
+  }
+
+  @Nullable
+  public TransactionIdImpl getModalityTransaction(@NotNull ModalityState modalityState) {
+    return myModality2Transaction.get(modalityState);
+  }
+
+  @NotNull
+  public Runnable wrapLaterInvocation(@NotNull final Runnable runnable, @NotNull ModalityState modalityState) {
+    if (myWriteSafeModalities.contains(modalityState)) {
+      return new Runnable() {
+        @Override
+        public void run() {
+          final boolean prev = myWritingAllowed;
+          myWritingAllowed = true;
+          try {
+            runnable.run();
+          } finally {
+            myWritingAllowed = prev;
+          }
+        }
+      };
+    }
+
+    return runnable;
   }
 
   private static class Transaction {
     @NotNull  final Runnable runnable;
-    @Nullable final TransactionIdImpl mergeInto;
-    @NotNull  final TransactionKind kind;
+    @Nullable final TransactionIdImpl expectedContext;
     @NotNull  final Disposable parentDisposable;
 
-    Transaction(@NotNull Runnable runnable,
-                       @Nullable TransactionIdImpl mergeInto,
-                       @NotNull TransactionKind kind,
-                       @NotNull Disposable parentDisposable) {
+    Transaction(@NotNull Runnable runnable, @Nullable TransactionIdImpl expectedContext, @NotNull Disposable parentDisposable) {
       this.runnable = runnable;
-      this.mergeInto = mergeInto;
-      this.kind = kind;
+      this.expectedContext = expectedContext;
       this.parentDisposable = parentDisposable;
     }
   }

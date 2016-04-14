@@ -24,8 +24,9 @@ import io.netty.handler.codec.http.FullHttpRequest
 import io.netty.handler.codec.http.HttpHeaderNames
 import io.netty.handler.codec.http.HttpRequest
 import io.netty.handler.codec.http.HttpResponseStatus
-import org.jetbrains.io.Responses
 import org.jetbrains.io.host
+import org.jetbrains.io.response
+import org.jetbrains.io.send
 import org.jetbrains.io.uriScheme
 
 /**
@@ -49,8 +50,8 @@ abstract class WebServerPathHandler {
 }
 
 fun redirectToDirectory(request: HttpRequest, channel: Channel, path: String) {
-  val response = Responses.response(HttpResponseStatus.MOVED_PERMANENTLY)
-  val url = VfsUtil.toUri("${channel.uriScheme}://${request.host}/$path/")!!
+  val response = HttpResponseStatus.MOVED_PERMANENTLY.response()
+  val url = VfsUtil.toUri("${channel.uriScheme}://${request.host!!}/$path/")!!
   response.headers().add(HttpHeaderNames.LOCATION, url.toASCIIString())
-  Responses.send(response, channel, request)
+  response.send(channel, request)
 }

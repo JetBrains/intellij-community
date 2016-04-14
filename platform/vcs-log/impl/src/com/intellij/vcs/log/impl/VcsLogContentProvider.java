@@ -100,8 +100,19 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
     toolWindow.activate(null);
   }
 
+  private void closeLogTabs() {
+    ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.VCS);
+
+    TabbedContent content = ContentUtilEx.findTabbedContent(toolWindow.getContentManager(), TAB_NAME);
+    if (content != null) {
+      toolWindow.getContentManager().removeContent(content, true);
+    }
+  }
+
   private void recreateLog() {
     myContainer.removeAll();
+    closeLogTabs();
+
     myLogManager.disposeLog();
 
     initContentInternal();

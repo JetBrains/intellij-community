@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,8 @@ public class MergeQuery<T> implements Query<T>{
   @NotNull
   public Collection<T> findAll() {
     List<T> results = new ArrayList<T>();
-    forEach(new CommonProcessors.CollectProcessor<T>(results));
+    Processor<T> processor = Processors.cancelableCollectProcessor(results);
+    forEach(processor);
     return results;
   }
 

@@ -60,6 +60,7 @@ public class LambdaUtil {
     return null;
   }
 
+  @Contract("null -> null")
   @Nullable
   public static PsiMethod getFunctionalInterfaceMethod(@Nullable PsiType functionalInterfaceType) {
     return getFunctionalInterfaceMethod(PsiUtil.resolveGenericsClassInType(functionalInterfaceType));
@@ -78,6 +79,7 @@ public class LambdaUtil {
     return getFunctionalInterfaceMethod(result.getElement());
   }
 
+  @Contract("null -> null")
   @Nullable
   public static PsiMethod getFunctionalInterfaceMethod(PsiClass aClass) {
     final MethodSignature methodSignature = getFunction(aClass);
@@ -641,6 +643,9 @@ public class LambdaUtil {
         final PsiType type = ((PsiExpression)body).getType();
         try {
           if (!PsiUtil.isStatement(JavaPsiFacade.getElementFactory(body.getProject()).createStatementFromText(body.getText(), body))) {
+            if (PsiType.VOID.equals(type)) {
+              return "Lambda body must be a statement expression";
+            }
             return "Bad return type in lambda expression: " + (type == PsiType.NULL || type == null ? "<null>" : type.getPresentableText()) + " cannot be converted to void";
           }
         }

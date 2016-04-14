@@ -146,7 +146,7 @@ public class JavaFxChunkBuildExtension extends ChunkBuildExtension {
         protected void registerJavaFxPackagerError(String message) {}
       };
     final List<JavaFxAntGenerator.SimpleTag> tags = 
-      JavaFxAntGenerator.createJarAndDeployTasks(javaFxPackager, artifactFileName, artifact.getName(), tempDirPath);
+      JavaFxAntGenerator.createJarAndDeployTasks(javaFxPackager, artifactFileName, artifact.getName(), tempDirPath, true);
     for (JavaFxAntGenerator.SimpleTag tag : tags) {
       buildTags(generator, tag);
     }

@@ -71,7 +71,7 @@ class EncodingFileTreeTable extends AbstractFileTreeTable<Charset> {
           setText(encodingText + (failReason == null ? "" : " (" + failReason + ")"));
         }
 
-        setEnabled(enabled);
+        setEnabled(enabled || isSelected); // do not use grayed text on selected row
         return this;
       }
     });

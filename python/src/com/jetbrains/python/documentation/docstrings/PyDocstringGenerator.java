@@ -540,7 +540,7 @@ public class PyDocstringGenerator {
         throw new IllegalStateException("Should be a function or class");
       }
       final PyStatementList statements = container.getStatementList();
-      final String indentation = PyIndentUtil.getExpectedElementIndent(statements);
+      final String indentation = PyIndentUtil.getElementIndent(statements);
       final Document document = PsiDocumentManager.getInstance(project).getDocument(myDocStringOwner.getContainingFile());
 
       if (document != null) {

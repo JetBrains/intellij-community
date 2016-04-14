@@ -163,4 +163,9 @@ public class Patches {
   public static boolean isJdkBugId8004103() {
     return SystemInfo.isXWindow && !GraphicsEnvironment.isHeadless() && SystemInfo.isJavaVersionAtLeast("1.7");
   }
+
+  /**
+   * Some HTTP connections lock the context class loader: https://bugs.openjdk.java.net/browse/JDK-8032832
+   */
+  public static boolean JDK_BUG_ID_8032832 = SystemInfo.isJavaVersionAtLeast("1.8.0_20");
 }

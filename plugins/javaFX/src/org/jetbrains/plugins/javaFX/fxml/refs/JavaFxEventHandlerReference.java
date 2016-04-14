@@ -21,6 +21,7 @@ import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.ArrayUtil;
@@ -57,19 +58,26 @@ public class JavaFxEventHandlerReference extends PsiReferenceBase<XmlAttributeVa
   public Object[] getVariants() {
     if (myController == null) return EMPTY_ARRAY;
     final List<PsiMethod> availableHandlers = new ArrayList<PsiMethod>();
-    for (PsiMethod psiMethod : myController.getMethods()) {
-      if (isHandlerMethodSignature(psiMethod) && JavaFxPsiUtil.isVisibleInFxml(psiMethod)) {
+    for (PsiMethod psiMethod : myController.getAllMethods()) {
+      if (isHandlerMethodSignature(psiMethod, myController) && JavaFxPsiUtil.isVisibleInFxml(psiMethod)) {
          availableHandlers.add(psiMethod);
        }
     }
     return availableHandlers.isEmpty() ? EMPTY_ARRAY : ArrayUtil.toObjectArray(availableHandlers);
   }
 
-  public static boolean isHandlerMethodSignature(PsiMethod psiMethod) {
+  public static boolean isHandlerMethodSignature(@NotNull PsiMethod psiMethod, @NotNull PsiClass controllerClass) {
+    final PsiClass containingClass = psiMethod.getContainingClass();
+    if (containingClass != null && CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName())) return false;
     if (!psiMethod.hasModifierProperty(PsiModifier.STATIC)) {
       final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
       if (parameters.length == 1) {
-        final PsiType parameterType = parameters[0].getType();
+        PsiType parameterType = parameters[0].getType();
+        if (containingClass != null && !controllerClass.isEquivalentTo(containingClass)) {
+          final PsiSubstitutor substitutor =
+            TypeConversionUtil.getSuperClassSubstitutor(containingClass, controllerClass, PsiSubstitutor.EMPTY);
+          parameterType = substitutor.substitute(parameterType);
+        }
         if (InheritanceUtil.isInheritor(parameterType, JavaFxCommonNames.JAVAFX_EVENT)) {
           return true;
         }

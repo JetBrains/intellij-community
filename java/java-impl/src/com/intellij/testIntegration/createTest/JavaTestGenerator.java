@@ -41,6 +41,7 @@ import com.intellij.testIntegration.TestIntegrationUtils;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -223,7 +224,7 @@ public class JavaTestGenerator implements TestGenerator {
     });
   }
 
-  private static PsiMethod generateMethod(TestIntegrationUtils.MethodKind methodKind,
+  private static PsiMethod generateMethod(@NotNull TestIntegrationUtils.MethodKind methodKind,
                                           TestFramework descriptor,
                                           PsiClass targetClass,
                                           @Nullable PsiClass sourceClass,

@@ -105,7 +105,7 @@ public class CacheUpdateRunner {
     };
     final ApplicationAdapter canceller = new ApplicationAdapter() {
       @Override
-      public void beforeWriteActionStart(Object action) {
+      public void beforeWriteActionStart(@NotNull Object action) {
         innerIndicator.cancel();
       }
     };

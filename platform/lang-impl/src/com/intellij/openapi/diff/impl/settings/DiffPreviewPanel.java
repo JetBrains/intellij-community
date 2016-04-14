@@ -28,8 +28,8 @@ import com.intellij.diff.tools.util.base.HighlightPolicy;
 import com.intellij.diff.tools.util.base.IgnorePolicy;
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder;
 import com.intellij.diff.util.DiffUtil;
+import com.intellij.diff.util.TextDiffTypeFactory.TextDiffTypeImpl;
 import com.intellij.diff.util.ThreeSide;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -41,24 +41,29 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
 /**
  * The panel from the Settings, that allows to see changes to diff/merge coloring scheme right away.
  */
-public class DiffPreviewPanel implements PreviewPanel {
+class DiffPreviewPanel implements PreviewPanel {
+  private final JPanel myPanel;
   private final SimpleThreesideDiffViewer myViewer;
 
   private final EventDispatcher<ColorAndFontSettingsListener> myDispatcher = EventDispatcher.create(ColorAndFontSettingsListener.class);
 
-  public DiffPreviewPanel(@NotNull Disposable parent) {
+  public DiffPreviewPanel() {
     myViewer = new SimpleThreesideDiffViewer(new SampleContext(), new SampleRequest()) {
       @Override
       protected boolean forceRediffSynchronously() {
@@ -66,7 +71,6 @@ public class DiffPreviewPanel implements PreviewPanel {
       }
     };
     myViewer.init();
-    Disposer.register(parent, myViewer);
 
     for (ThreeSide side : ThreeSide.values()) {
       final EditorMouseListener motionListener = new EditorMouseListener(side);
@@ -76,11 +80,13 @@ public class DiffPreviewPanel implements PreviewPanel {
       editor.addEditorMouseListener(clickListener);
       editor.getCaretModel().addCaretListener(clickListener);
     }
+
+    myPanel = JBUI.Panels.simplePanel(myViewer.getComponent()).withBorder(IdeBorderFactory.createBorder());
   }
 
   @Override
   public Component getPanel() {
-    return myViewer.getComponent();
+    return myPanel;
   }
 
   @Override
@@ -205,7 +211,10 @@ public class DiffPreviewPanel implements PreviewPanel {
 
   private void selectChange(@Nullable SimpleThreesideDiffChange change) {
     if (change == null) return;
-    myDispatcher.getMulticaster().selectionInPreviewChanged(change.getDiffType().getName());
+    TextDiffTypeImpl diffType = ObjectUtils.tryCast(change.getDiffType(), TextDiffTypeImpl.class);
+    if (diffType != null) {
+      myDispatcher.getMulticaster().selectionInPreviewChanged(diffType.getKey().getExternalName());
+    }
   }
 
   @Nullable
@@ -233,6 +242,7 @@ public class DiffPreviewPanel implements PreviewPanel {
 
   @Override
   public void disposeUIResources() {
+    Disposer.dispose(myViewer);
   }
 
   @NotNull

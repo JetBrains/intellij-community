@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -172,11 +172,8 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   @TestOnly
   public static void disposeApplication() {
     if (ourApplication != null) {
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          Disposer.dispose(ourApplication);
-        }
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        Disposer.dispose(ourApplication);
       });
 
       ourApplication = null;
@@ -227,15 +224,12 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   private static void initProject(@NotNull final LightProjectDescriptor descriptor) throws Exception {
     ourProjectDescriptor = descriptor;
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        if (ourProject != null) {
-          closeAndDeleteProject();
-        }
-        else {
-          cleanPersistedVFSContent();
-        }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      if (ourProject != null) {
+        closeAndDeleteProject();
+      }
+      else {
+        cleanPersistedVFSContent();
       }
     });
 
@@ -280,25 +274,22 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
   @Override
   protected void setUp() throws Exception {
-    EdtTestUtil.runInEdtAndWait(new ThrowableRunnable<Throwable>() {
-      @Override
-      public void run() throws Exception {
-        LightPlatformTestCase.super.setUp();
-        initApplication();
-        ApplicationInfoImpl.setInPerformanceTest(isPerformanceTest());
+    EdtTestUtil.runInEdtAndWait((ThrowableRunnable<Throwable>)() -> {
+      LightPlatformTestCase.super.setUp();
+      initApplication();
+      ApplicationInfoImpl.setInPerformanceTest(isPerformanceTest());
 
-        ourApplication.setDataProvider(LightPlatformTestCase.this);
-        LightProjectDescriptor descriptor = new SimpleLightProjectDescriptor(getModuleType(), getProjectJDK());
-        doSetup(descriptor, configureLocalInspectionTools(), getTestRootDisposable());
-        InjectedLanguageManagerImpl.pushInjectors(getProject());
+      ourApplication.setDataProvider(this);
+      LightProjectDescriptor descriptor = new SimpleLightProjectDescriptor(getModuleType(), getProjectJDK());
+      doSetup(descriptor, configureLocalInspectionTools(), getTestRootDisposable());
+      InjectedLanguageManagerImpl.pushInjectors(getProject());
 
-        storeSettings();
+      storeSettings();
 
-        myThreadTracker = new ThreadTracker();
-        ModuleRootManager.getInstance(ourModule).orderEntries().getAllLibrariesAndSdkClassesRoots();
-        VirtualFilePointerManagerImpl filePointerManager = (VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance();
-        filePointerManager.storePointers();
-      }
+      myThreadTracker = new ThreadTracker();
+      ModuleRootManager.getInstance(ourModule).orderEntries().getAllLibrariesAndSdkClassesRoots();
+      VirtualFilePointerManagerImpl filePointerManager = (VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance();
+      filePointerManager.storePointers();
     });
   }
 
@@ -331,7 +322,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     clearUncommittedDocuments(getProject());
 
     CodeInsightTestFixtureImpl.configureInspections(localInspectionTools, getProject(),
-                                                    Collections.<String>emptyList(), parentDisposable);
+                                                    Collections.emptyList(), parentDisposable);
 
     assertFalse(getPsiManager().isDisposed());
     Boolean passed = null;
@@ -352,12 +343,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     if (manager instanceof FileDocumentManagerImpl) {
       Document[] unsavedDocuments = manager.getUnsavedDocuments();
       manager.saveAllDocuments();
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          ((FileDocumentManagerImpl)manager).dropAllUnsavedDocuments();
-        }
-      });
+      ApplicationManager.getApplication().runWriteAction(((FileDocumentManagerImpl)manager)::dropAllUnsavedDocuments);
 
       assertEmpty("There are unsaved documents", Arrays.asList(unsavedDocuments));
     }
@@ -409,17 +395,14 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     if (key == null) {
       HighlightDisplayKey.register(shortName, toolWrapper.getDisplayName(), toolWrapper.getID());
     }
-    InspectionProfileImpl.initAndDo(new Computable() {
-      @Override
-      public Object compute() {
-        InspectionProfileImpl impl = (InspectionProfileImpl)profile;
-        InspectionToolWrapper existingWrapper = impl.getInspectionTool(shortName, project);
-        if (existingWrapper == null || existingWrapper.isInitialized() != toolWrapper.isInitialized() || toolWrapper.isInitialized() && toolWrapper.getTool() != existingWrapper.getTool()) {
-          impl.addTool(project, toolWrapper, new THashMap<String, List<String>>());
-        }
-        impl.enableTool(shortName, project);
-        return null;
+    InspectionProfileImpl.initAndDo((Computable)() -> {
+      InspectionProfileImpl impl = (InspectionProfileImpl)profile;
+      InspectionToolWrapper existingWrapper = impl.getInspectionTool(shortName, project);
+      if (existingWrapper == null || existingWrapper.isInitialized() != toolWrapper.isInitialized() || toolWrapper.isInitialized() && toolWrapper.getTool() != existingWrapper.getTool()) {
+        impl.addTool(project, toolWrapper, new THashMap<>());
       }
+      impl.enableTool(shortName, project);
+      return null;
     });
   }
 
@@ -432,7 +415,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   protected void tearDown() throws Exception {
     Project project = getProject();
     CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
-    List<Throwable> errors = new SmartList<Throwable>();
+    List<Throwable> errors = new SmartList<>();
     try {
       checkForSettingsDamage(errors);
       doTearDown(project, ourApplication, true, errors);
@@ -469,7 +452,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       DocumentCommitThread.getInstance().clearQueue();
       CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
 
-      checkAllTimersAreDisposed(exceptions);
+      checkJavaSwingTimersAreDisposed(exceptions);
 
       UsefulTestCase.doPostponedFormatting(project);
 
@@ -521,14 +504,11 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       ((HintManagerImpl)HintManager.getInstance()).cleanup();
       DocumentCommitThread.getInstance().clearQueue();
 
-      EdtTestUtil.runInEdtAndWait(new Runnable() {
-        @Override
-        public void run() {
-          ((UndoManagerImpl)UndoManager.getGlobalInstance()).dropHistoryInTests();
-          ((UndoManagerImpl)UndoManager.getInstance(project)).dropHistoryInTests();
+      EdtTestUtil.runInEdtAndWait((Runnable)() -> {
+        ((UndoManagerImpl)UndoManager.getGlobalInstance()).dropHistoryInTests();
+        ((UndoManagerImpl)UndoManager.getInstance(project)).dropHistoryInTests();
 
-          UIUtil.dispatchAllInvocationEvents();
-        }
+        UIUtil.dispatchAllInvocationEvents();
       });
 
       TemplateDataLanguageMappings.getInstance(project).cleanupForNextTest();
@@ -600,25 +580,22 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     }
 
     TestRunnerUtil.replaceIdeEventQueueSafely();
-    EdtTestUtil.runInEdtAndWait(new ThrowableRunnable<Throwable>() {
-      @Override
-      public void run() throws Throwable {
+    EdtTestUtil.runInEdtAndWait((ThrowableRunnable<Throwable>)() -> {
+      try {
+        ourTestThread = Thread.currentThread();
+        startRunAndTear();
+      }
+      finally {
+        ourTestThread = null;
         try {
-          ourTestThread = Thread.currentThread();
-          startRunAndTear();
+          Application application = ApplicationManager.getApplication();
+          if (application instanceof ApplicationEx) {
+            PlatformTestCase.cleanupApplicationCaches(ourProject);
+          }
+          resetAllFields();
         }
-        finally {
-          ourTestThread = null;
-          try {
-            Application application = ApplicationManager.getApplication();
-            if (application instanceof ApplicationEx) {
-              PlatformTestCase.cleanupApplicationCaches(ourProject);
-            }
-            resetAllFields();
-          }
-          catch (Throwable e) {
-            e.printStackTrace();
-          }
+        catch (Throwable e) {
+          e.printStackTrace();
         }
       }
     });
@@ -671,7 +648,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
    * @param fileName - name of the file to create. Extension is used to choose what PSI should be created like java, jsp, aj, xml etc.
    * @param text     - file text.
    * @return dummy psi file.
-   * @throws IncorrectOperationException
    *
    */
   @NotNull
@@ -693,6 +669,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
    *
    * @param lowercaseFirstLetter - whether first letter after test should be lowercased.
    */
+  @NotNull
   @Override
   protected String getTestName(boolean lowercaseFirstLetter) {
     String name = getName();
@@ -712,6 +689,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
   }
 
+  @NotNull
   @Override
   protected CodeStyleSettings getCurrentCodeStyleSettings() {
     if (CodeStyleSchemes.getInstance().getCurrentScheme() == null) return new CodeStyleSettings();
@@ -757,22 +735,10 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   }
 
   private static void registerShutdownHook() {
-    ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
-      @Override
-      public void run() {
-        ShutDownTracker.invokeAndWait(true, true, new Runnable() {
-          @Override
-          public void run() {
-            ApplicationManager.getApplication().runWriteAction(new Runnable() {
-              @Override
-              public void run() {
-                closeAndDeleteProject();
-              }
-            });
-          }
-        });
-      }
-    });
+    ShutDownTracker.getInstance().registerShutdownTask(
+      () -> ShutDownTracker.invokeAndWait(true, true,
+                                          () -> ApplicationManager.getApplication().runWriteAction(
+                                            LightPlatformTestCase::closeAndDeleteProject)));
   }
 
   private static class SimpleLightProjectDescriptor extends LightProjectDescriptor {

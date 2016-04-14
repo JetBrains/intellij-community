@@ -33,6 +33,7 @@ import com.intellij.openapi.progress.util.StandardProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.PomManager;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.event.PomModelEvent;
@@ -104,7 +105,7 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
         assert !application.isWriteAccessAllowed() || application.isUnitTestMode(); // crazy stuff happens in tests, e.g. UIUtil.dispatchInvocationEvents() inside write action
         application.addApplicationListener(new ApplicationAdapter() {
           @Override
-          public void beforeWriteActionStart(Object action) {
+          public void beforeWriteActionStart(@NotNull Object action) {
             int writeActionsBefore = runningWriteActions++;
             if (writeActionsBefore == 0) {
               disable("Write action started: " + action);
@@ -112,7 +113,7 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
           }
 
           @Override
-          public void writeActionFinished(Object action) {
+          public void writeActionFinished(@NotNull Object action) {
             // crazy things happen when running tests, like starting write action in one thread but firing its end in the other
             int writeActionsAfter = runningWriteActions = Math.max(0,runningWriteActions-1);
             if (writeActionsAfter == 0) {
@@ -422,10 +423,13 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
         assert !myApplication.isDispatchThread();
         final Runnable finalFinishRunnable = finishRunnable;
         final Project finalProject = project;
+        final TransactionGuardImpl guard = (TransactionGuardImpl)TransactionGuard.getInstance();
+        final TransactionId transaction = guard.getModalityTransaction(task.myCreationModalityState);
+        // invokeLater can be removed once transactions are enforced
         myApplication.invokeLater(new Runnable() {
           @Override
           public void run() {
-            TransactionGuard.getInstance().submitMergeableTransaction(finalProject, TransactionKind.TEXT_EDITING, finalFinishRunnable);
+            guard.submitTransaction(finalProject, transaction, finalFinishRunnable);
           }
         }, task.myCreationModalityState);
       }
@@ -775,12 +779,21 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
     return new Processor<Document>() {
       @Override
       public boolean process(Document document) {
-        if (file.isPhysical()) {
-          ApplicationManager.getApplication().assertWriteAccessAllowed();
-        }
+        FileViewProvider viewProvider = file.getViewProvider();
         if (!task.isStillValid() ||
-            ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(file.getProject())).getCachedViewProvider(document) != file.getViewProvider()) {
+            ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(file.getProject())).getCachedViewProvider(document) != viewProvider) {
           return false; // optimistic locking failed
+        }
+
+        if (file.isPhysical() && !ApplicationManager.getApplication().isWriteAccessAllowed()) {
+          VirtualFile vFile = viewProvider.getVirtualFile();
+          LOG.error("Write action expected" +
+                    "; file=" + file + " of " + file.getClass() +
+                    "; file.valid=" + file.isValid() +
+                    "; file.eventSystemEnabled=" + viewProvider.isEventSystemEnabled() +
+                    "; language=" + file.getLanguage() +
+                    "; vFile=" + vFile + " of " + vFile.getClass() +
+                    "; free-threaded=" + PsiDocumentManagerBase.isFreeThreaded(vFile));
         }
 
         doActualPsiChange(file, diffLog);

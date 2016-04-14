@@ -35,10 +35,10 @@ import static com.intellij.codeInspection.ProblemDescriptorUtil.TRIM_AT_TREE_END
 /**
  * @author max
  */
-public class ProblemDescriptionNode extends InspectionTreeNode {
+public class ProblemDescriptionNode extends InspectionTreeNode implements RefElementAware {
   protected RefEntity myElement;
   private final CommonProblemDescriptor myDescriptor;
-  protected final InspectionToolWrapper toolWrapper;
+  protected final InspectionToolWrapper myToolWrapper;
   @NotNull
   protected final InspectionToolPresentation myPresentation;
 
@@ -49,8 +49,13 @@ public class ProblemDescriptionNode extends InspectionTreeNode {
     super(descriptor);
     myElement = element;
     myDescriptor = descriptor;
-    this.toolWrapper = toolWrapper;
+    myToolWrapper = toolWrapper;
     myPresentation = presentation;
+  }
+
+  @NotNull
+  public InspectionToolWrapper getToolWrapper() {
+    return myToolWrapper;
   }
 
   @Nullable

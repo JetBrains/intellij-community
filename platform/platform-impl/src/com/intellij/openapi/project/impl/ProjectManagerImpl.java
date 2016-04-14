@@ -215,7 +215,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     ProgressIndicator indicator = myProgressManager.getProgressIndicator();
     if (indicator != null && !project.isDefault()) {
       indicator.setText(ProjectBundle.message("loading.components.for", project.getName()));
-      indicator.setIndeterminate(true);
     }
 
     ApplicationManager.getApplication().getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).beforeProjectLoaded(project);
@@ -229,8 +228,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       succeed = true;
     }
     finally {
-      if (!succeed) {
-        scheduleDispose(project);
+      if (!succeed && !project.isDefault()) {
+        TransactionGuard.submitTransaction(project, () -> WriteAction.run(() -> Disposer.dispose(project)));
       }
     }
   }
@@ -242,26 +241,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     else {
       return new ProjectImpl(this, FileUtilRt.toSystemIndependentName(filePath), projectName);
     }
-  }
-
-  private static void scheduleDispose(@NotNull final ProjectImpl project) {
-    if (project.isDefault()) {
-      return;
-    }
-
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            if (!project.isDisposed()) {
-              Disposer.dispose(project);
-            }
-          }
-        });
-      }
-    });
   }
 
   @Override
@@ -347,31 +326,24 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       return false;
     }
 
-    try (AccessToken ignored = TransactionGuard.getInstance().startSynchronousTransaction(TransactionKind.ANY_CHANGE)) {
-      DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, () ->
-        DumbService.getInstance(project).queueTask(new DumbModeTask() {
-          @Override
-          public void performInDumbMode(@NotNull ProgressIndicator indicator) {
-            waitForFileWatcher(indicator);
-          }
+    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, () ->
+      DumbService.getInstance(project).queueTask(new DumbModeTask() {
+        @Override
+        public void performInDumbMode(@NotNull ProgressIndicator indicator) {
+          waitForFileWatcher(indicator);
+        }
 
-          @Override
-          public String toString() {
-            return "wait for file watcher";
-          }
-        })
-      );
-    }
+        @Override
+        public String toString() {
+          return "wait for file watcher";
+        }
+      })
+    );
 
     Runnable process = new Runnable() {
       @Override
       public void run() {
-        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            fireProjectOpened(project);
-          }
-        });
+        TransactionGuard.getInstance().submitTransactionAndWait(() -> fireProjectOpened(project));
 
         StartupManagerImpl startupManager = (StartupManagerImpl)StartupManager.getInstance(project);
         startupManager.runStartupActivities();
@@ -468,12 +440,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
           return null;
         }
 
-        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            openProject(project);
-          }
-        });
+        openProject(project);
         return project;
       }
     });
@@ -637,7 +604,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     if (checkCanClose && !canClose(project)) return false;
     final ShutDownTracker shutDownTracker = ShutDownTracker.getInstance();
     shutDownTracker.registerStopperThread(Thread.currentThread());
-    try (AccessToken ignored = TransactionGuard.getInstance().startSynchronousTransaction(TransactionKind.ANY_CHANGE)) {
+    try {
       if (save) {
         FileDocumentManager.getInstance().saveAllDocuments();
         project.save();

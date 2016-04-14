@@ -183,7 +183,11 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
 
       @Override
       public void visitMethod(@NotNull RefMethod method) {
-        PsiMethod psiMethod = (PsiMethod)method.getElement();
+        final PsiModifierListOwner element = method.getElement();
+        if (element instanceof PsiClass) {
+          return;
+        }
+        PsiMethod psiMethod = (PsiMethod)element;
         if (psiMethod != null) {
           PsiType returnType = psiMethod.getReturnType();
 

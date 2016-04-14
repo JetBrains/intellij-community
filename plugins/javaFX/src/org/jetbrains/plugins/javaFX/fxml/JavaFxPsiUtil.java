@@ -103,9 +103,32 @@ public class JavaFxPsiUtil {
   public static PsiClass findPsiClass(String name, PsiElement context) {
     final Project project = context.getProject();
     if (!StringUtil.getShortName(name).equals(name)) {
-      return JavaPsiFacade.getInstance(project).findClass(name, GlobalSearchScope.allScope(project));
+      final PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(name, GlobalSearchScope.allScope(project));
+      if (psiClass != null) {
+        return psiClass;
+      }
+      return findNestedPsiClass(name, context, project);
     }
     return findPsiClass(name, parseImports((XmlFile)context.getContainingFile()), context, project);
+  }
+
+  private static PsiClass findNestedPsiClass(String name, PsiElement context, Project project) {
+    final int dotIndex = name.indexOf('.');
+    if (dotIndex > 0) {
+      final String outerName = name.substring(0, dotIndex);
+      final PsiClass outerClass = findPsiClass(outerName, parseImports((XmlFile)context.getContainingFile()), context, project);
+      if (outerClass != null) {
+        final List<String> nameChain = StringUtil.split(name, ".", true, false);
+        final List<String> nestedNames = nameChain.subList(1, nameChain.size());
+        PsiClass aClass = outerClass;
+        for (String nestedName : nestedNames) {
+          aClass = aClass.findInnerClassByName(nestedName, true);
+          if (aClass == null) return null;
+        }
+        return aClass;
+      }
+    }
+    return null;
   }
 
   private static PsiClass findPsiClass(String name, List<String> imports, PsiElement context, Project project) {
@@ -438,8 +461,7 @@ public class JavaFxPsiUtil {
   }
 
   public static boolean isAbleToInstantiate(@NotNull PsiClass psiClass, @NotNull Consumer<String> messageConsumer) {
-    if (psiClass.getConstructors().length == 0) return true;
-    if (hasNamedArgOrNoArgConstructor(psiClass)) return true;
+    if (psiClass.isEnum() || hasNamedArgOrNoArgConstructor(psiClass)) return true;
     final PsiMethod valueOf = findValueOfMethod(psiClass);
     if (valueOf == null) {
       if (!hasBuilder(psiClass)) {
@@ -451,6 +473,7 @@ public class JavaFxPsiUtil {
   }
 
   private static boolean hasNamedArgOrNoArgConstructor(@NotNull PsiClass psiClass) {
+    if (psiClass.getConstructors().length == 0) return true;
     return CachedValuesManager.getCachedValue(psiClass, () -> {
       for (PsiMethod constructor : psiClass.getConstructors()) {
         final PsiParameter[] parameters = constructor.getParameterList().getParameters();

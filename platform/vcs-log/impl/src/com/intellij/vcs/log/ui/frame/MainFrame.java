@@ -25,7 +25,6 @@ import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
 import com.intellij.vcs.CommittedChangeListForRevision;
 import com.intellij.vcs.log.*;
@@ -90,20 +89,18 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     // initialize components
     myGraphTable = new VcsLogGraphTable(ui, logDataManager, initialDataPack);
     myBranchesPanel = new BranchesPanel(logDataManager, ui, initialDataPack.getRefs());
-    JComponent branchScrollPane = myBranchesPanel.createScrollPane();
-    branchScrollPane.setVisible(uiProperties.isShowBranchesPanel());
-    myDetailsPanel = new DetailsPanel(logDataManager, myGraphTable, ui.getColorManager(), initialDataPack);
+    setBranchesPanelVisible(uiProperties.isShowBranchesPanel());
+    myDetailsPanel = new DetailsPanel(logDataManager, myGraphTable, ui.getColorManager(), initialDataPack, this);
 
     myChangesBrowser = new RepositoryChangesBrowser(project, null, Collections.<Change>emptyList(), null);
     myChangesBrowser.getViewer().setScrollPaneBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
     myChangesBrowser.getDiffAction().registerCustomShortcutSet(myChangesBrowser.getDiffAction().getShortcutSet(), getGraphTable());
     myChangesBrowser.getEditSourceAction().registerCustomShortcutSet(CommonShortcuts.getEditSource(), getGraphTable());
-    setDefaultEmptyText(myChangesBrowser);
-    myChangesLoadingPane = new JBLoadingPanel(new BorderLayout(), project, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
+    myChangesBrowser.getViewer().setEmptyText("");
+    myChangesLoadingPane = new JBLoadingPanel(new BorderLayout(), this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
     myChangesLoadingPane.add(myChangesBrowser);
 
-    final CommitSelectionListener selectionChangeListener = new CommitSelectionListener(myChangesBrowser);
-    myGraphTable.getSelectionModel().addListSelectionListener(selectionChangeListener);
+    myGraphTable.getSelectionModel().addListSelectionListener(new CommitSelectionListener());
     myGraphTable.getSelectionModel().addListSelectionListener(myDetailsPanel);
     updateWhenDetailsAreLoaded();
 
@@ -116,7 +113,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
     JComponent toolbars = new JPanel(new BorderLayout());
     toolbars.add(myToolbar, BorderLayout.NORTH);
-    toolbars.add(branchScrollPane, BorderLayout.CENTER);
+    toolbars.add(myBranchesPanel.getMainComponent(), BorderLayout.CENTER);
     JComponent toolbarsAndTable = new JPanel(new BorderLayout());
     toolbarsAndTable.add(toolbars, BorderLayout.NORTH);
     toolbarsAndTable.add(myDetailsSplitter, BorderLayout.CENTER);
@@ -128,7 +125,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     setLayout(new BorderLayout());
     add(myChangesBrowserSplitter);
 
-    Disposer.register(logDataManager, this);
+    Disposer.register(ui, this);
     myGraphTable.resetDefaultFocusTraversalKeys();
     setFocusTraversalPolicyProvider(true);
     setFocusTraversalPolicy(new MyFocusPolicy());
@@ -178,14 +175,11 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     myDetailsSplitter.setSecondComponent(state ? myDetailsPanel : null);
   }
 
+  @NotNull
   private JScrollPane setupScrolledGraph() {
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myGraphTable, SideBorder.TOP);
     myGraphTable.viewportSet(scrollPane.getViewport());
     return scrollPane;
-  }
-
-  private static void setDefaultEmptyText(ChangesBrowser changesBrowser) {
-    changesBrowser.getViewer().setEmptyText("");
   }
 
   @NotNull
@@ -241,18 +235,13 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     return toolbar;
   }
 
+  @NotNull
   public JComponent getMainComponent() {
     return this;
   }
 
   public void setBranchesPanelVisible(boolean visible) {
-    JScrollPane scrollPane = UIUtil.getParentOfType(JScrollPane.class, myBranchesPanel);
-    if (scrollPane != null) {
-      scrollPane.setVisible(visible);
-    }
-    else {
-      myBranchesPanel.setVisible(visible);
-    }
+    myBranchesPanel.setBranchPanelVisible(visible);
   }
 
   @Nullable
@@ -277,7 +266,8 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
         .map2Array(details, CommittedChangeListForRevision.class, new Function<VcsFullCommitDetails, CommittedChangeListForRevision>() {
           @Override
           public CommittedChangeListForRevision fun(@NotNull VcsFullCommitDetails details) {
-            return new CommittedChangeListForRevision(details.getSubject(), details.getFullMessage(), VcsUserUtil.getShortPresentation(details.getCommitter()),
+            return new CommittedChangeListForRevision(details.getSubject(), details.getFullMessage(),
+                                                      VcsUserUtil.getShortPresentation(details.getCommitter()),
                                                       new Date(details.getCommitTime()), details.getChanges(),
                                                       convertToRevisionNumber(details.getId()));
           }
@@ -347,12 +337,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   }
 
   private class CommitSelectionListener implements ListSelectionListener {
-    private final ChangesBrowser myChangesBrowser;
-    private ProgressIndicator myLastRequest;
-
-    public CommitSelectionListener(ChangesBrowser changesBrowser) {
-      myChangesBrowser = changesBrowser;
-    }
+    @Nullable private ProgressIndicator myLastRequest;
 
     @Override
     public void valueChanged(@Nullable ListSelectionEvent event) {
@@ -369,7 +354,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       }
       else {
         myChangesBrowser.setChangesToDisplay(Collections.<Change>emptyList());
-        setDefaultEmptyText(myChangesBrowser);
+        myChangesBrowser.getViewer().setEmptyText("");
         myChangesLoadingPane.startLoading();
 
         final EmptyProgressIndicator indicator = new EmptyProgressIndicator();

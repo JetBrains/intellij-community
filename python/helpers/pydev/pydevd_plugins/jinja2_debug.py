@@ -365,7 +365,7 @@ def exception_break(plugin, pydb, pydb_frame, frame, args, arg):
                 pydb_frame.set_suspend(thread, CMD_ADD_EXCEPTION_BREAK)
                 add_exception_to_frame(frame, (exception, value, trace))
                 thread.additional_info.suspend_type = JINJA2_SUSPEND
-                thread.additional_info.pydev_message = exception_type
+                thread.additional_info.pydev_message = str(exception_type)
                 flag = True
                 return flag, frame
     return None

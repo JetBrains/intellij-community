@@ -21,8 +21,10 @@ import com.intellij.openapi.application.ReadActionProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * @author peter
@@ -34,9 +36,10 @@ public abstract class AbstractQuery<Result> implements Query<Result> {
   @NotNull
   public Collection<Result> findAll() {
     assertNotProcessing();
-    final CommonProcessors.CollectProcessor<Result> processor = new CommonProcessors.CollectProcessor<Result>();
+    List<Result> result = new ArrayList<Result>();
+    Processor<Result> processor = Processors.cancelableCollectProcessor(result);
     forEach(processor);
-    return processor.getResults();
+    return result;
   }
 
   @Override

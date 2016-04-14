@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,8 +26,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
-import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
+import com.intellij.util.Processors;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -97,8 +97,8 @@ public class JavaTestFinder implements TestFinder {
     if (klass == null) return Collections.emptySet();
 
     List<Pair<? extends PsiNamedElement, Integer>> classesWithProximities = new ArrayList<Pair<? extends PsiNamedElement, Integer>>();
-    final CommonProcessors.CollectProcessor<Pair<? extends PsiNamedElement, Integer>> processor =
-      new CommonProcessors.CollectProcessor<Pair<? extends PsiNamedElement, Integer>>(classesWithProximities);
+    Processor<Pair<? extends PsiNamedElement, Integer>> processor =
+      Processors.cancelableCollectProcessor(classesWithProximities);
     collectTests(klass, processor);
 
     return TestFinderHelper.getSortedElements(classesWithProximities, true);

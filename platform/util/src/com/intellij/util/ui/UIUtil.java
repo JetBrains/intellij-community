@@ -67,7 +67,10 @@ import java.awt.image.BufferedImageOp;
 import java.awt.image.ImageObserver;
 import java.awt.image.PixelGrabber;
 import java.beans.PropertyChangeListener;
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -620,28 +623,19 @@ public class UIUtil {
     setEnabled(component, enabled, recursively, false);
   }
 
-  public static void setEnabled(Component component, boolean enabled, boolean recursively, boolean visibleOnly) {
-    component.setEnabled(enabled);
-    if (component instanceof JComboBox && isUnderAquaLookAndFeel()) {
-      // On Mac JComboBox instances have children: com.apple.laf.AquaComboBoxButton and javax.swing.CellRendererPane.
-      // Disabling these children results in ugly UI: WEB-10733
-      return;
-    }
-    if (component instanceof JLabel) {
-      Color color = enabled ? getLabelForeground() : getLabelDisabledForeground();
-      if (color != null) {
-        component.setForeground(color);
-      }
-    }
-    if (recursively && enabled == component.isEnabled()) {
-      if (component instanceof Container) {
-        final Container container = (Container)component;
-        final int subComponentCount = container.getComponentCount();
-        for (int i = 0; i < subComponentCount; i++) {
-          Component child = container.getComponent(i);
-          if (visibleOnly && !child.isVisible()) continue;
-          setEnabled(child, enabled, recursively, visibleOnly);
+  public static void setEnabled(Component component, boolean enabled, boolean recursively, final boolean visibleOnly) {
+    JBIterable<Component> all = recursively ? uiTraverser(component).expandAndFilter(
+      visibleOnly ? Conditions.<Component>alwaysTrue() : new Condition<Component>() {
+        @Override
+        public boolean value(Component c) {
+          return c.isVisible();
         }
+      }).traverse() : JBIterable.of(component);
+    Color fg = enabled ? getLabelForeground() : getLabelDisabledForeground();
+    for (Component c : all) {
+      c.setEnabled(enabled);
+      if (fg != null && c instanceof JLabel) {
+        c.setForeground(fg);
       }
     }
   }
@@ -2812,6 +2806,11 @@ public class UIUtil {
       JBIterable<Component> result;
       if (c instanceof JMenu) {
         result = JBIterable.of(((JMenu)c).getMenuComponents());
+      }
+      else if (c instanceof JComboBox && isUnderAquaLookAndFeel()) {
+        // On Mac JComboBox instances have children: com.apple.laf.AquaComboBoxButton and javax.swing.CellRendererPane.
+        // Disabling these children results in ugly UI: WEB-10733
+        result = JBIterable.empty();
       }
       else if (c instanceof Container) {
         result = JBIterable.of(((Container)c).getComponents());
