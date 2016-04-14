@@ -186,13 +186,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
           myTree.queueUpdate();
         }
       }
-
-      @Override
-      public void dispose() {
-
-      }
     };
-    Disposer.register(this, myExclusionHandler);
     createActionsToolbar();
   }
 
