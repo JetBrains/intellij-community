@@ -9,15 +9,18 @@ import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.components.AbstractProjectComponent;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
-
+import de.plushnikov.intellij.plugin.settings.ProjectSettings;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.HyperlinkEvent;
 
 /**
  * Shows notifications about project setup issues, that make the plugin not working.
+ *
  * @author Alexej Kubarev
  */
 public class LombokPluginProjectValidatorComponent extends AbstractProjectComponent {
@@ -25,26 +28,27 @@ public class LombokPluginProjectValidatorComponent extends AbstractProjectCompon
   private Project project;
 
   public LombokPluginProjectValidatorComponent(Project project) {
-
     super(project);
     this.project = project;
-
   }
 
   @NotNull
   @Override
   public String getComponentName() {
-
     return "lombok.ProjectValidatiorComponent";
   }
 
   @Override
   public void projectOpened() {
-
-    CompilerConfiguration config = CompilerConfiguration.getInstance(project);
+    final CompilerConfiguration config = CompilerConfiguration.getInstance(project);
     boolean enabled = config.isAnnotationProcessorsEnabled();
 
-    if (!enabled) {
+    final ModuleManager moduleManager = ModuleManager.getInstance(project);
+    for (Module module : moduleManager.getModules()) {
+      enabled &= config.getAnnotationProcessingConfiguration(module).isEnabled();
+    }
+
+    if (!enabled && ProjectSettings.isLombokEnabledInProject(project)) {
       NotificationGroup group = new NotificationGroup("Lombok Plugin", NotificationDisplayType.BALLOON, true);
       Notification notification = group.createNotification(LombokBundle.message("config.warn.annotation-processing.disabled.title", ""),
           LombokBundle.message("config.warn.annotation-processing.disabled.message", project.getName()),
@@ -65,7 +69,6 @@ public class LombokPluginProjectValidatorComponent extends AbstractProjectCompon
 
     @Override
     protected void hyperlinkActivated(@NotNull final Notification notification, @NotNull final HyperlinkEvent e) {
-
       ShowSettingsUtil.getInstance()
           .showSettingsDialog(project, new AnnotationProcessorsConfigurable(project).getDisplayName());
     }
