@@ -36,7 +36,9 @@ import java.awt.image.ImageFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
+import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -84,7 +86,11 @@ public class ImageLoader implements Serializable {
       }
       if (stream == null) {
         url = new URL(path);
-        stream = url.openStream();
+        URLConnection connection = url.openConnection();
+        if (connection instanceof HttpURLConnection) {
+          connection.addRequestProperty("User-Agent", "IntelliJ");
+        }
+        stream = connection.getInputStream();
       }
       return type.load(url, stream, scale);
     }
