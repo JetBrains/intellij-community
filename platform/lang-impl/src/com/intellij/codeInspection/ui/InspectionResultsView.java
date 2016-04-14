@@ -77,6 +77,7 @@ import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.InputEvent;
@@ -159,6 +160,14 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       @Override
       public void excludeNode(@NotNull InspectionTreeNode node) {
         node.ignoreElement(myExcludedInspectionTreeNodesManager);
+        if (myGlobalInspectionContext.getUIOptions().FILTER_RESOLVED_ITEMS) {
+          InspectionTreeNode parent = (InspectionTreeNode)node.getParent();
+          synchronized (myTreeStructureUpdateLock) {
+            parent.remove(node);
+            ((DefaultTreeModel)myTree.getModel()).reload(parent);
+          }
+          TreeUtil.selectInTree(parent, true, myTree);
+        }
       }
 
       @Override
@@ -173,10 +182,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
 
       @Override
       public void onDone(boolean isExcludeAction) {
-        if (isExcludeAction && myGlobalInspectionContext.getUIOptions().FILTER_RESOLVED_ITEMS) {
-          update();
-        }
-        else {
+        if (!isExcludeAction || !myGlobalInspectionContext.getUIOptions().FILTER_RESOLVED_ITEMS) {
           myTree.queueUpdate();
         }
       }
