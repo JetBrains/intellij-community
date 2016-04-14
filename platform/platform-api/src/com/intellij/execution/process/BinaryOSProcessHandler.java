@@ -21,8 +21,10 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.util.io.BaseDataReader;
 import com.intellij.util.io.BinaryOutputReader;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.InputStream;
+import java.nio.charset.Charset;
 import java.util.concurrent.Future;
 
 public class BinaryOSProcessHandler extends OSProcessHandler {
@@ -32,9 +34,13 @@ public class BinaryOSProcessHandler extends OSProcessHandler {
     super(commandLine);
   }
 
+  public BinaryOSProcessHandler(@NotNull Process process, @NotNull String commandLine, @Nullable Charset charset) {
+    super(process, commandLine, charset);
+  }
+
   @NotNull
   public byte[] getOutput() {
-    return myOutput.getInternalBuffer();
+    return myOutput.toByteArray();
   }
 
   @NotNull
