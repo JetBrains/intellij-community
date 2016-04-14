@@ -50,9 +50,7 @@ public class FunctionParsing extends Parsing {
     parseReturnTypeAnnotation();
     checkMatches(PyTokenTypes.COLON, message("PARSE.expected.colon"));
     final ParsingContext context = getParsingContext();
-    ParsingScope newScope = context.getScope().withFunction(true);
-    if (async) newScope = newScope.withAsync();
-    context.pushScope(newScope);
+    context.pushScope(context.getScope().withFunction(async));
     getStatementParser().parseSuite(functionMarker, getFunctionType());
     context.popScope();
   }
