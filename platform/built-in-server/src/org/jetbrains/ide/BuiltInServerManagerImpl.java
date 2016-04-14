@@ -78,12 +78,6 @@ public class BuiltInServerManagerImpl extends BuiltInServerManager {
   }
 
   private Future<?> startServerInPooledThread() {
-    /* Android Studio: Disable the Built-in Server (not needed and a potential security hole) */
-    //noinspection ConstantIfStatement,ConstantConditions
-    if (true) {
-      return null;
-    }
-
     if (!started.compareAndSet(false, true)) {
       return null;
     }
