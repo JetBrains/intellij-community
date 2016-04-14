@@ -35,6 +35,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -253,10 +254,24 @@ public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
   static class AllowedValues {
     @NotNull final PsiAnnotationMemberValue[] values;
     final boolean canBeOred;
+    final boolean resolvesToZero; //true if one if the values resolves to literal 0, e.g. "int PLAIN = 0"
 
     private AllowedValues(@NotNull PsiAnnotationMemberValue[] values, boolean canBeOred) {
       this.values = values;
       this.canBeOred = canBeOred;
+      resolvesToZero = resolvesToZero();
+    }
+
+    private boolean resolvesToZero() {
+      for (PsiAnnotationMemberValue value : values) {
+        if (value instanceof PsiExpression) {
+          Object evaluated = JavaConstantExpressionEvaluator.computeConstantExpression((PsiExpression)value, null, false);
+          if (evaluated instanceof Integer && ((Integer)evaluated).intValue() == 0) {
+            return true;
+          }
+        }
+      }
+      return false;
     }
 
     @Override
@@ -369,7 +384,7 @@ public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
 
     return constants.toArray(new PsiAnnotationMemberValue[constants.size()]);
   }
-  
+
   static AllowedValues getAllowedValues(@NotNull PsiModifierListOwner element, @Nullable PsiType type, @Nullable Set<PsiClass> visited) {
     PsiAnnotation[] annotations = getAllAnnotations(element);
     PsiManager manager = element.getManager();
@@ -502,7 +517,7 @@ public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
                                       }
                                       return value.getText();
                                     }, ", ");
-    holder.registerProblem(argument, "Must be one of: "+ values);
+    holder.registerProblem(argument, "Must be one of: " + values);
   }
 
   private static boolean isAllowed(@NotNull final PsiElement scope,
@@ -516,12 +531,12 @@ public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
                                 expression -> isGoodExpression(expression, allowedValues, scope, manager, visited));
   }
 
-  private static boolean isGoodExpression(@NotNull PsiExpression e,
+  private static boolean isGoodExpression(@NotNull PsiExpression argument,
                                           @NotNull AllowedValues allowedValues,
                                           @NotNull PsiElement scope,
                                           @NotNull PsiManager manager,
                                           @Nullable Set<PsiExpression> visited) {
-    PsiExpression expression = PsiUtil.deparenthesizeExpression(e);
+    PsiExpression expression = PsiUtil.deparenthesizeExpression(argument);
     if (expression == null) return true;
     if (visited == null) visited = new THashSet<>();
     if (!visited.add(expression)) return true;
@@ -537,7 +552,10 @@ public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
 
     if (allowedValues.canBeOred) {
       PsiExpression zero = getLiteralExpression(expression, manager, "0");
-      if (same(expression, zero, manager)) return true;
+      if (same(expression, zero, manager)
+          // if for some crazy reason the constant with value "0" is included to allowed values for flags, do not treat literal "0" as allowed value anymore
+          // see e.g. Font.BOLD=1, Font.ITALIC=2, Font.PLAIN=0
+          && !allowedValues.resolvesToZero) return true;
       PsiExpression minusOne = getLiteralExpression(expression, manager, "-1");
       if (same(expression, minusOne, manager)) return true;
       if (expression instanceof PsiPolyadicExpression) {

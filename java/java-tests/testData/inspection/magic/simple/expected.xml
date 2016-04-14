@@ -446,4 +446,10 @@
     <description>Must be one of: SwingConstants.LEFT, SwingConstants.CENTER, SwingConstants.RIGHT, SwingConstants.LEADING, SwingConstants.TRAILING</description>
   </problem>
 
+  <problem>
+    <file>X.java</file>
+    <line>268</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Magic Constant</problem_class>
+    <description>Must be one of: FontType.PLAIN, FontType.BOLD, FontType.ITALIC</description>
+  </problem>
 </problems>
