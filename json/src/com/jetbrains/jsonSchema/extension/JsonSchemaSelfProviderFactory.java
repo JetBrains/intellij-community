@@ -23,9 +23,9 @@ import java.util.List;
 /**
  * @author Irina.Chernushina on 2/16/2016.
  */
-public class JsonSchemaSelfProviderFactory implements JsonSchemaProviderFactory<Object> {
+public class JsonSchemaSelfProviderFactory implements JsonSchemaProviderFactory {
   @Override
-  public List<JsonSchemaFileProvider<Object>> getProviders(@Nullable Project project) {
+  public List<JsonSchemaFileProvider> getProviders(@Nullable Project project) {
     return JsonSchemaProjectSelfProviderFactory.getInstance(project).getProviders();
   }
 }

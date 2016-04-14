@@ -13,7 +13,6 @@ import com.jetbrains.jsonSchema.impl.JsonSchemaServiceEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.List;
 
 public interface JsonSchemaService {
@@ -33,7 +32,7 @@ public interface JsonSchemaService {
   @Nullable
   CompletionContributor getCompletionContributor(@Nullable VirtualFile file);
 
-  boolean isSchemaFile(@NotNull File file, @NotNull Consumer<String> errorConsumer);
+  boolean isSchemaFile(@NotNull VirtualFile file, @NotNull Consumer<String> errorConsumer);
 
   @Nullable
   DocumentationProvider getDocumentationProvider(@Nullable VirtualFile file);

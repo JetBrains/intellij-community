@@ -6,12 +6,11 @@ import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.PairConvertor;
 import com.intellij.util.ThrowablePairConsumer;
-import com.jetbrains.jsonSchema.extension.SchemaType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,9 +24,9 @@ import java.util.*;
 public class JsonSchemaReader {
   public static final Logger LOG = Logger.getInstance("#com.jetbrains.jsonSchema.impl.JsonSchemaReader");
   public static final NotificationGroup ERRORS_NOTIFICATION = NotificationGroup.logOnlyGroup("JSON Schema");
-  @NotNull private final Pair<SchemaType, ?> myKey;
+  @Nullable private final VirtualFile myKey;
 
-  public JsonSchemaReader(@NotNull final Pair<SchemaType, ?> key) {
+  public JsonSchemaReader(@Nullable final VirtualFile key) {
     myKey = key;
   }
 
@@ -51,7 +50,7 @@ public class JsonSchemaReader {
   }
 
   public static boolean isJsonSchema(@NotNull JsonSchemaExportedDefinitions definitions,
-                                     @NotNull Pair<SchemaType, ?> key,
+                                     @NotNull VirtualFile key,
                                      @NotNull final String string,
                                      Consumer<String> errorConsumer) throws IOException {
     final JsonSchemaReader reader = new JsonSchemaReader(key);
@@ -76,7 +75,7 @@ public class JsonSchemaReader {
     return true;
   }
 
-  public static void registerObjectsExportedDefinitions(@NotNull Pair<SchemaType, ?> key,
+  public static void registerObjectsExportedDefinitions(@NotNull VirtualFile key,
                                                         @NotNull final JsonSchemaExportedDefinitions definitionsObject,
                                                         @NotNull final JsonSchemaObject object) {
     String id = object.getId();
@@ -162,7 +161,7 @@ public class JsonSchemaReader {
   }
 
   @Nullable
-  public static JsonSchemaObject findDefinition(@NotNull Pair<SchemaType, ?> key,
+  public static JsonSchemaObject findDefinition(@Nullable VirtualFile key,
                                          @NotNull String ref,
                                          @NotNull final JsonSchemaObject root,
                                          @NotNull final Map<String, JsonSchemaObject> ids,
@@ -175,7 +174,7 @@ public class JsonSchemaReader {
     if (!ref.startsWith("#/")) {
       int idx = ref.indexOf("#/");
       if (idx == -1) throw new RuntimeException("Non-relative or erroneous reference: " + ref);
-      if (definitions == null) return null;
+      if (definitions == null || key == null) return null;
       final String url = ref.substring(0, idx);
       final String relative = ref.substring(idx);
       return definitions.findDefinition(key, url, relative, root);

@@ -20,16 +20,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ResourceUtil;
 import com.jetbrains.jsonSchema.JsonSchemaFileType;
 import com.jetbrains.jsonSchema.JsonSchemaMappingsProjectConfiguration;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-import java.io.Reader;
-import java.io.StringReader;
-import java.net.URL;
 import java.util.Collections;
 import java.util.List;
 
@@ -39,7 +33,7 @@ import java.util.List;
 public class JsonSchemaProjectSelfProviderFactory {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.jsonSchema.extension.JsonSchemaProjectSelfProviderFactory");
   public static final String SCHEMA_JSON_FILE_NAME = "schema.json";
-  private final List<JsonSchemaFileProvider<Object>> myProviders;
+  private final List<JsonSchemaFileProvider> myProviders;
 
   public static JsonSchemaProjectSelfProviderFactory getInstance(final Project project) {
     return ServiceManager.getService(project, JsonSchemaProjectSelfProviderFactory.class);
@@ -49,11 +43,11 @@ public class JsonSchemaProjectSelfProviderFactory {
     myProviders = Collections.singletonList(new MyJsonSchemaFileProvider(project));
   }
 
-  public List<JsonSchemaFileProvider<Object>> getProviders() {
+  public List<JsonSchemaFileProvider> getProviders() {
     return myProviders;
   }
 
-  private static class MyJsonSchemaFileProvider implements JsonSchemaFileProvider<Object> {
+  private static class MyJsonSchemaFileProvider implements JsonSchemaFileProvider {
     public static final Pair<SchemaType, Object> KEY = Pair.create(SchemaType.schema, SchemaType.schema);
     private final Project myProject;
 
@@ -67,39 +61,20 @@ public class JsonSchemaProjectSelfProviderFactory {
       return JsonSchemaMappingsProjectConfiguration.getInstance(myProject).isRegisteredSchemaFile(file);
     }
 
-    @Nullable
-    @Override
-    public Reader getSchemaReader() {
-      final String content = getContent();
-      return content == null ? null : new StringReader(content);
-    }
-
     @NotNull
     @Override
     public String getName() {
       return SCHEMA_JSON_FILE_NAME;
     }
 
-    @NotNull
     @Override
-    public Pair<SchemaType, Object> getKey() {
-      return KEY;
+    public VirtualFile getSchemaFile() {
+      return JsonSchemaProviderFactory.getResourceFile(JsonSchemaSelfProviderFactory.class, "jsonSchema/schema.json");
     }
 
-    @Nullable
-    private static String getContent() {
-      ClassLoader loader = JsonSchemaSelfProviderFactory.class.getClassLoader();
-      try {
-        URL resource = loader.getResource("jsonSchema/schema.json");
-        assert resource != null;
-
-        return ResourceUtil.loadText(resource);
-      }
-      catch (IOException e) {
-        LOG.error(e.getMessage(), e);
-      }
-
-      return null;
+    @Override
+    public SchemaType getSchemaType() {
+      return SchemaType.schema;
     }
 
     @Override
