@@ -29,6 +29,7 @@ import io.netty.channel.socket.nio.NioServerSocketChannel
 import io.netty.channel.socket.oio.OioServerSocketChannel
 import io.netty.channel.socket.oio.OioSocketChannel
 import io.netty.handler.codec.http.HttpHeaderNames
+import io.netty.handler.codec.http.HttpMethod
 import io.netty.handler.codec.http.HttpRequest
 import io.netty.handler.ssl.SslHandler
 import io.netty.resolver.HostsFileEntriesResolver
@@ -112,6 +113,9 @@ val HttpRequest.origin: String?
 val HttpRequest.referrer: String?
   get() = headers().getAsString(HttpHeaderNames.REFERER)
 
+val HttpRequest.userAgent: String?
+  get() = headers().getAsString(HttpHeaderNames.USER_AGENT)
+
 inline fun <T> ByteBuf.releaseIfError(task: () -> T): T {
   try {
     return task()
@@ -178,4 +182,11 @@ fun parseAndCheckIsLocalHost(uri: String?, onlyAnyOrLoopback: Boolean = true, ho
   catch (ignored: Exception) {
   }
   return false
+}
+
+// forbid POST requests from browser without Origin
+fun HttpRequest.isWriteFromBrowserWithoutOrigin(): Boolean {
+  val userAgent = userAgent ?: return false
+  val method = method()
+  return origin.isNullOrEmpty() && userAgent.startsWith("Mozilla/5.0") && (method == HttpMethod.POST || method == HttpMethod.PATCH || method == HttpMethod.PUT || method == HttpMethod.DELETE)
 }

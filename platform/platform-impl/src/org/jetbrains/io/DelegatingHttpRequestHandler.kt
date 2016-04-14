@@ -38,7 +38,7 @@ internal class DelegatingHttpRequestHandler : DelegatingHttpRequestHandlerBase()
                        request: FullHttpRequest,
                        urlDecoder: QueryStringDecoder): Boolean {
     fun HttpRequestHandler.checkAndProcess(): Boolean {
-      return isSupported(request) && isAccessible(request) && process(urlDecoder, request, context)
+      return isSupported(request) && !request.isWriteFromBrowserWithoutOrigin() && isAccessible(request) && process(urlDecoder, request, context)
     }
 
     val prevHandlerAttribute = context.attr(PREV_HANDLER)
