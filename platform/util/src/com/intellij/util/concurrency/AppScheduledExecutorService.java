@@ -99,7 +99,7 @@ public class AppScheduledExecutorService extends SchedulingWrapper {
   public void shutdownAppScheduledExecutorService() {
     delayQueue.shutdown(); // shutdown delay queue first to avoid rejected execution exceptions in Alarm
     doShutdown();
-    System.out.println("app threads counter = " + counter);
+    //System.out.println("app threads counter = " + counter);
   }
 
   public int getBackendPoolExecutorSize() {
