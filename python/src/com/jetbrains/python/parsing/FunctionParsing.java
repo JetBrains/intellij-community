@@ -34,23 +34,25 @@ public class FunctionParsing extends Parsing {
     super(context);
   }
 
-  public void parseFunctionDeclaration(@NotNull PsiBuilder.Marker endMarker) {
+  public void parseFunctionDeclaration(@NotNull PsiBuilder.Marker endMarker, boolean async) {
     assertCurrentToken(PyTokenTypes.DEF_KEYWORD);
-    parseFunctionInnards(endMarker);
+    parseFunctionInnards(endMarker, async);
   }
 
   protected IElementType getFunctionType() {
     return FUNCTION_TYPE;
   }
 
-  protected void parseFunctionInnards(@NotNull PsiBuilder.Marker functionMarker) {
+  protected void parseFunctionInnards(@NotNull PsiBuilder.Marker functionMarker, boolean async) {
     myBuilder.advanceLexer();
     parseIdentifierOrSkip(PyTokenTypes.LPAR);
     parseParameterList();
     parseReturnTypeAnnotation();
     checkMatches(PyTokenTypes.COLON, message("PARSE.expected.colon"));
     final ParsingContext context = getParsingContext();
-    context.pushScope(context.getScope().withFunction(true));
+    ParsingScope newScope = context.getScope().withFunction(true);
+    if (async) newScope = newScope.withAsync();
+    context.pushScope(newScope);
     getStatementParser().parseSuite(functionMarker, getFunctionType());
     context.popScope();
   }
@@ -98,21 +100,19 @@ public class FunctionParsing extends Parsing {
     parseDeclarationAfterDecorator(decoratorStartMarker);
   }
 
-  protected void parseDeclarationAfterDecorator(PsiBuilder.Marker endMarker) {
+  private void parseDeclarationAfterDecorator(PsiBuilder.Marker endMarker) {
     if (myBuilder.getTokenType() == PyTokenTypes.ASYNC_KEYWORD) {
       myBuilder.advanceLexer();
-      myContext.pushScope(myContext.getScope().withAsync());
-      parseSyncDeclarationAfterDecorator(endMarker);
-      myContext.popScope();
+      parseDeclarationAfterDecorator(endMarker, true);
     }
     else {
-      parseSyncDeclarationAfterDecorator(endMarker);
+      parseDeclarationAfterDecorator(endMarker, false);
     }
   }
 
-  private void parseSyncDeclarationAfterDecorator(PsiBuilder.Marker endMarker) {
+  protected void parseDeclarationAfterDecorator(PsiBuilder.Marker endMarker, boolean async) {
     if (myBuilder.getTokenType() == PyTokenTypes.DEF_KEYWORD) {
-      parseFunctionInnards(endMarker);
+      parseFunctionInnards(endMarker, async);
     }
     else if (myBuilder.getTokenType() == PyTokenTypes.CLASS_KEYWORD) {
       getStatementParser().parseClassDeclaration(endMarker);

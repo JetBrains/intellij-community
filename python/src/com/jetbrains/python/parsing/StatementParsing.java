@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -117,7 +117,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
       return;
     }
     if (firstToken == PyTokenTypes.DEF_KEYWORD) {
-      getFunctionParser().parseFunctionDeclaration(myBuilder.mark());
+      getFunctionParser().parseFunctionDeclaration(myBuilder.mark(), false);
       return;
     }
     if (firstToken == PyTokenTypes.AT) {
@@ -819,10 +819,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     myBuilder.advanceLexer();
     final IElementType token = myBuilder.getTokenType();
     if (token == PyTokenTypes.DEF_KEYWORD) {
-      final ParsingContext context = getParsingContext();
-      context.pushScope(context.getScope().withAsync());
-      getFunctionParser().parseFunctionDeclaration(marker);
-      context.popScope();
+      getFunctionParser().parseFunctionDeclaration(marker, true);
     }
     else if (token == PyTokenTypes.WITH_KEYWORD) {
       parseWithStatement(marker);
