@@ -15,7 +15,12 @@
  */
 package org.jetbrains.ide.script;
 
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.ClassLoaderUtil;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -76,16 +81,26 @@ class Jsr223IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
 
   @Nullable
   @Override
-  public IdeScriptEngine getEngineForLanguage(@NotNull String language) {
-    ScriptEngine engine = getScriptEngineManager().getEngineByName(language);
-    return createIdeScriptEngine(engine);
+  public IdeScriptEngine getEngineForLanguage(@NotNull final String language, @Nullable ClassLoader loader) {
+    ClassLoader l = ObjectUtils.notNull(loader, AllPluginsLoader.INSTANCE);
+    return ClassLoaderUtil.runWithClassLoader(l, new Computable<IdeScriptEngine>() {
+      @Override
+      public IdeScriptEngine compute() {
+        return createIdeScriptEngine(getScriptEngineManager().getEngineByName(language));
+      }
+    });
   }
 
   @Nullable
   @Override
-  public IdeScriptEngine getEngineForFileExtension(@NotNull String extension) {
-    ScriptEngine engine = getScriptEngineManager().getEngineByExtension(extension);
-    return createIdeScriptEngine(engine);
+  public IdeScriptEngine getEngineForFileExtension(@NotNull final String extension, @Nullable ClassLoader loader) {
+    ClassLoader l = ObjectUtils.notNull(loader, AllPluginsLoader.INSTANCE);
+    return ClassLoaderUtil.runWithClassLoader(l, new Computable<IdeScriptEngine>() {
+      @Override
+      public IdeScriptEngine compute() {
+        return createIdeScriptEngine(getScriptEngineManager().getEngineByExtension(extension));
+      }
+    });
   }
 
   @Override
@@ -128,9 +143,11 @@ class Jsr223IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
 
   static class Jsr223IdeScriptEngine implements IdeScriptEngine {
     private final ScriptEngine myEngine;
+    private final ClassLoader myLoader;
 
     Jsr223IdeScriptEngine(ScriptEngine engine) {
       myEngine = engine;
+      myLoader = Thread.currentThread().getContextClassLoader();
     }
 
     @Override
@@ -189,13 +206,18 @@ class Jsr223IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
     }
 
     @Override
-    public Object eval(@NotNull String script) throws IdeScriptException {
-      try {
-        return myEngine.eval(script);
-      }
-      catch (Throwable e) {
-        throw new IdeScriptException(e);
-      }
+    public Object eval(@NotNull final String script) throws IdeScriptException {
+      return ClassLoaderUtil.runWithClassLoader(myLoader, new ThrowableComputable<Object, IdeScriptException>() {
+        @Override
+        public Object compute() throws IdeScriptException {
+          try {
+            return myEngine.eval(script);
+          }
+          catch (Throwable e) {
+            throw new IdeScriptException(e);
+          }
+        }
+      });
     }
   }
 
@@ -206,6 +228,24 @@ class Jsr223IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
 
     @Override
     public void close() throws IOException {
+    }
+  }
+
+  static class AllPluginsLoader extends ClassLoader {
+    static final AllPluginsLoader INSTANCE = new AllPluginsLoader();
+
+    @Override
+    protected Class<?> findClass(String name) throws ClassNotFoundException {
+      for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
+        ClassLoader l = descriptor.getPluginClassLoader();
+        if (l == null) continue;
+        try {
+          return l.loadClass(name);
+        }
+        catch (ClassNotFoundException ignored) {
+        }
+      }
+      throw new ClassNotFoundException(name);
     }
   }
 }
