@@ -268,8 +268,12 @@ public class LineStatusTracker {
 
   public boolean isValid() {
     synchronized (LOCK) {
-      return myInitialized && !myReleased && !myAnathemaThrown && !myBulkUpdate && !myDuringRollback && myDirtyRange == null;
+      return !isSuppressed() && myDirtyRange == null;
     }
+  }
+
+  private boolean isSuppressed() {
+    return !myInitialized || myReleased || myAnathemaThrown || myBulkUpdate || myDuringRollback;
   }
 
   public void release() {
@@ -368,7 +372,7 @@ public class LineStatusTracker {
   private class MyApplicationListener extends ApplicationAdapter {
     @Override
     public void writeActionFinished(@NotNull Object action) {
-      if (!myInitialized || myReleased || myBulkUpdate || myDuringRollback || myAnathemaThrown) return;
+      if (isSuppressed()) return;
       if (myDirtyRange != null) {
         synchronized (LOCK) {
           try {
@@ -408,8 +412,7 @@ public class LineStatusTracker {
 
     @Override
     public void beforeDocumentChange(DocumentEvent e) {
-      if (!myInitialized || myReleased) return;
-      if (myBulkUpdate || myDuringRollback || myAnathemaThrown) return;
+      if (isSuppressed()) return;
       assert myDocument == e.getDocument();
 
       myLine1 = myDocument.getLineNumber(e.getOffset());
@@ -427,8 +430,7 @@ public class LineStatusTracker {
     public void documentChanged(final DocumentEvent e) {
       myApplication.assertIsDispatchThread();
 
-      if (!myInitialized || myReleased) return;
-      if (myBulkUpdate || myDuringRollback || myAnathemaThrown) return;
+      if (isSuppressed()) return;
       assert myDocument == e.getDocument();
 
       synchronized (LOCK) {
