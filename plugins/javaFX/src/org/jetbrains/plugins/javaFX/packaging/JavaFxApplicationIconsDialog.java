@@ -28,9 +28,9 @@ public class JavaFxApplicationIconsDialog extends DialogWrapper {
     init();
 
     if (icons != null) {
-      myPanel.myLinuxIconPath.setText(icons.getLinuxIcon());
-      myPanel.myMacIconPath.setText(icons.getMacIcon());
-      myPanel.myWindowsIconPath.setText(icons.getWindowsIcon());
+      setSystemDependentPath(myPanel.myLinuxIconPath, icons.getLinuxIcon());
+      setSystemDependentPath(myPanel.myMacIconPath, icons.getMacIcon());
+      setSystemDependentPath(myPanel.myWindowsIconPath, icons.getWindowsIcon());
     }
 
     addBrowseListener(myPanel.myLinuxIconPath, "png", project);
@@ -69,6 +69,10 @@ public class JavaFxApplicationIconsDialog extends DialogWrapper {
     final String text = withBrowseButton.getText();
     if (StringUtil.isEmptyOrSpaces(text)) return null;
     return FileUtil.toSystemIndependentName(text.trim());
+  }
+
+  private static void setSystemDependentPath(TextFieldWithBrowseButton withBrowseButton, String path) {
+    withBrowseButton.setText(!StringUtil.isEmptyOrSpaces(path) ? FileUtil.toSystemDependentName(path) : "");
   }
 
   private boolean isValidPath(TextFieldWithBrowseButton withBrowseButton, ProjectFileIndex index, String osName) {
