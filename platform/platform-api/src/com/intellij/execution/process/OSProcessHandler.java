@@ -31,11 +31,13 @@ import java.util.concurrent.Future;
 public class OSProcessHandler extends BaseOSProcessHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.process.OSProcessHandler");
 
+  private boolean myHasErrorStream = true;
   private boolean myHasPty;
   private boolean myDestroyRecursively = true;
 
   public OSProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
     this(commandLine.createProcess(), commandLine.getCommandLineString(), commandLine.getCharset());
+    myHasErrorStream = !commandLine.isRedirectErrorStream();
     setHasPty(commandLine instanceof PtyCommandLine);
   }
 
@@ -63,6 +65,11 @@ public class OSProcessHandler extends BaseOSProcessHandler {
   @Override
   protected Future<?> executeOnPooledThread(@NotNull Runnable task) {
     return super.executeOnPooledThread(task);  // to maintain binary compatibility?
+  }
+
+  @Override
+  protected boolean processHasSeparateErrorStream() {
+    return myHasErrorStream;
   }
 
   protected boolean shouldDestroyProcessRecursively() {
