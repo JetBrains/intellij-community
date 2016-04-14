@@ -643,6 +643,12 @@ public class InferenceSession {
   }
 
   public InferenceVariable[] initBounds(PsiElement context, PsiTypeParameter... typeParameters) {
+    return initBounds(context, mySiteSubstitutor, typeParameters);
+  }
+
+  public InferenceVariable[] initBounds(PsiElement context,
+                                        final PsiSubstitutor siteSubstitutor,
+                                        PsiTypeParameter... typeParameters) {
     List<InferenceVariable> result = new ArrayList<InferenceVariable>(typeParameters.length);
     for (PsiTypeParameter parameter : typeParameters) {
       String name = parameter.getName();
@@ -661,7 +667,7 @@ public class InferenceSession {
       boolean added = false;
       final PsiClassType[] extendsListTypes = parameter.getExtendsListTypes();
       for (PsiType classType : extendsListTypes) {
-        classType = substituteWithInferenceVariables(mySiteSubstitutor.substitute(classType));
+        classType = substituteWithInferenceVariables(siteSubstitutor.substitute(classType));
         if (isProperType(classType)) {
           added = true;
         }
@@ -1144,7 +1150,8 @@ public class InferenceSession {
       if (lowerBound != PsiType.NULL && !TypeConversionUtil.isAssignable(eqBound, lowerBound)) {
         final String incompatibleBoundsMessage =
           incompatibleBoundsMessage(var, substitutor, InferenceBound.EQ, EQUALITY_CONSTRAINTS_PRESENTATION, InferenceBound.LOWER, LOWER_BOUNDS_PRESENTATION);
-        return registerIncompatibleErrorMessage(var, incompatibleBoundsMessage);
+        registerIncompatibleErrorMessage(incompatibleBoundsMessage);
+        return PsiType.NULL;
       } else {
         type = eqBound;
 
@@ -1169,7 +1176,8 @@ public class InferenceSession {
       if (type instanceof PsiIntersectionType) {
         final String conflictingConjunctsMessage = ((PsiIntersectionType)type).getConflictingConjunctsMessage();
         if (conflictingConjunctsMessage != null) {
-          return registerIncompatibleErrorMessage(var, "Type parameter " + var.getParameter().getName() + " has incompatible upper bounds: " + conflictingConjunctsMessage);
+          registerIncompatibleErrorMessage("Type parameter " + var.getParameter().getName() + " has incompatible upper bounds: " + conflictingConjunctsMessage);
+          return PsiType.NULL;
         }
       }
     }
@@ -1184,7 +1192,8 @@ public class InferenceSession {
             incompatibleBoundsMessage = incompatibleBoundsMessage(var, substitutor, InferenceBound.LOWER, LOWER_BOUNDS_PRESENTATION, InferenceBound.UPPER, UPPER_BOUNDS_PRESENTATION);
           }
           if (incompatibleBoundsMessage != null) {
-            return registerIncompatibleErrorMessage(var, incompatibleBoundsMessage);
+            registerIncompatibleErrorMessage(incompatibleBoundsMessage);
+            return PsiType.NULL;
           }
         }
       }
@@ -1195,11 +1204,6 @@ public class InferenceSession {
   public String getPresentableText(PsiType psiType) {
     final PsiType substituted = myRestoreNameSubstitution.substitute(psiType);
     return substituted != null ? substituted.getPresentableText() : null;
-  }
-  
-  private PsiType registerIncompatibleErrorMessage(InferenceVariable var, @NotNull String incompatibleBoundsMessage) {
-    registerIncompatibleErrorMessage(incompatibleBoundsMessage);
-    return PsiType.NULL;
   }
 
   public void registerIncompatibleErrorMessage(Collection<InferenceVariable> variables, String incompatibleTypesMessage) {
@@ -1936,10 +1940,6 @@ public class InferenceSession {
       }
     }
     return null;
-  }
-
-  public void registerSiteSubstitutor(PsiSubstitutor substitutor) {
-    mySiteSubstitutor = mySiteSubstitutor.putAll(substitutor);
   }
 
   public List<String> getIncompatibleErrorMessages() {
