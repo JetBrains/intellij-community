@@ -141,7 +141,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
     try {
       if (reader != null) {
         final JsonSchemaObject resultObject = new JsonSchemaReader(provider.getKey()).read(reader, getDefinitions());
-        return new JsonSchemaObjectCodeInsightWrapper(provider.getName(), resultObject).setUserSchema(provider instanceof JsonSchemaImportedProviderMarker);
+        return new JsonSchemaObjectCodeInsightWrapper(provider.getName(), provider.getKey().getFirst(), resultObject);
       }
     }
     catch (Exception e) {
