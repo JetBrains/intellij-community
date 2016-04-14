@@ -75,7 +75,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.List;
-import java.util.function.Supplier;
 
 public abstract class InspectionToolsConfigurable extends BaseConfigurable
   implements ErrorsConfigurable, SearchableConfigurable, Configurable.NoScroll {
@@ -112,15 +111,28 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
     return myProjectProfileManager.getProject();
   }
 
-  @Nullable
-  private InspectionProfileImpl copyToNewProfile(ModifiableModel selectedProfile, @NotNull Project project) {
+  @NotNull
+  private InspectionProfileImpl copyToNewProfile(ModifiableModel selectedProfile,
+                                                 @NotNull Project project,
+                                                 boolean modifyName,
+                                                 boolean modifyLevel) {
+    LOG.assertTrue(modifyLevel || modifyName);
     String profileDefaultName = selectedProfile.getName();
-    do {
-      profileDefaultName += " (copy)";
+    if (modifyName) {
+      do {
+        profileDefaultName += " (copy)";
+      }
+      while (hasName(profileDefaultName, modifyLevel != myPanels.get(selectedProfile).isProjectLevel()));
     }
-    while (hasName(profileDefaultName, myPanels.get(selectedProfile).isProjectLevel()));
 
-    final ProfileManager profileManager = selectedProfile.getProfileManager();
+    ProfileManager profileManager = selectedProfile.getProfileManager();
+    if (modifyLevel) {
+      if (profileManager == myApplicationProfileManager) {
+        profileManager = myProjectProfileManager;
+      } else {
+        profileManager = myApplicationProfileManager;
+      }
+    }
     InspectionProfileImpl inspectionProfile =
       new InspectionProfileImpl(profileDefaultName, InspectionToolRegistrar.getInstance(), profileManager);
 
@@ -128,7 +140,11 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
     inspectionProfile.setName(profileDefaultName);
     inspectionProfile.initInspectionTools(project);
     inspectionProfile.setModified(true);
-    return inspectionProfile;
+
+    final InspectionProfileImpl modifiableModel = (InspectionProfileImpl)inspectionProfile.getModifiableModel();
+    modifiableModel.setModified(true);
+    addProfile(modifiableModel, inspectionProfile);
+    return modifiableModel;
   }
 
   protected void addProfile(InspectionProfileImpl model, InspectionProfileImpl profile) {
@@ -229,35 +245,29 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
       }
 
       @Override
-      public void setIsProjectLevel(boolean isProjectLevel) {
+      public boolean canChangeProfileLevel() {
+        return !hasName(getSelectedPanel().getCurrentProfileName(), !isProjectLevel());
+      }
+
+      @Override
+      public void moveToProject() {
         final SingleInspectionProfilePanel selectedPanel = getSelectedPanel();
         LOG.assertTrue(selectedPanel != null, "No settings selectedPanel for: " + getSelectedObject());
+        copyToNewProfile(getSelectedObject(), getProject(), false, true);
+      }
 
-        final String name = getSelectedPanel().getCurrentProfileName();
-        for (SingleInspectionProfilePanel p : myPanels.values()) {
-          if (p != selectedPanel && Comparing.equal(p.getCurrentProfileName(), name)) {
-            final boolean curShared = p.isProjectLevel();
-            if (curShared == isProjectLevel) {
-              Messages.showErrorDialog((isProjectLevel ? "Shared" : "Application level") + " profile with same name exists.", "Inspections Settings");
-              return;
-            }
-          }
-        }
-
-        selectedPanel.setIsProjectLevel(isProjectLevel);
+      @Override
+      public void setAsGlobal() {
+        final SingleInspectionProfilePanel selectedPanel = getSelectedPanel();
+        LOG.assertTrue(selectedPanel != null, "No settings selectedPanel for: " + getSelectedObject());
+        selectedPanel.setIsProjectLevel(false);
+        myProfiles.invalidate();
         myProfiles.repaint();
       }
 
       @Override
       public void copy() {
-        final InspectionProfileImpl newProfile = copyToNewProfile(getSelectedObject(), getProject());
-        if (newProfile != null) {
-          final InspectionProfileImpl modifiableModel = (InspectionProfileImpl)newProfile.getModifiableModel();
-          modifiableModel.setModified(true);
-          modifiableModel.setProjectLevel(false);
-          addProfile(modifiableModel, newProfile);
-          rename(modifiableModel);
-        }
+        rename(copyToNewProfile(getSelectedObject(), getProject(), true, false));
       }
 
       @Override
