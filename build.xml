@@ -93,6 +93,10 @@
     <call_gant script="${project.home}/build/scripts/tests.gant"/>
   </target>
 
+  <target name="coverage" depends="init">
+    <call_gant script="${project.home}/build/scripts/tests.gant" target="coverage" />
+  </target>
+
   <target name="guiTests" depends="init">
     <delete>
       <fileset dir="${project.home}/build" includes="TEST-com.android.tools.idea.tests.gui.*"/>

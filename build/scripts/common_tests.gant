@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import static groovy.xml.NamespaceBuilder.newInstance as namespace
 import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
 
 includeTargets << new File("${guessHome(this)}/build/scripts/utils.gant")
@@ -40,6 +41,21 @@ private pass(List<String> args, String prop) {
   if (isDefined(prop)) {
     args << "-D$prop=${p(prop)}"
   }
+}
+
+ant.taskdef(uri: "antlib:org.jacoco.ant", classpath: "${home}/plugins/coverage/lib/jacocoant.jar")
+def jacoco = namespace(ant, "antlib:org.jacoco.ant")
+def exec_data_file = "${out}/coverage/jacoco.exec"
+def class_dump_dir = "${out}/coverage/classes"
+
+target("enable_coverage": "Enable coverage measurement") {
+  jacoco.agent(
+    property: "jacoco_agent",
+    destfile: exec_data_file,
+    classdumpdir: class_dump_dir,
+    includes: "org.jetbrains.android.*:com.android.tools.idea.*:com.android.tools.ndk.*:com.google.gct.*:com.google.idea.blaze.*",  // duplicates test.patterns property
+    excludes: "*Test:*Test\$*:*TestCase:*TestCase\$*",
+  )
 }
 
 target('run_tests': 'Run java tests') {
@@ -87,6 +103,10 @@ target('run_tests': 'Run java tests') {
       jvmArgs.addAll(jvm_args)
     }
 
+    if (isDefined("jacoco_agent")) {
+      jvmArgs << jacoco_agent
+    }
+
     projectBuilder.info("Starting JUnit $testCase, JVM options: $jvmArgs")
     ant.junit(fork: "yes", showoutput: "true", logfailedtests: false) {
       jvmArgs.each {
@@ -103,6 +123,46 @@ target('run_tests': 'Run java tests') {
       test(name: 'com.intellij.tests.BootstrapTests')
     }
   }
+}
+
+target("coverage_report": "Generate coverage report") {
+  jacoco.report() {
+    executiondata() {
+      file(file: exec_data_file)
+    }
+    structure(name: "Android Studio") {
+      classfiles() {
+        fileset(dir: class_dump_dir)
+      }
+      sourcefiles() {
+        // cobbled together haphazardly, but sources aren't really needed anyway
+        fileset(dir: "${home}/../adt/idea/android/common/src")
+        fileset(dir: "${home}/../adt/idea/android/src")
+        fileset(dir: "${home}/../adt/idea/designer/src")
+        fileset(dir: "${home}/../adt/idea/sdk-updates/src")
+        fileset(dir: "${home}/../studio/google/appindexing/src")
+        fileset(dir: "${home}/../studio/google/cloud/testing/firebase-testing/src")
+        fileset(dir: "${home}/../studio/google/cloud/tools/android-studio-plugin/src")
+        fileset(dir: "${home}/../studio/google/cloud/tools/core-plugin/src")
+        fileset(dir: "${home}/../studio/google/cloud/tools/core-plugin/src")
+        fileset(dir: "${home}/../studio/google/cloud/tools/google-login-plugin/src")
+        fileset(dir: "${home}/../studio/google/login/src")
+        fileset(dir: "${home}/../vendor/google3/blaze/aswb/src")
+        fileset(dir: "${home}/../vendor/google3/blaze/blaze-base/src")
+        fileset(dir: "${home}/../vendor/google3/blaze/blaze-cpp/src")
+        fileset(dir: "${home}/../vendor/google3/blaze/blaze-google3/src")
+        fileset(dir: "${home}/../vendor/google3/blaze/blaze-java/src")
+        fileset(dir: "${home}/../vendor/google3/blaze/blaze-plugin-dev/src")
+        fileset(dir: "${home}/../vendor/google3/blaze/ijwb/src")
+        fileset(dir: "${home}/../vendor/google/android-ndk/src/")
+      }
+    }
+    html(destdir: "${out}/coverage/report")
+  }
+}
+
+target("coverage" : "Measure test coverage") {
+  depends([compile, enable_coverage, run_tests, coverage_report])
 }
 
 target('default' : "Run all tests") {
