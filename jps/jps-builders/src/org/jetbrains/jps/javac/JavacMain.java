@@ -197,7 +197,13 @@ public class JavacMain {
     return (StandardJavaFileManager)Proxy.newProxyInstance(fileManager.getClass().getClassLoader(), new Class[]{StandardJavaFileManager.class}, new InvocationHandler() {
       @Override
       public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-        return method.invoke(fileManager.getApiCallHandler(method), args);
+        try {
+          return method.invoke(fileManager.getApiCallHandler(method), args);
+        }
+        catch (InvocationTargetException e) {
+          final Throwable cause = e.getCause();
+          throw cause != null? cause : e;
+        }
       }
     });
   }
