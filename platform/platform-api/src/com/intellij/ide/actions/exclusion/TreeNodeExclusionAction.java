@@ -15,9 +15,11 @@
  */
 package com.intellij.ide.actions.exclusion;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Disposer;
 
 import javax.swing.*;
 import javax.swing.tree.MutableTreeNode;
@@ -40,7 +42,7 @@ abstract class TreeNodeExclusionAction<T extends MutableTreeNode> extends AnActi
   @Override
   public void update(AnActionEvent e) {
     final ExclusionHandler<T> exclusionProcessor = ExclusionHandler.EXCLUSION_HANDLER.getData(e.getDataContext());
-    if (exclusionProcessor == null || Disposer.isDisposed(exclusionProcessor)) {
+    if (exclusionProcessor == null) {
       e.getPresentation().setEnabledAndVisible(false);
       return;
     }
