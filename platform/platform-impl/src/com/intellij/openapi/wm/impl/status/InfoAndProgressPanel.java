@@ -28,16 +28,16 @@ import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.ui.popup.BalloonHandler;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
+import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
+import com.intellij.ui.BalloonLayoutImpl;
 import com.intellij.ui.Gray;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.awt.RelativePoint;
@@ -389,8 +389,9 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
     Disposer.register(inline, delegate);
 
     Component anchor = getAnchor(pane);
+    final BalloonLayoutImpl balloonLayout = getBalloonLayout(pane);
 
-    JBPopupFactory.getInstance().createBalloonBuilder(panel.getProgressPanel())
+    final Balloon balloon = JBPopupFactory.getInstance().createBalloonBuilder(panel.getProgressPanel())
       .setFadeoutTime(0)
       .setFillColor(Gray.TRANSPARENT)
       .setShowCallout(false)
@@ -404,13 +405,50 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
       .setHideOnKeyOutside(false)
       .setBlockClicksThroughBalloon(true)
       .setHideOnAction(false)
-      .createBalloon().show(new PositionTracker<Balloon>(anchor) {
+      .createBalloon();
+    if (balloonLayout != null) {
+      class MyListener implements JBPopupListener, Runnable {
+        @Override
+        public void beforeShown(LightweightWindowEvent event) {
+          balloonLayout.addListener(this);
+        }
+
+        @Override
+        public void onClosed(LightweightWindowEvent event) {
+          balloonLayout.removeListener(this);
+        }
+
+        @Override
+        public void run() {
+          balloon.revalidate();
+        }
+      }
+      balloon.addListener(new MyListener());
+    }
+    balloon.show(new PositionTracker<Balloon>(anchor) {
       @Override
       public RelativePoint recalculateLocation(Balloon object) {
         Component c = getAnchor(pane);
-        return new RelativePoint(c, new Point(c.getWidth() - 150, c.getHeight() - 45));
+        int y = c.getHeight() - 45;
+        if (balloonLayout != null) {
+          Component component = balloonLayout.getTopBalloonComponent();
+          if (component != null) {
+            y = SwingUtilities.convertPoint(component, 0, -45, c).y;
+          }
+        }
+
+        return new RelativePoint(c, new Point(c.getWidth() - 150, y));
       }
     }, Balloon.Position.above);
+  }
+
+  @Nullable
+  private static BalloonLayoutImpl getBalloonLayout(@NotNull JRootPane pane) {
+    Component parent = UIUtil.findUltimateParent(pane);
+    if (parent instanceof IdeFrame) {
+      return (BalloonLayoutImpl)((IdeFrame)parent).getBalloonLayout();
+    }
+    return null;
   }
 
   @NotNull

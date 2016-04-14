@@ -1121,7 +1121,11 @@ public class NotificationsManagerImpl extends NotificationsManager {
       }
 
       if (myCenteredComponent != null) {
-        myCenteredComponent.setBounds(0, top, width, centeredSize.height);
+        int centeredWidth = width;
+        if (!myLayoutData.showFullContent && !myLayoutData.showMinSize && myLayoutData.fullHeight != myLayoutData.maxScrollHeight) {
+          centeredWidth--;
+        }
+        myCenteredComponent.setBounds(0, top, centeredWidth, centeredSize.height);
         myCenteredComponent.revalidate();
       }
 

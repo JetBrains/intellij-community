@@ -35,6 +35,7 @@ import com.intellij.ui.ClickListener;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -191,7 +192,7 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
       myStr = str;
       myComponent = component;
       myTextColor = textColor;
-      myFont = new Font(NotificationsUtil.getFontName(), Font.BOLD, 9);
+      myFont = new Font(NotificationsUtil.getFontName(), Font.BOLD, JBUI.scale(9));
       myWidth = myComponent.getFontMetrics(myFont).stringWidth(myStr);
     }
 

@@ -666,6 +666,10 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     }
   }
 
+  public Component getComponent() {
+    return myComp;
+  }
+
   private void createComponent() {
     myComp = new MyComponent(myContent, this, myShadowBorderProvider != null ? null :
                                               myShowPointer ? myPosition.createBorder(this) : getPointlessBorder());
