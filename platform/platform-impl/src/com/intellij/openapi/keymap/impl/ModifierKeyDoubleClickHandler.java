@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,17 +96,30 @@ public class ModifierKeyDoubleClickHandler extends ApplicationComponent.Adapter 
    * @param actionId Id of action to be triggered on modifier+modifier[+actionKey]
    * @param modifierKeyCode keyCode for modifier, e.g. KeyEvent.VK_SHIFT
    * @param actionKeyCode keyCode for actionKey, or -1 if action should be triggered on bare modifier double click
+   * @param skipIfActionHasShortcut do not invoke action if a shortcut is already bound to it in keymap
    */
   public void registerAction(@NotNull String actionId,
                              int modifierKeyCode,
-                             int actionKeyCode) {
-    final MyDispatcher dispatcher = new MyDispatcher(actionId, modifierKeyCode, actionKeyCode);
+                             int actionKeyCode,
+                             boolean skipIfActionHasShortcut) {
+    final MyDispatcher dispatcher = new MyDispatcher(actionId, modifierKeyCode, actionKeyCode, skipIfActionHasShortcut);
     MyDispatcher oldDispatcher = myDispatchers.put(actionId, dispatcher);
     IdeEventQueue.getInstance().addDispatcher(dispatcher, dispatcher);
     myActionManagerEx.addAnActionListener(dispatcher, dispatcher);
     if (oldDispatcher != null) {
       Disposer.dispose(oldDispatcher);
     }
+  }
+
+/**
+ * @param actionId Id of action to be triggered on modifier+modifier[+actionKey]
+ * @param modifierKeyCode keyCode for modifier, e.g. KeyEvent.VK_SHIFT
+ * @param actionKeyCode keyCode for actionKey, or -1 if action should be triggered on bare modifier double click
+ */
+  public void registerAction(@NotNull String actionId,
+                             int modifierKeyCode,
+                             int actionKeyCode) {
+    registerAction(actionId, modifierKeyCode, actionKeyCode, true);
   }
 
   public void unregisterAction(@NotNull String actionId) {
@@ -124,16 +137,18 @@ public class ModifierKeyDoubleClickHandler extends ApplicationComponent.Adapter 
     private final String myActionId;
     private final int myModifierKeyCode;
     private final int myActionKeyCode;
+    private final boolean mySkipIfActionHasShortcut;
 
     private final Couple<AtomicBoolean> ourPressed = Couple.of(new AtomicBoolean(false), new AtomicBoolean(false));
     private final Couple<AtomicBoolean> ourReleased = Couple.of(new AtomicBoolean(false), new AtomicBoolean(false));
     private final AtomicBoolean ourOtherKeyWasPressed = new AtomicBoolean(false);
     private final AtomicLong ourLastTimePressed = new AtomicLong(0);
 
-    public MyDispatcher(@NotNull String actionId, int modifierKeyCode, int actionKeyCode) {
+    public MyDispatcher(@NotNull String actionId, int modifierKeyCode, int actionKeyCode, boolean skipIfActionHasShortcut) {
       myActionId = actionId;
       myModifierKeyCode = modifierKeyCode;
       myActionKeyCode = actionKeyCode;
+      mySkipIfActionHasShortcut = skipIfActionHasShortcut;
     }
 
     @Override
@@ -213,7 +228,7 @@ public class ModifierKeyDoubleClickHandler extends ApplicationComponent.Adapter 
           return;
         } else if (ourPressed.first.get() && ourReleased.first.get() && ourPressed.second.get()) {
           resetState();
-          if (myActionKeyCode == -1 && !isActionBound()) {
+          if (myActionKeyCode == -1 && !shouldSkipIfActionHasShortcut()) {
             run(event);
           }
           return;
@@ -248,8 +263,8 @@ public class ModifierKeyDoubleClickHandler extends ApplicationComponent.Adapter 
       }
     }
 
-    private boolean isActionBound() {
-      return KeymapManager.getInstance().getActiveKeymap().getShortcuts(myActionId).length > 0;
+    private boolean shouldSkipIfActionHasShortcut() {
+      return mySkipIfActionHasShortcut && KeymapManager.getInstance().getActiveKeymap().getShortcuts(myActionId).length > 0;
     }
 
     @Override
