@@ -402,7 +402,13 @@ public class LambdaUtil {
         return PsiResolveHelper.ourGraphGuard.doPreventingRecursion(expression, !MethodCandidateInfo.isOverloadCheck(), new Computable<PsiType>() {
           @Override
           public PsiType compute() {
-            return resolveResult.getSubstitutor().substitute(getNormalizedType(parameters[finalLambdaIdx]));
+            final PsiType normalizedType = getNormalizedType(parameters[finalLambdaIdx]);
+            if (resolveResult instanceof MethodCandidateInfo && ((MethodCandidateInfo)resolveResult).isRawSubstitution()) {
+              return TypeConversionUtil.erasure(normalizedType);
+            }
+            else {
+              return resolveResult.getSubstitutor().substitute(normalizedType);
+            }
           }
         });
       }

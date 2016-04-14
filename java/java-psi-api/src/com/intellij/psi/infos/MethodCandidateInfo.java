@@ -399,7 +399,7 @@ public class MethodCandidateInfo extends CandidateInfo{
     }, super.getSubstitutor(), policy.isVarargsIgnored() || isVarargs(), !includeReturnConstraint);
   }
 
-  private boolean isRawSubstitution() {
+  public boolean isRawSubstitution() {
     final PsiMethod method = getElement();
     if (!method.hasModifierProperty(PsiModifier.STATIC)) {
       final PsiClass containingClass = method.getContainingClass();
