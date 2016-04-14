@@ -43,7 +43,7 @@ public class JsonSchemaReader {
       adapter.readSomeProperty(in, name, object);
     }
 
-    processReferences(object, adapter.getAllObjects(), adapter.getIds(), definitions);
+    processReferences(object, adapter.getAllObjects(), definitions);
     final ArrayList<JsonSchemaObject> withoutDefinitions = new ArrayList<JsonSchemaObject>(adapter.getAllObjects());
     removeDefinitions(object, withoutDefinitions);
     return object;
@@ -123,20 +123,18 @@ public class JsonSchemaReader {
 
   private void processReferences(JsonSchemaObject root,
                                  Set<JsonSchemaObject> objects,
-                                 Map<String, JsonSchemaObject> ids,
                                  @Nullable JsonSchemaExportedDefinitions definitions) {
     final ArrayDeque<JsonSchemaObject> queue = new ArrayDeque<JsonSchemaObject>();
     queue.addAll(objects);
     int control = 10000;
 
     while (!queue.isEmpty()) {
-      // todo graph algorithm??
       if (--control == 0) throw new RuntimeException("cyclic definitions search");
 
       final JsonSchemaObject current = queue.removeFirst();
       if ("#".equals(current.getRef())) continue;
       if (current.getRef() != null) {
-        final JsonSchemaObject definition = findDefinition(myKey, current.getRef(), root, ids, definitions);
+        final JsonSchemaObject definition = findDefinition(myKey, current.getRef(), root, definitions);
         if (definition == null) {
           if (definitions == null) {
             // just skip current item
@@ -160,27 +158,41 @@ public class JsonSchemaReader {
     }
   }
 
-  @Nullable
-  public static JsonSchemaObject findDefinition(@Nullable VirtualFile key,
-                                         @NotNull String ref,
-                                         @NotNull final JsonSchemaObject root,
-                                         @NotNull final Map<String, JsonSchemaObject> ids,
-                                         @Nullable JsonSchemaExportedDefinitions definitions) {
-    if ("#".equals(ref)) {
-      return root;
-    }
-    final JsonSchemaObject found = ids.get(ref);
-    if (found != null) return found;
+  private static JsonSchemaObject findAbsoluteDefinition(@Nullable VirtualFile key,
+                                                         @NotNull String ref,
+                                                         @Nullable JsonSchemaExportedDefinitions definitions) {
     if (!ref.startsWith("#/")) {
       int idx = ref.indexOf("#/");
       if (idx == -1) throw new RuntimeException("Non-relative or erroneous reference: " + ref);
       if (definitions == null || key == null) return null;
       final String url = ref.substring(0, idx);
       final String relative = ref.substring(idx);
-      return definitions.findDefinition(key, url, relative, root);
+      return definitions.findDefinition(key, url, relative);
     }
-    ref = ref.substring(2);
+    return null;
+  }
 
+  @Nullable
+  private static JsonSchemaObject findDefinition(@Nullable VirtualFile key,
+                                                @NotNull String ref,
+                                                @NotNull final JsonSchemaObject root,
+                                                @Nullable JsonSchemaExportedDefinitions definitions) {
+    if ("#".equals(ref)) {
+      return root;
+    }
+    if (!ref.startsWith("#/")) {
+      return findAbsoluteDefinition(key, ref, definitions);
+    }
+    return findRelativeDefinition(ref, root);
+  }
+
+  @NotNull
+  public static JsonSchemaObject findRelativeDefinition(@NotNull String ref, @NotNull JsonSchemaObject root) {
+    if ("#".equals(ref)) {
+      return root;
+    }
+    if (!ref.startsWith("#/")) throw new RuntimeException("Non-relative or erroneous reference: " + ref);
+    ref = ref.substring(2);
     final String[] parts = ref.split("/");
     JsonSchemaObject current = root;
     for (int i = 0; i < parts.length; i++) {

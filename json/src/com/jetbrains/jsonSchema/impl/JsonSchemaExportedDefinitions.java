@@ -57,15 +57,16 @@ public class JsonSchemaExportedDefinitions {
   }
 
   public JsonSchemaObject findDefinition(@NotNull VirtualFile requestingSchemaKey, @NotNull final String url,
-                                         @NotNull final String relativePart,
-                                         @NotNull final JsonSchemaObject rootObject) {
+                                         @NotNull final String relativePart) {
     synchronized (myLock) {
       ensureInitialized();
       final VirtualFile key = myId2Key.get(url);
       if (key != null) myCrossDependencies.putValue(key, requestingSchemaKey);
       final Map<String, JsonSchemaObject> map = myMap.get(url);
       if (map != null) {
-        return JsonSchemaReader.findDefinition(key, relativePart, rootObject, map, null);
+        final JsonSchemaObject found = map.get(relativePart);
+        if (found != null) return found;
+        //return JsonSchemaReader.findRelativeDefinition(relativePart, rootObject);
       }
     }
     return null;
