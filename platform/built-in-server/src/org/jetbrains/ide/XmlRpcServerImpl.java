@@ -15,12 +15,8 @@
  */
 package org.jetbrains.ide;
 
-import com.intellij.ide.XmlRpcHandlerBean;
 import com.intellij.ide.XmlRpcServer;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.AbstractExtensionPointBean;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import gnu.trove.THashMap;
@@ -46,19 +42,9 @@ import java.util.Vector;
 public class XmlRpcServerImpl implements XmlRpcServer {
   private static final Logger LOG = Logger.getInstance(XmlRpcServerImpl.class);
 
-  private final Map<String, Object> handlerMapping;
+  private final Map<String, Object> handlerMapping = new THashMap<String, Object>();
 
   public XmlRpcServerImpl() {
-    handlerMapping = new THashMap<String, Object>();
-    for (XmlRpcHandlerBean handlerBean : Extensions.getExtensions(XmlRpcHandlerBean.EP_NAME)) {
-      try {
-        handlerMapping.put(handlerBean.name, AbstractExtensionPointBean.instantiate(handlerBean.findClass(handlerBean.implementation), ApplicationManager.getApplication().getPicoContainer(), true));
-      }
-      catch (ClassNotFoundException e) {
-        LOG.error(e);
-      }
-    }
-    LOG.debug("XmlRpcServerImpl instantiated, handlers " + handlerMapping);
   }
 
   static final class XmlRpcRequestHandler extends HttpRequestHandler {
