@@ -19,10 +19,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.BootstrapUtil;
-import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.channel.socket.oio.OioSocketChannel;
 import io.netty.handler.codec.http.HttpMethod;
@@ -198,22 +196,6 @@ public final class NettyUtil {
            (throwable instanceof ChannelException && message.startsWith("Failed to bind to: ")) ||
            throwable instanceof BindException ||
            (message.startsWith("Connection reset") || message.equals("Operation timed out") || message.equals("Connection timed out"));
-  }
-
-  @SuppressWarnings("unused")
-  @Deprecated
-  @NotNull
-  public static ServerBootstrap nioServerBootstrap(@NotNull EventLoopGroup eventLoopGroup) {
-    ServerBootstrap bootstrap = new ServerBootstrap().group(eventLoopGroup).channel(NioServerSocketChannel.class);
-    bootstrap.childOption(ChannelOption.TCP_NODELAY, true).childOption(ChannelOption.SO_KEEPALIVE, true);
-    return bootstrap;
-  }
-
-  @SuppressWarnings("unused")
-  @Deprecated
-  @NotNull
-  public static Bootstrap oioClientBootstrap() {
-    return NettyKt.oioClientBootstrap();
   }
 
   public static Bootstrap nioClientBootstrap() {
