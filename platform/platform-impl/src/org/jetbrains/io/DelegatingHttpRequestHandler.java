@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,14 +41,22 @@ import java.io.IOException;
 final class DelegatingHttpRequestHandler extends DelegatingHttpRequestHandlerBase {
   private static final AttributeKey<HttpRequestHandler> PREV_HANDLER = AttributeKey.valueOf("DelegatingHttpRequestHandler.handler");
 
+  static boolean checkAndProcess(@NotNull HttpRequestHandler handler,
+                                 @NotNull ChannelHandlerContext context,
+                                 @NotNull FullHttpRequest request,
+                                 @NotNull QueryStringDecoder urlDecoder) throws IOException {
+    return handler.isSupported(request) && !NettyKt.isWriteFromBrowserWithoutOrigin(request) && handler.isAccessible(request) && handler.process(urlDecoder, request, context);
+  }
+
   @Override
   protected boolean process(@NotNull ChannelHandlerContext context,
                             @NotNull FullHttpRequest request,
                             @NotNull QueryStringDecoder urlDecoder) throws IOException, ImageWriteException {
     Attribute<HttpRequestHandler> prevHandlerAttribute = context.attr(PREV_HANDLER);
     HttpRequestHandler connectedHandler = prevHandlerAttribute.get();
+
     if (connectedHandler != null) {
-      if (connectedHandler.isSupported(request) && connectedHandler.process(urlDecoder, request, context)) {
+      if (checkAndProcess(connectedHandler, context, request, urlDecoder)) {
         return true;
       }
       // prev cached connectedHandler is not suitable for this request, so, let's find it again
@@ -57,7 +65,7 @@ final class DelegatingHttpRequestHandler extends DelegatingHttpRequestHandlerBas
 
     for (HttpRequestHandler handler : HttpRequestHandler.EP_NAME.getExtensions()) {
       try {
-        if (handler.isSupported(request) && handler.process(urlDecoder, request, context)) {
+        if (checkAndProcess(handler, context, request, urlDecoder)) {
           prevHandlerAttribute.set(handler);
           return true;
         }

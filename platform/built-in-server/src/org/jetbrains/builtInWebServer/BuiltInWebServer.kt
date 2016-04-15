@@ -30,16 +30,20 @@ import com.intellij.util.net.NetUtils
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.FullHttpRequest
 import io.netty.handler.codec.http.HttpMethod
+import io.netty.handler.codec.http.HttpRequest
 import io.netty.handler.codec.http.QueryStringDecoder
 import org.jetbrains.ide.HttpRequestHandler
 import org.jetbrains.io.host
+import org.jetbrains.io.isLocalOrigin
 import java.io.File
+import java.io.IOException
 import java.net.InetAddress
-import java.net.UnknownHostException
 
 internal val LOG = Logger.getInstance(BuiltInWebServer::class.java)
 
 class BuiltInWebServer : HttpRequestHandler() {
+  override fun isAccessible(request: HttpRequest) = request.isLocalOrigin(onlyAnyOrLoopback = false, hostsOnly = true)
+
   override fun isSupported(request: FullHttpRequest) = super.isSupported(request) || request.method() == HttpMethod.POST
 
   override fun process(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): Boolean {
@@ -48,7 +52,7 @@ class BuiltInWebServer : HttpRequestHandler() {
       return false
     }
 
-    val portIndex = host.indexOf(':')
+    val portIndex = host!!.indexOf(':')
     if (portIndex > 0) {
       host = host.substring(0, portIndex)
     }
@@ -203,7 +207,9 @@ fun findIndexFile(basedir: File): File? {
   return null
 }
 
-fun isOwnHostName(host: String): Boolean {
+// is host loopback/any or network interface address (i.e. not custom domain)
+// must be not used to check is host on local machine
+internal fun isOwnHostName(host: String): Boolean {
   if (NetUtils.isLocalhost(host)) {
     return true
   }
@@ -219,7 +225,7 @@ fun isOwnHostName(host: String): Boolean {
     // develar.local is own host name: develar. equals to "develar.labs.intellij.net" (canonical host name)
     return localHostName.equals(host, ignoreCase = true) || (host.endsWith(".local") && localHostName.regionMatches(0, host, 0, host.length - ".local".length, true))
   }
-  catch (ignored: UnknownHostException) {
+  catch (ignored: IOException) {
     return false
   }
 }
