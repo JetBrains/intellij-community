@@ -640,7 +640,7 @@ public class FindDialog extends DialogWrapper {
           @Override
           protected void customizeEditorSettings(EditorSettings settings) {
             super.customizeEditorSettings(settings);
-            settings.setUseSoftWraps(true);
+            settings.setUseSoftWraps(false);
           }
         };
         myResultsPreviewTable = table;
