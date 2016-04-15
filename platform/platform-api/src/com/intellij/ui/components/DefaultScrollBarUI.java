@@ -20,6 +20,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.components.JBScrollPane.Alignment;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.RegionPainter;
 import com.intellij.util.ui.UIUtil;
 
@@ -370,9 +371,22 @@ class DefaultScrollBarUI extends ScrollBarUI {
       if (isOverTrack) onTrackHover(isOverTrack = false);
     }
 
+    private boolean redispatchIfTrackNotClickable(MouseEvent event) {
+      if (isTrackClickable()) return false;
+      // redispatch current event to the view
+      Container parent = myScrollBar.getParent();
+      if (parent instanceof JScrollPane) {
+        JScrollPane pane = (JScrollPane)parent;
+        Component view = pane.getViewport().getView();
+        if (view != null) view.dispatchEvent(MouseEventAdapter.convert(event, view));
+      }
+      return true;
+    }
+
     @Override
     public void mousePressed(MouseEvent event) {
       if (myScrollBar == null || !myScrollBar.isEnabled()) return;
+      if (redispatchIfTrackNotClickable(event)) return;
       if (SwingUtilities.isRightMouseButton(event)) return;
 
       isValueCached = true;
@@ -388,7 +402,7 @@ class DefaultScrollBarUI extends ScrollBarUI {
         myOffset = vertical ? (myMouseY - myThumbBounds.y) : (myMouseX - myThumbBounds.x);
         isDragging = true;
       }
-      else if (isTrackClickable() && myTrackBounds.contains(myMouseX, myMouseY)) {
+      else if (myTrackBounds.contains(myMouseX, myMouseY)) {
         // pressed on the track
         if (isAbsolutePositioning(event)) {
           myOffset = (vertical ? myThumbBounds.height : myThumbBounds.width) / 2;
@@ -419,6 +433,7 @@ class DefaultScrollBarUI extends ScrollBarUI {
     public void mouseReleased(MouseEvent event) {
       if (isDragging) updateMouse(event.getX(), event.getY());
       if (myScrollBar == null || !myScrollBar.isEnabled()) return;
+      if (redispatchIfTrackNotClickable(event)) return;
       if (SwingUtilities.isRightMouseButton(event)) return;
       isDragging = false;
       myOffset = 0;
@@ -448,6 +463,7 @@ class DefaultScrollBarUI extends ScrollBarUI {
     public void mouseMoved(MouseEvent event) {
       if (myScrollBar == null || !myScrollBar.isEnabled()) return;
       if (!isDragging) updateMouse(event.getX(), event.getY());
+      redispatchIfTrackNotClickable(event);
     }
 
     @Override
