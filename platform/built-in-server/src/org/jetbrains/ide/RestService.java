@@ -187,12 +187,14 @@ public abstract class RestService extends HttpRequestHandler {
     if (keepAlive) {
       HttpUtil.setKeepAlive(response, true);
     }
+    response.headers().set("X-Frame-Options", "Deny");
     Responses.send(response, channel, !keepAlive);
   }
 
-  protected static void send(@NotNull BufferExposingByteArrayOutputStream byteOut, @NotNull FullHttpRequest request, @NotNull ChannelHandlerContext context) {
+  protected static void send(@NotNull BufferExposingByteArrayOutputStream byteOut, @NotNull HttpRequest request, @NotNull ChannelHandlerContext context) {
     HttpResponse response = Responses.response("application/json", Unpooled.wrappedBuffer(byteOut.getInternalBuffer(), 0, byteOut.size()));
     Responses.addNoCache(response);
+    response.headers().set("X-Frame-Options", "Deny");
     Responses.send(response, context.channel(), request);
   }
 

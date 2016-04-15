@@ -99,6 +99,9 @@ fun HttpResponse.addKeepAliveIfNeed(request: HttpRequest): Boolean {
 fun HttpResponse.addCommonHeaders() {
   addServer()
   setDate()
+  if (!headers().contains("X-Frame-Options")) {
+    headers().set("X-Frame-Options", "SameOrigin")
+  }
 }
 
 fun HttpResponse.send(channel: Channel, close: Boolean) {
