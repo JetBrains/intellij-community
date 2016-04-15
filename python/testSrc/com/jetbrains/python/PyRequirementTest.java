@@ -40,49 +40,49 @@ public class PyRequirementTest extends PyTestCase {
   public void testArchiveUrl() {
     final String url = "https://pypi.python.org/packages/source/g/geoip2/geoip2-2.2.0.tar.gz";
 
-    assertEquals(new PyRequirement("geoip2", "2.2.0", url, false), PyRequirement.fromString(url));
+    assertEquals(new PyRequirement("geoip2", "2.2.0", url), PyRequirement.fromString(url));
   }
 
   // PY-14230
   public void testArchiveUrlWithMd5() {
     final String url = "https://pypi.python.org/packages/source/g/geoip2/geoip2-2.2.0.tar.gz#md5=26259d212447bc840400c25a48275fbc";
 
-    assertEquals(new PyRequirement("geoip2", "2.2.0", url, false), PyRequirement.fromString(url));
+    assertEquals(new PyRequirement("geoip2", "2.2.0", url), PyRequirement.fromString(url));
   }
 
   // PY-14230
   public void testArchiveUrlWithSha1() {
     final String url = "https://pypi.python.org/packages/source/g/geoip2/geoip2-2.2.0.tar.gz#sha1=26259d212447bc840400c25a48275fbc";
 
-    assertEquals(new PyRequirement("geoip2", "2.2.0", url, false), PyRequirement.fromString(url));
+    assertEquals(new PyRequirement("geoip2", "2.2.0", url), PyRequirement.fromString(url));
   }
 
   // PY-14230
   public void testArchiveUrlWithSha224() {
     final String url = "https://pypi.python.org/packages/source/g/geoip2/geoip2-2.2.0.tar.gz#sha224=26259d212447bc840400c25a48275fbc";
 
-    assertEquals(new PyRequirement("geoip2", "2.2.0", url, false), PyRequirement.fromString(url));
+    assertEquals(new PyRequirement("geoip2", "2.2.0", url), PyRequirement.fromString(url));
   }
 
   // PY-14230
   public void testArchiveUrlWithSha256() {
     final String url = "https://pypi.python.org/packages/source/g/geoip2/geoip2-2.2.0.tar.gz#sha256=26259d212447bc840400c25a48275fbc";
 
-    assertEquals(new PyRequirement("geoip2", "2.2.0", url, false), PyRequirement.fromString(url));
+    assertEquals(new PyRequirement("geoip2", "2.2.0", url), PyRequirement.fromString(url));
   }
 
   // PY-14230
   public void testArchiveUrlWithSha384() {
     final String url = "https://pypi.python.org/packages/source/g/geoip2/geoip2-2.2.0.tar.gz#sha384=26259d212447bc840400c25a48275fbc";
 
-    assertEquals(new PyRequirement("geoip2", "2.2.0", url, false), PyRequirement.fromString(url));
+    assertEquals(new PyRequirement("geoip2", "2.2.0", url), PyRequirement.fromString(url));
   }
 
   // PY-14230
   public void testArchiveUrlWithSha512() {
     final String url = "https://pypi.python.org/packages/source/g/geoip2/geoip2-2.2.0.tar.gz#sha512=26259d212447bc840400c25a48275fbc";
 
-    assertEquals(new PyRequirement("geoip2", "2.2.0", url, false), PyRequirement.fromString(url));
+    assertEquals(new PyRequirement("geoip2", "2.2.0", url), PyRequirement.fromString(url));
   }
 
   // PY-18054
@@ -151,113 +151,113 @@ public class PyRequirementTest extends PyTestCase {
   }
 
   public void testEditableGit() {
-    doTest("-e git://git.myproject.org/MyProject#egg=MyProject1", true);
-    doTest("-e git://git.myproject.org/MyProject/#egg=MyProject1", true);
-    doTest("-e git://git.myproject.org/MyProject.git#egg=MyProject1", true);
-    doTest("-e git://git.myproject.org/MyProject.git/#egg=MyProject1", true);
-    doTest("-e git://git.myproject.org/path/MyProject#egg=MyProject1", true);
-    doTest("-e git://git.myproject.org/path/MyProject/#egg=MyProject1", true);
-    doTest("-e git://git.myproject.org/path/MyProject.git#egg=MyProject1", true);
-    doTest("-e git://git.myproject.org/path/MyProject.git/#egg=MyProject1", true);
+    doTest("-e git://git.myproject.org/MyProject#egg=MyProject1");
+    doTest("-e git://git.myproject.org/MyProject/#egg=MyProject1");
+    doTest("-e git://git.myproject.org/MyProject.git#egg=MyProject1");
+    doTest("-e git://git.myproject.org/MyProject.git/#egg=MyProject1");
+    doTest("-e git://git.myproject.org/path/MyProject#egg=MyProject1");
+    doTest("-e git://git.myproject.org/path/MyProject/#egg=MyProject1");
+    doTest("-e git://git.myproject.org/path/MyProject.git#egg=MyProject1");
+    doTest("-e git://git.myproject.org/path/MyProject.git/#egg=MyProject1");
 
-    doTest("-e git+git://git.myproject.org/MyProject#egg=MyProject1", true);
-    doTest("-e git+git://git.myproject.org/MyProject/#egg=MyProject1", true);
-    doTest("-e git+git://git.myproject.org/MyProject.git#egg=MyProject1", true);
-    doTest("-e git+git://git.myproject.org/MyProject.git/#egg=MyProject1", true);
-    doTest("-e git+git://git.myproject.org/path/MyProject#egg=MyProject1", true);
-    doTest("-e git+git://git.myproject.org/path/MyProject/#egg=MyProject1", true);
-    doTest("-e git+git://git.myproject.org/path/MyProject.git#egg=MyProject1", true);
-    doTest("-e git+git://git.myproject.org/path/MyProject.git/#egg=MyProject1", true);
+    doTest("-e git+git://git.myproject.org/MyProject#egg=MyProject1");
+    doTest("-e git+git://git.myproject.org/MyProject/#egg=MyProject1");
+    doTest("-e git+git://git.myproject.org/MyProject.git#egg=MyProject1");
+    doTest("-e git+git://git.myproject.org/MyProject.git/#egg=MyProject1");
+    doTest("-e git+git://git.myproject.org/path/MyProject#egg=MyProject1");
+    doTest("-e git+git://git.myproject.org/path/MyProject/#egg=MyProject1");
+    doTest("-e git+git://git.myproject.org/path/MyProject.git#egg=MyProject1");
+    doTest("-e git+git://git.myproject.org/path/MyProject.git/#egg=MyProject1");
 
-    doTest("-e git+https://git.myproject.org/MyProject#egg=MyProject1", true);
-    doTest("-e git+https://git.myproject.org/MyProject/#egg=MyProject1", true);
-    doTest("-e git+https://git.myproject.org/MyProject.git#egg=MyProject1", true);
-    doTest("-e git+https://git.myproject.org/MyProject.git/#egg=MyProject1", true);
-    doTest("-e git+https://git.myproject.org/path/MyProject#egg=MyProject1", true);
-    doTest("-e git+https://git.myproject.org/path/MyProject/#egg=MyProject1", true);
-    doTest("-e git+https://git.myproject.org/path/MyProject.git#egg=MyProject1", true);
-    doTest("-e git+https://git.myproject.org/path/MyProject.git/#egg=MyProject1", true);
+    doTest("-e git+https://git.myproject.org/MyProject#egg=MyProject1");
+    doTest("-e git+https://git.myproject.org/MyProject/#egg=MyProject1");
+    doTest("-e git+https://git.myproject.org/MyProject.git#egg=MyProject1");
+    doTest("-e git+https://git.myproject.org/MyProject.git/#egg=MyProject1");
+    doTest("-e git+https://git.myproject.org/path/MyProject#egg=MyProject1");
+    doTest("-e git+https://git.myproject.org/path/MyProject/#egg=MyProject1");
+    doTest("-e git+https://git.myproject.org/path/MyProject.git#egg=MyProject1");
+    doTest("-e git+https://git.myproject.org/path/MyProject.git/#egg=MyProject1");
 
-    doTest("-e git+ssh://git.myproject.org/MyProject#egg=MyProject1", true);
-    doTest("-e git+ssh://git.myproject.org/MyProject/#egg=MyProject1", true);
-    doTest("-e git+ssh://git.myproject.org/MyProject.git#egg=MyProject1", true);
-    doTest("-e git+ssh://git.myproject.org/MyProject.git/#egg=MyProject1", true);
-    doTest("-e git+ssh://git.myproject.org/path/MyProject#egg=MyProject1", true);
-    doTest("-e git+ssh://git.myproject.org/path/MyProject/#egg=MyProject1", true);
-    doTest("-e git+ssh://git.myproject.org/path/MyProject.git#egg=MyProject1", true);
-    doTest("-e git+ssh://git.myproject.org/path/MyProject.git/#egg=MyProject1", true);
+    doTest("-e git+ssh://git.myproject.org/MyProject#egg=MyProject1");
+    doTest("-e git+ssh://git.myproject.org/MyProject/#egg=MyProject1");
+    doTest("-e git+ssh://git.myproject.org/MyProject.git#egg=MyProject1");
+    doTest("-e git+ssh://git.myproject.org/MyProject.git/#egg=MyProject1");
+    doTest("-e git+ssh://git.myproject.org/path/MyProject#egg=MyProject1");
+    doTest("-e git+ssh://git.myproject.org/path/MyProject/#egg=MyProject1");
+    doTest("-e git+ssh://git.myproject.org/path/MyProject.git#egg=MyProject1");
+    doTest("-e git+ssh://git.myproject.org/path/MyProject.git/#egg=MyProject1");
 
-    doTest("-e git+ssh://user@git.myproject.org/MyProject#egg=MyProject1", true);
-    doTest("-e git+ssh://user@git.myproject.org/MyProject/#egg=MyProject1", true);
-    doTest("-e git+ssh://user@git.myproject.org/MyProject.git#egg=MyProject1", true);
-    doTest("-e git+ssh://user@git.myproject.org/MyProject.git/#egg=MyProject1", true);
-    doTest("-e git+ssh://user@git.myproject.org/path/MyProject#egg=MyProject1", true);
-    doTest("-e git+ssh://user@git.myproject.org/path/MyProject/#egg=MyProject1", true);
-    doTest("-e git+ssh://user@git.myproject.org/path/MyProject.git#egg=MyProject1", true);
-    doTest("-e git+ssh://user@git.myproject.org/path/MyProject.git/#egg=MyProject1", true);
+    doTest("-e git+ssh://user@git.myproject.org/MyProject#egg=MyProject1");
+    doTest("-e git+ssh://user@git.myproject.org/MyProject/#egg=MyProject1");
+    doTest("-e git+ssh://user@git.myproject.org/MyProject.git#egg=MyProject1");
+    doTest("-e git+ssh://user@git.myproject.org/MyProject.git/#egg=MyProject1");
+    doTest("-e git+ssh://user@git.myproject.org/path/MyProject#egg=MyProject1");
+    doTest("-e git+ssh://user@git.myproject.org/path/MyProject/#egg=MyProject1");
+    doTest("-e git+ssh://user@git.myproject.org/path/MyProject.git#egg=MyProject1");
+    doTest("-e git+ssh://user@git.myproject.org/path/MyProject.git/#egg=MyProject1");
 
-    doTest("-e git+user@git.myproject.org:MyProject#egg=MyProject1", true);
-    doTest("-e git+user@git.myproject.org:MyProject/#egg=MyProject1", true);
-    doTest("-e git+user@git.myproject.org:MyProject.git#egg=MyProject1", true);
-    doTest("-e git+user@git.myproject.org:MyProject.git/#egg=MyProject1", true);
-    doTest("-e git+user@git.myproject.org:/path/MyProject#egg=MyProject1", true);
-    doTest("-e git+user@git.myproject.org:/path/MyProject/#egg=MyProject1", true);
-    doTest("-e git+user@git.myproject.org:/path/MyProject.git#egg=MyProject1", true);
-    doTest("-e git+user@git.myproject.org:/path/MyProject.git/#egg=MyProject1", true);
+    doTest("-e git+user@git.myproject.org:MyProject#egg=MyProject1");
+    doTest("-e git+user@git.myproject.org:MyProject/#egg=MyProject1");
+    doTest("-e git+user@git.myproject.org:MyProject.git#egg=MyProject1");
+    doTest("-e git+user@git.myproject.org:MyProject.git/#egg=MyProject1");
+    doTest("-e git+user@git.myproject.org:/path/MyProject#egg=MyProject1");
+    doTest("-e git+user@git.myproject.org:/path/MyProject/#egg=MyProject1");
+    doTest("-e git+user@git.myproject.org:/path/MyProject.git#egg=MyProject1");
+    doTest("-e git+user@git.myproject.org:/path/MyProject.git/#egg=MyProject1");
 
-    doTest("--editable git://git.myproject.org/MyProject#egg=MyProject1", true);
-    doTest("--editable git://git.myproject.org/MyProject/#egg=MyProject1", true);
-    doTest("--editable git://git.myproject.org/MyProject.git#egg=MyProject1", true);
-    doTest("--editable git://git.myproject.org/MyProject.git/#egg=MyProject1", true);
-    doTest("--editable git://git.myproject.org/path/MyProject#egg=MyProject1", true);
-    doTest("--editable git://git.myproject.org/path/MyProject/#egg=MyProject1", true);
-    doTest("--editable git://git.myproject.org/path/MyProject.git#egg=MyProject1", true);
-    doTest("--editable git://git.myproject.org/path/MyProject.git/#egg=MyProject1", true);
+    doTest("--editable git://git.myproject.org/MyProject#egg=MyProject1");
+    doTest("--editable git://git.myproject.org/MyProject/#egg=MyProject1");
+    doTest("--editable git://git.myproject.org/MyProject.git#egg=MyProject1");
+    doTest("--editable git://git.myproject.org/MyProject.git/#egg=MyProject1");
+    doTest("--editable git://git.myproject.org/path/MyProject#egg=MyProject1");
+    doTest("--editable git://git.myproject.org/path/MyProject/#egg=MyProject1");
+    doTest("--editable git://git.myproject.org/path/MyProject.git#egg=MyProject1");
+    doTest("--editable git://git.myproject.org/path/MyProject.git/#egg=MyProject1");
 
-    doTest("--editable git+git://git.myproject.org/MyProject#egg=MyProject1", true);
-    doTest("--editable git+git://git.myproject.org/MyProject/#egg=MyProject1", true);
-    doTest("--editable git+git://git.myproject.org/MyProject.git#egg=MyProject1", true);
-    doTest("--editable git+git://git.myproject.org/MyProject.git/#egg=MyProject1", true);
-    doTest("--editable git+git://git.myproject.org/path/MyProject#egg=MyProject1", true);
-    doTest("--editable git+git://git.myproject.org/path/MyProject/#egg=MyProject1", true);
-    doTest("--editable git+git://git.myproject.org/path/MyProject.git#egg=MyProject1", true);
-    doTest("--editable git+git://git.myproject.org/path/MyProject.git/#egg=MyProject1", true);
+    doTest("--editable git+git://git.myproject.org/MyProject#egg=MyProject1");
+    doTest("--editable git+git://git.myproject.org/MyProject/#egg=MyProject1");
+    doTest("--editable git+git://git.myproject.org/MyProject.git#egg=MyProject1");
+    doTest("--editable git+git://git.myproject.org/MyProject.git/#egg=MyProject1");
+    doTest("--editable git+git://git.myproject.org/path/MyProject#egg=MyProject1");
+    doTest("--editable git+git://git.myproject.org/path/MyProject/#egg=MyProject1");
+    doTest("--editable git+git://git.myproject.org/path/MyProject.git#egg=MyProject1");
+    doTest("--editable git+git://git.myproject.org/path/MyProject.git/#egg=MyProject1");
 
-    doTest("--editable git+https://git.myproject.org/MyProject#egg=MyProject1", true);
-    doTest("--editable git+https://git.myproject.org/MyProject/#egg=MyProject1", true);
-    doTest("--editable git+https://git.myproject.org/MyProject.git#egg=MyProject1", true);
-    doTest("--editable git+https://git.myproject.org/MyProject.git/#egg=MyProject1", true);
-    doTest("--editable git+https://git.myproject.org/path/MyProject#egg=MyProject1", true);
-    doTest("--editable git+https://git.myproject.org/path/MyProject/#egg=MyProject1", true);
-    doTest("--editable git+https://git.myproject.org/path/MyProject.git#egg=MyProject1", true);
-    doTest("--editable git+https://git.myproject.org/path/MyProject.git/#egg=MyProject1", true);
+    doTest("--editable git+https://git.myproject.org/MyProject#egg=MyProject1");
+    doTest("--editable git+https://git.myproject.org/MyProject/#egg=MyProject1");
+    doTest("--editable git+https://git.myproject.org/MyProject.git#egg=MyProject1");
+    doTest("--editable git+https://git.myproject.org/MyProject.git/#egg=MyProject1");
+    doTest("--editable git+https://git.myproject.org/path/MyProject#egg=MyProject1");
+    doTest("--editable git+https://git.myproject.org/path/MyProject/#egg=MyProject1");
+    doTest("--editable git+https://git.myproject.org/path/MyProject.git#egg=MyProject1");
+    doTest("--editable git+https://git.myproject.org/path/MyProject.git/#egg=MyProject1");
 
-    doTest("--editable git+ssh://git.myproject.org/MyProject#egg=MyProject1", true);
-    doTest("--editable git+ssh://git.myproject.org/MyProject/#egg=MyProject1", true);
-    doTest("--editable git+ssh://git.myproject.org/MyProject.git#egg=MyProject1", true);
-    doTest("--editable git+ssh://git.myproject.org/MyProject.git/#egg=MyProject1", true);
-    doTest("--editable git+ssh://git.myproject.org/path/MyProject#egg=MyProject1", true);
-    doTest("--editable git+ssh://git.myproject.org/path/MyProject/#egg=MyProject1", true);
-    doTest("--editable git+ssh://git.myproject.org/path/MyProject.git#egg=MyProject1", true);
-    doTest("--editable git+ssh://git.myproject.org/path/MyProject.git/#egg=MyProject1", true);
+    doTest("--editable git+ssh://git.myproject.org/MyProject#egg=MyProject1");
+    doTest("--editable git+ssh://git.myproject.org/MyProject/#egg=MyProject1");
+    doTest("--editable git+ssh://git.myproject.org/MyProject.git#egg=MyProject1");
+    doTest("--editable git+ssh://git.myproject.org/MyProject.git/#egg=MyProject1");
+    doTest("--editable git+ssh://git.myproject.org/path/MyProject#egg=MyProject1");
+    doTest("--editable git+ssh://git.myproject.org/path/MyProject/#egg=MyProject1");
+    doTest("--editable git+ssh://git.myproject.org/path/MyProject.git#egg=MyProject1");
+    doTest("--editable git+ssh://git.myproject.org/path/MyProject.git/#egg=MyProject1");
 
-    doTest("--editable git+ssh://user@git.myproject.org/MyProject#egg=MyProject1", true);
-    doTest("--editable git+ssh://user@git.myproject.org/MyProject/#egg=MyProject1", true);
-    doTest("--editable git+ssh://user@git.myproject.org/MyProject.git#egg=MyProject1", true);
-    doTest("--editable git+ssh://user@git.myproject.org/MyProject.git/#egg=MyProject1", true);
-    doTest("--editable git+ssh://user@git.myproject.org/path/MyProject#egg=MyProject1", true);
-    doTest("--editable git+ssh://user@git.myproject.org/path/MyProject/#egg=MyProject1", true);
-    doTest("--editable git+ssh://user@git.myproject.org/path/MyProject.git#egg=MyProject1", true);
-    doTest("--editable git+ssh://user@git.myproject.org/path/MyProject.git/#egg=MyProject1", true);
+    doTest("--editable git+ssh://user@git.myproject.org/MyProject#egg=MyProject1");
+    doTest("--editable git+ssh://user@git.myproject.org/MyProject/#egg=MyProject1");
+    doTest("--editable git+ssh://user@git.myproject.org/MyProject.git#egg=MyProject1");
+    doTest("--editable git+ssh://user@git.myproject.org/MyProject.git/#egg=MyProject1");
+    doTest("--editable git+ssh://user@git.myproject.org/path/MyProject#egg=MyProject1");
+    doTest("--editable git+ssh://user@git.myproject.org/path/MyProject/#egg=MyProject1");
+    doTest("--editable git+ssh://user@git.myproject.org/path/MyProject.git#egg=MyProject1");
+    doTest("--editable git+ssh://user@git.myproject.org/path/MyProject.git/#egg=MyProject1");
 
-    doTest("--editable git+user@git.myproject.org:MyProject#egg=MyProject1", true);
-    doTest("--editable git+user@git.myproject.org:MyProject/#egg=MyProject1", true);
-    doTest("--editable git+user@git.myproject.org:MyProject.git#egg=MyProject1", true);
-    doTest("--editable git+user@git.myproject.org:MyProject.git/#egg=MyProject1", true);
-    doTest("--editable git+user@git.myproject.org:/path/MyProject#egg=MyProject1", true);
-    doTest("--editable git+user@git.myproject.org:/path/MyProject/#egg=MyProject1", true);
-    doTest("--editable git+user@git.myproject.org:/path/MyProject.git#egg=MyProject1", true);
-    doTest("--editable git+user@git.myproject.org:/path/MyProject.git/#egg=MyProject1", true);
+    doTest("--editable git+user@git.myproject.org:MyProject#egg=MyProject1");
+    doTest("--editable git+user@git.myproject.org:MyProject/#egg=MyProject1");
+    doTest("--editable git+user@git.myproject.org:MyProject.git#egg=MyProject1");
+    doTest("--editable git+user@git.myproject.org:MyProject.git/#egg=MyProject1");
+    doTest("--editable git+user@git.myproject.org:/path/MyProject#egg=MyProject1");
+    doTest("--editable git+user@git.myproject.org:/path/MyProject/#egg=MyProject1");
+    doTest("--editable git+user@git.myproject.org:/path/MyProject.git#egg=MyProject1");
+    doTest("--editable git+user@git.myproject.org:/path/MyProject.git/#egg=MyProject1");
   }
 
   // PY-8623
@@ -319,59 +319,59 @@ public class PyRequirementTest extends PyTestCase {
 
   // PY-7583
   public void testGitWithoutEgg() {
-    doTest("-e git://git.myproject.org/MyProject1", true);
-    doTest("-e git://git.myproject.org/MyProject1/", true);
-    doTest("-e git://git.myproject.org/MyProject1.git", true);
-    doTest("-e git://git.myproject.org/MyProject1.git/", true);
-    doTest("-e git://git.myproject.org/path/MyProject1", true);
-    doTest("-e git://git.myproject.org/path/MyProject1/", true);
-    doTest("-e git://git.myproject.org/path/MyProject1.git", true);
-    doTest("-e git://git.myproject.org/path/MyProject1.git/", true);
+    doTest("-e git://git.myproject.org/MyProject1");
+    doTest("-e git://git.myproject.org/MyProject1/");
+    doTest("-e git://git.myproject.org/MyProject1.git");
+    doTest("-e git://git.myproject.org/MyProject1.git/");
+    doTest("-e git://git.myproject.org/path/MyProject1");
+    doTest("-e git://git.myproject.org/path/MyProject1/");
+    doTest("-e git://git.myproject.org/path/MyProject1.git");
+    doTest("-e git://git.myproject.org/path/MyProject1.git/");
 
-    doTest("-e git+git://git.myproject.org/MyProject1", true);
-    doTest("-e git+git://git.myproject.org/MyProject1/", true);
-    doTest("-e git+git://git.myproject.org/MyProject1.git", true);
-    doTest("-e git+git://git.myproject.org/MyProject1.git/", true);
-    doTest("-e git+git://git.myproject.org/path/MyProject1", true);
-    doTest("-e git+git://git.myproject.org/path/MyProject1/", true);
-    doTest("-e git+git://git.myproject.org/path/MyProject1.git", true);
-    doTest("-e git+git://git.myproject.org/path/MyProject1.git/", true);
+    doTest("-e git+git://git.myproject.org/MyProject1");
+    doTest("-e git+git://git.myproject.org/MyProject1/");
+    doTest("-e git+git://git.myproject.org/MyProject1.git");
+    doTest("-e git+git://git.myproject.org/MyProject1.git/");
+    doTest("-e git+git://git.myproject.org/path/MyProject1");
+    doTest("-e git+git://git.myproject.org/path/MyProject1/");
+    doTest("-e git+git://git.myproject.org/path/MyProject1.git");
+    doTest("-e git+git://git.myproject.org/path/MyProject1.git/");
 
-    doTest("-e git+https://git.myproject.org/MyProject1", true);
-    doTest("-e git+https://git.myproject.org/MyProject1/", true);
-    doTest("-e git+https://git.myproject.org/MyProject1.git", true);
-    doTest("-e git+https://git.myproject.org/MyProject1.git/", true);
-    doTest("-e git+https://git.myproject.org/path/MyProject1", true);
-    doTest("-e git+https://git.myproject.org/path/MyProject1/", true);
-    doTest("-e git+https://git.myproject.org/path/MyProject1.git", true);
-    doTest("-e git+https://git.myproject.org/path/MyProject1.git/", true);
+    doTest("-e git+https://git.myproject.org/MyProject1");
+    doTest("-e git+https://git.myproject.org/MyProject1/");
+    doTest("-e git+https://git.myproject.org/MyProject1.git");
+    doTest("-e git+https://git.myproject.org/MyProject1.git/");
+    doTest("-e git+https://git.myproject.org/path/MyProject1");
+    doTest("-e git+https://git.myproject.org/path/MyProject1/");
+    doTest("-e git+https://git.myproject.org/path/MyProject1.git");
+    doTest("-e git+https://git.myproject.org/path/MyProject1.git/");
 
-    doTest("-e git+ssh://git.myproject.org/MyProject1", true);
-    doTest("-e git+ssh://git.myproject.org/MyProject1/", true);
-    doTest("-e git+ssh://git.myproject.org/MyProject1.git", true);
-    doTest("-e git+ssh://git.myproject.org/MyProject1.git/", true);
-    doTest("-e git+ssh://git.myproject.org/path/MyProject1", true);
-    doTest("-e git+ssh://git.myproject.org/path/MyProject1/", true);
-    doTest("-e git+ssh://git.myproject.org/path/MyProject1.git", true);
-    doTest("-e git+ssh://git.myproject.org/path/MyProject1.git/", true);
+    doTest("-e git+ssh://git.myproject.org/MyProject1");
+    doTest("-e git+ssh://git.myproject.org/MyProject1/");
+    doTest("-e git+ssh://git.myproject.org/MyProject1.git");
+    doTest("-e git+ssh://git.myproject.org/MyProject1.git/");
+    doTest("-e git+ssh://git.myproject.org/path/MyProject1");
+    doTest("-e git+ssh://git.myproject.org/path/MyProject1/");
+    doTest("-e git+ssh://git.myproject.org/path/MyProject1.git");
+    doTest("-e git+ssh://git.myproject.org/path/MyProject1.git/");
 
-    doTest("-e git+ssh://user@git.myproject.org/MyProject1", true);
-    doTest("-e git+ssh://user@git.myproject.org/MyProject1/", true);
-    doTest("-e git+ssh://user@git.myproject.org/MyProject1.git", true);
-    doTest("-e git+ssh://user@git.myproject.org/MyProject1.git/", true);
-    doTest("-e git+ssh://user@git.myproject.org/path/MyProject1", true);
-    doTest("-e git+ssh://user@git.myproject.org/path/MyProject1/", true);
-    doTest("-e git+ssh://user@git.myproject.org/path/MyProject1.git", true);
-    doTest("-e git+ssh://user@git.myproject.org/path/MyProject1.git/", true);
+    doTest("-e git+ssh://user@git.myproject.org/MyProject1");
+    doTest("-e git+ssh://user@git.myproject.org/MyProject1/");
+    doTest("-e git+ssh://user@git.myproject.org/MyProject1.git");
+    doTest("-e git+ssh://user@git.myproject.org/MyProject1.git/");
+    doTest("-e git+ssh://user@git.myproject.org/path/MyProject1");
+    doTest("-e git+ssh://user@git.myproject.org/path/MyProject1/");
+    doTest("-e git+ssh://user@git.myproject.org/path/MyProject1.git");
+    doTest("-e git+ssh://user@git.myproject.org/path/MyProject1.git/");
 
-    doTest("-e git+user@git.myproject.org:MyProject1", true);
-    doTest("-e git+user@git.myproject.org:MyProject1/", true);
-    doTest("-e git+user@git.myproject.org:MyProject1.git", true);
-    doTest("-e git+user@git.myproject.org:MyProject1.git/", true);
-    doTest("-e git+user@git.myproject.org:/path/MyProject1", true);
-    doTest("-e git+user@git.myproject.org:/path/MyProject1/", true);
-    doTest("-e git+user@git.myproject.org:/path/MyProject1.git", true);
-    doTest("-e git+user@git.myproject.org:/path/MyProject1.git/", true);
+    doTest("-e git+user@git.myproject.org:MyProject1");
+    doTest("-e git+user@git.myproject.org:MyProject1/");
+    doTest("-e git+user@git.myproject.org:MyProject1.git");
+    doTest("-e git+user@git.myproject.org:MyProject1.git/");
+    doTest("-e git+user@git.myproject.org:/path/MyProject1");
+    doTest("-e git+user@git.myproject.org:/path/MyProject1/");
+    doTest("-e git+user@git.myproject.org:/path/MyProject1.git");
+    doTest("-e git+user@git.myproject.org:/path/MyProject1.git/");
   }
 
   // PY-7583
@@ -455,45 +455,45 @@ public class PyRequirementTest extends PyTestCase {
   }
 
   public void testEditableMercurial() {
-    doTest("-e hg+http://hg.myproject.org/MyProject#egg=MyProject1", true);
-    doTest("-e hg+http://hg.myproject.org/MyProject/#egg=MyProject1", true);
-    doTest("-e hg+http://hg.myproject.org/path/MyProject#egg=MyProject1", true);
-    doTest("-e hg+http://hg.myproject.org/path/MyProject/#egg=MyProject1", true);
+    doTest("-e hg+http://hg.myproject.org/MyProject#egg=MyProject1");
+    doTest("-e hg+http://hg.myproject.org/MyProject/#egg=MyProject1");
+    doTest("-e hg+http://hg.myproject.org/path/MyProject#egg=MyProject1");
+    doTest("-e hg+http://hg.myproject.org/path/MyProject/#egg=MyProject1");
 
-    doTest("-e hg+https://hg.myproject.org/MyProject#egg=MyProject1", true);
-    doTest("-e hg+https://hg.myproject.org/MyProject/#egg=MyProject1", true);
-    doTest("-e hg+https://hg.myproject.org/path/MyProject#egg=MyProject1", true);
-    doTest("-e hg+https://hg.myproject.org/path/MyProject/#egg=MyProject1", true);
+    doTest("-e hg+https://hg.myproject.org/MyProject#egg=MyProject1");
+    doTest("-e hg+https://hg.myproject.org/MyProject/#egg=MyProject1");
+    doTest("-e hg+https://hg.myproject.org/path/MyProject#egg=MyProject1");
+    doTest("-e hg+https://hg.myproject.org/path/MyProject/#egg=MyProject1");
 
-    doTest("-e hg+ssh://hg.myproject.org/MyProject#egg=MyProject1", true);
-    doTest("-e hg+ssh://hg.myproject.org/MyProject/#egg=MyProject1", true);
-    doTest("-e hg+ssh://hg.myproject.org/path/MyProject#egg=MyProject1", true);
-    doTest("-e hg+ssh://hg.myproject.org/path/MyProject/#egg=MyProject1", true);
+    doTest("-e hg+ssh://hg.myproject.org/MyProject#egg=MyProject1");
+    doTest("-e hg+ssh://hg.myproject.org/MyProject/#egg=MyProject1");
+    doTest("-e hg+ssh://hg.myproject.org/path/MyProject#egg=MyProject1");
+    doTest("-e hg+ssh://hg.myproject.org/path/MyProject/#egg=MyProject1");
 
-    doTest("-e hg+ssh://user@hg.myproject.org/MyProject#egg=MyProject1", true);
-    doTest("-e hg+ssh://user@hg.myproject.org/MyProject/#egg=MyProject1", true);
-    doTest("-e hg+ssh://user@hg.myproject.org/path/MyProject#egg=MyProject1", true);
-    doTest("-e hg+ssh://user@hg.myproject.org/path/MyProject/#egg=MyProject1", true);
+    doTest("-e hg+ssh://user@hg.myproject.org/MyProject#egg=MyProject1");
+    doTest("-e hg+ssh://user@hg.myproject.org/MyProject/#egg=MyProject1");
+    doTest("-e hg+ssh://user@hg.myproject.org/path/MyProject#egg=MyProject1");
+    doTest("-e hg+ssh://user@hg.myproject.org/path/MyProject/#egg=MyProject1");
 
-    doTest("--editable hg+http://hg.myproject.org/MyProject#egg=MyProject1", true);
-    doTest("--editable hg+http://hg.myproject.org/MyProject/#egg=MyProject1", true);
-    doTest("--editable hg+http://hg.myproject.org/path/MyProject#egg=MyProject1", true);
-    doTest("--editable hg+http://hg.myproject.org/path/MyProject/#egg=MyProject1", true);
+    doTest("--editable hg+http://hg.myproject.org/MyProject#egg=MyProject1");
+    doTest("--editable hg+http://hg.myproject.org/MyProject/#egg=MyProject1");
+    doTest("--editable hg+http://hg.myproject.org/path/MyProject#egg=MyProject1");
+    doTest("--editable hg+http://hg.myproject.org/path/MyProject/#egg=MyProject1");
 
-    doTest("--editable hg+https://hg.myproject.org/MyProject#egg=MyProject1", true);
-    doTest("--editable hg+https://hg.myproject.org/MyProject/#egg=MyProject1", true);
-    doTest("--editable hg+https://hg.myproject.org/path/MyProject#egg=MyProject1", true);
-    doTest("--editable hg+https://hg.myproject.org/path/MyProject/#egg=MyProject1", true);
+    doTest("--editable hg+https://hg.myproject.org/MyProject#egg=MyProject1");
+    doTest("--editable hg+https://hg.myproject.org/MyProject/#egg=MyProject1");
+    doTest("--editable hg+https://hg.myproject.org/path/MyProject#egg=MyProject1");
+    doTest("--editable hg+https://hg.myproject.org/path/MyProject/#egg=MyProject1");
 
-    doTest("--editable hg+ssh://hg.myproject.org/MyProject#egg=MyProject1", true);
-    doTest("--editable hg+ssh://hg.myproject.org/MyProject/#egg=MyProject1", true);
-    doTest("--editable hg+ssh://hg.myproject.org/path/MyProject#egg=MyProject1", true);
-    doTest("--editable hg+ssh://hg.myproject.org/path/MyProject/#egg=MyProject1", true);
+    doTest("--editable hg+ssh://hg.myproject.org/MyProject#egg=MyProject1");
+    doTest("--editable hg+ssh://hg.myproject.org/MyProject/#egg=MyProject1");
+    doTest("--editable hg+ssh://hg.myproject.org/path/MyProject#egg=MyProject1");
+    doTest("--editable hg+ssh://hg.myproject.org/path/MyProject/#egg=MyProject1");
 
-    doTest("--editable hg+ssh://user@hg.myproject.org/MyProject#egg=MyProject1", true);
-    doTest("--editable hg+ssh://user@hg.myproject.org/MyProject/#egg=MyProject1", true);
-    doTest("--editable hg+ssh://user@hg.myproject.org/path/MyProject#egg=MyProject1", true);
-    doTest("--editable hg+ssh://user@hg.myproject.org/path/MyProject/#egg=MyProject1", true);
+    doTest("--editable hg+ssh://user@hg.myproject.org/MyProject#egg=MyProject1");
+    doTest("--editable hg+ssh://user@hg.myproject.org/MyProject/#egg=MyProject1");
+    doTest("--editable hg+ssh://user@hg.myproject.org/path/MyProject#egg=MyProject1");
+    doTest("--editable hg+ssh://user@hg.myproject.org/path/MyProject/#egg=MyProject1");
   }
 
   public void testMercurialWithRevision() {
@@ -597,65 +597,65 @@ public class PyRequirementTest extends PyTestCase {
   }
 
   public void testEditableSubversion() {
-    doTest("-e svn+http://svn.myproject.org/MyProject/trunk#egg=MyProject1", true);
-    doTest("-e svn+http://svn.myproject.org/MyProject/trunk/#egg=MyProject1", true);
-    doTest("-e svn+http://svn.myproject.org/svn/MyProject/trunk#egg=MyProject1", true);
-    doTest("-e svn+http://svn.myproject.org/svn/MyProject/trunk/#egg=MyProject1", true);
+    doTest("-e svn+http://svn.myproject.org/MyProject/trunk#egg=MyProject1");
+    doTest("-e svn+http://svn.myproject.org/MyProject/trunk/#egg=MyProject1");
+    doTest("-e svn+http://svn.myproject.org/svn/MyProject/trunk#egg=MyProject1");
+    doTest("-e svn+http://svn.myproject.org/svn/MyProject/trunk/#egg=MyProject1");
 
-    doTest("-e svn+https://svn.myproject.org/MyProject/trunk#egg=MyProject1", true);
-    doTest("-e svn+https://svn.myproject.org/MyProject/trunk/#egg=MyProject1", true);
-    doTest("-e svn+https://svn.myproject.org/svn/MyProject/trunk#egg=MyProject1", true);
-    doTest("-e svn+https://svn.myproject.org/svn/MyProject/trunk/#egg=MyProject1", true);
+    doTest("-e svn+https://svn.myproject.org/MyProject/trunk#egg=MyProject1");
+    doTest("-e svn+https://svn.myproject.org/MyProject/trunk/#egg=MyProject1");
+    doTest("-e svn+https://svn.myproject.org/svn/MyProject/trunk#egg=MyProject1");
+    doTest("-e svn+https://svn.myproject.org/svn/MyProject/trunk/#egg=MyProject1");
 
-    doTest("-e svn+ssh://svn.myproject.org/MyProject#egg=MyProject1", true);
-    doTest("-e svn+ssh://svn.myproject.org/MyProject/#egg=MyProject1", true);
-    doTest("-e svn+ssh://svn.myproject.org/svn/MyProject#egg=MyProject1", true);
-    doTest("-e svn+ssh://svn.myproject.org/svn/MyProject/#egg=MyProject1", true);
+    doTest("-e svn+ssh://svn.myproject.org/MyProject#egg=MyProject1");
+    doTest("-e svn+ssh://svn.myproject.org/MyProject/#egg=MyProject1");
+    doTest("-e svn+ssh://svn.myproject.org/svn/MyProject#egg=MyProject1");
+    doTest("-e svn+ssh://svn.myproject.org/svn/MyProject/#egg=MyProject1");
 
-    doTest("-e svn+ssh://user@svn.myproject.org/MyProject#egg=MyProject1", true);
-    doTest("-e svn+ssh://user@svn.myproject.org/MyProject/#egg=MyProject1", true);
-    doTest("-e svn+ssh://user@svn.myproject.org/svn/MyProject#egg=MyProject1", true);
-    doTest("-e svn+ssh://user@svn.myproject.org/svn/MyProject/#egg=MyProject1", true);
+    doTest("-e svn+ssh://user@svn.myproject.org/MyProject#egg=MyProject1");
+    doTest("-e svn+ssh://user@svn.myproject.org/MyProject/#egg=MyProject1");
+    doTest("-e svn+ssh://user@svn.myproject.org/svn/MyProject#egg=MyProject1");
+    doTest("-e svn+ssh://user@svn.myproject.org/svn/MyProject/#egg=MyProject1");
 
-    doTest("-e svn+svn://svn.myproject.org/MyProject#egg=MyProject1", true);
-    doTest("-e svn+svn://svn.myproject.org/MyProject/#egg=MyProject1", true);
-    doTest("-e svn+svn://svn.myproject.org/svn/MyProject#egg=MyProject1", true);
-    doTest("-e svn+svn://svn.myproject.org/svn/MyProject/#egg=MyProject1", true);
+    doTest("-e svn+svn://svn.myproject.org/MyProject#egg=MyProject1");
+    doTest("-e svn+svn://svn.myproject.org/MyProject/#egg=MyProject1");
+    doTest("-e svn+svn://svn.myproject.org/svn/MyProject#egg=MyProject1");
+    doTest("-e svn+svn://svn.myproject.org/svn/MyProject/#egg=MyProject1");
 
-    doTest("-e svn+svn://user@svn.myproject.org/MyProject#egg=MyProject1", true);
-    doTest("-e svn+svn://user@svn.myproject.org/MyProject/#egg=MyProject1", true);
-    doTest("-e svn+svn://user@svn.myproject.org/svn/MyProject#egg=MyProject1", true);
-    doTest("-e svn+svn://user@svn.myproject.org/svn/MyProject/#egg=MyProject1", true);
+    doTest("-e svn+svn://user@svn.myproject.org/MyProject#egg=MyProject1");
+    doTest("-e svn+svn://user@svn.myproject.org/MyProject/#egg=MyProject1");
+    doTest("-e svn+svn://user@svn.myproject.org/svn/MyProject#egg=MyProject1");
+    doTest("-e svn+svn://user@svn.myproject.org/svn/MyProject/#egg=MyProject1");
 
-    doTest("--editable svn+http://svn.myproject.org/MyProject/trunk#egg=MyProject1", true);
-    doTest("--editable svn+http://svn.myproject.org/MyProject/trunk/#egg=MyProject1", true);
-    doTest("--editable svn+http://svn.myproject.org/svn/MyProject/trunk#egg=MyProject1", true);
-    doTest("--editable svn+http://svn.myproject.org/svn/MyProject/trunk/#egg=MyProject1", true);
+    doTest("--editable svn+http://svn.myproject.org/MyProject/trunk#egg=MyProject1");
+    doTest("--editable svn+http://svn.myproject.org/MyProject/trunk/#egg=MyProject1");
+    doTest("--editable svn+http://svn.myproject.org/svn/MyProject/trunk#egg=MyProject1");
+    doTest("--editable svn+http://svn.myproject.org/svn/MyProject/trunk/#egg=MyProject1");
 
-    doTest("--editable svn+https://svn.myproject.org/MyProject/trunk#egg=MyProject1", true);
-    doTest("--editable svn+https://svn.myproject.org/MyProject/trunk/#egg=MyProject1", true);
-    doTest("--editable svn+https://svn.myproject.org/svn/MyProject/trunk#egg=MyProject1", true);
-    doTest("--editable svn+https://svn.myproject.org/svn/MyProject/trunk/#egg=MyProject1", true);
+    doTest("--editable svn+https://svn.myproject.org/MyProject/trunk#egg=MyProject1");
+    doTest("--editable svn+https://svn.myproject.org/MyProject/trunk/#egg=MyProject1");
+    doTest("--editable svn+https://svn.myproject.org/svn/MyProject/trunk#egg=MyProject1");
+    doTest("--editable svn+https://svn.myproject.org/svn/MyProject/trunk/#egg=MyProject1");
 
-    doTest("--editable svn+ssh://svn.myproject.org/MyProject#egg=MyProject1", true);
-    doTest("--editable svn+ssh://svn.myproject.org/MyProject/#egg=MyProject1", true);
-    doTest("--editable svn+ssh://svn.myproject.org/svn/MyProject#egg=MyProject1", true);
-    doTest("--editable svn+ssh://svn.myproject.org/svn/MyProject/#egg=MyProject1", true);
+    doTest("--editable svn+ssh://svn.myproject.org/MyProject#egg=MyProject1");
+    doTest("--editable svn+ssh://svn.myproject.org/MyProject/#egg=MyProject1");
+    doTest("--editable svn+ssh://svn.myproject.org/svn/MyProject#egg=MyProject1");
+    doTest("--editable svn+ssh://svn.myproject.org/svn/MyProject/#egg=MyProject1");
 
-    doTest("--editable svn+ssh://user@svn.myproject.org/MyProject#egg=MyProject1", true);
-    doTest("--editable svn+ssh://user@svn.myproject.org/MyProject/#egg=MyProject1", true);
-    doTest("--editable svn+ssh://user@svn.myproject.org/svn/MyProject#egg=MyProject1", true);
-    doTest("--editable svn+ssh://user@svn.myproject.org/svn/MyProject/#egg=MyProject1", true);
+    doTest("--editable svn+ssh://user@svn.myproject.org/MyProject#egg=MyProject1");
+    doTest("--editable svn+ssh://user@svn.myproject.org/MyProject/#egg=MyProject1");
+    doTest("--editable svn+ssh://user@svn.myproject.org/svn/MyProject#egg=MyProject1");
+    doTest("--editable svn+ssh://user@svn.myproject.org/svn/MyProject/#egg=MyProject1");
 
-    doTest("--editable svn+svn://svn.myproject.org/MyProject#egg=MyProject1", true);
-    doTest("--editable svn+svn://svn.myproject.org/MyProject/#egg=MyProject1", true);
-    doTest("--editable svn+svn://svn.myproject.org/svn/MyProject#egg=MyProject1", true);
-    doTest("--editable svn+svn://svn.myproject.org/svn/MyProject/#egg=MyProject1", true);
+    doTest("--editable svn+svn://svn.myproject.org/MyProject#egg=MyProject1");
+    doTest("--editable svn+svn://svn.myproject.org/MyProject/#egg=MyProject1");
+    doTest("--editable svn+svn://svn.myproject.org/svn/MyProject#egg=MyProject1");
+    doTest("--editable svn+svn://svn.myproject.org/svn/MyProject/#egg=MyProject1");
 
-    doTest("--editable svn+svn://user@svn.myproject.org/MyProject#egg=MyProject1", true);
-    doTest("--editable svn+svn://user@svn.myproject.org/MyProject/#egg=MyProject1", true);
-    doTest("--editable svn+svn://user@svn.myproject.org/svn/MyProject#egg=MyProject1", true);
-    doTest("--editable svn+svn://user@svn.myproject.org/svn/MyProject/#egg=MyProject1", true);
+    doTest("--editable svn+svn://user@svn.myproject.org/MyProject#egg=MyProject1");
+    doTest("--editable svn+svn://user@svn.myproject.org/MyProject/#egg=MyProject1");
+    doTest("--editable svn+svn://user@svn.myproject.org/svn/MyProject#egg=MyProject1");
+    doTest("--editable svn+svn://user@svn.myproject.org/svn/MyProject/#egg=MyProject1");
   }
 
   public void testSubversionWithRevision() {
@@ -801,89 +801,89 @@ public class PyRequirementTest extends PyTestCase {
   }
 
   public void testEditableBazaar() {
-    doTest("-e bzr+http://bzr.myproject.org/MyProject/trunk#egg=MyProject1", true);
-    doTest("-e bzr+http://bzr.myproject.org/MyProject/trunk/#egg=MyProject1", true);
-    doTest("-e bzr+http://bzr.myproject.org/path/MyProject/trunk#egg=MyProject1", true);
-    doTest("-e bzr+http://bzr.myproject.org/path/MyProject/trunk/#egg=MyProject1", true);
+    doTest("-e bzr+http://bzr.myproject.org/MyProject/trunk#egg=MyProject1");
+    doTest("-e bzr+http://bzr.myproject.org/MyProject/trunk/#egg=MyProject1");
+    doTest("-e bzr+http://bzr.myproject.org/path/MyProject/trunk#egg=MyProject1");
+    doTest("-e bzr+http://bzr.myproject.org/path/MyProject/trunk/#egg=MyProject1");
 
-    doTest("-e bzr+https://bzr.myproject.org/MyProject/trunk#egg=MyProject1", true);
-    doTest("-e bzr+https://bzr.myproject.org/MyProject/trunk/#egg=MyProject1", true);
-    doTest("-e bzr+https://bzr.myproject.org/path/MyProject/trunk#egg=MyProject1", true);
-    doTest("-e bzr+https://bzr.myproject.org/path/MyProject/trunk/#egg=MyProject1", true);
+    doTest("-e bzr+https://bzr.myproject.org/MyProject/trunk#egg=MyProject1");
+    doTest("-e bzr+https://bzr.myproject.org/MyProject/trunk/#egg=MyProject1");
+    doTest("-e bzr+https://bzr.myproject.org/path/MyProject/trunk#egg=MyProject1");
+    doTest("-e bzr+https://bzr.myproject.org/path/MyProject/trunk/#egg=MyProject1");
 
-    doTest("-e bzr+sftp://myproject.org/MyProject/trunk#egg=MyProject1", true);
-    doTest("-e bzr+sftp://myproject.org/MyProject/trunk/#egg=MyProject1", true);
-    doTest("-e bzr+sftp://myproject.org/path/MyProject/trunk#egg=MyProject1", true);
-    doTest("-e bzr+sftp://myproject.org/path/MyProject/trunk/#egg=MyProject1", true);
+    doTest("-e bzr+sftp://myproject.org/MyProject/trunk#egg=MyProject1");
+    doTest("-e bzr+sftp://myproject.org/MyProject/trunk/#egg=MyProject1");
+    doTest("-e bzr+sftp://myproject.org/path/MyProject/trunk#egg=MyProject1");
+    doTest("-e bzr+sftp://myproject.org/path/MyProject/trunk/#egg=MyProject1");
 
-    doTest("-e bzr+sftp://user@myproject.org/MyProject/trunk#egg=MyProject1", true);
-    doTest("-e bzr+sftp://user@myproject.org/MyProject/trunk/#egg=MyProject1", true);
-    doTest("-e bzr+sftp://user@myproject.org/path/MyProject/trunk#egg=MyProject1", true);
-    doTest("-e bzr+sftp://user@myproject.org/path/MyProject/trunk/#egg=MyProject1", true);
+    doTest("-e bzr+sftp://user@myproject.org/MyProject/trunk#egg=MyProject1");
+    doTest("-e bzr+sftp://user@myproject.org/MyProject/trunk/#egg=MyProject1");
+    doTest("-e bzr+sftp://user@myproject.org/path/MyProject/trunk#egg=MyProject1");
+    doTest("-e bzr+sftp://user@myproject.org/path/MyProject/trunk/#egg=MyProject1");
 
-    doTest("-e bzr+ssh://myproject.org/MyProject/trunk#egg=MyProject1", true);
-    doTest("-e bzr+ssh://myproject.org/MyProject/trunk/#egg=MyProject1", true);
-    doTest("-e bzr+ssh://myproject.org/path/MyProject/trunk#egg=MyProject1", true);
-    doTest("-e bzr+ssh://myproject.org/path/MyProject/trunk/#egg=MyProject1", true);
+    doTest("-e bzr+ssh://myproject.org/MyProject/trunk#egg=MyProject1");
+    doTest("-e bzr+ssh://myproject.org/MyProject/trunk/#egg=MyProject1");
+    doTest("-e bzr+ssh://myproject.org/path/MyProject/trunk#egg=MyProject1");
+    doTest("-e bzr+ssh://myproject.org/path/MyProject/trunk/#egg=MyProject1");
 
-    doTest("-e bzr+ssh://user@myproject.org/MyProject/trunk#egg=MyProject1", true);
-    doTest("-e bzr+ssh://user@myproject.org/MyProject/trunk/#egg=MyProject1", true);
-    doTest("-e bzr+ssh://user@myproject.org/path/MyProject/trunk#egg=MyProject1", true);
-    doTest("-e bzr+ssh://user@myproject.org/path/MyProject/trunk/#egg=MyProject1", true);
+    doTest("-e bzr+ssh://user@myproject.org/MyProject/trunk#egg=MyProject1");
+    doTest("-e bzr+ssh://user@myproject.org/MyProject/trunk/#egg=MyProject1");
+    doTest("-e bzr+ssh://user@myproject.org/path/MyProject/trunk#egg=MyProject1");
+    doTest("-e bzr+ssh://user@myproject.org/path/MyProject/trunk/#egg=MyProject1");
 
-    doTest("-e bzr+ftp://myproject.org/MyProject/trunk#egg=MyProject1", true);
-    doTest("-e bzr+ftp://myproject.org/MyProject/trunk/#egg=MyProject1", true);
-    doTest("-e bzr+ftp://myproject.org/path/MyProject/trunk#egg=MyProject1", true);
-    doTest("-e bzr+ftp://myproject.org/path/MyProject/trunk/#egg=MyProject1", true);
+    doTest("-e bzr+ftp://myproject.org/MyProject/trunk#egg=MyProject1");
+    doTest("-e bzr+ftp://myproject.org/MyProject/trunk/#egg=MyProject1");
+    doTest("-e bzr+ftp://myproject.org/path/MyProject/trunk#egg=MyProject1");
+    doTest("-e bzr+ftp://myproject.org/path/MyProject/trunk/#egg=MyProject1");
 
-    doTest("-e bzr+ftp://user@myproject.org/MyProject/trunk#egg=MyProject1", true);
-    doTest("-e bzr+ftp://user@myproject.org/MyProject/trunk/#egg=MyProject1", true);
-    doTest("-e bzr+ftp://user@myproject.org/path/MyProject/trunk#egg=MyProject1", true);
-    doTest("-e bzr+ftp://user@myproject.org/path/MyProject/trunk/#egg=MyProject1", true);
+    doTest("-e bzr+ftp://user@myproject.org/MyProject/trunk#egg=MyProject1");
+    doTest("-e bzr+ftp://user@myproject.org/MyProject/trunk/#egg=MyProject1");
+    doTest("-e bzr+ftp://user@myproject.org/path/MyProject/trunk#egg=MyProject1");
+    doTest("-e bzr+ftp://user@myproject.org/path/MyProject/trunk/#egg=MyProject1");
 
-    doTest("-e bzr+lp:MyProject#egg=MyProject1", true);
+    doTest("-e bzr+lp:MyProject#egg=MyProject1");
 
-    doTest("--editable bzr+http://bzr.myproject.org/MyProject/trunk#egg=MyProject1", true);
-    doTest("--editable bzr+http://bzr.myproject.org/MyProject/trunk/#egg=MyProject1", true);
-    doTest("--editable bzr+http://bzr.myproject.org/path/MyProject/trunk#egg=MyProject1", true);
-    doTest("--editable bzr+http://bzr.myproject.org/path/MyProject/trunk/#egg=MyProject1", true);
+    doTest("--editable bzr+http://bzr.myproject.org/MyProject/trunk#egg=MyProject1");
+    doTest("--editable bzr+http://bzr.myproject.org/MyProject/trunk/#egg=MyProject1");
+    doTest("--editable bzr+http://bzr.myproject.org/path/MyProject/trunk#egg=MyProject1");
+    doTest("--editable bzr+http://bzr.myproject.org/path/MyProject/trunk/#egg=MyProject1");
 
-    doTest("--editable bzr+https://bzr.myproject.org/MyProject/trunk#egg=MyProject1", true);
-    doTest("--editable bzr+https://bzr.myproject.org/MyProject/trunk/#egg=MyProject1", true);
-    doTest("--editable bzr+https://bzr.myproject.org/path/MyProject/trunk#egg=MyProject1", true);
-    doTest("--editable bzr+https://bzr.myproject.org/path/MyProject/trunk/#egg=MyProject1", true);
+    doTest("--editable bzr+https://bzr.myproject.org/MyProject/trunk#egg=MyProject1");
+    doTest("--editable bzr+https://bzr.myproject.org/MyProject/trunk/#egg=MyProject1");
+    doTest("--editable bzr+https://bzr.myproject.org/path/MyProject/trunk#egg=MyProject1");
+    doTest("--editable bzr+https://bzr.myproject.org/path/MyProject/trunk/#egg=MyProject1");
 
-    doTest("--editable bzr+sftp://myproject.org/MyProject/trunk#egg=MyProject1", true);
-    doTest("--editable bzr+sftp://myproject.org/MyProject/trunk/#egg=MyProject1", true);
-    doTest("--editable bzr+sftp://myproject.org/path/MyProject/trunk#egg=MyProject1", true);
-    doTest("--editable bzr+sftp://myproject.org/path/MyProject/trunk/#egg=MyProject1", true);
+    doTest("--editable bzr+sftp://myproject.org/MyProject/trunk#egg=MyProject1");
+    doTest("--editable bzr+sftp://myproject.org/MyProject/trunk/#egg=MyProject1");
+    doTest("--editable bzr+sftp://myproject.org/path/MyProject/trunk#egg=MyProject1");
+    doTest("--editable bzr+sftp://myproject.org/path/MyProject/trunk/#egg=MyProject1");
 
-    doTest("--editable bzr+sftp://user@myproject.org/MyProject/trunk#egg=MyProject1", true);
-    doTest("--editable bzr+sftp://user@myproject.org/MyProject/trunk/#egg=MyProject1", true);
-    doTest("--editable bzr+sftp://user@myproject.org/path/MyProject/trunk#egg=MyProject1", true);
-    doTest("--editable bzr+sftp://user@myproject.org/path/MyProject/trunk/#egg=MyProject1", true);
+    doTest("--editable bzr+sftp://user@myproject.org/MyProject/trunk#egg=MyProject1");
+    doTest("--editable bzr+sftp://user@myproject.org/MyProject/trunk/#egg=MyProject1");
+    doTest("--editable bzr+sftp://user@myproject.org/path/MyProject/trunk#egg=MyProject1");
+    doTest("--editable bzr+sftp://user@myproject.org/path/MyProject/trunk/#egg=MyProject1");
 
-    doTest("--editable bzr+ssh://myproject.org/MyProject/trunk#egg=MyProject1", true);
-    doTest("--editable bzr+ssh://myproject.org/MyProject/trunk/#egg=MyProject1", true);
-    doTest("--editable bzr+ssh://myproject.org/path/MyProject/trunk#egg=MyProject1", true);
-    doTest("--editable bzr+ssh://myproject.org/path/MyProject/trunk/#egg=MyProject1", true);
+    doTest("--editable bzr+ssh://myproject.org/MyProject/trunk#egg=MyProject1");
+    doTest("--editable bzr+ssh://myproject.org/MyProject/trunk/#egg=MyProject1");
+    doTest("--editable bzr+ssh://myproject.org/path/MyProject/trunk#egg=MyProject1");
+    doTest("--editable bzr+ssh://myproject.org/path/MyProject/trunk/#egg=MyProject1");
 
-    doTest("--editable bzr+ssh://user@myproject.org/MyProject/trunk#egg=MyProject1", true);
-    doTest("--editable bzr+ssh://user@myproject.org/MyProject/trunk/#egg=MyProject1", true);
-    doTest("--editable bzr+ssh://user@myproject.org/path/MyProject/trunk#egg=MyProject1", true);
-    doTest("--editable bzr+ssh://user@myproject.org/path/MyProject/trunk/#egg=MyProject1", true);
+    doTest("--editable bzr+ssh://user@myproject.org/MyProject/trunk#egg=MyProject1");
+    doTest("--editable bzr+ssh://user@myproject.org/MyProject/trunk/#egg=MyProject1");
+    doTest("--editable bzr+ssh://user@myproject.org/path/MyProject/trunk#egg=MyProject1");
+    doTest("--editable bzr+ssh://user@myproject.org/path/MyProject/trunk/#egg=MyProject1");
 
-    doTest("--editable bzr+ftp://myproject.org/MyProject/trunk#egg=MyProject1", true);
-    doTest("--editable bzr+ftp://myproject.org/MyProject/trunk/#egg=MyProject1", true);
-    doTest("--editable bzr+ftp://myproject.org/path/MyProject/trunk#egg=MyProject1", true);
-    doTest("--editable bzr+ftp://myproject.org/path/MyProject/trunk/#egg=MyProject1", true);
+    doTest("--editable bzr+ftp://myproject.org/MyProject/trunk#egg=MyProject1");
+    doTest("--editable bzr+ftp://myproject.org/MyProject/trunk/#egg=MyProject1");
+    doTest("--editable bzr+ftp://myproject.org/path/MyProject/trunk#egg=MyProject1");
+    doTest("--editable bzr+ftp://myproject.org/path/MyProject/trunk/#egg=MyProject1");
 
-    doTest("--editable bzr+ftp://user@myproject.org/MyProject/trunk#egg=MyProject1", true);
-    doTest("--editable bzr+ftp://user@myproject.org/MyProject/trunk/#egg=MyProject1", true);
-    doTest("--editable bzr+ftp://user@myproject.org/path/MyProject/trunk#egg=MyProject1", true);
-    doTest("--editable bzr+ftp://user@myproject.org/path/MyProject/trunk/#egg=MyProject1", true);
+    doTest("--editable bzr+ftp://user@myproject.org/MyProject/trunk#egg=MyProject1");
+    doTest("--editable bzr+ftp://user@myproject.org/MyProject/trunk/#egg=MyProject1");
+    doTest("--editable bzr+ftp://user@myproject.org/path/MyProject/trunk#egg=MyProject1");
+    doTest("--editable bzr+ftp://user@myproject.org/path/MyProject/trunk/#egg=MyProject1");
 
-    doTest("--editable bzr+lp:MyProject#egg=MyProject1", true);
+    doTest("--editable bzr+lp:MyProject#egg=MyProject1");
   }
 
   public void testBazaarWithRevision() {
@@ -1024,15 +1024,15 @@ public class PyRequirementTest extends PyTestCase {
   public void testMinusInRequirementEggName() {
     final String options = "git://github.com/toastdriven/django-haystack.git#egg=django-haystack";
 
-    assertEquals(new PyRequirement("django-haystack", null, options, false), PyRequirement.fromString(options));
+    assertEquals(new PyRequirement("django-haystack", Collections.emptyList(), options), PyRequirement.fromString(options));
   }
 
   public void testDevInRequirementEggName() {
     final String options1 = "git://github.com/toastdriven/django-haystack.git#egg=django_haystack-dev";
-    assertEquals(new PyRequirement("django-haystack", "dev", options1, true), PyRequirement.fromString(options1));
+    assertEquals(new PyRequirement("django-haystack", "dev", options1), PyRequirement.fromString(options1));
 
     final String options2 = "git://github.com/toastdriven/django-haystack.git#egg=django-haystack-dev";
-    assertEquals(new PyRequirement("django-haystack", "dev", options2, true), PyRequirement.fromString(options2));
+    assertEquals(new PyRequirement("django-haystack", "dev", options2), PyRequirement.fromString(options2));
   }
 
   // LOCAL DIR
@@ -1323,11 +1323,7 @@ public class PyRequirementTest extends PyTestCase {
   // TODO: https://www.python.org/dev/peps/pep-0426/#environment-markers, https://www.python.org/dev/peps/pep-0508/#environment-markers
 
   private static void doTest(@NotNull String options) {
-    doTest(options, false);
-  }
-
-  private static void doTest(@NotNull String options, boolean editable) {
-    assertEquals(new PyRequirement("MyProject1", null, options, editable), PyRequirement.fromString(options));
+    assertEquals(new PyRequirement("MyProject1", Collections.emptyList(), options), PyRequirement.fromString(options));
   }
 
   private static void doRequirementRelationTest(@NotNull PyRequirementRelation relation, @NotNull String version) {
@@ -1371,6 +1367,6 @@ public class PyRequirementTest extends PyTestCase {
 
     final String options = sb.toString();
 
-    assertEquals(new PyRequirement(name, options, expectedVersionSpecs), PyRequirement.fromString(options));
+    assertEquals(new PyRequirement(name, expectedVersionSpecs, options), PyRequirement.fromString(options));
   }
 }

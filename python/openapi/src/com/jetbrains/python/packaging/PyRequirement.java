@@ -143,11 +143,15 @@ public class PyRequirement {
   private final List<PyRequirementVersionSpec> myVersionSpecs;
 
   public PyRequirement(@NotNull String name) {
-    this(name, Collections.<PyRequirementVersionSpec>emptyList());
+    this(name, Collections.emptyList());
   }
 
   public PyRequirement(@NotNull String name, @NotNull String version) {
-    this(name, Collections.singletonList(new PyRequirementVersionSpec(PyRequirementRelation.EQ, version)));
+    this(name, Collections.singletonList(calculateVersionSpec(version, PyRequirementRelation.EQ)));
+  }
+
+  public PyRequirement(@NotNull String name, @NotNull String version, @NotNull String options) {
+    this(name, Collections.singletonList(calculateVersionSpec(version, PyRequirementRelation.EQ)), options);
   }
 
   public PyRequirement(@NotNull String name, @NotNull List<PyRequirementVersionSpec> versionSpecs) {
@@ -156,21 +160,10 @@ public class PyRequirement {
     myOptions = toString();
   }
 
-  public PyRequirement(@NotNull String name, @Nullable String version, @NotNull String url, boolean editable) {
+  public PyRequirement(@NotNull String name, @NotNull List<PyRequirementVersionSpec> versionSpecs, @NotNull String options) {
     myName = name;
-    if (version != null) {
-      myVersionSpecs = Collections.singletonList(new PyRequirementVersionSpec(PyRequirementRelation.EQ, version));
-    }
-    else {
-      myVersionSpecs = Collections.emptyList();
-    }
-    myOptions = url;
-  }
-
-  public PyRequirement(@NotNull String name, @NotNull String options, @NotNull List<PyRequirementVersionSpec> versionSpecs) {
-    myName = name;
-    myOptions = options;
     myVersionSpecs = versionSpecs;
+    myOptions = options;
   }
 
   @NotNull
@@ -267,12 +260,21 @@ public class PyRequirement {
     return parseText(loadText(file), file, new HashSet<>());
   }
 
+  @NotNull
+  private static PyRequirementVersionSpec calculateVersionSpec(@NotNull String version, @NotNull PyRequirementRelation expectedRelation) {
+    final String normalizedVersion = PyRequirementVersionNormalizer.normalize(version);
+
+    return normalizedVersion == null ?
+           new PyRequirementVersionSpec(PyRequirementRelation.STR_EQ, version) :
+           new PyRequirementVersionSpec(expectedRelation, normalizedVersion);
+  }
+
   @Nullable
   private static PyRequirement parseGithubArchiveUrl(@NotNull String line) {
     final Matcher matcher = GITHUB_ARCHIVE_URL.matcher(line);
 
     if (matcher.matches()) {
-      return new PyRequirement(matcher.group(NAME_GROUP), line, Collections.emptyList());
+      return new PyRequirement(matcher.group(NAME_GROUP), Collections.emptyList(), line);
     }
 
     return null;
@@ -313,7 +315,7 @@ public class PyRequirement {
   private static PyRequirement parseRequirement(@NotNull String line) {
     final Matcher matcher = REQUIREMENT.matcher(line);
     if (matcher.matches()) {
-      return new PyRequirement(matcher.group(NAME_GROUP), line, parseVersionSpecs(matcher.group(VERSIONS_SPECS_GROUP)));
+      return new PyRequirement(matcher.group(NAME_GROUP), parseVersionSpecs(matcher.group(VERSIONS_SPECS_GROUP)), line);
     }
 
     return null;
@@ -376,15 +378,10 @@ public class PyRequirement {
     final String version = nameAndVersion.getSecond();
 
     if (version == null) {
-      return new PyRequirement(name, line, Collections.emptyList());
+      return new PyRequirement(name, Collections.emptyList(), line);
     }
 
-    final String normalizedVersion = PyRequirementVersionNormalizer.normalize(version);
-    final PyRequirementVersionSpec versionSpec = normalizedVersion == null ?
-                                                 new PyRequirementVersionSpec(PyRequirementRelation.STR_EQ, version) :
-                                                 new PyRequirementVersionSpec(PyRequirementRelation.EQ, normalizedVersion);
-
-    return new PyRequirement(name, line, Collections.singletonList(versionSpec));
+    return new PyRequirement(name, Collections.singletonList(calculateVersionSpec(version, PyRequirementRelation.EQ)), line);
   }
 
   @NotNull
@@ -517,13 +514,7 @@ public class PyRequirement {
         return new PyRequirementVersionSpec(relation, version);
       }
 
-      final String normalizedVersion = PyRequirementVersionNormalizer.normalize(version);
-
-      if (normalizedVersion == null) {
-        return new PyRequirementVersionSpec(PyRequirementRelation.STR_EQ, version);
-      } else {
-        return new PyRequirementVersionSpec(relation, normalizedVersion);
-      }
+      return calculateVersionSpec(version, relation);
     }
 
     return null;
