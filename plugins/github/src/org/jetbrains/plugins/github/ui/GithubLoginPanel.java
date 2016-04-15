@@ -206,6 +206,12 @@ public class GithubLoginPanel {
         }
       });
     }
+
+    @Override
+    protected boolean isFocusCycleRoot() {
+      // So that the focus cycles through the OK/Cancel/Help buttons.
+      return false;
+    }
   }
 }
 
