@@ -247,4 +247,58 @@ public class JsonSchemaCrossReferencesTest extends CompletionTestCase {
     instance.removeSchema(inherited);
     instance.removeSchema(base);
   }
+
+  public void testJsonSchemaGlobalRefsCrossResolve() throws Exception {
+    configureByFiles(null, BASE_SCHEMA_RESOLVE_PATH + "/referencingGlobalSchema.json");
+
+    String moduleDir = null;
+    VirtualFile moduleFile = null;
+    VirtualFile[] children = getProject().getBaseDir().getChildren();
+    for (VirtualFile child : children) {
+      if (child.isDirectory()) {
+        moduleDir = child.getName();
+        moduleFile = child;
+        break;
+      }
+    }
+    Assert.assertNotNull(moduleDir);
+
+    AreaPicoContainer container = Extensions.getArea(getProject()).getPicoContainer();
+    final String key = JsonSchemaMappingsProjectConfiguration.class.getName();
+    container.unregisterComponent(key);
+    container.registerComponentImplementation(key, TestJsonSchemaMappingsProjectConfiguration.class);
+
+    final JsonSchemaMappingsProjectConfiguration instance = JsonSchemaMappingsProjectConfiguration.getInstance(getProject());
+    final JsonSchemaMappingsConfigurationBase.SchemaInfo inherited
+      = new JsonSchemaMappingsConfigurationBase.SchemaInfo("inherited", "/" + moduleDir + "/referencingGlobalSchema.json", false, Collections.emptyList());
+
+    instance.addSchema(inherited);
+
+    try {
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
+        public void run() {
+          myFileTypeManager.associatePattern(JsonSchemaFileType.INSTANCE, "*Schema.json");
+        }
+      });
+      int offset = myEditor.getCaretModel().getPrimaryCaret().getOffset();
+      final PsiReference referenceAt = myFile.findReferenceAt(offset);
+      Assert.assertNotNull(referenceAt);
+      final PsiElement resolve = referenceAt.resolve();
+      Assert.assertNotNull(resolve);
+      Assert.assertEquals("\"enum\"", resolve.getText());
+
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
+        public void run() {
+          myFileTypeManager.removeAssociatedExtension(JsonSchemaFileType.INSTANCE, "*Schema.json");
+        }
+      });
+    } finally {
+      container.unregisterComponent(key);
+      container.registerComponentImplementation(key, JsonSchemaMappingsProjectConfiguration.class);
+    }
+
+    instance.removeSchema(inherited);
+  }
 }

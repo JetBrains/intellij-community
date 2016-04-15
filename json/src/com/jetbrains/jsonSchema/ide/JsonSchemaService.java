@@ -34,6 +34,8 @@ public interface JsonSchemaService {
 
   boolean isSchemaFile(@NotNull VirtualFile file, @NotNull Consumer<String> errorConsumer);
 
+  boolean isRegisteredSchemaFile(Project project, @NotNull VirtualFile file);
+
   @Nullable
   DocumentationProvider getDocumentationProvider(@Nullable VirtualFile file);
 

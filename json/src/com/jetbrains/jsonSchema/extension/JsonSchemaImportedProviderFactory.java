@@ -135,7 +135,7 @@ public class JsonSchemaImportedProviderFactory implements JsonSchemaProviderFact
     }
 
     @Override
-    public boolean isAvailable(@NotNull VirtualFile file) {
+    public boolean isAvailable(@NotNull Project project, @NotNull VirtualFile file) {
       if (myPatterns.isEmpty() || file.isDirectory() || !file.isValid() ||
           myProject != null && JsonSchemaMappingsProjectConfiguration.getInstance(myProject).isRegisteredSchemaFile(file)) return false;
       for (Processor<VirtualFile> pattern : myPatterns) {

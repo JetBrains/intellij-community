@@ -60,7 +60,7 @@ public abstract class IndexableSetContributor {
    *         the returned set should not contain nulls or invalid files
    */
   @NotNull
-  public abstract Set<VirtualFile> getAdditionalRootsToIndex();
+  public abstract Set getAdditionalRootsToIndex();
 
   @NotNull
   private static Set<VirtualFile> filterOutNulls(@NotNull IndexableSetContributor contributor,

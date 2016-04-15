@@ -43,6 +43,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
   private final Project myProject;
   private final Object myLock;
   private final Map<VirtualFile, JsonSchemaObjectCodeInsightWrapper> myWrappers = new HashMap<>();
+  private final Set<VirtualFile> mySchemaFiles = new HashSet<>();
   private final JsonSchemaExportedDefinitions myDefinitions;
 
   public JsonSchemaServiceImpl(@Nullable Project project) {
@@ -82,6 +83,27 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
   public boolean hasSchema(@Nullable VirtualFile file) {
     CodeInsightProviders wrapper = getWrapper(file);
     return wrapper != null;
+  }
+
+  @Override
+  public boolean isRegisteredSchemaFile(@NotNull Project project, @NotNull VirtualFile file) {
+    synchronized (myLock) {
+      ensureSchemaFiles(project);
+      return mySchemaFiles.contains(file);
+    }
+  }
+
+  private void ensureSchemaFiles(@NotNull final Project project) {
+    synchronized (myLock) {
+      if (!mySchemaFiles.isEmpty()) return;
+      final JsonSchemaProviderFactory[] factories = getProviderFactories();
+      for (JsonSchemaProviderFactory factory : factories) {
+        final List<JsonSchemaFileProvider> providers = factory.getProviders(project);
+        for (JsonSchemaFileProvider provider : providers) {
+          mySchemaFiles.add(provider.getSchemaFile());
+        }
+      }
+    }
   }
 
   @Override
@@ -179,6 +201,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
     synchronized (myLock) {
       myWrappers.clear();
       myDefinitions.reset();
+      mySchemaFiles.clear();
     }
   }
 
@@ -225,14 +248,16 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
 
   @Nullable
   private List<JsonSchemaObjectCodeInsightWrapper> getWrappers(@Nullable VirtualFile file) {
-    if (file == null) return null;
+    if (file == null || myProject == null) return null;
     final List<JsonSchemaObjectCodeInsightWrapper> wrappers = new ArrayList<>();
     JsonSchemaProviderFactory[] factories = getProviderFactories();
-    for (JsonSchemaProviderFactory factory : factories) {
-      for (JsonSchemaFileProvider provider : factory.getProviders(myProject)) {
-        if (provider.isAvailable(file)) {
+    synchronized (myLock) {
+      final Set<VirtualFile> files = mySchemaFiles.isEmpty() ? new HashSet<>() : null;
+      for (JsonSchemaProviderFactory factory : factories) {
+        for (JsonSchemaFileProvider provider : factory.getProviders(myProject)) {
           final VirtualFile key = provider.getSchemaFile();
-          synchronized (myLock) {
+          if (files != null) files.add(key);
+          if (provider.isAvailable(myProject, file)) {
             JsonSchemaObjectCodeInsightWrapper wrapper = myWrappers.get(key);
             if (wrapper == null) {
               wrapper = createWrapper(provider);
@@ -243,6 +268,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
           }
         }
       }
+      if (files != null) mySchemaFiles.addAll(files);
     }
     return wrappers;
   }

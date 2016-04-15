@@ -16,6 +16,7 @@
 package com.jetbrains.jsonSchema.extension.schema;
 
 import com.intellij.json.psi.JsonValue;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -25,6 +26,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
+import com.jetbrains.jsonSchema.impl.JsonSchemaResourcesRootsProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,15 +65,16 @@ public class JsonSchemaRefReferenceProvider extends PsiReferenceProvider {
         ref = text.substring(idx + 1);
       }
 
+      final Project project = getElement().getProject();
       final Ref<Pair<VirtualFile, Integer>> reference = new Ref<>();
       final GlobalSearchScope filter = id == null ? GlobalSearchScope.fileScope(getElement().getContainingFile()) :
-        GlobalSearchScope.allScope(getElement().getProject());
+                                       JsonSchemaResourcesRootsProvider.enlarge(project, GlobalSearchScope.allScope(project));
       String finalId = id;
       index.processValues(JsonSchemaFileIndex.PROPERTIES_INDEX, ref, null, new FileBasedIndex.ValueProcessor<Integer>() {
         @Override
         public boolean process(VirtualFile file, Integer value) {
           if (finalId != null) {
-            if (!JsonSchemaService.Impl.getEx(getElement().getProject()).checkFileForId(finalId, file)) {
+            if (!JsonSchemaService.Impl.getEx(project).checkFileForId(finalId, file)) {
               return true;
             }
           }
