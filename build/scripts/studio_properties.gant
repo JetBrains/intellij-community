@@ -1,3 +1,5 @@
+import com.intellij.openapi.util.SystemInfo
+
 /*
  * Copyright (C) 2015 The Android Open Source Project
  *
@@ -27,6 +29,7 @@ def getProperties(String home, String buildNumber) {
   def gradleVersion = "2.10"
   def studioCustomRepo = System.getenv().STUDIO_CUSTOM_REPO
   def studioRepo = studioCustomRepo ?: "${home}/../../prebuilts/tools/common/offline-m2"
+  def gradleOut = "${home}/../../out/studio"
 
   def enableUITests = System.getProperty("studio.ui.tests") ? !System.getProperty("studio.ui.tests").isEmpty() : false
 
@@ -93,6 +96,21 @@ def getProperties(String home, String buildNumber) {
       if (!aosp) {
         return
       }
+      if (SystemInfo.isWindows) {
+// TODO: tools/base is not currently building on windows.
+//        ant.exec(dir: "${home}/..", executable: "cmd.exe") {
+//          arg(value: "/c")
+//          arg(value: "gradlew.bat")
+//          arg(value: "clean")
+//          arg(value: "publishLocal")
+//        }
+      } else {
+        ant.exec(dir: "${home}/..", executable: "/bin/sh") {
+          arg(value: "gradlew")
+          arg(value: "clean")
+          arg(value: "publishLocal")
+        }
+      }
 
       layout(targetDirectory) {
         dir("${lldbBinTargetRoot}/shared") {
@@ -102,11 +120,7 @@ def getProperties(String home, String buildNumber) {
         dir("gradle") {
           dir("m2repository") {
             fileset(dir: "$studioRepo")
-          }
-          dir("plugins") {
-            jar("profiler-plugin.jar") {
-              module("profiler-plugin")
-            }
+            fileset(dir: "$home/../../out/studio")
           }
         }
 
