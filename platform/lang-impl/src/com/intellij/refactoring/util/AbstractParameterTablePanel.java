@@ -15,6 +15,9 @@
  */
 package com.intellij.refactoring.util;
 
+import com.intellij.lang.Language;
+import com.intellij.lang.LanguageNamesValidation;
+import com.intellij.openapi.project.Project;
 import com.intellij.ui.BooleanTableCellRenderer;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.ToolbarDecorator;
@@ -147,6 +150,11 @@ public abstract class AbstractParameterTablePanel<P extends AbstractVariableData
     public NameColumnInfo(Predicate<String> nameValidator) {
       super("Name");
       myNameValidator = nameValidator;
+    }
+
+    public NameColumnInfo(Language lang, Project project) {
+      super("Name");
+      myNameValidator = (paramName) -> LanguageNamesValidation.INSTANCE.forLanguage(lang).isIdentifier(paramName, project);
     }
 
     @Nullable
