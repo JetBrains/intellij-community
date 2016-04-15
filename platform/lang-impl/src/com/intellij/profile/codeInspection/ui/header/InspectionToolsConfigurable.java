@@ -83,6 +83,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
   private static final String HEADER_TITLE = "Profile:";
 
   private static final Logger LOG = Logger.getInstance(InspectionToolsConfigurable.class);
+  private static final String COPY_SUFFIX = "copy";
   protected final InspectionProfileManager myApplicationProfileManager;
   protected final InspectionProjectProfileManager myProjectProfileManager;
   private final CardLayout myLayout = new CardLayout();
@@ -119,10 +120,19 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
     LOG.assertTrue(modifyLevel || modifyName);
     String profileDefaultName = selectedProfile.getName();
     if (modifyName) {
-      do {
-        profileDefaultName += " (copy)";
+      if (!profileDefaultName.endsWith(COPY_SUFFIX)) {
+        profileDefaultName += " " + COPY_SUFFIX;
       }
-      while (hasName(profileDefaultName, modifyLevel != myPanels.get(selectedProfile).isProjectLevel()));
+      if (hasName(profileDefaultName, modifyLevel != myPanels.get(selectedProfile).isProjectLevel())) {
+        int idx = 0;
+        String currentProfileDefaultName;
+        do {
+          idx++;
+          currentProfileDefaultName = profileDefaultName + " " + String.valueOf(idx);
+        }
+        while (hasName(currentProfileDefaultName, modifyLevel != myPanels.get(selectedProfile).isProjectLevel()));
+        profileDefaultName = currentProfileDefaultName;
+      }
     }
 
     ProfileManager profileManager = selectedProfile.getProfileManager();
@@ -239,18 +249,23 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
       protected int compare(@NotNull InspectionProfileImpl p1, @NotNull InspectionProfileImpl p2) {
         SingleInspectionProfilePanel panel1 = getProfilePanel(p1);
         SingleInspectionProfilePanel panel2 = getProfilePanel(p2);
-        if (panel1.isProjectLevel() && !p2.isProjectLevel()) {
+        final boolean isProjectLevel1 = panel1 == null ? p1.isProjectLevel() : panel1.isProjectLevel();
+        final boolean isProjectLevel2 = panel2 == null ? p2.isProjectLevel() : panel2.isProjectLevel();
+        if (isProjectLevel1 && !isProjectLevel2) {
           return -1;
         }
-        if (panel2.isProjectLevel() && !p1.isProjectLevel()) {
+        if (isProjectLevel2 && !isProjectLevel1) {
           return 1;
         }
-        return panel1.getCurrentProfileName().compareTo(panel2.getCurrentProfileName());
+        final String currentProfileName1 = panel1 == null ? p1.getDisplayName(): panel1.getCurrentProfileName();
+        final String currentProfileName2 = panel2 == null ? p2.getDisplayName(): panel2.getCurrentProfileName();
+        return currentProfileName1.compareTo(currentProfileName2);
       }
 
       @Override
       protected boolean isProjectLevel(InspectionProfileImpl profile) {
-        return getProfilePanel(profile).isProjectLevel();
+        final SingleInspectionProfilePanel panel = getProfilePanel(profile);
+        return panel == null ? profile.isProjectLevel() : panel.isProjectLevel();
       }
     };
     JPanel profilesHolder = new JPanel();
