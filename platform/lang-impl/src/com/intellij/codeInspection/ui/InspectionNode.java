@@ -17,19 +17,12 @@
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
-import com.intellij.icons.AllIcons;
-import com.intellij.ui.LayeredIcon;
-import com.intellij.util.IconUtil;
 import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
 
 /**
  * @author max
  */
 public class InspectionNode extends InspectionTreeNode {
-  public static final Icon TOOL = LayeredIcon.create(AllIcons.Toolwindows.ToolWindowInspection, IconUtil.getEmptyIcon(false));
-
   public InspectionNode(@NotNull InspectionToolWrapper toolWrapper) {
     super(toolWrapper);
   }
@@ -42,10 +35,4 @@ public class InspectionNode extends InspectionTreeNode {
   public InspectionToolWrapper getToolWrapper() {
     return (InspectionToolWrapper)getUserObject();
   }
-
-  @Override
-  public Icon getIcon(boolean expanded) {
-    return TOOL;
-  }
-
 }

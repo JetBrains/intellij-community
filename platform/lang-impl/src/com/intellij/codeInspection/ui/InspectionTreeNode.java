@@ -38,7 +38,9 @@ public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
   }
 
   @Nullable
-  public abstract Icon getIcon(boolean expanded);
+  public Icon getIcon(boolean expanded) {
+    return null;
+  }
 
   public void visitProblemSeverities(FactoryMap<HighlightDisplayLevel, Integer> counter) {
     Enumeration enumeration = children();
