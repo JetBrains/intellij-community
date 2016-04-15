@@ -57,7 +57,7 @@ final class ScrollColorProducer implements NotNullProducer<Color> {
       Color background = JBScrollPane.getViewBackground((JScrollPane)parent);
       if (background != null) {
         if (!background.equals(myOriginal)) {
-          myModified = ColorUtil.shift(background, ColorUtil.isDark(background) ? 1.05 : 0.98);
+          myModified = ColorUtil.shift(background, ColorUtil.isDark(background) ? 1.05 : 0.96);
           myOriginal = background;
         }
         return myModified;
