@@ -20,12 +20,14 @@ import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.FactoryMap;
+import com.intellij.util.containers.SoftHashMap;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -37,10 +39,14 @@ import java.util.*;
 class InspectionTreeCellRenderer extends ColoredTreeCellRenderer {
   private final static int MAX_LEVEL_TYPES = 5;
 
+  private final Map<HighlightSeverity, String> myPlurizedSeverityNames = new SoftHashMap<>();
+  private final Map<HighlightSeverity, String> myUnplurizedSeverityNames = new SoftHashMap<>();
   private final FactoryMap<HighlightDisplayLevel, Integer> myItemCounter;
   private final InspectionResultsView myView;
+  private final SeverityRegistrar myRegistrar;
 
   public InspectionTreeCellRenderer(InspectionResultsView view) {
+    myRegistrar = SeverityRegistrar.getSeverityRegistrar(view.getProject());
     myItemCounter = new FactoryMap<HighlightDisplayLevel, Integer>() {
       @Nullable
       @Override
@@ -51,7 +57,6 @@ class InspectionTreeCellRenderer extends ColoredTreeCellRenderer {
       @Override
       protected Map<HighlightDisplayLevel, Integer> createMap() {
         return new TreeMap<>(new Comparator<Object>() {
-          private final SeverityRegistrar myRegistrar = SeverityRegistrar.getSeverityRegistrar(view.getProject());
 
           @Override
           public int compare(Object o1, Object o2) {
@@ -93,7 +98,7 @@ class InspectionTreeCellRenderer extends ColoredTreeCellRenderer {
           if (level == HighlightDisplayLevel.ERROR) {
             attrs = attrs.derive(-1, JBColor.red.brighter(), null, null);
           }
-          append(occur + " " + level.getName().toLowerCase(Locale.ENGLISH) + " ", patchAttr(node, attrs));
+          append(occur + " " + getPresentableName(level, occur > 1) + " ", patchAttr(node, attrs));
         }
       }
     }
@@ -115,6 +120,24 @@ class InspectionTreeCellRenderer extends ColoredTreeCellRenderer {
                                       attributes.getStyle() | SimpleTextAttributes.STYLE_STRIKEOUT);
     }
     return attributes;
+  }
+
+  private String getPresentableName(HighlightDisplayLevel level, boolean pluralize) {
+    final HighlightSeverity severity = level.getSeverity();
+    if (pluralize) {
+      String name = myPlurizedSeverityNames.get(severity);
+      if (name == null) {
+        final String lowerCaseName = level.getName().toLowerCase(Locale.ENGLISH);
+        name = myPlurizedSeverityNames.put(severity, myRegistrar.isDefaultSeverity(severity) ? StringUtil.pluralize(lowerCaseName) : lowerCaseName);
+      }
+      return name;
+    } else {
+      String name = myUnplurizedSeverityNames.get(severity);
+      if (name == null) {
+        name = myUnplurizedSeverityNames.put(severity, level.getName().toLowerCase(Locale.ENGLISH));
+      }
+      return name;
+    }
   }
 
   private static SimpleTextAttributes getMainForegroundAttributes(InspectionTreeNode node) {
