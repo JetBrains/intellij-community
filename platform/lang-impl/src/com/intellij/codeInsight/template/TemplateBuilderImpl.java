@@ -65,6 +65,10 @@ public class TemplateBuilderImpl implements TemplateBuilder {
     myContainerElement = wrapElement(element);
   }
 
+  public int getElementsCount() {
+    return myElements.size();
+  }
+
   public void replaceElement(PsiElement element, Expression expression, boolean alwaysStopAt) {
     final RangeMarker key = wrapElement(element);
     myAlwaysStopAtMap.put(key, alwaysStopAt ? Boolean.TRUE : Boolean.FALSE);
