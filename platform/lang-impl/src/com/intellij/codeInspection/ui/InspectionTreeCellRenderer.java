@@ -39,8 +39,8 @@ import java.util.*;
 class InspectionTreeCellRenderer extends ColoredTreeCellRenderer {
   private final static int MAX_LEVEL_TYPES = 5;
 
-  private final Map<HighlightSeverity, String> myPlurizedSeverityNames = new SoftHashMap<>();
-  private final Map<HighlightSeverity, String> myUnplurizedSeverityNames = new SoftHashMap<>();
+  private final Map<HighlightSeverity, String> myPluralizedSeverityNames = new SoftHashMap<>();
+  private final Map<HighlightSeverity, String> myUnpluralizedSeverityNames = new SoftHashMap<>();
   private final FactoryMap<HighlightDisplayLevel, Integer> myItemCounter;
   private final InspectionResultsView myView;
   private final SeverityRegistrar myRegistrar;
@@ -125,16 +125,17 @@ class InspectionTreeCellRenderer extends ColoredTreeCellRenderer {
   private String getPresentableName(HighlightDisplayLevel level, boolean pluralize) {
     final HighlightSeverity severity = level.getSeverity();
     if (pluralize) {
-      String name = myPlurizedSeverityNames.get(severity);
+      String name = myPluralizedSeverityNames.get(severity);
       if (name == null) {
         final String lowerCaseName = level.getName().toLowerCase(Locale.ENGLISH);
-        name = myPlurizedSeverityNames.put(severity, myRegistrar.isDefaultSeverity(severity) ? StringUtil.pluralize(lowerCaseName) : lowerCaseName);
+        name = myPluralizedSeverityNames
+          .put(severity, myRegistrar.isDefaultSeverity(severity) ? StringUtil.pluralize(lowerCaseName) : lowerCaseName);
       }
       return name;
     } else {
-      String name = myUnplurizedSeverityNames.get(severity);
+      String name = myUnpluralizedSeverityNames.get(severity);
       if (name == null) {
-        name = myUnplurizedSeverityNames.put(severity, level.getName().toLowerCase(Locale.ENGLISH));
+        name = myUnpluralizedSeverityNames.put(severity, level.getName().toLowerCase(Locale.ENGLISH));
       }
       return name;
     }
