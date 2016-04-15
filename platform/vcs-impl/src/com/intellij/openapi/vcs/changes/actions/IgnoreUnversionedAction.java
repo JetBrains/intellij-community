@@ -25,9 +25,9 @@ package com.intellij.openapi.vcs.changes.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vcs.changes.ui.IgnoreUnversionedDialog;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -46,7 +46,14 @@ public class IgnoreUnversionedAction extends AnAction {
     removeNullFiles(files);
     if (files.isEmpty()) return;
 
-    IgnoreUnversionedDialog.ignoreSelectedFiles(project, files);
+    ChangesBrowserBase<?> browser = e.getData(ChangesBrowserBase.DATA_KEY);
+    Runnable callback = browser == null ? null : () -> {
+      browser.rebuildList();
+      //noinspection unchecked
+      browser.getViewer().excludeChanges((List)files);
+    };
+
+    IgnoreUnversionedDialog.ignoreSelectedFiles(project, files, callback);
   }
 
   private static void removeNullFiles(List<VirtualFile> files) {

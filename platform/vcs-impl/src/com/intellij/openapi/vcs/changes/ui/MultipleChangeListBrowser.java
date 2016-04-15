@@ -310,6 +310,7 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
     });
     if (Registry.is("vcs.unversioned.files.in.commit")) {
       toolBarGroup.add(ActionManager.getInstance().getAction("ChangesView.AddUnversioned.From.Dialog"));
+      toolBarGroup.add(ActionManager.getInstance().getAction("ChangesView.Ignore"));
     }
     RollbackDialogAction rollback = new RollbackDialogAction();
     EmptyAction.setupAction(rollback, IdeActions.CHANGES_VIEW_ROLLBACK, this);
