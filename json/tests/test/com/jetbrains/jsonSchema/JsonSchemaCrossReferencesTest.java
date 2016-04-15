@@ -301,4 +301,39 @@ public class JsonSchemaCrossReferencesTest extends CompletionTestCase {
 
     instance.removeSchema(inherited);
   }
+
+  public void testJson2SchemaPropertyResolve() throws Exception {
+    configureByFiles(null, BASE_PATH + "/testFileForBaseProperties.json", BASE_PATH + "/baseProperties.json");
+
+    String moduleDir = null;
+    VirtualFile moduleFile = null;
+    VirtualFile[] children = getProject().getBaseDir().getChildren();
+    for (VirtualFile child : children) {
+      if (child.isDirectory()) {
+        moduleDir = child.getName();
+        moduleFile = child;
+        break;
+      }
+    }
+    Assert.assertNotNull(moduleDir);
+
+    final JsonSchemaMappingsProjectConfiguration instance = JsonSchemaMappingsProjectConfiguration.getInstance(getProject());
+    final JsonSchemaMappingsConfigurationBase.SchemaInfo inherited
+      = new JsonSchemaMappingsConfigurationBase.SchemaInfo("inherited", "/" + moduleDir + "/baseProperties.json", false,
+                                                           Collections.singletonList(
+                                                             new JsonSchemaMappingsConfigurationBase.Item("*.json", true, false)));
+
+    instance.addSchema(inherited);
+    JsonSchemaService.Impl.get(getProject()).reset();
+
+    int offset = myEditor.getCaretModel().getPrimaryCaret().getOffset();
+    final PsiReference referenceAt = myFile.findReferenceAt(offset);
+    Assert.assertNotNull(referenceAt);
+    final PsiElement resolve = referenceAt.resolve();
+    Assert.assertNotNull(resolve);
+    Assert.assertEquals("\"baseEnum\"", resolve.getText());
+    Assert.assertEquals("baseProperties.json", resolve.getContainingFile().getName());
+
+    instance.removeSchema(inherited);
+  }
 }

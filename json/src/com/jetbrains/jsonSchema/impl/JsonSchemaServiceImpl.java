@@ -25,6 +25,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Convertor;
 import com.jetbrains.jsonSchema.JsonSchemaVfsListener;
 import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
 import com.jetbrains.jsonSchema.extension.JsonSchemaImportedProviderMarker;
@@ -145,6 +146,13 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
 
   @Nullable
   @Override
+  public Convertor<String, PsiElement> getToPropertyResolver(@Nullable VirtualFile file) {
+    CodeInsightProviders wrapper = getWrapper(file);
+    return wrapper != null ? wrapper.getToPropertyResolver() : null;
+  }
+
+  @Nullable
+  @Override
   public List<Pair<Boolean, String>> getMatchingSchemaDescriptors(@Nullable VirtualFile file) {
     final List<JsonSchemaObjectCodeInsightWrapper> wrappers = getWrappers(file);
     if (wrappers == null || wrappers.isEmpty()) return null;
@@ -160,8 +168,8 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
   @Nullable
   private JsonSchemaObjectCodeInsightWrapper createWrapper(@NotNull JsonSchemaFileProvider provider) {
     final JsonSchemaObject resultObject = readObject(provider, getDefinitions());
-    if (resultObject == null) return null;
-    return new JsonSchemaObjectCodeInsightWrapper(provider.getName(), provider.getSchemaType(), resultObject);
+    if (resultObject == null || myProject == null) return null;
+    return new JsonSchemaObjectCodeInsightWrapper(myProject, provider.getName(), provider.getSchemaType(), provider.getSchemaFile(), resultObject);
   }
 
   private static JsonSchemaObject readObject(@NotNull JsonSchemaFileProvider provider,
@@ -334,6 +342,21 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
     @Override
     public DocumentationProvider getDocumentationProvider() {
       return myDocumentationProvider;
+    }
+
+    @NotNull
+    @Override
+    public Convertor<String, PsiElement> getToPropertyResolver() {
+      return new Convertor<String, PsiElement>() {
+        @Override
+        public PsiElement convert(String key) {
+          for (JsonSchemaObjectCodeInsightWrapper wrapper : myWrappers) {
+            PsiElement element = wrapper.getToPropertyResolver().convert(key);
+            if (element != null) return element;
+          }
+          return null;
+        }
+      };
     }
   }
 
