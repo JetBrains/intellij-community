@@ -15,6 +15,7 @@
  */
 package com.intellij.ui;
 
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import org.jetbrains.annotations.NotNull;
@@ -28,6 +29,9 @@ public class BalloonLayoutData {
   public MergeInfo mergeData;
 
   public boolean showFullContent;
+
+  public boolean welcomeScreen;
+  public NotificationType type;
 
   public int height;
   public int twoLineHeight;

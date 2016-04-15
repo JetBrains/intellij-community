@@ -19,6 +19,8 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.internal.statistic.UsageTrigger;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.impl.IdeNotificationArea;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
@@ -49,6 +51,7 @@ import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
+import com.intellij.util.ParameterizedRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MouseEventAdapter;
@@ -124,7 +127,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, AccessibleCont
       }
     });
 
-    myBalloonLayout = new BalloonLayoutImpl(rootPane, JBUI.insets(8));
+    myBalloonLayout = new WelcomeBalloonLayoutImpl(rootPane, JBUI.insets(8), myScreen.myEventListener, myScreen.myEventLocation);
 
     WelcomeFrame.setupCloseAction(this);
     MnemonicHelper.init(this);
@@ -140,6 +143,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, AccessibleCont
   public void dispose() {
     saveLocation(getBounds());
     super.dispose();
+    ((WelcomeBalloonLayoutImpl)myBalloonLayout).dispose();
     Disposer.dispose(myScreen);
     WelcomeFrame.resetInstance();
   }
@@ -185,6 +189,8 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, AccessibleCont
 
   private class FlatWelcomeScreen extends JPanel implements WelcomeScreen {
     private JBSlidingPanel mySlidingPanel = new JBSlidingPanel();
+    public ParameterizedRunnable<List<NotificationType>> myEventListener;
+    public Computable<Point> myEventLocation;
 
     public FlatWelcomeScreen() {
       super(new BorderLayout());
@@ -273,6 +279,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, AccessibleCont
       }
 
       toolbar.setLayout(new BoxLayout(toolbar, BoxLayout.X_AXIS));
+      toolbar.add(createEventsLink());
       toolbar.add(createActionLink("Configure", IdeActions.GROUP_WELCOME_SCREEN_CONFIGURE, AllIcons.General.GearPlain, !registeredVisible));
       toolbar.add(createActionLink("Get Help", IdeActions.GROUP_WELCOME_SCREEN_DOC, null, false));
 
@@ -280,6 +287,46 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, AccessibleCont
 
 
       panel.setBorder(JBUI.Borders.empty(0, 0, 8, 11));
+      return panel;
+    }
+
+    private JComponent createEventsLink() {
+      final Ref<ActionLink> actionLinkRef = new Ref<>();
+      final JComponent panel = createActionLink("Events", AllIcons.Ide.Notification.NoEvents, actionLinkRef, new AnAction() {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
+          ((WelcomeBalloonLayoutImpl)myBalloonLayout).showPopup();
+        }
+      });
+      panel.setVisible(false);
+      myEventListener = new ParameterizedRunnable<List<NotificationType>>() {
+        @Override
+        public void run(List<NotificationType> types) {
+          NotificationType type = null;
+          for (NotificationType t : types) {
+            if (NotificationType.ERROR == t) {
+              type = NotificationType.ERROR;
+              break;
+            }
+            if (NotificationType.WARNING == t) {
+              type = NotificationType.WARNING;
+            }
+            else if (type == null && NotificationType.INFORMATION == t) {
+              type = NotificationType.INFORMATION;
+            }
+          }
+
+          actionLinkRef.get().setIcon(IdeNotificationArea.createIconWithNotificationCount(actionLinkRef.get(), type, types.size()));
+          panel.setVisible(true);
+        }
+      };
+      myEventLocation = new Computable<Point>() {
+        @Override
+        public Point compute() {
+          Point location = SwingUtilities.convertPoint(panel, 0, 0, getRootPane().getLayeredPane());
+          return new Point(location.x, location.y + 5);
+        }
+      };
       return panel;
     }
 
@@ -296,16 +343,22 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, AccessibleCont
           UsageTrigger.trigger("welcome.screen." + groupId);
         }
       };
-      ref.set(new ActionLink(text, icon, action));
-      ref.get().setPaintUnderline(false);
-      ref.get().setNormalColor(getLinkNormalColor());
+      JComponent panel = createActionLink(text, icon, ref, action);
+      installFocusable(panel, action, KeyEvent.VK_UP, KeyEvent.VK_DOWN, focusListOnLeft);
+      return panel;
+    }
+
+    private JComponent createActionLink(String text, Icon icon, Ref<ActionLink> ref, AnAction action) {
+      ActionLink link = new ActionLink(text, icon, action);
+      ref.set(link);
+      link.setPaintUnderline(false);
+      link.setNormalColor(getLinkNormalColor());
       NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
       panel.setBorder(JBUI.Borders.empty(4, 6, 4, 6));
-      panel.add(ref.get());
-      AccessibleContextUtil.setName(panel, ref.get());
-      AccessibleContextUtil.setDescription(panel, ref.get());
-      panel.add(createArrow(ref.get()), BorderLayout.EAST);
-      installFocusable(panel, action, KeyEvent.VK_UP, KeyEvent.VK_DOWN, focusListOnLeft);
+      panel.add(link);
+      AccessibleContextUtil.setName(panel, link);
+      AccessibleContextUtil.setDescription(panel, link);
+      panel.add(createArrow(link), BorderLayout.EAST);
       return panel;
     }
 
