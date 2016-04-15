@@ -85,7 +85,7 @@ public class VcsLogManager implements Disposable {
   }
 
   public void unwatchTab(@NotNull String contentTabName) {
-    myTabsLogRefresher.removeTabFromWatch(contentTabName);
+    if (myTabsLogRefresher != null) myTabsLogRefresher.removeTabFromWatch(contentTabName);
   }
 
   private void watch(@NotNull final VcsLogUiImpl ui) {
