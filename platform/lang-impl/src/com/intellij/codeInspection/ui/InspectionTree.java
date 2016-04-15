@@ -23,18 +23,11 @@
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.CommonProblemDescriptor;
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.*;
-import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionsConfigTreeComparator;
-import com.intellij.ui.ColoredTreeCellRenderer;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.containers.Convertor;
@@ -44,7 +37,6 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.ExpandVetoException;
@@ -59,12 +51,13 @@ public class InspectionTree extends Tree {
   private boolean myQueueUpdate;
 
   public InspectionTree(@NotNull Project project,
-                        @NotNull GlobalInspectionContextImpl context, InspectionResultsView view) {
+                        @NotNull GlobalInspectionContextImpl context,
+                        @NotNull InspectionResultsView view) {
     setModel(new DefaultTreeModel(new InspectionRootNode(project, new InspectionTreeUpdater(view))));
     myContext = context;
     myExcludedManager = view.getExcludedManager();
 
-    setCellRenderer(new CellRenderer());
+    setCellRenderer(new InspectionTreeCellRenderer(view));
     setRootVisible(!myContext.isSingleInspectionRun());
     setShowsRootHandles(true);
     UIUtil.setLineStyleAngled(this);
@@ -317,75 +310,6 @@ public class InspectionTree extends Tree {
     public void treeWillCollapse(TreeExpansionEvent event) throws ExpandVetoException {
       InspectionTreeNode node = (InspectionTreeNode)event.getPath().getLastPathComponent();
       myState.getExpandedUserObjects().remove(node.getUserObject());
-    }
-  }
-
-  private class CellRenderer extends ColoredTreeCellRenderer {
-    /*  private Project myProject;
-      InspectionManagerEx myManager;
-      public CellRenderer(Project project) {
-        myProject = project;
-        myManager = (InspectionManagerEx)InspectionManager.getInstance(myProject);
-      }*/
-
-    @Override
-    public void customizeCellRenderer(JTree tree,
-                                      Object value,
-                                      boolean selected,
-                                      boolean expanded,
-                                      boolean leaf,
-                                      int row,
-                                      boolean hasFocus) {
-      InspectionTreeNode node = (InspectionTreeNode)value;
-
-      append(node.toString(),
-             patchAttr(node, appearsBold(node) ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : getMainForegroundAttributes(node)));
-
-      int problemCount = node.getProblemCount();
-      if (!leaf) {
-        append(" " + InspectionsBundle.message("inspection.problem.descriptor.count", problemCount), patchAttr(node, SimpleTextAttributes.GRAYED_ATTRIBUTES));
-      }
-
-      if (!node.isValid()) {
-        append(" " + InspectionsBundle.message("inspection.invalid.node.text"), patchAttr(node, SimpleTextAttributes.ERROR_ATTRIBUTES));
-      } else {
-        setIcon(node.getIcon(expanded));
-      }
-      // do not need reset model (for recalculation of prefered size) when digit number of problemCount is growth
-      // or INVALID marker appears
-      final String tail = StringUtil.repeat(" ", Math.max(0, 5- - String.valueOf(problemCount).length()));
-      append(tail);
-    }
-
-    public SimpleTextAttributes patchAttr(InspectionTreeNode node, SimpleTextAttributes attributes) {
-      if (node.isResolved(myExcludedManager)) {
-        return new SimpleTextAttributes(attributes.getBgColor(), attributes.getFgColor(), attributes.getWaveColor(), attributes.getStyle() | SimpleTextAttributes.STYLE_STRIKEOUT);
-      }
-      return attributes;
-    }
-
-    private SimpleTextAttributes getMainForegroundAttributes(InspectionTreeNode node) {
-      SimpleTextAttributes foreground = SimpleTextAttributes.REGULAR_ATTRIBUTES;
-      if (node instanceof RefElementNode) {
-        RefEntity refElement = ((RefElementNode)node).getElement();
-
-        if (refElement instanceof RefElement) {
-          refElement = ((RefElement)refElement).getContainingEntry();
-          if (((RefElement)refElement).isEntry() && ((RefElement)refElement).isPermanentEntry()) {
-            foreground = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.blue);
-          }
-        }
-
-      }
-      final FileStatus nodeStatus = node.getNodeStatus();
-      if (nodeStatus != FileStatus.NOT_CHANGED){
-        foreground = new SimpleTextAttributes(foreground.getBgColor(), nodeStatus.getColor(), foreground.getWaveColor(), foreground.getStyle());
-      }
-      return foreground;
-    }
-
-    private boolean appearsBold(Object node) {
-      return ((InspectionTreeNode)node).appearsBold();
     }
   }
 

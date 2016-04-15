@@ -16,13 +16,17 @@
 
 package com.intellij.codeInspection.ui;
 
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.containers.FactoryMap;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,6 +45,7 @@ public class ProblemDescriptionNode extends InspectionTreeNode implements RefEle
   protected final InspectionToolWrapper myToolWrapper;
   @NotNull
   protected final InspectionToolPresentation myPresentation;
+  private final HighlightDisplayLevel myLevel;
 
   public ProblemDescriptionNode(RefEntity element,
                                 CommonProblemDescriptor descriptor,
@@ -51,7 +56,12 @@ public class ProblemDescriptionNode extends InspectionTreeNode implements RefEle
     myDescriptor = descriptor;
     myToolWrapper = toolWrapper;
     myPresentation = presentation;
-  }
+    final InspectionProfileImpl profile = (InspectionProfileImpl)presentation.getContext().getCurrentProfile();
+    myLevel = descriptor instanceof ProblemDescriptor
+              ? profile.getErrorLevel(HighlightDisplayKey.find(toolWrapper.getShortName()), ((ProblemDescriptor)descriptor).getStartElement())
+              : profile.getTools(toolWrapper.getID(), element.getRefManager().getProject()).getLevel();
+
+}
 
   @NotNull
   public InspectionToolWrapper getToolWrapper() {
@@ -81,6 +91,11 @@ public class ProblemDescriptionNode extends InspectionTreeNode implements RefEle
   @Override
   public int getProblemCount() {
     return 1;
+  }
+
+  @Override
+  public void visitProblemSeverities(FactoryMap<HighlightDisplayLevel, Integer> counter) {
+    counter.put(myLevel, counter.get(myLevel) + 1);
   }
 
   @Override

@@ -16,6 +16,7 @@
 
 package com.intellij.codeInspection.ui;
 
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.reference.RefDirectory;
@@ -24,6 +25,7 @@ import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.ui.ComputableIcon;
+import com.intellij.util.containers.FactoryMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -131,5 +133,14 @@ public class RefElementNode extends InspectionTreeNode implements RefElementAwar
   @Override
   public int getProblemCount() {
     return Math.max(1, super.getProblemCount());
+  }
+
+  @Override
+  public void visitProblemSeverities(FactoryMap<HighlightDisplayLevel, Integer> counter) {
+    if (isLeaf()) {
+      counter.put(HighlightDisplayLevel.WARNING, counter.get(HighlightDisplayLevel.WARNING) + 1);
+      return;
+    }
+    super.visitProblemSeverities(counter);
   }
 }
