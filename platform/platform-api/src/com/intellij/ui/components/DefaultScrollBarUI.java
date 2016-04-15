@@ -103,6 +103,14 @@ class DefaultScrollBarUI extends ScrollBarUI {
     return Registry.is("ide.scroll.bar.expand.animation");
   }
 
+  boolean isTrackContains(int x, int y) {
+    return myTrackBounds.contains(x, y);
+  }
+
+  boolean isThumbContains(int x, int y) {
+    return myThumbBounds.contains(x, y);
+  }
+
   void onTrackHover(boolean hover) {
     myTrackAnimator.start(hover);
   }
@@ -356,9 +364,9 @@ class DefaultScrollBarUI extends ScrollBarUI {
     private boolean isOverThumb;
 
     private void updateMouse(int x, int y) {
-      if (myTrackBounds.contains(x, y)) {
+      if (isTrackContains(x, y)) {
         if (!isOverTrack) onTrackHover(isOverTrack = true);
-        boolean hover = myThumbBounds.contains(x, y);
+        boolean hover = isThumbContains(x, y);
         if (isOverThumb != hover) onThumbHover(isOverThumb = hover);
       }
       else {
@@ -397,12 +405,12 @@ class DefaultScrollBarUI extends ScrollBarUI {
       myMouseY = event.getY();
 
       boolean vertical = VERTICAL == myScrollBar.getOrientation();
-      if (myThumbBounds.contains(myMouseX, myMouseY)) {
+      if (isThumbContains(myMouseX, myMouseY)) {
         // pressed on the thumb
         myOffset = vertical ? (myMouseY - myThumbBounds.y) : (myMouseX - myThumbBounds.x);
         isDragging = true;
       }
-      else if (myTrackBounds.contains(myMouseX, myMouseY)) {
+      else if (isTrackContains(myMouseX, myMouseY)) {
         // pressed on the track
         if (isAbsolutePositioning(event)) {
           myOffset = (vertical ? myThumbBounds.height : myThumbBounds.width) / 2;

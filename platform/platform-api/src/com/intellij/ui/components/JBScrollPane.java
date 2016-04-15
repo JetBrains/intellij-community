@@ -352,6 +352,12 @@ public class JBScrollPane extends JScrollPane {
           return true;
         }
       }
+      else if (ui instanceof DefaultScrollBarUI) {
+        DefaultScrollBarUI dui = (DefaultScrollBarUI)ui;
+        Point point = e.getLocationOnScreen();
+        SwingUtilities.convertPointFromScreen(point, bar);
+        return !dui.isThumbContains(point.x, point.y);
+      }
     }
     return true;
   }
