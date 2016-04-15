@@ -15,6 +15,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -50,9 +51,9 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
     myLock = new Object();
     myProject = project;
     myDefinitions = new JsonSchemaExportedDefinitions(
-      new Consumer<PairConsumer<VirtualFile, Consumer<Consumer<JsonSchemaObject>>>>() {
+      new Consumer<PairConsumer<VirtualFile, NullableLazyValue<JsonSchemaObject>>>() {
                                                         @Override
-                                                        public void consume(PairConsumer<VirtualFile, Consumer<Consumer<JsonSchemaObject>>> consumer) {
+                                                        public void consume(PairConsumer<VirtualFile, NullableLazyValue<JsonSchemaObject>> consumer) {
                                                           iterateSchemas(consumer);
                                                         }
                                                       });
@@ -219,16 +220,15 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
     return null;
   }
 
-  public void iterateSchemas(@NotNull final PairConsumer<VirtualFile, Consumer<Consumer<JsonSchemaObject>>> consumer) {
+  public void iterateSchemas(@NotNull final PairConsumer<VirtualFile, NullableLazyValue<JsonSchemaObject>> consumer) {
     final JsonSchemaProviderFactory[] factories = getProviderFactories();
     for (JsonSchemaProviderFactory factory : factories) {
       for (JsonSchemaFileProvider provider : factory.getProviders(myProject)) {
         consumer.consume(provider.getSchemaFile(),
-                                     new Consumer<Consumer<JsonSchemaObject>>() {
+                                     new NullableLazyValue<JsonSchemaObject>() {
                                        @Override
-                                       public void consume(Consumer<JsonSchemaObject> consumer) {
-                                         final JsonSchemaObject resultObject = readObject(provider, null);
-                                         if (resultObject != null) consumer.consume(resultObject);
+                                       protected JsonSchemaObject compute() {
+                                         return readObject(provider, null);
                                        }
                                      });
       }

@@ -15,6 +15,7 @@
  */
 package com.jetbrains.jsonSchema.impl;
 
+import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.PairConsumer;
@@ -36,9 +37,9 @@ public class JsonSchemaExportedDefinitions {
   private final BidirectionalMap<String, VirtualFile> myId2Key;
   private final MultiMap<VirtualFile, VirtualFile> myCrossDependencies;
   private final Map<String, Map<String, JsonSchemaObject>> myMap;
-  @NotNull private final Consumer<PairConsumer<VirtualFile, Consumer<Consumer<JsonSchemaObject>>>> mySchemasIterator;
+  @NotNull private final Consumer<PairConsumer<VirtualFile, NullableLazyValue<JsonSchemaObject>>> mySchemasIterator;
 
-  public JsonSchemaExportedDefinitions(@NotNull Consumer<PairConsumer<VirtualFile, Consumer<Consumer<JsonSchemaObject>>>> schemasIterator) {
+  public JsonSchemaExportedDefinitions(@NotNull Consumer<PairConsumer<VirtualFile, NullableLazyValue<JsonSchemaObject>>> schemasIterator) {
     mySchemasIterator = schemasIterator;
     myLock = new Object();
     myMap = new HashMap<>();
@@ -66,7 +67,6 @@ public class JsonSchemaExportedDefinitions {
       if (map != null) {
         final JsonSchemaObject found = map.get(relativePart);
         if (found != null) return found;
-        //return JsonSchemaReader.findRelativeDefinition(relativePart, rootObject);
       }
     }
     return null;
@@ -75,16 +75,14 @@ public class JsonSchemaExportedDefinitions {
   private void ensureInitialized() {
     synchronized (myLock) {
       if (myInitialized && !myDirty) return;
-      mySchemasIterator.consume(new PairConsumer<VirtualFile, Consumer<Consumer<JsonSchemaObject>>>() {
+      mySchemasIterator.consume(new PairConsumer<VirtualFile, NullableLazyValue<JsonSchemaObject>>() {
         @Override
-        public void consume(VirtualFile key, Consumer<Consumer<JsonSchemaObject>> consumer) {
+        public void consume(VirtualFile key, NullableLazyValue<JsonSchemaObject> value) {
           if (!myInitialized || !myId2Key.containsValue(key)) {
-            consumer.consume(new Consumer<JsonSchemaObject>() {
-              @Override
-              public void consume(JsonSchemaObject object) {
-                JsonSchemaReader.registerObjectsExportedDefinitions(key, JsonSchemaExportedDefinitions.this, object);
-              }
-            });
+            final JsonSchemaObject object = value.getValue();
+            if (object != null) {
+              JsonSchemaReader.registerObjectsExportedDefinitions(key, JsonSchemaExportedDefinitions.this, object);
+            }
           }
         }
       });
