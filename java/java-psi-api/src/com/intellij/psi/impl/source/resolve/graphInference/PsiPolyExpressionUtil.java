@@ -16,7 +16,6 @@
 package com.intellij.psi.impl.source.resolve.graphInference;
 
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -47,7 +46,7 @@ public class PsiPolyExpressionUtil {
     else if (expression instanceof PsiParenthesizedExpression) {
       return isPolyExpression(((PsiParenthesizedExpression)expression).getExpression());
     }
-    else if (expression instanceof PsiNewExpression && PsiDiamondTypeUtil.hasDiamond((PsiNewExpression)expression)) {
+    else if (expression instanceof PsiNewExpression && PsiDiamondType.hasDiamond((PsiNewExpression)expression)) {
       return isInAssignmentOrInvocationContext(expression);
     }
     else if (expression instanceof PsiMethodCallExpression) {
@@ -73,7 +72,7 @@ public class PsiPolyExpressionUtil {
             return mentionsTypeParameters(returnType, typeParameters);
           }
         }
-        else if (method.isConstructor() && expression instanceof PsiNewExpression && PsiDiamondTypeUtil.hasDiamond((PsiNewExpression)expression)) {
+        else if (method.isConstructor() && expression instanceof PsiNewExpression && PsiDiamondType.hasDiamond((PsiNewExpression)expression)) {
           return true;
         }
       } else {

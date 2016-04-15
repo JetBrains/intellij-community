@@ -33,9 +33,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.controlFlow.AnalysisCanceledException;
 import com.intellij.psi.controlFlow.ControlFlow;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
-import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil;
 import com.intellij.psi.util.*;
-import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.text.UniqueNameGenerator;
@@ -137,7 +135,11 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
   }
 
   public static boolean hasForbiddenRefsInsideBody(PsiMethod method, PsiAnonymousClass aClass) {
-    final ForbiddenRefsChecker checker = new ForbiddenRefsChecker(method, aClass);
+    final PsiType inferredType = getInferredType(aClass, method);
+    if (inferredType == null) {
+      return true;
+    }
+    final ForbiddenRefsChecker checker = new ForbiddenRefsChecker(method, aClass, inferredType != PsiType.NULL ? inferredType : null);
     final PsiCodeBlock body = method.getBody();
     LOG.assertTrue(body != null);
     body.accept(checker);
@@ -156,27 +158,29 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
       topExpr = (PsiExpression)topExpr.getParent();
     }
 
-    final PsiElement parent = topExpr.getParent();
-    if (parent instanceof PsiExpressionList) {
-      PsiExpressionList expressionList = (PsiExpressionList)parent;
-      final PsiElement callExpr = expressionList.getParent();
-      if (callExpr instanceof PsiCallExpression) {
-        PsiExpression[] expressions = expressionList.getExpressions();
-        int i = ArrayUtilRt.find(expressions, topExpr);
-        if (i < 0) return null;
-        final PsiCallExpression copy = (PsiCallExpression)callExpr.copy();
-        final PsiExpressionList argumentList = copy.getArgumentList();
-        if (argumentList != null) {
-          final PsiExpression classArg = argumentList.getExpressions()[i];
-          PsiExpression lambda = JavaPsiFacade.getElementFactory(aClass.getProject())
-            .createExpressionFromText(ReplaceWithLambdaFix.composeLambdaText(method), expression);
-          lambda = (PsiExpression)classArg.replace(lambda);
-          ((PsiLambdaExpression)lambda).getBody().replace(method.getBody());
-          return LambdaUtil.getFunctionalInterfaceType(lambda, true);
+    final PsiCall call = LambdaUtil.treeWalkUp(topExpr);
+    if (call != null) {
+      final int offsetInTopCall = aClass.getTextRange().getStartOffset() - call.getTextRange().getStartOffset();
+      final PsiCall copyCall = (PsiCall)call.copy();
+      final PsiAnonymousClass classArg = PsiTreeUtil.getParentOfType(copyCall.findElementAt(offsetInTopCall), PsiAnonymousClass.class);
+      if (classArg != null) {
+        PsiExpression lambda = JavaPsiFacade.getElementFactory(aClass.getProject())
+          .createExpressionFromText(ReplaceWithLambdaFix.composeLambdaText(method), expression);
+        lambda = (PsiExpression)classArg.getParent().replace(lambda);
+        ((PsiLambdaExpression)lambda).getBody().replace(method.getBody());
+        final PsiType interfaceType;
+        if (copyCall.resolveMethod() == null) {
+          interfaceType = null;
         }
+        else {
+          interfaceType = ((PsiLambdaExpression)lambda).getFunctionalInterfaceType();
+        }
+
+        return interfaceType;
       }
     }
-    return null;
+
+    return PsiType.NULL;
   }
 
   public static boolean canBeConvertedToLambda(PsiAnonymousClass aClass,
@@ -246,9 +250,6 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
 
       final PsiCodeBlock body = method.getBody();
       if (body == null) return null;
-
-      final ForbiddenRefsChecker checker = new ForbiddenRefsChecker(method, anonymousClass);
-      body.accept(checker);
 
       final Project project = element.getProject();
       final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
@@ -457,10 +458,10 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
     private final PsiType myInferredType;
 
     public ForbiddenRefsChecker(PsiMethod method,
-                                PsiAnonymousClass aClass) {
+                                PsiAnonymousClass aClass,
+                                PsiType inferredType) {
       myMethod = method;
       myAnonymClass = aClass;
-      final PsiType inferredType = FunctionalInterfaceParameterizationUtil.getGroundTargetType(getInferredType(aClass, method));
       final PsiClassType baseClassType = aClass.getBaseClassType();
       myInferredType = !baseClassType.equals(inferredType) ? inferredType : null;
     }

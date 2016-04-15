@@ -70,6 +70,7 @@ public class LambdaRedundantCastTest extends LightDaemonAnalyzerTestCase {
   }
 
   public void testEnumConstantWithFunctionalExpressionArg() throws Exception { doTest(); }
+  public void testSecondLevelOverload() throws Exception { doTest(); }
 
   private void doTest() {
     doTest(BASE_PATH + "/" + getTestName(false) + ".java", true, false);

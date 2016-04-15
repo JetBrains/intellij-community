@@ -17,6 +17,7 @@ package com.intellij.psi;
 
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -156,5 +157,26 @@ public abstract class PsiDiamondType extends PsiType {
       result = 31 * result + (myErrorMessage != null ? myErrorMessage.hashCode() : 0);
       return result;
     }
+  }
+
+  public static boolean hasDiamond(PsiNewExpression expression) {
+    return getDiamondType(expression) != null;
+  }
+
+  public static PsiDiamondType getDiamondType(PsiNewExpression expression) {
+    if (PsiUtil.isLanguageLevel7OrHigher(expression)) {
+      final PsiJavaCodeReferenceElement classReference = expression.getClassOrAnonymousClassReference();
+      if (classReference != null) {
+        final PsiReferenceParameterList parameterList = classReference.getParameterList();
+        if (parameterList != null) {
+          final PsiTypeElement[] parameterElements = parameterList.getTypeParameterElements();
+          if (parameterElements.length == 1) {
+            final PsiType type = parameterElements[0].getType();
+            return type instanceof PsiDiamondType ? (PsiDiamondType)type : null;
+          }
+        }
+      }
+    }
+    return null;
   }
 }

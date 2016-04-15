@@ -23,7 +23,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
@@ -392,7 +391,7 @@ public class InlineUtil {
 
   private static PsiElement replaceDiamondWithInferredTypesIfNeeded(PsiExpression initializer, PsiElement ref) {
     if (initializer instanceof PsiNewExpression) {
-      final PsiDiamondType diamondType = PsiDiamondTypeUtil.getDiamondType((PsiNewExpression)initializer);
+      final PsiDiamondType diamondType = PsiDiamondType.getDiamondType((PsiNewExpression)initializer);
       if (diamondType != null) {
         final PsiDiamondType.DiamondInferenceResult inferenceResult = diamondType.resolveInferredTypes();
         if (inferenceResult.getErrorMessage() == null) {

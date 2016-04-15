@@ -22,7 +22,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiUtil;
@@ -100,7 +99,7 @@ public class ChangeClassSignatureProcessor extends BaseRefactoringProcessor {
                                                  parent.getParent() instanceof PsiClassObjectAccessExpression)) {
           continue;
         }
-        if (parent instanceof PsiNewExpression && PsiDiamondTypeUtil.hasDiamond((PsiNewExpression)parent)) {
+        if (parent instanceof PsiNewExpression && PsiDiamondType.hasDiamond((PsiNewExpression)parent)) {
           continue;
         }
         if (parent instanceof PsiTypeElement || parent instanceof PsiNewExpression || parent instanceof PsiAnonymousClass ||
