@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.webcore.packaging.PackageVersionComparator;
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation;
+import com.jetbrains.python.packaging.requirement.PyRequirementVersionNormalizer;
 import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,10 +45,7 @@ public class PyRequirement {
   private static final String LINE_WS_REGEXP = "[ \t]";
 
   @NotNull
-  private static final String EDITABLE_GROUP = "editable";
-
-  @NotNull
-  private static final String EDITABLE_REGEXP = "((?<" + EDITABLE_GROUP + ">-e|--editable)" + LINE_WS_REGEXP + "+)?";
+  private static final String EDITABLE_REGEXP = "((-e|--editable)" + LINE_WS_REGEXP + "+)?";
 
   @NotNull
   private static final String USER_AT_REGEXP = "[\\w-]+@";
@@ -274,7 +272,7 @@ public class PyRequirement {
     final Matcher matcher = GITHUB_ARCHIVE_URL.matcher(line);
 
     if (matcher.matches()) {
-      return new PyRequirement(matcher.group(NAME_GROUP), null, line, false);
+      return new PyRequirement(matcher.group(NAME_GROUP), line, Collections.emptyList());
     }
 
     return null;
@@ -285,9 +283,7 @@ public class PyRequirement {
     final Matcher matcher = ARCHIVE_URL.matcher(line);
 
     if (matcher.matches()) {
-      final Pair<String, String> nameAndVersion = parseNameAndVersion(matcher.group(NAME_GROUP));
-
-      return new PyRequirement(nameAndVersion.getFirst(), nameAndVersion.getSecond(), line, false);
+      return createVcsOrArchiveRequirement(line, parseNameAndVersionFromVcsOrArchive(matcher.group(NAME_GROUP)));
     }
 
     return null;
@@ -351,7 +347,7 @@ public class PyRequirement {
   }
 
   @NotNull
-  private static Pair<String, String> parseNameAndVersion(@NotNull String name) {
+  private static Pair<String, String> parseNameAndVersionFromVcsOrArchive(@NotNull String name) {
     boolean isName = true;
     final List<String> nameParts = new ArrayList<String>();
     final List<String> versionParts = new ArrayList<String>();
@@ -371,19 +367,36 @@ public class PyRequirement {
       }
     }
 
-    return Pair.create(normalizeNameParts(nameParts), normalizeVersionParts(versionParts));
+    return Pair.create(normalizeVcsOrArchiveNameParts(nameParts), normalizeVcsOrArchiveVersionParts(versionParts));
+  }
+
+  @NotNull
+  private static PyRequirement createVcsOrArchiveRequirement(@NotNull String line, @NotNull Pair<String, String> nameAndVersion) {
+    final String name = nameAndVersion.getFirst();
+    final String version = nameAndVersion.getSecond();
+
+    if (version == null) {
+      return new PyRequirement(name, line, Collections.emptyList());
+    }
+
+    final String normalizedVersion = PyRequirementVersionNormalizer.normalize(version);
+    final PyRequirementVersionSpec versionSpec = normalizedVersion == null ?
+                                                 new PyRequirementVersionSpec(PyRequirementRelation.STR_EQ, version) :
+                                                 new PyRequirementVersionSpec(PyRequirementRelation.EQ, normalizedVersion);
+
+    return new PyRequirement(name, line, Collections.singletonList(versionSpec));
   }
 
   @NotNull
   private static PyRequirement createVcsRequirement(@NotNull String line, @NotNull Matcher matcher) {
-    final boolean editable = matcher.group(EDITABLE_GROUP) != null;
     final String path = matcher.group(PATH_GROUP);
     final String egg = matcher.group(EGG_GROUP);
 
     final String project = extractProject(dropTrunk(dropRevision(path)));
-    final Pair<String, String> nameAndVersion = parseNameAndVersion(egg == null ? StringUtil.trimEnd(project, ".git") : egg);
+    final Pair<String, String> nameAndVersion =
+      parseNameAndVersionFromVcsOrArchive(egg == null ? StringUtil.trimEnd(project, ".git") : egg);
 
-    return new PyRequirement(nameAndVersion.getFirst(), nameAndVersion.getSecond(), line, editable);
+    return createVcsOrArchiveRequirement(line, nameAndVersion);
   }
 
   @NotNull
@@ -414,12 +427,12 @@ public class PyRequirement {
   }
 
   @NotNull
-  private static String normalizeNameParts(@NotNull List<String> nameParts) {
+  private static String normalizeVcsOrArchiveNameParts(@NotNull List<String> nameParts) {
     return normalizeName(StringUtil.join(nameParts, "-"));
   }
 
   @Nullable
-  private static String normalizeVersionParts(@NotNull List<String> versionParts) {
+  private static String normalizeVcsOrArchiveVersionParts(@NotNull List<String> versionParts) {
     return versionParts.isEmpty() ? null : normalizeVersion(StringUtil.join(versionParts, "-"));
   }
 
@@ -498,8 +511,19 @@ public class PyRequirement {
 
     if (relation != null) {
       final int versionIndex = findFirstNotWhiteSpace(versionSpec, relation.toString().length());
+      final String version = versionSpec.substring(versionIndex);
 
-      return new PyRequirementVersionSpec(relation, versionSpec.substring(versionIndex));
+      if (relation == PyRequirementRelation.STR_EQ) {
+        return new PyRequirementVersionSpec(relation, version);
+      }
+
+      final String normalizedVersion = PyRequirementVersionNormalizer.normalize(version);
+
+      if (normalizedVersion == null) {
+        return new PyRequirementVersionSpec(PyRequirementRelation.STR_EQ, version);
+      } else {
+        return new PyRequirementVersionSpec(relation, normalizedVersion);
+      }
     }
 
     return null;
