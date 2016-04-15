@@ -121,8 +121,9 @@ internal class OpenFileHttpService : RestService() {
     promise.done { sendStatus(HttpResponseStatus.OK, keepAlive, channel) }
       .rejected {
         if (it === NOT_FOUND) {
-          // don't expose file status if not local origin
+          // don't expose file status
           sendStatus(HttpResponseStatus.OK, keepAlive, channel)
+          LOG.warn("File ${apiRequest.file} not found")
         }
         else {
           // todo send error
