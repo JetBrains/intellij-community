@@ -35,6 +35,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -53,6 +54,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
   private static final Key<Boolean> NO_ANNOTATIONS_FOUND = Key.create("REPORTED_NO_ANNOTATIONS_FOUND");
@@ -517,7 +519,73 @@ public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
                                       }
                                       return value.getText();
                                     }, ", ");
-    holder.registerProblem(argument, "Must be one of: " + values);
+    String message = "Should be one of: " + values + (allowedValues.canBeOred ? " or their combination" : "");
+    holder.registerProblem(argument, message, suggestMagicConstant(argument, allowedValues));
+  }
+
+  @Nullable // null means no quickfix available
+  private static LocalQuickFix suggestMagicConstant(@NotNull PsiExpression argument,
+                                                    @NotNull AllowedValues allowedValues) {
+    Object argumentValue = JavaConstantExpressionEvaluator.computeConstantExpression(argument, null, false);
+    if (argumentValue == null) return null;
+
+    if (!allowedValues.canBeOred) {
+      for (PsiAnnotationMemberValue value : allowedValues.values) {
+        if (value instanceof PsiExpression) {
+          Object constantValue = JavaConstantExpressionEvaluator.computeConstantExpression((PsiExpression)value, null, false);
+          if (constantValue != null && constantValue.equals(argumentValue)) {
+            return new ReplaceWithMagicConstantFix(argument, value);
+          }
+        }
+      }
+    }
+    else {
+      Long longArgument = evaluateLongConstant(argument);
+      if (longArgument == null) { return null; }
+
+      // try to find ored flags
+      long remainingFlags = longArgument.longValue();
+      List<PsiAnnotationMemberValue> flags = new ArrayList<>();
+      for (PsiAnnotationMemberValue value : allowedValues.values) {
+        if (value instanceof PsiExpression) {
+          Long constantValue = evaluateLongConstant((PsiExpression)value);
+          if (constantValue == null) {
+            continue;
+          }
+          if ((remainingFlags & constantValue) == constantValue) {
+            flags.add(value);
+            remainingFlags &= ~constantValue;
+          }
+        }
+      }
+      if (remainingFlags == 0) {
+        // found flags to combine with OR, suggest the fix
+        if (flags.size() > 1) {
+          for (int i = flags.size() - 1; i >= 0; i--) {
+            PsiAnnotationMemberValue flag = flags.get(i);
+            if (evaluateLongConstant((PsiExpression)flag) == 0) {
+              // no sense in ORing with '0'
+              flags.remove(i);
+            }
+          }
+        }
+        if (!flags.isEmpty()) {
+          return new ReplaceWithMagicConstantFix(argument, flags.toArray(PsiAnnotationMemberValue.EMPTY_ARRAY));
+        }
+      }
+    }
+    return null;
+  }
+
+  private static Long evaluateLongConstant(@NotNull PsiExpression expression) {
+    Object constantValue = JavaConstantExpressionEvaluator.computeConstantExpression(expression, null, false);
+    if (constantValue instanceof Long ||
+                 constantValue instanceof Integer ||
+                 constantValue instanceof Short ||
+                 constantValue instanceof Byte) {
+      return ((Number)constantValue).longValue();
+    }
+    return null;
   }
 
   private static boolean isAllowed(@NotNull final PsiElement scope,
@@ -647,5 +715,76 @@ public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
     }
 
     return !children.isEmpty();
+  }
+
+  private static class ReplaceWithMagicConstantFix extends LocalQuickFixOnPsiElement {
+    private final List<SmartPsiElementPointer<PsiAnnotationMemberValue>> myMemberValuePointers;
+
+    ReplaceWithMagicConstantFix(@NotNull PsiExpression argument, @NotNull PsiAnnotationMemberValue... values) {
+      super(argument);
+      myMemberValuePointers = Arrays.stream(values).map(
+        value -> SmartPointerManager.getInstance(argument.getProject()).createSmartPsiElementPointer(value)).collect(Collectors.toList());
+    }
+
+    @Nls
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Replace with magic constant";
+    }
+
+    @NotNull
+    @Override
+    public String getText() {
+      List<String> names = myMemberValuePointers.stream().map(SmartPsiElementPointer::getElement).map(PsiElement::getText).collect(Collectors.toList());
+      String expression = StringUtil.join(names, " | ");
+      return "Replace with '" + expression + "'";
+    }
+
+    @Override
+    public void invoke(@NotNull Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
+      List<PsiAnnotationMemberValue> values = myMemberValuePointers.stream().map(SmartPsiElementPointer::getElement).collect(Collectors.toList());
+      String text = StringUtil.join(Collections.nCopies(values.size(), "0"), " | ");
+      PsiExpression concatExp = PsiElementFactory.SERVICE.getInstance(project).createExpressionFromText(text, startElement);
+
+      List<PsiLiteralExpression> expressionsToReplace = new ArrayList<>(values.size());
+      concatExp.accept(new JavaRecursiveElementWalkingVisitor() {
+        @Override
+        public void visitLiteralExpression(PsiLiteralExpression expression) {
+          super.visitLiteralExpression(expression);
+          if (Integer.valueOf(0).equals(expression.getValue())) {
+            expressionsToReplace.add(expression);
+          }
+        }
+      });
+      Iterator<PsiAnnotationMemberValue> iterator = values.iterator();
+      List<PsiElement> resolved = new ArrayList<>();
+      for (PsiLiteralExpression toReplace : expressionsToReplace) {
+        PsiAnnotationMemberValue value = iterator.next();
+        resolved.add(((PsiReference)value).resolve());
+        PsiExpression replaced = (PsiExpression)toReplace.replace(value);
+        if (toReplace == concatExp) {
+          concatExp = replaced;
+        }
+      }
+      PsiElement newStartElement = startElement.replace(concatExp);
+      Iterator<PsiElement> resolvedValuesIterator = resolved.iterator();
+      newStartElement.accept(new JavaRecursiveElementWalkingVisitor() {
+        @Override
+        public void visitReferenceExpression(PsiReferenceExpression expression) {
+          PsiElement bound = expression.bindToElement(resolvedValuesIterator.next());
+          JavaCodeStyleManager.getInstance(project).shortenClassReferences(bound);
+        }
+      });
+    }
+
+    @Override
+    public boolean isAvailable(@NotNull Project project,
+                               @NotNull PsiFile file,
+                               @NotNull PsiElement startElement,
+                               @NotNull PsiElement endElement) {
+      boolean allValid = !myMemberValuePointers.stream().map(SmartPsiElementPointer::getElement).anyMatch(p -> p == null || !p.isValid());
+      return allValid && super.isAvailable(project, file, startElement, endElement);
+    }
   }
 }
