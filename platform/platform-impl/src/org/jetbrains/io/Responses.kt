@@ -102,6 +102,7 @@ fun HttpResponse.addCommonHeaders() {
   if (!headers().contains("X-Frame-Options")) {
     headers().set("X-Frame-Options", "SameOrigin")
   }
+  headers().set("X-Content-Type-Options", "nosniff")
 }
 
 fun HttpResponse.send(channel: Channel, close: Boolean) {
