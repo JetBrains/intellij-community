@@ -51,6 +51,9 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.*;
 
 /**
  */
@@ -207,10 +210,13 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (filter instanceof VcsLogBranchFilter) {
       myBranchFilterModel.setFilter((VcsLogBranchFilter)filter);
-      JComponent toolbar = myUi.getToolbar();
-      toolbar.revalidate();
-      toolbar.repaint();
     }
+    else if (filter instanceof VcsLogStructureFilter) {
+      myStructureFilterModel.setFilter(new VcsLogFileFilter((VcsLogStructureFilter)filter, null));
+    }
+    JComponent toolbar = myUi.getToolbar();
+    toolbar.revalidate();
+    toolbar.repaint();
   }
 
   private static class FilterActionComponent extends DumbAwareAction implements CustomComponentAction {

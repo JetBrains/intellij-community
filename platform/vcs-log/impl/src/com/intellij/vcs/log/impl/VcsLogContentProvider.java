@@ -93,8 +93,12 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
 
   public static void openAnotherLogTab(@NotNull VcsLogManager logManager, @NotNull Project project) {
     ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS);
+    openLogTab(logManager, project, generateShortName(toolWindow));
+  }
 
-    String shortName = generateShortName(toolWindow);
+  public static VcsLogUiImpl openLogTab(@NotNull VcsLogManager logManager, @NotNull Project project, @NotNull String shortName) {
+    ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS);
+
     String name = ContentUtilEx.getFullName(TAB_NAME, shortName);
 
     VcsLogUiImpl logUi = logManager.createLogUi(name, name);
@@ -104,6 +108,7 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
     toolWindow.activate(null);
 
     logManager.scheduleInitialization();
+    return logUi;
   }
 
   @NotNull
