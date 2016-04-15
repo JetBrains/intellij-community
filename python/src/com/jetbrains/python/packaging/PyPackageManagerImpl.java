@@ -180,7 +180,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
   @Override
   public void install(@NotNull String requirementString) throws ExecutionException {
     installManagement();
-    install(Collections.singletonList(PyRequirement.fromString(requirementString)), Collections.<String>emptyList());
+    install(Collections.singletonList(PyRequirement.fromLine(requirementString)), Collections.<String>emptyList());
   }
 
   @Override
@@ -207,7 +207,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
     }
     args.addAll(extraArgs);
     for (PyRequirement req : requirements) {
-      args.add(req.toOptions());
+      args.add(req.getInstallOptions());
     }
     try {
       getHelperResult(PACKAGING_TOOL, args, !useUserSite, true, null);
@@ -221,7 +221,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
       }
       simplifiedArgs.addAll(extraArgs);
       for (PyRequirement req : requirements) {
-        simplifiedArgs.add(req.toOptions());
+        simplifiedArgs.add(req.getInstallOptions());
       }
       throw new PyExecutionException(e.getMessage(), "pip", simplifiedArgs, e.getStdout(), e.getStderr(), e.getExitCode(), e.getFixes());
     }
@@ -419,7 +419,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
       }
     }
     if (!lines.isEmpty()) {
-      return PyRequirement.parse(StringUtil.join(lines, "\n"));
+      return PyRequirement.fromText(StringUtil.join(lines, "\n"));
     }
     if (PyPackageUtil.findSetupPy(module) != null) {
       return Collections.emptyList();
@@ -570,7 +570,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
       if (fields.size() >= 4) {
         final String requiresLine = fields.get(3);
         final String requiresSpec = StringUtil.join(StringUtil.split(requiresLine, ":"), "\n");
-        requirements.addAll(PyRequirement.parse(requiresSpec));
+        requirements.addAll(PyRequirement.fromText(requiresSpec));
       }
       if (!"Python".equals(name)) {
         packages.add(new PyPackage(name, version, location, requirements));

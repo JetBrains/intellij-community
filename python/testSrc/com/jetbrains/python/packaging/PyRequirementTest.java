@@ -38,49 +38,49 @@ public class PyRequirementTest extends PyTestCase {
   public void testArchiveUrl() {
     final String url = "https://pypi.python.org/packages/source/g/geoip2/geoip2-2.2.0.tar.gz";
 
-    assertEquals(new PyRequirement("geoip2", "2.2.0", url), PyRequirement.fromString(url));
+    assertEquals(new PyRequirement("geoip2", "2.2.0", url), PyRequirement.fromLine(url));
   }
 
   // PY-14230
   public void testArchiveUrlWithMd5() {
     final String url = "https://pypi.python.org/packages/source/g/geoip2/geoip2-2.2.0.tar.gz#md5=26259d212447bc840400c25a48275fbc";
 
-    assertEquals(new PyRequirement("geoip2", "2.2.0", url), PyRequirement.fromString(url));
+    assertEquals(new PyRequirement("geoip2", "2.2.0", url), PyRequirement.fromLine(url));
   }
 
   // PY-14230
   public void testArchiveUrlWithSha1() {
     final String url = "https://pypi.python.org/packages/source/g/geoip2/geoip2-2.2.0.tar.gz#sha1=26259d212447bc840400c25a48275fbc";
 
-    assertEquals(new PyRequirement("geoip2", "2.2.0", url), PyRequirement.fromString(url));
+    assertEquals(new PyRequirement("geoip2", "2.2.0", url), PyRequirement.fromLine(url));
   }
 
   // PY-14230
   public void testArchiveUrlWithSha224() {
     final String url = "https://pypi.python.org/packages/source/g/geoip2/geoip2-2.2.0.tar.gz#sha224=26259d212447bc840400c25a48275fbc";
 
-    assertEquals(new PyRequirement("geoip2", "2.2.0", url), PyRequirement.fromString(url));
+    assertEquals(new PyRequirement("geoip2", "2.2.0", url), PyRequirement.fromLine(url));
   }
 
   // PY-14230
   public void testArchiveUrlWithSha256() {
     final String url = "https://pypi.python.org/packages/source/g/geoip2/geoip2-2.2.0.tar.gz#sha256=26259d212447bc840400c25a48275fbc";
 
-    assertEquals(new PyRequirement("geoip2", "2.2.0", url), PyRequirement.fromString(url));
+    assertEquals(new PyRequirement("geoip2", "2.2.0", url), PyRequirement.fromLine(url));
   }
 
   // PY-14230
   public void testArchiveUrlWithSha384() {
     final String url = "https://pypi.python.org/packages/source/g/geoip2/geoip2-2.2.0.tar.gz#sha384=26259d212447bc840400c25a48275fbc";
 
-    assertEquals(new PyRequirement("geoip2", "2.2.0", url), PyRequirement.fromString(url));
+    assertEquals(new PyRequirement("geoip2", "2.2.0", url), PyRequirement.fromLine(url));
   }
 
   // PY-14230
   public void testArchiveUrlWithSha512() {
     final String url = "https://pypi.python.org/packages/source/g/geoip2/geoip2-2.2.0.tar.gz#sha512=26259d212447bc840400c25a48275fbc";
 
-    assertEquals(new PyRequirement("geoip2", "2.2.0", url), PyRequirement.fromString(url));
+    assertEquals(new PyRequirement("geoip2", "2.2.0", url), PyRequirement.fromLine(url));
   }
 
   // PY-18054
@@ -1022,15 +1022,15 @@ public class PyRequirementTest extends PyTestCase {
   public void testMinusInRequirementEggName() {
     final String options = "git://github.com/toastdriven/django-haystack.git#egg=django-haystack";
 
-    assertEquals(new PyRequirement("django-haystack", Collections.emptyList(), options), PyRequirement.fromString(options));
+    assertEquals(new PyRequirement("django-haystack", Collections.emptyList(), options), PyRequirement.fromLine(options));
   }
 
   public void testDevInRequirementEggName() {
     final String options1 = "git://github.com/toastdriven/django-haystack.git#egg=django_haystack-dev";
-    assertEquals(new PyRequirement("django-haystack", "dev", options1), PyRequirement.fromString(options1));
+    assertEquals(new PyRequirement("django-haystack", "dev", options1), PyRequirement.fromLine(options1));
 
     final String options2 = "git://github.com/toastdriven/django-haystack.git#egg=django-haystack-dev";
-    assertEquals(new PyRequirement("django-haystack", "dev", options2), PyRequirement.fromString(options2));
+    assertEquals(new PyRequirement("django-haystack", "dev", options2), PyRequirement.fromLine(options2));
   }
 
   // LOCAL DIR
@@ -1046,152 +1046,152 @@ public class PyRequirementTest extends PyTestCase {
   // TODO: https://pip.pypa.io/en/stable/reference/pip_install/#per-requirement-overrides
   // https://www.python.org/dev/peps/pep-0508/#names
   public void testRequirement() {
-    assertEquals(new PyRequirement("Orange-Bioinformatics"), PyRequirement.fromString("Orange-Bioinformatics"));
-    assertEquals(new PyRequirement("MOCPy"), PyRequirement.fromString("MOCPy"));
-    assertEquals(new PyRequirement("score.webassets"), PyRequirement.fromString("score.webassets"));
-    assertEquals(new PyRequirement("pip_helpers"), PyRequirement.fromString("pip_helpers"));
-    assertEquals(new PyRequirement("Django"), PyRequirement.fromString("Django"));
-    assertEquals(new PyRequirement("django"), PyRequirement.fromString("django"));
-    assertEquals(new PyRequirement("pinax-utils"), PyRequirement.fromString("pinax-utils"));
-    assertEquals(new PyRequirement("no_limit_nester"), PyRequirement.fromString("no_limit_nester"));
-    assertEquals(new PyRequirement("Flask-Celery-py3"), PyRequirement.fromString("Flask-Celery-py3"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics"), PyRequirement.fromLine("Orange-Bioinformatics"));
+    assertEquals(new PyRequirement("MOCPy"), PyRequirement.fromLine("MOCPy"));
+    assertEquals(new PyRequirement("score.webassets"), PyRequirement.fromLine("score.webassets"));
+    assertEquals(new PyRequirement("pip_helpers"), PyRequirement.fromLine("pip_helpers"));
+    assertEquals(new PyRequirement("Django"), PyRequirement.fromLine("Django"));
+    assertEquals(new PyRequirement("django"), PyRequirement.fromLine("django"));
+    assertEquals(new PyRequirement("pinax-utils"), PyRequirement.fromLine("pinax-utils"));
+    assertEquals(new PyRequirement("no_limit_nester"), PyRequirement.fromLine("no_limit_nester"));
+    assertEquals(new PyRequirement("Flask-Celery-py3"), PyRequirement.fromLine("Flask-Celery-py3"));
   }
 
   // https://www.python.org/dev/peps/pep-0440/
   public void testRequirementVersion() {
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5a20"), PyRequirement.fromString("Orange-Bioinformatics==2.5a20"));
-    assertEquals(new PyRequirement("MOCPy", "0.1.0.dev0"), PyRequirement.fromString("MOCPy==0.1.0.dev0"));
-    assertEquals(new PyRequirement("score.webassets", "0.2.3"), PyRequirement.fromString("score.webassets==0.2.3"));
-    assertEquals(new PyRequirement("pip_helpers", "0.5.post6"), PyRequirement.fromString("pip_helpers==0.5.post6"));
-    assertEquals(new PyRequirement("Django", "1.9rc1"), PyRequirement.fromString("Django==1.9rc1"));
-    assertEquals(new PyRequirement("django", "1!1"), PyRequirement.fromString("django==1!1"));
-    assertEquals(new PyRequirement("pinax-utils", "1.0b1.dev3"), PyRequirement.fromString("pinax-utils==1.0b1.dev3"));
-    assertEquals(new PyRequirement("Flask-Celery-py3", "0.1.*"), PyRequirement.fromString("Flask-Celery-py3==0.1.*"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5a20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5a20"));
+    assertEquals(new PyRequirement("MOCPy", "0.1.0.dev0"), PyRequirement.fromLine("MOCPy==0.1.0.dev0"));
+    assertEquals(new PyRequirement("score.webassets", "0.2.3"), PyRequirement.fromLine("score.webassets==0.2.3"));
+    assertEquals(new PyRequirement("pip_helpers", "0.5.post6"), PyRequirement.fromLine("pip_helpers==0.5.post6"));
+    assertEquals(new PyRequirement("Django", "1.9rc1"), PyRequirement.fromLine("Django==1.9rc1"));
+    assertEquals(new PyRequirement("django", "1!1"), PyRequirement.fromLine("django==1!1"));
+    assertEquals(new PyRequirement("pinax-utils", "1.0b1.dev3"), PyRequirement.fromLine("pinax-utils==1.0b1.dev3"));
+    assertEquals(new PyRequirement("Flask-Celery-py3", "0.1.*"), PyRequirement.fromLine("Flask-Celery-py3==0.1.*"));
     assertEquals(new PyRequirement("no_limit_nester", "1.0+local.version.10"),
-                 PyRequirement.fromString("no_limit_nester==1.0+local.version.10"));
+                 PyRequirement.fromLine("no_limit_nester==1.0+local.version.10"));
   }
 
   // https://www.python.org/dev/peps/pep-0440/#normalization
   public void testRequirementAlternatePreReleaseVersion() {
-    assertEquals(new PyRequirement("Django", "1.9rc1"), PyRequirement.fromString("Django==1.9RC1"));
+    assertEquals(new PyRequirement("Django", "1.9rc1"), PyRequirement.fromLine("Django==1.9RC1"));
 
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5a20"), PyRequirement.fromString("Orange-Bioinformatics==2.5.a20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5a20"), PyRequirement.fromString("Orange-Bioinformatics==2.5.a.20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5a20"), PyRequirement.fromString("Orange-Bioinformatics==2.5-a20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5a20"), PyRequirement.fromString("Orange-Bioinformatics==2.5-a_20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5a20"), PyRequirement.fromString("Orange-Bioinformatics==2.5_a20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5a20"), PyRequirement.fromString("Orange-Bioinformatics==2.5_a-20"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5a20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5.a20"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5a20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5.a.20"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5a20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5-a20"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5a20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5-a_20"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5a20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5_a20"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5a20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5_a-20"));
 
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5a20"), PyRequirement.fromString("Orange-Bioinformatics==2.5alpha20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5a20"), PyRequirement.fromString("Orange-Bioinformatics==2.5.alpha20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5a20"), PyRequirement.fromString("Orange-Bioinformatics==2.5.alpha.20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5a20"), PyRequirement.fromString("Orange-Bioinformatics==2.5-alpha20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5a20"), PyRequirement.fromString("Orange-Bioinformatics==2.5-alpha_20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5a20"), PyRequirement.fromString("Orange-Bioinformatics==2.5_alpha20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5a20"), PyRequirement.fromString("Orange-Bioinformatics==2.5_alpha-20"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5a20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5alpha20"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5a20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5.alpha20"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5a20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5.alpha.20"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5a20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5-alpha20"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5a20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5-alpha_20"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5a20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5_alpha20"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5a20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5_alpha-20"));
 
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5b20"), PyRequirement.fromString("Orange-Bioinformatics==2.5beta20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5b20"), PyRequirement.fromString("Orange-Bioinformatics==2.5.beta20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5b20"), PyRequirement.fromString("Orange-Bioinformatics==2.5.beta.20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5b20"), PyRequirement.fromString("Orange-Bioinformatics==2.5-beta20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5b20"), PyRequirement.fromString("Orange-Bioinformatics==2.5-beta_20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5b20"), PyRequirement.fromString("Orange-Bioinformatics==2.5_beta20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5b20"), PyRequirement.fromString("Orange-Bioinformatics==2.5_beta-20"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5b20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5beta20"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5b20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5.beta20"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5b20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5.beta.20"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5b20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5-beta20"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5b20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5-beta_20"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5b20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5_beta20"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5b20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5_beta-20"));
 
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5rc20"), PyRequirement.fromString("Orange-Bioinformatics==2.5c20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5rc20"), PyRequirement.fromString("Orange-Bioinformatics==2.5.c20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5rc20"), PyRequirement.fromString("Orange-Bioinformatics==2.5.c.20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5rc20"), PyRequirement.fromString("Orange-Bioinformatics==2.5-c20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5rc20"), PyRequirement.fromString("Orange-Bioinformatics==2.5-c_20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5rc20"), PyRequirement.fromString("Orange-Bioinformatics==2.5_c20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5rc20"), PyRequirement.fromString("Orange-Bioinformatics==2.5_c-20"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5rc20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5c20"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5rc20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5.c20"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5rc20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5.c.20"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5rc20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5-c20"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5rc20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5-c_20"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5rc20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5_c20"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5rc20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5_c-20"));
 
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5rc20"), PyRequirement.fromString("Orange-Bioinformatics==2.5pre20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5rc20"), PyRequirement.fromString("Orange-Bioinformatics==2.5.pre20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5rc20"), PyRequirement.fromString("Orange-Bioinformatics==2.5.pre.20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5rc20"), PyRequirement.fromString("Orange-Bioinformatics==2.5-pre20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5rc20"), PyRequirement.fromString("Orange-Bioinformatics==2.5-pre_20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5rc20"), PyRequirement.fromString("Orange-Bioinformatics==2.5_pre20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5rc20"), PyRequirement.fromString("Orange-Bioinformatics==2.5_pre-20"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5rc20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5pre20"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5rc20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5.pre20"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5rc20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5.pre.20"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5rc20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5-pre20"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5rc20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5-pre_20"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5rc20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5_pre20"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5rc20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5_pre-20"));
 
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5rc20"), PyRequirement.fromString("Orange-Bioinformatics==2.5preview20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5rc20"), PyRequirement.fromString("Orange-Bioinformatics==2.5.preview20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5rc20"), PyRequirement.fromString("Orange-Bioinformatics==2.5.preview.20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5rc20"), PyRequirement.fromString("Orange-Bioinformatics==2.5-preview20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5rc20"), PyRequirement.fromString("Orange-Bioinformatics==2.5-preview_20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5rc20"), PyRequirement.fromString("Orange-Bioinformatics==2.5_preview20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5rc20"), PyRequirement.fromString("Orange-Bioinformatics==2.5_preview-20"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5rc20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5preview20"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5rc20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5.preview20"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5rc20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5.preview.20"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5rc20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5-preview20"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5rc20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5-preview_20"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5rc20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5_preview20"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5rc20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5_preview-20"));
 
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5a0"), PyRequirement.fromString("Orange-Bioinformatics==2.5a"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5a0"), PyRequirement.fromString("Orange-Bioinformatics==2.5.a"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5a0"), PyRequirement.fromString("Orange-Bioinformatics==2.5-a"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5a0"), PyRequirement.fromString("Orange-Bioinformatics==2.5_a"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5a0"), PyRequirement.fromLine("Orange-Bioinformatics==2.5a"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5a0"), PyRequirement.fromLine("Orange-Bioinformatics==2.5.a"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5a0"), PyRequirement.fromLine("Orange-Bioinformatics==2.5-a"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5a0"), PyRequirement.fromLine("Orange-Bioinformatics==2.5_a"));
   }
 
   // https://www.python.org/dev/peps/pep-0440/#normalization
   public void testRequirementAlternatePostReleaseVersion() {
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post20"), PyRequirement.fromString("Orange-Bioinformatics==2.5-post20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post20"), PyRequirement.fromString("Orange-Bioinformatics==2.5-post.20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post20"), PyRequirement.fromString("Orange-Bioinformatics==2.5_post20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post20"), PyRequirement.fromString("Orange-Bioinformatics==2.5_post_20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post20"), PyRequirement.fromString("Orange-Bioinformatics==2.5post20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post20"), PyRequirement.fromString("Orange-Bioinformatics==2.5post-20"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5-post20"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5-post.20"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5_post20"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5_post_20"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5post20"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5post-20"));
 
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post20"), PyRequirement.fromString("Orange-Bioinformatics==2.5.r20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post20"), PyRequirement.fromString("Orange-Bioinformatics==2.5-r20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post20"), PyRequirement.fromString("Orange-Bioinformatics==2.5-r.20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post20"), PyRequirement.fromString("Orange-Bioinformatics==2.5_r20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post20"), PyRequirement.fromString("Orange-Bioinformatics==2.5_r_20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post20"), PyRequirement.fromString("Orange-Bioinformatics==2.5r20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post20"), PyRequirement.fromString("Orange-Bioinformatics==2.5r-20"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5.r20"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5-r20"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5-r.20"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5_r20"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5_r_20"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5r20"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5r-20"));
 
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post20"), PyRequirement.fromString("Orange-Bioinformatics==2.5.rev20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post20"), PyRequirement.fromString("Orange-Bioinformatics==2.5-rev20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post20"), PyRequirement.fromString("Orange-Bioinformatics==2.5-rev.20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post20"), PyRequirement.fromString("Orange-Bioinformatics==2.5_rev20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post20"), PyRequirement.fromString("Orange-Bioinformatics==2.5_rev_20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post20"), PyRequirement.fromString("Orange-Bioinformatics==2.5rev20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post20"), PyRequirement.fromString("Orange-Bioinformatics==2.5rev-20"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5.rev20"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5-rev20"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5-rev.20"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5_rev20"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5_rev_20"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5rev20"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5rev-20"));
 
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post0"), PyRequirement.fromString("Orange-Bioinformatics==2.5.post"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post0"), PyRequirement.fromString("Orange-Bioinformatics==2.5-post"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post0"), PyRequirement.fromString("Orange-Bioinformatics==2.5_post"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post0"), PyRequirement.fromString("Orange-Bioinformatics==2.5post"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post0"), PyRequirement.fromLine("Orange-Bioinformatics==2.5.post"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post0"), PyRequirement.fromLine("Orange-Bioinformatics==2.5-post"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post0"), PyRequirement.fromLine("Orange-Bioinformatics==2.5_post"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post0"), PyRequirement.fromLine("Orange-Bioinformatics==2.5post"));
 
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post20"), PyRequirement.fromString("Orange-Bioinformatics==2.5-20"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5-20"));
   }
 
   // https://www.python.org/dev/peps/pep-0440/#normalization
   public void testRequirementAlternateDevelopmentVersion() {
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.dev20"), PyRequirement.fromString("Orange-Bioinformatics==2.5-dev20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.dev20"), PyRequirement.fromString("Orange-Bioinformatics==2.5_dev20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.dev20"), PyRequirement.fromString("Orange-Bioinformatics==2.5dev20"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.dev20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5-dev20"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.dev20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5_dev20"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.dev20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5dev20"));
 
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.dev0"), PyRequirement.fromString("Orange-Bioinformatics==2.5-dev"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.dev0"), PyRequirement.fromString("Orange-Bioinformatics==2.5_dev"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.dev0"), PyRequirement.fromString("Orange-Bioinformatics==2.5dev"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.dev0"), PyRequirement.fromLine("Orange-Bioinformatics==2.5-dev"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.dev0"), PyRequirement.fromLine("Orange-Bioinformatics==2.5_dev"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.dev0"), PyRequirement.fromLine("Orange-Bioinformatics==2.5dev"));
   }
 
   // https://www.python.org/dev/peps/pep-0440/#normalization
   public void testRequirementAlternateLocalVersion() {
     assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5+local.version"),
-                 PyRequirement.fromString("Orange-Bioinformatics==2.5+local-version"));
+                 PyRequirement.fromLine("Orange-Bioinformatics==2.5+local-version"));
 
     assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5+local.version"),
-                 PyRequirement.fromString("Orange-Bioinformatics==2.5+local_version"));
+                 PyRequirement.fromLine("Orange-Bioinformatics==2.5+local_version"));
   }
 
   // https://www.python.org/dev/peps/pep-0440/#normalization
   public void testRequirementAlternateVersionStart() {
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5a20"), PyRequirement.fromString("Orange-Bioinformatics==v2.5a20"));
-    assertEquals(new PyRequirement("MOCPy", "0.1.0.dev0"), PyRequirement.fromString("MOCPy==v0.1.0.dev0"));
-    assertEquals(new PyRequirement("score.webassets", "0.2.3"), PyRequirement.fromString("score.webassets==v0.2.3"));
-    assertEquals(new PyRequirement("pip_helpers", "0.5.post6"), PyRequirement.fromString("pip_helpers==v0.5.post6"));
-    assertEquals(new PyRequirement("Django", "1.9rc1"), PyRequirement.fromString("Django==v1.9rc1"));
-    assertEquals(new PyRequirement("django", "1!1"), PyRequirement.fromString("django==v1!1"));
-    assertEquals(new PyRequirement("pinax-utils", "1.0b1.dev3"), PyRequirement.fromString("pinax-utils==v1.0b1.dev3"));
-    assertEquals(new PyRequirement("no_limit_nester"), PyRequirement.fromString("no_limit_nester==v1.0+local.version.10"));
-    assertEquals(new PyRequirement("Flask-Celery-py3", "0.1.*"), PyRequirement.fromString("Flask-Celery-py3==v0.1.*"));
+    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5a20"), PyRequirement.fromLine("Orange-Bioinformatics==v2.5a20"));
+    assertEquals(new PyRequirement("MOCPy", "0.1.0.dev0"), PyRequirement.fromLine("MOCPy==v0.1.0.dev0"));
+    assertEquals(new PyRequirement("score.webassets", "0.2.3"), PyRequirement.fromLine("score.webassets==v0.2.3"));
+    assertEquals(new PyRequirement("pip_helpers", "0.5.post6"), PyRequirement.fromLine("pip_helpers==v0.5.post6"));
+    assertEquals(new PyRequirement("Django", "1.9rc1"), PyRequirement.fromLine("Django==v1.9rc1"));
+    assertEquals(new PyRequirement("django", "1!1"), PyRequirement.fromLine("django==v1!1"));
+    assertEquals(new PyRequirement("pinax-utils", "1.0b1.dev3"), PyRequirement.fromLine("pinax-utils==v1.0b1.dev3"));
+    assertEquals(new PyRequirement("no_limit_nester"), PyRequirement.fromLine("no_limit_nester==v1.0+local.version.10"));
+    assertEquals(new PyRequirement("Flask-Celery-py3", "0.1.*"), PyRequirement.fromLine("Flask-Celery-py3==v0.1.*"));
   }
 
   // https://www.python.org/dev/peps/pep-0440/#version-specifiers
@@ -1269,7 +1269,7 @@ public class PyRequirementTest extends PyTestCase {
 
   // PY-6355
   public void testTrailingZeroesInVersion() {
-    final PyRequirement req080 = PyRequirement.fromString("foo==0.8.0");
+    final PyRequirement req080 = PyRequirement.fromLine("foo==0.8.0");
     final PyPackage pack08 = new PyPackage("foo", "0.8", null, Collections.<PyRequirement>emptyList());
     assertNotNull(req080);
     assertNotNull(req080.match(Collections.singletonList(pack08)));
@@ -1277,7 +1277,7 @@ public class PyRequirementTest extends PyTestCase {
 
   // PY-6438
   public void testUnderscoreMatchesDash() {
-    final PyRequirement req = PyRequirement.fromString("pyramid_zcml");
+    final PyRequirement req = PyRequirement.fromLine("pyramid_zcml");
     final PyPackage pkg = new PyPackage("pyramid-zcml", "0.1", null, Collections.<PyRequirement>emptyList());
     assertNotNull(req);
     assertNotNull(req.match(Collections.singletonList(pkg)));
@@ -1286,7 +1286,7 @@ public class PyRequirementTest extends PyTestCase {
   // OPTIONS
   public void testOptions() {
     assertEmpty(
-      PyRequirement.parse(
+      PyRequirement.fromText(
         "-i URL\n" +
         "--index-url URL\n" +
         "--extra-index-url URL\n" +
@@ -1308,20 +1308,20 @@ public class PyRequirementTest extends PyTestCase {
     assertNotNull(requirementsFile);
 
     assertEquals(Arrays.asList(new PyRequirement("bitly_api"), new PyRequirement("numpy"), new PyRequirement("SomeProject")),
-                 PyRequirement.parse(requirementsFile));
+                 PyRequirement.fromFile(requirementsFile));
   }
 
   // COMMENTS
   // TODO: comment at the end
   public void testComment() {
-    assertNull(PyRequirement.fromString("# comment"));
+    assertNull(PyRequirement.fromLine("# comment"));
   }
 
   // ENV MARKERS
   // TODO: https://www.python.org/dev/peps/pep-0426/#environment-markers, https://www.python.org/dev/peps/pep-0508/#environment-markers
 
   private static void doTest(@NotNull String options) {
-    assertEquals(new PyRequirement("MyProject1", Collections.emptyList(), options), PyRequirement.fromString(options));
+    assertEquals(new PyRequirement("MyProject1", Collections.emptyList(), options), PyRequirement.fromLine(options));
   }
 
   private static void doRequirementRelationTest(@NotNull PyRequirementRelation relation, @NotNull String version) {
@@ -1365,6 +1365,6 @@ public class PyRequirementTest extends PyTestCase {
 
     final String options = sb.toString();
 
-    assertEquals(new PyRequirement(name, expectedVersionSpecs, options), PyRequirement.fromString(options));
+    assertEquals(new PyRequirement(name, expectedVersionSpecs, options), PyRequirement.fromLine(options));
   }
 }

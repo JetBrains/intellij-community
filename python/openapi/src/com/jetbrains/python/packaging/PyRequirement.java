@@ -37,7 +37,6 @@ import java.util.stream.StreamSupport;
 
 /**
  * @author vlan
- * @see <a href="http://legacy.python.org/dev/peps/pep-0386/">[PEP-0386]</a>
  */
 public class PyRequirement {
 
@@ -137,7 +136,7 @@ public class PyRequirement {
   private final String myName;
 
   @NotNull
-  private final String myOptions;
+  private final String myInstallOptions;
 
   @NotNull
   private final List<PyRequirementVersionSpec> myVersionSpecs;
@@ -150,20 +149,20 @@ public class PyRequirement {
     this(name, Collections.singletonList(calculateVersionSpec(version, PyRequirementRelation.EQ)));
   }
 
-  public PyRequirement(@NotNull String name, @NotNull String version, @NotNull String options) {
-    this(name, Collections.singletonList(calculateVersionSpec(version, PyRequirementRelation.EQ)), options);
+  public PyRequirement(@NotNull String name, @NotNull String version, @NotNull String installOptions) {
+    this(name, Collections.singletonList(calculateVersionSpec(version, PyRequirementRelation.EQ)), installOptions);
   }
 
   public PyRequirement(@NotNull String name, @NotNull List<PyRequirementVersionSpec> versionSpecs) {
     myName = name;
     myVersionSpecs = versionSpecs;
-    myOptions = toString();
+    myInstallOptions = toString();
   }
 
-  public PyRequirement(@NotNull String name, @NotNull List<PyRequirementVersionSpec> versionSpecs, @NotNull String options) {
+  public PyRequirement(@NotNull String name, @NotNull List<PyRequirementVersionSpec> versionSpecs, @NotNull String installOptions) {
     myName = name;
     myVersionSpecs = versionSpecs;
-    myOptions = options;
+    myInstallOptions = installOptions;
   }
 
   @NotNull
@@ -172,8 +171,8 @@ public class PyRequirement {
   }
 
   @NotNull
-  public String toOptions() {
-    return myOptions;
+  public String getInstallOptions() {
+    return myInstallOptions;
   }
 
   @Override
@@ -190,7 +189,7 @@ public class PyRequirement {
 
     if (!myName.equals(that.myName)) return false;
     if (!myVersionSpecs.equals(that.myVersionSpecs)) return false;
-    if (!myOptions.equals(that.myOptions)) return false;
+    if (!myInstallOptions.equals(that.myInstallOptions)) return false;
 
     return true;
   }
@@ -199,7 +198,7 @@ public class PyRequirement {
   public int hashCode() {
     int result = myName.hashCode();
     result = 31 * result + myVersionSpecs.hashCode();
-    result = 31 * result + myOptions.hashCode();
+    result = 31 * result + myInstallOptions.hashCode();
     return result;
   }
 
@@ -221,17 +220,8 @@ public class PyRequirement {
     return null;
   }
 
-  @NotNull
-  public static PyRequirement fromStringGuaranteed(@NotNull String line) {
-    final PyRequirement requirement = fromString(line);
-    if (requirement == null) {
-      throw new IllegalArgumentException("Failed to parse " + line);
-    }
-    return requirement;
-  }
-
   @Nullable
-  public static PyRequirement fromString(@NotNull String line) {
+  public static PyRequirement fromLine(@NotNull String line) {
     final PyRequirement githubArchiveUrl = parseGithubArchiveUrl(line);
     if (githubArchiveUrl != null) {
       return githubArchiveUrl;
@@ -251,13 +241,13 @@ public class PyRequirement {
   }
 
   @NotNull
-  public static List<PyRequirement> parse(@NotNull String text) {
-    return parseText(text, null, new HashSet<>());
+  public static List<PyRequirement> fromText(@NotNull String text) {
+    return fromText(text, null, new HashSet<>());
   }
 
   @NotNull
-  public static List<PyRequirement> parse(@NotNull VirtualFile file) {
-    return parseText(loadText(file), file, new HashSet<>());
+  public static List<PyRequirement> fromFile(@NotNull VirtualFile file) {
+    return fromText(loadText(file), file, new HashSet<>());
   }
 
   @NotNull
@@ -322,9 +312,9 @@ public class PyRequirement {
   }
 
   @NotNull
-  private static List<PyRequirement> parseText(@NotNull String text,
-                                               @Nullable VirtualFile containingFile,
-                                               @NotNull Set<VirtualFile> visitedFiles) {
+  private static List<PyRequirement> fromText(@NotNull String text,
+                                              @Nullable VirtualFile containingFile,
+                                              @NotNull Set<VirtualFile> visitedFiles) {
     if (containingFile != null) {
       visitedFiles.add(containingFile);
     }
@@ -420,7 +410,7 @@ public class PyRequirement {
       return parseRecursiveLine(line, containingFile, visitedFiles, "--requirement ".length());
     }
 
-    return Collections.singletonList(fromString(line));
+    return Collections.singletonList(fromLine(line));
   }
 
   @NotNull
@@ -534,7 +524,7 @@ public class PyRequirement {
     final VirtualFile file = findRecursiveFile(containingFile, path);
 
     if (file != null && !visitedFiles.contains(file)) {
-      return parseText(loadText(file), file, visitedFiles);
+      return fromText(loadText(file), file, visitedFiles);
     }
 
     return Collections.emptyList();

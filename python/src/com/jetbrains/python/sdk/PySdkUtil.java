@@ -252,7 +252,7 @@ public class PySdkUtil {
   public static List<PyRequirement> getRequirementsFromTxt(Module module) {
     final VirtualFile requirementsTxt = PyPackageUtil.findRequirementsTxt(module);
     if (requirementsTxt != null) {
-      return PyRequirement.parse(requirementsTxt);
+      return PyRequirement.fromFile(requirementsTxt);
     }
     return null;
   }
