@@ -33,8 +33,8 @@ import java.util.List;
 abstract class ProfilesConfigurableComboBox extends JPanel {
   private static final String COMBO_CARD = "combo.card";
   private static final String EDIT_CARD = "edit.card";
-  public static final String PROJECT_LEVEL_SEPARATOR_TEXT = "Project Level";
-  public static final String GLOBAL_LEVEL_SEPARATOR_TEXT = "Global Level";
+  private static final String PROJECT_LEVEL_SEPARATOR_TEXT = "Project Level";
+  private static final String GLOBAL_LEVEL_SEPARATOR_TEXT = "Global Level";
 
   private final JComboBox myProfilesComboBox;
   private final CardLayout myCardLayout;
