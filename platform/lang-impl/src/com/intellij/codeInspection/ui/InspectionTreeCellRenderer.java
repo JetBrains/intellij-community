@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.reference.RefElement;
@@ -85,20 +86,24 @@ class InspectionTreeCellRenderer extends ColoredTreeCellRenderer {
       myItemCounter.clear();
       node.visitProblemSeverities(myItemCounter);
       append("  ");
-      if (myItemCounter.size() > MAX_LEVEL_TYPES) {
-        append(InspectionsBundle.message("inspection.problem.descriptor.count",
-               myItemCounter.values().stream().reduce(0, (i, j) -> i + j)) + " ",
-               patchAttr(node, SimpleTextAttributes.GRAYED_ATTRIBUTES));
+      if (isDisableTooNode(node)) {
+        append("Disabled", patchAttr(node, SimpleTextAttributes.GRAYED_ATTRIBUTES));
       } else {
-        for (Map.Entry<HighlightDisplayLevel, Integer> entry : myItemCounter.entrySet()) {
-          final HighlightDisplayLevel level = entry.getKey();
-          final Integer occur = entry.getValue();
+        if (myItemCounter.size() > MAX_LEVEL_TYPES) {
+          append(InspectionsBundle.message("inspection.problem.descriptor.count",
+                                           myItemCounter.values().stream().reduce(0, (i, j) -> i + j)) + " ",
+                 patchAttr(node, SimpleTextAttributes.GRAYED_ATTRIBUTES));
+        } else {
+          for (Map.Entry<HighlightDisplayLevel, Integer> entry : myItemCounter.entrySet()) {
+            final HighlightDisplayLevel level = entry.getKey();
+            final Integer occur = entry.getValue();
 
-          SimpleTextAttributes attrs = SimpleTextAttributes.GRAY_ATTRIBUTES;
-          if (level == HighlightDisplayLevel.ERROR && !myView.getGlobalInspectionContext().getUIOptions().GROUP_BY_SEVERITY) {
-            attrs = attrs.derive(-1, JBColor.red.brighter(), null, null);
+            SimpleTextAttributes attrs = SimpleTextAttributes.GRAY_ATTRIBUTES;
+            if (level == HighlightDisplayLevel.ERROR && !myView.getGlobalInspectionContext().getUIOptions().GROUP_BY_SEVERITY) {
+              attrs = attrs.derive(-1, JBColor.red.brighter(), null, null);
+            }
+            append(occur + " " + getPresentableName(level, occur > 1) + " ", patchAttr(node, attrs));
           }
-          append(occur + " " + getPresentableName(level, occur > 1) + " ", patchAttr(node, attrs));
         }
       }
     }
@@ -139,6 +144,11 @@ class InspectionTreeCellRenderer extends ColoredTreeCellRenderer {
       }
       return name;
     }
+  }
+
+  private boolean isDisableTooNode(InspectionTreeNode node) {
+    return node instanceof InspectionNode && !myView.getCurrentProfile().isToolEnabled(
+      HighlightDisplayKey.find(((InspectionNode)node).getToolWrapper().getShortName()));
   }
 
   private static SimpleTextAttributes getMainForegroundAttributes(InspectionTreeNode node) {
