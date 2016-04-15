@@ -248,7 +248,7 @@ public class XDebuggerTestUtil {
     if (name != null) assertEquals(name, node.myName);
     if (type != null) assertEquals(type, node.myType);
     if (valuePattern != null) {
-      assertTrue("Expected value" + valuePattern + " Actual value: " + node.myValue, node.myValue.matches(valuePattern));
+      assertTrue("Expected value: " + valuePattern + " Actual value: " + node.myValue, node.myValue.matches(valuePattern));
     }
   }
 
