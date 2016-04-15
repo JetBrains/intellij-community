@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.ui.ArtifactPropertiesEditor;
@@ -55,6 +56,8 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
   private JTextField myVersionTF;
   private JTextField myWidthTF;
   private JTextField myHeightTF;
+  private TextFieldWithBrowseButton myHtmlTemplate;
+  private JTextField myHtmlPlaceholderIdTF;
   private TextFieldWithBrowseButton myHtmlParams;
   private TextFieldWithBrowseButton myParams;
   private JCheckBox myUpdateInBackgroundCB;
@@ -75,6 +78,8 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
     final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileDescriptor(StdFileTypes.PROPERTIES);
     myHtmlParams.addBrowseFolderListener("Choose Properties File", "Parameters for the resulting application to run standalone.", project, descriptor);
     myParams.addBrowseFolderListener("Choose Properties File", "Parameters for the resulting application to run in the browser.", project, descriptor);
+    myHtmlTemplate.addBrowseFolderListener("Choose HTML File", "HTML template for application entry point to run in browser", project,
+                                           FileChooserDescriptorFactory.createSingleFileDescriptor(StdFileTypes.HTML));
     myEditSignCertificateButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -130,8 +135,10 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
     if (isModified(myProperties.getHeight(), myHeightTF)) return true;
     if (isModified(myProperties.getAppClass(), myAppClass)) return true;
     if (isModified(myProperties.getVersion(), myVersionTF)) return true;
-    if (isModified(myProperties.getHtmlParamFile(), myHtmlParams)) return true;
-    if (isModified(myProperties.getParamFile(), myParams)) return true;
+    if (isModified(myProperties.getHtmlTemplateFile(), getSystemIndependentPath(myHtmlTemplate))) return true;
+    if (isModified(myProperties.getHtmlPlaceholderId(), myHtmlPlaceholderIdTF)) return true;
+    if (isModified(myProperties.getHtmlParamFile(), getSystemIndependentPath(myHtmlParams))) return true;
+    if (isModified(myProperties.getParamFile(), getSystemIndependentPath(myParams))) return true;
     if (!Comparing.equal(myNativeBundleCB.getSelectedItem(), myProperties.getNativeBundle())) return true;
     final boolean inBackground = Comparing.strEqual(myProperties.getUpdateMode(), JavaFxPackagerConstants.UPDATE_MODE_BACKGROUND);
     if (inBackground != myUpdateInBackgroundCB.isSelected()) return true;
@@ -160,6 +167,10 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
     return !Comparing.strEqual(title, tf.getText().trim());
   }
 
+  private static boolean isModified(final String title, String value) {
+    return !Comparing.strEqual(title, value);
+  }
+
   @Override
   public void apply() {
     myProperties.setTitle(myTitleTF.getText());
@@ -169,8 +180,10 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
     myProperties.setVersion(myVersionTF.getText());
     myProperties.setWidth(myWidthTF.getText());
     myProperties.setHeight(myHeightTF.getText());
-    myProperties.setHtmlParamFile(myHtmlParams.getText());
-    myProperties.setParamFile(myParams.getText());
+    myProperties.setHtmlTemplateFile(getSystemIndependentPath(myHtmlTemplate));
+    myProperties.setHtmlPlaceholderId(myHtmlPlaceholderIdTF.getText());
+    myProperties.setHtmlParamFile(getSystemIndependentPath(myHtmlParams));
+    myProperties.setParamFile(getSystemIndependentPath(myParams));
     myProperties.setUpdateMode(myUpdateInBackgroundCB.isSelected() ? JavaFxPackagerConstants.UPDATE_MODE_BACKGROUND
                                                                    : JavaFxPackagerConstants.UPDATE_MODE_ALWAYS);
     myProperties.setEnabledSigning(myEnableSigningCB.isSelected());
@@ -205,8 +218,10 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
     setText(myHeightTF, myProperties.getHeight());
     setText(myAppClass, myProperties.getAppClass());
     setText(myVersionTF, myProperties.getVersion());
-    setText(myHtmlParams, myProperties.getHtmlParamFile());
-    setText(myParams, myProperties.getParamFile());
+    setSystemDependentPath(myHtmlTemplate, myProperties.getHtmlTemplateFile());
+    setText(myHtmlPlaceholderIdTF, myProperties.getHtmlPlaceholderId());
+    setSystemDependentPath(myHtmlParams, myProperties.getHtmlParamFile());
+    setSystemDependentPath(myParams, myProperties.getParamFile());
     myNativeBundleCB.setSelectedItem(myProperties.getNativeBundle());
     myUpdateInBackgroundCB.setSelected(Comparing.strEqual(myProperties.getUpdateMode(), JavaFxPackagerConstants.UPDATE_MODE_BACKGROUND));
     myEnableSigningCB.setSelected(myProperties.isEnabledSigning());
@@ -233,6 +248,16 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
     if (myDialog != null) {
       myDialog.myPanel = null;
     }
+  }
+
+  static String getSystemIndependentPath(TextFieldWithBrowseButton withBrowseButton) {
+    final String text = withBrowseButton.getText();
+    if (StringUtil.isEmptyOrSpaces(text)) return null;
+    return FileUtil.toSystemIndependentName(text.trim());
+  }
+
+  static void setSystemDependentPath(TextFieldWithBrowseButton withBrowseButton, String path) {
+    withBrowseButton.setText(path != null ? FileUtil.toSystemDependentName(path.trim()) : "");
   }
 
   private static class CustomManifestAttributesDialog extends DialogWrapper {

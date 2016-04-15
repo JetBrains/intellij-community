@@ -7,7 +7,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -28,9 +27,9 @@ public class JavaFxApplicationIconsDialog extends DialogWrapper {
     init();
 
     if (icons != null) {
-      setSystemDependentPath(myPanel.myLinuxIconPath, icons.getLinuxIcon());
-      setSystemDependentPath(myPanel.myMacIconPath, icons.getMacIcon());
-      setSystemDependentPath(myPanel.myWindowsIconPath, icons.getWindowsIcon());
+      JavaFxArtifactPropertiesEditor.setSystemDependentPath(myPanel.myLinuxIconPath, icons.getLinuxIcon());
+      JavaFxArtifactPropertiesEditor.setSystemDependentPath(myPanel.myMacIconPath, icons.getMacIcon());
+      JavaFxArtifactPropertiesEditor.setSystemDependentPath(myPanel.myWindowsIconPath, icons.getWindowsIcon());
     }
 
     addBrowseListener(myPanel.myLinuxIconPath, "png", project);
@@ -58,21 +57,10 @@ public class JavaFxApplicationIconsDialog extends DialogWrapper {
   @NotNull
   public JavaFxApplicationIcons getIcons() {
     JavaFxApplicationIcons icons = new JavaFxApplicationIcons();
-    icons.setLinuxIcon(getSystemIndependentPath(myPanel.myLinuxIconPath));
-    icons.setMacIcon(getSystemIndependentPath(myPanel.myMacIconPath));
-    icons.setWindowsIcon(getSystemIndependentPath(myPanel.myWindowsIconPath));
-    icons.setBaseDir(myProject.getBasePath());
+    icons.setLinuxIcon(JavaFxArtifactPropertiesEditor.getSystemIndependentPath(myPanel.myLinuxIconPath));
+    icons.setMacIcon(JavaFxArtifactPropertiesEditor.getSystemIndependentPath(myPanel.myMacIconPath));
+    icons.setWindowsIcon(JavaFxArtifactPropertiesEditor.getSystemIndependentPath(myPanel.myWindowsIconPath));
     return icons;
-  }
-
-  private static String getSystemIndependentPath(TextFieldWithBrowseButton withBrowseButton) {
-    final String text = withBrowseButton.getText();
-    if (StringUtil.isEmptyOrSpaces(text)) return null;
-    return FileUtil.toSystemIndependentName(text.trim());
-  }
-
-  private static void setSystemDependentPath(TextFieldWithBrowseButton withBrowseButton, String path) {
-    withBrowseButton.setText(!StringUtil.isEmptyOrSpaces(path) ? FileUtil.toSystemDependentName(path) : "");
   }
 
   private boolean isValidPath(TextFieldWithBrowseButton withBrowseButton, ProjectFileIndex index, String osName) {

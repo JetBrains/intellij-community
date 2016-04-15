@@ -31,6 +31,8 @@ public class JpsJavaFxArtifactProperties extends JpsElementBase<JpsJavaFxArtifac
     myState.setVersion(state.myVersion);
     myState.setWidth(state.myWidth);
     myState.setHeight(state.myHeight);
+    myState.setHtmlTemplateFile(state.myHtmlTemplateFile);
+    myState.setHtmlPlaceholderId(state.myHtmlPlaceholderId);
     myState.setHtmlParamFile(state.myHtmlParamFile);
     myState.setParamFile(state.myParamFile);
     myState.setUpdateMode(state.myUpdateMode);
@@ -65,6 +67,8 @@ public class JpsJavaFxArtifactProperties extends JpsElementBase<JpsJavaFxArtifac
     private String myVersion;
     private String myWidth = JavaFxPackagerConstants.DEFAULT_WEIGHT;
     private String myHeight = JavaFxPackagerConstants.DEFAULT_HEIGHT;
+    private String myHtmlTemplateFile;
+    private String myHtmlPlaceholderId;
     private String myHtmlParamFile;
     private String myParamFile;
     private String myUpdateMode = JavaFxPackagerConstants.UPDATE_MODE_BACKGROUND;
@@ -141,6 +145,22 @@ public class JpsJavaFxArtifactProperties extends JpsElementBase<JpsJavaFxArtifac
 
     public void setHeight(String height) {
       myHeight = height;
+    }
+
+    public String getHtmlTemplateFile() {
+      return myHtmlTemplateFile;
+    }
+
+    public void setHtmlTemplateFile(String htmlTemplateFile) {
+      myHtmlTemplateFile = htmlTemplateFile;
+    }
+
+    public String getHtmlPlaceholderId() {
+      return myHtmlPlaceholderId;
+    }
+
+    public void setHtmlPlaceholderId(String htmlPlaceholderId) {
+      myHtmlPlaceholderId = htmlPlaceholderId;
     }
 
     public String getHtmlParamFile() {

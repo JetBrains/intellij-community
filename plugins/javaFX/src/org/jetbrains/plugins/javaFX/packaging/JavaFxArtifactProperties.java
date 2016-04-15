@@ -60,6 +60,8 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
   private String myVersion;
   private String myWidth = JavaFxPackagerConstants.DEFAULT_WEIGHT;
   private String myHeight = JavaFxPackagerConstants.DEFAULT_HEIGHT;
+  private String myHtmlTemplateFile;
+  private String myHtmlPlaceholderId;
   private String myHtmlParamFile;
   private String myParamFile;
   private String myUpdateMode = JavaFxPackagerConstants.UPDATE_MODE_BACKGROUND;
@@ -189,6 +191,22 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
 
   public void setHeight(String height) {
     myHeight = height;
+  }
+
+  public String getHtmlTemplateFile() {
+    return myHtmlTemplateFile;
+  }
+
+  public void setHtmlTemplateFile(String htmlTemplateFile) {
+    myHtmlTemplateFile = htmlTemplateFile;
+  }
+
+  public String getHtmlPlaceholderId() {
+    return myHtmlPlaceholderId;
+  }
+
+  public void setHtmlPlaceholderId(String htmlPlaceholderId) {
+    myHtmlPlaceholderId = htmlPlaceholderId;
   }
 
   public String getHtmlParamFile() {
@@ -411,6 +429,16 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
     @Override
     public boolean convertCss2Bin() {
       return myProperties.isConvertCss2Bin();
+    }
+
+    @Override
+    protected String getHtmlTemplateFile() {
+      return myProperties.getHtmlTemplateFile();
+    }
+
+    @Override
+    protected String getHtmlPlaceholderId() {
+      return myProperties.getHtmlPlaceholderId();
     }
 
     @Override

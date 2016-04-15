@@ -34,7 +34,8 @@ public class JavaFxAntGenerator {
                                                         String artifactFileName,
                                                         String artifactName,
                                                         String tempDirPath,
-                                                        boolean isRelativeIconPath) {
+                                                        String tempDirDeployPath,
+                                                        String relativeToBaseDirPath) {
     final String artifactFileNameWithoutExtension = FileUtil.getNameWithoutExtension(artifactFileName);
     final List<SimpleTag> topLevelTagsCollector = new ArrayList<SimpleTag>(); 
     final String preloaderJar = packager.getPreloaderJar();
@@ -100,7 +101,7 @@ public class JavaFxAntGenerator {
 
     //create jar task
     final SimpleTag createJarTag = new SimpleTag("fx:jar",
-                                                 Couple.of("destfile", tempDirPath + File.separator + artifactFileName));
+                                                 Couple.of("destfile", tempDirPath + "/" + artifactFileName));
     createJarTag.add(new SimpleTag("fx:application", Couple.of("refid", appId)));
 
     final List<Pair> fileset2Jar = new ArrayList<Pair>();
@@ -124,17 +125,20 @@ public class JavaFxAntGenerator {
     topLevelTagsCollector.add(createJarTag);
 
     final JavaFxPackagerConstants.NativeBundles bundle = packager.getNativeBundle();
-    final SimpleTag iconTag = appendApplicationIconPath(topLevelTagsCollector, bundle, packager.getIcons(), isRelativeIconPath);
+    final SimpleTag iconTag = appendApplicationIconPath(topLevelTagsCollector, bundle, packager.getIcons(), relativeToBaseDirPath);
 
     //deploy task
     final SimpleTag deployTag = new SimpleTag("fx:deploy",
                                               Couple.of("width", packager.getWidth()),
                                               Couple.of("height", packager.getHeight()),
                                               Couple.of("updatemode", packager.getUpdateMode()),
-                                              Couple.of("outdir", tempDirPath + File.separator + "deploy"),
+                                              Couple.of("outdir", tempDirDeployPath),
                                               Couple.of("outfile", artifactFileNameWithoutExtension));
-    if (bundle != JavaFxPackagerConstants.NativeBundles.none) {
+    if (bundle != null && bundle != JavaFxPackagerConstants.NativeBundles.none) {
       deployTag.addAttribute(Couple.of("nativeBundles", bundle.name()));
+    }
+    if (!StringUtil.isEmpty(packager.getHtmlPlaceholderId())) {
+      deployTag.addAttribute(Couple.of("placeholderId", packager.getHtmlPlaceholderId()));
     }
 
     if (packager.isEnabledSigning()) {
@@ -153,6 +157,8 @@ public class JavaFxAntGenerator {
       if (iconTag != null) infoTag.add(iconTag);
     }
     deployTag.add(createResourcesTag(preloaderFiles, true, allButPreloader, allButSelf, all));
+    final SimpleTag templateTag = createTemplateTag(packager, tempDirDeployPath, relativeToBaseDirPath);
+    if (templateTag != null) deployTag.add(templateTag);
 
     topLevelTagsCollector.add(deployTag);
     return topLevelTagsCollector;
@@ -161,32 +167,32 @@ public class JavaFxAntGenerator {
   private static SimpleTag appendApplicationIconPath(List<SimpleTag> topLevelTagsCollector,
                                                      JavaFxPackagerConstants.NativeBundles bundle,
                                                      JavaFxApplicationIcons appIcons,
-                                                     boolean isRelativeIconPath) {
+                                                     String relativeToPath) {
     boolean haveAppIcon = false;
     if (appIcons == null || bundle == null || appIcons.isEmpty()) return null;
     if (bundle.isOnLinux()) {
-      String iconPath = appIcons.getLinuxIcon(isRelativeIconPath);
+      String iconPath = appIcons.getLinuxIcon(relativeToPath);
       if (!StringUtil.isEmpty(iconPath)) {
         final SimpleTag and = new SimpleTag("and");
         and.add(new SimpleTag("os", Couple.of("family", "unix")));
         final SimpleTag not = new SimpleTag("not");
         not.add(new SimpleTag("os", Couple.of("family", "mac")));
         and.add(not);
-        appendIconPropertyTag(topLevelTagsCollector, iconPath, isRelativeIconPath, and);
+        appendIconPropertyTag(topLevelTagsCollector, iconPath, relativeToPath != null, and);
         haveAppIcon = true;
       }
     }
     if (bundle.isOnMac()) {
-      String iconPath = appIcons.getMacIcon(isRelativeIconPath);
+      String iconPath = appIcons.getMacIcon(relativeToPath);
       if (!StringUtil.isEmpty(iconPath)) {
-        appendIconPropertyTag(topLevelTagsCollector, iconPath, isRelativeIconPath, new SimpleTag("os", Couple.of("family", "mac")));
+        appendIconPropertyTag(topLevelTagsCollector, iconPath, relativeToPath != null, new SimpleTag("os", Couple.of("family", "mac")));
         haveAppIcon = true;
       }
     }
     if (bundle.isOnWindows()) {
-      String iconPath = appIcons.getWindowsIcon(isRelativeIconPath);
+      String iconPath = appIcons.getWindowsIcon(relativeToPath);
       if (!StringUtil.isEmpty(iconPath)) {
-        appendIconPropertyTag(topLevelTagsCollector, iconPath, isRelativeIconPath, new SimpleTag("os", Couple.of("family", "windows")));
+        appendIconPropertyTag(topLevelTagsCollector, iconPath, relativeToPath != null, new SimpleTag("os", Couple.of("family", "windows")));
         haveAppIcon = true;
       }
     }
@@ -219,6 +225,20 @@ public class JavaFxAntGenerator {
       resourcesTag.add(new SimpleTag("fx:fileset", Couple.of("refid", includeSelf ? all : allButSelf)));
     }
     return resourcesTag;
+  }
+
+  private static SimpleTag createTemplateTag(AbstractJavaFxPackager packager, String deployOutDir, String relativeToBaseDirPath) {
+    String htmlTemplate = packager.getHtmlTemplateFile();
+    if (!StringUtil.isEmpty(htmlTemplate)) {
+      final String shortName = new File(htmlTemplate).getName();
+      if (!StringUtil.isEmpty(relativeToBaseDirPath)) {
+        htmlTemplate = "${basedir}/" + FileUtil.getRelativePath(relativeToBaseDirPath, htmlTemplate, '/');
+      }
+      return new SimpleTag("fx:template",
+                           Couple.of("file", htmlTemplate),
+                           Couple.of("tofile", deployOutDir + "/" + shortName));
+    }
+    return null;
   }
 
   private static void appendIfNotEmpty(final List<Pair> pairs, final String propertyName, final String propValue) {

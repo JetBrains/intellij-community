@@ -176,6 +176,16 @@ public class JpsJavaFxArtifactBuildTaskProvider extends ArtifactBuildTaskProvide
     }
 
     @Override
+    protected String getHtmlTemplateFile() {
+      return myProperties.myState.getHtmlTemplateFile();
+    }
+
+    @Override
+    protected String getHtmlPlaceholderId() {
+      return myProperties.myState.getHtmlPlaceholderId();
+    }
+
+    @Override
     protected String getHtmlParamFile() {
       return myProperties.myState.getHtmlParamFile();
     }
