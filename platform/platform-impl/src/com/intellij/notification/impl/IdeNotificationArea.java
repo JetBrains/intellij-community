@@ -27,6 +27,7 @@ import com.intellij.notification.impl.ui.NotificationsUtil;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.openapi.wm.IconLikeCustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
@@ -228,6 +229,15 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
 
       x += (getIconWidth() - myWidth) / 2;
       y += SimpleColoredComponent.getTextBaseLine(g.getFontMetrics(), getIconHeight());
+
+      if (SystemInfo.isLinux) {
+        if (myStr.length() == 1) {
+          x--;
+        }
+      }
+      else if (myStr.length() == 2) {
+        x++;
+      }
 
       g.setColor(myTextColor);
       g.drawString(myStr, x, y);
