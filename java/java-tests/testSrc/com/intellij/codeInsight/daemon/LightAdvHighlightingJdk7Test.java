@@ -168,4 +168,5 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
   public void testAccessToStaticMethodsFromInterfaces() { doTest(true, false); }
   public void testUncheckedExtendedWarnings() { doTest(true, false); }
   public void testInaccessibleInferredTypeForVarargsArgument() { doTest(false, false);}
+  public void testRuntimeClassCast() { doTest(true, false);}
 }
