@@ -131,15 +131,13 @@ inline fun <T> ByteBuf.releaseIfError(task: () -> T): T {
 }
 
 fun isLocalHost(host: String, onlyAnyOrLoopback: Boolean, hostsOnly: Boolean = false): Boolean {
-  if (onlyAnyOrLoopback) {
-    if (NetUtils.isLocalhost(host)) {
-      return true
-    }
+  if (NetUtils.isLocalhost(host)) {
+    return true
+  }
 
-    if (!InetAddresses.isInetAddress(host)) {
-      return false
-    }
-    // if IP address, it is safe to use getByName (not affected by DNS rebinding)
+  // if IP address, it is safe to use getByName (not affected by DNS rebinding)
+  if (onlyAnyOrLoopback && !InetAddresses.isInetAddress(host)) {
+    return false
   }
 
   fun InetAddress.isLocal() = isAnyLocalAddress || isLoopbackAddress || NetworkInterface.getByInetAddress(this) != null
@@ -149,6 +147,7 @@ fun isLocalHost(host: String, onlyAnyOrLoopback: Boolean, hostsOnly: Boolean = f
     if (!address.isLocal()) {
       return false
     }
+    // be aware - on windows hosts file doesn't contain localhost
     // hosts can contain remote addresses, so, we check it
     if (hostsOnly && !InetAddresses.isInetAddress(host)) {
       return HostsFileEntriesResolver.DEFAULT.address(host).let { it != null && it.isLocal() }
