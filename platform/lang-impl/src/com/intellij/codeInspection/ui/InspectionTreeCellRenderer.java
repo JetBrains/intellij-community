@@ -95,7 +95,7 @@ class InspectionTreeCellRenderer extends ColoredTreeCellRenderer {
           final Integer occur = entry.getValue();
 
           SimpleTextAttributes attrs = SimpleTextAttributes.GRAY_ATTRIBUTES;
-          if (level == HighlightDisplayLevel.ERROR) {
+          if (level == HighlightDisplayLevel.ERROR && !myView.getGlobalInspectionContext().getUIOptions().GROUP_BY_SEVERITY) {
             attrs = attrs.derive(-1, JBColor.red.brighter(), null, null);
           }
           append(occur + " " + getPresentableName(level, occur > 1) + " ", patchAttr(node, attrs));
