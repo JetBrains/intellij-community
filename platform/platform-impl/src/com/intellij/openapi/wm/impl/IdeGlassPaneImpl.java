@@ -280,6 +280,8 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
 
   private boolean preprocess(final MouseEvent e, final boolean motion, JRootPane eventRootPane) {
     try {
+      if (UIUtil.getWindow(this) != UIUtil.getWindow(e.getComponent())) return false;
+
       final MouseEvent event = convertEvent(e, eventRootPane);
 
       if (!IdeGlassPaneUtil.canBePreprocessed(e)) {
