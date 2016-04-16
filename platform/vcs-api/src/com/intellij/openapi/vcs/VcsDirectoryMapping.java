@@ -27,8 +27,6 @@ public class VcsDirectoryMapping {
   public static final String PROJECT_CONSTANT = "<Project>";
   public static final VcsDirectoryMapping[] EMPTY_ARRAY = new VcsDirectoryMapping[0];
   private String myDirectory;
-  // for reliable comparison
-  private String mySystemIdependentPath;
   private String myVcs;
   private VcsRootSettings myRootSettings;
 
@@ -51,12 +49,9 @@ public class VcsDirectoryMapping {
     return myDirectory;
   }
 
-  private void initSystemIndependentPath() {
-    mySystemIdependentPath = FileUtil.toSystemIndependentName(myDirectory);
-  }
-
+  @NotNull
   public String systemIndependentPath() {
-    return mySystemIdependentPath;
+    return FileUtil.toSystemIndependentName(myDirectory);
   }
 
   public String getVcs() {
@@ -69,7 +64,6 @@ public class VcsDirectoryMapping {
 
   public void setDirectory(@NotNull final String directory) {
     myDirectory = directory;
-    initSystemIndependentPath();
   }
 
   /**
