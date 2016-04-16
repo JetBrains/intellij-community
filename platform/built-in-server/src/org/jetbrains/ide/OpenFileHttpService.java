@@ -43,7 +43,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.builtInWebServer.WebServerPathToFileManager;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
-import org.jetbrains.io.NettyKt;
 
 import java.io.File;
 import java.io.IOException;
@@ -141,8 +140,8 @@ class OpenFileHttpService extends RestService {
         @Override
         public void consume(Throwable throwable) {
           if (throwable == NOT_FOUND) {
-            // don't expose file status if not local origin
-            sendStatus(NettyKt.isLocalOrigin(request) ? HttpResponseStatus.NOT_FOUND : HttpResponseStatus.OK, keepAlive, channel);
+            // don't expose file status
+            sendStatus(HttpResponseStatus.OK, keepAlive, channel);
           }
           else {
             // todo send error
