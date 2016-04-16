@@ -480,8 +480,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
     // -release option makes sense for javac only and is supported in java9+ and higher
     if (compilerVersion >= 9 && chunkSdkVersion > 0 && targetLanguageLevel > 0 && isJavac(COMPILING_TOOL.get(context))) {
       if (chunkSdkVersion < 9) {
-        // todo: this 'if' should be removed, if javac9+ drops support for '-source' and '-target' options
-        return targetLanguageLevel == chunkSdkVersion;
+        // target sdk is set explicitly and differs from compiler SDK, so for consistency we should link against it
+        return false;
       }
       // chunkSdkVersion >= 9, so we have no rt.jar anymore and '-release' is the only cross-compilation option available
       return true;
