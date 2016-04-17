@@ -35,7 +35,7 @@ public class LombokPluginUpdateProjectComponent implements ProjectComponent {
     if (application.isUpdated() && !application.isUpdateNotificationShown()) {
       application.setUpdateNotificationShown(true);
 
-      NotificationGroup group = new NotificationGroup("Lombok plugin", NotificationDisplayType.STICKY_BALLOON, true);
+      NotificationGroup group = new NotificationGroup(Version.PLUGIN_NAME, NotificationDisplayType.STICKY_BALLOON, true);
       Notification notification = group.createNotification(
           LombokBundle.message("daemon.donate.title", Version.PLUGIN_VERSION),
           LombokBundle.message("daemon.donate.content"),
