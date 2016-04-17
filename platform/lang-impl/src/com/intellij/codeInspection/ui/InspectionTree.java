@@ -210,6 +210,17 @@ public class InspectionTree extends Tree {
     return descriptors.toArray(new CommonProblemDescriptor[descriptors.size()]);
   }
 
+  public boolean areDescriptorNodesSelected() {
+    final TreePath[] paths = getSelectionPaths();
+    if (paths == null) return false;
+    for (TreePath path : paths) {
+      if (!(path.getLastPathComponent() instanceof ProblemDescriptionNode)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   public int getSelectedProblemCount() {
     if (getSelectionCount() == 0) return 0;
     final TreePath[] paths = getSelectionPaths();

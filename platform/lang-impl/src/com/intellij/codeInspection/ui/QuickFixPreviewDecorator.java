@@ -25,7 +25,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SimpleColoredComponent;
@@ -34,7 +33,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.tree.TreePath;
 import java.awt.*;
 
 /**
@@ -60,7 +58,7 @@ public class QuickFixPreviewDecorator extends JPanel implements InspectionTreeLo
 
     setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
 
-    if (view.isUpdating() && !areDescriptorNodesSelected()) {
+    if (view.isUpdating() && !view.getTree().areDescriptorNodesSelected()) {
       setBorder(IdeBorderFactory.createEmptyBorder(16, 9, 13, 0));
       AsyncProcessIcon waitingIcon = new AsyncProcessIcon("Inspection preview panel updating...");
       Disposer.register(this, waitingIcon);
@@ -118,16 +116,6 @@ public class QuickFixPreviewDecorator extends JPanel implements InspectionTreeLo
     final JComponent component = toolbar.getComponent();
     toolbar.setTargetComponent(this);
     add(component);
-  }
-
-  private boolean areDescriptorNodesSelected() {
-    final TreePath[] paths = myView.getTree().getSelectionPaths();
-    for (TreePath path : paths) {
-      if (!(path.getLastPathComponent() instanceof ProblemDescriptionNode)) {
-        return false;
-      }
-    }
-    return true;
   }
 
   @NotNull
