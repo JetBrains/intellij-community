@@ -67,7 +67,7 @@ public class OfflineProblemDescriptorNode extends ProblemDescriptionNode {
   }
 
   @Override
-  public boolean isValid() {
+  public boolean calculateIsValid() {
     return true;
   }
 

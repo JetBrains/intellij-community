@@ -38,7 +38,7 @@ import static com.intellij.codeInspection.ProblemDescriptorUtil.TRIM_AT_TREE_END
 /**
  * @author max
  */
-public class ProblemDescriptionNode extends InspectionTreeNode implements RefElementAware {
+public class ProblemDescriptionNode extends CachedInspectionTreeNode implements RefElementAware {
   protected RefEntity myElement;
   private final CommonProblemDescriptor myDescriptor;
   protected final InspectionToolWrapper myToolWrapper;
@@ -88,7 +88,7 @@ public class ProblemDescriptionNode extends InspectionTreeNode implements RefEle
   }
 
   @Override
-  public boolean isValid() {
+  public boolean calculateIsValid() {
     if (myElement instanceof RefElement && !myElement.isValid()) return false;
     final CommonProblemDescriptor descriptor = getDescriptor();
     if (descriptor instanceof ProblemDescriptor) {
@@ -129,7 +129,8 @@ public class ProblemDescriptionNode extends InspectionTreeNode implements RefEle
     return FileStatus.NOT_CHANGED;
   }
 
-  public String toString() {
+  @Override
+  public String calculatePresentableName() {
     CommonProblemDescriptor descriptor = getDescriptor();
     if (descriptor == null) return "";
     PsiElement element = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getPsiElement() : null;

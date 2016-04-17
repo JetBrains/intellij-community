@@ -56,19 +56,19 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.util.Alarm;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.util.ui.update.MergingUpdateQueue;
+import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -188,6 +188,72 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       }
     };
     createActionsToolbar();
+
+    final PsiTreeChangeAdapter psiAdapter = new PsiTreeChangeAdapter() {
+      private final MergingUpdateQueue myUpdater =
+        new MergingUpdateQueue("inspection.view.psi.update.listener",
+                               200,
+                               true,
+                               InspectionResultsView.this,
+                               InspectionResultsView.this,
+                               InspectionResultsView.this,
+                               Alarm.ThreadToUse.POOLED_THREAD);
+      @Override
+      public void beforeChildAddition(@NotNull PsiTreeChangeEvent event) {
+        psiChanged();
+      }
+
+      @Override
+      public void beforeChildRemoval(@NotNull PsiTreeChangeEvent event) {
+        psiChanged();
+      }
+
+      @Override
+      public void beforeChildReplacement(@NotNull PsiTreeChangeEvent event) {
+        psiChanged();
+      }
+
+      @Override
+      public void beforeChildMovement(@NotNull PsiTreeChangeEvent event) {
+        psiChanged();
+      }
+
+      @Override
+      public void beforeChildrenChange(@NotNull PsiTreeChangeEvent event) {
+        psiChanged();
+      }
+
+      @Override
+      public void beforePropertyChange(@NotNull PsiTreeChangeEvent event) {
+        psiChanged();
+      }
+
+      private void psiChanged() {
+        myUpdater.queue(new Update("update") {
+          @Override
+          public void run() {
+            synchronized (myTreeStructureUpdateLock) {
+              TreeUtil.traverse(myTree.getRoot(), new TreeUtil.Traverse() {
+                @Override
+                public boolean accept(Object node) {
+                  if (node instanceof CachedInspectionTreeNode) {
+                    ((CachedInspectionTreeNode) node).dropCache();
+                  }
+                  return true;
+                }
+              });
+            }
+          }
+
+          @Override
+          public boolean canEat(Update update) {
+            return true;
+          }
+        });
+      }
+    };
+
+    PsiManager.getInstance(myProject).addPsiTreeChangeListener(psiAdapter, this);
   }
 
   private void initTreeListeners() {

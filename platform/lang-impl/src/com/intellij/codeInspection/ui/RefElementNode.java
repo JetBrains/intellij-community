@@ -35,7 +35,7 @@ import javax.swing.tree.MutableTreeNode;
 /**
  * @author max
  */
-public class RefElementNode extends InspectionTreeNode implements RefElementAware {
+public class RefElementNode extends CachedInspectionTreeNode implements RefElementAware {
   private boolean myHasDescriptorsUnder = false;
   private CommonProblemDescriptor mySingleDescriptor = null;
   protected final InspectionToolPresentation myToolPresentation;
@@ -49,7 +49,6 @@ public class RefElementNode extends InspectionTreeNode implements RefElementAwar
       return refEntity.getIcon(false);
     }
   });
-
   public RefElementNode(@Nullable RefEntity userObject, @NotNull InspectionToolPresentation presentation) {
     super(userObject);
     myToolPresentation = presentation;
@@ -70,16 +69,18 @@ public class RefElementNode extends InspectionTreeNode implements RefElementAwar
     return myIcon.getIcon();
   }
 
-  public String toString() {
+  @Override
+  protected String calculatePresentableName() {
     final RefEntity element = getElement();
     if (element == null || !element.isValid()) {
       return InspectionsBundle.message("inspection.reference.invalid");
+    } else {
+      return element.getRefManager().getRefinedElement(element).getName();
     }
-    return element.getRefManager().getRefinedElement(element).getName();
   }
 
   @Override
-  public boolean isValid() {
+  protected boolean calculateIsValid() {
     final RefEntity refEntity = getElement();
     return refEntity != null && refEntity.isValid();
   }
