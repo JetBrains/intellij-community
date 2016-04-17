@@ -15,12 +15,13 @@
  */
 package com.intellij.codeInspection.ui;
 
+import javax.swing.tree.TreeNode;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author Dmitry Batkovich
  */
-public abstract class CachedInspectionTreeNode extends InspectionTreeNode {
+public abstract class CachedInspectionTreeNode extends InspectionTreeNode implements RefElementAware {
   private final AtomicReference<String> myPresentableName = new AtomicReference<>();
   private final AtomicReference<Boolean> myValid = new AtomicReference<>();
 
@@ -48,12 +49,24 @@ public abstract class CachedInspectionTreeNode extends InspectionTreeNode {
     });
   }
 
+  protected final void init() {
+    myPresentableName.set(calculatePresentableName());
+    myValid.set(calculateIsValid());
+  }
+
   protected abstract String calculatePresentableName();
 
   protected abstract boolean calculateIsValid();
 
+  @SuppressWarnings("ResultOfMethodCallIgnored")
   final void dropCache() {
-    myValid.set(null);
-    myPresentableName.set(null);
+    myValid.set(calculateIsValid());
+    myPresentableName.set(calculatePresentableName());
+    for (int i = 0; i < getChildCount(); i++) {
+      TreeNode child = getChildAt(i);
+      if (child instanceof CachedInspectionTreeNode) {
+        ((CachedInspectionTreeNode)child).dropCache();
+      }
+    }
   }
 }

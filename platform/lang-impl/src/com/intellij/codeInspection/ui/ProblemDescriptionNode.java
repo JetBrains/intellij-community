@@ -59,7 +59,7 @@ public class ProblemDescriptionNode extends CachedInspectionTreeNode implements 
     myLevel = descriptor instanceof ProblemDescriptor
               ? profile.getErrorLevel(HighlightDisplayKey.find(toolWrapper.getShortName()), ((ProblemDescriptor)descriptor).getStartElement())
               : profile.getTools(toolWrapper.getID(), element.getRefManager().getProject()).getLevel();
-
+    init();
 }
 
   @NotNull

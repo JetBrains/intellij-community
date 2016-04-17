@@ -39,19 +39,13 @@ public class RefElementNode extends CachedInspectionTreeNode implements RefEleme
   private boolean myHasDescriptorsUnder = false;
   private CommonProblemDescriptor mySingleDescriptor = null;
   protected final InspectionToolPresentation myToolPresentation;
-  private final ComputableIcon myIcon = new ComputableIcon(new Computable<Icon>() {
-    @Override
-    public Icon compute() {
-      final RefEntity refEntity = getElement();
-      if (refEntity == null) {
-        return null;
-      }
-      return refEntity.getIcon(false);
-    }
-  });
+  private final Icon myIcon;
   public RefElementNode(@Nullable RefEntity userObject, @NotNull InspectionToolPresentation presentation) {
     super(userObject);
     myToolPresentation = presentation;
+    init();
+    final RefEntity refEntity = getElement();
+    myIcon = refEntity == null ? null : refEntity.getIcon(false);
   }
 
   public boolean hasDescriptorsUnder() {
@@ -66,7 +60,7 @@ public class RefElementNode extends CachedInspectionTreeNode implements RefEleme
   @Override
   @Nullable
   public Icon getIcon(boolean expanded) {
-    return myIcon.getIcon();
+    return myIcon;
   }
 
   @Override

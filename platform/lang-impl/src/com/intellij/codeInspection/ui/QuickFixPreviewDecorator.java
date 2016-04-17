@@ -53,8 +53,6 @@ public class QuickFixPreviewDecorator extends JPanel implements InspectionTreeLo
     myView = view;
     myWrapper = view.getTree().getSelectedToolWrapper();
     LOG.assertTrue(myWrapper != null);
-    CommonProblemDescriptor[] descriptors = myView.getTree().getSelectedDescriptors();
-    int problemCount = descriptors.length;
 
     setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
 
@@ -62,11 +60,12 @@ public class QuickFixPreviewDecorator extends JPanel implements InspectionTreeLo
       setBorder(IdeBorderFactory.createEmptyBorder(16, 9, 13, 0));
       AsyncProcessIcon waitingIcon = new AsyncProcessIcon("Inspection preview panel updating...");
       Disposer.register(this, waitingIcon);
-      myWaitingLabel = getLabel(problemCount);
+      myWaitingLabel = getLabel(1);
       add(myWaitingLabel);
       add(waitingIcon);
     }
     else {
+      CommonProblemDescriptor[] descriptors = myView.getTree().getSelectedDescriptors();
       setBorder(IdeBorderFactory.createEmptyBorder(2, 8, 0, 0));
       QuickFixAction[] fixes = view.getProvider().getQuickFixes(myWrapper, view.getTree());
       fillPanel(fixes, descriptors);
