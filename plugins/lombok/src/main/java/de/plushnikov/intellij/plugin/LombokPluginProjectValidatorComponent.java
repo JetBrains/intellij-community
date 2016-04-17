@@ -128,7 +128,7 @@ public class LombokPluginProjectValidatorComponent extends AbstractProjectCompon
   }
 
   @Nullable
-  private String parseLombokVersion(@Nullable OrderEntry orderEntry) {
+  protected String parseLombokVersion(@Nullable OrderEntry orderEntry) {
     String result = null;
     if (null != orderEntry) {
       final String presentableName = orderEntry.getPresentableName();
@@ -141,25 +141,24 @@ public class LombokPluginProjectValidatorComponent extends AbstractProjectCompon
     return result;
   }
 
-  private int compareVersionString(@NotNull String versionOne, @NotNull String versionTwo) {
-    String[] thisParts = versionOne.split("\\.");
-    String[] thatParts = versionTwo.split("\\.");
-    int length = Math.max(thisParts.length, thatParts.length);
+  protected int compareVersionString(@NotNull String firstVersionOne, @NotNull String secondVersion) {
+    String[] firstVersionParts = firstVersionOne.split("\\.");
+    String[] secondVersionParts = secondVersion.split("\\.");
+    int length = Math.max(firstVersionParts.length, secondVersionParts.length);
     for (int i = 0; i < length; i++) {
-      int thisPart = i < thisParts.length ?
-          Integer.parseInt(thisParts[i]) : 0;
-      int thatPart = i < thatParts.length ?
-          Integer.parseInt(thatParts[i]) : 0;
-      if (thisPart < thatPart) {
+      int firstPart = i < firstVersionParts.length && !firstVersionParts[i].isEmpty() ?
+          Integer.parseInt(firstVersionParts[i]) : 0;
+      int secondPart = i < secondVersionParts.length && !secondVersionParts[i].isEmpty() ?
+          Integer.parseInt(secondVersionParts[i]) : 0;
+      if (firstPart < secondPart) {
         return -1;
       }
-      if (thisPart > thatPart) {
+      if (firstPart > secondPart) {
         return 1;
       }
     }
     return 0;
   }
-
 
   /**
    * Simple {@link NotificationListener.Adapter} that opens Settings Page for correct dialog.
