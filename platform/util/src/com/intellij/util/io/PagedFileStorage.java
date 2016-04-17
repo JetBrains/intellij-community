@@ -15,6 +15,7 @@
  */
 package com.intellij.util.io;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.Forceable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
@@ -751,8 +752,18 @@ public class PagedFileStorage implements Forceable {
       if (buffers != null) {
         mySegmentsAllocationLock.lock();
         try {
+          Disposable fileContext = null;
           for(ByteBufferWrapper buffer:buffers.values()) {
-            buffer.flush();
+            if (buffer instanceof ReadWriteDirectBufferWrapper) {
+              fileContext = ((ReadWriteDirectBufferWrapper)buffer).flushWithContext(fileContext);
+            } else {
+              buffer.flush();
+            }
+          }
+
+          if (fileContext != null) {
+            //noinspection SSBasedInspection
+            fileContext.dispose();
           }
         }
         finally {
