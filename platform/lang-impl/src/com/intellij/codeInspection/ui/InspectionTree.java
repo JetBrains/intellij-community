@@ -23,9 +23,9 @@
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.CommonProblemDescriptor;
-import com.intellij.codeInspection.ex.*;
+import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionsConfigTreeComparator;
 import com.intellij.ui.TreeSpeedSearch;
@@ -37,10 +37,12 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.event.*;
+import javax.swing.event.TreeExpansionEvent;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
+import javax.swing.event.TreeWillExpandListener;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.ExpandVetoException;
-import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.util.*;
 
@@ -288,22 +290,7 @@ public class InspectionTree extends Tree {
     @Override
     public void treeWillExpand(TreeExpansionEvent event) throws ExpandVetoException {
       final InspectionTreeNode node = (InspectionTreeNode)event.getPath().getLastPathComponent();
-      final Object userObject = node.getUserObject();
-      //TODO: never re-sort
-      if (node.isValid() && !myState.getExpandedUserObjects().contains(userObject)) {
-        sortChildren(node);
-        nodeStructureChanged(node);
-      }
-      myState.getExpandedUserObjects().add(userObject);
-      // Smart expand
-      if (node.getChildCount() == 1) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            expandPath(new TreePath(node.getPath()));
-          }
-        });
-      }
+      myState.getExpandedUserObjects().add(node.getUserObject());
     }
 
     @Override
@@ -311,14 +298,6 @@ public class InspectionTree extends Tree {
       InspectionTreeNode node = (InspectionTreeNode)event.getPath().getLastPathComponent();
       myState.getExpandedUserObjects().remove(node.getUserObject());
     }
-  }
-
-  private void sortChildren(InspectionTreeNode node) {
-    final List<TreeNode> children = TreeUtil.childrenToArray(node);
-    Collections.sort(children, InspectionResultsViewComparator.getInstance());
-    node.removeAllChildren();
-    TreeUtil.addChildrenTo(node, children);
-    ((DefaultTreeModel)getModel()).reload(node);
   }
 
   @NotNull
