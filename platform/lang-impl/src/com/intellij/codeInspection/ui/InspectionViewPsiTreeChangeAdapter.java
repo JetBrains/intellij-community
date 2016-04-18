@@ -31,6 +31,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.containers.hash.HashSet;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
@@ -95,9 +96,11 @@ class InspectionViewPsiTreeChangeAdapter extends PsiTreeChangeAdapter {
                 return true;
               });
               if (needUpdateUI[0]) {
-                myView.invalidate();
-                myView.repaint();
-                myView.syncRightPanel();
+                UIUtil.invokeLaterIfNeeded(() -> {
+                  myView.invalidate();
+                  myView.repaint();
+                  myView.syncRightPanel();
+                });
               }
             }
           }
