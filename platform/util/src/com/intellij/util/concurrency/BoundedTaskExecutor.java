@@ -31,6 +31,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * ExecutorService which limits the number of tasks running simultaneously.
@@ -189,10 +190,18 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
 
   private void wrapAndExecute(@NotNull final Runnable task, final long status) {
     try {
+      final AtomicReference<Runnable> firstTask = new AtomicReference<Runnable>(task);
       myBackendExecutor.execute(new Runnable() {
         @Override
         public void run() {
-          runFirstTaskThenPollAndRunRest(task, status);
+          runFirstTaskThenPollAndRunRest(firstTask.get(), status);
+          firstTask.set(null);
+        }
+
+        @Override
+        public String toString() {
+          Runnable runnable = firstTask.get();
+          return runnable == null ? super.toString() : runnable.toString();
         }
       });
     }

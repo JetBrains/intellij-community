@@ -16,6 +16,7 @@
 
 package com.intellij.codeInspection.ui;
 
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.reference.RefDirectory;
@@ -24,6 +25,7 @@ import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.ui.ComputableIcon;
+import com.intellij.util.containers.FactoryMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,24 +35,17 @@ import javax.swing.tree.MutableTreeNode;
 /**
  * @author max
  */
-public class RefElementNode extends InspectionTreeNode {
+public class RefElementNode extends CachedInspectionTreeNode implements RefElementAware {
   private boolean myHasDescriptorsUnder = false;
   private CommonProblemDescriptor mySingleDescriptor = null;
   protected final InspectionToolPresentation myToolPresentation;
-  private final ComputableIcon myIcon = new ComputableIcon(new Computable<Icon>() {
-    @Override
-    public Icon compute() {
-      final RefEntity refEntity = getElement();
-      if (refEntity == null) {
-        return null;
-      }
-      return refEntity.getIcon(false);
-    }
-  });
-
+  private final Icon myIcon;
   public RefElementNode(@Nullable RefEntity userObject, @NotNull InspectionToolPresentation presentation) {
     super(userObject);
     myToolPresentation = presentation;
+    init();
+    final RefEntity refEntity = getElement();
+    myIcon = refEntity == null ? null : refEntity.getIcon(false);
   }
 
   public boolean hasDescriptorsUnder() {
@@ -65,19 +60,21 @@ public class RefElementNode extends InspectionTreeNode {
   @Override
   @Nullable
   public Icon getIcon(boolean expanded) {
-    return myIcon.getIcon();
-  }
-
-  public String toString() {
-    final RefEntity element = getElement();
-    if (element == null || !element.isValid()) {
-      return InspectionsBundle.message("inspection.reference.invalid");
-    }
-    return element.getRefManager().getRefinedElement(element).getName();
+    return myIcon;
   }
 
   @Override
-  public boolean isValid() {
+  protected String calculatePresentableName() {
+    final RefEntity element = getElement();
+    if (element == null || !element.isValid()) {
+      return InspectionsBundle.message("inspection.reference.invalid");
+    } else {
+      return element.getRefManager().getRefinedElement(element).getName();
+    }
+  }
+
+  @Override
+  protected boolean calculateIsValid() {
     final RefEntity refEntity = getElement();
     return refEntity != null && refEntity.isValid();
   }
@@ -131,5 +128,14 @@ public class RefElementNode extends InspectionTreeNode {
   @Override
   public int getProblemCount() {
     return Math.max(1, super.getProblemCount());
+  }
+
+  @Override
+  public void visitProblemSeverities(FactoryMap<HighlightDisplayLevel, Integer> counter) {
+    if (isLeaf()) {
+      counter.put(HighlightDisplayLevel.WARNING, counter.get(HighlightDisplayLevel.WARNING) + 1);
+      return;
+    }
+    super.visitProblemSeverities(counter);
   }
 }

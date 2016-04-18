@@ -52,6 +52,14 @@ public class WatchNodeImpl extends XValueNodeImpl implements WatchNode {
     return myExpression;
   }
 
+  @NotNull
+  @Override
+  public XValue getValueContainer() {
+    XValue container = super.getValueContainer();
+    XValue value = ((XWatchValue)container).myValue;
+    return value != null ? value : container;
+  }
+
   private static class XWatchValue extends XNamedValue {
     private final XExpression myExpression;
     private final XStackFrame myStackFrame;

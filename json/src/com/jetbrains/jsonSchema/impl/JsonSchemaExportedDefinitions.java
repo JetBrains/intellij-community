@@ -15,15 +15,13 @@
  */
 package com.jetbrains.jsonSchema.impl;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.NullableLazyValue;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.containers.MultiMap;
-import com.jetbrains.jsonSchema.extension.SchemaType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -36,15 +34,12 @@ public class JsonSchemaExportedDefinitions {
   private final Object myLock;
   private boolean myInitialized;
   private boolean myDirty;
-  private final BidirectionalMap<String, Pair<SchemaType, ?>> myId2Key;
-  private final MultiMap<Pair<SchemaType, ?>, Pair<SchemaType, ?>> myCrossDependencies;
+  private final BidirectionalMap<String, VirtualFile> myId2Key;
+  private final MultiMap<VirtualFile, VirtualFile> myCrossDependencies;
   private final Map<String, Map<String, JsonSchemaObject>> myMap;
-  private final Project myProject;
-  @NotNull private final Consumer<PairConsumer<Pair<SchemaType, ?>, Consumer<Consumer<JsonSchemaObject>>>> mySchemasIterator;
+  @NotNull private final Consumer<PairConsumer<VirtualFile, NullableLazyValue<JsonSchemaObject>>> mySchemasIterator;
 
-  public JsonSchemaExportedDefinitions(@Nullable final Project project,
-                                       @NotNull Consumer<PairConsumer<Pair<SchemaType, ?>, Consumer<Consumer<JsonSchemaObject>>>> schemasIterator) {
-    myProject = project;
+  public JsonSchemaExportedDefinitions(@NotNull Consumer<PairConsumer<VirtualFile, NullableLazyValue<JsonSchemaObject>>> schemasIterator) {
     mySchemasIterator = schemasIterator;
     myLock = new Object();
     myMap = new HashMap<>();
@@ -52,7 +47,7 @@ public class JsonSchemaExportedDefinitions {
     myCrossDependencies = new MultiMap<>();
   }
 
-  public void register(@NotNull Pair<SchemaType, ?> key, @NotNull final String url, @NotNull final Map<String, JsonSchemaObject> map) {
+  public void register(@NotNull VirtualFile key, @NotNull final String url, @NotNull final Map<String, JsonSchemaObject> map) {
     synchronized (myLock) {
       myMap.put(url, map);
       myId2Key.put(url, key);
@@ -62,16 +57,16 @@ public class JsonSchemaExportedDefinitions {
     }
   }
 
-  public JsonSchemaObject findDefinition(@NotNull Pair<SchemaType, ?> requestingSchemaKey, @NotNull final String url,
-                                         @NotNull final String relativePart,
-                                         @NotNull final JsonSchemaObject rootObject) {
+  public JsonSchemaObject findDefinition(@NotNull VirtualFile requestingSchemaKey, @NotNull final String url,
+                                         @NotNull final String relativePart) {
     synchronized (myLock) {
       ensureInitialized();
-      final Pair<SchemaType, ?> pair = myId2Key.get(url);
-      if (pair != null) myCrossDependencies.putValue(pair, requestingSchemaKey);
+      final VirtualFile key = myId2Key.get(url);
+      if (key != null) myCrossDependencies.putValue(key, requestingSchemaKey);
       final Map<String, JsonSchemaObject> map = myMap.get(url);
       if (map != null) {
-        return JsonSchemaReader.findDefinition(pair, relativePart, rootObject, map, null);
+        final JsonSchemaObject found = map.get(relativePart);
+        if (found != null) return found;
       }
     }
     return null;
@@ -80,16 +75,14 @@ public class JsonSchemaExportedDefinitions {
   private void ensureInitialized() {
     synchronized (myLock) {
       if (myInitialized && !myDirty) return;
-      mySchemasIterator.consume(new PairConsumer<Pair<SchemaType, ?>, Consumer<Consumer<JsonSchemaObject>>>() {
+      mySchemasIterator.consume(new PairConsumer<VirtualFile, NullableLazyValue<JsonSchemaObject>>() {
         @Override
-        public void consume(Pair<SchemaType, ?> key, Consumer<Consumer<JsonSchemaObject>> consumer) {
+        public void consume(VirtualFile key, NullableLazyValue<JsonSchemaObject> value) {
           if (!myInitialized || !myId2Key.containsValue(key)) {
-            consumer.consume(new Consumer<JsonSchemaObject>() {
-              @Override
-              public void consume(JsonSchemaObject object) {
-                JsonSchemaReader.registerObjectsExportedDefinitions(key, JsonSchemaExportedDefinitions.this, object);
-              }
-            });
+            final JsonSchemaObject object = value.getValue();
+            if (object != null) {
+              JsonSchemaReader.registerObjectsExportedDefinitions(key, JsonSchemaExportedDefinitions.this, object);
+            }
           }
         }
       });
@@ -108,21 +101,21 @@ public class JsonSchemaExportedDefinitions {
     }
   }
 
-  public Set<Pair<SchemaType, ?>> dropKey(@NotNull Pair<SchemaType, ?> key) {
-    final Set<Pair<SchemaType, ?>> dirtyKeys = new HashSet<>();
+  public Set<VirtualFile> dropKey(@NotNull VirtualFile key) {
+    final Set<VirtualFile> dirtyKeys = new HashSet<>();
     synchronized (myLock) {
       myDirty = true;
-      final ArrayDeque<Pair<SchemaType, ?>> queue = new ArrayDeque<>();
+      final ArrayDeque<VirtualFile> queue = new ArrayDeque<>();
       queue.add(key);
       while (!queue.isEmpty()) {
-        final Pair<SchemaType, ?> current = queue.remove();
+        final VirtualFile current = queue.remove();
         dirtyKeys.add(current);
         final List<String> keys = myId2Key.getKeysByValue(current);
         myId2Key.removeValue(current);
         if (keys != null && !keys.isEmpty()) {
           assert keys.size() == 1;
           myMap.remove(keys.get(0));
-          final Collection<Pair<SchemaType, ?>> dependencies = myCrossDependencies.remove(current);
+          final Collection<VirtualFile> dependencies = myCrossDependencies.remove(current);
           if (dependencies != null) {
             queue.addAll(dependencies);
           }
@@ -130,5 +123,12 @@ public class JsonSchemaExportedDefinitions {
       }
     }
     return dirtyKeys;
+  }
+
+  public boolean checkFileForId(@NotNull final String id, @NotNull final VirtualFile file) {
+    synchronized (myLock) {
+      ensureInitialized();
+      return file.equals(myId2Key.get(id));
+    }
   }
 }

@@ -30,15 +30,15 @@ import org.jetbrains.annotations.Nullable;
  * @author max
  */
 public class PsiFieldStubImpl extends StubBase<PsiField> implements PsiFieldStub {
-  private final StringRef myName;
-  private final TypeInfo myType;
-  private final StringRef myInitializer;
-  private final byte myFlags;
-
   private static final int ENUM_CONST = 0x01;
   private static final int DEPRECATED = 0x02;
   private static final int DEPRECATED_ANNOTATION = 0x04;
   private static final int HAS_DOC_COMMENT = 0x08;
+
+  private final StringRef myName;
+  private final TypeInfo myType;
+  private final StringRef myInitializer;
+  private final byte myFlags;
 
   public PsiFieldStubImpl(StubElement parent, String name, @NotNull TypeInfo type, @Nullable String initializer, byte flags) {
     this(parent, StringRef.fromString(name), type, StringRef.fromString(initializer), flags);
@@ -105,7 +105,7 @@ public class PsiFieldStubImpl extends StubBase<PsiField> implements PsiFieldStub
     return flags;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @Override
   public String toString() {
     StringBuilder builder = new StringBuilder();
     builder.append("PsiFieldStub[");
@@ -123,7 +123,7 @@ public class PsiFieldStubImpl extends StubBase<PsiField> implements PsiFieldStub
       builder.append('=').append(myInitializer);
     }
 
-    builder.append("]");
+    builder.append(']');
     return builder.toString();
   }
 }

@@ -21,11 +21,13 @@ import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -297,10 +299,13 @@ public class CodeInsightUtil {
         }
         return true;
       });
-    } else {
-      Query<PsiClass> baseQuery = ClassInheritorsSearch.search(
-        new ClassInheritorsSearch.SearchParameters(baseClass, scope, true, true, false, matcher::prefixMatches));
-      Query<PsiClass> query = new FilteredQuery<>(baseQuery, psiClass -> !(psiClass instanceof PsiTypeParameter));
+    }
+    else {
+      Query<PsiClass> baseQuery = ClassInheritorsSearch.search(baseClass, scope, true, true, false);
+      Query<PsiClass> query = new FilteredQuery<>(baseQuery, psiClass -> {
+        String name = ApplicationManager.getApplication().runReadAction((Computable<String>)psiClass::getName);
+        return !(psiClass instanceof PsiTypeParameter) && name != null && matcher.prefixMatches(name);
+      });
       query.forEach(inheritorsProcessor);
     }
   }

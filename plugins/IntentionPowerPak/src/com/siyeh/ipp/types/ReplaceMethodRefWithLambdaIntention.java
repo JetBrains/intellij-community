@@ -15,8 +15,7 @@
  */
 package com.siyeh.ipp.types;
 
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
@@ -39,21 +38,18 @@ public class ReplaceMethodRefWithLambdaIntention extends Intention {
   protected void processIntention(@NotNull PsiElement element) {}
 
   @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
+
+  @Override
   protected void processIntention(final Editor editor, @NotNull PsiElement element) {
-    final PsiMethodReferenceExpression referenceExpression = PsiTreeUtil.getParentOfType(element, PsiMethodReferenceExpression.class);
-    final PsiLambdaExpression expr = referenceExpression != null ? LambdaRefactoringUtil.convertMethodReferenceToLambda(referenceExpression, false, true) : null;
+    PsiMethodReferenceExpression ref = PsiTreeUtil.getParentOfType(element, PsiMethodReferenceExpression.class);
+    PsiLambdaExpression expr = ref != null
+                               ? WriteAction.compute(() -> LambdaRefactoringUtil.convertMethodReferenceToLambda(ref, false, true))
+                               : null;
     if (expr == null) return;
-    final Runnable runnable = new Runnable() {
-      public void run() {
-        LambdaRefactoringUtil.removeSideEffectsFromLambdaBody(editor, expr);
-      }
-    };
-    final Application application = ApplicationManager.getApplication();
-    if (application.isUnitTestMode()) {
-      runnable.run();
-    } else {
-      application.invokeLater(runnable);
-    }
+    LambdaRefactoringUtil.removeSideEffectsFromLambdaBody(editor, expr);
   }
 
   private static class MethodRefPredicate implements PsiElementPredicate {

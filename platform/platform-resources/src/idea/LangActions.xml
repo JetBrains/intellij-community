@@ -988,5 +988,26 @@
     </group>
 
     <action id="SeverityEditorDialog" class="com.intellij.codeInspection.ex.SeverityEditorDialogAction"/>
+
+    <group id="TreeNodeExclusion">
+      <action id="TreeNodeExclusionInclude" class="com.intellij.ide.actions.exclusion.IncludeTreeNodeAction"/>
+      <action id="TreeNodeExclusionExclude" class="com.intellij.ide.actions.exclusion.ExcludeTreeNodeAction" use-shortcut-of="$Delete"/>
+    </group>>
+
+    <group id="InspectionToolWindow.TreePopup" compact="true">
+      <reference ref="EditSource"/>
+      <reference ref="FindUsages"/>
+      <reference ref="TreeNodeExclusion"/>
+      <separator/>
+      <action id="QuickFixes" class="com.intellij.codeInspection.ui.actions.QuickFixesViewActionGroup"/>
+      <separator/>
+      <action id="EditInspectionSettings" class="com.intellij.codeInspection.ui.actions.EditSettingsAction"/>
+      <group id="InspectionsOptions">
+        <action id="DisableInspection" class="com.intellij.codeInspection.ui.actions.KeyAwareInspectionViewAction$DisableInspection"/>
+        <action id="RunInspectionOn" class="com.intellij.codeInspection.ui.actions.KeyAwareInspectionViewAction$RunInspectionOn"/>
+        <separator/>
+        <action id="SuppressFixes" class="com.intellij.codeInspection.ui.actions.SuppressActionWrapper"/>
+      </group>
+    </group>
   </actions>
 </idea-plugin>

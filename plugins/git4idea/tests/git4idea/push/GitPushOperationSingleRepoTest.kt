@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,6 +58,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
 
     Executor.cd(myProjectPath)
     refresh()
+    updateRepositories()
   }
 
   fun test_successful_push() {
@@ -138,7 +139,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
 
     agreeToUpdate(GitRejectedPushUpdateDialog.MERGE_EXIT_CODE)
 
-    refresh()
+    updateRepositories()
     val pushSpec = makePushSpec(myRepository, "master", "origin/master")
 
     val result = object : GitPushOperation(myProject, myPushSupport, singletonMap(myRepository, pushSpec), null, false) {
@@ -170,7 +171,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
 
     agreeToUpdate(GitRejectedPushUpdateDialog.REBASE_EXIT_CODE)
 
-    refresh()
+    updateRepositories()
     val pushSpec = makePushSpec(myRepository, "master", "origin/master")
 
     val result = object : GitPushOperation(myProject, myPushSupport, singletonMap(myRepository, pushSpec), null, false) {
@@ -327,7 +328,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     cd(myRepository)
     git("tag v1")
 
-    refresh()
+    updateRepositories()
     val spec = makePushSpec(myRepository, "master", "origin/master")
     val pushResult = GitPushOperation(myProject, myPushSupport, singletonMap(myRepository, spec),
         GitPushTagMode.ALL, false).execute()
@@ -443,7 +444,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
   }
 
   private fun push(from: String, to: String, force: Boolean = false): GitPushResult {
-    refresh()
+    updateRepositories()
     val spec = makePushSpec(myRepository, from, to)
     return GitPushOperation(myProject, myPushSupport, singletonMap(myRepository, spec), null, force).execute()
   }
@@ -468,7 +469,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
         getUpdatedFiles(actualResult.updatedFiles), ContainerUtil.notNullize(updatedFiles))
   }
 
-  private fun getUpdatedFiles(updatedFiles: UpdatedFiles): Collection<String>? {
+  private fun getUpdatedFiles(updatedFiles: UpdatedFiles): Collection<String> {
     val result = ContainerUtil.newArrayList<String>()
     for (group in updatedFiles.topLevelGroups) {
       result.addAll(getUpdatedFiles(group))

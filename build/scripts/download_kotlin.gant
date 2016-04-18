@@ -26,7 +26,7 @@ import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
 
 includeTargets << new File("${guessHome(this)}/build/scripts/utils.gant")
 
-String kotlinBuildConfigurationOnPublicTeamCity = "Kotlin_Rc_Idea142branch150versionNoTests"
+String kotlinBuildConfigurationOnPublicTeamCity = "Kotlin_101andRc_Idea142branch150versionNoTests"
 
 target('default': 'Ensures that build/kotlinc directory contains JARs from Kotlin plugin compatible with current IDEA sources. These JARs are used by build scripts.') {
   def communityHome = guessHome(this)
@@ -190,7 +190,7 @@ private String readKotlinClassVersionOfCompiledClasses() {
   }
 }
 
-private String readKotlinClassFileVersion(InputStream classFileStream) {
+private static String readKotlinClassFileVersion(InputStream classFileStream) {
   def reader = new ClassReader(classFileStream)
   String kotlinBytecodeVersion = null
   String kotlinMetaDataVersion = null
@@ -209,7 +209,8 @@ private String readKotlinClassFileVersion(InputStream classFileStream) {
         return new AnnotationVisitor(Opcodes.ASM5) {
           void visit(String name, Object value) {
             if (name == "mv") {
-              kotlinMetaDataVersion = (value as Integer[]).join(".")
+              //strip patch number of metadata version because changes in patch updates are forward and backward compatible
+              kotlinMetaDataVersion = (value as Integer[]).toList().dropRight(1).join(".")
             }
             else if (name == "bv") {
               kotlinBytecodeVersion = (value as Integer[]).join(".")

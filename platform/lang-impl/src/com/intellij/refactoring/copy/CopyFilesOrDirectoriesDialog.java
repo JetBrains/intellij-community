@@ -19,9 +19,7 @@ import com.intellij.ide.util.DirectoryUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.application.AcceptNestedTransactions;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.TransactionKind;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -60,7 +58,6 @@ import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.util.List;
 
-@AcceptNestedTransactions(TransactionKind.Common.TEXT_EDITING)
 public class CopyFilesOrDirectoriesDialog extends DialogWrapper {
   public static final int MAX_PATH_LENGTH = 70;
 

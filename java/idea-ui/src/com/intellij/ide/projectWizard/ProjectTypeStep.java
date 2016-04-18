@@ -544,6 +544,10 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
         throw new CommitStepException(null);
       }
     }
+    TemplatesGroup group = getSelectedGroup();
+    if (group != null) {
+      ProjectCategoryUsagesCollector.projectTypeUsed(group.getId());
+    }
   }
 
   @Override

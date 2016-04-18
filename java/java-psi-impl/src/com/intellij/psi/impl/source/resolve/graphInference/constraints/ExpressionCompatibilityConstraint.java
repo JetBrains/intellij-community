@@ -101,9 +101,9 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
       if (callSession != session) {
         session.getInferenceSessionContainer().registerNestedSession(callSession);
         session.propagateVariables(callSession.getInferenceVariables(), callSession.getRestoreNameSubstitution());
-        if (callSession.isErased()) {
+/*        if (callSession.isErased()) {
           session.setErased();
-        }
+        }*/
       }
       return true;
     }

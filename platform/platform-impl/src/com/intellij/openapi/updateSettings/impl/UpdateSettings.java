@@ -38,7 +38,6 @@ import java.util.List;
 public class UpdateSettings implements PersistentStateComponent<UpdateSettings.State>, UserUpdateSettings {
   public static class State {
     @CollectionBean public final List<String> pluginHosts = new SmartList<String>();
-    @CollectionBean public final List<String> knownUpdateChannels = new SmartList<String>();
     @CollectionBean public final List<String> ignoredBuildNumbers = new SmartList<String>();
 
     public boolean CHECK_NEEDED = true;
@@ -99,21 +98,6 @@ public class UpdateSettings implements PersistentStateComponent<UpdateSettings.S
 
   @NotNull
   @Override
-  public List<String> getKnownChannelsIds() {
-    return new ArrayList<String>(myState.knownUpdateChannels);
-  }
-
-  @Override
-  public void setKnownChannelIds(@NotNull List<String> ids) {
-    myState.knownUpdateChannels.clear();
-    myState.knownUpdateChannels.addAll(ids);
-  }
-
-  public void forgetChannelId(String id) {
-    myState.knownUpdateChannels.remove(id);
-  }
-
-  @Override
   public List<String> getIgnoredBuildNumbers() {
     return myState.ignoredBuildNumbers;
   }
@@ -150,6 +134,7 @@ public class UpdateSettings implements PersistentStateComponent<UpdateSettings.S
     return myState.SECURE_CONNECTION && NetUtils.isSniEnabled();
   }
 
+  //<editor-fold desc="Deprecated stuff.">
   /** @deprecated use {@link #getSelectedChannelStatus()} (to be removed in IDEA 17) */
   @SuppressWarnings("unused")
   public String getUpdateChannelType() {
@@ -161,4 +146,5 @@ public class UpdateSettings implements PersistentStateComponent<UpdateSettings.S
   public void setUpdateChannelType(@NotNull String value) {
     myState.UPDATE_CHANNEL_TYPE = value;
   }
+  //</editor-fold>
 }

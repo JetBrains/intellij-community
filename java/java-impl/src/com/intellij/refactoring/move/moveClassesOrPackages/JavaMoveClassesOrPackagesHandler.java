@@ -210,7 +210,7 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
     else {
       final boolean containsJava = hasJavaFiles(directories[0]);
       if (!containsJava) {
-        MoveFilesOrDirectoriesUtil.doMove(project, new PsiElement[]{directories[0]}, new PsiElement[]{targetContainer}, callback);
+        MoveFilesOrDirectoriesUtil.doMove(project, directories, new PsiElement[]{targetContainer}, callback);
         return;
       }
       final MoveClassesOrPackagesToNewDirectoryDialog dlg =

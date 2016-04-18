@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,6 +80,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   private final LookupOffsets myOffsets;
   private final Project myProject;
   private final Editor myEditor;
+  private final Object myLock = new Object();
   private final JBList myList = new JBList(new CollectionListModel<LookupElement>()) {
     @Override
     protected void processKeyEvent(@NotNull final KeyEvent e) {
@@ -121,9 +122,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   private volatile LookupArranger myArranger;
   private LookupArranger myPresentableArranger;
   private final Map<LookupElement, PrefixMatcher> myMatchers =
-    ContainerUtil.createConcurrentWeakMap(ContainerUtil.<LookupElement>identityStrategy());
+    ContainerUtil.createConcurrentWeakMap(ContainerUtil.identityStrategy());
   private final Map<LookupElement, Font> myCustomFonts = ContainerUtil.createConcurrentWeakMap(10, 0.75f, Runtime.getRuntime().availableProcessors(),
-    ContainerUtil.<LookupElement>identityStrategy());
+    ContainerUtil.identityStrategy());
   private boolean myStartCompletionWhenNothingMatches;
   boolean myResizePending;
   private boolean myFinishing;
@@ -812,7 +813,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
   public void fireItemSelected(@Nullable final LookupElement item, char completionChar){
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-
+    myArranger.itemSelected(item, completionChar);
     if (!myListeners.isEmpty()){
       LookupEvent event = new LookupEvent(this, item, completionChar);
       for (LookupListener listener : myListeners) {
@@ -1156,7 +1157,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     if (ApplicationManager.getApplication().isDispatchThread()) {
       HeavyProcessLatch.INSTANCE.stopThreadPrioritizing();
     }
-    synchronized (myList) {
+    synchronized (myLock) {
       return computable.compute();
     }
   }

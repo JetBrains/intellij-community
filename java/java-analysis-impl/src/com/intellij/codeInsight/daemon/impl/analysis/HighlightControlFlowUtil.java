@@ -104,10 +104,8 @@ public class HighlightControlFlowUtil {
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(unreachableStatement).descriptionAndTooltip(description).create();
       }
     }
-    catch (AnalysisCanceledException e) {
+    catch (AnalysisCanceledException | IndexNotReadyException e) {
       // incomplete code
-    }
-    catch (IndexNotReadyException ignored) {
     }
     return null;
   }
@@ -376,10 +374,7 @@ public class HighlightControlFlowUtil {
         final ControlFlow controlFlow = getControlFlow(topBlock);
         codeBlockProblems = ControlFlowUtil.getReadBeforeWriteLocals(controlFlow);
       }
-      catch (AnalysisCanceledException e) {
-        codeBlockProblems = Collections.emptyList();
-      }
-      catch (IndexNotReadyException e) {
+      catch (AnalysisCanceledException | IndexNotReadyException e) {
         codeBlockProblems = Collections.emptyList();
       }
       uninitializedVarProblems.put(topBlock, codeBlockProblems);
@@ -403,9 +398,28 @@ public class HighlightControlFlowUtil {
   private static boolean inInnerClass(@NotNull PsiElement psiElement, @Nullable PsiClass containingClass, @NotNull PsiFile containingFile) {
     PsiElement element = psiElement;
     while (element != null) {
-      if (element instanceof PsiLambdaExpression) return false;
-      if (element instanceof PsiClass) return !containingFile.getManager().areElementsEquivalent(element, containingClass);
+      if (element instanceof PsiClass) {
+        final boolean innerClass = !containingFile.getManager().areElementsEquivalent(element, containingClass);
+        if (innerClass) {
+          final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(psiElement, PsiLambdaExpression.class);
+          return lambdaExpression == null || !inLambdaInsideClassInitialization(containingClass, (PsiClass)element);
+        }
+        return false;
+      }
       element = element.getParent();
+    }
+    return false;
+  }
+
+  private static boolean inLambdaInsideClassInitialization(@Nullable PsiClass containingClass, PsiClass aClass) {
+    PsiMember member = aClass;
+    while (member != null) {
+      if (member.getContainingClass() == containingClass) {
+        return member instanceof PsiField ||
+               member instanceof PsiMethod && ((PsiMethod)member).isConstructor() ||
+               member instanceof PsiClassInitializer;
+      }
+      member = PsiTreeUtil.getParentOfType(member, PsiMember.class, true);
     }
     return false;
   }

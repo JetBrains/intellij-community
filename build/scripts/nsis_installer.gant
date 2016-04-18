@@ -71,9 +71,6 @@ def nsis_installer(pathsToInclude, stringsFile, pathsFile, outNamePrefix, includ
     replacefilter(token: "__BUILD_NUMBER__", value: buildNumber)
     replacefilter(token: "__VERSION_MAJOR__", value: p("component.version.major"))
     replacefilter(token: "__VERSION_MINOR__", value: p("component.version.minor"))
-    replacefilter(token: "__MIN_UPGRADE_BUILD__", value: p("component.install-over.minbuild"))
-    replacefilter(token: "__MAX_UPGRADE_BUILD__", value: p("component.install-over.maxbuild"))
-    replacefilter(token: "__UPGRADE_VERSION__", value: p("component.install-over.version"))
     replacefilter(token: "__PRODUCT_PATHS_SELECTOR__", value: system_selector)
   }
 

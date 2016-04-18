@@ -45,6 +45,8 @@ public class FxmlConstants {
 
   @NonNls public static final String STYLE_CLASS = "styleClass";
   @NonNls public static final String STYLESHEETS = "stylesheets";
+  @NonNls public static final String URL_ATTR = "url";
+  @NonNls public static final String URL_TAG = "URL";
 
   @NonNls public static final String SOURCE = "source";
 

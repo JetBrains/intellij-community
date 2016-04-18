@@ -558,6 +558,7 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
   }
 
   ant.fixcrlf(srcdir: "$path/bin", includes: "*.sh", eol: "unix")
+  ant.fixcrlf(srcdir: "$path/bin", includes: "*.py", eol: "unix")
 })
 
 binding.setVariable("winScripts", { String target, String home, String name, Map args ->
@@ -883,23 +884,21 @@ binding.setVariable("bundledJDK64s"){
 private bundledJDK(boolean win64) {
   requireProperty("artifact.linux.no.jdk", "true")
   requireProperty("artifact.mac.no.jdk", "true")
-  requireProperty("jdk.win", "jdk1.8")
-  requireProperty("jdk.custom.win", "false")
-  requireProperty("jdk.mac", "openjdk.1.8")
+  requireProperty("jdk.oracle.win", "jdk1.8")
+  requireProperty("jdk.win",   "openjdk.1.8")
+  requireProperty("jdk.mac",   "openjdk.1.8")
   requireProperty("jdk.linux", "openjdk.1.8")
 
   if (new File("${home}/build/jdk").exists()) {
     def jdkDir = new File("${home}/build/jdk/win")
-    if (p("jdk.win") != "false") {
-      setProperty("winJDK", getPathToBundledJDK(jdkDir, p("jdk.win"), (win64 ? "x64.zip": "x32.zip") ))
-      extractRedistJre(winJDK, "${paths.sandbox}/jdk.win/jre")
+    if (p("jdk.oracle.win") != "false" && (jdkDir.exists() && jdkDir.isDirectory())) {
+      setProperty("winJDK", getPathToBundledJDK(jdkDir, p("jdk.oracle.win"), (win64 ? "x64.zip": "x32.zip")))
+      extractRedistJre(winJDK, "${paths.sandbox}/jdk.oracle.win/jre")
     }
     jdkDir = new File("${home}/build/jdk/win/custom")
-    if (p("jdk.custom.win") != "false" && (jdkDir.exists() && jdkDir.isDirectory())) {
-      setProperty("winCustomJDKx32", getPathToBundledJDK(jdkDir, p("jdk.custom.win"), "x32.tar.gz"))
-      extractRedistJre(winCustomJDKx32, "${paths.sandbox}/jdk.custom.win.x32")
-      setProperty("winCustomJDKx64", getPathToBundledJDK(jdkDir, p("jdk.custom.win"), "x64.tar.gz"))
-      extractRedistJre(winCustomJDKx64, "${paths.sandbox}/jdk.custom.win.x64")
+    if (p("jdk.win") != "false" && (jdkDir.exists() && jdkDir.isDirectory())) {
+      setProperty("winCustomJDKx32", getPathToBundledJDK(jdkDir, p("jdk.win"), (win64 ? "x64.tar.gz": "x32.tar.gz")))
+      extractRedistJre(winCustomJDKx32, "${paths.sandbox}/jdk.win")
     }
     jdkDir = new File("${home}/build/jdk/mac/custom")
     if (p("jdk.mac") != "false" && (jdkDir.exists() && jdkDir.isDirectory())) {

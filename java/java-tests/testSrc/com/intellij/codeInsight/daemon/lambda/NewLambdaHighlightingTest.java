@@ -292,6 +292,22 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testDeepChainOfNestedLambdasOverCachedTopLevel() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA153999() throws Exception {
+    doTest();
+  }
+
+  public void testFieldReferencedFromLambdaInitializations() throws Exception {
+    doTest();
+  }
+
+  public void testRawSiteSubstitutorWithExpectedGenericsParameterType() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }

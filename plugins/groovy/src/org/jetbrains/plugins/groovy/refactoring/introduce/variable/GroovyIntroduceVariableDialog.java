@@ -16,8 +16,6 @@
 
 package org.jetbrains.plugins.groovy.refactoring.introduce.variable;
 
-import com.intellij.openapi.application.AcceptNestedTransactions;
-import com.intellij.openapi.application.TransactionKind;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -42,7 +40,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.LinkedHashSet;
 
-@AcceptNestedTransactions(TransactionKind.Common.TEXT_EDITING)
 public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIntroduceDialog<GroovyIntroduceVariableSettings> {
   private static final String REFACTORING_NAME = GroovyRefactoringBundle.message("introduce.variable.title");
 

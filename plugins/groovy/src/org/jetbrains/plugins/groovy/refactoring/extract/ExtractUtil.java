@@ -420,12 +420,12 @@ public class ExtractUtil {
     ParameterInfo[] infos = helper.getParameterInfos();
     int number = 0;
     for (ParameterInfo info : infos) {
-      if (info.passAsParameter()) number++;
+      if (info.passAsParameter) number++;
     }
     ArrayList<String> params = new ArrayList<String>();
     for (ParameterInfo info : infos) {
-      if (info.passAsParameter()) {
-        PsiType paramType = info.getType();
+      if (info.passAsParameter) {
+        PsiType paramType = info.type;
         final PsiPrimitiveType unboxed = PsiPrimitiveType.getUnboxedType(paramType);
         if (unboxed != null) paramType = unboxed;
 
@@ -474,7 +474,7 @@ public class ExtractUtil {
     buffer.append("(");
     int number = 0;
     for (ParameterInfo info : helper.getParameterInfos()) {
-      if (info.passAsParameter()) number++;
+      if (info.passAsParameter) number++;
     }
     int i = 0;
     String[] argumentNames = helper.getArgumentNames();

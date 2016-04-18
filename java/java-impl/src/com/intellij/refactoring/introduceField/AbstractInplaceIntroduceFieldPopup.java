@@ -23,6 +23,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.introduceParameter.AbstractJavaInplaceIntroducer;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.occurrences.OccurrenceManager;
@@ -79,6 +80,14 @@ public abstract class AbstractInplaceIntroduceFieldPopup extends AbstractJavaInp
   @Override
   protected SearchScope getReferencesSearchScope(VirtualFile file) {
     return new LocalSearchScope(myParentClass);
+  }
+
+  @Override
+  protected boolean startsOnTheSameElement(RefactoringActionHandler handler, PsiElement element) {
+    return super.startsOnTheSameElement(handler, element) ||
+           myParentClass != null &&
+           element instanceof PsiLocalVariable &&
+           myParentClass.findFieldByName(((PsiLocalVariable)element).getName(), false) != null;
   }
 
   protected PsiElement getAnchorElement() {

@@ -15,30 +15,29 @@
  */
 package com.intellij.configurationStore
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.ArrayUtil
 import com.intellij.util.SystemProperties
-import com.intellij.util.loadElement
 import gnu.trove.THashMap
 import org.iq80.snappy.SnappyInputStream
 import org.iq80.snappy.SnappyOutputStream
 import org.jdom.Element
 import java.io.ByteArrayInputStream
-import java.io.DataOutputStream
 import java.util.*
 import java.util.concurrent.atomic.AtomicReferenceArray
 
 fun archiveState(state: Element): BufferExposingByteArrayOutputStream {
   val byteOut = BufferExposingByteArrayOutputStream()
-  DataOutputStream(SnappyOutputStream(byteOut)).use {
+  SnappyOutputStream(byteOut).use {
     writeElement(state, it)
   }
   return byteOut
 }
 
-private fun unarchiveState(state: ByteArray) = loadElement(SnappyInputStream(ByteArrayInputStream(state)).reader())
+private fun unarchiveState(state: ByteArray) = SnappyInputStream(ByteArrayInputStream(state)).use { readElement(it) }
 
 fun getNewByteIfDiffers(key: String, newState: Any, oldState: ByteArray): ByteArray? {
   val newBytes: ByteArray
@@ -57,15 +56,16 @@ fun getNewByteIfDiffers(key: String, newState: Any, oldState: ByteArray): ByteAr
     }
   }
 
-  if (SystemProperties.getBooleanProperty("idea.log.changed.components", false)) {
+  val logChangedComponents = SystemProperties.getBooleanProperty("idea.log.changed.components", false)
+  if (ApplicationManager.getApplication().isUnitTestMode || logChangedComponents ) {
     fun stateToString(state: Any) = JDOMUtil.writeParent(state as? Element ?: unarchiveState(state as ByteArray), "\n")
 
     val before = stateToString(oldState)
     val after = stateToString(newState)
     if (before == after) {
-      LOG.info("Serialization error: serialized are different, but unserialized are equal")
+      throw IllegalStateException("$key serialization error - serialized are different, but unserialized are equal")
     }
-    else {
+    else if (logChangedComponents) {
       LOG.info("$key ${StringUtil.repeat("=", 80 - key.length)}\nBefore:\n$before\nAfter:\n$after")
     }
   }
@@ -174,9 +174,7 @@ class StateMap private constructor(private val names: Array<String>, private val
       return
     }
 
-    val currentState = states.get(index)
-    LOG.assertTrue(currentState is Element, currentState?.let { it.javaClass.name } ?: "null")
-    states.set(index, if (state == null) null else archiveState(state).toByteArray())
+    states.set(index, state?.let { archiveState(state).toByteArray() })
   }
 }
 

@@ -124,18 +124,18 @@ public class NotificationsUtil {
 
   @Nullable
   public static String getFontStyle() {
-    String fontName = null;
+    String fontName = getFontName();
+    return StringUtil.isEmpty(fontName) ? null : "font-family:" + fontName + ";";
+  }
+
+  @Nullable
+  public static String getFontName() {
     UISettings uiSettings = UISettings.getInstance();
     if (uiSettings.OVERRIDE_NONIDEA_LAF_FONTS) {
-      fontName = uiSettings.FONT_FACE;
+      return uiSettings.FONT_FACE;
     }
-    else {
-      Pair<String, Integer> systemFontData = UIUtil.getSystemFontData();
-      if (systemFontData != null) {
-        fontName = systemFontData.first;
-      }
-    }
-    return StringUtil.isEmpty(fontName) ? null : "font-family:" + fontName + ";";
+    Pair<String, Integer> systemFontData = UIUtil.getSystemFontData();
+    return systemFontData == null ? null : systemFontData.first;
   }
 
   @Nullable

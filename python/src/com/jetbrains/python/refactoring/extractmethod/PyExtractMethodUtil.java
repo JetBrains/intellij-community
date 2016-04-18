@@ -37,6 +37,7 @@ import com.intellij.refactoring.listeners.RefactoringElementListenerComposite;
 import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.listeners.RefactoringEventListener;
 import com.intellij.refactoring.rename.RenameUtil;
+import com.intellij.refactoring.util.AbstractVariableData;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Consumer;
@@ -105,7 +106,7 @@ public class PyExtractMethodUtil {
     final String methodName = data.first;
     final AbstractVariableData[] variableData = data.second;
 
-    final SimpleDuplicatesFinder finder = new SimpleDuplicatesFinder(statement1, statement2, variableData, fragment.getOutputVariables());
+    final SimpleDuplicatesFinder finder = new SimpleDuplicatesFinder(statement1, statement2, fragment.getOutputVariables(), variableData);
 
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
       public void run() {
@@ -300,7 +301,7 @@ public class PyExtractMethodUtil {
     final String methodName = data.first;
     final AbstractVariableData[] variableData = data.second;
 
-    final SimpleDuplicatesFinder finder = new SimpleDuplicatesFinder(expression, expression, variableData, fragment.getOutputVariables());
+    final SimpleDuplicatesFinder finder = new SimpleDuplicatesFinder(expression, expression, fragment.getOutputVariables(), variableData);
     if (fragment.getOutputVariables().isEmpty()) {
       CommandProcessor.getInstance().executeCommand(project, new Runnable() {
         @Override
@@ -625,7 +626,7 @@ public class PyExtractMethodUtil {
     final boolean isMethod = PyPsiUtils.isMethodContext(element);
     final ExtractMethodDecorator decorator = new ExtractMethodDecorator() {
       @NotNull
-      public String createMethodPreview(final String methodName, @NotNull final AbstractVariableData[] variableDatas) {
+      public String createMethodSignature(final String methodName, @NotNull final AbstractVariableData[] variableDatas) {
         final StringBuilder builder = new StringBuilder();
         if (isClassMethod) {
           builder.append("cls");
@@ -663,7 +664,7 @@ public class PyExtractMethodUtil {
       return Pair.empty();
     }
 
-    return Pair.create(dialog.getMethodName(), dialog.getVariableData());
+    return Pair.create(dialog.getMethodName(), dialog.getAbstractVariableData());
   }
 
   @NotNull

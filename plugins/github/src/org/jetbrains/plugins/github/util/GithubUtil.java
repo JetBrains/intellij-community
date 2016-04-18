@@ -167,22 +167,16 @@ public class GithubUtil {
   @NotNull
   private static ScheduledFuture<?> addCancellationListener(@NotNull final ProgressIndicator indicator,
                                                             @NotNull final GithubConnection connection) {
-    return addCancellationListener(new Runnable() {
-      @Override
-      public void run() {
-        if (indicator.isCanceled()) connection.abort();
-      }
+    return addCancellationListener(() -> {
+      if (indicator.isCanceled()) connection.abort();
     });
   }
 
   @NotNull
   private static ScheduledFuture<?> addCancellationListener(@NotNull final ProgressIndicator indicator,
                                                             @NotNull final Thread thread) {
-    return addCancellationListener(new Runnable() {
-      @Override
-      public void run() {
-        if (indicator.isCanceled()) thread.interrupt();
-      }
+    return addCancellationListener(() -> {
+      if (indicator.isCanceled()) thread.interrupt();
     });
   }
 
@@ -190,30 +184,23 @@ public class GithubUtil {
                                       @NotNull final GithubAuthDataHolder authHolder,
                                       @NotNull final ProgressIndicator indicator,
                                       @NotNull final GithubAuthData oldAuth) throws GithubOperationCanceledException {
-    authHolder.runTransaction(oldAuth, new ThrowableComputable<GithubAuthData, GithubOperationCanceledException>() {
-      @Override
-      @NotNull
-      public GithubAuthData compute() throws GithubOperationCanceledException {
-        final GithubAuthData[] authData = new GithubAuthData[1];
-        final boolean[] ok = new boolean[1];
-        ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-          @Override
-          public void run() {
-            final GithubLoginDialog dialog = new GithubLoginDialog(project, oldAuth);
-            DialogManager.show(dialog);
-            ok[0] = dialog.isOK();
+    authHolder.runTransaction(oldAuth, () -> {
+      final GithubAuthData[] authData = new GithubAuthData[1];
+      final boolean[] ok = new boolean[1];
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        final GithubLoginDialog dialog = new GithubLoginDialog(project, oldAuth);
+        DialogManager.show(dialog);
+        ok[0] = dialog.isOK();
 
-            if (ok[0]) {
-              authData[0] = dialog.getAuthData();
-              GithubSettings.getInstance().setAuthData(authData[0], dialog.isSavePasswordSelected());
-            }
-          }
-        }, indicator.getModalityState());
-        if (!ok[0]) {
-          throw new GithubOperationCanceledException("Can't get valid credentials");
+        if (ok[0]) {
+          authData[0] = dialog.getAuthData();
+          GithubSettings.getInstance().setAuthData(authData[0], dialog.isSavePasswordSelected());
         }
-        return authData[0];
+      }, indicator.getModalityState());
+      if (!ok[0]) {
+        throw new GithubOperationCanceledException("Can't get valid credentials");
       }
+      return authData[0];
     });
   }
 
@@ -222,33 +209,26 @@ public class GithubUtil {
                                                   @NotNull final ProgressIndicator indicator,
                                                   @NotNull final GithubAuthData oldAuth,
                                                   @NotNull final String host) throws GithubOperationCanceledException {
-    authHolder.runTransaction(oldAuth, new ThrowableComputable<GithubAuthData, GithubOperationCanceledException>() {
-      @Override
-      @NotNull
-      public GithubAuthData compute() throws GithubOperationCanceledException {
-        final GithubAuthData[] authData = new GithubAuthData[1];
-        final boolean[] ok = new boolean[1];
-        ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-          @Override
-          public void run() {
-            final GithubLoginDialog dialog = new GithubBasicLoginDialog(project, oldAuth, host);
-            DialogManager.show(dialog);
-            ok[0] = dialog.isOK();
-            if (ok[0]) {
-              authData[0] = dialog.getAuthData();
+    authHolder.runTransaction(oldAuth, () -> {
+      final GithubAuthData[] authData = new GithubAuthData[1];
+      final boolean[] ok = new boolean[1];
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        final GithubLoginDialog dialog = new GithubBasicLoginDialog(project, oldAuth, host);
+        DialogManager.show(dialog);
+        ok[0] = dialog.isOK();
+        if (ok[0]) {
+          authData[0] = dialog.getAuthData();
 
-              final GithubSettings settings = GithubSettings.getInstance();
-              if (settings.getAuthType() != GithubAuthData.AuthType.TOKEN) {
-                GithubSettings.getInstance().setAuthData(authData[0], dialog.isSavePasswordSelected());
-              }
-            }
+          final GithubSettings settings = GithubSettings.getInstance();
+          if (settings.getAuthType() != GithubAuthData.AuthType.TOKEN) {
+            GithubSettings.getInstance().setAuthData(authData[0], dialog.isSavePasswordSelected());
           }
-        }, indicator.getModalityState());
-        if (!ok[0]) {
-          throw new GithubOperationCanceledException("Can't get valid credentials");
         }
-        return authData[0];
+      }, indicator.getModalityState());
+      if (!ok[0]) {
+        throw new GithubOperationCanceledException("Can't get valid credentials");
       }
+      return authData[0];
     });
   }
 
@@ -256,35 +236,28 @@ public class GithubUtil {
                                            @NotNull final GithubAuthDataHolder authHolder,
                                            @NotNull final ProgressIndicator indicator,
                                            @NotNull final GithubAuthData oldAuth) throws GithubOperationCanceledException {
-    authHolder.runTransaction(oldAuth, new ThrowableComputable<GithubAuthData, GithubOperationCanceledException>() {
-      @Override
-      @NotNull
-      public GithubAuthData compute() throws GithubOperationCanceledException {
-        if (authHolder.getAuthData().getAuthType() != GithubAuthData.AuthType.BASIC) {
-          throw new GithubOperationCanceledException("Two factor authentication can be used only with Login/Password");
-        }
-
-        GithubApiUtil.askForTwoFactorCodeSMS(new GithubConnection(oldAuth, false));
-
-        final Ref<String> codeRef = new Ref<String>();
-        ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-          @Override
-          public void run() {
-            codeRef.set(Messages.showInputDialog(project, "Authentication Code", "Github Two-Factor Authentication", null));
-          }
-        }, indicator.getModalityState());
-        if (codeRef.isNull()) {
-          throw new GithubOperationCanceledException("Can't get two factor authentication code");
-        }
-
-        GithubSettings settings = GithubSettings.getInstance();
-        if (settings.getAuthType() == GithubAuthData.AuthType.BASIC &&
-            StringUtil.equalsIgnoreCase(settings.getLogin(), oldAuth.getBasicAuth().getLogin())) {
-          settings.setValidGitAuth(false);
-        }
-
-        return oldAuth.copyWithTwoFactorCode(codeRef.get());
+    authHolder.runTransaction(oldAuth, () -> {
+      if (authHolder.getAuthData().getAuthType() != GithubAuthData.AuthType.BASIC) {
+        throw new GithubOperationCanceledException("Two factor authentication can be used only with Login/Password");
       }
+
+      GithubApiUtil.askForTwoFactorCodeSMS(new GithubConnection(oldAuth, false));
+
+      final Ref<String> codeRef = new Ref<String>();
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        codeRef.set(Messages.showInputDialog(project, "Authentication Code", "Github Two-Factor Authentication", null));
+      }, indicator.getModalityState());
+      if (codeRef.isNull()) {
+        throw new GithubOperationCanceledException("Can't get two factor authentication code");
+      }
+
+      GithubSettings settings = GithubSettings.getInstance();
+      if (settings.getAuthType() == GithubAuthData.AuthType.BASIC &&
+          StringUtil.equalsIgnoreCase(settings.getLogin(), oldAuth.getBasicAuth().getLogin())) {
+        settings.setValidGitAuth(false);
+      }
+
+      return oldAuth.copyWithTwoFactorCode(codeRef.get());
     });
   }
 
@@ -342,9 +315,9 @@ public class GithubUtil {
     return testConnection(project, authHolder, indicator);
   }
 
-  public static <T> T computeValueInModal(@NotNull Project project,
-                                          @NotNull String caption,
-                                          @NotNull final ThrowableConvertor<ProgressIndicator, T, IOException> task) throws IOException {
+  public static <T> T computeValueInModalIO(@NotNull Project project,
+                                            @NotNull String caption,
+                                            @NotNull final ThrowableConvertor<ProgressIndicator, T, IOException> task) throws IOException {
     return ProgressManager.getInstance().run(new Task.WithResult<T, IOException>(project, caption, true) {
       @Override
       protected T compute(@NotNull ProgressIndicator indicator) throws IOException {

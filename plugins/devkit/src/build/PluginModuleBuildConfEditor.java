@@ -83,7 +83,7 @@ public class PluginModuleBuildConfEditor implements ModuleConfigurationEditor {
     gc.weighty = 1.0;
     manifestPanel.add(myManifest, gc);
     myWholePanel.add(manifestPanel, gc);
-    myWholePanel.setBorder(BorderFactory.createEmptyBorder(5,5,5,5));
+    myWholePanel.setBorder(JBUI.Borders.empty(5));
     return myWholePanel;
   }
 

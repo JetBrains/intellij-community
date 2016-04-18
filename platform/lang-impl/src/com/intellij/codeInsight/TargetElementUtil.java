@@ -286,7 +286,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
 
   protected boolean isAcceptableReferencedElement(@Nullable PsiElement element, @Nullable PsiElement referenceOrReferencedElement) {
     if (referenceOrReferencedElement == null || !referenceOrReferencedElement.isValid()) return false;
-    
+
     TargetElementEvaluatorEx2 evaluator = element != null ? getElementEvaluatorsEx2(element.getLanguage()) : null;
     if (evaluator != null) {
       ThreeState answer = evaluator.isAcceptableReferencedElement(element, referenceOrReferencedElement);
@@ -360,16 +360,16 @@ public class TargetElementUtil extends TargetElementUtilBase {
   @Nullable
   private PsiElement getNamedElement(@Nullable final PsiElement element) {
     if (element == null) return null;
-    
+
     TargetElementEvaluatorEx2 evaluator = getElementEvaluatorsEx2(element.getLanguage());
     if (evaluator != null) {
       PsiElement result = evaluator.getNamedElement(element);
       if (result != null) return result;
     }
-    
+
     PsiElement parent;
     if ((parent = PsiTreeUtil.getParentOfType(element, PsiNamedElement.class, false)) != null) {
-      boolean isInjected = parent instanceof PsiFile 
+      boolean isInjected = parent instanceof PsiFile
                            && InjectedLanguageManager.getInstance(parent.getProject()).isInjectedFragment((PsiFile)parent);
       // A bit hacky depends on navigation offset correctly overridden
       if (!isInjected && parent.getTextOffset() == element.getTextRange().getStartOffset()) {
@@ -428,7 +428,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
       Collection<PsiElement> candidates = evaluator.getTargetCandidates(reference);
       if (candidates != null) return candidates;
     }
-    
+
     if (reference instanceof PsiPolyVariantReference) {
       final ResolveResult[] results = ((PsiPolyVariantReference)reference).multiResolve(false);
       List<PsiElement> navigatableResults = new ArrayList<PsiElement>(results.length);

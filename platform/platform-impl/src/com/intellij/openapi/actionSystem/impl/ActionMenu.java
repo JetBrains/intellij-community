@@ -359,6 +359,10 @@ public final class ActionMenu extends JMenu {
     private SingleAlarm myCallbackAlarm;
     private MouseEvent myEventToRedispatch;
 
+    private long myLastEventTime = 0L;
+    private boolean myInBounds = false;
+    private SingleAlarm myCheckAlarm;
+
     private UsabilityHelper(Component component) {
       myCallbackAlarm = new SingleAlarm(new Runnable() {
         @Override
@@ -370,6 +374,17 @@ public final class ActionMenu extends JMenu {
           }
         }
       }, 50, this);
+      myCheckAlarm = new SingleAlarm(new Runnable() {
+        @Override
+        public void run() {
+          if (myLastEventTime > 0 && System.currentTimeMillis() - myLastEventTime > 1500) {
+            if (!myInBounds && myCallbackAlarm != null && !myCallbackAlarm.isDisposed()) {
+              myCallbackAlarm.request();
+            }
+          }
+          myCheckAlarm.request();
+        }
+      }, 100, this);
       myComponent = component;
       PointerInfo info = MouseInfo.getPointerInfo();
       myLastMousePoint = info != null ? info.getLocation() : null;
@@ -408,17 +423,21 @@ public final class ActionMenu extends JMenu {
           return false;
         }
         Point point = ((MouseEvent)e).getLocationOnScreen();
-
-        myCallbackAlarm.cancel();
-        boolean isMouseMovingTowardsSubmenu = new Polygon(
+        Rectangle bounds = myComponent.getBounds();
+        bounds.setLocation(myComponent.getLocationOnScreen());
+        myInBounds = bounds.contains(point);
+        boolean isMouseMovingTowardsSubmenu = myInBounds || new Polygon(
           new int[]{myLastMousePoint.x, myUpperTargetPoint.x, myLowerTargetPoint.x},
           new int[]{myLastMousePoint.y, myUpperTargetPoint.y, myLowerTargetPoint.y},
           3).contains(point);
 
         myEventToRedispatch = (MouseEvent)e;
+        myLastEventTime = System.currentTimeMillis();
 
         if (!isMouseMovingTowardsSubmenu) {
           myCallbackAlarm.request();
+        } else {
+          myCallbackAlarm.cancel();
         }
         myLastMousePoint = point;
         return true;

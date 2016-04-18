@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.codeInsight.template
 
 import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.CodeInsightSettings
+import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
@@ -536,6 +537,7 @@ class Outer {
                  "test do not replace macro value with null result",
                  "test escape string characters in soutv",
                  "test escape shouldn't move caret to the end marker",
+                 "test finish template on moving caret by completion insert handler",
                  "test do not replace macro value with empty result"]) {
       runnable.run();
       return;
@@ -1145,5 +1147,17 @@ class Foo {
   strings.stream().forEach(o -> System.out.println(<caret>));
 }}
 '''
+  }
+
+  public void "test finish template on moving caret by completion insert handler"() {
+    TemplateManagerImpl templateManager = TemplateManager.getInstance(project) as TemplateManagerImpl
+    myFixture.configureByText('a.html', '<selection><p></p></selection>')
+    def template = TemplateSettings.instance.getTemplate("T2", "html/xml")
+    myFixture.testAction(new InvokeTemplateAction(template, myFixture.editor, myFixture.project, ContainerUtil.newHashSet()))
+    myFixture.complete(CompletionType.BASIC)
+    myFixture.type("nofra")
+    myFixture.finishLookup(Lookup.REPLACE_SELECT_CHAR)
+    myFixture.checkResult("<noframes><caret><p></p></noframes>")
+    assertNull(templateManager.getActiveTemplate(myFixture.editor))
   }
 }

@@ -368,6 +368,15 @@ public class ExceptionUtil {
 
     final PsiElementVisitor visitor = new JavaRecursiveElementWalkingVisitor() {
       @Override
+      public void visitEnumConstant(PsiEnumConstant enumConstant) {
+        final PsiMethod method = enumConstant.resolveMethod();
+        if (method != null) {
+          addExceptions(array, getUnhandledExceptions(method, enumConstant, null, PsiSubstitutor.EMPTY));
+        }
+        visitElement(enumConstant);
+      }
+
+      @Override
       public void visitCallExpression(@NotNull PsiCallExpression expression) {
         addExceptions(array, getUnhandledExceptions(expression, null));
         visitElement(expression);
@@ -579,7 +588,8 @@ public class ExceptionUtil {
   }
 
   @NotNull
-  private static List<PsiType> getPreciseThrowTypes(@Nullable final PsiExpression expression) {
+  private static List<PsiType> getPreciseThrowTypes(@Nullable PsiExpression expression) {
+    expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (expression instanceof PsiReferenceExpression) {
       final PsiElement target = ((PsiReferenceExpression)expression).resolve();
       if (target != null && PsiUtil.isCatchParameter(target)) {

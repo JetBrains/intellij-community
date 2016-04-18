@@ -116,6 +116,20 @@ public class VfsUtilCore {
     return FileUtil.isAncestor(ancestor, file, strict);
   }
 
+  /**
+   * Gets relative path of <code>file</code> to <code>root</code> when it's possible
+   * This method is designed to be used for file descriptions (in trees, lists etc.)
+   * @param file the file
+   * @param root candidate to be parent file (Project base dir, any content roots etc.)
+   * @return relative path of {@code file} or full path if {@code root} is not actual ancestor of {@code file}
+   */
+  @Nullable
+  public static String getRelativeLocation(@Nullable VirtualFile file, @NotNull VirtualFile root) {
+    if (file == null) return null;
+    String path = getRelativePath(file, root);
+    return path != null ? path : file.getPresentableUrl();
+  }
+
   @Nullable
   public static String getRelativePath(@NotNull VirtualFile file, @NotNull VirtualFile ancestor) {
     return getRelativePath(file, ancestor, VFS_SEPARATOR_CHAR);

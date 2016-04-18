@@ -199,8 +199,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
     constructUi();
 
-
-    Disposer.register(myProject, this);
     myFileEditorManager = fileEditorManager;
 
     myConnection = project.getMessageBus().connect();

@@ -52,7 +52,7 @@ public class JavaFxColorRgbInspection extends XmlSuppressableInspectionTool {
         final XmlElementDescriptor descriptor = tag.getDescriptor();
         if (descriptor instanceof JavaFxPropertyTagDescriptor) {
           final PsiClass psiClass = ((JavaFxPropertyTagDescriptor)descriptor).getPsiClass();
-          if (JavaFxCommonNames.JAVAFX_SCENE_COLOR.equals(psiClass.getQualifiedName())) {
+          if (psiClass != null && JavaFxCommonNames.JAVAFX_SCENE_COLOR.equals(psiClass.getQualifiedName())) {
             final XmlTagValue valueElement = tag.getValue();
             final XmlText[] textElements = valueElement.getTextElements();
             final PsiElement location = textElements.length == 1 ? textElements[0] : tag;

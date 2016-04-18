@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,75 +19,144 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeElement;
+import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 /**
- * An extension that enables one to add children to some PSI elements, e.g. methods to Java classes. The class code remains the same, but its
- * method accessors also include the results returned from {@link PsiAugmentProvider}s.
- * 
- * During indexing, only {@link com.intellij.openapi.project.DumbAware} augment providers are run.
+ * Some code is not what it seems to be!
+ * This extension allows plugins <strike>augment a reality</strike> alter a behavior of Java PSI elements.
+ * To get an insight of how the extension may be used see {@code PsiAugmentProviderTest}.
+ * <p>
+ * N.B. during indexing, only {@link DumbAware} providers are run.
  */
 public abstract class PsiAugmentProvider {
-  private static final Logger LOG = Logger.getInstance("#" + PsiAugmentProvider.class.getName());
   public static final ExtensionPointName<PsiAugmentProvider> EP_NAME = ExtensionPointName.create("com.intellij.lang.psiAugmentProvider");
 
-  @NotNull
-  public abstract <Psi extends PsiElement> List<Psi> getAugments(@NotNull PsiElement element, @NotNull Class<Psi> type);
+  //<editor-fold desc="Methods to override in implementations.">
 
+  /**
+   * An extension that enables one to add children to some PSI elements, e.g. methods to Java classes.
+   * The class code remains the same, but its method accessors also include the results returned from {@link PsiAugmentProvider}s.
+   */
   @NotNull
-  public static <Psi extends PsiElement> List<Psi> collectAugments(@NotNull final PsiElement element, @NotNull final Class<Psi> type) {
-    List<Psi> result = Collections.emptyList();
-    for (PsiAugmentProvider provider : DumbService.getInstance(element.getProject()).filterByDumbAwareness(Extensions.getExtensions(EP_NAME))) {
-      List<Psi> augments = provider.getAugments(element, type);
-      if (!augments.isEmpty()) {
-        if (result.isEmpty()) result = new ArrayList<Psi>(augments.size());
-        result.addAll(augments);
-      }
-    }
-
-    return result;
+  protected <Psi extends PsiElement> List<Psi> getAugments(@NotNull PsiElement element, @NotNull Class<Psi> type) {
+    return Collections.emptyList();
   }
 
   /**
    * Extends {@link PsiTypeElement#getType()} so type could be retrieved from external place
    * e.g. from variable initializer in lombok case (http://projectlombok.org/features/val.html)
-   * 
-   * @param typeElement place where inference takes place, 
+   *
+   * @param typeElement place where inference takes place,
    *                    also nested PsiTypeElement-s (e.g. for List<String> PsiTypeElements corresponding to both List and String would be suggested)
    * @return inferred type or null, if inference is not applicable
-   * 
    * @since 14.1
    */
   @Nullable
-  protected PsiType inferType(PsiTypeElement typeElement) {
+  protected PsiType inferType(@NotNull PsiTypeElement typeElement) {
     return null;
   }
 
+  /**
+   * Intercepts {@link PsiModifierList#hasModifierProperty(String)}, so that plugins can add imaginary modifiers or hide existing ones.
+   *
+   * @since 2016.2
+   */
   @Nullable
-  public static PsiType getInferredType(PsiTypeElement typeElement) {
-    for (PsiAugmentProvider provider : Extensions.getExtensions(EP_NAME)) {
-      try {
-        final PsiType type = provider.inferType(typeElement);
-        if (type != null) {
-          return type;
-        }
-      }
-      catch (ProcessCanceledException e) {
-        throw e;
-      }
-      catch (Exception e) {
-        LOG.error("provider: " + provider, e);
-      }
-    }
+  protected Boolean hasModifierProperty(@NotNull PsiModifierList modifierList, @NotNull String name) {
     return null;
   }
+
+  //</editor-fold>
+
+  //<editor-fold desc="API and the inner kitchen.">
+
+  @NotNull
+  public static <Psi extends PsiElement> List<Psi> collectAugments(@NotNull final PsiElement element, @NotNull final Class<Psi> type) {
+    final List<Psi> result = ContainerUtil.newSmartList();
+
+    forEach(element.getProject(), new Processor<PsiAugmentProvider>() {
+      @Override
+      public boolean process(PsiAugmentProvider provider) {
+        result.addAll(provider.getAugments(element, type));
+        return true;
+      }
+    });
+
+    return result;
+  }
+
+  @Nullable
+  public static PsiType getInferredType(@NotNull final PsiTypeElement typeElement) {
+    final Ref<PsiType> result = Ref.create();
+
+    forEach(typeElement.getProject(), new Processor<PsiAugmentProvider>() {
+      @Override
+      public boolean process(PsiAugmentProvider provider) {
+        PsiType type = provider.inferType(typeElement);
+        if (type != null) {
+          result.set(type);
+          return false;
+        }
+        else {
+          return true;
+        }
+      }
+    });
+
+    return result.get();
+  }
+
+  @Nullable
+  public static Boolean checkModifierProperty(@NotNull final PsiModifierList modifierList, @NotNull final String name) {
+    final Ref<Boolean> result = Ref.create();
+
+    forEach(modifierList.getProject(), new Processor<PsiAugmentProvider>() {
+      @Override
+      public boolean process(PsiAugmentProvider provider) {
+        Boolean property = provider.hasModifierProperty(modifierList, name);
+        if (property != null) {
+          result.set(property);
+          return false;
+        }
+        else {
+          return true;
+        }
+      }
+    });
+
+    return result.get();
+  }
+
+  private static void forEach(Project project, Processor<PsiAugmentProvider> processor) {
+    for (PsiAugmentProvider provider : Extensions.getExtensions(EP_NAME)) {
+      if (!DumbService.isDumb(project) || DumbService.isDumbAware(provider)) {
+        try {
+          boolean goOn = processor.process(provider);
+          if (!goOn) break;
+        }
+        catch (ProcessCanceledException e) {
+          throw e;
+        }
+        catch (Exception e) {
+          Logger.getInstance(PsiAugmentProvider.class).error("provider: " + provider, e);
+        }
+      }
+    }
+  }
+
+  //</editor-fold>
 }

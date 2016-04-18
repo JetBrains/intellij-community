@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,7 @@ import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SeparatorFactory;
 import com.intellij.util.NotNullFunction;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NonNls;
@@ -115,7 +116,7 @@ public class ChangeListViewerDialog extends DialogWrapper implements DataProvide
 
   private void initCommitMessageArea(final Project project, final CommittedChangeList changeList) {
     myCommitMessageArea = new JEditorPane(UIUtil.HTML_MIME, "");
-    myCommitMessageArea.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
+    myCommitMessageArea.setBorder(JBUI.Borders.empty(3));
     myCommitMessageArea.setEditable(false);
     @NonNls final String text = IssueLinkHtmlRenderer.formatTextIntoHtml(project, changeList.getComment().trim());
     myCommitMessageArea.setBackground(UIUtil.getComboBoxDisabledBackground());

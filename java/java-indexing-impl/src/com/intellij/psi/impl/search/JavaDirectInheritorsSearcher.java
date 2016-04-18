@@ -49,12 +49,12 @@ import java.util.concurrent.atomic.AtomicIntegerArray;
 public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, DirectClassInheritorsSearch.SearchParameters> {
   @Override
   public boolean execute(@NotNull final DirectClassInheritorsSearch.SearchParameters parameters, @NotNull final Processor<PsiClass> consumer) {
-    final PsiClass aClass = parameters.getClassToProcess();
+    final PsiClass baseClass = parameters.getClassToProcess();
 
-    final SearchScope useScope = ApplicationManager.getApplication().runReadAction((Computable<SearchScope>)aClass::getUseScope);
+    final SearchScope useScope = ApplicationManager.getApplication().runReadAction((Computable<SearchScope>)baseClass::getUseScope);
 
-    final Project project = PsiUtilCore.getProjectInReadAction(aClass);
-    if (JavaClassInheritorsSearcher.isJavaLangObject(aClass)) {
+    final Project project = PsiUtilCore.getProjectInReadAction(baseClass);
+    if (JavaClassInheritorsSearcher.isJavaLangObject(baseClass)) {
       return AllClassesSearch.search(useScope, project).forEach(psiClass -> {
         ProgressManager.checkCanceled();
         if (psiClass.isInterface()) {
@@ -66,7 +66,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
     }
 
     final GlobalSearchScope scope = useScope instanceof GlobalSearchScope ? (GlobalSearchScope)useScope : new EverythingGlobalScope(project);
-    Pair<List<PsiClass>, AtomicIntegerArray> pair = calculateDirectSubClasses(project, aClass);
+    Pair<List<PsiClass>, AtomicIntegerArray> pair = getOrCalculateDirectSubClasses(project, baseClass);
     List<PsiClass> result = pair.getFirst();
     AtomicIntegerArray isInheritorFlag = pair.getSecond();
 
@@ -74,7 +74,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
       return true;
     }
 
-    final VirtualFile jarFile = getJarFile(aClass);
+    final VirtualFile jarFile = getJarFile(baseClass);
     // iterate by same-FQN groups. For each group process only same-jar subclasses, or all of them if they are all outside the jarFile.
     int groupStart = 0;
     boolean sameJarClassFound = false;
@@ -89,9 +89,9 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
         for (; i < result.size(); i++) {
           ProgressManager.checkCanceled();
           subClass = result.get(i);
-          if (!checkInheritance(parameters.isCheckInheritance(), aClass, subClass, project, isInheritorFlag, i)) continue;
-          if (!isInScope(scope, subClass)) continue;
-          if (!consumer.process(subClass)) return false;
+
+          CheckResult checkResult = checkAndProcessCandidate(scope, subClass, parameters, baseClass, project, isInheritorFlag, i, consumer);
+          if (checkResult == CheckResult.PROCESSED_ABORT) return false;
         }
         return true;
       }
@@ -102,29 +102,45 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
           for (int g=groupStart; g<i; g++) {
             ProgressManager.checkCanceled();
             subClass = result.get(g);
-            if (!checkInheritance(parameters.isCheckInheritance(), aClass, subClass, project, isInheritorFlag, g)) continue;
-            if (!consumer.process(subClass)) return false;
+            CheckResult checkResult = checkAndProcessCandidate(scope, subClass, parameters, baseClass, project, isInheritorFlag, g, consumer);
+            if (checkResult == CheckResult.PROCESSED_ABORT) return false;
           }
         }
         groupStart = i+1;
         sameJarClassFound = false;
       }
       else {
-        if (!checkInheritance(parameters.isCheckInheritance(), aClass, subClass, project, isInheritorFlag, i)) continue;
-        if (!isInScope(scope, subClass)) continue;
         VirtualFile currentJarFile = getJarFile(subClass);
         boolean fromSameJar = Comparing.equal(currentJarFile, jarFile);
-        if (fromSameJar) {
-          sameJarClassFound = true;
-          if (!consumer.process(subClass)) return false;
-        }
+        if (!fromSameJar) continue;
+        CheckResult checkResult = checkAndProcessCandidate(scope, subClass, parameters, baseClass, project, isInheritorFlag, i, consumer);
+        if (checkResult == CheckResult.PROCESSED_ABORT) return false;
+        if (checkResult == CheckResult.CANDIDATE_REJECTED) continue;
+        sameJarClassFound = true;
       }
     }
 
     return true;
   }
 
-  private static boolean isInScope(GlobalSearchScope scope, PsiClass subClass) {
+  private enum CheckResult {
+    CANDIDATE_REJECTED, PROCESSED_OK, PROCESSED_ABORT
+  }
+
+  @NotNull
+  private static CheckResult checkAndProcessCandidate(@NotNull GlobalSearchScope scope,
+                                                      @NotNull PsiClass candidate,
+                                                      @NotNull DirectClassInheritorsSearch.SearchParameters parameters,
+                                                      @NotNull PsiClass baseClass,
+                                                      @NotNull Project project,
+                                                      @NotNull AtomicIntegerArray isInheritorFlag, int i,
+                                                      @NotNull Processor<PsiClass> consumer) {
+    if (!isInScope(scope, candidate)) return CheckResult.CANDIDATE_REJECTED;
+    if (!checkInheritance(parameters.isCheckInheritance(), baseClass, candidate, project, isInheritorFlag, i)) return CheckResult.CANDIDATE_REJECTED;
+    return consumer.process(candidate) ? CheckResult.PROCESSED_OK : CheckResult.PROCESSED_ABORT;
+  }
+
+  private static boolean isInScope(@NotNull GlobalSearchScope scope, @NotNull PsiClass subClass) {
     return ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> PsiSearchScopeUtil.isInScope(scope, subClass));
   }
 
@@ -138,19 +154,28 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
   // Regular classes grouped by their FQN. (Because among the same-named subclasses we should return only the same-jar ones, or all of them if there were none)
   // The groups are separated with NULL_PSI_CLASS
   @NotNull
-  private static Pair<List<PsiClass>, AtomicIntegerArray> calculateDirectSubClasses(@NotNull Project project, @NotNull PsiClass baseClass) {
+  private static Pair<List<PsiClass>, AtomicIntegerArray> getOrCalculateDirectSubClasses(@NotNull Project project, @NotNull PsiClass baseClass) {
     Pair<List<PsiClass>, AtomicIntegerArray> cached = HighlightingCaches.getInstance(project).DIRECT_SUB_CLASSES.get(baseClass);
     if (cached != null) {
       return cached;
     }
 
-    final String className = ApplicationManager.getApplication().runReadAction((Computable<String>)baseClass::getName);
-    if (StringUtil.isEmpty(className)) {
+    final String baseClassName = ApplicationManager.getApplication().runReadAction((Computable<String>)baseClass::getName);
+    if (StringUtil.isEmpty(baseClassName)) {
       return Pair.create(Collections.emptyList(), new AtomicIntegerArray(0));
     }
+    Pair<List<PsiClass>, AtomicIntegerArray> pair = calculateDirectSubClasses(project, baseClass, baseClassName);
+    HighlightingCaches.getInstance(project).DIRECT_SUB_CLASSES.put(baseClass, pair);
+    return pair;
+  }
+
+  @NotNull
+  private static Pair<List<PsiClass>, AtomicIntegerArray> calculateDirectSubClasses(@NotNull Project project,
+                                                                                    @NotNull PsiClass baseClass,
+                                                                                    @NotNull String baseClassName) {
     GlobalSearchScope allScope = GlobalSearchScope.allScope(project);
     Collection<PsiReferenceList> candidates =
-      MethodUsagesSearcher.resolveInReadAction(project, () -> JavaSuperClassNameOccurenceIndex.getInstance().get(className, project, allScope));
+      MethodUsagesSearcher.resolveInReadAction(project, () -> JavaSuperClassNameOccurenceIndex.getInstance().get(baseClassName, project, allScope));
 
     Map<String, List<PsiClass>> classes = new HashMap<>();
     int count = 0;
@@ -170,9 +195,9 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
     }
 
     Collection<PsiAnonymousClass> anonymousCandidates =
-      MethodUsagesSearcher.resolveInReadAction(project, () -> JavaAnonymousClassBaseRefOccurenceIndex.getInstance().get(className, project, allScope));
+      MethodUsagesSearcher.resolveInReadAction(project, () -> JavaAnonymousClassBaseRefOccurenceIndex.getInstance().get(baseClassName, project, allScope));
 
-    List<PsiClass> result = new ArrayList<>(count+classes.size()+anonymousCandidates.size()+1);
+    List<PsiClass> result = new ArrayList<>(count + classes.size() + anonymousCandidates.size() + 1);
     for (Map.Entry<String, List<PsiClass>> entry : classes.entrySet()) {
       result.addAll(entry.getValue());
       result.add(PsiUtil.NULL_PSI_CLASS);
@@ -196,13 +221,11 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
       }
     }
 
-    Pair<List<PsiClass>, AtomicIntegerArray> pair = Pair.create(result, new AtomicIntegerArray(result.size()));
-    HighlightingCaches.getInstance(project).DIRECT_SUB_CLASSES.put(baseClass, pair);
-    return pair;
+    return Pair.create(result, new AtomicIntegerArray(result.size()));
   }
 
   private static boolean checkInheritance(boolean checkInheritance,
-                                          @NotNull PsiClass aClass,
+                                          @NotNull PsiClass baseClass,
                                           @NotNull PsiClass candidate,
                                           @NotNull Project project,
                                           @NotNull AtomicIntegerArray isInheritorFlags,
@@ -212,7 +235,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
     if (cachedFlag == INHERITANCE_YES) return true;
     if (cachedFlag == INHERITANCE_NO) return false;
     assert cachedFlag == INHERITANCE_UNKNOWN;
-    boolean isReallyInherited = MethodUsagesSearcher.resolveInReadAction(project, () -> candidate.isInheritor(aClass, false));
+    boolean isReallyInherited = MethodUsagesSearcher.resolveInReadAction(project, () -> candidate.isInheritor(baseClass, false));
     isInheritorFlags.set(i, isReallyInherited ? INHERITANCE_YES : INHERITANCE_NO);
     return isReallyInherited;
   }

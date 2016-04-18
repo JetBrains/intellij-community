@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.ui.treeStructure;
 
-import com.intellij.Patches;
 import com.intellij.ide.util.treeView.*;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.Queryable;
@@ -77,9 +76,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     myExpandableItemsHandler = ExpandableItemsHandlerFactory.install(this);
 
     addMouseListener(new MyMouseListener());
-    if (Patches.SUN_BUG_ID_4893787) {
-      addFocusListener(new MyFocusListener());
-    }
+    addFocusListener(new MyFocusListener());
 
     setCellRenderer(new NodeRenderer());
 

@@ -27,6 +27,8 @@ import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.TransactionId;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
@@ -37,8 +39,8 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.DependencyScope;
-import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.JavaProjectModelModificationService;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.ui.Messages;
@@ -57,12 +59,12 @@ import com.intellij.ui.TitledSeparator;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.*;
-import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.SequentialModalProgressTask;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
@@ -134,13 +136,12 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
     final UsageInfo[] usageInfos = findUsages(project, scope, fileCount[0]);
     if (usageInfos == null) return;
 
+    processUsages(project, scope, usageInfos);
+  }
+
+  protected void processUsages(@NotNull Project project, @NotNull AnalysisScope scope, @NotNull UsageInfo[] usageInfos) {
     if (usageInfos.length < 5) {
-      SwingUtilities.invokeLater(applyRunnable(project, new Computable<UsageInfo[]>() {
-        @Override
-        public UsageInfo[] compute() {
-          return usageInfos;
-        }
-      }));
+      applyRunnable(project, () -> usageInfos).run();
     }
     else {
       showUsageView(project, usageInfos, scope);
@@ -153,12 +154,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
     final Library annotationsLib = LibraryUtil.findLibraryByClass(annoFQN, project);
     if (annotationsLib != null) {
       String message = "Module" + (modulesWithoutAnnotations.size() == 1 ? " " : "s ");
-      message += StringUtil.join(modulesWithoutAnnotations, new Function<Module, String>() {
-        @Override
-        public String fun(Module module) {
-          return module.getName();
-        }
-      }, ", ");
+      message += StringUtil.join(modulesWithoutAnnotations, Module::getName, ", ");
       message += (modulesWithoutAnnotations.size() == 1 ? " doesn't" : " don't");
       message += " refer to the existing '" +
                  annotationsLib.getName() +
@@ -191,10 +187,11 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
     return false;
   }
 
-  private UsageInfo[] findUsages(@NotNull final Project project,
-                                 @NotNull final AnalysisScope scope, 
-                                          final int fileCount) {
-    final NullityInferrer inferrer = new NullityInferrer(myAnnotateLocalVariablesCb.isSelected(), project);
+  @Nullable
+  protected UsageInfo[] findUsages(@NotNull final Project project,
+                                 @NotNull final AnalysisScope scope,
+                                 final int fileCount) {
+    final NullityInferrer inferrer = new NullityInferrer(isAnnotateLocalVariables(), project);
     final PsiManager psiManager = PsiManager.getInstance(project);
     final Runnable searchForUsages = new Runnable() {
       @Override
@@ -232,6 +229,10 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
     final List<UsageInfo> usages = new ArrayList<UsageInfo>();
     inferrer.collect(usages);
     return usages.toArray(new UsageInfo[usages.size()]);
+  }
+
+  protected boolean isAnnotateLocalVariables() {
+    return myAnnotateLocalVariablesCb.isSelected();
   }
 
   private static Runnable applyRunnable(final Project project, final Computable<UsageInfo[]> computable) {
@@ -272,15 +273,18 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
     };
   }
 
-  private void restartAnalysis(final Project project, final AnalysisScope scope) {
-    DumbService.getInstance(project).smartInvokeLater(new Runnable() {
-      @Override
-      public void run() {
-        analyze(project, scope);
-      }
-    });
+  protected void restartAnalysis(final Project project, final AnalysisScope scope) {
+    TransactionGuard guard = TransactionGuard.getInstance();
+    TransactionId id = guard.getContextTransaction();
+    DumbService.getInstance(project).smartInvokeLater(
+      () -> TransactionGuard.getInstance().submitTransaction(project, id, () -> {
+        if (DumbService.isDumb(project)) {
+          restartAnalysis(project, scope);
+        } else {
+          analyze(project, scope);
+        }
+      }));
   }
-
 
   private void showUsageView(@NotNull Project project, final UsageInfo[] usageInfos, @NotNull AnalysisScope scope) {
     final UsageTarget[] targets = UsageTarget.EMPTY_ARRAY;

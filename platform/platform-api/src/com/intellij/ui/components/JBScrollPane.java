@@ -352,6 +352,12 @@ public class JBScrollPane extends JScrollPane {
           return true;
         }
       }
+      else if (ui instanceof DefaultScrollBarUI) {
+        DefaultScrollBarUI dui = (DefaultScrollBarUI)ui;
+        Point point = e.getLocationOnScreen();
+        SwingUtilities.convertPointFromScreen(point, bar);
+        return !dui.isThumbContains(point.x, point.y);
+      }
     }
     return true;
   }
@@ -361,14 +367,17 @@ public class JBScrollPane extends JScrollPane {
 
     public Corner(String pos) {
       myPos = pos;
+      ScrollColorProducer.setBackground(this);
+      ScrollColorProducer.setForeground(this);
     }
 
     @Override
     protected void paintComponent(Graphics g) {
-      g.setColor(ButtonlessScrollBarUI.getTrackBackgroundDefault());
+      g.setColor(getBackground());
       g.fillRect(0, 0, getWidth(), getHeight());
 
-      g.setColor(ButtonlessScrollBarUI.getTrackBorderColorDefault());
+      if (SystemInfo.isMac || !Registry.is("ide.scroll.track.border.paint")) return;
+      g.setColor(getForeground());
 
       int x2 = getWidth() - 1;
       int y2 = getHeight() - 1;

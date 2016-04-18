@@ -54,6 +54,7 @@ public class InferenceSessionContainer {
         ExpressionCompatibilityConstraint.reduceExpressionCompatibilityConstraint(session, returnExpression, returnType);
       if (inferenceSession != null && inferenceSession != session) {
         registerNestedSession(inferenceSession);
+        session.propagateVariables(inferenceSession.getInferenceVariables(), inferenceSession.getRestoreNameSubstitution());
       }
     }
   }
@@ -74,12 +75,12 @@ public class InferenceSessionContainer {
                                                                                               if (parent instanceof PsiExpression && !PsiPolyExpressionUtil.isPolyExpression((PsiExpression)parent)) {
                                                                                                 return null;
                                                                                               }
-                                                                                              return treeWalkUp(parent);
+                                                                                              return LambdaUtil.treeWalkUp(parent);
                                                                                             }
                                                                                           });
         if (topLevelCall != null) {
 
-          final InferenceSession session;
+          InferenceSession session;
           if (MethodCandidateInfo.isOverloadCheck() || !PsiDiamondType.ourDiamondGuard.currentStack().isEmpty() || LambdaUtil.isLambdaParameterCheck()) {
             session = startTopLevelInference(topLevelCall);
           }
@@ -91,6 +92,22 @@ public class InferenceSessionContainer {
                 return new Result<InferenceSession>(startTopLevelInference(topLevelCall), PsiModificationTracker.MODIFICATION_COUNT);
               }
             });
+
+            if (session != null) {
+              //reject cached top level session if it was based on wrong candidate: check nested session if candidate (it's type parameters) are the same
+              //such situations are avoided when overload resolution is performed (MethodCandidateInfo.isOverloadCheck above)
+              //but situations when client code iterates through PsiResolveHelper.getReferencedMethodCandidates or similar are impossible to guess
+              final Map<PsiElement, InferenceSession> sessions = session.getInferenceSessionContainer().myNestedSessions;
+              final InferenceSession childSession = sessions.get(parent);
+              if (childSession != null) {
+                for (PsiTypeParameter parameter : typeParameters) {
+                  if (!childSession.getInferenceSubstitution().getSubstitutionMap().containsKey(parameter)) {
+                    session = startTopLevelInference(topLevelCall);
+                    break;
+                  }
+                }
+              }
+            }
           }
 
           if (session != null) {
@@ -125,6 +142,15 @@ public class InferenceSessionContainer {
     final InferenceSessionContainer copy = new InferenceSessionContainer() {
       @Override
       public PsiSubstitutor findNestedSubstitutor(PsiElement arg, @Nullable PsiSubstitutor defaultSession) {
+        //for the case foo(bar(a -> m())): top level inference won't touch lambda "a -> m()"
+        //for the case foo(a -> bar(b -> m())): top level inference would go till nested lambda "b -> m()" and the state from top level could be found here by "bar(b -> m())"
+        //but proceeding with additional constraints from saved point would produce new expression constraints with different inference variables (could be found in myNestedSessions)
+        //which won't be found in the system if we won't reject stored sessions in such cases
+        final PsiSubstitutor substitutor = super.findNestedSubstitutor(arg, null);
+        if (substitutor != null) {
+          return substitutor;
+        }
+
         final InitialInferenceState state = nestedStates.get(PsiTreeUtil.getParentOfType(arg, PsiCall.class));
         if (state != null) {
           return state.getInferenceSubstitutor();
@@ -134,7 +160,7 @@ public class InferenceSessionContainer {
     };
     final Map<PsiElement, InferenceSession> nestedSessions = topLevelSession.getInferenceSessionContainer().myNestedSessions;
     for (Map.Entry<PsiElement, InferenceSession> entry : nestedSessions.entrySet()) {
-      nestedStates.put(entry.getKey(), entry.getValue().createInitialState(copy, topInferenceSubstitutor));
+      nestedStates.put(entry.getKey(), entry.getValue().createInitialState(copy, topLevelSession.getInferenceVariables(), topInferenceSubstitutor));
     }
 
     PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
@@ -197,82 +223,5 @@ public class InferenceSessionContainer {
       }
     }
     return substitutor;
-  }
-
-  @Nullable
-  public static PsiCall treeWalkUp(PsiElement context) {
-    PsiCall top = null;
-    PsiElement parent = PsiTreeUtil.getParentOfType(context, 
-                                                    PsiExpressionList.class, 
-                                                    PsiLambdaExpression.class,
-                                                    PsiConditionalExpression.class,
-                                                    PsiCodeBlock.class, 
-                                                    PsiCall.class);
-    while (true) {
-      if (parent instanceof PsiCall) {
-        break;
-      }
-
-      final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(parent, PsiLambdaExpression.class);
-      if (parent instanceof PsiCodeBlock) {
-        if (lambdaExpression == null) {
-          break;
-        }
-        else {
-          boolean inReturnExpressions = false;
-          for (PsiExpression expression : LambdaUtil.getReturnExpressions(lambdaExpression)) {
-            inReturnExpressions |= PsiTreeUtil.isAncestor(expression, context, false);
-          }
-
-          if (!inReturnExpressions) {
-            break;
-          }
-
-          if (LambdaUtil.getFunctionalTypeMap().containsKey(lambdaExpression)) {
-            break;
-          }
-        }
-      }
-
-      if (parent instanceof PsiConditionalExpression && !PsiPolyExpressionUtil.isPolyExpression((PsiExpression)parent)) {
-        break;
-      }
-      
-      if (parent instanceof PsiLambdaExpression && LambdaUtil.getFunctionalTypeMap().containsKey(parent)) {
-        break;
-      }
-      
-      final PsiCall psiCall = PsiTreeUtil.getParentOfType(parent, PsiCall.class);
-      if (psiCall == null) {
-        break;
-      }
-      final MethodCandidateInfo.CurrentCandidateProperties properties = MethodCandidateInfo.getCurrentMethod(psiCall.getArgumentList());
-      if (properties != null) {
-        if (properties.isApplicabilityCheck() || 
-            lambdaExpression != null && lambdaExpression.hasFormalParameterTypes()) {
-          break;
-        }
-      }
-
-      top = psiCall;
-      if (top instanceof PsiExpression && PsiPolyExpressionUtil.isPolyExpression((PsiExpression)top)) {
-        parent = PsiTreeUtil.getParentOfType(parent.getParent(), PsiExpressionList.class, PsiLambdaExpression.class, PsiCodeBlock.class);
-      }
-      else {
-        break;
-      }
-    }
-
-    if (top == null) {
-      return null;
-    }
-
-    final PsiExpressionList argumentList = top.getArgumentList();
-    if (argumentList == null) {
-      return null;
-    }
-
-    LOG.assertTrue(MethodCandidateInfo.getCurrentMethod(argumentList) == null);
-    return top;
   }
 }

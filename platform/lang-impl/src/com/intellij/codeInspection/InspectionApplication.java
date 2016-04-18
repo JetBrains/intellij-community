@@ -97,8 +97,9 @@ public class InspectionApplication {
       @Override
       public void run() {
         try {
-          final ApplicationInfoEx applicationInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
-          logMessage(1, InspectionsBundle.message("inspection.application.starting.up", applicationInfo.getFullApplicationName()));
+          final ApplicationInfoEx appInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
+          logMessage(1, InspectionsBundle.message("inspection.application.starting.up", 
+                                                  appInfo.getFullApplicationName() + " (build " + appInfo.getBuild().asString() + ")"));
           application.doNotSave();
           logMessageLn(1, InspectionsBundle.message("inspection.done"));
 

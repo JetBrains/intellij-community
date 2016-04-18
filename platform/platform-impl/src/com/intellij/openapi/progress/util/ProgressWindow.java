@@ -415,4 +415,9 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
       myDialog.enableCancelButtonIfNeeded(enable);
     }
   }
+
+  @Override
+  public String toString() {
+    return getTitle() + " " + System.identityHashCode(this) + ": running="+isRunning()+"; canceled="+isCanceled();
+  }
 }

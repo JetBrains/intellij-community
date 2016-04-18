@@ -65,15 +65,15 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   private RefCountHolder myRefCountHolder;
 
   // map codeBlock->List of PsiReferenceExpression of uninitialized final variables
-  private final Map<PsiElement, Collection<PsiReferenceExpression>> myUninitializedVarProblems = new THashMap<PsiElement, Collection<PsiReferenceExpression>>();
+  private final Map<PsiElement, Collection<PsiReferenceExpression>> myUninitializedVarProblems = new THashMap<>();
   // map codeBlock->List of PsiReferenceExpression of extra initialization of final variable
-  private final Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> myFinalVarProblems = new THashMap<PsiElement, Collection<ControlFlowUtil.VariableInfo>>();
+  private final Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> myFinalVarProblems = new THashMap<>();
 
   // value==1: no info if the parameter was reassigned (but the parameter is present in current file), value==2: parameter was reassigned
-  private final TObjectIntHashMap<PsiParameter> myReassignedParameters = new TObjectIntHashMap<PsiParameter>();
+  private final TObjectIntHashMap<PsiParameter> myReassignedParameters = new TObjectIntHashMap<>();
 
-  private final Map<String, Pair<PsiImportStaticReferenceElement, PsiClass>> mySingleImportedClasses = new THashMap<String, Pair<PsiImportStaticReferenceElement, PsiClass>>();
-  private final Map<String, Pair<PsiImportStaticReferenceElement, PsiField>> mySingleImportedFields = new THashMap<String, Pair<PsiImportStaticReferenceElement, PsiField>>();
+  private final Map<String, Pair<PsiImportStaticReferenceElement, PsiClass>> mySingleImportedClasses = new THashMap<>();
+  private final Map<String, Pair<PsiImportStaticReferenceElement, PsiField>> mySingleImportedFields = new THashMap<>();
   private PsiFile myFile;
   private final PsiElementVisitor REGISTER_REFERENCES_VISITOR = new PsiRecursiveElementWalkingVisitor() {
     @Override public void visitElement(PsiElement element) {
@@ -86,7 +86,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       }
     }
   };
-  private final Map<PsiClass, MostlySingularMultiMap<MethodSignature, PsiMethod>> myDuplicateMethods = new THashMap<PsiClass, MostlySingularMultiMap<MethodSignature, PsiMethod>>();
+  private final Map<PsiClass, MostlySingularMultiMap<MethodSignature, PsiMethod>> myDuplicateMethods = new THashMap<>();
   private LanguageLevel myLanguageLevel;
   private JavaSdkVersion myJavaSdkVersion;
   private static class Holder {
@@ -101,7 +101,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   private MostlySingularMultiMap<MethodSignature, PsiMethod> getDuplicateMethods(@NotNull PsiClass aClass) {
     MostlySingularMultiMap<MethodSignature, PsiMethod> signatures = myDuplicateMethods.get(aClass);
     if (signatures == null) {
-      signatures = new MostlySingularMultiMap<MethodSignature, PsiMethod>();
+      signatures = new MostlySingularMultiMap<>();
       for (PsiMethod method : aClass.getMethods()) {
         if (method instanceof ExternallyDefinedPsiElement) continue; // ignore aspectj-weaved methods; they are checked elsewhere
         MethodSignature signature = method.getSignature(PsiSubstitutor.EMPTY);
@@ -144,13 +144,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   private void registerReferencesFromInjectedFragments(@NotNull PsiElement element) {
     InjectedLanguageManager.getInstance(myFile.getProject()).enumerateEx(element, myFile, false,
-                                                                         new PsiLanguageInjectionHost.InjectedPsiVisitor() {
-                                                                           @Override
-                                                                           public void visit(@NotNull final PsiFile injectedPsi,
-                                                                                             @NotNull final List<PsiLanguageInjectionHost.Shred> places) {
-                                                                             injectedPsi.accept(REGISTER_REFERENCES_VISITOR);
-                                                                           }
-                                                                         }
+                                                                         (injectedPsi, places) -> injectedPsi.accept(REGISTER_REFERENCES_VISITOR)
     );
   }
 
@@ -175,14 +169,11 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         myRefCountHolder = refCountHolder;
         final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
         TextRange dirtyScope = ObjectUtils.notNull(document == null ? null : fileStatusMap.getFileDirtyScope(document, Pass.UPDATE_ALL), file.getTextRange());
-        success = refCountHolder.analyze(file, dirtyScope, progress, new Runnable(){
-          @Override
-          public void run() {
-            highlight.run();
-            progress.checkCanceled();
-            PostHighlightingVisitor highlightingVisitor = new PostHighlightingVisitor(file, document, refCountHolder);
-            highlightingVisitor.collectHighlights(holder, progress);
-          }
+        success = refCountHolder.analyze(file, dirtyScope, progress, () -> {
+          highlight.run();
+          progress.checkCanceled();
+          PostHighlightingVisitor highlightingVisitor = new PostHighlightingVisitor(file, document, refCountHolder);
+          highlightingVisitor.collectHighlights(holder, progress);
         });
       }
       else {
@@ -295,7 +286,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitAssignmentExpression(PsiAssignmentExpression assignment) {
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkAssignmentCompatibleTypes(assignment));
-    if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkAssignmentOperatorApplicable(assignment, myFile));
+    if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkAssignmentOperatorApplicable(assignment));
     if (!myHolder.hasErrorResults()) visitExpression(assignment);
   }
 
@@ -490,6 +481,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     super.visitEnumConstant(enumConstant);
     if (!myHolder.hasErrorResults()) GenericsHighlightUtil.checkEnumConstantForConstructorProblems(enumConstant, myHolder, myJavaSdkVersion);
     if (!myHolder.hasErrorResults()) registerConstructorCall(enumConstant);
+    if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkUnhandledExceptions(enumConstant, null));
   }
 
   @Override
@@ -1067,7 +1059,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (resolved != null && parent instanceof PsiReferenceList) {
       if (!myHolder.hasErrorResults()) {
         PsiReferenceList referenceList = (PsiReferenceList)parent;
-        myHolder.add(HighlightUtil.checkElementInReferenceList(ref, referenceList, result, myLanguageLevel));
+        myHolder.add(HighlightUtil.checkElementInReferenceList(ref, referenceList, result));
       }
     }
 

@@ -17,22 +17,23 @@ package com.intellij.openapi.util;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileChooser.FileChooser;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.util.Consumer;
 import com.intellij.util.JdkBundle;
 import com.intellij.util.JdkBundleList;
-import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,7 +42,6 @@ import javax.swing.*;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 import java.io.*;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
@@ -71,27 +71,6 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
     e.getPresentation().setText("Switch Boot JDK");
   }
 
-  private static List<JdkBundle> getBundlesFromFile(@NotNull File fileWithBundles) {
-    List<JdkBundle> list = new ArrayList<JdkBundle>();
-    try {
-      for (String line : FileUtil.loadLines(fileWithBundles, "UTF-8")) {
-        File storedFile = new File(line);
-        final boolean isBundled = !storedFile.isAbsolute();
-        File actualFile = isBundled ? new File(PathManager.getHomePath(), storedFile.getPath()) : storedFile;
-        if (actualFile.exists()) {
-          list.add(JdkBundle.createBundle(storedFile, false, isBundled));
-        }
-      }
-    } catch (IllegalStateException e) {
-      // The device builders can throw IllegalStateExceptions if
-      // build gets called before everything is properly setup
-      LOG.error(e);
-    } catch (IOException e) {
-      LOG.error("Error reading JDK bundles", e);
-    }
-    return list;
-  }
-
   @Override
   public void actionPerformed(AnActionEvent event) {
 
@@ -108,7 +87,7 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
       }
     }
 
-    SwitchBootJdkDialog dialog = new SwitchBootJdkDialog(null, getBundlesFromFile(productJdkConfigFile));
+    SwitchBootJdkDialog dialog = new SwitchBootJdkDialog();
     if (dialog.showAndGet()) {
       File selectedJdkBundleFile = dialog.getSelectedFile();
       FileWriter fooWriter = null;
@@ -138,19 +117,21 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
 
     @NotNull private final ComboBox myComboBox;
 
-    private SwitchBootJdkDialog(@Nullable Project project, final List<JdkBundle> jdkBundlesList) {
-      super(project, false);
+    private SwitchBootJdkDialog() {
+      super((Project)null, false);
 
       final JdkBundleList pathsList = findJdkPaths();
 
       myComboBox = new ComboBox();
 
-      DefaultComboBoxModel model = new DefaultComboBoxModel();
+      final DefaultComboBoxModel<JdkBundle> model = new DefaultComboBoxModel<JdkBundle>();
 
       for (JdkBundle jdkBundlePath : pathsList.toArrayList()) {
         //noinspection unchecked
         model.addElement(jdkBundlePath);
       }
+
+      model.addElement(null);
 
       model.addListDataListener(new ListDataListener() {
         @Override
@@ -161,7 +142,50 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
 
         @Override
         public void contentsChanged(ListDataEvent e) {
-          setOKActionEnabled(!((JdkBundle)myComboBox.getSelectedItem()).isBoot());
+          if (myComboBox.getSelectedItem() == null) {
+            FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false) {
+              @Override
+              public boolean isFileSelectable(final VirtualFile file) {
+                if (!super.isFileSelectable(file)) return false;
+                JdkBundle bundle = JdkBundle.createBundle(new File(file.getPath()), false, false);
+                if (bundle == null) return false;
+                Version version =  bundle.getVersion();
+
+                return version != null && !version.lessThan(JDK8_VERSION.major, JDK8_VERSION.minor, JDK8_VERSION.bugfix);
+              }
+            };
+
+            FileChooser.chooseFiles(descriptor, null, null, new Consumer<List<VirtualFile>>() {
+              @Override
+              public void consume(final List<VirtualFile> files) {
+                if (files.size() > 0) {
+                  final File jdkFile = new File(files.get(0).getPath());
+                  JdkBundle selectedJdk = pathsList.getBundle(jdkFile.getPath());
+                  if (selectedJdk == null) {
+                    selectedJdk = JdkBundle.createBundle(jdkFile, false, false);
+                    if (selectedJdk != null) {
+                      pathsList.addBundle(selectedJdk, true);
+                      if (model.getSize() > 0) {
+                        model.insertElementAt(selectedJdk, model.getSize() - 1);
+                      }
+                      else {
+                        model.addElement(selectedJdk);
+                      }
+                    }
+                    else {
+                      LOG.error("Cannot create bundle for path: " + jdkFile.getPath());
+                      return;
+                    }
+                  }
+                  myComboBox.setSelectedItem(selectedJdk);
+                }
+              }
+            });
+          }
+          if (myComboBox.getSelectedItem() == null) {
+            myComboBox.setSelectedItem(model.getElementAt(0));
+          }
+          setOKActionEnabled(myComboBox.getSelectedItem() != null && !((JdkBundle)myComboBox.getSelectedItem()).isBoot());
         }
       });
 
@@ -179,19 +203,7 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
             setText(jdkBundleDescriptor.getVisualRepresentation());
           }
           else {
-            if (LOG.isDebugEnabled()) {
-              LOG.debug("Null value has been passed to a cell renderer. Available JDKs count: " + pathsList.toArrayList().size());
-              StringBuilder jdkNames = new StringBuilder();
-              for (JdkBundle jdkBundlePath : pathsList.toArrayList()) {
-                if (!jdkBundlesList.isEmpty()) {
-                  continue;
-                }
-                jdkNames.append(jdkBundlePath.getVisualRepresentation()).append("; ");
-              }
-              if (LOG.isDebugEnabled()) {
-                LOG.debug("Available JDKs names: " + jdkNames.toString());
-              }
-            }
+            setText("...");
           }
         }
       });

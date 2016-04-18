@@ -29,7 +29,7 @@ switch ( x ) {
     case "bar":
         result += "bar"
 
-    <warning descr="Fall-through in switch statement">case [4, 5, 6, 'inList']:</warning>
+    <warning descr="Fallthrough in switch statement">case [4, 5, 6, 'inList']:</warning>
         result = "list"
         break
 

@@ -91,10 +91,6 @@ except AttributeError:
 
 try:
     SUPPORT_GEVENT = os.getenv('GEVENT_SUPPORT', 'False') == 'True'
-    try:
-        import gevent
-    except:
-        SUPPORT_GEVENT = False
 except:
     # Jython 2.1 doesn't accept that construct
     SUPPORT_GEVENT = False

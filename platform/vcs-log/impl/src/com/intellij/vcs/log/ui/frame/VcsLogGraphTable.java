@@ -55,7 +55,7 @@ import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.VcsLogColorManagerImpl;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.render.GraphCommitCell;
-import com.intellij.vcs.log.ui.render.GraphCommitCellRender;
+import com.intellij.vcs.log.ui.render.GraphCommitCellRenderer;
 import com.intellij.vcs.log.ui.tables.GraphTableModel;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import gnu.trove.TIntHashSet;
@@ -70,6 +70,8 @@ import javax.swing.plaf.basic.BasicTableHeaderUI;
 import javax.swing.table.*;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.*;
@@ -90,7 +92,7 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
   @NotNull private final VcsLogDataManager myLogDataManager;
   @NotNull private final MyDummyTableCellEditor myDummyEditor = new MyDummyTableCellEditor();
   @NotNull private final TableCellRenderer myDummyRenderer = new DefaultTableCellRenderer();
-  @NotNull private final GraphCommitCellRender myGraphCommitCellRenderer;
+  @NotNull private final GraphCommitCellRenderer myGraphCommitCellRenderer;
   private boolean myColumnsSizeInitialized = false;
   @Nullable private Selection mySelection = null;
 
@@ -107,7 +109,7 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
     super(new GraphTableModel(initialDataPack, logDataManager, ui));
     myUi = ui;
     myLogDataManager = logDataManager;
-    myGraphCommitCellRenderer = new GraphCommitCellRender(logDataManager, myGraphCellPainter, this);
+    myGraphCommitCellRenderer = new GraphCommitCellRenderer(logDataManager, myGraphCellPainter, this);
 
     setDefaultRenderer(VirtualFile.class, new RootCellRenderer(myUi));
     setDefaultRenderer(GraphCommitCell.class, myGraphCommitCellRenderer);
@@ -127,6 +129,12 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
     ScrollingUtil.installActions(this, false);
 
     initColumnSize();
+    addComponentListener(new ComponentAdapter() {
+      @Override
+      public void componentResized(ComponentEvent e) {
+        updateCommitColumnWidth();
+      }
+    });
   }
 
   public void updateDataPack(@NotNull VisiblePack visiblePack, boolean permGraphChanged) {
@@ -164,9 +172,6 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
       if (i == GraphTableModel.ROOT_COLUMN) { // thin stripe, or root name, or nothing
         setRootColumnSize(column);
       }
-      else if (i == GraphTableModel.COMMIT_COLUMN) { // let commit message occupy as much as possible
-        column.setPreferredWidth(Short.MAX_VALUE);
-      }
       else if (i == GraphTableModel.AUTHOR_COLUMN) { // detect author with the longest name
         // to avoid querying the last row (it would lead to full graph loading)
         int maxRowsToCheck = Math.min(MAX_ROWS_TO_CALC_WIDTH, getRowCount() - MAX_ROWS_TO_CALC_OFFSET);
@@ -180,19 +185,32 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
           if (!value.isEmpty()) sizeCalculated = true;
         }
         int min = Math.min(maxWidth + UIUtil.DEFAULT_HGAP, MAX_DEFAULT_AUTHOR_COLUMN_WIDTH);
-        column.setMinWidth(min);
-        column.setWidth(min);
+        column.setPreferredWidth(min);
       }
       else if (i == GraphTableModel.DATE_COLUMN) { // all dates have nearly equal sizes
         int min = getFontMetrics(tableFont.deriveFont(Font.BOLD)).stringWidth("mm" + DateFormatUtil.formatDateTime(new Date()));
-        column.setMinWidth(min);
-        column.setWidth(min);
+        column.setPreferredWidth(min);
       }
     }
+
+    updateCommitColumnWidth();
+
     return sizeCalculated;
   }
 
-  private void setRootColumnSize(TableColumn column) {
+  private void updateCommitColumnWidth() {
+    int size = getWidth();
+    for (int i = 0; i < getColumnCount(); i++) {
+      if (i == GraphTableModel.COMMIT_COLUMN) continue;
+      TableColumn column = getColumnModel().getColumn(i);
+      size -= column.getPreferredWidth();
+    }
+
+    TableColumn commitColumn = getColumnModel().getColumn(GraphTableModel.COMMIT_COLUMN);
+    commitColumn.setPreferredWidth(size);
+  }
+
+  private void setRootColumnSize(@NotNull TableColumn column) {
     int rootWidth;
     if (!myUi.isMultipleRoots()) {
       rootWidth = 0;
@@ -368,8 +386,8 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
   }
 
   public void rootColumnUpdated() {
-    setColumnPreferredSize();
     setRootColumnSize(getColumnModel().getColumn(GraphTableModel.ROOT_COLUMN));
+    updateCommitColumnWidth();
   }
 
   @Nullable

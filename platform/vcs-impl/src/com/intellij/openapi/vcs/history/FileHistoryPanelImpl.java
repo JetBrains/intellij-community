@@ -55,7 +55,8 @@ import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
 import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
 import com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl;
-import com.intellij.openapi.vcs.ui.ReplaceFileConfirmationDialog;
+import com.intellij.openapi.vcs.ui.*;
+import com.intellij.openapi.vcs.ui.FontUtil;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.vfs.VcsFileSystem;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
@@ -77,7 +78,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.table.*;
+import javax.swing.table.TableCellEditor;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumn;
+import javax.swing.table.TableModel;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
@@ -107,7 +111,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
 
   private final AbstractVcs myVcs;
   private final VcsHistoryProvider myProvider;
-  private final AnnotationProvider myAnnotationProvider;
   private VcsHistorySession myHistorySession;
   @NotNull private final FilePath myFilePath;
   @Nullable private final VcsRevisionNumber myStartingRevision;
@@ -207,7 +210,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     return myStartingRevision;
   }
 
-  private static class AuthorCellRenderer extends DefaultTableCellRenderer {
+  private static class AuthorCellRenderer extends ColoredTableCellRenderer {
     private String myTooltipText;
 
     public void setTooltipText(final String text) {
@@ -215,20 +218,17 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     }
 
     @Override
-    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-      final Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-      if (c instanceof JComponent) {
-        ((JComponent)c).setToolTipText(myTooltipText);
+    protected void customizeCellRenderer(JTable table, @Nullable Object value, boolean selected, boolean hasFocus, int row, int column) {
+      setToolTipText(myTooltipText);
+      if (selected || hasFocus) {
+        setBackground(table.getSelectionBackground());
+        setForeground(table.getSelectionForeground());
       }
-      if (isSelected || hasFocus) {
-        c.setBackground(table.getSelectionBackground());
-        c.setForeground(table.getSelectionForeground());
-      } else {
-        c.setBackground(table.getBackground());
-        c.setForeground(table.getForeground());
+      else {
+        setBackground(table.getBackground());
+        setForeground(table.getForeground());
       }
-
-      return c;
+      if (value != null) append(value.toString());
     }
   }
 
@@ -355,7 +355,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     myIsStaticAndEmbedded = false;
     myVcs = vcs;
     myProvider = provider;
-    myAnnotationProvider = myVcs.getCachingAnnotationProvider();
     myRefresherI = refresherI;
     myHistorySession = session;
     myFilePath = filePath;
@@ -662,7 +661,12 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
       if (revision != null) {
         final String message = revision.getCommitMessage();
         myOriginalComment = message;
-        @NonNls final String text = IssueLinkHtmlRenderer.formatTextIntoHtml(myVcs.getProject(), message);
+        @NonNls final String text = message == null ? "" : "<html><head>" +
+                                                           UIUtil.getCssFontDeclaration(UIUtil.getLabelFont()) +
+                                                           "</head><body>" +
+                                                           FontUtil.getHtmlWithFonts(IssueLinkHtmlRenderer
+                                                             .formatTextWithLinks(myVcs.getProject(), message)) +
+                                                           "</body></html>";
         myComments.setText(text);
         myComments.setCaretPosition(0);
       }

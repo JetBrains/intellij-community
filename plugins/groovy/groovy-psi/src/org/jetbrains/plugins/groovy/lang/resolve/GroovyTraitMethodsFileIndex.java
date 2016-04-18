@@ -76,7 +76,7 @@ public class GroovyTraitMethodsFileIndex extends SingleEntryFileBasedIndexExtens
 
   @Override
   public int getVersion() {
-    return ClassFileStubBuilder.STUB_VERSION;
+    return ClassFileStubBuilder.STUB_VERSION + 1;
   }
 
   @NotNull

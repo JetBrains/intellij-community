@@ -103,9 +103,32 @@ public class JavaFxPsiUtil {
   public static PsiClass findPsiClass(String name, PsiElement context) {
     final Project project = context.getProject();
     if (!StringUtil.getShortName(name).equals(name)) {
-      return JavaPsiFacade.getInstance(project).findClass(name, GlobalSearchScope.allScope(project));
+      final PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(name, GlobalSearchScope.allScope(project));
+      if (psiClass != null) {
+        return psiClass;
+      }
+      return findNestedPsiClass(name, context, project);
     }
     return findPsiClass(name, parseImports((XmlFile)context.getContainingFile()), context, project);
+  }
+
+  private static PsiClass findNestedPsiClass(String name, PsiElement context, Project project) {
+    final int dotIndex = name.indexOf('.');
+    if (dotIndex > 0) {
+      final String outerName = name.substring(0, dotIndex);
+      final PsiClass outerClass = findPsiClass(outerName, parseImports((XmlFile)context.getContainingFile()), context, project);
+      if (outerClass != null) {
+        final List<String> nameChain = StringUtil.split(name, ".", true, false);
+        final List<String> nestedNames = nameChain.subList(1, nameChain.size());
+        PsiClass aClass = outerClass;
+        for (String nestedName : nestedNames) {
+          aClass = aClass.findInnerClassByName(nestedName, true);
+          if (aClass == null) return null;
+        }
+        return aClass;
+      }
+    }
+    return null;
   }
 
   private static PsiClass findPsiClass(String name, List<String> imports, PsiElement context, Project project) {
@@ -327,7 +350,7 @@ public class JavaFxPsiUtil {
 
   @Nullable
   public static PsiMethod findValueOfMethod(@NotNull final PsiType psiType) {
-    final PsiClass psiClass = PsiTypesUtil.getPsiClass(psiType);
+    final PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(psiType);
     return psiClass != null ? findValueOfMethod(psiClass) : null;
   }
 
@@ -438,8 +461,7 @@ public class JavaFxPsiUtil {
   }
 
   public static boolean isAbleToInstantiate(@NotNull PsiClass psiClass, @NotNull Consumer<String> messageConsumer) {
-    if (psiClass.getConstructors().length == 0) return true;
-    if (hasNamedArgOrNoArgConstructor(psiClass)) return true;
+    if (psiClass.isEnum() || hasNamedArgOrNoArgConstructor(psiClass)) return true;
     final PsiMethod valueOf = findValueOfMethod(psiClass);
     if (valueOf == null) {
       if (!hasBuilder(psiClass)) {
@@ -451,6 +473,7 @@ public class JavaFxPsiUtil {
   }
 
   private static boolean hasNamedArgOrNoArgConstructor(@NotNull PsiClass psiClass) {
+    if (psiClass.getConstructors().length == 0) return true;
     return CachedValuesManager.getCachedValue(psiClass, () -> {
       for (PsiMethod constructor : psiClass.getConstructors()) {
         final PsiParameter[] parameters = constructor.getParameterList().getParameters();
@@ -507,7 +530,7 @@ public class JavaFxPsiUtil {
   }
 
   public static boolean isClassAcceptable(@Nullable XmlTag targetTag, @Nullable final PsiClass fromClass,
-                                          @NotNull BiConsumer<? super String, Validator.ValidationHost.ErrorType> messageConsumer) {
+                                          @NotNull BiConsumer<String, Validator.ValidationHost.ErrorType> messageConsumer) {
     if (targetTag == null || fromClass == null || !fromClass.isValid()) {
       return true;
     }
@@ -537,14 +560,14 @@ public class JavaFxPsiUtil {
     return true;
   }
 
-  private static boolean noDefaultPropertyError(@NotNull BiConsumer<? super String, Validator.ValidationHost.ErrorType> messageConsumer) {
+  private static boolean noDefaultPropertyError(@NotNull BiConsumer<String, Validator.ValidationHost.ErrorType> messageConsumer) {
     messageConsumer.accept("Parent tag has no default property",
                            Validator.ValidationHost.ErrorType.ERROR);
     return false;
   }
 
   private static boolean canCoerce(@Nullable PsiType targetType, @NotNull PsiClass fromClass, @NotNull PsiElement context,
-                                   @NotNull BiConsumer<? super String, Validator.ValidationHost.ErrorType> messageConsumer) {
+                                   @NotNull BiConsumer<String, Validator.ValidationHost.ErrorType> messageConsumer) {
     if (targetType == null) return true;
     PsiType collectionItemType = JavaGenericsUtil.getCollectionItemType(targetType, fromClass.getResolveScope());
     if (collectionItemType == null && InheritanceUtil.isInheritor(targetType, JavaFxCommonNames.JAVAFX_BEANS_PROPERTY)) {
@@ -556,18 +579,20 @@ public class JavaFxPsiUtil {
     return canCoerceImpl(targetType, fromClass, context, messageConsumer);
   }
 
-  /**
-   * Similar to {@link GenericsUtil#getVariableTypeByExpressionType(PsiType)} and {@link TypeConversionUtil#erasure(PsiType)}
-   */
   @Nullable
-  private static PsiType eraseFreeTypeParameters(@Nullable PsiType psiType, PsiMember member) {
+  private static PsiType eraseFreeTypeParameters(@Nullable PsiType psiType, @NotNull PsiMember member) {
     final PsiClass containingClass = member.getContainingClass();
+    return eraseFreeTypeParameters(psiType, containingClass);
+  }
+
+  @Nullable
+  private static PsiType eraseFreeTypeParameters(@Nullable PsiType psiType, @Nullable PsiClass containingClass) {
     if (containingClass == null) return null;
     return JavaPsiFacade.getElementFactory(containingClass.getProject()).createRawSubstitutor(containingClass).substitute(psiType);
   }
 
   private static boolean canCoerceImpl(@NotNull PsiType targetType, @NotNull PsiClass fromClass, @NotNull PsiElement context,
-                                       @NotNull BiConsumer<? super String, Validator.ValidationHost.ErrorType> messageConsumer) {
+                                       @NotNull BiConsumer<String, Validator.ValidationHost.ErrorType> messageConsumer) {
     if (targetType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) ||
         targetType.equalsToText(CommonClassNames.JAVA_LANG_STRING) ||
         targetType.isAssignableFrom(PsiTypesUtil.getClassType(fromClass))) {
@@ -602,14 +627,14 @@ public class JavaFxPsiUtil {
   }
 
   private static boolean unableToCoerceError(@NotNull PsiType targetType, @NotNull PsiClass fromClass,
-                                             @NotNull BiConsumer<? super String, Validator.ValidationHost.ErrorType> messageConsumer) {
+                                             @NotNull BiConsumer<String, Validator.ValidationHost.ErrorType> messageConsumer) {
     messageConsumer.accept("Unable to coerce " + HighlightUtil.formatClass(fromClass) + " to " + targetType.getCanonicalText(),
                            Validator.ValidationHost.ErrorType.ERROR);
     return false;
   }
 
   private static boolean unrelatedTypesWarning(@NotNull PsiType targetType, @NotNull PsiClass fromClass,
-                                               @NotNull BiConsumer<? super String, Validator.ValidationHost.ErrorType> messageConsumer) {
+                                               @NotNull BiConsumer<String, Validator.ValidationHost.ErrorType> messageConsumer) {
     messageConsumer.accept("Conversion between unrelated types, " + HighlightUtil.formatClass(fromClass) +
                            " to " + targetType.getCanonicalText(),
                            Validator.ValidationHost.ErrorType.WARNING);
@@ -949,7 +974,7 @@ public class JavaFxPsiUtil {
     final PsiClass tagClass = getTagClass(xmlTag);
     if (tagClass != null) {
       final String tagFieldName = xmlTag.getAttributeValue(FxmlConstants.FX_ID);
-      if (tagFieldName != null) {
+      if (!StringUtil.isEmpty(tagFieldName)) {
         final PsiField tagField = controllerClass.findFieldByName(tagFieldName, true);
         if (tagField != null && !tagField.hasModifierProperty(PsiModifier.STATIC) && isVisibleInFxml(tagField)) {
           final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(tagField.getType());
@@ -975,7 +1000,9 @@ public class JavaFxPsiUtil {
 
           final PsiType handlerType = tagClassSubstitutor != null ?
                                       tagClassSubstitutor.substitute(eventHandlerPropertyType) : eventHandlerPropertyType;
-          return substituteEventType(handlerType, xmlAttribute.getProject());
+          final PsiClassType eventType = substituteEventType(handlerType, xmlAttribute.getProject());
+          final PsiType erasedType = eraseFreeTypeParameters(eventType, tagClass);
+          return erasedType instanceof PsiClassType ? (PsiClassType)erasedType : null;
         }
       }
     }
@@ -1039,7 +1066,7 @@ public class JavaFxPsiUtil {
     for (PsiMethod method : methods) {
       if (method.getParameterList().getParametersCount() == 0 &&
           method.hasModifierProperty(PsiModifier.STATIC)) {
-        return PsiUtil.resolveClassInType(method.getReturnType());
+        return PsiUtil.resolveClassInClassTypeOnly(method.getReturnType());
       }
     }
     return null;

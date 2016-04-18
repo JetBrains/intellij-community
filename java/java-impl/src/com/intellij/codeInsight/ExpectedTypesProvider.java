@@ -23,7 +23,6 @@ import com.intellij.openapi.util.NullableComputable;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.impl.source.resolve.CompletionParameterTypeInferencePolicy;
 import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.impl.source.resolve.ParameterTypeInferencePolicy;
@@ -597,7 +596,7 @@ public class ExpectedTypesProvider {
 
     private void getExpectedArgumentsTypesForNewExpression(@NotNull final PsiNewExpression newExpr,
                                                            @NotNull final PsiExpressionList list) {
-      if (PsiDiamondTypeUtil.hasDiamond(newExpr)) {
+      if (PsiDiamondType.hasDiamond(newExpr)) {
         final JavaResolveResult[] candidates = PsiDiamondTypeImpl.collectStaticFactories(newExpr, DuplicateConflictResolver.INSTANCE);
         if (candidates != null) {
           final PsiExpressionList argumentList = newExpr.getArgumentList();
@@ -979,17 +978,25 @@ public class ExpectedTypesProvider {
         PsiSubstitutor substitutor;
         if (candidateInfo instanceof MethodCandidateInfo) {
           final MethodCandidateInfo info = (MethodCandidateInfo)candidateInfo;
-          substitutor = info.inferTypeArguments(policy, args, true);
+          substitutor = MethodCandidateInfo.ourOverloadGuard
+            .doPreventingRecursion(argumentList, false, () -> info.inferTypeArguments(policy, args, true));
           if (!info.isStaticsScopeCorrect() && method != null && !method.hasModifierProperty(PsiModifier.STATIC)) continue;
         }
         else {
-          substitutor = candidateInfo.getSubstitutor();
+          substitutor = MethodCandidateInfo.ourOverloadGuard.doPreventingRecursion(argumentList, false, candidateInfo::getSubstitutor);
+        }
+        if (substitutor == null) {
+          return ExpectedTypeInfo.EMPTY_ARRAY;
         }
         inferMethodCallArgumentTypes(argument, forCompletion, args, index, method, substitutor, array);
 
         if (leftArgs != null && candidateInfo instanceof MethodCandidateInfo) {
-          substitutor = ((MethodCandidateInfo)candidateInfo).inferTypeArguments(policy, leftArgs, true);
-          inferMethodCallArgumentTypes(argument, forCompletion, leftArgs, index, method, substitutor, array);
+          substitutor = MethodCandidateInfo.ourOverloadGuard.doPreventingRecursion(argumentList, false,
+                                                                                   () -> ((MethodCandidateInfo)candidateInfo)
+                                                                                     .inferTypeArguments(policy, leftArgs, true));
+          if (substitutor != null) {
+            inferMethodCallArgumentTypes(argument, forCompletion, leftArgs, index, method, substitutor, array);
+          }
         }
       }
 

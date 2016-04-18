@@ -137,7 +137,7 @@ public abstract class DvcsPlatformFacadeImpl implements DvcsPlatformFacade {
 
   @Override
   public void hardRefresh(@NotNull VirtualFile root) {
-    VfsUtil.markDirtyAndRefresh(true, true, false, root);
+    VfsUtil.markDirtyAndRefresh(false, true, false, root);
   }
 
 }

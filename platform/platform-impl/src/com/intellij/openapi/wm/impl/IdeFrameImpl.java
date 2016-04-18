@@ -32,10 +32,8 @@ import com.intellij.openapi.actionSystem.impl.MouseGestureManager;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.impl.ShadowPainter;
@@ -259,29 +257,18 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
         public void windowClosing(@NotNull final WindowEvent e) {
           if (isTemporaryDisposed())
             return;
-          final Application app = ApplicationManager.getApplication();
-          app.invokeLater(new DumbAwareRunnable() {
-            public void run() {
-              HeavyProcessLatch.INSTANCE.prioritizeUiActivity();
 
-              if (app.isDisposed()) {
-                ApplicationManagerEx.getApplicationEx().exit();
-                return;
-              }
-
-              final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
-              if (openProjects.length > 1 || (openProjects.length == 1 && SystemInfo.isMacSystemMenu)) {
-                if (myProject != null && myProject.isOpen()) {
-                  ProjectUtil.closeAndDispose(myProject);
-                }
-                app.getMessageBus().syncPublisher(AppLifecycleListener.TOPIC).projectFrameClosed();
-                WelcomeFrame.showIfNoProjectOpened();
-              }
-              else {
-                ApplicationManagerEx.getApplicationEx().exit();
-              }
+          final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
+          if (openProjects.length > 1 || openProjects.length == 1 && SystemInfo.isMacSystemMenu) {
+            if (myProject != null && myProject.isOpen()) {
+              ProjectUtil.closeAndDispose(myProject);
             }
-          }, ModalityState.NON_MODAL);
+            ApplicationManager.getApplication().getMessageBus().syncPublisher(AppLifecycleListener.TOPIC).projectFrameClosed();
+            WelcomeFrame.showIfNoProjectOpened();
+          }
+          else {
+            ApplicationManagerEx.getApplicationEx().exit();
+          }
         }
       }
     );

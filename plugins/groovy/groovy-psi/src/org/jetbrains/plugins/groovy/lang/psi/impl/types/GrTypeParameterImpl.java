@@ -91,6 +91,7 @@ public class GrTypeParameterImpl extends GrStubElementBase<GrTypeParameterStub> 
     return null;
   }
 
+  @NotNull
   @Override
   public String[] getSuperClassNames() {
     final PsiReference[] types = getExtendsList().getReferences();

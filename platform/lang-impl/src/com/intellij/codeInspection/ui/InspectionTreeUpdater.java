@@ -16,7 +16,6 @@
 package com.intellij.codeInspection.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.Nullable;
@@ -47,15 +46,12 @@ public class InspectionTreeUpdater {
     if (ApplicationManager.getApplication().isDispatchThread() && !force) {
       return;
     }
-    myUpdateQueue.queue(new MyTreeUpdate(node));
+    myUpdateQueue.queue(new MyTreeUpdate());
   }
 
   private class MyTreeUpdate extends Update {
-    private final TreeNode myNode;
-
-    public MyTreeUpdate(TreeNode node) {
-      super("TreeRepaint");
-      myNode = node;
+    public MyTreeUpdate() {
+      super("inspection.view.update");
     }
 
     @Override
@@ -64,34 +60,22 @@ public class InspectionTreeUpdater {
       final InspectionTree tree = myView.getTree();
       try {
         tree.setQueueUpdate(true);
-        ((DefaultTreeModel)tree.getModel()).reload(myNode);
+        ((DefaultTreeModel)tree.getModel()).reload();
         tree.revalidate();
         tree.repaint();
-        tree.restoreExpansionAndSelection((InspectionTreeNode)myNode);
+        tree.restoreExpansionAndSelection(tree.getRoot());
+        myView.openRightPanelIfNeed();
         if (myDoUpdatePreviewPanel.compareAndSet(true, false)) {
           myView.updateRightPanelLoading();
         }
       } finally {
         tree.setQueueUpdate(false);
-        if (tree.getSelectionModel().getMinSelectionRow() == -1) {
-          TreeUtil.selectFirstNode(tree);
-          tree.expandRow(0);
-        }
       }
     }
 
     @Override
     public boolean canEat(Update update) {
-      if (myNode == null) return true;
-      MyTreeUpdate other = (MyTreeUpdate) update;
-      TreeNode currentNode = other.myNode;
-      while (currentNode != null) {
-        if (InspectionResultsViewComparator.getInstance().areEqual(currentNode, myNode)) {
-          return true;
-        }
-        currentNode = currentNode.getParent();
-      }
-      return false;
+      return true;
     }
   }
 }

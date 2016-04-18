@@ -17,7 +17,6 @@ package com.intellij.refactoring.introduceparameterobject;
 
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -26,6 +25,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
@@ -53,7 +53,7 @@ class ParameterObjectBuilder {
         fields.add(field);
     }
 
-    public void setTypeArguments(List<PsiTypeParameter> typeParams) {
+  public void setTypeArguments(Collection<PsiTypeParameter> typeParams) {
         this.typeParams.clear();
         this.typeParams.addAll(typeParams);
     }

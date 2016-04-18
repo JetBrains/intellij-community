@@ -32,6 +32,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FocusChangeListener;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
@@ -631,6 +632,23 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
       }
       final Dimension historySize = history.getContentSize();
       final Dimension inputSize = input.getContentSize();
+
+      // deal with width
+      if (isHistoryViewerForceAdditionalColumnsUsage()) {
+        history.getSoftWrapModel().forceAdditionalColumnsUsage();
+
+        int minAdditionalColumns = 2;
+        // calculate content size without additional columns except minimal amount
+        int historySpaceWidth = EditorUtil.getPlainSpaceWidth(history);
+        historySize.width += historySpaceWidth * (minAdditionalColumns - history.getSettings().getAdditionalColumnsCount());
+        // calculate content size without additional columns except minimal amount
+        int inputSpaceWidth = EditorUtil.getPlainSpaceWidth(input);
+        inputSize.width += inputSpaceWidth * (minAdditionalColumns - input.getSettings().getAdditionalColumnsCount());
+        // calculate additional columns according to the corresponding width
+        int max = Math.max(historySize.width, inputSize.width);
+        history.getSettings().setAdditionalColumnsCount(minAdditionalColumns + (max - historySize.width) / historySpaceWidth);
+        input.getSettings().setAdditionalColumnsCount(minAdditionalColumns + (max - inputSize.width) / inputSpaceWidth);
+      }
 
       int newInputHeight;
       // deal with height, WEB-11122 we cannot trust editor width - it could be 0 in case of soft wrap even if editor has text

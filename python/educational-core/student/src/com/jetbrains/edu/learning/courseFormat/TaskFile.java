@@ -118,6 +118,7 @@ public class TaskFile {
       answerPlaceholderCopy.setLength(answerPlaceholder.getLength());
       answerPlaceholderCopy.setPossibleAnswer(answerPlaceholder.getPossibleAnswer());
       answerPlaceholderCopy.setIndex(answerPlaceholder.getIndex());
+      answerPlaceholderCopy.setHint(answerPlaceholder.getHint());
       answerPlaceholdersCopy.add(answerPlaceholderCopy);
     }
     target.name = source.name;

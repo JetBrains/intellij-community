@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -272,7 +272,6 @@ public final class IdeKeyEventDispatcher implements Disposable {
       return false;
     }
 
-    boolean isMainFrame = window instanceof IdeFrameImpl;
     boolean isFloatingDecorator = window instanceof FloatingDecorator;
 
     boolean isPopup = !(component instanceof JFrame) && !(component instanceof JDialog);
@@ -285,7 +284,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
       }
     }
 
-    return !isMainFrame && !isFloatingDecorator;
+    return !isFloatingDecorator;
   }
 
   private boolean inWaitForSecondStrokeState() {
@@ -751,7 +750,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
       final List<AnAction> readOnlyActions = Collections.unmodifiableList(actions);
       for (ActionPromoter promoter : ActionPromoter.EP_NAME.getExtensions()) {
         final List<AnAction> promoted = promoter.promote(readOnlyActions, myContext.getDataContext());
-        if (promoted.isEmpty()) continue;
+        if (promoted == null || promoted.isEmpty()) continue;
 
         actions.removeAll(promoted);
         actions.addAll(0, promoted);
@@ -910,14 +909,16 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
     private static class ActionListCellRenderer extends ColoredListCellRenderer {
       @Override
-      protected void customizeCellRenderer(final JList list, final Object value, final int index, final boolean selected, final boolean hasFocus) {
-        if (value == null) return;
+      protected void customizeCellRenderer(@NotNull final JList list, final Object value, final int index, final boolean selected, final boolean hasFocus) {
         if (value instanceof Pair) {
+          //noinspection unchecked
           final Pair<AnAction, KeyStroke> pair = (Pair<AnAction, KeyStroke>) value;
           append(KeymapUtil.getShortcutText(new KeyboardShortcut(pair.getSecond(), null)), SimpleTextAttributes.GRAY_ATTRIBUTES);
           appendTextPadding(30);
           final String text = pair.getFirst().getTemplatePresentation().getText();
-          append(text, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+          if (text != null) {
+            append(text, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+          }
         }
       }
     }

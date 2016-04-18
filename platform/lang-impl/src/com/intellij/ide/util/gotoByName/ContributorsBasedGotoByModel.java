@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,8 +33,8 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
+import com.intellij.util.Processors;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.util.indexing.IdFilter;
@@ -44,9 +44,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 
@@ -166,7 +164,8 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
   public String[] getNames(final boolean checkBoxState) {
     final THashSet<String> allNames = ContainerUtil.newTroveSet();
 
-    processNames(new CommonProcessors.CollectProcessor<String>(Collections.synchronizedCollection(allNames)), checkBoxState);
+    Collection<String> result = Collections.synchronizedCollection(allNames);
+    processNames(Processors.cancelableCollectProcessor(result), checkBoxState);
     if (LOG.isDebugEnabled()) {
       LOG.debug("getNames(): (got "+allNames.size()+" elements)");
     }

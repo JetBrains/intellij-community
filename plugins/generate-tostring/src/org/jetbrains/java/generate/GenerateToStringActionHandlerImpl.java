@@ -20,7 +20,7 @@ import com.intellij.codeInsight.generation.PsiElementClassMember;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.options.Configurable;
@@ -62,7 +62,7 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
 
     @Override
     public boolean startInWriteAction() {
-        return true;
+        return false;
     }
 
     @Override
@@ -89,40 +89,43 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
 
         final MemberChooserHeaderPanel header = new MemberChooserHeaderPanel(clazz);
         logger.debug("Displaying member chooser dialog");
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-            public void run() {
-              if (project.isDisposed()) return;
-                final MemberChooser<PsiElementClassMember> chooser =
-                    new MemberChooser<PsiElementClassMember>(dialogMembers, true, true, project, PsiUtil.isLanguageLevel5OrHigher(clazz), header) {
-                        @Nullable
-                        @Override
-                        protected String getHelpId() {
-                            return "editing.altInsert.tostring";
-                        }
-                    };
-                chooser.setTitle("Generate toString()");
 
-                chooser.setCopyJavadocVisible(false);
-                chooser.selectElements(dialogMembers);
-                header.setChooser(chooser);
-                chooser.show();
-
-                if (DialogWrapper.OK_EXIT_CODE == chooser.getExitCode()) {
-                    Collection<PsiMember> selectedMembers = GenerationUtil.convertClassMembersToPsiMembers(chooser.getSelectedElements());
-
-                    final TemplateResource template = header.getSelectedTemplate();
-                    ToStringTemplatesManager.getInstance().setDefaultTemplate(template);
-
-                    if (template.isValidTemplate()) {
-                        GenerateToStringWorker.executeGenerateActionLater(clazz, editor, selectedMembers, template,
-                                                                          chooser.isInsertOverrideAnnotation());
-                    }
-                    else {
-                        HintManager.getInstance().showErrorHint(editor, "toString() template '" + template.getFileName() + "' is invalid");
-                    }
+        final MemberChooser<PsiElementClassMember> chooser =
+            new MemberChooser<PsiElementClassMember>(dialogMembers, true, true, project, PsiUtil.isLanguageLevel5OrHigher(clazz), header) {
+                @Nullable
+                @Override
+                protected String getHelpId() {
+                    return "editing.altInsert.tostring";
                 }
+            };
+        //noinspection DialogTitleCapitalization
+        chooser.setTitle("Generate toString()");
+
+        chooser.setCopyJavadocVisible(false);
+        chooser.selectElements(dialogMembers);
+        header.setChooser(chooser);
+        chooser.show();
+
+        if (DialogWrapper.OK_EXIT_CODE == chooser.getExitCode()) {
+            Collection<PsiMember> selectedMembers = GenerationUtil.convertClassMembersToPsiMembers(chooser.getSelectedElements());
+
+            final TemplateResource template = header.getSelectedTemplate();
+            ToStringTemplatesManager.getInstance().setDefaultTemplate(template);
+
+            if (template.isValidTemplate()) {
+                WriteAction.run(() -> {
+                    try {
+                        new GenerateToStringWorker(clazz, editor, chooser.isInsertOverrideAnnotation()).execute(selectedMembers, template);
+                    }
+                    catch (Exception e) {
+                        GenerationUtil.handleException(project, e);
+                    }
+                });
             }
-        });
+            else {
+                HintManager.getInstance().showErrorHint(editor, "toString() template '" + template.getFileName() + "' is invalid");
+            }
+        }
 
         logger.debug("+++ doExecuteAction - END +++");
     }

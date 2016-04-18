@@ -20,6 +20,7 @@ import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree;
 import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree.*;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.*;
@@ -31,7 +32,7 @@ import java.util.Set;
 
 public class GrStubIndexer {
 
-  @Nullable
+  @NotNull
   public static Unit translate(int fileId, GrFileStub grFileStub) {
     if (grFileStub.isScript()) {
       return new Unit(fileId, null, IndexTree.GROOVY, Import.EMPTY_ARRAY, ClassDecl.EMPTY_ARRAY);

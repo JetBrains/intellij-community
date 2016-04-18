@@ -134,4 +134,9 @@ public class MockPsiDocumentManager extends PsiDocumentManager {
   public void reparseFiles(@NotNull Collection<VirtualFile> files, boolean includeOpenFiles) {
     throw new UnsupportedOperationException();
   }
+
+  @Override
+  public void performLaterWhenAllCommitted(@NotNull final Runnable runnable) {
+    throw new UnsupportedOperationException();
+  }
 }

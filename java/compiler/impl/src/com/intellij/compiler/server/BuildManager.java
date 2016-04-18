@@ -17,8 +17,10 @@ package com.intellij.compiler.server;
 
 import com.intellij.ProjectTopics;
 import com.intellij.compiler.CompilerConfiguration;
+import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.impl.CompilerUtil;
+import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration;
 import com.intellij.compiler.server.impl.BuildProcessClasspathManager;
 import com.intellij.concurrency.JobScheduler;
@@ -36,7 +38,10 @@ import com.intellij.ide.PowerSaveMode;
 import com.intellij.ide.file.BatchFileChangeListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.compiler.CompilationStatusListener;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompilerPaths;
@@ -76,6 +81,7 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.IntArrayList;
+import com.intellij.util.io.BaseOutputReader;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.NetUtils;
@@ -98,6 +104,7 @@ import org.jetbrains.jps.api.*;
 import org.jetbrains.jps.cmdline.BuildMain;
 import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.incremental.Utils;
+import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 import org.jetbrains.jps.model.serialization.JpsGlobalLoader;
 
 import javax.tools.*;
@@ -183,7 +190,7 @@ public class BuildManager implements Disposable {
     @Override
     public void runTask() {
       if (shouldSaveDocuments()) {
-        TransactionGuard.getInstance().submitTransactionAndWait(TransactionKind.ANY_CHANGE, () ->
+        TransactionGuard.getInstance().submitTransactionAndWait(() ->
           ((FileDocumentManagerImpl)FileDocumentManager.getInstance()).saveAllDocuments(false));
       }
     }
@@ -752,7 +759,7 @@ public class BuildManager implements Disposable {
                       // ensure project model is saved on disk, so that automake sees the latest model state.
                       // For ordinary make all project, app settings and unsaved docs are always saved before build starts.
                       try {
-                        TransactionGuard.getInstance().submitTransactionAndWait(TransactionKind.ANY_CHANGE, project::save);
+                        TransactionGuard.getInstance().submitTransactionAndWait(project::save);
                       }
                       catch (Throwable e) {
                         LOG.info(e);
@@ -944,12 +951,24 @@ public class BuildManager implements Disposable {
       }
     }
 
-    final Sdk internalJdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
-    if (projectJdk == null || sdkVersion == null || !sdkVersion.isAtLeast(JavaSdkVersion.JDK_1_6)) {
+    final JavaSdkVersion oldestPossible = getOldestPossiblePlatformForBuildProcess(project);
+
+    if (projectJdk == null || sdkVersion == null || !sdkVersion.isAtLeast(oldestPossible)) {
+      final Sdk internalJdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
       projectJdk = internalJdk;
       sdkVersion = javaSdkType.getVersion(internalJdk);
     }
     return Pair.create(projectJdk, sdkVersion);
+  }
+
+  @NotNull
+  private static JavaSdkVersion getOldestPossiblePlatformForBuildProcess(Project project) {
+    final BackendCompiler javaCompiler = ((CompilerConfigurationImpl)CompilerConfiguration.getInstance(project)).getDefaultCompiler();
+    final String id = javaCompiler != null? javaCompiler.getId() : JavaCompilers.JAVAC_ID;
+    if (id == JavaCompilers.ECLIPSE_ID || id == JavaCompilers.ECLIPSE_EMBEDDED_ID) {
+      return JavaSdkVersion.JDK_1_7; // because bundled ecj is compiled against 1.7
+    }
+    return JavaSdkVersion.JDK_1_6;
   }
 
   private Future<Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler>> launchPreloadedBuildProcess(final Project project, ExecutorService projectTaskQueue) throws Exception {
@@ -1138,6 +1157,8 @@ public class BuildManager implements Disposable {
     cmdLine.addParameter("-D" + PathManager.PROPERTY_PLUGINS_PATH + "=" + PathManager.getPluginsPath());
 
     cmdLine.addParameter("-D" + GlobalOptions.LOG_DIR_OPTION + "=" + FileUtil.toSystemIndependentName(getBuildLogDirectory().getAbsolutePath()));
+    cmdLine.addParameter("-D" + GlobalOptions.FALLBACK_JDK_HOME + "=" + FileUtil.toSystemIndependentName(SystemProperties.getJavaHome()));
+    cmdLine.addParameter("-D" + GlobalOptions.FALLBACK_JDK_VERSION + "=" + SystemProperties.getJavaVersion());
 
     final File workDirectory = getBuildSystemDirectory();
     //noinspection ResultOfMethodCallIgnored
@@ -1191,9 +1212,10 @@ public class BuildManager implements Disposable {
         return true;
       }
 
+      @NotNull
       @Override
-      protected boolean useNonBlockingRead() {
-        return false;
+      protected BaseOutputReader.Options readerOptions() {
+        return BaseOutputReader.Options.BLOCKING;
       }
     };
     processHandler.addProcessListener(new ProcessAdapter() {
@@ -1443,7 +1465,7 @@ public class BuildManager implements Disposable {
       String text;
 
       synchronized (this) {
-        if (myStoredLength > 2048) {
+        if (myStoredLength > 16384) {
           return;
         }
         text = event.getText();

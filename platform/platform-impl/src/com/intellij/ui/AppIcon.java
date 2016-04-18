@@ -291,6 +291,8 @@ public abstract class AppIcon {
 
       myCurrentProcessId = processId;
 
+      if (myLastValue > value) return true;
+
       if (Math.abs(myLastValue - value) < 0.02d) return true;
 
       try {

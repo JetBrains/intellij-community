@@ -59,7 +59,9 @@ class JavaFxFactoryReferenceProvider extends PsiReferenceProvider {
     }
 
     private static boolean isFactoryMethod(PsiMethod method) {
-      return method.hasModifierProperty(PsiModifier.STATIC) && method.getParameterList().getParametersCount() == 0;
+      return method.hasModifierProperty(PsiModifier.STATIC) &&
+             method.getParameterList().getParametersCount() == 0 &&
+             !PsiType.VOID.equals(method.getReturnType());
     }
 
     @NotNull

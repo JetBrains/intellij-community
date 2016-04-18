@@ -20,11 +20,11 @@ import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.QuickFixAction;
 import com.intellij.codeInspection.ui.actions.SuppressActionWrapper;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SimpleColoredComponent;
@@ -33,7 +33,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.tree.TreePath;
 import java.awt.*;
 
 /**
@@ -54,20 +53,19 @@ public class QuickFixPreviewDecorator extends JPanel implements InspectionTreeLo
     myView = view;
     myWrapper = view.getTree().getSelectedToolWrapper();
     LOG.assertTrue(myWrapper != null);
-    CommonProblemDescriptor[] descriptors = myView.getTree().getSelectedDescriptors();
-    int problemCount = descriptors.length;
 
     setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
 
-    if (view.isUpdating() && !areDescriptorNodesSelected()) {
+    if (view.isUpdating() && !view.getTree().areDescriptorNodesSelected()) {
       setBorder(IdeBorderFactory.createEmptyBorder(16, 9, 13, 0));
       AsyncProcessIcon waitingIcon = new AsyncProcessIcon("Inspection preview panel updating...");
       Disposer.register(this, waitingIcon);
-      myWaitingLabel = getLabel(problemCount);
+      myWaitingLabel = getLabel(1);
       add(myWaitingLabel);
       add(waitingIcon);
     }
     else {
+      CommonProblemDescriptor[] descriptors = myView.getTree().getSelectedDescriptors();
       setBorder(IdeBorderFactory.createEmptyBorder(2, 8, 0, 0));
       QuickFixAction[] fixes = view.getProvider().getQuickFixes(myWrapper, view.getTree());
       fillPanel(fixes, descriptors);
@@ -100,8 +98,6 @@ public class QuickFixPreviewDecorator extends JPanel implements InspectionTreeLo
   private void fillPanel(@Nullable QuickFixAction[] fixes,
                          CommonProblemDescriptor[] descriptors) {
     if (myFoldings != null) myFoldings.appendFoldings(descriptors);
-    InspectionTree tree = myView.getTree();
-    Project project = myView.getProject();
     boolean hasFixes = fixes != null && fixes.length != 0;
     int problemCount = descriptors.length;
     boolean multipleDescriptors = problemCount > 1;
@@ -114,21 +110,11 @@ public class QuickFixPreviewDecorator extends JPanel implements InspectionTreeLo
     if (hasFixes) {
       actions.addAll(createFixActions(fixes, multipleDescriptors));
     }
-    actions.add(createSuppressionCombo(myWrapper, tree.getSelectionPaths(), project));
+    actions.add(createSuppressionCombo(myView));
     final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actions, true);
     final JComponent component = toolbar.getComponent();
     toolbar.setTargetComponent(this);
     add(component);
-  }
-
-  private boolean areDescriptorNodesSelected() {
-    final TreePath[] paths = myView.getTree().getSelectionPaths();
-    for (TreePath path : paths) {
-      if (!(path.getLastPathComponent() instanceof ProblemDescriptionNode)) {
-        return false;
-      }
-    }
-    return true;
   }
 
   @NotNull
@@ -144,10 +130,8 @@ public class QuickFixPreviewDecorator extends JPanel implements InspectionTreeLo
     label.append(problemsCount + " problems:");
   }
 
-  private static AnAction createSuppressionCombo(@NotNull final InspectionToolWrapper toolWrapper,
-                                                 @NotNull final TreePath[] paths,
-                                                 @NotNull final Project project) {
-    final AnAction[] suppressors = new SuppressActionWrapper(project, toolWrapper, paths).getChildren(null);
+  private static AnAction createSuppressionCombo(InspectionResultsView view) {
+    final AnAction[] suppressors = new SuppressActionWrapper().getChildren(AnActionEvent.createFromDataContext(ActionPlaces.CODE_INSPECTION, null, DataManager.getInstance().getDataContext(view)));
     final ComboBoxAction action = new ComboBoxAction() {
       {
         getTemplatePresentation().setText("Suppress");
@@ -157,7 +141,7 @@ public class QuickFixPreviewDecorator extends JPanel implements InspectionTreeLo
       @NotNull
       @Override
       protected DefaultActionGroup createPopupActionGroup(JComponent button) {
-        DefaultActionGroup group = new DefaultActionGroup();
+        DefaultActionGroup group = new DefaultCompactActionGroup();
         group.addAll(suppressors);
         return group;
       }

@@ -22,6 +22,7 @@ package com.intellij.refactoring.introduceparameterobject.usageInfo;
 
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
+import com.intellij.refactoring.introduceparameterobject.JavaIntroduceParameterObjectClassDescriptor;
 import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewUtil;
@@ -32,24 +33,25 @@ public class BeanClassVisibilityUsageInfo extends FixableUsageInfo {
   private final PsiClass existingClass;
   private final UsageInfo[] usages;
   private final String myNewVisibility;
-  private final PsiMethod myExistingClassCompatibleConstructor;
+  private final JavaIntroduceParameterObjectClassDescriptor myClassDescriptor;
 
   public BeanClassVisibilityUsageInfo(PsiClass existingClass,
                                       UsageInfo[] usages,
                                       String newVisibility,
-                                      PsiMethod existingClassCompatibleConstructor) {
+                                      JavaIntroduceParameterObjectClassDescriptor classDescriptor) {
     super(existingClass);
     this.existingClass = existingClass;
     this.usages = usages;
     myNewVisibility = newVisibility;
-    myExistingClassCompatibleConstructor = existingClassCompatibleConstructor;
+    myClassDescriptor = classDescriptor;
   }
 
   @Override
   public void fixUsage() throws IncorrectOperationException {
     VisibilityUtil.fixVisibility(UsageViewUtil.toElements(usages), existingClass, myNewVisibility);
-    if (myExistingClassCompatibleConstructor != null) {
-      VisibilityUtil.fixVisibility(UsageViewUtil.toElements(usages), myExistingClassCompatibleConstructor, myNewVisibility);
+    final PsiMethod compatibleConstructor = myClassDescriptor.getExistingClassCompatibleConstructor();
+    if (compatibleConstructor != null) {
+      VisibilityUtil.fixVisibility(UsageViewUtil.toElements(usages), compatibleConstructor, myNewVisibility);
     }
   }
 }

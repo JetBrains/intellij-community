@@ -16,7 +16,6 @@
       <option name="SELECTION_FOREGROUND" value="ffffff"/>
       <option name="LINE_NUMBERS_COLOR" value="999999"/>
       <option name="ANNOTATIONS_COLOR" value="000080" />
-      <option name="ANNOTATIONS_MERGED_COLOR" value="008080" />
       <option name="CARET_COLOR" value="0"/>
       <option name="RIGHT_MARGIN_COLOR" value="E0E0E0"/>
       <option name="SOFT_WRAP_SIGN_COLOR" value="c0c0c0"/>
@@ -53,6 +52,12 @@
       <option name="FILESTATUS_OBSOLETE" value="7c7c00"/>
       <option name="FILESTATUS_SWITCHED" value="08978f"/>
       <option name="FILESTATUS_SUPPRESSED" value=""/>
+
+      <option name="VCS_ANNOTATIONS_COLOR_1" value="eaffe2"/>
+      <option name="VCS_ANNOTATIONS_COLOR_2" value="d1d1d1"/>
+      <option name="VCS_ANNOTATIONS_COLOR_3" value="d9e4f9"/>
+      <option name="VCS_ANNOTATIONS_COLOR_4" value="fffbcf"/>
+      <option name="VCS_ANNOTATIONS_COLOR_5" value="ffbfc3"/>
     </colors>
 
     <attributes>
@@ -1049,6 +1054,12 @@
       <option name="DIFF_SEPARATORS_TOP_BORDER" value="1E1E1E"/>
       <option name="DIFF_SEPARATORS_BACKGROUND" value="232323"/>
       <option name="DIFF_SEPARATORS_BOTTOM_BORDER" value="222222"/>
+
+      <option name="VCS_ANNOTATIONS_COLOR_1" value="464c43"/>
+      <option name="VCS_ANNOTATIONS_COLOR_2" value="444342"/>
+      <option name="VCS_ANNOTATIONS_COLOR_3" value="41444a"/>
+      <option name="VCS_ANNOTATIONS_COLOR_4" value="484248"/>
+      <option name="VCS_ANNOTATIONS_COLOR_5" value="4c393a"/>
     </colors>
     <attributes>
       <option name="ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES">

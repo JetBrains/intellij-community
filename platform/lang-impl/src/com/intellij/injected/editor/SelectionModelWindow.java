@@ -49,7 +49,7 @@ public class SelectionModelWindow implements SelectionModel {
   @Nullable
   @Override
   public VisualPosition getSelectionStartPosition() {
-    return myHostModel.getSelectionStartPosition();
+    return myInjectedEditor.offsetToVisualPosition(getSelectionStart());
   }
 
   @Override
@@ -60,7 +60,7 @@ public class SelectionModelWindow implements SelectionModel {
   @Nullable
   @Override
   public VisualPosition getSelectionEndPosition() {
-    return myHostModel.getSelectionEndPosition();
+    return myInjectedEditor.offsetToVisualPosition(getSelectionEnd());
   }
 
   @Override

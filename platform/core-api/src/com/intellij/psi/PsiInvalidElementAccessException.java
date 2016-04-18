@@ -27,7 +27,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.stubs.PsiFileStub;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.ExceptionUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -80,8 +79,8 @@ public class PsiInvalidElementAccessException extends RuntimeException implement
           myDiagnostic = Attachment.EMPTY_ARRAY;
         }
         else {
-          String diagnostic = trace instanceof Throwable ? ExceptionUtil.getThrowableText((Throwable)trace) : trace.toString();
-          myDiagnostic = new Attachment[]{new Attachment("diagnostic.txt", diagnostic)};
+          myDiagnostic = new Attachment[]{trace instanceof Throwable ? new Attachment("invalidation", (Throwable)trace)
+                                                                     : new Attachment("diagnostic.txt", trace.toString())};
         }
       }
       finally {

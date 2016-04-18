@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,13 +28,13 @@ import java.nio.charset.Charset;
 public class BaseInputStreamReader extends InputStreamReader {
   private final InputStream myInputStream;
 
-  public BaseInputStreamReader(@NotNull InputStream in, @NotNull Charset cs) {
-    super(in, cs);
+  public BaseInputStreamReader(@NotNull InputStream in) {
+    super(in);
     myInputStream = in;
   }
 
-  public BaseInputStreamReader(InputStream in) {
-    super(in);
+  public BaseInputStreamReader(@NotNull InputStream in, @NotNull Charset cs) {
+    super(in, cs);
     myInputStream = in;
   }
 

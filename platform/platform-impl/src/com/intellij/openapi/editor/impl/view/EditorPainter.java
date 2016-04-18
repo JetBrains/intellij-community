@@ -372,6 +372,10 @@ class EditorPainter implements TextDrawingCallback {
         @Override
         public void paint(Graphics2D g, VisualLineFragmentsIterator.Fragment fragment, int start, int end, 
                           TextAttributes attributes, float xStart, float xEnd, int y) {
+          boolean allowBorder = fragment.getCurrentFoldRegion() != null;
+          if (attributes != null && hasTextEffect(attributes.getEffectColor(), attributes.getEffectType(), allowBorder)) {
+            paintTextEffect(g, xStart, xEnd, y, attributes.getEffectColor(), attributes.getEffectType(), allowBorder);
+          }
           if (attributes != null && attributes.getForegroundColor() != null) {
             g.setColor(attributes.getForegroundColor());
             fragment.draw(g, xStart, y, start, end);
@@ -383,10 +387,6 @@ class EditorPainter implements TextDrawingCallback {
               currentLogicalLine[0] = logicalLine;
             }
             paintWhitespace(g, text, xStart, y, start, end, whitespacePaintingStrategy, fragment, whiteSpaceStroke, whiteSpaceStrokeWidth);
-          }
-          boolean allowBorder = fragment.getCurrentFoldRegion() != null;
-          if (attributes != null && hasTextEffect(attributes.getEffectColor(), attributes.getEffectType(), allowBorder)) {
-            paintTextEffect(g, xStart, xEnd, y, attributes.getEffectColor(), attributes.getEffectType(), allowBorder);
           }
         }
 
@@ -410,14 +410,12 @@ class EditorPainter implements TextDrawingCallback {
 
   private float paintLineLayoutWithEffect(Graphics2D g, LineLayout layout, float x, float y, 
                                   @Nullable Color effectColor, @Nullable EffectType effectType) {
-    float initialX = x;
+    if (hasTextEffect(effectColor, effectType, false)) {
+      paintTextEffect(g, x, x + layout.getWidth(), (int)y, effectColor, effectType, false);
+    }
     for (LineLayout.VisualFragment fragment : layout.getFragmentsInVisualOrder(x)) {
       fragment.draw(g, x, y);
       x = fragment.getEndX();
-
-    }
-    if (hasTextEffect(effectColor, effectType, false)) {
-      paintTextEffect(g, initialX, x, (int)y, effectColor, effectType, false);
     }
     return x;
   }

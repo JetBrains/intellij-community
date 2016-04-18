@@ -262,6 +262,12 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
 
   @Override
   public String getFullVersion() {
+    String result = doGetFullVersion();
+    if (isEAP()) result += " EAP";
+    return result;
+  }
+
+  private String doGetFullVersion() {
     if (myFullVersion == null) {
       if (!StringUtil.isEmptyOrSpaces(myMajorVersion)) {
         if (!StringUtil.isEmptyOrSpaces(myMinorVersion)) {
@@ -503,16 +509,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
 
   @Override
   public String getFullApplicationName() {
-    StringBuilder buffer = new StringBuilder();
-    buffer.append(getVersionName());
-    buffer.append(" ");
-    if (getMajorVersion() != null && !isEAP() && !isBetaOrRC()) {
-      buffer.append(getFullVersion());
-    }
-    else {
-      buffer.append(getBuild().asStringWithAllDetails());
-    }
-    return buffer.toString();
+    return getVersionName() + " " + getFullVersion();
   }
 
   @Override

@@ -38,14 +38,14 @@ public class GrTypeDefinitionStub extends StubBase<GrTypeDefinition> implements 
   private static final int TRAIT = 0x40;
 
   private final StringRef myName;
-  private final String[] mySuperClasses;
+  private final @NotNull String[] mySuperClasses;
   private final StringRef myQualifiedName;
   private final String[] myAnnotations;
   private final byte myFlags;
 
   public GrTypeDefinitionStub(StubElement parent,
                                   final String name,
-                                  final String[] supers,
+                                  @NotNull final String[] supers,
                                   @NotNull IStubElementType elementType,
                                   final String qualifiedName,
                                   String[] annotations,
@@ -58,6 +58,7 @@ public class GrTypeDefinitionStub extends StubBase<GrTypeDefinition> implements 
     myFlags = flags;
   }
 
+  @NotNull
   public String[] getSuperClassNames() {
     return mySuperClasses;
   }

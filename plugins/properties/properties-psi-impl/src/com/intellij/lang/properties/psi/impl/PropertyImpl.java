@@ -15,6 +15,7 @@
  */
 package com.intellij.lang.properties.psi.impl;
 
+import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.properties.PropertyManipulator;
 import com.intellij.lang.properties.parsing.PropertiesTokenTypes;
@@ -36,6 +37,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author max
@@ -451,17 +454,46 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
     return text.charAt(0);
   }
 
-  public void replaceKeyValueDelimiterWithDefault() {
-    PropertyImpl property = (PropertyImpl)PropertiesElementFactory.createProperty(getProject(), "yyy", "xxx", null);
-    final ASTNode oldDelimiter = getNode().findChildByType(PropertiesTokenTypes.KEY_VALUE_SEPARATOR);
-    LOG.assertTrue(oldDelimiter != null);
-    final ASTNode newDelimiter = property.getNode().findChildByType(PropertiesTokenTypes.KEY_VALUE_SEPARATOR);
-    LOG.assertTrue(newDelimiter != null);
-    getNode().replaceChild(oldDelimiter, newDelimiter);
-  }
-
   @Override
   public PsiElement getParent() {
     return getParentByStub();
+  }
+
+  public void replaceKeyValueDelimiterWithDefault() {
+    PropertyImpl property = (PropertyImpl)PropertiesElementFactory.createProperty(getProject(), "yyy", "xxx", null);
+    final ASTNode newDelimiter = property.getNode().findChildByType(PropertiesTokenTypes.KEY_VALUE_SEPARATOR);
+    final ASTNode propertyNode = getNode();
+    final ASTNode oldDelimiter = propertyNode.findChildByType(PropertiesTokenTypes.KEY_VALUE_SEPARATOR);
+    if (areDelimitersEqual(newDelimiter, oldDelimiter)) {
+      return;
+    }
+    if (newDelimiter == null) {
+      propertyNode.replaceChild(oldDelimiter, ASTFactory.whitespace(" "));
+    } else {
+      if (oldDelimiter == null) {
+        propertyNode.addChild(newDelimiter, getValueNode());
+        final ASTNode insertedDelimiter = propertyNode.findChildByType(PropertiesTokenTypes.KEY_VALUE_SEPARATOR);
+        LOG.assertTrue(insertedDelimiter != null);
+        ASTNode currentPrev = insertedDelimiter.getTreePrev();
+        final List<ASTNode> toDelete = new ArrayList<>();
+        while (currentPrev != null && currentPrev.getElementType() == PropertiesTokenTypes.WHITE_SPACE) {
+          toDelete.add(currentPrev);
+          currentPrev = currentPrev.getTreePrev();
+        }
+        for (ASTNode node : toDelete) {
+          propertyNode.removeChild(node);
+        }
+      } else {
+        propertyNode.replaceChild(oldDelimiter, newDelimiter);
+      }
+    }
+  }
+
+  private static boolean areDelimitersEqual(@Nullable ASTNode node1, @Nullable ASTNode node2) {
+    if (node1 == null && node2 == null) return true;
+    if (node1 == null || node2 == null) return false;
+    final String text1 = node1.getText();
+    final String text2 = node2.getText();
+    return text1.equals(text2);
   }
 }

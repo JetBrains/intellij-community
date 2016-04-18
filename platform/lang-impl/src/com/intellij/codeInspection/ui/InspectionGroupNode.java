@@ -16,17 +16,12 @@
 
 package com.intellij.codeInspection.ui;
 
-import com.intellij.util.IconUtil;
-import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
 
 /**
  * @author max
  */
 public class InspectionGroupNode extends InspectionTreeNode {
-  private static final Icon EMPTY = new EmptyIcon(0, IconUtil.getEmptyIcon(false).getIconHeight());
 
   InspectionGroupNode(@NotNull String groupTitle) {
     super(groupTitle);
@@ -34,11 +29,6 @@ public class InspectionGroupNode extends InspectionTreeNode {
 
   String getGroupTitle() {
     return (String) getUserObject();
-  }
-
-  @Override
-  public Icon getIcon(boolean expanded) {
-    return EMPTY;
   }
 
   @Override

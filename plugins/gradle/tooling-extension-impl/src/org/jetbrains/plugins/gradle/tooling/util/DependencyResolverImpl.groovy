@@ -421,9 +421,13 @@ class DependencyResolverImpl implements DependencyResolver {
     ArrayListMultimap<Object, ExternalDependency> resolvedMap,  List<ExternalDependency> result) {
     resolvedMap.asMap().values().each {
       def toRemove = []
+      def isCompileScope = false
+      def isProvidedScope = false
       it.each {
         if (it.dependencies.isEmpty()) {
           toRemove.add(it)
+          if(it.scope == 'COMPILE') isCompileScope = true
+          else if(it.scope == 'PROVIDED') isProvidedScope = true
         }
       }
       if (toRemove.size() != it.size()) {
@@ -432,6 +436,16 @@ class DependencyResolverImpl implements DependencyResolver {
       else if (toRemove.size() > 1) {
         toRemove.drop(1)
         result.removeAll(toRemove)
+      }
+      if(!toRemove.isEmpty()) {
+        def retained = it - toRemove
+        if(!retained.isEmpty()) {
+          def retainedDependency = retained.first() as AbstractExternalDependency
+          if(retainedDependency instanceof AbstractExternalDependency && retainedDependency.scope != 'COMPILE') {
+            if(isCompileScope) retainedDependency.scope = 'COMPILE'
+            else if(isProvidedScope) retainedDependency.scope = 'PROVIDED'
+          }
+        }
       }
     }
 
@@ -759,11 +773,11 @@ class DependencyResolverImpl implements DependencyResolver {
                   dependency.projectDependencyArtifacts = artifactMap.get(componentResult.moduleVersion).collect { it.file }
                   dependency.projectDependencyArtifacts.each { resolvedDepsFiles.add(it) }
 
-//                  if (componentResult != dependencyResult.from) {
-//                    dependency.dependencies.addAll(
-//                      transform(componentResult.dependencies)
-//                    )
-//                  }
+                  if (componentResult != dependencyResult.from) {
+                    dependency.dependencies.addAll(
+                      transform(componentResult.dependencies)
+                    )
+                  }
                   dependencies.add(dependency)
 
                   def files = []

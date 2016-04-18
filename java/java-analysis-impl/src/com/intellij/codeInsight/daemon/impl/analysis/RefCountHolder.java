@@ -52,9 +52,9 @@ class RefCountHolder {
   // resolved elements -> list of their references
   private final MultiMap<PsiElement,PsiReference> myLocalRefsMap = MultiMap.createSet();
 
-  private final Map<PsiAnchor, Boolean> myDclsUsedMap = new THashMap<PsiAnchor, Boolean>();
-  private final Map<PsiReference, PsiImportStatementBase> myImportStatements = new THashMap<PsiReference, PsiImportStatementBase>();
-  private final AtomicReference<ProgressIndicator> myState = new AtomicReference<ProgressIndicator>(EMPTY);
+  private final Map<PsiAnchor, Boolean> myDclsUsedMap = new THashMap<>();
+  private final Map<PsiReference, PsiImportStatementBase> myImportStatements = new THashMap<>();
+  private final AtomicReference<ProgressIndicator> myState = new AtomicReference<>(EMPTY);
   // contains useful information
   private static final ProgressIndicator READY = new DaemonProgressIndicator() {
     {
@@ -84,7 +84,7 @@ class RefCountHolder {
     RefCountHolder holder = com.intellij.reference.SoftReference.dereference(ref);
     if (holder == null) {
       holder = new RefCountHolder(file);
-      Reference<RefCountHolder> newRef = new SoftReference<RefCountHolder>(holder);
+      Reference<RefCountHolder> newRef = new SoftReference<>(holder);
       while (true) {
         boolean replaced = ((UserDataHolderEx)file).replace(REF_COUNT_HOLDER_IN_FILE_KEY, ref, newRef);
         if (replaced) {
@@ -182,7 +182,7 @@ class RefCountHolder {
 
   private void removeInvalidRefs() {
     synchronized (myLocalRefsMap) {
-      List<Pair<PsiElement, PsiReference>> toRemove = new ArrayList<Pair<PsiElement, PsiReference>>();
+      List<Pair<PsiElement, PsiReference>> toRemove = new ArrayList<>();
       for (Map.Entry<PsiElement, Collection<PsiReference>> entry : myLocalRefsMap.entrySet()) {
         PsiElement element = entry.getKey();
         for (PsiReference ref : entry.getValue()) {

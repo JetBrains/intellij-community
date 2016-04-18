@@ -18,6 +18,10 @@ package org.jetbrains.plugins.groovy.lang.psi.impl;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,6 +33,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.PackageSkippingProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.LinkedHashSet;
+import java.util.List;
 
 /**
  * @author Max Medvedev
@@ -103,10 +108,14 @@ public class GroovyImportHelper {
       }
     }
 
-    GroovyPsiManager groovyPsiManager = GroovyPsiManager.getInstance(file.getProject());
-    for (String implicitlyImportedClass : GroovyFileBase.IMPLICITLY_IMPORTED_CLASSES) {
-      PsiClass clazz = groovyPsiManager.findClassWithCache(implicitlyImportedClass, file.getResolveScope());
-      if (clazz != null && !ResolveUtil.processElement(processor, clazz, state)) return false;
+    List<PsiClass> implicitlyImportedClasses = CachedValuesManager.getCachedValue(file, () -> {
+      GlobalSearchScope scope = file.getResolveScope();
+      List<PsiClass> classes = ContainerUtil.mapNotNull(GroovyFileBase.IMPLICITLY_IMPORTED_CLASSES, s -> facade.findClass(s, scope));
+      return CachedValueProvider.Result.create(classes, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+    });
+
+    for (PsiClass clazz : implicitlyImportedClasses) {
+      if (!ResolveUtil.processElement(processor, clazz, state)) return false;
     }
     return true;
   }

@@ -13,9 +13,9 @@
 package org.zmlx.hg4idea.execution;
 
 import com.intellij.execution.process.ProcessOutput;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.ByteArrayOutputStream;
 import java.util.List;
 
 public final class HgCommandResult {
@@ -23,16 +23,17 @@ public final class HgCommandResult {
   //should be deleted and use ProcessOutput without wrapper
 
   public static final HgCommandResult CANCELLED = new HgCommandResult(new ProcessOutput(1));
+
   @NotNull private final ProcessOutput myProcessOutput;
-  @NotNull private final ByteArrayOutputStream myByteArrayOutputStream;
+  @NotNull private final byte[] myByteArrayOutput;
 
   public HgCommandResult(@NotNull ProcessOutput processOutput) {
-    this(processOutput, new ByteArrayOutputStream(0));
+    this(processOutput, ArrayUtil.EMPTY_BYTE_ARRAY);
   }
 
-  public HgCommandResult(@NotNull ProcessOutput processOutput, @NotNull ByteArrayOutputStream byteOutputStream) {
+  public HgCommandResult(@NotNull ProcessOutput processOutput, @NotNull byte[] byteArrayOutput) {
     myProcessOutput = processOutput;
-    myByteArrayOutputStream = byteOutputStream;
+    myByteArrayOutput = byteArrayOutput;
   }
 
   @NotNull
@@ -57,7 +58,7 @@ public final class HgCommandResult {
 
   @NotNull
   public byte[] getBytesOutput() {
-    return myByteArrayOutputStream.toByteArray();
+    return myByteArrayOutput;
   }
 
   public int getExitValue() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -108,19 +108,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private final List<Pair<Integer, ElementPattern<String>>> myRestartingPrefixConditions = ContainerUtil.createLockFreeCopyOnWriteList();
   private final LookupAdapter myLookupListener = new LookupAdapter() {
     @Override
-    public void itemSelected(LookupEvent event) {
-      LookupElement item = event.getItem();
-      boolean dispose = item == null;
-      finishCompletionProcess(dispose);
-      if (dispose) return;
-
-      setMergeCommand();
-
-      myHandler.lookupItemSelected(CompletionProgressIndicator.this, item, event.getCompletionChar(), myLookup.getItems());
-    }
-
-
-    @Override
     public void lookupCanceled(final LookupEvent event) {
       finishCompletionProcess(true);
     }
@@ -175,6 +162,16 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     if (hasModifiers && !ApplicationManager.getApplication().isUnitTestMode()) {
       trackModifiers();
     }
+  }
+
+  public void itemSelected(@Nullable LookupElement lookupItem, char completionChar) {
+    boolean dispose = lookupItem == null;
+    finishCompletionProcess(dispose);
+    if (dispose) return;
+
+    setMergeCommand();
+
+    myHandler.lookupItemSelected(this, lookupItem, completionChar, myLookup.getItems());
   }
 
   public OffsetMap getOffsetMap() {
@@ -677,7 +674,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     phase.ignoreCurrentDocumentChange();
 
     final Project project = getProject();
-    AutoPopupController.runLaterWithEverythingCommitted(project, () -> {
+    AutoPopupController.runTransactionWithEverythingCommitted(project, () -> {
       if (phase.checkExpired()) return;
 
       CompletionAutoPopupHandler.invokeCompletion(myParameters.getCompletionType(),

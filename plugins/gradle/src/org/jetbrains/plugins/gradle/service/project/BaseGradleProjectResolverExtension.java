@@ -164,7 +164,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     final String mainModuleFileDirectoryPath = mainModuleData.getModuleFileDirectoryPath();
 
     ExternalProject externalProject = resolverCtx.getExtraProject(gradleModule, ExternalProject.class);
-    if (externalProject != null) {
+    if (resolverCtx.isResolveModulePerSourceSet() && externalProject != null) {
       String gradlePath = gradleModule.getGradleProject().getPath();
       final boolean isRootModule = StringUtil.isEmpty(gradlePath) || ":".equals(gradlePath);
       final String[] moduleGroup;
@@ -244,8 +244,8 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     final BuildScriptClasspathModel buildScriptClasspathModel = resolverCtx.getExtraProject(gradleModule, BuildScriptClasspathModel.class);
     final List<BuildScriptClasspathData.ClasspathEntry> classpathEntries;
     if (buildScriptClasspathModel != null) {
-      classpathEntries = ContainerUtil
-        .map(buildScriptClasspathModel.getClasspath(), new Function<ClasspathEntryModel, BuildScriptClasspathData.ClasspathEntry>() {
+      classpathEntries = ContainerUtil.map(
+        buildScriptClasspathModel.getClasspath(), new Function<ClasspathEntryModel, BuildScriptClasspathData.ClasspathEntry>() {
           @Override
           public BuildScriptClasspathData.ClasspathEntry fun(ClasspathEntryModel model) {
             return new BuildScriptClasspathData.ClasspathEntry(model.getClasses(), model.getSources(), model.getJavadoc());
@@ -266,7 +266,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     if (externalProject != null) {
       processSourceSets(externalProject, ideModule, new SourceSetsProcessor() {
         @Override
-        public void process(@NotNull DataNode<GradleSourceSetData> dataNode, @NotNull ExternalSourceSet sourceSet) {
+        public void process(@NotNull DataNode<? extends ModuleData> dataNode, @NotNull ExternalSourceSet sourceSet) {
           for (Map.Entry<IExternalSystemSourceType, ExternalSourceDirectorySet> directorySetEntry : sourceSet.getSources().entrySet()) {
             ExternalSystemSourceType sourceType = ExternalSystemSourceType.from(directorySetEntry.getKey());
             ExternalSourceDirectorySet sourceDirectorySet = directorySetEntry.getValue();
@@ -325,10 +325,10 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
       if (sourceSet == null || sourceSet.getSources().isEmpty()) continue;
 
       final String moduleId = getModuleId(externalProject, sourceSet);
-      final DataNode<GradleSourceSetData> sourceSetDataNode = sourceSetsMap.get(moduleId);
-      if (sourceSetDataNode == null) continue;
+      final DataNode<? extends ModuleData> moduleDataNode = sourceSetsMap.isEmpty() ? ideModule : sourceSetsMap.get(moduleId);
+      if (moduleDataNode == null) continue;
 
-      processor.process(sourceSetDataNode, sourceSet);
+      processor.process(moduleDataNode, sourceSet);
     }
   }
 
@@ -337,16 +337,16 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
   public void populateModuleCompileOutputSettings(@NotNull IdeaModule gradleModule,
                                                   @NotNull DataNode<ModuleData> ideModule) {
     ExternalProject externalProject = resolverCtx.getExtraProject(gradleModule, ExternalProject.class);
-    if (externalProject != null) {
+    if (resolverCtx.isResolveModulePerSourceSet() && externalProject != null) {
       processSourceSets(externalProject, ideModule, new SourceSetsProcessor() {
         @Override
-        public void process(@NotNull DataNode<GradleSourceSetData> dataNode, @NotNull ExternalSourceSet sourceSet) {
+        public void process(@NotNull DataNode<? extends ModuleData> dataNode, @NotNull ExternalSourceSet sourceSet) {
           for (Map.Entry<IExternalSystemSourceType, ExternalSourceDirectorySet> directorySetEntry : sourceSet.getSources().entrySet()) {
             ExternalSystemSourceType sourceType = ExternalSystemSourceType.from(directorySetEntry.getKey());
             ExternalSourceDirectorySet sourceDirectorySet = directorySetEntry.getValue();
-            final GradleSourceSetData sourceSetData = dataNode.getData();
-            sourceSetData.setCompileOutputPath(sourceType, sourceDirectorySet.getOutputDir().getAbsolutePath());
-            sourceSetData.setInheritProjectCompileOutputPath(sourceDirectorySet.isCompilerOutputPathInherited());
+            final ModuleData moduleData = dataNode.getData();
+            moduleData.setCompileOutputPath(sourceType, sourceDirectorySet.getOutputDir().getAbsolutePath());
+            moduleData.setInheritProjectCompileOutputPath(sourceDirectorySet.isCompilerOutputPathInherited());
           }
         }
       });
@@ -367,16 +367,18 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
 
     Map<ExternalSystemSourceType, File> compileOutputPaths = ContainerUtil.newHashMap();
 
-    boolean inheritOutputDirs = false;
+    boolean inheritOutputDirs = moduleCompilerOutput != null && moduleCompilerOutput.getInheritOutputDirs();
 
     ModuleData moduleData = ideModule.getData();
     if (moduleCompilerOutput != null) {
-      compileOutputPaths.put(ExternalSystemSourceType.SOURCE, moduleCompilerOutput.getOutputDir());
-      compileOutputPaths.put(ExternalSystemSourceType.RESOURCE, moduleCompilerOutput.getOutputDir());
-      compileOutputPaths.put(ExternalSystemSourceType.TEST, moduleCompilerOutput.getTestOutputDir());
-      compileOutputPaths.put(ExternalSystemSourceType.TEST_RESOURCE, moduleCompilerOutput.getTestOutputDir());
-
-      inheritOutputDirs = moduleCompilerOutput.getInheritOutputDirs();
+      File classesOutputDir = selectCompileOutputDir(moduleCompilerOutput.getOutputDir(), externalProject, "classes/main");
+      compileOutputPaths.put(ExternalSystemSourceType.SOURCE, classesOutputDir);
+      File resourcesOutputDir = selectCompileOutputDir(moduleCompilerOutput.getOutputDir(), externalProject, "resources/main");
+      compileOutputPaths.put(ExternalSystemSourceType.RESOURCE, resourcesOutputDir);
+      File testClassesOuputDir = selectCompileOutputDir(moduleCompilerOutput.getTestOutputDir(), externalProject, "classes/test");
+      compileOutputPaths.put(ExternalSystemSourceType.TEST, testClassesOuputDir);
+      File testResourcesOutputDir = selectCompileOutputDir(moduleCompilerOutput.getTestOutputDir(), externalProject, "resources/test");
+      compileOutputPaths.put(ExternalSystemSourceType.TEST_RESOURCE, testResourcesOutputDir);
     }
 
     for (Map.Entry<ExternalSystemSourceType, File> sourceTypeFileEntry : compileOutputPaths.entrySet()) {
@@ -389,6 +391,13 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     moduleData.setInheritProjectCompileOutputPath(inheritOutputDirs);
   }
 
+  @Nullable
+  private static File selectCompileOutputDir(@Nullable File outputDir, @Nullable ExternalProject externalProject, String path) {
+    if (outputDir != null || externalProject == null) return outputDir;
+
+    return new File(externalProject.getBuildDir(), path);
+  }
+
   @Override
   public void populateModuleDependencies(@NotNull IdeaModule gradleModule,
                                          @NotNull DataNode<ModuleData> ideModule,
@@ -398,19 +407,21 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     if (externalProject != null) {
       final Map<String, Pair<DataNode<GradleSourceSetData>, ExternalSourceSet>> sourceSetMap =
         ideProject.getUserData(GradleProjectResolver.RESOLVED_SOURCE_SETS);
-      assert sourceSetMap != null;
 
       final Map<String, String> artifactsMap = ideProject.getUserData(CONFIGURATION_ARTIFACTS);
       assert artifactsMap != null;
 
-      processSourceSets(externalProject, ideModule, new SourceSetsProcessor() {
-        @Override
-        public void process(@NotNull DataNode<GradleSourceSetData> dataNode, @NotNull ExternalSourceSet sourceSet) {
-          buildDependencies(sourceSetMap, artifactsMap, dataNode, sourceSet.getDependencies(), ideProject);
-        }
-      });
+      if (resolverCtx.isResolveModulePerSourceSet()) {
+        assert sourceSetMap != null;
+        processSourceSets(externalProject, ideModule, new SourceSetsProcessor() {
+          @Override
+          public void process(@NotNull DataNode<? extends ModuleData> dataNode, @NotNull ExternalSourceSet sourceSet) {
+            buildDependencies(sourceSetMap, artifactsMap, dataNode, sourceSet.getDependencies(), ideProject);
+          }
+        });
 
-      return;
+        return;
+      }
     }
 
     final List<? extends IdeaDependency> dependencies = gradleModule.getDependencies().getAll();
@@ -867,6 +878,6 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
   }
 
   private interface SourceSetsProcessor {
-    void process(@NotNull DataNode<GradleSourceSetData> dataNode, @NotNull ExternalSourceSet sourceSet);
+    void process(@NotNull DataNode<? extends ModuleData> dataNode, @NotNull ExternalSourceSet sourceSet);
   }
 }

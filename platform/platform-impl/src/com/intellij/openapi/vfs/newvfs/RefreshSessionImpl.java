@@ -52,21 +52,19 @@ public class RefreshSessionImpl extends RefreshSession {
   private final Throwable myStartTrace;
   private final Semaphore mySemaphore = new Semaphore();
 
-  private List<VirtualFile> myWorkQueue = new ArrayList<VirtualFile>();
-  private List<VFileEvent> myEvents = new ArrayList<VFileEvent>();
+  private List<VirtualFile> myWorkQueue = new ArrayList<>();
+  private List<VFileEvent> myEvents = new ArrayList<>();
   private volatile boolean iHaveEventsToFire;
-  private volatile RefreshWorker myWorker = null;
-  private volatile boolean myCancelled = false;
-
-  public RefreshSessionImpl(boolean async, boolean recursive, @Nullable Runnable finishRunnable) {
-    this(async, recursive, finishRunnable, ModalityState.NON_MODAL);
-  }
+  private volatile RefreshWorker myWorker;
+  private volatile boolean myCancelled;
+  private final TransactionId myTransaction;
 
   public RefreshSessionImpl(boolean async, boolean recursive, @Nullable Runnable finishRunnable, @NotNull ModalityState modalityState) {
     myIsAsync = async;
     myIsRecursive = recursive;
     myFinishRunnable = finishRunnable;
     myModalityState = modalityState;
+    myTransaction = ((TransactionGuardImpl)TransactionGuard.getInstance()).getModalityTransaction(modalityState);
     LOG.assertTrue(modalityState == ModalityState.NON_MODAL || modalityState != ModalityState.any(), "Refresh session should have a specific modality");
 
     if (modalityState == ModalityState.NON_MODAL) {
@@ -119,7 +117,7 @@ public class RefreshSessionImpl extends RefreshSession {
 
   public void scan() {
     List<VirtualFile> workQueue = myWorkQueue;
-    myWorkQueue = new ArrayList<VirtualFile>();
+    myWorkQueue = new ArrayList<>();
     boolean haveEventsToFire = myFinishRunnable != null || !myEvents.isEmpty();
 
     if (!workQueue.isEmpty()) {
@@ -129,31 +127,37 @@ public class RefreshSessionImpl extends RefreshSession {
       }
 
       long t = 0;
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("scanning " + workQueue);
+      if (LOG.isTraceEnabled()) {
+        LOG.trace("scanning " + workQueue);
         t = System.currentTimeMillis();
       }
 
-      for (VirtualFile file : workQueue) {
-        if (myCancelled) break;
+      int count = 0;
+      refresh: do {
+        if (LOG.isTraceEnabled()) LOG.trace("try=" + count);
 
-        NewVirtualFile nvf = (NewVirtualFile)file;
-        if (!myIsRecursive && !myIsAsync) {
-          nvf.markDirty();  // always scan when non-recursive AND synchronous - needed e.g. when refreshing project files on open
+        for (VirtualFile file : workQueue) {
+          if (myCancelled) break refresh;
+
+          NewVirtualFile nvf = (NewVirtualFile)file;
+          if (!myIsRecursive && !myIsAsync) {
+            nvf.markDirty();  // always scan when non-recursive AND synchronous - needed e.g. when refreshing project files on open
+          }
+
+          RefreshWorker worker = new RefreshWorker(nvf, myIsRecursive);
+          myWorker = worker;
+          worker.scan();
+          haveEventsToFire |= myEvents.addAll(worker.getEvents());
         }
 
-        RefreshWorker worker = new RefreshWorker(nvf, myIsRecursive);
-        myWorker = worker;
-        worker.scan();
-        List<VFileEvent> events = worker.getEvents();
-        if (myEvents.addAll(events)) {
-          haveEventsToFire = true;
-        }
+        count++;
+        if (LOG.isTraceEnabled()) LOG.trace("events=" + myEvents.size());
       }
+      while (myIsRecursive && count < 3 && workQueue.stream().anyMatch(f -> ((NewVirtualFile)f).isDirty()));
 
       if (t != 0) {
         t = System.currentTimeMillis() - t;
-        LOG.debug((myCancelled ? "cancelled, " : "done, ") + t + " ms, events " + myEvents);
+        LOG.trace((myCancelled ? "cancelled, " : "done, ") + t + " ms, events " + myEvents);
       }
     }
 
@@ -161,7 +165,7 @@ public class RefreshSessionImpl extends RefreshSession {
     iHaveEventsToFire = haveEventsToFire;
   }
 
-  public void cancel() {
+  void cancel() {
     myCancelled = true;
 
     RefreshWorker worker = myWorker;
@@ -170,7 +174,7 @@ public class RefreshSessionImpl extends RefreshSession {
     }
   }
 
-  void fireEvents(boolean async) {
+  void fireEvents() {
     if (!iHaveEventsToFire || ApplicationManager.getApplication().isDisposed()) {
       mySemaphore.up();
       return;
@@ -178,7 +182,6 @@ public class RefreshSessionImpl extends RefreshSession {
 
     //noinspection unused
     try (AccessToken dumb  = myStartTrace == null ? null : DumbServiceImpl.forceDumbModeStartTrace(myStartTrace);
-         AccessToken guard = async ? TransactionGuard.getInstance().startSynchronousTransaction(TransactionKind.ANY_CHANGE) : null;
          AccessToken write = WriteAction.start()) {
       if (myDumbModePermission != null) {
         DumbService.allowStartingDumbModeInside(myDumbModePermission, this::fireEventsInWriteAction);
@@ -218,15 +221,20 @@ public class RefreshSessionImpl extends RefreshSession {
   }
 
   private List<VFileEvent> mergeEventsAndReset() {
-    Set<VFileEvent> mergedEvents = new LinkedHashSet<VFileEvent>(myEvents);
-    List<VFileEvent> events = new ArrayList<VFileEvent>(mergedEvents);
-    myEvents = new ArrayList<VFileEvent>();
+    Set<VFileEvent> mergedEvents = new LinkedHashSet<>(myEvents);
+    List<VFileEvent> events = new ArrayList<>(mergedEvents);
+    myEvents = new ArrayList<>();
     return events;
   }
 
   @NotNull
-  public ModalityState getModalityState() {
+  ModalityState getModalityState() {
     return myModalityState;
+  }
+
+  @Nullable
+  TransactionId getTransaction() {
+    return myTransaction;
   }
 
   @Override

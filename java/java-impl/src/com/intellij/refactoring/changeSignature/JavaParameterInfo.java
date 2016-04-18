@@ -33,6 +33,13 @@ public interface JavaParameterInfo extends ParameterInfo {
 
   PsiExpression getValue(PsiCallExpression callExpression);
 
+  @Nullable
+  @Override
+  default PsiElement getActualValue(PsiElement callExpression) {
+    return callExpression instanceof PsiCallExpression ? getValue((PsiCallExpression)callExpression) : null;
+  }
+
   boolean isVarargType();
 
+  default void setType(@Nullable PsiType type) {}
 }

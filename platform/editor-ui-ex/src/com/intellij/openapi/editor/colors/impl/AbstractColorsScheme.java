@@ -189,7 +189,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
 
   @Override
   public void setLineSpacing(float lineSpacing) {
-    myLineSpacing = lineSpacing;
+    myLineSpacing = EditorFontsConstants.checkAndFixEditorLineSpacing(lineSpacing);
   }
 
   @Override

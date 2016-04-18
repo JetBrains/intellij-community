@@ -21,6 +21,7 @@ import gnu.trove.PrimeFinder;
 import junit.framework.TestCase;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 
 public class HashSetQueueTest extends TestCase {
   private final Assertion CHECK = new Assertion();
@@ -113,5 +114,18 @@ public class HashSetQueueTest extends TestCase {
 
       toRemove = (toRemove + delta) % N;
     }
+  }
+
+  public void testIteratorCatchesUpQueueModificationImmediately() {
+    assertTrue(myQueue.add("1"));
+    Iterator<String> iterator = myQueue.iterator();
+    assertTrue(iterator.hasNext());
+    assertEquals("1", iterator.next());
+    assertFalse(iterator.hasNext());
+
+    myQueue.add("2");
+    assertTrue(iterator.hasNext());
+    assertEquals("2", iterator.next());
+    assertFalse(iterator.hasNext());
   }
 }

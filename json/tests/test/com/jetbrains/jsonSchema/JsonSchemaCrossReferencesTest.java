@@ -21,9 +21,15 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.extensions.AreaPicoContainer;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
+import com.jetbrains.jsonSchema.schemaFile.TestJsonSchemaMappingsProjectConfiguration;
 import org.junit.Assert;
 
 import java.util.Collections;
@@ -33,6 +39,15 @@ import java.util.Collections;
  */
 public class JsonSchemaCrossReferencesTest extends CompletionTestCase {
   private final static String BASE_PATH = "/tests/testData/jsonSchema/crossReferences";
+  private final static String BASE_SCHEMA_RESOLVE_PATH = "/tests/testData/jsonSchema/schemaFile/resolve";
+
+  private FileTypeManager myFileTypeManager;
+
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+    myFileTypeManager = FileTypeManager.getInstance();
+  }
 
   @Override
   protected String getTestDataPath() {
@@ -172,5 +187,153 @@ public class JsonSchemaCrossReferencesTest extends CompletionTestCase {
     JsonSchemaService.Impl.get(getProject()).reset();
     complete();
     assertStringItems("\"one1\"", "\"two1\"");
+  }
+
+  public void testJsonSchemaRefsCrossResolve() throws Exception {
+    configureByFiles(null, BASE_SCHEMA_RESOLVE_PATH + "/referencingSchema.json", BASE_SCHEMA_RESOLVE_PATH + "/localRefSchema.json");
+
+    String moduleDir = null;
+    VirtualFile moduleFile = null;
+    VirtualFile[] children = getProject().getBaseDir().getChildren();
+    for (VirtualFile child : children) {
+      if (child.isDirectory()) {
+        moduleDir = child.getName();
+        moduleFile = child;
+        break;
+      }
+    }
+    Assert.assertNotNull(moduleDir);
+
+    AreaPicoContainer container = Extensions.getArea(getProject()).getPicoContainer();
+    final String key = JsonSchemaMappingsProjectConfiguration.class.getName();
+    container.unregisterComponent(key);
+    container.registerComponentImplementation(key, TestJsonSchemaMappingsProjectConfiguration.class);
+
+    final JsonSchemaMappingsProjectConfiguration instance = JsonSchemaMappingsProjectConfiguration.getInstance(getProject());
+    final JsonSchemaMappingsConfigurationBase.SchemaInfo base =
+      new JsonSchemaMappingsConfigurationBase.SchemaInfo("base", "/" + moduleDir + "/localRefSchema.json", false, Collections.emptyList());
+    instance.addSchema(base);
+
+    final JsonSchemaMappingsConfigurationBase.SchemaInfo inherited
+      = new JsonSchemaMappingsConfigurationBase.SchemaInfo("inherited", "/" + moduleDir + "/referencingSchema.json", false, Collections.emptyList());
+
+    instance.addSchema(inherited);
+
+    try {
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
+        public void run() {
+          myFileTypeManager.associatePattern(JsonSchemaFileType.INSTANCE, "*Schema.json");
+        }
+      });
+      int offset = myEditor.getCaretModel().getPrimaryCaret().getOffset();
+      final PsiReference referenceAt = myFile.findReferenceAt(offset);
+      Assert.assertNotNull(referenceAt);
+      final PsiElement resolve = referenceAt.resolve();
+      Assert.assertNotNull(resolve);
+      Assert.assertEquals("\"baseEnum\"", resolve.getText());
+
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
+        public void run() {
+          myFileTypeManager.removeAssociatedExtension(JsonSchemaFileType.INSTANCE, "*Schema.json");
+        }
+      });
+    } finally {
+      container.unregisterComponent(key);
+      container.registerComponentImplementation(key, JsonSchemaMappingsProjectConfiguration.class);
+    }
+
+    instance.removeSchema(inherited);
+    instance.removeSchema(base);
+  }
+
+  public void testJsonSchemaGlobalRefsCrossResolve() throws Exception {
+    configureByFiles(null, BASE_SCHEMA_RESOLVE_PATH + "/referencingGlobalSchema.json");
+
+    String moduleDir = null;
+    VirtualFile moduleFile = null;
+    VirtualFile[] children = getProject().getBaseDir().getChildren();
+    for (VirtualFile child : children) {
+      if (child.isDirectory()) {
+        moduleDir = child.getName();
+        moduleFile = child;
+        break;
+      }
+    }
+    Assert.assertNotNull(moduleDir);
+
+    AreaPicoContainer container = Extensions.getArea(getProject()).getPicoContainer();
+    final String key = JsonSchemaMappingsProjectConfiguration.class.getName();
+    container.unregisterComponent(key);
+    container.registerComponentImplementation(key, TestJsonSchemaMappingsProjectConfiguration.class);
+
+    final JsonSchemaMappingsProjectConfiguration instance = JsonSchemaMappingsProjectConfiguration.getInstance(getProject());
+    final JsonSchemaMappingsConfigurationBase.SchemaInfo inherited
+      = new JsonSchemaMappingsConfigurationBase.SchemaInfo("inherited", "/" + moduleDir + "/referencingGlobalSchema.json", false, Collections.emptyList());
+
+    instance.addSchema(inherited);
+
+    try {
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
+        public void run() {
+          myFileTypeManager.associatePattern(JsonSchemaFileType.INSTANCE, "*Schema.json");
+        }
+      });
+      int offset = myEditor.getCaretModel().getPrimaryCaret().getOffset();
+      final PsiReference referenceAt = myFile.findReferenceAt(offset);
+      Assert.assertNotNull(referenceAt);
+      final PsiElement resolve = referenceAt.resolve();
+      Assert.assertNotNull(resolve);
+      Assert.assertEquals("\"enum\"", resolve.getText());
+
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
+        public void run() {
+          myFileTypeManager.removeAssociatedExtension(JsonSchemaFileType.INSTANCE, "*Schema.json");
+        }
+      });
+    } finally {
+      container.unregisterComponent(key);
+      container.registerComponentImplementation(key, JsonSchemaMappingsProjectConfiguration.class);
+    }
+
+    instance.removeSchema(inherited);
+  }
+
+  public void testJson2SchemaPropertyResolve() throws Exception {
+    configureByFiles(null, BASE_PATH + "/testFileForBaseProperties.json", BASE_PATH + "/baseProperties.json");
+
+    String moduleDir = null;
+    VirtualFile moduleFile = null;
+    VirtualFile[] children = getProject().getBaseDir().getChildren();
+    for (VirtualFile child : children) {
+      if (child.isDirectory()) {
+        moduleDir = child.getName();
+        moduleFile = child;
+        break;
+      }
+    }
+    Assert.assertNotNull(moduleDir);
+
+    final JsonSchemaMappingsProjectConfiguration instance = JsonSchemaMappingsProjectConfiguration.getInstance(getProject());
+    final JsonSchemaMappingsConfigurationBase.SchemaInfo inherited
+      = new JsonSchemaMappingsConfigurationBase.SchemaInfo("inherited", "/" + moduleDir + "/baseProperties.json", false,
+                                                           Collections.singletonList(
+                                                             new JsonSchemaMappingsConfigurationBase.Item("*.json", true, false)));
+
+    instance.addSchema(inherited);
+    JsonSchemaService.Impl.get(getProject()).reset();
+
+    int offset = myEditor.getCaretModel().getPrimaryCaret().getOffset();
+    final PsiReference referenceAt = myFile.findReferenceAt(offset);
+    Assert.assertNotNull(referenceAt);
+    final PsiElement resolve = referenceAt.resolve();
+    Assert.assertNotNull(resolve);
+    Assert.assertEquals("\"baseEnum\"", resolve.getText());
+    Assert.assertEquals("baseProperties.json", resolve.getContainingFile().getName());
+
+    instance.removeSchema(inherited);
   }
 }

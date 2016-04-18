@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -261,7 +261,7 @@ public class AnnotationsHighlightUtil {
     if (nameRef == null) return null;
     PsiClass aClass = (PsiClass)nameRef.resolve();
     if (aClass != null && aClass.isAnnotationType()) {
-      Set<String> names = new HashSet<String>();
+      Set<String> names = new HashSet<>();
       PsiNameValuePair[] attributes = annotation.getParameterList().getAttributes();
       for (PsiNameValuePair attribute : attributes) {
         final String name = attribute.getName();
@@ -274,7 +274,7 @@ public class AnnotationsHighlightUtil {
       }
 
       PsiMethod[] annotationMethods = aClass.getMethods();
-      List<String> missed = new ArrayList<String>();
+      List<String> missed = new ArrayList<>();
       for (PsiMethod method : annotationMethods) {
         if (PsiUtil.isAnnotationMethod(method)) {
           PsiAnnotationMethod annotationMethod = (PsiAnnotationMethod)method;
@@ -505,7 +505,7 @@ public class AnnotationsHighlightUtil {
   static HighlightInfo checkCyclicMemberType(PsiTypeElement typeElement, PsiClass aClass) {
     LOG.assertTrue(aClass.isAnnotationType());
     PsiType type = typeElement.getType();
-    final Set<PsiClass> checked = new HashSet<PsiClass>();
+    final Set<PsiClass> checked = new HashSet<>();
     if (cyclicDependencies(aClass, type, checked, aClass.getManager())) {
       String description = JavaErrorMessages.message("annotation.cyclic.element.type");
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(description).create();
@@ -596,7 +596,7 @@ public class AnnotationsHighlightUtil {
     PsiAnnotationMemberValue value = attributes[0].getValue();
     if (!(value instanceof PsiArrayInitializerMemberValue)) return null;
     PsiAnnotationMemberValue[] arrayInitializers = ((PsiArrayInitializerMemberValue) value).getInitializers();
-    Set<PsiElement> targets = new HashSet<PsiElement>();
+    Set<PsiElement> targets = new HashSet<>();
     for (PsiAnnotationMemberValue initializer : arrayInitializers) {
       if (initializer instanceof PsiReferenceExpression) {
         PsiElement target = ((PsiReferenceExpression) initializer).resolve();
@@ -707,7 +707,7 @@ public class AnnotationsHighlightUtil {
     }
 
     PsiMethod method = (PsiMethod)owner;
-    if (isStatic(method) || (method).isConstructor() && isStatic(method.getContainingClass())) {
+    if (isStatic(method) || method.isConstructor() && isStatic(method.getContainingClass())) {
       String text = JavaErrorMessages.message("receiver.static.context");
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(parameter.getIdentifier()).descriptionAndTooltip(text).create();
     }

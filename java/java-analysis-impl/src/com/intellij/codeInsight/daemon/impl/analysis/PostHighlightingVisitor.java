@@ -35,6 +35,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
@@ -52,7 +53,6 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -81,23 +81,22 @@ class PostHighlightingVisitor {
   private void optimizeImportsOnTheFlyLater(@NotNull final ProgressIndicator progress) {
     if ((myHasRedundantImports || myHasMissortedImports) && !progress.isCanceled()) {
       // schedule optimise action at the time of session disposal, which is after all applyInformation() calls
-      Disposable invokeFixLater = new Disposable() {
-        @Override
-        public void dispose() {
-          // later because should invoke when highlighting is finished
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              if (myProject.isDisposed() || !myFile.isValid() || !myFile.isWritable()) return;
-              IntentionAction optimizeImportsFix = QuickFixFactory.getInstance().createOptimizeImportsFix(true);
-              if (optimizeImportsFix.isAvailable(myProject, null, myFile)) {
-                optimizeImportsFix.invoke(myProject, null, myFile);
-              }
-            }
-          });
-        }
+      Disposable invokeFixLater = () -> {
+        // later because should invoke when highlighting is finished
+        TransactionGuard.getInstance().submitTransactionLater(myProject, () -> {
+          if (!myFile.isValid() || !myFile.isWritable()) return;
+          IntentionAction optimizeImportsFix = QuickFixFactory.getInstance().createOptimizeImportsFix(true);
+          if (optimizeImportsFix.isAvailable(myProject, null, myFile)) {
+            optimizeImportsFix.invoke(myProject, null, myFile);
+          }
+        });
       };
-      Disposer.register((DaemonProgressIndicator)progress, invokeFixLater);
+      try {
+        Disposer.register((DaemonProgressIndicator)progress, invokeFixLater);
+      }
+      catch (Exception ignored) {
+        // suppress "parent already has been disposed" exception here
+      }
       if (progress.isCanceled()) {
         Disposer.dispose(invokeFixLater);
         Disposer.dispose((DaemonProgressIndicator)progress);
@@ -306,12 +305,9 @@ class PostHighlightingVisitor {
           QuickFixAction.registerQuickFixAction(info, HighlightMethodUtil.getFixRange(field), 
                                                 quickFixFactory.createCreateConstructorParameterFromFieldFix(field));
         }
-        SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes(field, new Processor<String>() {
-          @Override
-          public boolean process(final String annoName) {
-            QuickFixAction.registerQuickFixAction(info, quickFixFactory.createAddToDependencyInjectionAnnotationsFix(project, annoName, "fields"));
-            return true;
-          }
+        SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes(field, annoName -> {
+          QuickFixAction.registerQuickFixAction(info, quickFixFactory.createAddToDependencyInjectionAnnotationsFix(project, annoName, "fields"));
+          return true;
         });
         return info;
       }
@@ -334,6 +330,7 @@ class PostHighlightingVisitor {
     return highlightInfo;
   }
 
+  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
   private final Map<PsiMethod, Boolean> isOverriddenOrOverrides = new ConcurrentFactoryMap<PsiMethod, Boolean>() {
     @Nullable
     @Override
@@ -421,13 +418,10 @@ class PostHighlightingVisitor {
     String message = JavaErrorMessages.message(key, symbolName);
     final HighlightInfo highlightInfo = UnusedSymbolUtil.createUnusedSymbolInfo(identifier, message, highlightInfoType);
     QuickFixAction.registerQuickFixAction(highlightInfo, QuickFixFactory.getInstance().createSafeDeleteFix(method), highlightDisplayKey);
-    SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes(method, new Processor<String>() {
-      @Override
-      public boolean process(final String annoName) {
-        IntentionAction fix = QuickFixFactory.getInstance().createAddToDependencyInjectionAnnotationsFix(project, annoName, "methods");
-        QuickFixAction.registerQuickFixAction(highlightInfo, fix);
-        return true;
-      }
+    SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes(method, annoName -> {
+      IntentionAction fix = QuickFixFactory.getInstance().createAddToDependencyInjectionAnnotationsFix(project, annoName, "methods");
+      QuickFixAction.registerQuickFixAction(highlightInfo, fix);
+      return true;
     });
     return highlightInfo;
   }
@@ -472,14 +466,11 @@ class PostHighlightingVisitor {
     String message = JavaErrorMessages.message(pattern, symbolName);
     final HighlightInfo highlightInfo = UnusedSymbolUtil.createUnusedSymbolInfo(identifier, message, highlightInfoType);
     QuickFixAction.registerQuickFixAction(highlightInfo, QuickFixFactory.getInstance().createSafeDeleteFix(aClass), highlightDisplayKey);
-    SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes((PsiModifierListOwner)aClass, new Processor<String>() {
-      @Override
-      public boolean process(final String annoName) {
-        QuickFixAction
-          .registerQuickFixAction(highlightInfo,
-                                  QuickFixFactory.getInstance().createAddToDependencyInjectionAnnotationsFix(project, annoName, element));
-        return true;
-      }
+    SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes((PsiModifierListOwner)aClass, annoName -> {
+      QuickFixAction
+        .registerQuickFixAction(highlightInfo,
+                                QuickFixFactory.getInstance().createAddToDependencyInjectionAnnotationsFix(project, annoName, element));
+      return true;
     });
     return highlightInfo;
   }

@@ -25,8 +25,8 @@ import com.intellij.util.PathUtilRt
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.FullHttpRequest
 import io.netty.handler.codec.http.HttpResponseStatus
-import org.jetbrains.io.Responses
-import java.io.File
+import org.jetbrains.io.send
+import java.nio.file.Path
 
 private class DefaultWebServerPathHandler : WebServerPathHandler() {
   override fun process(path: String,
@@ -43,7 +43,7 @@ private class DefaultWebServerPathHandler : WebServerPathHandler() {
       pathInfo = pathToFileManager.doFindByRelativePath(path)
       if (pathInfo == null) {
         if (path.isEmpty()) {
-          Responses.sendStatus(HttpResponseStatus.NOT_FOUND, channel, "Index file doesn't exist.", request)
+          HttpResponseStatus.NOT_FOUND.send(channel, request, "Index file doesn't exist.")
           return true
         }
         else {
@@ -62,7 +62,7 @@ private class DefaultWebServerPathHandler : WebServerPathHandler() {
       }
 
       var indexVirtualFile: VirtualFile? = null
-      var indexFile: File? = null
+      var indexFile: Path? = null
       if (pathInfo.file == null) {
         indexFile = findIndexFile(pathInfo.ioFile!!)
       }
@@ -71,7 +71,7 @@ private class DefaultWebServerPathHandler : WebServerPathHandler() {
       }
 
       if (indexFile == null && indexVirtualFile == null) {
-        Responses.sendStatus(HttpResponseStatus.NOT_FOUND, channel, "Index file doesn't exist.", request)
+        HttpResponseStatus.NOT_FOUND.send(channel, request, "Index file doesn't exist.")
         return true
       }
 

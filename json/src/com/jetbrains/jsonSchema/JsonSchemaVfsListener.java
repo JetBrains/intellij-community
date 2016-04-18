@@ -16,13 +16,9 @@
 package com.jetbrains.jsonSchema;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.*;
-import com.jetbrains.jsonSchema.extension.SchemaType;
 import com.jetbrains.jsonSchema.impl.JsonSchemaServiceImpl;
 import org.jetbrains.annotations.NotNull;
-
-import java.io.File;
 
 /**
  * @author Irina.Chernushina on 3/30/2016.
@@ -68,7 +64,7 @@ public class JsonSchemaVfsListener extends VirtualFileAdapter {
 
   private void onFileChange(@NotNull final VirtualFile file) {
     if (myMappingsProjectConfiguration.isRegisteredSchemaFile(file)) {
-      myService.dropProviderFromCache(Pair.create(SchemaType.userSchema, new File(file.getPath())));
+      myService.dropProviderFromCache(file);
     }
   }
 }

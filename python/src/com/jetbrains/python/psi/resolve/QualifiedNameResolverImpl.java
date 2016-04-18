@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -285,8 +285,10 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
    * Resolve relative imports from sdk root to the skeleton dir
    */
   private void addRelativeImportResultsFromSkeletons(@NotNull final PsiFile foothold) {
-    final boolean inSource = FileIndexFacade.getInstance(foothold.getProject()).isInContent(foothold.getVirtualFile());
-    if (inSource) return;
+    final VirtualFile vFile = foothold.getVirtualFile();
+    if (vFile == null || FileIndexFacade.getInstance(foothold.getProject()).isInContent(vFile)) {
+      return;
+    }
     PsiDirectory containingDirectory = foothold.getContainingDirectory();
     if (myRelativeLevel > 0) {
       containingDirectory = ResolveImportUtil.stepBackFrom(foothold, myRelativeLevel);

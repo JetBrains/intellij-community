@@ -151,7 +151,10 @@ public class AllClassesGetter {
     final Project project = context.getProject();
     final GlobalSearchScope scope = filterByScope ? context.getContainingFile().getResolveScope() : GlobalSearchScope.allScope(project);
 
+    int limit = Registry.intValue("ide.completion.variant.limit");
+
     Processor<PsiClass> processor = new Processor<PsiClass>() {
+      int count = 0;
       final Set<String> qNames = new THashSet<String>();
       final boolean pkgContext = JavaCompletionUtil.inSomePackage(context);
       final String packagePrefix = getPackagePrefix(context, parameters.getOffset());
@@ -172,6 +175,9 @@ public class AllClassesGetter {
           String qName = psiClass.getQualifiedName();
           if (qName != null && qName.startsWith(packagePrefix) && qNames.add(qName)) {
             consumer.consume(psiClass);
+            if (++count > limit) {
+              return false;
+            }
           }
         }
         return true;

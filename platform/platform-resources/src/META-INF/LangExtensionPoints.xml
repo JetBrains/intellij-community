@@ -375,6 +375,11 @@
     <extensionPoint name="refactoring.copyHandler" interface="com.intellij.refactoring.copy.CopyHandlerDelegate"/>
     <extensionPoint name="refactoring.moveHandler" interface="com.intellij.refactoring.move.MoveHandlerDelegate"/>
     <extensionPoint name="refactoring.invertBoolean" interface="com.intellij.refactoring.invertBoolean.InvertBooleanDelegate"/>
+    <extensionPoint name="refactoring.introduceParameterObject" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass"
+            implements="com.intellij.refactoring.introduceParameterObject.IntroduceParameterObjectDelegate"/>
+    </extensionPoint>
+
     <extensionPoint name="refactoring.pushDown" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.refactoring.memberPushDown.PushDownDelegate"/>
     </extensionPoint>

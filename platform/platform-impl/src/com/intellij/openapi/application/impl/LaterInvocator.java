@@ -16,11 +16,9 @@
 package com.intellij.openapi.application.impl;
 
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.idea.IdeaApplication;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ModalityStateListener;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.FrequentEventDetector;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -82,6 +80,7 @@ public class LaterInvocator {
   }
 
   private static final List<Object> ourModalEntities = ContainerUtil.createLockFreeCopyOnWriteList();
+  private static final Stack<ModalityState> ourModalityStack = new Stack<>(ModalityState.NON_MODAL);
   private static final List<RunnableInfo> ourQueue = new ArrayList<RunnableInfo>(); //protected by LOCK
   private static volatile int ourQueueSkipCount; // optimization
   private static final FlushQueue ourFlushQueueRunnable = new FlushQueue();
@@ -190,6 +189,12 @@ public class LaterInvocator {
     ourModalityStateMulticaster.getMulticaster().beforeModalityStateChanged(true);
 
     ourModalEntities.add(modalEntity);
+    ourModalityStack.push(new ModalityStateEx(ArrayUtil.toObjectArray(ourModalEntities)));
+
+    TransactionGuardImpl guard = IdeaApplication.isLoaded() ? (TransactionGuardImpl)TransactionGuard.getInstance() : null;
+    if (guard != null) {
+      guard.enteredModality(ourModalityStack.peek());
+    }
   }
 
   public static void leaveModal(@NotNull Object modalEntity) {
@@ -205,7 +210,11 @@ public class LaterInvocator {
     ourModalityStateMulticaster.getMulticaster().beforeModalityStateChanged(false);
 
     boolean removed = ourModalEntities.remove(modalEntity);
+    if (ourModalityStack.size() > 1) {
+      ourModalityStack.pop();
+    }
     LOG.assertTrue(removed, modalEntity);
+    LOG.assertTrue(!ourModalityStack.isEmpty());
     cleanupQueueForModal(modalEntity);
     ourQueueSkipCount = 0;
     requestFlush();
@@ -227,8 +236,12 @@ public class LaterInvocator {
   }
 
   @TestOnly
-  static void leaveAllModals() {
+  public static void leaveAllModals() {
     ourModalEntities.clear();
+    while (ourModalityStack.size() > 1) {
+      ourModalityStack.pop();
+    }
+    LOG.assertTrue(getCurrentModalityState() == ModalityState.NON_MODAL, getCurrentModalityState());
     ourQueueSkipCount = 0;
     requestFlush();
   }
@@ -240,6 +253,11 @@ public class LaterInvocator {
     //LOG.assertTrue(IdeEventQueue.getInstance().isInInputEvent() || isInMyRunnable());
 
     return ArrayUtil.toObjectArray(ourModalEntities);
+  }
+
+  @NotNull
+  public static ModalityState getCurrentModalityState() {
+    return ourModalityStack.peek();
   }
 
   public static boolean isInModalContext() {
@@ -286,14 +304,7 @@ public class LaterInvocator {
       }
 
 
-      ModalityState currentModality;
-      if (ourModalEntities.isEmpty()) {
-        Application application = ApplicationManager.getApplication();
-        currentModality = application == null ? ModalityState.NON_MODAL : application.getNoneModalityState();
-      }
-      else {
-        currentModality = new ModalityStateEx(ourModalEntities.toArray());
-      }
+      ModalityState currentModality = getCurrentModalityState();
 
       while (ourQueueSkipCount < ourQueue.size()) {
         RunnableInfo info = ourQueue.get(ourQueueSkipCount);

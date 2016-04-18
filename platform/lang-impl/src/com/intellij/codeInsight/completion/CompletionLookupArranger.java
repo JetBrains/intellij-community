@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -176,8 +176,13 @@ public class CompletionLookupArranger extends LookupArranger {
     trimToLimit(lookup, context);
   }
 
+  @Override
+  public void itemSelected(@Nullable LookupElement lookupItem, char completionChar) {
+    myProcess.itemSelected(lookupItem, completionChar);
+  }
+
   private void trimToLimit(Lookup lookup, ProcessingContext context) {
-    if (myItems.size() <= myLimit * 2) return;
+    if (myItems.size() < myLimit) return;
 
     List<LookupElement> items = getMatchingItems();
     Iterator<LookupElement> iterator = sortByRelevance(groupItemsBySorter(items)).iterator();
@@ -186,7 +191,7 @@ public class CompletionLookupArranger extends LookupArranger {
     retainedSet.addAll(getPrefixItems(true));
     retainedSet.addAll(getPrefixItems(false));
     retainedSet.addAll(myFrozenItems);
-    while (retainedSet.size() < myLimit && iterator.hasNext()) {
+    while (retainedSet.size() < myLimit / 2 && iterator.hasNext()) {
       retainedSet.add(iterator.next());
     }
 

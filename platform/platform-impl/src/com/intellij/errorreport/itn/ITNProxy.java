@@ -177,7 +177,7 @@ public class ITNProxy {
     params.put("app.compilation.timestamp", IdeaLogger.getOurCompilationTimestamp());
 
     BuildNumber build = appInfo.getBuild();
-    String buildNumberWithAllDetails = build.asStringWithAllDetails();
+    String buildNumberWithAllDetails = build.asString();
     params.put("app.product.code", build.getProductCode());
     if (StringUtil.startsWith(buildNumberWithAllDetails, build.getProductCode() + "-")) {
       buildNumberWithAllDetails = buildNumberWithAllDetails.substring(build.getProductCode().length() + 1);

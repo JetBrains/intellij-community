@@ -73,7 +73,6 @@ public class ExternalProjectsManager implements PersistentStateComponent<Externa
 
   public ExternalProjectsManager(@NotNull Project project) {
     myProject = project;
-    Disposer.register(project, this);
     myShortcutsManager = new ExternalSystemShortcutsManager(project);
     Disposer.register(this, myShortcutsManager);
     myTaskActivator = new ExternalSystemTaskActivator(project);

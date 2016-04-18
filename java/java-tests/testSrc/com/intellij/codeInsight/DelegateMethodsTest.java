@@ -23,23 +23,23 @@ public class DelegateMethodsTest extends LightCodeInsightTestCase {
   }
 
   public void testStaticMemberWithNonStaticField() throws Exception {
-      doTest(getTestName(false));
+    doTest();
   }
 
   public void testTypeParam() throws Exception {
-    doTest(getTestName(false));
+    doTest();
   }
 
   public void testExistingMethodWithAnnotation() throws Exception {
-    doTest(getTestName(false));
+    doTest();
   }
 
   public void testDelegateToContainingClassField() throws Exception {
-    doTest(getTestName(false));
+    doTest();
   }
   
   public void testDelegateFromStaticClassField() throws Exception {
-      doTest(getTestName(false));
+    doTest();
   }
   
   public void testCopyJavadoc() throws Exception {
@@ -57,34 +57,42 @@ public class DelegateMethodsTest extends LightCodeInsightTestCase {
   }
   
   public void testSuperSubstitution() throws Exception {
-    doTest(getTestName(false));
+    doTest();
   }
   
   public void testCopyAnnotationWithParams() throws Exception {
-    doTest(getTestName(false));
+    doTest();
   }
 
   public void testMultipleOverrideAnnotations() throws Exception {
-    doTest(getTestName(false));
+    doTest();
   }
 
   public void testStripSuppressWarningsAnnotation() throws Exception {
-    doTest(getTestName(false));
+    doTest();
   }
 
   public void testDoNotOverrideFinal() throws Exception {
-    doTest(getTestName(false));
+    doTest();
   }
 
   public void testAllowDelegateToFinal() throws Exception {
-    doTest(getTestName(false));
+    doTest();
   }
 
   public void testDelegateWithSubstitutionOverrides() throws Exception {
-    doTest(getTestName(false));
+    doTest();
   }
 
   public void testDelegateWithSubstitutionNoOverrides() throws Exception {
+    doTest();
+  }
+
+  public void testSingleField() throws Exception {
+    doTest();
+  }
+
+  private void doTest() throws Exception {
     doTest(getTestName(false));
   }
 

@@ -131,7 +131,7 @@ class LogicalPositionCache implements PrioritizedDocumentListener, Disposable, D
     checkDisposed();
     LineData result = myLines.get(line);
     if (result == null) {
-      result = new LineData(myDocument, line, myTabSize);
+      result = LineData.create(myDocument, line, myTabSize);
       myLines.set(line, result);
     }
     return result;
@@ -146,7 +146,7 @@ class LogicalPositionCache implements PrioritizedDocumentListener, Disposable, D
     if (myLines == null) myView.getEditor().throwDisposalError("Editor is already disposed");
   }
   
-  void validate() {
+  synchronized void validateState() {
     int lineCount = myDocument.getLineCount();
     int cacheSize = myLines.size();
     if (cacheSize != lineCount) throw new IllegalStateException("Line count: " + lineCount + ", cache size: " + cacheSize);
@@ -154,7 +154,7 @@ class LogicalPositionCache implements PrioritizedDocumentListener, Disposable, D
     for (int i = 0; i < cacheSize; i++) {
       LineData data = myLines.get(i);
       if (data != null) {
-        LineData actual = new LineData(myDocument, i, tabSize);
+        LineData actual = LineData.create(myDocument, i, tabSize);
         if (!Arrays.equals(data.columnCache, actual.columnCache)) throw new IllegalStateException("Wrong cache state at line " + i);
       }
     }
@@ -164,7 +164,7 @@ class LogicalPositionCache implements PrioritizedDocumentListener, Disposable, D
   @Override
   public String dumpState() {
     try {
-      validate();
+      validateState();
       return "valid";
     }
     catch (Exception e) {
@@ -173,16 +173,16 @@ class LogicalPositionCache implements PrioritizedDocumentListener, Disposable, D
   }
 
   private static class LineData {    
-    private static final LineData TRIVIAL = new LineData();
+    private static final LineData TRIVIAL = new LineData(null);
     private static final int CACHE_FREQUENCY = 1024; // logical column will be cached for each CACHE_FREQUENCY-th character on the line
     
     private final int[] columnCache;
     
-    private LineData() {
-      columnCache = null;
+    private LineData(int[] columnData) {
+      columnCache = columnData;
     }
     
-    private LineData(@NotNull Document document, int line, int tabSize) {
+    private static LineData create(@NotNull Document document, int line, int tabSize) {
       int start = document.getLineStartOffset(line);
       int end = document.getLineEndOffset(line);
       int cacheSize = (end - start) / CACHE_FREQUENCY;
@@ -202,7 +202,7 @@ class LogicalPositionCache implements PrioritizedDocumentListener, Disposable, D
           column++;
         }
       }
-      columnCache = hasTabs ? cache : null;
+      return hasTabs ? new LineData(cache) : TRIVIAL;
     }
 
     private int offsetToLogicalColumn(@NotNull Document document, int line, int tabSize, int offset) {

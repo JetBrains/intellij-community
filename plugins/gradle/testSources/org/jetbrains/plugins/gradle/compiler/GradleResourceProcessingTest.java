@@ -41,6 +41,20 @@ public class GradleResourceProcessingTest extends GradleCompilingTestCase {
   }
 
   @Test
+  public void testBasicResourceCopying_MergedProject() throws Exception {
+    createProjectSubFile("src/main/resources/dir/file.properties");
+    createProjectSubFile("src/test/resources/dir/file-test.properties");
+    importProjectUsingSingeModulePerGradleProject(
+      "apply plugin: 'java'"
+    );
+    assertModules("project");
+    compileModules("project");
+
+    assertCopied("build/resources/main/dir/file.properties");
+    assertCopied("build/resources/test/dir/file-test.properties");
+  }
+
+  @Test
   public void testResourceCopyingFromSourcesFolder() throws Exception {
     createProjectSubFile("src/main/resources/dir/file.properties");
     createProjectSubFile("src/test/resources/dir/file-test.properties");
@@ -55,6 +69,27 @@ public class GradleResourceProcessingTest extends GradleCompilingTestCase {
     );
     assertModules("project", "project_main", "project_test");
     compileModules("project_main", "project_test");
+
+    assertCopied("build/resources/main/dir/file.properties");
+    assertCopied("build/resources/test/dir/file-test.properties");
+    assertCopied("build/resources/main/file.txt");
+  }
+
+  @Test
+  public void testResourceCopyingFromSourcesFolder_MergedProject() throws Exception {
+    createProjectSubFile("src/main/resources/dir/file.properties");
+    createProjectSubFile("src/test/resources/dir/file-test.properties");
+    createProjectSubFile("src/main/java/file.txt");
+    importProjectUsingSingeModulePerGradleProject(
+      "apply plugin: 'java'\n" +
+      "sourceSets {\n" +
+      "  main {\n" +
+      "    resources.srcDir file('src/main/java')\n" +
+      "  }\n" +
+      "}"
+    );
+    assertModules("project");
+    compileModules("project");
 
     assertCopied("build/resources/main/dir/file.properties");
     assertCopied("build/resources/test/dir/file-test.properties");
@@ -78,6 +113,28 @@ public class GradleResourceProcessingTest extends GradleCompilingTestCase {
     );
     assertModules("project", "project_main", "project_test");
     compileModules("project_main", "project_test");
+
+    assertCopied("muchBetterOutputDir/dir/file.properties");
+    assertCopied("muchBetterTestOutputDir/dir/file-test.properties");
+  }
+
+  @Test
+  public void testResourceProcessingWithIdeaGradlePluginCustomization_MergedProject() throws Exception {
+    createProjectSubFile("src/main/resources/dir/file.properties");
+    createProjectSubFile("src/test/resources/dir/file-test.properties");
+    importProjectUsingSingeModulePerGradleProject(
+      "apply plugin: 'java'\n" +
+      "apply plugin: 'idea'\n" +
+      "idea {\n" +
+      "  module {\n" +
+      "    inheritOutputDirs = false\n" +
+      "    outputDir = file('muchBetterOutputDir')\n" +
+      "    testOutputDir = file('muchBetterTestOutputDir')\n" +
+      "  }\n" +
+      "}"
+    );
+    assertModules("project");
+    compileModules("project");
 
     assertCopied("muchBetterOutputDir/dir/file.properties");
     assertCopied("muchBetterTestOutputDir/dir/file-test.properties");
@@ -116,6 +173,38 @@ public class GradleResourceProcessingTest extends GradleCompilingTestCase {
   }
 
   @Test
+  public void testIncludesAndExcludesInSourceSets_MergedProject() throws Exception {
+    createFilesForIncludesAndExcludesTest();
+
+    importProjectUsingSingeModulePerGradleProject(
+      "apply plugin: 'java'\n" +
+      "\n" +
+      "sourceSets {\n" +
+      "  main {\n" +
+      "    resources {\n" +
+      "      include '**/*.yyy'\n" +
+      "      include '**/*.xxx'\n" +
+      "      exclude 'dir/*.yyy'\n" +
+      "      exclude '*.xxx'\n" +
+      "    }\n" +
+      "  }\n" +
+      "  test {\n" +
+      "    resources {\n" +
+      "      include '**/*.yyy'\n" +
+      "      include '**/*.xxx'\n" +
+      "      exclude 'dir/*.yyy'\n" +
+      "      exclude '*.xxx'\n" +
+      "    }\n" +
+      "  }\n" +
+      "}"
+    );
+    assertModules("project");
+    compileModules("project");
+
+    assertCopiedResources();
+  }
+
+  @Test
   public void testIncludesAndExcludesInAllSourceSets() throws Exception {
     createFilesForIncludesAndExcludesTest();
 
@@ -137,6 +226,27 @@ public class GradleResourceProcessingTest extends GradleCompilingTestCase {
     assertCopiedResources();
   }
 
+  @Test
+  public void testIncludesAndExcludesInAllSourceSets_MergedProject() throws Exception {
+    createFilesForIncludesAndExcludesTest();
+
+    importProjectUsingSingeModulePerGradleProject(
+      "apply plugin: 'java'\n" +
+      "\n" +
+      "sourceSets.all {\n" +
+      "  resources {\n" +
+      "    include '**/*.yyy'\n" +
+      "    include '**/*.xxx'\n" +
+      "    exclude 'dir/*.yyy'\n" +
+      "    exclude '*.xxx'\n" +
+      "  }\n" +
+      "}"
+    );
+    assertModules("project");
+    compileModules("project");
+
+    assertCopiedResources();
+  }
 
   @Test
   public void testIncludesAndExcludesInResourcesTask() throws Exception {
@@ -161,6 +271,33 @@ public class GradleResourceProcessingTest extends GradleCompilingTestCase {
     );
     assertModules("project", "project_main", "project_test");
     compileModules("project_main", "project_test");
+
+    assertCopiedResources();
+  }
+
+  @Test
+  public void testIncludesAndExcludesInResourcesTask_MergedProject() throws Exception {
+    createFilesForIncludesAndExcludesTest();
+
+    importProjectUsingSingeModulePerGradleProject(
+      "apply plugin: 'java'\n" +
+      "\n" +
+      "processResources {\n" +
+      "  include '**/*.yyy'\n" +
+      "  include '**/*.xxx'\n" +
+      "  exclude 'dir/*.yyy'\n" +
+      "  exclude '*.xxx'\n" +
+      "}\n" +
+      "\n" +
+      "processTestResources {\n" +
+      "  include '**/*.yyy'\n" +
+      "  include '**/*.xxx'\n" +
+      "  exclude 'dir/*.yyy'\n" +
+      "  exclude '*.xxx'\n" +
+      "}\n"
+    );
+    assertModules("project");
+    compileModules("project");
 
     assertCopiedResources();
   }

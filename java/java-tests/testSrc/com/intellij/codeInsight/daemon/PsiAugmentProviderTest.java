@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,9 +25,6 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Collections;
-import java.util.List;
 
 public class PsiAugmentProviderTest extends LightCodeInsightFixtureTestCase {
   @Override
@@ -68,54 +65,65 @@ public class PsiAugmentProviderTest extends LightCodeInsightFixtureTestCase {
     private static final String LOMBOK_VAL_FQN = "lombok.val";
     private static final String LOMBOK_VAL_SHORT_NAME = "val";
 
-    @NotNull
-    @Override
-    public <Psi extends PsiElement> List<Psi> getAugments(@NotNull PsiElement element, @NotNull Class<Psi> type) {
-      return Collections.emptyList();
-    }
-
     @Nullable
     @Override
-    protected PsiType inferType(PsiTypeElement typeElement) {
+    protected PsiType inferType(@NotNull PsiTypeElement typeElement) {
       PsiElement parent = typeElement.getParent();
-      if (parent instanceof PsiLocalVariable && ((PsiLocalVariable)parent).getInitializer() != null ||
-          parent instanceof PsiParameter && ((PsiParameter)parent).getDeclarationScope() instanceof PsiForeachStatement) {
-        String text = typeElement.getText();
-        if (LOMBOK_VAL_SHORT_NAME.equals(text) || LOMBOK_VAL_FQN.equals(text)) {
-          PsiJavaCodeReferenceElement referenceElement = typeElement.getInnermostComponentReferenceElement();
-          if (referenceElement != null) {
-            PsiElement resolve = referenceElement.resolve();
-            if (resolve instanceof PsiClass) {
-              if (parent instanceof PsiLocalVariable) {
-                PsiExpression initializer = ((PsiVariable)parent).getInitializer();
-                assertNotNull(initializer);
-                PsiType initializerType = initializer.getType();
-                if (initializer instanceof PsiNewExpression) {
-                  PsiJavaCodeReferenceElement reference = ((PsiNewExpression)initializer).getClassOrAnonymousClassReference();
-                  if (reference != null) {
-                    PsiReferenceParameterList parameterList = reference.getParameterList();
-                    if (parameterList != null) {
-                      PsiTypeElement[] elements = parameterList.getTypeParameterElements();
-                      if (elements.length == 1 && elements[0].getType() instanceof PsiDiamondType) {
-                        return TypeConversionUtil.erasure(initializerType);
-                      }
+      if (isLombokVal(parent)) {
+        PsiJavaCodeReferenceElement referenceElement = typeElement.getInnermostComponentReferenceElement();
+        if (referenceElement != null) {
+          PsiElement resolve = referenceElement.resolve();
+          if (resolve instanceof PsiClass) {
+            if (parent instanceof PsiLocalVariable) {
+              PsiExpression initializer = ((PsiVariable)parent).getInitializer();
+              assertNotNull(initializer);
+              PsiType initializerType = initializer.getType();
+              if (initializer instanceof PsiNewExpression) {
+                PsiJavaCodeReferenceElement reference = ((PsiNewExpression)initializer).getClassOrAnonymousClassReference();
+                if (reference != null) {
+                  PsiReferenceParameterList parameterList = reference.getParameterList();
+                  if (parameterList != null) {
+                    PsiTypeElement[] elements = parameterList.getTypeParameterElements();
+                    if (elements.length == 1 && elements[0].getType() instanceof PsiDiamondType) {
+                      return TypeConversionUtil.erasure(initializerType);
                     }
                   }
                 }
-                return initializerType;
               }
+              return initializerType;
+            }
 
-              PsiForeachStatement foreachStatement = (PsiForeachStatement)((PsiParameter)parent).getDeclarationScope();
-              PsiExpression iteratedValue = foreachStatement.getIteratedValue();
-              if (iteratedValue != null) {
-                return JavaGenericsUtil.getCollectionItemType(iteratedValue);
-              }
+            PsiForeachStatement foreachStatement = (PsiForeachStatement)((PsiParameter)parent).getDeclarationScope();
+            PsiExpression iteratedValue = foreachStatement.getIteratedValue();
+            if (iteratedValue != null) {
+              return JavaGenericsUtil.getCollectionItemType(iteratedValue);
             }
           }
         }
       }
 
       return null;
+    }
+
+    @Nullable
+    @Override
+    protected Boolean hasModifierProperty(@NotNull PsiModifierList modifierList, @NotNull String name) {
+      return (PsiModifier.FINAL.equals(name) && isLombokVal(modifierList.getParent())) ? Boolean.TRUE : null;
+    }
+
+    private static boolean isLombokVal(PsiElement variable) {
+      if (variable instanceof PsiLocalVariable && ((PsiLocalVariable)variable).getInitializer() != null ||
+          variable instanceof PsiParameter && ((PsiParameter)variable).getDeclarationScope() instanceof PsiForeachStatement) {
+        PsiTypeElement typeElement = ((PsiVariable)variable).getTypeElement();
+        if (typeElement != null) {
+          String text = typeElement.getText();
+          if (LOMBOK_VAL_SHORT_NAME.equals(text) || LOMBOK_VAL_FQN.equals(text)) {
+            return true;
+          }
+        }
+      }
+
+      return false;
     }
   }
 }

@@ -28,6 +28,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.refactoring.*;
+import com.intellij.refactoring.changeSignature.JavaMethodDescriptor;
+import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
+import com.intellij.refactoring.introduceParameterObject.IntroduceParameterObjectProcessor;
 import com.intellij.refactoring.move.moveClassesOrPackages.DestinationFolderComboBox;
 import com.intellij.refactoring.ui.PackageNameReferenceEditorCombo;
 import com.intellij.refactoring.ui.RefactoringDialog;
@@ -109,7 +112,10 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
     buttonGroup.add(createNewClassButton);
     buttonGroup.add(myCreateInnerClassRadioButton);
     createNewClassButton.setSelected(true);
-    if (containingClass != null && containingClass.getQualifiedName() == null) {
+    if (containingClass == null ||
+        containingClass.getQualifiedName() == null ||
+        containingClass.getContainingClass() != null ||
+        containingClass.isInterface()) {
       myCreateInnerClassRadioButton.setEnabled(false);
     }
     init();
@@ -166,20 +172,27 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
       packageName = getPackageName();
       className = getClassName();
     }
-    List<VariableData> parameters = new ArrayList<VariableData>();
+    final PsiParameterList parameterList = sourceMethod.getParameterList();
+    final List<ParameterInfoImpl> parameters = new ArrayList<>();
     for (VariableData data : parameterInfo) {
       if (data.passAsParameter) {
-        parameters.add(data);
+        parameters.add(new ParameterInfoImpl(parameterList.getParameterIndex((PsiParameter)data.variable), data.name, data.type));
       }
     }
+    final ParameterInfoImpl[] infos = parameters.toArray(new ParameterInfoImpl[parameters.size()]);
     final String newVisibility =
       myEscalateVisibilityCheckBox.isEnabled() && myEscalateVisibilityCheckBox.isSelected() ? VisibilityUtil.ESCALATE_VISIBILITY : null;
     final MoveDestination moveDestination = ((DestinationFolderComboBox)myDestinationCb)
       .selectDirectory(new PackageWrapper(PsiManager.getInstance(myProject), packageName), false);
-    invokeRefactoring(new IntroduceParameterObjectProcessor(className, packageName, moveDestination, sourceMethod,
-                                                            parameters.toArray(new VariableData[parameters.size()]),
-                                                            keepMethod, useExistingClass,
-                                                            createInnerClass, newVisibility, myGenerateAccessorsCheckBox.isSelected()));
+    final JavaIntroduceParameterObjectClassDescriptor classDescriptor =
+      new JavaIntroduceParameterObjectClassDescriptor(className, packageName, moveDestination, useExistingClass, createInnerClass,
+                                                      newVisibility, infos, sourceMethod,
+                                                      myGenerateAccessorsCheckBox.isSelected());
+    invokeRefactoring(
+      new IntroduceParameterObjectProcessor<PsiMethod, ParameterInfoImpl, JavaIntroduceParameterObjectClassDescriptor>(
+        sourceMethod, classDescriptor,
+        new JavaMethodDescriptor(sourceMethod).getParameters(),
+        keepMethod));
   }
 
   @Override
@@ -249,7 +262,7 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
 
   protected JComponent createCenterPanel() {
     sourceMethodTextField.setEditable(false);
-    final ParameterTablePanel paramsPanel = new ParameterTablePanel(myProject, parameterInfo, sourceMethod) {
+    final ParameterTablePanel paramsPanel = new ParameterTablePanel(myProject, parameterInfo) {
       protected void updateSignature() {}
 
       protected void doEnterAction() {}

@@ -30,6 +30,11 @@ import com.intellij.openapi.components.impl.stores.StoreUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
@@ -74,6 +79,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   private final AtomicBoolean mySavingInProgress = new AtomicBoolean(false);
   private String myName;
   private final boolean myLight;
+  private static boolean ourClassesAreLoaded;
 
   /**
    * @param filePath System-independent path
@@ -276,28 +282,50 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   public void init() {
     long start = System.currentTimeMillis();
 
-    final ProgressIndicator progressIndicator = isDefault() ? null : ProgressIndicatorProvider.getGlobalProgressIndicator();
-    if (progressIndicator != null) {
-      progressIndicator.pushState();
-    }
-    try {
-      init(progressIndicator);
-    }
-    finally {
-      if (progressIndicator != null) {
-        progressIndicator.popState();
-      }
-    }
+    ProgressIndicator progressIndicator = isDefault() ? null : ProgressIndicatorProvider.getGlobalProgressIndicator();
+    init(progressIndicator);
 
     long time = System.currentTimeMillis() - start;
     LOG.info(getComponentConfigCount() + " project components initialized in " + time + " ms");
 
+    if (!isDefault() &&
+        !ApplicationManager.getApplication().isUnitTestMode() &&
+        !ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      distributeProgress();
+    }
     ApplicationManager.getApplication().getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsInitialized(this);
 
     //noinspection SynchronizeOnThis
     synchronized (this) {
       myProjectManagerListener = new MyProjectManagerListener();
       myProjectManager.addProjectManagerListener(this, myProjectManagerListener);
+    }
+  }
+
+  @Override
+  protected void setProgressDuringInit(@NotNull ProgressIndicator indicator) {
+    indicator.setFraction(getPercentageOfComponentsLoaded() / (ourClassesAreLoaded ? 10 : 2));
+  }
+
+  private void distributeProgress() {
+    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    if (indicator == null) return;
+
+    double toDistribute = 1 - indicator.getFraction();
+    ModuleManagerImpl moduleManager = (ModuleManagerImpl)ModuleManager.getInstance(this);
+    int modulesCount = moduleManager.getModulePathsCount();
+    EditorsSplitters splitters = ((FileEditorManagerImpl)FileEditorManager.getInstance(this)).getMainSplitters();
+    int editors = splitters.getEditorsCount();
+
+    double modulesPart = (ourClassesAreLoaded || editors == 0) ? toDistribute : toDistribute * 0.5;
+    if (modulesCount != 0) {
+
+      double step = modulesPart / modulesCount;
+      moduleManager.setProgressStep(step);
+    }
+
+    if (editors != 0) {
+      splitters.setProgressStep(toDistribute - modulesPart / editors);
     }
   }
 
@@ -359,6 +387,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
         LOG.error(component.toString(), e);
       }
     }
+    ourClassesAreLoaded = true;
   }
 
   private void projectClosed() {

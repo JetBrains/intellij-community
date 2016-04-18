@@ -119,6 +119,8 @@ public class FileTypeIndex extends ScalarIndexExtension<FileType>
 
   @Override
   public boolean isEqual(FileType val1, FileType val2) {
+    if (val1 instanceof SubstitutedFileType) val1 = ((SubstitutedFileType)val1).getOriginalFileType();
+    if (val2 instanceof SubstitutedFileType) val2 = ((SubstitutedFileType)val2).getOriginalFileType();
     return Comparing.equal(val1, val2);
   }
 

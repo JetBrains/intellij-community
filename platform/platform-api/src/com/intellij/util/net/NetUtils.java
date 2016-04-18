@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.util.net;
 
-import com.intellij.Patches;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -34,20 +33,15 @@ public class NetUtils {
 
   private NetUtils() { }
 
-  public static boolean canConnectToSocket(String host, int port) {
-    return canConnectToSocket(host, port, false);
-  }
-
+  /** @deprecated use {@link #canConnectToSocket(String, int)} (to be remove in IDEA 17) */
+  @SuppressWarnings("unused")
   public static boolean canConnectToSocketOpenedByJavaProcess(String host, int port) {
-    return canConnectToSocket(host, port, Patches.SUN_BUG_ID_7179799);
+    return canConnectToSocket(host, port);
   }
 
-  private static boolean canConnectToSocket(String host, int port, boolean alwaysTryToConnectDirectly) {
+  public static boolean canConnectToSocket(String host, int port) {
     if (isLocalhost(host)) {
-      if (!canBindToLocalSocket(host, port)) {
-        return true;
-      }
-      return alwaysTryToConnectDirectly && canConnectToRemoteSocket(host, port);
+      return !canBindToLocalSocket(host, port);
     }
     else {
       return canConnectToRemoteSocket(host, port);
