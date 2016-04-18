@@ -17,6 +17,7 @@ package com.jetbrains.python.inspections.quickfix;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -30,6 +31,8 @@ import org.jetbrains.annotations.NotNull;
  * QuickFix to remove redundant parentheses from if/while/except statement
  */
 public class RedundantParenthesesQuickFix implements LocalQuickFix {
+  private static final Logger LOG = Logger.getInstance(RedundantParenthesesQuickFix.class);
+
   @NotNull
   public String getName() {
     return PyBundle.message("QFIX.redundant.parentheses");
@@ -60,7 +63,8 @@ public class RedundantParenthesesQuickFix implements LocalQuickFix {
       }
     }
     else if (element instanceof PyArgumentList) {
-      assert element.getParent() instanceof PyClass && ((PyArgumentList)element).getArguments().length == 0;
+      LOG.assertTrue(element.getParent() instanceof PyClass, "Parent type: " + element.getParent().getClass());
+      LOG.assertTrue(((PyArgumentList)element).getArguments().length == 0, "Argument list: " + element.getText());
       element.delete();
     }
   }
