@@ -38,6 +38,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Set;
 
+import static com.intellij.util.ObjectUtils.assertNotNull;
+
 public class ClsFieldImpl extends ClsMemberImpl<PsiFieldStub> implements PsiField, PsiVariableEx, ClsModifierListOwner {
   private final NotNullLazyValue<PsiTypeElement> myType;
   private final NullableLazyValue<PsiExpression> myInitializer;
@@ -79,23 +81,22 @@ public class ClsFieldImpl extends ClsMemberImpl<PsiFieldStub> implements PsiFiel
   @Override
   @NotNull
   public PsiType getType() {
-    return getTypeElement().getType();
+    return assertNotNull(getTypeElement()).getType();
   }
 
   @Override
-  @NotNull
   public PsiTypeElement getTypeElement() {
     return myType.getValue();
   }
 
   @Override
   public PsiModifierList getModifierList() {
-    return getStub().findChildStubByType(JavaStubElementTypes.MODIFIER_LIST).getPsi();
+    return assertNotNull(getStub().findChildStubByType(JavaStubElementTypes.MODIFIER_LIST)).getPsi();
   }
 
   @Override
   public boolean hasModifierProperty(@NotNull String name) {
-    return getModifierList().hasModifierProperty(name);
+    return assertNotNull(getModifierList()).hasModifierProperty(name);
   }
 
   @Override
@@ -116,22 +117,25 @@ public class ClsFieldImpl extends ClsMemberImpl<PsiFieldStub> implements PsiFiel
   @Override
   public Object computeConstantValue(Set<PsiVariable> visitedVars) {
     if (!hasModifierProperty(PsiModifier.FINAL)) return null;
+
     PsiExpression initializer = getInitializer();
     if (initializer == null) return null;
 
-    final PsiClass containingClass = getContainingClass();
-    final String qName = containingClass != null ? containingClass.getQualifiedName() : null;
-    if ("java.lang.Float".equals(qName)) {
-      String name = getName();
-      if ("POSITIVE_INFINITY".equals(name)) return Float.POSITIVE_INFINITY;
-      if ("NEGATIVE_INFINITY".equals(name)) return Float.NEGATIVE_INFINITY;
-      if ("NaN".equals(name)) return Float.NaN;
-    }
-    else if ("java.lang.Double".equals(qName)) {
-      String name = getName();
-      if ("POSITIVE_INFINITY".equals(name)) return Double.POSITIVE_INFINITY;
-      if ("NEGATIVE_INFINITY".equals(name)) return Double.NEGATIVE_INFINITY;
-      if ("NaN".equals(name)) return Double.NaN;
+    PsiClass containingClass = getContainingClass();
+    if (containingClass != null) {
+      String qName = containingClass.getQualifiedName();
+      if ("java.lang.Float".equals(qName)) {
+        String name = getName();
+        if ("POSITIVE_INFINITY".equals(name)) return Float.POSITIVE_INFINITY;
+        if ("NEGATIVE_INFINITY".equals(name)) return Float.NEGATIVE_INFINITY;
+        if ("NaN".equals(name)) return Float.NaN;
+      }
+      else if ("java.lang.Double".equals(qName)) {
+        String name = getName();
+        if ("POSITIVE_INFINITY".equals(name)) return Double.POSITIVE_INFINITY;
+        if ("NEGATIVE_INFINITY".equals(name)) return Double.NEGATIVE_INFINITY;
+        if ("NaN".equals(name)) return Double.NaN;
+      }
     }
 
     return PsiConstantEvaluationHelperImpl.computeCastTo(initializer, getType(), visitedVars);
@@ -143,8 +147,7 @@ public class ClsFieldImpl extends ClsMemberImpl<PsiFieldStub> implements PsiFiel
   }
 
   @Override
-  public void normalizeDeclaration() throws IncorrectOperationException {
-  }
+  public void normalizeDeclaration() throws IncorrectOperationException { }
 
   @Override
   public void appendMirrorText(int indentLevel, @NotNull StringBuilder buffer) {
@@ -185,6 +188,7 @@ public class ClsFieldImpl extends ClsMemberImpl<PsiFieldStub> implements PsiFiel
 
   @Override
   @NotNull
+  @SuppressWarnings({"Duplicates", "deprecation"})
   public PsiElement getNavigationElement() {
     for (ClsCustomNavigationPolicy customNavigationPolicy : Extensions.getExtensions(ClsCustomNavigationPolicy.EP_NAME)) {
       try {

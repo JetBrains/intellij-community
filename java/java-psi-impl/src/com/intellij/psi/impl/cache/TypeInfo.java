@@ -201,15 +201,15 @@ public class TypeInfo {
 
   @NotNull
   public static TypeInfo readTYPE(@NotNull StubInputStream record) throws IOException {
-    int flags = 0xFF & record.readByte();
+    int flags = record.readByte() & 0xFF;
     if (flags == FREQUENT_INDEX_MASK) {
       return NULL;
     }
 
-    int frequentIndex = FREQUENT_INDEX_MASK & flags;
     byte arrayCount = isSet(flags, HAS_ARRAY_COUNT) ? record.readByte() : 0;
     boolean hasEllipsis = isSet(flags, HAS_ELLIPSIS);
 
+    int frequentIndex = FREQUENT_INDEX_MASK & flags;
     String text = frequentIndex == 0 ? StringRef.toString(record.readName()) : ourIndexFrequentType[frequentIndex];
 
     return new TypeInfo(text, arrayCount, hasEllipsis, PsiAnnotationStub.EMPTY_ARRAY);
