@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,6 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.PsiElement;
 import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.usageView.UsageInfo;
@@ -343,7 +342,7 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
       actionGroup.add(new CloseAction());
     }
     if (isToShowPreviewButton()) {
-      actionGroup.add(new ToggleAction(UsageViewBundle.message("preview.usages.action.text"), "preview", AllIcons.Actions.PreviewDetails) {
+      actionGroup.add(new ToggleAction(UsageViewBundle.message("preview.usages.action.text", "usages"), "preview", AllIcons.Actions.PreviewDetails) {
         @Override
         public boolean isSelected(AnActionEvent e) {
           return isPreview();
