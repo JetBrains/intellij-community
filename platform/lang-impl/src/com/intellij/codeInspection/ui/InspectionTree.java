@@ -23,13 +23,17 @@
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.CommonProblemDescriptor;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionsConfigTreeComparator;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
@@ -43,10 +47,19 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.event.TreeWillExpandListener;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.ExpandVetoException;
+import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.util.*;
 
 public class InspectionTree extends Tree {
+  private static final Comparator<CommonProblemDescriptor> DESCRIPTOR_COMPARATOR = (c1, c2) -> {
+    if (c1 instanceof ProblemDescriptor && c2 instanceof ProblemDescriptor) {
+      return PsiUtilCore.compareElementsByPosition(((ProblemDescriptor)c2).getPsiElement(),
+                                                   ((ProblemDescriptor)c1).getPsiElement());
+    }
+    return c1.getDescriptionTemplate().compareTo(c2.getDescriptionTemplate());
+  };
+
   @NotNull private final GlobalInspectionContextImpl myContext;
   @NotNull private final ExcludedInspectionTreeNodesManager myExcludedManager;
   @NotNull private InspectionTreeState myState = new InspectionTreeState();
@@ -200,13 +213,56 @@ public class InspectionTree extends Tree {
   }
 
   public CommonProblemDescriptor[] getSelectedDescriptors() {
-    if (getSelectionCount() == 0) return CommonProblemDescriptor.EMPTY_ARRAY;
+    return getSelectedDescriptors(false);
+  }
+
+  public CommonProblemDescriptor[] getSelectedDescriptors(boolean sortedByPosition) {
     final TreePath[] paths = getSelectionPaths();
+    if (paths == null) return CommonProblemDescriptor.EMPTY_ARRAY;
+    final TreePath[] selectionPaths = TreeUtil.selectMaximals(paths);
     final LinkedHashSet<CommonProblemDescriptor> descriptors = new LinkedHashSet<CommonProblemDescriptor>();
-    for (TreePath path : paths) {
-      Object node = path.getLastPathComponent();
-      traverseDescriptors((InspectionTreeNode)node, descriptors, myExcludedManager);
+
+    MultiMap<Object, CommonProblemDescriptor> parentToChildNode = new MultiMap<>();
+    final List<InspectionTreeNode> nonDescriptorNodes = new SmartList<>();
+    for (TreePath path : selectionPaths) {
+      final Object[] pathAsArray = path.getPath();
+      final int length = pathAsArray.length;
+      final Object node = pathAsArray[length - 1];
+      if (node instanceof ProblemDescriptionNode) {
+        if (isNodeValidAndIncluded((ProblemDescriptionNode)node)) {
+          final CommonProblemDescriptor descriptor = ((ProblemDescriptionNode)node).getDescriptor();
+          if (length >= 2) {
+            parentToChildNode.putValue(pathAsArray[length - 2], descriptor);
+          } else {
+            parentToChildNode.putValue(node, descriptor);
+          }
+        }
+      } else {
+        nonDescriptorNodes.add((InspectionTreeNode)node);
+      }
     }
+
+    for (InspectionTreeNode node : nonDescriptorNodes) {
+      processChildDescriptorsDeep(node, descriptors, sortedByPosition);
+    }
+
+    for (Map.Entry<Object, Collection<CommonProblemDescriptor>> entry : parentToChildNode.entrySet()) {
+      final Collection<CommonProblemDescriptor> siblings = entry.getValue();
+      if (siblings.size() == 1) {
+        @SuppressWarnings("ConstantConditions")
+        final CommonProblemDescriptor descriptor = ContainerUtil.getFirstItem(siblings);
+        if (descriptor != null) {
+          descriptors.add(descriptor);
+        }
+      } else {
+        if (sortedByPosition) {
+          siblings.stream().sorted(DESCRIPTOR_COMPARATOR).forEach(descriptors::add);
+        } else {
+          descriptors.addAll(siblings);
+        }
+      }
+    }
+
     return descriptors.toArray(new CommonProblemDescriptor[descriptors.size()]);
   }
 
@@ -257,20 +313,37 @@ public class InspectionTree extends Tree {
     return count;
   }
 
-  private static void traverseDescriptors(InspectionTreeNode node,
-                                          LinkedHashSet<CommonProblemDescriptor> descriptors,
-                                          ExcludedInspectionTreeNodesManager manager){
-    if (node instanceof ProblemDescriptionNode) {
-      if (node.isValid() && !node.isResolved(manager)) {
-        final CommonProblemDescriptor descriptor = ((ProblemDescriptionNode)node).getDescriptor();
-        if (descriptor != null) {
-          descriptors.add(descriptor);
+  private void processChildDescriptorsDeep(InspectionTreeNode node,
+                                           LinkedHashSet<CommonProblemDescriptor> descriptors,
+                                           boolean sortedByPosition) {
+    List<CommonProblemDescriptor> descriptorChildren = null;
+    for (int i = 0; i < node.getChildCount(); i++) {
+      final TreeNode child = node.getChildAt(i);
+      if (child instanceof ProblemDescriptionNode) {
+        if (isNodeValidAndIncluded((ProblemDescriptionNode)child)) {
+          if (sortedByPosition) {
+            if (descriptorChildren == null) {
+              descriptorChildren = new ArrayList<>();
+            }
+            descriptorChildren.add(((ProblemDescriptionNode)child).getDescriptor());
+          } else {
+            descriptors.add(((ProblemDescriptionNode)child).getDescriptor());
+          }
         }
       }
+      else {
+        processChildDescriptorsDeep((InspectionTreeNode)child, descriptors, sortedByPosition);
+      }
     }
-    for(int i = node.getChildCount() - 1; i >= 0; i--){
-      traverseDescriptors((InspectionTreeNode)node.getChildAt(i), descriptors, manager);
+
+    if (descriptorChildren != null) {
+      Collections.sort(descriptorChildren, DESCRIPTOR_COMPARATOR);
+      descriptors.addAll(descriptorChildren);
     }
+  }
+
+  private boolean isNodeValidAndIncluded(ProblemDescriptionNode node) {
+    return node.isValid() && !node.isResolved(myExcludedManager);
   }
 
   private void nodeStructureChanged(InspectionTreeNode node) {
