@@ -14,6 +14,7 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.psi.PsiDirectory;
@@ -25,6 +26,7 @@ import com.jetbrains.edu.learning.courseFormat.StudyItem;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -189,5 +191,27 @@ public class CCUtils {
       return false;
     }
     return manager.isTestFile(file);
+  }
+
+  public static void createResourceFile(VirtualFile createdFile, Course course, VirtualFile taskVF) {
+    VirtualFile lessonVF = taskVF.getParent();
+    if (lessonVF == null) {
+      return;
+    }
+
+    String taskResourcesPath = FileUtil.join(course.getCourseDirectory(), lessonVF.getName(), taskVF.getName());
+    File taskResourceFile = new File(taskResourcesPath);
+    if (!taskResourceFile.exists()) {
+      if (!taskResourceFile.mkdirs()) {
+        LOG.info("Failed to create resources for task " + taskResourcesPath);
+      }
+    }
+    try {
+      File toFile = new File(taskResourceFile, createdFile.getName());
+      FileUtil.copy(new File(createdFile.getPath()), toFile);
+    }
+    catch (IOException e) {
+      LOG.info("Failed to copy created task file to resources " + createdFile.getPath());
+    }
   }
 }

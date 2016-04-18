@@ -354,20 +354,29 @@ public class StudyUtils {
 
   @Nullable
   public static Document getPatternDocument(@NotNull final TaskFile taskFile, String name) {
+    VirtualFile patternFile = getPatternFile(taskFile, name);
+    if (patternFile == null) {
+      return null;
+    }
+    return FileDocumentManager.getInstance().getDocument(patternFile);
+  }
+
+  @Nullable
+  public static VirtualFile getPatternFile(@NotNull TaskFile taskFile, String name) {
     Task task = taskFile.getTask();
     String lessonDir = EduNames.LESSON + String.valueOf(task.getLesson().getIndex());
     String taskDir = EduNames.TASK + String.valueOf(task.getIndex());
     Course course = task.getLesson().getCourse();
     File resourceFile = new File(course.getCourseDirectory());
     if (!resourceFile.exists()) {
-      return  null;
+      return null;
     }
     String patternPath = FileUtil.join(resourceFile.getPath(), lessonDir, taskDir, name);
     VirtualFile patternFile = VfsUtil.findFileByIoFile(new File(patternPath), true);
     if (patternFile == null) {
       return null;
     }
-    return FileDocumentManager.getInstance().getDocument(patternFile);
+    return patternFile;
   }
 
   public static boolean isRenameableOrMoveable(@NotNull final Project project, @NotNull final Course course, @NotNull final PsiElement element) {
