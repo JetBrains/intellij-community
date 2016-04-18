@@ -168,7 +168,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
       }
     }
 
-    if (myTargetClass.isInterface()) {
+    if (myTargetClass.isInterface() && !PsiUtil.isLanguageLevel8OrHigher(myTargetClass)) {
       addInheritorUsages(myTargetClass, searchScope, usages);
     }
 
@@ -251,7 +251,17 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
     }
 
     try {
-      if (myTargetClass.isInterface()) patternMethod.getBody().delete();
+      if (myTargetClass.isInterface()) {
+        final PsiModifierList modifierList = patternMethod.getModifierList();
+        if (!PsiUtil.isLanguageLevel8OrHigher(myTargetClass)) {
+          patternMethod.getBody().delete();
+          modifierList.setModifierProperty(PsiModifier.DEFAULT, false);
+        }
+        else {
+          modifierList.setModifierProperty(PsiModifier.DEFAULT, true);
+        }
+        RefactoringUtil.makeMethodAbstract(myTargetClass, patternMethod);
+      }
 
       final PsiMethod method = addMethodToClass(myTargetClass, patternMethod, false);
       myMethod.delete();
