@@ -851,6 +851,9 @@ def layoutAndroid(String androidHome, String androidToolsBaseHome) {
       jar("layoutlib-api.jar") {
         module("layoutlib-api")
       }
+      jar("layoutlib-loader.jar") {
+        module("layoutlib")
+      }
       jar("manifest-merger.jar") {
         module("manifest-merger")
       }
