@@ -47,6 +47,7 @@
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-lang-dfa/cidr-lang-dfa.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-lang-dfa/cidr-lang-dfa.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-util/cidr-util.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-util/cidr-util.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/clion-build/clion-build.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/clion-build/clion-build.iml" group="java" />
+      <module fileurl="file://$PROJECT_DIR$/../vendor/google3/blaze/clwb/clwb-aswb.iml" filepath="$PROJECT_DIR$/../vendor/google3/blaze/clwb/clwb-aswb.iml" group="plugins/Google/Blaze" />
       <module fileurl="file://$PROJECT_DIR$/colorSchemes/colorSchemes.iml" filepath="$PROJECT_DIR$/colorSchemes/colorSchemes.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/plugins/commander/commander.iml" filepath="$PROJECT_DIR$/plugins/commander/commander.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/../base/common/common.iml" filepath="$PROJECT_DIR$/../base/common/common.iml" group="android/sdktools" />
