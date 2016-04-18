@@ -17,6 +17,8 @@ import java.nio.file.Files
 import java.nio.file.Path
 
 private class StaticFileHandler : WebServerFileHandler() {
+  override val pageFileExtensions = arrayOf("html", "htm", "shtml")
+
   private var ssiProcessor: SsiProcessor? = null
 
   override fun process(pathInfo: PathInfo, canonicalPath: CharSequence, project: Project, request: FullHttpRequest, channel: Channel, projectNameIfNotCustomHost: String?): Boolean {

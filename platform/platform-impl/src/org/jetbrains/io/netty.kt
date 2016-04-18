@@ -182,9 +182,11 @@ fun parseAndCheckIsLocalHost(uri: String?, onlyAnyOrLoopback: Boolean = true, ho
   return false
 }
 
+fun HttpRequest.isRegularBrowser() = userAgent?.startsWith("Mozilla/5.0") ?: false
+
 // forbid POST requests from browser without Origin
 fun HttpRequest.isWriteFromBrowserWithoutOrigin(): Boolean {
   val userAgent = userAgent ?: return false
   val method = method()
-  return origin.isNullOrEmpty() && userAgent.startsWith("Mozilla/5.0") && (method == HttpMethod.POST || method == HttpMethod.PATCH || method == HttpMethod.PUT || method == HttpMethod.DELETE)
+  return origin.isNullOrEmpty() && isRegularBrowser() && (method == HttpMethod.POST || method == HttpMethod.PATCH || method == HttpMethod.PUT || method == HttpMethod.DELETE)
 }
