@@ -364,6 +364,14 @@ class EditorPainter implements TextDrawingCallback {
         @Override
         public void paint(Graphics2D g, VisualLineFragmentsIterator.Fragment fragment, int start, int end, 
                           TextAttributes attributes, float xStart, float xEnd, int y) {
+          Inlay inlay = fragment.getCurrentInlay();
+          if (inlay != null) {
+            Inlay.Renderer renderer = inlay.getRenderer();
+            if (renderer != null) {
+              renderer.paint(g, new Rectangle((int) xStart, y - myView.getAscent(), (int) xEnd - (int) xStart, myView.getLineHeight()));
+            }
+            return;
+          }
           boolean allowBorder = fragment.getCurrentFoldRegion() != null;
           if (attributes != null && hasTextEffect(attributes.getEffectColor(), attributes.getEffectType(), allowBorder)) {
             paintTextEffect(g, xStart, xEnd, y, attributes.getEffectColor(), attributes.getEffectType(), allowBorder);
@@ -891,22 +899,32 @@ class EditorPainter implements TextDrawingCallback {
         }
         prevEndOffset = end;
         assert it != null;
-        while (fragment.isRtl() ? start > end : start < end) {
-          if (fragment.isRtl() ? it.getEndOffset() >= start : it.getEndOffset() <= start) {
-            assert !it.atEnd();
-            it.advance();
-          }
+        if (start == end) { // special case of inlays
           TextAttributes attributes = it.getMergedAttributes();
-          int curEnd = fragment.isRtl() ? Math.max(it.getEndOffset(), end) : Math.min(it.getEndOffset(), end);
-          float xNew = fragment.offsetToX(x, start, curEnd);
+          float xNew = fragment.getEndX();
           if (xNew >= clip.getMinX()) {
-            painter.paint(g, fragment, 
-                          fragment.isRtl() ? fragmentStartOffset - start : start - fragmentStartOffset,
-                          fragment.isRtl() ? fragmentStartOffset - curEnd : curEnd - fragmentStartOffset, 
-                          attributes, x, xNew, y);
+            painter.paint(g, fragment, 0, 0, attributes, x, xNew, y);
           }
           x = xNew;
-          start = curEnd;
+        }
+        else {
+          while (fragment.isRtl() ? start > end : start < end) {
+            if (fragment.isRtl() ? it.getEndOffset() >= start : it.getEndOffset() <= start) {
+              assert !it.atEnd();
+              it.advance();
+            }
+            TextAttributes attributes = it.getMergedAttributes();
+            int curEnd = fragment.isRtl() ? Math.max(it.getEndOffset(), end) : Math.min(it.getEndOffset(), end);
+            float xNew = fragment.offsetToX(x, start, curEnd);
+            if (xNew >= clip.getMinX()) {
+              painter.paint(g, fragment,
+                            fragment.isRtl() ? fragmentStartOffset - start : start - fragmentStartOffset,
+                            fragment.isRtl() ? fragmentStartOffset - curEnd : curEnd - fragmentStartOffset,
+                            attributes, x, xNew, y);
+            }
+            x = xNew;
+            start = curEnd;
+          }
         }
       }
       else {

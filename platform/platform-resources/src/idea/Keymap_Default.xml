@@ -1,5 +1,8 @@
 <component>
 <keymap name="$default" version="1" disable-mnemonics="false">
+  <action id="EditorAddInlay">
+    <keyboard-shortcut first-keystroke="control alt Q"/>
+  </action>
   <action id="ShowNavBar">
     <keyboard-shortcut first-keystroke="alt HOME"/>
   </action>
