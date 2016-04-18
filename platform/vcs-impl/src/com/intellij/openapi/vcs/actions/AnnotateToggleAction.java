@@ -36,6 +36,7 @@ import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.UpToDateLineNumberProviderImpl;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -153,7 +154,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
       gutters.add(new HistoryIdColumn(fileAnnotation, presentation, bgColorMap, historyIds));
     }
     gutters.add(new HighlightedAdditionalColumn(fileAnnotation, null, presentation, bgColorMap));
-    final AnnotateActionGroup actionGroup = new AnnotateActionGroup(gutters, editorGutter);
+    final AnnotateActionGroup actionGroup = new AnnotateActionGroup(gutters, editorGutter, bgColorMap);
     presentation.addAction(actionGroup, 1);
     gutters.add(new ExtraFieldGutter(fileAnnotation, presentation, bgColorMap, actionGroup));
 
@@ -198,38 +199,39 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
     return numbers.size() < 2 ? null : numbers;
   }
 
-  @NotNull
+  @Nullable
   private static Couple<Map<VcsRevisionNumber, Color>> computeBgColors(@NotNull FileAnnotation fileAnnotation, @NotNull Editor editor) {
+    final List<VcsFileRevision> fileRevisionList = fileAnnotation.getRevisions();
+    if (ContainerUtil.isEmpty(fileRevisionList)) return null;
+
     final Map<VcsRevisionNumber, Color> commitOrderColors = new HashMap<VcsRevisionNumber, Color>();
     final Map<VcsRevisionNumber, Color> commitAuthorColors = new HashMap<VcsRevisionNumber, Color>();
     final Map<String, Color> authorColors = new HashMap<String, Color>();
-    final List<VcsFileRevision> fileRevisionList = fileAnnotation.getRevisions();
-    if (fileRevisionList != null) {
-      EditorColorsScheme colorScheme = editor.getColorsScheme();
-      AnnotationsSettings settings = AnnotationsSettings.getInstance();
-      List<Color> authorsColorPalette = settings.getAuthorsColors(colorScheme);
-      List<Color> orderedColorPalette = settings.getOrderedColors(colorScheme);
-      final int revisionsCount = fileRevisionList.size();
 
-      for (int i = 0; i < fileRevisionList.size(); i++) {
-        VcsFileRevision revision = fileRevisionList.get(i);
-        final VcsRevisionNumber number = revision.getRevisionNumber();
-        final String author = revision.getAuthor();
-        if (number == null) continue;
+    EditorColorsScheme colorScheme = editor.getColorsScheme();
+    AnnotationsSettings settings = AnnotationsSettings.getInstance();
+    List<Color> authorsColorPalette = settings.getAuthorsColors(colorScheme);
+    List<Color> orderedColorPalette = settings.getOrderedColors(colorScheme);
+    final int revisionsCount = fileRevisionList.size();
 
-        if (!commitAuthorColors.containsKey(number)) {
-          if (author != null && !authorColors.containsKey(author)) {
-            final int index = authorColors.size();
-            Color color = authorsColorPalette.get(index % authorsColorPalette.size());
-            authorColors.put(author, color);
-          }
+    for (int i = 0; i < fileRevisionList.size(); i++) {
+      VcsFileRevision revision = fileRevisionList.get(i);
+      final VcsRevisionNumber number = revision.getRevisionNumber();
+      final String author = revision.getAuthor();
+      if (number == null) continue;
 
-          commitAuthorColors.put(number, authorColors.get(author));
+      if (!commitAuthorColors.containsKey(number)) {
+        if (author != null && !authorColors.containsKey(author)) {
+          final int index = authorColors.size();
+          Color color = authorsColorPalette.get(index % authorsColorPalette.size());
+          authorColors.put(author, color);
         }
-        if (!commitOrderColors.containsKey(number)) {
-          Color color = orderedColorPalette.get(orderedColorPalette.size() * i / revisionsCount);
-          commitOrderColors.put(number, color);
-        }
+
+        commitAuthorColors.put(number, authorColors.get(author));
+      }
+      if (!commitOrderColors.containsKey(number)) {
+        Color color = orderedColorPalette.get(orderedColorPalette.size() * i / revisionsCount);
+        commitOrderColors.put(number, color);
       }
     }
     return Couple.of(commitOrderColors.size() > 1 ? commitOrderColors : null,
