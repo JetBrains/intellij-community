@@ -1,0 +1,66 @@
+import org.apache.tools.ant.filters.ReplaceTokens
+
+plugins {
+  id "org.jetbrains.intellij" version "0.0.39"
+}
+
+subprojects {
+
+  apply plugin: 'java'
+  apply plugin: "org.jetbrains.intellij"
+
+  tasks.withType(JavaCompile) { options.encoding = 'UTF-8' }
+
+  sourceSets {
+    main {
+      java.srcDir 'src'
+      resources.srcDir 'resources'
+    }
+    test {
+      java.srcDir 'test'
+    }
+  }
+
+  intellij {
+    version ideaVersion
+    updateSinceUntilBuild true
+    downloadSources Boolean.valueOf(downloadIdeaSources)
+  }
+
+  processResources {
+    filter ReplaceTokens, tokens: [
+      'VERSION': version.toString(),
+      'BUILD-NUMBER': buildNumber,
+    ]
+  }
+
+  afterEvaluate {
+    tasks.getByName('buildPlugin') {
+      archiveName = "$intellij.pluginName-$version-${buildNumber}.zip"
+    }
+  }
+}
+
+project(':student') {
+
+  dependencies {
+    compile fileTree(dir: 'lib', include: ['*.jar'])
+  }
+
+  intellij {
+    pluginName 'student'
+  }
+
+}
+
+project(':course-creator') {
+
+  dependencies {
+    compile project(':student')
+  }
+
+  intellij {
+    pluginName 'course-creator'
+  }
+
+}
