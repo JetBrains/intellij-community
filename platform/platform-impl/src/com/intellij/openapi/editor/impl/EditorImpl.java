@@ -147,7 +147,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private int myLinePaintersWidth;
 
   static {
-    ComplementaryFontsRegistry.getFontAbleToDisplay(' ', 0, 0, UIManager.getFont("Label.font").getFamily()); // load costly font info
+    ComplementaryFontsRegistry.getFontAbleToDisplay(' ', 0, Font.PLAIN, UIManager.getFont("Label.font").getFamily()); // load costly font info
   }
 
   private final CommandProcessor myCommandProcessor;

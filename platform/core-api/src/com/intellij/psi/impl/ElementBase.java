@@ -243,7 +243,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
         fileTypeIcon = file.getFileType().getIcon();
       }
       else {
-        fileTypeIcon = IconUtil.getIcon(virtualFile, BitUtil.clear(flags, ICON_FLAG_READ_STATUS), file.getProject());
+        fileTypeIcon = IconUtil.getIcon(virtualFile, flags & ~ICON_FLAG_READ_STATUS, file.getProject());
       }
       return createLayeredIcon(this, fileTypeIcon, elementFlags);
     }
