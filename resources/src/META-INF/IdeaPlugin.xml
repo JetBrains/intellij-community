@@ -70,6 +70,10 @@
     <component>
       <implementation-class>com.intellij.execution.scratch.JavaScratchCompilationSupport</implementation-class>
     </component>
+    <component>
+      <implementation-class>com.intellij.codeInsight.daemon.impl.InlayPassFactory</implementation-class>
+      <skipForDefaultProject/>
+    </component>
   </project-components>
 
   <extensionPoints>

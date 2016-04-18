@@ -232,7 +232,7 @@ public class FontInfo {
     return FontLayoutService.getInstance().charWidth(metrics, c);
   }
 
-  private FontMetrics fontMetrics() {
+  public FontMetrics fontMetrics() {
     if (myFontMetrics == null) {
       // We need to use antialising-aware font metrics because we've alrady encountered a situation when non-antialiased symbol
       // width is not equal to the antialiased one (IDEA-81539).
