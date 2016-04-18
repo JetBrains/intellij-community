@@ -15,7 +15,6 @@
  */
 package com.intellij.slicer;
 
-import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -26,7 +25,6 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.usages.TextChunk;
 import com.intellij.util.BitUtil;
 import com.intellij.util.FontUtil;
-import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,8 +34,7 @@ import java.util.List;
 /**
  * @author cdr
  */
-public class SliceUsageCellRenderer extends SliceUsageCellRendererBase {
-
+class SliceUsageCellRenderer extends SliceUsageCellRendererBase {
   @Override
   public void customizeCellRendererFor(@NotNull SliceUsage sliceUsage) {
     boolean isForcedLeaf = sliceUsage instanceof JavaSliceDereferenceUsage;
@@ -45,13 +42,10 @@ public class SliceUsageCellRenderer extends SliceUsageCellRendererBase {
     JavaSliceUsage javaSliceUsage = sliceUsage instanceof JavaSliceUsage ? (JavaSliceUsage)sliceUsage : null;
 
     TextChunk[] text = sliceUsage.getText();
-    final List<TextRange> usageRanges = new SmartList<TextRange>();
-    sliceUsage.processRangeMarkers(new Processor<Segment>() {
-      @Override
-      public boolean process(Segment segment) {
-        usageRanges.add(TextRange.create(segment));
-        return true;
-      }
+    final List<TextRange> usageRanges = new SmartList<>();
+    sliceUsage.processRangeMarkers(segment -> {
+      usageRanges.add(TextRange.create(segment));
+      return true;
     });
     boolean isInsideContainer = javaSliceUsage != null && javaSliceUsage.indexNesting != 0;
     for (int i = 0, length = text.length; i < length; i++) {
