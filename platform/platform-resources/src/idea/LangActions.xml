@@ -324,6 +324,7 @@
         <action id="ExtractInterface" class="com.intellij.refactoring.actions.ExtractInterfaceAction"/>
         <action id="ExtractSuperclass" class="com.intellij.refactoring.actions.ExtractSuperclassAction"/>
         <action id="ExtractModule" class="com.intellij.refactoring.actions.ExtractModuleAction"/>
+        <action id="IntroduceParameterObject" class="com.intellij.refactoring.actions.IntroduceParameterObjectAction"/>
       </group>
 
       <action id="Inline" class="com.intellij.refactoring.actions.InlineAction"/>

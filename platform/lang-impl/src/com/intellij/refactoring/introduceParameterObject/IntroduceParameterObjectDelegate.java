@@ -19,12 +19,14 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.changeSignature.ChangeInfo;
 import com.intellij.refactoring.changeSignature.ParameterInfo;
 import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
@@ -46,6 +48,11 @@ public abstract class IntroduceParameterObjectDelegate<M extends PsiNamedElement
     Language language) {
     return EP_NAME.forLanguage(language);
   }
+
+  public abstract boolean isEnabledOn(PsiElement element);
+
+  @Nullable
+  public abstract RefactoringActionHandler getHandler(PsiElement element);
 
   public abstract P createMergedParameterInfo(C descriptor,
                                               M method,

@@ -22,7 +22,9 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.MoveDestination;
+import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.changeSignature.*;
 import com.intellij.refactoring.introduceParameterObject.IntroduceParameterObjectClassDescriptor;
 import com.intellij.refactoring.introduceParameterObject.IntroduceParameterObjectDelegate;
@@ -43,6 +45,16 @@ import java.util.List;
 
 public class JavaIntroduceParameterObjectDelegate
   extends IntroduceParameterObjectDelegate<PsiMethod, ParameterInfoImpl, JavaIntroduceParameterObjectClassDescriptor> {
+
+  @Override
+  public boolean isEnabledOn(PsiElement element) {
+    return PsiTreeUtil.getParentOfType(element, PsiMethod.class, false) != null;
+  }
+
+  @Override
+  public RefactoringActionHandler getHandler(PsiElement element) {
+    return new IntroduceParameterObjectHandler();
+  }
 
   @Override
   public ParameterInfoImpl createMergedParameterInfo(JavaIntroduceParameterObjectClassDescriptor descriptor,

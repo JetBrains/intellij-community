@@ -22,6 +22,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.changeSignature.ChangeInfo;
 import com.intellij.refactoring.changeSignature.ParameterInfo;
 import com.intellij.refactoring.introduceParameterObject.IntroduceParameterObjectClassDescriptor;
@@ -49,6 +50,16 @@ import java.util.List;
 
 public class GroovyIntroduceParameterObjectDelegate
   extends IntroduceParameterObjectDelegate<GrMethod, GrParameterInfo, GroovyIntroduceObjectClassDescriptor> {
+  @Override
+  public boolean isEnabledOn(PsiElement element) {
+    return false;
+  }
+
+  @Override
+  public RefactoringActionHandler getHandler(PsiElement element) {
+    return null;
+  }
+
   @Override
   public GrParameterInfo createMergedParameterInfo(GroovyIntroduceObjectClassDescriptor descriptor,
                                                    GrMethod method,
