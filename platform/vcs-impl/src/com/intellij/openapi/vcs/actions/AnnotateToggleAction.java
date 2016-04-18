@@ -26,7 +26,6 @@ import com.intellij.openapi.localVcs.UpToDateLineNumberProvider;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.annotate.AnnotationGutterActionProvider;
@@ -121,9 +120,8 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
     presentation.addAction(new CopyRevisionNumberFromAnnotateAction(fileAnnotation));
     presentation.addAction(Separator.getInstance());
 
-    final Couple<Map<VcsRevisionNumber, Color>> bgColorMap =
-      Registry.is("vcs.show.colored.annotations") ? computeBgColors(fileAnnotation, editor) : null;
-    final Map<VcsRevisionNumber, Integer> historyIds = Registry.is("vcs.show.history.numbers") ? computeLineNumbers(fileAnnotation) : null;
+    final Couple<Map<VcsRevisionNumber, Color>> bgColorMap = computeBgColors(fileAnnotation, editor);
+    final Map<VcsRevisionNumber, Integer> historyIds = computeLineNumbers(fileAnnotation);
 
     if (switcher != null) {
       switcher.switchTo(switcher.getDefaultSource());
