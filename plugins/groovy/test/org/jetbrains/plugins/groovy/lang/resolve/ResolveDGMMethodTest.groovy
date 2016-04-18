@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod
 
 import static org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor.GROOVY_2_1
-import static org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor.GROOVY_2_3_9
+import static org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor.GROOVY_2_3
 
 abstract class AbstractResolveDGMMethodTest extends GroovyResolveTestCase {
 
@@ -49,8 +49,8 @@ abstract class AbstractResolveDGMMethodTest extends GroovyResolveTestCase {
     ]
   }
 
-  static class ResolveDGMMethod239Test extends AbstractResolveDGMMethodTest {
-    LightProjectDescriptor projectDescriptor = GROOVY_2_3_9
+  static class ResolveDGMMethod23Test extends AbstractResolveDGMMethodTest {
+    LightProjectDescriptor projectDescriptor = GROOVY_2_3
     Map<String, String> data = [
       isNumber      : "org.codehaus.groovy.runtime.StringGroovyMethods",
       collectionSort: "java.lang.Iterable<T>"
