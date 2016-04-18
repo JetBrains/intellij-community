@@ -43,9 +43,11 @@ public class InspectionNodeInfo extends JPanel {
   private final HighlightDisplayKey myKey;
   private final InspectionProfileImpl myCurrentProfile;
   private final Project myProject;
+  @NotNull private final InspectionTree myTree;
 
   public InspectionNodeInfo(@NotNull final InspectionTree tree,
                             @NotNull final Project project) {
+    myTree = tree;
     setLayout(new GridBagLayout());
     setBorder(IdeBorderFactory.createEmptyBorder(11, 0, 0, 0));
     final InspectionToolWrapper toolWrapper = tree.getSelectedToolWrapper();
@@ -116,5 +118,7 @@ public class InspectionNodeInfo extends JPanel {
     myEnabledLabel.setText(isEnabled ? "Enabled" : "Disabled");
     myEnabledLabel.revalidate();
     myEnabledLabel.repaint();
+    myTree.revalidate();
+    myTree.repaint();
   }
 }

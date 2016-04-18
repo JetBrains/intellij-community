@@ -72,6 +72,11 @@ public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
     return false;
   }
 
+  @Nullable
+  public String getCustomizedTailText() {
+    return null;
+  }
+
   public FileStatus getNodeStatus(){
     return FileStatus.NOT_CHANGED;
   }
