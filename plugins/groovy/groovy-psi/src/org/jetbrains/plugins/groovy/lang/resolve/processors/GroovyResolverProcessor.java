@@ -175,12 +175,14 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
         final NotNullComputable<PsiSubstitutor> substitutorComputer;
         if (kind == GroovyResolveKind.METHOD) {
           substitutorComputer = new NotNullCachedComputableWrapper<>(
-            () -> myMethodSubstitutorComputer.getValue().obtainSubstitutor(substitutor, method, resolveContext)
+            () -> myMethodSubstitutorComputer.getValue().obtainSubstitutor(substitutor, method, resolveContext),
+            PsiSubstitutor.EMPTY
           );
         }
         else {
           substitutorComputer = new NotNullCachedComputableWrapper<>(
-            () -> myPropertySubstitutorComputer.getValue().obtainSubstitutor(substitutor, method, resolveContext)
+            () -> myPropertySubstitutorComputer.getValue().obtainSubstitutor(substitutor, method, resolveContext),
+            PsiSubstitutor.EMPTY
           );
         }
         candidate = new GroovyMethodResult(
