@@ -1073,125 +1073,133 @@ public class PyRequirementTest extends PyTestCase {
 
   // https://www.python.org/dev/peps/pep-0440/#normalization
   public void testRequirementAlternatePreReleaseVersion() {
-    assertEquals(new PyRequirement("Django", "1.9rc1"), PyRequirement.fromLine("Django==1.9RC1"));
+    doRequirementVersionNormalizationTest("1.9rc1", "1.9RC1");
 
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5a20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5.a20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5a20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5.a.20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5a20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5-a20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5a20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5-a_20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5a20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5_a20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5a20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5_a-20"));
+    doRequirementVersionNormalizationTest("2.5a20", "2.5.a20");
+    doRequirementVersionNormalizationTest("2.5a20", "2.5.a.20");
+    doRequirementVersionNormalizationTest("2.5a20", "2.5-a20");
+    doRequirementVersionNormalizationTest("2.5a20", "2.5-a_20");
+    doRequirementVersionNormalizationTest("2.5a20", "2.5_a20");
+    doRequirementVersionNormalizationTest("2.5a20", "2.5_a-20");
 
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5a20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5alpha20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5a20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5.alpha20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5a20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5.alpha.20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5a20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5-alpha20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5a20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5-alpha_20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5a20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5_alpha20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5a20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5_alpha-20"));
+    doRequirementVersionNormalizationTest("2.5a20", "2.5alpha20");
+    doRequirementVersionNormalizationTest("2.5a20", "2.5.alpha20");
+    doRequirementVersionNormalizationTest("2.5a20", "2.5.alpha.20");
+    doRequirementVersionNormalizationTest("2.5a20", "2.5-alpha20");
+    doRequirementVersionNormalizationTest("2.5a20", "2.5-alpha_20");
+    doRequirementVersionNormalizationTest("2.5a20", "2.5_alpha20");
+    doRequirementVersionNormalizationTest("2.5a20", "2.5_alpha-20");
 
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5b20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5beta20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5b20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5.beta20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5b20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5.beta.20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5b20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5-beta20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5b20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5-beta_20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5b20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5_beta20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5b20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5_beta-20"));
+    doRequirementVersionNormalizationTest("2.5b20", "2.5beta20");
+    doRequirementVersionNormalizationTest("2.5b20", "2.5.beta20");
+    doRequirementVersionNormalizationTest("2.5b20", "2.5.beta.20");
+    doRequirementVersionNormalizationTest("2.5b20", "2.5-beta20");
+    doRequirementVersionNormalizationTest("2.5b20", "2.5-beta_20");
+    doRequirementVersionNormalizationTest("2.5b20", "2.5_beta20");
+    doRequirementVersionNormalizationTest("2.5b20", "2.5_beta-20");
 
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5rc20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5c20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5rc20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5.c20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5rc20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5.c.20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5rc20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5-c20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5rc20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5-c_20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5rc20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5_c20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5rc20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5_c-20"));
+    doRequirementVersionNormalizationTest("2.5rc20", "2.5c20");
+    doRequirementVersionNormalizationTest("2.5rc20", "2.5.c20");
+    doRequirementVersionNormalizationTest("2.5rc20", "2.5.c.20");
+    doRequirementVersionNormalizationTest("2.5rc20", "2.5-c20");
+    doRequirementVersionNormalizationTest("2.5rc20", "2.5-c_20");
+    doRequirementVersionNormalizationTest("2.5rc20", "2.5_c20");
+    doRequirementVersionNormalizationTest("2.5rc20", "2.5_c-20");
 
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5rc20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5pre20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5rc20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5.pre20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5rc20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5.pre.20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5rc20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5-pre20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5rc20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5-pre_20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5rc20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5_pre20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5rc20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5_pre-20"));
+    doRequirementVersionNormalizationTest("2.5rc20", "2.5pre20");
+    doRequirementVersionNormalizationTest("2.5rc20", "2.5.pre20");
+    doRequirementVersionNormalizationTest("2.5rc20", "2.5.pre.20");
+    doRequirementVersionNormalizationTest("2.5rc20", "2.5-pre20");
+    doRequirementVersionNormalizationTest("2.5rc20", "2.5-pre_20");
+    doRequirementVersionNormalizationTest("2.5rc20", "2.5_pre20");
+    doRequirementVersionNormalizationTest("2.5rc20", "2.5_pre-20");
 
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5rc20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5preview20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5rc20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5.preview20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5rc20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5.preview.20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5rc20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5-preview20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5rc20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5-preview_20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5rc20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5_preview20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5rc20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5_preview-20"));
+    doRequirementVersionNormalizationTest("2.5rc20", "2.5preview20");
+    doRequirementVersionNormalizationTest("2.5rc20", "2.5.preview20");
+    doRequirementVersionNormalizationTest("2.5rc20", "2.5.preview.20");
+    doRequirementVersionNormalizationTest("2.5rc20", "2.5-preview20");
+    doRequirementVersionNormalizationTest("2.5rc20", "2.5-preview_20");
+    doRequirementVersionNormalizationTest("2.5rc20", "2.5_preview20");
+    doRequirementVersionNormalizationTest("2.5rc20", "2.5_preview-20");
 
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5a0"), PyRequirement.fromLine("Orange-Bioinformatics==2.5a"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5a0"), PyRequirement.fromLine("Orange-Bioinformatics==2.5.a"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5a0"), PyRequirement.fromLine("Orange-Bioinformatics==2.5-a"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5a0"), PyRequirement.fromLine("Orange-Bioinformatics==2.5_a"));
+    doRequirementVersionNormalizationTest("2.5a0", "2.5a");
+    doRequirementVersionNormalizationTest("2.5a0", "2.5.a");
+    doRequirementVersionNormalizationTest("2.5a0", "2.5-a");
+    doRequirementVersionNormalizationTest("2.5a0", "2.5_a");
   }
 
   // https://www.python.org/dev/peps/pep-0440/#normalization
   public void testRequirementAlternatePostReleaseVersion() {
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5-post20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5-post.20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5_post20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5_post_20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5post20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5post-20"));
+    doRequirementVersionNormalizationTest("2.5.post20", "2.5-post20");
+    doRequirementVersionNormalizationTest("2.5.post20", "2.5-post.20");
+    doRequirementVersionNormalizationTest("2.5.post20", "2.5_post20");
+    doRequirementVersionNormalizationTest("2.5.post20", "2.5_post_20");
+    doRequirementVersionNormalizationTest("2.5.post20", "2.5post20");
+    doRequirementVersionNormalizationTest("2.5.post20", "2.5post-20");
 
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5.r20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5-r20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5-r.20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5_r20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5_r_20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5r20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5r-20"));
+    doRequirementVersionNormalizationTest("2.5.post20", "2.5.r20");
+    doRequirementVersionNormalizationTest("2.5.post20", "2.5-r20");
+    doRequirementVersionNormalizationTest("2.5.post20", "2.5-r.20");
+    doRequirementVersionNormalizationTest("2.5.post20", "2.5_r20");
+    doRequirementVersionNormalizationTest("2.5.post20", "2.5_r_20");
+    doRequirementVersionNormalizationTest("2.5.post20", "2.5r20");
+    doRequirementVersionNormalizationTest("2.5.post20", "2.5r-20");
 
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5.rev20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5-rev20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5-rev.20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5_rev20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5_rev_20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5rev20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5rev-20"));
+    doRequirementVersionNormalizationTest("2.5.post20", "2.5.rev20");
+    doRequirementVersionNormalizationTest("2.5.post20", "2.5-rev20");
+    doRequirementVersionNormalizationTest("2.5.post20", "2.5-rev.20");
+    doRequirementVersionNormalizationTest("2.5.post20", "2.5_rev20");
+    doRequirementVersionNormalizationTest("2.5.post20", "2.5_rev_20");
+    doRequirementVersionNormalizationTest("2.5.post20", "2.5rev20");
+    doRequirementVersionNormalizationTest("2.5.post20", "2.5rev-20");
 
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post0"), PyRequirement.fromLine("Orange-Bioinformatics==2.5.post"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post0"), PyRequirement.fromLine("Orange-Bioinformatics==2.5-post"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post0"), PyRequirement.fromLine("Orange-Bioinformatics==2.5_post"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post0"), PyRequirement.fromLine("Orange-Bioinformatics==2.5post"));
+    doRequirementVersionNormalizationTest("2.5.post0", "2.5.post");
+    doRequirementVersionNormalizationTest("2.5.post0", "2.5-post");
+    doRequirementVersionNormalizationTest("2.5.post0", "2.5_post");
+    doRequirementVersionNormalizationTest("2.5.post0", "2.5post");
 
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.post20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5-20"));
+    doRequirementVersionNormalizationTest("2.5.post20", "2.5-20");
   }
 
   // https://www.python.org/dev/peps/pep-0440/#normalization
   public void testRequirementAlternateDevelopmentVersion() {
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.dev20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5-dev20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.dev20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5_dev20"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.dev20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5dev20"));
+    doRequirementVersionNormalizationTest("2.5.dev20", "2.5-dev20");
+    doRequirementVersionNormalizationTest("2.5.dev20", "2.5_dev20");
+    doRequirementVersionNormalizationTest("2.5.dev20", "2.5dev20");
 
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.dev0"), PyRequirement.fromLine("Orange-Bioinformatics==2.5-dev"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.dev0"), PyRequirement.fromLine("Orange-Bioinformatics==2.5_dev"));
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5.dev0"), PyRequirement.fromLine("Orange-Bioinformatics==2.5dev"));
+    doRequirementVersionNormalizationTest("2.5.dev0", "2.5-dev");
+    doRequirementVersionNormalizationTest("2.5.dev0", "2.5_dev");
+    doRequirementVersionNormalizationTest("2.5.dev0", "2.5dev");
   }
 
   // https://www.python.org/dev/peps/pep-0440/#normalization
   public void testRequirementAlternateLocalVersion() {
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5+local.version"),
-                 PyRequirement.fromLine("Orange-Bioinformatics==2.5+local-version"));
-
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5+local.version"),
-                 PyRequirement.fromLine("Orange-Bioinformatics==2.5+local_version"));
+    doRequirementVersionNormalizationTest("2.5+local.version", "2.5+local-version");
+    doRequirementVersionNormalizationTest("2.5+local.version", "2.5+local_version");
   }
 
   // https://www.python.org/dev/peps/pep-0440/#normalization
   public void testRequirementAlternateVersionStart() {
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5a20"), PyRequirement.fromLine("Orange-Bioinformatics==v2.5a20"));
-    assertEquals(new PyRequirement("MOCPy", "0.1.0.dev0"), PyRequirement.fromLine("MOCPy==v0.1.0.dev0"));
-    assertEquals(new PyRequirement("score.webassets", "0.2.3"), PyRequirement.fromLine("score.webassets==v0.2.3"));
-    assertEquals(new PyRequirement("pip_helpers", "0.5.post6"), PyRequirement.fromLine("pip_helpers==v0.5.post6"));
-    assertEquals(new PyRequirement("Django", "1.9rc1"), PyRequirement.fromLine("Django==v1.9rc1"));
-    assertEquals(new PyRequirement("django", "1!1"), PyRequirement.fromLine("django==v1!1"));
-    assertEquals(new PyRequirement("pinax-utils", "1.0b1.dev3"), PyRequirement.fromLine("pinax-utils==v1.0b1.dev3"));
-    assertEquals(new PyRequirement("no_limit_nester"), PyRequirement.fromLine("no_limit_nester==v1.0+local.version.10"));
-    assertEquals(new PyRequirement("Flask-Celery-py3", "0.1.*"), PyRequirement.fromLine("Flask-Celery-py3==v0.1.*"));
+    doRequirementVersionNormalizationTest("2.5a20", "v2.5a20");
+    doRequirementVersionNormalizationTest("0.1.0.dev0", "v0.1.0.dev0");
+    doRequirementVersionNormalizationTest("0.2.3", "v0.2.3");
+    doRequirementVersionNormalizationTest("0.5.post6", "v0.5.post6");
+    doRequirementVersionNormalizationTest("1.9rc1", "v1.9rc1");
+    doRequirementVersionNormalizationTest("1!1", "v1!1");
+    doRequirementVersionNormalizationTest("1.0b1.dev3", "v1.0b1.dev3");
+    doRequirementVersionNormalizationTest("1.0+local.version.10", "v1.0+local.version.10");
+    doRequirementVersionNormalizationTest("0.1.*", "v0.1.*");
+  }
+
+  // PY-11835
+  public void testRequirementNotNormalizableVersion() {
+    final String name = "django_compressor";
+    final String version = "dev";
+    final String installOptions = name + "==" + version;
+    final List<PyRequirementVersionSpec> versionSpecs = Collections.singletonList(new PyRequirementVersionSpec(PyRequirementRelation.STR_EQ,
+                                                                                                               version));
+
+    assertEquals(new PyRequirement(name, versionSpecs, installOptions), PyRequirement.fromLine(installOptions));
   }
 
   // https://www.python.org/dev/peps/pep-0440/#version-specifiers
@@ -1322,6 +1330,14 @@ public class PyRequirementTest extends PyTestCase {
 
   private static void doTest(@NotNull String options) {
     assertEquals(new PyRequirement("MyProject1", Collections.emptyList(), options), PyRequirement.fromLine(options));
+  }
+
+  private static void doRequirementVersionNormalizationTest(@NotNull String expectedVersion,
+                                                            @NotNull String actualVersion) {
+    final String name = "name";
+    final String installOptions = name + "==" + actualVersion;
+
+    assertEquals(new PyRequirement(name, expectedVersion, installOptions), PyRequirement.fromLine(installOptions));
   }
 
   private static void doRequirementRelationTest(@NotNull PyRequirementRelation relation, @NotNull String version) {
