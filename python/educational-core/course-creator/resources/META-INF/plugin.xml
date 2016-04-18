@@ -47,12 +47,10 @@
     <action id="CreateTask" class="com.jetbrains.edu.coursecreator.actions.CCCreateTask">
       <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFile"/>
     </action>
-    <action id="CreateTaskFile" class="com.jetbrains.edu.coursecreator.actions.CCCreateTaskFile">
-      <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFile"/>
-    </action>
 
     <group id="CCProjectViewGroup">
-      <action id="AddTaskFile" class="com.jetbrains.edu.coursecreator.actions.CCAddAsTaskFile" text="Add As Task File"/>
+      <action id="AddTaskFile" class="com.jetbrains.edu.coursecreator.actions.CCAddAsTaskFile" text="Add as Task File"/>
+      <action id="HideTaskFile" class="com.jetbrains.edu.coursecreator.actions.CCHideFromStudent" text="Hide from Student"/>
       <action id="ShowPreview" class="com.jetbrains.edu.coursecreator.actions.CCShowPreview">
         <add-to-group group-id="EditorTabPopupMenu"/>
       </action>
