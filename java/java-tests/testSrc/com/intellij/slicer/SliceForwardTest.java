@@ -16,7 +16,6 @@
 package com.intellij.slicer;
 
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.psi.PsiDocumentManager;
@@ -30,7 +29,7 @@ import java.util.Map;
 /**
  * @author cdr
  */
-public class SliceForwardTest extends DaemonAnalyzerTestCase {
+public class SliceForwardTest extends SliceTestCase {
   private final TIntObjectHashMap<IntArrayList> myFlownOffsets = new TIntObjectHashMap<>();
 
   private void dotest() throws Exception {
