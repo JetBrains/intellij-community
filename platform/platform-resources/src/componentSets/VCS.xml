@@ -4,9 +4,6 @@
       <implementation-class>com.intellij.openapi.vcs.changes.VetoSavingCommittingDocumentsAdapter</implementation-class>
     </component>
     <component>
-      <implementation-class>com.intellij.openapi.vcs.changes.VcsDirtyScopeVfsListener</implementation-class>
-    </component>
-    <component>
       <implementation-class>com.intellij.lifecycle.PeriodicalTasksCloser</implementation-class>
     </component>
     <component>
@@ -22,6 +19,9 @@
       <implementation-class>com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl</implementation-class>
       <option name="workspace" value="true"/>
       <loadForDefaultProject/>
+    </component>
+    <component>
+      <implementation-class>com.intellij.openapi.vcs.changes.VcsDirtyScopeVfsListener</implementation-class>
     </component>
     <!-- <component>
       <implementation-class>com.intellij.openapi.vcs.changes.dbCommitted.HistoryCacheManager</implementation-class>
