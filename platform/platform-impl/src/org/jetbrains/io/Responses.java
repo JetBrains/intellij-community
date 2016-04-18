@@ -106,6 +106,7 @@ public final class Responses {
       response.headers().set("X-Frame-Options", "SameOrigin");
     }
     response.headers().set("X-Content-Type-Options", "nosniff");
+    response.headers().set("x-xss-protection", "1; mode=block");
   }
 
   public static void send(CharSequence content, Channel channel, @Nullable HttpRequest request) {
@@ -137,6 +138,11 @@ public final class Responses {
 
   public static void sendStatus(HttpResponseStatus responseStatus, Channel channel, @Nullable HttpRequest request) {
     sendStatus(responseStatus, channel, null, request);
+  }
+
+  public static HttpResponseStatus okInSafeMode(@NotNull HttpResponseStatus status) {
+    Application app = ApplicationManager.getApplication();
+    return app != null && app.isUnitTestMode() ? status : HttpResponseStatus.OK;
   }
 
   public static void sendStatus(@NotNull HttpResponseStatus responseStatus, Channel channel, @Nullable String description, @Nullable HttpRequest request) {

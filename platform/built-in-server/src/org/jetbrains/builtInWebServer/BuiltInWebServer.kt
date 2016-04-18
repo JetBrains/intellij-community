@@ -28,11 +28,9 @@ import com.intellij.util.UriUtil
 import com.intellij.util.io.URLUtil
 import com.intellij.util.net.NetUtils
 import io.netty.channel.ChannelHandlerContext
-import io.netty.handler.codec.http.FullHttpRequest
-import io.netty.handler.codec.http.HttpMethod
-import io.netty.handler.codec.http.HttpRequest
-import io.netty.handler.codec.http.QueryStringDecoder
+import io.netty.handler.codec.http.*
 import org.jetbrains.ide.HttpRequestHandler
+import org.jetbrains.io.Responses
 import org.jetbrains.io.host
 import org.jetbrains.io.isLocalOrigin
 import java.io.File
@@ -136,7 +134,13 @@ private fun doProcess(request: FullHttpRequest, context: ChannelHandlerContext, 
     return true
   }
 
-  val path = FileUtil.toCanonicalPath(decodedPath.substring(offset + 1), '/')
+  val path = toIdeaPath(decodedPath, offset)
+  if (path == null) {
+    LOG.warn("$decodedPath is not valid")
+    Responses.sendStatus(HttpResponseStatus.NOT_FOUND, context.channel(), request)
+    return true
+  }
+
   for (pathHandler in WebServerPathHandler.EP_NAME.extensions) {
     LOG.catchAndLog {
       if (pathHandler.process(path, project, request, context, projectName, decodedPath, isCustomHost)) {
@@ -145,6 +149,15 @@ private fun doProcess(request: FullHttpRequest, context: ChannelHandlerContext, 
     }
   }
   return false
+}
+
+private fun toIdeaPath(decodedPath: String, offset: Int): String? {
+  // must be absolute path (relative to DOCUMENT_ROOT, i.e. scheme://authority/) to properly canonicalize
+  val path = decodedPath.substring(offset)
+  if (!path.startsWith('/')) {
+    return null
+  }
+  return FileUtil.toCanonicalPath(path, '/').substring(1)
 }
 
 fun compareNameAndProjectBasePath(projectName: String, project: Project): Boolean {

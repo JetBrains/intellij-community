@@ -20,13 +20,18 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.endsWithName
 import com.intellij.openapi.util.io.endsWithSlash
 import com.intellij.openapi.util.io.getParentPath
+import com.intellij.openapi.vfs.VFileProperty
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtilRt
+import com.intellij.util.isDirectory
+import io.netty.channel.Channel
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.FullHttpRequest
+import io.netty.handler.codec.http.HttpRequest
 import io.netty.handler.codec.http.HttpResponseStatus
 import org.jetbrains.io.Responses
 import java.io.File
+import java.nio.file.Paths
 
 private class DefaultWebServerPathHandler : WebServerPathHandler() {
   override fun process(path: String,
@@ -94,6 +99,10 @@ private class DefaultWebServerPathHandler : WebServerPathHandler() {
       }
     }
 
+    if (!checkAccess(pathInfo, channel, request)) {
+      return true
+    }
+
     val canonicalPath = if (indexUsed) "$path/${pathInfo.name}" else path
     for (fileHandler in WebServerFileHandler.EP_NAME.extensions) {
       LOG.catchAndLog {
@@ -104,4 +113,23 @@ private class DefaultWebServerPathHandler : WebServerPathHandler() {
     }
     return false
   }
+}
+
+private fun checkAccess(pathInfo: PathInfo, channel: Channel, request: HttpRequest): Boolean {
+  if (pathInfo.ioFile != null || pathInfo.file!!.isInLocalFileSystem) {
+    val file = pathInfo.ioFile?.toPath() ?: Paths.get(pathInfo.file!!.path)
+    if (file.isDirectory()) {
+      Responses.sendStatus(HttpResponseStatus.NOT_FOUND, channel, request)
+      return false
+    }
+    else if (!checkAccess(channel, file, request, Paths.get(pathInfo.root.path))) {
+      return false
+    }
+  }
+  else if (pathInfo.file!!.`is`(VFileProperty.HIDDEN)) {
+    Responses.sendStatus(HttpResponseStatus.NOT_FOUND, channel, request)
+    return false
+  }
+
+  return true
 }

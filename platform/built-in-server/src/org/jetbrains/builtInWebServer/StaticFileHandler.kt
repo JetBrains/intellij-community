@@ -2,9 +2,7 @@ package org.jetbrains.builtInWebServer
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtilRt
-import com.intellij.openapi.vfs.VFileProperty
 import com.intellij.util.PathUtilRt
-import com.intellij.util.isDirectory
 import io.netty.buffer.ByteBufUtf8Writer
 import io.netty.channel.Channel
 import io.netty.channel.ChannelFutureListener
@@ -17,7 +15,6 @@ import org.jetbrains.io.Responses
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.Paths
 
 private class StaticFileHandler : WebServerFileHandler() {
   private var ssiProcessor: SsiProcessor? = null
@@ -33,15 +30,10 @@ private class StaticFileHandler : WebServerFileHandler() {
         return true
       }
 
-      sendIoFile(channel, ioFile.toPath(), Paths.get(pathInfo.root.path), request)
+      FileResponses.sendFile(request, channel, ioFile)
     }
     else {
       val file = pathInfo.file!!
-      if (file.`is`(VFileProperty.HIDDEN)) {
-        Responses.sendStatus(HttpResponseStatus.FORBIDDEN, channel, request)
-        return true
-      }
-
       val response = FileResponses.prepareSend(request, channel, file.timeStamp, file.name) ?: return true
 
       val keepAlive = Responses.addKeepAliveIfNeed(response, request)
@@ -100,20 +92,11 @@ private class StaticFileHandler : WebServerFileHandler() {
   }
 }
 
-private fun sendIoFile(channel: Channel, file: Path, root: Path, request: HttpRequest) {
-  if (file.isDirectory()) {
-    Responses.sendStatus(HttpResponseStatus.FORBIDDEN, channel, request)
-  }
-  else if (checkAccess(channel, file, request, root)) {
-    FileResponses.sendFile(request, channel, file.toFile())
-  }
-}
-
-fun checkAccess(channel: Channel, file: Path, request: HttpRequest, root: Path): Boolean {
+internal fun checkAccess(channel: Channel, file: Path, request: HttpRequest, root: Path = file.root): Boolean {
   var parent = file
   do {
     if (!hasAccess(parent)) {
-      Responses.sendStatus(HttpResponseStatus.FORBIDDEN, channel, request)
+      Responses.sendStatus(Responses.okInSafeMode(HttpResponseStatus.FORBIDDEN), channel, request)
       return false
     }
     parent = parent.parent ?: break
@@ -122,5 +105,5 @@ fun checkAccess(channel: Channel, file: Path, request: HttpRequest, root: Path):
   return true
 }
 
-// deny access to .htaccess files
-private fun hasAccess(result: Path) = Files.isReadable(result) && !(Files.isHidden(result) || result.fileName.toString().startsWith(".ht"))
+// deny access to any dot prefixed file
+private fun hasAccess(result: Path) = Files.isReadable(result) && !(Files.isHidden(result) || result.fileName.toString().startsWith('.'))

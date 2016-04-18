@@ -43,6 +43,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.builtInWebServer.WebServerPathToFileManager;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
+import org.jetbrains.io.Responses;
 
 import java.io.File;
 import java.io.IOException;
@@ -141,7 +142,7 @@ class OpenFileHttpService extends RestService {
         public void consume(Throwable throwable) {
           if (throwable == NOT_FOUND) {
             // don't expose file status
-            sendStatus(HttpResponseStatus.OK, keepAlive, channel);
+            sendStatus(Responses.okInSafeMode(HttpResponseStatus.NOT_FOUND), keepAlive, channel);
           }
           else {
             // todo send error
