@@ -15,6 +15,7 @@
  */
 
 package org.jetbrains.plugins.groovy.lang.resolve
+
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -31,6 +32,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
  */
 public abstract class GroovyResolveTestCase extends LightGroovyTestCase {
   @NonNls protected static final String MARKER = "<ref>";
+
+  protected String getBasePath() { null }
 
   @Override
   void setUp() {
