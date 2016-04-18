@@ -201,7 +201,7 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent {
         application.invokeLater(new Runnable() {
           public void run() {
             if (shouldAskBeforeHotswap && !DebuggerSettings.RUN_HOTSWAP_ALWAYS.equals(runHotswap)) {
-              final RunHotswapDialog dialog = new RunHotswapDialog(myProject, sessions, shouldDisplayHangWarning);
+              final RunHotswapDialog dialog = RunHotswapDialog.Factory.createDialog(myProject, sessions, shouldDisplayHangWarning);
               if (!dialog.showAndGet()) {
                 for (DebuggerSession session : modifiedClasses.keySet()) {
                   session.setModifiedClassesScanRequired(true);
@@ -331,8 +331,7 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent {
       if (myProject.isDisposed()) {
         return;
       }
-
-      if (errors == 0 && !aborted && myPerformHotswapAfterThisCompilation) {
+      if (!aborted && myPerformHotswapAfterThisCompilation) {
         for (HotSwapVetoableListener listener : myListeners) {
           if (!listener.shouldHotSwap(compileContext)) {
             return;
