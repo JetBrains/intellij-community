@@ -47,6 +47,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.UIUtil;
@@ -103,7 +104,8 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, AccessibleCont
     setTitle(WELCOME_TITLE);
     AppUIUtil.updateWindowIcon(this);
     final int width = RecentProjectsManager.getInstance().getRecentProjectsActions(false).length == 0 ? 666 : 777;
-    setSize(JBUI.size(width, 460));
+    JBDimension size = JBUI.size(width, getMinimumSize().height);
+    setSize(size);
     setResizable(false);
     //int x = bounds.x + (bounds.width - getWidth()) / 2;
     //int y = bounds.y + (bounds.height - getHeight()) / 2;
@@ -363,8 +365,14 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, AccessibleCont
         }
       }
 
+      // Ensure there is enough space after the last element so it doesn't get cut off.
+      Component verticalSpacer = Box.createVerticalStrut(25);
+      actions.add(verticalSpacer);
+
       WelcomeScreenActionsPanel panel = new WelcomeScreenActionsPanel();
       panel.actions.add(actions);
+      // root does not automatically update its minimum size when items are added to actions.
+      panel.root.setMinimumSize(panel.actions.getMinimumSize());
       return panel.root;
     }
 
