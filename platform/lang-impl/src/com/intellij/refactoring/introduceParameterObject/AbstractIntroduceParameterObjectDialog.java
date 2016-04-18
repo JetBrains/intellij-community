@@ -45,7 +45,6 @@ public abstract class AbstractIntroduceParameterObjectDialog<M extends PsiNamedE
   protected abstract JPanel createParameterClassPanel();
   protected abstract AbstractParameterTablePanel<V> createParametersPanel();
 
-  protected abstract List<P> getAllMethodParameters();
   protected abstract C createClassDescriptor();
 
   protected boolean isDelegateCheckboxVisible() {
@@ -60,7 +59,9 @@ public abstract class AbstractIntroduceParameterObjectDialog<M extends PsiNamedE
 
   @Override
   protected void doAction() {
-    invokeRefactoring(new IntroduceParameterObjectProcessor<M, P, C>(mySourceMethod, createClassDescriptor(), getAllMethodParameters(), keepMethodAsDelegate()));
+    final IntroduceParameterObjectDelegate<M, P, C> delegate = IntroduceParameterObjectDelegate.findDelegate(mySourceMethod);
+    final List<P> allMethodParameters = delegate.getAllMethodParameters(mySourceMethod);
+    invokeRefactoring(new IntroduceParameterObjectProcessor<M, P, C>(mySourceMethod, createClassDescriptor(), allMethodParameters, keepMethodAsDelegate()));
   }
 
   @Override

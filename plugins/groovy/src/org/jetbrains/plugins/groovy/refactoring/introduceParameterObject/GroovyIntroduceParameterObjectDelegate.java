@@ -43,6 +43,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrC
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.refactoring.changeSignature.GrChangeInfoImpl;
+import org.jetbrains.plugins.groovy.refactoring.changeSignature.GrMethodDescriptor;
 import org.jetbrains.plugins.groovy.refactoring.changeSignature.GrParameterInfo;
 
 import java.util.Collection;
@@ -58,6 +59,11 @@ public class GroovyIntroduceParameterObjectDelegate
   @Override
   public RefactoringActionHandler getHandler(PsiElement element) {
     return null;
+  }
+
+  @Override
+  public List<GrParameterInfo> getAllMethodParameters(GrMethod sourceMethod) {
+    return new GrMethodDescriptor(sourceMethod).getParameters();
   }
 
   @Override

@@ -47,6 +47,11 @@ public class JavaIntroduceParameterObjectDelegate
   extends IntroduceParameterObjectDelegate<PsiMethod, ParameterInfoImpl, JavaIntroduceParameterObjectClassDescriptor> {
 
   @Override
+  public  List<ParameterInfoImpl> getAllMethodParameters(PsiMethod sourceMethod) {
+    return new JavaMethodDescriptor(sourceMethod).getParameters();
+  }
+
+  @Override
   public boolean isEnabledOn(PsiElement element) {
     return PsiTreeUtil.getParentOfType(element, PsiMethod.class, false) != null;
   }

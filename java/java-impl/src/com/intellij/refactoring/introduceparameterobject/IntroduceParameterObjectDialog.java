@@ -28,7 +28,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.refactoring.*;
-import com.intellij.refactoring.changeSignature.JavaMethodDescriptor;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.introduceParameterObject.AbstractIntroduceParameterObjectDialog;
 import com.intellij.refactoring.move.moveClassesOrPackages.DestinationFolderComboBox;
@@ -142,10 +141,6 @@ public class IntroduceParameterObjectDialog extends AbstractIntroduceParameterOb
 
   protected String getSourceMethodPresentation() {
     return PsiFormatUtil.formatMethod(mySourceMethod, PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_CONTAINING_CLASS | PsiFormatUtil.SHOW_NAME, 0);
-  }
-
-  protected List<ParameterInfoImpl> getAllMethodParameters() {
-    return new JavaMethodDescriptor(mySourceMethod).getParameters();
   }
 
   protected ParameterTablePanel createParametersPanel() {
