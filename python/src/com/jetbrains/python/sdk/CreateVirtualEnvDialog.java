@@ -72,8 +72,7 @@ public class CreateVirtualEnvDialog extends AbstractCreateVirtualEnvDialog {
     });
     List<Sdk> sortedSdks = new ArrayList<Sdk>(allSdks);
     Collections.sort(sortedSdks, new PreferredSdkComparator());
-    updateSdkList(allSdks, sortedSdks.get(0));
-
+    updateSdkList(allSdks, sortedSdks.isEmpty() ? null : sortedSdks.get(0));
   }
 
   protected void layoutPanel(final List<Sdk> allSdks) {
