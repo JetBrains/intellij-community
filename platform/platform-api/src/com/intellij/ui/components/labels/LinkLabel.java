@@ -26,6 +26,9 @@ import com.intellij.util.ui.JBRectangle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.AccessibleAction;
+import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleRole;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
@@ -308,5 +311,45 @@ public class LinkLabel<T> extends JLabel {
 
   public void doClick(InputEvent e) {
     doClick();
+  }
+
+  @Override
+  public AccessibleContext getAccessibleContext() {
+    if (accessibleContext == null) {
+      accessibleContext = new AccessibleLinkLabel();
+    }
+    return accessibleContext;
+  }
+
+  protected class AccessibleLinkLabel extends AccessibleJLabel implements AccessibleAction {
+    @Override
+    public AccessibleRole getAccessibleRole() {
+      return AccessibleRole.HYPERLINK;
+    }
+
+    @Override
+    public int getAccessibleActionCount() {
+      return 1;
+    }
+
+    @Override
+    public String getAccessibleActionDescription(int i) {
+      if (i == 0) {
+        return UIManager.getString("AbstractButton.clickText");
+      }
+      else {
+        return null;
+      }
+    }
+
+    @Override
+    public boolean doAccessibleAction(int i) {
+      if (i == 0) {
+        doClick();
+        return true;
+      } else {
+        return false;
+      }
+    }
   }
 }
