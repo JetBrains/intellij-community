@@ -52,11 +52,13 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor;
-import com.intellij.util.ui.accessibility.AccessibleContextUtil;
+import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleRole;
 import javax.swing.*;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
@@ -314,11 +316,8 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, AccessibleCont
       ref.set(new ActionLink(text, icon, action));
       ref.get().setPaintUnderline(false);
       ref.get().setNormalColor(getLinkNormalColor());
-      NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
+      JActionLinkPanel panel = new JActionLinkPanel(ref.get());
       panel.setBorder(JBUI.Borders.empty(4, 6, 4, 6));
-      panel.add(ref.get());
-      AccessibleContextUtil.setName(panel, ref.get());
-      AccessibleContextUtil.setDescription(panel, ref.get());
       panel.add(createArrow(ref.get()), BorderLayout.EAST);
       installFocusable(panel, action, KeyEvent.VK_UP, KeyEvent.VK_DOWN, focusListOnLeft);
       return panel;
@@ -334,9 +333,6 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, AccessibleCont
       collectAllActions(group, quickStart);
 
       for (AnAction action : group.getChildren(null)) {
-        JPanel button = new JPanel(new BorderLayout());
-        button.setOpaque(false);
-        button.setBorder(JBUI.Borders.empty(8, 20));
         AnActionEvent e =
           AnActionEvent.createFromAnAction(action, null, ActionPlaces.WELCOME_SCREEN, DataManager.getInstance().getDataContext(this));
         action.update(e);
@@ -354,9 +350,8 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, AccessibleCont
           ActionLink link = new ActionLink(text, icon, action, createUsageTracker(action));
           link.setPaintUnderline(false);
           link.setNormalColor(getLinkNormalColor());
-          button.add(link);
-          AccessibleContextUtil.setName(button, link);
-          AccessibleContextUtil.setDescription(button, link);
+          JActionLinkPanel button = new JActionLinkPanel(link);
+          button.setBorder(JBUI.Borders.empty(8, 20));
           if (action instanceof WelcomePopupAction) {
             button.add(createArrow(link), BorderLayout.EAST);
           }
@@ -374,6 +369,47 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, AccessibleCont
       // root does not automatically update its minimum size when items are added to actions.
       panel.root.setMinimumSize(panel.actions.getMinimumSize());
       return panel.root;
+    }
+
+    /**
+     * Wraps an {@link ActionLink} component and delegates accessibility support to it.
+     */
+    protected class JActionLinkPanel extends JPanel {
+      @NotNull private ActionLink myActionLink;
+
+      public JActionLinkPanel(@NotNull ActionLink actionLink) {
+        super(new BorderLayout());
+        myActionLink = actionLink;
+        add(myActionLink);
+        NonOpaquePanel.setTransparent(this);
+      }
+
+      @Override
+      public AccessibleContext getAccessibleContext() {
+        if (accessibleContext == null) {
+          accessibleContext = new AccessibleJActionLinkPanel(myActionLink.getAccessibleContext());
+        }
+        return accessibleContext;
+      }
+
+      protected class AccessibleJActionLinkPanel extends AccessibleContextDelegate {
+        public AccessibleJActionLinkPanel(AccessibleContext context) {
+          super(context);
+        }
+
+        @Override
+        public Accessible getAccessibleParent() {
+          if (getParent() instanceof Accessible) {
+            return (Accessible)getParent();
+          }
+          return super.getAccessibleParent();
+        }
+
+        @Override
+        public AccessibleRole getAccessibleRole() {
+          return AccessibleRole.PUSH_BUTTON;
+        }
+      }
     }
 
     private AnAction wrapGroups(AnAction action) {
@@ -500,7 +536,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, AccessibleCont
         @Override
         public void keyPressed(KeyEvent e) {
           final JList list = UIUtil.findComponentOfType(FlatWelcomeFrame.this.getComponent(), JList.class);
-          if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+          if (e.getKeyCode() == KeyEvent.VK_ENTER || e.getKeyCode() == KeyEvent.VK_SPACE) {
             InputEvent event = e;
             if (e.getComponent() instanceof JComponent) {
               ActionLink link = UIUtil.findComponentOfType((JComponent)e.getComponent(), ActionLink.class);
