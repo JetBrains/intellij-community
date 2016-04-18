@@ -524,6 +524,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         }
 
         ContentHashesSupport.flushContentHashes();
+        SharedIndicesData.flushData();
         myConnection.disconnect();
       }
       catch (Throwable e) {
@@ -606,6 +607,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     }
 
     ContentHashesSupport.flushContentHashes();
+    SharedIndicesData.flushData();
   }
 
   @Override
