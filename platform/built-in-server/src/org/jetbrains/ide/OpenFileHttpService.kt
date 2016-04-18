@@ -42,6 +42,7 @@ import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.catchError
 import org.jetbrains.concurrency.rejectedPromise
+import org.jetbrains.io.okInSafeMode
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -122,7 +123,7 @@ internal class OpenFileHttpService : RestService() {
       .rejected {
         if (it === NOT_FOUND) {
           // don't expose file status
-          sendStatus(HttpResponseStatus.OK, keepAlive, channel)
+          sendStatus(HttpResponseStatus.NOT_FOUND.okInSafeMode(), keepAlive, channel)
           LOG.warn("File ${apiRequest.file} not found")
         }
         else {
@@ -141,7 +142,7 @@ internal class OpenFileHttpService : RestService() {
       if (!file.exists()) {
         return rejectedPromise(NOT_FOUND)
       }
-      return if (context == null || checkAccess(context.channel(), file, httpRequest!!, doNotExposeStatus = true)) openAbsolutePath(file, request) else null
+      return if (context == null || checkAccess(context.channel(), file, httpRequest!!)) openAbsolutePath(file, request) else null
     }
 
     // we don't want to call refresh for each attempt on findFileByRelativePath call, so, we do what ourSaveAndSyncHandlerImpl does on frame activation

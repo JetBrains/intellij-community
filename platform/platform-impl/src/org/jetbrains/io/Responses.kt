@@ -103,6 +103,7 @@ fun HttpResponse.addCommonHeaders() {
     headers().set("X-Frame-Options", "SameOrigin")
   }
   headers().set("X-Content-Type-Options", "nosniff")
+  headers().set("x-xss-protection", "1; mode=block")
 }
 
 fun HttpResponse.send(channel: Channel, close: Boolean) {
@@ -124,6 +125,8 @@ fun HttpResponse.send(channel: Channel, close: Boolean) {
 fun HttpResponseStatus.send(channel: Channel, request: HttpRequest? = null, description: String? = null) {
   createStatusResponse(this, request, description).send(channel, request)
 }
+
+fun HttpResponseStatus.okInSafeMode() = if (ApplicationManager.getApplication()?.isUnitTestMode ?: false) this else HttpResponseStatus.OK
 
 private fun createStatusResponse(responseStatus: HttpResponseStatus, request: HttpRequest?, description: String?): HttpResponse {
   if (request != null && request.method() === HttpMethod.HEAD) {

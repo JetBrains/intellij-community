@@ -138,7 +138,8 @@ private fun doProcess(request: FullHttpRequest, context: ChannelHandlerContext, 
 
   val path = toIdeaPath(decodedPath, offset)
   if (path == null) {
-    HttpResponseStatus.BAD_REQUEST.send(context.channel(), request)
+    LOG.warn("$decodedPath is not valid")
+    HttpResponseStatus.NOT_FOUND.send(context.channel(), request)
     return true
   }
 
