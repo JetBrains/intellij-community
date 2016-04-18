@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.endsWithName
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.UriUtil
@@ -32,9 +33,7 @@ import com.intellij.util.net.NetUtils
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.*
 import org.jetbrains.ide.HttpRequestHandler
-import org.jetbrains.io.host
-import org.jetbrains.io.isLocalOrigin
-import org.jetbrains.io.send
+import org.jetbrains.io.*
 import java.io.IOException
 import java.net.InetAddress
 import java.nio.file.Path
@@ -143,6 +142,11 @@ private fun doProcess(request: FullHttpRequest, context: ChannelHandlerContext, 
     return true
   }
 
+  if (request.origin == null && request.referrer == null && request.isRegularBrowser() && !canBeAccessedDirectly(path)) {
+    HttpResponseStatus.NOT_FOUND.send(context.channel(), request)
+    return true
+  }
+
   for (pathHandler in WebServerPathHandler.EP_NAME.extensions) {
     LOG.catchAndLog {
       if (pathHandler.process(path, project, request, context, projectName, decodedPath, isCustomHost)) {
@@ -243,4 +247,15 @@ internal fun isOwnHostName(host: String): Boolean {
   catch (ignored: IOException) {
     return false
   }
+}
+
+private fun canBeAccessedDirectly(path: String): Boolean {
+  for (fileHandler in WebServerFileHandler.EP_NAME.extensions) {
+    for (ext in fileHandler.pageFileExtensions) {
+      if (FileUtilRt.extensionEquals(path, ext)) {
+        return true
+      }
+    }
+  }
+  return false
 }
