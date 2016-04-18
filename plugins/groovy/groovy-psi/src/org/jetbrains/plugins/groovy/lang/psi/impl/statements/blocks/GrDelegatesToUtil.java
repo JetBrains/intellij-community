@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks;
 
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -37,6 +38,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
@@ -44,6 +46,10 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
  * @author Max Medvedev
  */
 public class GrDelegatesToUtil {
+
+  public static final Key<String> DELEGATES_TO_KEY = Key.create("groovy.closure.delegatesTo");
+  public static final Key<Integer> DELEGATES_TO_STRATEGY_KEY = Key.create("groovy.closure.delegatesTo.strategy");
+
   @Nullable
   public static DelegatesToInfo getDelegatesToInfo(@NotNull PsiElement place, @NotNull final GrClosableBlock closableBlock) {
     GrCall call = getContainingCall(closableBlock);
@@ -66,6 +72,12 @@ public class GrDelegatesToUtil {
 
     final PsiParameter parameter = findParameter(closableBlock, map, result);
     if (parameter == null) return null;
+
+    final String delegateFqnData = parameter.getUserData(DELEGATES_TO_KEY);
+    final Integer strategyData = parameter.getUserData(DELEGATES_TO_STRATEGY_KEY);
+    if (delegateFqnData != null) {
+      return new DelegatesToInfo(TypesUtil.createType(delegateFqnData, place), strategyData == null ? Closure.OWNER_FIRST : strategyData);
+    }
 
     final PsiModifierList modifierList = parameter.getModifierList();
     if (modifierList == null) return null;
