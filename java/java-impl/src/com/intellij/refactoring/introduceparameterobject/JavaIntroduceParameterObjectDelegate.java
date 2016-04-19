@@ -17,6 +17,7 @@ package com.intellij.refactoring.introduceparameterobject;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -66,9 +67,12 @@ public class JavaIntroduceParameterObjectDelegate
                                                      PsiMethod method,
                                                      List<ParameterInfoImpl> oldMethodParameters) {
     final PsiCodeBlock body = method.getBody();
-    final String baseParameterName = StringUtil.decapitalize(descriptor.getClassName());
+    String baseParameterName = StringUtil.decapitalize(descriptor.getClassName());
     final Project project = method.getProject();
 
+    if (!PsiNameHelper.getInstance(project).isIdentifier(baseParameterName, LanguageLevel.HIGHEST)) {
+      baseParameterName = StringUtil.fixVariableNameDerivedFromPropertyName(baseParameterName);
+    }
     final String paramName = body != null
                              ? JavaCodeStyleManager.getInstance(project)
                                .suggestUniqueVariableName(baseParameterName, body.getLBrace(), true)
