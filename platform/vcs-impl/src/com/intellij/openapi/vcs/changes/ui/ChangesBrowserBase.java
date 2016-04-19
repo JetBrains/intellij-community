@@ -17,11 +17,13 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.diff.DiffDialogHints;
 import com.intellij.diff.util.DiffUserDataKeysEx;
+import com.intellij.ide.DeleteProvider;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileChooser.actions.VirtualFileDeleteProvider;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
@@ -31,6 +33,7 @@ import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffAction;
 import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffContext;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -73,6 +76,7 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
   public static DataKey<ChangesBrowserBase> DATA_KEY = DataKey.create("com.intellij.openapi.vcs.changes.ui.ChangesBrowser");
   private AnAction myDiffAction;
   private final VirtualFile myToSelect;
+  @NotNull private final DeleteProvider myDeleteProvider = new VirtualFileDeleteProvider();
 
   public void setChangesToDisplay(final List<T> changes) {
     myChangesToDisplay = changes;
@@ -219,6 +223,9 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
     }
     else if (UNVERSIONED_FILES_DATA_KEY.equals(key)) {
       sink.put(UNVERSIONED_FILES_DATA_KEY, getVirtualFiles(myViewer.getSelectionPaths(), ChangesBrowserNode.UNVERSIONED_FILES_TAG));
+    }
+    else if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.equals(key)) {
+      sink.put(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, myDeleteProvider);
     }
   }
 
@@ -439,9 +446,14 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
   @NotNull
   public abstract List<Change> getAllChanges();
 
+  @NotNull
   private VirtualFile[] getSelectedFiles() {
-    final List<Change> changes = getSelectedChanges();
-    return ChangesUtil.getFilesFromChanges(changes);
+    Set<VirtualFile> result = ContainerUtil.newHashSet();
+
+    result.addAll(ChangesUtil.getAfterRevisionsFiles(getSelectedChanges()));
+    result.addAll(getVirtualFiles(myViewer.getSelectionPaths(), null));
+
+    return VfsUtilCore.toVirtualFileArray(result);
   }
 
   public AnAction getDiffAction() {

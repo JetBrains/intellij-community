@@ -87,12 +87,17 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
   private void setupRebuildListForActions() {
     ActionManager actionManager = ActionManager.getInstance();
     final AnAction moveAction = actionManager.getAction(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST);
+    final AnAction deleteAction = actionManager.getAction("ChangesView.DeleteUnversioned.From.Dialog");
 
     actionManager.addAnActionListener(new AnActionListener.Adapter() {
       @Override
       public void afterActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
         if (moveAction.equals(action)) {
           rebuildList();
+        }
+        else if (deleteAction.equals(action)) {
+          ChangeListManager.getInstance(myProject)
+            .invokeAfterUpdate(() -> rebuildList(), InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE, "Delete files", null);
         }
       }
     }, this);
@@ -310,6 +315,7 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
     });
     if (Registry.is("vcs.unversioned.files.in.commit")) {
       toolBarGroup.add(ActionManager.getInstance().getAction("ChangesView.AddUnversioned.From.Dialog"));
+      toolBarGroup.add(ActionManager.getInstance().getAction("ChangesView.DeleteUnversioned.From.Dialog"));
       toolBarGroup.add(ActionManager.getInstance().getAction("ChangesView.Ignore"));
     }
     RollbackDialogAction rollback = new RollbackDialogAction();
