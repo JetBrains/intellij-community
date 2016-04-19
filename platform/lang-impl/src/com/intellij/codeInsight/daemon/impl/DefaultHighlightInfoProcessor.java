@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.impl.EditorMarkupModelImpl;
 import com.intellij.openapi.editor.markup.MarkupModel;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
@@ -67,8 +68,10 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
         }
         if (editor != null && !editor.isDisposed()) {
           // usability: show auto import popup as soon as possible
-          new ShowAutoImportPass(project, psiFile, editor).addImports();
-          
+          if (!DumbService.isDumb(project)) {
+            new ShowAutoImportPass(project, psiFile, editor).addImports();
+          }
+
           DaemonListeners.repaintErrorStripeRenderer(editor, project);
         }
       }

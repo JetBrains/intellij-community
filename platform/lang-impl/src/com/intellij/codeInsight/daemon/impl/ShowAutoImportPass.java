@@ -78,8 +78,6 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
   }
 
   public void addImports() {
-    if (!isValid()) return;
-
     Application application = ApplicationManager.getApplication();
     application.assertIsDispatchThread();
     if (!application.isUnitTestMode() && !myEditor.getContentComponent().hasFocus()) return;
