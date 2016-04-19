@@ -98,7 +98,7 @@ public class JavaMoveFilesOrDirectoriesHandler extends MoveFilesOrDirectoriesHan
                   if (topLevelClass != null) {
                     elements[i] = topLevelClass;
                     final PsiFile containingFile = obtainContainingFile(topLevelClass, elements);
-                    if (containingFile != null && !adjustedElements.contains(containingFile)) {
+                    if (containingFile != null) {
                       adjustedElements.add(containingFile);
                       continue;
                     }
