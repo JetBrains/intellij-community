@@ -22,9 +22,7 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.reference.RefDirectory;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.ui.ComputableIcon;
 import com.intellij.util.containers.FactoryMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -137,5 +135,11 @@ public class RefElementNode extends CachedInspectionTreeNode implements RefEleme
       return;
     }
     super.visitProblemSeverities(counter);
+  }
+
+  @Nullable
+  @Override
+  public String getCustomizedTailText() {
+    return myToolPresentation.isDummy() ? "" : null;
   }
 }
