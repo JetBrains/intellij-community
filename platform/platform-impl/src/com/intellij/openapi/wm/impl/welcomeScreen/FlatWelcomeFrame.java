@@ -276,6 +276,8 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, AccessibleCont
         Presentation presentation = e.getPresentation();
         if (presentation.isEnabled()) {
           ActionLink registerLink = new ActionLink("Register", register);
+          // Don't allow focus, as the containing panel is going to focusable.
+          registerLink.setFocusable(false);
           registerLink.setNormalColor(getLinkNormalColor());
           NonOpaquePanel button = new NonOpaquePanel(new BorderLayout());
           button.setBorder(JBUI.Borders.empty(4, 10));
@@ -314,6 +316,8 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, AccessibleCont
         }
       };
       ref.set(new ActionLink(text, icon, action));
+      // Don't allow focus, as the containing panel is going to focusable.
+      ref.get().setFocusable(false);
       ref.get().setPaintUnderline(false);
       ref.get().setNormalColor(getLinkNormalColor());
       JActionLinkPanel panel = new JActionLinkPanel(ref.get());
@@ -348,6 +352,8 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, AccessibleCont
           }
           action = wrapGroups(action);
           ActionLink link = new ActionLink(text, icon, action, createUsageTracker(action));
+          // Don't allow focus, as the containing panel is going to focusable.
+          link.setFocusable(false);
           link.setPaintUnderline(false);
           link.setNormalColor(getLinkNormalColor());
           JActionLinkPanel button = new JActionLinkPanel(link);
