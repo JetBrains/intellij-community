@@ -375,7 +375,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     return sb.toString();
   }
 
-  private abstract static class Info {
+  public abstract static class Info {
     @NotNull protected final PsiElement myElementAtPointer;
     @NotNull private final List<TextRange> myRanges;
 
@@ -413,6 +413,11 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     }
 
     @NotNull
+    public PsiElement getElementAtPointer() {
+      return myElementAtPointer;
+    }
+
+    @NotNull
     public abstract DocInfo getInfo();
 
     public abstract boolean isValid(@NotNull Document document);
@@ -435,7 +440,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     DumbService.getInstance(project).showDumbModeNotification("Element information is not available during index update");
   }
 
-  private static class InfoSingle extends Info {
+  public static class InfoSingle extends Info {
     @NotNull private final PsiElement myTargetElement;
 
     public InfoSingle(@NotNull PsiElement elementAtPointer, @NotNull PsiElement targetElement) {
@@ -446,6 +451,11 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     public InfoSingle(@NotNull PsiReference ref, @NotNull final PsiElement targetElement) {
       super(ref.getElement(), ReferenceRange.getAbsoluteRanges(ref));
       myTargetElement = targetElement;
+    }
+
+    @NotNull
+    public PsiElement getTargetElement() {
+      return myTargetElement;
     }
 
     @Override
@@ -485,7 +495,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     }
   }
 
-  private static class InfoMultiple extends Info {
+  public static class InfoMultiple extends Info {
     public InfoMultiple(@NotNull final PsiElement elementAtPointer) {
       super(elementAtPointer);
     }
@@ -522,7 +532,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
   }
   
   @Nullable
-  private static Info getInfoAt(@NotNull Project project, @NotNull final Editor editor, @NotNull PsiFile file, int offset, 
+  public static Info getInfoAt(@NotNull Project project, @NotNull final Editor editor, @NotNull PsiFile file, int offset,
                                 @NotNull BrowseMode browseMode) {
     PsiElement targetElement = null;
 
@@ -1034,7 +1044,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     }
   }
 
-  private static class DocInfo {
+  public static class DocInfo {
     public static final DocInfo EMPTY = new DocInfo(null, null, null);
 
     @Nullable public final String text;
