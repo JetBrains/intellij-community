@@ -24,6 +24,7 @@ import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.net.HTTPMethod;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.net.NetUtils;
@@ -105,14 +106,19 @@ public final class HttpRequests {
   }
 
   static <T> T wrapAndProcess(RequestBuilder builder, RequestProcessor<T> processor) throws IOException {
-    // hack-around for class loader lock in sun.net.www.protocol.http.NegotiateAuthentication (IDEA-131621)
-    ClassLoader oldClassLoader = Thread.currentThread().getContextClassLoader();
-    Thread.currentThread().setContextClassLoader(new URLClassLoader(new URL[0], oldClassLoader));
-    try {
-      return process(builder, processor);
+    ClassLoader contextLoader = Thread.currentThread().getContextClassLoader();
+    if (!UrlClassLoader.isRegisteredAsParallelCapable(contextLoader)) {
+      // hack-around for class loader lock in sun.net.www.protocol.http.NegotiateAuthentication (IDEA-131621)
+      try (URLClassLoader cl = new URLClassLoader(new URL[0], contextLoader)) {
+        Thread.currentThread().setContextClassLoader(cl);
+        return process(builder, processor);
+      }
+      finally {
+        Thread.currentThread().setContextClassLoader(contextLoader);
+      }
     }
-    finally {
-      Thread.currentThread().setContextClassLoader(oldClassLoader);
+    else {
+      return process(builder, processor);
     }
   }
 

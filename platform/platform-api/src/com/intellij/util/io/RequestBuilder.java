@@ -20,9 +20,7 @@ import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.net.HTTPMethod;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.net.NetUtils;
@@ -36,9 +34,6 @@ import java.net.HttpURLConnection;
 import java.net.URLConnection;
 
 public final class RequestBuilder {
-  private static final boolean ourWrapClassLoader =
-    SystemInfo.isJavaVersionAtLeast("1.7") && !SystemProperties.getBooleanProperty("idea.parallel.class.loader", true);
-
   final String myUrl;
   int myConnectTimeout = HttpConfigurable.CONNECTION_TIMEOUT;
   int myTimeout = HttpConfigurable.READ_TIMEOUT;
@@ -123,13 +118,7 @@ public final class RequestBuilder {
   }
 
   public <T> T connect(@NotNull HttpRequests.RequestProcessor<T> processor) throws IOException {
-    // todo[r.sh] drop condition in IDEA 15
-    if (ourWrapClassLoader) {
-      return HttpRequests.wrapAndProcess(this, processor);
-    }
-    else {
-      return HttpRequests.process(this, processor);
-    }
+    return HttpRequests.wrapAndProcess(this, processor);
   }
 
   public int tryConnect() throws IOException {
@@ -141,12 +130,7 @@ public final class RequestBuilder {
       }
     };
 
-    if (ourWrapClassLoader) {
-      return HttpRequests.wrapAndProcess(this, processor);
-    }
-    else {
-      return HttpRequests.process(this, processor);
-    }
+    return HttpRequests.wrapAndProcess(this, processor);
   }
 
   public <T> T connect(@NotNull HttpRequests.RequestProcessor<T> processor, T errorValue, @Nullable Logger logger) {
