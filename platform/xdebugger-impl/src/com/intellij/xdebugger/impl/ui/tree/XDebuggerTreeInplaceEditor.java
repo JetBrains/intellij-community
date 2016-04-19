@@ -37,7 +37,7 @@ public abstract class XDebuggerTreeInplaceEditor extends TreeInplaceEditor {
   public XDebuggerTreeInplaceEditor(final XDebuggerTreeNode node, @NonNls final String historyId) {
     myNode = node;
     myTree = myNode.getTree();
-    myExpressionEditor = new XDebuggerExpressionComboBox(myTree.getProject(), myTree.getEditorsProvider(), historyId, myTree.getSourcePosition());
+    myExpressionEditor = new XDebuggerExpressionComboBox(myTree.getProject(), myTree.getEditorsProvider(), historyId, myTree.getSourcePosition(), false);
   }
 
   @Override
