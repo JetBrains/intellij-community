@@ -279,6 +279,7 @@ public class JavaIntroduceParameterObjectDelegate
     }
 
     if (moveDestination != null) {
+      boolean constructorMiss = false;
       for (UsageInfo info : infos) {
         if (info instanceof IntroduceParameterObjectProcessor.ChangeSignatureUsageWrapper) {
           final UsageInfo usageInfo = ((IntroduceParameterObjectProcessor.ChangeSignatureUsageWrapper)info).getInfo();
@@ -288,6 +289,10 @@ public class JavaIntroduceParameterObjectDelegate
             if (!moveDestination.isTargetAccessible(overridingMethod.getProject(), overridingMethod.getContainingFile().getVirtualFile())) {
               conflicts.putValue(overridingMethod, "Created class won't be accessible");
             }
+          }
+          if (!constructorMiss && classDescriptor.isUseExistingClass() && usageInfo instanceof MethodCallUsageInfo && classDescriptor.getExistingClassCompatibleConstructor() == null) {
+            conflicts.putValue(classDescriptor.getExistingClass(), "Existing class misses compatible constructor");
+            constructorMiss = true;
           }
         }
       }
