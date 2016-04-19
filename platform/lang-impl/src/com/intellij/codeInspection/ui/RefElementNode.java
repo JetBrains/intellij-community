@@ -64,11 +64,10 @@ public class RefElementNode extends CachedInspectionTreeNode implements RefEleme
   @Override
   protected String calculatePresentableName() {
     final RefEntity element = getElement();
-    if (element == null || !element.isValid()) {
+    if (element == null) {
       return InspectionsBundle.message("inspection.reference.invalid");
-    } else {
-      return element.getRefManager().getRefinedElement(element).getName();
     }
+    return element.getRefManager().getRefinedElement(element).getName();
   }
 
   @Override
