@@ -429,6 +429,10 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
     doTest();
   }
 
+  public void testPolyMethodCallOnLeftSideOfAssignment() throws Exception {
+    doTest();
+  }
+
   public void testVariableNamesOfNestedCalls() throws Exception {
     IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_8, getModule(), getTestRootDisposable());
     String filePath = BASE_PATH + "/" + getTestName(false) + ".java";
