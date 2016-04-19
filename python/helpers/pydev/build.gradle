@@ -24,10 +24,10 @@ task buildBinariesOnWindows(type: Exec, dependsOn: 'build_envs') << {
   workingDir projectDir
 
   environment PYTHONPATH: projectDir,
-              MINICONDA32_ENVS: miniconda.buildEnvironmentDirectory,
-              MINICONDA64_ENVS: miniconda.buildEnvironmentDirectory
+              MINICONDA32_ENVS: envs.envsDirectory,
+              MINICONDA64_ENVS: envs.envsDirectory
 
-  commandLine "${miniconda.buildEnvironmentDirectory}/py27_32/python.exe", "build_tools/build_binaries_windows.py"
+  commandLine "${envs.envsDirectory}/py27_32/python.exe", "build_tools/build_binaries_windows.py"
 }
 
 
