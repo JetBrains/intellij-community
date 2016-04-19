@@ -434,7 +434,10 @@ public class PsiImplUtil {
     if (isInServerPage(file)) return maximalUseScope;
 
     PsiClass aClass = member.getContainingClass();
-    if (aClass instanceof PsiAnonymousClass) {
+    if (aClass instanceof PsiAnonymousClass && !(aClass instanceof PsiEnumConstantInitializer &&
+                                                 member instanceof PsiMethod &&
+                                                 member.hasModifierProperty(PsiModifier.PUBLIC) &&
+                                                 ((PsiMethod)member).findSuperMethods().length > 0)) {
       //member from anonymous class can be called from outside the class
       PsiElement methodCallExpr = PsiUtil.isLanguageLevel8OrHigher(aClass) ? PsiTreeUtil.getTopmostParentOfType(aClass, PsiStatement.class) 
                                                                            : PsiTreeUtil.getParentOfType(aClass, PsiMethodCallExpression.class);
