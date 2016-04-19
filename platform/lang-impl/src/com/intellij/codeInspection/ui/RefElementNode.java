@@ -33,13 +33,13 @@ import javax.swing.tree.MutableTreeNode;
 /**
  * @author max
  */
-public class RefElementNode extends CachedInspectionTreeNode implements RefElementAware {
+public class RefElementNode extends SuppressableInspectionTreeNode implements RefElementAware {
   private boolean myHasDescriptorsUnder = false;
   private CommonProblemDescriptor mySingleDescriptor = null;
   protected final InspectionToolPresentation myToolPresentation;
   private final Icon myIcon;
   public RefElementNode(@Nullable RefEntity userObject, @NotNull InspectionToolPresentation presentation) {
-    super(userObject);
+    super(userObject, presentation);
     myToolPresentation = presentation;
     init();
     final RefEntity refEntity = getElement();
@@ -139,6 +139,13 @@ public class RefElementNode extends CachedInspectionTreeNode implements RefEleme
   @Nullable
   @Override
   public String getCustomizedTailText() {
-    return myToolPresentation.isDummy() ? "" : null;
+    if (myToolPresentation.isDummy()) {
+      return "";
+    }
+    final String customizedText = super.getCustomizedTailText();
+    if (customizedText != null) {
+      return customizedText;
+    }
+    return isLeaf() ? "" : null;
   }
 }

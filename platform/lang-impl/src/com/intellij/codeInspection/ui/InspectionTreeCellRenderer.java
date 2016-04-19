@@ -31,7 +31,10 @@ import com.intellij.util.containers.SoftHashMap;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.Comparator;
+import java.util.Locale;
+import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * @author Dmitry Batkovich
@@ -81,29 +84,29 @@ class InspectionTreeCellRenderer extends ColoredTreeCellRenderer {
     append(node.toString(),
            patchAttr(node, appearsBold(node) ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : getMainForegroundAttributes(node)));
 
-    if (!leaf) {
-      myItemCounter.clear();
-      node.visitProblemSeverities(myItemCounter);
-      append("  ");
-      final String customizedTailText = node.getCustomizedTailText();
-      if (customizedTailText != null) {
-        append(customizedTailText, patchAttr(node, SimpleTextAttributes.GRAYED_ATTRIBUTES));
-      } else {
-        if (myItemCounter.size() > MAX_LEVEL_TYPES) {
-          append(InspectionsBundle.message("inspection.problem.descriptor.count",
-                                           myItemCounter.values().stream().reduce(0, (i, j) -> i + j)) + " ",
-                 patchAttr(node, SimpleTextAttributes.GRAYED_ATTRIBUTES));
-        } else {
-          for (Map.Entry<HighlightDisplayLevel, Integer> entry : myItemCounter.entrySet()) {
-            final HighlightDisplayLevel level = entry.getKey();
-            final Integer occur = entry.getValue();
+    myItemCounter.clear();
+    node.visitProblemSeverities(myItemCounter);
+    append("  ");
+    final String customizedTailText = node.getCustomizedTailText();
+    if (customizedTailText != null) {
+      append(customizedTailText, patchAttr(node, SimpleTextAttributes.GRAYED_ATTRIBUTES));
+    }
+    else {
+      if (myItemCounter.size() > MAX_LEVEL_TYPES) {
+        append(InspectionsBundle.message("inspection.problem.descriptor.count",
+                                         myItemCounter.values().stream().reduce(0, (i, j) -> i + j)) + " ",
+               patchAttr(node, SimpleTextAttributes.GRAYED_ATTRIBUTES));
+      }
+      else {
+        for (Map.Entry<HighlightDisplayLevel, Integer> entry : myItemCounter.entrySet()) {
+          final HighlightDisplayLevel level = entry.getKey();
+          final Integer occur = entry.getValue();
 
-            SimpleTextAttributes attrs = SimpleTextAttributes.GRAY_ATTRIBUTES;
-            if (level == HighlightDisplayLevel.ERROR && !myView.getGlobalInspectionContext().getUIOptions().GROUP_BY_SEVERITY) {
-              attrs = attrs.derive(-1, JBColor.red.brighter(), null, null);
-            }
-            append(occur + " " + getPresentableName(level, occur > 1) + " ", patchAttr(node, attrs));
+          SimpleTextAttributes attrs = SimpleTextAttributes.GRAY_ATTRIBUTES;
+          if (level == HighlightDisplayLevel.ERROR && !myView.getGlobalInspectionContext().getUIOptions().GROUP_BY_SEVERITY) {
+            attrs = attrs.derive(-1, JBColor.red.brighter(), null, null);
           }
+          append(occur + " " + getPresentableName(level, occur > 1) + " ", patchAttr(node, attrs));
         }
       }
     }

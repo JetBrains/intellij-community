@@ -121,6 +121,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   private EditorEx myPreviewEditor;
   private InspectionTreeLoadingProgressAware myLoadingProgressPreview;
   private final ExcludedInspectionTreeNodesManager myExcludedInspectionTreeNodesManager = new ExcludedInspectionTreeNodesManager();
+  private final Set<Object> mySuppressedNodesManager = new HashSet<>();
 
   private final Object myTreeStructureUpdateLock = new Object();
 
@@ -568,6 +569,10 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
         }
       }
     });
+  }
+
+  Set<Object> getSuppressedNodes() {
+    return mySuppressedNodesManager;
   }
 
   @NotNull

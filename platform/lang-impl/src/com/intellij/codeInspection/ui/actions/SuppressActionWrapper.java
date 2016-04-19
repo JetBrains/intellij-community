@@ -27,10 +27,7 @@ import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.codeInspection.ui.InspectionResultsView;
-import com.intellij.codeInspection.ui.InspectionTreeNode;
-import com.intellij.codeInspection.ui.ProblemDescriptionNode;
-import com.intellij.codeInspection.ui.RefElementNode;
+import com.intellij.codeInspection.ui.*;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -173,17 +170,13 @@ public class SuppressActionWrapper extends ActionGroup implements CompactActionG
             @Override
             public void run() {
               final InspectionToolWrapper wrapper = view.getTree().getSelectedToolWrapper();
-              for (InspectionTreeNode node : getNodesToSuppress(view)) {
+              for (SuppressableInspectionTreeNode node : getNodesToSuppress(view)) {
                 final Pair<PsiElement, CommonProblemDescriptor> content = getContentToSuppress(node);
                 if (content.first == null) break;
                 final PsiElement element = content.first;
-                RefEntity refEntity = null;
-                if (node instanceof RefElementNode) {
-                  refEntity = ((RefElementNode)node).getElement();
-                } else if (node instanceof ProblemDescriptionNode) {
-                  refEntity = ((ProblemDescriptionNode)node).getElement();
-                }
+                RefEntity refEntity = node.getElement();
                 if (!suppress(element, content.second, mySuppressAction, refEntity, wrapper)) break;
+                node.markAsSuppressedFromView();
               }
               final Set<GlobalInspectionContextImpl> globalInspectionContexts = ((InspectionManagerEx)InspectionManager.getInstance(project)).getRunningContexts();
               for (GlobalInspectionContextImpl context : globalInspectionContexts) {
@@ -214,10 +207,10 @@ public class SuppressActionWrapper extends ActionGroup implements CompactActionG
     }
   }
 
-  private static Set<InspectionTreeNode> getNodesToSuppress(@NotNull InspectionResultsView view) {
+  private static Set<SuppressableInspectionTreeNode> getNodesToSuppress(@NotNull InspectionResultsView view) {
     final TreePath[] paths = view.getTree().getSelectionPaths();
     if (paths == null) return Collections.emptySet();
-    final Set<InspectionTreeNode> result = new HashSet<>();
+    final Set<SuppressableInspectionTreeNode> result = new HashSet<>();
     for (TreePath path : paths) {
       final Object node = path.getLastPathComponent();
       if (!(node instanceof TreeNode)) continue;
@@ -225,8 +218,10 @@ public class SuppressActionWrapper extends ActionGroup implements CompactActionG
         @Override
         public boolean accept(final Object node) {    //fetch leaves
           final InspectionTreeNode n = (InspectionTreeNode)node;
-          if (n.isLeaf()) {
-            result.add(n);
+          if (n instanceof SuppressableInspectionTreeNode &&
+              ((SuppressableInspectionTreeNode)n).canSuppress() &&
+              !((SuppressableInspectionTreeNode)n).isAlreadySuppressedFromView()) {
+            result.add((SuppressableInspectionTreeNode)n);
           }
           return true;
         }
