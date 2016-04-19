@@ -28,7 +28,7 @@ public class WrapBlocksState extends State {
   private final InitialInfoBuilder myWrapper;
   private final BlockIndentOptions myBlockIndentOptions;
   private WhiteSpace myLastWhiteSpace;
-  private BlockMapperHelper myBlockMapperHelper;
+  private BlockRangesMap myBlockRangesMap;
   private DependentSpacingEngine myDependentSpacingEngine;
   private AlignmentHelper myAlignmentHelper;
   private IndentAdjuster myIndentAdjuster;
@@ -73,18 +73,18 @@ public class WrapBlocksState extends State {
     return myLastWhiteSpace;
   }
   
-  public BlockMapperHelper getBlockMapperHelper() {
+  public BlockRangesMap getBlockRangesMap() {
     assertDone();
-    if (myBlockMapperHelper == null) {
-      myBlockMapperHelper = new BlockMapperHelper(getFirstBlock(), getLastBlock());
+    if (myBlockRangesMap == null) {
+      myBlockRangesMap = new BlockRangesMap(getFirstBlock(), getLastBlock());
     }
-    return myBlockMapperHelper;
+    return myBlockRangesMap;
   }
   
   public DependentSpacingEngine getDependentSpacingEngine() {
     assertDone();
     if (myDependentSpacingEngine == null) {
-      myDependentSpacingEngine = new DependentSpacingEngine(getBlockMapperHelper());
+      myDependentSpacingEngine = new DependentSpacingEngine(getBlockRangesMap());
     }
     return myDependentSpacingEngine;
   }
@@ -120,9 +120,13 @@ public class WrapBlocksState extends State {
     assertDone();
     if (myWrapProcessor == null) {
       int rightMargin = myBlockIndentOptions.getRightMargin();
-      myWrapProcessor = new WrapProcessor(myBlockMapperHelper, getIndentAdjuster(), rightMargin);
+      myWrapProcessor = new WrapProcessor(myBlockRangesMap, getIndentAdjuster(), rightMargin);
     }
     return myWrapProcessor;
+  }
+
+  public BlockIndentOptions getBlockIndentOptions() {
+    return myBlockIndentOptions;
   }
   
   private void assertDone() {

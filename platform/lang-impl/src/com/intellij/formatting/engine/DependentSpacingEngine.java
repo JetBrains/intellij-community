@@ -49,7 +49,7 @@ import java.util.*;
  * formatting iteration.
  */
 public class DependentSpacingEngine {
-  private final BlockMapperHelper myBlockMapperHelper;
+  private final BlockRangesMap myBlockRangesMap;
   
   private SortedMap<TextRange, DependantSpacingImpl> myPreviousDependencies =
     new TreeMap<TextRange, DependantSpacingImpl>(new Comparator<TextRange>() {
@@ -64,8 +64,8 @@ public class DependentSpacingEngine {
       }
     });
 
-  public DependentSpacingEngine(BlockMapperHelper helper) {
-    myBlockMapperHelper = helper;
+  public DependentSpacingEngine(BlockRangesMap helper) {
+    myBlockRangesMap = helper;
   }
 
   public boolean shouldReformatPreviouslyLocatedDependentSpacing(WhiteSpace space) {
@@ -82,7 +82,7 @@ public class DependentSpacingEngine {
         }
 
         final boolean containedLineFeeds = spacing.getMinLineFeeds() > 0;
-        final boolean containsLineFeeds = myBlockMapperHelper.containsLineFeeds(textRange);
+        final boolean containsLineFeeds = myBlockRangesMap.containsLineFeeds(textRange);
 
         if (containedLineFeeds != containsLineFeeds) {
           spacing.setDependentRegionLinefeedStatusChanged();

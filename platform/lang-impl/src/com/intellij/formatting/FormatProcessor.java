@@ -77,8 +77,8 @@ public class FormatProcessor {
     myStateProcessor = new StateProcessor(myWrapState);
   }
   
-  public BlockMapperHelper getBlockMapperHelper() {
-    return myWrapState.getBlockMapperHelper();
+  public BlockRangesMap getBlockRangesMap() {
+    return myWrapState.getBlockRangesMap();
   }
 
   public void format(FormattingModel model) {
@@ -88,8 +88,8 @@ public class FormatProcessor {
   public void format(FormattingModel model, boolean sequentially) {
     if (sequentially) {
       myStateProcessor.setNextState(new AdjustWhiteSpacesState(myWrapState, myProgressCallback, myReformatContext));
-      myStateProcessor.setNextState(new ExpandChildrenIndent(myDocument, myWrapState));
-      myStateProcessor.setNextState(new ApplyChangesState(model, myWrapState, myProgressCallback, myBlockIndentOptions));
+      myStateProcessor.setNextState(new ExpandChildrenIndentState(myDocument, myWrapState));
+      myStateProcessor.setNextState(new ApplyChangesState(model, myWrapState, myProgressCallback));
     }
     else {
       formatWithoutRealModifications(false);
@@ -119,7 +119,7 @@ public class FormatProcessor {
   @SuppressWarnings({"WhileLoopSpinsOnField"})
   public void formatWithoutRealModifications(boolean sequentially) {
     myStateProcessor.setNextState(new AdjustWhiteSpacesState(myWrapState, myProgressCallback, myReformatContext));
-    myStateProcessor.setNextState(new ExpandChildrenIndent(myDocument, myWrapState));
+    myStateProcessor.setNextState(new ExpandChildrenIndentState(myDocument, myWrapState));
     if (sequentially) {
       return;
     }
@@ -131,7 +131,7 @@ public class FormatProcessor {
   }
 
   public void performModifications(FormattingModel model, boolean sequentially) {
-    myStateProcessor.setNextState(new ApplyChangesState(model, myWrapState, myProgressCallback, myBlockIndentOptions));
+    myStateProcessor.setNextState(new ApplyChangesState(model, myWrapState, myProgressCallback));
 
     if (sequentially) {
       return;

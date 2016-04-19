@@ -22,14 +22,14 @@ import java.util.ArrayList;
 
 public class WrapProcessor {
   private LeafBlockWrapper myFirstWrappedBlockOnLine = null;
-  private BlockMapperHelper myBlockMapperHelper;
+  private BlockRangesMap myBlockRangesMap;
   private LeafBlockWrapper myWrapCandidate = null;
   private IndentAdjuster myIndentAdjuster;
   private int myRightMargin;
 
-  public WrapProcessor(BlockMapperHelper blockHelper, IndentAdjuster indentAdjuster, int rightMargin) {
+  public WrapProcessor(BlockRangesMap blockHelper, IndentAdjuster indentAdjuster, int rightMargin) {
     myIndentAdjuster = indentAdjuster;
-    myBlockMapperHelper = blockHelper;
+    myBlockRangesMap = blockHelper;
     myRightMargin = rightMargin;
   }
 
@@ -77,7 +77,7 @@ public class WrapProcessor {
       return startColumnNow > startColumnAfterWrap;
     }
     finally {
-      whiteSpace.removeLineFeeds(currentBlock.getSpaceProperty(), myBlockMapperHelper);
+      whiteSpace.removeLineFeeds(currentBlock.getSpaceProperty(), myBlockRangesMap);
       whiteSpace.setSpaces(spaces, indentSpaces);
     }
   }
@@ -136,7 +136,7 @@ public class WrapProcessor {
       myFirstWrappedBlockOnLine = null;
 
       if (!whiteSpace.containsLineFeedsInitially()) {
-        whiteSpace.removeLineFeeds(spacing, myBlockMapperHelper);
+        whiteSpace.removeLineFeeds(spacing, myBlockRangesMap);
       }
     }
 

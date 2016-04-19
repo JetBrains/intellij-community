@@ -16,7 +16,7 @@
 
 package com.intellij.formatting;
 
-import com.intellij.formatting.engine.BlockMapperHelper;
+import com.intellij.formatting.engine.BlockRangesMap;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -89,7 +89,7 @@ public class DependantSpacingImpl extends SpacingImpl {
   }
 
   @Override
-  public void refresh(BlockMapperHelper helper) {
+  public void refresh(BlockRangesMap helper) {
     if (isDependentRegionLinefeedStatusChanged()) {
       return;
     }

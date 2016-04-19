@@ -51,11 +51,11 @@ public class ApplyChangesState extends State {
 
   private BlockIndentOptions myBlockIndentOptions;
 
-  public ApplyChangesState(FormattingModel model, WrapBlocksState state, FormattingProgressCallback callback, BlockIndentOptions options) {
+  public ApplyChangesState(FormattingModel model, WrapBlocksState state, FormattingProgressCallback callback) {
     myModel = model;
     myWrapState = state;
     myProgressCallback = callback;
-    myBlockIndentOptions = options;
+    myBlockIndentOptions = state.getBlockIndentOptions();
   }
 
   /**

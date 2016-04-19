@@ -25,7 +25,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-public class ExpandChildrenIndent extends State {
+public class ExpandChildrenIndentState extends State {
   private final Document myDocument;
   private final WrapBlocksState myWrapState;
   private IndentAdjuster myIndentAdjuster;
@@ -35,7 +35,7 @@ public class ExpandChildrenIndent extends State {
   private Iterator<ExpandableIndent> myIterator;
   private MultiMap<Alignment, LeafBlockWrapper> myBlocksToRealign = new MultiMap<Alignment, LeafBlockWrapper>();
 
-  public ExpandChildrenIndent(Document document, WrapBlocksState state) {
+  public ExpandChildrenIndentState(Document document, WrapBlocksState state) {
     myDocument = document;
     myWrapState = state;
   }

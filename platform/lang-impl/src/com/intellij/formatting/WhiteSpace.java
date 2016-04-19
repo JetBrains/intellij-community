@@ -16,7 +16,7 @@
 
 package com.intellij.formatting;
 
-import com.intellij.formatting.engine.BlockMapperHelper;
+import com.intellij.formatting.engine.BlockRangesMap;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -394,7 +394,7 @@ public class WhiteSpace {
    * Tries to ensure that number of line feeds managed by the current {@link WhiteSpace} is consistent to the settings
    * defined at the given spacing property.
    */
-  public void arrangeLineFeeds(final SpacingImpl spaceProperty, final BlockMapperHelper helper) {
+  public void arrangeLineFeeds(final SpacingImpl spaceProperty, final BlockRangesMap helper) {
     performModification(new Runnable() {
       @Override
       public void run() {
@@ -540,7 +540,7 @@ public class WhiteSpace {
    * This method may be considered a shortcut for calling {@link #arrangeLineFeeds(SpacingImpl, FormatProcessor)} and
    * {@link #arrangeSpaces(SpacingImpl)}.
    */
-  public void removeLineFeeds(final SpacingImpl spacing, final BlockMapperHelper helper) {
+  public void removeLineFeeds(final SpacingImpl spacing, final BlockRangesMap helper) {
     performModification(new Runnable() {
       @Override
       public void run() {

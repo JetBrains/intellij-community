@@ -35,7 +35,7 @@ public class AdjustWhiteSpacesState extends State {
   
   private DependentSpacingEngine myDependentSpacingEngine;
   private WrapProcessor myWrapProcessor;
-  private BlockMapperHelper myBlockMapperHelper;
+  private BlockRangesMap myBlockRangesMap;
   private IndentAdjuster myIndentAdjuster;
 
 
@@ -61,7 +61,7 @@ public class AdjustWhiteSpacesState extends State {
       myDependentSpacingEngine = myWrapBlocksState.getDependentSpacingEngine();
       myWrapProcessor = myWrapBlocksState.getWrapProcessor();
       myIndentAdjuster = myWrapBlocksState.getIndentAdjuster();
-      myBlockMapperHelper = myWrapBlocksState.getBlockMapperHelper();
+      myBlockRangesMap = myWrapBlocksState.getBlockRangesMap();
       myAlignmentsInsideRangesToModify = myWrapBlocksState.getAlignmentsInsideRangesToModify();
     }
   }
@@ -70,7 +70,7 @@ public class AdjustWhiteSpacesState extends State {
                                 DependentSpacingEngine dependentSpacingEngine,
                                 WrapProcessor wrapProcessor,
                                 IndentAdjuster indentAdjuster,
-                                BlockMapperHelper blockMapperHelper,
+                                BlockRangesMap blockRangesMap,
                                 Set<Alignment> alignmentsInsideRangesToModify,
                                 boolean isReformatContext,
                                 FormattingProgressCallback progressCallback) 
@@ -80,7 +80,7 @@ public class AdjustWhiteSpacesState extends State {
     myDependentSpacingEngine = dependentSpacingEngine;
     myWrapProcessor = wrapProcessor;
     myIndentAdjuster = indentAdjuster;
-    myBlockMapperHelper = blockMapperHelper;
+    myBlockRangesMap = blockRangesMap;
     myAlignmentsInsideRangesToModify = alignmentsInsideRangesToModify;
     myReformatContext = isReformatContext;
     myProgressCallback = progressCallback;
@@ -178,7 +178,7 @@ public class AdjustWhiteSpacesState extends State {
       }
     }
 
-    whiteSpace.arrangeLineFeeds(spaceProperty, myBlockMapperHelper);
+    whiteSpace.arrangeLineFeeds(spaceProperty, myBlockRangesMap);
 
     if (!whiteSpace.containsLineFeeds()) {
       whiteSpace.arrangeSpaces(spaceProperty);

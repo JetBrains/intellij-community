@@ -16,7 +16,7 @@
 
 package com.intellij.formatting;
 
-import com.intellij.formatting.engine.BlockMapperHelper;
+import com.intellij.formatting.engine.BlockRangesMap;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -92,7 +92,7 @@ public class SpacingImpl extends Spacing {
   /**
    * Allows to ask to refresh current state using given formatter if necessary.
    */
-  public void refresh(BlockMapperHelper helper) {
+  public void refresh(BlockRangesMap helper) {
   }
 
   public final boolean shouldKeepLineFeeds() {
