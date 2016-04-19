@@ -1,19 +1,8 @@
-buildscript {
-  repositories {
-    maven {
-      url "https://plugins.gradle.org/m2/"
-    }
-//    maven {
-//      url uri('../mvn_repo')
-//    }
-  }
-  dependencies {
-    classpath group: 'com.jetbrains.python', name: 'gradle-python-envs', version: '0.0.2+'
-  }
+plugins {
+  id "com.jetbrains.python.envs" version "0.0.2"
 }
 
 
-apply plugin: 'com.jetbrains.python.envs'
 
 
 envs {
