@@ -139,7 +139,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
     PsiElement parent = orig.getParent();
     if (parent == null) return;
     if (statement instanceof PsiBlockStatement && parent instanceof PsiCodeBlock &&
-        !VariableSearchUtils.containsConflictingDeclarations((PsiCodeBlock)parent, (PsiCodeBlock)parent)) {
+        !VariableSearchUtils.containsConflictingDeclarations(((PsiBlockStatement)statement).getCodeBlock(), (PsiCodeBlock)parent)) {
       // See IDEADEV-24277
       // Code block can only be inlined into another (parent) code block.
       // Code blocks, which are if or loop statement branches should not be inlined.
