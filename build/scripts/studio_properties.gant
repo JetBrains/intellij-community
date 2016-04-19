@@ -96,20 +96,21 @@ def getProperties(String home, String buildNumber) {
       if (!aosp) {
         return
       }
-      if (SystemInfo.isWindows) {
-        ant.exec(dir: "${home}/..", executable: "cmd.exe") {
-          arg(value: "/c")
-          arg(value: "gradlew.bat")
-          arg(value: "init")
-          arg(value: "publishLocal")
-        }
-      } else {
-        ant.exec(dir: "${home}/..", executable: "/bin/sh") {
-          arg(value: "gradlew")
-          arg(value: "init")
-          arg(value: "publishLocal")
-        }
-      }
+// TODO: This only seems to be working on Mac:
+//      if (SystemInfo.isWindows) {
+//        ant.exec(dir: "${home}/..", executable: "cmd.exe") {
+//          arg(value: "/c")
+//          arg(value: "gradlew.bat")
+//          arg(value: "clean")
+//          arg(value: "publishLocal")
+//        }
+//      } else {
+//        ant.exec(dir: "${home}/..", executable: "/bin/sh") {
+//          arg(value: "gradlew")
+//          arg(value: "clean")
+//          arg(value: "publishLocal")
+//        }
+//      }
 
       layout(targetDirectory) {
         dir("${lldbBinTargetRoot}/shared") {
@@ -119,7 +120,8 @@ def getProperties(String home, String buildNumber) {
         dir("gradle") {
           dir("m2repository") {
             fileset(dir: "$studioRepo")
-            fileset(dir: "$home/../../out/studio")
+// TODO reenable when gradle integration is complete
+//            fileset(dir: "$home/../../out/studio")
           }
         }
 
