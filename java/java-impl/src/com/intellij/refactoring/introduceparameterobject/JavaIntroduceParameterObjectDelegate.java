@@ -292,5 +292,14 @@ public class JavaIntroduceParameterObjectDelegate
         }
       }
     }
+
+    if (classDescriptor.isUseExistingClass()) {
+      for (ParameterInfoImpl info : classDescriptor.getParamsToMerge()) {
+        Object existingClassBean = classDescriptor.getBean(info);
+        if (existingClassBean == null) {
+          conflicts.putValue(classDescriptor.getExistingClass(), "No field associated with " + info.getName() + " found");
+        }
+      }
+    }
   }
 }

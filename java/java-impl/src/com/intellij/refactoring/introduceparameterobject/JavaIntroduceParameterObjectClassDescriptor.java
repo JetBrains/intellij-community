@@ -189,7 +189,7 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
     return bean != null ? bean.getField() : null;
   }
 
-  private ParameterBean getBean(ParameterInfoImpl param) {
+  public ParameterBean getBean(ParameterInfoImpl param) {
     return myExistingClassProperties.get(param);
   }
 
@@ -217,18 +217,22 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
         break;
       }
     }
-    if (compatibleConstructor == null) {
+
+    PsiField[] fields = aClass.getFields();
+    if (compatibleConstructor == null && !areTypesCompatible(getParamsToMerge(), fields, aClass)) {
       return null;
     }
-    final PsiParameterList parameterList = compatibleConstructor.getParameterList();
-    final PsiParameter[] constructorParams = parameterList.getParameters();
-    for (int i = 0; i < constructorParams.length; i++) {
-      final PsiParameter param = constructorParams[i];
+
+    final PsiVariable[] constructorParams = compatibleConstructor != null ? compatibleConstructor.getParameterList().getParameters()
+                                                                          : fields;
+    for (int i = 0; i < getParamsToMerge().length; i++) {
       final ParameterInfoImpl methodParam = getParameterInfo(i);
       final ParameterBean bean = new ParameterBean();
       myExistingClassProperties.put(methodParam, bean);
 
-      final PsiField field = findFieldAssigned(param, compatibleConstructor);
+      final PsiVariable var = constructorParams[i];
+
+      final PsiField field = var instanceof PsiParameter ? findFieldAssigned((PsiParameter)var, compatibleConstructor) : (PsiField)var;
       if (field == null) {
         return null;
       }
@@ -251,11 +255,15 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
   private boolean constructorIsCompatible(PsiMethod constructor, ParameterInfoImpl[] paramsToMerge, PsiElement context) {
     final PsiParameterList parameterList = constructor.getParameterList();
     final PsiParameter[] constructorParams = parameterList.getParameters();
-    if (constructorParams.length != paramsToMerge.length) {
+    return areTypesCompatible(paramsToMerge, constructorParams, context);
+  }
+
+  private boolean areTypesCompatible(ParameterInfoImpl[] expected, PsiVariable[] actual, PsiElement context) {
+    if (actual.length != expected.length) {
       return false;
     }
-    for (int i = 0; i < constructorParams.length; i++) {
-      if (!TypeConversionUtil.isAssignable(constructorParams[i].getType(),
+    for (int i = 0; i < actual.length; i++) {
+      if (!TypeConversionUtil.isAssignable(actual[i].getType(),
                                            getParameterInfo(i).getTypeWrapper().getType(context, context.getManager()))) {
         return false;
       }
