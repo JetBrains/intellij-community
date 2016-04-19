@@ -17,6 +17,7 @@ package com.intellij.refactoring.introduceparameterobject;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -24,6 +25,7 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.changeSignature.*;
@@ -260,6 +262,19 @@ public class JavaIntroduceParameterObjectDelegate
     if (moveDestination != null) {
       if (!moveDestination.isTargetAccessible(method.getProject(), method.getContainingFile().getVirtualFile())) {
         conflicts.putValue(method, "Created class won't be accessible");
+      }
+
+      final PsiFile containingFile = method.getContainingFile();
+      final PsiDirectory containingDirectory = containingFile.getContainingDirectory();
+      PsiDirectory directory = moveDestination.getTargetDirectory(containingDirectory);
+      if (directory != null) {
+        PsiFile file = directory.findFile(classDescriptor.getClassName() + ".java");
+        if (file != null) {
+          VirtualFile virtualFile = PsiUtilCore.getVirtualFile(file);
+          if (virtualFile != null) {
+            conflicts.putValue(method, "File already exits: " + virtualFile.getPresentableUrl());
+          }
+        }
       }
     }
 

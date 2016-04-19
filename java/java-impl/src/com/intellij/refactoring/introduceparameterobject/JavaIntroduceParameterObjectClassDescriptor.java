@@ -329,7 +329,7 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
       }
     }
     catch (IncorrectOperationException e) {
-      LOG.info(e);
+      LOG.error(e);
     }
     return null;
   }
