@@ -42,33 +42,16 @@ public class AlignmentHelper {
   private final Document myDocument;
   private final BlockIndentOptions myBlockIndentOptions;
 
-  private int myTotalBlocksWithAlignments;
-  private int myBlockRollbacks;
+  private final AlignmentCyclesDetector myCyclesDetector;
 
-
-  /**
-   * Remembers mappings between backward-shifted aligned block and blocks that cause that shift in order to detect
-   * infinite cycles that may occur when, for example following alignment is specified:
-   * <p/>
-   * <pre>
-   *     int i1     = 1;
-   *     int i2, i3 = 2;
-   * </pre>
-   * <p/>
-   * There is a possible case that <code>'i1'</code>, <code>'i2'</code> and <code>'i3'</code> blocks re-use
-   * the same alignment, hence, <code>'i1'</code> is shifted to right during <code>'i3'</code> processing but
-   * that causes <code>'i2'</code> to be shifted right as wll because it's aligned to <code>'i1'</code> that
-   * increases offset of <code>'i3'</code> that, in turn, causes backward shift of <code>'i1'</code> etc.
-   * <p/>
-   * This map remembers such backward shifts in order to be able to break such infinite cycles.
-   */
   private final Map<LeafBlockWrapper, Set<LeafBlockWrapper>> myBackwardShiftedAlignedBlocks = ContainerUtil.newHashMap();
   private final Map<AbstractBlockWrapper, Set<AbstractBlockWrapper>> myAlignmentMappings = ContainerUtil.newHashMap();
 
   public AlignmentHelper(Document document, MultiMap<Alignment, Block> blocksToAlign, BlockIndentOptions options) {
     myDocument = document;
-    myTotalBlocksWithAlignments = blocksToAlign.values().size();
     myBlockIndentOptions = options;
+    int totalBlocks = blocksToAlign.values().size();
+    myCyclesDetector = new AlignmentCyclesDetector(totalBlocks);
   }
   
   private static void reportAlignmentProcessingError(BlockAlignmentProcessor.Context context) {
@@ -89,8 +72,9 @@ public class AlignmentHelper {
     BlockAlignmentProcessor.Context context = new BlockAlignmentProcessor.Context(
       myDocument, alignment, currentBlock, myAlignmentMappings, myBackwardShiftedAlignedBlocks,
       myBlockIndentOptions.getIndentOptions(currentBlock));
-    BlockAlignmentProcessor.Result result = alignmentProcessor.applyAlignment(context);
     final LeafBlockWrapper offsetResponsibleBlock = alignment.getOffsetRespBlockBefore(currentBlock);
+    myCyclesDetector.registerOffsetResponsibleBlock(offsetResponsibleBlock);
+    BlockAlignmentProcessor.Result result = alignmentProcessor.applyAlignment(context);
     switch (result) {
       case TARGET_BLOCK_PROCESSED_NOT_ALIGNED:
         return null;
@@ -106,12 +90,11 @@ public class AlignmentHelper {
         myBackwardShiftedAlignedBlocks.put(offsetResponsibleBlock, blocksCausedRealignment);
         blocksCausedRealignment.add(currentBlock);
         storeAlignmentMapping(currentBlock, offsetResponsibleBlock);
-
-        if (myBlockRollbacks > myTotalBlocksWithAlignments) {
+        if (myCyclesDetector.isCycleDetected()) {
           reportAlignmentProcessingError(context);
           return null;
         }
-        myBlockRollbacks++;
+        myCyclesDetector.registerBlockRollback(currentBlock);
         return offsetResponsibleBlock.getNextBlock();
       case RECURSION_DETECTED:
         myAlignmentsToSkip.add(alignment);
