@@ -20,6 +20,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.GeneralCommandLine.ParentEnvironmentType;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.configurations.SimpleJavaParameters;
+import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
@@ -30,10 +31,12 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.util.PathUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.lang.ClassPath;
 import com.intellij.util.lang.UrlClassLoader;
 import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,6 +48,7 @@ import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.UnsupportedCharsetException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
@@ -278,6 +282,12 @@ public class JdkUtil {
       commandLine.addParameter("@vm_params");
       commandLine.addParameter(vmParamsFile.getAbsolutePath());
     }
+
+    if (classpathFile != null || vmParamsFile != null) {
+      final Set<File> filesToDelete = getFilesToDeleteUserData(commandLine);
+      ContainerUtil.addIfNotNull(classpathFile, filesToDelete);
+      ContainerUtil.addIfNotNull(vmParamsFile, filesToDelete);
+    }
   }
 
   private static void appendJarClasspathParams(SimpleJavaParameters javaParameters,
@@ -306,7 +316,11 @@ public class JdkUtil {
       }
       final boolean notEscape = vmParametersList.hasParameter(PROPERTY_DO_NOT_ESCAPE_CLASSPATH_URL);
       final List<String> classPathList = javaParameters.getClassPath().getPathList();
-      final String jarFile = CommandLineWrapperUtil.createClasspathJarFile(manifest, classPathList, notEscape).getAbsolutePath();
+
+      final File classpathJarFile = CommandLineWrapperUtil.createClasspathJarFile(manifest, classPathList, notEscape);
+      getFilesToDeleteUserData(commandLine).add(classpathJarFile);
+
+      final String jarFile = classpathJarFile.getAbsolutePath();
       commandLine.addParameter("-classpath");
       if (writeDynamicVMOptions) {
         commandLine.addParameter(PathUtil.getJarPathForClass(commandLineWrapper) + File.pathSeparator + jarFile);
@@ -378,6 +392,15 @@ public class JdkUtil {
       catch (UnsupportedCharsetException ignore) { }
       catch (IllegalCharsetNameException ignore) { }
     }
+  }
+
+  private static Set<File> getFilesToDeleteUserData(GeneralCommandLine commandLine) {
+    Set<File> filesToDelete = commandLine.getUserData(OSProcessHandler.DELETE_FILES_ON_TERMINATION);
+    if (filesToDelete == null) {
+      filesToDelete = new THashSet<>();
+      commandLine.putUserData(OSProcessHandler.DELETE_FILES_ON_TERMINATION, filesToDelete);
+    }
+    return filesToDelete;
   }
 
   @Nullable

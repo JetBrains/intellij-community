@@ -27,6 +27,7 @@ import com.intellij.notification.impl.ui.NotificationsUtil;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.openapi.wm.IconLikeCustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
@@ -35,6 +36,7 @@ import com.intellij.ui.ClickListener;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -191,7 +193,7 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
       myStr = str;
       myComponent = component;
       myTextColor = textColor;
-      myFont = new Font(NotificationsUtil.getFontName(), Font.BOLD, 9);
+      myFont = new Font(NotificationsUtil.getFontName(), Font.BOLD, JBUI.scale(9));
       myWidth = myComponent.getFontMetrics(myFont).stringWidth(myStr);
     }
 
@@ -227,6 +229,15 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
 
       x += (getIconWidth() - myWidth) / 2;
       y += SimpleColoredComponent.getTextBaseLine(g.getFontMetrics(), getIconHeight());
+
+      if (SystemInfo.isLinux) {
+        if (myStr.length() == 1) {
+          x--;
+        }
+      }
+      else if (myStr.length() == 2) {
+        x++;
+      }
 
       g.setColor(myTextColor);
       g.drawString(myStr, x, y);

@@ -73,6 +73,7 @@ public class IndexingStamp {
   private IndexingStamp() {}
 
   public static synchronized void rewriteVersion(@NotNull final File file, final int version) throws IOException {
+    SharedIndicesData.beforeSomeIndexVersionInvalidation();
     final long prevLastModifiedValue = file.lastModified();
     if (file.exists()) {
       FileUtil.deleteWithRenaming(file);
@@ -142,7 +143,7 @@ public class IndexingStamp {
     }
   }
 
-  private static long getIndexCreationStamp(@NotNull ID<?, ?> indexName) {
+  static long getIndexCreationStamp(@NotNull ID<?, ?> indexName) {
     Long version = ourIndexIdToCreationStamp.get(indexName);
     if (version != null) return version.longValue();
 

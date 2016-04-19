@@ -597,7 +597,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
 
     final PsiElement tempContainer = anchorStatement.getParent();
 
-    if (!(tempContainer instanceof PsiCodeBlock) && !RefactoringUtil.isLoopOrIf(tempContainer) && (tempContainer.getParent() instanceof PsiLambdaExpression)) {
+    if (!(tempContainer instanceof PsiCodeBlock) && !RefactoringUtil.isLoopOrIf(tempContainer) && !(tempContainer instanceof PsiLambdaExpression) && (tempContainer.getParent() instanceof PsiLambdaExpression)) {
       String message = RefactoringBundle.message("refactoring.is.not.supported.in.the.current.context", REFACTORING_NAME);
       showErrorMessage(project, editor, message);
       return false;

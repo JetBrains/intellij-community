@@ -46,7 +46,11 @@ def do_list():
     except ImportError:
         error("Python packaging tool 'setuptools' not found", ERROR_NO_SETUPTOOLS)
     for pkg in pkg_resources.working_set:
-        requires = ':'.join([str(x) for x in pkg.requires()])
+        try:
+            requirements = pkg.requires()
+        except Exception:
+            requirements = []
+        requires = ':'.join([str(x) for x in requirements])
         sys.stdout.write('\t'.join([pkg.project_name, pkg.version, pkg.location, requires])+chr(10))
     sys.stdout.flush()
 

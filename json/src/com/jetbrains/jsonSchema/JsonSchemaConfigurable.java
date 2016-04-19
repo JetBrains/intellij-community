@@ -8,6 +8,8 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.CollectConsumer;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.JsonSchemaReader;
@@ -103,8 +105,11 @@ public class JsonSchemaConfigurable extends NamedConfigurable<JsonSchemaMappings
     if (StringUtil.isEmptyOrSpaces(myView.getSchemaSubPath())) throw new ConfigurationException("Schema path is empty");
     final CollectConsumer<String> collectConsumer = new CollectConsumer<>();
     final File file = new File(myProject.getBasePath(), myView.getSchemaSubPath());
+    VirtualFile vFile = null;
+    if (!file.exists() || (vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file)) == null)
+      throw new ConfigurationException("Schema file does not exist");
     final JsonSchemaService service = JsonSchemaService.Impl.get(myProject);
-    if (service != null && !service.isSchemaFile(file, collectConsumer)) {
+    if (service != null && !service.isSchemaFile(vFile, collectConsumer)) {
       final String message;
       if (collectConsumer.getResult().isEmpty()) message = "Can not read JSON schema from file (Unknown reason)";
       else message = "Can not read JSON schema from file: " + StringUtil.join(collectConsumer.getResult(), "; ");

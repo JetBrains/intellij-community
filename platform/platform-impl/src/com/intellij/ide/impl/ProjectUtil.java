@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,6 +46,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 
@@ -176,6 +177,17 @@ public class ProjectUtil {
       }
     }
 
+    if (isRemotePath(path) && !RecentProjectsManager.getInstance().hasPath(path)) {
+      final Window window = getActiveFrameOrWelcomeScreen();
+      final String msg = IdeBundle.message("warning.load.project.from.share", path);
+      final String title = IdeBundle.message("title.load.project.from.share");
+      final Icon icon = Messages.getWarningIcon();
+      final int answer = window == null ? Messages.showYesNoDialog(msg, title, icon) : Messages.showYesNoDialog(window, msg, title, icon);
+      if (answer != Messages.YES) {
+        return null;
+      }
+    }
+
     ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
     Project project = null;
     try {
@@ -196,6 +208,23 @@ public class ProjectUtil {
                                  Messages.getErrorIcon());
     }
     return project;
+  }
+
+  private static Window getActiveFrameOrWelcomeScreen() {
+    Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
+    if (window != null)  return window;
+
+    for (Frame frame : Frame.getFrames()) {
+      if (frame instanceof IdeFrame && frame.isVisible()) {
+        return frame;
+      }
+    }
+
+    return null;
+  }
+
+  private static boolean isRemotePath(@NotNull String path) {
+    return path.contains("//") || path.contains("\\\\");
   }
 
   @Nullable

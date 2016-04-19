@@ -19,12 +19,16 @@ import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
+import org.jetbrains.jps.model.JpsDummyElement;
+import org.jetbrains.jps.model.java.JpsJavaSdkType;
+import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.org.objectweb.asm.ClassReader;
 import org.jetbrains.org.objectweb.asm.ClassVisitor;
 import org.jetbrains.org.objectweb.asm.ClassWriter;
@@ -85,8 +89,8 @@ public abstract class ClassProcessingBuilder extends ModuleLevelBuilder {
         final Collection<File> classpath = new ArrayList<File>();
         classpath.addAll(ProjectPaths.getCompilationClasspath(chunk, false));
         classpath.addAll(ProjectPaths.getSourceRootsWithDependents(chunk).keySet());
-
-        finder = createInstrumentationClassFinder(platformCp, classpath, outputConsumer);
+        final JpsSdk<JpsDummyElement> sdk = chunk.representativeTarget().getModule().getSdk(JpsJavaSdkType.INSTANCE);
+        finder = createInstrumentationClassFinder(sdk, platformCp, classpath, outputConsumer);
         CLASS_FINDER.set(context, finder);
       }
 
@@ -109,10 +113,21 @@ public abstract class ClassProcessingBuilder extends ModuleLevelBuilder {
 
 
   // utility methods
-  public static InstrumentationClassFinder createInstrumentationClassFinder(Collection<File> platformCp, Collection<File> cp, final OutputConsumer outputConsumer) throws
+  public static InstrumentationClassFinder createInstrumentationClassFinder(@Nullable JpsSdk<?> sdk,
+                                                                            Collection<File> platformCp,
+                                                                            Collection<File> cp,
+                                                                            final OutputConsumer outputConsumer) throws
                                                                                                                                                                    MalformedURLException {
-    final URL[] platformUrls = new URL[platformCp.size()];
+    final URL[] platformUrls;
     int index = 0;
+    if (sdk != null && JpsJavaSdkType.getJavaVersion(sdk) >= 9) {
+      platformUrls = new URL[1 + platformCp.size()];
+      platformUrls[index++] = InstrumentationClassFinder.createJDKPlatformUrl(sdk.getHomePath());
+    }
+    else {
+      platformUrls = new URL[platformCp.size()];
+    }
+
     for (File file : platformCp) {
       platformUrls[index++] = file.toURI().toURL();
     }

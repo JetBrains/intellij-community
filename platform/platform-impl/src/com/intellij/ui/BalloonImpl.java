@@ -114,7 +114,12 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
 
         if (myHideOnMouse && id == MouseEvent.MOUSE_PRESSED) {
           if (!insideBalloon && !hasModalDialog(me) && !isWithinChildWindow(me)) {
-            hide();
+            if (myHideListener == null) {
+              hide();
+            }
+            else {
+              myHideListener.run();
+            }
           }
           return;
         }
@@ -153,8 +158,14 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
         }
       }
 
-      if (myHideOnKey && e instanceof KeyEvent && id == KeyEvent.KEY_PRESSED) {
+      if ((myHideOnKey || myHideListener != null) && e instanceof KeyEvent && id == KeyEvent.KEY_PRESSED) {
         final KeyEvent ke = (KeyEvent)e;
+        if (myHideListener != null) {
+          if (ke.getKeyCode() == KeyEvent.VK_ESCAPE) {
+            myHideListener.run();
+          }
+          return;
+        }
         if (ke.getKeyCode() != KeyEvent.VK_SHIFT &&
             ke.getKeyCode() != KeyEvent.VK_CONTROL &&
             ke.getKeyCode() != KeyEvent.VK_ALT &&
@@ -266,6 +277,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
   private boolean myDisposed;
   private final JComponent myContent;
   private boolean myHideOnMouse;
+  private Runnable myHideListener;
   private final boolean myHideOnKey;
   private final boolean myHideOnAction;
   private final boolean myRequestFocus;
@@ -666,6 +678,14 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     }
   }
 
+  public JComponent getContent() {
+    return myContent;
+  }
+
+  public Component getComponent() {
+    return myComp;
+  }
+
   private void createComponent() {
     myComp = new MyComponent(myContent, this, myShadowBorderProvider != null ? null :
                                               myShowPointer ? myPosition.createBorder(this) : getPointlessBorder());
@@ -984,6 +1004,11 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
 
   public void setHideOnClickOutside(boolean hideOnMouse) {
     myHideOnMouse = hideOnMouse;
+  }
+
+  public void setHideListener(@NotNull Runnable listener) {
+    myHideListener = listener;
+    myHideOnMouse = true;
   }
 
   public void setShowPointer(final boolean show) {

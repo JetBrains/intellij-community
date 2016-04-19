@@ -94,7 +94,7 @@ public class AlarmTest extends PlatformTestCase {
     }
     Map<Thread, StackTraceElement[]> after = Thread.getAllStackTraces();
     System.out.println("before: "+before.size()+"; after: "+after.size());
-    assertTrue(Math.abs(before.size() - after.size()) < 10);
+    assertTrue(after.size() - before.size() < 10);
   }
 
   public void testManyAlarmsDoNotStartTooManyThreads() throws InterruptedException, ExecutionException, TimeoutException {
@@ -109,7 +109,7 @@ public class AlarmTest extends PlatformTestCase {
     }
     Map<Thread, StackTraceElement[]> after = Thread.getAllStackTraces();
     System.out.println("before: "+before.size()+"; after: "+after.size());
-    assertTrue(Math.abs(before.size() - after.size()) < 10);
+    assertTrue(after.size() - before.size() < 10);
   }
 
   public void testOrderIsPreservedAfterModalitySwitching() {

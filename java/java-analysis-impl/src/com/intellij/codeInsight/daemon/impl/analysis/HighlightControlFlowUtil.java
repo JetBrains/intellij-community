@@ -104,10 +104,8 @@ public class HighlightControlFlowUtil {
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(unreachableStatement).descriptionAndTooltip(description).create();
       }
     }
-    catch (AnalysisCanceledException e) {
+    catch (AnalysisCanceledException | IndexNotReadyException e) {
       // incomplete code
-    }
-    catch (IndexNotReadyException ignored) {
     }
     return null;
   }
@@ -376,10 +374,7 @@ public class HighlightControlFlowUtil {
         final ControlFlow controlFlow = getControlFlow(topBlock);
         codeBlockProblems = ControlFlowUtil.getReadBeforeWriteLocals(controlFlow);
       }
-      catch (AnalysisCanceledException e) {
-        codeBlockProblems = Collections.emptyList();
-      }
-      catch (IndexNotReadyException e) {
+      catch (AnalysisCanceledException | IndexNotReadyException e) {
         codeBlockProblems = Collections.emptyList();
       }
       uninitializedVarProblems.put(topBlock, codeBlockProblems);

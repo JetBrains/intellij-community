@@ -17,6 +17,7 @@ package com.theoryinpractice.testng.util;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -444,18 +445,14 @@ public class TestNGUtil {
         final PsiManager manager = PsiManager.getInstance(filter.getProject());
         final GlobalSearchScope projectScope = GlobalSearchScope.projectScope(manager.getProject());
         final GlobalSearchScope scope = projectScope.intersectWith(filter.getScope());
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          public void run() {
-            for (final PsiClass psiClass : AllClassesSearch.search(scope, manager.getProject())) {
-              if (filter.isAccepted(psiClass)) {
-                if (indicator != null) {
-                  indicator.setText2("Found test class " + psiClass.getQualifiedName());
-                }
-                set.add(psiClass);
-              }
+        for (final PsiClass psiClass : AllClassesSearch.search(scope, manager.getProject())) {
+          if (filter.isAccepted(psiClass)) {
+            if (indicator != null) {
+              indicator.setText2("Found test class " + ReadAction.compute(psiClass::getQualifiedName));
             }
+            set.add(psiClass);
           }
-        });
+        }
         holder[0] = set.toArray(new PsiClass[set.size()]);
       }
     };

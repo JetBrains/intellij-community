@@ -24,6 +24,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.ByteSequence;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.cache.impl.id.IdIndex;
@@ -38,10 +39,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.nio.charset.Charset;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -104,13 +102,19 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
 
     mySnapshotIndexExternalizer = createInputsIndexExternalizer(extension, myIndexId, extension.getKeyDescriptor());
     myValueExternalizer = extension.getValueExternalizer();
-    myContents = createContentsIndex();
     myIsPsiBackedIndex = extension instanceof PsiDependentIndex;
 
-    if (myHasSnapshotMapping) {
-      myInputsSnapshotMapping = createInputSnapshotMapping();
+    myContents = createContentsIndex(); // todo
+
+    if (!SharedIndicesData.ourFileSharedIndicesEnabled || SharedIndicesData.DO_CHECKS) {
+      if (myHasSnapshotMapping) {
+        myInputsSnapshotMapping = createInputSnapshotMapping();
+      }
+      else {
+        myInputsIndex = createInputsIndex();
+      }
     }
-    myInputsIndex = myHasSnapshotMapping ? null : createInputsIndex();
+
     if (DebugAssertions.EXTRA_SANITY_CHECKS && myHasSnapshotMapping && myIndexId != null) {
       myIndexingTrace = createIndexingTrace();
     }
@@ -395,7 +399,8 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
         hashId = getHashOfContent(fileContent);
         if (doReadSavedPersistentData) {
           if (!myContents.isBusyReading() || DebugAssertions.EXTRA_SANITY_CHECKS) { // avoid blocking read, we can calculate index value
-            ByteSequence bytes = myContents.get(hashId);
+            ByteSequence bytes = readContents(hashId);
+
             if (bytes != null) {
               data = deserializeSavedPersistentData(bytes);
               havePersistentData = true;
@@ -464,7 +469,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
               Integer currentHashId = readInputHashId(inputId);
               Collection<Key> currentKeys;
               if (currentHashId != null) {
-                ByteSequence byteSequence = myContents.get(currentHashId);
+                ByteSequence byteSequence = readContents(currentHashId);
                 currentKeys = byteSequence != null ? deserializeSavedPersistentData(byteSequence).keySet() : Collections.<Key>emptyList();
               }
               else {
@@ -501,7 +506,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
                 Integer currentHashId = readInputHashId(inputId);
                 Map<Key, Value> currentValue;
                 if (currentHashId != null) {
-                  ByteSequence byteSequence = myContents.get(currentHashId);
+                  ByteSequence byteSequence = readContents(currentHashId);
                   currentValue = byteSequence != null ? deserializeSavedPersistentData(byteSequence) : Collections.<Key, Value>emptyMap();
                 }
                 else {
@@ -585,12 +590,81 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     };
   }
 
+  private ByteSequence readContents(Integer hashId) throws IOException {
+    if (SharedIndicesData.ourFileSharedIndicesEnabled) {
+      if (SharedIndicesData.DO_CHECKS) {
+        synchronized (myContents) {
+          ByteSequence contentBytes = SharedIndicesData.recallContentData(hashId, myIndexId, ByteSequenceDataExternalizer.INSTANCE);
+          ByteSequence contentBytesFromContents = myContents.get(hashId);
+
+          if ((contentBytes == null && contentBytesFromContents != null) ||
+              !Comparing.equal(contentBytesFromContents, contentBytes)) {
+            SharedIndicesData.associateContentData(hashId, myIndexId, contentBytesFromContents, ByteSequenceDataExternalizer.INSTANCE);
+            if (contentBytes != null) {
+              LOG.error("Unexpected indexing diff with hashid " + myIndexId + "," + hashId);
+            }
+            contentBytes = contentBytesFromContents;
+          }
+          return contentBytes;
+        }
+      } else {
+        return SharedIndicesData.recallContentData(hashId, myIndexId, ByteSequenceDataExternalizer.INSTANCE);
+      }
+    }
+
+    return myContents.get(hashId);
+  }
+
+  private void saveContents(int id, BufferExposingByteArrayOutputStream out) throws IOException {
+    ByteSequence byteSequence = new ByteSequence(out.getInternalBuffer(), 0, out.size());
+    if (SharedIndicesData.ourFileSharedIndicesEnabled) {
+      if (SharedIndicesData.DO_CHECKS) {
+        synchronized (myContents) {
+          myContents.put(id, byteSequence);
+          SharedIndicesData.associateContentData(id, myIndexId, byteSequence, ByteSequenceDataExternalizer.INSTANCE);
+        }
+      } else {
+        SharedIndicesData.associateContentData(id, myIndexId, byteSequence, ByteSequenceDataExternalizer.INSTANCE);
+      }
+    } else {
+      myContents.put(id, byteSequence);
+    }
+  }
+
   private Integer readInputHashId(int inputId) throws IOException {
+    if (SharedIndicesData.ourFileSharedIndicesEnabled) {
+      Integer hashId = SharedIndicesData.recallFileData(inputId, myIndexId, EnumeratorIntegerDescriptor.INSTANCE);
+      if (hashId == null) hashId = 0;
+      if (myInputsSnapshotMapping == null) return hashId;
+
+      Integer hashIdFromInputSnapshotMapping = myInputsSnapshotMapping.get(inputId);
+      if ((hashId == 0 && hashIdFromInputSnapshotMapping != 0) ||
+          !Comparing.equal(hashIdFromInputSnapshotMapping, hashId)) {
+        SharedIndicesData.associateFileData(inputId, myIndexId, hashIdFromInputSnapshotMapping,
+                                            EnumeratorIntegerDescriptor.INSTANCE);
+        if (hashId != 0) {
+          LOG.error("Unexpected indexing diff with hashid " + myIndexId + ", file:" + IndexInfrastructure.findFileById(PersistentFS.getInstance(), inputId)
+                    + "," + hashIdFromInputSnapshotMapping + "," + hashId);
+        }
+        hashId = hashIdFromInputSnapshotMapping;
+      }
+      return hashId;
+    }
     return myInputsSnapshotMapping.get(inputId);
   }
 
   private void saveInputHashId(int inputId, int savedInputId) throws IOException {
-    myInputsSnapshotMapping.put(inputId, savedInputId);
+    if (SharedIndicesData.ourFileSharedIndicesEnabled) {
+      SharedIndicesData.associateFileData(inputId, myIndexId, savedInputId, EnumeratorIntegerDescriptor.INSTANCE);
+      //if (DebugAssertions.DEBUG) {
+      //  Integer recalledSavedInputId = SharedIndicesData.recallFileData(inputId, myIndexId, EnumeratorIntegerDescriptor.INSTANCE);
+      //  if (!Comparing.equal(recalledSavedInputId, savedInputId)) {
+      //    assert false:myIndexId + "," + savedInputId + "," + recalledSavedInputId;
+      //  }
+      //}
+    }
+
+    if (myInputsSnapshotMapping != null) myInputsSnapshotMapping.put(inputId, savedInputId);
   }
 
   private Collection<Key> readInputKeys(int inputId) throws IOException {
@@ -605,6 +679,26 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     if (myHasSnapshotMapping) {
       return null;
     }
+
+    if (SharedIndicesData.ourFileSharedIndicesEnabled) {
+      Collection<Key> keys = SharedIndicesData.recallFileData(inputId, myIndexId, mySnapshotIndexExternalizer);
+      if (myInputsIndex != null) {
+        Collection<Key> keysFromInputsIndex = myInputsIndex.get(inputId);
+
+        if ((keys == null && keysFromInputsIndex != null) ||
+            !DebugAssertions.equals(keysFromInputsIndex, keys, myExtension.getKeyDescriptor())
+           ) {
+          SharedIndicesData.associateFileData(inputId, myIndexId, keysFromInputsIndex, mySnapshotIndexExternalizer);
+          if (keys != null) {
+            DebugAssertions.error(
+              "Unexpected indexing diff " + myIndexId + ", file:" + IndexInfrastructure.findFileById(PersistentFS.getInstance(), inputId)
+              + "," + keysFromInputsIndex + "," + keys);
+          }
+          keys = keysFromInputsIndex;
+        }
+      }
+      return keys;
+    }
     return myInputsIndex.get(inputId);
   }
 
@@ -617,11 +711,27 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
       if (myHasSnapshotMapping) {
         saveInputHashId(inputId, savedInputId);
       } else {
-        if (newData.size() > 0) {
-          myInputsIndex.put(inputId, newData.keySet());
+        if (myInputsIndex != null) {
+          if (newData.size() > 0) {
+            myInputsIndex.put(inputId, newData.keySet());
+          }
+          else {
+            myInputsIndex.remove(inputId);
+          }
         }
-        else {
-          myInputsIndex.remove(inputId);
+
+        if (SharedIndicesData.ourFileSharedIndicesEnabled) {
+          Set<Key> newKeys = newData.keySet();
+          if (newKeys.size() == 0) newKeys = null;
+          SharedIndicesData.associateFileData(inputId, myIndexId, newKeys, mySnapshotIndexExternalizer);
+
+          //if (DebugAssertions.DEBUG && myInputsIndex != null) {   //
+          //  Collection<Key> recall = SharedIndicesData.recallFileData(inputId, myIndexId, mySnapshotIndexExternalizer);
+          //  Collection<Key> recall2 = myInputsIndex.get(inputId);
+          //  if (!DebugAssertions.equals(recall, recall2, myExtension.getKeyDescriptor())) {
+          //    assert false:myIndexId + ", " + recall2 + "," + recall;
+          //  }
+          //}
         }
       }
     }
@@ -779,7 +889,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
         }
       }
 
-      myContents.put(id, new ByteSequence(out.getInternalBuffer(), 0, out.size()));
+      saveContents(id, out);
     } catch (IOException ex) {
       throw new RuntimeException(ex);
     }

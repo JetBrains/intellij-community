@@ -180,8 +180,8 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
       }
     }
     if (!methods.isEmpty()) {
-      collectOverridingMethods(methods, result);
       collectSiblingInheritedMethods(methods, result);
+      collectOverridingMethods(methods, result);
     }
   }
 
@@ -189,11 +189,6 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
                                                      @NotNull Collection<LineMarkerInfo> result) {
     for (PsiMethod method : methods) {
       ProgressManager.checkCanceled();
-      PsiClass aClass = method.getContainingClass();
-      if (aClass == null || aClass.hasModifierProperty(PsiModifier.FINAL) || aClass.isInterface()) continue;
-
-      boolean canHaveSiblingSuper = !method.hasModifierProperty(PsiModifier.ABSTRACT) && !method.hasModifierProperty(PsiModifier.STATIC) && method.hasModifierProperty(PsiModifier.PUBLIC)&& !method.hasModifierProperty(PsiModifier.FINAL)&& !method.hasModifierProperty(PsiModifier.NATIVE);
-      if (!canHaveSiblingSuper) continue;
 
       PsiMethod siblingInheritedViaSubClass = FindSuperElementsHelper.getSiblingInheritedViaSubClass(method);
       if (siblingInheritedViaSubClass == null) {

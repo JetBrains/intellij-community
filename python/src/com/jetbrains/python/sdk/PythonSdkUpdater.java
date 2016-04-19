@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathMappingSettings;
 import com.intellij.util.concurrency.BlockingSet;
+import com.intellij.util.concurrency.EdtExecutorService;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.psi.PyUtil;
@@ -54,6 +55,7 @@ import java.awt.*;
 import java.io.File;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Refreshes all project's Python SDKs.
@@ -78,33 +80,20 @@ public class PythonSdkUpdater implements StartupActivity {
     if (application.isUnitTestMode()) {
       return;
     }
-    application.executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          Thread.sleep(INITIAL_ACTIVITY_DELAY);
-        }
-        catch (InterruptedException ignored) {
-        }
-        application.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            ProgressManager.getInstance().run(new Task.Backgroundable(project, "Updating Python Paths", false) {
-              @Override
-              public void run(@NotNull ProgressIndicator indicator) {
-                final Project project = getProject();
-                if (project.isDisposed()) {
-                  return;
-                }
-                for (final Sdk sdk : getPythonSdks(project)) {
-                  update(sdk, null, project, null);
-                }
-              }
-            });
+    EdtExecutorService.getScheduledExecutorInstance().schedule(() -> {
+      ProgressManager.getInstance().run(new Task.Backgroundable(project, "Updating Python Paths", false) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          final Project project = getProject();
+          if (project.isDisposed()) {
+            return;
           }
-        });
-      }
-    });
+          for (final Sdk sdk : getPythonSdks(project)) {
+            update(sdk, null, project, null);
+          }
+        }
+      });
+    }, INITIAL_ACTIVITY_DELAY, TimeUnit.MILLISECONDS);
   }
 
   /**

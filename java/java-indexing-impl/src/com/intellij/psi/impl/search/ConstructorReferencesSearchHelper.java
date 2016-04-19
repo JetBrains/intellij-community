@@ -255,17 +255,14 @@ public class ConstructorReferencesSearchHelper {
 
       @Override
       public TextRange getRangeInElement() {
-        if (usage instanceof PsiClass) {
-          PsiIdentifier identifier = ((PsiClass)usage).getNameIdentifier();
-          if (identifier != null) return TextRange.from(identifier.getStartOffsetInParent(), identifier.getTextLength());
-        }
-        else if (usage instanceof PsiField) {
-          PsiIdentifier identifier = ((PsiField)usage).getNameIdentifier();
-          return TextRange.from(identifier.getStartOffsetInParent(), identifier.getTextLength());
-        }
-        else if (usage instanceof PsiMethod) {
-          PsiIdentifier identifier = ((PsiMethod)usage).getNameIdentifier();
-          if (identifier != null) return TextRange.from(identifier.getStartOffsetInParent(), identifier.getTextLength());
+        if (usage instanceof PsiNameIdentifierOwner) {
+          PsiElement identifier = ((PsiNameIdentifierOwner)usage).getNameIdentifier();
+          if (identifier != null) {
+            final int startOffsetInParent = identifier.getStartOffsetInParent();
+            if (startOffsetInParent >= 0) { // -1 for light elements generated e.g. by lombok
+              return TextRange.from(startOffsetInParent, identifier.getTextLength());
+            }
+          }
         }
         return super.getRangeInElement();
       }

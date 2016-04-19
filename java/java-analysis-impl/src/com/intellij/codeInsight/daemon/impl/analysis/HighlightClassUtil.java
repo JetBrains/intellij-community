@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -487,7 +487,7 @@ public class HighlightClassUtil {
   @Nullable
   private static String checkDefaultConstructorThrowsException(PsiMethod constructor, @NotNull PsiClassType[] handledExceptions) {
     PsiClassType[] referencedTypes = constructor.getThrowsList().getReferencedTypes();
-    List<PsiClassType> exceptions = new ArrayList<PsiClassType>();
+    List<PsiClassType> exceptions = new ArrayList<>();
     for (PsiClassType referencedType : referencedTypes) {
       if (!ExceptionUtil.isUncheckedException(referencedType) && !ExceptionUtil.isHandledBy(referencedType, handledExceptions)) {
         exceptions.add(referencedType);
@@ -562,7 +562,7 @@ public class HighlightClassUtil {
 
   @Nullable
   static HighlightInfo checkCyclicInheritance(PsiClass aClass) {
-    PsiClass circularClass = getCircularClass(aClass, new HashSet<PsiClass>());
+    PsiClass circularClass = getCircularClass(aClass, new HashSet<>());
     if (circularClass != null) {
       String description = JavaErrorMessages.message("cyclic.inheritance", HighlightUtil.formatClass(circularClass));
       TextRange range = HighlightNamesUtil.getClassDeclarationTextRange(aClass);

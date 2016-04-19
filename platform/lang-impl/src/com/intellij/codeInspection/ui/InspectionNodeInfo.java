@@ -43,10 +43,14 @@ public class InspectionNodeInfo extends JPanel {
   private final HighlightDisplayKey myKey;
   private final InspectionProfileImpl myCurrentProfile;
   private final Project myProject;
+  @NotNull private final InspectionTree myTree;
 
-  public InspectionNodeInfo(final InspectionToolWrapper toolWrapper, Project project) {
+  public InspectionNodeInfo(@NotNull final InspectionTree tree,
+                            @NotNull final Project project) {
+    myTree = tree;
     setLayout(new GridBagLayout());
     setBorder(IdeBorderFactory.createEmptyBorder(11, 0, 0, 0));
+    final InspectionToolWrapper toolWrapper = tree.getSelectedToolWrapper();
     myProject = project;
     myCurrentProfile = (InspectionProfileImpl)InspectionProjectProfileManager.getInstance(project).getProjectProfileImpl();
     myKey = HighlightDisplayKey.find(toolWrapper.getID());
@@ -87,6 +91,8 @@ public class InspectionNodeInfo extends JPanel {
       @Override
       public boolean onClick(@NotNull MouseEvent event, int clickCount) {
         updateEnableButtonText(true);
+        tree.revalidate();
+        tree.repaint();
         return true;
       }
     }.installOn(myButton);
@@ -112,5 +118,7 @@ public class InspectionNodeInfo extends JPanel {
     myEnabledLabel.setText(isEnabled ? "Enabled" : "Disabled");
     myEnabledLabel.revalidate();
     myEnabledLabel.repaint();
+    myTree.revalidate();
+    myTree.repaint();
   }
 }

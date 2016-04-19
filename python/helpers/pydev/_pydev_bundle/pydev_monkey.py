@@ -167,8 +167,11 @@ def args_to_str(args):
         if x.startswith('"') and x.endswith('"'):
             quoted_args.append(x)
         else:
-            x = x.replace('"', '\\"')
-            quoted_args.append('"%s"' % x)
+            if ' ' in x:
+                x = x.replace('"', '\\"')
+                quoted_args.append('"%s"' % x)
+            else:
+                quoted_args.append(x)
 
     return ' '.join(quoted_args)
 

@@ -100,7 +100,7 @@ final class MacScrollBarUI extends DefaultScrollBarUI {
 
   @Override
   void paintThumb(Graphics2D g, int x, int y, int width, int height, JComponent c) {
-    RegionPainter<Float> p = isDark(c) ? JBScrollPane.MAC_THUMB_DARK_PAINTER : JBScrollPane.MAC_THUMB_PAINTER;
+    RegionPainter<Float> p = ScrollColorProducer.isDark(c) ? JBScrollPane.MAC_THUMB_DARK_PAINTER : JBScrollPane.MAC_THUMB_PAINTER;
     if (c.isOpaque()) {
       paint(p, g, x, y, width, height, c, myThumbAnimator.myValue, true);
     }

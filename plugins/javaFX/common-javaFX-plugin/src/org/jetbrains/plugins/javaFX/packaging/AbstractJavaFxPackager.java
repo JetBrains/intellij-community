@@ -59,9 +59,15 @@ public abstract class AbstractJavaFxPackager {
 
   protected abstract String getDescription();
 
+  protected abstract String getVersion();
+
   protected abstract String getWidth();
 
   protected abstract String getHeight();
+
+  protected abstract String getHtmlTemplateFile();
+
+  protected abstract String getHtmlPlaceholderId();
 
   protected abstract String getHtmlParamFile();
 
@@ -104,7 +110,7 @@ public abstract class AbstractJavaFxPackager {
       buf.append("<target name=\"build artifact\" xmlns:fx=\"javafx:com.sun.javafx.tools.ant\">");
       final String artifactFileName = getArtifactRootName();
       final List<JavaFxAntGenerator.SimpleTag> tags =
-        JavaFxAntGenerator.createJarAndDeployTasks(this, artifactFileName, getArtifactName(), tempUnzippedArtifactOutput.getPath(), false);
+        JavaFxAntGenerator.createJarAndDeployTasks(this, artifactFileName, getArtifactName(), tempUnzippedArtifactOutput.getPath(), tempDirectory.getPath(), null);
       for (JavaFxAntGenerator.SimpleTag tag : tags) {
         tag.generate(buf);
       }

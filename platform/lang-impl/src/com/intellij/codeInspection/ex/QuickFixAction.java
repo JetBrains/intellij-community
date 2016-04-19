@@ -114,7 +114,7 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
     final InspectionResultsView view = getInvoker(e);
     final InspectionTree tree = view.getTree();
     final CommonProblemDescriptor[] descriptors;
-    if (isProblemDescriptorsAcceptable() && (descriptors = tree.getSelectedDescriptors()).length > 0) {
+    if (isProblemDescriptorsAcceptable() && (descriptors = tree.getSelectedDescriptors(true)).length > 0) {
       doApplyFix(view.getProject(), descriptors, tree.getContext());
     } else {
       doApplyFix(getSelectedElements(e), view);
@@ -142,14 +142,6 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
 
     if (!FileModificationService.getInstance().prepareVirtualFilesForWrite(project, readOnlyFiles)) return;
     
-    Arrays.sort(descriptors, (c1, c2) -> {
-      if (c1 instanceof ProblemDescriptor && c2 instanceof ProblemDescriptor) {
-        return PsiUtilCore.compareElementsByPosition(((ProblemDescriptor)c2).getPsiElement(), 
-                                                     ((ProblemDescriptor)c1).getPsiElement());
-      }
-      return c1.getDescriptionTemplate().compareTo(c2.getDescriptionTemplate()); 
-    });
-
     final RefManagerImpl refManager = (RefManagerImpl)context.getRefManager();
 
     final boolean initial = refManager.isInProcess();

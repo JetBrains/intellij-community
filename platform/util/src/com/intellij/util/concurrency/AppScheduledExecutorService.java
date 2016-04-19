@@ -34,6 +34,7 @@ public class AppScheduledExecutorService extends SchedulingWrapper {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.ide.PooledThreadExecutor");
   static final String POOLED_THREAD_PREFIX = "ApplicationImpl pooled thread ";
   private Consumer<Thread> newThreadListener;
+  private final AtomicInteger counter = new AtomicInteger();
 
   private static class Holder {
     private static final AppScheduledExecutorService INSTANCE = new AppScheduledExecutorService();
@@ -47,7 +48,6 @@ public class AppScheduledExecutorService extends SchedulingWrapper {
   AppScheduledExecutorService() {
     super(new BackendThreadPoolExecutor(), new AppDelayQueue());
     ((BackendThreadPoolExecutor)backendExecutorService).doSetThreadFactory(new ThreadFactory() {
-      private final AtomicInteger counter = new AtomicInteger();
       @NotNull
       @Override
       public Thread newThread(@NotNull final Runnable r) {
@@ -99,6 +99,7 @@ public class AppScheduledExecutorService extends SchedulingWrapper {
   public void shutdownAppScheduledExecutorService() {
     delayQueue.shutdown(); // shutdown delay queue first to avoid rejected execution exceptions in Alarm
     doShutdown();
+    //System.out.println("app threads counter = " + counter);
   }
 
   public int getBackendPoolExecutorSize() {
@@ -133,6 +134,7 @@ public class AppScheduledExecutorService extends SchedulingWrapper {
     private void doShutdown() {
       super.shutdown();
     }
+
     private List<Runnable> doShutdownNow() {
       return super.shutdownNow();
     }

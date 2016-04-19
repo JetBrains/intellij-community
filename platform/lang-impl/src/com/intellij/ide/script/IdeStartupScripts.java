@@ -126,7 +126,7 @@ class IdeStartupScripts extends ApplicationComponent.Adapter {
       @Override
       public Pair<VirtualFile, IdeScriptEngine> fun(VirtualFile script) {
         String extension = script.getExtension();
-        return Pair.create(script, extension != null ? scriptEngineManager.getEngineForFileExtension(extension) : null);
+        return Pair.create(script, extension != null ? scriptEngineManager.getEngineForFileExtension(extension, null) : null);
       }
     });
   }

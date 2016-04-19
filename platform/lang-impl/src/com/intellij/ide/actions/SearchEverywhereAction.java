@@ -175,7 +175,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   boolean mySkipFocusGain = false;
 
   static {
-    ModifierKeyDoubleClickHandler.getInstance().registerAction(IdeActions.ACTION_SEARCH_EVERYWHERE, KeyEvent.VK_SHIFT, -1);
+    ModifierKeyDoubleClickHandler.getInstance().registerAction(IdeActions.ACTION_SEARCH_EVERYWHERE, KeyEvent.VK_SHIFT, -1, false);
 
     IdeEventQueue.getInstance().addPostprocessor(new IdeEventQueue.EventDispatcher() {
       @Override

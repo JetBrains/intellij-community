@@ -43,11 +43,11 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ConcurrentMultiMap;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.EnumeratorStringDescriptor;
@@ -57,7 +57,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.annotator.GroovyFrameworkConfigNotification;
 import org.jetbrains.plugins.groovy.dsl.DslActivationStatus.Status;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
@@ -362,17 +361,11 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
 
   @NotNull
   private static Set<File> getBundledScriptFolders() {
-    final GroovyFrameworkConfigNotification[] extensions = GroovyFrameworkConfigNotification.EP_NAME.getExtensions();
-    Set<Class> classes = new HashSet<Class>(ContainerUtil.map2Set(extensions, new Function<GroovyFrameworkConfigNotification, Class>() {
-      @Override
-      public Class fun(GroovyFrameworkConfigNotification notification) {
-        return notification.getClass();
-      }
-    }));
-    classes.add(GroovyFrameworkConfigNotification.class); // for default extension
+    final GdslScriptProvider[] extensions = GdslScriptProvider.EP_NAME.getExtensions();
+    final Set<Class> classes = new HashSet<>(ContainerUtil.map(extensions, GdslScriptProvider::getClass));
+    classes.add(GdslScriptProvider.class); // for default extension
 
-    // perhaps a separate extension for that?
-    Set<File> scriptFolders = new LinkedHashSet<File>();
+    Set<File> scriptFolders = new LinkedHashSet<>();
     for (Class aClass : classes) {
       File jarPath = new File(PathUtil.getJarPathForClass(aClass));
       if (jarPath.isFile()) {

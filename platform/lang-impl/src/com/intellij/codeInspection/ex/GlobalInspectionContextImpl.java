@@ -682,7 +682,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
       }
     }
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      if (myView == null && !InspectionResultsView.hasProblems(globalTools, this, createContentProvider())) {
+      if (myView == null && !ReadAction.compute(() -> InspectionResultsView.hasProblems(globalTools, this, createContentProvider())).booleanValue()) {
         return;
       }
       createViewIfNeed();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.diagnostic.LogUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -353,9 +352,6 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
     if (element instanceof PsiClass && !(element instanceof PsiTypeParameter)) {
       final String fqn = ((PsiClass)element).getQualifiedName();
       if (fqn != null) return fqn;
-      LOG.error("FQN is null. Reference:" + getElement().getText() +
-                " resolves to:" + LogUtil.objectAndClass(element) +
-                " parent:" + LogUtil.objectAndClass(element.getParent()));
     }
     return getCachedNormalizedText();
   }

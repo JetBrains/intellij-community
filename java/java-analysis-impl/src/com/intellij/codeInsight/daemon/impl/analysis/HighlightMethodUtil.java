@@ -255,14 +255,14 @@ public class HighlightMethodUtil {
     PsiJavaCodeReferenceElement[] referenceElements;
     List<PsiElement> exceptionContexts;
     if (includeRealPositionInfo) {
-      exceptionContexts = new ArrayList<PsiElement>();
+      exceptionContexts = new ArrayList<>();
       referenceElements = method.getThrowsList().getReferenceElements();
     }
     else {
       exceptionContexts = null;
       referenceElements = null;
     }
-    List<PsiClassType> checkedExceptions = new ArrayList<PsiClassType>();
+    List<PsiClassType> checkedExceptions = new ArrayList<>();
     for (int i = 0; i < exceptions.length; i++) {
       PsiClassType exception = exceptions[i];
       if (!ExceptionUtil.isUncheckedException(exception)) {
@@ -395,7 +395,7 @@ public class HighlightMethodUtil {
           String containerName = parent == null ? "" : HighlightMessageUtil.getSymbolName(parent, substitutor);
           String argTypes = buildArgTypesList(list);
           String description = JavaErrorMessages.message("wrong.method.arguments", methodName, containerName, argTypes);
-          final Ref<PsiElement> elementToHighlight = new Ref<PsiElement>(list);
+          final Ref<PsiElement> elementToHighlight = new Ref<>(list);
           String toolTip;
           if (parent instanceof PsiClass) {
             toolTip = buildOneLineMismatchDescription(list, candidateInfo, elementToHighlight);
@@ -704,7 +704,7 @@ public class HighlightMethodUtil {
 
   @NotNull
   private static MethodCandidateInfo[] toMethodCandidates(@NotNull JavaResolveResult[] resolveResults) {
-    List<MethodCandidateInfo> candidateList = new ArrayList<MethodCandidateInfo>(resolveResults.length);
+    List<MethodCandidateInfo> candidateList = new ArrayList<>(resolveResults.length);
 
     for (JavaResolveResult result : resolveResults) {
       if (!(result instanceof MethodCandidateInfo)) continue;
@@ -768,7 +768,7 @@ public class HighlightMethodUtil {
   @NotNull
   private static String createAmbiguousMethodHtmlTooltip(MethodCandidateInfo[] methodCandidates) {
     return JavaErrorMessages.message("ambiguous.method.html.tooltip",
-                                     Integer.valueOf(methodCandidates[0].getElement().getParameterList().getParametersCount() + 2),
+                                     methodCandidates[0].getElement().getParameterList().getParametersCount() + 2,
                                      createAmbiguousMethodHtmlTooltipMethodRow(methodCandidates[0]),
                                      getContainingClassName(methodCandidates[0]),
                                      createAmbiguousMethodHtmlTooltipMethodRow(methodCandidates[1]),
@@ -824,7 +824,8 @@ public class HighlightMethodUtil {
     String errorMessage = info != null ? info.getParentInferenceErrorMessage(list) : null;
     return JavaErrorMessages.message(
       "argument.mismatch.html.tooltip",
-      Integer.valueOf(cols - parameters.length + 1), parensizedName,
+      cols - parameters.length + 1,
+      parensizedName,
       HighlightUtil.formatClass(aClass, false),
       createMismatchedArgsHtmlTooltipParamsRow(parameters, substitutor, expressions),
       createMismatchedArgsHtmlTooltipArgumentsRow(expressions, parameters, substitutor, cols),
@@ -1101,7 +1102,7 @@ public class HighlightMethodUtil {
     boolean isStatic = method.hasModifierProperty(PsiModifier.STATIC);
     boolean isPrivate = method.hasModifierProperty(PsiModifier.PRIVATE);
 
-    final List<IntentionAction> additionalFixes = new ArrayList<IntentionAction>();
+    final List<IntentionAction> additionalFixes = new ArrayList<>();
     String description = null;
     if (hasNoBody) {
       if (isExtension) {
@@ -1341,7 +1342,7 @@ public class HighlightMethodUtil {
       if (aClass.isInterface() && !containingClass.isInterface()) continue;
       HighlightInfo highlightInfo;
       if (allAbstracts) {
-        superSignatures = new ArrayList<HierarchicalMethodSignature>(superSignatures);
+        superSignatures = new ArrayList<>(superSignatures);
         superSignatures.add(0, signature);
         highlightInfo = checkInterfaceInheritedMethodsReturnTypes(superSignatures, languageLevel);
       }

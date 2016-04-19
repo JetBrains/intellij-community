@@ -13,19 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.jsonSchema.extension;
+package org.jetbrains.plugins.groovy.dsl;
 
-import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.extensions.ExtensionPointName;
 
-import java.util.List;
+public interface GdslScriptProvider {
 
-/**
- * @author Irina.Chernushina on 2/16/2016.
- */
-public class JsonSchemaSelfProviderFactory implements JsonSchemaProviderFactory<Object> {
-  @Override
-  public List<JsonSchemaFileProvider<Object>> getProviders(@Nullable Project project) {
-    return JsonSchemaProjectSelfProviderFactory.getInstance(project).getProviders();
-  }
+  ExtensionPointName<GdslScriptProvider> EP_NAME = ExtensionPointName.create("org.intellij.groovy.gdslScriptProvider");
 }

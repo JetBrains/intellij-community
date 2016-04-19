@@ -151,6 +151,11 @@ public class JpsJavaFxArtifactBuildTaskProvider extends ArtifactBuildTaskProvide
     }
 
     @Override
+    protected String getVersion() {
+      return myProperties.myState.getVersion();
+    }
+
+    @Override
     protected JavaFxApplicationIcons getIcons() {
       return myProperties.myState.getIcons();
     }
@@ -168,6 +173,16 @@ public class JpsJavaFxArtifactBuildTaskProvider extends ArtifactBuildTaskProvide
     @Override
     protected void registerJavaFxPackagerError(String message) {
       myCompileContext.processMessage(new CompilerMessage(COMPILER_NAME, BuildMessage.Kind.ERROR, message));
+    }
+
+    @Override
+    protected String getHtmlTemplateFile() {
+      return myProperties.myState.getHtmlTemplateFile();
+    }
+
+    @Override
+    protected String getHtmlPlaceholderId() {
+      return myProperties.myState.getHtmlPlaceholderId();
     }
 
     @Override

@@ -18,9 +18,9 @@ import org.intellij.lang.annotations.MagicConstant;
 import java.io.*;
 
 class Const {
-  public static final int X = 0;
+  public static final int X = 1;
   public static final int Y = 2;
-  public static final int Z = 3;
+  public static final int Z = 4;
 }
 public class X {
 
@@ -255,5 +255,16 @@ public class X {
     plusSupportedInFlags(ix);
     plusSupportedInFlags(0);
     plusSupportedInFlags(-1);
+  }
+
+  ///////////////////////////////////////
+  static class FontType {
+    public static final int PLAIN = 0;
+    public static final int BOLD = 1;
+    public static final int ITALIC = 2;
+  }
+  void font(@MagicConstant(flags = {FontType.PLAIN, FontType.BOLD, FontType.ITALIC}) int x) {
+    // 0 is not allowed despite the fact that it's flags parameter
+    font(0);
   }
 }
