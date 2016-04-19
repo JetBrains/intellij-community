@@ -92,6 +92,7 @@ public class StudyRefreshTaskFileAction extends StudyToolbarAction {
     if (!resetDocument(document, taskFile, name)) {
       return false;
     }
+    taskFile.getTask().setStatus(StudyStatus.Unchecked);
     resetAnswerPlaceholders(taskFile, project);
     ProjectView.getInstance(project).refresh();
     StudyUtils.updateToolWindows(project);
