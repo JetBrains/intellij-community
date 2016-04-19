@@ -225,6 +225,10 @@ public class Main {
     String tempDir = System.getProperty("java.io.tmpdir");
     File patch = new File(tempDir, patchFileName);
 
+    installPatch(platform, patchFileName, tempDir, patch, PathManager.getHomePath());
+  }
+
+  public static void installPatch(String platform, String patchFileName, String tempDir, File patch, String installDir) throws Exception {
     // always delete previous patch copy
     String userName = System.getProperty("user.name");
     File patchCopy = new File(tempDir, patchFileName + "_copy_" + userName);
@@ -276,7 +280,7 @@ public class Main {
                          "-Dswing.defaultlaf=" + UIManager.getSystemLookAndFeelClassName(),
                          "com.intellij.updater.Runner",
                          "install",
-                         PathManager.getHomePath());
+                         installDir);
 
       status = Restarter.scheduleRestart(ArrayUtilRt.toStringArray(args));
     }
