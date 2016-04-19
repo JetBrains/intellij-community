@@ -73,14 +73,8 @@ public class DfaPsiUtil {
     if (owner instanceof PsiEnumConstant || PsiUtil.isAnnotationMethod(owner)) {
       return Nullness.NOT_NULL;
     }
-    if (owner instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)owner;
-      if ("valueOf".equals(method.getName()) && method.hasModifierProperty(PsiModifier.STATIC)) {
-        PsiClass containingClass = method.getContainingClass();
-        if (containingClass != null && containingClass.isEnum()) {
-          return Nullness.NOT_NULL;
-        }
-      }
+    if (owner instanceof PsiMethod && isEnumValueOf((PsiMethod)owner)) {
+      return Nullness.NOT_NULL;
     }
 
     if (resultType != null) {
@@ -109,6 +103,19 @@ public class DfaPsiUtil {
     }
 
     return Nullness.UNKNOWN;
+  }
+
+  private static boolean isEnumValueOf(PsiMethod method) {
+    if ("valueOf".equals(method.getName()) && method.hasModifierProperty(PsiModifier.STATIC)) {
+      PsiClass containingClass = method.getContainingClass();
+      if (containingClass != null && containingClass.isEnum()) {
+        PsiParameter[] parameters = method.getParameterList().getParameters();
+        if (parameters.length == 1 && parameters[0].getType().equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   public static boolean isInitializedNotNull(PsiField field) {
