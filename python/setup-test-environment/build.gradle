@@ -1,0 +1,56 @@
+buildscript {
+  repositories {
+    maven {
+      url "https://plugins.gradle.org/m2/"
+    }
+//    maven {
+//      url uri('../mvn_repo')
+//    }
+  }
+  dependencies {
+    classpath group: 'com.jetbrains.python', name: 'gradle-python-envs', version: '0.0.2+'
+  }
+}
+
+
+apply plugin: 'com.jetbrains.python.envs'
+
+
+envs {
+  bootstrapDirectory = new File(buildDir, 'pythons')
+  envsDirectory = new File(buildDir, 'envs')
+  minicondaVersion = 'latest'
+  packages = ["pip", "setuptools"]
+
+  conda "python26", "2.6", ["nose", "pytest", "ipython==0.11", "behave", "lettuce"]
+  textfile "python26/tags.txt", "nose\npytest\nipython\nipython011\nbehave\nlettuce\npackaging"
+
+  conda "django19", "2.7", ["django==1.9"]
+  textfile "django19/tags.txt", "django"
+
+  conda "django16", "2.7", ["django==1.6"]
+  textfile "django16/tags.txt", "django"
+
+  conda "django17", "2.7", ["django==1.7"]
+  textfile "django17/tags.txt", "django"
+
+  conda "tox", "2.7", ["tox", "nose", "pytest"]
+  textfile "tox/tags.txt", "tox"
+
+  conda "ipython12", "2.7", ["ipython==0.12"]
+  textfile "ipython12/tags.txt", "\"ipython\nipython012\nskeletons"
+
+  conda "python34", "3.4", ["ipython==2.1", "django==1.6", "behave", "jinja2", "tox==2.0"]
+  textfile "python34/tags.txt", "python3\nipython\nipython200\nskeletons\ndjango\nbehave\ntox\njinja2\npython34\npackaging"
+
+  jython "jython25", []
+  textfile "jython25/tags.txt", "jython"
+
+  conda "django_latest", "3.5", ["django"]
+  textfile "django_latest/tags.txt", "django"
+}
+
+if (new File(envs.envsDirectory, "django_latest").lastModified()<System.currentTimeMillis() - 24*60*60*1000) {
+  // older then a day
+  delete new File(envs.envsDirectory, "django_latest")
+}
