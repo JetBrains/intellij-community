@@ -252,6 +252,8 @@ public class ProtocolParser {
 
     final String name = readString(reader, "name", null);
     final String type = readString(reader, "type", null);
+    final String qualifier = readString(reader, "qualifier", null); //to be able to get the fully qualified type if necessary
+
     String value = readString(reader, "value", null);
     final String isContainer = readString(reader, "isContainer", "");
     final String isErrorOnEval = readString(reader, "isErrorOnEval", "");
@@ -260,7 +262,7 @@ public class ProtocolParser {
       value = value.substring(type.length() + 2);
     }
 
-    return new PyDebugValue(name, type, value, "True".equals(isContainer), "True".equals(isErrorOnEval), frameAccessor);
+    return new PyDebugValue(name, type, qualifier, value, "True".equals(isContainer), "True".equals(isErrorOnEval), frameAccessor);
   }
 
   public static ArrayChunk parseArrayValues(final String text, final PyFrameAccessor frameAccessor) throws PyDebuggerException {
@@ -279,7 +281,7 @@ public class ProtocolParser {
       String max = readString(reader, "max", null);
       String min = readString(reader, "min", null);
       result =
-        new ArrayChunk(new PyDebugValue(slice, null, null, false, false, frameAccessor), slice, rows, cols, max, min, format, type, null);
+        new ArrayChunk(new PyDebugValue(slice, null, null, null, false, false, frameAccessor), slice, rows, cols, max, min, format, type, null);
       reader.moveUp();
     }
 
