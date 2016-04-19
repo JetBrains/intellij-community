@@ -71,6 +71,10 @@
             text="Fill Answer Placeholders">
       <add-to-group group-id="HelpMenu" anchor="before" relative-to-action="HelpTopics"/>
     </action>
+    <action id="StudySwitchPanel" class="com.jetbrains.edu.learning.actions.StudySwitchTaskPanelAction"
+            text="Switch Task Description Panel">
+      <add-to-group group-id="HelpMenu" anchor="before" relative-to-action="HelpTopics"/>
+    </action>
 
   </actions>
 
