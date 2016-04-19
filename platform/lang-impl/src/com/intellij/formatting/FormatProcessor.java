@@ -38,8 +38,6 @@ public class FormatProcessor {
   @NotNull
   private final FormattingProgressCallback myProgressCallback;
 
-  private boolean                         myDisposed;
-
   @NotNull
   private StateProcessor myStateProcessor;
 
@@ -112,7 +110,6 @@ public class FormatProcessor {
     formatWithoutRealModifications(false);
   }
 
-  @SuppressWarnings({"WhileLoopSpinsOnField"})
   public void formatWithoutRealModifications(boolean sequentially) {
     myStateProcessor.setNextState(new AdjustWhiteSpacesState(myWrapState, myProgressCallback, myReformatContext));
     myStateProcessor.setNextState(new ExpandChildrenIndentState(myDocument, myWrapState));
