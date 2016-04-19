@@ -25,13 +25,13 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.containers.hash.HashMap;
+import com.jetbrains.edu.learning.actions.StudyToolbarAction;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
 import com.jetbrains.edu.learning.courseFormat.Task;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
-import com.jetbrains.edu.learning.actions.*;
 import com.jetbrains.edu.learning.editor.StudyEditorFactoryListener;
 import com.jetbrains.edu.learning.ui.StudyProgressToolWindowFactory;
 import com.jetbrains.edu.learning.ui.StudyToolWindow;
@@ -52,8 +52,9 @@ public class StudyProjectComponent implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance(StudyProjectComponent.class.getName());
   private final Project myProject;
   private FileCreatedByUserListener myListener;
+
   // Shows could we use JavaFX Task Description panel or should use Swing
-  private boolean useJavaFx = true;
+  private boolean useJavaFx = false;
   private Map<Keymap, List<Pair<String, String>>> myDeletedShortcuts = new HashMap<Keymap, List<Pair<String, String>>>();
   private StudyProjectComponent(@NotNull final Project project) {
     myProject = project;
@@ -63,11 +64,9 @@ public class StudyProjectComponent implements ProjectComponent {
   public void projectOpened() {
     final Course course = StudyTaskManager.getInstance(myProject).getCourse();
     // Check if user has javafx lib in his JDK. Now bundled JDK doesn't have this lib inside.
-    try {
+    if (StudyUtils.hasJavaFx()) {
       Platform.setImplicitExit(false);
-    }
-    catch (NoClassDefFoundError e) {
-      useJavaFx = false;
+      useJavaFx = true;
     }
 
     if (course != null && !course.isUpToDate()) {
@@ -118,7 +117,9 @@ public class StudyProjectComponent implements ProjectComponent {
           if (action instanceof StudyToolbarAction) {
             String id = ((StudyToolbarAction)action).getActionId();
             String[] shortcuts = ((StudyToolbarAction)action).getShortcuts();
-            addShortcut(id, shortcuts);
+            if (shortcuts != null) {
+              addShortcut(id, shortcuts);
+            }
           }
         }
       }
@@ -285,6 +286,10 @@ public class StudyProjectComponent implements ProjectComponent {
 
   public boolean useJavaFx() {
     return useJavaFx;
+  }
+
+  public void setUseJavaFx(boolean useJavaFx) {
+    this.useJavaFx = useJavaFx;
   }
 
   private class FileCreatedByUserListener extends VirtualFileAdapter {
