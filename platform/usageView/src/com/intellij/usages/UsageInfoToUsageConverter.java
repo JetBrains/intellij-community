@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.usages;
 
 import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
@@ -26,6 +25,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -134,8 +134,9 @@ public class UsageInfoToUsageConverter {
   @NotNull
   public static Usage convert(@NotNull PsiElement[] primaryElements, @NotNull UsageInfo usageInfo) {
     PsiElement usageElement = usageInfo.getElement();
-    for(ReadWriteAccessDetector detector: Extensions.getExtensions(ReadWriteAccessDetector.EP_NAME)) {
-      if (isReadWriteAccessibleElements(primaryElements, detector)) {
+    if (usageElement != null) {
+      ReadWriteAccessDetector detector = ReadWriteAccessDetector.findDetector(usageElement);
+      if (detector != null && Arrays.stream(primaryElements).allMatch(primaryElement -> ReadWriteAccessDetector.findDetector(primaryElement) == detector)) {
         final ReadWriteAccessDetector.Access rwAccess = detector.getExpressionAccess(usageElement);
         return new ReadWriteAccessUsageInfo2UsageAdapter(usageInfo,
                                                          rwAccess != ReadWriteAccessDetector.Access.Write,
@@ -163,15 +164,5 @@ public class UsageInfoToUsageConverter {
       }
     }, new Usage[usageInfos.length]);
     return usages;
-  }
-
-  private static boolean isReadWriteAccessibleElements(@NotNull PsiElement[] elements, @NotNull ReadWriteAccessDetector detector) {
-    if (elements.length == 0) {
-      return false;
-    }
-    for (PsiElement element : elements) {
-      if (!detector.isReadWriteAccessible(element)) return false;
-    }
-    return true;
   }
 }
