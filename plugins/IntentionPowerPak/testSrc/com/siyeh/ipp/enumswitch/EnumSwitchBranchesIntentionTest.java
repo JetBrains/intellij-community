@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ public class EnumSwitchBranchesIntentionTest extends IPPTestCase {
 
   public void testWithoutBraces() { doTest(); }
   public void testBeforeDefault() { doTest(); }
+  public void testBeforeFallthrough() { doTest(); }
   public void testMultiple() { doTest(); }
   public void testNoActionAfterBraces() { assertIntentionNotAvailable(); }
 
