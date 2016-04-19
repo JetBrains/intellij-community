@@ -167,7 +167,8 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
       final Ref<PsiElement> resolvedRef = resolveDictLiteralExpression((PyDictLiteralExpression)containedExpr);
       return resolvedRef != null ? resolvedRef.get() : containedExpr;
     }
-    else if (containedExpr instanceof PyLiteralExpression) {
+    else if (PyUtil.instanceOf(containedExpr, PyLiteralExpression.class, PySetLiteralExpression.class,
+                               PyListLiteralExpression.class, PyTupleExpression.class)) {
       return null;
     }
     else if (containedExpr instanceof PyCallExpression) {
@@ -192,7 +193,8 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
         return null;
       }
     }
-    else if (myPosition != 0 && PsiTreeUtil.instanceOf(containedExpression, PyLiteralExpression.class)) {
+    else if (myPosition != 0 && PsiTreeUtil.instanceOf(containedExpression, PyLiteralExpression.class, PySetLiteralExpression.class,
+                                                       PyListLiteralExpression.class, PyDictLiteralExpression.class)) {
       return null;
     }
     return containedExpression;
