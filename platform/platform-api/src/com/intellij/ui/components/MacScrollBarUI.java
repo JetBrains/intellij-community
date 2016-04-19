@@ -112,7 +112,7 @@ final class MacScrollBarUI extends DefaultScrollBarUI {
   @Override
   void onThumbMove() {
     if (myScrollBar != null && myScrollBar.isShowing() && !myScrollBar.isOpaque()) {
-      if (myThumbAnimator.myValue == 0) myTrackAnimator.rewind(false);
+      if (!myTrackHovered && myThumbAnimator.myValue == 0) myTrackAnimator.rewind(false);
       myThumbAnimator.rewind(true);
       myAlarm.cancelAllRequests();
       if (!myTrackHovered) {
