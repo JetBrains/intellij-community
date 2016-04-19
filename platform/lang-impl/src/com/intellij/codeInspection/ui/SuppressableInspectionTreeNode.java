@@ -49,6 +49,10 @@ public abstract class SuppressableInspectionTreeNode extends CachedInspectionTre
   @Nullable
   @Override
   public String getCustomizedTailText() {
+    final String text = super.getCustomizedTailText();
+    if (text != null) {
+      return text;
+    }
     return isAlreadySuppressedFromView() ? "Suppressed" : null;
   }
 }

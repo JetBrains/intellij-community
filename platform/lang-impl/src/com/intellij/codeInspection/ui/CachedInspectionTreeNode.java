@@ -15,6 +15,8 @@
  */
 package com.intellij.codeInspection.ui;
 
+import org.jetbrains.annotations.Nullable;
+
 import javax.swing.tree.TreeNode;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -68,5 +70,11 @@ public abstract class CachedInspectionTreeNode extends InspectionTreeNode implem
         ((CachedInspectionTreeNode)child).dropCache();
       }
     }
+  }
+
+  @Nullable
+  @Override
+  public String getCustomizedTailText() {
+    return isValid() ? null : "No longer valid";
   }
 }

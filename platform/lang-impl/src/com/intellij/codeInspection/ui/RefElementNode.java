@@ -77,20 +77,15 @@ public class RefElementNode extends SuppressableInspectionTreeNode implements Re
   }
 
   @Override
-  public boolean isResolved(ExcludedInspectionTreeNodesManager excludedManager) {
-    return myToolPresentation.isElementIgnored(getElement());
-  }
-
-  @Override
-  public void ignoreElement(ExcludedInspectionTreeNodesManager excludedManager) {
+  public void excludeElement(ExcludedInspectionTreeNodesManager excludedManager) {
     myToolPresentation.ignoreCurrentElement(getElement());
-    super.ignoreElement(excludedManager);
+    super.excludeElement(excludedManager);
   }
 
   @Override
-  public void amnesty(ExcludedInspectionTreeNodesManager excludedManager) {
+  public void amnestyElement(ExcludedInspectionTreeNodesManager excludedManager) {
     myToolPresentation.amnesty(getElement());
-    super.amnesty(excludedManager);
+    super.amnestyElement(excludedManager);
   }
 
   @Override

@@ -98,22 +98,18 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode imple
     return true;
   }
 
-
   @Override
-  public boolean isResolved(ExcludedInspectionTreeNodesManager manager) {
-    return myElement instanceof RefElement && getPresentation().isProblemResolved(myElement, getDescriptor());
-  }
-
-  @Override
-  public void ignoreElement(ExcludedInspectionTreeNodesManager manager) {
+  public void excludeElement(ExcludedInspectionTreeNodesManager manager) {
     InspectionToolPresentation presentation = getPresentation();
     presentation.ignoreCurrentElementProblem(getElement(), getDescriptor());
+    super.excludeElement(manager);
   }
 
   @Override
-  public void amnesty(ExcludedInspectionTreeNodesManager manager) {
+  public void amnestyElement(ExcludedInspectionTreeNodesManager manager) {
     InspectionToolPresentation presentation = getPresentation();
     presentation.amnesty(getElement());
+    super.amnestyElement(manager);
   }
 
   @NotNull
@@ -137,5 +133,15 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode imple
 
     return XmlStringUtil.stripHtml(ProblemDescriptorUtil.renderDescriptionMessage(descriptor, element,
                                                                                   APPEND_LINE_NUMBER | TRIM_AT_TREE_END));
+  }
+
+  public boolean isQuickFixAppliedFromView() {
+    return myPresentation.isProblemResolved(getElement(), myDescriptor);
+  }
+
+  @Nullable
+  @Override
+  public String getCustomizedTailText() {
+    return isQuickFixAppliedFromView() ? "" : super.getCustomizedTailText();
   }
 }

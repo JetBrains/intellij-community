@@ -57,7 +57,7 @@ public class InspectionTreeHtmlWriter {
   private void traverseInspectionTree(final InspectionTreeNode node,
                                              final Consumer<InspectionTreeNode> preAction,
                                              final Consumer<InspectionTreeNode> postAction) {
-    if (node.isResolved(myExcludedManager)) {
+    if (node.isExcluded(myExcludedManager)) {
       return;
     }
     preAction.accept(node);

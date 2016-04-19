@@ -152,12 +152,12 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     myExclusionHandler = new ExclusionHandler<InspectionTreeNode>() {
       @Override
       public boolean isNodeExcluded(@NotNull InspectionTreeNode node) {
-        return node.isResolved(myExcludedInspectionTreeNodesManager);
+        return node.isExcluded(myExcludedInspectionTreeNodesManager);
       }
 
       @Override
       public void excludeNode(@NotNull InspectionTreeNode node) {
-        node.ignoreElement(myExcludedInspectionTreeNodesManager);
+        node.excludeElement(myExcludedInspectionTreeNodesManager);
         if (myGlobalInspectionContext.getUIOptions().FILTER_RESOLVED_ITEMS) {
           InspectionTreeNode parent = (InspectionTreeNode)node.getParent();
           synchronized (myTreeStructureUpdateLock) {
@@ -170,7 +170,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
 
       @Override
       public void includeNode(@NotNull InspectionTreeNode node) {
-        node.amnesty(myExcludedInspectionTreeNodesManager);
+        node.amnestyElement(myExcludedInspectionTreeNodesManager);
       }
 
       @Override
@@ -221,7 +221,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       @Override
       @Nullable
       protected Navigatable createDescriptorForNode(DefaultMutableTreeNode node) {
-        if (node instanceof InspectionTreeNode && ((InspectionTreeNode)node).isResolved(myExcludedInspectionTreeNodesManager)) {
+        if (node instanceof InspectionTreeNode && ((InspectionTreeNode)node).isExcluded(myExcludedInspectionTreeNodesManager)) {
           return null;
         }
         if (node instanceof RefElementNode) {
