@@ -10,8 +10,6 @@ import com.jetbrains.edu.learning.StudyUtils
 import javax.swing.DefaultComboBoxModel
 import javax.swing.JComponent
 import javax.swing.JLabel
-import javax.swing.event.ListDataEvent
-import javax.swing.event.ListDataListener
 
 
 class StudySwitchTaskPanelAction: AnAction() {
@@ -31,8 +29,8 @@ class StudySwitchTaskPanelAction: AnAction() {
   
   
   class MyDialog: DialogWrapper {
-    val JAVAFX_ITEM = "Panel with code highlighting"
-    val SWING_ITEM = "Simple panel"
+    val JAVAFX_ITEM = "JavaFX"
+    val SWING_ITEM = "Swing"
     private val myProject: Project
     private val myComboBox: ComboBox<String>
 
@@ -41,30 +39,16 @@ class StudySwitchTaskPanelAction: AnAction() {
       myProject = project
       myComboBox = ComboBox<String>()
       val comboBoxModel = DefaultComboBoxModel<String>()
-      val projectComponent = StudyProjectComponent.getInstance(project)
-      
+
       if (StudyUtils.hasJavaFx()) {
         comboBoxModel.addElement(JAVAFX_ITEM)
       }
       comboBoxModel.addElement(SWING_ITEM)
-      comboBoxModel.addListDataListener(object : ListDataListener {
-        override fun contentsChanged(e: ListDataEvent?) {
-          isOKActionEnabled = (projectComponent.useJavaFx() && myComboBox.selectedItem == SWING_ITEM) 
-              || (!projectComponent.useJavaFx() && myComboBox.selectedItem == JAVAFX_ITEM)
-        }
-
-        override fun intervalRemoved(e: ListDataEvent?) {
-        }
-
-        override fun intervalAdded(e: ListDataEvent?) {
-        }
-
-      })
-      comboBoxModel.selectedItem = if (projectComponent.useJavaFx()) JAVAFX_ITEM else SWING_ITEM
+      
+      comboBoxModel.selectedItem = if (StudyProjectComponent.getInstance(project).useJavaFx()) JAVAFX_ITEM else SWING_ITEM
       myComboBox.model = comboBoxModel
       title = "Switch Task Description Panel"
-      isOKActionEnabled = false
-      myComboBox.setMinimumAndPreferredWidth(300)
+      myComboBox.setMinimumAndPreferredWidth(250)
       init()
     }
 
