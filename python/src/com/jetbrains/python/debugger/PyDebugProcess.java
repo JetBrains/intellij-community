@@ -857,21 +857,19 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     }
     else {
       final PyType parentDef = resolveTypeFromString(parentType, file);
-      if (parentDef == null)
+      if (parentDef == null) {
         return null;
+      }
       List<? extends RatedResolveResult> results =
         parentDef.resolveMember(name, null, AccessDirection.READ, PyResolveContext.noImplicits());
       if (results != null && !results.isEmpty()) {
         return XSourcePositionImpl.createByElement(results.get(0).getElement());
       }
       else {
-          return typeToPosition(parentDef); // at least try to return parent
+        return typeToPosition(parentDef); // at least try to return parent
       }
-
     }
-
   }
-
 
 
   @NotNull
@@ -894,7 +892,6 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
               elementRef.set(element);
             }
             return false;
-
           }
           return true;
         }
@@ -941,8 +938,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
 
     final PyType pyType = resolveTypeFromString(typeName, file);
-    return pyType == null? null : typeToPosition(pyType);
-
+    return pyType == null ? null : typeToPosition(pyType);
   }
 
   @Nullable
@@ -967,16 +963,14 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
       pyType = PyTypeParser.getTypeByName(file, typeName);
     }
-    if (pyType == null)
-    {
+    if (pyType == null) {
       PyElementGenerator generator = PyElementGenerator.getInstance(getProject());
       PyPsiFacade psiFacade = PyPsiFacade.getInstance(getProject());
-      PsiFile dummyFile = generator.createDummyFile( ((PyFile)file).getLanguageLevel() , "");
+      PsiFile dummyFile = generator.createDummyFile(((PyFile)file).getLanguageLevel(), "");
       Module moduleForFile = ModuleUtilCore.findModuleForPsiElement(file);
       dummyFile.putUserData(ModuleUtilCore.KEY_MODULE, moduleForFile);
 
       pyType = psiFacade.parseTypeAnnotation(typeName, dummyFile);
-
     }
     return pyType;
   }
