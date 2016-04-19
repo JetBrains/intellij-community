@@ -25,6 +25,8 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class NotNullCachedComputableWrapper<T> implements NotNullComputable<T> {
 
+  private static final RecursionGuard ourGuard = RecursionManager.createGuard(NotNullCachedComputableWrapper.class.getName());
+
   private volatile NotNullComputable<T> myComputable;
   private final AtomicReference<T> myValueRef = new AtomicReference<>();
 
@@ -42,7 +44,7 @@ public class NotNullCachedComputableWrapper<T> implements NotNullComputable<T> {
       final NotNullComputable<T> computable = myComputable;
       if (computable == null) continue;                 // computable is null only after some thread succeeds CAS
 
-      RecursionGuard.StackStamp stamp = RecursionManager.createGuard(computable.getClass().getName()).markStack();
+      RecursionGuard.StackStamp stamp = ourGuard.markStack();
       value = computable.compute();
       if (stamp.mayCacheNow()) {
         if (myValueRef.compareAndSet(null, value)) {    // try to cache value
