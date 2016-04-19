@@ -28,6 +28,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.util.concurrency.FutureResult;
 import com.intellij.util.ui.TextTransferable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.breakpoints.*;
@@ -271,37 +272,42 @@ public class XDebuggerTestUtil {
   }
 
   public static void assertVariableFullValue(@NotNull XValue var,
-                                             @Nullable String value) throws InterruptedException {
+                                             @Nullable String value) throws Exception {
     XTestValueNode node = computePresentation(var);
-    final String[] result = new String[1];
 
-    node.myFullValueEvaluator.startEvaluation(new XFullValueEvaluator.XFullValueEvaluationCallback() {
-      @Override
-      public void evaluated(@NotNull String fullValue) {
-        result[0] = fullValue;
-      }
+    if (value == null) {
+      assertNull("full value evaluator should be null", node.myFullValueEvaluator);
+    }
+    else {
+      final FutureResult<String> result = new FutureResult<>();
+      node.myFullValueEvaluator.startEvaluation(new XFullValueEvaluator.XFullValueEvaluationCallback() {
+        @Override
+        public void evaluated(@NotNull String fullValue) {
+          result.set(fullValue);
+        }
 
-      @Override
-      public void evaluated(@NotNull String fullValue, @Nullable Font font) {
-        result[0] = fullValue;
-      }
+        @Override
+        public void evaluated(@NotNull String fullValue, @Nullable Font font) {
+          result.set(fullValue);
+        }
 
-      @Override
-      public void errorOccurred(@NotNull String errorMessage) {
-        result[0] = errorMessage;
-      }
+        @Override
+        public void errorOccurred(@NotNull String errorMessage) {
+          result.set(errorMessage);
+        }
 
-      @Override
-      public boolean isObsolete() {
-        return false;
-      }
-    });
+        @Override
+        public boolean isObsolete() {
+          return false;
+        }
+      });
 
-    assertEquals(value, result[0]);
+      assertEquals(value, result.get(TIMEOUT, TimeUnit.MILLISECONDS));
+    }
   }
 
   public static void assertVariableFullValue(Collection<XValue> vars, @Nullable String name, @Nullable String value)
-    throws InterruptedException {
+    throws Exception {
     assertVariableFullValue(findVar(vars, name), value);
   }
 
