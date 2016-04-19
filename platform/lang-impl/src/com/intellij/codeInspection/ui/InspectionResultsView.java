@@ -406,8 +406,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
           showInRightPanel(node.getContainingFileLocalEntity());
         }
         else if (node instanceof InspectionNode) {
-          final String shortName = ((InspectionNode)node).getToolWrapper().getShortName();
-          if (shortName.isEmpty()) {
+          if (myGlobalInspectionContext.getPresentation(((InspectionNode)node).getToolWrapper()).isDummy()) {
             mySplitter.setSecondComponent(getNothingToShowTextLabel());
           }
           else {
