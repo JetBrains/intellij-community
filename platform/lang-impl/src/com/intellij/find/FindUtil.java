@@ -64,6 +64,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
 import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -921,6 +922,7 @@ public class FindUtil {
             }
           });
         }
+        UIUtil.invokeLaterIfNeeded(((UsageViewImpl)view)::expandAll);
       }
     });
     return view;
