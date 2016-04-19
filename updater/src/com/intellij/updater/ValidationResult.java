@@ -1,5 +1,6 @@
 package com.intellij.updater;
 
+import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 
@@ -34,13 +35,15 @@ public class ValidationResult implements Comparable<ValidationResult> {
 
   public final Kind kind;
   public final String path;
+  public final File toFile;
   public final Action action;
   public final String message;
   public final List<Option> options;
 
-  public ValidationResult(Kind kind, String path, Action action, String message, Option... options) {
+  public ValidationResult(Kind kind, String path, File toFile, Action action, String message, Option... options) {
     this.kind = kind;
     this.path = path;
+    this.toFile = toFile;
     this.action = action;
     this.message = message;
     this.options = Arrays.asList(options);
