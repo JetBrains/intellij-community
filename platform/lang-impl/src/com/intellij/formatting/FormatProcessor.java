@@ -32,14 +32,8 @@ public class FormatProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.formatting.FormatProcessor");
   
   private final WrapBlocksState myWrapState;
-  
   private boolean myReformatContext;
-  
-  private final BlockIndentOptions myBlockIndentOptions;
-  private final CommonCodeStyleSettings.IndentOptions myDefaultIndentOption;
-  private final CodeStyleSettings mySettings;
   private final Document myDocument;
-  
   
   @NotNull
   private final FormattingProgressCallback myProgressCallback;
@@ -65,14 +59,16 @@ public class FormatProcessor {
                          @NotNull FormattingProgressCallback callback)
   {
     myProgressCallback = callback;
-    myDefaultIndentOption = options.myIndentOptions;
-    mySettings = options.mySettings;
-    myBlockIndentOptions = new BlockIndentOptions(mySettings, myDefaultIndentOption, block);
+    
+    CommonCodeStyleSettings.IndentOptions defaultIndentOption = options.myIndentOptions;
+    CodeStyleSettings settings = options.mySettings;
+    BlockIndentOptions blockIndentOptions = new BlockIndentOptions(settings, defaultIndentOption, block);
+    
     myDocument = model.getDocument();
     myReformatContext = options.myReformatContext;
     
-    final InitialInfoBuilder builder = prepareToBuildBlocksSequentially(block, model, options, mySettings, myDefaultIndentOption, myProgressCallback);
-    myWrapState = new WrapBlocksState(builder, myBlockIndentOptions);
+    final InitialInfoBuilder builder = prepareToBuildBlocksSequentially(block, model, options, settings, defaultIndentOption, myProgressCallback);
+    myWrapState = new WrapBlocksState(builder, blockIndentOptions);
     
     myStateProcessor = new StateProcessor(myWrapState);
   }
