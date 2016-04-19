@@ -1,7 +1,6 @@
 package com.jetbrains.edu.learning.editor;
 
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -53,42 +52,30 @@ public class StudyEditorFactoryListener implements EditorFactoryListener {
   @Override
   public void editorCreated(@NotNull final EditorFactoryEvent event) {
     final Editor editor = event.getEditor();
-
     final Project project = editor.getProject();
     if (project == null) {
       return;
     }
-    ApplicationManager.getApplication().invokeLater(
-      new Runnable() {
-        @Override
-        public void run() {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              final Document document = editor.getDocument();
-              final VirtualFile openedFile = FileDocumentManager.getInstance().getFile(document);
-              if (openedFile != null) {
-                final TaskFile taskFile = StudyUtils.getTaskFile(project, openedFile);
-                if (taskFile != null) {
-                  WolfTheProblemSolver.getInstance(project).clearProblems(openedFile);
-                  final ToolWindow studyToolWindow = ToolWindowManager.getInstance(project).getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW);
-                  if (studyToolWindow != null) {
-                    StudyUtils.updateToolWindows(project);
-                    studyToolWindow.show(null);
-                  }
-                  if (!taskFile.getAnswerPlaceholders().isEmpty()) {
-                    StudyNavigator.navigateToFirstAnswerPlaceholder(editor, taskFile);
-                    StudyEditor.addDocumentListener(document, new EduDocumentListener(taskFile));
-                    StudyUtils.drawAllWindows(editor, taskFile);
-                    editor.addEditorMouseListener(new WindowSelectionListener(taskFile));
-                  }
-                }
-              }
-            }
-          });
+
+    final Document document = editor.getDocument();
+    final VirtualFile openedFile = FileDocumentManager.getInstance().getFile(document);
+    if (openedFile != null) {
+      final TaskFile taskFile = StudyUtils.getTaskFile(project, openedFile);
+      if (taskFile != null) {
+        WolfTheProblemSolver.getInstance(project).clearProblems(openedFile);
+        final ToolWindow studyToolWindow = ToolWindowManager.getInstance(project).getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW);
+        if (studyToolWindow != null) {
+          StudyUtils.updateToolWindows(project);
+          studyToolWindow.show(null);
+        }
+        if (!taskFile.getAnswerPlaceholders().isEmpty()) {
+          StudyNavigator.navigateToFirstAnswerPlaceholder(editor, taskFile);
+          StudyEditor.addDocumentListener(document, new EduDocumentListener(taskFile));
+          StudyUtils.drawAllWindows(editor, taskFile);
+          editor.addEditorMouseListener(new WindowSelectionListener(taskFile));
         }
       }
-    );
+    }
   }
 
   @Override
