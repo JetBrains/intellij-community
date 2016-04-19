@@ -52,13 +52,13 @@ public class BitUtil {
     return set(value, mask, false);
   }
 
-  public static void assertOneBitMask(byte mask) {
+  private static void assertOneBitMask(byte mask) {
     assertOneBitMask(mask & 0xFFL);
   }
   public static void assertOneBitMask(int mask) {
     assertOneBitMask(mask & 0xFFFFFFFFL);
   }
-  public static void assertOneBitMask(long mask) {
+  private static void assertOneBitMask(long mask) {
     assert (mask & mask - 1) == 0 : "Mask must have only one bit set, but got: " + Long.toBinaryString(mask);
   }
 }

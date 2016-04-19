@@ -708,6 +708,36 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     myFixture.copyDirectoryToProject("typing", "");
     doTest();
   }
+  
+  // PY-19084
+  public void testPercentStringPositionalListArgument() {
+    doTest();
+  }
+
+  // PY-19084
+  public void testPercentStringPositionalSetArgument() {
+    doTest();
+  }
+
+  // PY-19084
+  public void testPercentStringPositionalDictArgument() {
+    doTest();
+  }
+
+  // PY-19084
+  public void testPercentStringKeywordListArgument() {
+    doTest();
+  }
+
+  // PY-19084
+  public void testPercentStringKeywordSetArgument() {
+    doTest();
+  }
+
+  // PY-19084
+  public void testPercentStringKeywordTupleArgument() {
+    doTest();
+  }
 
   @NotNull
   @Override

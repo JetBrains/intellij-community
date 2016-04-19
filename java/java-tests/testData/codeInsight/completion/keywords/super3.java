@@ -20,6 +20,6 @@ interface Super
 
 interface Sub extends Super {
     default void foo() {
-          Super.<caret>
+          Super.s<caret>
     }
 }

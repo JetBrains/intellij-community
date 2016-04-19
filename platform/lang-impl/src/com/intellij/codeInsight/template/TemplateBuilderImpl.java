@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
+import com.intellij.util.DocumentUtil;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
@@ -62,6 +63,10 @@ public class TemplateBuilderImpl implements TemplateBuilder {
     myFile = InjectedLanguageManager.getInstance(element.getProject()).getTopLevelFile(element);
     myDocument = myFile.getViewProvider().getDocument();
     myContainerElement = wrapElement(element);
+  }
+
+  public int getElementsCount() {
+    return myElements.size();
   }
 
   public void replaceElement(PsiElement element, Expression expression, boolean alwaysStopAt) {
@@ -185,11 +190,13 @@ public class TemplateBuilderImpl implements TemplateBuilder {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
 
     //this is kinda hacky way of doing things, but have not got a better idea
-    for (RangeMarker element : myElements) {
-      if (element != myEndElement) {
-        myDocument.deleteString(element.getStartOffset(), element.getEndOffset());
+    DocumentUtil.executeInBulk(myDocument, true, () -> {
+      for (RangeMarker element : myElements) {
+        if (element != myEndElement) {
+          myDocument.deleteString(element.getStartOffset(), element.getEndOffset());
+        }
       }
-    }
+    });
 
     return template;
   }

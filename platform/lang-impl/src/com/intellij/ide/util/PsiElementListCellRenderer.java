@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -156,7 +156,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
 
         SimpleTextAttributes nameAttributes = attributes != null ? SimpleTextAttributes.fromTextAttributes(attributes) : null;
 
-        if (nameAttributes == null) nameAttributes = new SimpleTextAttributes(Font.PLAIN, color);
+        if (nameAttributes == null) nameAttributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, color);
 
         assert name != null : "Null name for PSI element " + element + " (by " + PsiElementListCellRenderer.this + ")";
         SpeedSearchUtil.appendColoredFragmentForMatcher(name,  this, nameAttributes, myMatcher, bgColor, selected);
@@ -168,12 +168,12 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
 
         String containerText = getContainerTextForLeftComponent(element, name + (myModuleName != null ? myModuleName + "        " : ""));
         if (containerText != null) {
-          append(" " + containerText, new SimpleTextAttributes(Font.PLAIN, JBColor.GRAY));
+          append(" " + containerText, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.GRAY));
         }
       }
       else if (!customizeNonPsiElementLeftRenderer(this, list, value, index, selected, hasFocus)) {
         setIcon(IconUtil.getEmptyIcon(false));
-        append(value == null ? "" : value.toString(), new SimpleTextAttributes(Font.PLAIN, list.getForeground()));
+        append(value == null ? "" : value.toString(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, list.getForeground()));
       }
       setBackground(selected ? UIUtil.getListSelectionBackground() : bgColor);
     }

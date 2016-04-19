@@ -661,7 +661,10 @@ public class NotificationsManagerImpl extends NotificationsManager {
 
     configureBalloonScrollPane(pane);
 
-    if (!showFullContent && layoutData.twoLineHeight < layoutData.fullHeight) {
+    if (showFullContent) {
+      pane.setPreferredSize(text.getPreferredSize());
+    }
+    else if (layoutData.twoLineHeight < layoutData.fullHeight) {
       text.setPreferredSize(null);
       Dimension size = text.getPreferredSize();
       size.height = layoutData.twoLineHeight;

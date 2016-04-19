@@ -502,4 +502,14 @@ public class StudyUtils {
   public static boolean isStudyProject(@NotNull Project project) {
     return StudyTaskManager.getInstance(project).getCourse() != null;
   }
+  
+  public static boolean hasJavaFx() {
+    try {
+      Class.forName("javafx.application.Platform");
+      return true;
+    }
+    catch (ClassNotFoundException e) {
+      return false;
+    }
+  }
 }

@@ -21,6 +21,7 @@ import com.intellij.ide.RecentProjectsManager;
 import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.impl.IdeNotificationArea;
+import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
@@ -126,7 +127,12 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, AccessibleCont
       }
     });
 
-    myBalloonLayout = new WelcomeBalloonLayoutImpl(rootPane, JBUI.insets(8), myScreen.myEventListener, myScreen.myEventLocation);
+    if (NotificationsManagerImpl.newEnabled()) {
+      myBalloonLayout = new WelcomeBalloonLayoutImpl(rootPane, JBUI.insets(8), myScreen.myEventListener, myScreen.myEventLocation);
+    }
+    else {
+      myBalloonLayout = new BalloonLayoutImpl(rootPane, JBUI.insets(8));
+    }
 
     WelcomeFrame.setupCloseAction(this);
     MnemonicHelper.init(this);
@@ -142,7 +148,9 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, AccessibleCont
   public void dispose() {
     saveLocation(getBounds());
     super.dispose();
-    ((WelcomeBalloonLayoutImpl)myBalloonLayout).dispose();
+    if (myBalloonLayout instanceof WelcomeBalloonLayoutImpl) {
+      ((WelcomeBalloonLayoutImpl)myBalloonLayout).dispose();
+    }
     Disposer.dispose(myScreen);
     WelcomeFrame.resetInstance();
   }
@@ -282,7 +290,9 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, AccessibleCont
       }
 
       toolbar.setLayout(new BoxLayout(toolbar, BoxLayout.X_AXIS));
-      toolbar.add(createEventsLink());
+      if (NotificationsManagerImpl.newEnabled()) {
+        toolbar.add(createEventsLink());
+      }
       toolbar.add(createActionLink("Configure", IdeActions.GROUP_WELCOME_SCREEN_CONFIGURE, AllIcons.General.GearPlain, !registeredVisible));
       toolbar.add(createActionLink("Get Help", IdeActions.GROUP_WELCOME_SCREEN_DOC, null, false));
 

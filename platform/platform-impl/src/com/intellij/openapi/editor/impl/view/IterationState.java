@@ -616,7 +616,7 @@ public class IterationState {
   
   @NotNull
   public TextAttributes getBeforeLineStartBackgroundAttributes() {
-    return new TextAttributes(null, getBreakBackgroundColor(false), null, null, 0);
+    return new TextAttributes(null, getBreakBackgroundColor(false), null, null, Font.PLAIN);
   }
 
   private Color getBreakBackgroundColor(boolean lineEnd) {

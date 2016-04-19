@@ -176,6 +176,9 @@ def frame_vars_to_xml(frame_f_locals):
     return xml
 
 
+def get_type_qualifier(type):
+    return getattr(type, "__module__", "")
+
 def var_to_xml(val, name, doTrim=True, additionalInXml=''):
     """ single variable or dictionary to xml representation """
 
@@ -187,6 +190,8 @@ def var_to_xml(val, name, doTrim=True, additionalInXml=''):
         v = val
 
     _type, typeName, resolver = get_type(v)
+    type_qualifier = get_type_qualifier(_type)
+
 
     do_not_call_value_str = False
     if isinstance(resolver, pydevd_resolver.djangoFormResolver.__class__):
@@ -233,7 +238,7 @@ def var_to_xml(val, name, doTrim=True, additionalInXml=''):
         name = quote(name, '/>_= ') #TODO: Fix PY-5834 without using quote
     except:
         pass
-    xml = '<var name="%s" type="%s"' % (make_valid_xml_value(name), make_valid_xml_value(typeName))
+    xml = '<var name="%s" type="%s" qualifier="%s"' % (make_valid_xml_value(name), make_valid_xml_value(typeName), make_valid_xml_value(type_qualifier))
 
     if value:
         #cannot be too big... communication may not handle it.

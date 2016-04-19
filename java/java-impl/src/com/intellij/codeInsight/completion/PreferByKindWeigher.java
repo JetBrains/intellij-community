@@ -157,7 +157,6 @@ public class PreferByKindWeigher extends LookupElementWeigher {
     suitableClass,
     improbableKeyword,
     nonInitialized,
-    classLiteral,
     classNameOrGlobalStatic,
   }
 
@@ -239,10 +238,6 @@ public class PreferByKindWeigher extends LookupElementWeigher {
       StaticallyImportable callElement = item.as(StaticallyImportable.CLASS_CONDITION_KEY);
       if (callElement != null && callElement.canBeImported() && !callElement.willBeImported()) {
         return MyResult.classNameOrGlobalStatic;
-      }
-
-      if (object instanceof PsiKeyword && PsiKeyword.CLASS.equals(item.getLookupString())) {
-        return MyResult.classLiteral;
       }
 
       if (object instanceof PsiMethod && PsiUtil.isAnnotationMethod((PsiElement)object)) {

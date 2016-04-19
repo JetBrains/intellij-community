@@ -209,7 +209,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
             LOG.info("Dumb mode not permitted in modal environment; see DumbService.allowStartingDumbModeInside documentation", trace);
           }
           else if (permission == DumbModePermission.MAY_START_MODAL) {
-            LOG.info("Starting modal dumb mode, caused by the following trace", trace);
+            LOG.debug("Starting modal dumb mode, caused by the following trace", trace);
           }
 
           // always change dumb status inside write action.

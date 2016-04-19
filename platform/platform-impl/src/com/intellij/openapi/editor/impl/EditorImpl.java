@@ -147,7 +147,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private int myLinePaintersWidth;
 
   static {
-    ComplementaryFontsRegistry.getFontAbleToDisplay(' ', 0, 0, UIManager.getFont("Label.font").getFamily()); // load costly font info
+    ComplementaryFontsRegistry.getFontAbleToDisplay(' ', 0, Font.PLAIN, UIManager.getFont("Label.font").getFamily()); // load costly font info
   }
 
   private final CommandProcessor myCommandProcessor;
@@ -1947,10 +1947,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     boolean painted = false;
     if (myDocument.getTextLength() > 0) {
-      int startDocLine = myDocument.getLineNumber(e.getOffset());
-      int endDocLine = myDocument.getLineNumber(e.getOffset() + e.getNewLength());
-      if (e.getOldLength() > e.getNewLength() || startDocLine != endDocLine || StringUtil.indexOf(e.getOldFragment(), '\n') != -1) {
-        updateGutterSize();
+      if (startLine != endLine || StringUtil.indexOf(e.getOldFragment(), '\n') != -1) {
+        myGutterComponent.clearLineToGutterRenderersCache();
       }
 
       if (countLineFeeds(e.getOldFragment()) != countLineFeeds(e.getNewFragment())) {
@@ -2036,7 +2034,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       dim = mySizeAdjustmentStrategy.adjust(dim, myPreferredSize, this);
       myPreferredSize = dim;
 
-      myGutterComponent.updateSize();
+      updateGutterSize();
 
       myEditorComponent.setSize(dim);
       myEditorComponent.fireResized();

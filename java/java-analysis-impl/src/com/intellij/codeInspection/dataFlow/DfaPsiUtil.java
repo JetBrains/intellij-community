@@ -66,6 +66,19 @@ public class DfaPsiUtil {
 
   @NotNull
   public static Nullness getElementNullability(@Nullable PsiType resultType, @Nullable PsiModifierListOwner owner) {
+    if (resultType != null) {
+      for (PsiAnnotation annotation : resultType.getAnnotations()) {
+        String qualifiedName = annotation.getQualifiedName();
+        NullableNotNullManager nnn = NullableNotNullManager.getInstance(annotation.getProject());
+        if (nnn.getNullables().contains(qualifiedName)) {
+          return Nullness.NULLABLE;
+        }
+        if (nnn.getNotNulls().contains(qualifiedName)) {
+          return Nullness.NOT_NULL;
+        }
+      }
+    }
+
     if (owner == null || resultType instanceof PsiPrimitiveType) {
       return Nullness.UNKNOWN;
     }
@@ -75,24 +88,6 @@ public class DfaPsiUtil {
     }
     if (owner instanceof PsiMethod && isEnumValueOf((PsiMethod)owner)) {
       return Nullness.NOT_NULL;
-    }
-
-    if (resultType != null) {
-      NullableNotNullManager nnn = NullableNotNullManager.getInstance(owner.getProject());
-      for (PsiAnnotation annotation : resultType.getAnnotations()) {
-        if (!annotation.isValid()) {
-          PsiUtilCore.ensureValid(owner);
-          PsiUtil.ensureValidType(resultType, owner + " of " + owner.getClass());
-          PsiUtilCore.ensureValid(annotation); //should fail
-        }
-        String qualifiedName = annotation.getQualifiedName();
-        if (nnn.getNullables().contains(qualifiedName)) {
-          return Nullness.NULLABLE;
-        }
-        if (nnn.getNotNulls().contains(qualifiedName)) {
-          return Nullness.NOT_NULL;
-        }
-      }
     }
 
     if (NullableNotNullManager.isNullable(owner)) {

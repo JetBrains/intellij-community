@@ -66,8 +66,12 @@ public class CodeFragmentInputComponent extends EvaluationInputComponent {
 
   @Override
   @NotNull
-  protected XDebuggerEditorBase getInputEditor() {
+  public XDebuggerEditorBase getInputEditor() {
     return myMultilineEditor;
+  }
+
+  public JPanel getMainComponent() {
+    return myMainPanel;
   }
 
   @Override

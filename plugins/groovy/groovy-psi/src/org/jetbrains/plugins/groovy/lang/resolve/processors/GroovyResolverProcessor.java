@@ -39,7 +39,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.util.NotNullCachedComputableWrapper;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -174,16 +173,10 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
 
         final NotNullComputable<PsiSubstitutor> substitutorComputer;
         if (kind == GroovyResolveKind.METHOD) {
-          substitutorComputer = new NotNullCachedComputableWrapper<>(
-            () -> myMethodSubstitutorComputer.getValue().obtainSubstitutor(substitutor, method, resolveContext),
-            PsiSubstitutor.EMPTY
-          );
+          substitutorComputer = () -> myMethodSubstitutorComputer.getValue().obtainSubstitutor(substitutor, method, resolveContext);
         }
         else {
-          substitutorComputer = new NotNullCachedComputableWrapper<>(
-            () -> myPropertySubstitutorComputer.getValue().obtainSubstitutor(substitutor, method, resolveContext),
-            PsiSubstitutor.EMPTY
-          );
+          substitutorComputer = () -> myPropertySubstitutorComputer.getValue().obtainSubstitutor(substitutor, method, resolveContext);
         }
         candidate = new GroovyMethodResult(
           method, resolveContext, spreadState,

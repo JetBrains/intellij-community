@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -257,18 +257,33 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod, Orig
     return myParameterList;
   }
 
+  @NotNull
   public GrLightMethodBuilder addParameter(@NotNull GrParameter parameter) {
     getParameterList().addParameter(parameter);
     return this;
   }
 
+  @NotNull
   public GrLightMethodBuilder addParameter(@NotNull String name, @NotNull String type, boolean isOptional) {
     return addParameter(name, JavaPsiFacade.getElementFactory(getProject()).createTypeFromText(type, this), isOptional);
   }
 
+  @NotNull
   public GrLightMethodBuilder addParameter(@NotNull String name, @NotNull PsiType type, boolean isOptional) {
     GrLightParameter param = new GrLightParameter(name, type, this).setOptional(isOptional);
     return addParameter(param);
+  }
+
+  @NotNull
+  public GrLightParameter addAndGetParameter(@NotNull String name, @NotNull String type, boolean isOptional) {
+    return addAndGetParameter(name, JavaPsiFacade.getElementFactory(getProject()).createTypeFromText(type, this), isOptional);
+  }
+
+  @NotNull
+  public GrLightParameter addAndGetParameter(@NotNull String name, @NotNull PsiType type, boolean isOptional) {
+    GrLightParameter param = new GrLightParameter(name, type, this).setOptional(isOptional);
+    addParameter(param);
+    return param;
   }
 
   @Override
