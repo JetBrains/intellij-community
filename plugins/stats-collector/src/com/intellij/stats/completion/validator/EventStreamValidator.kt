@@ -79,10 +79,11 @@ class SessionsInputSeparator(input: InputStream,
 
 
 class CompletionState(event: CompletionStartedEvent) : LogEventVisitor() {
-    var currentPosition    = event.currentPosition
-    var currentId          = event.completionListIds[currentPosition]
-    var completionList     = event.completionListIds
     val allCompletionItems = event.newCompletionListItems.toMutableList()
+    
+    var currentPosition    = event.currentPosition
+    var completionList     = event.completionListIds
+    var currentId          = getSafeCurrentId(completionList, currentPosition)
 
     var isValid = true
     var isFinished = false
@@ -93,7 +94,20 @@ class CompletionState(event: CompletionStartedEvent) : LogEventVisitor() {
         if (nextEvent.completionListIds.isNotEmpty()) {
             completionList = nextEvent.completionListIds
         }
-        currentId = completionList[currentPosition]
+        currentId = getSafeCurrentId(completionList, currentPosition)
+    }
+
+    private fun getSafeCurrentId(completionList: List<Int>, position: Int): Int {
+        if (completionList.isEmpty()) {
+            return -1
+        }        
+        else if (position < completionList.size) {
+            return completionList[position]
+        }
+        else {
+            isValid = false
+            return -2
+        }
     }
 
     fun accept(nextEvent: LogEvent) {
