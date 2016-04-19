@@ -391,17 +391,16 @@ public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
     PsiAnnotation[] annotations = getAllAnnotations(element);
     PsiManager manager = element.getManager();
     for (PsiAnnotation annotation : annotations) {
-      AllowedValues values;
-      if (type != null && MagicConstant.class.getName().equals(annotation.getQualifiedName())) {
-        //PsiAnnotation magic = AnnotationUtil.findAnnotationInHierarchy(element, Collections.singleton(MagicConstant.class.getName()));
-        values = getAllowedValuesFromMagic(type, annotation, manager);
-        if (values != null) return values;
-      }
-
       PsiJavaCodeReferenceElement ref = annotation.getNameReferenceElement();
       PsiElement resolved = ref == null ? null : ref.resolve();
       if (!(resolved instanceof PsiClass) || !((PsiClass)resolved).isAnnotationType()) continue;
       PsiClass aClass = (PsiClass)resolved;
+      AllowedValues values;
+      if (type != null && MagicConstant.class.getName().equals(aClass.getQualifiedName())) {
+        values = getAllowedValuesFromMagic(type, annotation, manager);
+        if (values != null) return values;
+      }
+
       if (visited == null) visited = new THashSet<>();
       if (!visited.add(aClass)) continue;
       values = getAllowedValues(aClass, type, visited);
@@ -563,7 +562,8 @@ public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
         if (flags.size() > 1) {
           for (int i = flags.size() - 1; i >= 0; i--) {
             PsiAnnotationMemberValue flag = flags.get(i);
-            if (evaluateLongConstant((PsiExpression)flag) == 0) {
+            Long flagValue = evaluateLongConstant((PsiExpression)flag);
+            if (flagValue != null && flagValue == 0) {
               // no sense in ORing with '0'
               flags.remove(i);
             }
