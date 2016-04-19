@@ -21,8 +21,9 @@ import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.openapi.project.DumbAware;
 
-public class ToggleShowLineNumbersGloballyAction extends ToggleAction {
+public class ToggleShowLineNumbersGloballyAction extends ToggleAction implements DumbAware {
   @Override
   public boolean isSelected(AnActionEvent e) {
     return EditorSettingsExternalizable.getInstance().isLineNumbersShown();
