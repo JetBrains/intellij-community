@@ -28,14 +28,15 @@ public class PyReferringObjectsValue extends PyDebugValue {
 
   public PyReferringObjectsValue(@NotNull String name,
                                  String type,
+                                 String typeQualifier,
                                  String value,
                                  boolean container, boolean errorOnEval, @NotNull PyFrameAccessor frameAccessor) {
-    super(name, type, value, container, errorOnEval, frameAccessor);
+    super(name, type, typeQualifier, value, container, errorOnEval, frameAccessor);
     myReferrersLoader = frameAccessor.getReferrersLoader();
   }
 
   public PyReferringObjectsValue(PyDebugValue debugValue) {
-    this(debugValue.getName(), debugValue.getType(), debugValue.getValue(), debugValue.isContainer(), debugValue.isErrorOnEval(), debugValue.getFrameAccessor());
+    this(debugValue.getName(), debugValue.getType(), debugValue.getTypeQualifier(), debugValue.getValue(), debugValue.isContainer(), debugValue.isErrorOnEval(), debugValue.getFrameAccessor());
   }
 
   @Override

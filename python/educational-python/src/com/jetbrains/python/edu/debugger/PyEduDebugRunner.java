@@ -152,6 +152,22 @@ public class PyEduDebugRunner extends PyDebugRunner {
     eduConsole.setCloseable(false);
     ui.addContent(eduConsole, 0, PlaceInGrid.right, false);
 
+    Presentation presentation = view.getSwitchConsoleActionPresentation();
+    ToggleAction action = new ToggleAction(presentation.getText(), presentation.getDescription(), presentation.getIcon()) {
+
+      @Override
+      public boolean isSelected(AnActionEvent e) {
+        return !view.isPrimaryConsoleEnabled();
+      }
+
+      @Override
+      public void setSelected(AnActionEvent e, boolean state) {
+        view.enableConsole(!state);
+      }
+    };
+
+    eduConsole.setActions(new DefaultActionGroup(action), ActionPlaces.DEBUGGER_TOOLBAR,
+                          view.getPreferredFocusableComponent());
     PyDebugProcess process = (PyDebugProcess)session.getDebugProcess();
     PyDebugRunner.initDebugConsoleView(project, process, view, processHandler, session);
 

@@ -36,6 +36,7 @@ import com.intellij.util.io.IntInlineKeyDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.util.*;
@@ -119,7 +120,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
       @Override
       @NotNull
       public Map<Integer, SerializedStubTree> map(@NotNull final FileContent inputData) {
-        final Map<Integer, SerializedStubTree> result = new HashMap<Integer, SerializedStubTree>();
+        final Map<Integer, SerializedStubTree> result = new THashMap<Integer, SerializedStubTree>();
 
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           @Override
@@ -152,7 +153,13 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
               }
             }
             final int key = Math.abs(FileBasedIndex.getFileId(file));
-            result.put(key, new SerializedStubTree(bytes.getInternalBuffer(), bytes.size(), rootStub, file.getLength(), contentLength));
+            SerializedStubTree serializedStubTree = new SerializedStubTree(bytes.getInternalBuffer(), bytes.size(), rootStub, file.getLength(), contentLength);
+            try {
+              serializedStubTree.setStubIndicesValueMap(getStubIndicesValueMap(serializedStubTree, key));
+            } catch (StorageException ex) {
+              throw new RuntimeException(ex);
+            }
+            result.put(key, serializedStubTree);
           }
         });
 
@@ -275,6 +282,51 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
     return allIndices;
   }
 
+  private static @NotNull Map<StubIndexKey, Map<Object, StubIdList>> getStubIndicesValueMap(SerializedStubTree stub, int fileId)
+    throws StorageException {
+    if (stub == null) return Collections.emptyMap();
+    Map<StubIndexKey, Map<Object, StubIdList>> stubIndicesValueMap = stub.getStubIndicesValueMap();
+    if (stubIndicesValueMap != null) return stubIndicesValueMap;
+
+    try {
+      ObjectStubBase root = (ObjectStubBase)stub.getStub(true);
+      if (root instanceof PsiFileStub) {
+        root.putUserData(IndexingDataKeys.VIRTUAL_FILE_ID, fileId);
+      }
+      ObjectStubTree objectStubTree = root instanceof PsiFileStub ? new StubTree((PsiFileStub)root, false) :
+                                      new ObjectStubTree(root, false);
+      Map<StubIndexKey, Map<Object, int[]>> map = objectStubTree.indexStubTree();
+
+      // xxx:fix refs inplace
+      stubIndicesValueMap = (Map)map;
+      for(StubIndexKey key:map.keySet()) {
+        Map<Object, int[]> value = map.get(key);
+        for(Object k: value.keySet()) {
+          int[] ints = value.get(k);
+          StubIdList stubList = ints.length == 1 ? new StubIdList(ints[0]) : new StubIdList(ints, ints.length);
+          ((Map<Object, StubIdList>)(Map)value).put(k, stubList);
+        }
+      }
+
+      return stubIndicesValueMap;
+    }
+    catch (SerializerNotFoundException e) {
+      throw new StorageException(e);
+    }
+  }
+
+  private static @Nullable SerializedStubTree getSerializedStubTree(@NotNull final Map<Integer, SerializedStubTree> data) {
+    if (!data.isEmpty()) {
+      Map.Entry<Integer, SerializedStubTree> entry = data.entrySet().iterator().next();
+      return entry.getValue();
+    }
+    return null;
+  }
+  private static Map<StubIndexKey, Map<Object, StubIdList>> getStubIndicesValueMap(@NotNull final Map<Integer, SerializedStubTree> data, int fileId)
+    throws StorageException {
+      return getStubIndicesValueMap(getSerializedStubTree(data), fileId);
+  }
+
   private static class MyIndex extends MapReduceIndex<Integer, SerializedStubTree, FileContent> {
     private StubIndexImpl myStubIndex;
 
@@ -301,13 +353,8 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
       throws StorageException {
 
       checkNameStorage();
-      final Map<StubIndexKey, Map<Object, StubIdList>> newStubTree;
-      try {
-        newStubTree = getStubTree(((SimpleUpdateData)updateData).getNewData());
-      }
-      catch (SerializerNotFoundException e) {
-        throw new StorageException(e);
-      }
+      final Map<StubIndexKey, Map<Object, StubIdList>> newStubIndicesValueMap =
+        getStubIndicesValueMap(getSerializedStubTree(((SimpleUpdateData)updateData).getNewData()), inputId);
 
       final StubIndexImpl stubIndex = getStubIndex();
       final Collection<StubIndexKey> allStubIndices = stubIndex.getAllStubIndexKeys();
@@ -320,19 +367,17 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
         try {
           getWriteLock().lock();
 
-          final Map<Integer, SerializedStubTree> oldData = readOldData(inputId);
-
-          final Map<StubIndexKey, Map<Object, StubIdList>> oldStubTree;
-          try {
-            oldStubTree = getStubTree(oldData);
-          }
-          catch (SerializerNotFoundException e) {
-            throw new StorageException(e);
-          }
+          final Map<StubIndexKey, Map<Object, StubIdList>> previousStubIndicesValueMap =
+            getStubIndicesValueMap(readOldData(inputId), inputId);
 
           super.updateWithMap(inputId, updateData);
 
-          updateStubIndices(getAffectedIndices(oldStubTree, newStubTree), inputId, oldStubTree, newStubTree);
+          updateStubIndices(
+            getAffectedIndices(previousStubIndicesValueMap, newStubIndicesValueMap),
+            inputId,
+            previousStubIndicesValueMap,
+            newStubIndicesValueMap
+          );
         }
         finally {
           getWriteLock().unlock();
@@ -360,38 +405,6 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
         //noinspection ThrowFromFinallyBlock
         throw new StorageException("NameStorage for stubs serialization has been corrupted");
       }
-    }
-
-    private static Map<StubIndexKey, Map<Object, StubIdList>> getStubTree(@NotNull final Map<Integer, SerializedStubTree> data)
-      throws SerializerNotFoundException {
-      final Map<StubIndexKey, Map<Object, StubIdList>> stubTree;
-      if (!data.isEmpty()) {
-        Map.Entry<Integer, SerializedStubTree> entry = data.entrySet().iterator().next();
-        final SerializedStubTree stub = entry.getValue();
-        ObjectStubBase root = (ObjectStubBase)stub.getStub(true);
-        if (root instanceof PsiFileStub) {
-          Integer fileId = entry.getKey();
-          root.putUserData(IndexingDataKeys.VIRTUAL_FILE_ID, fileId);
-        }
-        ObjectStubTree objectStubTree = root instanceof PsiFileStub ? new StubTree((PsiFileStub)root, false) :
-                                        new ObjectStubTree(root, false);
-        Map<StubIndexKey, Map<Object, int[]>> map = objectStubTree.indexStubTree();
-
-        // xxx:fix refs inplace
-        stubTree = (Map)map;
-        for(StubIndexKey key:map.keySet()) {
-          Map<Object, int[]> value = map.get(key);
-          for(Object k: value.keySet()) {
-            int[] ints = value.get(k);
-            StubIdList stubList = ints.length == 1 ? new StubIdList(ints[0]) : new StubIdList(ints, ints.length);
-            ((Map<Object, StubIdList>)(Map)value).put(k, stubList);
-          }
-        }
-      }
-      else {
-        stubTree = Collections.emptyMap();
-      }
-      return stubTree;
     }
 
     /*MUST be called under the WriteLock*/

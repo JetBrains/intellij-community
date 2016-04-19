@@ -57,12 +57,13 @@ class PyEduDebugProcess extends PyDebugProcess {
       return Collections.emptyList();
     }
     final String helpersPath = PythonHelpersLocator.getHelpersRoot().getPath();
-    return Collections2.filter(frames, new Predicate<PyStackFrameInfo>() {
+    Collection<PyStackFrameInfo> filteredFrames = Collections2.filter(frames, new Predicate<PyStackFrameInfo>() {
       @Override
       public boolean apply(PyStackFrameInfo frame) {
         String file = frame.getPosition().getFile();
         return !FileUtil.isAncestor(helpersPath, file, false);
       }
     });
+    return !filteredFrames.isEmpty() ? filteredFrames : frames;
   }
 }

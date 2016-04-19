@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGd
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyMethodResult;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
-import org.jetbrains.plugins.groovy.util.NotNullCachedComputableWrapper;
 
 import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.RESOLVE_CONTEXT;
 
@@ -111,15 +110,8 @@ public class AccessorResolverProcessor extends MethodResolverProcessor {
     final PsiSubstitutor substitutor = getSubstitutor(state);
 
     final PsiElement resolveContext = state.get(RESOLVE_CONTEXT);
-    final NotNullCachedComputableWrapper<PsiSubstitutor> substitutorComputer = new NotNullCachedComputableWrapper<PsiSubstitutor>(
-      new NotNullComputable<PsiSubstitutor>() {
-        @NotNull
-        @Override
-        public PsiSubstitutor compute() {
-          return mySubstitutorComputer.obtainSubstitutor(substitutor, method, resolveContext);
-        }
-      }
-    );
+    final NotNullComputable<PsiSubstitutor> substitutorComputer =
+      () -> mySubstitutorComputer.obtainSubstitutor(substitutor, method, resolveContext);
     boolean isAccessible = isAccessible(method);
     final SpreadState spreadState = state.get(SpreadState.SPREAD_STATE);
     boolean isStaticsOK = isStaticsOK(method, resolveContext, false);

@@ -727,6 +727,8 @@ public class RefactoringUtil {
 
   private static void prepareForInterface(PsiMethod method) {
     PsiUtil.setModifierProperty(method, PsiModifier.PUBLIC, false);
+    PsiUtil.setModifierProperty(method, PsiModifier.PRIVATE, false);
+    PsiUtil.setModifierProperty(method, PsiModifier.PROTECTED, false);
     prepareForAbstract(method);
   }
 

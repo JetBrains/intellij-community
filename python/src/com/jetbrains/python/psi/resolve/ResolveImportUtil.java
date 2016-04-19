@@ -191,6 +191,17 @@ public class ResolveImportUtil {
     if (qualifiedName == null || sourceFile == null) {
       return Collections.emptyList();
     }
+    final ResolveModuleParams params = new ResolveModuleParams(qualifiedName, sourceFile, importIsAbsolute, relativeLevel);
+    return PyUtil.getParameterizedCachedValue(sourceFile, params, ResolveImportUtil::calculateResolveModule);
+  }
+
+  @NotNull
+  private static List<PsiElement> calculateResolveModule(@NotNull ResolveModuleParams params) {
+    final QualifiedName qualifiedName = params.getName();
+    final int relativeLevel = params.getLevel();
+    final PsiFile sourceFile = params.getFile();
+    final boolean importIsAbsolute = params.isAbsolute();
+
     final String marker = qualifiedName + "#" + Integer.toString(relativeLevel);
     final Set<String> beingImported = ourBeingImported.get();
     if (beingImported.contains(marker)) {
@@ -485,5 +496,61 @@ public class ResolveImportUtil {
       }
     }
     return PointInImport.NONE;
+  }
+
+  private static final class ResolveModuleParams {
+    @NotNull private final QualifiedName myName;
+    @NotNull private final PsiFile myFile;
+    private final boolean myAbsolute;
+    private final int myLevel;
+
+    public ResolveModuleParams(@NotNull QualifiedName qualifiedName, @NotNull PsiFile file , boolean importIsAbsolute, int relativeLevel) {
+      myName = qualifiedName;
+      myFile = file;
+      myAbsolute = importIsAbsolute;
+      myLevel = relativeLevel;
+    }
+
+    @NotNull
+    public QualifiedName getName() {
+      return myName;
+    }
+
+    public boolean isAbsolute() {
+      return myAbsolute;
+    }
+
+    public int getLevel() {
+      return myLevel;
+    }
+
+    @NotNull
+    public PsiFile getFile() {
+      return myFile;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      ResolveModuleParams params = (ResolveModuleParams)o;
+
+      if (myAbsolute != params.myAbsolute) return false;
+      if (myLevel != params.myLevel) return false;
+      if (!myName.equals(params.myName)) return false;
+      if (!myFile.equals(params.myFile)) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = myName.hashCode();
+      result = 31 * result + myFile.hashCode();
+      result = 31 * result + (myAbsolute ? 1 : 0);
+      result = 31 * result + myLevel;
+      return result;
+    }
   }
 }

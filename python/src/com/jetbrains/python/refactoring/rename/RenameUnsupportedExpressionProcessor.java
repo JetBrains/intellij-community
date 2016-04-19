@@ -22,14 +22,23 @@ import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
-import com.jetbrains.python.psi.PyLiteralExpression;
+import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class RenamePyLiteralExpressionProcessor extends RenamePyElementProcessor {
+public class RenameUnsupportedExpressionProcessor extends RenamePyElementProcessor {
   @Override
   public boolean canProcessElement(@NotNull PsiElement element) {
-    return PsiTreeUtil.instanceOf(element, PyLiteralExpression.class);
+    return PsiTreeUtil.instanceOf(element, 
+                                  PyStringLiteralExpression.class,
+                                  PyNumericLiteralExpression.class,
+                                  PyListLiteralExpression.class,
+                                  PyDictLiteralExpression.class,
+                                  PySetLiteralExpression.class,
+                                  PyStarArgument.class,
+                                  PyCallExpression.class,
+                                  PyBinaryExpression.class,
+                                  PySubscriptionExpression.class);
   }
 
   @Override

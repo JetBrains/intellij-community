@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.jetbrains.python.testing;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -32,6 +31,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.concurrency.EdtExecutorService;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonModuleTypeBase;
@@ -45,6 +45,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Detects test runner and docstring format
@@ -70,94 +71,80 @@ public class PyIntegratedToolsProjectConfigurator implements DirectoryProjectCon
 
   private static void updateIntegratedTools(final Module module, final int delay) {
     final PyDocumentationSettings docSettings = PyDocumentationSettings.getInstance(module);
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      public void run() {
-        if (delay > 0) {
-          try {
-            Thread.sleep(delay); // wait until all short-term disk-hitting activity ceases
-          }
-          catch (InterruptedException ignore) {
+    EdtExecutorService.getScheduledExecutorInstance().schedule(() -> {
+      LOG.debug("Integrated tools configurator has started");
+      if (module.isDisposed()) return;
+
+      @NotNull DocStringFormat docFormat = DocStringFormat.PLAIN;
+      //check setup.py
+      @NotNull String testRunner = detectTestRunnerFromSetupPy(module);
+      if (!testRunner.isEmpty()) {
+        LOG.debug("Test runner '" + testRunner + "' was discovered from setup.py in the module '" + module.getModuleFilePath() + "'");
+      }
+
+      //try to find test_runner import
+      final String extension = PythonFileType.INSTANCE.getDefaultExtension();
+      // Module#getModuleScope() and GlobalSearchScope#getModuleScope() search only in source roots
+      final GlobalSearchScope searchScope = module.getModuleContentScope();
+      final Collection<VirtualFile> pyFiles = FilenameIndex.getAllFilesByExt(module.getProject(), extension, searchScope);
+      for (VirtualFile file : pyFiles) {
+        if (file.getName().startsWith("test")) {
+          if (testRunner.isEmpty()) {
+            testRunner = checkImports(file, module); //find test runner import
+            if (!testRunner.isEmpty()) {
+              LOG.debug("Test runner '" + testRunner + "' was detected from imports in the file '" + file.getPath() + "'");
+            }
           }
         }
-        
-        LOG.debug("Integrated tools configurator has started");
-
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            @NotNull DocStringFormat docFormat = DocStringFormat.PLAIN;
-            //check setup.py
-            @NotNull String testRunner = detectTestRunnerFromSetupPy(module);
-            if (!testRunner.isEmpty()) {
-              LOG.debug("Test runner '" + testRunner + "' was discovered from setup.py in the module '" + module.getModuleFilePath() + "'");
-            }
-
-            //try to find test_runner import
-            final String extension = PythonFileType.INSTANCE.getDefaultExtension();
-            // Module#getModuleScope() and GlobalSearchScope#getModuleScope() search only in source roots
-            final GlobalSearchScope searchScope = module.getModuleContentScope();
-            final Collection<VirtualFile> pyFiles = FilenameIndex.getAllFilesByExt(module.getProject(), extension, searchScope);
-            for (VirtualFile file : pyFiles) {
-              if (file.getName().startsWith("test")) {
-                if (testRunner.isEmpty()) {
-                  testRunner = checkImports(file, module); //find test runner import
-                  if (!testRunner.isEmpty()) {
-                    LOG.debug("Test runner '" + testRunner + "' was detected from imports in the file '" + file.getPath() + "'");
-                  }
-                }
-              }
-              else if (docFormat == DocStringFormat.PLAIN) {
-                docFormat = checkDocstring(file, module);    // detect docstring type
-                if (docFormat != DocStringFormat.PLAIN) {
-                  LOG.debug("Docstring format '" + docFormat + "' was detected from content of the file '" + file.getPath() + "'");
-                }
-              }
-              
-              if (!testRunner.isEmpty() && docFormat != DocStringFormat.PLAIN) {
-                break;
-              }
-            }
-            
-            // Check test runners available in the module SDK
-            if (testRunner.isEmpty()) {
-              //check if installed in sdk
-              final Sdk sdk = PythonSdkType.findPythonSdk(module);
-              if (sdk != null && sdk.getSdkType() instanceof PythonSdkType) {
-                final Boolean nose = VFSTestFrameworkListener.isTestFrameworkInstalled(sdk, PyNames.NOSE_TEST);
-                final Boolean pytest = VFSTestFrameworkListener.isTestFrameworkInstalled(sdk, PyNames.PY_TEST);
-                final Boolean attest = VFSTestFrameworkListener.isTestFrameworkInstalled(sdk, PyNames.AT_TEST);
-                if (nose != null && nose)
-                  testRunner = PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME;
-                else if (pytest != null && pytest)
-                  testRunner = PythonTestConfigurationsModel.PY_TEST_NAME;
-                else if (attest != null && attest)
-                  testRunner = PythonTestConfigurationsModel.PYTHONS_ATTEST_NAME;
-                if (!testRunner.isEmpty()) {
-                  LOG.debug("Test runner '" + testRunner + "' was detected from SDK " + sdk);
-                }
-              }
-            }
-
-            final TestRunnerService runnerService = TestRunnerService.getInstance(module);
-            if (runnerService != null) {
-              if (testRunner.isEmpty()) {
-                runnerService.setProjectConfiguration(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME);
-              }
-              else {
-                runnerService.setProjectConfiguration(testRunner);
-                LOG.info("Test runner '" + testRunner + "' was detected by project configurator");
-              }
-            }
-
-            // Documentation settings should have meaningful default already
-            if (docFormat != DocStringFormat.PLAIN) {
-              docSettings.setFormat(docFormat);
-              LOG.info("Docstring format '" + docFormat + "' was detected by project configurator");
-            }
+        else if (docFormat == DocStringFormat.PLAIN) {
+          docFormat = checkDocstring(file, module);    // detect docstring type
+          if (docFormat != DocStringFormat.PLAIN) {
+            LOG.debug("Docstring format '" + docFormat + "' was detected from content of the file '" + file.getPath() + "'");
           }
-        }, ModalityState.any(), module.getDisposed());
+        }
+
+        if (!testRunner.isEmpty() && docFormat != DocStringFormat.PLAIN) {
+          break;
+        }
       }
-    });
+
+      // Check test runners available in the module SDK
+      if (testRunner.isEmpty()) {
+        //check if installed in sdk
+        final Sdk sdk = PythonSdkType.findPythonSdk(module);
+        if (sdk != null && sdk.getSdkType() instanceof PythonSdkType) {
+          final Boolean nose = VFSTestFrameworkListener.isTestFrameworkInstalled(sdk, PyNames.NOSE_TEST);
+          final Boolean pytest = VFSTestFrameworkListener.isTestFrameworkInstalled(sdk, PyNames.PY_TEST);
+          final Boolean attest = VFSTestFrameworkListener.isTestFrameworkInstalled(sdk, PyNames.AT_TEST);
+          if (nose != null && nose)
+            testRunner = PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME;
+          else if (pytest != null && pytest)
+            testRunner = PythonTestConfigurationsModel.PY_TEST_NAME;
+          else if (attest != null && attest)
+            testRunner = PythonTestConfigurationsModel.PYTHONS_ATTEST_NAME;
+          if (!testRunner.isEmpty()) {
+            LOG.debug("Test runner '" + testRunner + "' was detected from SDK " + sdk);
+          }
+        }
+      }
+
+      final TestRunnerService runnerService = TestRunnerService.getInstance(module);
+      if (runnerService != null) {
+        if (testRunner.isEmpty()) {
+          runnerService.setProjectConfiguration(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME);
+        }
+        else {
+          runnerService.setProjectConfiguration(testRunner);
+          LOG.info("Test runner '" + testRunner + "' was detected by project configurator");
+        }
+      }
+
+      // Documentation settings should have meaningful default already
+      if (docFormat != DocStringFormat.PLAIN) {
+        docSettings.setFormat(docFormat);
+        LOG.info("Docstring format '" + docFormat + "' was detected by project configurator");
+      }
+    }, delay, TimeUnit.MILLISECONDS);
   }
 
   @NotNull

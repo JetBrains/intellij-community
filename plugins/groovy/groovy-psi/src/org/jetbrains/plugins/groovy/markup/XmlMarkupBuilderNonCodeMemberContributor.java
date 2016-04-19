@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,24 +15,31 @@
  */
 package org.jetbrains.plugins.groovy.markup;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
-/**
- * @author Sergey Evdokimov
- */
+import static com.intellij.psi.CommonClassNames.*;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrDelegatesToUtil.DELEGATES_TO_KEY;
+import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_CLOSURE;
+
 public class XmlMarkupBuilderNonCodeMemberContributor extends NonCodeMembersContributor {
+
+  private static final String FQN = "groovy.xml.MarkupBuilder";
 
   @Nullable
   @Override
   protected String getParentClassName() {
-    return "groovy.xml.MarkupBuilder";
+    return FQN;
   }
 
   @Override
@@ -41,22 +48,66 @@ public class XmlMarkupBuilderNonCodeMemberContributor extends NonCodeMembersCont
                                      @NotNull PsiScopeProcessor processor,
                                      @NotNull PsiElement place,
                                      @NotNull ResolveState state) {
-    String nameHint = ResolveUtil.getNameHint(processor);
-    if (nameHint == null) return;
+    String name = ResolveUtil.getNameHint(processor);
+    if (name == null) return;
 
     if (!ResolveUtil.shouldProcessMethods(processor.getHint(ElementClassHint.KEY))) return;
 
-    GrLightMethodBuilder res = new GrLightMethodBuilder(aClass.getManager(), nameHint);
-    res.addParameter("attrs", CommonClassNames.JAVA_UTIL_MAP, false);
-    res.addParameter("content", CommonClassNames.JAVA_LANG_OBJECT, false);
-    res.setOriginInfo("XML tag");
+    GrLightMethodBuilder res;
 
+    // ()
+    res = new GrLightMethodBuilder(aClass.getManager(), name);
+    res.setReturnType(JAVA_LANG_STRING, place.getResolveScope());
+    res.setOriginInfo("via MarkupBuilder");
     if (!processor.execute(res, state)) return;
 
-    res = new GrLightMethodBuilder(aClass.getManager(), nameHint);
-    res.addParameter("contentOrAttrs", CommonClassNames.JAVA_LANG_OBJECT, true);
-    res.setOriginInfo("XML tag");
+    // (Closure)
+    res = new GrLightMethodBuilder(aClass.getManager(), name);
+    res.addAndGetParameter("body", GROOVY_LANG_CLOSURE, false).putUserData(DELEGATES_TO_KEY, FQN);
+    res.setReturnType(JAVA_LANG_STRING, place.getResolveScope());
+    res.setOriginInfo("via MarkupBuilder");
+    if (!processor.execute(res, state)) return;
 
-    processor.execute(res, state);
+    // (Object, Closure)
+    res = new GrLightMethodBuilder(aClass.getManager(), name);
+    res.addParameter("value", JAVA_LANG_OBJECT, false);
+    res.addAndGetParameter("body", GROOVY_LANG_CLOSURE, false).putUserData(DELEGATES_TO_KEY, FQN);
+    res.setReturnType(JAVA_LANG_STRING, place.getResolveScope());
+    res.setOriginInfo("via MarkupBuilder");
+    if (!processor.execute(res, state)) return;
+
+    // (Map, Closure)
+    res = new GrLightMethodBuilder(aClass.getManager(), name);
+    res.addParameter("attributes", JAVA_UTIL_MAP, false);
+    res.addAndGetParameter("body", GROOVY_LANG_CLOSURE, false).putUserData(DELEGATES_TO_KEY, FQN);
+    res.setReturnType(JAVA_LANG_STRING, place.getResolveScope());
+    res.setOriginInfo("via MarkupBuilder");
+    if (!processor.execute(res, state)) return;
+
+    // (Map)
+    // (Map, Object)
+    // (Map, Object, Closure)
+    res = new GrLightMethodBuilder(aClass.getManager(), name);
+    res.setReturnType(JAVA_LANG_STRING, place.getResolveScope());
+    res.addParameter("attributes", JAVA_UTIL_MAP, false);
+    res.addParameter("value", JAVA_LANG_OBJECT, true);
+    res.addAndGetParameter("body", GROOVY_LANG_CLOSURE, true).putUserData(DELEGATES_TO_KEY, FQN);
+    res.setOriginInfo("via MarkupBuilder");
+    for (GrReflectedMethod method : res.getReflectedMethods()) {
+      if (!processor.execute(method, state)) return;
+    }
+
+    // (Object)
+    // (Object, Map)
+    // (Object, Map, Closure)
+    res = new GrLightMethodBuilder(aClass.getManager(), name);
+    res.setReturnType(JAVA_LANG_STRING, place.getResolveScope());
+    res.addParameter("value", JAVA_LANG_OBJECT, false);
+    res.addParameter("attributes", JAVA_UTIL_MAP, true);
+    res.addAndGetParameter("body", GROOVY_LANG_CLOSURE, true).putUserData(DELEGATES_TO_KEY, FQN);
+    res.setOriginInfo("via MarkupBuilder");
+    for (GrReflectedMethod method : res.getReflectedMethods()) {
+      if (!processor.execute(method, state)) return;
+    }
   }
 }

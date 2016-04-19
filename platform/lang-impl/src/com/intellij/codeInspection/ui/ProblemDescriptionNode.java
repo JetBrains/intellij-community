@@ -16,18 +16,21 @@
 
 package com.intellij.codeInspection.ui;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInspection.CommonProblemDescriptor;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemDescriptorUtil;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.containers.FactoryMap;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
 
 import static com.intellij.codeInspection.ProblemDescriptorUtil.APPEND_LINE_NUMBER;
 import static com.intellij.codeInspection.ProblemDescriptorUtil.TRIM_AT_TREE_END;
@@ -35,12 +38,13 @@ import static com.intellij.codeInspection.ProblemDescriptorUtil.TRIM_AT_TREE_END
 /**
  * @author max
  */
-public class ProblemDescriptionNode extends InspectionTreeNode implements RefElementAware {
+public class ProblemDescriptionNode extends CachedInspectionTreeNode implements RefElementAware {
   protected RefEntity myElement;
   private final CommonProblemDescriptor myDescriptor;
   protected final InspectionToolWrapper myToolWrapper;
   @NotNull
   protected final InspectionToolPresentation myPresentation;
+  private final HighlightDisplayLevel myLevel;
 
   public ProblemDescriptionNode(RefEntity element,
                                 CommonProblemDescriptor descriptor,
@@ -51,7 +55,12 @@ public class ProblemDescriptionNode extends InspectionTreeNode implements RefEle
     myDescriptor = descriptor;
     myToolWrapper = toolWrapper;
     myPresentation = presentation;
-  }
+    final InspectionProfileImpl profile = (InspectionProfileImpl)presentation.getContext().getCurrentProfile();
+    myLevel = descriptor instanceof ProblemDescriptor
+              ? profile.getErrorLevel(HighlightDisplayKey.find(toolWrapper.getShortName()), ((ProblemDescriptor)descriptor).getStartElement())
+              : profile.getTools(toolWrapper.getID(), element.getRefManager().getProject()).getLevel();
+    init();
+}
 
   @NotNull
   public InspectionToolWrapper getToolWrapper() {
@@ -69,22 +78,17 @@ public class ProblemDescriptionNode extends InspectionTreeNode implements RefEle
   }
 
   @Override
-  public Icon getIcon(boolean expanded) {
-    if (myDescriptor instanceof ProblemDescriptorBase) {
-      ProblemHighlightType problemHighlightType = ((ProblemDescriptorBase)myDescriptor).getHighlightType();
-      if (problemHighlightType == ProblemHighlightType.ERROR) return AllIcons.General.Error;
-      if (problemHighlightType == ProblemHighlightType.GENERIC_ERROR_OR_WARNING) return AllIcons.General.Warning;
-    }
-    return AllIcons.General.Information;
-  }
-
-  @Override
   public int getProblemCount() {
     return 1;
   }
 
   @Override
-  public boolean isValid() {
+  public void visitProblemSeverities(FactoryMap<HighlightDisplayLevel, Integer> counter) {
+    counter.put(myLevel, counter.get(myLevel) + 1);
+  }
+
+  @Override
+  public boolean calculateIsValid() {
     if (myElement instanceof RefElement && !myElement.isValid()) return false;
     final CommonProblemDescriptor descriptor = getDescriptor();
     if (descriptor instanceof ProblemDescriptor) {
@@ -125,7 +129,8 @@ public class ProblemDescriptionNode extends InspectionTreeNode implements RefEle
     return FileStatus.NOT_CHANGED;
   }
 
-  public String toString() {
+  @Override
+  public String calculatePresentableName() {
     CommonProblemDescriptor descriptor = getDescriptor();
     if (descriptor == null) return "";
     PsiElement element = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getPsiElement() : null;

@@ -1,9 +1,7 @@
 package com.jetbrains.jsonSchema.impl;
 
-import com.intellij.openapi.util.Pair;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.concurrency.Semaphore;
-import com.jetbrains.jsonSchema.extension.SchemaType;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -19,13 +17,11 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author Irina.Chernushina on 8/29/2015.
  */
 public class JsonSchemaReadTest {
-  public static final Pair<SchemaType, ?> KEY = Pair.create(SchemaType.userSchema, "*");
-
   @org.junit.Test
   public void testReadSchemaItself() throws Exception {
     final File file = new File(PlatformTestUtil.getCommunityPath(), "json/tests/testData/jsonSchema/schema.json");
     Assert.assertTrue(file.exists());
-    final JsonSchemaReader reader = new JsonSchemaReader(KEY);
+    final JsonSchemaReader reader = new JsonSchemaReader(null);
     final JsonSchemaObject read = reader.read(new FileReader(file), null);
 
     Assert.assertEquals("http://json-schema.org/draft-04/schema#", read.getId());
@@ -65,7 +61,7 @@ public class JsonSchemaReadTest {
   public void testReadSchemaWithCustomTags() throws Exception {
     final File file = new File(PlatformTestUtil.getCommunityPath(), "json/tests/testData/jsonSchema/withNotesCustomTag.json");
     Assert.assertTrue(file.exists());
-    final JsonSchemaReader reader = new JsonSchemaReader(KEY);
+    final JsonSchemaReader reader = new JsonSchemaReader(null);
     final JsonSchemaObject read = reader.read(new FileReader(file), null);
     Assert.assertTrue(read.getDefinitions().get("common").getProperties().containsKey("id"));
   }
@@ -93,7 +89,7 @@ public class JsonSchemaReadTest {
     final Thread thread = new Thread(new Runnable() {
       @Override
       public void run() {
-        final JsonSchemaReader reader = new JsonSchemaReader(KEY);
+        final JsonSchemaReader reader = new JsonSchemaReader(null);
         try {
           reader.read(new FileReader(file), null);
           done.set(true);

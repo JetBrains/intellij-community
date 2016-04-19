@@ -16,13 +16,14 @@
 
 package com.intellij.codeInspection.ui;
 
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.util.containers.FactoryMap;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeNode;
 import java.util.Enumeration;
@@ -37,7 +38,17 @@ public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
   }
 
   @Nullable
-  public abstract Icon getIcon(boolean expanded);
+  public Icon getIcon(boolean expanded) {
+    return null;
+  }
+
+  public void visitProblemSeverities(FactoryMap<HighlightDisplayLevel, Integer> counter) {
+    Enumeration enumeration = children();
+    while (enumeration.hasMoreElements()) {
+      InspectionTreeNode child = (InspectionTreeNode)enumeration.nextElement();
+      child.visitProblemSeverities(counter);
+    }
+  }
 
   public int getProblemCount() {
     int sum = 0;
@@ -59,6 +70,11 @@ public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
 
   public boolean appearsBold() {
     return false;
+  }
+
+  @Nullable
+  public String getCustomizedTailText() {
+    return null;
   }
 
   public FileStatus getNodeStatus(){

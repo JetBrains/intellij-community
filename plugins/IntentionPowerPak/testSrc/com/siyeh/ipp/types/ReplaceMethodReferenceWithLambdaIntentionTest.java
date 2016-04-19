@@ -124,6 +124,10 @@ public class ReplaceMethodReferenceWithLambdaIntentionTest extends IPPTestCase {
     doTest();
   }
 
+  public void testPreserveExpressionQualifier() throws Exception {
+    doTest();
+  }
+
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {

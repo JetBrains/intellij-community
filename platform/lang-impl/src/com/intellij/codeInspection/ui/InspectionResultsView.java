@@ -56,10 +56,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
@@ -77,6 +74,7 @@ import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.InputEvent;
@@ -159,6 +157,14 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       @Override
       public void excludeNode(@NotNull InspectionTreeNode node) {
         node.ignoreElement(myExcludedInspectionTreeNodesManager);
+        if (myGlobalInspectionContext.getUIOptions().FILTER_RESOLVED_ITEMS) {
+          InspectionTreeNode parent = (InspectionTreeNode)node.getParent();
+          synchronized (myTreeStructureUpdateLock) {
+            parent.remove(node);
+            ((DefaultTreeModel)myTree.getModel()).reload(parent);
+          }
+          TreeUtil.selectInTree(parent, true, myTree);
+        }
       }
 
       @Override
@@ -173,21 +179,13 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
 
       @Override
       public void onDone(boolean isExcludeAction) {
-        if (isExcludeAction && myGlobalInspectionContext.getUIOptions().FILTER_RESOLVED_ITEMS) {
-          update();
-        }
-        else {
+        if (!isExcludeAction || !myGlobalInspectionContext.getUIOptions().FILTER_RESOLVED_ITEMS) {
           myTree.queueUpdate();
         }
       }
-
-      @Override
-      public void dispose() {
-
-      }
     };
-    Disposer.register(this, myExclusionHandler);
     createActionsToolbar();
+    PsiManager.getInstance(myProject).addPsiTreeChangeListener(new InspectionViewPsiTreeChangeAdapter(this), this);
   }
 
   private void initTreeListeners() {
@@ -380,7 +378,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     }
   }
 
-  private void syncRightPanel() {
+  void syncRightPanel() {
     final Editor oldEditor = myPreviewEditor;
     if (myLoadingProgressPreview != null) {
       Disposer.dispose(myLoadingProgressPreview);
@@ -533,7 +531,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       return Pair.create(myPreviewEditor.getComponent(), myPreviewEditor);
     }
     else if (selectedEntity == null) {
-      return Pair.create(new InspectionNodeInfo(myTree.getSelectedToolWrapper(), myProject), null);
+      return Pair.create(new InspectionNodeInfo(myTree, myProject), null);
     }
     return Pair.create(new JPanel(), null);
   }
@@ -550,7 +548,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     String groupName =
       toolWrapper.getGroupDisplayName().isEmpty() ? InspectionProfileEntry.GENERAL_GROUP_NAME : toolWrapper.getGroupDisplayName();
     InspectionTreeNode parentNode = getToolParentNode(groupName, errorLevel, groupedBySeverity, isSingleInspectionRun);
-    InspectionNode toolNode = new InspectionNode(toolWrapper);
+    InspectionNode toolNode = new InspectionNode(toolWrapper, myInspectionProfile);
     boolean showStructure = myGlobalInspectionContext.getUIOptions().SHOW_STRUCTURE;
     myProvider.appendToolNodeContent(myGlobalInspectionContext, toolNode, parentNode, showStructure);
     InspectionToolPresentation presentation = myGlobalInspectionContext.getPresentation(toolWrapper);

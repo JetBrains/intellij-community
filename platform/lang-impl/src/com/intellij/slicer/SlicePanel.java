@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,6 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.PsiElement;
 import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.usageView.UsageInfo;
@@ -50,8 +49,6 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
 import javax.swing.event.TreeWillExpandListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
@@ -88,11 +85,11 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
   private final ToolWindow myToolWindow;
   private final SliceLanguageSupportProvider myProvider;
 
-  public SlicePanel(@NotNull final Project project,
-                    boolean dataFlowToThis,
-                    @NotNull SliceNode rootNode,
-                    boolean splitByLeafExpressions,
-                    @NotNull final ToolWindow toolWindow) {
+  protected SlicePanel(@NotNull final Project project,
+                       boolean dataFlowToThis,
+                       @NotNull SliceNode rootNode,
+                       boolean splitByLeafExpressions,
+                       @NotNull final ToolWindow toolWindow) {
     super(new BorderLayout());
     myProvider = rootNode.getProvider();
     myToolWindow = toolWindow;
@@ -122,20 +119,17 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
 
     Disposer.register(this, myBuilder);
 
-    myBuilder.addSubtreeToUpdate((DefaultMutableTreeNode)myTree.getModel().getRoot(), new Runnable() {
-      @Override
-      public void run() {
-        if (isDisposed || myBuilder.isDisposed() || myProject.isDisposed()) return;
-        final SliceNode rootNode = myBuilder.getRootSliceNode();
-        myBuilder.expand(rootNode, new Runnable() {
-          @Override
-          public void run() {
-            if (isDisposed || myBuilder.isDisposed() || myProject.isDisposed()) return;
-            myBuilder.select(rootNode.myCachedChildren.get(0)); //first there is ony one child
-          }
-        });
-        treeSelectionChanged();
-      }
+    myBuilder.addSubtreeToUpdate((DefaultMutableTreeNode)myTree.getModel().getRoot(), () -> {
+      if (isDisposed || myBuilder.isDisposed() || myProject.isDisposed()) return;
+      final SliceNode rootNode1 = myBuilder.getRootSliceNode();
+      myBuilder.expand(rootNode1, new Runnable() {
+        @Override
+        public void run() {
+          if (isDisposed || myBuilder.isDisposed() || myProject.isDisposed()) return;
+          myBuilder.select(rootNode1.myCachedChildren.get(0)); //first there is ony one child
+        }
+      });
+      treeSelectionChanged();
     });
 
     layoutPanel();
@@ -216,12 +210,7 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
 
     myAutoScrollToSourceHandler.install(tree);
 
-    tree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
-      @Override
-      public void valueChanged(final TreeSelectionEvent e) {
-        treeSelectionChanged();
-      }
-    });
+    tree.getSelectionModel().addTreeSelectionListener(e -> treeSelectionChanged());
 
     tree.addKeyListener(new KeyAdapter() {
       @Override
@@ -262,14 +251,11 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
   }
 
   private void treeSelectionChanged() {
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (isDisposed) return;
-        List<UsageInfo> infos = getSelectedUsageInfos();
-        if (infos != null && myUsagePreviewPanel != null) {
-          myUsagePreviewPanel.updateLayout(infos);
-        }
+    SwingUtilities.invokeLater(() -> {
+      if (isDisposed) return;
+      List<UsageInfo> infos = getSelectedUsageInfos();
+      if (infos != null && myUsagePreviewPanel != null) {
+        myUsagePreviewPanel.updateLayout(infos);
       }
     });
   }
@@ -290,7 +276,7 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
   private List<UsageInfo> getSelectedUsageInfos() {
     TreePath[] paths = myTree.getSelectionPaths();
     if (paths == null) return null;
-    final ArrayList<UsageInfo> result = new ArrayList<UsageInfo>();
+    final ArrayList<UsageInfo> result = new ArrayList<>();
     for (TreePath path : paths) {
       SliceNode sliceNode = fromPath(path);
       if (sliceNode != null) {
@@ -315,7 +301,7 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
   private List<Navigatable> getNavigatables() {
     TreePath[] paths = myTree.getSelectionPaths();
     if (paths == null) return Collections.emptyList();
-    final ArrayList<Navigatable> navigatables = new ArrayList<Navigatable>();
+    final ArrayList<Navigatable> navigatables = new ArrayList<>();
     for (TreePath path : paths) {
       Object lastPathComponent = path.getLastPathComponent();
       if (lastPathComponent instanceof DefaultMutableTreeNode) {
@@ -343,7 +329,7 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
       actionGroup.add(new CloseAction());
     }
     if (isToShowPreviewButton()) {
-      actionGroup.add(new ToggleAction(UsageViewBundle.message("preview.usages.action.text"), "preview", AllIcons.Actions.PreviewDetails) {
+      actionGroup.add(new ToggleAction(UsageViewBundle.message("preview.usages.action.text", "usages"), "preview", AllIcons.Actions.PreviewDetails) {
         @Override
         public boolean isSelected(AnActionEvent e) {
           return isPreview();

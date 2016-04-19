@@ -93,8 +93,11 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
 
   void clearCaches() {
     if (myMap.size() == 0) return;
-    String message = "Dropping caches for " + (myIndexId != null ? myIndexId:this) + ", number of items:" + myMap.size();
-    FileBasedIndexImpl.LOG.info(message);
+
+    if (DebugAssertions.DEBUG) {
+      String message = "Dropping caches for " + (myIndexId != null ? myIndexId:this) + ", number of items:" + myMap.size();
+      FileBasedIndexImpl.LOG.info(message);
+    }
 
     for(ChangeTrackingValueContainer<Value> v:myMap.values()) {
       v.dropMergedData();

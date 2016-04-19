@@ -19,10 +19,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 class InitialInferenceState {
   private final Set<InferenceVariable> myInferenceVariables;
@@ -34,7 +31,7 @@ class InitialInferenceState {
   private final InferenceSessionContainer myInferenceSessionContainer;
   private final boolean myErased;
 
-  InitialInferenceState(Set<InferenceVariable> inferenceVariables,
+  InitialInferenceState(Collection<InferenceVariable> inferenceVariables,
                         PsiSubstitutor topInferenceSubstitutor,
                         PsiElement context,
                         PsiSubstitutor inferenceSubstitutor,

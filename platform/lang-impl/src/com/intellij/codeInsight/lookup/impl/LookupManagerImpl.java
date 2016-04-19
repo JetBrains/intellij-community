@@ -183,15 +183,15 @@ public class LookupManagerImpl extends LookupManager {
 
       private void lookupClosed() {
         ApplicationManager.getApplication().assertIsDispatchThread();
-
         alarm.cancelAllRequests();
-        LookupImpl lookup = myActiveLookup;
-        if (lookup == null) return;
-
-        LOG.assertTrue(lookup.isLookupDisposed());
+        lookup.removeLookupListener(this);
+      }
+    });
+    Disposer.register(lookup, new Disposable() {
+      @Override
+      public void dispose() {
         myActiveLookup = null;
         myActiveLookupEditor = null;
-        lookup.removeLookupListener(this);
         myPropertyChangeSupport.firePropertyChange(PROP_ACTIVE_LOOKUP, lookup, null);
       }
     });

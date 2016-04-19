@@ -79,7 +79,7 @@ public class FavoritesPanel {
               o = ((DefaultMutableTreeNode)o).getUserObject();
               if (o instanceof FavoritesTreeNodeDescriptor) {
                 FavoritesTreeNodeDescriptor root = ((FavoritesTreeNodeDescriptor)o).getFavoritesRoot();
-                if (root != o) {
+                if (root != null && root != o) {
                   o = root.getElement();
                   if (o instanceof FavoritesListNode && ((FavoritesListNode)o).getProvider() == null) {
                     return new DnDDragStartBean(path);

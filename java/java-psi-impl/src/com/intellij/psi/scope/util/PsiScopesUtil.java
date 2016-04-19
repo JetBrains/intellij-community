@@ -30,6 +30,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
+import com.intellij.psi.infos.ClassCandidateInfo;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.MethodProcessorSetupFailedException;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -322,23 +323,19 @@ public class PsiScopesUtil {
           PsiType type = ((PsiExpression)qualifier).getType();
           if (type != null && qualifier instanceof PsiReferenceExpression) {
             final PsiElement resolve = ((PsiReferenceExpression)qualifier).resolve();
-            if (resolve instanceof PsiVariable && ((PsiVariable)resolve).hasModifierProperty(PsiModifier.FINAL) && ((PsiVariable)resolve).hasInitializer()) {
+            if (resolve instanceof PsiEnumConstant) {
+              final PsiEnumConstantInitializer initializingClass = ((PsiEnumConstant)resolve).getInitializingClass();
+              if (hasDesiredMethod(methodCall, type, initializingClass)) {
+                processQualifierResult(new ClassCandidateInfo(initializingClass, PsiSubstitutor.EMPTY), processor, methodCall);
+                return;
+              }
+            }
+            else if (resolve instanceof PsiVariable && ((PsiVariable)resolve).hasModifierProperty(PsiModifier.FINAL) && ((PsiVariable)resolve).hasInitializer()) {
               final PsiExpression initializer = ((PsiVariable)resolve).getInitializer();
               if (initializer instanceof PsiNewExpression) {
                 final PsiAnonymousClass anonymousClass = ((PsiNewExpression)initializer).getAnonymousClass();
-                if (anonymousClass != null && type.equals(anonymousClass.getBaseClassType())) {
-                  final PsiMethod[] refMethods = anonymousClass.findMethodsByName(methodCall.getMethodExpression().getReferenceName(), false);
-                  if (refMethods.length > 0) {
-                    final PsiClass baseClass = PsiUtil.resolveClassInType(type);
-                    if (baseClass != null && !hasCovariantOverridingOrNotPublic(baseClass, refMethods)) {
-                      for (PsiMethod method : refMethods) {
-                        if (method.findSuperMethods(baseClass).length > 0) {
-                          type = initializer.getType();
-                          break;
-                        }
-                      }
-                    }
-                  }
+                if (hasDesiredMethod(methodCall, type, anonymousClass)) {
+                  type = initializer.getType();
                 }
               }
             }
@@ -406,6 +403,23 @@ public class PsiScopesUtil {
         processDummyConstructor(processor, aClass);
       }
     }
+  }
+
+  private static boolean hasDesiredMethod(PsiMethodCallExpression methodCall, PsiType type, PsiAnonymousClass anonymousClass) {
+    if (anonymousClass != null && type.equals(anonymousClass.getBaseClassType())) {
+      final PsiMethod[] refMethods = anonymousClass.findMethodsByName(methodCall.getMethodExpression().getReferenceName(), false);
+      if (refMethods.length > 0) {
+        final PsiClass baseClass = PsiUtil.resolveClassInType(type);
+        if (baseClass != null && !hasCovariantOverridingOrNotPublic(baseClass, refMethods)) {
+          for (PsiMethod method : refMethods) {
+            if (method.findSuperMethods(baseClass).length > 0) {
+              return true;
+            }
+          }
+        }
+      }
+    }
+    return false;
   }
 
   private static boolean hasCovariantOverridingOrNotPublic(PsiClass baseClass, PsiMethod[] refMethods) {

@@ -35,7 +35,6 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.Function;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.UriUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
@@ -422,9 +421,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     // due to wonderful UI designer bug
     dlg.initProjectMessage();
     if (dlg.showAndGet()) {
-      VcsDirectoryMapping mapping = new VcsDirectoryMapping();
-      dlg.saveToMapping(mapping);
-      addMapping(mapping);
+      addMapping(dlg.getMapping());
     }
   }
 
@@ -436,6 +433,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     myModel.setItems(items);
     checkNotifyListeners(getActiveVcses());
   }
+
 
   private void addSelectedUnregisteredMappings(List<MapInfo> infos) {
     List<MapInfo> items = new ArrayList<MapInfo>(myModel.getItems());
@@ -470,15 +468,21 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
   }
 
   private void editMapping() {
-    Collection<AbstractVcs> activeVcses = getActiveVcses();
     VcsMappingConfigurationDialog dlg = new VcsMappingConfigurationDialog(myProject, VcsBundle.message("directory.mapping.remove.title"));
-    VcsDirectoryMapping mapping = ObjectUtils.assertNotNull(myDirectoryMappingTable.getSelectedObject()).mapping;
+    int row = myDirectoryMappingTable.getSelectedRow();
+    VcsDirectoryMapping mapping = myDirectoryMappingTable.getRow(row).mapping;
     dlg.setMapping(mapping);
     if (dlg.showAndGet()) {
-      dlg.saveToMapping(mapping);
-      myModel.fireTableDataChanged();
-      checkNotifyListeners(activeVcses);
+      setMapping(row, dlg.getMapping());
     }
+  }
+
+  private void setMapping(int row, @NotNull VcsDirectoryMapping mapping) {
+    List<MapInfo> items = new ArrayList<>(myModel.getItems());
+    items.set(row, MapInfo.registered(mapping, isMappingValid(mapping)));
+    Collections.sort(items, MapInfo.COMPARATOR);
+    myModel.setItems(items);
+    checkNotifyListeners(getActiveVcses());
   }
 
   private void removeMapping() {

@@ -36,13 +36,7 @@ class DebugLogManager : ApplicationComponent.Adapter() {
   }
 
   override fun initComponent() {
-    val categories = getSavedCategories()
-    if (categories.isEmpty()) {
-      saveCategories(getCurrentCategories())
-    }
-    else {
-      applyCategories(categories)
-    }
+    applyCategories(getSavedCategories())
   }
 
   private fun fromString(text: String?, level: DebugLogLevel) =
@@ -71,20 +65,6 @@ class DebugLogManager : ApplicationComponent.Adapter() {
   private fun toString(categories: List<Pair<String, DebugLogLevel>>, level: DebugLogLevel): String? {
     val filtered = categories.filter { it.second == level }.map { it.first }
     return if (filtered.isNotEmpty()) filtered.joinToString("\n") else null
-  }
-
-  private fun getCurrentCategories(): List<Pair<String, DebugLogLevel>> {
-    val currentLoggers = LogManager.getCurrentLoggers().toList().filterIsInstance(org.apache.log4j.Logger::class.java)
-    return currentLoggers.map {
-      val category = it.name
-      val logger = Logger.getInstance(category)
-      when {
-        logger.isTraceEnabled -> Pair(category, DebugLogLevel.TRACE)
-        logger.isDebugEnabled ->  Pair(category, DebugLogLevel.DEBUG)
-        else -> null
-      }
-    }.filterNotNull()
-
   }
 }
 

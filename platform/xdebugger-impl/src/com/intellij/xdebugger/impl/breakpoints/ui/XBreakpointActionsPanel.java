@@ -59,7 +59,7 @@ public class XBreakpointActionsPanel extends XBreakpointPropertiesSubPanel {
           onCheckboxChanged();
         }
       };
-      myLogExpressionComboBox = new XDebuggerExpressionComboBox(project, debuggerEditorsProvider, LOG_EXPRESSION_HISTORY_ID, myBreakpoint.getSourcePosition());
+      myLogExpressionComboBox = new XDebuggerExpressionComboBox(project, debuggerEditorsProvider, LOG_EXPRESSION_HISTORY_ID, myBreakpoint.getSourcePosition(), true);
       JComponent logExpressionComponent = myLogExpressionComboBox.getComponent();
       myLogExpressionPanel.add(logExpressionComponent, BorderLayout.CENTER);
       myLogExpressionComboBox.setEnabled(false);

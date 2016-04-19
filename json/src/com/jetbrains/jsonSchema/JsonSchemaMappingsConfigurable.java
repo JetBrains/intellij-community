@@ -356,19 +356,18 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
     private String myError;
 
     public boolean checkSchemaFile() {
-      final File ioFile = new File(myFile.getPath());
-        final long length = ioFile.length();
-        if (length > MAX_SCHEMA_LENGTH) {
-          myError = "JSON schema was not loaded from '" + myFile.getName() + "' because it's too large (file size is " + length + " bytes).";
-          return false;
-        }
-        if (length == 0) {
-          myError = "JSON schema was not loaded from '" + myFile.getName() + "'. File is empty.";
-          return false;
-        }
+      final long length = myFile.getLength();
+      if (length > MAX_SCHEMA_LENGTH) {
+        myError = "JSON schema was not loaded from '" + myFile.getName() + "' because it's too large (file size is " + length + " bytes).";
+        return false;
+      }
+      if (length == 0) {
+        myError = "JSON schema was not loaded from '" + myFile.getName() + "'. File is empty.";
+        return false;
+      }
       final CollectConsumer<String> collectConsumer = new CollectConsumer<>();
       final JsonSchemaService service = JsonSchemaService.Impl.get(myProject);
-      if (service != null && !service.isSchemaFile(ioFile, collectConsumer)) {
+      if (service != null && !service.isSchemaFile(myFile, collectConsumer)) {
         myError = "JSON Schema not found or contain error in '" + myFile.getName() + "'";
         if (!collectConsumer.getResult().isEmpty()) {
           myError += ": " + StringUtil.join(collectConsumer.getResult(), "; ");

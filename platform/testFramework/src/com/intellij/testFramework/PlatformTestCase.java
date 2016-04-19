@@ -373,8 +373,10 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       ((PsiManagerImpl)PsiManager.getInstance(project)).cleanupForNextTest();
     }
 
-    ProjectManagerImpl projectManager = (ProjectManagerImpl)ProjectManager.getInstance();
-    if (projectManager.isDefaultProjectInitialized()) {
+    final ProjectManager projectManager = ProjectManager.getInstance();
+    assert projectManager != null : "The ProjectManager is not initialized yet";
+    ProjectManagerImpl projectManagerImpl = (ProjectManagerImpl)projectManager;
+    if (projectManagerImpl.isDefaultProjectInitialized()) {
       Project defaultProject = projectManager.getDefaultProject();
       ((PsiManagerImpl)PsiManager.getInstance(defaultProject)).cleanupForNextTest();
     }

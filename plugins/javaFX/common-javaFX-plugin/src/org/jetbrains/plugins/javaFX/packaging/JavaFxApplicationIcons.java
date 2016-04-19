@@ -11,14 +11,13 @@ public class JavaFxApplicationIcons {
   private String myLinuxIcon;
   private String myMacIcon;
   private String myWindowsIcon;
-  private String myBaseDir;
 
   public String getLinuxIcon() {
     return myLinuxIcon;
   }
 
-  public String getLinuxIcon(boolean isRelative) {
-    return isRelative ? getRelativeIcon(myLinuxIcon) : myLinuxIcon;
+  public String getLinuxIcon(String relativeToPath) {
+    return getRelativeIcon(relativeToPath, myLinuxIcon);
   }
 
   public void setLinuxIcon(String linuxIcon) {
@@ -29,8 +28,8 @@ public class JavaFxApplicationIcons {
     return myMacIcon;
   }
 
-  public String getMacIcon(boolean isRelative) {
-    return isRelative ? getRelativeIcon(myMacIcon) : myMacIcon;
+  public String getMacIcon(String relativeToPath) {
+    return getRelativeIcon(relativeToPath, myMacIcon);
   }
 
   public void setMacIcon(String macIcon) {
@@ -41,20 +40,12 @@ public class JavaFxApplicationIcons {
     return myWindowsIcon;
   }
 
-  public String getWindowsIcon(boolean isRelative) {
-    return isRelative ? getRelativeIcon(myWindowsIcon) : myWindowsIcon;
+  public String getWindowsIcon(String relativeToPath) {
+    return getRelativeIcon(relativeToPath, myWindowsIcon);
   }
 
   public void setWindowsIcon(String windowsIcon) {
     myWindowsIcon = windowsIcon;
-  }
-
-  public String getBaseDir() {
-    return myBaseDir;
-  }
-
-  public void setBaseDir(String baseDir) {
-    myBaseDir = baseDir;
   }
 
   public boolean isEmpty() {
@@ -71,7 +62,6 @@ public class JavaFxApplicationIcons {
     if (myLinuxIcon != null ? !myLinuxIcon.equals(icons.myLinuxIcon) : icons.myLinuxIcon != null) return false;
     if (myMacIcon != null ? !myMacIcon.equals(icons.myMacIcon) : icons.myMacIcon != null) return false;
     if (myWindowsIcon != null ? !myWindowsIcon.equals(icons.myWindowsIcon) : icons.myWindowsIcon != null) return false;
-    if (myBaseDir != null ? !myBaseDir.equals(icons.myBaseDir) : icons.myBaseDir != null) return false;
 
     return true;
   }
@@ -81,14 +71,13 @@ public class JavaFxApplicationIcons {
     int result = myLinuxIcon != null ? myLinuxIcon.hashCode() : 0;
     result = 31 * result + (myMacIcon != null ? myMacIcon.hashCode() : 0);
     result = 31 * result + (myWindowsIcon != null ? myWindowsIcon.hashCode() : 0);
-    result = 31 * result + (myBaseDir != null ? myBaseDir.hashCode() : 0);
     return result;
   }
 
   @Nullable
-  private String getRelativeIcon(String icon) {
-    if (!StringUtil.isEmpty(icon) && !StringUtil.isEmpty(myBaseDir)) {
-      return FileUtil.getRelativePath(myBaseDir, icon, '/');
+  private static String getRelativeIcon(String relativeToPath, String icon) {
+    if (!StringUtil.isEmpty(icon) && !StringUtil.isEmpty(relativeToPath)) {
+      return FileUtil.getRelativePath(relativeToPath, icon, '/');
     }
     return icon;
   }

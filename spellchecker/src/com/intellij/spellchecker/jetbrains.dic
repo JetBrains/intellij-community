@@ -574,6 +574,8 @@ strictfp
 stringify
 stylesheet
 stylesheets
+subexpression
+subexpressions
 sublicense
 subpackage
 subpackages
@@ -588,6 +590,8 @@ subview
 subviews
 superclass
 superclasses
+superinterface
+superinterfaces
 superview
 superviews
 sybase

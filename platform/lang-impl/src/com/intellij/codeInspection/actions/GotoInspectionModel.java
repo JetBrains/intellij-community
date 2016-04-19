@@ -44,12 +44,11 @@ public class GotoInspectionModel extends SimpleChooseByNameModel {
     super(project, IdeBundle.message("prompt.goto.inspection.enter.name"), "goto.inspection.help.id");
     final InspectionProfileImpl rootProfile = (InspectionProfileImpl)InspectionProfileManager.getInstance().getRootProfile();
     for (ScopeToolState state : rootProfile.getAllTools(project)) {
-      InspectionToolWrapper tool = state.getTool();
-      if (tool instanceof LocalInspectionToolWrapper && ((LocalInspectionToolWrapper)tool).isUnfair()) {
-        continue;
+      InspectionToolWrapper tool = LocalInspectionToolWrapper.findTool2RunInBatch(project, null, rootProfile, state.getTool());
+      if (tool != null) {
+        String name = tool.getDisplayName() + " " + StringUtil.join(tool.getGroupPath(), " ");
+        myToolNames.put(name, tool);
       }
-      final String name = tool.getDisplayName() + " " + StringUtil.join(tool.getGroupPath(), " ");
-      myToolNames.put(name, tool);
     }
     myNames = ArrayUtil.toStringArray(myToolNames.keySet());
   }

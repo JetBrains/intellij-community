@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ public class ExceptionUtils {
       final PsiResourceList resourceList = (PsiResourceList)element;
       for (PsiResourceListElement resource : resourceList) {
         final PsiMethod method = PsiUtil.getResourceCloserMethod(resource);
-        collectExceptionsThrown(method, out);
+        collectExceptionsThrown(method, PsiSubstitutor.EMPTY, out);
       }
     }
     final ExceptionsThrownVisitor visitor = new ExceptionsThrownVisitor(out);
@@ -202,15 +202,18 @@ public class ExceptionUtils {
     return false;
   }
 
-  private static void collectExceptionsThrown(@Nullable PsiMethod method, @NotNull Set<PsiType> out) {
+  private static void collectExceptionsThrown(@Nullable PsiMethod method, @NotNull PsiSubstitutor substitutor, @NotNull Set<PsiType> out) {
     if (method == null) {
       return;
     }
-    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(method.getProject());
-    for (PsiJavaCodeReferenceElement referenceElement : method.getThrowsList().getReferenceElements()) {
-      final PsiClass exceptionClass = (PsiClass)referenceElement.resolve();
-      if (exceptionClass != null) {
-        out.add(factory.createType(exceptionClass));
+    for (PsiClassType type : method.getThrowsList().getReferencedTypes()) {
+      final PsiType substitute = substitutor.substitute(type);
+      if (substitute instanceof PsiClassType) {
+        out.add(substitute);
+      }
+      else if (substitute instanceof PsiCapturedWildcardType) {
+        final PsiCapturedWildcardType capturedWildcardType = (PsiCapturedWildcardType)substitute;
+        out.add(capturedWildcardType.getUpperBound());
       }
     }
   }
@@ -246,7 +249,12 @@ public class ExceptionUtils {
     @Override
     public void visitCallExpression(PsiCallExpression callExpression) {
       super.visitCallExpression(callExpression);
-      collectExceptionsThrown(callExpression.resolveMethod(), m_exceptionsThrown);
+      final JavaResolveResult resolveResult = callExpression.resolveMethodGenerics();
+      final PsiElement target = resolveResult.getElement();
+      if (!(target instanceof PsiMethod)) {
+        return;
+      }
+      collectExceptionsThrown((PsiMethod)target, resolveResult.getSubstitutor(), m_exceptionsThrown);
     }
 
     @Override

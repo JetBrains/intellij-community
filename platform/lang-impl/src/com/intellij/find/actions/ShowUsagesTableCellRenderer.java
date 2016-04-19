@@ -16,7 +16,9 @@
 
 package com.intellij.find.actions;
 
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -25,6 +27,8 @@ import com.intellij.ui.FileColorManager;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
+import com.intellij.usageView.UsageTreeColors;
+import com.intellij.usageView.UsageTreeColorsScheme;
 import com.intellij.usages.TextChunk;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageGroup;
@@ -38,6 +42,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
@@ -104,8 +109,11 @@ class ShowUsagesTableCellRenderer implements TableCellRenderer {
     panel.setBackground(panelBackground);
     panel.setForeground(panelForeground);
 
+    VirtualFile file = getFile(usage);
+    VirtualFile prevFile = findPrevFile(list, row, column);
+
     if (column == 0) {
-      appendGroupText(list, (GroupNode)usageNode.getParent(), panel, fileBgColor, isSelected);
+      appendGroupText(list, (GroupNode)usageNode.getParent(), panel, fileBgColor, isSelected, Comparing.equal(file, prevFile));
       return panel;
     }
     else if (usage != ShowUsagesAction.MORE_USAGES_SEPARATOR && usage != ShowUsagesAction.USAGES_OUTSIDE_SCOPE_SEPARATOR) {
@@ -136,6 +144,14 @@ class ShowUsagesTableCellRenderer implements TableCellRenderer {
     return panel;
   }
 
+  @Nullable
+  private static VirtualFile findPrevFile(@NotNull JTable table, int row, int column) {
+    if (row <= 0) return null;
+    Object prev = table.getValueAt(row - 1, column);
+    UsageNode usageNode = prev instanceof UsageNode ? (UsageNode)prev : null;
+    return getFile(usageNode == null ? null : usageNode.getUsage());
+  }
+  
   @NotNull
   public static SimpleTextAttributes getAttributes(boolean isSelected, Color fileBgColor, Color bg, Color fg, TextChunk chunk) {
     SimpleTextAttributes background = chunk.getSimpleAttributesIgnoreBackground();
@@ -195,7 +211,8 @@ class ShowUsagesTableCellRenderer implements TableCellRenderer {
     return component;
   }
 
-  private static SimpleTextAttributes deriveAttributesWithColor(SimpleTextAttributes attributes, Color fileBgColor) {
+  @NotNull
+  private static SimpleTextAttributes deriveAttributesWithColor(@NotNull SimpleTextAttributes attributes, @Nullable Color fileBgColor) {
     if (fileBgColor != null) {
       attributes = attributes.derive(-1,null, fileBgColor,null);
     }
@@ -208,7 +225,7 @@ class ShowUsagesTableCellRenderer implements TableCellRenderer {
       fileBgColor = UIUtil.getListSelectionBackground();
     }
     else {
-      VirtualFile virtualFile = usage instanceof UsageInFile ? ((UsageInFile)usage).getFile() : null;
+      VirtualFile virtualFile = getFile(usage);
       if (virtualFile != null) {
         Project project = myUsageView.getProject();
         PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
@@ -221,16 +238,28 @@ class ShowUsagesTableCellRenderer implements TableCellRenderer {
     return fileBgColor;
   }
 
-  private void appendGroupText(JTable table, final GroupNode node, JPanel panel, Color fileBgColor, boolean isSelected) {
+  private static VirtualFile getFile(@Nullable Usage usage) {
+    return usage instanceof UsageInFile ? ((UsageInFile)usage).getFile() : null;
+  }
+
+  private void appendGroupText(@NotNull JTable table,
+                               @Nullable GroupNode node,
+                               @NotNull JPanel panel,
+                               @Nullable Color fileBgColor,
+                               boolean isSelected,
+                               boolean sameFile) {
     UsageGroup group = node == null ? null : node.getGroup();
     if (group == null) return;
     GroupNode parentGroup = (GroupNode)node.getParent();
-    appendGroupText(table, parentGroup, panel, fileBgColor, isSelected);
+    appendGroupText(table, parentGroup, panel, fileBgColor, isSelected, sameFile);
     if (node.canNavigateToSource()) {
       SimpleColoredComponent renderer = new SimpleColoredComponent();
       renderer.setIcon(group.getIcon(false));
-      SimpleTextAttributes attributes = deriveAttributesWithColor(SimpleTextAttributes.REGULAR_ATTRIBUTES, fileBgColor);
-      renderer.append(group.getText(myUsageView), attributes);
+      TextAttributes attributes = UsageTreeColorsScheme.getInstance().getScheme().getAttributes(UsageTreeColors.USAGE_LOCATION);
+      SimpleTextAttributes attr = sameFile && !isSelected
+                                  ? SimpleTextAttributes.fromTextAttributes(attributes)
+                                  : SimpleTextAttributes.REGULAR_ATTRIBUTES;
+      renderer.append(group.getText(myUsageView), deriveAttributesWithColor(attr, fileBgColor));
       renderer.setBorder(null);
       SpeedSearchUtil.applySpeedSearchHighlighting(table, renderer, false, isSelected);
       panel.add(renderer);

@@ -52,6 +52,10 @@ public class InvokeQuickFixAction extends AnAction {
     final Presentation presentation = e.getPresentation();
     InspectionToolWrapper toolWrapper = myView.getTree().getSelectedToolWrapper();
     final InspectionRVContentProvider provider = myView.getProvider();
+    if (myView.isUpdating() && !myView.getTree().areDescriptorNodesSelected()) {
+      presentation.setEnabled(false);
+      return;
+    }
     if (toolWrapper != null && provider.isContentLoaded()) {
       presentation.setEnabled(provider.hasQuickFixes(myView.getTree()));
     }

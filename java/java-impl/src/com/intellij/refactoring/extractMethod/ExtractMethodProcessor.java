@@ -731,6 +731,14 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   @TestOnly
+  public void testTargetClass(PsiClass targetClass) {
+    if (targetClass != null) {
+      myTargetClass = targetClass;
+      myNeedChangeContext = true;
+    }
+  }
+
+  @TestOnly
   public void testPrepare(PsiType returnType, boolean makeStatic) throws PrepareFailedException{
     if (makeStatic) {
       if (!isCanBeStatic()) {
@@ -1018,7 +1026,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       ChangeContextUtil.decodeContextInfo(myExtractedMethod, myTargetClass, RefactoringChangeUtil.createThisExpression(myManager, null));
       if (myMethodCall.resolveMethod() != myExtractedMethod) {
         final PsiReferenceExpression methodExpression = myMethodCall.getMethodExpression();
-        methodExpression.setQualifierExpression(RefactoringChangeUtil.createThisExpression(myManager, myTargetClass));
+        RefactoringChangeUtil.qualifyReference(methodExpression, myExtractedMethod, PsiUtil.getEnclosingStaticElement(methodExpression, myTargetClass) != null ? myTargetClass : null);
       }
     }
   }

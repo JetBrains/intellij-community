@@ -116,9 +116,10 @@ public class AddImportAction implements QuestionAction {
           }
 
           if (finalChoice) {
-            PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-            addImport(myReference, selectedValue);
-            return FINAL_CHOICE;
+            return doFinalStep(() -> {
+              PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+              addImport(myReference, selectedValue);
+            });
           }
 
           return getExcludesStep(selectedValue.getQualifiedName(), myProject);

@@ -67,12 +67,16 @@ public class FindSuperElementsHelper {
     return Pair.getFirst(getSiblingInfoInheritedViaSubClass(method));
   }
 
-  // returns super method, sub class
+  // returns (super method, sub class) or null if can't find any siblings
   public static Pair<PsiMethod, PsiClass> getSiblingInfoInheritedViaSubClass(@NotNull final PsiMethod method) {
-    if (!method.hasModifierProperty(PsiModifier.PUBLIC)) return null;
-    if (method.hasModifierProperty(PsiModifier.STATIC)) return null;
+    boolean canHaveSiblingSuper = !method.hasModifierProperty(PsiModifier.ABSTRACT) &&
+                                  !method.hasModifierProperty(PsiModifier.STATIC) &&
+                                  method.hasModifierProperty(PsiModifier.PUBLIC) &&
+                                  !method.hasModifierProperty(PsiModifier.FINAL) &&
+                                  !method.hasModifierProperty(PsiModifier.NATIVE);
+    if (!canHaveSiblingSuper) return null;
     final PsiClass containingClass = method.getContainingClass();
-    if (containingClass == null || containingClass.isInterface()) {
+    if (containingClass == null || containingClass.isInterface() || containingClass.hasModifierProperty(PsiModifier.FINAL)) {
       return null;
     }
     if (CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName())) {

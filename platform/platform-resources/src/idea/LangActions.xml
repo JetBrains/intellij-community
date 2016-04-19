@@ -317,6 +317,8 @@
         <action id="IntroduceField" class="com.intellij.refactoring.actions.IntroduceFieldAction"/>
         <action id="IntroduceParameter" class="com.intellij.refactoring.actions.IntroduceParameterAction"/>
         <separator/>
+        <action id="IntroduceParameterObject" class="com.intellij.refactoring.actions.IntroduceParameterObjectAction"/>
+        <separator/>
         <action id="ExtractMethod" class="com.intellij.refactoring.actions.ExtractMethodAction"/>
         <separator/>
         <action id="ExtractClass" class="com.intellij.refactoring.actions.ExtractClassAction"/>

@@ -226,7 +226,9 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
       mySdkSettingsWereModified.run();
     }
     for (SdkModificator modificator : myModifiedModificators) {
-      modificator.commitChanges();
+      if (modificator.isWritable()) {
+        modificator.commitChanges();
+      }
     }
     myModificators.clear();
     myModifiedModificators.clear();
@@ -431,6 +433,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
   }
 
   private void reloadSdk(@NotNull Sdk currentSdk) {
+    // XXX: Here we are reusing a modifier that we are going to commit later
     PythonSdkUpdater.update(currentSdk, myModificators.get(currentSdk), myProject, null);
   }
 

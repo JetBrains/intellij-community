@@ -29,7 +29,6 @@ import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.refactoring.util.FixableUsagesRefactoringProcessor;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -60,11 +59,12 @@ public class IntroduceParameterObjectProcessor<M extends PsiNamedElement, P exte
     final P[] paramsToMerge = classDescriptor.getParamsToMerge();
     List<P> newParams = new ArrayList<>();
     int anchor = -1;
-    for (P param : oldMethodParameters) {
-      final P mergedParameterInfo = classDescriptor.getParameterInfo(param.getOldIndex());
+    for (int oldIdx = 0; oldIdx < oldMethodParameters.size(); oldIdx++) {
+      P param = oldMethodParameters.get(oldIdx);
+      final P mergedParameterInfo = classDescriptor.getParameterInfo(oldIdx);
       if (mergedParameterInfo != null) {
         if (anchor == -1) {
-          anchor = ArrayUtil.find(paramsToMerge, mergedParameterInfo);
+          anchor = oldIdx;
         }
       }
       else {

@@ -711,7 +711,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
       myCacheRefreshTimer = UIUtil.createNamedTimer("TaskManager refresh", myConfig.updateInterval * 60 * 1000, new ActionListener() {
         public void actionPerformed(@NotNull ActionEvent e) {
           if (myConfig.updateEnabled && !myUpdating) {
-            LOG.info("Updating issues cache (every " + myConfig.updateInterval + " min)");
+            LOG.debug("Updating issues cache (every " + myConfig.updateInterval + " min)");
             updateIssues(null);
           }
         }
