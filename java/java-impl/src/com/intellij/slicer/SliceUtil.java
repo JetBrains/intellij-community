@@ -17,6 +17,7 @@ package com.intellij.slicer;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.dataFlow.DfaUtil;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -307,32 +308,34 @@ class SliceUtil {
     return ReferencesSearch.search(field, searchScope).forEach(reference -> {
       ProgressManager.checkCanceled();
       PsiElement element = reference.getElement();
-      if (!(element instanceof PsiReferenceExpression)) return true;
       if (element instanceof PsiCompiledElement) {
         element = element.getNavigationElement();
         if (!parent.getScope().contains(element)) return true;
       }
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)element;
-      PsiElement parentExpr = referenceExpression.getParent();
-      if (PsiUtil.isOnAssignmentLeftHand(referenceExpression)) {
-        PsiExpression rExpression = ((PsiAssignmentExpression)parentExpr).getRExpression();
-        PsiType rtype = rExpression.getType();
-        PsiType ftype = field.getType();
-        PsiType subFType = parentSubstitutor.substitute(ftype);
-        PsiType subRType = parentSubstitutor.substitute(rtype);
-        if (subFType != null && subRType != null && TypeConversionUtil.isAssignable(subFType, subRType)) {
-          return handToProcessor(rExpression, processor, parent, parentSubstitutor, parent.indexNesting, "");
+      if (element instanceof PsiReferenceExpression) {
+        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)element;
+        PsiElement parentExpr = referenceExpression.getParent();
+        if (PsiUtil.isOnAssignmentLeftHand(referenceExpression)) {
+          PsiExpression rExpression = ((PsiAssignmentExpression)parentExpr).getRExpression();
+          PsiType rtype = rExpression.getType();
+          PsiType ftype = field.getType();
+          PsiType subFType = parentSubstitutor.substitute(ftype);
+          PsiType subRType = parentSubstitutor.substitute(rtype);
+          if (subFType != null && subRType != null && TypeConversionUtil.isAssignable(subFType, subRType)) {
+            return handToProcessor(rExpression, processor, parent, parentSubstitutor, parent.indexNesting, "");
+          }
+        }
+        if (parentExpr instanceof PsiPrefixExpression && ((PsiPrefixExpression)parentExpr).getOperand() == referenceExpression && ( ((PsiPrefixExpression)parentExpr).getOperationTokenType() == JavaTokenType.PLUSPLUS || ((PsiPrefixExpression)parentExpr).getOperationTokenType() == JavaTokenType.MINUSMINUS)) {
+          PsiPrefixExpression prefixExpression = (PsiPrefixExpression)parentExpr;
+          return handToProcessor(prefixExpression, processor, parent, parentSubstitutor, parent.indexNesting, "");
+        }
+        if (parentExpr instanceof PsiPostfixExpression && ((PsiPostfixExpression)parentExpr).getOperand() == referenceExpression && ( ((PsiPostfixExpression)parentExpr).getOperationTokenType() == JavaTokenType.PLUSPLUS || ((PsiPostfixExpression)parentExpr).getOperationTokenType() == JavaTokenType.MINUSMINUS)) {
+          PsiPostfixExpression postfixExpression = (PsiPostfixExpression)parentExpr;
+          return handToProcessor(postfixExpression, processor, parent, parentSubstitutor, parent.indexNesting, "");
         }
       }
-      if (parentExpr instanceof PsiPrefixExpression && ((PsiPrefixExpression)parentExpr).getOperand() == referenceExpression && ( ((PsiPrefixExpression)parentExpr).getOperationTokenType() == JavaTokenType.PLUSPLUS || ((PsiPrefixExpression)parentExpr).getOperationTokenType() == JavaTokenType.MINUSMINUS)) {
-        PsiPrefixExpression prefixExpression = (PsiPrefixExpression)parentExpr;
-        return handToProcessor(prefixExpression, processor, parent, parentSubstitutor, parent.indexNesting, "");
-      }
-      if (parentExpr instanceof PsiPostfixExpression && ((PsiPostfixExpression)parentExpr).getOperand() == referenceExpression && ( ((PsiPostfixExpression)parentExpr).getOperationTokenType() == JavaTokenType.PLUSPLUS || ((PsiPostfixExpression)parentExpr).getOperationTokenType() == JavaTokenType.MINUSMINUS)) {
-        PsiPostfixExpression postfixExpression = (PsiPostfixExpression)parentExpr;
-        return handToProcessor(postfixExpression, processor, parent, parentSubstitutor, parent.indexNesting, "");
-      }
-      return true;
+
+      return processIfInForeignLanguage(parent, parentSubstitutor, 0, "", processor, element);
     });
   }
 
@@ -404,11 +407,13 @@ class SliceUtil {
             if (!(callExp instanceof PsiCallExpression)) return true;
             result = ((PsiCall)callExp).resolveMethodGenerics();
           }
+          else if (element instanceof PsiCall) {
+              PsiCall call = (PsiCall)element;
+              argumentList = call.getArgumentList();
+              result = call.resolveMethodGenerics();
+          }
           else {
-            if (!(element instanceof PsiCall)) return true;
-            PsiCall call = (PsiCall)element;
-            argumentList = call.getArgumentList();
-            result = call.resolveMethodGenerics();
+            return processIfInForeignLanguage(parent, parentSubstitutor, indexNesting, syntheticField, processor, refElement);
           }
         }
         PsiSubstitutor substitutor = result.getSubstitutor();
@@ -474,6 +479,22 @@ class SliceUtil {
       }
     }
 
+    return true;
+  }
+
+  private static boolean processIfInForeignLanguage(@NotNull SliceUsage parent,
+                                                    @NotNull PsiSubstitutor parentSubstitutor,
+                                                    int indexNesting,
+                                                    @NotNull String syntheticField,
+                                                    @NotNull Processor<SliceUsage> processor,
+                                                    @NotNull PsiElement foreignElement) {
+    PsiFile file = foreignElement.getContainingFile();
+    if (file != null && file.getLanguage() != JavaLanguage.INSTANCE) {
+      // show foreign language usage as leaf to warn about possible (but unknown to us) flow.
+      if (!handToProcessor(foreignElement, processor, parent, parentSubstitutor, indexNesting, syntheticField)) {
+        return false;
+      }
+    }
     return true;
   }
 

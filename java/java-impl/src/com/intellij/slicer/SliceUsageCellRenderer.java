@@ -15,7 +15,8 @@
  */
 package com.intellij.slicer;
 
-import com.intellij.openapi.util.TextRange;
+import com.intellij.lang.Language;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
@@ -25,11 +26,9 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.usages.TextChunk;
 import com.intellij.util.BitUtil;
 import com.intellij.util.FontUtil;
-import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
-import java.util.List;
 
 /**
  * @author cdr
@@ -42,11 +41,6 @@ class SliceUsageCellRenderer extends SliceUsageCellRendererBase {
     JavaSliceUsage javaSliceUsage = sliceUsage instanceof JavaSliceUsage ? (JavaSliceUsage)sliceUsage : null;
 
     TextChunk[] text = sliceUsage.getText();
-    final List<TextRange> usageRanges = new SmartList<>();
-    sliceUsage.processRangeMarkers(segment -> {
-      usageRanges.add(TextRange.create(segment));
-      return true;
-    });
     boolean isInsideContainer = javaSliceUsage != null && javaSliceUsage.indexNesting != 0;
     for (int i = 0, length = text.length; i < length; i++) {
       TextChunk textChunk = text[i];
@@ -97,6 +91,14 @@ class SliceUsageCellRenderer extends SliceUsageCellRendererBase {
     if (location != null) {
       SimpleTextAttributes attributes = SimpleTextAttributes.GRAY_ATTRIBUTES;
       append(" in " + location, attributes);
+    }
+
+    Language language = element == null ? JavaLanguage.INSTANCE : element.getLanguage();
+    if (language != JavaLanguage.INSTANCE) {
+      SliceLanguageSupportProvider foreignSlicing = LanguageSlicing.getProvider(element);
+      if (foreignSlicing == null) {
+        append(" (in " + language.getDisplayName()+" file - stopped here)", SimpleTextAttributes.EXCLUDED_ATTRIBUTES);
+      }
     }
   }
 }
