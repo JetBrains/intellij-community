@@ -1947,9 +1947,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     boolean painted = false;
     if (myDocument.getTextLength() > 0) {
-      int startDocLine = myDocument.getLineNumber(e.getOffset());
-      int endDocLine = myDocument.getLineNumber(e.getOffset() + e.getNewLength());
-      if (startDocLine != endDocLine || StringUtil.indexOf(e.getOldFragment(), '\n') != -1) {
+      if (startLine != endLine || StringUtil.indexOf(e.getOldFragment(), '\n') != -1) {
         myGutterComponent.clearLineToGutterRenderersCache();
       }
 
