@@ -544,8 +544,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
 
   public void testWinEggDebug() throws Exception {
-    if (!SystemInfo.isWindows)
-    {
+    if (UsefulTestCase.IS_UNDER_TEAMCITY && !SystemInfo.isWindows) {
        return; // Only needs to run on windows
     }
     runPythonTest(new PyDebuggerTask("/debug", "test_winegg.py") {
@@ -580,27 +579,21 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       public Set<String> getTags() {
         return ImmutableSet.of("-jython"); //TODO: fix that for Jython if anybody needs it
       }
-
-
     });
   }
 
   public void testWinLongName() throws Exception {
-    if (!SystemInfo.isWindows)
-    {
+    if (UsefulTestCase.IS_UNDER_TEAMCITY && !SystemInfo.isWindows) {
       return; // Only needs to run on windows
     }
     runPythonTest(new PyDebuggerTask("/debug", "long_n~1.py") {
       @Override
       public void before() throws Exception {
-
         String scriptPath = getScriptPath();
         String longPath = FileUtil
           .toSystemDependentName((new File(scriptPath).getCanonicalPath()));
         LocalFileSystem.getInstance().refreshAndFindFileByPath(longPath);
         toggleBreakpoint(longPath, 2);
-
-
       }
 
       @Override
@@ -608,7 +601,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         waitForPause();
         eval("x").hasValue("10");
         resume();
-
       }
 
       @NotNull
@@ -616,8 +608,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       public Set<String> getTags() {
         return ImmutableSet.of("-jython"); //TODO: fix that for Jython if anybody needs it
       }
-
-
     });
   }
 

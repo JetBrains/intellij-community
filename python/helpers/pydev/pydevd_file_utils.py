@@ -73,24 +73,26 @@ PATHS_FROM_ECLIPSE_TO_PYTHON = []
 
 
 normcase = os_normcase # May be rebound on set_ide_os
-import types
-str_to_unicode = types.UnicodeType
+
+CTYPES_AVAILABLE = True
+try:
+    import ctypes
+except ImportError:
+    CTYPES_AVAILABLE = False
+
+
 def convert_to_long_pathname(filename):
-    return filename
-if os.name == 'nt':
-    try:
-        import ctypes
-    except ImportError:
-        pass
+    if sys.platform != "win32":
+        return filename
     else:
-        def convert_to_long_pathname(filename):
+        if CTYPES_AVAILABLE:
             buf = ctypes.create_unicode_buffer(260)
             GetLongPathName = ctypes.windll.kernel32.GetLongPathNameW
-            rv = GetLongPathName(str_to_unicode(filename), buf , 260)
-            if rv == 0 or rv > 260:
-                return filename
-            else:
+            rv = GetLongPathName(types.UnicodeType(filename), buf, 260)
+            if rv != 0 and rv <= 260:
                 return buf.value.encode(getfilesystemencoding())
+        return filename
+
 
 def norm_case(filename):
     # `normcase` doesn't lower case on Python 2 for non-English locale, but Java side does it,
