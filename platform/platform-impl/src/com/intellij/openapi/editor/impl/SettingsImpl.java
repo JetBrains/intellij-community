@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,6 +70,7 @@ public class SettingsImpl implements EditorSettings {
   private Boolean myIsRightMarginShown                    = null;
   private Integer myRightMargin                           = null;
   private Boolean myAreLineNumbersShown                   = null;
+  private Boolean myGutterIconsShown                      = null;
   private Boolean myIsFoldingOutlineShown                 = null;
   private Boolean myIsSmartHome                           = null;
   private Boolean myIsBlockCursor                         = null;
@@ -194,6 +195,21 @@ public class SettingsImpl implements EditorSettings {
     final Boolean newValue = val ? Boolean.TRUE : Boolean.FALSE;
     if (newValue.equals(myAreLineNumbersShown)) return;
     myAreLineNumbersShown = newValue;
+    fireEditorRefresh();
+  }
+
+  @Override
+  public boolean areGutterIconsShown() {
+    return myGutterIconsShown != null
+           ? myGutterIconsShown.booleanValue()
+           : EditorSettingsExternalizable.getInstance().areGutterIconsShown();
+  }
+
+  @Override
+  public void setGutterIconsShown(boolean val) {
+    final Boolean newValue = val ? Boolean.TRUE : Boolean.FALSE;
+    if (newValue.equals(myGutterIconsShown)) return;
+    myGutterIconsShown = newValue;
     fireEditorRefresh();
   }
 
