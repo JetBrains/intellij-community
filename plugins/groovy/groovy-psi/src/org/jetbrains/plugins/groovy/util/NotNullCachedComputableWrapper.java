@@ -39,21 +39,22 @@ public class NotNullCachedComputableWrapper<T> implements NotNullComputable<T> {
   public T compute() {
     while (true) {
       T value = myValueRef.get();
-      if (value != null) return value;                // value already computed and cached
+      if (value != null) return value;                  // value already computed and cached
 
       final NotNullComputable<T> computable = myComputable;
-      if (computable == null) continue;               // computable is null only after some thread succeeds CAS
+      if (computable == null) continue;                 // computable is null only after some thread succeeds CAS
 
-      final RecursionGuard.StackStamp stamp = ourGuard.markStack();
+      RecursionGuard.StackStamp stamp = ourGuard.markStack();
       value = computable.compute();
       if (stamp.mayCacheNow()) {
-        if (myValueRef.compareAndSet(null, value)) {  // try to cache value
-          myComputable = null;                        // if ok, allow gc to clean computable
+        if (myValueRef.compareAndSet(null, value)) {    // try to cache value
+          myComputable = null;                          // if ok, allow gc to clean computable
           return value;
-        }                                             // if not ok then another thread already set cached value
+        }
+        // if CAS failed then other thread already set this value => loop & get value from reference
       }
       else {
-        return value;                                 // do not try to cache, just return value
+        return value;                                   // recursion detected
       }
     }
   }

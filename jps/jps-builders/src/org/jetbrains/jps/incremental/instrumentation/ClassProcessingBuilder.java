@@ -18,7 +18,6 @@ package org.jetbrains.jps.incremental.instrumentation;
 import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
@@ -123,7 +122,7 @@ public abstract class ClassProcessingBuilder extends ModuleLevelBuilder {
     int index = 0;
     if (sdk != null && JpsJavaSdkType.getJavaVersion(sdk) >= 9) {
       platformUrls = new URL[1 + platformCp.size()];
-      platformUrls[index++] = new URL("jrt", null, FileUtil.toSystemIndependentName(sdk.getHomePath()));
+      platformUrls[index++] = InstrumentationClassFinder.createJDKPlatformUrl(sdk.getHomePath());
     }
     else {
       platformUrls = new URL[platformCp.size()];

@@ -19,7 +19,9 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.ex.DisableInspectionToolAction;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.ui.*;
@@ -38,6 +40,7 @@ import java.awt.event.MouseEvent;
  * @author Dmitry Batkovich
  */
 public class InspectionNodeInfo extends JPanel {
+  private final static Logger LOG = Logger.getInstance(InspectionNodeInfo.class);
   private final JButton myButton;
   private final JBLabel myEnabledLabel;
   private final HighlightDisplayKey myKey;
@@ -51,9 +54,10 @@ public class InspectionNodeInfo extends JPanel {
     setLayout(new GridBagLayout());
     setBorder(IdeBorderFactory.createEmptyBorder(11, 0, 0, 0));
     final InspectionToolWrapper toolWrapper = tree.getSelectedToolWrapper();
+    LOG.assertTrue(toolWrapper != null);
     myProject = project;
     myCurrentProfile = (InspectionProfileImpl)InspectionProjectProfileManager.getInstance(project).getProjectProfileImpl();
-    myKey = HighlightDisplayKey.find(toolWrapper.getID());
+    myKey = HighlightDisplayKey.find(toolWrapper.getShortName());
     myButton = new JButton();
 
     JPanel titlePanel = new JPanel();
@@ -74,6 +78,10 @@ public class InspectionNodeInfo extends JPanel {
     description.setContentType(UIUtil.HTML_MIME);
     description.setEditable(false);
     description.setOpaque(false);
+    if (Registry.is("ide.scroll.background.auto")) {
+      description.setBackground(UIUtil.getLabelBackground());
+      description.setForeground(UIUtil.getLabelForeground());
+    }
     description.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
     final String toolDescription = toolWrapper.loadDescription();
     SingleInspectionProfilePanel.readHTML(description, SingleInspectionProfilePanel.toHTML(description, toolDescription == null ? "" : toolDescription, false));

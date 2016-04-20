@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,7 @@ import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TObjectIntHashMap;
 import gnu.trove.TObjectIntProcedure;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
@@ -337,7 +338,8 @@ public class GrIntroduceParameterDialog extends DialogWrapper {
   @Nullable
   private PsiType inferClosureReturnType() {
     final ExtractClosureHelperImpl mockHelper =
-      new ExtractClosureHelperImpl(myInfo, "__test___n_", false, new TIntArrayList(), false, 0, false, false, false);
+      new ExtractClosureHelperImpl(myInfo, "__test___n_", false, new TIntArrayList(), false,
+                                   IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false);
     final PsiType returnType;
     final AccessToken token = WriteAction.start();
     try {
@@ -532,6 +534,7 @@ public class GrIntroduceParameterDialog extends DialogWrapper {
     return GroovyIntroduceParameterUtil.suggestNames(var, expr, stringPart, myInfo.getToReplaceIn(), myProject);
   }
 
+  @MagicConstant(valuesFromClass = IntroduceParameterRefactoring.class)
   private int getReplaceFieldsWithGetter() {
     if (myDoNotReplaceRadioButton.isSelected()) return IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE;
     if (myReplaceFieldsInaccessibleInRadioButton.isSelected()) return IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE;

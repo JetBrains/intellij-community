@@ -88,7 +88,16 @@ public class VcsHistoryUtil {
     final byte[] content1 = loadRevisionContent(revision1);
     final byte[] content2 = loadRevisionContent(revision2);
 
-    String title = DiffRequestFactoryImpl.getContentTitle(path);
+    FilePath path1 = getRevisionPath(revision1);
+    FilePath path2 = getRevisionPath(revision2);
+
+    String title;
+    if (path1 != null && path2 != null) {
+      title = DiffRequestFactoryImpl.getTitle(path1, path2, " -> ");
+    }
+    else {
+      title = DiffRequestFactoryImpl.getContentTitle(path);
+    }
 
     DiffContent diffContent1 = createContent(project, content1, revision1, path);
     DiffContent diffContent2 = createContent(project, content2, revision2, path);
@@ -109,6 +118,14 @@ public class VcsHistoryUtil {
   private static Pair<FilePath, VcsRevisionNumber> getRevisionInfo(@NotNull VcsFileRevision revision) {
     if (revision instanceof VcsFileRevisionEx) {
       return Pair.create(((VcsFileRevisionEx)revision).getPath(), revision.getRevisionNumber());
+    }
+    return null;
+  }
+
+  @Nullable
+  private static FilePath getRevisionPath(@NotNull VcsFileRevision revision) {
+    if (revision instanceof VcsFileRevisionEx) {
+      return ((VcsFileRevisionEx)revision).getPath();
     }
     return null;
   }

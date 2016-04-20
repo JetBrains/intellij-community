@@ -33,5 +33,21 @@ public abstract class PredefinedSearchScopeProvider {
                                                         boolean suggestSearchInLibs,
                                                         boolean prevSearchFiles,
                                                         boolean currentSelection,
-                                                        boolean usageView);
+                                                        boolean usageView,
+                                                        boolean showEmptyScopes);
+
+  public final List<SearchScope> getPredefinedScopes(@NotNull final Project project,
+                                                     @Nullable final DataContext dataContext,
+                                                     boolean suggestSearchInLibs,
+                                                     boolean prevSearchFiles,
+                                                     boolean currentSelection,
+                                                     boolean usageView) {
+    return getPredefinedScopes(project,
+                               dataContext,
+                               suggestSearchInLibs,
+                               prevSearchFiles,
+                               currentSelection,
+                               usageView,
+                               false);
+  }
 }

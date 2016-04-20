@@ -54,6 +54,7 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.psi.*;
 import com.intellij.psi.search.*;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.content.Content;
 import com.intellij.usageView.UsageInfo;
@@ -370,7 +371,7 @@ public class FindUsagesManager {
             ApplicationManager.getApplication().runReadAction(new Runnable() {
               @Override
               public void run() {
-                LOG.assertTrue(element.isValid());
+                PsiUtilCore.ensureValid(element);
               }
             });
             handler.processElementUsages(element, usageInfoProcessor, optionsClone);

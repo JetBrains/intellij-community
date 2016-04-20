@@ -78,7 +78,7 @@ public class XDebuggerExpressionEditor extends XDebuggerEditorBase {
       myEditorTextField.setFontInheritedFromLAF(false);
       myEditorTextField.setFont(EditorUtil.getEditorFont());
     }
-    myComponent = addChooseFactoryLabel(myEditorTextField, multiline);
+    myComponent = decorate(myEditorTextField, multiline, false);
   }
 
   @Override

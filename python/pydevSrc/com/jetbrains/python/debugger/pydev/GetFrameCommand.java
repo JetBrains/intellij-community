@@ -47,7 +47,7 @@ public class GetFrameCommand extends AbstractFrameCommand {
   }
 
   protected PyDebugValue extend(final PyDebugValue value) {
-    return new PyDebugValue(value.getName(), value.getType(), value.getValue(), value.isContainer(), value.isErrorOnEval(), null, myDebugProcess);
+    return new PyDebugValue(value.getName(), value.getType(), value.getTypeQualifier(), value.getValue(), value.isContainer(), value.isErrorOnEval(), null, myDebugProcess);
   }
 
   public XValueChildrenList getVariables() {

@@ -69,6 +69,20 @@ public class JavaDocCompletionContributor extends CompletionContributor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.JavaDocCompletionContributor");
   private static final @NonNls String VALUE_TAG = "value";
   private static final @NonNls String LINK_TAG = "link";
+  private static final InsertHandler<LookupElement> PARAM_DESCRIPTION_INSERT_HANDLER = (context, item) -> {
+    if (context.getCompletionChar() != Lookup.REPLACE_SELECT_CHAR) return;
+
+    context.commitDocument();
+    PsiDocTag docTag = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), PsiDocTag.class, false);
+    if (docTag != null) {
+      Document document = context.getDocument();
+      int tagEnd = DocTagSelectioner.getDocTagRange(docTag, document.getCharsSequence(), 0).getEndOffset();
+      int tail = context.getTailOffset();
+      if (tail < tagEnd) {
+        document.deleteString(tail, tagEnd);
+      }
+    }
+  };
 
   public JavaDocCompletionContributor() {
     extend(CompletionType.BASIC, PsiJavaPatterns.psiElement(JavaDocTokenType.DOC_TAG_NAME), new TagChooser());
@@ -265,23 +279,8 @@ public class JavaDocCompletionContributor extends CompletionContributor {
       }
     });
     for (String description : descriptions) {
-      result.addElement(LookupElementBuilder.create(description).withInsertHandler(new InsertHandler<LookupElement>() {
-        @Override
-        public void handleInsert(InsertionContext context, LookupElement item) {
-          if (context.getCompletionChar() != Lookup.REPLACE_SELECT_CHAR) return;
-          
-          context.commitDocument();
-          PsiDocTag docTag = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), PsiDocTag.class, false);
-          if (docTag != null) {
-            Document document = context.getDocument();
-            int tagEnd = DocTagSelectioner.getDocTagRange(docTag, document.getCharsSequence(), 0).getEndOffset();
-            int tail = context.getTailOffset();
-            if (tail < tagEnd) {
-              document.deleteString(tail, tagEnd);
-            }
-          }
-        }
-      }));
+      result.addElement(PrioritizedLookupElement.withPriority(
+        LookupElementBuilder.create(description).withInsertHandler(PARAM_DESCRIPTION_INSERT_HANDLER), 1));
     }
   }
 

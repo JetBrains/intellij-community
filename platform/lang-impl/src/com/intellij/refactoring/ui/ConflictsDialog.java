@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@
 package com.intellij.refactoring.ui;
 
 import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -197,13 +196,11 @@ public class ConflictsDialog extends DialogWrapper{
         }
         boolean isRead = false;
         boolean isWrite = false;
-        for (ReadWriteAccessDetector detector : Extensions.getExtensions(ReadWriteAccessDetector.EP_NAME)) {
-          if (detector.isReadWriteAccessible(element)) {
-            final ReadWriteAccessDetector.Access access = detector.getExpressionAccess(element);
-            isRead = access != ReadWriteAccessDetector.Access.Write;
-            isWrite = access != ReadWriteAccessDetector.Access.Read;
-            break;
-          }
+        ReadWriteAccessDetector detector = ReadWriteAccessDetector.findDetector(element);
+        if (detector != null) {
+          final ReadWriteAccessDetector.Access access = detector.getExpressionAccess(element);
+          isRead = access != ReadWriteAccessDetector.Access.Write;
+          isWrite = access != ReadWriteAccessDetector.Access.Read;
         }
 
         for (final String conflictDescription : myElementConflictDescription.get(element)) {

@@ -17,12 +17,17 @@ package com.intellij.refactoring.introduceparameterobject;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.MoveDestination;
+import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.changeSignature.*;
 import com.intellij.refactoring.introduceParameterObject.IntroduceParameterObjectClassDescriptor;
 import com.intellij.refactoring.introduceParameterObject.IntroduceParameterObjectDelegate;
@@ -45,13 +50,31 @@ public class JavaIntroduceParameterObjectDelegate
   extends IntroduceParameterObjectDelegate<PsiMethod, ParameterInfoImpl, JavaIntroduceParameterObjectClassDescriptor> {
 
   @Override
+  public  List<ParameterInfoImpl> getAllMethodParameters(PsiMethod sourceMethod) {
+    return new JavaMethodDescriptor(sourceMethod).getParameters();
+  }
+
+  @Override
+  public boolean isEnabledOn(PsiElement element) {
+    return PsiTreeUtil.getParentOfType(element, PsiMethod.class, false) != null;
+  }
+
+  @Override
+  public RefactoringActionHandler getHandler(PsiElement element) {
+    return new IntroduceParameterObjectHandler();
+  }
+
+  @Override
   public ParameterInfoImpl createMergedParameterInfo(JavaIntroduceParameterObjectClassDescriptor descriptor,
                                                      PsiMethod method,
                                                      List<ParameterInfoImpl> oldMethodParameters) {
     final PsiCodeBlock body = method.getBody();
-    final String baseParameterName = StringUtil.decapitalize(descriptor.getClassName());
+    String baseParameterName = StringUtil.decapitalize(descriptor.getClassName());
     final Project project = method.getProject();
 
+    if (!PsiNameHelper.getInstance(project).isIdentifier(baseParameterName, LanguageLevel.HIGHEST)) {
+      baseParameterName = StringUtil.fixVariableNameDerivedFromPropertyName(baseParameterName);
+    }
     final String paramName = body != null
                              ? JavaCodeStyleManager.getInstance(project)
                                .suggestUniqueVariableName(baseParameterName, body.getLBrace(), true)
@@ -240,9 +263,23 @@ public class JavaIntroduceParameterObjectDelegate
       if (!moveDestination.isTargetAccessible(method.getProject(), method.getContainingFile().getVirtualFile())) {
         conflicts.putValue(method, "Created class won't be accessible");
       }
+
+      final PsiFile containingFile = method.getContainingFile();
+      final PsiDirectory containingDirectory = containingFile.getContainingDirectory();
+      PsiDirectory directory = moveDestination.getTargetDirectory(containingDirectory);
+      if (directory != null) {
+        PsiFile file = directory.findFile(classDescriptor.getClassName() + ".java");
+        if (file != null) {
+          VirtualFile virtualFile = PsiUtilCore.getVirtualFile(file);
+          if (virtualFile != null) {
+            conflicts.putValue(method, "File already exits: " + virtualFile.getPresentableUrl());
+          }
+        }
+      }
     }
 
     if (moveDestination != null) {
+      boolean constructorMiss = false;
       for (UsageInfo info : infos) {
         if (info instanceof IntroduceParameterObjectProcessor.ChangeSignatureUsageWrapper) {
           final UsageInfo usageInfo = ((IntroduceParameterObjectProcessor.ChangeSignatureUsageWrapper)info).getInfo();
@@ -253,6 +290,19 @@ public class JavaIntroduceParameterObjectDelegate
               conflicts.putValue(overridingMethod, "Created class won't be accessible");
             }
           }
+          if (!constructorMiss && classDescriptor.isUseExistingClass() && usageInfo instanceof MethodCallUsageInfo && classDescriptor.getExistingClassCompatibleConstructor() == null) {
+            conflicts.putValue(classDescriptor.getExistingClass(), "Existing class misses compatible constructor");
+            constructorMiss = true;
+          }
+        }
+      }
+    }
+
+    if (classDescriptor.isUseExistingClass()) {
+      for (ParameterInfoImpl info : classDescriptor.getParamsToMerge()) {
+        Object existingClassBean = classDescriptor.getBean(info);
+        if (existingClassBean == null) {
+          conflicts.putValue(classDescriptor.getExistingClass(), "No field associated with " + info.getName() + " found");
         }
       }
     }

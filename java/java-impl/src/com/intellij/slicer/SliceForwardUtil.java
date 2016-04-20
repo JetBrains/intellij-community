@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,8 +37,10 @@ import java.util.Set;
 /**
  * @author cdr
  */
-public class SliceForwardUtil {
-  public static boolean processUsagesFlownFromThe(@NotNull PsiElement element, @NotNull final Processor<SliceUsage> processor, @NotNull final JavaSliceUsage parent) {
+class SliceForwardUtil {
+  static boolean processUsagesFlownFromThe(@NotNull PsiElement element,
+                                           @NotNull final Processor<SliceUsage> processor,
+                                           @NotNull final JavaSliceUsage parent) {
     Pair<PsiElement, PsiSubstitutor> pair = getAssignmentTarget(element, parent);
     if (pair != null) {
       PsiElement target = pair.getFirst();
@@ -50,22 +52,19 @@ public class SliceForwardUtil {
           final PsiMethod method = (PsiMethod)declarationScope;
           final int parameterIndex = method.getParameterList().getParameterIndex(parameter);
 
-          Processor<PsiMethod> myProcessor = new Processor<PsiMethod>() {
-            @Override
-            public boolean process(PsiMethod override) {
-              if (!parent.getScope().contains(override)) return true;
-              final PsiSubstitutor superSubstitutor = method == override
-                                                      ? substitutor
-                                                      : MethodSignatureUtil.getSuperMethodSignatureSubstitutor(method.getSignature(substitutor),
-                                                                                            override.getSignature(substitutor));
+          Processor<PsiMethod> myProcessor = override -> {
+            if (!parent.getScope().contains(override)) return true;
+            final PsiSubstitutor superSubstitutor = method == override
+                                                    ? substitutor
+                                                    : MethodSignatureUtil.getSuperMethodSignatureSubstitutor(method.getSignature(substitutor),
+                                                                                          override.getSignature(substitutor));
 
-              PsiParameter[] parameters = override.getParameterList().getParameters();
-              if (parameters.length <= parameterIndex) return true;
-              PsiParameter actualParam = parameters[parameterIndex];
+            PsiParameter[] parameters = override.getParameterList().getParameters();
+            if (parameters.length <= parameterIndex) return true;
+            PsiParameter actualParam = parameters[parameterIndex];
 
-              SliceUsage usage = SliceUtil.createSliceUsage(actualParam, parent, superSubstitutor,parent.indexNesting, "");
-              return processor.process(usage);
-            }
+            SliceUsage usage = SliceUtil.createSliceUsage(actualParam, parent, superSubstitutor,parent.indexNesting, "");
+            return processor.process(usage);
           };
           if (!myProcessor.process(method)) return false;
           return OverridingMethodsSearch.search(method, parent.getScope().toSearchScope(), true).forEach(myProcessor);
@@ -102,12 +101,12 @@ public class SliceForwardUtil {
     if (from instanceof PsiParameter) {
       PsiParameter parameter = (PsiParameter)from;
       PsiElement scope = parameter.getDeclarationScope();
-      Collection<PsiParameter> parametersToAnalyze = new THashSet<PsiParameter>();
+      Collection<PsiParameter> parametersToAnalyze = new THashSet<>();
       if (scope instanceof PsiMethod) {
         final PsiMethod method = (PsiMethod)scope;
         int index = method.getParameterList().getParameterIndex(parameter);
 
-        Collection<PsiMethod> superMethods = new THashSet<PsiMethod>(Arrays.asList(method.findDeepestSuperMethods()));
+        Collection<PsiMethod> superMethods = new THashSet<>(Arrays.asList(method.findDeepestSuperMethods()));
         superMethods.add(method);
         for (Iterator<PsiMethod> iterator = superMethods.iterator(); iterator.hasNext(); ) {
           ProgressManager.checkCanceled();
@@ -117,16 +116,13 @@ public class SliceForwardUtil {
           }
         }
 
-        final THashSet<PsiMethod> implementors = new THashSet<PsiMethod>(superMethods);
+        final THashSet<PsiMethod> implementors = new THashSet<>(superMethods);
         for (PsiMethod superMethod : superMethods) {
           ProgressManager.checkCanceled();
-          if (!OverridingMethodsSearch.search(superMethod, parent.getScope().toSearchScope(), true).forEach(new Processor<PsiMethod>() {
-            @Override
-            public boolean process(PsiMethod sub) {
-              ProgressManager.checkCanceled();
-              implementors.add(sub);
-              return true;
-            }
+          if (!OverridingMethodsSearch.search(superMethod, parent.getScope().toSearchScope(), true).forEach(sub -> {
+            ProgressManager.checkCanceled();
+            implementors.add(sub);
+            return true;
           })) return false;
         }
         for (PsiMethod implementor : implementors) {
@@ -157,22 +153,19 @@ public class SliceForwardUtil {
     if (from instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)from;
 
-      Collection<PsiMethod> superMethods = new THashSet<PsiMethod>(Arrays.asList(method.findDeepestSuperMethods()));
+      Collection<PsiMethod> superMethods = new THashSet<>(Arrays.asList(method.findDeepestSuperMethods()));
       superMethods.add(method);
-      final Set<PsiReference> processed = new THashSet<PsiReference>(); //usages of super method and overridden method can overlap
+      final Set<PsiReference> processed = new THashSet<>(); //usages of super method and overridden method can overlap
       for (final PsiMethod containingMethod : superMethods) {
-        if (!MethodReferencesSearch.search(containingMethod, parent.getScope().toSearchScope(), true).forEach(new Processor<PsiReference>() {
-            @Override
-            public boolean process(final PsiReference reference) {
-              ProgressManager.checkCanceled();
-              synchronized (processed) {
-                if (!processed.add(reference)) return true;
-              }
-              PsiElement element = reference.getElement().getParent();
+        if (!MethodReferencesSearch.search(containingMethod, parent.getScope().toSearchScope(), true).forEach(reference -> {
+          ProgressManager.checkCanceled();
+          synchronized (processed) {
+            if (!processed.add(reference)) return true;
+          }
+          PsiElement element = reference.getElement().getParent();
 
-              return processAssignmentTarget(element, parent, processor);
-            }
-          })) {
+          return processAssignmentTarget(element, parent, processor);
+        })) {
           return false;
         }
       }
@@ -182,13 +175,10 @@ public class SliceForwardUtil {
 
   private static boolean searchReferencesAndProcessAssignmentTarget(@NotNull PsiElement element, @Nullable final PsiElement context, final JavaSliceUsage parent,
                                                                     final Processor<SliceUsage> processor) {
-    return ReferencesSearch.search(element).forEach(new Processor<PsiReference>() {
-      @Override
-      public boolean process(PsiReference reference) {
-        PsiElement element = reference.getElement();
-        if (context != null && element.getTextOffset() < context.getTextOffset()) return true;
-        return processAssignmentTarget(element, parent, processor);
-      }
+    return ReferencesSearch.search(element).forEach(reference -> {
+      PsiElement element1 = reference.getElement();
+      if (context != null && element1.getTextOffset() < context.getTextOffset()) return true;
+      return processAssignmentTarget(element1, parent, processor);
     });
   }
 
@@ -265,7 +255,7 @@ public class SliceForwardUtil {
   }
 
   @NotNull
-  public static PsiElement complexify(@NotNull PsiElement element) {
+  static PsiElement complexify(@NotNull PsiElement element) {
     PsiElement parent = element.getParent();
     if (parent instanceof PsiParenthesizedExpression && element.equals(((PsiParenthesizedExpression)parent).getExpression())) {
       return complexify(parent);

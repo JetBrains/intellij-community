@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,10 @@
 package com.intellij.ide;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.options.*;
+import com.intellij.openapi.options.CompositeConfigurable;
+import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.ui.components.JBRadioButton;
 import org.jetbrains.annotations.NotNull;
@@ -67,6 +70,7 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Searchabl
     settings.setUseSafeWrite(myComponent.myChkUseSafeWrite.isSelected());
   }
 
+  @GeneralSettings.OpenNewProjectOption
   private int getConfirmOpenNewProject() {
     if (myComponent.myConfirmWindowToOpenProject.isSelected()) {
       return GeneralSettings.OPEN_PROJECT_ASK;

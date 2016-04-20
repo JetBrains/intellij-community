@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,7 +97,7 @@ public class LivePreview extends DocumentAdapter implements SearchResults.Search
 
   private static TextAttributes strikeout() {
     Color color = EditorColorsManager.getInstance().getGlobalScheme().getDefaultForeground();
-    return new TextAttributes(null, null, color, EffectType.STRIKEOUT, 0);
+    return new TextAttributes(null, null, color, EffectType.STRIKEOUT, Font.PLAIN);
   }
 
   @Override
@@ -233,7 +233,7 @@ public class LivePreview extends DocumentAdapter implements SearchResults.Search
     if (cursor != null && cursor.getEndOffset() <= editor.getDocument().getTextLength()) {
       Set<RangeHighlighter> dummy = new HashSet<RangeHighlighter>();
       Color color = editor.getColorsScheme().getColor(EditorColors.CARET_COLOR);
-      highlightRange(cursor, new TextAttributes(null, null, color, EffectType.ROUNDED_BOX, 0), dummy);
+      highlightRange(cursor, new TextAttributes(null, null, color, EffectType.ROUNDED_BOX, Font.PLAIN), dummy);
       if (!dummy.isEmpty()) {
         myCursorHighlighter = dummy.iterator().next();
       }
@@ -363,7 +363,7 @@ public class LivePreview extends DocumentAdapter implements SearchResults.Search
         if (cursor != null && highlighter.getStartOffset() == cursor.getStartOffset() &&
             highlighter.getEndOffset() == cursor.getEndOffset()) continue;
         final RangeHighlighter toAnnotate = highlightRange(new TextRange(highlighter.getStartOffset(), highlighter.getEndOffset()),
-                                                                 new TextAttributes(null, null, Color.WHITE, EffectType.ROUNDED_BOX, 0), toAdd);
+                                                           new TextAttributes(null, null, Color.WHITE, EffectType.ROUNDED_BOX, Font.PLAIN), toAdd);
         highlighter.putUserData(IN_SELECTION_KEY, IN_SELECTION1);
         toAnnotate.putUserData(IN_SELECTION_KEY, IN_SELECTION2);
       }

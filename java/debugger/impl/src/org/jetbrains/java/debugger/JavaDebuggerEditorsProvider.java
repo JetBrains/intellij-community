@@ -24,6 +24,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -72,7 +73,7 @@ public class JavaDebuggerEditorsProvider extends XDebuggerEditorsProviderBase {
     PsiDocumentManager.getInstance(project).commitDocument(document);
     PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
     if (psiFile != null) {
-      return new XExpressionImpl(psiFile.getText(), language, ((JavaCodeFragment)psiFile).importsToString(), mode);
+      return new XExpressionImpl(psiFile.getText(), language, StringUtil.nullize(((JavaCodeFragment)psiFile).importsToString()), mode);
     }
     return super.createExpression(project, document, language, mode);
   }

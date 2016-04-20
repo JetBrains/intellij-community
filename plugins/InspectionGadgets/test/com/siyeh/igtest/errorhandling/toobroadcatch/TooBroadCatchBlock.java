@@ -121,3 +121,18 @@ public class TooBroadCatchBlock{
     } catch (NumberFormatException e) {}
   }
 }
+interface ThrowsTypeParameter<T, E extends Exception> {
+  T execute() throws E;
+
+  static void go(ThrowsTypeParameter<String, IllegalArgumentException> action) {
+    try {
+      action.execute();
+    } catch(<warning descr="'catch' of 'Exception' is too broad, masking exception 'IllegalArgumentException'">Exception</warning> e) {}
+  }
+
+  static void perform(ThrowsTypeParameter<?, ?> manager) {
+    try {
+      manager.execute();
+    } catch (Exception e) {}
+  }
+}

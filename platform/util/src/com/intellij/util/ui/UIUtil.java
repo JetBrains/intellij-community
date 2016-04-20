@@ -2968,6 +2968,7 @@ public class UIUtil {
       final int[] maxWidth = {0};
       final int[] height = {0};
       final int[] maxBulletWidth = {0};
+      GraphicsUtil.setupAntialiasing(g, true, true);
       ContainerUtil.process(myLines, new Processor<Pair<String, LineInfo>>() {
         @Override
         public boolean process(final Pair<String, LineInfo> pair) {

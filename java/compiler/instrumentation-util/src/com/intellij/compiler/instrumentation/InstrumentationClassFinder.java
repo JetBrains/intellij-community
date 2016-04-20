@@ -7,6 +7,7 @@ import org.jetbrains.org.objectweb.asm.Opcodes;
 
 import java.io.*;
 import java.lang.reflect.Constructor;
+import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -41,6 +42,10 @@ public class InstrumentationClassFinder {
     myClasspath = new ClassFinderClasspath(classpathUrls);
   }
 
+  public static URL createJDKPlatformUrl(String jdkHomePath) throws MalformedURLException {
+    return new URL(ClassFinderClasspath.Loader.JRT_PROTOCOL, null, jdkHomePath.replace(File.separatorChar, '/'));
+  }
+  
   // compatibility with legacy code requiring ClassLoader
   public ClassLoader getLoader() {
     ClassLoader loader = myLoader;

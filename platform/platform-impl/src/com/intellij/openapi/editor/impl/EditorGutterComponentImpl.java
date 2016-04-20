@@ -66,7 +66,7 @@ import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntFunction;
 import gnu.trove.TIntObjectHashMap;
-import gnu.trove.TObjectProcedure;
+import gnu.trove.TIntObjectProcedure;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -128,6 +128,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   private final EditorImpl myEditor;
   private final FoldingAnchorsOverlayStrategy myAnchorsDisplayStrategy;
+  @Nullable private TIntObjectHashMap<List<GutterMark>> myLineToGutterRenderers;
   private int myIconsAreaWidth = 0;
   private int myLineNumberAreaWidth = 0;
   private int myAdditionalLineNumberAreaWidth = 0;
@@ -683,6 +684,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     int prevHash = sizeHash();
 
     if (!onLayout) {
+      clearLineToGutterRenderersCache();
       calcLineNumberAreaWidth();
       calcLineMarkerAreaWidth(canShrink);
       calcAnnotationsSize();
@@ -748,23 +750,15 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     }
   }
 
-  private TIntObjectHashMap<List<GutterMark>> myLineToGutterRenderers;
+  public void clearLineToGutterRenderersCache() {
+    myLineToGutterRenderers = null;
+  }
 
-  private void calcLineMarkerAreaWidth(boolean canShrink) {
+  private void buildGutterRenderersCache() {
     myLineToGutterRenderers = new TIntObjectHashMap<>();
-    myLeftFreePaintersAreaShown = myForceLeftFreePaintersAreaShown;
-    myRightFreePaintersAreaShown = myForceRightFreePaintersAreaShown;
-
     processRangeHighlighters(0, myEditor.getDocument().getTextLength(), new RangeHighlighterProcessor() {
       @Override
       public void process(@NotNull RangeHighlighter highlighter) {
-        LineMarkerRenderer lineMarkerRenderer = highlighter.getLineMarkerRenderer();
-        if (lineMarkerRenderer != null) {
-          LineMarkerRendererEx.Position position = getLineMarkerPosition(lineMarkerRenderer);
-          if (position == LineMarkerRendererEx.Position.LEFT && isLineMarkerVisible(highlighter)) myLeftFreePaintersAreaShown = true;
-          if (position == LineMarkerRendererEx.Position.RIGHT && isLineMarkerVisible(highlighter)) myRightFreePaintersAreaShown = true;
-        }
-
         GutterMark renderer = highlighter.getGutterIconRenderer();
         if (renderer == null) {
           return;
@@ -785,6 +779,23 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         }
       }
     });
+  }
+
+  private void calcLineMarkerAreaWidth(boolean canShrink) {
+    myLeftFreePaintersAreaShown = myForceLeftFreePaintersAreaShown;
+    myRightFreePaintersAreaShown = myForceRightFreePaintersAreaShown;
+
+    processRangeHighlighters(0, myEditor.getDocument().getTextLength(), new RangeHighlighterProcessor() {
+      @Override
+      public void process(@NotNull RangeHighlighter highlighter) {
+        LineMarkerRenderer lineMarkerRenderer = highlighter.getLineMarkerRenderer();
+        if (lineMarkerRenderer != null) {
+          LineMarkerRendererEx.Position position = getLineMarkerPosition(lineMarkerRenderer);
+          if (position == LineMarkerRendererEx.Position.LEFT && isLineMarkerVisible(highlighter)) myLeftFreePaintersAreaShown = true;
+          if (position == LineMarkerRendererEx.Position.RIGHT && isLineMarkerVisible(highlighter)) myRightFreePaintersAreaShown = true;
+        }
+      }
+    });
 
     if (canShrink) {
       myIconsAreaWidth = myEditor.getLineHeight();
@@ -792,21 +803,18 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       myIconsAreaWidth = Math.max(myIconsAreaWidth, myEditor.getLineHeight());
     }
 
-    myLineToGutterRenderers.forEachValue(new TObjectProcedure<List<GutterMark>>() {
-      @Override
-      public boolean execute(List<GutterMark> renderers) {
-        int width = 1;
-        for (int i = 0; i < renderers.size(); i++) {
-          GutterMark renderer = renderers.get(i);
-          if (!checkDumbAware(renderer)) continue;
-          width += scaleIcon(renderer.getIcon()).getIconWidth();
-          if (i > 0) width += GAP_BETWEEN_ICONS;
-        }
-        if (myIconsAreaWidth < width) {
-          myIconsAreaWidth = width + 1;
-        }
-        return true;
+    processGutterRenderers((line, renderers) -> {
+      int width = 1;
+      for (int i = 0; i < renderers.size(); i++) {
+        GutterMark renderer = renderers.get(i);
+        if (!checkDumbAware(renderer)) continue;
+        width += scaleIcon(renderer.getIcon()).getIconWidth();
+        if (i > 0) width += GAP_BETWEEN_ICONS;
       }
+      if (myIconsAreaWidth < width) {
+        myIconsAreaWidth = width + 1;
+      }
+      return true;
     });
 
     if (isDumbMode()) {
@@ -815,6 +823,21 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     else {
       myLastNonDumbModeIconAreaWidth = myIconsAreaWidth;
     }
+  }
+
+  @Nullable
+  private List<GutterMark> getGutterRenderers(int line) {
+    if (myLineToGutterRenderers == null) {
+      buildGutterRenderersCache();
+    }
+    return myLineToGutterRenderers.get(line);
+  }
+
+  private void processGutterRenderers(@NotNull TIntObjectProcedure<List<GutterMark>> processor) {
+    if (myLineToGutterRenderers == null) {
+      buildGutterRenderersCache();
+    }
+    myLineToGutterRenderers.forEachEntry(processor);
   }
 
   private boolean isHighlighterVisible(RangeHighlighter highlighter) {
@@ -850,7 +873,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   private void paintIcons(final int firstVisibleLine, final int lastVisibleLine, final Graphics2D g) {
     for (int line = firstVisibleLine; line <= lastVisibleLine; line++) {
-      List<GutterMark> renderers = myLineToGutterRenderers.get(line);
+      List<GutterMark> renderers = getGutterRenderers(line);
       if (renderers != null) {
         paintIconRow(line, renderers, g);
       }
@@ -1442,7 +1465,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     if (toolTip != null && !toolTip.isEmpty()) {
       final Ref<Point> t = new Ref<>(e.getPoint());
       int line = EditorUtil.yPositionToLogicalLine(myEditor, e);
-      List<GutterMark> row = myLineToGutterRenderers.get(line);
+      List<GutterMark> row = getGutterRenderers(line);
       Balloon.Position ballPosition = Balloon.Position.atRight;
       if (row != null) {
         final TreeMap<Integer, GutterMark> xPos = new TreeMap<>();
@@ -1697,22 +1720,17 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   @Nullable
   public Point getCenterPoint(final GutterIconRenderer renderer) {
     final Ref<Point> result = Ref.create();
-    for (int line : myLineToGutterRenderers.keys()) {
-      processIconsRow(line, myLineToGutterRenderers.get(line), new LineGutterIconRendererProcessor() {
-        @Override
-        public void process(int x, int y, GutterMark r) {
-          if (result.isNull() && r.equals(renderer)) {
-            Icon icon = scaleIcon(r.getIcon());
-            result.set(new Point(x + icon.getIconWidth() / 2, y + icon.getIconHeight() / 2));
-          }
+    processGutterRenderers((line, renderers) -> {
+      processIconsRow(line, renderers, (x, y, r) -> {
+        if (result.isNull() && r.equals(renderer)) {
+          Icon icon = scaleIcon(r.getIcon());
+          result.set(new Point(x + icon.getIconWidth() / 2, y + icon.getIconHeight() / 2));
         }
       }, true);
 
-      if (!result.isNull()) {
-        return result.get();
-      }
-    }
-    return null;
+      return result.isNull();
+    });
+    return result.get();
   }
 
   @Override
@@ -1840,7 +1858,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private GutterMark getGutterRenderer(final Point p) {
     int line = convertPointToLineNumber(p);
     if (line == -1) return null;
-    List<GutterMark> renderers = myLineToGutterRenderers.get(line);
+    List<GutterMark> renderers = getGutterRenderers(line);
     if (renderers == null) {
       return null;
     }

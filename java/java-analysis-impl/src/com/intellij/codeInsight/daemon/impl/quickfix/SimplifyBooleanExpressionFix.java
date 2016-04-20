@@ -35,6 +35,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
+import com.siyeh.ig.psiutils.VariableSearchUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -130,14 +131,15 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
     return true;
   }
 
-  private static void replaceWithStatements(final PsiStatement orig, final PsiStatement statement) throws IncorrectOperationException {
+  private static void replaceWithStatements(final PsiIfStatement orig, final PsiStatement statement) throws IncorrectOperationException {
     if (statement == null) {
       orig.delete();
       return;
     }
     PsiElement parent = orig.getParent();
     if (parent == null) return;
-    if (statement instanceof PsiBlockStatement && parent instanceof PsiCodeBlock) {
+    if (statement instanceof PsiBlockStatement && parent instanceof PsiCodeBlock &&
+        !VariableSearchUtils.containsConflictingDeclarations(((PsiBlockStatement)statement).getCodeBlock(), (PsiCodeBlock)parent)) {
       // See IDEADEV-24277
       // Code block can only be inlined into another (parent) code block.
       // Code blocks, which are if or loop statement branches should not be inlined.

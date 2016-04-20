@@ -2982,6 +2982,14 @@ public class StringUtil extends StringUtilRt {
   }
 
   @Contract(pure = true)
+  public static boolean findIgnoreCase(@Nullable String toFind, @NotNull String... where) {
+    for (String string : where) {
+      if (equalsIgnoreCase(toFind, string)) return true;
+    }
+    return false;
+  }
+
+  @Contract(pure = true)
   public static int compare(char c1, char c2, boolean ignoreCase) {
     // duplicating String.equalsIgnoreCase logic
     int d = c1 - c2;

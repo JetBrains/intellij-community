@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 
 import java.io.File;
+import java.io.IOException;
 import java.security.SecureRandom;
 
 @SuppressWarnings("SpellCheckingInspection")
@@ -511,12 +512,12 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
     System.out.println("SOE depth=" + i + ", time=" + t + "ms");
   }
 
-  public void testPerformance() throws Exception {
+  public void testPerformance() throws IOException {
     String path = PathManagerEx.getTestDataPath() + "/psi/stub/StubPerformanceTest.java";
     String text = FileUtil.loadFile(new File(path));
     PsiJavaFile file = (PsiJavaFile)createLightFile("test.java", text);
     String message = "Source file size: " + text.length();
-    PlatformTestUtil.startPerformanceTest(message, 2000, () -> myBuilder.buildStubTree(file)).cpuBound().useLegacyScaling().assertTiming();
+    PlatformTestUtil.startPerformanceTest(message, 4000, () -> myBuilder.buildStubTree(file)).cpuBound().assertTiming();
   }
 
   private void doTest(String source, String expected) {

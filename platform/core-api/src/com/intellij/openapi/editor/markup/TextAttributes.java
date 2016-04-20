@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -172,7 +172,7 @@ public class TextAttributes implements Cloneable {
   public void setFontType(@JdkConstants.FontStyle int type) {
     if (type < 0 || type > 3) {
       LOG.error("Wrong font type: " + type);
-      type = 0;
+      type = Font.PLAIN;
     }
     myAttrs = myAttrs.withFontType(type);
   }
