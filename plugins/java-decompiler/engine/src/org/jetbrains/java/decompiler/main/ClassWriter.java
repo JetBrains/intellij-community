@@ -816,7 +816,7 @@ public class ClassWriter {
           StructAnnDefaultAttribute attr = (StructAnnDefaultAttribute)mt.getAttributes().getWithKey("AnnotationDefault");
           if (attr != null) {
             buffer.append(" default ");
-            buffer.append(attr.getDefaultValue().toJava(indent + 1, new BytecodeMappingTracer())); // dummy tracer
+            buffer.append(attr.getDefaultValue().toJava(0, new BytecodeMappingTracer())); // dummy tracer
           }
         }
 
@@ -970,7 +970,6 @@ public class ClassWriter {
     StructGeneralAttribute.ATTRIBUTE_RUNTIME_INVISIBLE_PARAMETER_ANNOTATIONS};
 
   private static void appendParameterAnnotations(TextBuffer buffer, StructMethod mt, int param) {
-
     BytecodeMappingTracer tracer_dummy = new BytecodeMappingTracer(); // FIXME: replace with a real one
 
     for (String name : PARAMETER_ANNOTATION_ATTRIBUTES) {
