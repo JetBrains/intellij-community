@@ -28,7 +28,6 @@ import com.jetbrains.edu.learning.stepic.StudySettings;
 import icons.InteractiveLearningIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.service.SharedThreadPool;
 
 import javax.swing.*;
 import java.awt.*;
@@ -255,6 +254,12 @@ public class StudyNewProjectPanel {
       return myRemoteCourse.getContentPanel();
     }
 
+    @Nullable
+    @Override
+    public JComponent getPreferredFocusedComponent() {
+      return myRemoteCourse.getLoginField();
+    }
+
     @Override
     protected void doOKAction() {
       if (StringUtil.isEmptyOrSpaces(myRemoteCourse.getLogin())) {
@@ -269,7 +274,7 @@ public class StudyNewProjectPanel {
       super.doOKAction();
       final ProgressManager progressManager = ProgressManager.getInstance();
       progressManager.runProcessWithProgressSynchronously(() -> {
-        final Future<?> future = SharedThreadPool.getInstance().executeOnPooledThread(() -> {
+        final Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
           final boolean isSuccess = EduStepicConnector.login(myRemoteCourse.getLogin(), myRemoteCourse.getPassword());
           if (!isSuccess) {
             setError("Failed to log in");
@@ -281,7 +286,7 @@ public class StudyNewProjectPanel {
           }
         });
 
-        while (!future.isDone()) {
+        while (!future.isCancelled() && !future.isDone()) {
           progressManager.getProgressIndicator().checkCanceled();
           try {
             TimeUnit.MILLISECONDS.sleep(500);
@@ -290,7 +295,7 @@ public class StudyNewProjectPanel {
             LOG.warn(e.getMessage());
           }
         }
-      }, "Login And Getting Stepic Course List", true, new DefaultProjectFactoryImpl().getDefaultProject());
+      }, "Signing In And Getting Stepic Course List", true, new DefaultProjectFactoryImpl().getDefaultProject());
     }
   }
 }

@@ -40,6 +40,10 @@ public class StudyAddRemoteCourse {
     return myContentPanel;
   }
 
+  public JTextField getLoginField() {
+    return myLoginField;
+  }
+
   public String getPassword() {
     return String.valueOf(myPasswordField.getPassword());
   }
