@@ -5,14 +5,15 @@ import com.intellij.util.PathUtilRt
 import io.netty.buffer.ByteBufUtf8Writer
 import io.netty.channel.Channel
 import io.netty.channel.ChannelFutureListener
-import io.netty.handler.codec.http.*
+import io.netty.handler.codec.http.FullHttpRequest
+import io.netty.handler.codec.http.HttpMethod
+import io.netty.handler.codec.http.HttpUtil
+import io.netty.handler.codec.http.LastHttpContent
 import io.netty.handler.stream.ChunkedStream
 import org.jetbrains.builtInWebServer.ssi.SsiExternalResolver
 import org.jetbrains.builtInWebServer.ssi.SsiProcessor
 import org.jetbrains.io.FileResponses
 import org.jetbrains.io.addKeepAliveIfNeed
-import org.jetbrains.io.okInSafeMode
-import org.jetbrains.io.send
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -94,11 +95,10 @@ private class StaticFileHandler : WebServerFileHandler() {
   }
 }
 
-internal fun checkAccess(channel: Channel, file: Path, request: HttpRequest, root: Path = file.root): Boolean {
+internal fun checkAccess(file: Path, root: Path = file.root): Boolean {
   var parent = file
   do {
     if (!hasAccess(parent)) {
-      HttpResponseStatus.FORBIDDEN.okInSafeMode().send(channel, request)
       return false
     }
     parent = parent.parent ?: break

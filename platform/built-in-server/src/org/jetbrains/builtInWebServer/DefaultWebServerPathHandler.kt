@@ -29,10 +29,7 @@ import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.FullHttpRequest
 import io.netty.handler.codec.http.HttpRequest
 import io.netty.handler.codec.http.HttpResponseStatus
-import org.jetbrains.io.isRegularBrowser
-import org.jetbrains.io.origin
-import org.jetbrains.io.referrer
-import org.jetbrains.io.send
+import org.jetbrains.io.*
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -128,15 +125,16 @@ private fun checkAccess(pathInfo: PathInfo, channel: Channel, request: HttpReque
   if (pathInfo.ioFile != null || pathInfo.file!!.isInLocalFileSystem) {
     val file = pathInfo.ioFile ?: Paths.get(pathInfo.file!!.path)
     if (file.isDirectory()) {
-      HttpResponseStatus.NOT_FOUND.send(channel, request)
+      HttpResponseStatus.FORBIDDEN.orInSafeMode(HttpResponseStatus.NOT_FOUND).send(channel, request)
       return false
     }
-    else if (!checkAccess(channel, file, request, Paths.get(pathInfo.root.path))) {
+    else if (!checkAccess(file, Paths.get(pathInfo.root.path))) {
+      HttpResponseStatus.FORBIDDEN.orInSafeMode(HttpResponseStatus.NOT_FOUND).send(channel, request)
       return false
     }
   }
   else if (pathInfo.file!!.`is`(VFileProperty.HIDDEN)) {
-    HttpResponseStatus.NOT_FOUND.send(channel, request)
+    HttpResponseStatus.FORBIDDEN.orInSafeMode(HttpResponseStatus.NOT_FOUND).send(channel, request)
     return false
   }
 

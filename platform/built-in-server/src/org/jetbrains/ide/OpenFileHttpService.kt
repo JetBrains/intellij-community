@@ -42,7 +42,8 @@ import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.catchError
 import org.jetbrains.concurrency.rejectedPromise
-import org.jetbrains.io.okInSafeMode
+import org.jetbrains.io.orInSafeMode
+import org.jetbrains.io.send
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -123,7 +124,7 @@ internal class OpenFileHttpService : RestService() {
       .rejected {
         if (it === NOT_FOUND) {
           // don't expose file status
-          sendStatus(HttpResponseStatus.NOT_FOUND.okInSafeMode(), keepAlive, channel)
+          sendStatus(HttpResponseStatus.NOT_FOUND.orInSafeMode(HttpResponseStatus.OK), keepAlive, channel)
           LOG.warn("File ${apiRequest.file} not found")
         }
         else {
@@ -135,14 +136,20 @@ internal class OpenFileHttpService : RestService() {
     return null
   }
 
-  fun openFile(request: OpenFileRequest, context: ChannelHandlerContext?, httpRequest: HttpRequest?): Promise<Void>? {
+  internal fun openFile(request: OpenFileRequest, context: ChannelHandlerContext, httpRequest: HttpRequest?): Promise<Void>? {
     val path = FileUtil.expandUserHome(request.file!!)
     val file = Paths.get(FileUtil.toSystemDependentName(path))
     if (file.isAbsolute) {
       if (!file.exists()) {
         return rejectedPromise(NOT_FOUND)
       }
-      return if (context == null || checkAccess(context.channel(), file, httpRequest!!)) openAbsolutePath(file, request) else null
+      if (checkAccess(file)) {
+        return openAbsolutePath(file, request)
+      }
+      else {
+        HttpResponseStatus.FORBIDDEN.orInSafeMode(HttpResponseStatus.OK).send(context.channel(), httpRequest)
+        return null
+      }
     }
 
     // we don't want to call refresh for each attempt on findFileByRelativePath call, so, we do what ourSaveAndSyncHandlerImpl does on frame activation

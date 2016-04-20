@@ -126,7 +126,7 @@ fun HttpResponseStatus.send(channel: Channel, request: HttpRequest? = null, desc
   createStatusResponse(this, request, description).send(channel, request)
 }
 
-fun HttpResponseStatus.okInSafeMode() = if (ApplicationManager.getApplication()?.isUnitTestMode ?: false) this else HttpResponseStatus.OK
+fun HttpResponseStatus.orInSafeMode(safeStatus: HttpResponseStatus) = if (ApplicationManager.getApplication()?.isUnitTestMode ?: false) this else safeStatus
 
 private fun createStatusResponse(responseStatus: HttpResponseStatus, request: HttpRequest?, description: String?): HttpResponse {
   if (request != null && request.method() === HttpMethod.HEAD) {
