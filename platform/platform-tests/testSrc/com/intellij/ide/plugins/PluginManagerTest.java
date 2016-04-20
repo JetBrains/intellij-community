@@ -82,11 +82,11 @@ public class PluginManagerTest {
 
     assertCompatible("145.SNAPSHOT", "145.2", null);
 
-    // snapshot ignore until build (special case)
-    assertCompatible("145.SNAPSHOT", null, "145");
-    assertCompatible("145.SNAPSHOT", null, "144");
-    assertCompatible("145.2.SNAPSHOT", null, "145");
-    assertCompatible("145.2.SNAPSHOT", null, "144");
+    assertCompatible("145.SNAPSHOT", null, "146");
+    assertIncompatible("145.SNAPSHOT", null, "145");
+    assertIncompatible("145.SNAPSHOT", null, "144");
+    assertIncompatible("145.2.SNAPSHOT", null, "145");
+    assertIncompatible("145.2.SNAPSHOT", null, "144");
   }
 
   private static void assertIncompatible(String ideVersion, String sinceBuild, String untilBuild) {
