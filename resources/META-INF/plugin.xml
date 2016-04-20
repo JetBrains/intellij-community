@@ -10,7 +10,9 @@
 
   <change-notes><![CDATA[
       <ul>
-        <li>Removed assertions</li>
+        <li>Event tracking corrected</li>
+        <li>Corrected event serialization engine</li>
+        <li>Fix for OOM while sending data</li>
       </ul>
     ]]>
   </change-notes>
