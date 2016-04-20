@@ -17,11 +17,15 @@ package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.codeinsight.RuntimeTypeEvaluator;
+import com.intellij.debugger.engine.StackFrameContext;
+import com.intellij.debugger.engine.evaluation.CodeFragmentFactory;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -150,7 +154,7 @@ public class DebuggerTreeNodeExpression {
     }
 
   @Nullable
-  public static PsiExpression substituteThis(@Nullable PsiElement expressionWithThis, PsiExpression howToEvaluateThis, Value howToEvaluateThisValue)
+  public static PsiExpression substituteThis(@Nullable PsiElement expressionWithThis, PsiExpression howToEvaluateThis, Value howToEvaluateThisValue, StackFrameContext context)
     throws EvaluateException {
     if (expressionWithThis == null) return null;
     PsiExpression result = (PsiExpression)expressionWithThis.copy();
@@ -178,7 +182,10 @@ public class DebuggerTreeNodeExpression {
     }
 
     if (castNeeded) {
-      howToEvaluateThis = castToRuntimeType(howToEvaluateThis, howToEvaluateThisValue);
+      PsiExpression expressionWithCast = castToRuntimeType(howToEvaluateThis, howToEvaluateThisValue);
+      if (isCastMakesSenseInCurrentContext(context, expressionWithCast)) {
+        howToEvaluateThis = expressionWithCast;
+      }
     }
 
     ChangeContextUtil.encodeContextInfo(result, false);
@@ -200,6 +207,20 @@ public class DebuggerTreeNodeExpression {
     catch (IncorrectOperationException e) {
       throw new EvaluateException(e.getMessage(), e);
     }
+  }
+
+  private static boolean isCastMakesSenseInCurrentContext(StackFrameContext context, PsiExpression expressionWithCast) {
+    if (context instanceof DebuggerContextImpl) {
+      SourcePosition position = ((DebuggerContextImpl)context).getSourcePosition();
+      if (position != null) {
+        TextWithImportsImpl text = new TextWithImportsImpl(expressionWithCast);
+        PsiElement contextElement = position.getElementAt();
+        CodeFragmentFactory factory = DebuggerUtilsEx.findAppropriateCodeFragmentFactory(text, contextElement);
+        PsiCodeFragment codeFragment = factory.createCodeFragment(text, contextElement, expressionWithCast.getProject());
+        return !PsiTreeUtil.hasErrorElements(codeFragment);
+      }
+    }
+    return true;
   }
 
   public static final Key<Set<String>> ADDITIONAL_IMPORTS_KEY = Key.create("ADDITIONAL_IMPORTS");
