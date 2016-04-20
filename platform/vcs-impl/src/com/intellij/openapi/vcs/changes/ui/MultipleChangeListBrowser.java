@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
@@ -304,9 +305,6 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
   protected void buildToolBar(@NotNull DefaultActionGroup toolBarGroup) {
     super.buildToolBar(toolBarGroup);
 
-    EmptyAction.registerWithShortcutSet(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST, CommonShortcuts.getMove(), myViewer);
-    toolBarGroup.add(ActionManager.getInstance().getAction(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST));
-
     toolBarGroup.add(new AnAction("Refresh Changes", null, AllIcons.Actions.Refresh) {
       @Override
       public void actionPerformed(AnActionEvent e) {
@@ -314,10 +312,16 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
       }
     });
     if (Registry.is("vcs.unversioned.files.in.commit")) {
-      toolBarGroup.add(ActionManager.getInstance().getAction("ChangesView.AddUnversioned.From.Dialog"));
-      toolBarGroup.add(ActionManager.getInstance().getAction("ChangesView.DeleteUnversioned.From.Dialog"));
-      toolBarGroup.add(ActionManager.getInstance().getAction("ChangesView.Ignore"));
+      toolBarGroup.add(UnversionedViewDialog.getUnversionedActionGroup());
     }
+    else {
+      toolBarGroup.add(ActionManager.getInstance().getAction(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST));
+    }
+    UnversionedViewDialog.registerUnversionedActionsShortcuts(DataManager.getInstance().getDataContext(this), myViewer);
+    // We do not add "Delete" key shortcut for deleting unversioned files as this shortcut is already used to uncheck
+    // checkboxes in the tree.
+    EmptyAction.registerWithShortcutSet(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST, CommonShortcuts.getMove(), myViewer);
+
     RollbackDialogAction rollback = new RollbackDialogAction();
     EmptyAction.setupAction(rollback, IdeActions.CHANGES_VIEW_ROLLBACK, this);
     toolBarGroup.add(rollback);
