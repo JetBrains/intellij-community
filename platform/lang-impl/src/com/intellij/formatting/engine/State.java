@@ -13,27 +13,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.formatting;
+package com.intellij.formatting.engine;
 
-public class ExpandableIndent extends IndentImpl {
-  private boolean myEnforceIndent;
+public abstract class State {
 
-  public ExpandableIndent(Type type) {
-    super(type, false, 0, false, true);
-    myEnforceIndent = false;
+  private boolean myDone;
+  private Runnable myOnDoneAction;
+
+  public void iteration() {
+    if (!isDone()) {
+      doIteration();
+    }
   }
 
-  @Override
-  public boolean isEnforceIndentToChildren() {
-    return myEnforceIndent;
+  public boolean isDone() {
+    return myDone;
   }
 
-  void setEnforceIndent(boolean value) {
-    myEnforceIndent = value;
+  protected void setDone(boolean done) {
+    if (!myDone && done && myOnDoneAction != null) {
+      myOnDoneAction.run();
+    }
+    myDone = done;
   }
 
-  @Override
-  public String toString() {
-    return "SmartIndent (" + getType() + ")";
+  public void stop() {}
+
+  protected abstract void doIteration();
+
+  public void prepare() {}
+
+  public void setOnDone(Runnable onDoneAction) {
+    myOnDoneAction = onDoneAction;
   }
+  
 }
