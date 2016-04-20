@@ -998,11 +998,15 @@ public class JavaBuilder extends ModuleLevelBuilder {
       if (Utils.IS_TEST_MODE) {
         LOG.info(message);
       }
-      myContext.processMessage(new CompilerMessage(
+      final CompilerMessage compilerMsg = new CompilerMessage(
         BUILDER_NAME, kind, message, srcPath, diagnostic.getStartPosition(),
         diagnostic.getEndPosition(), diagnostic.getPosition(), diagnostic.getLineNumber(),
         diagnostic.getColumnNumber()
-      ));
+      );
+      if (LOG.isDebugEnabled()) {
+        LOG.debug(compilerMsg.toString());
+      }
+      myContext.processMessage(compilerMsg);
     }
 
     public int getErrorCount() {
