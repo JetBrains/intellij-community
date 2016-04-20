@@ -72,7 +72,7 @@ public abstract class SmartEnterProcessor {
     return PsiDocumentManager.getInstance(project).hasUncommitedDocuments();
   }
 
-  protected void commit(@NotNull final Editor editor) {
+  public void commit(@NotNull final Editor editor) {
     commitDocument(editor);
   }
 
