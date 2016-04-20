@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.actionSystem.*;
@@ -29,6 +30,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder;
@@ -39,6 +41,7 @@ import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
@@ -53,6 +56,7 @@ public class UnversionedViewDialog extends DialogWrapper {
   private final ChangeListManager myChangeListManager;
   private boolean myInRefresh;
   private final Project myProject;
+  private AnAction myDeleteActionWithCustomShortcut;
 
   public UnversionedViewDialog(final Project project) {
     super(project, true);
@@ -112,7 +116,8 @@ public class UnversionedViewDialog extends DialogWrapper {
 
     List<AnAction> actions = registerUnversionedActionsShortcuts(actionToolbar.getToolbarDataContext(), myView);
     // special shortcut for deleting a file
-    actions.add(EmptyAction.registerWithShortcutSet("ChangesView.DeleteUnversioned.From.Dialog", CommonShortcuts.getDelete(), myView));
+    actions.add(myDeleteActionWithCustomShortcut =
+                  EmptyAction.registerWithShortcutSet("ChangesView.DeleteUnversioned.From.Dialog", CommonShortcuts.getDelete(), myView));
 
     refreshViewAfterActionPerformed(actions);
     group.add(getUnversionedActionGroup());
@@ -140,6 +145,11 @@ public class UnversionedViewDialog extends DialogWrapper {
       public void afterActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
         if (actions.contains(action)) {
           refreshView();
+          if (myDeleteActionWithCustomShortcut.equals(action)) {
+            // We can not utilize passed "dataContext" here as it results in
+            // "cannot share data context between Swing events" assertion.
+            refreshChanges(myProject, ChangesBrowserBase.DATA_KEY.getData(DataManager.getInstance().getDataContext(myView)));
+          }
         }
       }
     }, myDisposable);
@@ -161,6 +171,13 @@ public class UnversionedViewDialog extends DialogWrapper {
     }
 
     return actions;
+  }
+
+  public static void refreshChanges(@NotNull Project project, @Nullable ChangesBrowserBase browser) {
+    if (browser != null) {
+      ChangeListManager.getInstance(project)
+        .invokeAfterUpdate(browser::rebuildList, InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE, "Delete files", null);
+    }
   }
 
   @Override

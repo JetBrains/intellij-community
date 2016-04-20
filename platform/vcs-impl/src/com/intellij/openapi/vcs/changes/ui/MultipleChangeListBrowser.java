@@ -98,8 +98,7 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
           rebuildList();
         }
         else if (deleteAction.equals(action)) {
-          ChangeListManager.getInstance(myProject)
-            .invokeAfterUpdate(() -> rebuildList(), InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE, "Delete files", null);
+          UnversionedViewDialog.refreshChanges(myProject, MultipleChangeListBrowser.this);
         }
       }
     }, this);
