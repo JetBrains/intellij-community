@@ -474,6 +474,10 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
     }
     if (paramClass == null) return null;
 
+    if (arg instanceof PsiCapturedWildcardType) {
+      arg = ((PsiCapturedWildcardType)arg).getUpperBound();
+    }
+
     if (!(arg instanceof PsiClassType)) return null;
 
     JavaResolveResult argResult = ((PsiClassType)arg).resolveGenerics();
