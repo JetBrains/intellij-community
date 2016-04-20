@@ -5,7 +5,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
-import com.jetbrains.edu.learning.StudyProjectComponent
+import com.jetbrains.edu.learning.StudyTaskManager
 import com.jetbrains.edu.learning.StudyUtils
 import javax.swing.DefaultComboBoxModel
 import javax.swing.JComponent
@@ -45,7 +45,8 @@ class StudySwitchTaskPanelAction: AnAction() {
       }
       comboBoxModel.addElement(SWING_ITEM)
       
-      comboBoxModel.selectedItem = if (StudyProjectComponent.getInstance(project).useJavaFx()) JAVAFX_ITEM else SWING_ITEM
+      comboBoxModel.selectedItem =
+          if (StudyUtils.hasJavaFx() && StudyTaskManager.getInstance(project).shouldUseJavaFx()) JAVAFX_ITEM else SWING_ITEM
       myComboBox.model = comboBoxModel
       title = "Switch Task Description Panel"
       myComboBox.setMinimumAndPreferredWidth(250)
@@ -67,7 +68,13 @@ class StudySwitchTaskPanelAction: AnAction() {
 
     override fun doOKAction() {
       super.doOKAction()
-      StudyProjectComponent.getInstance(myProject).setUseJavaFx(myComboBox.selectedItem == JAVAFX_ITEM)
+      StudyTaskManager.getInstance(myProject).setShouldUseJavaFx(myComboBox.selectedItem == JAVAFX_ITEM)
+    }
+  }
+
+  override fun update(e: AnActionEvent?) {
+    if (e != null) {
+      StudyUtils.updateAction(e)
     }
   }
 }

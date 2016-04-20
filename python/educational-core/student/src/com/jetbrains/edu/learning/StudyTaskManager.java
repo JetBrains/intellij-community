@@ -37,6 +37,7 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
   public Map<TaskFile, StudyStatus> myTaskStatusMap = new HashMap<>();
   public Map<Task, List<UserTest>> myUserTests = new HashMap<>();
   public List<String> myInvisibleFiles = new ArrayList<>();
+  public boolean myShouldUseJavaFx = StudyUtils.hasJavaFx();
 
   private StudyTaskManager() {
   }
@@ -70,7 +71,7 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
   @NotNull
   public List<UserTest> getUserTests(@NotNull final Task task) {
     final List<UserTest> userTests = myUserTests.get(task);
-    return userTests != null ? userTests : Collections.<UserTest>emptyList();
+    return userTests != null ? userTests : Collections.emptyList();
   }
 
   public void removeUserTest(@NotNull final Task task, @NotNull final UserTest userTest) {
@@ -207,6 +208,7 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
         myInvisibleFiles = taskManager.myInvisibleFiles;
         myTaskStatusMap = taskManager.myTaskStatusMap;
         myStudyStatusMap = taskManager.myStudyStatusMap;
+        myShouldUseJavaFx = taskManager.myShouldUseJavaFx;
       }
     }
     final Element oldCourseElement = state.getChild(COURSE_ELEMENT);
@@ -249,5 +251,13 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
 
   public boolean isInvisibleFile(String path) {
     return myInvisibleFiles.contains(path);
+  }
+
+  public boolean shouldUseJavaFx() {
+    return myShouldUseJavaFx;
+  }
+
+  public void setShouldUseJavaFx(boolean shouldUseJavaFx) {
+    this.myShouldUseJavaFx = shouldUseJavaFx;
   }
 }
