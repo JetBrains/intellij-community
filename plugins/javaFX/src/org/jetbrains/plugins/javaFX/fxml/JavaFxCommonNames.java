@@ -51,7 +51,7 @@ public class JavaFxCommonNames {
   @NonNls public static final String JAVAFX_SCENE_LAYOUT_PANE = "javafx.scene.layout.Pane";
   @NonNls public static final String JAVAFX_BEANS_NAMED_ARG = "javafx.beans.NamedArg";
 
-  @NonNls public static final String PROPERTY_FIELD_SUFFIX = "Property";
+  @NonNls public static final String PROPERTY_METHOD_SUFFIX = "Property";
 
   public static final Map<String, PsiType> ourWritableMap = new HashMap<String, PsiType>();
   static {

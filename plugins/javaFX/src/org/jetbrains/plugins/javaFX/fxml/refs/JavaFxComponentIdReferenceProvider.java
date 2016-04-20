@@ -26,10 +26,10 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -233,7 +233,7 @@ class JavaFxComponentIdReferenceProvider extends PsiReferenceProvider {
     }
   }
 
-  private static class JavaFxExpressionReferenceBase extends PsiReferenceBase<XmlAttributeValue> {
+  private static class JavaFxExpressionReferenceBase extends PsiReferenceBase<XmlAttributeValue> implements JavaFxPropertyReference {
     private final PsiClass myTagClass;
     private final String myFieldName;
 
@@ -277,6 +277,41 @@ class JavaFxComponentIdReferenceProvider extends PsiReferenceProvider {
         }
       }
       return ArrayUtil.toObjectArray(objs);
+    }
+
+    @Nullable
+    @Override
+    public PsiMethod getGetter() {
+      return JavaFxPropertyReference.getGetter(myTagClass, myFieldName);
+    }
+
+    @Nullable
+    @Override
+    public PsiMethod getSetter() {
+      return JavaFxPropertyReference.getSetter(myTagClass, myFieldName);
+    }
+
+    @Nullable
+    @Override
+    public PsiField getField() {
+      return JavaFxPropertyReference.getField(myTagClass, myFieldName);
+    }
+
+    @Nullable
+    @Override
+    public PsiMethod getObservableGetter() {
+      return JavaFxPropertyReference.getObservableGetter(myTagClass, myFieldName);
+    }
+
+    @Nullable
+    @Override
+    public PsiType getType() {
+      return JavaFxPsiUtil.getReadablePropertyType(resolve());
+    }
+
+    @Override
+    public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+      return super.handleElementRename(JavaFxPsiUtil.getPropertyNameFromMemberName(newElementName, resolve() instanceof PsiMethod));
     }
   }
 }

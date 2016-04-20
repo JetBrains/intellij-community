@@ -232,23 +232,39 @@ public class JavaFxPsiUtil {
     return null;
   }
 
-  public static PsiMethod findPropertyGetter(String attributeName, PsiClass classWithStaticProperty) {
-    PsiMethod getter = findPropertyGetter(attributeName, classWithStaticProperty, null);
+  public static PsiMethod findPropertyGetter(@NotNull PsiClass psiClass, @NotNull String propertyName) {
+    PsiMethod getter = findPropertyGetter(psiClass, propertyName, null);
     if (getter != null) {
       return getter;
     }
-    return findPropertyGetter(attributeName, classWithStaticProperty, PsiType.BOOLEAN);
+    return findPropertyGetter(psiClass, propertyName, PsiType.BOOLEAN);
   }
 
-  private static PsiMethod findPropertyGetter(final String attributeName,
-                                              final PsiClass classWithStaticProperty,
-                                              final PsiType propertyType) {
-    final String getterName = PropertyUtil.suggestGetterName(StringUtil.getShortName(attributeName), propertyType);
-    final PsiMethod[] getters = classWithStaticProperty.findMethodsByName(getterName, true);
+  private static PsiMethod findPropertyGetter(final PsiClass psiClass, final String propertyName, final PsiType propertyType) {
+    final String getterName = PropertyUtil.suggestGetterName(propertyName, propertyType);
+    final PsiMethod[] getters = psiClass.findMethodsByName(getterName, true);
     for (PsiMethod getter : getters) {
-      if (getter.hasModifierProperty(PsiModifier.PUBLIC)) return getter;
+      if (isInstancePropertyGetterSignature(getter)) return getter;
     }
     return null;
+  }
+
+  public static PsiMethod findObservablePropertyGetter(@NotNull PsiClass psiClass, @NotNull String propertyName) {
+    final PsiMethod[] accessors = psiClass.findMethodsByName(propertyName + JavaFxCommonNames.PROPERTY_METHOD_SUFFIX, true);
+    for (PsiMethod accessor : accessors) {
+      if (isInstancePropertyGetterSignature(accessor) &&
+          InheritanceUtil.isInheritor(accessor.getReturnType(), JavaFxCommonNames.JAVAFX_BEANS_VALUE_OBSERVABLE_VALUE)) {
+        return accessor;
+      }
+    }
+    return null;
+  }
+
+  private static boolean isInstancePropertyGetterSignature(@NotNull PsiMethod method) {
+    return method.hasModifierProperty(PsiModifier.PUBLIC) &&
+           !method.hasModifierProperty(PsiModifier.STATIC) &&
+           method.getParameterList().getParametersCount() == 0 &&
+           !PsiType.VOID.equals(method.getReturnType());
   }
 
   private static final Key<CachedValue<PsiClass>> INJECTED_CONTROLLER = Key.create("javafx.injected.controller");
@@ -428,7 +444,7 @@ public class JavaFxPsiUtil {
         final PsiAnnotationMemberValue memberValue = annotation.findAttributeValue(null);
         if (memberValue != null) {
           final String propertyName = StringUtil.unquoteString(memberValue.getText());
-          final PsiMethod getter = findPropertyGetter(propertyName, aClass);
+          final PsiMethod getter = findPropertyGetter(aClass, propertyName);
           if (getter != null) {
             final PsiType propertyType = eraseFreeTypeParameters(getter.getReturnType(), getter);
             return CachedValueProvider.Result.create(propertyType, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
@@ -942,17 +958,19 @@ public class JavaFxPsiUtil {
   }
 
   @Nullable
-  private static PsiMethod findInstancePropertySetter(@NotNull PsiClass psiClass, @NotNull String propertyName) {
+  public static PsiMethod findInstancePropertySetter(@NotNull PsiClass psiClass, @NotNull String propertyName) {
     final String suggestedSetterName = PropertyUtil.suggestSetterName(propertyName);
     final PsiMethod[] setters = psiClass.findMethodsByName(suggestedSetterName, true);
     for (PsiMethod setter : setters) {
-      if (!setter.hasModifierProperty(PsiModifier.STATIC) &&
-          setter.hasModifierProperty(PsiModifier.PUBLIC) &&
-          setter.getParameterList().getParametersCount() == 1) {
-        return setter;
-      }
+      if (isInstancePropertySetterSignature(setter)) return setter;
     }
     return null;
+  }
+
+  private static boolean isInstancePropertySetterSignature(@NotNull PsiMethod method) {
+    return !method.hasModifierProperty(PsiModifier.STATIC) &&
+           method.hasModifierProperty(PsiModifier.PUBLIC) &&
+           method.getParameterList().getParametersCount() == 1;
   }
 
   private static boolean isWritablePropertyType(@NotNull PsiClass psiClass, @NotNull PsiType fieldType) {
@@ -1086,6 +1104,18 @@ public class JavaFxPsiUtil {
       return "No enum constant '" + name + "' in " + enumClass.getQualifiedName();
     }
     return null;
+  }
+
+  @NotNull
+  public static String getPropertyNameFromMemberName(@NotNull String name, boolean isMethod) {
+    if(!isMethod) return name;
+    if (name.startsWith("get") || name.startsWith("set")) {
+      return StringUtil.decapitalize(name.substring(3));
+    }
+    else if (name.startsWith("is")) {
+      return StringUtil.decapitalize(name.substring(2));
+    }
+    return name;
   }
 
   private static class JavaFxControllerCachedValueProvider implements CachedValueProvider<PsiClass> {
