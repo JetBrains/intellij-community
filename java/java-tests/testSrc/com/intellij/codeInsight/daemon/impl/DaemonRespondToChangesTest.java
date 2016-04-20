@@ -122,6 +122,7 @@ import com.intellij.ui.HintListener;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
@@ -136,6 +137,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -1665,15 +1667,47 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertTrue(ave < 10);
   }
 
+  private static void startCPUProfiling() {
+    try {
+      Class<?> aClass = Class.forName("com.intellij.util.ProfilingUtil");
+      Method method = ReflectionUtil.getDeclaredMethod(aClass, "startCPUProfiling");
+      method.invoke(null);
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+  private static void stopCPUProfiling() {
+    try {
+      Class<?> aClass = Class.forName("com.intellij.util.ProfilingUtil");
+      Method method = ReflectionUtil.getDeclaredMethod(aClass, "stopCPUProfiling");
+      method.invoke(null);
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  private static String captureCPUSnapshot() {
+    try {
+      Class<?> aClass = Class.forName("com.intellij.util.ProfilingUtil");
+      Method method = ReflectionUtil.getDeclaredMethod(aClass, "captureCPUSnapshot");
+      return (String)method.invoke(null);
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   public void testPostHighlightingPassRunsOnEveryPsiModification() throws Exception {
     PsiFile x = createFile("X.java", "public class X { public static void ffffffffffffff(){} }");
     PsiFile use = createFile("Use.java", "public class Use { { <caret>X.ffffffffffffff(); } }");
     configureByExistingFile(use.getVirtualFile());
 
     InspectionProfile profile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile();
-    HighlightDisplayKey myDeadCodeKey = HighlightDisplayKey.find(UnusedDeclarationInspection.SHORT_NAME);
+    HighlightDisplayKey myDeadCodeKey = HighlightDisplayKey.find(UnusedDeclarationInspectionBase.SHORT_NAME);
     if (myDeadCodeKey == null) {
-      myDeadCodeKey = HighlightDisplayKey.register(UnusedDeclarationInspection.SHORT_NAME, UnusedDeclarationInspection.DISPLAY_NAME);
+      myDeadCodeKey = HighlightDisplayKey.register(UnusedDeclarationInspectionBase.SHORT_NAME, UnusedDeclarationInspectionBase.DISPLAY_NAME);
     }
     UnusedDeclarationInspectionBase myDeadCodeInspection = new UnusedDeclarationInspectionBase(true);
     enableInspectionTool(myDeadCodeInspection);
@@ -1854,9 +1888,9 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertEquals(applied, ContainerUtil.newHashSet(editor1, editor2));
   }
 
-  public void registerFakePass(@NotNull final Set<Editor> applied, @NotNull final Set<Editor> collected) {
+  private void registerFakePass(@NotNull final Set<Editor> applied, @NotNull final Set<Editor> collected) {
     class Fac extends AbstractProjectComponent implements TextEditorHighlightingPassFactory {
-      protected Fac(Project project) {
+      private Fac(Project project) {
         super(project);
       }
 
@@ -1879,7 +1913,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     registrar.registerTextEditorHighlightingPass(new Fac(getProject()), null, null, false, -1);
   }
 
-  volatile boolean runHeavyProcessing;
+  private volatile boolean runHeavyProcessing;
   public void testDaemonDisablesItselfDuringHeavyProcessing() throws Exception {
     runHeavyProcessing = false;
     DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
@@ -1912,7 +1946,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       }
 
       runHeavyProcessing = true;
-      ApplicationManager.getApplication().executeOnPooledThread((Runnable)() -> {
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
         AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("my own heavy op");
         try {
           while (runHeavyProcessing) {
