@@ -271,6 +271,7 @@ public class MasterDetailPopupBuilder implements MasterController {
 
       if ((SystemInfo.isMacOSLion || SystemInfo.isMacOSMountainLion) && !UIUtil.isUnderDarcula()) {
         final JButton done = new JButton("Done");
+        done.setOpaque(false);
         done.setMnemonic('o');
         done.addActionListener(actionListener);
         builder.setCommandButton(new ActiveComponent.Adapter() {
