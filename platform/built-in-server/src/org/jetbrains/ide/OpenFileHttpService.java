@@ -77,6 +77,9 @@ import java.util.regex.Pattern;
 class OpenFileHttpService extends RestService {
   private static final RuntimeException NOT_FOUND = Promise.createError("not found");
   private static final Pattern LINE_AND_COLUMN = Pattern.compile("^(.*?)(?::(\\d+))?(?::(\\d+))?$");
+  private long lastTimeRejected = -1;
+  private long waitUntilNextRequestTimeout = 0;
+  private boolean isWorking = false;
 
   private volatile long refreshSessionId = 0;
   private final ConcurrentLinkedQueue<OpenFileTask> requests = new ConcurrentLinkedQueue<OpenFileTask>();
@@ -177,19 +180,30 @@ class OpenFileHttpService extends RestService {
     if (file.isAbsolute()) {
       if (com.intellij.ide.impl.ProjectUtil.isRemotePath(systemIndependentName)) {
         Ref<Boolean> confirmLoadingRemoteFile = new Ref<>();
-        try {
-          SwingUtilities.invokeAndWait(new Runnable() {
-            @Override
-            public void run() {
-              boolean value = com.intellij.ide.impl.ProjectUtil
-                .confirmLoadingFromRemotePath(systemIndependentName, "warning.load.file.from.share", "title.load.file.from.share");
-              confirmLoadingRemoteFile.set(value);
-            }
-          });
-        } catch (Throwable ignored) {}
+        if (!isWorking && System.currentTimeMillis() - lastTimeRejected > waitUntilNextRequestTimeout) {
+          try {
+            isWorking = true;
+            SwingUtilities.invokeAndWait(new Runnable() {
+              @Override
+              public void run() {
+                boolean value = com.intellij.ide.impl.ProjectUtil
+                  .confirmLoadingFromRemotePath(systemIndependentName, "warning.load.file.from.share", "title.load.file.from.share");
+                confirmLoadingRemoteFile.set(value);
+              }
+            });
+          }
+          catch (Throwable ignored) {
+          }
+          finally {
+            isWorking = false;
+          }
+        }
         if (confirmLoadingRemoteFile.get() != Boolean.TRUE) {
+          lastTimeRejected = System.currentTimeMillis();
+          waitUntilNextRequestTimeout = Math.min(2 * Math.max(waitUntilNextRequestTimeout, 5000), 60 * 60 * 1000); //to avoid negative values
           return Promise.reject(NOT_FOUND);
         }
+        waitUntilNextRequestTimeout = 0;
       }
       return openAbsolutePath(file, request);
     }
