@@ -76,34 +76,7 @@ public class PluginManagerTest {
   }
   
   @Test
-  public void compatibilityYearBased() throws Exception {
-    assertCompatible("2016.2", "2016.1", "2016.3");
-    assertCompatible("2016.2", "145.*", "2016.3");
-    assertCompatible("2016.2", null, "2016.10");
-    assertIncompatible("2016.2", null, "2015.10");
-  }
-  
-  @Test
-  public void compatibilityYearBasedStar() throws Exception {
-    assertCompatible("2016.2", "2016.1.*", null);
-    assertIncompatible("2016.2", "2016.2.*", null);
-    assertIncompatible("2016.2", "2016.2.*", null);
-    assertIncompatible("2016.2", null, "2016.1.*");
-    assertCompatible("2016.2", null, "2016.2.*");
-    assertCompatible("2016.2", null, "20163.*");
-    
-    assertCompatible("2016.2.1", null, "2016.2.*");
-    assertCompatible("2016.2.1", "2016.2", "2016.2.*");
-
-    assertCompatible("2016.2.SNAPSHOT", null, "2016.2.*");
-
-    assertCompatible("2016.2", "2016", null);
-    assertCompatible("2015", null, "2016");
-    assertIncompatible("2016.1", null, "2016");
-  }
-
-  @Test
-  public void compatibilityBranchBasedSnapshots() throws Exception {
+  public void compatibilitySnapshots() throws Exception {
     assertIncompatible("145.SNAPSHOT", "146", null);
     assertIncompatible("145.2.SNAPSHOT", "145.3", null);
 
@@ -114,22 +87,6 @@ public class PluginManagerTest {
     assertCompatible("145.SNAPSHOT", null, "144");
     assertCompatible("145.2.SNAPSHOT", null, "145");
     assertCompatible("145.2.SNAPSHOT", null, "144");
-  }
-
-  @Test
-  public void compatibilityYearBasedSnapshots() throws Exception {
-    assertIncompatible("2016.2.SNAPSHOT", "2016.3", null);
-    assertIncompatible("2016.2.2.SNAPSHOT", "2016.2.3", null);
-
-    assertCompatible("2016.2.SNAPSHOT", "2016.2.2", null);
-
-    // snapshot ignore until build (special case)
-    assertCompatible("2016.2.SNAPSHOT", null, "2016.2");
-    assertCompatible("2016.2.SNAPSHOT", null, "2016.1");
-    assertCompatible("2016.2.SNAPSHOT", null, "2017.2");
-    assertCompatible("2016.2.2.SNAPSHOT", null, "2016.2");
-    assertCompatible("2016.2.2.SNAPSHOT", null, "2016.1");
-    assertCompatible("2016.2.2.SNAPSHOT", null, "144");
   }
 
   private static void assertIncompatible(String ideVersion, String sinceBuild, String untilBuild) {
