@@ -45,7 +45,7 @@ class VarianceTesting {
         VarianceTesting t = l1.get(0);
         l.add(new VarianceTesting());
         l.add(null);
-        <error descr="Incompatible types. Found: 'java.lang.Object', required: 'VarianceTesting'">VarianceTesting t1 = l.get(0);</error>
+        <error descr="Incompatible types. Found: 'capture<? super VarianceTesting>', required: 'VarianceTesting'">VarianceTesting t1 = l.get(0);</error>
         X<? extends VarianceTesting> x1 = null;
         x1.putAll(new ArrayList<VarianceTesting>());
         List<?> unknownlist = l;
@@ -142,7 +142,7 @@ class S1 {
     }
 
     void bar(List<? extends S1> k) {
-        f(k,  <error descr="'f(java.util.List<capture<? extends S1>>, capture<? extends S1>)' in 'S1' cannot be applied to '(java.util.List<capture<? extends S1>>, S1)'">k.get(0)</error>);
+        f(k,  <error descr="'f(java.util.List<capture<? extends S1>>, capture<? extends S1>)' in 'S1' cannot be applied to '(java.util.List<capture<? extends S1>>, capture<? extends S1>)'">k.get(0)</error>);
     }
 }
 
