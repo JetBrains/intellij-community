@@ -102,7 +102,6 @@ public class UniqueResultsQuery<T, M> implements Query<T> {
 
     @Override
     public boolean process(final T t) {
-      System.out.println("t = " + t);
       return !myProcessedElements.add(myMapper.fun(t)) || myConsumer.process(t);
     }
   }
