@@ -70,7 +70,7 @@ public class ProjectSetRequestHandler extends RestService {
         new ProjectSetReader().readDescriptor(descriptor, null);
         activateLastFocusedFrame();
       }
-    }, ModalityState.any());
+    }, ModalityState.defaultModalityState());
     sendOk(request, context);
     return null;
   }
