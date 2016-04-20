@@ -35,6 +35,8 @@ import javax.script.ScriptEngineManager;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
+import java.net.URL;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -238,6 +240,10 @@ class Jsr223IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
 
     final Map<Long, ClassLoader> myLuckyGuess = ContainerUtil.newConcurrentMap();
 
+    public AllPluginsLoader() {
+      // Groovy performance: do not specify parent loader to enable our luckyGuesser
+    }
+
     @Override
     protected Class<?> findClass(String name) throws ClassNotFoundException {
       //long ts = System.currentTimeMillis();
@@ -292,6 +298,16 @@ class Jsr223IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
       myLuckyGuess.put(StringHash.calc(name), this);
 
       throw new ClassNotFoundException(name);
+    }
+
+    @Override
+    protected URL findResource(String name) {
+      return getClass().getClassLoader().getResource(name);
+    }
+
+    @Override
+    protected Enumeration<URL> findResources(String name) throws IOException {
+      return getClass().getClassLoader().getResources(name);
     }
   }
 }
