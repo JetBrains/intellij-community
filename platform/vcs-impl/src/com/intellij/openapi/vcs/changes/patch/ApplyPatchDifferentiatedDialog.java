@@ -27,6 +27,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diff.impl.patch.*;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -99,7 +100,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   private JComponent myCenterPanel;
   protected final Project myProject;
 
-  private final AtomicReference<FilePresentation> myRecentPathFileChange;
+  private final AtomicReference<FilePresentationModel> myRecentPathFileChange;
   private final ApplyPatchDifferentiatedDialog.MyUpdater myUpdater;
   private final Runnable myReset;
   private final ChangeListChooserPanel myChangeListChooser;
@@ -153,7 +154,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
 
     myProject = project;
     myPatches = new LinkedList<AbstractFilePatchInProgress>();
-    myRecentPathFileChange = new AtomicReference<FilePresentation>();
+    myRecentPathFileChange = new AtomicReference<FilePresentationModel>();
     myBinaryShelvedPatches = binaryShelvedPatches;
     myPreselectedChanges = preselectedChanges;
     myChangesTreeList = new MyChangeTreeList(project, Collections.<AbstractFilePatchInProgress.PatchChange>emptyList(),
@@ -245,10 +246,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       myListener = new VirtualFileAdapter() {
         @Override
         public void contentsChanged(@NotNull VirtualFileEvent event) {
-          if (myRecentPathFileChange.get() != null && myRecentPathFileChange.get().getVf() != null &&
-              event.getFile().equals(myRecentPathFileChange.get().getVf())) {
-            queueRequest();
-          }
+          syncUpdatePatchFileAndScheduleReloadIfNeeded(event.getFile());
         }
       };
       final VirtualFileManager fileManager = VirtualFileManager.getInstance();
@@ -327,7 +325,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       patchGroups.putValue(patchInProgress.getBase(), patchInProgress);
     }
     final LocalChangeList selected = getSelectedChangeList();
-    FilePresentation presentation = myRecentPathFileChange.get();
+    FilePresentationModel presentation = myRecentPathFileChange.get();
     VirtualFile vf = presentation != null ? presentation.getVf() : null;
     executor.apply(getOriginalRemaining(), patchGroups, selected, vf == null ? null : vf.getName(),
                    myReader == null ? null : myReader.getAdditionalInfo(ApplyPatchDefaultExecutor.pathsFromGroups(patchGroups)));
@@ -356,13 +354,11 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   }
 
   private void setPathFileChangeDefault() {
-    myRecentPathFileChange.set(new FilePresentation(myPatchFile.getText()));
+    myRecentPathFileChange.set(new FilePresentationModel(myPatchFile.getText()));
   }
 
-  private void init(final VirtualFile patchFile) {
+  private void init(@NotNull final VirtualFile patchFile) {
     myPatchFile.setText(patchFile.getPresentableUrl());
-    myRecentPathFileChange.set(new FilePresentation(patchFile));
-    queueRequest();
   }
 
   public void setHelpId(String s) {
@@ -371,14 +367,14 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
 
   private class MyUpdater implements Runnable {
     public void run() {
-      final FilePresentation filePresentation = myRecentPathFileChange.get();
-      if ((filePresentation == null) || (filePresentation.getVf() == null)) {
-        ApplicationManager.getApplication().invokeLater(myReset);
+      final FilePresentationModel filePresentationModel = myRecentPathFileChange.get();
+      final VirtualFile file = filePresentationModel != null ? filePresentationModel.getVf() : null;
+      if (file == null) {
+        ApplicationManager.getApplication().invokeLater(myReset, ModalityState.any());
         return;
       }
-      final VirtualFile file = filePresentation.getVf();
 
-      final PatchReader patchReader = loadPatches(filePresentation);
+      final PatchReader patchReader = loadPatches(file);
       if (patchReader == null) return;
 
       List<FilePatch> filePatches = ContainerUtil.<FilePatch>newArrayList(patchReader.getPatches());
@@ -398,19 +394,12 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
           updateTree(true);
           paintBusy(false);
         }
-      });
+      }, ModalityState.any());
     }
   }
 
   @Nullable
-  private static PatchReader loadPatches(final FilePresentation filePresentation) {
-    final VirtualFile patchFile = filePresentation.getVf();
-    if (patchFile == null) return null;
-    patchFile.refresh(false, false);
-    if (!patchFile.isValid()) {
-      return null;
-    }
-
+  private static PatchReader loadPatches(@NotNull VirtualFile patchFile) {
     PatchReader reader;
     try {
       reader = PatchVirtualFileReader.create(patchFile);
@@ -428,27 +417,34 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     return reader;
   }
 
-  private static class FilePresentation {
-    private final VirtualFile myVf;
-    private final String myPath;
-
-    private FilePresentation(VirtualFile vf) {
-      myVf = vf;
-      myPath = null;
+  @CalledInAwt
+  private void syncUpdatePatchFileAndScheduleReloadIfNeeded(@Nullable VirtualFile eventFile) {
+    // if dialog is modal and refresh called not from dispatch thread then
+    // fireEvents in RefreshQueueImpl will not be triggered because of wrong modality state inside those thread -> defaultMS == NON_MODAL
+    final FilePresentationModel filePresentationModel = myRecentPathFileChange.get();
+    VirtualFile filePresentationVf = filePresentationModel != null ? filePresentationModel.getVf() : null;
+    if (filePresentationVf != null && (eventFile == null || filePresentationVf.equals(eventFile))) {
+      filePresentationVf.refresh(false, false);
+      queueRequest();
     }
+  }
 
-    private FilePresentation(String path) {
+  private static class FilePresentationModel {
+    @NotNull private final String myPath;
+    @Nullable private VirtualFile myVf;
+
+    private FilePresentationModel(@NotNull String path) {
       myPath = path;
-      myVf = null;
+      myVf = null; // don't try to find vf for each typing; only when requested
     }
 
     @Nullable
     public VirtualFile getVf() {
-      if (myVf != null) {
-        return myVf;
+      if (myVf == null) {
+        final VirtualFile file = VfsUtil.findFileByIoFile(new File(myPath), true);
+        myVf = (file != null) && (!file.isDirectory()) ? file : null;
       }
-      final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(myPath);
-      return (file != null) && (!file.isDirectory()) ? file : null;
+      return myVf;
     }
   }
 
@@ -492,7 +488,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
         group.add(new AnAction("Refresh", "Refresh", AllIcons.Actions.Refresh) {
           @Override
           public void actionPerformed(AnActionEvent e) {
-            queueRequest();
+            syncUpdatePatchFileAndScheduleReloadIfNeeded(null);
           }
         });
       }
