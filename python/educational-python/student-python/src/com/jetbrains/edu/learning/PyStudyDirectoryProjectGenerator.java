@@ -6,6 +6,7 @@ import com.intellij.facet.ui.ValidationResult;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -15,8 +16,8 @@ import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
-import com.jetbrains.edu.learning.ui.StudyNewProjectPanel;
 import com.jetbrains.edu.learning.stepic.CourseInfo;
+import com.jetbrains.edu.learning.ui.StudyNewProjectPanel;
 import com.jetbrains.python.newProject.PythonProjectGenerator;
 import icons.InteractiveLearningPythonIcons;
 import org.jetbrains.annotations.Nls;
@@ -89,7 +90,7 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator imp
         throw new UnsupportedOperationException();
       }
       public void validate() {
-        fireStateChanged();
+        ApplicationManager.getApplication().invokeLater(()->fireStateChanged());
       }
     });
     return settingsPanel.getContentPanel();
