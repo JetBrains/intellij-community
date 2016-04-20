@@ -42,7 +42,6 @@ import org.jetbrains.java.decompiler.struct.gen.VarType;
 import java.util.*;
 
 public class ExprProcessor implements CodeConstants {
-
   public static final String UNDEFINED_TYPE_STRING = "<undefinedtype>";
   public static final String UNKNOWN_TYPE_STRING = "<unknown>";
   public static final String NULL_TYPE_STRING = "<null>";
@@ -50,7 +49,6 @@ public class ExprProcessor implements CodeConstants {
   private static final HashMap<Integer, Integer> mapConsts = new HashMap<Integer, Integer>();
 
   static {
-
     // mapConsts.put(new Integer(opc_i2l), new
     // Integer(FunctionExprent.FUNCTION_I2L));
     // mapConsts.put(new Integer(opc_i2f), new
@@ -141,18 +139,17 @@ public class ExprProcessor implements CodeConstants {
 
   private static final String[] typeNames = new String[]{"byte", "char", "double", "float", "int", "long", "short", "boolean",};
 
-  private final VarProcessor varProcessor = (VarProcessor)DecompilerContext.getProperty(DecompilerContext.CURRENT_VAR_PROCESSOR);
+  private final MethodDescriptor methodDescriptor;
+  private final VarProcessor varProcessor;
+
+  public ExprProcessor(MethodDescriptor md, VarProcessor varProc) {
+    methodDescriptor = md;
+    varProcessor = varProc;
+  }
 
   public void processStatement(RootStatement root, StructClass cl) {
-
     FlattenStatementsHelper flatthelper = new FlattenStatementsHelper();
     DirectGraph dgraph = flatthelper.buildDirectGraph(root);
-
-    //		try {
-    //			DotExporter.toDotFile(dgraph, new File("c:\\Temp\\gr12_my.dot"));
-    //		} catch (Exception ex) {
-    //			ex.printStackTrace();
-    //		}
 
     // collect finally entry points
     Set<String> setFinallyShortRangeEntryPoints = new HashSet<String>();
@@ -534,10 +531,7 @@ public class ExprProcessor implements CodeConstants {
         case opc_athrow:
           exprlist.add(new ExitExprent(instr.opcode == opc_athrow ? ExitExprent.EXIT_THROW : ExitExprent.EXIT_RETURN,
                                        instr.opcode == opc_return ? null : stack.pop(),
-                                       instr.opcode == opc_athrow
-                                       ? null
-                                       : ((MethodDescriptor)DecompilerContext
-                                         .getProperty(DecompilerContext.CURRENT_METHOD_DESCRIPTOR)).ret,
+                                       instr.opcode == opc_athrow ? null : methodDescriptor.ret,
                                        bytecode_offsets));
           break;
         case opc_monitorenter:
