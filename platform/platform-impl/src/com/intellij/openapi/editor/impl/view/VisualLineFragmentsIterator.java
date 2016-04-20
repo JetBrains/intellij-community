@@ -75,6 +75,7 @@ class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterato
   private int myCurrentInlayIndex;
   private boolean myIsInlay;
   private float myInlaysTotalWidth;
+  private int myInlaysTotalVisualColumns;
   private float myCurrentX;
   private int myCurrentVisualColumn;
   private LineLayout.VisualFragment myDelegate;
@@ -213,7 +214,7 @@ class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterato
   public boolean hasNext() {
     return mySegmentStartOffset == getCurrentFoldRegionStartOffset()
            || myInlays != null && (myCurrentInlayIndex < myInlays.size() ||
-                                   myIsInlay && myInlays.get(myCurrentInlayIndex - 1).getOffset() < myDelegate.getMaxOffset())
+                                   myIsInlay && myInlays.get(myCurrentInlayIndex - 1).getOffset() < myDelegate.getMaxOffset() + myDocument.getLineStartOffset(myCurrentStartLogicalLine))
            || myFragmentIterator.hasNext();
   }
 
@@ -235,14 +236,15 @@ class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterato
     }
     else {
       if (myInlays != null) {
-        if (myCurrentInlayIndex < myInlays.size() ||
-            myIsInlay && myInlays.get(myCurrentInlayIndex - 1).getOffset() < myDelegate.getMaxOffset()) {
+        if (!myIsInlay && myCurrentInlayIndex < myInlays.size() ||
+            myIsInlay && myInlays.get(myCurrentInlayIndex).getOffset() < myDelegate.getMaxOffset() + myDocument.getLineStartOffset(myCurrentStartLogicalLine)) {
           if (myIsInlay) myCurrentInlayIndex++;
           myIsInlay = !myIsInlay;
         }
         else {
           for (Inlay inlay : myInlays) {
             myInlaysTotalWidth += inlay.getWidthInPixels();
+            myInlaysTotalVisualColumns++;
           }
           myInlays = null;
         }
@@ -308,13 +310,18 @@ class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterato
     }
     
     int getStartVisualColumn() {
-      return myDelegate == null ? myCurrentVisualColumn - getFoldRegionWidthInColumns(myFoldRegion):
-             myDelegate.logicalToVisualColumn(getStartLogicalColumn());
+      return myInlaysTotalVisualColumns + (
+              myDelegate == null ? myCurrentVisualColumn - getFoldRegionWidthInColumns(myFoldRegion):
+              myDelegate.logicalToVisualColumn(getStartLogicalColumn()) + myCurrentInlayIndex
+      );
+
     }
 
     int getEndVisualColumn() {
-      return myDelegate == null ? myCurrentVisualColumn :
-             myDelegate.logicalToVisualColumn(myDelegate.getEndLogicalColumn());
+      return myInlaysTotalVisualColumns + (
+              myDelegate == null ? myInlaysTotalVisualColumns + myCurrentVisualColumn :
+              myDelegate.logicalToVisualColumn(getEndLogicalColumn()) + myCurrentInlayIndex + (myIsInlay ? 1 : 0)
+      );
     }
     
     int getStartLogicalLine() {
@@ -338,14 +345,15 @@ class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterato
 
     // column is expected to be between minLogicalColumn and maxLogicalColumn for this fragment
     int logicalToVisualColumn(int column) {
-      return myDelegate == null ? myCurrentVisualColumn - getFoldRegionWidthInColumns(myFoldRegion) : 
-             myDelegate.logicalToVisualColumn(column);
+      return myDelegate == null ? myCurrentVisualColumn - getFoldRegionWidthInColumns(myFoldRegion) :
+             myInlaysTotalVisualColumns + myDelegate.logicalToVisualColumn(column) + myCurrentInlayIndex + (myIsInlay ? 1 : 0);
     }
 
     // column is expected to be between startVisualColumn and endVisualColumn for this fragment
     int visualToLogicalColumn(int column) {
-      return myDelegate == null ? (column == myCurrentVisualColumn ? getEndLogicalColumn() : getStartLogicalColumn()) : 
-             myDelegate.visualToLogicalColumn(column);
+      return myDelegate == null ? (column == myCurrentVisualColumn + myInlaysTotalVisualColumns ? getEndLogicalColumn() : getStartLogicalColumn()) :
+             myIsInlay ? getStartLogicalColumn() :
+             myDelegate.visualToLogicalColumn(column - myInlaysTotalVisualColumns - myCurrentInlayIndex);
     }
 
     // returns array of two elements 
@@ -357,25 +365,30 @@ class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterato
         column[0] += getStartVisualColumn();
         return column;
       }
+      if (myIsInlay) {
+        boolean closerToStart = x < (getStartX() + getEndX()) / 2;
+        return new int[]{closerToStart ? getStartVisualColumn() : getEndVisualColumn(), closerToStart ? 1 : 0};
+      }
       x -= myInlaysTotalWidth;
-      if (myIsInlay) return new int[] {getStartVisualColumn(), 1};
       for (int i = 0; i < myCurrentInlayIndex; i++) x -= myInlays.get(i).getWidthInPixels();
-      return myDelegate.xToVisualColumn(x);
+      int[] result = myDelegate.xToVisualColumn(x);
+      result[0] +=  myInlaysTotalVisualColumns + myCurrentInlayIndex;
+      return result;
     }
 
     float visualColumnToX(int column) {
       if (myDelegate == null) {
         return getStartX() +
-               getXForVisualColumnInsideFoldRegion(myFoldRegion, column - myCurrentVisualColumn +
-                                                                 getFoldRegionWidthInColumns(myFoldRegion));
+               getXForVisualColumnInsideFoldRegion(myFoldRegion, column - getStartVisualColumn());
       }
-      int offset = myDocument.getLineStartOffset(myCurrentStartLogicalLine) + myDelegate.getStartOffset() + column - myDelegate.getStartVisualColumn();
+      if (myIsInlay) {
+        return column == getStartVisualColumn() ? getStartX() : getEndX();
+      }
       float inlaysSize = 0;
-      for (Inlay inlay : myInlays) {
-        if (inlay.getOffset() > offset) break;
-        inlaysSize += inlay.getWidthInPixels();
+      for (int i = 0; i < myCurrentInlayIndex; i++) {
+        inlaysSize += myInlays.get(i).getWidthInPixels();
       }
-      return myInlaysTotalWidth + inlaysSize + myDelegate.visualColumnToX(column);
+      return myInlaysTotalWidth + inlaysSize + myDelegate.visualColumnToX(column - myInlaysTotalVisualColumns - myCurrentInlayIndex);
     }
 
     // absolute
