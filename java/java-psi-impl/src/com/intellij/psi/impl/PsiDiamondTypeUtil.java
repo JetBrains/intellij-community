@@ -169,11 +169,12 @@ public class PsiDiamondTypeUtil {
       copy = initializer.getInitializers()[0].replace(expression);
     }
     else {
-      final int offset = expression.getTextRange().getStartOffset();
+      final PsiExpressionList argumentList = expression.getArgumentList();
+      final int offset = (argumentList != null ? argumentList : expression).getTextRange().getStartOffset();
       final PsiCall call = LambdaUtil.treeWalkUp(expression);
-      if (call instanceof PsiCallExpression) { //exclude EnumConstant
-        final PsiCall callCopy = (PsiCall)call.copy();
-        copy = callCopy.findElementAt(offset - call.getTextRange().getStartOffset());
+      if (call != null) {
+        final PsiCall callCopy = LambdaUtil.copyTopLevelCall(call);
+        copy = callCopy != null ? callCopy.findElementAt(offset - call.getTextRange().getStartOffset()) : null;
       }
       else  {
         final PsiFile containingFile = expression.getContainingFile();
