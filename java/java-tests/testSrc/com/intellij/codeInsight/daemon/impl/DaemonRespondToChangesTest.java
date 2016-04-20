@@ -500,71 +500,99 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertEquals("Field can be converted to a local variable", infos.get(0).getDescription());
   }
 
+  private static class MyWholeInspection extends LocalInspectionTool {
+    private final List<PsiElement> visited = Collections.synchronizedList(new ArrayList<>());
+
+    @Nls
+    @NotNull
+    @Override
+    public String getGroupDisplayName() {
+      return "fegna";
+    }
+
+    @Nls
+    @NotNull
+    @Override
+    public String getDisplayName() {
+      return getGroupDisplayName();
+    }
+
+    @NotNull
+    @Override
+    public String getShortName() {
+      return getGroupDisplayName();
+    }
+
+    @NotNull
+    @Override
+    public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+      return new PsiElementVisitor() {
+        @Override
+        public void visitFile(PsiFile file) {
+          TimeoutUtil.sleep(1000); // make it run longer that LIP
+          super.visitFile(file);
+        }
+
+        @Override
+        public void visitElement(PsiElement element) {
+          visited.add(element);
+          super.visitElement(element);
+        }
+      };
+    }
+
+    @Override
+    public boolean runForWholeFile() {
+      return true;
+    }
+  }
+
   public void testWholeFileInspectionRestartedOnAllElements() throws Exception {
-    final List<PsiElement> visited = Collections.synchronizedList(new ArrayList<>());
-    final LocalInspectionTool tool = new LocalInspectionTool() {
-      @Nls
-      @NotNull
-      @Override
-      public String getGroupDisplayName() {
-        return "fegna";
-      }
-
-      @Nls
-      @NotNull
-      @Override
-      public String getDisplayName() {
-        return getGroupDisplayName();
-      }
-
-      @NotNull
-      @Override
-      public String getShortName() {
-        return getGroupDisplayName();
-      }
-
-      @NotNull
-      @Override
-      public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-        return new PsiElementVisitor() {
-          @Override
-          public void visitFile(PsiFile file) {
-            TimeoutUtil.sleep(1000); // make it run longer that LIP
-            super.visitFile(file);
-          }
-
-          @Override
-          public void visitElement(PsiElement element) {
-            visited.add(element);
-            super.visitElement(element);
-          }
-        };
-      }
-
-      @Override
-      public boolean runForWholeFile() {
-        return true;
-      }
-    };
+    MyWholeInspection tool = new MyWholeInspection();
     enableInspectionTool(tool);
     disposeOnTearDown(() -> disableInspectionTool(tool.getShortName()));
 
     configureByText(JavaFileType.INSTANCE, "class X { void f() { <caret> } }");
     List<HighlightInfo> infos = doHighlighting(HighlightSeverity.WARNING);
     assertEmpty(infos);
-    int visitedCount = visited.size();
-    visited.clear();
+    int visitedCount = tool.visited.size();
+    tool.visited.clear();
 
     type("  ");  // white space modification
 
     infos = doHighlighting(HighlightSeverity.WARNING);
     assertEmpty(infos);
 
-    int countAfter = visited.size();
+    int countAfter = tool.visited.size();
     assertTrue("visitedCount = "+visitedCount+"; countAfter="+countAfter, countAfter >= visitedCount);
   }
 
-  
+  public void testWholeFileInspectionRestartedEvenIfThereWasAModificationInsideCodeBlockInOtherFile() throws Exception {
+    MyWholeInspection tool = new MyWholeInspection();
+
+    enableInspectionTool(tool);
+    disposeOnTearDown(() -> disableInspectionTool(tool.getShortName()));
+
+    PsiFile file = configureByText(JavaFileType.INSTANCE, "class X { void f() { <caret> } }");
+    PsiFile otherFile = createFile(myModule, file.getContainingDirectory().getVirtualFile(), "otherFile.txt", "xxx");
+    List<HighlightInfo> infos = doHighlighting(HighlightSeverity.WARNING);
+    assertEmpty(infos);
+    int visitedCount = tool.visited.size();
+    assertTrue(tool.visited.toString(), visitedCount > 0);
+    tool.visited.clear();
+
+    Document otherDocument = PsiDocumentManager.getInstance(getProject()).getDocument(otherFile);
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      otherDocument.setText("zzz");
+    });
+
+    infos = doHighlighting(HighlightSeverity.WARNING);
+    assertEmpty(infos);
+
+    int countAfter = tool.visited.size();
+    assertTrue(tool.visited.toString(), countAfter > 0);
+  }
+
   public void testOverriddenMethodMarkers() throws Exception {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
     highlightErrors();
