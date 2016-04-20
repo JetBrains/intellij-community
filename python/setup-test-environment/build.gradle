@@ -1,5 +1,5 @@
 plugins {
-  id "com.jetbrains.python.envs" version "0.0.4"
+  id "com.jetbrains.python.envs" version "0.0.5"
 }
 
 
@@ -10,6 +10,7 @@ envs {
   envsDirectory = new File(buildDir, 'envs')
   minicondaVersion = 'latest'
   packages = ["pip", "setuptools"]
+  _64Bits = true
 
   conda "python26", "2.6", ["nose", "pytest", "ipython==0.11", "behave", "lettuce"]
   textfile "python26/tags.txt", "nose\npytest\nipython\nipython011\nbehave\nlettuce\npackaging"

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.ExitExprent;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.*;
-import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -29,32 +28,23 @@ import java.util.List;
 import java.util.Set;
 
 public class ExitHelper {
-
-
   public static boolean condenseExits(RootStatement root) {
-
     int changed = integrateExits(root);
 
     if (changed > 0) {
-
       cleanUpUnreachableBlocks(root);
-
       SequenceHelper.condenseSequences(root);
     }
 
     return (changed > 0);
   }
 
-
   private static void cleanUpUnreachableBlocks(Statement stat) {
-
     boolean found;
     do {
-
       found = false;
 
       for (int i = 0; i < stat.getStats().size(); i++) {
-
         Statement st = stat.getStats().get(i);
 
         cleanUpUnreachableBlocks(st);
@@ -83,16 +73,12 @@ public class ExitHelper {
     while (found);
   }
 
-
   private static int integrateExits(Statement stat) {
-
     int ret = 0;
-    Statement dest = null;
+    Statement dest;
 
     if (stat.getExprents() == null) {
-
       while (true) {
-
         int changed = 0;
 
         for (Statement st : stat.getStats()) {
@@ -107,7 +93,6 @@ public class ExitHelper {
           break;
         }
       }
-
 
       switch (stat.type) {
         case Statement.TYPE_IF:
@@ -168,14 +153,11 @@ public class ExitHelper {
           // LabelHelper.lowContinueLabels(block, new HashSet<StatEdge>());
           // do it by hand
           for (StatEdge prededge : block.getPredecessorEdges(StatEdge.TYPE_CONTINUE)) {
-
             block.removePredecessor(prededge);
             prededge.getSource().changeEdgeNode(Statement.DIRECTION_FORWARD, prededge, stat);
             stat.addPredecessor(prededge);
-
             stat.addLabeledEdge(prededge);
           }
-
 
           stat.addSuccessor(new StatEdge(StatEdge.TYPE_REGULAR, stat, bstat));
 
@@ -202,11 +184,9 @@ public class ExitHelper {
   }
 
   private static Statement isExitEdge(StatEdge edge) {
-
     Statement dest = edge.getDestination();
 
-    if (edge.getType() == StatEdge.TYPE_BREAK && dest.type == Statement.TYPE_BASICBLOCK
-        && edge.explicit && (edge.labeled || isOnlyEdge(edge))) {
+    if (edge.getType() == StatEdge.TYPE_BREAK && dest.type == Statement.TYPE_BASICBLOCK && edge.explicit && (edge.labeled || isOnlyEdge(edge))) {
       List<Exprent> data = dest.getExprents();
 
       if (data != null && data.size() == 1) {
@@ -220,7 +200,6 @@ public class ExitHelper {
   }
 
   private static boolean isOnlyEdge(StatEdge edge) {
-
     Statement stat = edge.getDestination();
 
     for (StatEdge ed : stat.getAllPredecessorEdges()) {
@@ -244,7 +223,6 @@ public class ExitHelper {
   }
 
   public static boolean removeRedundantReturns(RootStatement root) {
-
     boolean res = false;
 
     DummyExitStatement dummyExit = root.getDummyExit();
@@ -269,80 +247,5 @@ public class ExitHelper {
     }
 
     return res;
-  }
-
-  public static boolean handleReturnFromInitializer(RootStatement root) {
-
-    boolean res = false;
-
-    Statement exit = root.getDummyExit();
-    Statement top = root.getFirst();
-    Statement newret = null;
-
-    boolean sharedcreated = false;
-
-    for (StatEdge edge : exit.getAllPredecessorEdges()) {
-      if (edge.explicit) {
-
-        if (!sharedcreated) {
-          newret = addSharedInitializerReturn(root);
-          sharedcreated = true;
-        }
-
-        Statement source = edge.getSource();
-        List<Exprent> lstExpr = source.getExprents();
-        if (lstExpr != null && !lstExpr.isEmpty()) {
-          Exprent expr = lstExpr.get(lstExpr.size() - 1);
-          if (expr.type == Exprent.EXPRENT_EXIT) {
-            ExitExprent ex = (ExitExprent)expr;
-            if (ex.getExitType() == ExitExprent.EXIT_RETURN && ex.getValue() == null) {
-              lstExpr.remove(lstExpr.size() - 1);
-
-              source.removeSuccessor(edge);
-              source.addSuccessor(new StatEdge(StatEdge.TYPE_BREAK, source, newret, top));
-
-              res = true;
-            }
-          }
-        }
-      }
-    }
-
-    return res;
-  }
-
-  private static Statement addSharedInitializerReturn(RootStatement root) {
-
-    Statement exit = root.getDummyExit();
-    Statement top = root.getFirst();
-
-    // build a new statement with the single instruction 'return'
-    BasicBlockStatement bstat = new BasicBlockStatement(new BasicBlock(
-      DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.STATEMENT_COUNTER)));
-
-    ExitExprent retexpr = new ExitExprent(ExitExprent.EXIT_RETURN, null,
-                                          ((MethodDescriptor)DecompilerContext
-                                            .getProperty(DecompilerContext.CURRENT_METHOD_DESCRIPTOR)).ret, null);
-    // a changeable list needed
-    bstat.setExprents(new ArrayList<Exprent>(Arrays.asList(new Exprent[]{retexpr})));
-
-    // build sequence to replace the former top statement
-    SequenceStatement seq = new SequenceStatement(Arrays.asList(top, bstat));
-    top.setParent(seq);
-    bstat.setParent(seq);
-    seq.setParent(root);
-
-    root.getStats().removeWithKey(top.id);
-    root.getStats().addWithKeyAndIndex(0, seq, seq.id);
-    root.setFirst(seq);
-
-    for (StatEdge succedge : top.getAllSuccessorEdges()) {
-      top.removeSuccessor(succedge);
-    }
-
-    top.addSuccessor(new StatEdge(StatEdge.TYPE_REGULAR, top, bstat));
-    bstat.addSuccessor(new StatEdge(StatEdge.TYPE_BREAK, bstat, exit, seq));
-
-    return bstat;
   }
 }
