@@ -775,6 +775,28 @@ public class LambdaUtil {
     return top;
   }
 
+  public static PsiCall copyTopLevelCall(@NotNull PsiCall call) {
+    PsiCall copyCall = (PsiCall)call.copy();
+    if (call instanceof PsiEnumConstant) {
+      PsiClass containingClass = ((PsiEnumConstant)call).getContainingClass();
+      if (containingClass == null) {
+        return null;
+      }
+      String enumName = containingClass.getName();
+      if (enumName == null) {
+        return null;
+      }
+      PsiMethod resolveMethod = call.resolveMethod();
+      if (resolveMethod == null) {
+        return null;
+      }
+      PsiClass anEnum = JavaPsiFacade.getElementFactory(call.getProject()).createEnum(enumName);
+      anEnum.add(resolveMethod);
+      return  (PsiCall)anEnum.add(copyCall);
+    }
+    return copyCall;
+  }
+
   public static class TypeParamsChecker extends PsiTypeVisitor<Boolean> {
     private PsiMethod myMethod;
     private final PsiClass myClass;
