@@ -83,6 +83,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import static com.intellij.codeInspection.ex.InspectionRVContentProvider.insertByIndex;
@@ -121,7 +122,8 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   private EditorEx myPreviewEditor;
   private InspectionTreeLoadingProgressAware myLoadingProgressPreview;
   private final ExcludedInspectionTreeNodesManager myExcludedInspectionTreeNodesManager = new ExcludedInspectionTreeNodesManager();
-  private final Set<Object> mySuppressedNodesManager = new HashSet<>();
+  private final Set<Object> mySuppressedNodes = new HashSet<>();
+  private final ConcurrentMap<InspectionToolWrapper, Set<SuppressIntentionAction>> mySuppressActions = new ConcurrentHashMap<>();
 
   private final Object myTreeStructureUpdateLock = new Object();
 
@@ -229,7 +231,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
           if (refNode.hasDescriptorsUnder()) return null;
           final RefEntity element = refNode.getElement();
           if (element == null || !element.isValid()) return null;
-          final CommonProblemDescriptor problem = refNode.getProblem();
+          final CommonProblemDescriptor problem = refNode.getDescriptor();
           if (problem != null) {
             return navigate(problem);
           }
@@ -571,8 +573,16 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     });
   }
 
+  @NotNull
+  public Set<SuppressIntentionAction> getSuppressActions(InspectionToolWrapper wrapper) {
+    return mySuppressActions.computeIfAbsent(wrapper, (w) -> {
+      final SuppressIntentionAction[] actions = InspectionManagerEx.getSuppressActions(w);
+      return actions == null ? Collections.emptySet() : ContainerUtil.newHashSet(actions);
+    });
+  }
+
   Set<Object> getSuppressedNodes() {
-    return mySuppressedNodesManager;
+    return mySuppressedNodes;
   }
 
   @NotNull
@@ -798,7 +808,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       PsiElement psiElement = item instanceof RefElement ? ((RefElement)item).getElement() : null;
       if (psiElement == null) return null;
 
-      final CommonProblemDescriptor problem = refElementNode.getProblem();
+      final CommonProblemDescriptor problem = refElementNode.getDescriptor();
       if (problem != null) {
         if (problem instanceof ProblemDescriptor) {
           PsiElement elementFromDescriptor = ((ProblemDescriptor)problem).getPsiElement();

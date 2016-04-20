@@ -38,12 +38,10 @@ import static com.intellij.codeInspection.ProblemDescriptorUtil.TRIM_AT_TREE_END
 /**
  * @author max
  */
-public class ProblemDescriptionNode extends SuppressableInspectionTreeNode implements RefElementAware {
+public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
   protected RefEntity myElement;
   private final CommonProblemDescriptor myDescriptor;
   protected final InspectionToolWrapper myToolWrapper;
-  @NotNull
-  protected final InspectionToolPresentation myPresentation;
   private final HighlightDisplayLevel myLevel;
 
   public ProblemDescriptionNode(RefEntity element,
@@ -54,13 +52,17 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode imple
     myElement = element;
     myDescriptor = descriptor;
     myToolWrapper = toolWrapper;
-    myPresentation = presentation;
     final InspectionProfileImpl profile = (InspectionProfileImpl)presentation.getContext().getCurrentProfile();
     myLevel = descriptor instanceof ProblemDescriptor
               ? profile.getErrorLevel(HighlightDisplayKey.find(toolWrapper.getShortName()), ((ProblemDescriptor)descriptor).getStartElement())
               : profile.getTools(toolWrapper.getID(), element.getRefManager().getProject()).getLevel();
-    init();
+    init(presentation.getContext().getProject());
 }
+
+  @Override
+  public boolean canSuppress() {
+    return super.canSuppress() && !isQuickFixAppliedFromView();
+  }
 
   @NotNull
   public InspectionToolWrapper getToolWrapper() {

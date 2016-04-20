@@ -25,7 +25,6 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
-import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.ui.*;
 import com.intellij.openapi.actionSystem.*;
@@ -56,6 +55,8 @@ import static com.intellij.codeInspection.ui.actions.InspectionViewActionBase.ge
 public class SuppressActionWrapper extends ActionGroup implements CompactActionGroup {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.actions.SuppressActionWrapper");
 
+  public static final SuppressIntentionAction[] EMPTY_ARRAY = new SuppressIntentionAction[0];
+
   public SuppressActionWrapper() {
     super(InspectionsBundle.message("suppress.inspection.problem"), false);
   }
@@ -67,14 +68,17 @@ public class SuppressActionWrapper extends ActionGroup implements CompactActionG
     if (view == null) return AnAction.EMPTY_ARRAY;
     final InspectionToolWrapper wrapper = view.getTree().getSelectedToolWrapper();
     if (wrapper == null) return AnAction.EMPTY_ARRAY;
-    final SuppressIntentionAction[] suppressActions = InspectionManagerEx.getSuppressActions(wrapper);
-    if (suppressActions == null || suppressActions.length == 0) return new SuppressTreeAction[0];
-    final AnAction[] actions = new AnAction[suppressActions.length + 1];
-    for (int i = 0; i < suppressActions.length; i++) {
-      final SuppressIntentionAction suppressAction = suppressActions[i];
-      actions[i] = new SuppressTreeAction(suppressAction);
+    final Set<SuppressIntentionAction> suppressActions = view.getSuppressActions(wrapper);
+
+    if (suppressActions.isEmpty()) return new SuppressTreeAction[0];
+    final AnAction[] actions = new AnAction[suppressActions.size() + 1];
+
+    int i = 0;
+    for (SuppressIntentionAction action : suppressActions) {
+      actions[i++] = new SuppressTreeAction(action);
     }
-    actions[suppressActions.length] = Separator.getInstance();
+    actions[suppressActions.size()] = Separator.getInstance();
+
     Arrays.sort(actions, new Comparator<AnAction>() {
       @Override
       public int compare(AnAction a1, AnAction a2) {
@@ -133,25 +137,6 @@ public class SuppressActionWrapper extends ActionGroup implements CompactActionG
     return true;
   }
 
-  private static Pair<PsiElement, CommonProblemDescriptor> getContentToSuppress(InspectionTreeNode node) {
-    RefElement refElement = null;
-    CommonProblemDescriptor descriptor = null;
-    if (node instanceof RefElementNode) {
-      final RefElementNode elementNode = (RefElementNode)node;
-      final RefEntity element = elementNode.getElement();
-      refElement = element instanceof RefElement ? (RefElement)element : null;
-      descriptor = elementNode.getProblem();
-    }
-    else if (node instanceof ProblemDescriptionNode) {
-      final ProblemDescriptionNode descriptionNode = (ProblemDescriptionNode)node;
-      final RefEntity element = descriptionNode.getElement();
-      refElement = element instanceof RefElement ? (RefElement)element : null;
-      descriptor = descriptionNode.getDescriptor();
-    }
-    PsiElement element = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getPsiElement() : refElement != null ? refElement.getElement() : null;
-    return Pair.create(element, descriptor);
-  }
-
   public static class SuppressTreeAction extends KeyAwareInspectionViewAction {
     private final SuppressIntentionAction mySuppressAction;
 
@@ -171,7 +156,7 @@ public class SuppressActionWrapper extends ActionGroup implements CompactActionG
             public void run() {
               final InspectionToolWrapper wrapper = view.getTree().getSelectedToolWrapper();
               for (SuppressableInspectionTreeNode node : getNodesToSuppress(view)) {
-                final Pair<PsiElement, CommonProblemDescriptor> content = getContentToSuppress(node);
+                final Pair<PsiElement, CommonProblemDescriptor> content = node.getSuppressContent();
                 if (content.first == null) break;
                 final PsiElement element = content.first;
                 RefEntity refEntity = node.getElement();
@@ -191,11 +176,8 @@ public class SuppressActionWrapper extends ActionGroup implements CompactActionG
 
     @Override
     protected boolean isEnabled(@NotNull InspectionResultsView view) {
-      for (InspectionTreeNode node : getNodesToSuppress(view)) {
-        final Pair<PsiElement, CommonProblemDescriptor> content = getContentToSuppress(node);
-        if (content.first == null) continue;
-        final PsiElement element = content.first;
-        if (mySuppressAction.isAvailable(view.getProject(), null, element)) {
+      for (SuppressableInspectionTreeNode node : getNodesToSuppress(view)) {
+        if (node.getAvailableSuppressActions().contains(mySuppressAction)) {
           return true;
         }
       }
@@ -220,7 +202,8 @@ public class SuppressActionWrapper extends ActionGroup implements CompactActionG
           final InspectionTreeNode n = (InspectionTreeNode)node;
           if (n instanceof SuppressableInspectionTreeNode &&
               ((SuppressableInspectionTreeNode)n).canSuppress() &&
-              !((SuppressableInspectionTreeNode)n).isAlreadySuppressedFromView()) {
+              !((SuppressableInspectionTreeNode)n).isAlreadySuppressedFromView() &&
+              n.isValid()) {
             result.add((SuppressableInspectionTreeNode)n);
           }
           return true;
