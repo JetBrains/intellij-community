@@ -31,9 +31,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.colors.EditorColorsListener;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.EditorFactoryAdapter;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
@@ -158,7 +155,6 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
         final MyFileStatusListener fileStatusListener = new MyFileStatusListener();
         final EditorFactoryListener editorFactoryListener = new MyEditorFactoryListener();
         final MyVirtualFileListener virtualFileListener = new MyVirtualFileListener();
-        final EditorColorsListener editorColorsListener = new MyEditorColorsListener();
 
         final FileStatusManager fsManager = FileStatusManager.getInstance(myProject);
         fsManager.addFileStatusListener(fileStatusListener, myDisposable);
@@ -168,9 +164,6 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
 
         final VirtualFileManager virtualFileManager = VirtualFileManager.getInstance();
         virtualFileManager.addVirtualFileListener(virtualFileListener, myDisposable);
-
-        final EditorColorsManager editorColorsManager = EditorColorsManager.getInstance();
-        editorColorsManager.addEditorColorsListener(editorColorsListener, myDisposable);
       }
     });
   }
@@ -473,13 +466,6 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
       if (VirtualFile.PROP_ENCODING.equals(event.getPropertyName())) {
         resetTracker(event.getFile());
       }
-    }
-  }
-
-  private class MyEditorColorsListener implements EditorColorsListener {
-    @Override
-    public void globalSchemeChange(EditorColorsScheme scheme) {
-      resetTrackers();
     }
   }
 
