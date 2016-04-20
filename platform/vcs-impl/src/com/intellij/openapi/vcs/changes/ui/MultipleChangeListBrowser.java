@@ -60,6 +60,7 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
   private boolean myShowUnversioned;
   private Collection<Change> myAllChanges;
   private boolean myInRebuildList;
+  private AnAction myMoveActionWithCustomShortcut;
 
   // todo terrible constructor
   public MultipleChangeListBrowser(Project project,
@@ -93,7 +94,7 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
     actionManager.addAnActionListener(new AnActionListener.Adapter() {
       @Override
       public void afterActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
-        if (moveAction.equals(action)) {
+        if (moveAction.equals(action) || myMoveActionWithCustomShortcut != null && myMoveActionWithCustomShortcut.equals(action)) {
           rebuildList();
         }
         else if (deleteAction.equals(action)) {
@@ -320,7 +321,8 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
     UnversionedViewDialog.registerUnversionedActionsShortcuts(DataManager.getInstance().getDataContext(this), myViewer);
     // We do not add "Delete" key shortcut for deleting unversioned files as this shortcut is already used to uncheck
     // checkboxes in the tree.
-    EmptyAction.registerWithShortcutSet(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST, CommonShortcuts.getMove(), myViewer);
+    myMoveActionWithCustomShortcut =
+      EmptyAction.registerWithShortcutSet(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST, CommonShortcuts.getMove(), myViewer);
 
     RollbackDialogAction rollback = new RollbackDialogAction();
     EmptyAction.setupAction(rollback, IdeActions.CHANGES_VIEW_ROLLBACK, this);

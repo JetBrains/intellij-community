@@ -110,11 +110,11 @@ public class UnversionedViewDialog extends DialogWrapper {
     final DefaultActionGroup group = new DefaultActionGroup();
     final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("UNVERSIONED_DIALOG", group, true);
 
-    registerUnversionedActionsShortcuts(actionToolbar.getToolbarDataContext(), myView);
+    List<AnAction> actions = registerUnversionedActionsShortcuts(actionToolbar.getToolbarDataContext(), myView);
     // special shortcut for deleting a file
-    EmptyAction.registerWithShortcutSet("ChangesView.DeleteUnversioned.From.Dialog", CommonShortcuts.getDelete(), myView);
+    actions.add(EmptyAction.registerWithShortcutSet("ChangesView.DeleteUnversioned.From.Dialog", CommonShortcuts.getDelete(), myView));
 
-    refreshViewAfterActionPerformed(getUnversionedActionGroup());
+    refreshViewAfterActionPerformed(actions);
     group.add(getUnversionedActionGroup());
 
     final CommonActionsManager cam = CommonActionsManager.getInstance();
@@ -134,15 +134,12 @@ public class UnversionedViewDialog extends DialogWrapper {
     myView.setShowFlatten(false);
   }
 
-  private void refreshViewAfterActionPerformed(@NotNull final ActionGroup opActionGroup) {
+  private void refreshViewAfterActionPerformed(@NotNull final List<AnAction> actions) {
     ActionManager.getInstance().addAnActionListener(new AnActionListener.Adapter() {
       @Override
       public void afterActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
-        for (AnAction anAction : opActionGroup.getChildren(event)) {
-          if (anAction.equals(action)) {
-            refreshView();
-            return;
-          }
+        if (actions.contains(action)) {
+          refreshView();
         }
       }
     }, myDisposable);
@@ -153,7 +150,8 @@ public class UnversionedViewDialog extends DialogWrapper {
     return (ActionGroup)ActionManager.getInstance().getAction("Unversioned.Files.Dialog");
   }
 
-  public static void registerUnversionedActionsShortcuts(@NotNull DataContext dataContext, @NotNull JComponent component) {
+  @NotNull
+  public static List<AnAction> registerUnversionedActionsShortcuts(@NotNull DataContext dataContext, @NotNull JComponent component) {
     ActionManager manager = ActionManager.getInstance();
     List<AnAction> actions = ContainerUtil.newArrayList();
 
@@ -161,6 +159,8 @@ public class UnversionedViewDialog extends DialogWrapper {
     for (AnAction action : actions) {
       action.registerCustomShortcutSet(action.getShortcutSet(), component);
     }
+
+    return actions;
   }
 
   @Override
