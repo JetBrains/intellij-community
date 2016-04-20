@@ -351,12 +351,10 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
           }
         }
 
-        if (changes.size() > 0) {
-          if (selectedTreeRow >= 0) {
-            myTree.setSelectionRow(selectedTreeRow);
-          }
-          TreeUtil.showRowCentered(myTree, selectedTreeRow, false);
+        if (selectedTreeRow >= 0) {
+          myTree.setSelectionRow(selectedTreeRow);
         }
+        TreeUtil.showRowCentered(myTree, selectedTreeRow, false);
       }
     };
     if (ApplicationManager.getApplication().isDispatchThread()) {
