@@ -94,7 +94,7 @@ public class ExpandChildrenIndentState extends State {
     }
   }
 
-  private void adjustSpacingToKeepAligned(LeafBlockWrapper block, int newSpaces) {
+  private static void adjustSpacingToKeepAligned(LeafBlockWrapper block, int newSpaces) {
     WhiteSpace space = block.getWhiteSpace();
     SpacingImpl property = block.getSpaceProperty();
     if (property == null) return;
@@ -108,7 +108,7 @@ public class ExpandChildrenIndentState extends State {
                                         property.getPrefLineFeeds()));
   }
 
-  private LeafBlockWrapper getRightMostBlock(Collection<LeafBlockWrapper> toRealign) {
+  private static LeafBlockWrapper getRightMostBlock(Collection<LeafBlockWrapper> toRealign) {
     int maxSpacesBeforeBlock = -1;
     LeafBlockWrapper rightMostBlock = null;
 
@@ -123,7 +123,7 @@ public class ExpandChildrenIndentState extends State {
     return rightMostBlock;
   }
 
-  private void arrangeSpaces(Collection<LeafBlockWrapper> toRealign) {
+  private static void arrangeSpaces(Collection<LeafBlockWrapper> toRealign) {
     for (LeafBlockWrapper block : toRealign) {
       WhiteSpace whiteSpace = block.getWhiteSpace();
       SpacingImpl spacing = block.getSpaceProperty();
@@ -131,7 +131,7 @@ public class ExpandChildrenIndentState extends State {
     }
   }
 
-  private boolean shouldExpand(Collection<AbstractBlockWrapper> blocksToExpandIndent) {
+  private static boolean shouldExpand(Collection<AbstractBlockWrapper> blocksToExpandIndent) {
     AbstractBlockWrapper last = null;
     for (AbstractBlockWrapper block : blocksToExpandIndent) {
       if (block.getWhiteSpace().containsLineFeeds()) {
@@ -153,7 +153,7 @@ public class ExpandChildrenIndentState extends State {
     return false;
   }
 
-  private int finMinNewLineIndent(@NotNull Collection<AbstractBlockWrapper> wrappers) {
+  private static int finMinNewLineIndent(@NotNull Collection<AbstractBlockWrapper> wrappers) {
     int totalMinimum = Integer.MAX_VALUE;
     for (AbstractBlockWrapper wrapper : wrappers) {
       int minNewLineIndent = findMinNewLineIndent(wrapper);
@@ -164,7 +164,7 @@ public class ExpandChildrenIndentState extends State {
     return totalMinimum;
   }
 
-  private int findMinNewLineIndent(@NotNull AbstractBlockWrapper block) {
+  private static int findMinNewLineIndent(@NotNull AbstractBlockWrapper block) {
     if (block instanceof LeafBlockWrapper && block.getWhiteSpace().containsLineFeeds()) {
       return block.getNumberOfSymbolsBeforeBlock().getTotalSpaces();
     }
@@ -182,7 +182,7 @@ public class ExpandChildrenIndentState extends State {
     return Integer.MAX_VALUE;
   }
 
-  private AbstractBlockWrapper getNextBlock(AbstractBlockWrapper block) {
+  private static AbstractBlockWrapper getNextBlock(AbstractBlockWrapper block) {
     List<AbstractBlockWrapper> children = block.getParent().getChildren();
     int nextBlockIndex = children.indexOf(block) + 1;
     if (nextBlockIndex < children.size()) {

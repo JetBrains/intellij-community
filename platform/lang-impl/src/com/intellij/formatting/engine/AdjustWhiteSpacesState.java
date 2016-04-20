@@ -65,26 +65,6 @@ public class AdjustWhiteSpacesState extends State {
       myAlignmentsInsideRangesToModify = myWrapBlocksState.getAlignmentsInsideRangesToModify();
     }
   }
-
-  public AdjustWhiteSpacesState(LeafBlockWrapper firstBlock,
-                                DependentSpacingEngine dependentSpacingEngine,
-                                WrapProcessor wrapProcessor,
-                                IndentAdjuster indentAdjuster,
-                                BlockRangesMap blockRangesMap,
-                                Set<Alignment> alignmentsInsideRangesToModify,
-                                boolean isReformatContext,
-                                FormattingProgressCallback progressCallback) 
-  {
-    myWrapBlocksState = null;
-    myCurrentBlock = firstBlock;
-    myDependentSpacingEngine = dependentSpacingEngine;
-    myWrapProcessor = wrapProcessor;
-    myIndentAdjuster = indentAdjuster;
-    myBlockRangesMap = blockRangesMap;
-    myAlignmentsInsideRangesToModify = alignmentsInsideRangesToModify;
-    myReformatContext = isReformatContext;
-    myProgressCallback = progressCallback;
-  }
   
   public LeafBlockWrapper getCurrentBlock() {
     return myCurrentBlock;

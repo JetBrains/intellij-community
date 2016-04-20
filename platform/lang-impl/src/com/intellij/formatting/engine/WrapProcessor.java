@@ -49,10 +49,6 @@ public class WrapProcessor {
     return wrap.getType() == WrapImpl.Type.CHOP_IF_NEEDED && lineOver(currentBlock) && positionAfterWrappingIsSuitable(currentBlock);
   }
 
-  /**
-   * @return <code>true</code> if {@link #myCurrentBlock currently processed wrapped block} doesn't contain line feeds and
-   * exceeds right margin; <code>false</code> otherwise
-   */
   private boolean lineOver(LeafBlockWrapper currentBlock) {
     return !currentBlock.containsLineFeeds() &&
            CoreFormatterUtil.getStartColumn(currentBlock) + currentBlock.getLength() > myRightMargin;
@@ -60,9 +56,7 @@ public class WrapProcessor {
 
 
   /**
-   * Ensures that offset of the {@link #myCurrentBlock currently processed block} is not increased if we make a wrap on it.
-   *
-   * @return <code>true</code> if it's ok to wrap at the currently processed block; <code>false</code> otherwise
+   * Ensures that offset of the currentBlock is not increased if we make a wrap on it.
    */
   private boolean positionAfterWrappingIsSuitable(LeafBlockWrapper currentBlock) {
     final WhiteSpace whiteSpace = currentBlock.getWhiteSpace();
