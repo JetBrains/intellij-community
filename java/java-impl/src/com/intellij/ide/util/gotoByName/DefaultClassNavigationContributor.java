@@ -107,7 +107,7 @@ public class DefaultClassNavigationContributor implements ChooseByNameContributo
         hasDollar = namePattern.contains("$");
       }
     }
-    final MinusculeMatcher innerMatcher = hasDollar ? new MinusculeMatcher("*" + namePattern, NameUtil.MatchingCaseSensitivity.NONE) : null;
+    final MinusculeMatcher innerMatcher = hasDollar ? NameUtil.buildMatcher("*" + namePattern).build() : null;
     PsiShortNamesCache.getInstance(parameters.getProject()).processClassesWithName(name, new Processor<PsiClass>() {
       final boolean isAnnotation = parameters.getLocalPatternName().startsWith("@");
 
