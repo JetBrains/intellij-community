@@ -361,6 +361,14 @@ class type(object):
         """
         return False
 
+    @staticmethod
+    def __prepare__(metacls, name, bases):
+        """Used to create the namespace for the class statement.
+
+        :rtype: dict[str, unknown]
+        """
+        return {}
+
 
 class enumerate(object):
     """enumerate object."""
