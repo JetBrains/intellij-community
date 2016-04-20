@@ -43,8 +43,8 @@ import java.util.concurrent.TimeUnit;
  * author: liana
  * data: 7/31/14.
  */
-public class StudyNewProjectPanel{
-  private static  final Logger LOG = Logger.getInstance(StudyNewProjectPanel.class);
+public class StudyNewProjectPanel {
+  private static final Logger LOG = Logger.getInstance(StudyNewProjectPanel.class);
   private List<CourseInfo> myAvailableCourses = new ArrayList<CourseInfo>();
   private JButton myBrowseButton;
   private JComboBox<CourseInfo> myCoursesComboBox;
@@ -86,7 +86,6 @@ public class StudyNewProjectPanel{
     myRefreshButton.setIcon(AllIcons.Actions.Refresh);
 
     myLabel.setPreferredSize(new JLabel("Project name").getPreferredSize());
-
   }
 
   private void setupBrowseButton() {
@@ -224,7 +223,7 @@ public class StudyNewProjectPanel{
         return;
       }
       final String authorsString = Course.getAuthorsString(selectedCourse.getAuthors());
-      myAuthorLabel.setText(!StringUtil.isEmptyOrSpaces(authorsString) ?"Author: " + authorsString : "");
+      myAuthorLabel.setText(!StringUtil.isEmptyOrSpaces(authorsString) ? "Author: " + authorsString : "");
       myCoursesComboBox.removeItem(CourseInfo.INVALID_COURSE);
       myDescriptionLabel.setText(selectedCourse.getDescription());
       myGenerator.setSelectedCourse(selectedCourse);
@@ -270,17 +269,16 @@ public class StudyNewProjectPanel{
       super.doOKAction();
       final ProgressManager progressManager = ProgressManager.getInstance();
       progressManager.runProcessWithProgressSynchronously(() -> {
-
         final Future<?> future = SharedThreadPool.getInstance().executeOnPooledThread(() -> {
           final boolean isSuccess = EduStepicConnector.login(myRemoteCourse.getLogin(), myRemoteCourse.getPassword());
-          ApplicationManager.getApplication().invokeLater(() -> {
-            if (!isSuccess) {
-              setError("Failed to log in");
-            }
+          if (!isSuccess) {
+            setError("Failed to log in");
+          }
+          else {
             StudySettings.getInstance().setLogin(myRemoteCourse.getLogin());
             StudySettings.getInstance().setPassword(myRemoteCourse.getPassword());
-            refreshCoursesList();
-          });
+            ApplicationManager.getApplication().invokeLater(StudyNewProjectPanel.this::refreshCoursesList);
+          }
         });
 
         while (!future.isDone()) {
@@ -292,8 +290,7 @@ public class StudyNewProjectPanel{
             LOG.warn(e.getMessage());
           }
         }
-      }, "Getting Stepic Course List", true, new DefaultProjectFactoryImpl().getDefaultProject());
+      }, "Login And Getting Stepic Course List", true, new DefaultProjectFactoryImpl().getDefaultProject());
     }
   }
-
 }

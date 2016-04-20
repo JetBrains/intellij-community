@@ -23,10 +23,7 @@ import com.jetbrains.edu.learning.courseFormat.Lesson;
 import com.jetbrains.edu.learning.courseFormat.Task;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import org.apache.commons.codec.binary.Base64;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpStatus;
-import org.apache.http.NameValuePair;
-import org.apache.http.StatusLine;
+import org.apache.http.*;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.*;
 import org.apache.http.cookie.Cookie;
@@ -39,7 +36,6 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicNameValuePair;
-import org.apache.http.protocol.HTTP;
 import org.apache.http.util.EntityUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,7 +44,6 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -171,14 +166,7 @@ public class EduStepicConnector {
     nvps.add(new BasicNameValuePair("password", password));
     nvps.add(new BasicNameValuePair("remember", "on"));
 
-    try {
-      request.setEntity(new UrlEncodedFormEntity(nvps, HTTP.UTF_8));
-    }
-    catch (UnsupportedEncodingException e) {
-      LOG.error(e.getMessage());
-      ourClient = null;
-      return false;
-    }
+    request.setEntity(new UrlEncodedFormEntity(nvps, Consts.UTF_8));
 
     setHeaders(request, "application/x-www-form-urlencoded");
 
@@ -189,7 +177,7 @@ public class EduStepicConnector {
       if (line.getStatusCode() != HttpStatus.SC_MOVED_TEMPORARILY) {
         final HttpEntity responseEntity = response.getEntity();
         final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
-        LOG.error("Failed to login " + responseString);
+        LOG.warn("Failed to login " + responseString);
         ourClient = null;
         return false;
       }
