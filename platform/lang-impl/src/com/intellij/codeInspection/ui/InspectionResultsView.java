@@ -824,7 +824,8 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       }
     }
     else if (selectedNode instanceof ProblemDescriptionNode && CommonDataKeys.NAVIGATABLE.is(dataId)) {
-      return getSelectedNavigatable(((ProblemDescriptionNode)selectedNode).getDescriptor());
+      Navigatable navigatable = getSelectedNavigatable(((ProblemDescriptionNode)selectedNode).getDescriptor());
+      return navigatable == null ? getNavigatableForInvalidNode((ProblemDescriptionNode)selectedNode) : navigatable;
     }
 
     return null;
@@ -1003,5 +1004,14 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     if (editor != null && !editor.isDisposed()) {
       EditorFactory.getInstance().releaseEditor(editor);
     }
+  }
+
+  @Nullable
+  private static Navigatable getNavigatableForInvalidNode(ProblemDescriptionNode node) {
+    RefEntity element = node.getElement();
+    if (!(element instanceof RefElement)) return null;
+    PsiElement containingElement = ((RefElement)element).getElement();
+    if (!(containingElement instanceof NavigatablePsiElement) || !containingElement.isValid()) return null;
+    return (Navigatable)containingElement;
   }
 }
