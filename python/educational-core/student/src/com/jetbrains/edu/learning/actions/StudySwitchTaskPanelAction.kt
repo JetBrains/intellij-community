@@ -73,8 +73,12 @@ class StudySwitchTaskPanelAction: AnAction() {
   }
 
   override fun update(e: AnActionEvent?) {
-    if (e != null) {
-      StudyUtils.updateAction(e)
+    val project = e?.project
+    if (project != null && StudyUtils.isStudyProject(project)) {
+      e?.presentation?.isEnabled = true
+    }
+    else {
+      e?.presentation?.isEnabled = false
     }
   }
 }
