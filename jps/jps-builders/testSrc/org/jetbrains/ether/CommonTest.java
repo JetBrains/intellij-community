@@ -157,5 +157,8 @@ public class CommonTest extends IncrementalTestCase {
   public void testMoveClassToAnotherRoot() throws Exception {
     doTest();
   }
-  
+
+  public void testIntegrateOnNonIncrementalMake() throws Exception {
+    doTest();
+  }
 }
