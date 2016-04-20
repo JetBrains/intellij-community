@@ -6,6 +6,8 @@ import com.intellij.ide.projectView.actions.MarkRootActionBase;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbModePermission;
 import com.intellij.openapi.project.DumbService;
@@ -18,20 +20,18 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.util.DocumentUtil;
 import com.intellij.util.Function;
 import com.jetbrains.edu.learning.StudyTaskManager;
+import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduUtils;
-import com.jetbrains.edu.learning.courseFormat.Course;
-import com.jetbrains.edu.learning.courseFormat.StudyItem;
+import com.jetbrains.edu.learning.courseFormat.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
+import java.util.*;
 
 public class CCUtils {
   private static final Logger LOG = Logger.getInstance(CCUtils.class);
@@ -212,6 +212,33 @@ public class CCUtils {
     }
     catch (IOException e) {
       LOG.info("Failed to copy created task file to resources " + createdFile.getPath());
+    }
+  }
+
+
+  public static void createResources(Project project, Task task, VirtualFile taskDir) {
+    Map<String, TaskFile> files = task.getTaskFiles();
+    for (Map.Entry<String, TaskFile> entry : files.entrySet()) {
+      String name = entry.getKey();
+      VirtualFile child = taskDir.findChild(name);
+      if (child == null) {
+        continue;
+      }
+      Document patternDocument = StudyUtils.getPatternDocument(entry.getValue(), name);
+      Document document = FileDocumentManager.getInstance().getDocument(child);
+      if (document == null || patternDocument == null) {
+        return;
+      }
+      DocumentUtil.writeInRunUndoTransparentAction(() -> {
+        patternDocument.replaceString(0, patternDocument.getTextLength(), document.getCharsSequence());
+        FileDocumentManager.getInstance().saveDocument(patternDocument);
+      });
+      TaskFile target = new TaskFile();
+      TaskFile.copy(entry.getValue(), target);
+      for (AnswerPlaceholder placeholder : target.getAnswerPlaceholders()) {
+        placeholder.setUseLength(false);
+      }
+      EduUtils.createStudentDocument(project, target, child, patternDocument);
     }
   }
 }
