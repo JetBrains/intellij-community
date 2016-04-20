@@ -86,6 +86,7 @@ public class SingleClassesTest {
   @Test public void testStaticNameClash() { doTest("pkg/TestStaticNameClash"); }
   @Test public void testExtendingSubclass() { doTest("pkg/TestExtendingSubclass"); }
   @Test public void testSyntheticAccess() { doTest("pkg/TestSyntheticAccess"); }
+  @Test public void testIllegalVarName() { doTest("pkg/TestIllegalVarName"); }
 
   private void doTest(String testFile, String... companionFiles) {
     ConsoleDecompiler decompiler = fixture.getDecompiler();
