@@ -59,6 +59,7 @@ import javax.swing.*;
 import java.util.*;
 
 public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProvider {
+
   @NotNull
   @Override
   public List<SearchScope> getPredefinedScopes(@NotNull final Project project,
@@ -79,7 +80,13 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
       result.add(GlobalSearchScopesCore.projectTestScope(project));
     }
 
-    result.add(GlobalSearchScopes.openFilesScope(project));
+    final GlobalSearchScope openFilesScope = GlobalSearchScopes.openFilesScope(project);
+    if (openFilesScope != GlobalSearchScope.EMPTY_SCOPE) {
+      result.add(openFilesScope);
+    }
+    else if (showEmptyScopes) {
+      result.add(new LocalSearchScope(PsiElement.EMPTY_ARRAY, IdeBundle.message("scope.open.files")));
+    }
 
     final Editor selectedTextEditor = ApplicationManager.getApplication().isDispatchThread()
                                       ? FileEditorManager.getInstance(project).getSelectedTextEditor()
