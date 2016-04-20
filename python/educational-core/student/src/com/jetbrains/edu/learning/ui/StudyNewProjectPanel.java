@@ -33,6 +33,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
@@ -275,17 +277,13 @@ public class StudyNewProjectPanel {
       super.doOKAction();
       final ProgressManager progressManager = ProgressManager.getInstance();
       progressManager.runProcessWithProgressSynchronously(() -> {
-        final Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
-          final boolean isSuccess = EduStepicConnector.login(myRemoteCourse.getLogin(), myRemoteCourse.getPassword());
-          if (!isSuccess) {
-            setError("Failed to log in");
-          }
-          else {
-            StudySettings.getInstance().setLogin(myRemoteCourse.getLogin());
-            StudySettings.getInstance().setPassword(myRemoteCourse.getPassword());
-            ApplicationManager.getApplication().invokeLater(StudyNewProjectPanel.this::refreshCoursesList);
-          }
-        });
+        final Future<Boolean> future = ApplicationManager.getApplication().executeOnPooledThread(
+          new Callable<Boolean>() {
+            @Override
+            public Boolean call() throws Exception {
+              return EduStepicConnector.login(myRemoteCourse.getLogin(), myRemoteCourse.getPassword());
+            }
+          });
 
         while (!future.isCancelled() && !future.isDone()) {
           progressManager.getProgressIndicator().checkCanceled();
@@ -295,6 +293,25 @@ public class StudyNewProjectPanel {
           catch (final InterruptedException e) {
             LOG.warn(e.getMessage());
           }
+        }
+
+        try {
+          final boolean isSuccess = future.get();
+
+          if (!isSuccess) {
+            setError("Failed to log in");
+          }
+          else {
+            StudySettings.getInstance().setLogin(myRemoteCourse.getLogin());
+            StudySettings.getInstance().setPassword(myRemoteCourse.getPassword());
+            ApplicationManager.getApplication().invokeLater(StudyNewProjectPanel.this::refreshCoursesList);
+          }
+        }
+        catch (InterruptedException e) {
+          LOG.warn(e.getMessage());
+        }
+        catch (ExecutionException e) {
+          LOG.warn(e.getMessage());
         }
       }, "Signing In And Getting Stepic Course List", true, new DefaultProjectFactoryImpl().getDefaultProject());
     }
