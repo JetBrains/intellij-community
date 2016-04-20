@@ -49,10 +49,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.ex.LineStatusTracker;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileAdapter;
-import com.intellij.openapi.vfs.VirtualFileEvent;
-import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.*;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.QueueProcessorRemovePartner;
@@ -63,6 +60,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
 
@@ -360,6 +358,7 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
       // loads are sequential (in single threaded QueueProcessor);
       // so myLoadCounter can't take less value for greater base revision -> the only thing we want from it
       final VcsRevisionNumber revisionNumber = baseContent.getRevisionNumber();
+      final Charset charset = myVirtualFile.getCharset();
       final long loadCounter = myLoadCounter;
       myLoadCounter++;
 
@@ -369,7 +368,7 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
           log("BaseRevisionLoader canceled: tracker already released", myVirtualFile);
           return;
         }
-        if (!data.shouldBeUpdated(revisionNumber, loadCounter)) {
+        if (!data.shouldBeUpdated(revisionNumber, charset, loadCounter)) {
           log("BaseRevisionLoader canceled: no need to update", myVirtualFile);
           return;
         }
@@ -392,13 +391,13 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
               log("BaseRevisionLoader initializing: tracker already released", myVirtualFile);
               return;
             }
-            if (!data.shouldBeUpdated(revisionNumber, loadCounter)) {
+            if (!data.shouldBeUpdated(revisionNumber, charset, loadCounter)) {
               log("BaseRevisionLoader initializing: canceled", myVirtualFile);
               return;
             }
 
             log("BaseRevisionLoader initializing: success", myVirtualFile);
-            myLineStatusTrackers.put(myDocument, new TrackerData(data.tracker, revisionNumber, loadCounter));
+            myLineStatusTrackers.put(myDocument, new TrackerData(data.tracker, revisionNumber, charset, loadCounter));
             data.tracker.setBaseRevision(converted);
           }
         }
@@ -468,6 +467,13 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
         resetTracker(event.getFile());
       }
     }
+
+    @Override
+    public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
+      if (VirtualFile.PROP_ENCODING.equals(event.getPropertyName())) {
+        resetTracker(event.getFile());
+      }
+    }
   }
 
   private class MyEditorColorsListener implements EditorColorsListener {
@@ -488,24 +494,29 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
 
     public TrackerData(@NotNull LineStatusTracker tracker,
                        @NotNull VcsRevisionNumber revision,
+                       @NotNull Charset charset,
                        long loadCounter) {
       this.tracker = tracker;
-      this.currentContent = new ContentInfo(revision, loadCounter);
+      this.currentContent = new ContentInfo(revision, charset, loadCounter);
     }
 
-    public boolean shouldBeUpdated(@NotNull VcsRevisionNumber revision, long loadCounter) {
+    public boolean shouldBeUpdated(@NotNull VcsRevisionNumber revision, @NotNull Charset charset, long loadCounter) {
       if (currentContent == null) return true;
-      if (currentContent.revision.equals(revision) && !currentContent.revision.equals(VcsRevisionNumber.NULL)) return false;
+      if (currentContent.revision.equals(revision) && !currentContent.revision.equals(VcsRevisionNumber.NULL)) {
+        return !currentContent.charset.equals(charset);
+      }
       return currentContent.loadCounter < loadCounter;
     }
   }
 
   private static class ContentInfo {
     @NotNull public final VcsRevisionNumber revision;
+    @NotNull public final Charset charset;
     public final long loadCounter;
 
-    public ContentInfo(@NotNull VcsRevisionNumber revision, long loadCounter) {
+    public ContentInfo(@NotNull VcsRevisionNumber revision, @NotNull Charset charset, long loadCounter) {
       this.revision = revision;
+      this.charset = charset;
       this.loadCounter = loadCounter;
     }
   }
