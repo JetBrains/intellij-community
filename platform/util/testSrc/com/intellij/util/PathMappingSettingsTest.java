@@ -39,4 +39,19 @@ public class PathMappingSettingsTest {
       Assert.assertEquals(LOCAL_PATH_TO_FILE, myMappingSettings.convertToRemote(LOCAL_PATH_TO_FILE)); //don't convert
     }
   }
+
+
+  @Test
+  public void testConvertToLocalPathWithSeveralRemotePrefixInclusions() {
+    myMappingSettings.addMapping("C:/testPrj/src", "/management");
+
+    Assert.assertEquals("C:/testPrj/src/management/order.py", myMappingSettings.convertToLocal("/management/management/order.py"));
+  }
+
+  @Test
+  public void testConvertToLocalPathWithPartialRemotePrefixFolderNameMatch() {
+    myMappingSettings.addMapping("C:/testPrj/src", "/management");
+
+    Assert.assertEquals("/management-data/users.db", myMappingSettings.convertToLocal("/management-data/users.db"));
+  }
 }
