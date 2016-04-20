@@ -15,15 +15,19 @@
  */
 package com.jetbrains.python.console;
 
+import com.google.common.collect.Maps;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ExecutionConsole;
+import com.intellij.openapi.project.Project;
 import com.intellij.remote.RemoteProcessControl;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.jetbrains.python.debugger.PyDebugProcess;
+import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.ServerSocket;
+import java.util.Map;
 
 /**
  * @author traff
@@ -84,7 +88,18 @@ public class PyConsoleDebugProcess extends PyDebugProcess {
     } else {
       portToConnect = myLocalPort;
     }
-    consoleCommunication.connectToDebugger(portToConnect);
+    Map<String, Boolean> optionsMap = makeDebugOptionsMap(getSession());
+
+    consoleCommunication.connectToDebugger(portToConnect, optionsMap);
+  }
+
+  private static Map<String, Boolean> makeDebugOptionsMap(XDebugSession session) {
+    Project project = session.getProject();
+    PyDebuggerOptionsProvider userOpts = PyDebuggerOptionsProvider.getInstance(project);
+    Map<String, Boolean> dbgOpts = Maps.newHashMap();
+    dbgOpts.put("save-signatures", userOpts.isSaveCallSignatures());
+    dbgOpts.put("qt-support", userOpts.isSupportQtDebugging());
+    return dbgOpts;
   }
 
   public void waitForNextConnection() {

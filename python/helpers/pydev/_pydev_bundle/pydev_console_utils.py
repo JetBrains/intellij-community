@@ -480,11 +480,15 @@ class BaseInterpreterInterface:
         else:
             return self.orig_find_frame(thread_id, frame_id)
 
-    def connectToDebugger(self, debuggerPort):
+    def connectToDebugger(self, debuggerPort, debugger_options = None):
         '''
         Used to show console with variables connection.
         Mainly, monkey-patches things in the debugger structure so that the debugger protocol works.
         '''
+
+        if debugger_options is None:
+            debugger_options = {}
+
         def do_connect_to_debugger():
             try:
                 # Try to import the packages needed to attach the debugger
@@ -504,6 +508,7 @@ class BaseInterpreterInterface:
 
             self.debugger = pydevd.PyDB()
             try:
+                pydevd.apply_debugger_options(debugger_options)
                 self.debugger.connect(pydev_localhost.get_localhost(), debuggerPort)
                 self.debugger.prepare_to_run()
                 from _pydevd_bundle import pydevd_tracing
