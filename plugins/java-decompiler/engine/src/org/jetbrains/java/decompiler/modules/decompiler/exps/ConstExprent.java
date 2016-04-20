@@ -27,6 +27,7 @@ import org.jetbrains.java.decompiler.struct.match.MatchEngine;
 import org.jetbrains.java.decompiler.struct.match.MatchNode;
 import org.jetbrains.java.decompiler.struct.match.MatchNode.RuleValue;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
+import org.jetbrains.java.decompiler.util.TextUtil;
 
 import java.util.*;
 import java.util.Map.Entry;
@@ -131,11 +132,11 @@ public class ConstExprent extends Exprent {
           String ret = ESCAPES.get(val);
           if (ret == null) {
             char c = (char)val.intValue();
-            if (c >= 32 && c < 127 || !ascii && InterpreterUtil.isPrintableUnicode(c)) {
+            if (c >= 32 && c < 127 || !ascii && TextUtil.isPrintableUnicode(c)) {
               ret = String.valueOf(c);
             }
             else {
-              ret = InterpreterUtil.charToUnicodeLiteral(c);
+              ret = TextUtil.charToUnicodeLiteral(c);
             }
           }
           return new TextBuffer(ret).enclose("\'", "\'");
@@ -307,11 +308,11 @@ public class ConstExprent extends Exprent {
           buffer.append("\\\'");
           break;
         default:
-          if (c >= 32 && c < 127 || !ascii && InterpreterUtil.isPrintableUnicode(c)) {
+          if (c >= 32 && c < 127 || !ascii && TextUtil.isPrintableUnicode(c)) {
             buffer.append(c);
           }
           else {
-            buffer.append(InterpreterUtil.charToUnicodeLiteral(c));
+            buffer.append(TextUtil.charToUnicodeLiteral(c));
           }
       }
     }

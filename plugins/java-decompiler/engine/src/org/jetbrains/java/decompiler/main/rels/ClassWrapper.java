@@ -28,7 +28,6 @@ import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructField;
 import org.jetbrains.java.decompiler.struct.StructMethod;
-import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
 import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTableAttribute;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
@@ -162,9 +161,7 @@ public class ClassWrapper {
 
       // if debug information present and should be used
       if (DecompilerContext.getOption(IFernflowerPreferences.USE_DEBUG_VAR_NAMES)) {
-        StructLocalVariableTableAttribute attr = (StructLocalVariableTableAttribute)mt.getAttributes().getWithKey(
-          StructGeneralAttribute.ATTRIBUTE_LOCAL_VARIABLE_TABLE);
-
+        StructLocalVariableTableAttribute attr = mt.getLocalVariableAttr();
         if (attr != null) {
           varProc.setDebugVarNames(attr.getMapVarNames());
         }
