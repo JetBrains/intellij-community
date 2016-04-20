@@ -170,7 +170,6 @@ public class EnterHandler extends BaseEnterHandler {
     );
     action.setForceIndent(forceIndent);
     action.run();
-    documentManager.commitDocument(document);
     for (EnterHandlerDelegate delegate : delegates) {
       if (delegate.postProcessEnter(file, editor, dataContext) == EnterHandlerDelegate.Result.Stop) {
         break;
