@@ -75,7 +75,6 @@ class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterato
   private int myCurrentInlayIndex;
   private boolean myIsInlay;
   private float myInlaysTotalWidth;
-  private int myInlaysTotalVisualColumns;
   private float myCurrentX;
   private int myCurrentVisualColumn;
   private LineLayout.VisualFragment myDelegate;
@@ -244,7 +243,6 @@ class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterato
         else {
           for (Inlay inlay : myInlays) {
             myInlaysTotalWidth += inlay.getWidthInPixels();
-            myInlaysTotalVisualColumns++;
           }
           myInlays = null;
         }
@@ -310,18 +308,13 @@ class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterato
     }
     
     int getStartVisualColumn() {
-      return myInlaysTotalVisualColumns + (
-              myDelegate == null ? myCurrentVisualColumn - getFoldRegionWidthInColumns(myFoldRegion):
-              myDelegate.logicalToVisualColumn(getStartLogicalColumn()) + myCurrentInlayIndex
-      );
-
+      return myDelegate == null ? myCurrentVisualColumn - getFoldRegionWidthInColumns(myFoldRegion):
+              myDelegate.logicalToVisualColumn(getStartLogicalColumn());
     }
 
     int getEndVisualColumn() {
-      return myInlaysTotalVisualColumns + (
-              myDelegate == null ? myInlaysTotalVisualColumns + myCurrentVisualColumn :
-              myDelegate.logicalToVisualColumn(getEndLogicalColumn()) + myCurrentInlayIndex + (myIsInlay ? 1 : 0)
-      );
+      return myDelegate == null ? myCurrentVisualColumn :
+              myDelegate.logicalToVisualColumn(getEndLogicalColumn());
     }
     
     int getStartLogicalLine() {
@@ -346,14 +339,13 @@ class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterato
     // column is expected to be between minLogicalColumn and maxLogicalColumn for this fragment
     int logicalToVisualColumn(int column) {
       return myDelegate == null ? myCurrentVisualColumn - getFoldRegionWidthInColumns(myFoldRegion) :
-             myInlaysTotalVisualColumns + myDelegate.logicalToVisualColumn(column) + myCurrentInlayIndex + (myIsInlay ? 1 : 0);
+             myDelegate.logicalToVisualColumn(column);
     }
 
     // column is expected to be between startVisualColumn and endVisualColumn for this fragment
     int visualToLogicalColumn(int column) {
-      return myDelegate == null ? (column == myCurrentVisualColumn + myInlaysTotalVisualColumns ? getEndLogicalColumn() : getStartLogicalColumn()) :
-             myIsInlay ? getStartLogicalColumn() :
-             myDelegate.visualToLogicalColumn(column - myInlaysTotalVisualColumns - myCurrentInlayIndex);
+      return myDelegate == null ? (column == myCurrentVisualColumn ? getEndLogicalColumn() : getStartLogicalColumn()) :
+             myDelegate.visualToLogicalColumn(column);
     }
 
     // returns array of two elements 
@@ -367,13 +359,11 @@ class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterato
       }
       if (myIsInlay) {
         boolean closerToStart = x < (getStartX() + getEndX()) / 2;
-        return new int[]{closerToStart ? getStartVisualColumn() : getEndVisualColumn(), closerToStart ? 1 : 0};
+        return new int[]{getEndVisualColumn(), closerToStart ? 0 : 1};
       }
       x -= myInlaysTotalWidth;
       for (int i = 0; i < myCurrentInlayIndex; i++) x -= myInlays.get(i).getWidthInPixels();
-      int[] result = myDelegate.xToVisualColumn(x);
-      result[0] +=  myInlaysTotalVisualColumns + myCurrentInlayIndex;
-      return result;
+      return myDelegate.xToVisualColumn(x);
     }
 
     float visualColumnToX(int column) {
@@ -382,13 +372,13 @@ class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterato
                getXForVisualColumnInsideFoldRegion(myFoldRegion, column - getStartVisualColumn());
       }
       if (myIsInlay) {
-        return column == getStartVisualColumn() ? getStartX() : getEndX();
+        return getEndX();
       }
       float inlaysSize = 0;
       for (int i = 0; i < myCurrentInlayIndex; i++) {
         inlaysSize += myInlays.get(i).getWidthInPixels();
       }
-      return myInlaysTotalWidth + inlaysSize + myDelegate.visualColumnToX(column - myInlaysTotalVisualColumns - myCurrentInlayIndex);
+      return myInlaysTotalWidth + inlaysSize + myDelegate.visualColumnToX(column);
     }
 
     // absolute

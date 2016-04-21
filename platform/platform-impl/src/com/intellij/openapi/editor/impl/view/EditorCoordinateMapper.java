@@ -310,7 +310,7 @@ class EditorCoordinateMapper {
           break;
         }
         int endColumn = fragment.getEndVisualColumn();
-        if (column <= endColumn) {
+        if (column < endColumn || column == endColumn && !pos.leansRight) {
           return new Point((int)fragment.visualColumnToX(column), y);
         }
         x = fragment.getEndX();

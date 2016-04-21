@@ -72,7 +72,7 @@ public class InlayModelImpl implements InlayModel, Disposable {
     ApplicationManager.getApplication().assertIsDispatchThread();
     List<Inlay> result = new ArrayList<>();
     myInlayTree.processOverlappingWith(startOffset, endOffset, inlay -> {
-      if (inlay.getOffset() != startOffset) result.add(inlay);
+      if (startOffset == endOffset || inlay.getOffset() != startOffset) result.add(inlay);
       return true;
     });
     Collections.sort(result, Comparator.comparingInt(Inlay::getOffset));
