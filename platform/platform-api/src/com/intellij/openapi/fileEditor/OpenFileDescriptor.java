@@ -17,6 +17,7 @@ package com.intellij.openapi.fileEditor;
 
 import com.intellij.ide.*;
 import com.intellij.ide.FileEditorProvider;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.editor.*;
@@ -192,6 +193,10 @@ public class OpenFileDescriptor implements Navigatable, Comparable<OpenFileDescr
   }
 
   public void navigateIn(@NotNull Editor e) {
+    if (!FileEditorManager.getInstance(myProject).canNavigateInEditor(this, e)) {
+      navigateInAnyFileEditor(myProject, true);
+      return;
+    }
     final int offset = getOffset();
     CaretModel caretModel = e.getCaretModel();
     boolean caretMoved = false;

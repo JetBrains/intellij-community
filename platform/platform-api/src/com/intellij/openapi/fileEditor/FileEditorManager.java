@@ -198,4 +198,6 @@ public abstract class FileEditorManager {
    * {@link com.intellij.openapi.fileEditor.FileEditorProvider#getEditorTypeId()}
    */
   public abstract void setSelectedEditor(@NotNull VirtualFile file, @NotNull String fileEditorProviderId);
+
+  public abstract boolean canNavigateInEditor(OpenFileDescriptor openFileDescriptor, Editor e);
 }

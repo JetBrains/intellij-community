@@ -440,6 +440,11 @@ public class Mock {
     @Override
     public void setSelectedEditor(@NotNull VirtualFile file, @NotNull String fileEditorProviderId) {
     }
+
+    @Override
+    public boolean canNavigateInEditor(OpenFileDescriptor openFileDescriptor, Editor e) {
+      return true;
+    }
   }
 
   public static class MyVirtualFile extends VirtualFile {

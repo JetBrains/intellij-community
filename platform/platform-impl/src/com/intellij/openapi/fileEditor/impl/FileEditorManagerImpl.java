@@ -2044,4 +2044,8 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   public ActionCallback getReady(@NotNull Object requestor) {
     return myBusyObject.getReady(requestor);
   }
+
+  public boolean canNavigateInEditor(OpenFileDescriptor openFileDescriptor, Editor e) {
+    return openFileDescriptor.getFile().equals(FileDocumentManager.getInstance().getFile(e.getDocument()));
+  }
 }

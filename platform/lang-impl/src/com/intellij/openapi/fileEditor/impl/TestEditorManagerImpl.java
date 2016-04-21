@@ -492,4 +492,9 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
   @Override
   public void setSelectedEditor(@NotNull VirtualFile file, @NotNull String fileEditorProviderId) {
   }
+
+  @Override
+  public boolean canNavigateInEditor(OpenFileDescriptor openFileDescriptor, Editor e) {
+    return true;
+  }
 }

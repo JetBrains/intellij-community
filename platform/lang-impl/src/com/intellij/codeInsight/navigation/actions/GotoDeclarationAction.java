@@ -26,6 +26,7 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.find.actions.ShowUsagesAction;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 import com.intellij.ide.util.EditSourceUtil;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -60,6 +61,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import sun.security.action.OpenFileInputStreamAction;
 
 import javax.swing.*;
 import java.awt.*;
@@ -97,8 +99,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
       if (elements.length != 1) {
         if (elements.length == 0 && suggestCandidates(TargetElementUtil.findReference(editor, offset)).isEmpty()) {
           PsiElement element = findElementToShowUsagesOf(editor, editor.getCaretModel().getOffset());
-          if (element != null &&
-              !ApplicationManager.getApplication().isOnAir()) { // not implemented for onair yet
+          if (element != null && !ApplicationManager.getApplication().isOnAir()) { // not implemented for onair yet
             ShowUsagesAction showUsages = (ShowUsagesAction)ActionManager.getInstance().getAction(ShowUsagesAction.ID);
             RelativePoint popupPosition = JBPopupFactory.getInstance().guessBestPopupLocation(editor);
             showUsages.startFindUsages(element, popupPosition, editor, ShowUsagesAction.USAGES_PAGE_SIZE);
@@ -167,12 +168,22 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
       if (leaf != null && PsiTreeUtil.isAncestor(element, leaf, false)) {
         Project project = element.getProject();
         IdeDocumentHistory.getInstance(project).includeCurrentCommandAsNavigation();
-        new OpenFileDescriptor(project, currentFile.getViewProvider().getVirtualFile(), offset).navigateIn(currentEditor);
+        Navigatable n = PsiNavigationSupport.getInstance().getDescriptor(element);
+        if (n instanceof OpenFileDescriptor) {
+          ((OpenFileDescriptor)n).navigateIn(currentEditor);
+        }
+        else if (n != null) {
+          n.navigate(true);
+        }
+        else {
+          new OpenFileDescriptor(project, currentFile.getViewProvider().getVirtualFile(), offset).navigateIn(currentEditor);
+        }
         return;
       }
     }
 
-    Navigatable navigatable = element instanceof Navigatable ? (Navigatable)element : EditSourceUtil.getDescriptor(element);
+    Navigatable navigatable =
+      element instanceof Navigatable ? (Navigatable)element : PsiNavigationSupport.getInstance().getDescriptor(element);
     if (navigatable != null && navigatable.canNavigate()) {
       navigatable.navigate(true);
     }
@@ -191,10 +202,10 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     final PsiReference reference = TargetElementUtil.findReference(editor, offset);
 
     if (elements == null || elements.length == 0) {
-      elements = reference == null ? PsiElement.EMPTY_ARRAY
-                                   : PsiUtilCore.toPsiElementArray(
-                                     underModalProgress(reference.getElement().getProject(), "Resolving Reference...",
-                                                        () -> suggestCandidates(reference)));
+      elements = reference == null
+                 ? PsiElement.EMPTY_ARRAY
+                 : PsiUtilCore.toPsiElementArray(
+                   underModalProgress(reference.getElement().getProject(), "Resolving Reference...", () -> suggestCandidates(reference)));
     }
 
     if (elements.length == 1) {
@@ -212,7 +223,8 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
       else {
         final TextRange range = reference.getRangeInElement();
         final String elementText = reference.getElement().getText();
-        LOG.assertTrue(range.getStartOffset() >= 0 && range.getEndOffset() <= elementText.length(), Arrays.toString(elements) + ";" + reference);
+        LOG.assertTrue(range.getStartOffset() >= 0 && range.getEndOffset() <= elementText.length(),
+                       Arrays.toString(elements) + ";" + reference);
         final String refText = range.substring(elementText);
         title = MessageFormat.format(titlePattern, refText);
       }
