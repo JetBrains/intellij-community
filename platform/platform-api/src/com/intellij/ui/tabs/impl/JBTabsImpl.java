@@ -45,6 +45,7 @@ import com.intellij.util.ui.Animator;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TimedDeadzone;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.update.ComparableObject;
 import com.intellij.util.ui.update.LazyUiDisposable;
 import org.jetbrains.annotations.NonNls;
@@ -296,7 +297,12 @@ public class JBTabsImpl extends JComponent
       }
     };
 
-    setFocusCycleRoot(true);
+    // Note: Ideally, we should always set "FocusCycleRoot" to "false", but,
+    // in the interest of backward compatibility, we only do so when a
+    // screen reader is active.
+    // See https://github.com/JetBrains/intellij-community/commit/aa93e5f4cf7f4fd25538164ba04a7e532dc18d2e
+    // why "true" was introduced, although it seems not necessary anymore.
+    setFocusCycleRoot(!ScreenReader.isActive());
     setFocusTraversalPolicy(new LayoutFocusTraversalPolicy() {
       @Override
       public Component getDefaultComponent(final Container aContainer) {
