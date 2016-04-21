@@ -170,10 +170,10 @@ public class PatchDiffRequestFactory {
                                                    @NotNull Document document,
                                                    @NotNull VirtualFile file,
                                                    @NotNull String localContent,
-                                                   @NotNull String patchedContent,
+                                                   @NotNull AppliedTextPatch textPatch,
                                                    @Nullable Consumer<MergeResult> callback)
     throws InvalidDiffRequestException {
-    return createBadMergeRequest(project, document, file, localContent, patchedContent, null, null, null, callback);
+    return createBadMergeRequest(project, document, file, localContent, textPatch, null, null, null, null, callback);
   }
 
   @NotNull
@@ -205,10 +205,11 @@ public class PatchDiffRequestFactory {
                                                    @NotNull Document document,
                                                    @Nullable VirtualFile file,
                                                    @NotNull String localContent,
-                                                   @NotNull String patchedContent,
+                                                   @NotNull AppliedTextPatch textPatch,
                                                    @Nullable String windowTitle,
                                                    @Nullable String localTitle,
-                                                   @Nullable String patchedTitle,
+                                                   @Nullable String resultTitle,
+                                                   @Nullable String patchTitle,
                                                    @Nullable Consumer<MergeResult> callback)
     throws InvalidDiffRequestException {
     if (!DiffUtil.canMakeWritable(document)) {
@@ -217,9 +218,11 @@ public class PatchDiffRequestFactory {
 
     if (windowTitle == null) windowTitle = getBadPatchTitle(file);
     if (localTitle == null) localTitle = VcsBundle.message("patch.apply.conflict.local.version");
-    if (patchedTitle == null) patchedTitle = "Patched (with problems)";
+    if (resultTitle == null) resultTitle = VcsBundle.message("patch.apply.conflict.patched.somehow.version");
+    if (patchTitle == null) patchTitle = VcsBundle.message("patch.apply.conflict.patch");
 
-    return new ApplyPatchMergeRequest(project, document, localContent, patchedContent, windowTitle, localTitle, patchedTitle, callback);
+    return new ApplyPatchMergeRequest(project, document, textPatch, localContent,
+                                      windowTitle, localTitle, resultTitle, patchTitle, callback);
   }
 
   @NotNull

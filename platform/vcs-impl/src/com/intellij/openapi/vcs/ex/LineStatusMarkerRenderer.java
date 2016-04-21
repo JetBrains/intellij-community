@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.util.Function;
+import com.intellij.util.PairConsumer;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -75,6 +76,34 @@ public abstract class LineStatusMarkerRenderer implements ActiveGutterRenderer {
       public void doAction(Editor editor, MouseEvent e) {
         LineStatusMarkerPopup popup = popupBuilder != null ? popupBuilder.fun(editor) : null;
         if (popup != null) popup.showHint(e);
+      }
+    };
+  }
+
+  @NotNull
+  public static LineMarkerRenderer createRenderer(int line1, int line2, @NotNull Color color,
+                                                  @Nullable PairConsumer<Editor, MouseEvent> action) {
+    return new ActiveGutterRenderer() {
+      @Override
+      public void paint(Editor editor, Graphics g, Rectangle r) {
+        Rectangle area = getMarkerArea(editor, r, line1, line2);
+        Color borderColor = getGutterBorderColor(editor);
+        if (area.height != 0) {
+          paintRect(g, color, borderColor, area.x, area.y, area.x + area.width, area.y + area.height);
+        }
+        else {
+          paintTriangle(g, color, borderColor, area.x, area.x + area.width, area.y);
+        }
+      }
+
+      @Override
+      public boolean canDoAction(MouseEvent e) {
+        return action != null && isInsideMarkerArea(e);
+      }
+
+      @Override
+      public void doAction(Editor editor, MouseEvent e) {
+        if (action != null) action.consume(editor, e);
       }
     };
   }

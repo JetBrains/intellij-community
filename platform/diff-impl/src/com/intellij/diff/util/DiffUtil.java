@@ -694,6 +694,22 @@ public class DiffUtil {
     document.replaceString(offset1, offset2, text);
   }
 
+  public static void applyModification(@NotNull Document document,
+                                       int line1,
+                                       int line2,
+                                       @NotNull List<? extends CharSequence> newLines) {
+    if (line1 == line2 && newLines.isEmpty()) return;
+    if (line1 == line2) {
+      insertLines(document, line1, StringUtil.join(newLines, "\n"));
+    }
+    else if (newLines.isEmpty()) {
+      deleteLines(document, line1, line2);
+    }
+    else {
+      replaceLines(document, line1, line2, StringUtil.join(newLines, "\n"));
+    }
+  }
+
   public static void applyModification(@NotNull Document document1,
                                        int line1,
                                        int line2,
@@ -793,11 +809,12 @@ public class DiffUtil {
 
   @NotNull
   public static UpdatedLineRange updateRangeOnModification(int start, int end, int changeStart, int changeEnd, int shift) {
-    return updateRangeOnModification(start, end, changeStart, changeEnd, shift, false);
+    return updateRangeOnModification(start, end, changeStart, changeEnd, shift, false, false);
   }
 
   @NotNull
-  public static UpdatedLineRange updateRangeOnModification(int start, int end, int changeStart, int changeEnd, int shift, boolean greedy) {
+  public static UpdatedLineRange updateRangeOnModification(int start, int end, int changeStart, int changeEnd, int shift,
+                                                           boolean greedy, boolean strict) {
     if (end <= changeStart) { // change before
       return new UpdatedLineRange(start, end, false);
     }
@@ -806,7 +823,7 @@ public class DiffUtil {
     }
 
     if (start <= changeStart && end >= changeEnd) { // change inside
-      return new UpdatedLineRange(start, end + shift, false);
+      return new UpdatedLineRange(start, end + shift, strict);
     }
 
     // range is damaged. We don't know new boundaries.

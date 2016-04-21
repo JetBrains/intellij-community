@@ -22,35 +22,39 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ApplyPatchMergeRequest extends MergeRequest {
   @Nullable private final Project myProject;
+
   @NotNull private final Document myDocument;
+  @NotNull private final AppliedTextPatch myAppliedPatch;
 
   @NotNull private final CharSequence myOriginalContent;
   @NotNull private final String myLocalContent;
-  @NotNull private final String myPatchedContent;
 
   @NotNull private final String myWindowTitle;
   @NotNull private final String myLocalTitle;
-  @NotNull private final String myPatchedTitle;
+  @NotNull private final String myResultTitle;
+  @NotNull private final String myPatchTitle;
 
   @Nullable private final Consumer<MergeResult> myCallback;
 
   public ApplyPatchMergeRequest(@Nullable Project project,
                                 @NotNull Document document,
+                                @NotNull AppliedTextPatch appliedPatch,
                                 @NotNull String localContent,
-                                @NotNull String patchedContent,
                                 @NotNull String windowTitle,
                                 @NotNull String localTitle,
-                                @NotNull String patchedTitle,
+                                @NotNull String resultTitle,
+                                @NotNull String patchTitle,
                                 @Nullable Consumer<MergeResult> callback) {
     myProject = project;
     myDocument = document;
+    myAppliedPatch = appliedPatch;
 
     myOriginalContent = ApplicationManager.getApplication().runReadAction(new Computable<CharSequence>() {
       @Override
@@ -59,11 +63,11 @@ public class ApplyPatchMergeRequest extends MergeRequest {
       }
     });
     myLocalContent = localContent;
-    myPatchedContent = patchedContent;
 
     myWindowTitle = windowTitle;
     myLocalTitle = localTitle;
-    myPatchedTitle = patchedTitle;
+    myResultTitle = resultTitle;
+    myPatchTitle = patchTitle;
 
     myCallback = callback;
   }
@@ -84,8 +88,8 @@ public class ApplyPatchMergeRequest extends MergeRequest {
   }
 
   @NotNull
-  public String getPatchedContent() {
-    return myPatchedContent;
+  public AppliedTextPatch getPatch() {
+    return myAppliedPatch;
   }
 
   @Nullable
@@ -100,8 +104,13 @@ public class ApplyPatchMergeRequest extends MergeRequest {
   }
 
   @NotNull
-  public String getPatchedTitle() {
-    return myPatchedTitle;
+  public String getResultTitle() {
+    return myResultTitle;
+  }
+
+  @NotNull
+  public String getPatchTitle() {
+    return myPatchTitle;
   }
 
   @Override
@@ -115,7 +124,7 @@ public class ApplyPatchMergeRequest extends MergeRequest {
         applyContent = myLocalContent;
         break;
       case RIGHT:
-        applyContent = myPatchedContent;
+        applyContent = PatchChangeBuilder.getPatchedContent(myAppliedPatch, myLocalContent);
         break;
       case RESOLVED:
         applyContent = null;

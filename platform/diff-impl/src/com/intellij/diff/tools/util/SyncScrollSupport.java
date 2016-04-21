@@ -411,8 +411,8 @@ public class SyncScrollSupport {
   }
 
   @NotNull
-  private static int[] getTargetOffsets(@NotNull Editor editor1, @NotNull Editor editor2,
-                                        int startLine1, int endLine1, int startLine2, int endLine2) {
+  public static int[] getTargetOffsets(@NotNull Editor editor1, @NotNull Editor editor2,
+                                       int startLine1, int endLine1, int startLine2, int endLine2) {
     return getTargetOffsets(new Editor[]{editor1, editor2},
                             new int[]{startLine1, startLine2},
                             new int[]{endLine1, endLine2});
