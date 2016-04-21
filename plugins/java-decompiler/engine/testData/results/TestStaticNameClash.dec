@@ -3,9 +3,9 @@ package pkg;
 public class TestStaticNameClash {
    public static String property;
 
-   public static void setProperty(String property) {
-      TestStaticNameClash.property = property;// 12
-   }// 13
+   public static void setProperty(String var0) {
+      property = var0;// 8
+   }// 9
 }
 
 class 'pkg/TestStaticNameClash' {
@@ -16,5 +16,5 @@ class 'pkg/TestStaticNameClash' {
 }
 
 Lines mapping:
-12 <-> 7
-13 <-> 8
+8 <-> 7
+9 <-> 8
