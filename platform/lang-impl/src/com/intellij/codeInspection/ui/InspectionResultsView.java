@@ -59,7 +59,6 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
-import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.OpenSourceUtil;
@@ -185,6 +184,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
         if (!isExcludeAction || !myGlobalInspectionContext.getUIOptions().FILTER_RESOLVED_ITEMS) {
           myTree.queueUpdate();
         }
+        syncRightPanel();
       }
     };
     createActionsToolbar();
@@ -330,7 +330,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
 
   @Override
   public void dispose() {
-    releaseEditor(myPreviewEditor);
+    InspectionResultsViewUtil.releaseEditor(myPreviewEditor);
     mySplitter.dispose();
     myInspectionProfile = null;
     myDisposed = true;
@@ -389,7 +389,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     }
     if (myTree.getSelectionModel().getSelectionCount() != 1) {
       if (myTree.getSelectedToolWrapper() == null) {
-        mySplitter.setSecondComponent(getNothingToShowTextLabel());
+        mySplitter.setSecondComponent(InspectionResultsViewUtil.getNothingToShowTextLabel());
       }
       else {
         showInRightPanel(myTree.getCommonSelectedElement());
@@ -410,7 +410,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
         }
         else if (node instanceof InspectionNode) {
           if (myGlobalInspectionContext.getPresentation(((InspectionNode)node).getToolWrapper()).isDummy()) {
-            mySplitter.setSecondComponent(getNothingToShowTextLabel());
+            mySplitter.setSecondComponent(InspectionResultsViewUtil.getNothingToShowTextLabel());
           }
           else {
             showInRightPanel(null);
@@ -431,20 +431,12 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
         oldEditor.putUserData(PREVIEW_EDITOR_IS_REUSED_KEY, null);
       }
       else {
-        releaseEditor(oldEditor);
+        InspectionResultsViewUtil.releaseEditor(oldEditor);
         if (oldEditor == myPreviewEditor) {
           myPreviewEditor = null;
         }
       }
     }
-  }
-
-  @NotNull
-  private static JLabel getNothingToShowTextLabel() {
-    final JLabel multipleSelectionLabel = new JBLabel(InspectionViewNavigationPanel.getTitleText(false, false));
-    multipleSelectionLabel.setVerticalAlignment(SwingConstants.TOP);
-    multipleSelectionLabel.setBorder(IdeBorderFactory.createEmptyBorder(16, 12, 0, 0));
-    return multipleSelectionLabel;
   }
 
   private void showInRightPanel(@Nullable final RefEntity refEntity) {
@@ -514,7 +506,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
         });
       }
       else {
-        myPreviewEditor = (EditorEx)EditorFactory.getInstance().createEditor(document, myProject, file.getVirtualFile(), true);
+        myPreviewEditor = (EditorEx)EditorFactory.getInstance().createEditor( document, myProject, file.getVirtualFile(), true);
         DiffUtil.setFoldingModelSupport(myPreviewEditor);
         final EditorSettings settings = myPreviewEditor.getSettings();
         settings.setLineNumbersShown(false);
@@ -542,7 +534,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     else if (selectedEntity == null) {
       return Pair.create(new InspectionNodeInfo(myTree, myProject), null);
     }
-    return Pair.create(new JPanel(), null);
+    return Pair.create(InspectionResultsViewUtil.getInvalidEntityLabel(selectedEntity), null);
   }
 
   private boolean reuseEditorFor(Document document) {
@@ -842,7 +834,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     }
     else if (selectedNode instanceof ProblemDescriptionNode && CommonDataKeys.NAVIGATABLE.is(dataId)) {
       Navigatable navigatable = getSelectedNavigatable(((ProblemDescriptionNode)selectedNode).getDescriptor());
-      return navigatable == null ? getNavigatableForInvalidNode((ProblemDescriptionNode)selectedNode) : navigatable;
+      return navigatable == null ? InspectionResultsViewUtil.getNavigatableForInvalidNode((ProblemDescriptionNode)selectedNode) : navigatable;
     }
 
     return null;
@@ -1012,20 +1004,5 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
         myGlobalInspectionContext.doInspections(myScope);
       }
     }
-  }
-
-  private static void releaseEditor(@Nullable Editor editor) {
-    if (editor != null && !editor.isDisposed()) {
-      EditorFactory.getInstance().releaseEditor(editor);
-    }
-  }
-
-  @Nullable
-  private static Navigatable getNavigatableForInvalidNode(ProblemDescriptionNode node) {
-    RefEntity element = node.getElement();
-    if (!(element instanceof RefElement)) return null;
-    PsiElement containingElement = ((RefElement)element).getElement();
-    if (!(containingElement instanceof NavigatablePsiElement) || !containingElement.isValid()) return null;
-    return (Navigatable)containingElement;
   }
 }

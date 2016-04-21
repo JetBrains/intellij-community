@@ -85,8 +85,14 @@ class InspectionViewPsiTreeChangeAdapter extends PsiTreeChangeAdapter {
                   RefEntity element = ((CachedInspectionTreeNode)node).getElement();
                   if (element instanceof RefElement) {
                     final SmartPsiElementPointer pointer = ((RefElement)element).getPointer();
-                    VirtualFile containingFile = pointer.getVirtualFile();
-                    if (files.contains(containingFile)) {
+                    VirtualFile strictVirtualFile = pointer.getVirtualFile();
+                    if (strictVirtualFile == null || !strictVirtualFile.isValid()) {
+                      final PsiFile file = pointer.getContainingFile();
+                      if (file != null && file.isValid()) {
+                        strictVirtualFile = file.getVirtualFile();
+                      }
+                    }
+                    if (strictVirtualFile == null || files.contains(strictVirtualFile)) {
                       ((CachedInspectionTreeNode)node).dropCache(project);
                       if (!needUpdateUI[0]) {
                         needUpdateUI[0] = true;
