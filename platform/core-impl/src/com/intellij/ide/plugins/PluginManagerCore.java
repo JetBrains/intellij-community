@@ -1134,7 +1134,7 @@ public class PluginManagerCore {
       }
     }
 
-    if (!StringUtil.isEmpty(untilBuild)) {
+    if (!StringUtil.isEmpty(untilBuild) && !buildNumber.isSnapshot()) {
       BuildNumber untilBuildNumber = BuildNumber.fromString(untilBuild, descriptorName);
       if (untilBuildNumber.compareTo(buildNumber) < 0) {
         if (descriptorDebugString != null) {
