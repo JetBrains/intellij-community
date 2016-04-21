@@ -142,14 +142,14 @@ public abstract class RestService extends HttpRequestHandler {
   @Override
   public final boolean process(@NotNull QueryStringDecoder urlDecoder, @NotNull FullHttpRequest request, @NotNull ChannelHandlerContext context) throws IOException {
     try {
-      if (!isHostTrusted(request)) {
-        Responses.send(Responses.orInSafeMode(HttpResponseStatus.FORBIDDEN, HttpResponseStatus.OK), context.channel(), request);
+      AtomicInteger counter = abuseCounter.get(((InetSocketAddress)context.channel().remoteAddress()).getAddress());
+      if (counter.incrementAndGet() > Registry.intValue("ide.rest.api.requests.per.minute", 30)) {
+        Responses.send(Responses.orInSafeMode(HttpResponseStatus.TOO_MANY_REQUESTS, HttpResponseStatus.OK), context.channel(), request);
         return true;
       }
 
-      AtomicInteger counter = abuseCounter.get(((InetSocketAddress)context.channel().remoteAddress()).getAddress());
-      if (counter.incrementAndGet() > Registry.intValue("ide.rest.api.requests.per.minute", 60)) {
-        Responses.send(Responses.orInSafeMode(HttpResponseStatus.TOO_MANY_REQUESTS, HttpResponseStatus.OK), context.channel(), request);
+      if (!isHostTrusted(request)) {
+        Responses.send(Responses.orInSafeMode(HttpResponseStatus.FORBIDDEN, HttpResponseStatus.OK), context.channel(), request);
         return true;
       }
 
