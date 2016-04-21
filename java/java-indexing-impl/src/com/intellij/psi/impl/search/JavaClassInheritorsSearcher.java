@@ -85,7 +85,7 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
       return processLocalScope(project, parameters, (LocalSearchScope)searchScope, baseClass, consumer);
     }
 
-    Iterable<PsiClass> cached = getOrComputeSubClasses(project, parameters.getClassToProcess());
+    Iterable<PsiClass> cached = getOrComputeSubClasses(project, baseClass);
 
     for (final PsiClass subClass : cached) {
       ProgressManager.checkCanceled();
