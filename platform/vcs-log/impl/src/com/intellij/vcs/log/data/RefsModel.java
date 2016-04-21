@@ -55,7 +55,9 @@ public class RefsModel implements VcsLogRefs {
     TIntObjectHashMap<VirtualFile> map = new TIntObjectHashMap<VirtualFile>();
     for (Integer head : heads) {
       CommitId commitId = hashMap.getCommitId(head);
-      map.put(head, commitId.getRoot());
+      if (commitId != null) {
+        map.put(head, commitId.getRoot());
+      }
     }
     return map;
   }
