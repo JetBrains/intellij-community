@@ -86,7 +86,9 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
 
   @Override
   public void visitProblemSeverities(FactoryMap<HighlightDisplayLevel, Integer> counter) {
-    counter.put(myLevel, counter.get(myLevel) + 1);
+    if (!myPresentation.isProblemResolved(getElement(), myDescriptor)) {
+      counter.put(myLevel, counter.get(myLevel) + 1);
+    }
   }
 
   @Override
