@@ -80,16 +80,12 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
 
   public void testJdk8Class() {
     String testDir = JavaTestUtil.getJavaTestDataPath();
-    String clsPath = testDir + "/../../mockJDK-1.8/jre/lib/rt.jar!/java/lang/Class.class";
-    String txtPath = testDir + "/psi/cls/mirror/Class.txt";
-    doTest(clsPath, txtPath);
+    doTest(testDir + "/../../mockJDK-1.8/jre/lib/rt.jar!/java/lang/Class.class", testDir + "/psi/cls/mirror/Class.txt");
   }
 
   public void testStaticMethodInInterface() {
     String testDir = JavaTestUtil.getJavaTestDataPath();
-    String clsPath = testDir + "/../../mockJDK-1.8/jre/lib/rt.jar!/java/util/function/Function.class";
-    String txtPath = testDir + "/psi/cls/mirror/Function.txt";
-    doTest(clsPath, txtPath);
+    doTest(testDir + "/../../mockJDK-1.8/jre/lib/rt.jar!/java/util/function/Function.class", testDir + "/psi/cls/mirror/Function.txt");
   }
 
   public void testStrayInnersFiltering() throws IOException {
