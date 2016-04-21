@@ -120,10 +120,7 @@ import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.ui.HintListener;
 import com.intellij.ui.LightweightHint;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.ExceptionUtil;
-import com.intellij.util.ReflectionUtil;
-import com.intellij.util.TimeoutUtil;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.UIUtil;
@@ -2279,6 +2276,28 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     finally {
       EditorFactory.getInstance().releaseEditor(myEditor);
     }
+  }
+
+  public void testFileReload() throws Exception {
+    VirtualFile file = createFile("a.java", "").getVirtualFile();
+    Document document = getDocument(file);
+    assertNotNull(document);
+
+    FileStatusMap fileStatusMap = myDaemonCodeAnalyzer.getFileStatusMap();
+
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      PlatformTestUtil.tryGcSoftlyReachableObjects();
+      assertNull(PsiDocumentManager.getInstance(getProject()).getCachedPsiFile(document));
+
+      document.insertString(0, "class X { void foo() {}}");
+      assertEquals(TextRange.from(0, document.getTextLength()), fileStatusMap.getFileDirtyScope(document, Pass.UPDATE_ALL));
+
+      FileContentUtilCore.reparseFiles(file);
+      assertEquals(TextRange.from(0, document.getTextLength()), fileStatusMap.getFileDirtyScope(document, Pass.UPDATE_ALL));
+
+      findClass("X").getMethods()[0].delete();
+      assertEquals(TextRange.from(0, document.getTextLength()), fileStatusMap.getFileDirtyScope(document, Pass.UPDATE_ALL));
+    });
   }
 }
 
