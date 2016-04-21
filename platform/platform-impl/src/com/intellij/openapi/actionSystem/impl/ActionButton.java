@@ -124,8 +124,13 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     }
   }
 
+  @Override
+  public boolean isEnabled() {
+    return super.isEnabled() && myPresentation.isEnabled();
+  }
+
   protected boolean isButtonEnabled() {
-    return isEnabled() && myPresentation.isEnabled();
+    return isEnabled();
   }
 
   private void onMousePresenceChanged(boolean setInfo) {
