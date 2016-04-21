@@ -36,7 +36,7 @@ envs {
   jython "jython25", []
   textfile "jython25/tags.txt", "jython"
 
-  conda "django_latest", "3.5", ["django"]
+  conda "django_latest", "3.4", ["django"]
   textfile "django_latest/tags.txt", "django"
 }
 
