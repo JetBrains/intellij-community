@@ -136,3 +136,20 @@ interface ThrowsTypeParameter<T, E extends Exception> {
     } catch (Exception e) {}
   }
 }
+class Ex<T extends S, S extends IOException> {
+  void bar() throws T, S {}
+
+  void foo(Ex<?, ?> i) {
+    try {
+      i.bar();
+    }
+    catch (<warning descr="'catch' of 'Exception' is too broad, masking exception 'IOException'">Exception</warning> ignored) {}
+  }
+
+  void foo2(Ex<?, ?> ex) {
+    try {
+      ex.bar();
+    }
+    catch (IOException ignored) {}
+  }
+}
