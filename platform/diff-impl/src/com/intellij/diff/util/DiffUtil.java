@@ -70,6 +70,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapperDialog;
 import com.intellij.openapi.ui.WindowWrapper;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -217,6 +218,12 @@ public class DiffUtil {
   //
   // Scrolling
   //
+
+  public static void disableBlitting(@NotNull EditorEx editor) {
+    if (Registry.is("diff.divider.repainting.disable.blitting")) {
+      editor.getScrollPane().getViewport().setScrollMode(JViewport.SIMPLE_SCROLL_MODE);
+    }
+  }
 
   public static void moveCaret(@Nullable final Editor editor, int line) {
     if (editor == null) return;

@@ -42,7 +42,6 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.CalledInAwt;
@@ -107,10 +106,8 @@ public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEd
     ThreeSide.LEFT.select(holders).getEditor().setVerticalScrollbarOrientation(EditorEx.VERTICAL_SCROLLBAR_LEFT);
     ((EditorMarkupModel)ThreeSide.BASE.select(holders).getEditor().getMarkupModel()).setErrorStripeVisible(false);
 
-    if (Registry.is("diff.divider.repainting.disable.blitting")) {
-      for (TextEditorHolder holder : holders) {
-        holder.getEditor().getScrollPane().getViewport().setScrollMode(JViewport.SIMPLE_SCROLL_MODE);
-      }
+    for (TextEditorHolder holder : holders) {
+      DiffUtil.disableBlitting(holder.getEditor());
     }
 
     return holders;
