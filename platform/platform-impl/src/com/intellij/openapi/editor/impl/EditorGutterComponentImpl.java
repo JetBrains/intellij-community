@@ -1038,7 +1038,6 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     return Math.max(centerRelative, baselineRelative);
   }
 
-  @Override
   public Color getOutlineColor(boolean isActive) {
     ColorKey key = isActive ? EditorColors.SELECTED_TEARLINE_COLOR : EditorColors.TEARLINE_COLOR;
     Color color = myEditor.getColorsScheme().getColor(key);
@@ -1247,17 +1246,15 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     return EditorUtil.isRealFileEditor(myEditor);
   }
 
-  @Override
-  public boolean isLineMarkersShown() {
+  private boolean isLineMarkersShown() {
     return myEditor.getSettings().isLineMarkerAreaShown();
   }
 
-  @Override
-  public boolean areIconsShown() {
+  private boolean areIconsShown() {
     return myEditor.getSettings().areGutterIconsShown();
   }
 
-  public boolean isLineNumbersShown() {
+  private boolean isLineNumbersShown() {
     return myEditor.getSettings().isLineNumbersShown();
   }
 
@@ -1266,8 +1263,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     return !myTextAnnotationGutters.isEmpty();
   }
 
-  @Override
-  public boolean isFoldingOutlineShown() {
+  private boolean isFoldingOutlineShown() {
     return myEditor.getSettings().isFoldingOutlineShown() &&
            myEditor.getFoldingModel().isFoldingEnabled() &&
            !myEditor.isInPresentationMode();
