@@ -94,7 +94,7 @@ public class PluginManagerCore {
       if (ourBuildNumber == null) {
         ourBuildNumber = BUILD_NUMBER == null ? null : BuildNumber.fromString(BUILD_NUMBER);
         if (ourBuildNumber == null) {
-          ourBuildNumber = BuildNumber.fromString("SNAPSHOT");
+          ourBuildNumber = BuildNumber.currentVersion();
         }
       }
       return ourBuildNumber;
