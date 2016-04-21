@@ -18,6 +18,7 @@ package com.intellij.ide.plugins;
 import com.intellij.openapi.util.BuildNumber;
 import org.junit.Test;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -82,11 +83,28 @@ public class PluginManagerTest {
 
     assertCompatible("145.SNAPSHOT", "145.2", null);
 
-    // snapshot ignore until build (special case)
-    assertCompatible("145.SNAPSHOT", null, "145");
-    assertCompatible("145.SNAPSHOT", null, "144");
-    assertCompatible("145.2.SNAPSHOT", null, "145");
-    assertCompatible("145.2.SNAPSHOT", null, "144");
+    assertCompatible("145.SNAPSHOT", null, "146");
+    assertIncompatible("145.SNAPSHOT", null, "145");
+    assertIncompatible("145.SNAPSHOT", null, "144");
+    assertIncompatible("145.2.SNAPSHOT", null, "145");
+    assertIncompatible("145.2.SNAPSHOT", null, "144");
+  }
+
+  @Test
+  public void convertExplicitBigNumberInUntilBuildToStar() {
+    assertConvertsTo(null, null);
+    assertConvertsTo("145", "145");
+    assertConvertsTo("145.999", "145.999");
+    assertConvertsTo("145.9999", "145.*");
+    assertConvertsTo("145.99999", "145.*");
+    assertConvertsTo("145.9999.1", "145.9999.1");
+    assertConvertsTo("145.1000", "145.1000");
+    assertConvertsTo("145.10000", "145.*");
+    assertConvertsTo("145.100000", "145.*");
+  }
+
+  private static void assertConvertsTo(String untilBuild, String result) {
+    assertEquals(result, IdeaPluginDescriptorImpl.convertExplicitBigNumberInUntilBuildToStar(untilBuild));
   }
 
   private static void assertIncompatible(String ideVersion, String sinceBuild, String untilBuild) {
