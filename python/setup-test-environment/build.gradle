@@ -6,8 +6,8 @@ plugins {
 
 
 envs {
-  bootstrapDirectory = new File(buildDir, 'pythons')
-  envsDirectory = new File(buildDir, 'envs')
+  bootstrapDirectory = new File(System.getenv().getOrDefault("PYCHARM_PYTHONS", new File(buildDir, 'pythons').path))
+  envsDirectory = new File(System.getenv().getOrDefault("PYCHARM_PYTHON_ENVS", new File(buildDir, 'envs').path))
   minicondaVersion = 'latest'
   packages = ["pip", "setuptools"]
   _64Bits = true
