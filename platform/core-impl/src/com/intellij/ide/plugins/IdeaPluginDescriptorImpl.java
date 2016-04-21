@@ -220,9 +220,6 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     if (pluginBean.ideaVersion != null) {
       mySinceBuild = pluginBean.ideaVersion.sinceBuild;
       myUntilBuild = convertExplicitBigNumberInUntilBuildToStar(pluginBean.ideaVersion.untilBuild);
-      if (myUntilBuild != null && myUntilBuild.matches("9{4,}+|10{5,}+")) {
-        myUntilBuild = "*";
-      }
     }
 
     myResourceBundleBaseName = pluginBean.resourceBundle;
