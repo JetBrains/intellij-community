@@ -20,6 +20,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.editorActions.smartEnter.PySmartEnterProcessor;
+import com.jetbrains.python.psi.PyAnnotation;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyParameterList;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
@@ -45,7 +46,15 @@ public class PyFunctionFixer extends PyFixer<PyFunction> {
       if (function.getNameNode() == null) {
         processor.registerUnresolvedError(parameterList.getTextOffset());
       }
-      editor.getDocument().insertString(parameterList.getTextRange().getEndOffset(), ":");
+      final int colonOffset;
+      final PyAnnotation annotation = function.getAnnotation();
+      if (annotation != null) {
+        colonOffset = annotation.getTextRange().getEndOffset();
+      }
+      else {
+        colonOffset = parameterList.getTextRange().getEndOffset();
+      }
+      editor.getDocument().insertString(colonOffset, ":");
     }
   }
 
@@ -54,7 +63,7 @@ public class PyFunctionFixer extends PyFixer<PyFunction> {
    * Attempting to operate in the context of such "fake" function definition may lead to various kinds of malformed code and we want to
    * avoid it.
    *
-   * @return whether it's more the less proper function definition, i.e. it contains at least {@code def} keyword
+   * @return whether it's more or less proper function definition, i.e. it contains at least {@code def} keyword
    */
   static boolean isFakeFunction(@NotNull PyFunction function) {
     return function.getNode().findChildByType(PyTokenTypes.DEF_KEYWORD) == null;
