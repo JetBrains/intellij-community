@@ -65,7 +65,7 @@ public class VcsLogProgress {
     }
   }
 
-  private boolean isRunning() {
+  public boolean isRunning() {
     synchronized (myLock) {
       return myRunningTasksCount > 0;
     }
