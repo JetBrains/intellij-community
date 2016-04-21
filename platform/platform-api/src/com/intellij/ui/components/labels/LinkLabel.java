@@ -23,6 +23,9 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.UI;
 import com.intellij.util.ui.JBRectangle;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,10 +34,7 @@ import javax.accessibility.AccessibleContext;
 import javax.accessibility.AccessibleRole;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.InputEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionListener;
+import java.awt.event.*;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -50,6 +50,7 @@ public class LinkLabel<T> extends JLabel {
   private static final Set<String> ourVisitedLinks = new HashSet<String>();
 
   private boolean myIsLinkActive;
+  private boolean myIsSelected;
 
   private String myVisitedLinksKey;
   private Icon myHoveringIcon;
@@ -81,6 +82,10 @@ public class LinkLabel<T> extends JLabel {
                    @Nullable String aVisitedLinksKey) {
     super(text, icon, SwingConstants.LEFT);
     setOpaque(false);
+    // Note: Ideally, we should be focusable by default in all cases, however,
+    // to preserve backward compatibility with existing behavior, we make
+    // ourselves focusable only when a screen reader is active.
+    setFocusable(ScreenReader.isActive());
 
     setListener(aListener, aLinkData);
     myInactiveIcon = getIcon();
@@ -88,6 +93,31 @@ public class LinkLabel<T> extends JLabel {
     MyMouseHandler mouseHandler = new MyMouseHandler();
     addMouseListener(mouseHandler);
     addMouseMotionListener(mouseHandler);
+    addKeyListener(new KeyAdapter() {
+      @Override
+      public void keyReleased(KeyEvent e) {
+        super.keyReleased(e);
+        if (e.getModifiers() == 0 && e.getKeyCode() == KeyEvent.VK_SPACE) {
+          e.consume();
+          doClick();
+        }
+      }
+    });
+    addFocusListener(new FocusListener() {
+      @Override
+      public void focusGained(FocusEvent e) {
+        myIsSelected = true;
+        myUnderline = true;
+        repaint();
+      }
+
+      @Override
+      public void focusLost(FocusEvent e) {
+        myIsSelected = false;
+        myUnderline = false;
+        repaint();
+      }
+    });
 
     myVisitedLinksKey = aVisitedLinksKey;
   }
@@ -140,6 +170,12 @@ public class LinkLabel<T> extends JLabel {
         Rectangle bounds = getTextBounds();
         int lineY = getUI().getBaseline(this, getWidth(), getHeight()) + 1;
         g.drawLine(bounds.x, lineY, bounds.x + bounds.width, lineY);
+      }
+
+      if (myIsSelected){
+        g.setColor(UIUtil.getTreeSelectionBorderColor());
+        Rectangle bounds = getTextBounds();
+        UIUtil.drawDottedRectangle(g, bounds.x, bounds.y, bounds.x + bounds.width - 1, bounds.y + bounds.height - 1);
       }
     }
   }
