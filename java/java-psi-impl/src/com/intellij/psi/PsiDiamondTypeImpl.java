@@ -162,7 +162,12 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
                                                                                                   }) 
                                                                                         : getStaticFactoryCandidateInfo(newExpression, context);
         staticFactoryRef.set(staticFactoryCandidateInfo);
-        return staticFactoryCandidateInfo != null ? staticFactoryCandidateInfo.getSubstitutor() : null;
+        if (staticFactoryCandidateInfo != null) {
+          PsiSubstitutor substitutor = staticFactoryCandidateInfo.getSubstitutor();
+          return staticFactoryCandidateInfo instanceof MethodCandidateInfo && ((MethodCandidateInfo)staticFactoryCandidateInfo).getInferenceErrorMessage() != null
+                 ? null : substitutor;
+        }
+        return null;
       }
     });
     if (inferredSubstitutor == null) {
