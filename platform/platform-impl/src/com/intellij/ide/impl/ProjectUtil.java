@@ -178,12 +178,6 @@ public class ProjectUtil {
       }
     }
 
-    if (isRemotePath(path) && !RecentProjectsManager.getInstance().hasPath(path)) {
-      if (!confirmLoadingFromRemotePath(path, "warning.load.project.from.share", "title.load.project.from.share")) {
-        return null;
-      }
-    }
-
     ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
     Project project = null;
     try {

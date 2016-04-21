@@ -177,21 +177,27 @@ class OpenFileHttpService extends RestService {
     final File file = new File(systemIndependentName);
 
     if (file.isAbsolute()) {
-      if (com.intellij.ide.impl.ProjectUtil.isRemotePath(systemIndependentName)) {
-        Ref<Boolean> confirmLoadingRemoteFile = new Ref<>();
-        try {
-          SwingUtilities.invokeAndWait(new Runnable() {
-            @Override
-            public void run() {
-              boolean value = com.intellij.ide.impl.ProjectUtil
-                .confirmLoadingFromRemotePath(systemIndependentName, "warning.load.file.from.share", "title.load.file.from.share");
-              confirmLoadingRemoteFile.set(value);
+      Ref<Promise<Void>> result = Ref.create();
+      try {
+        SwingUtilities.invokeAndWait(new Runnable() {
+          @Override
+          public void run() {
+            boolean remotePath = com.intellij.ide.impl.ProjectUtil.isRemotePath(systemIndependentName);
+            boolean userReallyWantsToOpen = com.intellij.ide.impl.ProjectUtil.confirmLoadingFromRemotePath(
+              systemIndependentName,
+              remotePath ? "warning.load.file.from.share" : "warning.load.local.file",
+              remotePath ? "title.load.file.from.share" : "title.load.local.file"
+            );
+
+            if (!userReallyWantsToOpen) {
+              result.set(Promise.reject(NOT_FOUND));
             }
-          });
-        } catch (Throwable ignored) {}
-        if (confirmLoadingRemoteFile.get() != Boolean.TRUE) {
-          return Promise.reject(NOT_FOUND);
-        }
+          }
+        });
+      } catch (Throwable ignored) {
+      }
+      if (result.get() != null) {
+        return result.get();
       }
       return openAbsolutePath(file, request);
     }
