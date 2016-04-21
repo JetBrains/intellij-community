@@ -525,6 +525,7 @@ public class ExprProcessor implements CodeConstants {
             new FieldExprent(pool.getLinkConstant(instr.getOperand(0)), instr.opcode == opc_putstatic ? null : stack.pop(),
                              bytecode_offsets);
           exprlist.add(new AssignmentExprent(exprfield, valfield, bytecode_offsets));
+          cl.addField(((FieldExprent) exprfield).getName());
           break;
         case opc_invokevirtual:
         case opc_invokespecial:
