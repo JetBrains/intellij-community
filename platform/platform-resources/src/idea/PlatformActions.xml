@@ -500,7 +500,9 @@
       <reference ref="Forward"/>
       <separator/>
       <group id="MainToolBarSettings">
+        <!-- Android Studio: Not including Settings in toolbar
         <reference ref="ShowSettings"/>
+        -->
       </group>
       <separator/>
       <reference ref="HelpTopics"/>
