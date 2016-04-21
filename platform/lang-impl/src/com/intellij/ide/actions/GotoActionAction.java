@@ -34,6 +34,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.keymap.impl.ActionShortcutRestrictions;
 import com.intellij.openapi.keymap.impl.KeymapManagerImpl;
 import com.intellij.openapi.keymap.impl.ui.KeymapPanel;
 import com.intellij.openapi.progress.util.ProgressWindow;
@@ -195,7 +196,7 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
               KeymapManagerImpl km = ((KeymapManagerImpl)KeymapManager.getInstance());
               Keymap k = km.getActiveKeymap();
               if (!k.canModify()) return;
-              KeymapPanel.addKeyboardShortcut(id, ArrayUtil.getFirstElement(k.getShortcuts(id)), k, component, new QuickList[]{});
+              KeymapPanel.addKeyboardShortcut(id, ActionShortcutRestrictions.getInstance().getForActionId(id), k, component);
               popup.repaintListImmediate();
             }
           }
