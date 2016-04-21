@@ -23,9 +23,9 @@ import com.intellij.remote.RemoteProcessControl;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.jetbrains.python.debugger.PyDebugProcess;
+import com.jetbrains.python.debugger.PyDebugRunner;
 import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
 import org.jetbrains.annotations.NotNull;
-
 import java.net.ServerSocket;
 import java.util.Map;
 
@@ -89,8 +89,14 @@ public class PyConsoleDebugProcess extends PyDebugProcess {
       portToConnect = myLocalPort;
     }
     Map<String, Boolean> optionsMap = makeDebugOptionsMap(getSession());
+    Map<String, String> envs = getDebuggerEnvs(getSession());
+    consoleCommunication.connectToDebugger(portToConnect, optionsMap, envs);
+  }
 
-    consoleCommunication.connectToDebugger(portToConnect, optionsMap);
+  private static Map<String,String> getDebuggerEnvs(XDebugSession session) {
+    Map<String, String> env = Maps.newHashMap();
+    PyDebugRunner.configureDebugEnvironment(session.getProject() , env);
+    return env;
   }
 
   private static Map<String, Boolean> makeDebugOptionsMap(XDebugSession session) {

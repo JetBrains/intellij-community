@@ -1,3 +1,5 @@
+import os
+
 from _pydev_bundle.pydev_imports import xmlrpclib, _queue, Exec
 import sys
 from _pydevd_bundle.pydevd_constants import IS_JYTHON
@@ -488,7 +490,11 @@ class BaseInterpreterInterface:
 
         if debugger_options is None:
             debugger_options = {}
-
+        env_key = '__extra__envs__'
+        if env_key in debugger_options:
+            for (env_name, value) in debugger_options[env_key].items():
+                os.environ[env_name] = value
+            del debugger_options[env_key]
         def do_connect_to_debugger():
             try:
                 # Try to import the packages needed to attach the debugger

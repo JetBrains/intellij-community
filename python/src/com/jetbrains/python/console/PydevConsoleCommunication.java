@@ -588,14 +588,17 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
    *
    * @param localPort port for pydevd to connect to.
    * @param dbgOpts additional debugger options (that are normally passed via command line) to apply
+   * @param extraEnvs
    * @throws Exception if connection fails
    */
-  public void connectToDebugger(int localPort, Map<String, Boolean> dbgOpts) throws Exception {
+  public void connectToDebugger(int localPort,@NotNull Map<String, Boolean> dbgOpts,@NotNull Map<String, String> extraEnvs) throws Exception {
     if (waitingForInput) {
       throw new Exception("Can't connect debugger now, waiting for input");
     }
     /* argument needs to be hashtable type for compatability with the RPC library */
-    Object result = myClient.execute(CONNECT_TO_DEBUGGER, new Object[]{localPort, new Hashtable<>(dbgOpts)});
+    Hashtable<String, Object> opts = new Hashtable<>(dbgOpts);
+    opts.put("__extra__envs__", new Hashtable<>(extraEnvs));
+    Object result = myClient.execute(CONNECT_TO_DEBUGGER, new Object[]{localPort, opts});
     Exception exception = null;
     if (result instanceof Vector) {
       Vector resultarray = (Vector)result;
