@@ -73,9 +73,9 @@ betas.)
     adding the following line:
 
     ```
-         <option name="DEFAULT_COMPILER" value="Javac" />
-    +    <addNotNullAssertions enabled="false" />
-         <excludeFromCompile>
+        <option name="BUILD_PROCESS_HEAP_SIZE" value="1100" />
+   +    <addNotNullAssertions enabled="false" />
+        <excludeFromCompile>
     ```
 
     (We don't leave it in with enabled="true" because the IDE will automatically
@@ -83,7 +83,11 @@ betas.)
     for all developers who open the project.)
 
  8. Turn off CLASS retention in
-    platform/annotations/src/org/jetbrains/annotations
+    platform/annotations/java8/src/org/jetbrains/annotations
+    (Sadly, we can't also do this in
+      platform/annotations/java5/src/org/jetbrains/annotations
+     because the Kotlin compiler seems to require class retention; without it
+     compilation fails.)
 
     ```
     --- a/platform/annotations/src/org/jetbrains/annotations/NotNull.java
@@ -149,5 +153,7 @@ betas.)
 10. Ensure that the default Update channel (for new users downloading this build)
     is set to stable, not something else.
 
-    Edit UpdateSettings.State.UPDATE_CHANNEL_TYPE and make sure it's set
-    to ChannelStatus.RELEASE.getCode();
+    Edit UpdateSettings.State.UPDATE_CHANNEL_TYPE in
+      platform/platform-impl/src/com/intellij/openapi/updateSettings/impl/UpdateSettings.java
+    and make sure it's set to ChannelStatus.BETA.getCode() (for beta releases)
+    or ChannelStatus.RELEASE.getCode() (for final.)
