@@ -117,7 +117,7 @@ public abstract class LineStatusMarkerRenderer implements ActiveGutterRenderer {
     Color gutterColor = getGutterColor(myRange, editor);
     Color borderColor = getGutterBorderColor(editor);
 
-    final int x = r.x + r.width - 3;
+    final int x = r.x + 1; // leave 1px for brace highlighters
     final int endX = gutter.getWhitespaceSeparatorOffset();
 
     final int y = lineToY(editor, myRange.getLine1());

@@ -961,7 +961,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         break;
       case RIGHT:
         w = getRightFreePaintersAreaWidth();
-        x = getLineMarkerFreePaintersAreaOffset() - 1;
+        x = getLineMarkerFreePaintersAreaOffset();
         break;
       case CUSTOM:
         w = getWidth();
