@@ -587,11 +587,12 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
    * Request that pydevconsole connect (with pydevd) to the specified port
    *
    * @param localPort port for pydevd to connect to.
-   * @param dbgOpts additional debugger options (that are normally passed via command line) to apply
+   * @param dbgOpts   additional debugger options (that are normally passed via command line) to apply
    * @param extraEnvs
    * @throws Exception if connection fails
    */
-  public void connectToDebugger(int localPort,@NotNull Map<String, Boolean> dbgOpts,@NotNull Map<String, String> extraEnvs) throws Exception {
+  public void connectToDebugger(int localPort, @NotNull Map<String, Boolean> dbgOpts, @NotNull Map<String, String> extraEnvs)
+    throws Exception {
     if (waitingForInput) {
       throw new Exception("Can't connect debugger now, waiting for input");
     }
@@ -660,7 +661,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
 
     public boolean waitForTerminate() {
       if (listener != null) {
-        return new WaitFor(10000){
+        return new WaitFor(10000) {
           @Override
           protected boolean condition() {
             return !listener.isAlive();

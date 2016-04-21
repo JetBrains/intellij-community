@@ -26,6 +26,7 @@ import com.jetbrains.python.debugger.PyDebugProcess;
 import com.jetbrains.python.debugger.PyDebugRunner;
 import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
 import org.jetbrains.annotations.NotNull;
+
 import java.net.ServerSocket;
 import java.util.Map;
 
@@ -85,7 +86,8 @@ public class PyConsoleDebugProcess extends PyDebugProcess {
     if (myConsoleDebugProcessHandler.getConsoleProcessHandler() instanceof RemoteProcessControl) {
       portToConnect = getRemoteTunneledPort(myLocalPort,
                                             ((RemoteProcessControl)myConsoleDebugProcessHandler.getConsoleProcessHandler()));
-    } else {
+    }
+    else {
       portToConnect = myLocalPort;
     }
     Map<String, Boolean> optionsMap = makeDebugOptionsMap(getSession());
@@ -93,9 +95,9 @@ public class PyConsoleDebugProcess extends PyDebugProcess {
     consoleCommunication.connectToDebugger(portToConnect, optionsMap, envs);
   }
 
-  private static Map<String,String> getDebuggerEnvs(XDebugSession session) {
+  private static Map<String, String> getDebuggerEnvs(XDebugSession session) {
     Map<String, String> env = Maps.newHashMap();
-    PyDebugRunner.configureDebugEnvironment(session.getProject() , env);
+    PyDebugRunner.configureDebugEnvironment(session.getProject(), env);
     return env;
   }
 
