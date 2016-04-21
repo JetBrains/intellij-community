@@ -346,14 +346,16 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
                     .checkParametersCompatible(expression, parameters, LambdaUtil.getSubstitutor(interfaceMethod, resolveResult));
                   if (result != null) {
                     myHolder.add(result);
-                  } else {
+                  }
+                  else {
                     checkFunctionalInterfaceTypeAccessible(expression, functionalInterfaceType);
                   }
                 }
               }
             }
           }
-        } else if (LambdaUtil.getFunctionalInterfaceType(expression, true) != null) {
+        }
+        else if (LambdaUtil.getFunctionalInterfaceType(expression, true) != null) {
           myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip("Cannot infer functional interface type").create());
         }
       }
@@ -659,7 +661,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   }
 
   @Override
-  public void visitImportStaticReferenceElement(final PsiImportStaticReferenceElement ref) {
+  public void visitImportStaticReferenceElement(@NotNull PsiImportStaticReferenceElement ref) {
     final String refName = ref.getReferenceName();
     final JavaResolveResult[] results = ref.multiResolve(false);
 
@@ -806,7 +808,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
   }
 
-  private void highlightReferencedMethodOrClassName(PsiJavaCodeReferenceElement element, PsiElement resolved) {
+  private void highlightReferencedMethodOrClassName(@NotNull PsiJavaCodeReferenceElement element, PsiElement resolved) {
     PsiElement parent = element.getParent();
     if (parent instanceof PsiReferenceExpression || parent instanceof PsiJavaCodeReferenceElement) {
       return;
@@ -1378,7 +1380,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   // 15.13 | 15.27
   // It is a compile-time error if any class or interface mentioned by either U or the function type of U 
   // is not accessible from the class or interface in which the method reference expression appears.
-  private PsiClassType.ClassResolveResult checkFunctionalInterfaceTypeAccessible(PsiFunctionalExpression expression,
+  @NotNull
+  private PsiClassType.ClassResolveResult checkFunctionalInterfaceTypeAccessible(@NotNull PsiFunctionalExpression expression,
                                                                                  PsiType functionalInterfaceType) {
     PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
     final PsiClass psiClass = resolveResult.getElement();
@@ -1598,7 +1601,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     return HighlightUtil.checkFeature(element, feature, myLanguageLevel, myFile);
   }
   
-  protected void prepareToRunAsInspection(final HighlightInfoHolder holder) {
+  protected void prepareToRunAsInspection(@NotNull HighlightInfoHolder holder) {
     myHolder = holder;
 
     final PsiFile file = holder.getContextFile();
