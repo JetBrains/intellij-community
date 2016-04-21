@@ -82,11 +82,15 @@ public abstract class JBIterator<E> implements Iterator<E> {
   protected abstract E nextImpl();
 
   /**
+   * Called right after the new current value is set.
+   */
+  protected void currentChanged() { }
+
+  /**
    * Notifies the iterator that there's no more elements.
    */
   protected final E stop() {
     myNext = STOP;
-    myCurrent = null;
     return null;
   }
 
@@ -95,7 +99,6 @@ public abstract class JBIterator<E> implements Iterator<E> {
    */
   protected final E skip() {
     myNext = SKIP;
-    myCurrent = null;
     return null;
   }
 
@@ -107,10 +110,12 @@ public abstract class JBIterator<E> implements Iterator<E> {
 
   @Override
   public final E next() {
+    myCurrent = NONE;
     peekNext();
     if (myNext == STOP) throw new NoSuchElementException();
     myCurrent = myNext;
     myNext = NONE;
+    currentChanged();
     return (E)myCurrent;
   }
 
@@ -123,21 +128,20 @@ public abstract class JBIterator<E> implements Iterator<E> {
     if (myNext == STOP) return false;
     myCurrent = myNext;
     myNext = NONE;
+    currentChanged();
     return true;
   }
 
   /**
    * Returns the current element if any; otherwise throws exception.
    */
-  public E current() {
+  public final E current() {
     if (myCurrent == NONE) throw new NoSuchElementException();
-    if (myNext == STOP) throw new NoSuchElementException();
     return (E)myCurrent;
   }
 
   private void peekNext() {
     if (myNext != NONE) return;
-    myNext = null;
     Object o = nextImpl();
     if (myNext == STOP) return;
     Op op = myFirstOp.nextOp;

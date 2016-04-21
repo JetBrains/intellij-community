@@ -208,6 +208,14 @@ public class TreeTraverserTest extends TestCase {
     assertFalse(it.hasNext());
   }
 
+  public void testIteratorContractsCurrent() {
+    JBIterator<Integer> it = JBIterator.from(JBIterable.of(1).iterator());
+    assertTrue(it.advance());
+    assertEquals(new Integer(1), it.current());
+    assertFalse(it.hasNext());
+    assertEquals(new Integer(1), it.current());
+  }
+
   // JBIterable ----------------------------------------------
 
   public void testAppend() {
