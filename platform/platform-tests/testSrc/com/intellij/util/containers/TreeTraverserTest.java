@@ -17,6 +17,7 @@ package com.intellij.util.containers;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.util.*;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
@@ -350,17 +351,38 @@ public class TreeTraverserTest extends TestCase {
     //assertEquals(Arrays.asList(1, 4, 19, 236), counts.take(4).toList());
   }
 
-  public void testSimplePreOrderDfsBacktrace() {
-    List<Integer> backDfs = Collections.emptyList();
-    for (TreeTraversal.TracingIt<Integer> it = numTraverser2(TreeTraversal.PRE_ORDER_DFS).fun(1).typedIterator(); it.hasNext(); ) {
-      if (it.next().equals(37)) backDfs = it.backtrace().toList();
-    }
-    List<Integer> backBfs = Collections.emptyList();
-    for (TreeTraversal.TracingIt<Integer> it = numTraverser2(TreeTraversal.TRACING_BFS).fun(1).typedIterator(); it.hasNext(); ) {
-      if (it.next().equals(37)) backBfs = it.backtrace().toList();
-    }
-    assertEquals(Arrays.asList(37, 12, 4, 1), backDfs);
-    assertEquals(Arrays.asList(37, 12, 4, 1), backBfs);
+  public void testTreeBacktraceSimple() {
+    JBIterable<Integer> dfs = numTraverser2(TreeTraversal.PRE_ORDER_DFS).fun(1);
+    JBIterable<Integer> bfs = numTraverser2(TreeTraversal.TRACING_BFS).fun(1);
+
+    TreeTraversal.TracingIt<Integer> it1 = dfs.typedIterator();
+    it1.skipWhile(Conditions.notEqualTo(37)).next();
+
+    TreeTraversal.TracingIt<Integer> it2 = bfs.typedIterator();
+    it2.skipWhile(Conditions.notEqualTo(37)).next();
+
+    assertEquals(Arrays.asList(37, 12, 4, 1), it1.backtrace().toList());
+    assertEquals(Arrays.asList(37, 12, 4, 1), it2.backtrace().toList());
+
+    assertEquals(new Integer(12), it1.parent());
+    assertEquals(new Integer(12), it2.parent());
+  }
+
+  public void testTreeBacktraceTransformed() {
+    JBIterable<String> dfs = numTraverser2(TreeTraversal.PRE_ORDER_DFS).fun(1).transform(Functions.TO_STRING());
+    JBIterable<String> bfs = numTraverser2(TreeTraversal.TRACING_BFS).fun(1).transform(Functions.TO_STRING());
+
+    TreeTraversal.TracingIt<String> it1 = dfs.typedIterator();
+    it1.skipWhile(Conditions.notEqualTo("37")).next();
+
+    TreeTraversal.TracingIt<String> it2 = bfs.typedIterator();
+    it2.skipWhile(Conditions.notEqualTo("37")).next();
+
+    assertEquals(Arrays.asList("37", "12", "4", "1"), it1.backtrace().toList());
+    assertEquals(Arrays.asList("37", "12", "4", "1"), it2.backtrace().toList());
+
+    assertEquals("12", it1.parent());
+    assertEquals("12", it2.parent());
   }
 
   public void testSimplePostOrderDfs() {

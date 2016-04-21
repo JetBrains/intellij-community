@@ -243,13 +243,13 @@ public abstract class JBIterator<E> implements Iterator<E> {
   }
 
   @NotNull
-  public JBIterable<Object> operations() {
-    return operationsImpl().transform(new Function<Op, Object>() {
+  public final JBIterable<Function<Object, Object>> getTransformations() {
+    return (JBIterable<Function<Object, Object>>)(JBIterable)operationsImpl().transform(new Function<Op, Object>() {
       @Override
       public Object fun(Op op) {
         return op.impl;
       }
-    });
+    }).filter(Function.class);
   }
 
   @NotNull
