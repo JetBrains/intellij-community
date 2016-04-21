@@ -1,5 +1,5 @@
 plugins {
-  id "com.jetbrains.python.envs" version "0.0.5"
+  id "com.jetbrains.python.envs" version "0.0.6"
 }
 
 
