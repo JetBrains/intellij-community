@@ -262,13 +262,13 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
     }
 
     if (!myWithoutForeign) {
-      for (PyImportResolver resolver : Extensions.getExtensions(PyImportResolver.EP_NAME)) {
-        PsiElement foreign = resolver.resolveImportReference(myQualifiedName, myContext, !myWithoutRoots);
-        if (foreign != null) {
-          myForeignResults.add(foreign);
-        }
-      }
       if (mySourceResults.isEmpty() || myQualifiedName.getComponentCount() == 0) {
+        for (PyImportResolver resolver : Extensions.getExtensions(PyImportResolver.EP_NAME)) {
+          PsiElement foreign = resolver.resolveImportReference(myQualifiedName, myContext, !myWithoutRoots);
+          if (foreign != null) {
+            myForeignResults.add(foreign);
+          }
+        }
         mySourceResults.addAll(myForeignResults);
         myForeignResults.clear();
       }
