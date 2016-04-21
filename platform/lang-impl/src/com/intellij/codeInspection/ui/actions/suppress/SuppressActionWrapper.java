@@ -129,7 +129,7 @@ public class SuppressActionWrapper extends ActionGroup implements CompactActionG
           for (GlobalInspectionContextImpl context : globalInspectionContexts) {
             context.refreshViews();
           }
-          view.updateRightPanel();
+          view.syncRightPanel();
         }
       });
     }

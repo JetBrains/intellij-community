@@ -80,8 +80,7 @@ public abstract class SuppressableInspectionTreeNode extends CachedInspectionTre
         if ((actions = myAvailableSuppressActions) == null) {
           final RefEntity element = getElement();
           if (element == null) {
-            final Set<SuppressIntentionAction> availableActions = getSuppressActions();
-            actions = availableActions;
+            actions = getSuppressActions();
           }
           else {
             actions = getOnlyAvailableSuppressActions(element.getRefManager().getProject());

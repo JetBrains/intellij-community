@@ -381,7 +381,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     }
   }
 
-  void syncRightPanel() {
+  public void syncRightPanel() {
     final Editor oldEditor = myPreviewEditor;
     if (myLoadingProgressPreview != null) {
       Disposer.dispose(myLoadingProgressPreview);
@@ -699,7 +699,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     }
     ConcurrentMap<String, InspectionGroupNode> map = myGroups.get(errorLevel);
     if (map == null) {
-      map = ConcurrencyUtil.cacheOrGet(myGroups, errorLevel, ContainerUtil.<String, InspectionGroupNode>newConcurrentMap());
+      map = ConcurrencyUtil.cacheOrGet(myGroups, errorLevel, ContainerUtil.newConcurrentMap());
     }
     InspectionGroupNode group;
     if (groupedBySeverity) {
@@ -934,19 +934,16 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     }
   }
 
+  @NotNull
   public AnalysisScope getScope() {
     return myScope;
-  }
-
-  public void updateRightPanel() {
-    syncRightPanel();
   }
 
   public boolean isUpdating() {
     return myUpdatingRequestors > 0;
   }
 
-  public void updateRightPanelLoading() {
+  void updateRightPanelLoading() {
     if (!myDisposed && isUpdating() && myLoadingProgressPreview != null) {
       myLoadingProgressPreview.updateLoadingProgress();
     }
