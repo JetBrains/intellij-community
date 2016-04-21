@@ -377,11 +377,22 @@ public class ResolveImportUtil {
       final List<RatedResolveResult> resolved = resolveInDirectory(referencedName, containingFile, (PsiDirectory)parentDir, fileOnly,
                                                                    checkForPackage);
       if (!resolved.isEmpty()) {
-        return resolved;
+        for (RatedResolveResult result : resolved) {
+          if (result.getRate() > RatedResolveResult.RATE_LOW) {
+            return resolved;
+          }
+        }
       }
       if (parent instanceof PsiFile) {
-        return ResolveResultList.to(resolveForeignImports((PsiFile)parent, referencedName));
+        final PsiElement foreign = resolveForeignImports((PsiFile)parent, referencedName);
+        if (foreign != null) {
+          final ResolveResultList results = new ResolveResultList();
+          results.addAll(resolved);
+          results.poke(foreign, RatedResolveResult.RATE_NORMAL);
+          return results;
+        }
       }
+      return resolved;
     }
     return Collections.emptyList();
   }
