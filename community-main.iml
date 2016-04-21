@@ -119,7 +119,6 @@
     <orderEntry type="module" module-name="typeMigration" />
     <orderEntry type="module" module-name="platform-tests" />
     <orderEntry type="module" module-name="configuration-store-tests" scope="TEST" />
-    <orderEntry type="module" module-name="designer" />
     <orderEntry type="module" module-name="sdk-updates" />
     <orderEntry type="module" module-name="analytics" />
     <orderEntry type="module" module-name="ndk-workspace" />

@@ -897,7 +897,6 @@ def layoutAndroid(String androidHome, String androidToolsBaseHome) {
         }
       }
     }
-    layoutPlugin("designer", "designer")
   }
 }
 
