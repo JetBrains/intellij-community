@@ -780,6 +780,13 @@ public class DiffUtil {
   // Updating ranges on change
   //
 
+  @NotNull
+  public static LineRange getAffectedLineRange(@NotNull DocumentEvent e) {
+    int line1 = e.getDocument().getLineNumber(e.getOffset());
+    int line2 = e.getDocument().getLineNumber(e.getOffset() + e.getOldLength()) + 1;
+    return new LineRange(line1, line2);
+  }
+
   public static int countLinesShift(@NotNull DocumentEvent e) {
     return StringUtil.countNewLines(e.getNewFragment()) - StringUtil.countNewLines(e.getOldFragment());
   }

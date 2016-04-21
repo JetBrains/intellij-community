@@ -19,7 +19,6 @@ import com.intellij.diff.DiffContext;
 import com.intellij.diff.actions.BufferedLineIterator;
 import com.intellij.diff.actions.NavigationContextChecker;
 import com.intellij.diff.comparison.DiffTooBigException;
-import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
@@ -53,7 +52,6 @@ import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Iterator;
@@ -324,13 +322,12 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       return;
     }
 
-    int line1 = e.getDocument().getLineNumber(e.getOffset());
-    int line2 = e.getDocument().getLineNumber(e.getOffset() + e.getOldLength()) + 1;
+    LineRange lineRange = DiffUtil.getAffectedLineRange(e);
     int shift = DiffUtil.countLinesShift(e);
 
     List<SimpleDiffChange> invalid = new ArrayList<SimpleDiffChange>();
     for (SimpleDiffChange change : myDiffChanges) {
-      if (change.processChange(line1, line2, shift, side)) {
+      if (change.processChange(lineRange.start, lineRange.end, shift, side)) {
         invalid.add(change);
       }
     }
