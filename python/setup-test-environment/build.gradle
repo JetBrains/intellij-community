@@ -1,13 +1,13 @@
+import org.apache.tools.ant.taskdefs.condition.Os
+
 plugins {
   id "com.jetbrains.python.envs" version "0.0.6"
 }
 
 
-
-
 envs {
-  bootstrapDirectory = new File(buildDir, 'pythons')
-  envsDirectory = new File(buildDir, 'envs')
+  bootstrapDirectory = new File(System.getenv().getOrDefault("PYCHARM_PYTHONS", new File(buildDir, 'pythons').path))
+  envsDirectory = new File(System.getenv().getOrDefault("PYCHARM_PYTHON_ENVS", new File(buildDir, 'envs').path))
   minicondaVersion = 'latest'
   packages = ["pip", "setuptools"]
   _64Bits = true
@@ -33,8 +33,10 @@ envs {
   conda "python34", "3.4", ["ipython==2.1", "django==1.6", "behave", "jinja2", "tox==2.0"]
   textfile "python34/tags.txt", "python3\nipython\nipython200\nskeletons\ndjango\nbehave\ntox\njinja2\npython34\npackaging"
 
-  jython "jython25", []
-  textfile "jython25/tags.txt", "jython"
+  if (!Os.isFamily(Os.FAMILY_WINDOWS)) {
+    jython "jython25", []
+    textfile "jython25/tags.txt", "jython"
+  }
 
   conda "django_latest", "3.5", ["django"]
   textfile "django_latest/tags.txt", "django"
