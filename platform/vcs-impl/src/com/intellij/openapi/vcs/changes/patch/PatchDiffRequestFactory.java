@@ -24,6 +24,7 @@ import com.intellij.diff.merge.MergeRequest;
 import com.intellij.diff.merge.MergeResult;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
+import com.intellij.diff.tools.util.DiffNotifications;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
@@ -38,7 +39,6 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
 import com.intellij.openapi.vcs.changes.patch.tool.ApplyPatchMergeRequest;
-import com.intellij.openapi.vcs.changes.patch.tool.ApplyPatchMergeTool;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
@@ -145,7 +145,7 @@ public class PatchDiffRequestFactory {
     DocumentContent rightContent = contentFactory.create(patchedContent, fileType);
 
     final DiffRequest request = new SimpleDiffRequest(windowTitle, leftContent, rightContent, localTitle, patchedTitle);
-    DiffUtil.addNotification(new ApplyPatchMergeTool.DiffIsApproximateNotification(), request);
+    DiffUtil.addNotification(DiffNotifications.createNotification(VcsBundle.getString("patch.apply.approximate.warning")), request);
 
     return request;
   }

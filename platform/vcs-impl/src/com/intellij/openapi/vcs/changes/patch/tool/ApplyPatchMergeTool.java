@@ -21,6 +21,7 @@ import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.merge.*;
 import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.tools.simple.SimpleDiffViewer;
+import com.intellij.diff.tools.util.DiffNotifications;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.DocumentReferenceManager;
@@ -30,8 +31,8 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.EditorNotificationPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,7 +70,7 @@ public class ApplyPatchMergeTool implements MergeTool {
 
       SimpleDiffRequest diffRequest = new SimpleDiffRequest(myMergeRequest.getTitle(), localContent, mergedContent,
                                                             myMergeRequest.getLocalTitle(), myMergeRequest.getPatchedTitle());
-      DiffUtil.addNotification(new DiffIsApproximateNotification(), diffRequest);
+      DiffUtil.addNotification(DiffNotifications.createNotification(VcsBundle.getString("patch.apply.approximate.warning")), diffRequest);
 
       myViewer = new SimpleDiffViewer(diffContext, diffRequest);
     }
@@ -141,13 +142,6 @@ public class ApplyPatchMergeTool implements MergeTool {
     @Override
     public void dispose() {
       Disposer.dispose(myViewer);
-    }
-  }
-
-  public static class DiffIsApproximateNotification extends EditorNotificationPanel {
-    public DiffIsApproximateNotification() {
-      myLabel.setText("<html>Couldn't find context for patch. Some fragments were applied at the best possible place. " +
-                      "<b>Please check carefully.</b></html>");
     }
   }
 }
