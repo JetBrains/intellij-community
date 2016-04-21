@@ -900,6 +900,9 @@ class EditorPainter implements TextDrawingCallback {
         prevEndOffset = end;
         assert it != null;
         if (start == end) { // special case of inlays
+          if (start == it.getEndOffset() && it.isAtSelectionBoundary() && it.isInSelection()) {
+            it.advance();
+          }
           TextAttributes attributes = it.getMergedAttributes();
           float xNew = fragment.getEndX();
           if (xNew >= clip.getMinX()) {

@@ -368,11 +368,15 @@ public class IterationState {
     return getNearestValueAhead(myStartOffset, mySelectionStarts[myCurrentSelectionIndex], mySelectionEnds[myCurrentSelectionIndex]);
   }
 
-  private boolean isInSelection() {
+  public boolean isInSelection() {
     return myCurrentSelectionIndex < mySelectionStarts.length &&
            (myReverseIteration ?
             myStartOffset <= mySelectionEnds[myCurrentSelectionIndex] :
             myStartOffset >= mySelectionStarts[myCurrentSelectionIndex]);
+  }
+
+  public boolean isAtSelectionBoundary() {
+    return myEndOffset == getSelectionEnd();
   }
 
   private void advanceSegmentHighlighters() {
