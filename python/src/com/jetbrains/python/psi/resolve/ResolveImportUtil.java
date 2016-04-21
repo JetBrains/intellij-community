@@ -23,9 +23,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -36,7 +34,10 @@ import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.*;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.impl.PyReferenceExpressionImpl;
+import com.jetbrains.python.psi.impl.PyResolveResultRater;
+import com.jetbrains.python.psi.impl.ResolveResultList;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.NotNull;
@@ -220,43 +221,11 @@ public class ResolveImportUtil {
           visitor.withRelative(0);
         }
       }
-      List<PsiElement> results = visitor.resultsAsList();
-      if (results.isEmpty() && relativeLevel == 0 && !importIsAbsolute) {
-        results = resolveRelativeImportAsAbsolute(sourceFile, qualifiedName);
-      }
-      return results;
+      return visitor.resultsAsList();
     }
     finally {
       beingImported.remove(marker);
     }
-  }
-
-  /**
-   * Try to resolve relative import as absolute in roots, not in its parent directory.
-   *
-   * This may be useful for resolving to child skeleton modules located in other directories.
-   *
-   * @param foothold        foothold file.
-   * @param qualifiedName   relative import name.
-   * @return                list of resolved elements.
-   */
-  @NotNull
-  private static List<PsiElement> resolveRelativeImportAsAbsolute(@NotNull PsiFile foothold,
-                                                                  @NotNull QualifiedName qualifiedName) {
-    final VirtualFile virtualFile = foothold.getVirtualFile();
-    if (virtualFile == null) return Collections.emptyList();
-    final boolean inSource = FileIndexFacade.getInstance(foothold.getProject()).isInContent(virtualFile);
-    if (inSource) return Collections.emptyList();
-    final PsiDirectory containingDirectory = foothold.getContainingDirectory();
-    if (containingDirectory != null) {
-      final QualifiedName containingPath = QualifiedNameFinder.findCanonicalImportPath(containingDirectory, null);
-      if (containingPath != null && containingPath.getComponentCount() > 0) {
-        final QualifiedName absolutePath = containingPath.append(qualifiedName.toString());
-        final QualifiedNameResolver absoluteVisitor = new QualifiedNameResolverImpl(absolutePath).fromElement(foothold);
-        return absoluteVisitor.resultsAsList();
-      }
-    }
-    return Collections.emptyList();
   }
 
   @Nullable
