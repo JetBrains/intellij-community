@@ -16,6 +16,7 @@
   <depends>com.jetbrains.edu.interactivelearning</depends>
 
   <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceImplementation="com.jetbrains.edu.coursecreator.CCProjectService"/>
     <treeStructureProvider implementation="com.jetbrains.edu.coursecreator.projectView.CCTreeStructureProvider"/>
     <refactoring.elementListenerProvider implementation="com.jetbrains.edu.coursecreator.CCRefactoringElementListenerProvider"/>
     <refactoring.moveHandler implementation="com.jetbrains.edu.coursecreator.handlers.CCLessonMoveHandlerDelegate" order="first"/>
