@@ -138,7 +138,7 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
   }
 
   public boolean isQuickFixAppliedFromView() {
-    return myPresentation.isProblemResolved(getElement(), myDescriptor);
+    return myPresentation.isProblemResolved(getElement(), myDescriptor) && !isAlreadySuppressedFromView();
   }
 
   @Nullable

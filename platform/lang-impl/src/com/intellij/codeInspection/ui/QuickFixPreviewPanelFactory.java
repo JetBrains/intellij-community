@@ -18,7 +18,7 @@ package com.intellij.codeInspection.ui;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.QuickFixAction;
-import com.intellij.codeInspection.ui.actions.SuppressActionWrapper;
+import com.intellij.codeInspection.ui.actions.suppress.SuppressActionWrapper;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;

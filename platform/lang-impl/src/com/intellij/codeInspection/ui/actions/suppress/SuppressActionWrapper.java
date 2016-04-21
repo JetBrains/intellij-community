@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,26 +18,26 @@
  * User: anna
  * Date: 29-Jan-2007
  */
-package com.intellij.codeInspection.ui.actions;
+package com.intellij.codeInspection.ui.actions.suppress;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.SuppressIntentionAction;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
-import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.codeInspection.ui.*;
+import com.intellij.codeInspection.ui.InspectionResultsView;
+import com.intellij.codeInspection.ui.InspectionTreeNode;
+import com.intellij.codeInspection.ui.SuppressableInspectionTreeNode;
+import com.intellij.codeInspection.ui.actions.KeyAwareInspectionViewAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SequentialModalProgressTask;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -53,7 +53,7 @@ import java.util.Set;
 import static com.intellij.codeInspection.ui.actions.InspectionViewActionBase.getView;
 
 public class SuppressActionWrapper extends ActionGroup implements CompactActionGroup {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.actions.SuppressActionWrapper");
+  private final static Logger LOG = Logger.getInstance(SuppressActionWrapper.class);
 
   public static final SuppressIntentionAction[] EMPTY_ARRAY = new SuppressIntentionAction[0];
 
@@ -92,51 +92,6 @@ public class SuppressActionWrapper extends ActionGroup implements CompactActionG
     return actions;
   }
 
-  private static boolean suppress(@NotNull final PsiElement element,
-                                  final CommonProblemDescriptor descriptor,
-                                  final SuppressIntentionAction action,
-                                  @NotNull final RefEntity refEntity, InspectionToolWrapper wrapper) {
-    if (action instanceof SuppressIntentionActionFromFix && !(descriptor instanceof ProblemDescriptor)) {
-      LOG.info("local suppression fix for specific problem descriptor:  " + wrapper.getTool().getClass().getName());
-    }
-    final Project project = element.getProject();
-    final PsiModificationTracker tracker = PsiManager.getInstance(project).getModificationTracker();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        PsiDocumentManager.getInstance(project).commitAllDocuments();
-        try {
-          final long startModificationCount = tracker.getModificationCount();
-
-          PsiElement container = null;
-          if (action instanceof SuppressIntentionActionFromFix) {
-            container = ((SuppressIntentionActionFromFix)action).getContainer(element);
-          }
-          if (container == null) {
-            container = element;
-          }
-
-          if (action.isAvailable(project, null, element)) {
-            action.invoke(project, null, element);
-          }
-          if (startModificationCount != tracker.getModificationCount()) {
-            final Set<GlobalInspectionContextImpl> globalInspectionContexts = ((InspectionManagerEx)InspectionManager.getInstance(element.getProject())).getRunningContexts();
-            for (GlobalInspectionContextImpl context : globalInspectionContexts) {
-              context.ignoreElement(wrapper.getTool(), container);
-              if (descriptor != null) {
-                context.getPresentation(wrapper).ignoreCurrentElementProblem(refEntity, descriptor);
-              }
-            }
-          }
-        }
-        catch (IncorrectOperationException e1) {
-          LOG.error(e1);
-        }
-      }
-    });
-    return true;
-  }
-
   public static class SuppressTreeAction extends KeyAwareInspectionViewAction {
     private final SuppressIntentionAction mySuppressAction;
 
@@ -151,25 +106,30 @@ public class SuppressActionWrapper extends ActionGroup implements CompactActionG
         @Override
         public void run() {
           Project project = view.getProject();
+          final String templatePresentationText = getTemplatePresentation().getText();
+          LOG.assertTrue(templatePresentationText != null);
+          final InspectionToolWrapper wrapper = view.getTree().getSelectedToolWrapper();
+          LOG.assertTrue(wrapper != null);
+          final Set<SuppressableInspectionTreeNode> nodesAsSet = getNodesToSuppress(view);
+          final SuppressableInspectionTreeNode[] nodes = nodesAsSet.toArray(new SuppressableInspectionTreeNode[nodesAsSet.size()]);
           CommandProcessor.getInstance().executeCommand(project, new Runnable() {
             @Override
             public void run() {
-              final InspectionToolWrapper wrapper = view.getTree().getSelectedToolWrapper();
-              for (SuppressableInspectionTreeNode node : getNodesToSuppress(view)) {
-                final Pair<PsiElement, CommonProblemDescriptor> content = node.getSuppressContent();
-                if (content.first == null) break;
-                final PsiElement element = content.first;
-                RefEntity refEntity = node.getElement();
-                if (!suppress(element, content.second, mySuppressAction, refEntity, wrapper)) break;
-                node.markAsSuppressedFromView();
-              }
-              final Set<GlobalInspectionContextImpl> globalInspectionContexts = ((InspectionManagerEx)InspectionManager.getInstance(project)).getRunningContexts();
-              for (GlobalInspectionContextImpl context : globalInspectionContexts) {
-                context.refreshViews();
-              }
               CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
+              final SequentialModalProgressTask progressTask =
+                new SequentialModalProgressTask(project, templatePresentationText, true);
+              progressTask.setMinIterationTime(200);
+              progressTask.setTask(new SuppressActionSequentialTask(nodes, mySuppressAction, wrapper, progressTask));
+              ProgressManager.getInstance().run(progressTask);
             }
-          }, getTemplatePresentation().getText(), null);
+          }, templatePresentationText, null);
+
+          final Set<GlobalInspectionContextImpl> globalInspectionContexts =
+            ((InspectionManagerEx)InspectionManager.getInstance(project)).getRunningContexts();
+          for (GlobalInspectionContextImpl context : globalInspectionContexts) {
+            context.refreshViews();
+          }
+          view.updateRightPanel();
         }
       });
     }

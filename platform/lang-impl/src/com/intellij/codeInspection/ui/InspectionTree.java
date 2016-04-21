@@ -343,7 +343,10 @@ public class InspectionTree extends Tree {
   }
 
   private boolean isNodeValidAndIncluded(ProblemDescriptionNode node) {
-    return node.isValid() && !node.isExcluded(myExcludedManager) && !node.isQuickFixAppliedFromView();
+    return node.isValid() &&
+           !node.isExcluded(myExcludedManager) &&
+           !node.isAlreadySuppressedFromView() &&
+           !node.isQuickFixAppliedFromView();
   }
 
   private void nodeStructureChanged(InspectionTreeNode node) {

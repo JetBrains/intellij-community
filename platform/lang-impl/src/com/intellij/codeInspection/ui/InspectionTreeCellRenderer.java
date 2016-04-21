@@ -86,14 +86,14 @@ class InspectionTreeCellRenderer extends ColoredTreeCellRenderer {
                                     ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES
                                     : getMainForegroundAttributes(node)));
 
-    myItemCounter.clear();
-    node.visitProblemSeverities(myItemCounter);
     append("  ");
     final String customizedTailText = node.getCustomizedTailText();
     if (customizedTailText != null) {
       append(customizedTailText, SimpleTextAttributes.GRAYED_ATTRIBUTES);
     }
     else {
+      myItemCounter.clear();
+      node.visitProblemSeverities(myItemCounter);
       if (myItemCounter.size() > MAX_LEVEL_TYPES) {
         append(InspectionsBundle.message("inspection.problem.descriptor.count",
                                          myItemCounter.values().stream().reduce(0, (i, j) -> i + j)) + " ",
