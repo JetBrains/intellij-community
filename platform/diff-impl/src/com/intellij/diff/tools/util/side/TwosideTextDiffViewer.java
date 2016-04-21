@@ -369,12 +369,7 @@ public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditor
     @Override
     public void visibleAreaChanged(VisibleAreaEvent e) {
       if (mySyncScrollSupport != null) mySyncScrollSupport.visibleAreaChanged(e);
-      if (Registry.is("diff.divider.repainting.fix")) {
-        myContentPanel.repaint();
-      }
-      else {
-        myContentPanel.repaintDivider();
-      }
+      myContentPanel.repaint();
     }
   }
 

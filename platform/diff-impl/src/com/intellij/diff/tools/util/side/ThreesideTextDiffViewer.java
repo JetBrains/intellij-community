@@ -351,12 +351,7 @@ public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEd
     @Override
     public void visibleAreaChanged(VisibleAreaEvent e) {
       if (mySyncScrollSupport != null) mySyncScrollSupport.visibleAreaChanged(e);
-      if (Registry.is("diff.divider.repainting.fix")) {
-        myContentPanel.repaint();
-      }
-      else {
-        myContentPanel.repaintDivider(mySide);
-      }
+      myContentPanel.repaint();
     }
   }
 
