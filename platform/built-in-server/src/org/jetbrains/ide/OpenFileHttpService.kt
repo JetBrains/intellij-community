@@ -48,6 +48,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.regex.Pattern
+import javax.swing.SwingUtilities
 
 private val NOT_FOUND = Promise.createError("not found")
 private val LINE_AND_COLUMN = Pattern.compile("^(.*?)(?::(\\d+))?(?::(\\d+))?$")
@@ -137,13 +138,22 @@ internal class OpenFileHttpService : RestService() {
   }
 
   internal fun openFile(request: OpenFileRequest, context: ChannelHandlerContext, httpRequest: HttpRequest?): Promise<Void>? {
-    val path = FileUtil.expandUserHome(request.file!!)
-    val file = Paths.get(FileUtil.toSystemDependentName(path))
+    val systemIndependentPath = FileUtil.toSystemIndependentName(FileUtil.expandUserHome(request.file!!))
+    val file = Paths.get(FileUtil.toSystemDependentName(systemIndependentPath))
     if (file.isAbsolute) {
       if (!file.exists()) {
         return rejectedPromise(NOT_FOUND)
       }
-      if (checkAccess(file)) {
+
+      var isAllowed = checkAccess(file)
+      if (isAllowed && com.intellij.ide.impl.ProjectUtil.isRemotePath(systemIndependentPath)) {
+        // invokeAndWait is added to avoid processing many requests in this place: e.g. to prevent abuse of opening many remote files
+        SwingUtilities.invokeAndWait {
+          isAllowed = com.intellij.ide.impl.ProjectUtil.confirmLoadingFromRemotePath(systemIndependentPath, "warning.load.file.from.share", "title.load.file.from.share")
+        }
+      }
+
+      if (isAllowed) {
         return openAbsolutePath(file, request)
       }
       else {
@@ -155,7 +165,7 @@ internal class OpenFileHttpService : RestService() {
     // we don't want to call refresh for each attempt on findFileByRelativePath call, so, we do what ourSaveAndSyncHandlerImpl does on frame activation
     val queue = RefreshQueue.getInstance()
     queue.cancelSession(refreshSessionId)
-    val mainTask = OpenFileTask(FileUtil.toCanonicalPath(FileUtil.toSystemIndependentName(path), '/'), request)
+    val mainTask = OpenFileTask(FileUtil.toCanonicalPath(systemIndependentPath, '/'), request)
     requests.offer(mainTask)
     val session = queue.createSession(true, true, {
       while (true) {
