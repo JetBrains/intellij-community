@@ -64,6 +64,7 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
   public void testBounds() { doTest(); }
   public void testGrEnum() { doTest(); }
   public void testSuspiciousParameterNames() { doTest(); }
+  public void testTypeAnnotations() { doTest(); }
 
   public void testTextPsiMismatch() {
     CommonCodeStyleSettings.IndentOptions options =

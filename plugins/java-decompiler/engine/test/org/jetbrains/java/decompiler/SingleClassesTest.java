@@ -84,6 +84,7 @@ public class SingleClassesTest {
   @Test public void testMethodReferenceLetterClass() { doTest("pkg/TestMethodReferenceLetterClass"); }
   @Test public void testMemberAnnotations() { doTest("pkg/TestMemberAnnotations"); }
   @Test public void testMoreAnnotations() { doTest("pkg/MoreAnnotations"); }
+  @Test public void testTypeAnnotations() { doTest("pkg/TypeAnnotations"); }
   @Test public void testStaticNameClash() { doTest("pkg/TestStaticNameClash"); }
   @Test public void testExtendingSubclass() { doTest("pkg/TestExtendingSubclass"); }
   @Test public void testSyntheticAccess() { doTest("pkg/TestSyntheticAccess"); }

@@ -38,7 +38,7 @@ import static com.intellij.psi.compiled.ClassFileDecompilers.Full;
 public class ClassFileStubBuilder implements BinaryFileStubBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClassFileStubBuilder");
 
-  public static final int STUB_VERSION = 14;
+  public static final int STUB_VERSION = 15;
 
   @Override
   public boolean acceptsFile(@NotNull VirtualFile file) {

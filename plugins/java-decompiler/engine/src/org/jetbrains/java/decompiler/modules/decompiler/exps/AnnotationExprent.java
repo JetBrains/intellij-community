@@ -47,22 +47,31 @@ public class AnnotationExprent extends Exprent {
     buffer.append('@');
     buffer.append(DecompilerContext.getImportCollector().getShortName(ExprProcessor.buildJavaClassName(className)));
 
-    if (!parNames.isEmpty()) {
+    int type = getAnnotationType();
+
+    if (type != ANNOTATION_MARKER) {
       buffer.append('(');
-      if (getAnnotationType() == ANNOTATION_SINGLE_ELEMENT) {
-        buffer.append(parValues.get(0).toJava(indent + 1, tracer));
-      }
-      else {
-        for (int i = 0; i < parNames.size(); i++) {
+
+      boolean oneLiner = type == ANNOTATION_SINGLE_ELEMENT || indent < 0;
+
+      for (int i = 0; i < parNames.size(); i++) {
+        if (!oneLiner) {
           buffer.appendLineSeparator().appendIndent(indent + 1);
+        }
+
+        if (type != ANNOTATION_SINGLE_ELEMENT) {
           buffer.append(parNames.get(i));
           buffer.append(" = ");
-          buffer.append(parValues.get(i).toJava(0, tracer));
-
-          if (i < parNames.size() - 1) {
-            buffer.append(',');
-          }
         }
+
+        buffer.append(parValues.get(i).toJava(0, tracer));
+
+        if (i < parNames.size() - 1) {
+          buffer.append(',');
+        }
+      }
+
+      if (!oneLiner) {
         buffer.appendLineSeparator().appendIndent(indent);
       }
 
