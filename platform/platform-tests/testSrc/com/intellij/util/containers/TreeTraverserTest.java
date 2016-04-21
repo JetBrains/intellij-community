@@ -17,10 +17,7 @@ package com.intellij.util.containers;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
-import com.intellij.util.Consumer;
-import com.intellij.util.Function;
-import com.intellij.util.Functions;
-import com.intellij.util.PairFunction;
+import com.intellij.util.*;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 
@@ -177,6 +174,38 @@ public class TreeTraverserTest extends TestCase {
     };
   }
 
+
+  // JBIterator ----------------------------------------------
+
+  public void testIteratorContracts() {
+    Processor<Runnable> tryCatch = (r) -> {
+      try {
+        r.run();
+        return true;
+      }
+      catch (NoSuchElementException e) {
+        return false;
+      }
+    };
+    JBIterator<Integer> it = JBIterator.from(Arrays.asList(1, 2, 3, 4).iterator());
+    assertFalse(tryCatch.process(it::current));
+    assertTrue(it.hasNext());
+    assertFalse(tryCatch.process(it::current));
+    assertTrue(it.advance());                  // advance->1
+    assertEquals(new Integer(1), it.current());
+    assertTrue(it.hasNext());
+    assertTrue(it.hasNext());
+    assertEquals(new Integer(2), it.next());   // advance->2
+    assertEquals(new Integer(2), it.current());
+    assertEquals(new Integer(2), it.current());
+    assertTrue(it.advance());                  // advance->3
+    assertEquals(new Integer(4), it.next());   // advance->4
+    assertFalse(it.hasNext());
+    assertFalse(it.hasNext());
+    assertFalse(tryCatch.process(it::advance));
+    assertFalse(tryCatch.process(it::next));
+    assertFalse(it.hasNext());
+  }
 
   // JBIterable ----------------------------------------------
 
