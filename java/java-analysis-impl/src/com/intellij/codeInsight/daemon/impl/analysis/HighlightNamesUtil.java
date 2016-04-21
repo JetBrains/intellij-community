@@ -20,6 +20,7 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.application.options.colors.ScopeAttributesUtil;
+import com.intellij.codeHighlighting.RainbowHighlighter;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.JavaHighlightInfoTypes;
@@ -140,20 +141,27 @@ public class HighlightNamesUtil {
   @Nullable
   static HighlightInfo highlightVariableName(@NotNull PsiVariable variable,
                                              @NotNull PsiElement elementToHighlight,
-                                             @NotNull TextAttributesScheme colorsScheme) {
+                                             @NotNull TextAttributesScheme colorsScheme,
+                                             @Nullable RainbowHighlighter rainbowHighlighter) {
     HighlightInfoType varType = getVariableNameHighlightType(variable);
-    if (varType != null) {
-      if (variable instanceof PsiField) {
-        TextAttributes attributes = mergeWithScopeAttributes(variable, varType, colorsScheme);
-        HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(varType).range(elementToHighlight.getTextRange());
-        if (attributes != null) {
-          builder.textAttributes(attributes);
-        }
-        return builder.createUnconditionally();
-      }
-      return HighlightInfo.newHighlightInfo(varType).range(elementToHighlight).create();
+    if (varType == null) {
+      return null;
     }
-    return null;
+    if (variable instanceof PsiField) {
+      TextAttributes attributes = mergeWithScopeAttributes(variable, varType, colorsScheme);
+      HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(varType).range(elementToHighlight.getTextRange());
+      if (attributes != null) {
+        builder.textAttributes(attributes);
+      }
+      return builder.createUnconditionally();
+    }
+
+    HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(varType).range(elementToHighlight);
+    if (varType == JavaHighlightInfoTypes.LOCAL_VARIABLE && rainbowHighlighter != null) {
+      TextAttributes rainbowAttributes = rainbowHighlighter.getAttributes(variable.getName());
+      builder.textAttributes(rainbowAttributes);
+    }
+    return builder.create();
   }
 
   @Nullable

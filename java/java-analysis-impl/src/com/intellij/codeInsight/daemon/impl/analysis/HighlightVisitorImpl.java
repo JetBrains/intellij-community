@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeHighlighting.Pass;
+import com.intellij.codeHighlighting.RainbowHighlighter;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil.Feature;
@@ -89,6 +90,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   private final Map<PsiClass, MostlySingularMultiMap<MethodSignature, PsiMethod>> myDuplicateMethods = new THashMap<>();
   private LanguageLevel myLanguageLevel;
   private JavaSdkVersion myJavaSdkVersion;
+  private RainbowHighlighter myRainbowHighlighter;
+
   private static class Holder {
     private static final boolean CHECK_ELEMENT_LEVEL = ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isInternal();
   }
@@ -155,6 +158,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
                          @NotNull final Runnable highlight) {
     myFile = file;
     myHolder = Holder.CHECK_ELEMENT_LEVEL ? new CheckLevelHighlightInfoHolder(file, holder) : holder;
+    myRainbowHighlighter = RainbowHighlighter.isRainbowEnabled() ? new RainbowHighlighter(holder.getColorsScheme()) : null;
     boolean success = true;
     try {
       myLanguageLevel = PsiUtil.getLanguageLevel(file);
@@ -192,6 +196,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       myFile = null;
       myHolder = null;
       myDuplicateMethods.clear();
+      myRainbowHighlighter = null;
     }
 
     return success;
@@ -473,7 +478,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
                                                             colorsScheme));
       }
       else if (element instanceof PsiParameter) {
-        myHolder.add(HighlightNamesUtil.highlightVariableName((PsiVariable)element, value.getNavigationElement(), colorsScheme));
+        myHolder.add(HighlightNamesUtil.highlightVariableName((PsiVariable)element, value.getNavigationElement(), colorsScheme, myRainbowHighlighter));
       }
     }
   }
@@ -614,7 +619,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
           myHolder.add(HighlightNamesUtil.highlightReassignedVariable(variable, identifier));
         }
         else {
-          myHolder.add(HighlightNamesUtil.highlightVariableName(variable, identifier, colorsScheme));
+          myHolder.add(HighlightNamesUtil.highlightVariableName(variable, identifier, colorsScheme,myRainbowHighlighter));
         }
       }
     }
@@ -717,7 +722,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       else{
         myHolder.add(HighlightNamesUtil.highlightClassNameInQualifier(ref, colorsScheme));
         if (resolved instanceof PsiVariable) {
-          myHolder.add(HighlightNamesUtil.highlightVariableName((PsiVariable)resolved, referenceNameElement, colorsScheme));
+          myHolder.add(HighlightNamesUtil.highlightVariableName((PsiVariable)resolved, referenceNameElement, colorsScheme, myRainbowHighlighter));
         }
         else if (resolved instanceof PsiMethod) {
           myHolder.add(HighlightNamesUtil.highlightMethodName((PsiMethod)resolved, referenceNameElement, false, colorsScheme));
@@ -803,7 +808,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         myHolder.add(HighlightNamesUtil.highlightReassignedVariable(parameter, parameter.getNameIdentifier()));
       }
       else {
-        myHolder.add(HighlightNamesUtil.highlightVariableName(parameter, parameter.getNameIdentifier(), colorsScheme));
+        myHolder.add(HighlightNamesUtil.highlightVariableName(parameter, parameter.getNameIdentifier(), colorsScheme, myRainbowHighlighter));
       }
     }
   }
@@ -1091,7 +1096,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         myHolder.add(HighlightNamesUtil.highlightReassignedVariable(variable, ref));
       }
       else {
-        myHolder.add(HighlightNamesUtil.highlightVariableName(variable, ref.getReferenceNameElement(), colorsScheme));
+        myHolder.add(HighlightNamesUtil.highlightVariableName(variable, ref.getReferenceNameElement(), colorsScheme, myRainbowHighlighter));
       }
       myHolder.add(HighlightNamesUtil.highlightClassNameInQualifier(ref, colorsScheme));
     }
