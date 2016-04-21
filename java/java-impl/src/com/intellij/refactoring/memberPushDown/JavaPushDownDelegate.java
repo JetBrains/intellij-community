@@ -48,7 +48,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class JavaPushDownDelegate extends PushDownDelegate {
+public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember> {
   public static final Key<Boolean> REMOVE_QUALIFIER_KEY = Key.create("REMOVE_QUALIFIER_KEY");
   public static final Key<PsiClass> REPLACE_QUALIFIER_KEY = Key.create("REPLACE_QUALIFIER_KEY");
 
@@ -60,7 +60,7 @@ public class JavaPushDownDelegate extends PushDownDelegate {
   }
 
   @Override
-  public List<PsiElement> findInheritors(PushDownData pushDownData) {
+  public List<PsiElement> findInheritors(PushDownData<MemberInfo, PsiMember> pushDownData) {
     final List<PsiElement> result = new ArrayList<>();
     final PsiClass aClass = (PsiClass)pushDownData.getSourceClass();
     ClassInheritorsSearch.search(aClass, false).forEach((iClass) -> {
@@ -70,7 +70,7 @@ public class JavaPushDownDelegate extends PushDownDelegate {
 
     final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(aClass);
     if (interfaceMethod != null) {
-      for (MemberInfoBase<? extends PsiElement> info : pushDownData.getMembersToMove()) {
+      for (MemberInfo info : pushDownData.getMembersToMove()) {
         if (interfaceMethod == info.getMember()) {
           FunctionalExpressionSearch.search(aClass).forEach(expression -> {
             result.add(expression);
@@ -84,15 +84,17 @@ public class JavaPushDownDelegate extends PushDownDelegate {
   }
 
   @Override
-  public void checkSourceClassConflicts(PushDownData pushDownData, MultiMap<PsiElement, String> conflicts) {
-    new PushDownConflicts((PsiClass)pushDownData.getSourceClass(), (MemberInfo[])pushDownData.getMembersToMove(), conflicts).checkSourceClassConflicts();
+  public void checkSourceClassConflicts(PushDownData<MemberInfo, PsiMember> pushDownData, MultiMap<PsiElement, String> conflicts) {
+    List<MemberInfo> toMove = pushDownData.getMembersToMove();
+    new PushDownConflicts((PsiClass)pushDownData.getSourceClass(), toMove.toArray(new MemberInfo[0]), conflicts).checkSourceClassConflicts();
   }
 
   @Override
   public void checkTargetClassConflicts(PsiElement targetClass,
-                                        PushDownData pushDownData,
+                                        PushDownData<MemberInfo, PsiMember> pushDownData,
                                         MultiMap<PsiElement, String> conflicts) {
-    new PushDownConflicts((PsiClass)pushDownData.getSourceClass(), (MemberInfo[])pushDownData.getMembersToMove(), conflicts).checkTargetClassConflicts(targetClass, targetClass);
+    List<MemberInfo> toMove = pushDownData.getMembersToMove();
+    new PushDownConflicts((PsiClass)pushDownData.getSourceClass(), toMove.toArray(new MemberInfo[0]), conflicts).checkTargetClassConflicts(targetClass, targetClass);
   }
 
   @Override
@@ -126,7 +128,7 @@ public class JavaPushDownDelegate extends PushDownDelegate {
   }
 
   @Override
-  public void prepareToPush(PushDownData pushDownData) {
+  public void prepareToPush(PushDownData<MemberInfo, PsiMember> pushDownData) {
     final Set<PsiMember> movedMembers = new HashSet<PsiMember>();
     for (MemberInfoBase<? extends PsiElement> memberInfo : pushDownData.getMembersToMove()) {
       movedMembers.add((PsiMember)memberInfo.getMember());
@@ -162,7 +164,7 @@ public class JavaPushDownDelegate extends PushDownDelegate {
   }
 
   @Override
-  public void pushDownToClass(PsiElement targetElement, PushDownData pushDownData) {
+  public void pushDownToClass(PsiElement targetElement, PushDownData<MemberInfo, PsiMember> pushDownData) {
     final PsiElementFactory factory = JavaPsiFacade.getInstance(pushDownData.getSourceClass().getProject()).getElementFactory();
     final PsiClass targetClass = targetElement instanceof PsiClass ? (PsiClass)targetElement : null;
     if (targetClass == null) {
@@ -283,7 +285,7 @@ public class JavaPushDownDelegate extends PushDownDelegate {
   }
 
   @Override
-  public void removeFromSourceClass(PushDownData pushDownData) {
+  public void removeFromSourceClass(PushDownData<MemberInfo, PsiMember> pushDownData) {
     for (MemberInfoBase<? extends PsiElement> memberInfo : pushDownData.getMembersToMove()) {
       final PsiElement member = memberInfo.getMember();
 

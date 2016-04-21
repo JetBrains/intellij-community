@@ -20,6 +20,7 @@ import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.classMembers.MemberInfoBase;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -27,11 +28,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public abstract class PushDownDelegate {
+public abstract class PushDownDelegate<MemberInfo extends MemberInfoBase<Member>,
+                                      Member extends PsiElement> {
   public static final LanguageExtension<PushDownDelegate> EP_NAME = new LanguageExtension<PushDownDelegate>("com.intellij.refactoring.pushDown");
 
   @Nullable
-  protected static PushDownDelegate findDelegate(@NotNull PsiElement sourceClass) {
+  protected static <MemberInfo extends MemberInfoBase<Member>, Member extends PsiElement> PushDownDelegate<MemberInfo, Member> findDelegate(@NotNull PsiElement sourceClass) {
     return EP_NAME.forLanguage(sourceClass.getLanguage());
   }
 
@@ -60,7 +62,7 @@ public abstract class PushDownDelegate {
   /**
    * Find classes to push members down.
    */
-  protected abstract List<PsiElement> findInheritors(PushDownData pushDownData);
+  protected abstract List<PsiElement> findInheritors(PushDownData<MemberInfo, Member> pushDownData);
 
   protected UsageInfo createUsageInfo(PsiElement element) {
     return new UsageInfo(element);
@@ -70,7 +72,7 @@ public abstract class PushDownDelegate {
    * Collect conflicts inside sourceClass assuming members would be removed,
    * e.g. check if members remaining in source class do not depend on moved members
    */
-  protected abstract void checkSourceClassConflicts(PushDownData pushDownData, MultiMap<PsiElement, String> conflicts);
+  protected abstract void checkSourceClassConflicts(PushDownData<MemberInfo, Member> pushDownData, MultiMap<PsiElement, String> conflicts);
 
   /**
    * Collect conflicts inside targetClass assuming methods would be pushed,
@@ -78,23 +80,23 @@ public abstract class PushDownDelegate {
    * won't be accessible anymore, etc
    */
   protected abstract void checkTargetClassConflicts(PsiElement targetClass,
-                                                    PushDownData pushDownData,
+                                                    PushDownData<MemberInfo, Member> pushDownData,
                                                     MultiMap<PsiElement, String> conflicts);
 
   /**
    * Could be used e.g. to encode mutual references between moved members 
    */
-  protected void prepareToPush(PushDownData pushDownData) {}
+  protected void prepareToPush(PushDownData<MemberInfo, Member> pushDownData) {}
 
   /**
    * Push members to the target class adjusting visibility, comments according to the policy, etc
    */
-  protected abstract void pushDownToClass(PsiElement targetClass, PushDownData pushDownData);
+  protected abstract void pushDownToClass(PsiElement targetClass, PushDownData<MemberInfo, Member> pushDownData);
 
   /**
    * Remove members from the source class according to the abstract flag. 
    */
-  protected abstract void removeFromSourceClass(PushDownData pushDownData);
+  protected abstract void removeFromSourceClass(PushDownData<MemberInfo, Member> pushDownData);
 
   /**
    * Called if no inheritors were found in {@link #findInheritors(PushDownData)}. Should warn that members would be deleted and 

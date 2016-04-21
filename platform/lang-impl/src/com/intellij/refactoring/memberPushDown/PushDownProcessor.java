@@ -27,7 +27,6 @@ import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -39,26 +38,28 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public abstract class AbstractPushDownProcessor extends BaseRefactoringProcessor {
-  private static final Logger LOG = Logger.getInstance("#" + AbstractPushDownProcessor.class.getName());
+public class PushDownProcessor<MemberInfo extends MemberInfoBase<Member>,
+                               Member extends PsiElement,
+                               Klass extends PsiElement> extends BaseRefactoringProcessor {
+  private static final Logger LOG = Logger.getInstance("#" + PushDownProcessor.class.getName());
 
   private NewSubClassData mySubClassData;
-  private PushDownDelegate myDelegate;
-  private PushDownData myPushDownData;
+  private PushDownDelegate<MemberInfo, Member> myDelegate;
+  private PushDownData<MemberInfo, Member> myPushDownData;
 
-  public AbstractPushDownProcessor(@NotNull PsiElement sourceClass,
-                                   @NotNull MemberInfoBase<? extends PsiElement>[] memberInfos,
-                                   @NotNull DocCommentPolicy javaDocPolicy) {
+  public PushDownProcessor(@NotNull Klass sourceClass,
+                           @NotNull List<MemberInfo> memberInfos,
+                           @NotNull DocCommentPolicy javaDocPolicy) {
     super(sourceClass.getProject());
     myDelegate = PushDownDelegate.findDelegate(sourceClass);
     LOG.assertTrue(myDelegate != null);
-    myPushDownData = new PushDownData(sourceClass, memberInfos, javaDocPolicy);
+    myPushDownData = new PushDownData<MemberInfo, Member>(sourceClass, memberInfos, javaDocPolicy);
   }
 
   @Override
   @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usages) {
-    return new PushDownUsageViewDescriptor(myPushDownData.getSourceClass(), myPushDownData.getMembersToMove());
+    return new PushDownUsageViewDescriptor<MemberInfo, Member, Klass>((Klass)myPushDownData.getSourceClass(), myPushDownData.getMembersToMove());
   }
 
   @NotNull
@@ -72,12 +73,7 @@ public abstract class AbstractPushDownProcessor extends BaseRefactoringProcessor
   protected RefactoringEventData getBeforeData() {
     RefactoringEventData data = new RefactoringEventData();
     data.addElement(myPushDownData.getSourceClass());
-    data.addMembers(myPushDownData.getMembersToMove(), new Function<MemberInfoBase<? extends PsiElement>, PsiElement>() {
-      @Override
-      public PsiElement fun(MemberInfoBase<? extends PsiElement> info) {
-        return info.getMember();
-      }
-    });
+    data.addElements(ContainerUtil.map(myPushDownData.getMembersToMove(), MemberInfoBase::getMember));
     return data;
   }
 
@@ -111,33 +107,25 @@ public abstract class AbstractPushDownProcessor extends BaseRefactoringProcessor
         return false;
       }
     }
-    Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          @Override
-          public void run() {
-            if (mySubClassData != null) {
-              myDelegate.checkTargetClassConflicts(null, myPushDownData, conflicts);
+    Runnable runnable = () -> ApplicationManager.getApplication().runReadAction(() -> {
+      if (mySubClassData != null) {
+        myDelegate.checkTargetClassConflicts(null, myPushDownData, conflicts);
+      }
+      else {
+        for (UsageInfo usage : usagesIn) {
+          final PsiElement element = usage.getElement();
+          if (element != null) {
+            final PushDownDelegate delegate = PushDownDelegate.findDelegateForTarget(myPushDownData.getSourceClass(), element);
+            if (delegate != null) {
+              delegate.checkTargetClassConflicts(element, myPushDownData, conflicts);
             }
             else {
-              for (UsageInfo usage : usagesIn) {
-                final PsiElement element = usage.getElement();
-                if (element != null) {
-                  final PushDownDelegate delegate = PushDownDelegate.findDelegateForTarget(myPushDownData.getSourceClass(), element);
-                  if (delegate != null) {
-                    delegate.checkTargetClassConflicts(element, myPushDownData, conflicts);
-                  }
-                  else {
-                    conflicts.putValue(element, "Not supported source/target pair detected");
-                  }
-                }
-              }
+              conflicts.putValue(element, "Not supported source/target pair detected");
             }
           }
-        });
+        }
       }
-    };
+    });
 
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(runnable, RefactoringBundle.message("detecting.possible.conflicts"), true, myProject)) {
       return false;
@@ -187,5 +175,16 @@ public abstract class AbstractPushDownProcessor extends BaseRefactoringProcessor
         }
       }
     }
+  }
+
+  @Override
+  protected String getCommandName() {
+    return RefactoringBundle.message("push.members.down.title");
+  }
+
+  @Nullable
+  @Override
+  protected String getRefactoringId() {
+    return "refactoring.push.down";
   }
 }
