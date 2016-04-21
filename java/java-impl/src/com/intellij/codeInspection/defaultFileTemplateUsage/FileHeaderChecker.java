@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,13 +19,11 @@ import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInspection.*;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntObjectHashMap;
@@ -109,12 +107,16 @@ public class FileHeaderChecker {
         }
 
         if (!newText.isEmpty()) {
-          PsiComment newComment = JavaPsiFacade.getElementFactory(project).createCommentFromText(newText, null);
-          element.replace(newComment);
+          PsiElement parent = element.getParent();
+          PsiFile tempFile = PsiFileFactory.getInstance(project).createFileFromText("template.java", JavaFileType.INSTANCE, newText);
+          for (PsiElement child : tempFile.getChildren()) {
+            if (child.getTextLength() > 0) {
+              parent.addBefore(child, element);
+            }
+          }
         }
-        else {
-          element.delete();
-        }
+
+        element.delete();
       }
     };
 
