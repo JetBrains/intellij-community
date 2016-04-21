@@ -849,26 +849,24 @@ public class ExprProcessor implements CodeConstants {
     return buf;
   }
 
-  public static ConstExprent getDefaultArrayValue(VarType arrtype) {
-
-    ConstExprent defaultval;
-    if (arrtype.type == CodeConstants.TYPE_OBJECT || arrtype.arrayDim > 0) {
-      defaultval = new ConstExprent(VarType.VARTYPE_NULL, null, null);
+  public static ConstExprent getDefaultArrayValue(VarType arrType) {
+    ConstExprent defaultVal;
+    if (arrType.type == CodeConstants.TYPE_OBJECT || arrType.arrayDim > 0) {
+      defaultVal = new ConstExprent(VarType.VARTYPE_NULL, null, null);
     }
-    else if (arrtype.type == CodeConstants.TYPE_FLOAT) {
-      defaultval = new ConstExprent(VarType.VARTYPE_FLOAT, new Float(0), null);
+    else if (arrType.type == CodeConstants.TYPE_FLOAT) {
+      defaultVal = new ConstExprent(VarType.VARTYPE_FLOAT, new Float(0), null);
     }
-    else if (arrtype.type == CodeConstants.TYPE_LONG) {
-      defaultval = new ConstExprent(VarType.VARTYPE_LONG, new Long(0), null);
+    else if (arrType.type == CodeConstants.TYPE_LONG) {
+      defaultVal = new ConstExprent(VarType.VARTYPE_LONG, new Long(0), null);
     }
-    else if (arrtype.type == CodeConstants.TYPE_DOUBLE) {
-      defaultval = new ConstExprent(VarType.VARTYPE_DOUBLE, new Double(0), null);
+    else if (arrType.type == CodeConstants.TYPE_DOUBLE) {
+      defaultVal = new ConstExprent(VarType.VARTYPE_DOUBLE, new Double(0), null);
     }
     else { // integer types
-      defaultval = new ConstExprent(0, true, null);
+      defaultVal = new ConstExprent(0, true, null);
     }
-
-    return defaultval;
+    return defaultVal;
   }
 
   public static boolean getCastedExprent(Exprent exprent,
@@ -887,35 +885,30 @@ public class ExprProcessor implements CodeConstants {
                                          boolean castNull,
                                          boolean castAlways,
                                          BytecodeMappingTracer tracer) {
-
     VarType rightType = exprent.getExprType();
-
-    TextBuffer res = exprent.toJava(indent, tracer);
 
     boolean cast =
       castAlways ||
       (!leftType.isSuperset(rightType) && (rightType.equals(VarType.VARTYPE_OBJECT) || leftType.type != CodeConstants.TYPE_OBJECT)) ||
       (castNull && rightType.type == CodeConstants.TYPE_NULL && !UNDEFINED_TYPE_STRING.equals(getTypeName(leftType))) ||
-      (isIntConstant(exprent) && VarType.VARTYPE_INT.isStrictSuperset(leftType));
+      (isIntConstant(exprent) && rightType.isStrictSuperset(leftType));
 
-    if (cast) {
-      if (exprent.getPrecedence() >= FunctionExprent.getPrecedence(FunctionExprent.FUNCTION_CAST)) {
-        res.enclose("(", ")");
-      }
+    boolean quote = cast && exprent.getPrecedence() >= FunctionExprent.getPrecedence(FunctionExprent.FUNCTION_CAST);
 
-      res.prepend("(" + getCastTypeName(leftType) + ")");
-    }
+    if (cast) buffer.append('(').append(getCastTypeName(leftType)).append(')');
 
-    buffer.append(res);
+    if (quote) buffer.append('(');
+
+    buffer.append(exprent.toJava(indent, tracer));
+
+    if (quote) buffer.append(')');
 
     return cast;
   }
 
   private static boolean isIntConstant(Exprent exprent) {
-
     if (exprent.type == Exprent.EXPRENT_CONST) {
-      ConstExprent cexpr = (ConstExprent)exprent;
-      switch (cexpr.getConstType().type) {
+      switch (((ConstExprent)exprent).getConstType().type) {
         case CodeConstants.TYPE_BYTE:
         case CodeConstants.TYPE_BYTECHAR:
         case CodeConstants.TYPE_SHORT:

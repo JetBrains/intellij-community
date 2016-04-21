@@ -42,7 +42,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
-import com.intellij.util.ui.UIUtil;
 import gnu.trove.Equality;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;

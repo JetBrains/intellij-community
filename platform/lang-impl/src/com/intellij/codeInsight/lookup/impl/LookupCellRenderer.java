@@ -31,7 +31,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
@@ -392,7 +391,7 @@ public class LookupCellRenderer implements ListCellRenderer {
   }
 
   public static FList<TextRange> getMatchingFragments(String prefix, String name) {
-    return new MinusculeMatcher("*" + prefix, NameUtil.MatchingCaseSensitivity.NONE).matchingFragments(name);
+    return NameUtil.buildMatcher("*" + prefix).build().matchingFragments(name);
   }
 
   private int setTypeTextLabel(LookupElement item,

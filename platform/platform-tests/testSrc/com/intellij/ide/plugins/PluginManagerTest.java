@@ -23,7 +23,7 @@ import static org.junit.Assert.assertTrue;
 
 public class PluginManagerTest {
   @Test
-  public void compatibilityBranchBased() throws Exception {
+  public void compatibilityBranchBased() {
     assertCompatible("145.2", null, null);
     assertCompatible("145.2.2", null, null);
 
@@ -61,7 +61,7 @@ public class PluginManagerTest {
   }
 
   @Test
-  public void compatibilityBranchBasedStar() throws Exception {
+  public void compatibilityBranchBasedStar() {
     assertCompatible("145.10", "144.*", null);
     assertIncompatible("145.10", "145.*", null);
     assertIncompatible("145.10", "146.*", null);
@@ -76,17 +76,17 @@ public class PluginManagerTest {
   }
   
   @Test
-  public void compatibilitySnapshots() throws Exception {
+  public void compatibilitySnapshots() {
     assertIncompatible("145.SNAPSHOT", "146", null);
     assertIncompatible("145.2.SNAPSHOT", "145.3", null);
 
     assertCompatible("145.SNAPSHOT", "145.2", null);
 
-    // snapshot ignore until build (special case)
-    assertCompatible("145.SNAPSHOT", null, "145");
-    assertCompatible("145.SNAPSHOT", null, "144");
-    assertCompatible("145.2.SNAPSHOT", null, "145");
-    assertCompatible("145.2.SNAPSHOT", null, "144");
+    assertCompatible("145.SNAPSHOT", null, "146");
+    assertIncompatible("145.SNAPSHOT", null, "145");
+    assertIncompatible("145.SNAPSHOT", null, "144");
+    assertIncompatible("145.2.SNAPSHOT", null, "145");
+    assertIncompatible("145.2.SNAPSHOT", null, "144");
   }
 
   private static void assertIncompatible(String ideVersion, String sinceBuild, String untilBuild) {

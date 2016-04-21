@@ -79,7 +79,6 @@ class OpenFileHttpService extends RestService {
   private static final Pattern LINE_AND_COLUMN = Pattern.compile("^(.*?)(?::(\\d+))?(?::(\\d+))?$");
   private long lastTimeRejected = -1;
   private long waitUntilNextRequestTimeout = 0;
-  private boolean isWorking = false;
 
   private volatile long refreshSessionId = 0;
   private final ConcurrentLinkedQueue<OpenFileTask> requests = new ConcurrentLinkedQueue<OpenFileTask>();
@@ -179,32 +178,33 @@ class OpenFileHttpService extends RestService {
 
     if (file.isAbsolute()) {
       if (com.intellij.ide.impl.ProjectUtil.isRemotePath(systemIndependentName)) {
-        Ref<Boolean> confirmLoadingRemoteFile = new Ref<>();
-        if (!isWorking && System.currentTimeMillis() - lastTimeRejected > waitUntilNextRequestTimeout) {
-          try {
-            isWorking = true;
-            SwingUtilities.invokeAndWait(new Runnable() {
-              @Override
-              public void run() {
-                boolean value = com.intellij.ide.impl.ProjectUtil
-                  .confirmLoadingFromRemotePath(systemIndependentName, "warning.load.file.from.share", "title.load.file.from.share");
-                confirmLoadingRemoteFile.set(value);
+        final Ref<Promise<Void>> result = new Ref<>();
+        try {
+          SwingUtilities.invokeAndWait(new Runnable() {
+            @Override
+            public void run() {
+              if (System.currentTimeMillis() - lastTimeRejected < waitUntilNextRequestTimeout) {
+                return;
               }
-            });
-          }
-          catch (Throwable ignored) {
-          }
-          finally {
-            isWorking = false;
-          }
+              boolean value = com.intellij.ide.impl.ProjectUtil
+                .confirmLoadingFromRemotePath(systemIndependentName, "warning.load.file.from.share", "title.load.file.from.share");
+
+              if (value != Boolean.TRUE) {
+                lastTimeRejected = System.currentTimeMillis();
+                waitUntilNextRequestTimeout = Math.min(2 * Math.max(waitUntilNextRequestTimeout, 2000), 60 * 60 * 1000); //to avoid negative values
+                result.set(Promise.reject(NOT_FOUND));
+              } else {
+                waitUntilNextRequestTimeout = 0;
+              }
+            }
+          });
+        } catch (Throwable ignored) {}
+
+        if (result.get() != null) {
+          return result.get();
         }
-        if (confirmLoadingRemoteFile.get() != Boolean.TRUE) {
-          lastTimeRejected = System.currentTimeMillis();
-          waitUntilNextRequestTimeout = Math.min(2 * Math.max(waitUntilNextRequestTimeout, 5000), 60 * 60 * 1000); //to avoid negative values
-          return Promise.reject(NOT_FOUND);
-        }
-        waitUntilNextRequestTimeout = 0;
       }
+
       return openAbsolutePath(file, request);
     }
 

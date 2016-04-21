@@ -145,8 +145,7 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
       if (element == null) {
         return null;
       }
-
-      final MinusculeMatcher matcher = new MinusculeMatcher(pattern, NameUtil.MatchingCaseSensitivity.NONE);
+      final MinusculeMatcher matcher = NameUtil.buildMatcher(pattern).build();
       int max = Integer.MIN_VALUE;
       Object target = null;
       for (TreeElement treeElement : element.getChildren()) {

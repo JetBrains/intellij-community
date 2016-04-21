@@ -90,8 +90,8 @@ public class InspectionTreeHtmlWriter {
                                }
                                builder.append(" onclick=\"navigate(").append(nodeId).append(")\" ");
                                builder.append(" id=\"").append(nodeId).append("\" />");
-                               if (n instanceof RefElementAware) {
-                                 RefEntity e = ((RefElementAware)n).getElement();
+                               if (n instanceof RefElementAndDescriptorAware) {
+                                 RefEntity e = ((RefElementAndDescriptorAware)n).getElement();
                                  if (e != null) {
                                    if (exporter[0] != null) {
                                      builder

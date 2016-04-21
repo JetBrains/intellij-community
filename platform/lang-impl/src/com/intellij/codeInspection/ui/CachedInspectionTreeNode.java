@@ -15,17 +15,17 @@
  */
 package com.intellij.codeInspection.ui;
 
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreeNode;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author Dmitry Batkovich
  */
-public abstract class CachedInspectionTreeNode extends InspectionTreeNode implements RefElementAware {
-  private final AtomicReference<String> myPresentableName = new AtomicReference<>();
-  private final AtomicReference<Boolean> myValid = new AtomicReference<>();
+public abstract class CachedInspectionTreeNode extends InspectionTreeNode implements RefElementAndDescriptorAware {
+  private volatile String myPresentableName = null;
+  private volatile Boolean myValid = null;
 
   protected CachedInspectionTreeNode(Object userObject) {
     super(userObject);
@@ -33,27 +33,35 @@ public abstract class CachedInspectionTreeNode extends InspectionTreeNode implem
 
   @Override
   public final boolean isValid() {
-    return myValid.updateAndGet((b) -> {
-      if (b == null) {
-        b = calculateIsValid();
+    Boolean valid = myValid;
+    if (valid != null) return valid;
+    synchronized (this) {
+      valid = myValid;
+      if (valid == null) {
+        valid = calculateIsValid();
+        myValid = valid;
       }
-      return b;
-    });
+      return valid;
+    }
   }
 
   @Override
   public final String toString() {
-    return myPresentableName.updateAndGet((s) -> {
-      if (s == null) {
-        s = calculatePresentableName();
+    String name = myPresentableName;
+    if (name != null) return name;
+    synchronized (this) {
+      name = myPresentableName;
+      if (name == null) {
+        name = calculatePresentableName();
+        myPresentableName = name;
       }
-      return s;
-    });
+      return name;
+    }
   }
 
-  protected final void init() {
-    myPresentableName.set(calculatePresentableName());
-    myValid.set(calculateIsValid());
+  protected void init(Project project) {
+    myPresentableName = calculatePresentableName();
+    myValid = calculateIsValid();
   }
 
   protected abstract String calculatePresentableName();
@@ -61,13 +69,13 @@ public abstract class CachedInspectionTreeNode extends InspectionTreeNode implem
   protected abstract boolean calculateIsValid();
 
   @SuppressWarnings("ResultOfMethodCallIgnored")
-  final void dropCache() {
-    myValid.set(calculateIsValid());
-    myPresentableName.set(calculatePresentableName());
+  protected void dropCache(Project project) {
+    myValid = calculateIsValid();
+    myPresentableName = calculatePresentableName();
     for (int i = 0; i < getChildCount(); i++) {
       TreeNode child = getChildAt(i);
       if (child instanceof CachedInspectionTreeNode) {
-        ((CachedInspectionTreeNode)child).dropCache();
+        ((CachedInspectionTreeNode)child).dropCache(project);
       }
     }
   }

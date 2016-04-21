@@ -33,15 +33,13 @@ import javax.swing.tree.MutableTreeNode;
 /**
  * @author max
  */
-public class RefElementNode extends SuppressableInspectionTreeNode implements RefElementAware {
+public class RefElementNode extends SuppressableInspectionTreeNode {
   private boolean myHasDescriptorsUnder = false;
   private CommonProblemDescriptor mySingleDescriptor = null;
-  protected final InspectionToolPresentation myToolPresentation;
   private final Icon myIcon;
   public RefElementNode(@Nullable RefEntity userObject, @NotNull InspectionToolPresentation presentation) {
     super(userObject, presentation);
-    myToolPresentation = presentation;
-    init();
+    init(presentation.getContext().getProject());
     final RefEntity refEntity = getElement();
     myIcon = refEntity == null ? null : refEntity.getIcon(false);
   }
@@ -78,19 +76,19 @@ public class RefElementNode extends SuppressableInspectionTreeNode implements Re
 
   @Override
   public void excludeElement(ExcludedInspectionTreeNodesManager excludedManager) {
-    myToolPresentation.ignoreCurrentElement(getElement());
+    myPresentation.ignoreCurrentElement(getElement());
     super.excludeElement(excludedManager);
   }
 
   @Override
   public void amnestyElement(ExcludedInspectionTreeNodesManager excludedManager) {
-    myToolPresentation.amnesty(getElement());
+    myPresentation.amnesty(getElement());
     super.amnestyElement(excludedManager);
   }
 
   @Override
   public FileStatus getNodeStatus() {
-    return  myToolPresentation.getElementStatus(getElement());
+    return myPresentation.getElementStatus(getElement());
   }
 
   @Override
@@ -105,7 +103,9 @@ public class RefElementNode extends SuppressableInspectionTreeNode implements Re
     mySingleDescriptor = descriptor;
   }
 
-  public CommonProblemDescriptor getProblem() {
+  @Nullable
+  @Override
+  public CommonProblemDescriptor getDescriptor() {
     return mySingleDescriptor;
   }
 
@@ -134,7 +134,7 @@ public class RefElementNode extends SuppressableInspectionTreeNode implements Re
   @Nullable
   @Override
   public String getCustomizedTailText() {
-    if (myToolPresentation.isDummy()) {
+    if (myPresentation.isDummy()) {
       return "";
     }
     final String customizedText = super.getCustomizedTailText();

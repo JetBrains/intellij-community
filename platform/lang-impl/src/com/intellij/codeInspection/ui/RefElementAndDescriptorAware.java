@@ -15,13 +15,17 @@
  */
 package com.intellij.codeInspection.ui;
 
+import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.reference.RefEntity;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Dmitry Batkovich
  */
-public interface RefElementAware {
+public interface RefElementAndDescriptorAware {
   @Nullable
   RefEntity getElement();
+
+  @Nullable
+  CommonProblemDescriptor getDescriptor();
 }

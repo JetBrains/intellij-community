@@ -264,15 +264,17 @@ public class JavaIntroduceParameterObjectDelegate
         conflicts.putValue(method, "Created class won't be accessible");
       }
 
-      final PsiFile containingFile = method.getContainingFile();
-      final PsiDirectory containingDirectory = containingFile.getContainingDirectory();
-      PsiDirectory directory = moveDestination.getTargetDirectory(containingDirectory);
-      if (directory != null) {
-        PsiFile file = directory.findFile(classDescriptor.getClassName() + ".java");
-        if (file != null) {
-          VirtualFile virtualFile = PsiUtilCore.getVirtualFile(file);
-          if (virtualFile != null) {
-            conflicts.putValue(method, "File already exits: " + virtualFile.getPresentableUrl());
+      if (!classDescriptor.isCreateInnerClass()) {
+        final PsiFile containingFile = method.getContainingFile();
+        final PsiDirectory containingDirectory = containingFile.getContainingDirectory();
+        PsiDirectory directory = moveDestination.getTargetDirectory(containingDirectory);
+        if (directory != null) {
+          PsiFile file = directory.findFile(classDescriptor.getClassName() + ".java");
+          if (file != null) {
+            VirtualFile virtualFile = PsiUtilCore.getVirtualFile(file);
+            if (virtualFile != null) {
+              conflicts.putValue(method, "File already exits: " + virtualFile.getPresentableUrl());
+            }
           }
         }
       }

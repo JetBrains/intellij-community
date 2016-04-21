@@ -22,6 +22,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ReadTask;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -74,6 +75,7 @@ class InspectionViewPsiTreeChangeAdapter extends PsiTreeChangeAdapter {
               });
             }
 
+            final Project project = view.getProject();
             synchronized (myView.getTreeStructureUpdateLock()) {
               InspectionTreeNode root = myView.getTree().getRoot();
               boolean[] needUpdateUI = {false};
@@ -85,7 +87,7 @@ class InspectionViewPsiTreeChangeAdapter extends PsiTreeChangeAdapter {
                     final SmartPsiElementPointer pointer = ((RefElement)element).getPointer();
                     VirtualFile containingFile = pointer.getVirtualFile();
                     if (files.contains(containingFile)) {
-                      ((CachedInspectionTreeNode)node).dropCache();
+                      ((CachedInspectionTreeNode)node).dropCache(project);
                       if (!needUpdateUI[0]) {
                         needUpdateUI[0] = true;
                       }
@@ -93,7 +95,7 @@ class InspectionViewPsiTreeChangeAdapter extends PsiTreeChangeAdapter {
                     return false;
                   }
                   else {
-                    ((CachedInspectionTreeNode)node).dropCache();
+                    ((CachedInspectionTreeNode)node).dropCache(project);
                     if (!needUpdateUI[0]) {
                       needUpdateUI[0] = true;
                     }
