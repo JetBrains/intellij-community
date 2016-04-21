@@ -44,7 +44,7 @@ public class RainbowHighlighter {
 
   @NotNull
   public TextAttributes getAttributes(@NotNull String name) {
-    int hash = StringHash.murmur(name, name.length());
+    int hash = StringHash.murmur(name, 0);
     final float colors = 36.0f;
     final float v = Math.round(Math.abs(colors * hash) / Integer.MAX_VALUE) / colors;
     //System.out.println("name = " + name + " \tv=" + v);

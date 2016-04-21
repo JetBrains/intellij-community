@@ -13,10 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/**
- * @author cdr
- */
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.application.options.colors.ScopeAttributesUtil;
@@ -157,9 +153,12 @@ public class HighlightNamesUtil {
     }
 
     HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(varType).range(elementToHighlight);
-    if (varType == JavaHighlightInfoTypes.LOCAL_VARIABLE && rainbowHighlighter != null) {
-      TextAttributes rainbowAttributes = rainbowHighlighter.getAttributes(variable.getName());
-      builder.textAttributes(rainbowAttributes);
+    if (rainbowHighlighter != null && (varType == JavaHighlightInfoTypes.LOCAL_VARIABLE || varType == JavaHighlightInfoTypes.PARAMETER)) {
+      String name = variable.getName();
+      if (name != null) {
+        TextAttributes rainbowAttributes = rainbowHighlighter.getAttributes(name);
+        builder.textAttributes(rainbowAttributes);
+      }
     }
     return builder.create();
   }
