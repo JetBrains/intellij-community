@@ -236,10 +236,10 @@ public class PatchDiffRequestFactory {
   @NotNull
   private static String getBadPatchTitle(@Nullable VirtualFile file) {
     if (file != null) {
-      return "Result Of Patch Apply To " + getPresentablePath(file);
+      return "Result of Patch Apply to " + getPresentablePath(file);
     }
     else {
-      return "Result Of Patch Apply";
+      return "Result of Patch Apply";
     }
   }
 
