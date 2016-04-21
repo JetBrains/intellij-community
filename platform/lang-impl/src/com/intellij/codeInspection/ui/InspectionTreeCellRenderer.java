@@ -89,6 +89,7 @@ class InspectionTreeCellRenderer extends ColoredTreeCellRenderer {
     append("  ");
     final String customizedTailText = node.getCustomizedTailText();
     if (customizedTailText != null) {
+      append("  ");
       append(customizedTailText, SimpleTextAttributes.GRAYED_ATTRIBUTES);
     }
     else {
