@@ -37,10 +37,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.accessibility.*;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
@@ -60,6 +57,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   private ActionButtonLook myLook = ActionButtonLook.IDEA_LOOK;
   private boolean myMouseDown;
   private boolean myRollover;
+  private boolean mySelected;
   private static boolean ourGlobalMouseDown = false;
 
   private boolean myNoIconsInPopup = false;
@@ -86,6 +84,19 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
         if (e.getModifiers() == 0 && e.getKeyCode() == VK_SPACE) {
           click();
         }
+      }
+    });
+    addFocusListener(new FocusListener() {
+      @Override
+      public void focusGained(FocusEvent e) {
+        mySelected = true;
+        repaint();
+      }
+
+      @Override
+      public void focusLost(FocusEvent e) {
+        mySelected = false;
+        repaint();
       }
     });
 
@@ -338,8 +349,14 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     if (isPushed || myRollover && myMouseDown && isButtonEnabled()) {
       return PUSHED;
     }
+    else if (myRollover && isButtonEnabled()) {
+      return POPPED;
+    }
+    else if (mySelected) {
+      return SELECTED;
+    }
     else {
-      return !myRollover || !isButtonEnabled() ? NORMAL : POPPED;
+      return NORMAL;
     }
   }
 
