@@ -88,7 +88,7 @@ public class EduAdaptiveStepicConnector {
           for (int stepId : realLesson.steps) {
             final StepicWrappers.Step step = EduStepicConnector.getStep(stepId);
             if (step.name.equals("code")) {
-              return getTaskFromStep(LESSON_DEFAULT_NAME + lessonId, stepId, step);
+              return getTaskFromStep(realLesson.getName(), stepId, step);
             }
           }
         }
