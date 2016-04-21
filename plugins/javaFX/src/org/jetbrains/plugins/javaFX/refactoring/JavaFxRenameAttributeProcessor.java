@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.javaFX;
+package org.jetbrains.plugins.javaFX.refactoring;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;

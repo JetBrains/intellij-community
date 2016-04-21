@@ -501,6 +501,6 @@ public class FileStructureDialog extends DialogWrapper {
 
   @NotNull
   public static MinusculeMatcher createFileStructureMatcher(@NotNull String pattern) {
-    return new MinusculeMatcher(pattern, NameUtil.MatchingCaseSensitivity.NONE, " ()");
+    return NameUtil.buildMatcher(pattern).withSeparators(" ()").build();
   }
 }

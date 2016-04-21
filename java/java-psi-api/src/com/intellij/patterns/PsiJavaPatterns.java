@@ -144,11 +144,11 @@ public class PsiJavaPatterns extends StandardPatterns{
   }
 
   public static PsiAnnotationPattern psiAnnotation() {
-    return new PsiAnnotationPattern();
+    return PsiAnnotationPattern.PSI_ANNOTATION_PATTERN;
   }
 
   public static PsiNameValuePairPattern psiNameValuePair() {
-    return new PsiNameValuePairPattern();
+    return PsiNameValuePairPattern.NAME_VALUE_PAIR_PATTERN;
   }
 
   public static PsiTypePattern psiType() {

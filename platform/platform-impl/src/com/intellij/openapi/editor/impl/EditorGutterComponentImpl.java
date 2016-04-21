@@ -60,6 +60,7 @@ import com.intellij.ui.HintHint;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -797,6 +798,12 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       }
     });
 
+    if (!areIconsShown()) {
+      myIconsAreaWidth = 0;
+      myLastNonDumbModeIconAreaWidth = 0;
+      return;
+    }
+
     if (canShrink) {
       myIconsAreaWidth = myEditor.getLineHeight();
     } else {
@@ -975,11 +982,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   private void processIconsRow(int line, List<GutterMark> row, LineGutterIconRendererProcessor processor) {
-    processIconsRow(line, row, processor, false);
-  }
+    if (!areIconsShown()) return;
 
-  private void processIconsRow(int line, List<GutterMark> row, LineGutterIconRendererProcessor processor, boolean force) {
-    if (!force && Registry.is("editor.hide.gutter.icons")) return;
     int middleCount = 0;
     int middleSize = 0;
     int x = getIconAreaOffset() + 2;
@@ -1248,6 +1252,11 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     return myEditor.getSettings().isLineMarkerAreaShown();
   }
 
+  @Override
+  public boolean areIconsShown() {
+    return myEditor.getSettings().areGutterIconsShown();
+  }
+
   public boolean isLineNumbersShown() {
     return myEditor.getSettings().isLineNumbersShown();
   }
@@ -1383,7 +1392,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   public int getGapAfterIconsArea() {
-    return isRealEditor() ? GAP_BETWEEN_AREAS : 0;
+    return isRealEditor() && areIconsShown() ? GAP_BETWEEN_AREAS : 0;
   }
 
   private boolean isMirrored() {
@@ -1720,16 +1729,27 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   @Nullable
   public Point getCenterPoint(final GutterIconRenderer renderer) {
     final Ref<Point> result = Ref.create();
-    processGutterRenderers((line, renderers) -> {
-      processIconsRow(line, renderers, (x, y, r) -> {
-        if (result.isNull() && r.equals(renderer)) {
-          Icon icon = scaleIcon(r.getIcon());
-          result.set(new Point(x + icon.getIconWidth() / 2, y + icon.getIconHeight() / 2));
+    if (!areIconsShown()) {
+      processGutterRenderers((line, renderers) -> {
+        if (ContainerUtil.find(renderers, renderer) != null) {
+          result.set(new Point(getIconAreaOffset(), getLineCenterY(line)));
+          return false;
         }
-      }, true);
+        return true;
+      });
+    }
+    else {
+      processGutterRenderers((line, renderers) -> {
+        processIconsRow(line, renderers, (x, y, r) -> {
+          if (result.isNull() && r.equals(renderer)) {
+            Icon icon = scaleIcon(r.getIcon());
+            result.set(new Point(x + icon.getIconWidth() / 2, y + icon.getIconHeight() / 2));
+          }
+        });
 
-      return result.isNull();
-    });
+        return result.isNull();
+      });
+    }
     return result.get();
   }
 

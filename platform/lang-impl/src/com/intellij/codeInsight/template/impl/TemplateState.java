@@ -769,7 +769,7 @@ public class TemplateState implements Disposable {
               changes.add(new TemplateDocumentChange(newValue, start, end, i));
             }
           }
-          proceedChanges(changes);
+          executeChanges(changes);
           if (selectionCalculated) {
             mySelectionCalculated = true;
           }
@@ -793,7 +793,7 @@ public class TemplateState implements Disposable {
     }
   }
 
-  private void proceedChanges(@NotNull List<TemplateDocumentChange> changes) {
+  private void executeChanges(@NotNull List<TemplateDocumentChange> changes) {
     if (isDisposed() || changes.isEmpty()) {
       return;
     }
@@ -1167,7 +1167,7 @@ public class TemplateState implements Disposable {
         }
       }
     }
-    proceedChanges(changes);
+    executeChanges(changes);
     return indices;
   }
 

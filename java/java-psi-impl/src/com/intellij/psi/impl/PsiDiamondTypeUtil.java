@@ -158,37 +158,38 @@ public class PsiDiamondTypeUtil {
                                                   boolean constructorRef,
                                                   @Nullable PsiMethod method, 
                                                   PsiTypeParameter[] typeParameters) {
-    final PsiElement copy;
-    final PsiType typeByParent = PsiTypesUtil.getExpectedTypeByParent(expression);
-    if (typeByParent != null) {
-      final String arrayInitializer = "new " + typeByParent.getCanonicalText() + "[]{0}";
-      final PsiNewExpression newExpr =
-        (PsiNewExpression)JavaPsiFacade.getInstance(expression.getProject()).getElementFactory().createExpressionFromText(arrayInitializer, expression);
-      final PsiArrayInitializerExpression initializer = newExpr.getArrayInitializer();
-      LOG.assertTrue(initializer != null);
-      copy = initializer.getInitializers()[0].replace(expression);
-    }
-    else {
-      final int offset = expression.getTextRange().getStartOffset();
-      final PsiCall call = LambdaUtil.treeWalkUp(expression);
-      if (call instanceof PsiCallExpression) { //exclude EnumConstant
-        final PsiCall callCopy = (PsiCall)call.copy();
-        copy = callCopy.findElementAt(offset - call.getTextRange().getStartOffset());
+    try {
+      final PsiElement copy;
+      final PsiType typeByParent = PsiTypesUtil.getExpectedTypeByParent(expression);
+      if (typeByParent != null) {
+        final String arrayInitializer = "new " + typeByParent.getCanonicalText() + "[]{0}";
+        final PsiNewExpression newExpr =
+          (PsiNewExpression)JavaPsiFacade.getInstance(expression.getProject()).getElementFactory().createExpressionFromText(arrayInitializer, expression);
+        final PsiArrayInitializerExpression initializer = newExpr.getArrayInitializer();
+        LOG.assertTrue(initializer != null);
+        copy = initializer.getInitializers()[0].replace(expression);
       }
-      else  {
-        final PsiFile containingFile = expression.getContainingFile();
-        final PsiFile fileCopy = (PsiFile)containingFile.copy();
-        copy = fileCopy.findElementAt(offset);
-        if (method != null && method.getContainingFile() == containingFile) {
-          final PsiElement startMethodElementInCopy = fileCopy.findElementAt(method.getTextOffset());
-          method = PsiTreeUtil.getParentOfType(startMethodElementInCopy, PsiMethod.class);
-          LOG.assertTrue(method != null, startMethodElementInCopy);
+      else {
+        final PsiExpressionList argumentList = expression.getArgumentList();
+        final int offset = (argumentList != null ? argumentList : expression).getTextRange().getStartOffset();
+        final PsiCall call = LambdaUtil.treeWalkUp(expression);
+        if (call != null) {
+          final PsiCall callCopy = LambdaUtil.copyTopLevelCall(call);
+          copy = callCopy != null ? callCopy.findElementAt(offset - call.getTextRange().getStartOffset()) : null;
+        }
+        else  {
+          final PsiFile containingFile = expression.getContainingFile();
+          final PsiFile fileCopy = (PsiFile)containingFile.copy();
+          copy = fileCopy.findElementAt(offset);
+          if (method != null && method.getContainingFile() == containingFile) {
+            final PsiElement startMethodElementInCopy = fileCopy.findElementAt(method.getTextOffset());
+            method = PsiTreeUtil.getParentOfType(startMethodElementInCopy, PsiMethod.class);
+            LOG.assertTrue(method != null, startMethodElementInCopy);
+          }
         }
       }
-    }
-    final PsiCallExpression exprCopy = PsiTreeUtil.getParentOfType(copy, PsiCallExpression.class, false);
-    if (exprCopy != null) {
-      try {
+      final PsiCallExpression exprCopy = PsiTreeUtil.getParentOfType(copy, PsiCallExpression.class, false);
+      if (exprCopy != null) {
         final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(exprCopy.getProject()).getElementFactory();
         if (constructorRef) {
           if (!(exprCopy instanceof PsiNewExpression) || !isInferenceEquivalent(typeArguments, elementFactory, (PsiNewExpression)exprCopy)) {
@@ -202,10 +203,10 @@ public class PsiDiamondTypeUtil {
           }
         }
       }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
-        return false;
-      }
+    }
+    catch (IncorrectOperationException e) {
+      LOG.info(e);
+      return false;
     }
     return true;
   }

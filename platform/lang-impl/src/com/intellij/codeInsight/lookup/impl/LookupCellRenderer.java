@@ -31,7 +31,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
@@ -45,6 +44,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.util.HashMap;
@@ -58,8 +58,6 @@ import java.util.Set;
 public class LookupCellRenderer implements ListCellRenderer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.lookup.impl.LookupCellRenderer");
   //TODO[kb]: move all these awesome constants to Editor's Fonts & Colors settings
-  private static final int AFTER_TAIL = 10;
-  private static final int AFTER_TYPE = 6;
   private Icon myEmptyIcon = EmptyIcon.create(5);
   private final Font myNormalFont;
   private final Font myBoldFont;
@@ -100,17 +98,16 @@ public class LookupCellRenderer implements ListCellRenderer {
 
     myTailComponent = new MySimpleColoredComponent();
     myTailComponent.setIpad(new Insets(0, 0, 0, 0));
+    myTailComponent.setBorder(new EmptyBorder(0, 0, 0, JBUI.scale(10)));
 
     myTypeLabel = new MySimpleColoredComponent();
     myTypeLabel.setIpad(new Insets(0, 0, 0, 0));
+    myTypeLabel.setBorder(new EmptyBorder(0, 0, 0, JBUI.scale(6)));
 
     myPanel = new LookupPanel();
     myPanel.add(myNameComponent, BorderLayout.WEST);
     myPanel.add(myTailComponent, BorderLayout.CENTER);
-    myTailComponent.setBorder(new EmptyBorder(0, 0, 0, AFTER_TAIL));
-
     myPanel.add(myTypeLabel, BorderLayout.EAST);
-    myTypeLabel.setBorder(new EmptyBorder(0, 0, 0, AFTER_TYPE));
 
     myNormalMetrics = myLookup.getTopLevelEditor().getComponent().getFontMetrics(myNormalFont);
     myBoldMetrics = myLookup.getTopLevelEditor().getComponent().getFontMetrics(myBoldFont);
@@ -137,7 +134,7 @@ public class LookupCellRenderer implements ListCellRenderer {
     final Color background = nonFocusedSelection ? SELECTED_NON_FOCUSED_BACKGROUND_COLOR :
                              isSelected ? SELECTED_BACKGROUND_COLOR : BACKGROUND_COLOR;
 
-    int allowedWidth = list.getWidth() - AFTER_TAIL - AFTER_TYPE - getTextIndent();
+    int allowedWidth = list.getWidth() - calcSpacing(myNameComponent, myEmptyIcon) - calcSpacing(myTailComponent, null) - calcSpacing(myTypeLabel, null);
 
     FontMetrics normalMetrics = getRealFontMetrics(item, false);
     FontMetrics boldMetrics = getRealFontMetrics(item, true);
@@ -224,6 +221,24 @@ public class LookupCellRenderer implements ListCellRenderer {
     AccessibleContextUtil.setCombinedName(myPanel, myNameComponent, "", myTailComponent, " - ", myTypeLabel);
     AccessibleContextUtil.setCombinedDescription(myPanel, myNameComponent, "", myTailComponent, " - ", myTypeLabel);
     return myPanel;
+  }
+
+  private static int calcSpacing(@NotNull SimpleColoredComponent component, @Nullable Icon icon) {
+    Insets iPad = component.getIpad();
+    int width = iPad.left + iPad.right;
+    Border myBorder = component.getMyBorder();
+    if (myBorder != null) {
+      Insets insets = myBorder.getBorderInsets(component);
+      width += insets.left + insets.right;
+    }
+    Insets insets = component.getInsets();
+    if (insets != null) {
+      width += insets.left + insets.right;
+    }
+    if (icon != null) {
+      width += icon.getIconWidth() + component.getIconTextGap();
+    }
+    return width;
   }
 
   private static Color getForegroundColor(boolean isSelected) {
@@ -376,7 +391,7 @@ public class LookupCellRenderer implements ListCellRenderer {
   }
 
   public static FList<TextRange> getMatchingFragments(String prefix, String name) {
-    return new MinusculeMatcher("*" + prefix, NameUtil.MatchingCaseSensitivity.NONE).matchingFragments(name);
+    return NameUtil.buildMatcher("*" + prefix).build().matchingFragments(name);
   }
 
   private int setTypeTextLabel(LookupElement item,
@@ -466,7 +481,8 @@ public class LookupCellRenderer implements ListCellRenderer {
       myEmptyIcon = new EmptyIcon(Math.max(icon.getIconWidth(), myEmptyIcon.getIconWidth()), Math.max(icon.getIconHeight(), myEmptyIcon.getIconHeight()));
     }
 
-    return RealLookupElementPresentation.calculateWidth(p, getRealFontMetrics(item, false), getRealFontMetrics(item, true)) + AFTER_TAIL + AFTER_TYPE;
+    return RealLookupElementPresentation.calculateWidth(p, getRealFontMetrics(item, false), getRealFontMetrics(item, true)) +
+           calcSpacing(myTailComponent, null) + calcSpacing(myTypeLabel, null);
   }
 
   public int getTextIndent() {
