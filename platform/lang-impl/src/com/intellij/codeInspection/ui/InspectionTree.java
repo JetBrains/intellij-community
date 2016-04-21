@@ -73,7 +73,7 @@ public class InspectionTree extends Tree {
     myExcludedManager = view.getExcludedManager();
 
     setCellRenderer(new InspectionTreeCellRenderer(view));
-    setRootVisible(!myContext.isSingleInspectionRun());
+    setRootVisible(false);
     setShowsRootHandles(true);
     UIUtil.setLineStyleAngled(this);
     addTreeWillExpandListener(new ExpandListener());
