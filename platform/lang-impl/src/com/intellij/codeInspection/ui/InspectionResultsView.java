@@ -468,9 +468,16 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       }
       editorPanel.add(previewPanel, BorderLayout.CENTER);
       if (problemCount > 0) {
-        final QuickFixPreviewDecorator fixToolbar = new QuickFixPreviewDecorator(previewEditor, this);
-        myLoadingProgressPreview = fixToolbar;
-        editorPanel.add(fixToolbar, BorderLayout.NORTH);
+        final JComponent fixToolbar = QuickFixPreviewPanelFactory.create(previewEditor, this);
+        if (fixToolbar != null) {
+          if (fixToolbar instanceof InspectionTreeLoadingProgressAware) {
+            myLoadingProgressPreview = (InspectionTreeLoadingProgressAware)fixToolbar;
+          }
+          if (previewEditor != null) {
+            previewPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
+          }
+          editorPanel.add(fixToolbar, BorderLayout.NORTH);
+        }
       }
       mySplitter.setSecondComponent(editorPanel);
     }
@@ -516,10 +523,10 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
         settings.setAdditionalLinesCount(0);
         settings.setLeadingWhitespaceShown(true);
         myPreviewEditor.getColorsScheme().setColor(EditorColors.GUTTER_BACKGROUND, myPreviewEditor.getColorsScheme().getDefaultBackground());
-        myPreviewEditor.getScrollPane().setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
+        myPreviewEditor.getScrollPane().setBorder(IdeBorderFactory.createEmptyBorder());
       }
       myPreviewEditor.getSettings().setFoldingOutlineShown(problemCount != 1);
-
+      myPreviewEditor.getComponent().setBorder(IdeBorderFactory.createEmptyBorder());
       if (problemCount == 1) {
         final PsiElement finalSelectedElement = selectedElement;
         ApplicationManager.getApplication().invokeLater(() -> {
