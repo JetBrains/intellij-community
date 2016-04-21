@@ -90,11 +90,9 @@ public class JavaPushDownDelegate extends PushDownDelegate {
 
   @Override
   public void checkTargetClassConflicts(PsiElement targetClass,
-                                        PushDownData pushDownData, 
-                                        boolean checkStatic,
-                                        PsiElement context,
+                                        PushDownData pushDownData,
                                         MultiMap<PsiElement, String> conflicts) {
-    new PushDownConflicts((PsiClass)pushDownData.getSourceClass(), (MemberInfo[])pushDownData.getMembersToMove(), conflicts).checkTargetClassConflicts(targetClass, checkStatic, context);
+    new PushDownConflicts((PsiClass)pushDownData.getSourceClass(), (MemberInfo[])pushDownData.getMembersToMove(), conflicts).checkTargetClassConflicts(targetClass, targetClass);
   }
 
   @Override
@@ -104,7 +102,7 @@ public class JavaPushDownDelegate extends PushDownDelegate {
       if (Messages.showOkCancelDialog((aClass.isEnum() ? "Enum " + aClass.getQualifiedName() + " doesn't have constants to inline to. " : "Final class " + aClass.getQualifiedName() + "does not have inheritors. ") +
                                       "Pushing members down will result in them being deleted. " +
                                       "Would you like to proceed?", conflictDialogTitle, Messages.getWarningIcon()) != Messages.OK) {
-        return NewSubClassData.EMPTY;
+        return NewSubClassData.ABORT_REFACTORING;
       }
     } else {
       String noInheritors = aClass.isInterface() ?
@@ -117,11 +115,11 @@ public class JavaPushDownDelegate extends PushDownDelegate {
         if (classDialog != null) {
           return new NewSubClassData(classDialog.getTargetDirectory(), classDialog.getClassName());
         } else {
-          return NewSubClassData.EMPTY;
+          return NewSubClassData.ABORT_REFACTORING;
         }
       }
       else if (answer != Messages.NO) {
-        return NewSubClassData.EMPTY;
+        return NewSubClassData.ABORT_REFACTORING;
       }
     }
     return null;

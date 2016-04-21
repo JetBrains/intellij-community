@@ -107,7 +107,7 @@ public abstract class AbstractPushDownProcessor extends BaseRefactoringProcessor
     final UsageInfo[] usagesIn = refUsages.get();
     if (usagesIn.length == 0) {
       mySubClassData = myDelegate.preprocessNoInheritorsFound(myPushDownData.getSourceClass(), getCommandName());
-      if (mySubClassData == NewSubClassData.EMPTY) {
+      if (mySubClassData == NewSubClassData.ABORT_REFACTORING) {
         return false;
       }
     }
@@ -118,7 +118,7 @@ public abstract class AbstractPushDownProcessor extends BaseRefactoringProcessor
           @Override
           public void run() {
             if (mySubClassData != null) {
-              myDelegate.checkTargetClassConflicts(null, myPushDownData, false, mySubClassData.getContext(), conflicts);
+              myDelegate.checkTargetClassConflicts(null, myPushDownData, conflicts);
             }
             else {
               for (UsageInfo usage : usagesIn) {
@@ -126,7 +126,7 @@ public abstract class AbstractPushDownProcessor extends BaseRefactoringProcessor
                 if (element != null) {
                   final PushDownDelegate delegate = PushDownDelegate.findDelegateForTarget(myPushDownData.getSourceClass(), element);
                   if (delegate != null) {
-                    delegate.checkTargetClassConflicts(element, myPushDownData, usagesIn.length > 1, element, conflicts);
+                    delegate.checkTargetClassConflicts(element, myPushDownData, conflicts);
                   }
                   else {
                     conflicts.putValue(element, "Not supported source/target pair detected");

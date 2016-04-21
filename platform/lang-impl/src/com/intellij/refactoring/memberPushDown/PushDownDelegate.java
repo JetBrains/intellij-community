@@ -52,7 +52,7 @@ public abstract class PushDownDelegate {
    * Implementations are supposed to override this method when overriding default behaviour for the language, 
    * e.g. pushing members from groovy class to java, groovy could provide additional delegate which inherits delegate for java and accepts groovy sources.
    * Methods to process target class should be updated to cope with source of another language (e.g. calling super on PushDownData translated to java): 
-   * {@link #checkTargetClassConflicts(PsiElement, PushDownData, boolean, PsiElement, MultiMap)}, 
+   * {@link #checkTargetClassConflicts(PsiElement, PushDownData, MultiMap) },
    * {@link #pushDownToClass(PsiElement, PushDownData)}
    */
   protected abstract boolean isApplicableForSource(@NotNull PsiElement sourceClass);
@@ -79,8 +79,6 @@ public abstract class PushDownDelegate {
    */
   protected abstract void checkTargetClassConflicts(PsiElement targetClass,
                                                     PushDownData pushDownData,
-                                                    boolean checkStatic,
-                                                    PsiElement context,
                                                     MultiMap<PsiElement, String> conflicts);
 
   /**
@@ -102,7 +100,7 @@ public abstract class PushDownDelegate {
    * Called if no inheritors were found in {@link #findInheritors(PushDownData)}. Should warn that members would be deleted and 
    * suggest to create new target class if applicable
    * 
-   * @return NewSubClassData.EMPTY if refactoring should be aborted
+   * @return NewSubClassData.ABORT_REFACTORING if refactoring should be aborted
    *         null to proceed without inheritors (members would be deleted from the source class and not added to the target)
    *         new NewSubClassData(context, name) if new inheritor should be created with {@link #createSubClass(PsiElement, NewSubClassData)} 
    */
@@ -111,7 +109,7 @@ public abstract class PushDownDelegate {
                            RefactoringBundle.message("push.down.will.delete.members");
     final int answer = Messages.showYesNoDialog(message, conflictDialogTitle, Messages.getWarningIcon());
     if (answer != Messages.YES) {
-      return NewSubClassData.EMPTY;
+      return NewSubClassData.ABORT_REFACTORING;
     }
     return null;
   }
