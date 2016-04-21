@@ -44,11 +44,50 @@ import static com.jetbrains.python.psi.PyUtil.as;
  */
 public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
 
-  private static final Set<String> STATEMENT_WITH_HEADER_START_KEYWORDS = ImmutableSet.of("def", "class", "with", "if", "while", "for");
+  /**
+   * Keywords that start multiline block statements
+   */
+  private static final Set<String> START_KEYWORDS = ImmutableSet.of("async",
+                                                                    "def",
+                                                                    "class",
+                                                                    "with",
+                                                                    "if", "elif", "else",
+                                                                    "while", "for",
+                                                                    "try", "except", "finally");
 
   @Nullable
   @Override
   public String preprocessOnCopy(PsiFile file, int[] startOffsets, int[] endOffsets, String text) {
+    if (!CodeInsightSettings.getInstance().INDENT_TO_CARET_ON_PASTE || file.getLanguage() != PythonLanguage.getInstance()) {
+      return null;
+    }
+    // Expand copied text if it can cause indentation ambiguity
+    
+    // Text was selected with a single caret and might begin with a block statement 
+    if (startOffsets.length == 1 && endOffsets.length == 1 && fragmentBeginsWithBlockStatement(text)) {
+      final int start = startOffsets[0];
+      final int end = endOffsets[0];
+
+      final Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+      if (document != null) {
+        final int startLine = document.getLineNumber(start);
+        final int startLineOffset = getLineStartSafeOffset(document, startLine);
+        if (start != startLineOffset && startLine != document.getLineNumber(end)) {
+          final PsiElement keyword = file.findElementAt(start);
+          if (keyword != null && START_KEYWORDS.contains(keyword.getText())) {
+            final PyStatementListContainer block = PsiTreeUtil.getParentOfType(keyword, PyStatementListContainer.class);
+            // Statement body is in selection
+            if (block != null && end > block.getStatementList().getTextOffset()) {
+              final String linePrefix = document.getText(TextRange.create(startLineOffset, start));
+              if (StringUtil.isEmptyOrSpaces(linePrefix)) {
+                return linePrefix + text;
+              }
+            }
+          }
+        }
+      }
+    }
+    
     return null;
   }
 
@@ -78,7 +117,7 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
     final PsiElement element = file.findElementAt(caretOffset);
     if (PsiTreeUtil.getParentOfType(element, PyStringLiteralExpression.class) != null) return text;
 
-    text = addLeadingSpacesToNormalizeSelection(project, file, text);
+    text = addLeadingSpacesToNormalizeSelection(project, text);
     final String indentText = getIndentText(file, document, caretOffset, lineNumber);
 
     final String line = document.getText(TextRange.create(lineStartOffset, lineEndOffset));
@@ -107,9 +146,8 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
   }
 
   @NotNull
-  private static String addLeadingSpacesToNormalizeSelection(@NotNull Project project, @NotNull PsiFile file, final @NotNull String text) {
-    boolean applicable = ContainerUtil.exists(STATEMENT_WITH_HEADER_START_KEYWORDS, keyword -> text.startsWith(keyword + " "));
-    if (!applicable) {
+  private static String addLeadingSpacesToNormalizeSelection(@NotNull Project project, @NotNull String text) {
+    if (!fragmentBeginsWithBlockStatement(text)) {
       return text;
     }
 
@@ -132,6 +170,10 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
       return bodyIndent.substring(0, bodyIndent.length() - indentStep.length()) + text;
     }
     return text;
+  }
+
+  private static boolean fragmentBeginsWithBlockStatement(@NotNull String text) {
+    return ContainerUtil.exists(START_KEYWORDS, keyword -> text.startsWith(keyword + " ") || text.startsWith(keyword + ":"));
   }
 
   @NotNull
