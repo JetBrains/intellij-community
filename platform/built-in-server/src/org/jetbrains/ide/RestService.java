@@ -15,23 +15,33 @@
  */
 package org.jetbrains.ide;
 
+import com.google.common.base.Supplier;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 import com.google.gson.stream.MalformedJsonException;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.net.NetUtils;
 import io.netty.buffer.ByteBufInputStream;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
@@ -39,14 +49,25 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.io.NettyKt;
 import org.jetbrains.io.Responses;
 
+import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.lang.reflect.InvocationTargetException;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import static com.intellij.ide.impl.ProjectUtil.showYesNoDialog;
 
 /**
  * Document your service using <a href="http://apidocjs.com">apiDoc</a>. To extract big example from source code, consider to use *.coffee file near your source file.
@@ -67,6 +88,12 @@ public abstract class RestService extends HttpRequestHandler {
       return new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     }
   };
+
+  private final LoadingCache<InetAddress, AtomicInteger> abuseCounter =
+    CacheBuilder.newBuilder().expireAfterWrite(1, TimeUnit.MINUTES).build(CacheLoader.from((Supplier<AtomicInteger>)AtomicInteger::new));
+
+  private final Cache<String, Boolean> trustedOrigins =
+    CacheBuilder.newBuilder().maximumSize(1024).expireAfterWrite(1, TimeUnit.DAYS).build();
 
   @Override
   public final boolean isSupported(@NotNull FullHttpRequest request) {
@@ -115,6 +142,17 @@ public abstract class RestService extends HttpRequestHandler {
   @Override
   public final boolean process(@NotNull QueryStringDecoder urlDecoder, @NotNull FullHttpRequest request, @NotNull ChannelHandlerContext context) throws IOException {
     try {
+      if (!isHostTrusted(request)) {
+        Responses.send(Responses.orInSafeMode(HttpResponseStatus.FORBIDDEN, HttpResponseStatus.OK), context.channel(), request);
+        return true;
+      }
+
+      AtomicInteger counter = abuseCounter.get(((InetSocketAddress)context.channel().remoteAddress()).getAddress());
+      if (counter.incrementAndGet() > Registry.intValue("ide.rest.api.requests.per.minute", 60)) {
+        Responses.send(Responses.orInSafeMode(HttpResponseStatus.TOO_MANY_REQUESTS, HttpResponseStatus.OK), context.channel(), request);
+        return true;
+      }
+
       String error = execute(urlDecoder, request, context);
       if (error != null) {
         Responses.send(HttpResponseStatus.BAD_REQUEST, context.channel(), request, error);
@@ -137,7 +175,44 @@ public abstract class RestService extends HttpRequestHandler {
     return true;
   }
 
-  protected final void activateLastFocusedFrame() {
+  private boolean isHostTrusted(@NotNull FullHttpRequest request) throws InterruptedException, InvocationTargetException {
+    String referrer = NettyKt.getOrigin(request);
+    if (referrer == null) {
+      referrer = NettyKt.getReferrer(request);
+    }
+
+    String host;
+    try {
+      host = StringUtil.nullize(referrer == null ? null : new URI(referrer).getHost());
+    }
+    catch (URISyntaxException ignored) {
+      return false;
+    }
+
+    Ref<Boolean> isTrusted = Ref.create();
+    if (host != null) {
+      if (NetUtils.isLocalhost(host)) {
+        isTrusted.set(true);
+      }
+      else {
+        isTrusted.set(trustedOrigins.getIfPresent(host));
+      }
+    }
+
+    if (isTrusted.isNull()) {
+      SwingUtilities.invokeAndWait(() -> {
+        isTrusted.set(showYesNoDialog(
+          IdeBundle.message("warning.use.rest.api", getServiceName(), ObjectUtils.chooseNotNull(host, "unknown host")),
+          "title.use.rest.api"));
+        if (host != null) {
+          trustedOrigins.put(host, isTrusted.get());
+        }
+      });
+    }
+    return isTrusted.get();
+  }
+
+  protected static void activateLastFocusedFrame() {
     IdeFrame frame = IdeFocusManager.getGlobalInstance().getLastFocusedFrame();
     if (frame instanceof Window) {
       ((Window)frame).toFront();

@@ -187,7 +187,6 @@ fun HttpRequest.isRegularBrowser() = userAgent?.startsWith("Mozilla/5.0") ?: fal
 
 // forbid POST requests from browser without Origin
 fun HttpRequest.isWriteFromBrowserWithoutOrigin(): Boolean {
-  val userAgent = userAgent ?: return false
   val method = method()
   return origin.isNullOrEmpty() && isRegularBrowser() && (method == HttpMethod.POST || method == HttpMethod.PATCH || method == HttpMethod.PUT || method == HttpMethod.DELETE)
 }

@@ -18,6 +18,7 @@ package org.jetbrains.io
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationInfoEx
+import com.intellij.openapi.util.registry.Registry
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.ByteBufAllocator
 import io.netty.buffer.ByteBufUtil
@@ -126,7 +127,14 @@ fun HttpResponseStatus.send(channel: Channel, request: HttpRequest? = null, desc
   createStatusResponse(this, request, description).send(channel, request)
 }
 
-fun HttpResponseStatus.orInSafeMode(safeStatus: HttpResponseStatus) = if (ApplicationManager.getApplication()?.isUnitTestMode ?: false) this else safeStatus
+fun HttpResponseStatus.orInSafeMode(safeStatus: HttpResponseStatus): HttpResponseStatus {
+  if (!Registry.`is`("ide.rest.api.paranoid.mode", true) || (ApplicationManager.getApplication()?.isUnitTestMode ?: false)) {
+    return this
+  }
+  else {
+    return safeStatus
+  }
+}
 
 private fun createStatusResponse(responseStatus: HttpResponseStatus, request: HttpRequest?, description: String?): HttpResponse {
   if (request != null && request.method() === HttpMethod.HEAD) {
