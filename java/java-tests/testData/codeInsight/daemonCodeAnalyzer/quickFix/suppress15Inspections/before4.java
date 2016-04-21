@@ -1,4 +1,4 @@
-// "Suppress for statement with comment" "true"
+// "Suppress for statement" "true"
 public class Test {
   public void run() {
     //noinspection id
