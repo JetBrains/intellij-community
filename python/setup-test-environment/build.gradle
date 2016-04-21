@@ -1,8 +1,8 @@
+import org.apache.tools.ant.taskdefs.condition.Os
+
 plugins {
   id "com.jetbrains.python.envs" version "0.0.6"
 }
-
-
 
 
 envs {
@@ -33,10 +33,12 @@ envs {
   conda "python34", "3.4", ["ipython==2.1", "django==1.6", "behave", "jinja2", "tox==2.0"]
   textfile "python34/tags.txt", "python3\nipython\nipython200\nskeletons\ndjango\nbehave\ntox\njinja2\npython34\npackaging"
 
-  jython "jython25", []
-  textfile "jython25/tags.txt", "jython"
+  if (!Os.isFamily(Os.FAMILY_WINDOWS)) {
+    jython "jython25", []
+    textfile "jython25/tags.txt", "jython"
+  }
 
-  conda "django_latest", "3.4", ["django"]
+  conda "django_latest", "3.5", ["django"]
   textfile "django_latest/tags.txt", "django"
 }
 
