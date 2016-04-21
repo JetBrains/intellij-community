@@ -14,33 +14,6 @@ import java.util.Map;
  * @author Pavel.Dolgov
  */
 public interface JavaFxPropertyReference extends PsiReference {
-  default boolean isRenameable() {
-    return resolve() != null;
-  }
-
-  @NotNull
-  default Map<PsiElement, String> getElementsToRename(@NotNull String newPropertyName) {
-    final Map<PsiElement, String> rename = new THashMap<>();
-    final PsiField field = getField();
-    if (field != null) {
-      rename.put(field, newPropertyName);
-    }
-    final PsiMethod getter = getGetter();
-    if (getter != null) {
-      rename.put(getter, PropertyUtil.suggestGetterName(newPropertyName, getter.getReturnType()));
-    }
-    final PsiMethod setter = getSetter();
-    if (setter != null) {
-      rename.put(setter, PropertyUtil.suggestSetterName(newPropertyName));
-    }
-    final PsiMethod observableGetter = getObservableGetter();
-    if (observableGetter != null) {
-      rename.put(observableGetter, newPropertyName + JavaFxCommonNames.PROPERTY_METHOD_SUFFIX);
-    }
-    //TODO add "name" parameter of the observable property constructor (like new SimpleObjectProperty(this, "name", null);
-    return rename;
-  }
-
   @Nullable
   PsiMethod getGetter();
 

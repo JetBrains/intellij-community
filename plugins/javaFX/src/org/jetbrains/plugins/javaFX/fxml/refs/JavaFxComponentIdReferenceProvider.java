@@ -190,7 +190,7 @@ class JavaFxComponentIdReferenceProvider extends PsiReferenceProvider {
     }
   }
 
-  private static class JavaFxIdReferenceBase extends PsiReferenceBase<XmlAttributeValue> {
+  private static class JavaFxIdReferenceBase extends PsiReferenceBase<XmlAttributeValue> implements JavaFxIdAttributeReference {
     private final Map<String, XmlAttributeValue> myFileIds;
     private final Set<String> myAcceptableIds;
     private final Map<String, TypeMatch> myTypeMatches;
@@ -230,6 +230,11 @@ class JavaFxComponentIdReferenceProvider extends PsiReferenceProvider {
       return myAcceptableIds.stream()
         .map(id -> PrioritizedLookupElement.withPriority(LookupElementBuilder.create(id), TypeMatch.getPriority(myTypeMatches.get(id))))
         .toArray(LookupElement[]::new);
+    }
+
+    @Override
+    public boolean isBuiltIn() {
+      return FxmlConstants.CONTROLLER.equals(myReferencesId) || myReferencesId.endsWith(FxmlConstants.CONTROLLER_SUFFIX);
     }
   }
 
@@ -311,7 +316,8 @@ class JavaFxComponentIdReferenceProvider extends PsiReferenceProvider {
 
     @Override
     public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-      return super.handleElementRename(JavaFxPsiUtil.getPropertyNameFromMemberName(newElementName, resolve() instanceof PsiMethod));
+      final String newPropertyName = JavaFxPsiUtil.getPropertyName(newElementName, resolve() instanceof PsiMethod);
+      return super.handleElementRename(newPropertyName);
     }
   }
 }

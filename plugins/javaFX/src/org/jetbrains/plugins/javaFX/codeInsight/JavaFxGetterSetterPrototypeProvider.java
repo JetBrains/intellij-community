@@ -46,6 +46,7 @@ public class JavaFxGetterSetterPrototypeProvider extends GetterSetterPrototypePr
     final PsiMethod getter = GenerateMembersUtil.generateSimpleGetterPrototype(field);
 
     final PsiType wrappedType = JavaFxPsiUtil.getWrappedPropertyType(field, project, JavaFxCommonNames.ourReadOnlyMap);
+    getter.setName(PropertyUtil.suggestGetterName(PropertyUtil.suggestPropertyName(field), wrappedType));
 
     final PsiTypeElement returnTypeElement = getter.getReturnTypeElement();
     LOG.assertTrue(returnTypeElement != null);
