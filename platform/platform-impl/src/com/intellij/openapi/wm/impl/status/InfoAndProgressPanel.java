@@ -420,7 +420,9 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
 
         @Override
         public void run() {
-          balloon.revalidate();
+          if (!balloon.isDisposed()) {
+            balloon.revalidate();
+          }
         }
       }
       balloon.addListener(new MyListener());

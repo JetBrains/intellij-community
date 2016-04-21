@@ -26,7 +26,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.index.JavaAnonymousClassBaseRefOccurenceIndex;
 import com.intellij.psi.impl.java.stubs.index.JavaSuperClassNameOccurenceIndex;
-import com.intellij.psi.search.EverythingGlobalScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.search.SearchScope;
@@ -65,7 +64,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
       });
     }
 
-    final GlobalSearchScope scope = useScope instanceof GlobalSearchScope ? (GlobalSearchScope)useScope : new EverythingGlobalScope(project);
+    SearchScope scope = parameters.getScope();
     Pair<List<PsiClass>, AtomicIntegerArray> pair = getOrCalculateDirectSubClasses(project, baseClass);
     List<PsiClass> result = pair.getFirst();
     AtomicIntegerArray isInheritorFlag = pair.getSecond();
@@ -128,7 +127,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
   }
 
   @NotNull
-  private static CheckResult checkAndProcessCandidate(@NotNull GlobalSearchScope scope,
+  private static CheckResult checkAndProcessCandidate(@NotNull SearchScope scope,
                                                       @NotNull PsiClass candidate,
                                                       @NotNull DirectClassInheritorsSearch.SearchParameters parameters,
                                                       @NotNull PsiClass baseClass,
@@ -140,7 +139,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
     return consumer.process(candidate) ? CheckResult.PROCESSED_OK : CheckResult.PROCESSED_ABORT;
   }
 
-  private static boolean isInScope(@NotNull GlobalSearchScope scope, @NotNull PsiClass subClass) {
+  private static boolean isInScope(@NotNull SearchScope scope, @NotNull PsiClass subClass) {
     return ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> PsiSearchScopeUtil.isInScope(scope, subClass));
   }
 

@@ -2164,6 +2164,31 @@ public class Mappings {
             }
           }
 
+          // Now that the list of added classes is complete,
+          // check that super-classes of compiled classes are among newly added ones.
+          // Even if compiled class did not change, we should register 'added' superclass
+          // Consider situation for class B extends A:
+          // 1. file A is removed, make fails with error in file B
+          // 2. A is added back, B and A are compiled together in the second make session
+          // 3. Even if B did not change, A is considered as newly added and should be registered again in ClassToSubclasses dependencies
+          //    Without this code such registration will not happen because list of B's parents did not change
+          final Set<ClassRepr> addedClasses = myDelta.getAddedClasses();
+          if (!addedClasses.isEmpty()) {
+            final TIntHashSet addedNames = new TIntHashSet();
+            for (ClassRepr repr : addedClasses) {
+              addedNames.add(repr.name);
+            }
+            for (FileClasses compiledFile : newClasses) {
+              for (ClassRepr aClass : compiledFile.myFileClasses) {
+                for (int parent : aClass.getSupers()) {
+                  if (addedNames.contains(parent)) {
+                    myDelta.registerAddedSuperClass(aClass.name, parent);
+                  }
+                }
+              }
+            }
+          }
+
           debug("End of Differentiate.");
 
           if (myEasyMode) {
