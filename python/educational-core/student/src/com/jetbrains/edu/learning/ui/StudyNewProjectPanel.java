@@ -22,7 +22,7 @@ import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import com.jetbrains.edu.learning.stepic.CourseInfo;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
-import com.jetbrains.edu.learning.stepic.StudySettings;
+import com.jetbrains.edu.learning.stepic.StepicUser;
 import icons.InteractiveLearningIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -277,10 +277,10 @@ public class StudyNewProjectPanel {
       super.doOKAction();
       final ProgressManager progressManager = ProgressManager.getInstance();
       progressManager.runProcessWithProgressSynchronously(() -> {
-        final Future<Boolean> future = ApplicationManager.getApplication().executeOnPooledThread(
-          new Callable<Boolean>() {
+        final Future<StepicUser> future = ApplicationManager.getApplication().executeOnPooledThread(
+          new Callable<StepicUser>() {
             @Override
-            public Boolean call() throws Exception {
+            public StepicUser call() throws Exception {
               return EduStepicConnector.login(myRemoteCourse.getLogin(), myRemoteCourse.getPassword());
             }
           });
@@ -296,15 +296,15 @@ public class StudyNewProjectPanel {
         }
 
         try {
-          final boolean isSuccess = future.get();
-
-          if (!isSuccess) {
-            setError("Failed to log in");
+          final StepicUser stepicUser = future.get();
+          if (stepicUser != null) {
+            stepicUser.setEmail(myRemoteCourse.getLogin());
+            stepicUser.setPassword(myRemoteCourse.getPassword());
+            myGenerator.myUser = stepicUser;
+            ApplicationManager.getApplication().invokeLater(StudyNewProjectPanel.this::refreshCoursesList);
           }
           else {
-            StudySettings.getInstance().setLogin(myRemoteCourse.getLogin());
-            StudySettings.getInstance().setPassword(myRemoteCourse.getPassword());
-            ApplicationManager.getApplication().invokeLater(StudyNewProjectPanel.this::refreshCoursesList);
+            setError("Failed to log in");
           }
         }
         catch (InterruptedException e) {

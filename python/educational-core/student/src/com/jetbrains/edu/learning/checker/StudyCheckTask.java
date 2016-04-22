@@ -24,7 +24,6 @@ import com.jetbrains.edu.learning.courseFormat.StudyStatus;
 import com.jetbrains.edu.learning.courseFormat.Task;
 import com.jetbrains.edu.learning.stepic.EduAdaptiveStepicConnector;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
-import com.jetbrains.edu.learning.stepic.StudySettings;
 import org.jetbrains.annotations.NotNull;
 
 public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroundable {
@@ -122,7 +121,7 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
     ProgressManager.getInstance().runProcessWithProgressAsynchronously(new Backgroundable(myProject, "Checking Task") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        final Pair<Boolean, String> pair = EduAdaptiveStepicConnector.checkTask(myTask, myProject);
+        final Pair<Boolean, String> pair = EduAdaptiveStepicConnector.checkTask(myProject, myTask);
         if (pair != null) {
           final String checkMessage = pair.getSecond();
           if (pair.getFirst()) {
@@ -171,7 +170,7 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
   }
 
   protected void postAttemptToStepic(StudyTestsOutputParser.TestsOutput testsOutput) {
-    final StudySettings studySettings = StudySettings.getInstance();
+    final StudyTaskManager studySettings = StudyTaskManager.getInstance(myProject);
     final String login = studySettings.getLogin();
     final String password = StringUtil.isEmptyOrSpaces(login) ? "" : studySettings.getPassword();
     EduStepicConnector.postAttempt(myTask, testsOutput.isSuccess(), login, password);

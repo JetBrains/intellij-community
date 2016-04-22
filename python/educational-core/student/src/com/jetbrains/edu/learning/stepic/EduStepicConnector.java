@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.util.net.ssl.CertificateManager;
+import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.Course;
@@ -51,11 +52,12 @@ import java.security.cert.X509Certificate;
 import java.util.*;
 
 public class EduStepicConnector {
+  private static final Logger LOG = Logger.getInstance(EduStepicConnector.class.getName());
   private static final String stepicUrl = "https://stepic.org/";
   private static final String stepicApiUrl = stepicUrl + "api/";
-  private static final Logger LOG = Logger.getInstance(EduStepicConnector.class.getName());
   private static String ourCSRFToken = "";
   private static CloseableHttpClient ourClient;
+
 
   //this prefix indicates that course can be opened by educational plugin
   public static final String PYCHARM_PREFIX = "pycharm";
@@ -64,17 +66,15 @@ public class EduStepicConnector {
   private EduStepicConnector() {
   }
 
-  public static boolean login(@NotNull final String username, @NotNull final String password) {
+  public static StepicUser login(@NotNull final String username, @NotNull final String password) {
     initializeClient();
     if (postCredentials(username, password)) {
       final StepicWrappers.AuthorWrapper stepicUserWrapper = getCurrentUser();
       if (stepicUserWrapper != null && stepicUserWrapper.users.size() == 1) {
-        final StepicUser user = stepicUserWrapper.users.get(0);
-        StudySettings.getInstance().setUser(user);
+        return stepicUserWrapper.users.get(0);
       }
-      return true;
     }
-    return false;
+    return null;
   }
 
   @Nullable
@@ -210,9 +210,9 @@ public class EduStepicConnector {
   }
   
   @NotNull
-  public static CloseableHttpClient getHttpClient() {
+  public static CloseableHttpClient getHttpClient(@NotNull final Project project) {
     if (ourClient == null) {
-      login();
+      login(project);
       initializeClient();
     }
     return ourClient;
@@ -242,9 +242,8 @@ public class EduStepicConnector {
       final String courseType = info.getType();
       if (!info.isAdaptive() && StringUtil.isEmptyOrSpaces(courseType)) continue;
       final List<String> typeLanguage = StringUtil.split(courseType, " ");
-      // TODO: should adaptive course be of PyCharmType
+      // TODO: should adaptive course be of PyCharmType ?
       if (info.isAdaptive() || (typeLanguage.size() == 2 && PYCHARM_PREFIX.equals(typeLanguage.get(0)))) {
-
         for (Integer instructor : info.instructors) {
           final StepicUser author = getFromStepic("users/" + String.valueOf(instructor), StepicWrappers.AuthorWrapper.class).users.get(0);
           info.addAuthor(author);
@@ -256,17 +255,17 @@ public class EduStepicConnector {
     return coursesContainer.meta.containsKey("has_next") && coursesContainer.meta.get("has_next") == Boolean.TRUE;
   }
 
-  public static Course getCourse(@NotNull final CourseInfo info) {
+  public static Course getCourse(@NotNull final Project project, @NotNull final CourseInfo info, @NotNull final String username) {
     final Course course = new Course();
     course.setAuthors(info.getAuthors());
     course.setDescription(info.getDescription());
-    course.setName(info.getName());
     course.setAdaptive(info.isAdaptive());
     course.setId(info.id);
     course.setUpToDate(true);  // TODO: get from stepic
     
     if (!course.isAdaptive()) {
       String courseType = info.getType();
+      course.setName(info.getName());
       course.setLanguage(courseType.substring(PYCHARM_PREFIX.length() + 1));
       try {
         for (Integer section : info.sections) {
@@ -280,10 +279,11 @@ public class EduStepicConnector {
     }
     else {
       final Lesson lesson = new Lesson();
+      course.setName(info.getName());
       //TODO: more specific name?
       lesson.setName("Adaptive");
       course.addLesson(lesson);
-      final Task recommendation = EduAdaptiveStepicConnector.getNextRecommendation(course);
+      final Task recommendation = EduAdaptiveStepicConnector.getNextRecommendation(project, course);
       if (recommendation != null) {
         lesson.addTask(recommendation);
       }
@@ -364,8 +364,7 @@ public class EduStepicConnector {
         return;
       }
       else {
-        final boolean success = login(login, password);
-        if (!success) return;
+        if (login(login, password) == null) return;
       }
     }
 
@@ -428,7 +427,7 @@ public class EduStepicConnector {
     indicator.setText("Uploading course to " + stepicUrl);
     final HttpPost request = new HttpPost(stepicApiUrl + "courses");
     if (ourClient == null || !relogin) {
-      if (!login()) return;
+      if (!login(project)) return;
     }
     final StepicWrappers.AuthorWrapper user = getCurrentUser();
     if (user != null) {
@@ -446,7 +445,7 @@ public class EduStepicConnector {
       final StatusLine line = response.getStatusLine();
       if (line.getStatusCode() != HttpStatus.SC_CREATED) {
         if (!relogin) {
-          login();
+          login(project);
           postCourse(project, course, true, indicator);
         }
         LOG.error("Failed to push " + responseString);
@@ -474,14 +473,13 @@ public class EduStepicConnector {
     }
   }
 
-  private static boolean login() {
-    final String login = StudySettings.getInstance().getLogin();
+  private static boolean login(@NotNull final Project project) {
+    final String login = StudyTaskManager.getInstance(project).getLogin();
     if (StringUtil.isEmptyOrSpaces(login)) {
       return showLoginDialog();
     }
     else {
-      boolean success = login(login, StudySettings.getInstance().getPassword());
-      if (!success) {
+      if (login(login, StudyTaskManager.getInstance(project).getPassword()) == null) {
         return showLoginDialog();
       }
     }
@@ -586,10 +584,10 @@ public class EduStepicConnector {
     return -1;
   }
 
-  public static int updateLesson(Project project, @NotNull final Lesson lesson, ProgressIndicator indicator) {
+  public static int updateLesson(@NotNull final Project project, @NotNull final Lesson lesson, ProgressIndicator indicator) {
     final HttpPut request = new HttpPut(stepicApiUrl + "lessons/" + String.valueOf(lesson.id));
     if (ourClient == null) {
-      if (!login()) {
+      if (!login(project)) {
         LOG.error("Failed to push lesson");
         return 0;
       }
@@ -625,10 +623,10 @@ public class EduStepicConnector {
     return -1;
   }
 
-  public static int postLesson(Project project, @NotNull final Lesson lesson, ProgressIndicator indicator) {
+  public static int postLesson(@NotNull final Project project, @NotNull final Lesson lesson, ProgressIndicator indicator) {
     final HttpPost request = new HttpPost(stepicApiUrl + "lessons");
     if (ourClient == null) {
-      login();
+      login(project);
     }
 
     setHeaders(request, "application/json");

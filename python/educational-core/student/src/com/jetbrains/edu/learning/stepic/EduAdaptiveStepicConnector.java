@@ -55,15 +55,13 @@ public class EduAdaptiveStepicConnector {
   private static final String CONTENT_TYPE_APPL_JSON = "application/json";
   private static final String LESSON_URL = "lessons/";
   private static final String RECOMMENDATION_REACTIONS_URL = "recommendation-reactions";
-  private static final String LESSON_DEFAULT_NAME = "Adaptive";
   private static final String ATTEMPTS_URL = "attempts";
   private static final String SUBMISSION_URL = "submissions";
 
   @Nullable
-  public static Task getNextRecommendation(@NotNull Course course) {
-
+  public static Task getNextRecommendation(@NotNull final Project project, @NotNull Course course) {
     try {
-      final CloseableHttpClient client = getHttpClient();
+      final CloseableHttpClient client = getHttpClient(project);
       final URI uri = new URIBuilder(STEPIC_API_URL + RECOMMENDATIONS_URL).addParameter("course", String.valueOf(course.getId())).build();
       final HttpGet request = new HttpGet(uri);
       setHeaders(request, CONTENT_TYPE_APPL_JSON);
@@ -106,13 +104,14 @@ public class EduAdaptiveStepicConnector {
     return null;
   }
 
-  public static boolean postRecommendationReaction(int reaction, @NotNull final String user, @NotNull final String lessonId) {
+  public static boolean postRecommendationReaction(@NotNull final Project project, @NotNull final String lessonId, 
+                                                   @NotNull final String user,int reaction) {
 
     final HttpPost post = new HttpPost(STEPIC_API_URL + RECOMMENDATION_REACTIONS_URL);
     final String json = new Gson()
       .toJson(new StepicWrappers.RecommendationReactionWrapper(new StepicWrappers.RecommendationReaction(reaction, user, lessonId)));
     post.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
-    final CloseableHttpClient client = getHttpClient();
+    final CloseableHttpClient client = getHttpClient(project);
     setHeaders(post, CONTENT_TYPE_APPL_JSON);
     try {
       final CloseableHttpResponse execute = client.execute(post);
@@ -124,15 +123,16 @@ public class EduAdaptiveStepicConnector {
     return false;
   }
 
-  public static void addNextRecommendedTask(@NotNull Project project, int reaction) {
+  public static void addNextRecommendedTask(@NotNull final Project project, int reaction) {
     final StudyEditor editor = StudyUtils.getSelectedStudyEditor(project);
     final Course course = StudyTaskManager.getInstance(project).getCourse();
     if (course != null && editor != null && editor.getTaskFile() != null) {
       // TODO: get user from settings
-      final StepicUser user = StudySettings.getInstance().getUser();
+      final StepicUser user = StudyTaskManager.getInstance(project).getUser();
       if (user != null &&
-          postRecommendationReaction(reaction, String.valueOf(user.id), String.valueOf(editor.getTaskFile().getTask().getLesson().id))) {
-        final Task task = getNextRecommendation(course);
+          postRecommendationReaction(project, String.valueOf(editor.getTaskFile().getTask().getLesson().id), 
+                                     String.valueOf(user.id), reaction)) {
+        final Task task = getNextRecommendation(project, course);
 
         if (task != null) {
           final Lesson adaptive = course.getLessons().get(0);
@@ -213,9 +213,9 @@ public class EduAdaptiveStepicConnector {
   }
 
   @Nullable
-  public static Pair<Boolean, String> checkTask(@NotNull final Task task, @NotNull final Project project) {
+  public static Pair<Boolean, String> checkTask(@NotNull final Project project, @NotNull final Task task) {
     try {
-      final int attemptId = getAttemptId(task, ATTEMPTS_URL);
+      final int attemptId = getAttemptId(project, task, ATTEMPTS_URL);
       final Editor editor = StudyUtils.getSelectedEditor(project);
       String language = getLanguageString(task, project);
       if (editor != null && language != null) {
@@ -223,13 +223,13 @@ public class EduAdaptiveStepicConnector {
           new StepicWrappers.SubmissionToPostWrapper(String.valueOf(attemptId), "python3", editor.getDocument().getText());
         final HttpPost httpPost = new HttpPost(STEPIC_API_URL + SUBMISSION_URL);
         httpPost.setEntity(new StringEntity(new Gson().toJson(submissionToPostWrapper)));
-        final CloseableHttpClient client = getHttpClient();
+        final CloseableHttpClient client = getHttpClient(project);
         setHeaders(httpPost, CONTENT_TYPE_APPL_JSON);
         final CloseableHttpResponse execute = client.execute(httpPost);
         StepicWrappers.ResultSubmissionWrapper wrapper =
           new Gson().fromJson(EntityUtils.toString(execute.getEntity()), StepicWrappers.ResultSubmissionWrapper.class);
 
-        final StepicUser user = StudySettings.getInstance().getUser();
+        final StepicUser user = StudyTaskManager.getInstance(project).getUser();
         if (user != null) {
           final int id = user.getId();
           while (wrapper.submissions.length == 1 && wrapper.submissions[0].status.equals("evaluation")) {
@@ -244,8 +244,10 @@ public class EduAdaptiveStepicConnector {
             final CloseableHttpResponse httpResponse = client.execute(httpGet);
             wrapper = new Gson().fromJson(EntityUtils.toString(httpResponse.getEntity()), StepicWrappers.ResultSubmissionWrapper.class);
           }
-          final boolean isSolved = wrapper.submissions.length == 1 && !wrapper.submissions[0].status.equals("wrong");
-          return Pair.create(isSolved, wrapper.submissions[0].hint);
+          if (wrapper.submissions.length == 1) {
+            final boolean isSolved = !wrapper.submissions[0].status.equals("wrong");
+            return Pair.create(isSolved, wrapper.submissions[0].hint);
+          }
         }
       }
     }
@@ -281,13 +283,13 @@ public class EduAdaptiveStepicConnector {
     return null;
   }
 
-  private static int getAttemptId(@NotNull Task task, String attempts) throws IOException {
+  private static int getAttemptId(@NotNull final Project project, @NotNull Task task, @NotNull final String attempts) throws IOException {
     final StepicWrappers.AttemptToPostWrapper attemptWrapper = new StepicWrappers.AttemptToPostWrapper(task.getStepicId());
 
     final HttpPost post = new HttpPost(STEPIC_API_URL + attempts);
     post.setEntity(new StringEntity(new Gson().toJson(attemptWrapper)));
 
-    final CloseableHttpClient client = getHttpClient();
+    final CloseableHttpClient client = getHttpClient(project);
     setHeaders(post, CONTENT_TYPE_APPL_JSON);
     final CloseableHttpResponse httpResponse = client.execute(post);
     final StepicWrappers.AttemptContainer container =

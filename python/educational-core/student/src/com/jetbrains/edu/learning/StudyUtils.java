@@ -21,6 +21,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
@@ -43,6 +44,7 @@ import com.jetbrains.edu.learning.core.EduAnswerPlaceholderPainter;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.*;
+import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.ui.StudyProgressToolWindowFactory;
 import com.jetbrains.edu.learning.ui.StudyToolWindow;
@@ -354,12 +356,12 @@ public class StudyUtils {
   }
 
   @Nullable
-  public static Document getPatternDocument(@NotNull final TaskFile taskFile, String name) {
+  public static Document getPatternDocument(@NotNull final Project project, @NotNull final TaskFile taskFile, String name) {
     Task task = taskFile.getTask();
     String lessonDir = EduNames.LESSON + String.valueOf(task.getLesson().getIndex());
     String taskDir = EduNames.TASK + String.valueOf(task.getIndex());
     Course course = task.getLesson().getCourse();
-    File resourceFile = new File(course.getCourseDirectory());
+    File resourceFile = getCourseDirectory(project, course);
     if (!resourceFile.exists()) {
       return  null;
     }
@@ -501,5 +503,31 @@ public class StudyUtils {
 
   public static boolean isStudyProject(@NotNull Project project) {
     return StudyTaskManager.getInstance(project).getCourse() != null;
+  }
+
+  @Nullable
+  public static Project getStudyProject() {
+    Project studyProject = null;
+    Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
+    for (Project project : openProjects) {
+      if (StudyTaskManager.getInstance(project).getCourse() != null) {
+         studyProject = project;
+      }
+    }
+    return studyProject;
+  }
+
+  @NotNull
+  public static File getCourseDirectory(@NotNull Project project, Course course) {
+    final File courseDirectory;
+    if (course.isAdaptive()) {
+      courseDirectory = new File(StudyProjectGenerator.ourCoursesDir,
+                                 StudyProjectGenerator.ADAPTIVE_COURSE_PREFIX + course.getName()
+                                 + "_" + StudyTaskManager.getInstance(project).getUser().getEmail());
+    }
+    else {
+      courseDirectory = new File(StudyProjectGenerator.ourCoursesDir, course.getName());
+    }
+    return courseDirectory;
   }
 }

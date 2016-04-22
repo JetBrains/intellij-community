@@ -19,13 +19,13 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.problems.WolfTheProblemSolver;
+import com.jetbrains.edu.learning.StudyState;
+import com.jetbrains.edu.learning.StudyTaskManager;
+import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduAnswerPlaceholderPainter;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.learning.courseFormat.StudyStatus;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
-import com.jetbrains.edu.learning.StudyState;
-import com.jetbrains.edu.learning.StudyTaskManager;
-import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.navigation.StudyNavigator;
 import org.jetbrains.annotations.NotNull;
@@ -89,7 +89,7 @@ public class StudyRefreshTaskFileAction extends StudyToolbarAction {
                                        @NotNull final Project project,
                                        TaskFile taskFile,
                                        String name) {
-    if (!resetDocument(document, taskFile, name)) {
+    if (!resetDocument(project, document, taskFile, name)) {
       return false;
     }
     resetAnswerPlaceholders(taskFile, project);
@@ -117,10 +117,10 @@ public class StudyRefreshTaskFileAction extends StudyToolbarAction {
   }
 
 
-  private static boolean resetDocument(@NotNull final Document document,
+  private static boolean resetDocument(@NotNull final Project project, @NotNull final Document document,
                                        @NotNull final TaskFile taskFile,
                                        String fileName) {
-    final Document patternDocument = StudyUtils.getPatternDocument(taskFile, fileName);
+    final Document patternDocument = StudyUtils.getPatternDocument(project, taskFile, fileName);
     if (patternDocument == null) {
       return false;
     }

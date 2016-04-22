@@ -45,16 +45,18 @@ import java.util.List;
 import java.util.Map;
 
 public class StudyProjectGenerator {
-  private static final Logger LOG = Logger.getInstance(StudyProjectGenerator.class.getName());
-  private final List<SettingsListener> myListeners = ContainerUtil.newArrayList();
-  protected static final File ourCoursesDir = new File(PathManager.getConfigPath(), "courses");
-  private static final String CACHE_NAME = "courseNames.txt";
-  private List<CourseInfo> myCourses = new ArrayList<>();
-  protected CourseInfo mySelectedCourseInfo;
-  private static final String COURSE_NAME_ATTRIBUTE = "name";
-  private static final String COURSE_DESCRIPTION = "description";
   public static final String AUTHOR_ATTRIBUTE = "authors";
   public static final String LANGUAGE_ATTRIBUTE = "language";
+  public static final String ADAPTIVE_COURSE_PREFIX = "__AdaptivePyCharmPython__";
+  public static final File ourCoursesDir = new File(PathManager.getConfigPath(), "courses");
+  private static final Logger LOG = Logger.getInstance(StudyProjectGenerator.class.getName());
+  private static final String COURSE_NAME_ATTRIBUTE = "name";
+  private static final String COURSE_DESCRIPTION = "description";
+  private static final String CACHE_NAME = "courseNames.txt";
+  private final List<SettingsListener> myListeners = ContainerUtil.newArrayList();
+  public StepicUser myUser;
+  private List<CourseInfo> myCourses = new ArrayList<>();
+  protected CourseInfo mySelectedCourseInfo;
 
   public void setCourses(List<CourseInfo> courses) {
     myCourses = courses;
@@ -65,7 +67,8 @@ public class StudyProjectGenerator {
   }
 
   public void generateProject(@NotNull final Project project, @NotNull final VirtualFile baseDir) {
-    final Course course = getCourse();
+    StudyTaskManager.getInstance(project).setUser(myUser);
+    final Course course = getCourse(project);
     if (course == null) {
       LOG.warn("Course is null");
       return;
@@ -75,8 +78,8 @@ public class StudyProjectGenerator {
       () -> DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND,
                                                     () -> ApplicationManager.getApplication().runWriteAction(() -> {
                                                       course.initCourse(false);
-                                                      final File courseDirectory = new File(ourCoursesDir, course.getName());
-                                                      StudyGenerator.createCourse(course, baseDir, courseDirectory, project);
+                                                      StudyGenerator.createCourse(course, baseDir, StudyUtils
+                                                        .getCourseDirectory(project, course), project);
                                                       course.setCourseDirectory(new File(ourCoursesDir, mySelectedCourseInfo.getName()).getAbsolutePath());
                                                       VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
                                                       StudyProjectComponent.getInstance(project).registerStudyToolWindow(course);
@@ -84,7 +87,7 @@ public class StudyProjectGenerator {
                                                     })));
   }
 
-  protected Course getCourse() {
+  protected Course getCourse(@NotNull final Project project) {
     Reader reader = null;
     try {
       final File courseFile = new File(new File(ourCoursesDir, mySelectedCourseInfo.getName()), EduNames.COURSE_META_FILE);
@@ -102,9 +105,9 @@ public class StudyProjectGenerator {
     finally {
       StudyUtils.closeSilently(reader);
     }
-    final Course course = EduStepicConnector.getCourse(mySelectedCourseInfo);
+    final Course course = EduStepicConnector.getCourse(project, mySelectedCourseInfo, myUser.getEmail());
     if (course != null) {
-      flushCourse(course);
+      flushCourse(project, course);
     }
     return course;
   }
@@ -143,8 +146,8 @@ public class StudyProjectGenerator {
     }
   }
 
-  public void flushCourse(@NotNull final Course course) {
-    final File courseDirectory = new File(ourCoursesDir, course.getName());
+  public void flushCourse(@NotNull final Project project, @NotNull final Course course) {
+    final File courseDirectory = StudyUtils.getCourseDirectory(project, course);
     FileUtil.createDirectory(courseDirectory);
     flushCourseJson(course, courseDirectory);
 
@@ -361,7 +364,9 @@ public class StudyProjectGenerator {
           while ((line = reader.readLine()) != null) {
             Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
             final CourseInfo courseInfo = gson.fromJson(line, CourseInfo.class);
-            courses.add(courseInfo);
+            if (!courseInfo.isAdaptive()) {
+              courses.add(courseInfo);
+            }
           }
         }
         catch (IOException | JsonSyntaxException e) {
@@ -395,7 +400,9 @@ public class StudyProjectGenerator {
       CourseInfo courseName = addCourse(myCourses, courseDir);
       flushCache(myCourses);
       if (courseName != null && !courseName.getName().equals(unzippedName)) {
+        //noinspection ResultOfMethodCallIgnored
         courseDir.renameTo(new File(ourCoursesDir, courseName.getName()));
+        //noinspection ResultOfMethodCallIgnored
         courseDir.delete();
       }
       return courseName;
@@ -471,8 +478,8 @@ public class StudyProjectGenerator {
         for (JsonElement author : courseAuthors) {
           final JsonObject authorAsJsonObject = author.getAsJsonObject();
           final StepicUser stepicUser = new StepicUser();
-          stepicUser.setFirst_name(authorAsJsonObject.get("first_name").getAsString());
-          stepicUser.setLast_name(authorAsJsonObject.get("last_name").getAsString());
+          stepicUser.setFirstName(authorAsJsonObject.get("first_name").getAsString());
+          stepicUser.setLastName(authorAsJsonObject.get("last_name").getAsString());
           authors.add(stepicUser);
         }
         courseInfo.setAuthors(authors);

@@ -1,28 +1,25 @@
 package com.jetbrains.edu.learning.stepic;
 
+import com.intellij.ide.passwordSafe.PasswordSafe;
+import com.intellij.ide.passwordSafe.PasswordSafeException;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
+import com.jetbrains.edu.learning.StudyTaskManager;
 
 public class StepicUser {
+  private static final String STEPIC_SETTINGS_PASSWORD_KEY = "STEPIC_SETTINGS_PASSWORD_KEY";
+  private static final Logger LOG = Logger.getInstance(StepicUser.class);
   int id;
-  String first_name;
+  String firstName;
   String last_name;
   String email;
-  String password;
-
-  public StepicUser(int id, String first_name, String last_name, String email, String password) {
-    this.id = id;
-    this.first_name = first_name;
-    this.last_name = last_name;
-    this.email = email;
-    this.password = password;
-  }
-
-  public StepicUser(String email, String password) {
-    this.email = email;
-    this.password = password;
-  }
 
   public StepicUser() {
+  }
+  
+  public StepicUser(String email, String password) {
+    this.email = email;
+    setPassword(password);
   }
 
   public int getId() {
@@ -33,19 +30,19 @@ public class StepicUser {
     this.id = id;
   }
 
-  public String getFirst_name() {
-    return first_name;
+  public String getFirstName() {
+    return firstName;
   }
 
-  public void setFirst_name(String first_name) {
-    this.first_name = first_name;
+  public void setFirstName(String firstName) {
+    this.firstName = firstName;
   }
 
-  public String getLast_name() {
+  public String getLastName() {
     return last_name;
   }
 
-  public void setLast_name(String last_name) {
+  public void setLastName(String last_name) {
     this.last_name = last_name;
   }
 
@@ -58,14 +55,31 @@ public class StepicUser {
   }
 
   public String getPassword() {
-    return password;
+    final String login = getEmail();
+    if (StringUtil.isEmptyOrSpaces(login)) return "";
+
+    String password;
+    try {
+      password = PasswordSafe.getInstance().getPassword(null, StudyTaskManager.class, STEPIC_SETTINGS_PASSWORD_KEY + login);
+    }
+    catch (PasswordSafeException e) {
+      LOG.info("Couldn't get password for key [" + STEPIC_SETTINGS_PASSWORD_KEY + "]", e);
+      password = "";
+    }
+
+    return StringUtil.notNullize(password);
   }
 
   public void setPassword(String password) {
-    this.password = password;
+    try {
+      PasswordSafe.getInstance().storePassword(null, StudyTaskManager.class, STEPIC_SETTINGS_PASSWORD_KEY + getEmail(), password);
+    }
+    catch (PasswordSafeException e) {
+      LOG.info("Couldn't set password for key [" + STEPIC_SETTINGS_PASSWORD_KEY + getEmail() + "]", e);
+    }
   }
 
   public String getName() {
-    return StringUtil.join(new String[]{first_name, last_name}, " ");
+    return StringUtil.join(new String[]{firstName, last_name}, " ");
   }
 }
