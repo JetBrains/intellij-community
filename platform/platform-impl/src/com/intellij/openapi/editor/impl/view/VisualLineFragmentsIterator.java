@@ -222,6 +222,9 @@ class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterato
     if (!hasNext()) throw new NoSuchElementException();
     if (mySegmentStartOffset == getCurrentFoldRegionStartOffset()) {
       myDelegate = null;
+      myInlays = null;
+      myCurrentInlayIndex = 0;
+      myIsInlay = false;
       myFoldRegion = myRegions[myCurrentFoldRegionIndex];
       assert myFoldRegion.isValid();
       
