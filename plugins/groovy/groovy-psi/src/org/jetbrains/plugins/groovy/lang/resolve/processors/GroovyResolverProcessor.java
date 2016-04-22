@@ -32,6 +32,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyMethodResult;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
@@ -50,7 +51,7 @@ import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.isAccessible
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.isStaticsOK;
 import static org.jetbrains.plugins.groovy.lang.resolve.processors.AccessorResolverProcessor.*;
 
-public abstract class GroovyResolverProcessor implements PsiScopeProcessor, ElementClassHint, NameHint {
+public abstract class GroovyResolverProcessor implements PsiScopeProcessor, ElementClassHint, NameHint, DynamicMembersHint {
 
   protected final @NotNull GrReferenceExpression myRef;
   private final @NotNull String myName;
@@ -204,7 +205,7 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
   @Nullable
   @Override
   public <T> T getHint(@NotNull Key<T> hintKey) {
-    if (hintKey == ElementClassHint.KEY || hintKey == NameHint.KEY) {
+    if (hintKey == ElementClassHint.KEY || hintKey == NameHint.KEY || hintKey == DynamicMembersHint.KEY) {
       return (T)this;
     }
     return null;
@@ -233,6 +234,11 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
   @Override
   public String getName(@NotNull ResolveState state) {
     return myName;
+  }
+
+  @Override
+  public boolean shouldProcessMethods() {
+    return myRef.getParent() instanceof GrCallExpression;
   }
 
   @NotNull

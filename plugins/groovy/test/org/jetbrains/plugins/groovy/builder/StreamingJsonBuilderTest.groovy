@@ -49,8 +49,16 @@ builder.people {
           foobar()
           hellYeah(1,2,3)
         }
+        <warning>someProperty</warning>
     }
+    <warning>someProperty</warning>
 }
+
+builder.<warning>root</warning>
+builder.root<warning>(new Object())</warning>
+builder.root<warning>(new Object[0])</warning>
+builder.root<warning>([new Object(), new Object()])</warning>
+builder.root<warning>([], new Object(), {})</warning>
 '''
     fixture.enableInspections GroovyAssignabilityCheckInspection, GrUnresolvedAccessInspection
     fixture.checkHighlighting true, false, true

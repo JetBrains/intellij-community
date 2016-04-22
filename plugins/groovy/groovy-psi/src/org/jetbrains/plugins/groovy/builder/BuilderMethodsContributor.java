@@ -19,12 +19,12 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.ResolveState;
-import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt;
 
 public abstract class BuilderMethodsContributor extends NonCodeMembersContributor {
 
@@ -39,7 +39,7 @@ public abstract class BuilderMethodsContributor extends NonCodeMembersContributo
     String name = ResolveUtil.getNameHint(processor);
     if (name == null) return;
 
-    if (!ResolveUtil.shouldProcessMethods(processor.getHint(ElementClassHint.KEY))) return;
+    if (!ResolveUtilKt.shouldProcessDynamicMethods(processor)) return;
 
     processDynamicMethods(qualifierType, clazz, name, place, e -> processor.execute(e, state));
   }
