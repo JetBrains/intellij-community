@@ -22,8 +22,10 @@ import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.catchAndLog
+import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtil
@@ -43,6 +45,7 @@ import io.netty.handler.codec.http.cookie.DefaultCookie
 import io.netty.handler.codec.http.cookie.ServerCookieDecoder
 import org.jetbrains.ide.HttpRequestHandler
 import org.jetbrains.io.*
+import java.awt.datatransfer.StringSelection
 import java.io.File
 import java.io.IOException
 import java.net.InetAddress
@@ -236,8 +239,15 @@ private fun validateToken(request: HttpRequest, channel: Channel, urlDecoder: Qu
 
   SwingUtilities.invokeAndWait {
     ProjectUtil.focusProjectWindow(null, true)
-    Messages.showMessageDialog(ProjectUtil.getActiveFrameOrWelcomeScreen(), "Page '" + StringUtil.trimMiddle(url, 50) + "' requested without authorization, " +
-        "\nplease <a href='" + url + "?" + acquireToken() + "'>open this link</a> to trust it.", "", Messages.getWarningIcon())
+
+    if (MessageDialogBuilder
+        .yesNo("", "Page '" + StringUtil.trimMiddle(url, 50) + "' requested without authorization, " +
+            "\nyou can copy URL and open it in browser to trust it.")
+        .icon(Messages.getWarningIcon())
+        .yesText("Copy authorization URL to clipboard")
+        .show() == Messages.YES) {
+      CopyPasteManager.getInstance().setContents(StringSelection(url + "?" + TOKEN_PARAM_NAME + "=" + acquireToken()))
+    }
   }
 
   HttpResponseStatus.UNAUTHORIZED.orInSafeMode(HttpResponseStatus.NOT_FOUND).send(channel, request)
