@@ -97,8 +97,7 @@ class ApplyPatchMergeViewer implements MergeTool.MergeViewer {
     patchPanel.add(myViewer.getPatchTitle(), BorderLayout.NORTH);
 
 
-    myPatchSplitter = new DiffSplitter();
-    myPatchSplitter.setProportion(2f / 3);
+    myPatchSplitter = new DiffSplitter(2f / 3);
     myPatchSplitter.setFirstComponent(myViewer.getComponent());
     myPatchSplitter.setSecondComponent(patchPanel);
     myPatchSplitter.setHonorComponentsMinimumSize(false);

@@ -57,6 +57,7 @@ public class Splitter extends JPanel implements Splittable {
   private final float myMaxProp;
 
 
+  protected float myDefaultProportion = .5f;
   protected float myProportion;// first size divided by (first + second)
 
   protected final Divider myDivider;
@@ -385,6 +386,14 @@ public class Splitter extends JPanel implements Splittable {
     repaint();
   }
 
+  public void setDefaultProportion(float value) {
+    myDefaultProportion = value;
+  }
+
+  public void resetProportion() {
+    setProportion(myDefaultProportion);
+  }
+
   /**
    * Swaps components.
    */
@@ -570,7 +579,7 @@ public class Splitter extends JPanel implements Splittable {
         new ClickListener() {
           @Override
           public boolean onClick(@NotNull MouseEvent e, int clickCount) {
-            setProportion(.5f);
+            resetProportion();
             return true;
           }
         }.installOn(splitCenterlabel);
@@ -640,7 +649,7 @@ public class Splitter extends JPanel implements Splittable {
           Splitter.this.setOrientation(!Splitter.this.getOrientation());
         }
         if (myResizeEnabled && e.getClickCount() == 2) {
-          Splitter.this.setProportion(.5f);
+          resetProportion();
         }
       }
     }
