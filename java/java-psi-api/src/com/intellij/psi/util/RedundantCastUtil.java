@@ -361,7 +361,7 @@ public class RedundantCastUtil {
               final PsiCall call = LambdaUtil.treeWalkUp(expression);
               if (call != null) {
                 final PsiCall callCopy = (PsiCall)call.copy();
-                newCall = PsiTreeUtil.getParentOfType(callCopy.findElementAt(expression.getTextRange().getStartOffset() - call.getTextRange().getStartOffset()), expression.getClass());
+                newCall = PsiTreeUtil.getParentOfType(callCopy.findElementAt(argumentList.getTextRange().getStartOffset() - call.getTextRange().getStartOffset()), expression.getClass());
               }
               else {
                 newCall = (PsiCall)expression.copy();

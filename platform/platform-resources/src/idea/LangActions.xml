@@ -1008,7 +1008,7 @@
         <action id="DisableInspection" class="com.intellij.codeInspection.ui.actions.KeyAwareInspectionViewAction$DisableInspection"/>
         <action id="RunInspectionOn" class="com.intellij.codeInspection.ui.actions.KeyAwareInspectionViewAction$RunInspectionOn"/>
         <separator/>
-        <action id="SuppressFixes" class="com.intellij.codeInspection.ui.actions.SuppressActionWrapper"/>
+        <action id="SuppressFixes" class="com.intellij.codeInspection.ui.actions.suppress.SuppressActionWrapper"/>
       </group>
     </group>
   </actions>

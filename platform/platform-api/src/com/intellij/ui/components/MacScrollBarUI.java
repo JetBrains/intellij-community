@@ -152,7 +152,7 @@ final class MacScrollBarUI extends DefaultScrollBarUI {
       if (event != null && MouseEvent.MOUSE_MOVED == event.getID()) {
         Object source = event.getSource();
         if (source instanceof Component) {
-          JScrollPane pane = UIUtil.findParentByClass((Component)source, JScrollPane.class);
+          JScrollPane pane = UIUtil.getParentOfType(JScrollPane.class, (Component)source);
           if (pane != null) {
             pauseThumbAnimation(pane.getHorizontalScrollBar());
             pauseThumbAnimation(pane.getVerticalScrollBar());

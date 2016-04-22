@@ -247,7 +247,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
       @NotNull
       @Override
       protected MinusculeMatcher createMatcher(@NotNull String pattern) {
-        return new MinusculeMatcher(pattern, NameUtil.MatchingCaseSensitivity.NONE, " ()");
+        return NameUtil.buildMatcher(pattern).withSeparators(" ()").build();
       }
     });
 

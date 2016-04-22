@@ -16,8 +16,8 @@
 package com.intellij.ide.presentation;
 
 import com.intellij.ide.TypePresentationService;
+import com.intellij.openapi.fileTypes.DirectoryFileType;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
@@ -40,7 +40,7 @@ public class VirtualFilePresentation {
       return icon;
     }
     FileType fileType = vFile.getFileType();
-    if (fileType == UnknownFileType.INSTANCE && vFile.isDirectory() && vFile.isInLocalFileSystem()) {
+    if (vFile.isDirectory() && vFile.isInLocalFileSystem() && !(fileType instanceof DirectoryFileType)) {
       return PlatformIcons.FOLDER_ICON;
     }
     return fileType.getIcon();

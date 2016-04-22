@@ -38,8 +38,11 @@ import java.util.List;
 class SliceLeafValueRootNode extends SliceNode implements MyColoredTreeCellRenderer {
   final List<SliceNode> myCachedChildren;
 
-  SliceLeafValueRootNode(@NotNull Project project, PsiElement leafExpression, SliceNode root, List<SliceNode> children,
-                         SliceAnalysisParams params) {
+  SliceLeafValueRootNode(@NotNull Project project,
+                         @NotNull PsiElement leafExpression,
+                         @NotNull SliceNode root,
+                         @NotNull List<SliceNode> children,
+                         @NotNull SliceAnalysisParams params) {
     super(project, JavaSliceUsage.createRootUsage(leafExpression, params), root.targetEqualUsages);
     myCachedChildren = children;
   }

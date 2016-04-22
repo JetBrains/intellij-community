@@ -349,7 +349,7 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
   @NotNull
   public String getCanonicalText() {
     final PsiElement element = resolve();
-    if (element instanceof PsiClass && !(element instanceof PsiTypeParameter)) {
+    if (element instanceof PsiClass) {
       final String fqn = ((PsiClass)element).getQualifiedName();
       if (fqn != null) return fqn;
     }

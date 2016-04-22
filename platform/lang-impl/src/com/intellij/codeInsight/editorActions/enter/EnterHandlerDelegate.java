@@ -16,10 +16,10 @@
 
 package com.intellij.codeInsight.editorActions.enter;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
@@ -39,5 +39,22 @@ public interface EnterHandlerDelegate {
                          @NotNull final Ref<Integer> caretAdvance, @NotNull final DataContext dataContext,
                          @Nullable final EditorActionHandler originalHandler);
 
+  /**
+   * Called at the end of Enter handling after line feed insertion and indentation adjustment.
+   * <p>
+   * <b>Important Note: A document associated with the editor has modifications which are not reflected yet in the PSI file. If any
+   * operations with PSI are needed including a search for PSI elements, the document must be committed first to update the PSI.
+   * For example:</b>
+   * <code><pre>
+   *   PsiDocumentManager.getInstance(file.getProject()).commitDocument(editor.getDocument);
+   * </pre></code>
+   *
+   * @param file        The PSI file associated with the document.
+   * @param editor      The document.
+   * @param dataContext The data context passed to the Enter handler.
+   * @return One of <code>{@link Result} values.</code>
+   * @see DataContext
+   * @see com.intellij.psi.PsiDocumentManager
+   */
   Result postProcessEnter(@NotNull PsiFile file, @NotNull Editor editor, @NotNull DataContext dataContext);
 }

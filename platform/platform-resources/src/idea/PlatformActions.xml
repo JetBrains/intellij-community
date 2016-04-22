@@ -24,6 +24,19 @@
       <action id="SwitchApply" text="Switching Apply" class="com.intellij.ui.switcher.ApplySwitchAction"/>
     </group>
 
+    <group id="ScrollPaneActions">
+      <action class="com.intellij.openapi.actionSystem.EmptyAction" id="Swing-ScrollPane-scrollHome" text="Scroll Home"/>
+      <action class="com.intellij.openapi.actionSystem.EmptyAction" id="Swing-ScrollPane-scrollEnd" text="Scroll End"/>
+      <action class="com.intellij.openapi.actionSystem.EmptyAction" id="Swing-ScrollPane-unitScrollUp" text="Scroll Up"/>
+      <action class="com.intellij.openapi.actionSystem.EmptyAction" id="Swing-ScrollPane-unitScrollDown" text="Scroll Down"/>
+      <action class="com.intellij.openapi.actionSystem.EmptyAction" id="Swing-ScrollPane-unitScrollLeft" text="Scroll Left"/>
+      <action class="com.intellij.openapi.actionSystem.EmptyAction" id="Swing-ScrollPane-unitScrollRight" text="Scroll Right"/>
+      <action class="com.intellij.openapi.actionSystem.EmptyAction" id="Swing-ScrollPane-scrollUp" text="Scroll Page Up"/>
+      <action class="com.intellij.openapi.actionSystem.EmptyAction" id="Swing-ScrollPane-scrollDown" text="Scroll Page Down"/>
+      <action class="com.intellij.openapi.actionSystem.EmptyAction" id="Swing-ScrollPane-scrollLeft" text="Scroll Page Left"/>
+      <action class="com.intellij.openapi.actionSystem.EmptyAction" id="Swing-ScrollPane-scrollRight" text="Scroll Page Right"/>
+    </group>
+
     <action id="ContextHelp" class="com.intellij.ide.actions.ContextHelpAction"/>
     <action id="RunGc" class="com.intellij.ide.actions.RunGcAction"/>
     <action id="ShowPopupMenu" class="com.intellij.ide.actions.ShowPopupMenuAction"/>
@@ -344,6 +357,7 @@
         <group id="EditorToggleActions" popup="true">
           <action id="EditorToggleShowWhitespaces" class="com.intellij.openapi.editor.actions.ToggleShowWhitespacesAction"/>
           <action id="EditorToggleShowLineNumbers" class="com.intellij.openapi.editor.actions.ToggleShowLineNumbersAction"/>
+          <action id="EditorToggleShowGutterIcons" class="com.intellij.openapi.editor.actions.ToggleShowGutterIconsAction"/>
           <action id="EditorToggleShowIndentLines" class="com.intellij.openapi.editor.actions.ToggleShowIndentLinesAction"/>
           <action id="EditorToggleUseSoftWraps" class="com.intellij.openapi.editor.actions.ToggleUseSoftWrapsMenuAction" icon="AllIcons.Actions.ToggleSoftWrap"/>
         </group>
@@ -604,6 +618,7 @@
 
     <group id="EditorGutterPopupMenu">
       <action id="EditorGutterToggleGlobalLineNumbers" class="com.intellij.openapi.editor.actions.ToggleShowLineNumbersGloballyAction"/>
+      <action id="EditorGutterToggleGlobalGutterIcons" class="com.intellij.openapi.editor.actions.ToggleShowGutterIconsGloballyAction"/>
       <action id="EditorGutterToggleGlobalIndentLines" class="com.intellij.openapi.editor.actions.ToggleShowIndentLinesGloballyAction"/>
       <separator/>
       <action id="EditorGutterToggleGlobalSoftWraps" class="com.intellij.openapi.editor.actions.ToggleSoftWrapsGloballyAction"/>

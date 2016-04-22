@@ -38,29 +38,31 @@ import static com.intellij.codeInspection.ProblemDescriptorUtil.TRIM_AT_TREE_END
 /**
  * @author max
  */
-public class ProblemDescriptionNode extends CachedInspectionTreeNode implements RefElementAware {
+public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
   protected RefEntity myElement;
   private final CommonProblemDescriptor myDescriptor;
   protected final InspectionToolWrapper myToolWrapper;
-  @NotNull
-  protected final InspectionToolPresentation myPresentation;
   private final HighlightDisplayLevel myLevel;
 
   public ProblemDescriptionNode(RefEntity element,
                                 CommonProblemDescriptor descriptor,
                                 @NotNull InspectionToolWrapper toolWrapper,
                                 @NotNull InspectionToolPresentation presentation) {
-    super(descriptor);
+    super(descriptor, presentation);
     myElement = element;
     myDescriptor = descriptor;
     myToolWrapper = toolWrapper;
-    myPresentation = presentation;
     final InspectionProfileImpl profile = (InspectionProfileImpl)presentation.getContext().getCurrentProfile();
     myLevel = descriptor instanceof ProblemDescriptor
               ? profile.getErrorLevel(HighlightDisplayKey.find(toolWrapper.getShortName()), ((ProblemDescriptor)descriptor).getStartElement())
               : profile.getTools(toolWrapper.getID(), element.getRefManager().getProject()).getLevel();
-    init();
+    init(presentation.getContext().getProject());
 }
+
+  @Override
+  public boolean canSuppress() {
+    return super.canSuppress() && !isQuickFixAppliedFromView();
+  }
 
   @NotNull
   public InspectionToolWrapper getToolWrapper() {
@@ -84,7 +86,9 @@ public class ProblemDescriptionNode extends CachedInspectionTreeNode implements 
 
   @Override
   public void visitProblemSeverities(FactoryMap<HighlightDisplayLevel, Integer> counter) {
-    counter.put(myLevel, counter.get(myLevel) + 1);
+    if (!myPresentation.isProblemResolved(getElement(), myDescriptor)) {
+      counter.put(myLevel, counter.get(myLevel) + 1);
+    }
   }
 
   @Override
@@ -98,22 +102,18 @@ public class ProblemDescriptionNode extends CachedInspectionTreeNode implements 
     return true;
   }
 
-
   @Override
-  public boolean isResolved(ExcludedInspectionTreeNodesManager manager) {
-    return myElement instanceof RefElement && getPresentation().isProblemResolved(myElement, getDescriptor());
-  }
-
-  @Override
-  public void ignoreElement(ExcludedInspectionTreeNodesManager manager) {
+  public void excludeElement(ExcludedInspectionTreeNodesManager manager) {
     InspectionToolPresentation presentation = getPresentation();
     presentation.ignoreCurrentElementProblem(getElement(), getDescriptor());
+    super.excludeElement(manager);
   }
 
   @Override
-  public void amnesty(ExcludedInspectionTreeNodesManager manager) {
+  public void amnestyElement(ExcludedInspectionTreeNodesManager manager) {
     InspectionToolPresentation presentation = getPresentation();
     presentation.amnesty(getElement());
+    super.amnestyElement(manager);
   }
 
   @NotNull
@@ -137,5 +137,15 @@ public class ProblemDescriptionNode extends CachedInspectionTreeNode implements 
 
     return XmlStringUtil.stripHtml(ProblemDescriptorUtil.renderDescriptionMessage(descriptor, element,
                                                                                   APPEND_LINE_NUMBER | TRIM_AT_TREE_END));
+  }
+
+  public boolean isQuickFixAppliedFromView() {
+    return myPresentation.isProblemResolved(getElement(), myDescriptor) && !isAlreadySuppressedFromView();
+  }
+
+  @Nullable
+  @Override
+  public String getCustomizedTailText() {
+    return isQuickFixAppliedFromView() ? "" : super.getCustomizedTailText();
   }
 }

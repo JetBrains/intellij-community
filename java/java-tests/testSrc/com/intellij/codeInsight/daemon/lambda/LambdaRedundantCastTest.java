@@ -75,6 +75,12 @@ public class LambdaRedundantCastTest extends LightDaemonAnalyzerTestCase {
 
   public void testIDEA154861() { doTest();}
 
+  public void testQualifierOfMethodWithCast() throws Exception {
+    doTest();
+  }
+
+  public void testInvalidResolveWithoutCast() { doTest();}
+
   private void doTest() {
     doTest(BASE_PATH + "/" + getTestName(false) + ".java", true, false);
   }

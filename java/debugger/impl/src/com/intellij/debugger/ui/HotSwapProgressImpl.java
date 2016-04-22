@@ -96,7 +96,7 @@ public class HotSwapProgressImpl extends HotSwapProgress{
                                                 }
                                               }
                                             }
-      ).notify(getProject());
+      ).setImportant(false).notify(getProject());
     }
     else if (!warnings.isEmpty()){
       NOTIFICATION_GROUP.createNotification(DebuggerBundle.message("status.hot.swap.completed.with.warnings"),

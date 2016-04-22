@@ -39,8 +39,8 @@ class EventLogTest extends LightPlatformTestCase {
 \tfirst line
 \tsecond line
 \tthird
-\tAction (show balloon)'''
-    assert entry.links.collect { it.first } == [new TextRange(39, 45), new TextRange(47, 59)]
+\tAction'''
+    assert entry.links.collect { it.first } == [new TextRange(39, 45)]
 
   }
 

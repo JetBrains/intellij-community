@@ -19,10 +19,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.ProblemDescriptionsProcessor;
 import com.intellij.codeInspection.QuickFix;
-import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
-import com.intellij.codeInspection.ex.HTMLComposerImpl;
-import com.intellij.codeInspection.ex.InspectionRVContentProvider;
-import com.intellij.codeInspection.ex.QuickFixAction;
+import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefModule;
 import com.intellij.openapi.vcs.FileStatus;
@@ -36,6 +33,10 @@ import java.util.Map;
 import java.util.Set;
 
 public interface InspectionToolPresentation extends ProblemDescriptionsProcessor {
+
+  @NotNull
+  InspectionToolWrapper getToolWrapper();
+
   @NotNull
   InspectionNode createToolNode(@NotNull GlobalInspectionContextImpl globalInspectionContext,
                                 @NotNull InspectionNode node,
@@ -97,4 +98,12 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
   default JComponent getCustomPreviewPanel(RefEntity entity) {
     return null;
   };
+
+  /**
+   * see {@link com.intellij.codeInspection.deadCode.DummyEntryPointsPresentation}
+   * @return false only if contained problem elements contain real highlighted problem in code.
+   */
+  default boolean isDummy() {
+    return false;
+  }
 }

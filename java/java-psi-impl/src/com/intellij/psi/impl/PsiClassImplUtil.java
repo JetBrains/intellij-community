@@ -150,10 +150,10 @@ public class PsiClassImplUtil {
     if (name == null) return Collections.emptyList();
 
     if (checkBases) {
-      Map<String, List<Pair<PsiMember, PsiSubstitutor>>> allMethodsMap = getMap(aClass, type);
-      List<Pair<PsiMember, PsiSubstitutor>> list = allMethodsMap.get(name);
+      Map<String, Pair<PsiMember, PsiSubstitutor>[]> allMethodsMap = getMap(aClass, type);
+      Pair<PsiMember, PsiSubstitutor>[] list = allMethodsMap.get(name);
       if (list == null) return Collections.emptyList();
-      List<PsiMember> ret = new ArrayList<PsiMember>(list.size());
+      List<PsiMember> ret = new ArrayList<PsiMember>(list.length);
       for (final Pair<PsiMember, PsiSubstitutor> info : list) {
         ret.add(info.getFirst());
       }
@@ -186,9 +186,10 @@ public class PsiClassImplUtil {
 
   @NotNull
   public static <T extends PsiMember> List<Pair<T, PsiSubstitutor>> getAllWithSubstitutorsByMap(@NotNull PsiClass aClass, @NotNull MemberType type) {
-    Map<String, List<Pair<PsiMember, PsiSubstitutor>>> allMap = getMap(aClass, type);
+    Map<String, Pair<PsiMember, PsiSubstitutor>[]> allMap = getMap(aClass, type);
+    Pair<PsiMember, PsiSubstitutor>[] pairs = allMap.get(ALL);
     //noinspection unchecked
-    return (List)allMap.get(ALL);
+    return Arrays.<Pair<T, PsiSubstitutor>>asList((Pair[])pairs);
   }
 
   @NotNull
@@ -210,7 +211,7 @@ public class PsiClassImplUtil {
 
   public enum MemberType {CLASS, FIELD, METHOD}
 
-  private static Map<String, List<Pair<PsiMember, PsiSubstitutor>>> getMap(@NotNull PsiClass aClass, @NotNull MemberType type) {
+  private static Map<String, Pair<PsiMember, PsiSubstitutor>[]> getMap(@NotNull PsiClass aClass, @NotNull MemberType type) {
     ParameterizedCachedValue<Map<GlobalSearchScope, MembersMap>, PsiClass> value = getValues(aClass);
     return value.getValue(aClass).get(aClass.getResolveScope()).get(type);
   }
@@ -357,7 +358,7 @@ public class PsiClassImplUtil {
     return factory.createMethodFromText(text, null).getSignature(PsiSubstitutor.EMPTY);
   }
 
-  private static class MembersMap extends ConcurrentFactoryMap<MemberType, Map<String, List<Pair<PsiMember, PsiSubstitutor>>>> {
+  private static class MembersMap extends ConcurrentFactoryMap<MemberType, Map<String, Pair<PsiMember, PsiSubstitutor>[]>> {
     private final PsiClass myPsiClass;
     private final GlobalSearchScope myResolveScope;
 
@@ -368,7 +369,7 @@ public class PsiClassImplUtil {
 
     @Nullable
     @Override
-    protected Map<String, List<Pair<PsiMember, PsiSubstitutor>>> create(final MemberType key) {
+    protected Map<String, Pair<PsiMember, PsiSubstitutor>[]> create(final MemberType key) {
       final Map<String, List<Pair<PsiMember, PsiSubstitutor>>> map = new THashMap<String, List<Pair<PsiMember, PsiSubstitutor>>>();
 
       final List<Pair<PsiMember, PsiSubstitutor>> allMembers = new ArrayList<Pair<PsiMember, PsiSubstitutor>>();
@@ -412,7 +413,12 @@ public class PsiClassImplUtil {
 
       processDeclarationsInClassNotCached(myPsiClass, processor, ResolveState.initial(), null, null, myPsiClass, false,
                                           PsiUtil.getLanguageLevel(myPsiClass), myResolveScope);
-      return map;
+      Map<String, Pair<PsiMember, PsiSubstitutor>[]> result = ContainerUtil.newTroveMap();
+      for (String name : map.keySet()) {
+        //noinspection unchecked
+        result.put(name, map.get(name).toArray(new Pair[0]));
+      }
+      return result;
     }
   }
 
@@ -510,9 +516,9 @@ public class PsiClassImplUtil {
         if (!processor.execute(fieldByName, state)) return false;
       }
       else {
-        final Map<String, List<Pair<PsiMember, PsiSubstitutor>>> allFieldsMap = value.get(MemberType.FIELD);
+        final Map<String, Pair<PsiMember, PsiSubstitutor>[]> allFieldsMap = value.get(MemberType.FIELD);
 
-        final List<Pair<PsiMember, PsiSubstitutor>> list = allFieldsMap.get(name);
+        final Pair<PsiMember, PsiSubstitutor>[] list = allFieldsMap.get(name);
         if (list != null) {
           boolean resolved = false;
           for (final Pair<PsiMember, PsiSubstitutor> candidate : list) {
@@ -550,9 +556,9 @@ public class PsiClassImplUtil {
           if (!processor.execute(classByName, state)) return false;
         }
         else {
-          Map<String, List<Pair<PsiMember, PsiSubstitutor>>> allClassesMap = value.get(MemberType.CLASS);
+          Map<String, Pair<PsiMember, PsiSubstitutor>[]> allClassesMap = value.get(MemberType.CLASS);
 
-          List<Pair<PsiMember, PsiSubstitutor>> list = allClassesMap.get(name);
+          Pair<PsiMember, PsiSubstitutor>[] list = allClassesMap.get(name);
           if (list != null) {
             boolean resolved = false;
             for (final Pair<PsiMember, PsiSubstitutor> candidate : list) {
@@ -584,8 +590,8 @@ public class PsiClassImplUtil {
           return true;
         }
       }
-      Map<String, List<Pair<PsiMember, PsiSubstitutor>>> allMethodsMap = value.get(MemberType.METHOD);
-      List<Pair<PsiMember, PsiSubstitutor>> list = allMethodsMap.get(name);
+      Map<String, Pair<PsiMember, PsiSubstitutor>[]> allMethodsMap = value.get(MemberType.METHOD);
+      Pair<PsiMember, PsiSubstitutor>[] list = allMethodsMap.get(name);
       if (list != null) {
         boolean resolved = false;
         for (final Pair<PsiMember, PsiSubstitutor> candidate : list) {
@@ -1011,12 +1017,11 @@ public class PsiClassImplUtil {
       }
       return ret;
     }
-    Map<String, List<Pair<PsiMember, PsiSubstitutor>>> map = getMap(psiClass, MemberType.METHOD);
-    @SuppressWarnings("unchecked")
-    List<Pair<PsiMethod, PsiSubstitutor>> list = (List)map.get(name);
+    Pair<PsiMember, PsiSubstitutor>[] list = getMap(psiClass, MemberType.METHOD).get(name);
+    //noinspection unchecked
     return list == null ?
            Collections.<Pair<PsiMethod, PsiSubstitutor>>emptyList() :
-           Collections.unmodifiableList(list);
+           Arrays.<Pair<PsiMember, PsiSubstitutor>>asList((Pair[])list);
   }
 
   @NotNull

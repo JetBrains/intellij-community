@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-class WrapImpl extends Wrap {
+public class WrapImpl extends Wrap {
   /**
    * The block where the wrap needs to happen if the CHOP wrap mode is used and the chain of blocks exceeds the right margin.
    */
@@ -124,11 +124,11 @@ class WrapImpl extends Wrap {
     myIgnoredWraps.get(wrap).add(currentBlock);
   }
 
-  enum Type{
+  public enum Type{
     DO_NOT_WRAP, WRAP_AS_NEEDED, CHOP_IF_NEEDED, WRAP_ALWAYS
   }
 
-  LeafBlockWrapper getChopStartBlock() {
+  public LeafBlockWrapper getChopStartBlock() {
     return myChopStartBlock;
   }
 
@@ -139,7 +139,7 @@ class WrapImpl extends Wrap {
    *   <li>'{@link #isActive() isActive}' property value is set (to <code>true</code>)</li>
    * </ul>
    */
-  void setActive() {
+  public void setActive() {
     myChopStartBlock = null;
     myFlags |= ACTIVE_MASK;
   }
@@ -150,7 +150,7 @@ class WrapImpl extends Wrap {
    *
    * @param startOffset   new '{@link #getWrapOffset() firstPosition}' property value to use if current value is undefined (negative)
    */
-  void setWrapOffset(final int startOffset) {
+  public void setWrapOffset(final int startOffset) {
     if (myWrapOffset < 0) {
       myWrapOffset = startOffset;
     }
@@ -160,7 +160,7 @@ class WrapImpl extends Wrap {
    * @return    '{@link #getWrapOffset() firstPosition}' property value defined previously via {@link #setWrapOffset(int)} if any;
    *            <code>'-1'</code> otherwise
    */
-  int getWrapOffset() {
+  public int getWrapOffset() {
     return myWrapOffset;
   }
 
@@ -180,7 +180,7 @@ class WrapImpl extends Wrap {
     myFlags |= (wrapFirstElement ? WRAP_FIRST_ELEMENT_MASK:0) | (myType.ordinal() << TYPE_SHIFT) | (myId << ID_SHIFT);
   }
 
-  final Type getType() {
+  public final Type getType() {
     return myTypes[(myFlags & TYPE_MASK) >>> TYPE_SHIFT];
   }
 
@@ -190,17 +190,17 @@ class WrapImpl extends Wrap {
    *
    * @return    <code>'wrapFirstElement'</code> property value
    */
-  final boolean isWrapFirstElement() {
+  public final boolean isWrapFirstElement() {
     return (myFlags & WRAP_FIRST_ELEMENT_MASK) != 0;
   }
 
-  void saveChopBlock(LeafBlockWrapper current) {
+  public void saveChopBlock(LeafBlockWrapper current) {
     if (myChopStartBlock == null) {
       myChopStartBlock = current;
     }
   }
 
-  final boolean isActive() {
+  public final boolean isActive() {
     return (myFlags & ACTIVE_MASK) != 0;
   }
 

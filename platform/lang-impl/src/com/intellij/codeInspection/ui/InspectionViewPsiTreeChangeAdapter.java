@@ -22,10 +22,12 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ReadTask;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ContentIterator;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiTreeChangeAdapter;
-import com.intellij.psi.PsiTreeChangeEvent;
+import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.psi.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.Processor;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -35,7 +37,6 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
@@ -51,12 +52,12 @@ class InspectionViewPsiTreeChangeAdapter extends PsiTreeChangeAdapter {
     myView = view;
     myExecutor = new BoundedTaskExecutor(AppExecutorUtil.getAppExecutorService(), JobSchedulerImpl.CORES_COUNT, myView);
     myUpdater = new MergingUpdateQueue("inspection.view.psi.update.listener",
-                           200,
-                           true,
-                           myView,
-                           myView,
-                           myView,
-                           Alarm.ThreadToUse.POOLED_THREAD) {
+                                       200,
+                                       true,
+                                       myView,
+                                       myView,
+                                       myView,
+                                       Alarm.ThreadToUse.POOLED_THREAD) {
       @Override
       protected void execute(@NotNull Update[] updates) {
         ReadTask task = new ReadTask() {
@@ -66,27 +67,41 @@ class InspectionViewPsiTreeChangeAdapter extends PsiTreeChangeAdapter {
             Set<VirtualFile> files = new HashSet<>();
             for (Update update : updates) {
               VirtualFile file = (VirtualFile)update.getEqualityObjects()[0];
-              files.add(file);
+              VfsUtilCore.iterateChildrenRecursively(file, VirtualFileFilter.ALL, new ContentIterator() {
+                @Override
+                public boolean processFile(VirtualFile fileOrDir) {
+                  return files.add(fileOrDir);
+                }
+              });
             }
 
+            final Project project = view.getProject();
             synchronized (myView.getTreeStructureUpdateLock()) {
               InspectionTreeNode root = myView.getTree().getRoot();
               boolean[] needUpdateUI = {false};
               processNodesIfNeed(root, (node) -> {
                 if (node instanceof CachedInspectionTreeNode) {
-                  indicator.checkCanceled();
+                  //indicator.checkCanceled();
                   RefEntity element = ((CachedInspectionTreeNode)node).getElement();
                   if (element instanceof RefElement) {
-                    VirtualFile containingFile = ((RefElement)element).getPointer().getVirtualFile();
-                    if (files.contains(containingFile)) {
-                      ((CachedInspectionTreeNode)node).dropCache();
+                    final SmartPsiElementPointer pointer = ((RefElement)element).getPointer();
+                    VirtualFile strictVirtualFile = pointer.getVirtualFile();
+                    if (strictVirtualFile == null || !strictVirtualFile.isValid()) {
+                      final PsiFile file = pointer.getContainingFile();
+                      if (file != null && file.isValid()) {
+                        strictVirtualFile = file.getVirtualFile();
+                      }
+                    }
+                    if (strictVirtualFile == null || files.contains(strictVirtualFile)) {
+                      ((CachedInspectionTreeNode)node).dropCache(project);
                       if (!needUpdateUI[0]) {
                         needUpdateUI[0] = true;
                       }
-                      return false;
                     }
-                  } else {
-                    ((CachedInspectionTreeNode)node).dropCache();
+                    return false;
+                  }
+                  else {
+                    ((CachedInspectionTreeNode)node).dropCache(project);
                     if (!needUpdateUI[0]) {
                       needUpdateUI[0] = true;
                     }
@@ -118,57 +133,82 @@ class InspectionViewPsiTreeChangeAdapter extends PsiTreeChangeAdapter {
   }
 
   @Override
-  public void beforeChildAddition(@NotNull PsiTreeChangeEvent event) {
-    psiChanged(event.getFile());
+  public void childAdded(@NotNull PsiTreeChangeEvent event) {
+    processEventFileOrDir(event, false);
   }
 
   @Override
   public void beforeChildRemoval(@NotNull PsiTreeChangeEvent event) {
-    psiChanged(event.getFile());
+    processEventFileOrDir(event, true);
   }
 
   @Override
   public void beforeChildReplacement(@NotNull PsiTreeChangeEvent event) {
-    psiChanged(event.getFile());
+    processEventFileOrDir(event, true);
   }
 
   @Override
-  public void beforeChildMovement(@NotNull PsiTreeChangeEvent event) {
-    psiChanged(event.getFile());
+  public void childMoved(@NotNull PsiTreeChangeEvent event) {
+    processEventFileOrDir(event, false);
   }
 
   @Override
-  public void beforeChildrenChange(@NotNull PsiTreeChangeEvent event) {
-    psiChanged(event.getFile());
+  public void childrenChanged(@NotNull PsiTreeChangeEvent event) {
+    processEventFileOrDir(event, false);
   }
 
   @Override
-  public void beforePropertyChange(@NotNull PsiTreeChangeEvent event) {
-    psiChanged(event.getFile());
+  public void propertyChanged(@NotNull PsiTreeChangeEvent event) {
+    processEventFileOrDir(event, false);
   }
 
-  private void psiChanged(@Nullable PsiFile changedFile) {
-    if (changedFile == null) return;
-    VirtualFile vFile = changedFile.getVirtualFile();
-    if (vFile == null) return;
-    myUpdater.queue(new Update(vFile) {
-      @Override
-      public void run() {
-        //do nothing
+  private void processEventFileOrDir(@NotNull PsiTreeChangeEvent event, boolean eagerEvaluateFiles) {
+    final PsiFile file = event.getFile();
+    if (file != null) {
+      VirtualFile vFile = file.getVirtualFile();
+      if (vFile == null) return;
+      invalidateFiles(vFile);
+    }
+    else {
+      final PsiElement child = event.getChild();
+      if (child instanceof PsiFileSystemItem) {
+        final VirtualFile childFile = ((PsiFileSystemItem)child).getVirtualFile();
+        if (childFile != null) {
+          if (eagerEvaluateFiles) {
+            Set<VirtualFile> files = new HashSet<>();
+            VfsUtilCore.iterateChildrenRecursively(childFile, VirtualFileFilter.ALL, files::add);
+            invalidateFiles(files.toArray(new VirtualFile[files.size()]));
+          }
+          else {
+            invalidateFiles(childFile);
+          }
+        }
       }
-
-      @Override
-      public boolean canEat(Update update) {
-        return false;
-      }
-    });
+    }
   }
 
   private static void processNodesIfNeed(InspectionTreeNode node, Processor<InspectionTreeNode> processor) {
     if (processor.process(node)) {
-      for (int i = 0; i < node.getChildCount(); i++) {
+      final int count = node.getChildCount();
+      for (int i = 0; i < count; i++) {
         processNodesIfNeed((InspectionTreeNode)node.getChildAt(i), processor);
       }
+    }
+  }
+
+  private void invalidateFiles(VirtualFile... files) {
+    for (VirtualFile file : files) {
+      myUpdater.queue(new Update(file) {
+        @Override
+        public void run() {
+          //do nothing
+        }
+
+        @Override
+        public boolean canEat(Update update) {
+          return false;
+        }
+      });
     }
   }
 }

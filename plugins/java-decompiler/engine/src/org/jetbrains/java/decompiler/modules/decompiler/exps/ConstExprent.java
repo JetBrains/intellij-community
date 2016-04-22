@@ -27,6 +27,7 @@ import org.jetbrains.java.decompiler.struct.match.MatchEngine;
 import org.jetbrains.java.decompiler.struct.match.MatchNode;
 import org.jetbrains.java.decompiler.struct.match.MatchNode.RuleValue;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
+import org.jetbrains.java.decompiler.util.TextUtil;
 
 import java.util.*;
 import java.util.Map.Entry;
@@ -122,158 +123,128 @@ public class ConstExprent extends Exprent {
     if (constType.type != CodeConstants.TYPE_NULL && value == null) {
       return new TextBuffer(ExprProcessor.getCastTypeName(constType));
     }
-    else {
-      switch (constType.type) {
-        case CodeConstants.TYPE_BOOLEAN:
-          return new TextBuffer(Boolean.toString(((Integer)value).intValue() != 0));
-        case CodeConstants.TYPE_CHAR:
-          Integer val = (Integer)value;
-          String ret = ESCAPES.get(val);
-          if (ret == null) {
-            char c = (char)val.intValue();
-            if (c >= 32 && c < 127 || !ascii && InterpreterUtil.isPrintableUnicode(c)) {
-              ret = String.valueOf(c);
-            }
-            else {
-              ret = InterpreterUtil.charToUnicodeLiteral(c);
-            }
-          }
-          return new TextBuffer(ret).enclose("\'", "\'");
-        case CodeConstants.TYPE_BYTE:
-        case CodeConstants.TYPE_BYTECHAR:
-        case CodeConstants.TYPE_SHORT:
-        case CodeConstants.TYPE_SHORTCHAR:
-        case CodeConstants.TYPE_INT:
-          int ival = ((Integer)value).intValue();
 
-          String intfield;
-          if (literal) {
-            return new TextBuffer(value.toString());
-          }
-          else if (ival == Integer.MAX_VALUE) {
-            intfield = "MAX_VALUE";
-          }
-          else if (ival == Integer.MIN_VALUE) {
-            intfield = "MIN_VALUE";
+    switch (constType.type) {
+      case CodeConstants.TYPE_BOOLEAN:
+        return new TextBuffer(Boolean.toString(((Integer)value).intValue() != 0));
+
+      case CodeConstants.TYPE_CHAR:
+        Integer val = (Integer)value;
+        String ret = ESCAPES.get(val);
+        if (ret == null) {
+          char c = (char)val.intValue();
+          if (c >= 32 && c < 127 || !ascii && TextUtil.isPrintableUnicode(c)) {
+            ret = String.valueOf(c);
           }
           else {
-            return new TextBuffer(value.toString());
+            ret = TextUtil.charToUnicodeLiteral(c);
           }
-          return new FieldExprent(intfield, "java/lang/Integer", true, null, FieldDescriptor.INTEGER_DESCRIPTOR, bytecode).toJava(0, tracer);
-        case CodeConstants.TYPE_LONG:
-          long lval = ((Long)value).longValue();
+        }
+        return new TextBuffer().append('\'').append(ret).append('\'');
 
-          String longfield;
-          if (literal) {
-            return new TextBuffer(value.toString()).append("L");
+      case CodeConstants.TYPE_BYTE:
+      case CodeConstants.TYPE_BYTECHAR:
+      case CodeConstants.TYPE_SHORT:
+      case CodeConstants.TYPE_SHORTCHAR:
+      case CodeConstants.TYPE_INT:
+        int intVal = ((Integer)value).intValue();
+        if (!literal) {
+          if (intVal == Integer.MAX_VALUE) {
+            return new FieldExprent("MAX_VALUE", "java/lang/Integer", true, null, FieldDescriptor.INTEGER_DESCRIPTOR, bytecode).toJava(0, tracer);
           }
-          else if (lval == Long.MAX_VALUE) {
-            longfield = "MAX_VALUE";
+          else if (intVal == Integer.MIN_VALUE) {
+            return new FieldExprent("MIN_VALUE", "java/lang/Integer", true, null, FieldDescriptor.INTEGER_DESCRIPTOR, bytecode).toJava(0, tracer);
           }
-          else if (lval == Long.MIN_VALUE) {
-            longfield = "MIN_VALUE";
-          }
-          else {
-            return new TextBuffer(value.toString()).append("L");
-          }
-          return new FieldExprent(longfield, "java/lang/Long", true, null, FieldDescriptor.LONG_DESCRIPTOR, bytecode).toJava(0, tracer);
-        case CodeConstants.TYPE_DOUBLE:
-          double dval = ((Double)value).doubleValue();
+        }
+        return new TextBuffer(value.toString());
 
-          String doublefield;
-          if (literal) {
-            if (Double.isNaN(dval)) {
-              return new TextBuffer("0.0D / 0.0");
-            }
-            else if (dval == Double.POSITIVE_INFINITY) {
-              return new TextBuffer("1.0D / 0.0");
-            }
-            else if (dval == Double.NEGATIVE_INFINITY) {
-              return new TextBuffer("-1.0D / 0.0");
-            }
-            else {
-              return new TextBuffer(value.toString()).append("D");
-            }
+      case CodeConstants.TYPE_LONG:
+        long longVal = ((Long)value).longValue();
+        if (!literal) {
+          if (longVal == Long.MAX_VALUE) {
+            return new FieldExprent("MAX_VALUE", "java/lang/Long", true, null, FieldDescriptor.LONG_DESCRIPTOR, bytecode).toJava(0, tracer);
           }
-          else if (Double.isNaN(dval)) {
-            doublefield = "NaN";
+          else if (longVal == Long.MIN_VALUE) {
+            return new FieldExprent("MIN_VALUE", "java/lang/Long", true, null, FieldDescriptor.LONG_DESCRIPTOR, bytecode).toJava(0, tracer);
           }
-          else if (dval == Double.POSITIVE_INFINITY) {
-            doublefield = "POSITIVE_INFINITY";
-          }
-          else if (dval == Double.NEGATIVE_INFINITY) {
-            doublefield = "NEGATIVE_INFINITY";
-          }
-          else if (dval == Double.MAX_VALUE) {
-            doublefield = "MAX_VALUE";
-          }
-          else if (dval == Double.MIN_VALUE) {
-            doublefield = "MIN_VALUE";
-          }
-          else {
-            return new TextBuffer(value.toString()).append("D");
-          }
-          return new FieldExprent(doublefield, "java/lang/Double", true, null, FieldDescriptor.DOUBLE_DESCRIPTOR, bytecode).toJava(0, tracer);
-        case CodeConstants.TYPE_FLOAT:
-          float fval = ((Float)value).floatValue();
+        }
+        return new TextBuffer(value.toString()).append('L');
 
-          String floatfield;
-          if (literal) {
-            if (Double.isNaN(fval)) {
-              return new TextBuffer("0.0F / 0.0");
-            }
-            else if (fval == Double.POSITIVE_INFINITY) {
-              return new TextBuffer("1.0F / 0.0");
-            }
-            else if (fval == Double.NEGATIVE_INFINITY) {
-              return new TextBuffer("-1.0F / 0.0");
-            }
-            else {
-              return new TextBuffer(value.toString()).append("F");
-            }
+      case CodeConstants.TYPE_FLOAT:
+        float floatVal = ((Float)value).floatValue();
+        if (!literal) {
+          if (Float.isNaN(floatVal)) {
+            return new FieldExprent("NaN", "java/lang/Float", true, null, FieldDescriptor.FLOAT_DESCRIPTOR, bytecode).toJava(0, tracer);
           }
-          else if (Float.isNaN(fval)) {
-            floatfield = "NaN";
+          else if (floatVal == Float.POSITIVE_INFINITY) {
+            return new FieldExprent("POSITIVE_INFINITY", "java/lang/Float", true, null, FieldDescriptor.FLOAT_DESCRIPTOR, bytecode).toJava(0, tracer);
           }
-          else if (fval == Float.POSITIVE_INFINITY) {
-            floatfield = "POSITIVE_INFINITY";
+          else if (floatVal == Float.NEGATIVE_INFINITY) {
+            return new FieldExprent("NEGATIVE_INFINITY", "java/lang/Float", true, null, FieldDescriptor.FLOAT_DESCRIPTOR, bytecode).toJava(0, tracer);
           }
-          else if (fval == Float.NEGATIVE_INFINITY) {
-            floatfield = "NEGATIVE_INFINITY";
+          else if (floatVal == Float.MAX_VALUE) {
+            return new FieldExprent("MAX_VALUE", "java/lang/Float", true, null, FieldDescriptor.FLOAT_DESCRIPTOR, bytecode).toJava(0, tracer);
           }
-          else if (fval == Float.MAX_VALUE) {
-            floatfield = "MAX_VALUE";
+          else if (floatVal == Float.MIN_VALUE) {
+            return new FieldExprent("MIN_VALUE", "java/lang/Float", true, null, FieldDescriptor.FLOAT_DESCRIPTOR, bytecode).toJava(0, tracer);
           }
-          else if (fval == Float.MIN_VALUE) {
-            floatfield = "MIN_VALUE";
-          }
-          else {
-            return new TextBuffer(value.toString()).append("F");
-          }
-          return new FieldExprent(floatfield, "java/lang/Float", true, null, FieldDescriptor.FLOAT_DESCRIPTOR, bytecode).toJava(0, tracer);
-        case CodeConstants.TYPE_NULL:
-          return new TextBuffer("null");
-        case CodeConstants.TYPE_OBJECT:
-          if (constType.equals(VarType.VARTYPE_STRING)) {
-            return new TextBuffer(convertStringToJava(value.toString(), ascii)).enclose("\"", "\"");
-          }
-          else if (constType.equals(VarType.VARTYPE_CLASS)) {
-            String strval = value.toString();
+        }
+        else if (Float.isNaN(floatVal)) {
+          return new TextBuffer("0.0F / 0.0");
+        }
+        else if (floatVal == Float.POSITIVE_INFINITY) {
+          return new TextBuffer("1.0F / 0.0");
+        }
+        else if (floatVal == Float.NEGATIVE_INFINITY) {
+          return new TextBuffer("-1.0F / 0.0");
+        }
+        return new TextBuffer(value.toString()).append('F');
 
-            VarType classtype;
-            if (strval.startsWith("[")) { // array of simple type
-              classtype = new VarType(strval, false);
-            }
-            else { // class
-              classtype = new VarType(strval, true);
-            }
-
-            return new TextBuffer(ExprProcessor.getCastTypeName(classtype)).append(".class");
+      case CodeConstants.TYPE_DOUBLE:
+        double doubleVal = ((Double)value).doubleValue();
+        if (!literal) {
+          if (Double.isNaN(doubleVal)) {
+            return new FieldExprent("NaN", "java/lang/Double", true, null, FieldDescriptor.DOUBLE_DESCRIPTOR, bytecode).toJava(0, tracer);
           }
-      }
+          else if (doubleVal == Double.POSITIVE_INFINITY) {
+            return new FieldExprent("POSITIVE_INFINITY", "java/lang/Double", true, null, FieldDescriptor.DOUBLE_DESCRIPTOR, bytecode).toJava(0, tracer);
+          }
+          else if (doubleVal == Double.NEGATIVE_INFINITY) {
+            return new FieldExprent("NEGATIVE_INFINITY", "java/lang/Double", true, null, FieldDescriptor.DOUBLE_DESCRIPTOR, bytecode).toJava(0, tracer);
+          }
+          else if (doubleVal == Double.MAX_VALUE) {
+            return new FieldExprent("MAX_VALUE", "java/lang/Double", true, null, FieldDescriptor.DOUBLE_DESCRIPTOR, bytecode).toJava(0, tracer);
+          }
+          else if (doubleVal == Double.MIN_VALUE) {
+            return new FieldExprent("MIN_VALUE", "java/lang/Double", true, null, FieldDescriptor.DOUBLE_DESCRIPTOR, bytecode).toJava(0, tracer);
+          }
+        }
+        else if (Double.isNaN(doubleVal)) {
+          return new TextBuffer("0.0D / 0.0");
+        }
+        else if (doubleVal == Double.POSITIVE_INFINITY) {
+          return new TextBuffer("1.0D / 0.0");
+        }
+        else if (doubleVal == Double.NEGATIVE_INFINITY) {
+          return new TextBuffer("-1.0D / 0.0");
+        }
+        return new TextBuffer(value.toString()).append('D');
+
+      case CodeConstants.TYPE_NULL:
+        return new TextBuffer("null");
+
+      case CodeConstants.TYPE_OBJECT:
+        if (constType.equals(VarType.VARTYPE_STRING)) {
+          return new TextBuffer().append('"').append(convertStringToJava(value.toString(), ascii)).append('"');
+        }
+        else if (constType.equals(VarType.VARTYPE_CLASS)) {
+          String stringVal = value.toString();
+          VarType type = new VarType(stringVal, !stringVal.startsWith("["));
+          return new TextBuffer(ExprProcessor.getCastTypeName(type)).append(".class");
+        }
     }
 
-    throw new RuntimeException("invalid constant type");
+    throw new RuntimeException("invalid constant type: " + constType);
   }
 
   private static String convertStringToJava(String value, boolean ascii) {
@@ -307,11 +278,11 @@ public class ConstExprent extends Exprent {
           buffer.append("\\\'");
           break;
         default:
-          if (c >= 32 && c < 127 || !ascii && InterpreterUtil.isPrintableUnicode(c)) {
+          if (c >= 32 && c < 127 || !ascii && TextUtil.isPrintableUnicode(c)) {
             buffer.append(c);
           }
           else {
-            buffer.append(InterpreterUtil.charToUnicodeLiteral(c));
+            buffer.append(TextUtil.charToUnicodeLiteral(c));
           }
       }
     }
@@ -338,9 +309,8 @@ public class ConstExprent extends Exprent {
       case CodeConstants.TYPE_SHORT:
       case CodeConstants.TYPE_SHORTCHAR:
       case CodeConstants.TYPE_INT:
-        Integer ival = (Integer)value;
-        return ival.intValue() == 0 ||
-               (DecompilerContext.getOption(IFernflowerPreferences.BOOLEAN_TRUE_ONE) && ival.intValue() == 1);
+        int value = ((Integer)this.value).intValue();
+        return value == 0 || (DecompilerContext.getOption(IFernflowerPreferences.BOOLEAN_TRUE_ONE) && value == 1);
     }
 
     return false;
@@ -379,7 +349,7 @@ public class ConstExprent extends Exprent {
         return new ConstExprent(VarType.VARTYPE_FLOAT, new Float(0), null);
     }
 
-    throw new RuntimeException("Invalid argument!");
+    throw new RuntimeException("Invalid argument: " + type);
   }
 
   public VarType getConstType() {
@@ -405,32 +375,29 @@ public class ConstExprent extends Exprent {
   // *****************************************************************************
   // IMatchable implementation
   // *****************************************************************************
-  
-  public boolean match(MatchNode matchNode, MatchEngine engine) {
 
-    if(!super.match(matchNode, engine)) {
+  @Override
+  public boolean match(MatchNode matchNode, MatchEngine engine) {
+    if (!super.match(matchNode, engine)) {
       return false;
     }
-    
-    for(Entry<MatchProperties, RuleValue> rule : matchNode.getRules().entrySet()) {
-      RuleValue rule_value = rule.getValue();
-      
-      switch(rule.getKey()) {
-      case EXPRENT_CONSTTYPE:
-        if(!rule_value.value.equals(this.constType)) {
+
+    for (Entry<MatchProperties, RuleValue> rule : matchNode.getRules().entrySet()) {
+      RuleValue value = rule.getValue();
+      MatchProperties key = rule.getKey();
+
+      if (key == MatchProperties.EXPRENT_CONSTTYPE) {
+        if (!value.value.equals(this.constType)) {
           return false;
         }
-        break;
-      case EXPRENT_CONSTVALUE:
-        if(rule_value.isVariable()) {
-          if(!engine.checkAndSetVariableValue(rule_value.value.toString(), this.value)) {
-            return false;
-          }
-        } 
-        break;
+      }
+      else if (key == MatchProperties.EXPRENT_CONSTVALUE) {
+        if (value.isVariable() && !engine.checkAndSetVariableValue(value.value.toString(), this.value)) {
+          return false;
+        }
       }
     }
-    
+
     return true;
   }
 }

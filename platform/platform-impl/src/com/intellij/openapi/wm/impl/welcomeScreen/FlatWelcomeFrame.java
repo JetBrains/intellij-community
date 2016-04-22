@@ -492,17 +492,12 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, AccessibleCont
       appName.setHorizontalAlignment(SwingConstants.CENTER);
       String appVersion = "Version ";
 
-      if (app.getBuild().isYearBased()) {
-        appVersion += app.isEAP() ? (app.getBuild().asStringWithoutProductCode() + " EAP") : app.getFullVersion();
-      }
-      else {
-        appVersion += app.getFullVersion();
+      appVersion += app.getFullVersion();
 
-        if (app.isEAP() && !app.getBuild().isSnapshot()) {
-          appVersion += " (" + app.getBuild().asStringWithoutProductCode() + ")";
-        }
+      if (app.isEAP() && !app.getBuild().isSnapshot()) {
+        appVersion += " (" + app.getBuild().asStringWithoutProductCode() + ")";
       }
-      
+
       JLabel version = new JLabel(appVersion);
       version.setFont(getProductFont().deriveFont(JBUI.scale(16f)));
       version.setHorizontalAlignment(SwingConstants.CENTER);

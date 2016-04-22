@@ -52,9 +52,6 @@ public class StudyProjectComponent implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance(StudyProjectComponent.class.getName());
   private final Project myProject;
   private FileCreatedByUserListener myListener;
-
-  // Shows could we use JavaFX Task Description panel or should use Swing
-  private boolean useJavaFx = false;
   private Map<Keymap, List<Pair<String, String>>> myDeletedShortcuts = new HashMap<Keymap, List<Pair<String, String>>>();
   private StudyProjectComponent(@NotNull final Project project) {
     myProject = project;
@@ -66,7 +63,6 @@ public class StudyProjectComponent implements ProjectComponent {
     // Check if user has javafx lib in his JDK. Now bundled JDK doesn't have this lib inside.
     if (StudyUtils.hasJavaFx()) {
       Platform.setImplicitExit(false);
-      useJavaFx = true;
     }
 
     if (course != null && !course.isUpToDate()) {
@@ -282,14 +278,6 @@ public class StudyProjectComponent implements ProjectComponent {
   public static StudyProjectComponent getInstance(@NotNull final Project project) {
     final Module module = ModuleManager.getInstance(project).getModules()[0];
     return module.getComponent(StudyProjectComponent.class);
-  }
-
-  public boolean useJavaFx() {
-    return useJavaFx;
-  }
-
-  public void setUseJavaFx(boolean useJavaFx) {
-    this.useJavaFx = useJavaFx;
   }
 
   private class FileCreatedByUserListener extends VirtualFileAdapter {

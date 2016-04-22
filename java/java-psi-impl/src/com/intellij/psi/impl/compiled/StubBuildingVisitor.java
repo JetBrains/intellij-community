@@ -43,6 +43,7 @@ import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static com.intellij.openapi.util.Pair.pair;
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION;
@@ -400,7 +401,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
 
     int localVarIgnoreCount = isStatic ? 0 : isEnumConstructor ? 3 : 1;
     int paramIgnoreCount = isEnumConstructor ? 2 : isInnerClassConstructor ? 1 : 0;
-    return new ParameterAnnotationCollectingVisitor(stub, modList, localVarIgnoreCount, paramIgnoreCount, paramCount, paramStubs, myMapping);
+    return new MethodAnnotationCollectingVisitor(stub, modList, localVarIgnoreCount, paramIgnoreCount, paramCount, paramStubs, myMapping);
   }
 
   private MethodInfo parseMethodSignature(String signature, String[] exceptions) throws ClsFormatException {
@@ -558,6 +559,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
   private static class FieldAnnotationCollectingVisitor extends FieldVisitor {
     private final PsiModifierListStub myModList;
     private final Function<String, String> myMapping;
+    private Set<String> myFilter = null;
 
     private FieldAnnotationCollectingVisitor(PsiModifierListStub modList, Function<String, String> mapping) {
       super(ASM_API);
@@ -570,13 +572,27 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
       return new AnnotationTextCollector(desc, myMapping, new Consumer<String>() {
         @Override
         public void consume(String text) {
+          if (myFilter == null) myFilter = ContainerUtil.newTroveSet();
+          myFilter.add(text);
           new PsiAnnotationStubImpl(myModList, text);
+        }
+      });
+    }
+
+    @Override
+    public AnnotationVisitor visitTypeAnnotation(int typeRef, final TypePath typePath, String desc, boolean visible) {
+      return new AnnotationTextCollector(desc, myMapping, new Consumer<String>() {
+        @Override
+        public void consume(String text) {
+          if (typePath == null && (myFilter == null || !myFilter.contains(text))) {
+            new PsiAnnotationStubImpl(myModList, text);
+          }
         }
       });
     }
   }
 
-  private static class ParameterAnnotationCollectingVisitor extends MethodVisitor {
+  private static class MethodAnnotationCollectingVisitor extends MethodVisitor {
     private final PsiMethodStub myOwner;
     private final PsiModifierListStub myModList;
     private final int myIgnoreCount;
@@ -586,14 +602,15 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     private final Function<String, String> myMapping;
     private int myUsedParamSize = 0;
     private int myUsedParamCount = 0;
+    private List<Set<String>> myFilters;
 
-    private ParameterAnnotationCollectingVisitor(PsiMethodStub owner,
-                                                 PsiModifierListStub modList,
-                                                 int ignoreCount,
-                                                 int paramIgnoreCount,
-                                                 int paramCount,
-                                                 PsiParameterStubImpl[] paramStubs,
-                                                 Function<String, String> mapping) {
+    private MethodAnnotationCollectingVisitor(PsiMethodStub owner,
+                                              PsiModifierListStub modList,
+                                              int ignoreCount,
+                                              int paramIgnoreCount,
+                                              int paramCount,
+                                              PsiParameterStubImpl[] paramStubs,
+                                              Function<String, String> mapping) {
       super(ASM_API);
       myOwner = owner;
       myModList = modList;
@@ -609,7 +626,40 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
       return new AnnotationTextCollector(desc, myMapping, new Consumer<String>() {
         @Override
         public void consume(String text) {
+          filter(0, text);
           new PsiAnnotationStubImpl(myModList, text);
+        }
+      });
+    }
+
+    @Override
+    @Nullable
+    public AnnotationVisitor visitParameterAnnotation(final int parameter, String desc, boolean visible) {
+      return parameter < myParamIgnoreCount ? null : new AnnotationTextCollector(desc, myMapping, new Consumer<String>() {
+        @Override
+        public void consume(String text) {
+          int idx = parameter - myParamIgnoreCount;
+          filter(idx + 1, text);
+          new PsiAnnotationStubImpl(myOwner.findParameter(idx).getModList(), text);
+        }
+      });
+    }
+
+    @Override
+    public AnnotationVisitor visitTypeAnnotation(int typeRef, final TypePath typePath, String desc, boolean visible) {
+      final TypeReference ref = new TypeReference(typeRef);
+      return new AnnotationTextCollector(desc, myMapping, new Consumer<String>() {
+        @Override
+        public void consume(String text) {
+          if (ref.getSort() == TypeReference.METHOD_RETURN && typePath == null && !filtered(0, text)) {
+            new PsiAnnotationStubImpl(myModList, text);
+          }
+          else if (ref.getSort() == TypeReference.METHOD_FORMAL_PARAMETER && typePath == null) {
+            int idx = ref.getFormalParameterIndex() - myParamIgnoreCount;
+            if (!filtered(idx + 1, text)) {
+              new PsiAnnotationStubImpl(myOwner.findParameter(idx).getModList(), text);
+            }
+          }
         }
       });
     }
@@ -643,15 +693,18 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
       }
     }
 
-    @Override
-    @Nullable
-    public AnnotationVisitor visitParameterAnnotation(final int parameter, String desc, boolean visible) {
-      return parameter < myParamIgnoreCount ? null : new AnnotationTextCollector(desc, myMapping, new Consumer<String>() {
-        @Override
-        public void consume(String text) {
-          new PsiAnnotationStubImpl(myOwner.findParameter(parameter - myParamIgnoreCount).getModList(), text);
-        }
-      });
+    private void filter(int index, String text) {
+      if (myFilters == null) {
+        myFilters = ContainerUtil.newArrayListWithCapacity(myParamCount + 1);
+        for (int i = 0; i < myParamCount + 1; i++) myFilters.add(null);
+      }
+      Set<String> filter = myFilters.get(index);
+      if (filter == null) myFilters.set(index, (filter = ContainerUtil.newTroveSet()));
+      filter.add(text);
+    }
+
+    private boolean filtered(int index, String text) {
+      return myFilters != null && myFilters.get(index) != null && myFilters.get(index).contains(text);
     }
   }
 

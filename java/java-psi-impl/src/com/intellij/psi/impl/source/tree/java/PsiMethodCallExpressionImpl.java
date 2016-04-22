@@ -25,7 +25,6 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
-import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.resolve.JavaResolveCache;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
@@ -271,9 +270,6 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
       if (Comparing.equal(TypeConversionUtil.erasure(substitutedReturnType), returnTypeErasure)) {
         return returnTypeErasure;
       }
-    }
-    if (!languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
-      return PsiImplUtil.normalizeWildcardTypeByPosition(substitutedReturnType, call);
     }
     return PsiUtil.captureToplevelWildcards(substitutedReturnType, call);
   }

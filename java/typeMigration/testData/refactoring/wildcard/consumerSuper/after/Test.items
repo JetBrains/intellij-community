@@ -1,5 +1,5 @@
 Types:
-PsiMethodCallExpression:p.get(0) : java.lang.Object
+PsiMethodCallExpression:p.get(0) : ? super java.lang.Number
 PsiParameter:p : java.util.ArrayList<? super java.lang.Number>
 PsiParameter:p2 : java.lang.Object
 PsiReferenceExpression:p : java.util.ArrayList<? super java.lang.Number>

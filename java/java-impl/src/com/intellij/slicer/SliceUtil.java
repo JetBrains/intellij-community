@@ -140,7 +140,7 @@ class SliceUtil {
     }
     if (expression instanceof PsiMethodCallExpression) { // ctr call can't return value or be container get, so don't use PsiCall here
       PsiMethod method = ((PsiMethodCallExpression)expression).resolveMethod();
-      Flow anno = isMethodFlowAnnotated(method);
+      Flow anno = method == null ? null : isMethodFlowAnnotated(method);
       if (anno != null) {
         String target = anno.target();
         if (target.equals(Flow.DEFAULT_TARGET)) target = Flow.RETURN_METHOD_TARGET;
@@ -184,19 +184,18 @@ class SliceUtil {
 
       // check for constructor put arguments
       if (expression instanceof PsiNewExpression &&
-          !processContainerPutArguments((PsiNewExpression)expression, processor, parent, parentSubstitutor, indexNesting, syntheticField)) {
+          !processContainerPutArguments((PsiNewExpression)expression, parent, parentSubstitutor, indexNesting, syntheticField, processor)) {
         return false;
       }
     }
     return true;
   }
 
-  private static Flow isMethodFlowAnnotated(PsiMethod method) {
-    if (method == null) return null;
+  private static Flow isMethodFlowAnnotated(@NotNull PsiMethod method) {
     return AnnotationUtil.findAnnotationInHierarchy(method, Flow.class);
   }
 
-  private static Flow isParamFlowAnnotated(PsiMethod method, int paramIndex) {
+  private static Flow isParamFlowAnnotated(@NotNull PsiMethod method, int paramIndex) {
     PsiParameter[] parameters = method.getParameterList().getParameters();
     if (parameters.length <= paramIndex) {
       if (parameters.length != 0 && parameters[parameters.length-1].isVarArgs()) {
@@ -349,8 +348,7 @@ class SliceUtil {
   }
 
   @NotNull
-  private static SliceUsage createTooComplexDFAUsage(@NotNull PsiElement element,
-                                                     @NotNull SliceUsage parent) {
+  private static SliceUsage createTooComplexDFAUsage(@NotNull PsiElement element, @NotNull SliceUsage parent) {
     return new SliceTooComplexDFAUsage(simplify(element), parent);
   }
 
@@ -534,17 +532,17 @@ class SliceUtil {
     }
     PsiElement grand = parentElement == null ? null : parentElement.getParent();
     if (grand instanceof PsiCallExpression) {
-      if (!processContainerPutArguments((PsiCallExpression)grand, processor, parent, parentSubstitutor, indexNesting, syntheticField)) return false;
+      if (!processContainerPutArguments((PsiCallExpression)grand, parent, parentSubstitutor, indexNesting, syntheticField, processor)) return false;
     }
     return true;
   }
 
-  private static boolean processContainerPutArguments(PsiCallExpression call,
-                                                      Processor<SliceUsage> processor,
-                                                      SliceUsage parent,
-                                                      PsiSubstitutor parentSubstitutor,
+  private static boolean processContainerPutArguments(@NotNull PsiCallExpression call,
+                                                      @NotNull SliceUsage parent,
+                                                      @NotNull PsiSubstitutor parentSubstitutor,
                                                       int indexNesting,
-                                                      @NotNull String syntheticField) {
+                                                      @NotNull String syntheticField,
+                                                      @NotNull Processor<SliceUsage> processor) {
     assert indexNesting != 0;
     JavaResolveResult result = call.resolveMethodGenerics();
     PsiMethod method = (PsiMethod)result.getElement();
@@ -603,7 +601,7 @@ class SliceUtil {
     return true;
   }
 
-  private static int calcNewIndexNesting(int indexNesting, Flow anno) {
+  private static int calcNewIndexNesting(int indexNesting, @NotNull Flow anno) {
     int nestingDelta = (anno.sourceIsContainer() ? 1 : 0) - (anno.targetIsContainer() ? 1 : 0);
     return indexNesting + nestingDelta;
   }

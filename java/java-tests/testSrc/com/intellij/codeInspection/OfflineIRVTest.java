@@ -167,11 +167,11 @@ public class OfflineIRVTest extends TestSourceBasedTestCase {
                                            + "    " + varMessage("a") + "\n");
     TreeUtil.selectFirstNode(tree);
     final InspectionTreeNode root = (InspectionTreeNode)tree.getLastSelectedPathComponent();
-    root.ignoreElement(myView.getExcludedManager());
+    root.excludeElement(myView.getExcludedManager());
     TreeUtil.traverse(root, new TreeUtil.Traverse() {
       @Override
       public boolean accept(final Object node) {
-        assertTrue(((InspectionTreeNode)node).isResolved(myView.getExcludedManager()));
+        assertTrue(((InspectionTreeNode)node).isExcluded(myView.getExcludedManager()));
         return true;
       }
     });

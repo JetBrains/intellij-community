@@ -41,7 +41,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.SequentialModalProgressTask;
@@ -119,7 +118,7 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
     } else {
       doApplyFix(getSelectedElements(e), view);
     }
-    view.updateRightPanel();
+    view.syncRightPanel();
   }
 
 

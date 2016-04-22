@@ -34,7 +34,7 @@ public class BuildNumber implements Comparable<BuildNumber> {
   private static final String BUILD_NUMBER = "__BUILD_NUMBER__";
   private static final String STAR = "*";
   private static final String SNAPSHOT = "SNAPSHOT";
-  private static final String FALLBACK_VERSION = "9999.SNAPSHOT";
+  private static final String FALLBACK_VERSION = "999.SNAPSHOT";
 
   public static final int SNAPSHOT_VALUE = Integer.MAX_VALUE;
 
@@ -128,11 +128,6 @@ public class BuildNumber implements Comparable<BuildNumber> {
       }
 
       int[] intComponents = intComponentsList.toNativeArray();
-      if (isYearBased(intComponents[0])) {
-        if (intComponents[1] != SNAPSHOT_VALUE) {
-          intComponents[1] = normalizedYearRevision(intComponents);
-        }
-      }
 
       return new BuildNumber(productCode, intComponents);
     }
@@ -144,10 +139,6 @@ public class BuildNumber implements Comparable<BuildNumber> {
         return new BuildNumber(productCode, buildNumber, 0);
       }
 
-      if (isYearBased(buildNumber)) {
-        return new BuildNumber(productCode, buildNumber, 0);
-      }
-      
       baselineVersion = getBaseLineForHistoricBuilds(buildNumber);
       return new BuildNumber(productCode, baselineVersion, buildNumber);
     }
@@ -214,28 +205,16 @@ public class BuildNumber implements Comparable<BuildNumber> {
   }
 
   public int getBaselineVersion() {
-    return isYearBased() ? (myComponents[0] * 10 + normalizedYearRevision(myComponents)) : myComponents[0];
-  }
-
-  private static int normalizedYearRevision(int[] components) {
-    return Math.min(components[1], 9);
+    return myComponents[0];
   }
 
   @Deprecated
   public int getBuildNumber() {
-    return isYearBased() ? -1 : myComponents[1];
+    return myComponents[1];
   }
 
   public int[] getComponents() {
     return myComponents;
-  }
-
-  public boolean isYearBased() {
-    return isYearBased(myComponents[0]); 
-  }
-
-  private static boolean isYearBased(int buildNumber) {
-    return buildNumber >= 2016 && buildNumber <= 2999;
   }
 
   @Override

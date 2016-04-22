@@ -232,21 +232,36 @@ public class JavaFxPsiUtil {
     return null;
   }
 
-  public static PsiMethod findPropertyGetter(String attributeName, PsiClass classWithStaticProperty) {
-    PsiMethod getter = findPropertyGetter(attributeName, classWithStaticProperty, null);
+  public static PsiMethod findPropertyGetter(@NotNull PsiClass psiClass, @NotNull String propertyName) {
+    PsiMethod getter = findPropertyGetter(psiClass, propertyName, null);
     if (getter != null) {
       return getter;
     }
-    return findPropertyGetter(attributeName, classWithStaticProperty, PsiType.BOOLEAN);
+    return findPropertyGetter(psiClass, propertyName, PsiType.BOOLEAN);
   }
 
-  private static PsiMethod findPropertyGetter(final String attributeName,
-                                              final PsiClass classWithStaticProperty,
-                                              final PsiType propertyType) {
-    final String getterName = PropertyUtil.suggestGetterName(StringUtil.getShortName(attributeName), propertyType);
-    final PsiMethod[] getters = classWithStaticProperty.findMethodsByName(getterName, true);
+  private static PsiMethod findPropertyGetter(final PsiClass psiClass, final String propertyName, final PsiType propertyType) {
+    final String getterName = PropertyUtil.suggestGetterName(propertyName, propertyType);
+    final PsiMethod[] getters = psiClass.findMethodsByName(getterName, true);
     for (PsiMethod getter : getters) {
-      if (getter.hasModifierProperty(PsiModifier.PUBLIC)) return getter;
+      if (getter.hasModifierProperty(PsiModifier.PUBLIC) &&
+          !getter.hasModifierProperty(PsiModifier.STATIC) &&
+          PropertyUtil.isSimplePropertyGetter(getter)) {
+        return getter;
+      }
+    }
+    return null;
+  }
+
+  public static PsiMethod findObservablePropertyGetter(@NotNull PsiClass psiClass, @NotNull String propertyName) {
+    final PsiMethod[] getters = psiClass.findMethodsByName(propertyName + JavaFxCommonNames.PROPERTY_METHOD_SUFFIX, true);
+    for (PsiMethod getter : getters) {
+      if (getter.hasModifierProperty(PsiModifier.PUBLIC) &&
+          !getter.hasModifierProperty(PsiModifier.STATIC) &&
+          getter.getParameterList().getParametersCount() == 0 &&
+          InheritanceUtil.isInheritor(getter.getReturnType(), JavaFxCommonNames.JAVAFX_BEANS_VALUE_OBSERVABLE_VALUE)) {
+        return getter;
+      }
     }
     return null;
   }
@@ -428,7 +443,7 @@ public class JavaFxPsiUtil {
         final PsiAnnotationMemberValue memberValue = annotation.findAttributeValue(null);
         if (memberValue != null) {
           final String propertyName = StringUtil.unquoteString(memberValue.getText());
-          final PsiMethod getter = findPropertyGetter(propertyName, aClass);
+          final PsiMethod getter = findPropertyGetter(aClass, propertyName);
           if (getter != null) {
             final PsiType propertyType = eraseFreeTypeParameters(getter.getReturnType(), getter);
             return CachedValueProvider.Result.create(propertyType, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
@@ -942,13 +957,13 @@ public class JavaFxPsiUtil {
   }
 
   @Nullable
-  private static PsiMethod findInstancePropertySetter(@NotNull PsiClass psiClass, @NotNull String propertyName) {
+  public static PsiMethod findInstancePropertySetter(@NotNull PsiClass psiClass, @NotNull String propertyName) {
     final String suggestedSetterName = PropertyUtil.suggestSetterName(propertyName);
     final PsiMethod[] setters = psiClass.findMethodsByName(suggestedSetterName, true);
     for (PsiMethod setter : setters) {
-      if (!setter.hasModifierProperty(PsiModifier.STATIC) &&
-          setter.hasModifierProperty(PsiModifier.PUBLIC) &&
-          setter.getParameterList().getParametersCount() == 1) {
+      if (setter.hasModifierProperty(PsiModifier.PUBLIC) &&
+          !setter.hasModifierProperty(PsiModifier.STATIC) &&
+          PropertyUtil.isSimplePropertySetter(setter)) {
         return setter;
       }
     }
@@ -1086,6 +1101,13 @@ public class JavaFxPsiUtil {
       return "No enum constant '" + name + "' in " + enumClass.getQualifiedName();
     }
     return null;
+  }
+
+  @NotNull
+  public static String getPropertyName(@NotNull String memberName, boolean isMethod) {
+    if (!isMethod) return memberName;
+    final String propertyName = PropertyUtil.getPropertyName(memberName);
+    return propertyName != null ? propertyName : memberName;
   }
 
   private static class JavaFxControllerCachedValueProvider implements CachedValueProvider<PsiClass> {
