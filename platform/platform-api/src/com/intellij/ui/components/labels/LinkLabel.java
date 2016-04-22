@@ -23,7 +23,6 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.UI;
 import com.intellij.util.ui.JBRectangle;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NotNull;
@@ -175,7 +174,13 @@ public class LinkLabel<T> extends JLabel {
       if (myIsSelected){
         g.setColor(UIUtil.getTreeSelectionBorderColor());
         Rectangle bounds = getTextBounds();
-        UIUtil.drawDottedRectangle(g, bounds.x, bounds.y, bounds.x + bounds.width - 1, bounds.y + bounds.height - 1);
+        // JLabel draws the text relative to the baseline. So, we must ensure
+        // we draw the dotted rectangle relative to that same baseline.
+        FontMetrics fm = getFontMetrics(getFont());
+        int baseLine = getUI().getBaseline(this, getWidth(), getHeight());
+        int textY = baseLine - fm.getLeading() - fm.getAscent();
+        int textHeight = fm.getHeight();
+        UIUtil.drawDottedRectangle(g, bounds.x, textY, bounds.x + bounds.width - 1, textY + textHeight - 1);
       }
     }
   }
