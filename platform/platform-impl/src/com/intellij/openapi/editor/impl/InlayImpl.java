@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.Inlay;
+import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.util.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,6 +32,14 @@ class InlayImpl extends RangeMarkerImpl implements Inlay, Getter<InlayImpl> {
     myWidthInPixels = widthInPixels;
     myRenderer = renderer;
     myEditor.getInlayModel().myInlayTree.addInterval(this, offset, offset, false, false, 0);
+  }
+
+  @Override
+  protected void changedUpdateImpl(@NotNull DocumentEvent e) {
+    super.changedUpdateImpl(e);
+    if (isValid() && getOffset() >= e.getOffset() && getOffset() <= e.getOffset() + e.getNewLength()) {
+      invalidate(e);
+    }
   }
 
   @Override
