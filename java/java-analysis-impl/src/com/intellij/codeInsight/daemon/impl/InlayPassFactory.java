@@ -28,9 +28,12 @@ import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.*;
+import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
+import com.intellij.util.ui.GraphicsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -148,7 +151,7 @@ public class InlayPassFactory extends AbstractProjectComponent implements TextEd
       }
       for (Map.Entry<Integer, String> e : myAnnotations.entrySet()) {
         String text = e.getValue();
-        int width = MyRenderer.FONT.fontMetrics().stringWidth(text) + 3;
+        int width = MyRenderer.FONT.fontMetrics().stringWidth(text) + 4;
         myEditor.getInlayModel().addInlineElement(e.getKey(), width, new MyRenderer(text));
       }
     }
@@ -164,10 +167,14 @@ public class InlayPassFactory extends AbstractProjectComponent implements TextEd
 
     @Override
     public void paint(@NotNull Graphics g, @NotNull Rectangle r) {
-      g.setColor(JBColor.DARK_GRAY);
+      GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
+      g.setColor(Gray._230);
+      g.fillRoundRect(r.x + 1, r.y + 2, r.width - 2, r.height - 4, 4, 4);
+      g.setColor(JBColor.darkGray);
       g.setFont(FONT.getFont());
       FontMetrics metrics = g.getFontMetrics();
-      g.drawString(myText, r.x + 3, r.y + (r.height + metrics.getAscent() - metrics.getDescent()) / 2 + 1);
+      g.drawString(myText, r.x + 4, r.y + (r.height + metrics.getAscent() - metrics.getDescent()) / 2);
+      config.restore();
     }
   }
 }

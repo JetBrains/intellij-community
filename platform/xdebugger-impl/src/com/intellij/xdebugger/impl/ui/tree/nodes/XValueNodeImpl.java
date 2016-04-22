@@ -158,7 +158,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
           final XValue container = getValueContainer();
           if (container instanceof JavaValue) {
             ValueDescriptorImpl desc = ((JavaValue)container).getDescriptor();
-            if (desc.isNull() || desc.isPrimitive()) value = "=" + desc.getValueText();
+            if (desc.isNull() || desc.isPrimitive()) value = " " + desc.getValueText();
           }
 
           if (value != null && currentPosition != null && currentPosition.getFile().equals(position.getFile()) && currentPosition.getLine() == position.getLine()) {
@@ -208,10 +208,14 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
 
     @Override
     public void paint(@NotNull Graphics g, @NotNull Rectangle r) {
+      g.setColor(new Color(0, 150, 150));
+      g.fillRoundRect(r.x + 1, r.y + 2, r.width - 3, r.height - 4, 2, 2);
+      g.setColor(new Color(50, 200, 200));
+      g.drawRoundRect(r.x + 1, r.y + 2, r.width - 3, r.height - 4, 2, 2);
       g.setColor(JBColor.cyan);
       g.setFont(FONT.getFont());
       FontMetrics metrics = g.getFontMetrics();
-      g.drawString(myText, r.x + 3, r.y + (r.height + metrics.getAscent() - metrics.getDescent()) / 2 + 1);
+      g.drawString(myText, r.x + 1, r.y + (r.height + metrics.getAscent() - metrics.getDescent()) / 2 + 1);
     }
   }
 
