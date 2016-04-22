@@ -16,20 +16,16 @@
 package org.jetbrains.plugins.groovy.builder;
 
 import com.intellij.psi.*;
-import com.intellij.psi.impl.compiled.ClsClassImpl;
-import com.intellij.psi.scope.ElementClassHint;
-import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
-import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
-import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrDelegatesToUtil.DELEGATES_TO_KEY;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_CLOSURE;
 
-public class JsonDelegateContributor extends NonCodeMembersContributor {
+public class JsonDelegateContributor extends BuilderMethodsContributor {
 
   static final String DELEGATE_FQN = "groovy.json.JsonDelegate";
 
@@ -40,18 +36,11 @@ public class JsonDelegateContributor extends NonCodeMembersContributor {
   }
 
   @Override
-  public void processDynamicElements(@NotNull PsiType qualifierType,
-                                     PsiClass clazz,
-                                     @NotNull PsiScopeProcessor processor,
-                                     @NotNull PsiElement place,
-                                     @NotNull ResolveState state) {
-    if (clazz == null) return;
-
-    String name = ResolveUtil.getNameHint(processor);
-    if (name == null) return;
-
-    if (!ResolveUtil.shouldProcessMethods(processor.getHint(ElementClassHint.KEY))) return;
-
+  boolean processDynamicMethods(@NotNull PsiType qualifierType,
+                                @NotNull PsiClass clazz,
+                                @NotNull String name,
+                                @NotNull PsiElement place,
+                                @NotNull Processor<PsiElement> processor) {
     JavaPsiFacade facade = JavaPsiFacade.getInstance(place.getProject());
 
     GrLightMethodBuilder method;
@@ -62,7 +51,7 @@ public class JsonDelegateContributor extends NonCodeMembersContributor {
     genericType = facade.getElementFactory().createType(method.addTypeParameter("T"));
     method.addParameter("value", genericType, false);
     method.setReturnType(genericType);
-    if (!processor.execute(method, state)) return;
+    if (!processor.process(method)) return false;
 
     // List<T> (T[], Closure)
     method = createMethod(name, clazz, place);
@@ -70,7 +59,7 @@ public class JsonDelegateContributor extends NonCodeMembersContributor {
     method.addParameter("values", genericType.createArrayType(), false);
     method.addAndGetParameter("c", GROOVY_LANG_CLOSURE, false).putUserData(DELEGATES_TO_KEY, DELEGATE_FQN);
     method.setReturnType(TypesUtil.createListType(place, genericType));
-    if (!processor.execute(method, state)) return;
+    if (!processor.process(method)) return false;
 
     // List<T> (Iterable<T>, Closure)
     method = createMethod(name, clazz, place);
@@ -78,14 +67,14 @@ public class JsonDelegateContributor extends NonCodeMembersContributor {
     method.addParameter("values", TypesUtil.createIterableType(place, genericType), false);
     method.addAndGetParameter("c", GROOVY_LANG_CLOSURE, false).putUserData(DELEGATES_TO_KEY, DELEGATE_FQN);
     method.setReturnType(TypesUtil.createListType(place, genericType));
-    if (!processor.execute(method, state)) return;
+    if (!processor.process(method)) return false;
 
     // List<T> (T...)
     method = createMethod(name, clazz, place);
     genericType = facade.getElementFactory().createType(method.addTypeParameter("T"));
     method.addAndGetParameter("values", new PsiEllipsisType(genericType), false);
     method.setReturnType(TypesUtil.createListType(place, genericType));
-    processor.execute(method, state);
+    return processor.process(method);
   }
 
   private static GrLightMethodBuilder createMethod(@NotNull String name,
@@ -94,7 +83,7 @@ public class JsonDelegateContributor extends NonCodeMembersContributor {
     GrLightMethodBuilder method = new GrLightMethodBuilder(context.getManager(), name);
     method.setOriginInfo(JsonBuilderContributor.ORIGIN_INFO);
     method.addModifier(PsiModifier.PUBLIC);
-    method.setContainingClass(clazz instanceof ClsClassImpl ? ((ClsClassImpl)clazz).getSourceMirrorClass() : clazz);
+    UtilsKt.setContainingClass(method, clazz);
     return method;
   }
 }
