@@ -107,6 +107,8 @@ public class JsonSchemaReader {
     }
     final JsonSchemaObject found = ids.get(ref);
     if (found != null) return found;
+    // temporal solution for now: do not parse non-local references completely, just ignore them and do not use for check
+    if (ref.indexOf("#/") > 0) return null;
     if (!ref.startsWith("#/")) throw new RuntimeException("Non-relative reference: " + ref);
     ref = ref.substring(2);
 
