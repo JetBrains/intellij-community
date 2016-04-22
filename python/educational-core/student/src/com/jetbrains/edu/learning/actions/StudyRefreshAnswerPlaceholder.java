@@ -14,11 +14,11 @@ import com.intellij.openapi.util.TextRange;
 import com.jetbrains.edu.learning.StudyActionListener;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.core.EduNames;
-import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
-import com.jetbrains.edu.learning.courseFormat.Course;
-import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.StudyState;
 import com.jetbrains.edu.learning.StudyUtils;
+import com.jetbrains.edu.learning.courseFormat.Course;
+import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
+import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,7 +45,7 @@ public class StudyRefreshAnswerPlaceholder extends DumbAwareAction {
     }
     StudyEditor studyEditor = StudyUtils.getSelectedStudyEditor(project);
     final StudyState studyState = new StudyState(studyEditor);
-    Document patternDocument = StudyUtils.getPatternDocument(answerPlaceholder.getTaskFile(), studyState.getVirtualFile().getName());
+    Document patternDocument = StudyUtils.getPatternDocument(project, answerPlaceholder.getTaskFile(), studyState.getVirtualFile().getName());
     if (patternDocument == null) {
       return;
     }

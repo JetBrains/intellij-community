@@ -21,6 +21,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
@@ -47,6 +48,7 @@ import com.jetbrains.edu.learning.core.EduAnswerPlaceholderPainter;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.*;
+import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.ui.StudyProgressToolWindowFactory;
 import com.jetbrains.edu.learning.ui.StudyToolWindow;
@@ -446,9 +448,9 @@ public class StudyUtils {
     if (taskDirectory != null) {
       final String taskTextFileHtml = getTaskTextFrom(taskDirectory, EduNames.TASK_HTML);
       if (taskTextFileHtml != null) return taskTextFileHtml;
-      
+
       final String taskTextFileMd = getTaskTextFrom(taskDirectory, EduNames.TASK_MD);
-      if (taskTextFileMd != null) return convertToHtml(taskTextFileMd);      
+      if (taskTextFileMd != null) return convertToHtml(taskTextFileMd);
     }
     return null;
   }
@@ -472,7 +474,7 @@ public class StudyUtils {
     }
     return null;
   }
-
+  
   @Nullable
   public static StudyPluginConfigurator getConfigurator(@NotNull final Project project) {
     StudyPluginConfigurator[] extensions = StudyPluginConfigurator.EP_NAME.getExtensions();
@@ -579,24 +581,24 @@ public class StudyUtils {
     ArrayList<String> lines = ContainerUtil.newArrayList(content.split("\n|\r|\r\n"));
     MarkdownUtil.replaceHeaders(lines);
     MarkdownUtil.replaceCodeBlock(lines);
-    
+
     return new MarkdownProcessor().markdown(StringUtil.join(lines, "\n"));
   }
-  
+
   public static boolean isTaskDescriptionFile(@NotNull final String fileName) {
     return EduNames.TASK_HTML.equals(fileName) || EduNames.TASK_MD.equals(fileName);
   }
-  
+
   @Nullable
   public static VirtualFile findTaskDescriptionVirtualFile(@NotNull final VirtualFile parent) {
     return ObjectUtils.chooseNotNull(parent.findChild(EduNames.TASK_HTML), parent.findChild(EduNames.TASK_MD));
   }
-  
+
   @NotNull
   public static String getTaskDescriptionFileName(final boolean useHtml) {
-    return useHtml ? EduNames.TASK_HTML : EduNames.TASK_MD;    
+    return useHtml ? EduNames.TASK_HTML : EduNames.TASK_MD;
   }
-  
+
   @Nullable
   public static File createTaskDescriptionFile(@NotNull final File parent) {
     if(new File(parent, EduNames.TASK_HTML).exists()) {
@@ -605,5 +607,31 @@ public class StudyUtils {
     else {
       return new File(parent, EduNames.TASK_MD);
     }
+  }
+
+  @Nullable
+  public static Project getStudyProject() {
+    Project studyProject = null;
+    Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
+    for (Project project : openProjects) {
+      if (StudyTaskManager.getInstance(project).getCourse() != null) {
+        studyProject = project;
+      }
+    }
+    return studyProject;
+  }
+
+  @NotNull
+  public static File getCourseDirectory(@NotNull Project project, Course course) {
+    final File courseDirectory;
+    if (course.isAdaptive()) {
+      courseDirectory = new File(StudyProjectGenerator.ourCoursesDir,
+                                 StudyProjectGenerator.ADAPTIVE_COURSE_PREFIX + course.getName()
+                                 + "_" + StudyTaskManager.getInstance(project).getUser().getEmail());
+    }
+    else {
+      courseDirectory = new File(StudyProjectGenerator.ourCoursesDir, course.getName());
+    }
+    return courseDirectory;
   }
 }
