@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,8 +42,8 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
     myReference = reference;
   }
 
-  public PsiClassReferenceType(@NotNull PsiJavaCodeReferenceElement reference, LanguageLevel level, @NotNull TypeAnnotationProvider annotations) {
-    super(level, annotations);
+  public PsiClassReferenceType(@NotNull PsiJavaCodeReferenceElement reference, LanguageLevel level, @NotNull TypeAnnotationProvider provider) {
+    super(level, provider);
     myReference = reference;
   }
 
@@ -56,6 +56,12 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
       }
     }
     return result == null ? PsiAnnotation.EMPTY_ARRAY : result.toArray(new PsiAnnotation[result.size()]);
+  }
+
+  @NotNull
+  @Override
+  public PsiClassReferenceType annotate(@NotNull TypeAnnotationProvider provider) {
+    return new PsiClassReferenceType(myReference, myLanguageLevel, provider);
   }
 
   @Override

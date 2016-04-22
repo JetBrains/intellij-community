@@ -72,6 +72,11 @@ public abstract class PsiType implements PsiAnnotationOwner {
     myAnnotationProvider = annotations;
   }
 
+  @NotNull
+  public PsiType annotate(@NotNull TypeAnnotationProvider provider) {
+    throw new UnsupportedOperationException("Not implemented for " + getClass());
+  }
+
   /**
    * Creates array type with this type as a component.
    */
