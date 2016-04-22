@@ -111,7 +111,7 @@ public class PsiImmediateClassType extends PsiClassType.Stub {
   @NotNull
   @Override
   public PsiImmediateClassType annotate(@NotNull TypeAnnotationProvider provider) {
-    return new PsiImmediateClassType(myClass, mySubstitutor, myLanguageLevel, provider);
+    return provider == getAnnotationProvider() ? this : new PsiImmediateClassType(myClass, mySubstitutor, myLanguageLevel, provider);
   }
 
   @Override
@@ -123,6 +123,7 @@ public class PsiImmediateClassType extends PsiClassType.Stub {
   public String getClassName() {
     return myClass.getName();
   }
+
   @Override
   @NotNull
   public PsiType[] getParameters() {
@@ -134,12 +135,10 @@ public class PsiImmediateClassType extends PsiClassType.Stub {
     List<PsiType> lst = new ArrayList<PsiType>();
     for (PsiTypeParameter parameter : parameters) {
       PsiType substituted = mySubstitutor.substitute(parameter);
-      if (substituted != null) {
-        lst.add(substituted);
-      }
-      else {
+      if (substituted == null) {
         return PsiType.EMPTY_ARRAY;
       }
+      lst.add(substituted);
     }
     return lst.toArray(createArray(lst.size()));
   }

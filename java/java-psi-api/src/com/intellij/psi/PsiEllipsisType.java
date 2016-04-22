@@ -38,7 +38,7 @@ public class PsiEllipsisType extends PsiArrayType {
   @NotNull
   @Override
   public PsiEllipsisType annotate(@NotNull TypeAnnotationProvider provider) {
-    return new PsiEllipsisType(getComponentType(), provider);
+    return provider == getAnnotationProvider() ? this : new PsiEllipsisType(getComponentType(), provider);
   }
 
   @NotNull

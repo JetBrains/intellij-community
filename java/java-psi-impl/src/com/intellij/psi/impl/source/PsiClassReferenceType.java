@@ -61,7 +61,7 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
   @NotNull
   @Override
   public PsiClassReferenceType annotate(@NotNull TypeAnnotationProvider provider) {
-    return new PsiClassReferenceType(myReference, myLanguageLevel, provider);
+    return provider == getAnnotationProvider() ? this : new PsiClassReferenceType(myReference, myLanguageLevel, provider);
   }
 
   @Override

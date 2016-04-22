@@ -43,7 +43,7 @@ public class PsiArrayType extends PsiType.Stub {
   @NotNull
   @Override
   public PsiArrayType annotate(@NotNull TypeAnnotationProvider provider) {
-    return new PsiArrayType(myComponentType, provider);
+    return provider == getAnnotationProvider() ? this : new PsiArrayType(myComponentType, provider);
   }
 
   @NotNull

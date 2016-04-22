@@ -89,7 +89,7 @@ public class PsiWildcardType extends PsiType.Stub {
   @NotNull
   @Override
   public PsiWildcardType annotate(@NotNull TypeAnnotationProvider provider) {
-    return new PsiWildcardType(this, provider);
+    return provider == getAnnotationProvider() ? this : new PsiWildcardType(this, provider);
   }
 
   @NotNull
