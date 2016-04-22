@@ -735,10 +735,10 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
         }
       }
 
-      removeWildcardPatterns();
       node = parentNode.getChild(JpsJavaCompilerConfigurationSerializer.WILDCARD_RESOURCE_PATTERNS);
       if (node != null) {
         myWildcardPatternsInitialized = true;
+        removeWildcardPatterns();
         for (Element element : node.getChildren(JpsJavaCompilerConfigurationSerializer.ENTRY)) {
           String pattern = element.getAttributeValue(JpsJavaCompilerConfigurationSerializer.NAME);
           if (!StringUtil.isEmpty(pattern)) {
