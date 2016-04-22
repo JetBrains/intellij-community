@@ -203,7 +203,8 @@ public class TreeTraverserTest extends TestCase {
     assertEquals(new Integer(4), it.next());   // advance->4
     assertFalse(it.hasNext());
     assertFalse(it.hasNext());
-    assertFalse(tryCatch.process(it::advance));
+    assertFalse(it.advance());
+    assertFalse(tryCatch.process(it::current));
     assertFalse(tryCatch.process(it::next));
     assertFalse(it.hasNext());
   }
@@ -214,6 +215,16 @@ public class TreeTraverserTest extends TestCase {
     assertEquals(new Integer(1), it.current());
     assertFalse(it.hasNext());
     assertEquals(new Integer(1), it.current());
+  }
+
+  public void testIteratorContractsCursor() {
+    List<Integer> list = ContainerUtil.newArrayList();
+    for (JBIterator<Integer> it : JBIterator.cursor(JBIterator.from(JBIterable.of(1, 2).iterator()))) {
+      it.current();
+      it.hasNext();
+      list.add(it.current());
+    }
+    assertEquals(Arrays.asList(1, 2), list);
   }
 
   // JBIterable ----------------------------------------------
