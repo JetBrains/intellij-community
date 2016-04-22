@@ -53,19 +53,20 @@ public class BuiltInWebBrowserUrlProvider extends WebBrowserUrlProvider implemen
     String path = info.getPath();
 
     String authority = currentAuthority == null ? "localhost:" + effectiveBuiltInServerPort : currentAuthority;
-    List<Url> urls = new SmartList<>(Urls.newHttpUrl(authority, '/' + project.getName() + '/' + path));
+    String query = "?" + BuiltInWebServerKt.TOKEN_PARAM_NAME + "=" + BuiltInWebServerKt.acquireToken();
+    List<Url> urls = new SmartList<>(Urls.newHttpUrl(authority, '/' + project.getName() + '/' + path, query));
 
     String path2 = info.getRootLessPathIfPossible();
     if (path2 != null) {
-      urls.add(Urls.newHttpUrl(authority, '/' + project.getName() + '/' + path2));
+      urls.add(Urls.newHttpUrl(authority, '/' + project.getName() + '/' + path2, query));
     }
 
     int defaultPort = BuiltInServerManager.getInstance().getPort();
     if (currentAuthority == null && defaultPort != effectiveBuiltInServerPort) {
       String defaultAuthority = "localhost:" + defaultPort;
-      urls.add(Urls.newHttpUrl(defaultAuthority, '/' + project.getName() + '/' + path));
+      urls.add(Urls.newHttpUrl(defaultAuthority, '/' + project.getName() + '/' + path, query));
       if (path2 != null) {
-        urls.add(Urls.newHttpUrl(defaultAuthority, '/' + project.getName() + '/' + path2));
+        urls.add(Urls.newHttpUrl(defaultAuthority, '/' + project.getName() + '/' + path2, query));
       }
     }
 

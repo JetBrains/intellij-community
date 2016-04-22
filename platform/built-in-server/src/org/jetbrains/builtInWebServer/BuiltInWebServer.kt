@@ -15,30 +15,41 @@
  */
 package org.jetbrains.builtInWebServer
 
+import com.google.common.cache.CacheBuilder
 import com.google.common.net.InetAddresses
+import com.intellij.ide.impl.ProjectUtil
+import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.catchAndLog
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.endsWithName
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.UriUtil
 import com.intellij.util.directoryStreamIfExists
 import com.intellij.util.io.URLUtil
 import com.intellij.util.isDirectory
 import com.intellij.util.net.NetUtils
+import io.netty.channel.Channel
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.*
+import io.netty.handler.codec.http.cookie.ClientCookieEncoder
+import io.netty.handler.codec.http.cookie.DefaultCookie
+import io.netty.handler.codec.http.cookie.ServerCookieDecoder
 import org.jetbrains.ide.HttpRequestHandler
-import org.jetbrains.io.host
-import org.jetbrains.io.isLocalOrigin
-import org.jetbrains.io.send
+import org.jetbrains.io.*
+import java.io.File
 import java.io.IOException
 import java.net.InetAddress
 import java.nio.file.Path
+import java.util.*
+import java.util.concurrent.TimeUnit
+import javax.swing.SwingUtilities
 
 internal val LOG = Logger.getInstance(BuiltInWebServer::class.java)
 
@@ -73,12 +84,52 @@ class BuiltInWebServer : HttpRequestHandler() {
     else {
       projectName = host
     }
-    return doProcess(request, context, projectName)
+    return doProcess(urlDecoder, request, context, projectName)
   }
 }
 
-private fun doProcess(request: FullHttpRequest, context: ChannelHandlerContext, projectNameAsHost: String?): Boolean {
-  val decodedPath = URLUtil.unescapePercentSequences(UriUtil.trimParameters(request.uri()))
+const val TOKEN_PARAM_NAME = "__ij-st"
+
+private val STANDARD_COOKIE by lazy {
+  val productName = ApplicationNamesInfo.getInstance().lowercaseProductName
+  val configPath = PathManager.getConfigPath()
+  val cookieName = productName + "-" + Integer.toHexString(configPath.hashCode())
+  val file = File(configPath, cookieName)
+  var token: String? = null
+  if (file.exists()) {
+    try {
+      token = UUID.fromString(FileUtil.loadFile(file)).toString()
+    }
+    catch (e: Exception) {
+      LOG.warn(e)
+    }
+  }
+  if (token == null) {
+    token = UUID.randomUUID().toString()
+    FileUtil.writeToFile(file, token!!)
+  }
+
+  val cookie = DefaultCookie(cookieName, token!!)
+  cookie.isHttpOnly = true
+  cookie.setMaxAge(TimeUnit.DAYS.toMillis(365 * 10))
+  cookie.setPath("/")
+  cookie
+}
+
+// expire after access because we reuse tokens
+private val tokens = CacheBuilder.newBuilder().expireAfterAccess(1, TimeUnit.MINUTES).build<String, Boolean>()
+
+internal fun acquireToken(): String {
+  var token = tokens.asMap().keys.firstOrNull()
+  if (token == null) {
+    token = UUID.randomUUID().toString()
+    tokens.put(token, java.lang.Boolean.TRUE)
+  }
+  return token
+}
+
+private fun doProcess(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext, projectNameAsHost: String?): Boolean {
+  val decodedPath = URLUtil.unescapePercentSequences(urlDecoder.path())
   var offset: Int
   var isEmptyPath: Boolean
   val isCustomHost = projectNameAsHost != null
@@ -139,8 +190,11 @@ private fun doProcess(request: FullHttpRequest, context: ChannelHandlerContext, 
 
   val path = toIdeaPath(decodedPath, offset)
   if (path == null) {
-    LOG.warn("$decodedPath is not valid")
-    HttpResponseStatus.NOT_FOUND.send(context.channel(), request)
+    HttpResponseStatus.BAD_REQUEST.orInSafeMode(HttpResponseStatus.NOT_FOUND).send(context.channel(), request)
+    return true
+  }
+
+  if (!validateToken(request, context.channel(), urlDecoder)) {
     return true
   }
 
@@ -151,6 +205,42 @@ private fun doProcess(request: FullHttpRequest, context: ChannelHandlerContext, 
       }
     }
   }
+  return false
+}
+
+private fun validateToken(request: HttpRequest, channel: Channel, urlDecoder: QueryStringDecoder): Boolean {
+  val cookieString = request.headers().get(HttpHeaderNames.COOKIE)
+  if (cookieString != null) {
+    val cookies = ServerCookieDecoder.STRICT.decode(cookieString)
+    for (cookie in cookies) {
+      if (cookie.name() == STANDARD_COOKIE.name()) {
+        if (cookie.value() == STANDARD_COOKIE.value()) {
+          return true
+        }
+        break
+      }
+    }
+  }
+
+  val token = urlDecoder.parameters().get(TOKEN_PARAM_NAME)?.firstOrNull()
+  val url = "${channel.uriScheme}://${request.host!!}${urlDecoder.path()}"
+  if (token != null && tokens.getIfPresent(token) != null) {
+    tokens.invalidate(token)
+    // we redirect because it is not easy to change and maintain all places where we send response
+    val response = HttpResponseStatus.TEMPORARY_REDIRECT.response()
+    response.headers().add(HttpHeaderNames.LOCATION, url)
+    response.headers().set(HttpHeaderNames.SET_COOKIE, ClientCookieEncoder.STRICT.encode(STANDARD_COOKIE))
+    response.send(channel, request)
+    return true
+  }
+
+  SwingUtilities.invokeAndWait {
+    ProjectUtil.focusProjectWindow(null, true)
+    Messages.showMessageDialog(ProjectUtil.getActiveFrameOrWelcomeScreen(), "Page '" + StringUtil.trimMiddle(url, 50) + "' requested without authorization, " +
+        "\nplease <a href='" + url + "?" + acquireToken() + "'>open this link</a> to trust it.", "", Messages.getWarningIcon())
+  }
+
+  HttpResponseStatus.UNAUTHORIZED.orInSafeMode(HttpResponseStatus.NOT_FOUND).send(channel, request)
   return false
 }
 
