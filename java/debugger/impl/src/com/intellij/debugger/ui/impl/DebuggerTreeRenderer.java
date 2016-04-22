@@ -27,7 +27,11 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.util.PlatformIcons;
+import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebuggerManager;
+import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
+import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import org.jetbrains.annotations.NotNull;
@@ -128,6 +132,18 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
         nodeIcon = AllIcons.Debugger.Value;
       }
     }
+
+    // if watches in variables enabled, always use watch icon
+    if (valueDescriptor instanceof WatchItemDescriptor && nodeIcon != AllIcons.Debugger.Watch) {
+      XDebugSession session = XDebuggerManager.getInstance(valueDescriptor.getProject()).getCurrentSession();
+      if (session != null) {
+        XDebugSessionTab tab = ((XDebugSessionImpl)session).getSessionTab();
+        if (tab != null && tab.isWatchesInVariables()) {
+          nodeIcon = AllIcons.Debugger.Watch;
+        }
+      }
+    }
+
     final Icon valueIcon = valueDescriptor.getValueIcon();
     if (nodeIcon != null && valueIcon != null) {
       nodeIcon = new RowIcon(nodeIcon, valueIcon);
