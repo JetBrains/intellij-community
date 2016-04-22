@@ -40,9 +40,9 @@ import com.intellij.util.net.NetUtils
 import io.netty.channel.Channel
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.*
-import io.netty.handler.codec.http.cookie.ClientCookieEncoder
 import io.netty.handler.codec.http.cookie.DefaultCookie
 import io.netty.handler.codec.http.cookie.ServerCookieDecoder
+import io.netty.handler.codec.http.cookie.ServerCookieEncoder
 import org.jetbrains.ide.HttpRequestHandler
 import org.jetbrains.io.*
 import java.awt.datatransfer.StringSelection
@@ -112,9 +112,11 @@ private val STANDARD_COOKIE by lazy {
     FileUtil.writeToFile(file, token!!)
   }
 
+  // explicit setting domain cookie on localhost doesn't work for chrome
+  // http://stackoverflow.com/questions/8134384/chrome-doesnt-create-cookie-for-domain-localhost-in-broken-https
   val cookie = DefaultCookie(cookieName, token!!)
   cookie.isHttpOnly = true
-  cookie.setMaxAge(TimeUnit.DAYS.toMillis(365 * 10))
+  cookie.setMaxAge(TimeUnit.DAYS.toSeconds(365 * 10))
   cookie.setPath("/")
   cookie
 }
@@ -225,14 +227,15 @@ private fun validateToken(request: HttpRequest, channel: Channel, urlDecoder: Qu
     }
   }
 
-  val token = urlDecoder.parameters().get(TOKEN_PARAM_NAME)?.firstOrNull()
+  // we must check referrer - if html cached, browser will send request without query
+  val token = urlDecoder.parameters().get(TOKEN_PARAM_NAME)?.firstOrNull() ?: request.referrer?.let { QueryStringDecoder(it).parameters().get(TOKEN_PARAM_NAME)?.firstOrNull() }
   val url = "${channel.uriScheme}://${request.host!!}${urlDecoder.path()}"
   if (token != null && tokens.getIfPresent(token) != null) {
     tokens.invalidate(token)
     // we redirect because it is not easy to change and maintain all places where we send response
     val response = HttpResponseStatus.TEMPORARY_REDIRECT.response()
     response.headers().add(HttpHeaderNames.LOCATION, url)
-    response.headers().set(HttpHeaderNames.SET_COOKIE, ClientCookieEncoder.STRICT.encode(STANDARD_COOKIE))
+    response.headers().set(HttpHeaderNames.SET_COOKIE, ServerCookieEncoder.STRICT.encode(STANDARD_COOKIE))
     response.send(channel, request)
     return true
   }
