@@ -271,7 +271,8 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
         if (comparisonFailureActualText != null && comparisonFailureExpectedText != null) {
           testProxy.setTestComparisonFailed(failureMessage, stackTrace,
                                             comparisonFailureActualText, comparisonFailureExpectedText,
-                                            testFailedEvent.getExpectedFilePath());
+                                            testFailedEvent.getExpectedFilePath(),
+                                            testFailedEvent.getActualFilePath());
         } else if (comparisonFailureActualText == null && comparisonFailureExpectedText == null) {
           testProxy.setTestFailed(failureMessage, stackTrace, testFailedEvent.isTestError());
         } else {
