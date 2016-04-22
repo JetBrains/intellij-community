@@ -15,8 +15,8 @@
  */
 package com.intellij.util.ui.accessibility;
 
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.SystemProperties;
-import org.jetbrains.annotations.NotNull;
 
 import javax.accessibility.AccessibleContext;
 import java.awt.*;
@@ -48,12 +48,14 @@ public class ScreenReader {
       return SystemProperties.is(SYSTEM_PROPERTY_KEY);
     }
 
-    // Auto-detect if system property not set.
-    for (Frame frame: Frame.getFrames()) {
-      if (frame instanceof AccessibleContextAccessor) {
-        AccessibleContext frameContext = ((AccessibleContextAccessor)frame).getCurrentAccessibleContext();
-        if (frameContext != null)
-          return true;
+    if (Registry.is("ide.screenreader.autodetect.accessibility")) {
+      // Auto-detect if system property not set.
+      for (Frame frame : Frame.getFrames()) {
+        if (frame instanceof AccessibleContextAccessor) {
+          AccessibleContext frameContext = ((AccessibleContextAccessor)frame).getCurrentAccessibleContext();
+          if (frameContext != null)
+            return true;
+        }
       }
     }
     return false;
