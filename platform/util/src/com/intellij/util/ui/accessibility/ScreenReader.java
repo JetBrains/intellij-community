@@ -15,6 +15,7 @@
  */
 package com.intellij.util.ui.accessibility;
 
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.SystemProperties;
 
 import javax.accessibility.AccessibleContext;
@@ -42,12 +43,15 @@ public class ScreenReader {
       return SystemProperties.is(SYSTEM_PROPERTY_KEY);
     }
 
-    // Auto-detect if system property not set.
-    for (Frame frame: Frame.getFrames()) {
-      if (frame instanceof AccessibleContextAccessor) {
-        AccessibleContext frameContext = ((AccessibleContextAccessor)frame).getCurrentAccessibleContext();
-        if (frameContext != null)
-          return true;
+    // Auto-detect if system property not set
+    // Note: Only on Windows until Mac/Linux are fully supported.
+    if (SystemInfo.isWindows) {
+      for (Frame frame : Frame.getFrames()) {
+        if (frame instanceof AccessibleContextAccessor) {
+          AccessibleContext frameContext = ((AccessibleContextAccessor)frame).getCurrentAccessibleContext();
+          if (frameContext != null)
+            return true;
+        }
       }
     }
     return false;
