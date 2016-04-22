@@ -231,7 +231,7 @@ public class ProjectUtil {
   }
 
   public static boolean isRemotePath(@NotNull String path) {
-    return path.contains("//") || path.contains("\\\\");
+    return path.contains("://") || path.contains("\\\\");
   }
 
   @Nullable
