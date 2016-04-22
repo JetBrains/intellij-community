@@ -139,8 +139,9 @@ public class InlayPassFactory extends AbstractProjectComponent implements TextEd
     public void doApplyInformationToEditor() {
       assert myDocument != null;
       for (Inlay inlay : myEditor.getInlayModel().getInlineElementsInRange(-1, myDocument.getTextLength())) {
+        if (!(inlay.getRenderer() instanceof MyRenderer)) continue;
         int offset = inlay.getOffset();
-        String oldText = inlay.getRenderer() instanceof MyRenderer ? ((MyRenderer)inlay.getRenderer()).myText : null;
+        String oldText = ((MyRenderer)inlay.getRenderer()).myText;
         String newText = myAnnotations.get(offset);
         if (newText == null || newText.equals(oldText)) Disposer.dispose(inlay);
         else myAnnotations.remove(offset);
