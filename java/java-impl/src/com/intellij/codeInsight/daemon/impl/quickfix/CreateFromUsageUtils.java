@@ -261,10 +261,7 @@ public class CreateFromUsageUtils {
         names = new String[]{"p" + i};
       }
 
-      if (argType == null || PsiType.NULL.equals(argType) ||
-          argType instanceof PsiLambdaExpressionType ||
-          argType instanceof PsiLambdaParameterType ||
-          argType instanceof PsiMethodReferenceType) {
+      if (argType == null || PsiType.NULL.equals(argType) || LambdaUtil.notInferredType(argType)) {
         argType = PsiType.getJavaLangObject(psiManager, resolveScope);
       } else if (argType instanceof PsiDisjunctionType) {
         argType = ((PsiDisjunctionType)argType).getLeastUpperBound();

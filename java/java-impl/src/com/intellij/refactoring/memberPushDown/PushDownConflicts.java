@@ -77,7 +77,7 @@ public class PushDownConflicts {
     }
   }
 
-  public void checkTargetClassConflicts(final PsiElement targetElement, final boolean checkStatic, final PsiElement context) {
+  public void checkTargetClassConflicts(final PsiElement targetElement, final PsiElement context) {
     if (targetElement instanceof PsiFunctionalExpression) {
       myConflicts.putValue(targetElement, RefactoringBundle.message("functional.interface.broken"));
       return;
@@ -123,7 +123,6 @@ public class PushDownConflicts {
               aClass = ((PsiClassType)qualifierType).resolve();
             }
             else {
-              if (!checkStatic) continue;
               if (qualifier instanceof PsiReferenceExpression) {
                 final PsiElement resolved = ((PsiReferenceExpression)qualifier).resolve();
                 if (resolved instanceof PsiClass) {

@@ -6,9 +6,11 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.refactoring.RenameRefactoring;
 import com.intellij.refactoring.openapi.impl.JavaRenameRefactoringImpl;
@@ -16,9 +18,13 @@ import com.intellij.refactoring.rename.PsiElementRenameHandler;
 import com.intellij.refactoring.rename.RenameDialog;
 import com.intellij.refactoring.rename.RenameHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
+import org.jetbrains.plugins.javaFX.fxml.refs.JavaFxIdAttributeReference;
 import org.jetbrains.plugins.javaFX.fxml.refs.JavaFxPropertyReference;
 
 import java.util.Map;
@@ -30,7 +36,9 @@ public class JavaFxPropertyRenameHandler implements RenameHandler {
   @Override
   public boolean isAvailableOnDataContext(DataContext dataContext) {
     final PsiReference reference = getReference(dataContext);
-    return reference != null;
+    if (reference instanceof JavaFxPropertyReference) return true;
+    if (reference instanceof JavaFxIdAttributeReference) return ((JavaFxIdAttributeReference)reference).isBuiltIn();
+    return false;
   }
 
   @Override
@@ -40,30 +48,37 @@ public class JavaFxPropertyRenameHandler implements RenameHandler {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
-    //if (editor == null) {
-    //  editor = CommonDataKeys.EDITOR.getData(dataContext);
-    //}
-    //final PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
-    final JavaFxPropertyReference reference = getReference(dataContext);
+    performInvoke(project, editor, dataContext);
+  }
+
+  @Override
+  public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
+    performInvoke(project, null, dataContext);
+  }
+
+  private static void performInvoke(@NotNull Project project, @Nullable Editor editor, DataContext dataContext) {
+    final PsiReference reference = getReference(dataContext);
     if (reference == null) return;
-    if (reference.isRenameable()) {
+    if (reference instanceof JavaFxIdAttributeReference && ((JavaFxIdAttributeReference)reference).isBuiltIn()) {
+      CommonRefactoringUtil.showErrorHint(project, editor, "Cannot rename built-in property", null, null);
+      return;
+    }
+    if ((reference instanceof JavaFxPropertyReference) && reference.resolve() != null) {
+      final JavaFxPropertyReference propertyReference = (JavaFxPropertyReference)reference;
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         final String newName = PsiElementRenameHandler.DEFAULT_NAME.getData(dataContext);
         assert newName != null : "Rename property";
-        doRename(reference, newName, false, false);
+        doRename(propertyReference, newName, false, false);
         return;
       }
-      final Map<PsiElement, String> elementsToRename = reference.getElementsToRename("a");
-      for (PsiElement element : elementsToRename.keySet()) {
+      final Map<String, PsiElement> elementsToRename = getElementsToRename(propertyReference, "a");
+      for (PsiElement element : elementsToRename.values()) {
         if (!PsiElementRenameHandler.canRename(project, editor, element)) return;
       }
-      final PsiElement psiElement = JavaFxPropertyElement.fromReference(reference);
+      final PsiElement psiElement = JavaFxPropertyElement.fromReference(propertyReference);
       if (psiElement != null) {
-        new PropertyRenameDialog(reference, psiElement, project, editor).show();
+        new PropertyRenameDialog(propertyReference, psiElement, project, editor).show();
       }
-    }
-    else {
-      CommonRefactoringUtil.showErrorHint(project, editor, "Cannot rename built-in property", null, null);
     }
   }
 
@@ -73,41 +88,42 @@ public class JavaFxPropertyRenameHandler implements RenameHandler {
     final RenameRefactoring rename = new JavaRenameRefactoringImpl(psiElement.getProject(), psiElement, newName, searchInComments, false);
     rename.setPreviewUsages(isPreview);
 
-    final Map<PsiElement, String> elementsToRename = reference.getElementsToRename(newName);
-    for (Map.Entry<PsiElement, String> entry : elementsToRename.entrySet()) {
-      rename.addElement(entry.getKey(), entry.getValue());
+    final Map<String, PsiElement> elementsToRename = getElementsToRename(reference, newName);
+    for (Map.Entry<String, PsiElement> entry : elementsToRename.entrySet()) {
+      rename.addElement(entry.getValue(), entry.getKey());
     }
     rename.run();
   }
 
-  @Override
-  public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
-    final PsiReference reference = getReference(dataContext);
-    //final PsiElement element = getElement(dataContext);
-
-  }
-
   @Nullable
-  private static JavaFxPropertyReference getReference(DataContext dataContext) {
+  private static PsiReference getReference(DataContext dataContext) {
     final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
-    final PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
+    PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
 
-    //if (file == null && editor != null && ApplicationManager.getApplication().isUnitTestMode()) {
-    //  final Project project = editor.getProject();
-    //  if (project != null) {
-    //    file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-    //  }
-    //}
-
-    if (editor != null && file instanceof XmlFile && JavaFxFileTypeFactory.isFxml(file)) {
-      final int offset = editor.getCaretModel().getOffset();
-      final PsiReference reference = file.findReferenceAt(offset);
-      if (reference instanceof JavaFxPropertyReference) {
-        return (JavaFxPropertyReference)reference;
+    if (file == null && editor != null && ApplicationManager.getApplication().isUnitTestMode()) {
+      final Project project = editor.getProject();
+      if (project != null) {
+        file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
       }
     }
 
+    if (editor != null && file instanceof XmlFile && JavaFxFileTypeFactory.isFxml(file)) {
+      final int offset = editor.getCaretModel().getOffset();
+      return file.findReferenceAt(offset);
+    }
+
     return null;
+  }
+
+  @NotNull
+  private static Map<String, PsiElement> getElementsToRename(@NotNull JavaFxPropertyReference reference, @NotNull String newPropertyName) {
+    final Map<String, PsiElement> rename = new THashMap<>();
+    ContainerUtil.putIfNotNull(newPropertyName, reference.getField(), rename);
+    ContainerUtil.putIfNotNull(PropertyUtil.suggestGetterName(newPropertyName, reference.getType()), reference.getGetter(), rename);
+    ContainerUtil.putIfNotNull(PropertyUtil.suggestSetterName(newPropertyName), reference.getSetter(), rename);
+    ContainerUtil.putIfNotNull(newPropertyName + JavaFxCommonNames.PROPERTY_METHOD_SUFFIX, reference.getObservableGetter(), rename);
+    //TODO add "name" parameter of the observable property constructor (like new SimpleObjectProperty(this, "name", null);
+    return rename;
   }
 
   private static class PropertyRenameDialog extends RenameDialog {

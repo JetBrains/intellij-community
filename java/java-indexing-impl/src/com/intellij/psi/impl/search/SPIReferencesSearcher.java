@@ -16,10 +16,8 @@
 package com.intellij.psi.impl.search;
 
 import com.intellij.lang.spi.SPILanguage;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.QueryExecutorBase;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -30,73 +28,46 @@ import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
 public class SPIReferencesSearcher extends QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters> {
+  public SPIReferencesSearcher() {
+    super(true);
+  }
+
   @Override
   public void processQuery(@NotNull final ReferencesSearch.SearchParameters p, @NotNull final Processor<PsiReference> consumer) {
-    final SearchScope scope = ApplicationManager.getApplication().runReadAction(new Computable<SearchScope>() {
-      @Override
-      public SearchScope compute() {
-        return p.getEffectiveSearchScope();
-      }
-    });
-    if (!(scope instanceof GlobalSearchScope)) return;
-    
     final PsiElement element = p.getElementToSearch();
+    if (!element.isValid()) return;
+
+    final SearchScope scope = p.getEffectiveSearchScope();
+    if (!(scope instanceof GlobalSearchScope)) return;
+
     if (element instanceof PsiClass) {
       final PsiClass aClass = (PsiClass)element;
-      final String jvmClassName = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-        @Override
-        public String compute() {
-          return ClassUtil.getJVMClassName(aClass);
-        }
-      });
+      final String jvmClassName = ClassUtil.getJVMClassName(aClass);
 
       if (jvmClassName == null) return;
-      final PsiFile[] files = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile[]>() {
-        @Override
-        public PsiFile[] compute() {
-          return FilenameIndex.getFilesByName(aClass.getProject(), jvmClassName, (GlobalSearchScope)scope);
-        }
-      });
+      final PsiFile[] files = FilenameIndex.getFilesByName(aClass.getProject(), jvmClassName, (GlobalSearchScope)scope);
       for (PsiFile file : files) {
         if (file.getLanguage() == SPILanguage.INSTANCE) {
           final PsiReference reference = file.getReference();
           if (reference != null) {
-            ApplicationManager.getApplication().runReadAction(new Runnable() {
-              @Override
-              public void run() {
-                consumer.process(reference);
-              }
-            });
+            consumer.process(reference);
           }
         }
       }
-    } else if (element instanceof PsiPackage) {
+    }
+    else if (element instanceof PsiPackage) {
       final String qualifiedName = ((PsiPackage)element).getQualifiedName();
       final Project project = element.getProject();
-      final String[] filenames = ApplicationManager.getApplication().runReadAction(new Computable<String[]>() {
-        @Override
-        public String[] compute() {
-          return FilenameIndex.getAllFilenames(project);
-        }
-      });
+      final String[] filenames = FilenameIndex.getAllFilenames(project);
       for (final String filename : filenames) {
         if (filename.startsWith(qualifiedName + ".")) {
-          final PsiFile[] files = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile[]>() {
-            @Override
-            public PsiFile[] compute() {
-              return FilenameIndex.getFilesByName(project, filename, (GlobalSearchScope)scope);
-            }
-          });
+          final PsiFile[] files = FilenameIndex.getFilesByName(project, filename, (GlobalSearchScope)scope);
           for (PsiFile file : files) {
             if (file.getLanguage() == SPILanguage.INSTANCE) {
               final PsiReference[] references = file.getReferences();
               for (final PsiReference reference : references) {
                 if (reference.getCanonicalText().equals(qualifiedName)) {
-                  ApplicationManager.getApplication().runReadAction(new Runnable() {
-                    public void run() {
-                      consumer.process(reference);
-                    }
-                  });
+                  consumer.process(reference);
                 }
               }
             }

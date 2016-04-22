@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ public class PsiWildcardType extends PsiType.Stub {
   public static final String EXTENDS_PREFIX = "? extends ";
   public static final String SUPER_PREFIX = "? super ";
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.PsiWildcardType");
+  private static final Logger LOG = Logger.getInstance(PsiWildcardType.class);
   private static final Key<PsiWildcardType> UNBOUNDED_WILDCARD = new Key<PsiWildcardType>("UNBOUNDED_WILDCARD");
 
   private final PsiManager myManager;
@@ -39,14 +39,14 @@ public class PsiWildcardType extends PsiType.Stub {
   private final PsiType myBound;
 
   private PsiWildcardType(@NotNull PsiManager manager, boolean isExtending, @Nullable PsiType bound) {
-    super(PsiAnnotation.EMPTY_ARRAY);
+    super(TypeAnnotationProvider.EMPTY);
     myManager = manager;
     myIsExtending = isExtending;
     myBound = bound;
   }
 
-  private PsiWildcardType(@NotNull PsiWildcardType type, @NotNull TypeAnnotationProvider annotations) {
-    super(annotations);
+  private PsiWildcardType(@NotNull PsiWildcardType type, @NotNull TypeAnnotationProvider provider) {
+    super(provider);
     myManager = type.myManager;
     myIsExtending = type.myIsExtending;
     myBound = type.myBound;
@@ -87,8 +87,9 @@ public class PsiWildcardType extends PsiType.Stub {
   }
 
   @NotNull
-  public PsiWildcardType annotate(@NotNull final TypeAnnotationProvider annotations) {
-    return new PsiWildcardType(this, annotations);
+  @Override
+  public PsiWildcardType annotate(@NotNull TypeAnnotationProvider provider) {
+    return provider == getAnnotationProvider() ? this : new PsiWildcardType(this, provider);
   }
 
   @NotNull

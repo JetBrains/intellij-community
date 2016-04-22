@@ -23,6 +23,7 @@ import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.intellij.openapi.util.Conditions.not;
 
@@ -203,9 +204,42 @@ public class TreeTraverserTest extends TestCase {
     assertEquals(new Integer(4), it.next());   // advance->4
     assertFalse(it.hasNext());
     assertFalse(it.hasNext());
-    assertFalse(tryCatch.process(it::advance));
+    assertFalse(it.advance());
+    assertFalse(tryCatch.process(it::current));
     assertFalse(tryCatch.process(it::next));
     assertFalse(it.hasNext());
+  }
+
+  public void testIteratorContractsCurrent() {
+    JBIterator<Integer> it = JBIterator.from(JBIterable.of(1).iterator());
+    assertTrue(it.advance());
+    assertEquals(new Integer(1), it.current());
+    assertFalse(it.hasNext());
+    assertEquals(new Integer(1), it.current());
+  }
+
+  public void testIteratorContractsCursor() {
+    List<Integer> list = ContainerUtil.newArrayList();
+    for (JBIterator<Integer> it : JBIterator.cursor(JBIterator.from(JBIterable.of(1, 2).iterator()))) {
+      it.current();
+      it.hasNext();
+      list.add(it.current());
+    }
+    assertEquals(Arrays.asList(1, 2), list);
+  }
+
+  public void testIteratorContractsSkipAndStop() {
+    final AtomicInteger count = new AtomicInteger(0);
+    JBIterator<Integer> it = new JBIterator<Integer>() {
+
+      @Override
+      protected Integer nextImpl() {
+        return count.get() < 0 ? stop() :
+               count.incrementAndGet() < 10 ? skip() :
+               (Integer)count.addAndGet(-count.get() - 1);
+      }
+    };
+    assertEquals(JBIterable.of(-1).toList(), JBIterable.once(it).toList());
   }
 
   // JBIterable ----------------------------------------------

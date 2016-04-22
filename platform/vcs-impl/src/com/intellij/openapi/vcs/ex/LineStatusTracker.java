@@ -40,7 +40,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
-import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.util.containers.ContainerUtil;
@@ -264,6 +263,12 @@ public class LineStatusTracker {
   private boolean tryValidate() {
     if (myApplication.isDispatchThread()) updateRanges();
     return isValid();
+  }
+
+  public boolean isOperational() {
+    synchronized (LOCK) {
+      return myInitialized && !myReleased;
+    }
   }
 
   public boolean isValid() {

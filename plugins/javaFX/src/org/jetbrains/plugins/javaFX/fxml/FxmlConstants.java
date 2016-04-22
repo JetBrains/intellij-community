@@ -42,6 +42,7 @@ public class FxmlConstants {
   @NonNls public static final String RESOURCES = "resources";
   @NonNls public static final String CHARSET = "charset";
   @NonNls public static final String CONTROLLER = "controller";
+  @NonNls public static final String CONTROLLER_SUFFIX = "Controller";
 
   @NonNls public static final String STYLE_CLASS = "styleClass";
   @NonNls public static final String STYLESHEETS = "stylesheets";

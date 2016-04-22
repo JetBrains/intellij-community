@@ -219,7 +219,9 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
           final int exitCode = dialog.getExitCode();
           prepareSuccessful(); // dialog is always dismissed;
           if (exitCode == UnsafeUsagesDialog.VIEW_USAGES_EXIT_CODE) {
-            showUsages(usages);
+            showUsages(Arrays.stream(usages)
+                         .filter(usage -> usage instanceof SafeDeleteReferenceUsageInfo &&
+                                          !((SafeDeleteReferenceUsageInfo)usage).isSafeDelete()).toArray(UsageInfo[]::new));
           }
           return false;
         }

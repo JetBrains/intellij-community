@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import gnu.trove.THashMap;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,21 +35,28 @@ public class PsiPrimitiveType extends PsiType.Stub {
 
   private final String myName;
 
-  PsiPrimitiveType(@NonNls @NotNull String name, @NonNls String boxedName) {
-    this(name, PsiAnnotation.EMPTY_ARRAY);
+  PsiPrimitiveType(@NotNull String name, String boxedName) {
+    this(name, TypeAnnotationProvider.EMPTY);
     if (boxedName != null) {
       ourQNameToUnboxed.put(boxedName, this);
       ourUnboxedToQName.put(this, boxedName);
     }
   }
 
-  public PsiPrimitiveType(@NonNls @NotNull String name, @NotNull PsiAnnotation[] annotations) {
+  public PsiPrimitiveType(@NotNull String name, @NotNull PsiAnnotation[] annotations) {
     super(annotations);
     myName = name;
   }
-  public PsiPrimitiveType(@NonNls @NotNull String name, @NotNull TypeAnnotationProvider annotations) {
-    super(annotations);
+
+  public PsiPrimitiveType(@NotNull String name, @NotNull TypeAnnotationProvider provider) {
+    super(provider);
     myName = name;
+  }
+
+  @NotNull
+  @Override
+  public PsiPrimitiveType annotate(@NotNull TypeAnnotationProvider provider) {
+    return provider == getAnnotationProvider() ? this : new PsiPrimitiveType(myName, provider);
   }
 
   @NotNull

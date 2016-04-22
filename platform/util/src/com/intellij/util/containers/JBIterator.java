@@ -45,7 +45,7 @@ import java.util.NoSuchElementException;
  *
  * @author gregsh
  *
- * @noinspection unchecked
+ * @noinspection unchecked, AssignmentToForLoopParameter
  */
 public abstract class JBIterator<E> implements Iterator<E> {
   private static final Object NONE = new String("#none");
@@ -82,11 +82,15 @@ public abstract class JBIterator<E> implements Iterator<E> {
   protected abstract E nextImpl();
 
   /**
+   * Called right after the new current value is set.
+   */
+  protected void currentChanged() { }
+
+  /**
    * Notifies the iterator that there's no more elements.
    */
   protected final E stop() {
     myNext = STOP;
-    myCurrent = null;
     return null;
   }
 
@@ -95,7 +99,6 @@ public abstract class JBIterator<E> implements Iterator<E> {
    */
   protected final E skip() {
     myNext = SKIP;
-    myCurrent = null;
     return null;
   }
 
@@ -107,49 +110,41 @@ public abstract class JBIterator<E> implements Iterator<E> {
 
   @Override
   public final E next() {
-    peekNext();
-    if (myNext == STOP) throw new NoSuchElementException();
-    myCurrent = myNext;
-    myNext = NONE;
-    return (E)myCurrent;
+    advance();
+    return current();
   }
 
   /**
    * Proceeds to the next element if any and returns true; otherwise false.
    */
   public final boolean advance() {
-    if (myNext == STOP) throw new NoSuchElementException();
+    myCurrent = NONE;
     peekNext();
     if (myNext == STOP) return false;
     myCurrent = myNext;
     myNext = NONE;
+    currentChanged();
     return true;
   }
 
   /**
    * Returns the current element if any; otherwise throws exception.
    */
-  public E current() {
+  public final E current() {
     if (myCurrent == NONE) throw new NoSuchElementException();
-    if (myNext == STOP) throw new NoSuchElementException();
     return (E)myCurrent;
   }
 
   private void peekNext() {
     if (myNext != NONE) return;
-    myNext = null;
-    Object o = nextImpl();
-    if (myNext == STOP) return;
-    Op op = myFirstOp.nextOp;
-    while (op != null) {
-      o = op.apply(o);
+    Object o = NONE;
+    for (Op op = myFirstOp; op != null; op = op == null ? myFirstOp : op.nextOp) {
+      o = op == myFirstOp ? nextImpl() : op.apply(o);
       if (myNext == SKIP) {
-        myNext = NONE;
-        o = nextImpl();
-        op = myFirstOp;
+        o = myNext = NONE;
+        op = null;
       }
       if (myNext == STOP) return;
-      op = op.nextOp;
     }
     myNext = o;
   }
@@ -239,7 +234,7 @@ public abstract class JBIterator<E> implements Iterator<E> {
   @Override
   public String toString() {
     JBIterable<Op> ops = operationsImpl();
-    return "{cur=" + myCurrent + "; ops[" + ops.size() + "]=" + ops + "}";
+    return "{cur=" + myCurrent + "; next=" + myNext + (ops.isEmpty() ? "" : "; ops[" + ops.size() + "]=" + ops) + "}";
   }
 
   @NotNull
