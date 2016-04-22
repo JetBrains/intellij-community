@@ -28,6 +28,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.StatusBar;
+import com.intellij.ui.components.JBMenu;
 import com.intellij.ui.plaf.beg.IdeaMenuUI;
 import com.intellij.ui.plaf.gtk.GtkMenuUI;
 import com.intellij.util.ReflectionUtil;
@@ -47,7 +48,7 @@ import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
-public final class ActionMenu extends JMenu {
+public final class ActionMenu extends JBMenu {
   private final String myPlace;
   private DataContext myContext;
   private final ActionRef<ActionGroup> myGroup;
