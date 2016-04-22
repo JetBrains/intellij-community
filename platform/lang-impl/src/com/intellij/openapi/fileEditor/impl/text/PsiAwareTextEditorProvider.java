@@ -137,7 +137,6 @@ public class PsiAwareTextEditorProvider extends TextEditorProvider implements As
     if (FileEditorStateLevel.FULL == level) {
       // Folding
       if (project != null && !project.isDisposed() && !editor.isDisposed() && project.isInitialized()) {
-        PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
         state.setFoldingState(CodeFoldingManager.getInstance(project).saveFoldingState(editor));
       }
       else {
@@ -154,7 +153,7 @@ public class PsiAwareTextEditorProvider extends TextEditorProvider implements As
     // Folding
     final CodeFoldingState foldState = state.getFoldingState();
     if (project != null && foldState != null) {
-      PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+      LOG.assertTrue(PsiDocumentManager.getInstance(project).isCommitted(editor.getDocument()));
       editor.getFoldingModel().runBatchFoldingOperation(
         () -> CodeFoldingManager.getInstance(project).restoreFoldingState(editor, foldState)
       );

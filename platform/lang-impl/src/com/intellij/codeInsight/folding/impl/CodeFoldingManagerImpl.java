@@ -186,7 +186,6 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
     Document document = editor.getDocument();
     PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
     if (file == null || !file.getViewProvider().isPhysical() || !file.isValid()) return;
-    PsiDocumentManager.getInstance(myProject).commitDocument(document);
 
     Editor[] otherEditors = EditorFactory.getInstance().getEditors(document, myProject);
     if (otherEditors.length == 0 && !editor.isDisposed()) {
