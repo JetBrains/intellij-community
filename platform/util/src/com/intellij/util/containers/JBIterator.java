@@ -110,20 +110,15 @@ public abstract class JBIterator<E> implements Iterator<E> {
 
   @Override
   public final E next() {
-    myCurrent = NONE;
-    peekNext();
-    if (myNext == STOP) throw new NoSuchElementException();
-    myCurrent = myNext;
-    myNext = NONE;
-    currentChanged();
-    return (E)myCurrent;
+    advance();
+    return current();
   }
 
   /**
    * Proceeds to the next element if any and returns true; otherwise false.
    */
   public final boolean advance() {
-    if (myNext == STOP) throw new NoSuchElementException();
+    myCurrent = NONE;
     peekNext();
     if (myNext == STOP) return false;
     myCurrent = myNext;
@@ -243,7 +238,7 @@ public abstract class JBIterator<E> implements Iterator<E> {
   @Override
   public String toString() {
     JBIterable<Op> ops = operationsImpl();
-    return "{cur=" + myCurrent + "; ops[" + ops.size() + "]=" + ops + "}";
+    return "{cur=" + myCurrent + "; next=" + myNext + (ops.isEmpty() ? "" : "; ops[" + ops.size() + "]=" + ops) + "}";
   }
 
   @NotNull
