@@ -16,8 +16,8 @@
 package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.ExceptionUtil;
-import com.intellij.codeInspection.sameParameterValue.SameParameterValueInspection;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
@@ -26,12 +26,18 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
+import com.intellij.refactoring.changeSignature.ChangeSignatureProcessorBase;
+import com.intellij.refactoring.changeSignature.JavaChangeInfo;
+import com.intellij.refactoring.changeSignature.JavaChangeInfoImpl;
+import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
+import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
+import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,6 +58,9 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
   private final boolean mySameClass;
   private final PsiCodeBlock myCallingBlock;
   private final boolean myCreateLocal;
+
+  private JavaChangeInfo myChangeInfo;
+  private UsageInfo[] myChangeSignatureUsages;
 
   public InlineParameterExpressionProcessor(final PsiCallExpression methodCall,
                                             final PsiMethod method,
@@ -146,6 +155,28 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
         result.add(new UsageInfo(ref));
       }
     }
+
+
+    final PsiParameter[] parameters = myMethod.getParameterList().getParameters();
+    final List<ParameterInfoImpl> psiParameters = new ArrayList<ParameterInfoImpl>();
+    int paramIdx = 0;
+    final String paramName = myParameter.getName();
+    for (PsiParameter param : parameters) {
+      if (!Comparing.strEqual(paramName, param.getName())) {
+        psiParameters.add(new ParameterInfoImpl(paramIdx, param.getName(), param.getType()));
+      }
+      paramIdx++;
+    }
+
+    PsiType returnType = myMethod.getReturnType();
+    myChangeInfo = new JavaChangeInfoImpl(VisibilityUtil.getVisibilityModifier(myMethod.getModifierList()), myMethod, myMethod.getName(),
+                                          returnType != null ? CanonicalTypes.createTypeWrapper(returnType) : null,
+                                          psiParameters.toArray(new ParameterInfoImpl[psiParameters.size()]),
+                                          null,
+                                          false,
+                                          Collections.emptySet(),
+                                          Collections.emptySet() );
+    myChangeSignatureUsages = ChangeSignatureProcessorBase.findUsages(myChangeInfo);
 
     final UsageInfo[] usageInfos = result.toArray(new UsageInfo[result.size()]);
     return UsageViewUtil.removeDuplicatedUsages(usageInfos);
@@ -267,7 +298,7 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
       }
     }
 
-    SameParameterValueInspection.InlineParameterValueFix.removeParameter(myMethod, myParameter);
+    ChangeSignatureProcessorBase.doChangeSignature(myChangeInfo, myChangeSignatureUsages);
 
     if (!thrownExceptions.isEmpty()) {
       for (PsiClassType exception : thrownExceptions) {

@@ -42,7 +42,7 @@ class TypeCorrector extends PsiTypeMapper {
 
   @Override
   public PsiType visitType(PsiType type) {
-    if (type instanceof PsiLambdaParameterType || type instanceof PsiLambdaExpressionType || type instanceof PsiMethodReferenceType) {
+    if (LambdaUtil.notInferredType(type)) {
       return type;
     }
     return super.visitType(type);
