@@ -1683,7 +1683,9 @@
             class="org.jetbrains.plugins.groovy.console.actions.GrNewConsoleAction"
             text="Groovy Console..." description="Launch Groovy Console"
             icon="JetgroovyIcons.Groovy.Groovy_16x16">
+      <!-- Android Studio: We don't need this action in the tools menu
       <add-to-group group-id="ToolsMenu" anchor="last"/>
+      -->
     </action>
     
     <action id="Groovy.Shell"
