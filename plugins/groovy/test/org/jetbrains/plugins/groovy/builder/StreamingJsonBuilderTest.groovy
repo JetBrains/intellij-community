@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.builder
 
 import com.intellij.psi.PsiMethod
+import com.intellij.psi.impl.compiled.ClsMethodImpl
 import com.intellij.testFramework.LightProjectDescriptor
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
@@ -147,5 +148,15 @@ builder.root<warning>([], new Object(), {})</warning>
     def reference = fixture.getReferenceAtCaretPosition() as GrReferenceExpression
     assert reference.resolve() instanceof PsiMethod
     assert reference.type.canonicalText == 'java.lang.Object'
+  }
+
+  void 'test do not override existing methods'() {
+    def file = myFixture.configureByText('a.groovy', '''
+new groovy.json.StreamingJsonBuilder().cal<caret>l {}
+''') as GroovyFile
+    def call = file.topStatements.last() as GrCallExpression
+    def method = call.resolveMethod()
+    assert method
+    assert method instanceof ClsMethodImpl
   }
 }

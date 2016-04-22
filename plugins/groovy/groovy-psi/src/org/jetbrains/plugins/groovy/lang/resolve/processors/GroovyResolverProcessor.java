@@ -238,7 +238,7 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
 
   @Override
   public boolean shouldProcessMethods() {
-    return myRef.getParent() instanceof GrCallExpression;
+    return myRef.getParent() instanceof GrCallExpression && !myCandidates.containsKey(GroovyResolveKind.METHOD);
   }
 
   @NotNull
