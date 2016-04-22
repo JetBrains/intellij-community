@@ -50,10 +50,10 @@ public class CanonicalTypes {
   }
 
   private abstract static class AnnotatedType extends Type {
-    protected final PsiAnnotation[] myAnnotations;
+    protected final TypeAnnotationProvider myProvider;
 
-    protected AnnotatedType(@NotNull PsiAnnotation[] annotations) {
-      myAnnotations = annotations;
+    public AnnotatedType(@NotNull TypeAnnotationProvider provider) {
+      myProvider = TypeAnnotationProvider.Static.create(provider.getAnnotations());
     }
   }
 
@@ -61,14 +61,14 @@ public class CanonicalTypes {
     private final PsiPrimitiveType myType;
 
     private Primitive(@NotNull PsiPrimitiveType type) {
-      super(type.getAnnotations());
+      super(type.getAnnotationProvider());
       myType = type;
     }
 
     @NotNull
     @Override
     public PsiType getType(PsiElement context, PsiManager manager) {
-      return myAnnotations.length == 0 ? myType : new PsiPrimitiveType(myType.getCanonicalText(false), myAnnotations);
+      return myType.annotate(myProvider);
     }
 
     @Override
@@ -81,14 +81,14 @@ public class CanonicalTypes {
     protected final Type myComponentType;
 
     private Array(@NotNull PsiType original, @NotNull Type componentType) {
-      super(original.getAnnotations());
+      super(original.getAnnotationProvider());
       myComponentType = componentType;
     }
 
     @NotNull
     @Override
     public PsiType getType(PsiElement context, PsiManager manager) throws IncorrectOperationException {
-      return myComponentType.getType(context, manager).createArrayType(myAnnotations);
+      return myComponentType.getType(context, manager).createArrayType().annotate(myProvider);
     }
 
     @Override
@@ -115,7 +115,7 @@ public class CanonicalTypes {
     @NotNull
     @Override
     public PsiType getType(PsiElement context, PsiManager manager) throws IncorrectOperationException {
-      return new PsiEllipsisType(myComponentType.getType(context, manager), myAnnotations);
+      return new PsiEllipsisType(myComponentType.getType(context, manager)).annotate(myProvider);
     }
 
     @Override
@@ -129,7 +129,7 @@ public class CanonicalTypes {
     private final Type myBound;
 
     private WildcardType(@NotNull PsiType original, boolean isExtending, @Nullable Type bound) {
-      super(original.getAnnotations());
+      super(original.getAnnotationProvider());
       myIsExtending = isExtending;
       myBound = bound;
     }
@@ -147,7 +147,7 @@ public class CanonicalTypes {
       else {
         type = PsiWildcardType.createSuper(manager, myBound.getType(context, manager));
       }
-      return type.annotate(myAnnotations);
+      return type.annotate(myProvider);
     }
 
     @Override
@@ -205,7 +205,7 @@ public class CanonicalTypes {
     private final Map<String, Type> mySubstitutor;
 
     private ClassType(@NotNull PsiType original, @NotNull String classQName, @NotNull Map<String, Type> substitutor) {
-      super(original.getAnnotations());
+      super(original.getAnnotationProvider());
       myPresentableText = original.getPresentableText();
       myClassQName = classQName;
       mySubstitutor = substitutor;
@@ -227,7 +227,7 @@ public class CanonicalTypes {
         Type substitute = mySubstitutor.get(typeParameter.getName());
         substitutionMap.put(typeParameter, substitute != null ? substitute.getType(context, manager) : null);
       }
-      return factory.createType(aClass, factory.createSubstitutor(substitutionMap), null, myAnnotations);
+      return factory.createType(aClass, factory.createSubstitutor(substitutionMap), null).annotate(myProvider);
     }
 
     @Override

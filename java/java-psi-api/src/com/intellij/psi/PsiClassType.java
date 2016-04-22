@@ -55,6 +55,12 @@ public abstract class PsiClassType extends PsiType {
     myLanguageLevel = languageLevel;
   }
 
+  @NotNull
+  @Override
+  public PsiClassType annotate(@NotNull TypeAnnotationProvider provider) {
+    return (PsiClassType)super.annotate(provider);
+  }
+
   /**
    * Resolves the class reference and returns the resulting class.
    *
