@@ -26,6 +26,32 @@ import java.awt.*;
  */
 public class ScreenReader {
   public static String SYSTEM_PROPERTY_KEY = "screenreader";
+  /**
+   * <p>Cache the <b>positive</b> state of having an active screen reader.</p>
+   *
+   * <p><b>Note:</b>
+   * Screen readers always attach to applications after some delay, due to the
+   * way Java Access Bridge events work. The delay varies between screen readers, as
+   * it depends on how the initial handshake is implemented by the screen reader.</p>
+   *
+   * <p>This means caching the negative case would require heuristics to deal
+   * with the non-determinism introduced by this delay. In other words, if we don't
+   * detect an active screen reader at some point in time, how long can we remember
+   * that fact?</p>
+   *
+   * <p>However, caching the positive case is safe, as we can assume that once we detect
+   * an active screen reader, we can remember that fact until the application is
+   * terminated -- the way {@link javax.accessibility.Accessible#getAccessibleContext}
+   * is implemented follows the same assumption.</p>
+   *
+   * <p>Also, it turns out caching the positive case helps alleviate the latency
+   * issue in the case where the application keeps closing and opening top level
+   * windows, as each new window has a {@code null} {@link AccessibleContext} until
+   * the screen reader attaches to the window. By remembering the "positive" state,
+   * we ensure screen reader latency only affects the very first window opened by
+   * the application.</p>
+   */
+  private static boolean myActiveCache = false;
 
   /**
    * Components that need to customize their behavior in the presence of a external screen reader
@@ -38,6 +64,9 @@ public class ScreenReader {
    * since the start of the application.
    */
   public static boolean isActive() {
+    if (myActiveCache)
+      return true;
+
     // Return system property value if it is set
     if (SystemProperties.has(SYSTEM_PROPERTY_KEY)) {
       return SystemProperties.is(SYSTEM_PROPERTY_KEY);
