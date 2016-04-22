@@ -19,12 +19,10 @@ import com.intellij.diff.comparison.ByWord;
 import com.intellij.diff.comparison.ComparisonPolicy;
 import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.tools.util.SyncScrollSupport;
-import com.intellij.diff.util.DiffDrawUtil;
-import com.intellij.diff.util.DiffUtil;
-import com.intellij.diff.util.LineRange;
-import com.intellij.diff.util.TextDiffType;
+import com.intellij.diff.util.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
@@ -102,21 +100,27 @@ class ApplyPatchChange {
     RangeHighlighter highlighter = markupModel.addRangeHighlighter(textRange.getStartOffset(), textRange.getEndOffset(),
                                                                    HighlighterLayer.LAST, null, HighlighterTargetArea.LINES_IN_RANGE);
 
-    PairConsumer<Editor, MouseEvent> clickHandler = myAppliedTo != null ? (ed, e) -> handleStatusClick(editor) : null;
+    PairConsumer<Editor, MouseEvent> clickHandler = myAppliedTo != null ? (e, event) -> handleStatusClick(editor, event) : null;
     highlighter.setLineMarkerRenderer(LineStatusMarkerRenderer.createRenderer(line1, line2, color, clickHandler));
 
     myHighlighters.add(highlighter);
   }
 
-  private void handleStatusClick(@NotNull EditorEx editor) {
-    // TODO: avoid scrolling clicked editor, if possible
-    // TODO: blink ranges, to make them more noticeable ?
+  private void handleStatusClick(@NotNull EditorEx editor, @NotNull MouseEvent event) {
     assert myAppliedTo != null;
     EditorEx resultEditor = myViewer.getResultEditor();
     EditorEx patchEditor = myViewer.getPatchEditor();
+
+    Side clickSide = Side.fromLeft(editor == resultEditor);
+    int clickLine = clickSide.select(myAppliedTo.start, myPatchInsertionRange.start);
+    EditorEx clickEditor = clickSide.select(resultEditor, patchEditor);
+    int targetY = clickEditor.logicalPositionToXY(new LogicalPosition(clickLine, 0)).y;
+    int topShift = targetY - clickEditor.getScrollingModel().getVerticalScrollOffset();
+
     int[] offsets = SyncScrollSupport.getTargetOffsets(resultEditor, patchEditor,
                                                        myAppliedTo.start, myAppliedTo.end,
-                                                       myPatchInsertionRange.start, myPatchInsertionRange.end);
+                                                       myPatchInsertionRange.start, myPatchInsertionRange.end,
+                                                       topShift);
     DiffUtil.scrollToPoint(resultEditor, new Point(0, offsets[0]), false);
     DiffUtil.scrollToPoint(patchEditor, new Point(0, offsets[1]), false);
   }
