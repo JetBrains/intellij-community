@@ -131,7 +131,7 @@ public class InlayPassFactory extends AbstractProjectComponent implements TextEd
         String text = descriptor.getPlaceholderText();
         assert text != null;
         int colonPos = text.indexOf(':');
-        myAnnotations.put(descriptor.getRange().getEndOffset(), "→ " + text.substring(0, colonPos));
+        myAnnotations.put(descriptor.getRange().getStartOffset(), text.substring(0, colonPos + 2));
       }
     }
 
@@ -148,7 +148,7 @@ public class InlayPassFactory extends AbstractProjectComponent implements TextEd
       }
       for (Map.Entry<Integer, String> e : myAnnotations.entrySet()) {
         String text = e.getValue();
-        int width = MyRenderer.FONT.fontMetrics().stringWidth(text) + 5;
+        int width = MyRenderer.FONT.fontMetrics().stringWidth(text) + 3;
         myEditor.getInlayModel().addInlineElement(e.getKey(), width, new MyRenderer(text));
       }
     }
