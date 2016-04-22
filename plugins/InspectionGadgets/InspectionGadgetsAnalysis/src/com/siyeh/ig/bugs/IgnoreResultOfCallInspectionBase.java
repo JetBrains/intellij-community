@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -148,15 +148,29 @@ public class IgnoreResultOfCallInspectionBase extends BaseInspection {
         registerMethodCallError(call, aClass);
         return;
       }
-      final PsiAnnotation anno2 =
-        AnnotationUtil.findAnnotationInHierarchy(method, Collections.singleton("javax.annotation.CheckReturnValue"));
-      if (anno2 != null) {
-        registerMethodCallError(call, aClass);
-      }
-      if (!myMethodMatcher.matches(method)) {
+      if (!myMethodMatcher.matches(method) && findAnnotationInTree(method, "javax.annotation.CheckReturnValue") == null) {
         return;
       }
       registerMethodCallError(call, aClass);
+    }
+
+    private PsiAnnotation findAnnotationInTree(PsiMethod method, String fqAnnotationName) {
+      final PsiAnnotation methodAnnotation =
+        AnnotationUtil.findAnnotationInHierarchy(method, Collections.singleton(fqAnnotationName));
+      if (methodAnnotation != null) {
+        return methodAnnotation;
+      }
+      final PsiClass aClass = method.getContainingClass();
+      if (aClass == null) {
+        return null;
+      }
+      final PsiAnnotation classAnnotation = AnnotationUtil.findAnnotation(aClass, fqAnnotationName);
+      if (classAnnotation != null) {
+        return classAnnotation;
+      }
+      final PsiDirectory directory = aClass.getContainingFile().getContainingDirectory();
+      final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
+      return AnnotationUtil.findAnnotation(aPackage, fqAnnotationName);
     }
   }
 }
