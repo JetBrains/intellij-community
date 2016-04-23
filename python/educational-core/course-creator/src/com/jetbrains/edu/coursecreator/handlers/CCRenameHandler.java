@@ -1,4 +1,4 @@
-package com.jetbrains.edu.coursecreator;
+package com.jetbrains.edu.coursecreator.handlers;
 
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -12,6 +12,8 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.rename.RenameHandler;
+import com.jetbrains.edu.coursecreator.CCUtils;
+import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.StudyItem;
 import org.jetbrains.annotations.NotNull;
@@ -23,9 +25,7 @@ public abstract class CCRenameHandler implements RenameHandler {
     if (element == null || !(element instanceof PsiDirectory)) {
       return false;
     }
-    CCProjectService instance = CCProjectService.getInstance(element.getProject());
-    Course course = instance.getCourse();
-    if (course == null) {
+    if (!CCUtils.isCourseCreator(element.getProject())) {
       return false;
     }
     VirtualFile directory = ((PsiDirectory)element).getVirtualFile();
@@ -44,8 +44,10 @@ public abstract class CCRenameHandler implements RenameHandler {
     PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
     assert element != null;
     PsiDirectory directory = (PsiDirectory)element;
-    CCProjectService instance = CCProjectService.getInstance(project);
-    Course course = instance.getCourse();
+    Course course = StudyTaskManager.getInstance(project).getCourse();
+    if (course == null) {
+      return;
+    }
     rename(project, course, directory);
     ProjectView.getInstance(project).refresh();
   }

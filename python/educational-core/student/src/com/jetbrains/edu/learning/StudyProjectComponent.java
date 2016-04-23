@@ -25,13 +25,13 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.containers.hash.HashMap;
-import com.jetbrains.edu.learning.actions.StudyToolbarAction;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
 import com.jetbrains.edu.learning.courseFormat.Task;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.actions.*;
 import com.jetbrains.edu.learning.editor.StudyEditorFactoryListener;
 import com.jetbrains.edu.learning.ui.StudyProgressToolWindowFactory;
 import com.jetbrains.edu.learning.ui.StudyToolWindow;
@@ -110,9 +110,9 @@ public class StudyProjectComponent implements ProjectComponent {
       List<AnAction> actionsOnToolbar = window.getActions(true);
       if (actionsOnToolbar != null) {
         for (AnAction action : actionsOnToolbar) {
-          if (action instanceof StudyToolbarAction) {
-            String id = ((StudyToolbarAction)action).getActionId();
-            String[] shortcuts = ((StudyToolbarAction)action).getShortcuts();
+          if (action instanceof StudyActionWithShortcut) {
+            String id = ((StudyActionWithShortcut)action).getActionId();
+            String[] shortcuts = ((StudyActionWithShortcut)action).getShortcuts();
             if (shortcuts != null) {
               addShortcut(id, shortcuts);
             }
@@ -227,7 +227,7 @@ public class StudyProjectComponent implements ProjectComponent {
             keymap.addShortcut(actionShortcut.first, new KeyboardShortcut(KeyStroke.getKeyStroke(actionShortcut.second), null));
           }
         }
-       }
+      }
     }
     myListener = null;
   }
@@ -287,30 +287,30 @@ public class StudyProjectComponent implements ProjectComponent {
       final VirtualFile createdFile = event.getFile();
       final VirtualFile taskDir = createdFile.getParent();
       final Course course = StudyTaskManager.getInstance(myProject).getCourse();
+      if (course == null || !EduNames.STUDY.equals(course.getCourseMode())) {
+        return;
+      }
       if (taskDir != null && taskDir.getName().contains(EduNames.TASK)) {
         int taskIndex = EduUtils.getIndex(taskDir.getName(), EduNames.TASK);
         final VirtualFile lessonDir = taskDir.getParent();
         if (lessonDir != null && lessonDir.getName().contains(EduNames.LESSON)) {
           int lessonIndex = EduUtils.getIndex(lessonDir.getName(), EduNames.LESSON);
-          if (course != null) {
-            List<Lesson> lessons = course.getLessons();
-            if (StudyUtils.indexIsValid(lessonIndex, lessons)) {
-              final Lesson lesson = lessons.get(lessonIndex);
-              final List<Task> tasks = lesson.getTaskList();
-              if (StudyUtils.indexIsValid(taskIndex, tasks)) {
-                final Task task = tasks.get(taskIndex);
-                final TaskFile taskFile = new TaskFile();
-                taskFile.initTaskFile(task, false);
-                taskFile.setUserCreated(true);
-                final String name = createdFile.getName();
-                taskFile.name = name;
-                task.getTaskFiles().put(name, taskFile);
-              }
+          List<Lesson> lessons = course.getLessons();
+          if (StudyUtils.indexIsValid(lessonIndex, lessons)) {
+            final Lesson lesson = lessons.get(lessonIndex);
+            final List<Task> tasks = lesson.getTaskList();
+            if (StudyUtils.indexIsValid(taskIndex, tasks)) {
+              final Task task = tasks.get(taskIndex);
+              final TaskFile taskFile = new TaskFile();
+              taskFile.initTaskFile(task, false);
+              taskFile.setUserCreated(true);
+              final String name = createdFile.getName();
+              taskFile.name = name;
+              task.getTaskFiles().put(name, taskFile);
             }
           }
         }
       }
     }
   }
-
 }
