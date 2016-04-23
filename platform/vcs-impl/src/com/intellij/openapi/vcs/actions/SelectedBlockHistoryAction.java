@@ -20,12 +20,12 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.history.VcsFileRevision;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.history.VcsHistoryProviderBackgroundableProxy;
 import com.intellij.openapi.vcs.history.VcsHistorySession;
-import com.intellij.openapi.vcs.history.impl.CachedRevisionsContents;
 import com.intellij.openapi.vcs.history.impl.VcsSelectionHistoryDialog;
 import com.intellij.openapi.vcs.impl.BackgroundableActionEnabledHandler;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
@@ -36,8 +36,6 @@ import com.intellij.vcsUtil.VcsSelection;
 import com.intellij.vcsUtil.VcsSelectionUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
 
 public class SelectedBlockHistoryAction extends AbstractVcsAction {
 
@@ -86,15 +84,10 @@ public class SelectedBlockHistoryAction extends AbstractVcsAction {
       final int selectionStart = selection.getSelectionStartLineNumber();
       final int selectionEnd = selection.getSelectionEndLineNumber();
 
-      final VcsException[] preloadException = new VcsException[1];
-      final CachedRevisionsContents cachedRevisionsContents = new CachedRevisionsContents(project, file);
       new VcsHistoryProviderBackgroundableProxy(activeVcs, provider, activeVcs.getDiffProvider()).
         createSessionFor(activeVcs.getKeyInstanceMethod(), VcsUtil.getFilePath(file),
         new Consumer<VcsHistorySession>() {
           public void consume(VcsHistorySession session) {
-            if (preloadException[0] != null) {
-              reportError(preloadException[0]);
-            }
             if (session == null) return;
             final VcsSelectionHistoryDialog vcsHistoryDialog =
               new VcsSelectionHistoryDialog(project,
@@ -105,32 +98,15 @@ public class SelectedBlockHistoryAction extends AbstractVcsAction {
                                             activeVcs,
                                             Math.min(selectionStart, selectionEnd),
                                             Math.max(selectionStart, selectionEnd),
-                                            selection.getDialogTitle(), cachedRevisionsContents);
+                                            selection.getDialogTitle());
 
             vcsHistoryDialog.show();
           }
-        }, VcsBackgroundableActions.HISTORY_FOR_SELECTION, false, new Consumer<VcsHistorySession>() {
-          @Override
-          public void consume(VcsHistorySession vcsHistorySession) {
-            if (vcsHistorySession == null) return;
-            final List<VcsFileRevision> revisionList = vcsHistorySession.getRevisionList();
-            cachedRevisionsContents.setRevisions(revisionList);
-            if (VcsConfiguration.getInstance(project).SHOW_ONLY_CHANGED_IN_SELECTION_DIFF) {
-              // preload while in bckgrnd
-              try {
-                cachedRevisionsContents.loadContentsFor(revisionList.toArray(new VcsFileRevision[revisionList.size()]));
-              }
-              catch (VcsException e) {
-                preloadException[0] = e;
-              }
-            }
-          }
-        });
+        }, VcsBackgroundableActions.HISTORY_FOR_SELECTION, false, null);
     }
     catch (Exception exception) {
       reportError(exception);
     }
-
   }
 
   protected void update(VcsContext context, Presentation presentation) {

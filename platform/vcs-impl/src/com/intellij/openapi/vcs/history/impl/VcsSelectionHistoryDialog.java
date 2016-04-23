@@ -63,6 +63,7 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -100,7 +101,6 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
   @NotNull private final VirtualFile myFile;
   @NotNull private final Document myDocument;
   @NotNull private final AbstractVcs myActiveVcs;
-  @NotNull private final CachedRevisionsContents myCachedContents;
   private final int mySelectionStart;
   private final int mySelectionEnd;
   @NonNls private final String myHelpId;
@@ -128,14 +128,12 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
                                    @NotNull AbstractVcs vcs,
                                    int selectionStart,
                                    int selectionEnd,
-                                   @NotNull String title,
-                                   @NotNull CachedRevisionsContents cachedContents) {
+                                   @NotNull String title) {
     super(project);
     myProject = project;
     myFile = file;
     myDocument = document;
     myActiveVcs = vcs;
-    myCachedContents = cachedContents;
     mySelectionStart = selectionStart;
     mySelectionEnd = selectionEnd;
     myHelpId = notNull(vcsHistoryProvider.getHelpId(), "reference.dialogs.vcs.selection.history");
@@ -241,12 +239,15 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
     return "Can not load revision contents: " + e.getMessage();
   }
 
-  protected String getContentOf(VcsFileRevision revision) throws VcsException {
-    return myCachedContents.getContentOf(revision);
-  }
-
-  private void loadContentsFor(final VcsFileRevision... revisions) throws VcsException {
-    myCachedContents.loadContentsFor(revisions);
+  @NotNull
+  public String doLoadContents(@NotNull VcsFileRevision revision) throws VcsException {
+    try {
+      byte[] bytes = revision.loadContent();
+      return new String(bytes, myFile.getCharset());
+    }
+    catch (IOException e) {
+      throw new VcsException(e);
+    }
   }
 
   private void updateRevisionsList() {
@@ -257,7 +258,6 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
       List<VcsFileRevision> newItems;
       if (myChangesOnlyCheckBox.isSelected()) {
         try {
-          loadContentsFor(myRevisions.toArray(new VcsFileRevision[myRevisions.size()]));
           newItems = filteredRevisions();
         }
         catch (final VcsException e) {
@@ -430,8 +430,6 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
   }
 
   private void ensureBlocksCreated(int requiredIndex) throws VcsException {
-    loadContentsFor(myRevisions.get(requiredIndex));
-
     for (int i = 0; i <= requiredIndex; i++) {
       if (myBlocks.get(i) == null) {
         myBlocks.set(i, createBlock(i));
@@ -448,7 +446,7 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
     Block previousBlock = myBlocks.get(index - 1);
     if (previousBlock == EMPTY_BLOCK) return EMPTY_BLOCK;
 
-    String revisionContent = getContentOf(myRevisions.get(index));
+    String revisionContent = doLoadContents(myRevisions.get(index));
     if (revisionContent == null) return EMPTY_BLOCK;
 
     Block newBlock = previousBlock.createPreviousBlock(revisionContent);
