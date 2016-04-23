@@ -42,39 +42,46 @@ import java.util.List;
 public class SelectedBlockHistoryAction extends AbstractVcsAction {
 
   protected boolean isEnabled(VcsContext context) {
-    VirtualFile[] selectedFiles = context.getSelectedFiles();
-    if (selectedFiles == null) return false;
-    if (selectedFiles.length == 0) return false;
-    VirtualFile file = selectedFiles[0];
     Project project = context.getProject();
     if (project == null) return false;
-    final ProjectLevelVcsManagerImpl vcsManager = (ProjectLevelVcsManagerImpl) ProjectLevelVcsManager.getInstance(project);
+
+    VcsSelection selection = VcsSelectionUtil.getSelection(context);
+    if (selection == null) return false;
+
+    VirtualFile file = FileDocumentManager.getInstance().getFile(selection.getDocument());
+    if (file == null) return false;
+
+    final ProjectLevelVcsManagerImpl vcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(project);
     final BackgroundableActionEnabledHandler handler =
       vcsManager.getBackgroundableActionHandler(VcsBackgroundableActions.HISTORY_FOR_SELECTION);
     if (handler.isInProgress(VcsBackgroundableActions.keyFrom(file))) return false;
-    AbstractVcs vcs = vcsManager.getVcsFor(file);
-    if (vcs == null) return false;
-    VcsHistoryProvider vcsHistoryProvider = vcs.getVcsBlockHistoryProvider();
-    if (vcsHistoryProvider == null) return false;
-    if (! AbstractVcs.fileInVcsByFileStatus(project, VcsUtil.getFilePath(file))) return false;
 
-    VcsSelection selection = VcsSelectionUtil.getSelection(context);
-    if (selection == null) {
-      return false;
-    }
+    AbstractVcs activeVcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(file);
+    if (activeVcs == null) return false;
+
+    VcsHistoryProvider provider = activeVcs.getVcsBlockHistoryProvider();
+    if (provider == null) return false;
+
+    if (!AbstractVcs.fileInVcsByFileStatus(project, VcsUtil.getFilePath(file))) return false;
     return true;
   }
 
   public void actionPerformed(@NotNull final VcsContext context) {
     try {
-      final VcsSelection selection = VcsSelectionUtil.getSelection(context);
-      VirtualFile file = FileDocumentManager.getInstance().getFile(selection.getDocument());
       final Project project = context.getProject();
-      if (project == null) return;
+      assert project != null;
+
+      final VcsSelection selection = VcsSelectionUtil.getSelection(context);
+      assert selection != null;
+
+      final VirtualFile file = FileDocumentManager.getInstance().getFile(selection.getDocument());
+      assert file != null;
+
       final AbstractVcs activeVcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(file);
-      if (activeVcs == null) return;
+      assert activeVcs != null;
 
       final VcsHistoryProvider provider = activeVcs.getVcsBlockHistoryProvider();
+      assert provider != null;
 
       final int selectionStart = selection.getSelectionStartLineNumber();
       final int selectionEnd = selection.getSelectionEndLineNumber();
@@ -91,8 +98,8 @@ public class SelectedBlockHistoryAction extends AbstractVcsAction {
             if (session == null) return;
             final VcsSelectionHistoryDialog vcsHistoryDialog =
               new VcsSelectionHistoryDialog(project,
-                                            context.getSelectedFiles()[0],
-                                            context.getEditor(),
+                                            file,
+                                            selection.getDocument(),
                                             provider,
                                             session,
                                             activeVcs,

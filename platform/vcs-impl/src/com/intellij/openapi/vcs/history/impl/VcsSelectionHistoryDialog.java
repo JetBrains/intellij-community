@@ -28,7 +28,7 @@ import com.intellij.diff.util.IntPair;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.FrameWrapper;
@@ -98,7 +98,7 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
 
   @NotNull private final Project myProject;
   @NotNull private final VirtualFile myFile;
-  @NotNull private final Editor myEditor;
+  @NotNull private final Document myDocument;
   @NotNull private final AbstractVcs myActiveVcs;
   @NotNull private final CachedRevisionsContents myCachedContents;
   private final int mySelectionStart;
@@ -122,7 +122,7 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
 
   public VcsSelectionHistoryDialog(@NotNull Project project,
                                    @NotNull VirtualFile file,
-                                   @NotNull Editor editor,
+                                   @NotNull Document document,
                                    @NotNull VcsHistoryProvider vcsHistoryProvider,
                                    @NotNull VcsHistorySession session,
                                    @NotNull AbstractVcs vcs,
@@ -133,7 +133,7 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
     super(project);
     myProject = project;
     myFile = file;
-    myEditor = editor;
+    myDocument = document;
     myActiveVcs = vcs;
     myCachedContents = cachedContents;
     mySelectionStart = selectionStart;
@@ -442,7 +442,7 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
   @NotNull
   private Block createBlock(int index) throws VcsException {
     if (index == 0) {
-      return new Block(myEditor.getDocument().getText(), mySelectionStart, mySelectionEnd + 1);
+      return new Block(myDocument.getText(), mySelectionStart, mySelectionEnd + 1);
     }
 
     Block previousBlock = myBlocks.get(index - 1);
