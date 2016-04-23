@@ -61,8 +61,6 @@ public class JavaAllOverridingMethodsSearcher implements QueryExecutor<Pair<PsiM
         PsiSubstitutor substitutor = null;
 
         for (String name : methods.keySet()) {
-          if (inheritor.findMethodsByName(name, true).length == 0) continue;
-
           for (PsiMethod method : methods.get(name)) {
             if (method.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) &&
                 !JavaPsiFacade.getInstance(inheritor.getProject()).arePackagesTheSame(psiClass, inheritor)) continue;
