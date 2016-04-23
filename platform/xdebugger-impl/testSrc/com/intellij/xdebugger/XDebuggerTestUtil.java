@@ -235,6 +235,13 @@ public class XDebuggerTestUtil {
     assertVariableValueMatches(findVar(vars, name), name, valuePattern);
   }
 
+  public static void assertVariableValueMatches(@NotNull Collection<XValue> vars,
+                                                @Nullable String name,
+                                                @Nullable String type,
+                                                @Nullable @Language("RegExp") String valuePattern) throws InterruptedException {
+    assertVariableValueMatches(findVar(vars, name), name, type, valuePattern);
+  }
+
   public static void assertVariableValueMatches(@NotNull XValue var,
                                                 @Nullable String name,
                                                 @Nullable @Language("RegExp") String valuePattern) throws InterruptedException {
