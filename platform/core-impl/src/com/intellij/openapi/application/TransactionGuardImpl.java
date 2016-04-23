@@ -60,6 +60,7 @@ public class TransactionGuardImpl extends TransactionGuard {
       public void finish() {
         Queue<Transaction> queue = getQueue(prevTransaction);
         queue.addAll(myCurrentTransaction.myQueue);
+        myCurrentTransaction.myQueue = queue;
         if (!queue.isEmpty()) {
           pollQueueLater();
         }
@@ -72,14 +73,7 @@ public class TransactionGuardImpl extends TransactionGuard {
 
   @NotNull
   private Queue<Transaction> getQueue(@Nullable TransactionIdImpl transaction) {
-    if (transaction == null) {
-      return myQueue;
-    }
-    if (myCurrentTransaction != null && transaction.myStartCounter > myCurrentTransaction.myStartCounter) {
-      // transaction is finished already, it makes no sense to add to its queue
-      return myCurrentTransaction.myQueue;
-    }
-    return transaction.myQueue;
+    return transaction == null ? myQueue : transaction.myQueue;
   }
 
   private void pollQueueLater() {
@@ -304,7 +298,7 @@ public class TransactionGuardImpl extends TransactionGuard {
   private static class TransactionIdImpl implements TransactionId {
     private static final AtomicLong ourTransactionCounter = new AtomicLong();
     final long myStartCounter = ourTransactionCounter.getAndIncrement();
-    final Queue<Transaction> myQueue = new LinkedBlockingQueue<Transaction>();
+    Queue<Transaction> myQueue = new LinkedBlockingQueue<Transaction>();
 
     @Override
     public String toString() {

@@ -216,4 +216,18 @@ class TransactionTest extends LightPlatformTestCase {
     assert log == ['1', '2', '3', '4', '5']
   }
 
+  public void "test don't add transaction to outdated queue"() {
+    TransactionGuard.submitTransaction testRootDisposable, {
+      log << '1'
+      guard.submitTransactionLater testRootDisposable, { log << '3' }
+      log << '2'
+    }
+    TransactionGuard.submitTransaction testRootDisposable, {
+      UIUtil.dispatchAllInvocationEvents()
+      assert log == ['1', '2']
+    }
+    UIUtil.dispatchAllInvocationEvents()
+    assert log == ['1', '2', '3']
+  }
+
 }
