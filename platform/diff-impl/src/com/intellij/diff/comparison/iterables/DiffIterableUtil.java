@@ -42,7 +42,8 @@ public class DiffIterableUtil {
    * Compare two integer arrays
    */
   @NotNull
-  public static FairDiffIterable diff(@NotNull int[] data1, @NotNull int[] data2, @NotNull ProgressIndicator indicator) {
+  public static FairDiffIterable diff(@NotNull int[] data1, @NotNull int[] data2, @NotNull ProgressIndicator indicator)
+    throws DiffTooBigException {
     indicator.checkCanceled();
 
     try {
@@ -59,7 +60,8 @@ public class DiffIterableUtil {
    * Compare two arrays, basing on equals() and hashCode() of it's elements
    */
   @NotNull
-  public static <T> FairDiffIterable diff(@NotNull T[] data1, @NotNull T[] data2, @NotNull ProgressIndicator indicator) {
+  public static <T> FairDiffIterable diff(@NotNull T[] data1, @NotNull T[] data2, @NotNull ProgressIndicator indicator)
+    throws DiffTooBigException {
     indicator.checkCanceled();
 
     try {
@@ -76,13 +78,28 @@ public class DiffIterableUtil {
    * Compare two lists, basing on equals() and hashCode() of it's elements
    */
   @NotNull
-  public static <T> FairDiffIterable diff(@NotNull List<T> objects1, @NotNull List<T> objects2, @NotNull ProgressIndicator indicator) {
+  public static <T> FairDiffIterable diff(@NotNull List<T> objects1, @NotNull List<T> objects2, @NotNull ProgressIndicator indicator)
+    throws DiffTooBigException {
     indicator.checkCanceled();
 
     // TODO: compare lists instead of arrays in Diff
     Object[] data1 = ContainerUtil.toArray((List)objects1, new Object[objects1.size()]);
     Object[] data2 = ContainerUtil.toArray((List)objects2, new Object[objects2.size()]);
     return diff(data1, data2, indicator);
+  }
+
+  /*
+   * Compare two arrays, basing on equals() and hashCode() of it's elements
+   *
+   * If the input arrays are too big, "everything is changed" can be returned.
+   */
+  @NotNull
+  public static <T> FairDiffIterable diffSomehow(@NotNull T[] data1, @NotNull T[] data2, @NotNull ProgressIndicator indicator) {
+    indicator.checkCanceled();
+
+    // TODO: use ProgressIndicator inside
+    Diff.Change change = Diff.buildChangesSomehow(data1, data2);
+    return fair(create(change, data1.length, data2.length));
   }
 
   //
