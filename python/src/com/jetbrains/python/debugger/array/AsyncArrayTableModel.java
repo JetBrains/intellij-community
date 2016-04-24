@@ -24,7 +24,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.debugger.ArrayChunk;
-import com.jetbrains.python.debugger.PyDebugValue;
+import com.jetbrains.python.debugger.ArrayChunkBuilder;
 
 import javax.swing.table.AbstractTableModel;
 import java.util.concurrent.*;
@@ -39,7 +39,7 @@ public class AsyncArrayTableModel extends AbstractTableModel {
 
   private int myRows;
   private int myColumns;
-  private final NumpyArrayTable myProvider;
+  private final TableChunkDatasource myProvider;
 
 
   private final ExecutorService myExecutorService = ConcurrencyUtil.newSingleThreadExecutor("Python async table");
@@ -49,15 +49,16 @@ public class AsyncArrayTableModel extends AbstractTableModel {
     new CacheLoader<Pair<Integer, Integer>, ListenableFuture<ArrayChunk>>() {
       @Override
       public ListenableFuture<ArrayChunk> load(final Pair<Integer, Integer> key) throws Exception {
-        final PyDebugValue value = myProvider.getDebugValue();
-        final PyDebugValue slicedValue =
-          new PyDebugValue(myProvider.getSliceText(), value.getType(), value.getTypeQualifier(), value.getValue(), value.isContainer(),
-                           value.isReturnedVal(), value.isErrorOnEval(), value.getParent(), value.getFrameAccessor());
 
-        ListenableFutureTask<ArrayChunk> task = ListenableFutureTask.create(() -> value.getFrameAccessor()
-          .getArrayItems(slicedValue, key.first, key.second, Math.min(CHUNK_ROW_SIZE, getRowCount() - key.first),
-                         Math.min(CHUNK_COL_SIZE, getColumnCount() - key.second),
-                         myProvider.getFormat()));
+        ListenableFutureTask<ArrayChunk> task = ListenableFutureTask.create(new Callable<ArrayChunk>() {
+          @Override
+          public ArrayChunk call() throws Exception {
+            ArrayChunk chunk = myProvider.getChunk(key.first, key.second, Math.min(CHUNK_ROW_SIZE, getRowCount() - key.first),
+                                                   Math.min(CHUNK_COL_SIZE, getColumnCount() - key.second));
+            handleChunkAdded(key.first, key.second, chunk);
+            return chunk;
+          }
+        });
 
         myExecutorService.execute(task);
 
@@ -65,7 +66,7 @@ public class AsyncArrayTableModel extends AbstractTableModel {
       }
     });
 
-  public AsyncArrayTableModel(int rows, int columns, NumpyArrayTable provider) {
+  public AsyncArrayTableModel(int rows, int columns, TableChunkDatasource provider) {
     myRows = rows;
     myColumns = columns;
     myProvider = provider;
@@ -187,15 +188,22 @@ public class AsyncArrayTableModel extends AbstractTableModel {
 
           @Override
           public ArrayChunk get() throws InterruptedException, ExecutionException {
-            return new ArrayChunk(chunk.getValue(), null, 0, 0, null, null, null, null, chunkData);
+            return new ArrayChunkBuilder().setValue(chunk.getValue()).setSlicePresentation(null).setRows(0).setColumns(0).setMax(null)
+              .setMin(null).setFormat(null).setType(null).setData(chunkData).createArrayChunk();
           }
 
           @Override
           public ArrayChunk get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-            return new ArrayChunk(chunk.getValue(), null, 0, 0, null, null, null, null, chunkData);
+            return new ArrayChunkBuilder().setValue(chunk.getValue()).setSlicePresentation(null).setRows(0).setColumns(0).setMax(null)
+              .setMin(null).setFormat(null).setType(null).setData(chunkData).createArrayChunk();
           }
         });
       }
     }
+    handleChunkAdded(0, 0, chunk);
+  }
+
+  protected void handleChunkAdded(Integer rowOffset, Integer colOffset, ArrayChunk chunk) {
+
   }
 }

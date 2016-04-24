@@ -34,7 +34,7 @@ import java.util.regex.Pattern;
 /**
  * @author amarch
  */
-public class NumpyArrayTable {
+public class NumpyArrayTable implements TableChunkDatasource {
   private final PyDebugValue myValue;
   private final PyViewArrayAction.ViewArrayDialog myDialog;
   private final ArrayTableForm myComponent;
@@ -178,7 +178,7 @@ public class NumpyArrayTable {
   private void initUi(@NotNull final ArrayChunk chunk, final boolean inPlace) {
       myPagingModel = new AsyncArrayTableModel(Math.min(chunk.getRows(), ROWS_IN_DEFAULT_VIEW),
                                                Math.min(chunk.getColumns(), COLUMNS_IN_DEFAULT_VIEW), this);
-      myPagingModel.addToCache(chunk);
+      myPagingModel. addToCache(chunk);
       myDtypeKind = chunk.getType();
 
       UIUtil.invokeLaterIfNeeded(() -> {
@@ -238,6 +238,15 @@ public class NumpyArrayTable {
     return myComponent.getSliceTextField().getText();
   }
 
+  @Override
+  public ArrayChunk getChunk(int rowOffset, int colOffset, int rows, int cols) throws PyDebuggerException {
+    final PyDebugValue slicedValue =
+      new PyDebugValue(getSliceText(), myValue.getType(), myValue.getTypeQualifier(), myValue.getValue(), myValue.isContainer(), myValue.isErrorOnEval(),
+                       myValue.getParent(), myValue.getFrameAccessor());
+
+    return myValue.getFrameAccessor().getArrayItems(slicedValue, rowOffset, colOffset, rows, cols, getFormat());
+  }
+
   public boolean isNumeric() {
     if (myDtypeKind != null) {
       return "biufc".contains(myDtypeKind.substring(0, 1));
@@ -263,10 +272,11 @@ public class NumpyArrayTable {
     });
   }
 
+  @Override
   public String correctStringValue(@NotNull Object value) {
     if (value instanceof String) {
       String corrected = (String)value;
-      if (isNumeric()) {
+      if ( isNumeric()) {
         if (corrected.startsWith("\'") || corrected.startsWith("\"")) {
           corrected = corrected.substring(1, corrected.length() - 1);
         }
@@ -283,6 +293,7 @@ public class NumpyArrayTable {
     this.myDtypeKind = dtype;
   }
 
+  @Override
   public void showError(String message) {
     myDialog.setError(message);
   }
