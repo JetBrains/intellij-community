@@ -1,5 +1,6 @@
 package com.jetbrains.python.debugger.pydev;
 
+import com.google.common.collect.Lists;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.debugger.*;
 import com.thoughtworks.xstream.io.naming.NoNameCoder;
@@ -269,28 +270,63 @@ public class ProtocolParser {
 
   public static ArrayChunk parseArrayValues(final String text, final PyFrameAccessor frameAccessor) throws PyDebuggerException {
     final XppReader reader = openReader(text, false);
-    ArrayChunk result = null;
+    ArrayChunkBuilder result = new ArrayChunkBuilder();
     if (reader.hasMoreChildren()) {
       reader.moveDown();
       if (!"array".equals(reader.getNodeName())) {
         throw new PyDebuggerException("Expected <array> at first node, found " + reader.getNodeName());
       }
       String slice = readString(reader, "slice", null);
-      int rows = readInt(reader, "rows", null);
-      int cols = readInt(reader, "cols", null);
-      String format = "%" + readString(reader, "format", null);
-      String type = readString(reader, "type", null);
-      String max = readString(reader, "max", null);
-      String min = readString(reader, "min", null);
-      result =
-        new ArrayChunk(new PyDebugValue(slice, null, null, null, false, false, false, frameAccessor), slice, rows, cols, max, min, format,
-                       type, null);
+      result.setSlicePresentation(slice);
+      result.setRows(readInt(reader, "rows", null));
+      result.setColumns(readInt(reader, "cols", null));
+      result.setFormat("%" + readString(reader, "format", null));
+      result.setType(readString(reader, "type", null));
+      result.setMax(readString(reader, "max", null));
+      result.setMin(readString(reader, "min", null));
+      result.setValue(new PyDebugValue(slice, null, null, null, false, false, frameAccessor));
       reader.moveUp();
+    }
+    if ("headerdata".equals(reader.peekNextChild()))
+    {
+      parseArrayHeaderData(reader, result);
     }
 
     Object[][] data = parseArrayValues(reader, frameAccessor);
-    return new ArrayChunk(result.getValue(), result.getSlicePresentation(), result.getRows(), result.getColumns(), result.getMax(),
-                          result.getMin(), result.getFormat(), result.getType(), data);
+    result.setData(data);
+    return result.createArrayChunk();
+
+  }
+
+  private static void parseArrayHeaderData(XppReader reader, ArrayChunkBuilder result) throws PyDebuggerException {
+    List<String> rowHeaders = Lists.newArrayList();
+    List<ArrayChunk.ColHeader> colHeaders = Lists.newArrayList();
+    reader.moveDown();
+    while (reader.hasMoreChildren())
+    {
+      reader.moveDown();
+      if ("colheader".equals(reader.getNodeName()))
+      {
+        colHeaders.add(new ArrayChunk.ColHeader(
+          readString(reader, "label", null),
+          readString(reader, "type", null),
+          readString(reader, "format", null),
+          readString(reader, "max", null),
+          readString(reader, "min", null)));
+      }
+      else if("rowheader".equals(reader.getNodeName()))
+      {
+        rowHeaders.add(readString(reader,"label", null));
+      }
+      else
+      {
+        throw new PyDebuggerException("Invalid node name" + reader.getNodeName());
+      }
+      reader.moveUp();
+    }
+    result.setColHeaders(colHeaders);
+    result.setRowLabels(rowHeaders);
+    reader.moveUp();
   }
 
   public static Object[][] parseArrayValues(final XppReader reader, final PyFrameAccessor frameAccessor) throws PyDebuggerException {
