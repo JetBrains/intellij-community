@@ -28,6 +28,7 @@ import org.jetbrains.ide.BuiltInServerManager;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.UUID;
 
 /**
  * <p>The provider of external application scripts called by Git when a remote operation needs communication with the user.</p>
@@ -42,7 +43,7 @@ import java.io.IOException;
  *     <li>If the operation requires user interaction, the registered handler is called via XML RPC protocol.
  *         It can show a dialog in the GUI and return the answer via XML RPC to the external application, that further provides
  *         this value to the Git process.</li>
- *     <li>{@link #unregisterHandler(int) Unregister} the handler after operation has completed.</li>
+ *     <li>{@link #unregisterHandler(UUID) Unregister} the handler after operation has completed.</li>
  *   </ol>
  * </p>
  */
@@ -55,7 +56,7 @@ public abstract class GitXmlRpcHandlerService<T> {
   @Nullable private File myScriptPath;
   @NotNull private final Object SCRIPT_FILE_LOCK = new Object();
 
-  @NotNull private final THashMap<Integer, T> handlers = new THashMap<Integer, T>();
+  @NotNull private final THashMap<UUID, T> handlers = new THashMap<UUID, T>();
   private int myNextHandlerKey;
   @NotNull private final Object HANDLERS_LOCK = new Object();
 
@@ -103,28 +104,27 @@ public abstract class GitXmlRpcHandlerService<T> {
   protected abstract void customizeScriptGenerator(@NotNull ScriptGenerator generator);
 
   /**
-   * Register handler. Note that handlers must be unregistered using {@link #unregisterHandler(int)}.
+   * Register handler. Note that handlers must be unregistered using {@link #unregisterHandler(UUID)}.
    *
    * @param handler a handler to register
    * @return an identifier to pass to the environment variable
    */
-  public int registerHandler(@NotNull T handler) {
+  public UUID registerHandler(@NotNull T handler) {
     synchronized (HANDLERS_LOCK) {
       XmlRpcServer xmlRpcServer = XmlRpcServer.SERVICE.getInstance();
       if (!xmlRpcServer.hasHandler(myHandlerName)) {
         xmlRpcServer.addHandler(myHandlerName, createRpcRequestHandlerDelegate());
       }
 
-      int key = myNextHandlerKey;
+      final UUID key = UUID.randomUUID();
       handlers.put(key, handler);
-      myNextHandlerKey++;
       return key;
     }
   }
 
   /**
    * Creates an implementation of the xml rpc handler, which methods will be called from the external application.
-   * This method should just delegate the call to the specific handler of type {@link T}, which can be achieved by {@link #getHandler(int)}.
+   * This method should just delegate the call to the specific handler of type {@link T}, which can be achieved by {@link #getHandler(UUID)}.
    * @return New instance of the xml rpc handler delegate.
    */
   @NotNull
@@ -137,7 +137,7 @@ public abstract class GitXmlRpcHandlerService<T> {
    * @return the registered handler
    */
   @NotNull
-  protected T getHandler(int key) {
+  protected T getHandler(UUID key) {
     synchronized (HANDLERS_LOCK) {
       T rc = handlers.get(key);
       if (rc == null) {
@@ -152,7 +152,7 @@ public abstract class GitXmlRpcHandlerService<T> {
    *
    * @param key the key to unregister
    */
-  public void unregisterHandler(int key) {
+  public void unregisterHandler(UUID key) {
     synchronized (HANDLERS_LOCK) {
       if (handlers.remove(key) == null) {
         throw new IllegalArgumentException("The handler " + key + " is not registered");
