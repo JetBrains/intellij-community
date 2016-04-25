@@ -410,7 +410,8 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
   //This methods works equally well for primary usages as well as for propagated callers' usages
   private static void fixActualArgumentsList(PsiExpressionList list,
                                              JavaChangeInfo changeInfo,
-                                             boolean toInsertDefaultValue, PsiSubstitutor substitutor) throws IncorrectOperationException {
+                                             boolean toInsertDefaultValue,
+                                             PsiSubstitutor substitutor) throws IncorrectOperationException {
     final PsiElementFactory factory = JavaPsiFacade.getInstance(list.getProject()).getElementFactory();
     if (changeInfo.isParameterSetOrOrderChanged()) {
       if (changeInfo instanceof JavaChangeInfoImpl && ((JavaChangeInfoImpl)changeInfo).isPropagationEnabled) {
@@ -418,7 +419,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
         for (ParameterInfoImpl info : createdParmsInfo) {
           PsiExpression newArg;
           if (toInsertDefaultValue) {
-            newArg = createDefaultValue(changeInfo, factory, info, list);
+            newArg = createDefaultValue(changeInfo, factory, info, list, substitutor);
           }
           else {
             newArg = factory.createExpressionFromText(info.getName(), list);
@@ -486,12 +487,12 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
               continue;
             }
           }
-          newArgs[i] = createActualArgument(changeInfo, list, newParms[i], toInsertDefaultValue, args);
+          newArgs[i] = createActualArgument(changeInfo, list, newParms[i], toInsertDefaultValue, args, substitutor);
         }
         if (changeInfo.isArrayToVarargs()) {
           if (newVarargInitializers == null) {
             newArgs[newNonVarargCount] =
-              createActualArgument(changeInfo, list, newParms[newNonVarargCount], toInsertDefaultValue, args);
+              createActualArgument(changeInfo, list, newParms[newNonVarargCount], toInsertDefaultValue, args, substitutor);
           }
           else {
             System.arraycopy(newVarargInitializers, 0, newArgs, newNonVarargCount, newVarargInitializers.length);
@@ -503,7 +504,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
           for (int i = newNonVarargCount; i < newArgsLength; i++){
             final int oldIndex = newParms[newNonVarargCount].getOldIndex();
             if (oldIndex >= 0 && oldIndex != nonVarargCount) {
-              newArgs[i] = createActualArgument(changeInfo, list, newParms[newNonVarargCount], toInsertDefaultValue, args);
+              newArgs[i] = createActualArgument(changeInfo, list, newParms[newNonVarargCount], toInsertDefaultValue, args, substitutor);
             } else {
               System.arraycopy(args, nonVarargCount, newArgs, newNonVarargCount, newVarargCount);
               break;
@@ -526,7 +527,8 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
                                                     final PsiExpressionList list,
                                                     final JavaParameterInfo info,
                                                     final boolean toInsertDefaultValue,
-                                                    final PsiExpression[] args) throws IncorrectOperationException {
+                                                    final PsiExpression[] args,
+                                                    PsiSubstitutor substitutor) throws IncorrectOperationException {
     final PsiElementFactory factory = JavaPsiFacade.getInstance(list.getProject()).getElementFactory();
     final int index = info.getOldIndex();
     if (index >= 0 && index < args.length) {
@@ -534,7 +536,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
     }
     else {
       if (toInsertDefaultValue) {
-        return createDefaultValue(changeInfo, factory, info, list);
+        return createDefaultValue(changeInfo, factory, info, list, substitutor);
       }
       else {
         return factory.createExpressionFromText(info.getName(), list);
@@ -546,7 +548,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
   private static PsiExpression createDefaultValue(JavaChangeInfo changeInfo,
                                                   final PsiElementFactory factory,
                                                   final JavaParameterInfo info,
-                                                  final PsiExpressionList list)
+                                                  final PsiExpressionList list, PsiSubstitutor substitutor)
     throws IncorrectOperationException {
     if (info.isUseAnySingleVariable()) {
       final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(list.getProject()).getResolveHelper();
@@ -593,7 +595,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
     }
     final PsiCallExpression callExpression = PsiTreeUtil.getParentOfType(list, PsiCallExpression.class);
     final String defaultValue = info.getDefaultValue();
-    return callExpression != null ? (PsiExpression)info.getActualValue(callExpression)
+    return callExpression != null ? (PsiExpression)info.getActualValue(callExpression, substitutor)
                                   : !StringUtil.isEmpty(defaultValue) ? factory.createExpressionFromText(defaultValue, list) : null;
   }
 
@@ -706,14 +708,13 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
   private static void addDelegateArguments(JavaChangeInfo changeInfo, PsiElementFactory factory, final PsiCallExpression callExpression) throws IncorrectOperationException {
     final JavaParameterInfo[] newParms = changeInfo.getNewParameters();
     final String[] oldParameterNames = changeInfo.getOldParameterNames();
-    for (int i = 0; i < newParms.length; i++) {
-      JavaParameterInfo newParm = newParms[i];
+    for (JavaParameterInfo newParm : newParms) {
       final PsiExpression actualArg;
       if (newParm.getOldIndex() >= 0) {
         actualArg = factory.createExpressionFromText(oldParameterNames[newParm.getOldIndex()], callExpression);
       }
       else {
-        actualArg = (PsiExpression)changeInfo.getActualValue(i, callExpression);
+        actualArg = (PsiExpression)newParm.getActualValue(callExpression, PsiSubstitutor.EMPTY);
       }
       final PsiExpressionList argumentList = callExpression.getArgumentList();
       if (actualArg != null && argumentList != null) {

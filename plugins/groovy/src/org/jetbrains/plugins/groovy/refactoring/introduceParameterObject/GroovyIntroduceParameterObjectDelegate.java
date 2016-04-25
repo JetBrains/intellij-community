@@ -76,10 +76,10 @@ public class GroovyIntroduceParameterObjectDelegate
     return new GrParameterInfo(descriptor.getClassName(), null, null, classType, -1, false) {
       @Nullable
       @Override
-      public PsiElement getActualValue(PsiElement callExpression) {
+      public PsiElement getActualValue(PsiElement callExpression, Object substitutor) {
         final IntroduceParameterObjectDelegate<PsiNamedElement, ParameterInfo, IntroduceParameterObjectClassDescriptor<PsiNamedElement, ParameterInfo>>
           delegate = findDelegate(callExpression);
-        return delegate != null ? delegate.createNewParameterInitializerAtCallSite(callExpression, descriptor, oldMethodParameters) : null;
+        return delegate != null ? delegate.createNewParameterInitializerAtCallSite(callExpression, descriptor, oldMethodParameters, substitutor) : null;
       }
     };
   }
@@ -87,7 +87,8 @@ public class GroovyIntroduceParameterObjectDelegate
   @Override
   public PsiElement createNewParameterInitializerAtCallSite(PsiElement callExpression,
                                                             IntroduceParameterObjectClassDescriptor descriptor,
-                                                            List<? extends ParameterInfo> oldMethodParameters) {
+                                                            List<? extends ParameterInfo> oldMethodParameters,
+                                                            Object substitutor) {
     if (callExpression instanceof GrCallExpression) {
       final GrArgumentList list = ((GrCallExpression)callExpression).getArgumentList();
       if (list == null) {

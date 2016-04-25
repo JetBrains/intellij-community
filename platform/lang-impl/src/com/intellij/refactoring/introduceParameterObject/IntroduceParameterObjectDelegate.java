@@ -100,10 +100,12 @@ public abstract class IntroduceParameterObjectDelegate<M extends PsiNamedElement
   /**
    * Call site should be updated according to the selected parameters, which correspond to the parameters to merge ({@link IntroduceParameterObjectClassDescriptor#getParamsToMerge()})
    * E.g. for the call foo(a, b, c) and parameter class which corresponds to the first 2 parameters, actual value should represent foo(new P(a, b), c)
+   * @param substitutor should contain call substitutor before change signature replaced parameters
    */
   public abstract PsiElement createNewParameterInitializerAtCallSite(PsiElement callExpression,
                                                                      IntroduceParameterObjectClassDescriptor descriptor,
-                                                                     List<? extends ParameterInfo> oldMethodParameters);
+                                                                     List<? extends ParameterInfo> oldMethodParameters,
+                                                                     Object substitutor);
 
   /**
    * Pass new parameter infos to the change info constructor which corresponds to the language of this delegate

@@ -336,7 +336,7 @@ public class GrChangeInfoImpl implements JavaChangeInfo {
   @Override
   public PsiExpression getValue(int i, PsiCallExpression callExpression) {
     if (defaultValues[i] != null) return defaultValues[i];
-    final PsiElement valueAtCallSite = parameters.get(i).getActualValue(callExpression);
+    final PsiElement valueAtCallSite = parameters.get(i).getActualValue(callExpression, PsiSubstitutor.EMPTY);
     return valueAtCallSite instanceof PsiExpression ? (PsiExpression)valueAtCallSite : null;
   }
 
