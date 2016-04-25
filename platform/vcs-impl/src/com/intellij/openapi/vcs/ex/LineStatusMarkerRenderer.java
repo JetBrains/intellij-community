@@ -63,12 +63,12 @@ public abstract class LineStatusMarkerRenderer implements ActiveGutterRenderer {
   }
 
   @NotNull
-  public static LineStatusMarkerRenderer createRenderer(@NotNull Range range,
-                                                        @Nullable Function<Editor, LineStatusMarkerPopup> popupBuilder) {
+  public static LineMarkerRenderer createRenderer(@NotNull Range range,
+                                                  @Nullable Function<Editor, LineStatusMarkerPopup> popupBuilder) {
     return new LineStatusMarkerRenderer(range) {
       @Override
       public boolean canDoAction(MouseEvent e) {
-        return popupBuilder != null && super.canDoAction(e);
+        return popupBuilder != null && isInsideMarkerArea(e);
       }
 
       @Override
@@ -113,15 +113,14 @@ public abstract class LineStatusMarkerRenderer implements ActiveGutterRenderer {
 
   @Override
   public void paint(Editor editor, Graphics g, Rectangle r) {
-    final EditorGutterComponentEx gutter = ((EditorEx)editor).getGutterComponentEx();
     Color gutterColor = getGutterColor(myRange, editor);
     Color borderColor = getGutterBorderColor(editor);
 
-    final int x = r.x + 1; // leave 1px for brace highlighters
-    final int endX = gutter.getWhitespaceSeparatorOffset();
-
-    final int y = lineToY(editor, myRange.getLine1());
-    final int endY = lineToY(editor, myRange.getLine2());
+    Rectangle area = getMarkerArea(editor, r, myRange.getLine1(), myRange.getLine2());
+    final int x = area.x;
+    final int endX = area.x + area.width;
+    final int y = area.y;
+    final int endY = area.y + area.height;
 
     if (myRange.getInnerRanges() == null) { // Mode.DEFAULT
       if (y != endY) {
@@ -185,6 +184,21 @@ public abstract class LineStatusMarkerRenderer implements ActiveGutterRenderer {
       UIUtil.drawLine(g, x1, y1, x1, y2 - 1);
       UIUtil.drawLine(g, x1, y2 - 1, x2 - 1, y2 - 1);
     }
+  }
+
+  @NotNull
+  public static Rectangle getMarkerArea(@NotNull Editor editor, @NotNull Rectangle r, int line1, int line2) {
+    EditorGutterComponentEx gutter = ((EditorEx)editor).getGutterComponentEx();
+    int x = r.x + 1; // leave 1px for brace highlighters
+    int endX = gutter.getWhitespaceSeparatorOffset();
+    int y = lineToY(editor, line1);
+    int endY = lineToY(editor, line2);
+    return new Rectangle(x, y, endX - x, endY - y);
+  }
+
+  public static boolean isInsideMarkerArea(@NotNull MouseEvent e) {
+    final EditorGutterComponentEx gutter = (EditorGutterComponentEx)e.getComponent();
+    return e.getX() > gutter.getLineMarkerFreePaintersAreaOffset();
   }
 
   private static void paintTriangle(@NotNull Graphics g, @Nullable Color color, @Nullable Color borderColor, int x1, int x2, int y) {
@@ -269,7 +283,10 @@ public abstract class LineStatusMarkerRenderer implements ActiveGutterRenderer {
 
   @Override
   public boolean canDoAction(MouseEvent e) {
-    final EditorGutterComponentEx gutter = (EditorGutterComponentEx)e.getComponent();
-    return e.getX() > gutter.getLineMarkerFreePaintersAreaOffset();
+    return false;
+  }
+
+  @Override
+  public void doAction(Editor editor, MouseEvent e) {
   }
 }
