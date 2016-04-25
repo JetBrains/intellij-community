@@ -20,7 +20,10 @@ import com.intellij.diff.DiffContentFactory;
 import com.intellij.diff.DiffManager;
 import com.intellij.diff.DiffRequestPanel;
 import com.intellij.diff.contents.DiffContent;
-import com.intellij.diff.requests.*;
+import com.intellij.diff.requests.LoadingDiffRequest;
+import com.intellij.diff.requests.MessageDiffRequest;
+import com.intellij.diff.requests.NoDiffRequest;
+import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.util.IntPair;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
@@ -355,21 +358,20 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
   private void updateDiff() {
     if (myIsDisposed || myIsDuringUpdate) return;
 
-    DiffRequest request;
     if (myList.getSelectedRowCount() == 0) {
-      request = NoDiffRequest.INSTANCE;
+      myDiffPanel.setRequest(NoDiffRequest.INSTANCE);
+      return;
     }
-    else {
-      IntPair range = getSelectedRevisionsRange();
-      request = createDiffRequest(range.val2, range.val1); // leastRecent -> mostRecent
-    }
-    myDiffPanel.setRequest(request);
-  }
 
-  @NotNull
-  private DiffRequest createDiffRequest(int revIndex1, int revIndex2) {
     int count = myRevisions.size();
-    if (revIndex1 == count && revIndex2 == count) return NoDiffRequest.INSTANCE;
+    IntPair range = getSelectedRevisionsRange();
+    int revIndex1 = range.val2;
+    int revIndex2 = range.val1;
+
+    if (revIndex1 == count && revIndex2 == count) {
+      myDiffPanel.setRequest(NoDiffRequest.INSTANCE);
+      return;
+    }
 
     BlockData blockData = myBlockLoader.getLoadedData();
     DiffContent content1 = createDiffContent(revIndex1, blockData);
@@ -377,14 +379,15 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
     String title1 = createDiffContentTitle(revIndex1);
     String title2 = createDiffContentTitle(revIndex2);
     if (content1 != null && content2 != null) {
-      return new SimpleDiffRequest(null, content1, content2, title1, title2);
+      myDiffPanel.setRequest(new SimpleDiffRequest(null, content1, content2, title1, title2), new IntPair(revIndex1, revIndex2));
+      return;
     }
 
     if (blockData.isLoading()) {
-      return new LoadingDiffRequest();
+      myDiffPanel.setRequest(new LoadingDiffRequest());
     }
     else {
-      return new MessageDiffRequest(canNoLoadMessage(blockData.getException()));
+      myDiffPanel.setRequest(new MessageDiffRequest(canNoLoadMessage(blockData.getException())));
     }
   }
 
