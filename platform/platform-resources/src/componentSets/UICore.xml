@@ -36,6 +36,9 @@
       <headless-implementation-class>com.intellij.ide.SaveAndSyncHandlerStub</headless-implementation-class>
     </component>
     <component>
+      <implementation-class>com.intellij.ide.ScreenReaderSupportHandler</implementation-class>
+    </component>
+    <component>
       <interface-class>com.intellij.ide.FrameStateManager</interface-class>
       <implementation-class>com.intellij.ide.FrameStateManagerImpl</implementation-class>
     </component>
