@@ -14,6 +14,7 @@ import com.intellij.util.xmlb.XmlSerializer;
 import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.*;
 import com.jetbrains.edu.learning.oldCourseFormat.OldCourse;
+import com.jetbrains.edu.learning.ui.StudyToolWindow;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,6 +39,8 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
   public Map<Task, List<UserTest>> myUserTests = new HashMap<>();
   public List<String> myInvisibleFiles = new ArrayList<>();
   public boolean myShouldUseJavaFx = StudyUtils.hasJavaFx();
+  private StudyToolWindow.StudyToolWindowMode myToolWindowMode = StudyToolWindow.StudyToolWindowMode.TEXT;
+  private boolean myTurnEditingMode = false;
 
   private StudyTaskManager() {
   }
@@ -71,7 +74,7 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
   @NotNull
   public List<UserTest> getUserTests(@NotNull final Task task) {
     final List<UserTest> userTests = myUserTests.get(task);
-    return userTests != null ? userTests : Collections.emptyList();
+    return userTests != null ? userTests : Collections.<UserTest>emptyList();
   }
 
   public void removeUserTest(@NotNull final Task task, @NotNull final UserTest userTest) {
@@ -259,5 +262,21 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
 
   public void setShouldUseJavaFx(boolean shouldUseJavaFx) {
     this.myShouldUseJavaFx = shouldUseJavaFx;
+  }
+
+  public StudyToolWindow.StudyToolWindowMode getToolWindowMode() {
+    return myToolWindowMode;
+  }
+
+  public void setToolWindowMode(StudyToolWindow.StudyToolWindowMode toolWindowMode) {
+    myToolWindowMode = toolWindowMode;
+  }
+
+  public boolean isTurnEditingMode() {
+    return myTurnEditingMode;
+  }
+
+  public void setTurnEditingMode(boolean turnEditingMode) {
+    myTurnEditingMode = turnEditingMode;
   }
 }

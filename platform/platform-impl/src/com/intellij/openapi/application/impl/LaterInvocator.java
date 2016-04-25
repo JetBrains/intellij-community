@@ -193,7 +193,7 @@ public class LaterInvocator {
 
     TransactionGuardImpl guard = IdeaApplication.isLoaded() ? (TransactionGuardImpl)TransactionGuard.getInstance() : null;
     if (guard != null) {
-      guard.enteredModality(ourModalityStack.peek());
+      guard.enteredModality(ourModalityStack.peek(), modalEntity);
     }
   }
 
@@ -215,6 +215,12 @@ public class LaterInvocator {
     }
     LOG.assertTrue(removed, modalEntity);
     LOG.assertTrue(!ourModalityStack.isEmpty());
+
+    TransactionGuardImpl guard = IdeaApplication.isLoaded() ? (TransactionGuardImpl)TransactionGuard.getInstance() : null;
+    if (guard != null) {
+      guard.leftModality(modalEntity);
+    }
+
     cleanupQueueForModal(modalEntity);
     ourQueueSkipCount = 0;
     requestFlush();
@@ -237,9 +243,8 @@ public class LaterInvocator {
 
   @TestOnly
   public static void leaveAllModals() {
-    ourModalEntities.clear();
-    while (ourModalityStack.size() > 1) {
-      ourModalityStack.pop();
+    while (!ourModalEntities.isEmpty()) {
+      leaveModal(ourModalEntities.get(ourModalEntities.size() - 1));
     }
     LOG.assertTrue(getCurrentModalityState() == ModalityState.NON_MODAL, getCurrentModalityState());
     ourQueueSkipCount = 0;

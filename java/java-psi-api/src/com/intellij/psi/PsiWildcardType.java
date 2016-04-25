@@ -75,15 +75,10 @@ public class PsiWildcardType extends PsiType.Stub {
     return new PsiWildcardType(manager, false, bound);
   }
 
-  @NotNull
+  /** @deprecated use {@link #annotate(TypeAnnotationProvider)} (to be removed in IDEA 18) */
+  @SuppressWarnings("unused")
   public PsiWildcardType annotate(@NotNull final PsiAnnotation[] annotations) {
-    return annotations.length == 0 ? this : new PsiWildcardType(this, new TypeAnnotationProvider() {
-      @NotNull
-      @Override
-      public PsiAnnotation[] getAnnotations() {
-        return annotations;
-      }
-    });
+    return annotations.length == 0 ? this : new PsiWildcardType(this, TypeAnnotationProvider.Static.create(annotations));
   }
 
   @NotNull

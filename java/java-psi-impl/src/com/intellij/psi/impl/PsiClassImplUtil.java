@@ -736,38 +736,7 @@ public class PsiClassImplUtil {
   }
 
   public static List<PsiClassType.ClassResolveResult> getScopeCorrectedSuperTypes(final PsiClass aClass, GlobalSearchScope resolveScope) {
-    Map<GlobalSearchScope, List<PsiClassType.ClassResolveResult>> cache =
-      CachedValuesManager.getCachedValue(aClass, new CachedValueProvider<Map<GlobalSearchScope, List<PsiClassType.ClassResolveResult>>>() {
-        @Nullable
-        @Override
-        public Result<Map<GlobalSearchScope, List<PsiClassType.ClassResolveResult>>> compute() {
-          Map<GlobalSearchScope, List<PsiClassType.ClassResolveResult>> map = new ConcurrentFactoryMap<GlobalSearchScope, List<PsiClassType.ClassResolveResult>>() {
-            @NotNull
-            @Override
-            protected List<PsiClassType.ClassResolveResult> create(final GlobalSearchScope resolveScope) {
-              return calcScopeCorrectedSuperTypes(resolveScope, aClass);
-            }
-          };
-          return Result.create(map, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
-        }
-      });
-    return cache.get(resolveScope);
-  }
-
-  @NotNull
-  private static List<PsiClassType.ClassResolveResult> calcScopeCorrectedSuperTypes(GlobalSearchScope resolveScope, PsiClass aClass) {
-    List<PsiClassType.ClassResolveResult> answer = ContainerUtil.newArrayList();
-    for (PsiClassType type : aClass.getSuperTypes()) {
-      PsiClassType corrected = correctType(type, resolveScope);
-      if (corrected == null) continue;
-
-      PsiClassType.ClassResolveResult result = ((PsiClassType)PsiUtil.captureToplevelWildcards(corrected, aClass)).resolveGenerics();
-      PsiClass superClass = result.getElement();
-      if (superClass == null || !PsiSearchScopeUtil.isInScope(resolveScope, superClass)) continue;
-
-      answer.add(result);
-    }
-    return answer;
+    return ScopedClassHierarchy.getHierarchy(aClass, resolveScope).getImmediateSupersWithCapturing();
   }
 
   private static boolean processSuperTypes(@NotNull PsiClass aClass,

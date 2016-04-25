@@ -104,7 +104,8 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
 
   @Override
   public DiamondInferenceResult resolveInferredTypes() {
-    final PsiNewExpression newExpression = PsiTreeUtil.getParentOfType(myTypeElement, PsiNewExpression.class);
+    PsiElement typeElementWithDiamondTypeArgument = myTypeElement.getParent();
+    final PsiNewExpression newExpression = PsiTreeUtil.getParentOfType(typeElementWithDiamondTypeArgument, PsiNewExpression.class, true, PsiTypeElement.class);
     if (newExpression == null) {
       return PsiDiamondTypeImpl.DiamondInferenceResult.NULL_RESULT;
     }

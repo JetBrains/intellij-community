@@ -125,19 +125,18 @@ public class PsiPrimitiveType extends PsiType.Stub {
   @Nullable
   public static PsiPrimitiveType getUnboxedType(PsiType type) {
     if (!(type instanceof PsiClassType)) return null;
+
+    assert type.isValid() : type;
     LanguageLevel languageLevel = ((PsiClassType)type).getLanguageLevel();
     if (!languageLevel.isAtLeast(LanguageLevel.JDK_1_5)) return null;
 
-    assert type.isValid() : type;
     PsiClass psiClass = ((PsiClassType)type).resolve();
     if (psiClass == null) return null;
 
     PsiPrimitiveType unboxed = ourQNameToUnboxed.get(psiClass.getQualifiedName());
-    PsiAnnotation[] annotations = type.getAnnotations();
-    if (unboxed != null && annotations.length > 0) {
-      unboxed = new PsiPrimitiveType(unboxed.myName, annotations);
-    }
-    return unboxed;
+    if (unboxed == null) return null;
+
+    return unboxed.annotate(type.getAnnotationProvider());
   }
 
   public String getBoxedTypeName() {
@@ -152,31 +151,30 @@ public class PsiPrimitiveType extends PsiType.Stub {
    *         it was not possible to resolve the reference to the class.
    */
   @Nullable
-  public PsiClassType getBoxedType(PsiElement context) {
+  public PsiClassType getBoxedType(@NotNull PsiElement context) {
     PsiFile file = context.getContainingFile();
     LanguageLevel languageLevel = PsiUtil.getLanguageLevel(file);
     if (!languageLevel.isAtLeast(LanguageLevel.JDK_1_5)) return null;
 
     String boxedQName = getBoxedTypeName();
-    //[ven]previous call returns null for NULL, VOID
     if (boxedQName == null) return null;
+
     JavaPsiFacade facade = JavaPsiFacade.getInstance(file.getProject());
     PsiClass aClass = facade.findClass(boxedQName, file.getResolveScope());
     if (aClass == null) return null;
 
     PsiElementFactory factory = facade.getElementFactory();
-    return factory.createType(aClass, PsiSubstitutor.EMPTY, languageLevel, getAnnotations());
+    return factory.createType(aClass, PsiSubstitutor.EMPTY, languageLevel).annotate(getAnnotationProvider());
   }
 
   @Nullable
-  public PsiClassType getBoxedType(final PsiManager manager, final GlobalSearchScope resolveScope) {
-    final String boxedQName = getBoxedTypeName();
-
-    //[ven]previous call returns null for NULL, VOID
+  public PsiClassType getBoxedType(@NotNull PsiManager manager, @NotNull GlobalSearchScope resolveScope) {
+    String boxedQName = getBoxedTypeName();
     if (boxedQName == null) return null;
 
-    final PsiClass aClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(boxedQName, resolveScope);
+    PsiClass aClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(boxedQName, resolveScope);
     if (aClass == null) return null;
+
     return JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createType(aClass);
   }
 

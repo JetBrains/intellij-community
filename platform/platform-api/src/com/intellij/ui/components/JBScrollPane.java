@@ -17,6 +17,7 @@ package com.intellij.ui.components;
 
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
@@ -177,8 +178,9 @@ public class JBScrollPane extends JScrollPane {
   }
 
   private static void updateInputMap(InputMap map, String prefix, String... actions) {
-    if (map != null) {
+    if (map != null && null != ApplicationManager.getApplication()) {
       ActionManager manager = ActionManager.getInstance();
+      if (manager != null)
       for (String action : actions) {
         KeyboardShortcut shortcut = manager.getKeyboardShortcut(prefix + action);
         if (shortcut != null) map.put(shortcut.getFirstKeyStroke(), action);

@@ -313,23 +313,18 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
 
     @Override
     public void run() {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-            myUsageView.close();
-            ArrayList<PsiElement> elements = new ArrayList<PsiElement>();
-            for (SmartPsiElementPointer pointer : myPointers) {
-              final PsiElement element = pointer.getElement();
-              if (element != null) {
-                elements.add(element);
-              }
-            }
-            if(!elements.isEmpty()) {
-              SafeDeleteHandler.invoke(myProject, PsiUtilCore.toPsiElementArray(elements), true);
-            }
-          }
-        });
+      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+      myUsageView.close();
+      ArrayList<PsiElement> elements = new ArrayList<PsiElement>();
+      for (SmartPsiElementPointer pointer : myPointers) {
+        final PsiElement element = pointer.getElement();
+        if (element != null) {
+          elements.add(element);
+        }
+      }
+      if(!elements.isEmpty()) {
+        SafeDeleteHandler.invoke(myProject, PsiUtilCore.toPsiElementArray(elements), true);
+      }
     }
   }
 

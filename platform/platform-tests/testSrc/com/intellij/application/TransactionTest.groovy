@@ -40,12 +40,30 @@ class TransactionTest extends LightPlatformTestCase {
     super.tearDown()
   }
 
-  public void "test write action in invokeLater requires transaction"() {
+  public void "test write action without transaction prohibited"() {
     assert app.isDispatchThread()
     assert !app.isWriteAccessAllowed()
 
+    assertWritingProhibited()
     SwingUtilities.invokeLater { assertWritingProhibited() }
     UIUtil.dispatchAllInvocationEvents()
+  }
+
+  public void "test write action allowed inside user activity but not in modal dialog shown from non-modal invokeLater"() {
+    SwingUtilities.invokeLater {
+      guard.performUserActivity { app.runWriteAction { log << '1' } }
+
+      LaterInvocator.enterModal(new Object())
+      guard.performUserActivity {
+        assertWritingProhibited()
+        log << '2'
+      }
+      LaterInvocator.leaveAllModals()
+
+      guard.performUserActivity { app.runWriteAction { log << '3' } }
+    }
+    UIUtil.dispatchAllInvocationEvents()
+    assert log == ['1', '2', '3']
   }
 
   private void assertWritingProhibited() {
@@ -193,7 +211,8 @@ class TransactionTest extends LightPlatformTestCase {
     TransactionGuard.submitTransaction testRootDisposable, {
       log << '1'
 
-      LaterInvocator.enterModal(new Object())
+      def innerModal = new Object()
+      LaterInvocator.enterModal(innerModal)
       def safeModality = ModalityState.current()
       app.executeOnPooledThread({
         app.invokeLater({
@@ -210,10 +229,39 @@ class TransactionTest extends LightPlatformTestCase {
         app.invokeLater({ app.runWriteAction { log << '5' } }, ModalityState.NON_MODAL)
       }).get()
       UIUtil.dispatchAllInvocationEvents()
+      LaterInvocator.leaveModal(innerModal)
+      UIUtil.dispatchAllInvocationEvents()
     }
     LaterInvocator.leaveAllModals()
     UIUtil.dispatchAllInvocationEvents()
     assert log == ['1', '2', '3', '4', '5']
+  }
+
+  public void "test submitTransactionLater happens ASAP regardless of modality bounds"() {
+    TransactionGuard.submitTransaction testRootDisposable, {
+      log << '1'
+      guard.submitTransactionLater testRootDisposable, { log << '2' }
+      LaterInvocator.enterModal(new Object())
+      UIUtil.dispatchAllInvocationEvents()
+      LaterInvocator.leaveAllModals()
+      log << '3'
+    }
+    UIUtil.dispatchAllInvocationEvents()
+    assert log == ['1', '2', '3']
+  }
+
+  public void "test don't add transaction to outdated queue"() {
+    TransactionGuard.submitTransaction testRootDisposable, {
+      log << '1'
+      guard.submitTransactionLater testRootDisposable, { log << '3' }
+      log << '2'
+    }
+    TransactionGuard.submitTransaction testRootDisposable, {
+      UIUtil.dispatchAllInvocationEvents()
+      assert log == ['1', '2']
+    }
+    UIUtil.dispatchAllInvocationEvents()
+    assert log == ['1', '2', '3']
   }
 
 }

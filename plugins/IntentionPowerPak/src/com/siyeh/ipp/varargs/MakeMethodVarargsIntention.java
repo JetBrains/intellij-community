@@ -48,7 +48,7 @@ public class MakeMethodVarargsIntention extends Intention {
     final PsiElementFactory factory = JavaPsiFacade.getInstance(element.getProject()).getElementFactory();
     final PsiTypeElement typeElement = lastParameter.getTypeElement();
     LOG.assertTrue(typeElement != null);
-    final PsiType ellipsisType = PsiEllipsisType.createEllipsis(((PsiArrayType)type).getComponentType(), type.getAnnotations());
+    final PsiType ellipsisType = new PsiEllipsisType(((PsiArrayType)type).getComponentType(), TypeAnnotationProvider.Static.create(type.getAnnotations()));
     typeElement.replace(factory.createTypeElement(ellipsisType));
   }
 

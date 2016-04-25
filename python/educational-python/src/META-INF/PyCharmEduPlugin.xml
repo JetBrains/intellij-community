@@ -25,4 +25,18 @@
       <consoleInputFilterProvider implementation="com.jetbrains.python.edu.debugger.PyEduConsoleInputFilterProvider"/>
   </extensions>
 
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="Edu.executeFile" interface="com.jetbrains.python.edu.PyExecuteFileExtensionPoint"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.python.edu.PyExecuteFileLineMarkerProvider"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="Edu">
+    <executeFile implementation="com.jetbrains.python.edu.PyEduAddParametersAction" order="last"/>
+    <executeFile implementation="com.jetbrains.python.edu.PyDebugCurrentFile"/>
+  </extensions>
+
 </idea-plugin>

@@ -96,7 +96,7 @@ public class BuildNumber implements Comparable<BuildNumber> {
 
     if (BUILD_NUMBER.equals(version) || SNAPSHOT.equals(version)) {
       final String productCode = name != null ? name : "";
-      return new BuildNumber(productCode, Holder.CURRENT_VERSION.myComponents);
+      return new BuildNumber(productCode, currentVersion().myComponents);
     }
 
     String code = version;
@@ -171,9 +171,17 @@ public class BuildNumber implements Comparable<BuildNumber> {
     }
     catch (IOException ignored) { }
 
-    return fallback();
+    return fromString(FALLBACK_VERSION);
   }
 
+  /**
+   * This method is for internal platform use only. In regular code use {@link com.intellij.openapi.application.ApplicationInfo#getBuild()} instead.
+   */
+  public static BuildNumber currentVersion() {
+    return Holder.CURRENT_VERSION;
+  }
+
+  @Deprecated
   public static BuildNumber fallback() {
     return fromString(FALLBACK_VERSION);
   }

@@ -550,14 +550,7 @@ public class XPathEvalAction extends XPathAction {
     public abstract static class EditExpressionAction implements Runnable {
         @Override
         public void run() {
-            Runnable runnable = new Runnable() {
-                @Override
-                public void run() {
-                    execute();
-                }
-
-            };
-            SwingUtilities.invokeLater(runnable);
+          execute();
         }
 
         protected abstract void execute();

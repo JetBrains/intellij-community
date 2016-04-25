@@ -1,5 +1,6 @@
 package com.jetbrains.edu.coursecreator;
 
+import com.intellij.openapi.project.Project;
 import com.jetbrains.python.edu.PyEduUtils;
 import com.jetbrains.python.psi.PyQualifiedExpression;
 import com.jetbrains.python.psi.resolve.PyReferenceResolveProvider;
@@ -13,7 +14,8 @@ public class PyCCReferenceResolveProvider implements PyReferenceResolveProvider 
   @NotNull
   @Override
   public List<RatedResolveResult> resolveName(@NotNull final PyQualifiedExpression element) {
-    if (CCProjectService.getInstance(element.getProject()).getCourse() == null) {
+    Project project = element.getProject();
+    if (!CCUtils.isCourseCreator(project)) {
       return Collections.emptyList();
     }
     return PyEduUtils.getResolveResultFromContainingDirectory(element);

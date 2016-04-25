@@ -27,26 +27,10 @@ import javax.swing.*;
 import java.awt.*;
 
 public abstract class EditorGutterComponentEx extends JComponent implements EditorGutter {
-
-  public abstract boolean isFoldingOutlineShown();
-
-  public abstract boolean isLineMarkersShown();
-
-  public abstract boolean areIconsShown();
-
   @Nullable
   public abstract FoldRegion findFoldingAnchorAt(int x, int y);
 
   public abstract int getWhitespaceSeparatorOffset();
-
-  public abstract Color getOutlineColor(boolean isActive);
-
-  /**
-   * @deprecated use getOutlineColor
-   */
-  public Color getFoldingColor(boolean isActive) {
-    return getOutlineColor(isActive);
-  }
 
   public abstract void revalidateMarkup();
 

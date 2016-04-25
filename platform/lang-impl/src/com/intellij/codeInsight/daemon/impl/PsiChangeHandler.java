@@ -208,6 +208,7 @@ class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable {
     Document document = pdm.getCachedDocument(file);
     if (document != null) {
       if (pdm.getSynchronizer().getTransaction(document) == null) {
+        // content reload, language level change or some other big change
         myFileStatusMap.markAllFilesDirty(child);
         return;
       }
