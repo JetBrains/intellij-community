@@ -214,6 +214,8 @@ public class InvocationExprent extends Exprent {
     boolean isInstanceThis = false;
 
     tracer.addMapping(bytecode);
+    
+    boolean overloadingSafetyCasts = DecompilerContext.getOption(IFernflowerPreferences.OVERLOADING_SAFETY_CASTS);
 
     if (isStatic) {
       ClassNode node = (ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_NODE);
@@ -261,7 +263,7 @@ public class InvocationExprent extends Exprent {
           VarType rightType = instance.getExprType();
           VarType leftType = new VarType(CodeConstants.TYPE_OBJECT, 0, classname);
 
-          if (rightType.equals(VarType.VARTYPE_OBJECT) && !leftType.equals(rightType)) {
+          if ((overloadingSafetyCasts || rightType.equals(VarType.VARTYPE_OBJECT)) && !leftType.equals(rightType)) {
             buf.append("((").append(ExprProcessor.getCastTypeName(leftType)).append(")");
 
             if (instance.getPrecedence() >= FunctionExprent.getPrecedence(FunctionExprent.FUNCTION_CAST)) {
@@ -340,8 +342,8 @@ public class InvocationExprent extends Exprent {
         }
 
         TextBuffer buff = new TextBuffer();
-        boolean ambiguous = setAmbiguousParameters.get(i);
-        ExprProcessor.getCastedExprent(lstParameters.get(i), descriptor.params[i], buff, indent, true, ambiguous, tracer);
+        boolean forceSameType = overloadingSafetyCasts || setAmbiguousParameters.get(i);
+        ExprProcessor.getCastedExprent(lstParameters.get(i), descriptor.params[i], buff, indent, true, forceSameType, tracer);
         buf.append(buff);
 
         firstParameter = false;
