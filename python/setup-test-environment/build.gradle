@@ -31,7 +31,18 @@ envs {
   textfile "django_latest/tags.txt", "django"
 }
 
-if (new File(envs.envsDirectory, "django_latest").lastModified()<System.currentTimeMillis() - 24*60*60*1000) {
+if (new File(envs.envsDirectory, "django_latest").exists() && 
+    new File(envs.envsDirectory, "django_latest").lastModified()<System.currentTimeMillis() - 24*60*60*1000) {
   // older then a day
+  println "Cleaning django_latest at" + new File(envs.envsDirectory, "django_latest")
   delete new File(envs.envsDirectory, "django_latest")
+}
+
+if (envs.envsDirectory.exists() &&
+    envs.envsDirectory.lastModified()<project.buildscript.sourceFile.lastModified()) {
+  // clean the cache if the build script if modified later
+  println "Cleaning cached environments at " + envs.envsDirectory
+  delete envs.envsDirectory
+  println "Cleaning cached pythons at " + envs.bootstrapDirectory
+  delete envs.bootstrapDirectory
 }
