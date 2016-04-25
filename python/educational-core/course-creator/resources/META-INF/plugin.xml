@@ -49,7 +49,7 @@
       <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFile"/>
     </action>
 
-    <group id="CCProjectViewGroup">
+    <group id="CCProjectViewGroup" popup="true" text="Course Creator">
       <action id="AddTaskFile" class="com.jetbrains.edu.coursecreator.actions.CCAddAsTaskFile" text="Add as Task File"/>
       <action id="HideTaskFile" class="com.jetbrains.edu.coursecreator.actions.CCHideFromStudent" text="Hide from Student"/>
       <action id="ShowPreview" class="com.jetbrains.edu.coursecreator.actions.CCShowPreview">
