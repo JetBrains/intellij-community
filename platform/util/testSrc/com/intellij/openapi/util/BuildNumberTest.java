@@ -129,12 +129,12 @@ public class BuildNumberTest {
   }
 
   @Test
-  public void fallbackVersion() throws Exception {
-    assertParsed(BuildNumber.fallback(), 999, BuildNumber.SNAPSHOT_VALUE, "999.SNAPSHOT");
-    assertTrue(BuildNumber.fallback().isSnapshot());
+  public void currentVersion() throws Exception {
+    BuildNumber current = BuildNumber.currentVersion();
+    assertTrue(current.isSnapshot());
 
-    assertTrue(BuildNumber.fallback().compareTo(BuildNumber.fromString("7512")) > 0);
-    assertTrue(BuildNumber.fallback().compareTo(BuildNumber.fromString("145")) > 0);
-    assertTrue(BuildNumber.fallback().compareTo(BuildNumber.fromString("145.12")) > 0);
+    assertTrue(current.compareTo(BuildNumber.fromString("7512")) > 0);
+    assertTrue(current.compareTo(BuildNumber.fromString("145")) > 0);
+    assertTrue(current.compareTo(BuildNumber.fromString("145.12")) > 0);
   }
 }

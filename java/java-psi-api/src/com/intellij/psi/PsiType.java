@@ -56,13 +56,7 @@ public abstract class PsiType implements PsiAnnotationOwner {
    * Constructs a PsiType with given annotations
    */
   protected PsiType(@NotNull final PsiAnnotation[] annotations) {
-    this(annotations.length == 0 ? TypeAnnotationProvider.EMPTY : new TypeAnnotationProvider() {
-      @NotNull
-      @Override
-      public PsiAnnotation[] getAnnotations() {
-        return annotations;
-      }
-    });
+    this(TypeAnnotationProvider.Static.create(annotations));
   }
 
   /**
@@ -70,6 +64,11 @@ public abstract class PsiType implements PsiAnnotationOwner {
    */
   protected PsiType(@NotNull TypeAnnotationProvider annotations) {
     myAnnotationProvider = annotations;
+  }
+
+  @NotNull
+  public PsiType annotate(@NotNull TypeAnnotationProvider provider) {
+    throw new UnsupportedOperationException("Not implemented for " + getClass());
   }
 
   /**
@@ -80,10 +79,8 @@ public abstract class PsiType implements PsiAnnotationOwner {
     return new PsiArrayType(this);
   }
 
-  /**
-   * Creates array type with this type as a component.
-   */
-  @NotNull
+  /** @deprecated use {@link #annotate(TypeAnnotationProvider)} (to be removed in IDEA 18) */
+  @SuppressWarnings("unused")
   public PsiArrayType createArrayType(@NotNull PsiAnnotation... annotations) {
     return new PsiArrayType(this, annotations);
   }

@@ -3443,4 +3443,23 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("any variable can be final", 3, findMatchesCount(source, "@Modifier(\"final\") '_T '_a;"));
     assertEquals("parameters and local variables are not instance fields", 1, findMatchesCount(source, "@Modifier(\"Instance\") '_T '_a;"));
   }
+
+  public void testFindParameterizedMethodCalls() {
+    String source = "interface Foo {" +
+                    "  <T> T bar();" +
+                    "  <S, T> void bar2(S, T);" +
+                    "}" +
+                    "class X {" +
+                    "  void x(Foo foo) {" +
+                    "    foo.<String>bar();" +
+                    "    foo.<Integer>bar();" +
+                    "    String s = foo.bar();" +
+                    "    foo.bar2(1, 2);" +
+                    "  }" +
+                    "}";
+    assertEquals("find parameterized method calls 1", 1, findMatchesCount(source, "foo.<Integer>bar()"));
+    assertEquals("find parameterized method calls 2", 2, findMatchesCount(source, "foo.<String>bar()"));
+    assertEquals("find parameterized method calls 3", 3, findMatchesCount(source, "'_a.<'_b>'_c('_d*)"));
+    assertEquals("find parameterized method calls 4", 4, findMatchesCount(source, "'_a.<'_b+>'_c('_d*)"));
+  }
 }

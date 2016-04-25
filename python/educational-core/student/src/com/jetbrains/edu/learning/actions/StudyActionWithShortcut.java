@@ -6,8 +6,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public abstract class StudyToolbarAction extends DumbAwareAction {
-  public StudyToolbarAction(@Nullable String text, @Nullable String description, @Nullable Icon icon) {
+public abstract class StudyActionWithShortcut extends DumbAwareAction {
+
+  public StudyActionWithShortcut(@Nullable String text, @Nullable String description, @Nullable Icon icon) {
     super(text, description, icon);
   }
 
@@ -15,5 +16,5 @@ public abstract class StudyToolbarAction extends DumbAwareAction {
   public abstract String getActionId();
   
   @Nullable
-  public abstract String[] getShortcuts();  
+  public abstract String[] getShortcuts();
 }

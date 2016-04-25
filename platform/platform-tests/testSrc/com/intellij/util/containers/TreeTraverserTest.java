@@ -23,6 +23,7 @@ import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.intellij.openapi.util.Conditions.not;
 
@@ -225,6 +226,20 @@ public class TreeTraverserTest extends TestCase {
       list.add(it.current());
     }
     assertEquals(Arrays.asList(1, 2), list);
+  }
+
+  public void testIteratorContractsSkipAndStop() {
+    final AtomicInteger count = new AtomicInteger(0);
+    JBIterator<Integer> it = new JBIterator<Integer>() {
+
+      @Override
+      protected Integer nextImpl() {
+        return count.get() < 0 ? stop() :
+               count.incrementAndGet() < 10 ? skip() :
+               (Integer)count.addAndGet(-count.get() - 1);
+      }
+    };
+    assertEquals(JBIterable.of(-1).toList(), JBIterable.once(it).toList());
   }
 
   // JBIterable ----------------------------------------------

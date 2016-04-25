@@ -27,7 +27,7 @@ import javax.swing.tree.TreePath;
 import java.util.Map;
 
 
-abstract public class StudyTaskNavigationAction extends StudyToolbarAction {
+abstract public class StudyTaskNavigationAction extends StudyActionWithShortcut {
   public StudyTaskNavigationAction(@Nullable String text, @Nullable String description, @Nullable Icon icon) {
     super(text, description, icon);
   }

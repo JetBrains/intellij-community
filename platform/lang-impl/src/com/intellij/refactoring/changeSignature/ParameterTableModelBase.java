@@ -64,13 +64,7 @@ public abstract class ParameterTableModelBase<P extends ParameterInfo, TableItem
   }
 
   public void setValueAtWithoutUpdate(Object aValue, int rowIndex, int columnIndex) {
-    super.setValueAt(aValue, rowIndex, columnIndex);
-  }
-
-  @Override
-  public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-    super.setValueAt(aValue, rowIndex, columnIndex);
-    fireTableCellUpdated(rowIndex, columnIndex); // to update signature
+    setValueAt(aValue, rowIndex, columnIndex, false);
   }
 
   protected static abstract class ColumnInfoBase<P extends ParameterInfo, TableItem extends ParameterTableModelItemBase<P>, Aspect>

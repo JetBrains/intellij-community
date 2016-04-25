@@ -48,9 +48,6 @@ public abstract class StudyBasePluginConfigurator implements StudyPluginConfigur
   public FileEditorManagerListener getFileEditorManagerListener(@NotNull Project project, @NotNull StudyToolWindow toolWindow) {
 
     return new FileEditorManagerListener() {
-
-      private static final String EMPTY_TASK_TEXT = "Please, open any task to see task description";
-
       @Override
       public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
         Task task = getTask(file);
@@ -59,7 +56,7 @@ public abstract class StudyBasePluginConfigurator implements StudyPluginConfigur
 
       @Override
       public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-        toolWindow.setTaskText(EMPTY_TASK_TEXT);
+        toolWindow.setEmptyText(project);
       }
 
       @Override
@@ -85,10 +82,10 @@ public abstract class StudyBasePluginConfigurator implements StudyPluginConfigur
       private void setTaskText(@Nullable final Task task, @Nullable final VirtualFile taskDirectory) {
         String text = StudyUtils.getTaskTextFromTask(task, taskDirectory);
         if (text == null) {
-          toolWindow.setTaskText(EMPTY_TASK_TEXT);
+          toolWindow.setEmptyText(project);
           return;
         }
-        toolWindow.setTaskText(text);
+        toolWindow.setTaskText(text, taskDirectory, project);
       }
     };
   }

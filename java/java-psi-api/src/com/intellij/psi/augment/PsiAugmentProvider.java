@@ -142,8 +142,9 @@ public abstract class PsiAugmentProvider {
   }
 
   private static void forEach(Project project, Processor<PsiAugmentProvider> processor) {
+    boolean dumb = DumbService.isDumb(project);
     for (PsiAugmentProvider provider : Extensions.getExtensions(EP_NAME)) {
-      if (!DumbService.isDumb(project) || DumbService.isDumbAware(provider)) {
+      if (!dumb || DumbService.isDumbAware(provider)) {
         try {
           boolean goOn = processor.process(provider);
           if (!goOn) break;

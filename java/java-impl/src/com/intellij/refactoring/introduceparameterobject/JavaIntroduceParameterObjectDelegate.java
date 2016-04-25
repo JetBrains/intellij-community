@@ -22,6 +22,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -42,6 +43,7 @@ import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -86,9 +88,9 @@ public class JavaIntroduceParameterObjectDelegate
     return new ParameterInfoImpl(-1, paramName, facade.getElementFactory().createTypeFromText(classTypeText, method), null) {
       @Nullable
       @Override
-      public PsiElement getActualValue(PsiElement exp) {
+      public PsiElement getActualValue(PsiElement exp, Object substitutor) {
         final IntroduceParameterObjectDelegate<PsiNamedElement, ParameterInfo, IntroduceParameterObjectClassDescriptor<PsiNamedElement, ParameterInfo>> delegate = findDelegate(exp);
-        return delegate != null ? delegate.createNewParameterInitializerAtCallSite(exp, descriptor, oldMethodParameters) : null;
+        return delegate != null ? delegate.createNewParameterInitializerAtCallSite(exp, descriptor, oldMethodParameters, substitutor) : null;
       }
     };
   }
@@ -96,7 +98,8 @@ public class JavaIntroduceParameterObjectDelegate
   @Override
   public PsiElement createNewParameterInitializerAtCallSite(PsiElement callExpression,
                                                             IntroduceParameterObjectClassDescriptor descriptor,
-                                                            List<? extends ParameterInfo> oldMethodParameters) {
+                                                            List<? extends ParameterInfo> oldMethodParameters,
+                                                            Object substitutor) {
     if (callExpression instanceof PsiCallExpression) {
       final PsiCallExpression expr = (PsiCallExpression)callExpression;
       final JavaPsiFacade facade = JavaPsiFacade.getInstance(expr.getProject());
@@ -109,16 +112,31 @@ public class JavaIntroduceParameterObjectDelegate
 
       final PsiExpression[] args = argumentList.getExpressions();
       StringBuilder newExpression = new StringBuilder();
-      final JavaResolveResult resolvant = expr.resolveMethodGenerics();
-      final PsiSubstitutor substitutor = resolvant.getSubstitutor();
-      newExpression.append("new ")
-        .append(JavaPsiFacade.getElementFactory(expr.getProject()).createType(existingClass, substitutor).getCanonicalText());
+      newExpression.append("new ").append(existingClass.getQualifiedName());
+      if (descriptor instanceof JavaIntroduceParameterObjectClassDescriptor) {
+        List<String> types = new ArrayList<>();
+        for (PsiTypeParameter parameter : ((JavaIntroduceParameterObjectClassDescriptor)descriptor).getTypeParameters()) {
+          PsiType type = ((PsiSubstitutor)substitutor).substitute(parameter);
+          if (type == null) {
+            types.clear();
+            break;
+          }
+          types.add(type.getCanonicalText());
+        }
+        if (!types.isEmpty()) {
+          newExpression.append("<").append(StringUtil.join(types, ", ")).append(">");
+        }
+      }
       newExpression.append('(');
       newExpression.append(getMergedArgs(descriptor, oldMethodParameters, args));
       newExpression.append(')');
 
-      return JavaCodeStyleManager.getInstance(callExpression.getProject())
+      PsiNewExpression newClassExpression = (PsiNewExpression)JavaCodeStyleManager.getInstance(callExpression.getProject())
         .shortenClassReferences(facade.getElementFactory().createExpressionFromText(newExpression.toString(), expr));
+      if (PsiDiamondTypeUtil.canChangeContextForDiamond(newClassExpression, newClassExpression.getType())) {
+        PsiDiamondTypeUtil.replaceExplicitWithDiamond(newClassExpression.getClassOrAnonymousClassReference().getParameterList());
+      }
+      return newClassExpression;
     }
     return null;
   }

@@ -4413,7 +4413,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return;
     }
 
-    if (getMouseEventArea(e) == EditorMouseEventArea.LINE_MARKERS_AREA) {
+    EditorMouseEventArea eventArea = getMouseEventArea(e);
+    if (eventArea == EditorMouseEventArea.LINE_MARKERS_AREA ||
+        eventArea == EditorMouseEventArea.FOLDING_OUTLINE_AREA && !isInsideGutterWhitespaceArea(e)) {
       // The general idea is that we don't want to change caret position on gutter marker area click (e.g. on setting a breakpoint)
       // but do want to allow bulk selection on gutter marker mouse drag. However, when a drag is performed, the first event is
       // a 'mouse pressed' event, that's why we remember target line on 'mouse pressed' processing and use that information on
@@ -5857,7 +5859,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         myExpectedCaretOffset = -1;
       }
 
-      if (event.getArea() == EditorMouseEventArea.LINE_MARKERS_AREA) {
+      if (event.getArea() == EditorMouseEventArea.LINE_MARKERS_AREA ||
+          event.getArea() == EditorMouseEventArea.FOLDING_OUTLINE_AREA && !isInsideGutterWhitespaceArea(e)) {
         myDragOnGutterSelectionStartLine = EditorUtil.yPositionToLogicalLine(EditorImpl.this, e);
       }
 

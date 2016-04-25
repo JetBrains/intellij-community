@@ -45,7 +45,7 @@ import java.util.NoSuchElementException;
  *
  * @author gregsh
  *
- * @noinspection unchecked
+ * @noinspection unchecked, AssignmentToForLoopParameter
  */
 public abstract class JBIterator<E> implements Iterator<E> {
   private static final Object NONE = new String("#none");
@@ -137,18 +137,14 @@ public abstract class JBIterator<E> implements Iterator<E> {
 
   private void peekNext() {
     if (myNext != NONE) return;
-    Object o = nextImpl();
-    if (myNext == STOP) return;
-    Op op = myFirstOp.nextOp;
-    while (op != null) {
-      o = op.apply(o);
+    Object o = NONE;
+    for (Op op = myFirstOp; op != null; op = op == null ? myFirstOp : op.nextOp) {
+      o = op == myFirstOp ? nextImpl() : op.apply(o);
       if (myNext == SKIP) {
-        myNext = NONE;
-        o = nextImpl();
-        op = myFirstOp;
+        o = myNext = NONE;
+        op = null;
       }
       if (myNext == STOP) return;
-      op = op.nextOp;
     }
     myNext = o;
   }
