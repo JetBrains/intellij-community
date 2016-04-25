@@ -48,8 +48,9 @@ hes (1): hide empty super invocation
 hdc (1): hide empty default constructor
 dgs (0): decompile generic signatures
 osc (0): add more casts to output to make sure correct methods/fields are selected
-         Fernflower by default tries to create nice looking code, which can be incorrect or even illegal.
-         Casts in original code can lead to illegal access of private fields/methods or wrong field/method selection.
+         Fernflower by default tries to create nice looking code, which can be incorrect
+         or even illegal. Casts in original code can lead to illegal access of private
+         fields/methods or wrong field/method selection.
 ner (1): assume return not throwing exceptions
 den (1): decompile enumerations
 rgn (1): remove getClass() invocation, when it is part of a qualified new statement
