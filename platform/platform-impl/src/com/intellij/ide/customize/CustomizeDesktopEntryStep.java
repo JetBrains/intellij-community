@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,8 +26,6 @@ import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.awt.*;
 
 /**
@@ -67,12 +65,9 @@ public class CustomizeDesktopEntryStep extends AbstractCustomizeWizardStep {
 
     add(panel, BorderLayout.CENTER);
 
-    myCreateEntryCheckBox.addChangeListener(new ChangeListener() {
-      @Override
-      public void stateChanged(ChangeEvent e) {
-        myGlobalEntryCheckBox.setEnabled(myCreateEntryCheckBox.isSelected());
-        myGlobalEntryCheckBox.setSelected(myCreateEntryCheckBox.isSelected() && !PathManager.getHomePath().startsWith("/home"));
-      }
+    myCreateEntryCheckBox.addChangeListener(e -> {
+      myGlobalEntryCheckBox.setEnabled(myCreateEntryCheckBox.isSelected());
+      myGlobalEntryCheckBox.setSelected(myCreateEntryCheckBox.isSelected() && !PathManager.getHomePath().startsWith("/home"));
     });
 
     myCreateEntryCheckBox.setSelected(true);
