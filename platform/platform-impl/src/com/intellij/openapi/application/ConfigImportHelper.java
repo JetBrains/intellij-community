@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -196,6 +196,9 @@ public class ConfigImportHelper {
     // Copy old plugins. If some of them are incompatible PluginManager will deal with it
     FileUtil.copyDir(src, dest);
 
+    // delete old user token - we must not reuse it
+    FileUtil.delete(new File(dest, "user.token"));
+
     File oldPluginsDir = new File(src, PLUGINS_PATH);
     if (!oldPluginsDir.isDirectory() && SystemInfo.isMac) {
       oldPluginsDir = getSettingsPath(oldInstallationHome, settings, PathManager.PROPERTY_PLUGINS_PATH,
@@ -340,14 +343,14 @@ public class ConfigImportHelper {
         }
         if (bundle.containsKey(propertyName)) {
           return bundle.getString(propertyName);
-        } 
+        }
         return null;
       }
       catch (IOException e) {
         return null;
       }
     }
-    
+
     final String fileContent = getContent(file);
 
     // try to find custom config path
