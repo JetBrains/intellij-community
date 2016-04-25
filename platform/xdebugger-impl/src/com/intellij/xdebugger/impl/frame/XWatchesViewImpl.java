@@ -56,6 +56,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.event.*;
@@ -402,6 +403,17 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
     boolean possible = false;
     if (object instanceof XValueNodeImpl[]) {
       possible = true;
+      // do not add new watch if node is dragged to itself
+      if (((XValueNodeImpl[])object).length == 1) {
+        Point point = aEvent.getPoint();
+        XDebuggerTree tree = getTree();
+        TreePath path = tree.getClosestPathForLocation(point.x, point.y);
+        if (path != null && path.getLastPathComponent() == ((XValueNodeImpl[])object)[0]) {
+          // the same item is under pointer, filter out place below the tree
+          Rectangle pathBounds = tree.getPathBounds(path);
+          possible = pathBounds != null && pathBounds.y + pathBounds.height < point.y;
+        }
+      }
     }
     else if (object instanceof EventInfo) {
       possible = ((EventInfo)object).getTextForFlavor(DataFlavor.stringFlavor) != null;
