@@ -84,7 +84,7 @@
   </target>
 
 
-  <target name="test-stdout-prepare" depends="init">
+  <target name="test-stdout-prepare" depends="init,test-compile">
     
     <!-- here you can skip tests -->
     <patternset id="stdout-tests.exclude.pattern">
