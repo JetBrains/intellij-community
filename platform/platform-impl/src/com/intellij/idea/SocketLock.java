@@ -225,11 +225,13 @@ public class SocketLock {
             DataInputStream stream = new DataInputStream(socket.getInputStream());
             final String command = stream.readUTF();
             if (command.startsWith(ACTIVATE_COMMAND)) {
-              List<String> args = StringUtil.split(command.substring(ACTIVATE_COMMAND.length()), "\0");
-              if (myActivateListener != null) {
-                myActivateListener.consume(args);
+              if (command.length() <= 8192) {
+                List<String> args = StringUtil.split(command.substring(ACTIVATE_COMMAND.length()), "\0");
+                if (myActivateListener != null) {
+                  myActivateListener.consume(args);
+                }
+                out.writeUTF("ok");
               }
-              out.writeUTF("ok");
             }
             out.close();
           }
