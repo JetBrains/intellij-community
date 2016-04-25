@@ -17,7 +17,6 @@ package com.intellij.xdebugger.impl.ui.tree.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AppUIUtil;
@@ -30,71 +29,54 @@ import com.intellij.xdebugger.impl.ui.tree.nodes.HeadlessValueEvaluationCallback
 import com.intellij.xdebugger.impl.ui.tree.nodes.WatchNodeImpl;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.tree.TreePath;
 import java.util.List;
 
 public abstract class XFetchValueActionBase extends AnAction {
-  @Nullable
-  private static TreePath[] getSelectedNodes(DataContext dataContext) {
-    XDebuggerTree tree = XDebuggerTree.getTree(dataContext);
-    return tree == null ? null : tree.getSelectionPaths();
-  }
-
   @Override
   public void update(@NotNull AnActionEvent e) {
-    TreePath[] paths = getSelectedNodes(e.getDataContext());
-    if (paths != null) {
-      for (TreePath path : paths) {
-        Object node = path.getLastPathComponent();
-        if (isEnabled(e, node)) {
-          return;
-        }
+    for (XValueNodeImpl node : XDebuggerTreeActionBase.getSelectedNodes(e.getDataContext())) {
+      if (isEnabled(e, node)) {
+        return;
       }
     }
     e.getPresentation().setEnabled(false);
   }
 
-  protected boolean isEnabled(@NotNull AnActionEvent event, @NotNull Object node) {
-    if (node instanceof XValueNodeImpl) {
-      if (node instanceof WatchNodeImpl || ((XValueNodeImpl)node).isComputed()) {
-        event.getPresentation().setEnabled(true);
-        return true;
-      }
+  protected boolean isEnabled(@NotNull AnActionEvent event, @NotNull XValueNodeImpl node) {
+    if (node instanceof WatchNodeImpl || node.isComputed()) {
+      event.getPresentation().setEnabled(true);
+      return true;
     }
     return false;
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    TreePath[] paths = getSelectedNodes(e.getDataContext());
-    if (paths == null) {
+    List<XValueNodeImpl> nodes = XDebuggerTreeActionBase.getSelectedNodes(e.getDataContext());
+    if (nodes.isEmpty()) {
       return;
     }
 
     ValueCollector valueCollector = createCollector(e);
-    for (TreePath path : paths) {
-      addToCollector(paths, path.getLastPathComponent(), valueCollector);
+    for (XValueNodeImpl node : nodes) {
+      addToCollector(nodes, node, valueCollector);
     }
     valueCollector.processed = true;
     valueCollector.finish();
   }
 
-  protected void addToCollector(@NotNull TreePath[] paths, @NotNull Object node, @NotNull ValueCollector valueCollector) {
-    if (node instanceof XValueNodeImpl) {
-      XValueNodeImpl valueNode = (XValueNodeImpl)node;
+  protected void addToCollector(@NotNull List<XValueNodeImpl> paths, @NotNull XValueNodeImpl valueNode, @NotNull ValueCollector valueCollector) {
+    if (paths.size() > 1) { // multiselection - copy the whole node text, see IDEA-136722
+      valueCollector.add(valueNode.getText().toString(), valueNode.getPath().getPathCount());
+    }
+    else {
       XFullValueEvaluator fullValueEvaluator = valueNode.getFullValueEvaluator();
-      if (paths.length > 1) { // multiselection - copy the whole node text, see IDEA-136722
-        valueCollector.add(valueNode.getText().toString(), valueNode.getPath().getPathCount());
+      if (fullValueEvaluator == null || !fullValueEvaluator.isShowValuePopup()) {
+        valueCollector.add(StringUtil.notNullize(DebuggerUIUtil.getNodeRawValue(valueNode)));
       }
       else {
-        if (fullValueEvaluator == null || !fullValueEvaluator.isShowValuePopup()) {
-          valueCollector.add(StringUtil.notNullize(DebuggerUIUtil.getNodeRawValue(valueNode)));
-        }
-        else {
-          new CopyValueEvaluationCallback(valueNode, valueCollector).startFetchingValue(fullValueEvaluator);
-        }
+        new CopyValueEvaluationCallback(valueNode, valueCollector).startFetchingValue(fullValueEvaluator);
       }
     }
   }
