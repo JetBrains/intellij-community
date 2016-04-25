@@ -23,8 +23,7 @@ import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.projectRoots.JavaSdkType;
-import com.intellij.openapi.projectRoots.SdkTypeId;
+import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
@@ -162,7 +161,15 @@ public class JavaModuleBuilder extends ModuleBuilder implements SourcePathsBuild
       instance.setDefault(false);
     }
     else {
-      instance.setDefault(true);
+      //setup language level according to jdk, then setup default flag
+      Sdk sdk = ProjectRootManager.getInstance(project).getProjectSdk();
+      if (sdk != null) {
+        JavaSdkVersion version = JavaSdk.getInstance().getVersion(sdk);
+        if (version != null) {
+          instance.setLanguageLevel(version.getMaxLanguageLevel());
+          instance.setDefault(true);
+        }
+      }
     }
     return super.commit(project, model, modulesProvider);
   }
