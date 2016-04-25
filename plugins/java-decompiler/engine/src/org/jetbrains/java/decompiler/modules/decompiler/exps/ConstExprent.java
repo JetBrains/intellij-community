@@ -239,6 +239,19 @@ public class ConstExprent extends Exprent {
         }
         else if (constType.equals(VarType.VARTYPE_CLASS)) {
           String stringVal = value.toString();
+          
+          //we must check renamer...
+          if (DecompilerContext.getPoolInterceptor() != null) {
+              String lookupName = stringVal;
+              if (lookupName.charAt(0) == '[') {
+                  lookupName = lookupName.substring(1);
+              }
+              lookupName = lookupName.replace('.', '/');
+              String newName = DecompilerContext.getPoolInterceptor().getName(lookupName);
+              if (newName != null) {
+                stringVal = newName;
+              }
+          }
           VarType type = new VarType(stringVal, !stringVal.startsWith("["));
           return new TextBuffer(ExprProcessor.getCastTypeName(type)).append(".class");
         }
