@@ -58,7 +58,10 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerImpl;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
-import com.intellij.util.*;
+import com.intellij.util.DocumentUtil;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.IntArrayList;
@@ -102,13 +105,11 @@ public class TemplateState implements Disposable {
   @Nullable private PairProcessor<String, String> myProcessor;
   private boolean mySelectionCalculated = false;
   private boolean myStarted;
-  private final Alarm myDocumentChangeAlarm;
 
   TemplateState(@NotNull Project project, @NotNull final Editor editor) {
     myProject = project;
     myEditor = editor;
     myDocument = myEditor.getDocument();
-    myDocumentChangeAlarm = new Alarm(this);
   }
 
   private void initListeners() {
@@ -519,16 +520,7 @@ public class TemplateState implements Disposable {
         fireTemplateCancelled();
       }
       else {
-        myDocumentChangeAlarm.cancelAllRequests();
-        myDocumentChangeAlarm.addRequest(() -> {
-          if (!isDisposed()) {
-            calcResults(true);
-          }
-        }, 50);
-        if (ApplicationManager.getApplication().isUnitTestMode()) {
-          //noinspection TestOnlyProblems
-          myDocumentChangeAlarm.flush();
-        }
+        calcResults(true);
       }
       myDocumentChanged = false;
     }
@@ -1369,7 +1361,7 @@ public class TemplateState implements Disposable {
       }
       buffer.append(ch);
     }
-    if (buffer.length() == 0 && selectionIndent <= 0) {
+    if (buffer.length() == 0 && selectionIndent <= 0 || startLineNum >= endLineNum) {
       return;
     }
     String stringToInsert = buffer.toString();
