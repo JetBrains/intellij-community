@@ -4,6 +4,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,7 +26,9 @@ import com.jetbrains.edu.learning.StudyState;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduAnswerPlaceholderPainter;
+import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
+import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.StudyStatus;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.editor.StudyEditor;
@@ -164,8 +167,19 @@ public class StudyRefreshTaskFileAction extends StudyActionWithShortcut {
     if (project != null) {
       StudyEditor studyEditor = StudyUtils.getSelectedStudyEditor(project);
       StudyState studyState = new StudyState(studyEditor);
+      Presentation presentation = event.getPresentation();
       if (!studyState.isValid()) {
-        event.getPresentation().setEnabled(false);
+        presentation.setEnabled(false);
+        return;
+      }
+
+      Course course = StudyTaskManager.getInstance(project).getCourse();
+      if (course == null) {
+        return;
+      }
+      if (!EduNames.STUDY.equals(course.getCourseMode())) {
+        presentation.setVisible(true);
+        presentation.setEnabled(false);
       }
     }
   }
