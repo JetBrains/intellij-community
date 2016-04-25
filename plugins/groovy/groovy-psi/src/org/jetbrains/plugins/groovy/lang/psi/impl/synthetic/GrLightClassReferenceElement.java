@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,27 +57,11 @@ public class GrLightClassReferenceElement extends LightElement implements GrCode
     return myClassName;
   }
 
-
-  @Override
-  public PsiElement resolve() {
-    return GroovyPsiManager.getInstance(getProject()).findClassWithCache(myClassName, myContext.getResolveScope());
-  }
-
-  @Override
-  public GroovyResolveResult advancedResolve() {
-    return new GroovyResolveResultImpl(resolve(), true);
-  }
-
   @NotNull
   @Override
   public GroovyResolveResult[] multiResolve(boolean incompleteCode) {
-    final GroovyResolveResult resolveResult = advancedResolve();
-    if (resolveResult.getElement() == null) {
-      return new GroovyResolveResult[]{resolveResult};
-    }
-    else {
-      return GroovyResolveResult.EMPTY_ARRAY;
-    }
+    PsiClass clazz = GroovyPsiManager.getInstance(getProject()).findClassWithCache(myClassName, myContext.getResolveScope());
+    return clazz == null ? GroovyResolveResult.EMPTY_ARRAY : new GroovyResolveResult[]{new GroovyResolveResultImpl(clazz, true)};
   }
 
   @NotNull
