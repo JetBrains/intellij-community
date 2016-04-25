@@ -1,0 +1,5 @@
+# this problem does only exist with old java versions, e.g. compile for 1.4 to see it
+
+!matches:[$]assertionsDisabled
+!matches:throw new AssertionError
+

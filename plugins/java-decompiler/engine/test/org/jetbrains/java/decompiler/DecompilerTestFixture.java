@@ -35,10 +35,10 @@ public class DecompilerTestFixture {
   private File tempDir;
   private File targetDir;
   private ConsoleDecompiler decompiler;
+  private boolean deleteTempDirInCleanup;
 
-  public void setUp(String... optionPairs) throws IOException {
-    assertEquals(0, optionPairs.length % 2);
-
+  public static File findTestDataDir() throws IOException {
+    File testDataDir = new File("testData");
     testDataDir = new File("testData");
     if (!isTestDataDir(testDataDir)) testDataDir = new File("community/plugins/java-decompiler/engine/testData");
     if (!isTestDataDir(testDataDir)) testDataDir = new File("plugins/java-decompiler/engine/testData");
@@ -46,10 +46,24 @@ public class DecompilerTestFixture {
     if (!isTestDataDir(testDataDir)) testDataDir = new File("../plugins/java-decompiler/engine/testData");
     assertTrue("current dir: " + new File("").getAbsolutePath(), isTestDataDir(testDataDir));
     testDataDir = testDataDir.getAbsoluteFile();
+    return testDataDir;
+  }
+  
+  public void setUp(String externalTempDir, String... optionPairs) throws IOException {
+    assertEquals(0, optionPairs.length % 2);
 
-    //noinspection SSBasedInspection
-    tempDir = File.createTempFile("decompiler_test_", "_dir");
-    assertTrue(tempDir.delete());
+    testDataDir = findTestDataDir();
+
+    if (externalTempDir == null) {
+      deleteTempDirInCleanup = true;
+      //noinspection SSBasedInspection
+      tempDir = File.createTempFile("decompiler_test_", "_dir");
+      assertTrue(tempDir.delete());
+    }
+    else {
+      deleteTempDirInCleanup = false;
+      tempDir = new File(externalTempDir);
+    }
 
     targetDir = new File(tempDir, "decompiled");
     assertTrue(targetDir.mkdirs());
@@ -68,7 +82,7 @@ public class DecompilerTestFixture {
   }
 
   public void tearDown() {
-    if (tempDir != null) {
+    if (tempDir != null && deleteTempDirInCleanup) {
       delete(tempDir);
     }
   }

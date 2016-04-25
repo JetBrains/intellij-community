@@ -35,7 +35,7 @@ public class BulkDecompilationTest {
   @Before
   public void setUp() throws IOException {
     fixture = new DecompilerTestFixture();
-    fixture.setUp();
+    fixture.setUp(null);
   }
 
   @After

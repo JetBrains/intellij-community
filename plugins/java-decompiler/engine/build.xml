@@ -7,6 +7,7 @@
     <property name="dist" value="${basedir}/fernflower.jar"/>
     <property name="test-src" value="${basedir}/test"/>
     <property name="test-out" value="${basedir}/out/test"/>
+    <property name="test-data" value="${basedir}/testData"/>
   </target>
 
   <!-- external dependencies, adjust to your own -->
@@ -45,7 +46,10 @@
     </javac>
   </target>
 
-  <target name="test" depends="init,test-compile">
+
+  <target name="test" depends="test-stdout,test-normal"/>
+
+  <target name="test-normal" depends="init,test-compile">
     <junit printsummary="true" failureproperty="tests.failed" fork="true">
       <classpath path="${test-out}:${out}"/>
       <classpath refid="junit"/>
@@ -54,6 +58,139 @@
       </batchtest>
     </junit>
     <fail if="tests.failed" message="Tests failed."/>
+  </target>
+
+  <target name="test-stdout" depends="init,test-compile,test-stdout-prepare">
+    <junit printsummary="true" failureproperty="tests.failed" fork="true" >
+      <classpath path="${test-out}:${out}"/>
+      <classpath refid="junit"/>
+      <sysproperty key="stdout-tests.expected.dir" value="${stdout-tests.expected.dir}"/>
+      <sysproperty key="stdout-tests.decompile.dir"   value="${stdout-tests.decompile.dir}"/>
+      <batchtest >
+        <fileset dir="${test-src}" includes="**/StdoutCompareTestRunner.java"/>
+      </batchtest>
+      
+      <!-- look at output
+      <formatter type="plain" usefile="false" />
+      <formatter type="plain" />
+      -->
+    </junit>
+    <!-- clean up (delete tmp dir with all the output) -->
+    <delete includeemptydirs="true" failonerror="false">
+      <fileset dir="${stdout-tests.temp.dir}"/>
+    </delete>
+    
+    <fail if="tests.failed" message="Tests failed."/>
+  </target>
+
+
+  <target name="test-stdout-prepare" depends="init">
+    
+    <!-- here you can skip tests -->
+    <patternset id="stdout-tests.exclude.pattern">
+      <include name="**/*.java"/>
+      
+      <!-- general problems -->
+      <!-- non-compilable: causes private field/method access -->
+      <exclude name="**/PrivateAccess.java"/>
+      <!-- non-compilable: assertion code atm can only handle the throw in the if clause, not in the else clause -->
+      <exclude name="**/assertions/**/*"/>
+      <!-- overloading causes many troubles... -->
+      <exclude name="**/overloading/**/*"/>
+      <!-- non-compilable: renaming fails -->
+      <exclude name="**/renaming/**/*"/>
+      
+      <!-- old java versions -->
+      <!-- non-compilable: (.class field trouble with assert) (remove filter on assertions above too) -->
+      <exclude name="**/java14/assertions/**/*"/>
+      
+    </patternset>
+
+    <tempfile property="stdout-tests.temp.dir" destDir="${java.io.tmpdir}" prefix="decompiler_test_" suffix="_stdout-tests_dir"/>
+    <!--property name="stdout-tests.temp.dir" value="tmp_decompiler_test_stdout-tests_dir"/-->
+    <property name="stdout-tests.expected.dir" value="${stdout-tests.temp.dir}/expected"/>
+    <property name="stdout-tests.decompile.dir" value="${stdout-tests.temp.dir}/decompile"/>
+    
+    <property name="defaultJavaVersion" value="1.8"/>
+    
+    <!-- delete previous outputs if they exist -->
+    <delete includeemptydirs="true" failonerror="false">
+      <fileset dir="${stdout-tests.expected.dir}"/>
+      <fileset dir="${stdout-tests.decompile.dir}"/>
+    </delete>
+    
+    <mkdir dir="${stdout-tests.expected.dir}/classes"/>
+    <mkdir dir="${stdout-tests.expected.dir}/results"/>
+    <mkdir dir="${stdout-tests.decompile.dir}/classes"/>
+    <mkdir dir="${stdout-tests.decompile.dir}/results"/>
+    
+    <!-- compile (default java) the test cases from testData (packages in javadefault) -->
+    <javac srcdir="${test-data}/src-stdout" destdir="${stdout-tests.expected.dir}/classes"
+      source="${defaultJavaVersion}" target="${defaultJavaVersion}"
+      encoding="UTF-8" includeantruntime="false" failonerror="false">
+      <patternset>
+        <patternset includes="javadefault/**/*" />
+        <patternset refid="stdout-tests.exclude.pattern" />
+      </patternset>
+    </javac>
+    <!-- compile (java 1.4) the test cases from testData (packages in java14) -->
+    <javac srcdir="${test-data}/src-stdout" destdir="${stdout-tests.expected.dir}/classes"
+      source="1.4" target="1.4"
+      encoding="UTF-8" includeantruntime="false" failonerror="false">
+      <patternset>
+        <patternset includes="java14/**/*" />
+        <patternset refid="stdout-tests.exclude.pattern" />
+      </patternset>
+    </javac>
+    <!-- compile (java 1.5) the test cases from testData (packages in java15) -->
+    <javac srcdir="${test-data}/src-stdout" destdir="${stdout-tests.expected.dir}/classes"
+      source="1.5" target="1.5"
+      encoding="UTF-8" includeantruntime="false" failonerror="false">
+      <patternset>
+        <patternset includes="java15/**/*" />
+        <patternset refid="stdout-tests.exclude.pattern" />
+      </patternset>
+    </javac>
+    
+    <!-- run test cases from testData, stdout stored to compare later -->
+    <java classname="org.jetbrains.java.decompiler.StdoutCompareTestHelper" fork="true" failonerror="false">
+      <arg value="run"/>
+      <arg value="${stdout-tests.expected.dir}/results"/>
+      <!-- activate assertions to be able to test them -->
+      <jvmarg value="-ea"/>
+        
+      <classpath path="${test-out}"/>
+      <classpath path="${out}"/>
+      <classpath refid="junit"/>
+      <classpath path="${stdout-tests.expected.dir}/classes"/>
+    </java>
+    
+    <!-- decompile the classes -->
+    <java classname="org.jetbrains.java.decompiler.StdoutCompareTestHelper" fork="true" failonerror="false">
+      <arg value="decompile"/>
+      <arg value="${stdout-tests.expected.dir}/classes"/>
+      <arg value="${stdout-tests.decompile.dir}"/>
+        
+      <classpath path="${test-out}"/>
+      <classpath path="${out}"/>
+      <classpath refid="junit"/>
+    </java>
+    <!-- compile the decompiled classes -->
+    <javac srcdir="${stdout-tests.decompile.dir}/decompiled" destdir="${stdout-tests.decompile.dir}/classes"
+      source="${defaultJavaVersion}" target="${defaultJavaVersion}" encoding="UTF-8" includeantruntime="false" failonerror="false">
+    </javac>    
+    <!-- now run the decompiled classes -->
+    <java classname="org.jetbrains.java.decompiler.StdoutCompareTestHelper" fork="true" failonerror="false">
+      <arg value="run"/>
+      <arg value="${stdout-tests.decompile.dir}/results"/>
+      <!-- activate assertions to be able to test them -->
+      <jvmarg value="-ea"/>
+        
+      <classpath path="${test-out}"/>
+      <classpath path="${out}"/>
+      <classpath refid="junit"/>
+      <classpath path="${stdout-tests.decompile.dir}/classes"/>
+    </java>
   </target>
 
 </project>

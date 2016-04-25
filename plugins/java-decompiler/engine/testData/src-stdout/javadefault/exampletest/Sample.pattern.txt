@@ -1,0 +1,17 @@
+# A Pattern file (optional)
+
+# You can match patterns in the decompiled java files with it (e.g. make sure no synthetics)
+
+# You give pattern in java regex syntax, applied to the whole java file (multiline|dotall, '.*?' appended and prepended automatically)
+# NOTE: you can only define a pattern file for a class containing a main method
+# NOTE: each line is stripped of whitespace at begin and end, so use [ ] to match space at end
+
+
+# decompiled java file content must contain (java regex syntax):
+matches:System[.]out[.]println
+
+# decompiled java file must not contain:
+!matches:[$]assertionsDisabled
+
+
+
