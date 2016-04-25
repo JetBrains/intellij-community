@@ -24,6 +24,8 @@ import org.jetbrains.git4idea.http.GitAskPassXmlRpcHandler;
 import org.jetbrains.git4idea.ssh.GitXmlRpcHandlerService;
 import org.jetbrains.git4idea.util.ScriptGenerator;
 
+import java.util.UUID;
+
 /**
  * Provides the authentication mechanism for Git HTTP connections.
  */
@@ -70,14 +72,14 @@ public abstract class GitHttpAuthService extends GitXmlRpcHandlerService<GitHttp
   public class InternalRequestHandlerDelegate implements GitAskPassXmlRpcHandler {
     @NotNull
     @Override
-    public String askUsername(int handler, @NotNull String url) {
-      return getHandler(handler).askUsername(url);
+    public String askUsername(String token, @NotNull String url) {
+      return getHandler(UUID.fromString(token)).askUsername(url);
     }
 
     @NotNull
     @Override
-    public String askPassword(int handler, @NotNull String url) {
-      return getHandler(handler).askPassword(url);
+    public String askPassword(String token, @NotNull String url) {
+      return getHandler(UUID.fromString(token)).askPassword(url);
     }
   }
 
