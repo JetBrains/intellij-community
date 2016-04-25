@@ -36,7 +36,7 @@ java -jar fernflower.jar -dgs=1 c:\Temp\binary\library.jar c:\Temp\binary\Boot.c
 With the exception of mpm and urc the value of 1 means the option is activated, 0 - deactivated. Default 
 value, if any, is given between parentheses.
 
-Typically, the following options will be changed by user, if any: hes, hdc, dgs, mpm, ren, urc 
+Typically, the following options will be changed by user, if any: hes, hdc, dgs, mpm, ren, urc, osc 
 The rest of options can be left as they are: they are aimed at professional reverse engineers.
 
 rbr (1): hide bridge methods
@@ -47,6 +47,9 @@ das (1): decompile assertions
 hes (1): hide empty super invocation
 hdc (1): hide empty default constructor
 dgs (0): decompile generic signatures
+osc (0): add more casts to output to make sure correct methods/fields are selected
+         Fernflower by default tries to create nice looking code, which can be incorrect or even illegal.
+         Casts in original code can lead to illegal access of private fields/methods or wrong field/method selection.
 ner (1): assume return not throwing exceptions
 den (1): decompile enumerations
 rgn (1): remove getClass() invocation, when it is part of a qualified new statement
