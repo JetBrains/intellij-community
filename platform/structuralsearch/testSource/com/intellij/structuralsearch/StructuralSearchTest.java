@@ -3425,10 +3425,15 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                      "  void two() {" +
                      "    System.out.println();" +
                      "  }" +
+                     "  <T> T three() {" +
+                     "    return null;" +
+                     "  }" +
                      "}";
 
     assertEquals("find with simple method pattern", 2, findMatchesCount(source, "void '_a();"));
     assertEquals("find with simple method pattern 2", 1, findMatchesCount(source, "void one();"));
+    assertEquals("find with simple method pattern 3", 3, findMatchesCount(source, "'_t '_a('_pt '_p*);"));
+    assertEquals("find with simple generic method pattern", 1, findMatchesCount(source, "<'_+> '_Type '_Method('_ '_*);"));
     assertEquals("find with simple static initializer pattern", 3, findMatchesCount(source, "static { '_statement*;}"));
   }
 
