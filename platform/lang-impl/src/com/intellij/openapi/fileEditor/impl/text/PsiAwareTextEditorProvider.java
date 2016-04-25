@@ -153,7 +153,10 @@ public class PsiAwareTextEditorProvider extends TextEditorProvider implements As
     // Folding
     final CodeFoldingState foldState = state.getFoldingState();
     if (project != null && foldState != null) {
-      LOG.assertTrue(PsiDocumentManager.getInstance(project).isCommitted(editor.getDocument()));
+      if (!PsiDocumentManager.getInstance(project).isCommitted(editor.getDocument())) {
+        PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+        LOG.error("File should be parsed when changing editor state, otherwise UI might be frozen for a considerable time");
+      }
       editor.getFoldingModel().runBatchFoldingOperation(
         () -> CodeFoldingManager.getInstance(project).restoreFoldingState(editor, foldState)
       );
