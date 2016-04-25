@@ -31,12 +31,12 @@ public class ApplyPatchMergeRequest extends MergeRequest {
   @Nullable private final Project myProject;
 
   @NotNull private final Document myDocument;
-  @NotNull private final AppliedTextPatch myAppliedPatch;
-
   @NotNull private final CharSequence myOriginalContent;
+
+  @NotNull private final AppliedTextPatch myAppliedPatch;
   @NotNull private final String myLocalContent;
 
-  @NotNull private final String myWindowTitle;
+  @Nullable private final String myWindowTitle;
   @NotNull private final String myLocalTitle;
   @NotNull private final String myResultTitle;
   @NotNull private final String myPatchTitle;
@@ -47,7 +47,7 @@ public class ApplyPatchMergeRequest extends MergeRequest {
                                 @NotNull Document document,
                                 @NotNull AppliedTextPatch appliedPatch,
                                 @NotNull String localContent,
-                                @NotNull String windowTitle,
+                                @Nullable String windowTitle,
                                 @NotNull String localTitle,
                                 @NotNull String resultTitle,
                                 @NotNull String patchTitle,

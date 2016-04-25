@@ -19,17 +19,14 @@ import com.intellij.diff.DiffContentFactory;
 import com.intellij.diff.DiffContext;
 import com.intellij.diff.FrameDiffTool;
 import com.intellij.diff.contents.DocumentContent;
-import com.intellij.diff.merge.MergeContext;
-import com.intellij.diff.merge.MergeResult;
-import com.intellij.diff.merge.MergeTool;
-import com.intellij.diff.merge.MergeTool.ToolbarComponents;
-import com.intellij.diff.merge.MergeUtil;
+import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.tools.fragmented.LineNumberConvertor;
 import com.intellij.diff.tools.simple.SimpleDiffViewer;
 import com.intellij.diff.tools.util.DiffSplitter;
 import com.intellij.diff.tools.util.StatusPanel;
 import com.intellij.diff.util.*;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.DocumentReferenceManager;
 import com.intellij.openapi.command.undo.UndoManager;
@@ -41,7 +38,6 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.DocumentImpl;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.util.Disposer;
@@ -53,13 +49,14 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-class ApplyPatchMergeViewer implements MergeTool.MergeViewer {
-  @NotNull private final MergeContext myMergeContext;
-  @NotNull private final ApplyPatchMergeRequest myMergeRequest;
+class ApplyPatchViewer implements Disposable {
+  @NotNull private final ApplyPatchDiffRequest myPatchRequest;
+
+  @Nullable private final Project myProject;
+  @NotNull private final Document myResultDocument;
 
   @NotNull private final MySimpleDiffViewer myViewer;
 
@@ -71,24 +68,28 @@ class ApplyPatchMergeViewer implements MergeTool.MergeViewer {
 
   @NotNull private final List<ApplyPatchChange> myPatchChanges = new ArrayList<>();
 
-  public ApplyPatchMergeViewer(@NotNull MergeContext context, @NotNull ApplyPatchMergeRequest request) {
-    myMergeContext = context;
-    myMergeRequest = request;
+  public ApplyPatchViewer(@NotNull DiffContext context,
+                          @NotNull ApplyPatchDiffRequest patchRequest,
+                          @Nullable Document resultDocument) {
+    myPatchRequest = patchRequest;
 
-    Project project = myMergeRequest.getProject();
-    VirtualFile file = FileDocumentManager.getInstance().getFile(myMergeRequest.getDocument());
+    myProject = context.getProject();
+    myResultDocument = resultDocument != null ? resultDocument : new DocumentImpl("");
+
+    VirtualFile file = patchRequest.getHighlightFile();
     DiffContentFactory contentFactory = DiffContentFactory.getInstance();
-    DocumentContent localContent = contentFactory.create(myMergeRequest.getLocalContent(), file);
-    DocumentContent mergedContent = contentFactory.create(project, myMergeRequest.getDocument());
+    DocumentContent localContent = contentFactory.create(myPatchRequest.getLocalContent(), file);
+    DocumentContent mergedContent = contentFactory.create(myProject, myResultDocument, file);
 
-    MergeUtil.ProxyDiffContext diffContext = new MergeUtil.ProxyDiffContext(myMergeContext);
-    SimpleDiffRequest diffRequest = new SimpleDiffRequest(myMergeRequest.getTitle(), localContent, mergedContent,
-                                                          myMergeRequest.getLocalTitle(), myMergeRequest.getResultTitle());
-    myViewer = new MySimpleDiffViewer(diffContext, diffRequest);
+    SimpleDiffRequest diffRequest = new SimpleDiffRequest(myPatchRequest.getTitle(), localContent, mergedContent,
+                                                          myPatchRequest.getLocalTitle(), myPatchRequest.getResultTitle());
+    if (resultDocument == null) diffRequest.putUserData(DiffUserDataKeys.FORCE_READ_ONLY, true);
+
+    myViewer = new MySimpleDiffViewer(context, diffRequest);
     myResultEditor = myViewer.getEditor2();
 
-    myPatchEditor = DiffUtil.createEditor(new DocumentImpl("", true), project, true, true);
-    DiffUtil.setEditorHighlighter(project, myPatchEditor, mergedContent);
+    myPatchEditor = DiffUtil.createEditor(new DocumentImpl("", true), myProject, true, true);
+    DiffUtil.setEditorHighlighter(myProject, myPatchEditor, mergedContent);
     DiffUtil.disableBlitting(myPatchEditor);
     myPatchEditor.getGutterComponentEx().setForceShowRightFreePaintersArea(true);
 
@@ -106,59 +107,24 @@ class ApplyPatchMergeViewer implements MergeTool.MergeViewer {
   }
 
   @NotNull
-  @Override
   public JComponent getComponent() {
     return myPatchSplitter;
   }
 
   @Nullable
-  @Override
   public JComponent getPreferredFocusedComponent() {
     return myViewer.getPreferredFocusedComponent();
-  }
-
-  @NotNull
-  @Override
-  public ToolbarComponents init() {
-    initPatchEditor();
-
-    ToolbarComponents components = new ToolbarComponents();
-
-    FrameDiffTool.ToolbarComponents init = myViewer.init();
-    components.statusPanel = myStatusPanel;
-    components.toolbarActions = init.toolbarActions;
-
-    components.closeHandler = new BooleanGetter() {
-      @Override
-      public boolean get() {
-        return MergeUtil.showExitWithoutApplyingChangesDialog(ApplyPatchMergeViewer.this, myMergeRequest, myMergeContext);
-      }
-    };
-    return components;
-  }
-
-  @Nullable
-  @Override
-  public Action getResolveAction(@NotNull final MergeResult result) {
-    if (result == MergeResult.LEFT || result == MergeResult.RIGHT) return null;
-
-    String caption = MergeUtil.getResolveActionTitle(result, myMergeRequest, myMergeContext);
-    return new AbstractAction(caption) {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        if (result == MergeResult.CANCEL &&
-            !MergeUtil.showExitWithoutApplyingChangesDialog(ApplyPatchMergeViewer.this, myMergeRequest, myMergeContext)) {
-          return;
-        }
-        myMergeContext.finishMerge(result);
-      }
-    };
   }
 
   @Override
   public void dispose() {
     EditorFactory.getInstance().releaseEditor(myPatchEditor);
     Disposer.dispose(myViewer);
+  }
+
+  @NotNull
+  public StatusPanel getStatusPanel() {
+    return myStatusPanel;
   }
 
   @NotNull
@@ -176,29 +142,27 @@ class ApplyPatchMergeViewer implements MergeTool.MergeViewer {
     return myPatchEditor;
   }
 
-
-  private void initPatchEditor() {
-    Project project = myMergeContext.getProject();
+  @NotNull
+  public FrameDiffTool.ToolbarComponents doInit() {
     Document patchDocument = myPatchEditor.getDocument();
-    Document resultDocument = myMergeRequest.getDocument();
 
 
     PatchChangeBuilder builder = new PatchChangeBuilder();
-    builder.exec(myMergeRequest.getPatch().getHunks(), myMergeRequest.getLocalContent());
+    builder.exec(myPatchRequest.getPatch().getHunks(), myPatchRequest.getLocalContent());
 
 
-    DiffUtil.executeWriteCommand(resultDocument, project, "Init merge content", () -> {
-      resultDocument.setText(builder.getPatchApplyResult());
+    DiffUtil.executeWriteCommand(myResultDocument, myProject, "Init merge content", () -> {
+      myResultDocument.setText(builder.getPatchApplyResult());
 
-      UndoManager undoManager = project != null ? UndoManager.getInstance(project) : UndoManager.getGlobalInstance();
+      UndoManager undoManager = myProject != null ? UndoManager.getInstance(myProject) : UndoManager.getGlobalInstance();
       if (undoManager != null) {
-        DocumentReference ref = DocumentReferenceManager.getInstance().create(resultDocument);
+        DocumentReference ref = DocumentReferenceManager.getInstance().create(myResultDocument);
         undoManager.nonundoableActionPerformed(ref, false);
       }
     });
 
-
     patchDocument.setText(builder.getPatchContent());
+
 
     LineNumberConvertor convertor = builder.getLineConvertor();
     myPatchEditor.getGutterComponentEx().setLineNumberConvertor(convertor.createConvertor1(), convertor.createConvertor2());
@@ -224,6 +188,11 @@ class ApplyPatchMergeViewer implements MergeTool.MergeViewer {
     myPatchEditor.getScrollingModel().addVisibleAreaListener(areaListener);
 
     myResultEditor.getDocument().addDocumentListener(new MyDocumentListener(), this);
+
+
+    FrameDiffTool.ToolbarComponents init = myViewer.init();
+    init.statusPanel = getStatusPanel();
+    return init;
   }
 
   private class MyDocumentListener implements DocumentListener {
@@ -317,9 +286,9 @@ class ApplyPatchMergeViewer implements MergeTool.MergeViewer {
   }
 
   class MySimpleDiffViewer extends SimpleDiffViewer {
-    private JComponent myPatchTitle;
+    private JComponent myPatchTitleComponent;
 
-    public MySimpleDiffViewer(@NotNull DiffContext context, @NotNull SimpleDiffRequest request) {
+    public MySimpleDiffViewer(@NotNull DiffContext context, @NotNull DiffRequest request) {
       super(context, request);
     }
 
@@ -327,7 +296,7 @@ class ApplyPatchMergeViewer implements MergeTool.MergeViewer {
     @Override
     protected List<JComponent> createTitles() {
       List<JComponent> requestTitles = DiffUtil.createTextTitles(myRequest, getEditors());
-      JComponent patchTitleLabel = DiffUtil.createTitle(myMergeRequest.getPatchTitle(), null, null, false);
+      JComponent patchTitleLabel = DiffUtil.createTitle(myPatchRequest.getPatchTitle(), null, null, false);
       assert requestTitles.size() == 2;
 
       List<JComponent> titles = ContainerUtil.append(requestTitles, patchTitleLabel);
@@ -335,12 +304,12 @@ class ApplyPatchMergeViewer implements MergeTool.MergeViewer {
 
       JComponent title1 = syncTitles.get(0);
       JComponent title2 = syncTitles.get(1);
-      myPatchTitle = syncTitles.get(2);
+      myPatchTitleComponent = syncTitles.get(2);
       return ContainerUtil.list(title1, title2);
     }
 
     public JComponent getPatchTitle() {
-      return myPatchTitle;
+      return myPatchTitleComponent;
     }
   }
 }

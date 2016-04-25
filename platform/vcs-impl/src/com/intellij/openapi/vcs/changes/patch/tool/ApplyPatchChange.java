@@ -44,7 +44,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 class ApplyPatchChange {
-  @NotNull private final ApplyPatchMergeViewer myViewer;
+  @NotNull private final ApplyPatchViewer myViewer;
 
   @NotNull private final LineRange myPatchDeletionRange;
   @NotNull private final LineRange myPatchInsertionRange;
@@ -55,7 +55,7 @@ class ApplyPatchChange {
   @Nullable private LineRange myAppliedTo;
   private boolean myIsValid = true;
 
-  public ApplyPatchChange(@NotNull ApplyPatchMergeViewer viewer, @NotNull PatchChangeBuilder.Hunk hunk) {
+  public ApplyPatchChange(@NotNull ApplyPatchViewer viewer, @NotNull PatchChangeBuilder.Hunk hunk) {
     myViewer = viewer;
     myPatchDeletionRange = hunk.getPatchDeletionRange();
     myPatchInsertionRange = hunk.getPatchInsertionRange();
