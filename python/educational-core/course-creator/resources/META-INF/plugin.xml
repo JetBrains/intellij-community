@@ -55,7 +55,6 @@
       <action id="ShowPreview" class="com.jetbrains.edu.coursecreator.actions.CCShowPreview">
         <add-to-group group-id="EditorTabPopupMenu"/>
       </action>
-      <action id="DeleteAllPlaceholders" class="com.jetbrains.edu.coursecreator.actions.CCDeleteAllAnswerPlaceholdersAction"/>
       <action id="PackCourse" class="com.jetbrains.edu.coursecreator.actions.CCCreateCourseArchive">
         <add-to-group group-id="FileMenu" relative-to-action="FileMainSettingsGroup" anchor="before"/>
       </action>
@@ -73,7 +72,7 @@
     <group id="AnswerPlaceholderGroup">
       <action id="EditAnswerPlaceholder" class="com.jetbrains.edu.coursecreator.actions.CCEditAnswerPlaceholder"/>
       <action id="AddTaskWindow" class="com.jetbrains.edu.coursecreator.actions.CCAddAnswerPlaceholder"/>
-      <reference ref="DeleteAllPlaceholders"/>
+      <action id="DeleteAllPlaceholders" class="com.jetbrains.edu.coursecreator.actions.CCDeleteAllAnswerPlaceholdersAction"/>
       <separator/>
       <add-to-group group-id="EditorPopupMenu" anchor="first"/>
     </group>
