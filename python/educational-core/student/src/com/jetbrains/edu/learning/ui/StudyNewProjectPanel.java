@@ -5,6 +5,8 @@ import com.intellij.facet.ui.ValidationResult;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -13,8 +15,8 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
-import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.StudyUtils;
+import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import com.jetbrains.edu.learning.stepic.CourseInfo;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
@@ -101,7 +103,9 @@ public class StudyNewProjectPanel{
             return doFinalStep(new Runnable() {
               public void run() {
                 if ("Add local course".equals(selectedValue)) {
-                  FileChooser.chooseFile(fileChooser, null, null,
+
+                  Project[] projects = ProjectManager.getInstance().getOpenProjects();
+                  FileChooser.chooseFile(fileChooser, null, projects.length == 0 ? null : projects[0].getBaseDir(),
                                          new Consumer<VirtualFile>() {
                                            @Override
                                            public void consume(VirtualFile file) {
