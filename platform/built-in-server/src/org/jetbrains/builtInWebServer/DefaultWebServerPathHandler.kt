@@ -41,6 +41,8 @@ private class DefaultWebServerPathHandler : WebServerPathHandler() {
                        projectName: String,
                        decodedRawPath: String,
                        isCustomHost: Boolean): Boolean {
+    val extraHttpHeaders = validateToken(request, context.channel(), false) ?: return true
+
     val channel = context.channel()
     val pathToFileManager = WebServerPathToFileManager.getInstance(project)
     var pathInfo = pathToFileManager.pathToInfoCache.getIfPresent(path)
@@ -48,7 +50,7 @@ private class DefaultWebServerPathHandler : WebServerPathHandler() {
       pathInfo = pathToFileManager.doFindByRelativePath(path)
       if (pathInfo == null) {
         if (path.isEmpty()) {
-          HttpResponseStatus.NOT_FOUND.send(channel, request, "Index file doesn't exist.")
+          HttpResponseStatus.NOT_FOUND.send(channel, request, "Index file doesn't exist.", extraHttpHeaders)
           return true
         }
         else {
@@ -71,13 +73,13 @@ private class DefaultWebServerPathHandler : WebServerPathHandler() {
       }
 
       if (indexFile == null && indexVirtualFile == null) {
-        HttpResponseStatus.NOT_FOUND.send(channel, request)
+        HttpResponseStatus.NOT_FOUND.send(channel, request, extraHeaders = extraHttpHeaders)
         return true
       }
 
       // we must redirect only after index file check to not expose directory status
       if (!endsWithSlash(decodedRawPath)) {
-        redirectToDirectory(request, channel, if (isCustomHost) path else "$projectName/$path")
+        redirectToDirectory(request, channel, if (isCustomHost) path else "$projectName/$path", extraHttpHeaders)
         return true
       }
 
@@ -86,7 +88,8 @@ private class DefaultWebServerPathHandler : WebServerPathHandler() {
       pathToFileManager.pathToInfoCache.put(path, pathInfo)
     }
 
-    if (request.origin == null && request.referrer == null && request.isRegularBrowser() && !canBeAccessedDirectly(pathInfo.name)) {
+    // if extraHttpHeaders is not empty, it means that we get request wih token in the query
+    if (extraHttpHeaders.isEmpty && request.origin == null && request.referrer == null && request.isRegularBrowser() && !canBeAccessedDirectly(pathInfo.name)) {
       HttpResponseStatus.NOT_FOUND.send(context.channel(), request)
       return true
     }
@@ -99,7 +102,7 @@ private class DefaultWebServerPathHandler : WebServerPathHandler() {
         // FallbackResource feature in action, /login requested, /index.php retrieved, we must not redirect /login to /login/
         val parentPath = getParentPath(pathInfo.path)
         if (parentPath != null && endsWithName(path, PathUtilRt.getFileName(parentPath))) {
-          redirectToDirectory(request, channel, if (isCustomHost) path else "$projectName/$path")
+          redirectToDirectory(request, channel, if (isCustomHost) path else "$projectName/$path", extraHttpHeaders)
           return true
         }
       }
@@ -112,7 +115,7 @@ private class DefaultWebServerPathHandler : WebServerPathHandler() {
     val canonicalPath = if (indexUsed) "$path/${pathInfo.name}" else path
     for (fileHandler in WebServerFileHandler.EP_NAME.extensions) {
       LOG.catchAndLog {
-        if (fileHandler.process(pathInfo!!, canonicalPath, project, request, channel, if (isCustomHost) null else projectName)) {
+        if (fileHandler.process(pathInfo!!, canonicalPath, project, request, channel, if (isCustomHost) null else projectName, extraHttpHeaders)) {
           return true
         }
       }

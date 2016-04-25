@@ -20,10 +20,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtil
 import io.netty.channel.Channel
 import io.netty.channel.ChannelHandlerContext
-import io.netty.handler.codec.http.FullHttpRequest
-import io.netty.handler.codec.http.HttpHeaderNames
-import io.netty.handler.codec.http.HttpRequest
-import io.netty.handler.codec.http.HttpResponseStatus
+import io.netty.handler.codec.http.*
 import org.jetbrains.io.host
 import org.jetbrains.io.response
 import org.jetbrains.io.send
@@ -49,9 +46,12 @@ abstract class WebServerPathHandler {
                        isCustomHost: Boolean): Boolean
 }
 
-fun redirectToDirectory(request: HttpRequest, channel: Channel, path: String) {
-  val response = HttpResponseStatus.MOVED_PERMANENTLY.response()
+internal fun redirectToDirectory(request: HttpRequest, channel: Channel, path: String, extraHttpHeader: HttpHeaders?) {
+  val response = HttpResponseStatus.MOVED_PERMANENTLY.response(request)
   val url = VfsUtil.toUri("${channel.uriScheme}://${request.host!!}/$path/")!!
   response.headers().add(HttpHeaderNames.LOCATION, url.toASCIIString())
-  response.send(channel, request)
+  extraHttpHeader?.let {
+
+  }
+  response.send(channel, request, extraHttpHeader)
 }

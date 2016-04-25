@@ -189,17 +189,13 @@ private fun doProcess(urlDecoder: QueryStringDecoder, request: FullHttpRequest, 
 
   if (isEmptyPath) {
     // we must redirect "jsdebug" to "jsdebug/" as nginx does, otherwise browser will treat it as a file instead of a directory, so, relative path will not work
-    redirectToDirectory(request, context.channel(), projectName)
+    redirectToDirectory(request, context.channel(), projectName, null)
     return true
   }
 
   val path = toIdeaPath(decodedPath, offset)
   if (path == null) {
     HttpResponseStatus.BAD_REQUEST.orInSafeMode(HttpResponseStatus.NOT_FOUND).send(context.channel(), request)
-    return true
-  }
-
-  if (!validateToken(request, context.channel(), urlDecoder)) {
     return true
   }
 
@@ -213,31 +209,37 @@ private fun doProcess(urlDecoder: QueryStringDecoder, request: FullHttpRequest, 
   return false
 }
 
-private fun validateToken(request: HttpRequest, channel: Channel, urlDecoder: QueryStringDecoder): Boolean {
+internal fun validateToken(request: HttpRequest, channel: Channel, redirectToSetCookie: Boolean): HttpHeaders? {
   val cookieString = request.headers().get(HttpHeaderNames.COOKIE)
   if (cookieString != null) {
     val cookies = ServerCookieDecoder.STRICT.decode(cookieString)
     for (cookie in cookies) {
       if (cookie.name() == STANDARD_COOKIE.name()) {
         if (cookie.value() == STANDARD_COOKIE.value()) {
-          return true
+          return EmptyHttpHeaders.INSTANCE
         }
         break
       }
     }
   }
 
+  val urlDecoder = QueryStringDecoder(request.uri())
   // we must check referrer - if html cached, browser will send request without query
   val token = urlDecoder.parameters().get(TOKEN_PARAM_NAME)?.firstOrNull() ?: request.referrer?.let { QueryStringDecoder(it).parameters().get(TOKEN_PARAM_NAME)?.firstOrNull() }
   val url = "${channel.uriScheme}://${request.host!!}${urlDecoder.path()}"
   if (token != null && tokens.getIfPresent(token) != null) {
     tokens.invalidate(token)
-    // we redirect because it is not easy to change and maintain all places where we send response
-    val response = HttpResponseStatus.TEMPORARY_REDIRECT.response()
-    response.headers().add(HttpHeaderNames.LOCATION, url)
-    response.headers().set(HttpHeaderNames.SET_COOKIE, ServerCookieEncoder.STRICT.encode(STANDARD_COOKIE))
-    response.send(channel, request)
-    return true
+    if (redirectToSetCookie) {
+      // we redirect because it is not easy to change and maintain all places where we send response
+      val response = HttpResponseStatus.TEMPORARY_REDIRECT.response(request)
+      response.headers().add(HttpHeaderNames.LOCATION, url)
+      response.headers().set(HttpHeaderNames.SET_COOKIE, ServerCookieEncoder.STRICT.encode(STANDARD_COOKIE) + "; SameSite=strict")
+      response.send(channel, request)
+      return response.headers()
+    }
+    else {
+      return DefaultHttpHeaders().set(HttpHeaderNames.SET_COOKIE, ServerCookieEncoder.STRICT.encode(STANDARD_COOKIE) + "; SameSite=strict")
+    }
   }
 
   SwingUtilities.invokeAndWait {
@@ -254,7 +256,7 @@ private fun validateToken(request: HttpRequest, channel: Channel, urlDecoder: Qu
   }
 
   HttpResponseStatus.UNAUTHORIZED.orInSafeMode(HttpResponseStatus.NOT_FOUND).send(channel, request)
-  return false
+  return null
 }
 
 private fun toIdeaPath(decodedPath: String, offset: Int): String? {
