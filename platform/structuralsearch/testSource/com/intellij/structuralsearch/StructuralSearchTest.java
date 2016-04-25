@@ -3467,4 +3467,16 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("find parameterized method calls 3", 3, findMatchesCount(source, "'_a.<'_b>'_c('_d*)"));
     assertEquals("find parameterized method calls 4", 4, findMatchesCount(source, "'_a.<'_b+>'_c('_d*)"));
   }
+
+  public void testFindDiamondTypes() {
+    String source = "class A<X, Y> {}" +
+                    "class B {{" +
+                    "  A<Integer, String> a1 = new A<>();" +
+                    "  A<Integer, String> a2 = new A<Integer, String>();" +
+                    "  A<Double, Boolean> a3 = new A<>();" +
+                    "  A<Double, Boolean> a4 = new A<>();" +
+                    "}}";
+    assertEquals("find diamond new expressions", 3, findMatchesCount(source, "new A<>()"));
+    assertEquals("find parameterized new expressions", 2, findMatchesCount(source, "new A<Integer, String>()"));
+  }
 }
