@@ -132,7 +132,7 @@ fun HttpResponseStatus.send(channel: Channel, request: HttpRequest? = null, desc
 }
 
 fun HttpResponseStatus.orInSafeMode(safeStatus: HttpResponseStatus): HttpResponseStatus {
-  if (!Registry.`is`("ide.http.server.response.actual.status", true) || (ApplicationManager.getApplication()?.isUnitTestMode ?: false)) {
+  if (Registry.`is`("ide.http.server.response.actual.status", true) || (ApplicationManager.getApplication()?.isUnitTestMode ?: false)) {
     return this
   }
   else {
