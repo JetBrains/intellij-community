@@ -15,6 +15,8 @@
  */
 package com.intellij.psi.impl;
 
+import com.intellij.openapi.util.RecursionGuard;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -54,6 +56,7 @@ class ScopedClassHierarchy {
       return o1.getManager().areElementsEquivalent(o1, o2);
     }
   };
+  private static final RecursionGuard ourGuard = RecursionManager.createGuard("ScopedClassHierarchy");
   private final PsiClass myPlaceClass;
   private final GlobalSearchScope myResolveScope;
   private volatile Map<PsiClass, PsiClassType.ClassResolveResult> mySupersWithSubstitutors;
@@ -117,8 +120,11 @@ class ScopedClassHierarchy {
     Map<PsiClass, PsiClassType.ClassResolveResult> map = hierarchy.mySupersWithSubstitutors;
     if (map == null) {
       map = ContainerUtil.newTroveMap(CLASS_HASHING_STRATEGY);
+      RecursionGuard.StackStamp stamp = ourGuard.markStack();
       hierarchy.visitType(JavaPsiFacade.getElementFactory(derivedClass.getProject()).createType(derivedClass, PsiSubstitutor.EMPTY), map);
-      hierarchy.mySupersWithSubstitutors = map;
+      if (stamp.mayCacheNow()) {
+        hierarchy.mySupersWithSubstitutors = map;
+      }
     }
     PsiClassType.ClassResolveResult resolveResult = map.get(superClass);
     if (resolveResult == null) return null;
@@ -147,6 +153,7 @@ class ScopedClassHierarchy {
   List<PsiClassType.ClassResolveResult> getImmediateSupersWithCapturing() {
     List<PsiClassType.ClassResolveResult> list = myImmediateSupersWithCapturing;
     if (list == null) {
+      RecursionGuard.StackStamp stamp = ourGuard.markStack();
       list = ContainerUtil.newArrayList();
       for (PsiClassType type : myPlaceClass.getSuperTypes()) {
         PsiClassType corrected = PsiClassImplUtil.correctType(type, myResolveScope);
@@ -158,7 +165,9 @@ class ScopedClassHierarchy {
 
         list.add(result);
       }
-      myImmediateSupersWithCapturing = list;
+      if (stamp.mayCacheNow()) {
+        myImmediateSupersWithCapturing = list;
+      }
     }
     return list;
   }
