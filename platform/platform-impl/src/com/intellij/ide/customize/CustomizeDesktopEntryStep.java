@@ -17,7 +17,6 @@ package com.intellij.ide.customize;
 
 import com.intellij.ide.actions.CreateDesktopEntryAction;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.IconLoader;
@@ -65,12 +64,10 @@ public class CustomizeDesktopEntryStep extends AbstractCustomizeWizardStep {
 
     add(panel, BorderLayout.CENTER);
 
-    myCreateEntryCheckBox.addChangeListener(e -> {
-      myGlobalEntryCheckBox.setEnabled(myCreateEntryCheckBox.isSelected());
-      myGlobalEntryCheckBox.setSelected(myCreateEntryCheckBox.isSelected() && !PathManager.getHomePath().startsWith("/home"));
-    });
+    myCreateEntryCheckBox.addChangeListener(e -> myGlobalEntryCheckBox.setEnabled(myCreateEntryCheckBox.isSelected()));
+    myCreateEntryCheckBox.setSelected(!"true".equals(System.getProperty("idea.debug.mode")));
 
-    myCreateEntryCheckBox.setSelected(true);
+    myGlobalEntryCheckBox.setSelected(false);
   }
 
   @Override

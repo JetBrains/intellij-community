@@ -32,7 +32,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -164,22 +163,18 @@ public class InitialConfigurationDialog extends DialogWrapper {
     init();
 
     final boolean canCreateLauncherScript = canCreateLauncherScript();
-    myCreateScriptCheckbox.setVisible(canCreateLauncherScript);
-    myCreateScriptCheckbox.setSelected(canCreateLauncherScript);
     myCreateScriptPanel.setVisible(canCreateLauncherScript);
+    myCreateScriptCheckbox.setSelected(false);
     if (canCreateLauncherScript) {
       myScriptPathTextField.setText(CreateLauncherScriptAction.defaultScriptPath());
     }
 
     final boolean canCreateDesktopEntry = canCreateDesktopEntry();
-    myCreateEntryCheckBox.setVisible(canCreateDesktopEntry);
-    myCreateEntryCheckBox.setSelected(canCreateDesktopEntry);
     myCreateEntryPanel.setVisible(canCreateDesktopEntry);
-    if (canCreateDesktopEntry) {
-      myGlobalEntryCheckBox.setSelected(!PathManager.getHomePath().startsWith("/home"));
-    }
+    myCreateEntryCheckBox.setSelected(canCreateDesktopEntry);
+    myGlobalEntryCheckBox.setSelected(false);
 
-    myPreferencesLabel.setText("You can use "+ CommonBundle.settingsActionPath() + " to configure any of these settings later.");
+    myPreferencesLabel.setText("You can use " + CommonBundle.settingsActionPath() + " to configure any of these settings later.");
 
     Disposer.register(myDisposable, new Disposable() {
       @Override
