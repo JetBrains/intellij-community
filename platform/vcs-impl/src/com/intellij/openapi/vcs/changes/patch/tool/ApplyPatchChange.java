@@ -72,13 +72,11 @@ class ApplyPatchChange {
   }
 
   private void installHighlighters() {
-    Color color = getStatusColor();
-
-    createStatusHighlighter(myViewer.getPatchEditor(), myPatchDeletionRange.start, myPatchInsertionRange.end, color);
+    createStatusHighlighter(myViewer.getPatchEditor(), myPatchDeletionRange.start, myPatchInsertionRange.end);
 
     if (myAppliedTo != null) {
       EditorEx resultEditor = myViewer.getResultEditor();
-      createStatusHighlighter(resultEditor, myAppliedTo.start, myAppliedTo.end, color);
+      createStatusHighlighter(resultEditor, myAppliedTo.start, myAppliedTo.end);
 
       myHighlighters.addAll(DiffDrawUtil.createLineMarker(resultEditor, myAppliedTo.start, myAppliedTo.end,
                                                           TextDiffType.MODIFIED, true));
@@ -92,7 +90,10 @@ class ApplyPatchChange {
     myHighlighters.clear();
   }
 
-  private void createStatusHighlighter(@NotNull EditorEx editor, int line1, int line2, @NotNull Color color) {
+  private void createStatusHighlighter(@NotNull EditorEx editor, int line1, int line2) {
+    Color color = getStatusColor();
+    String tooltip = getStatusText();
+
     Document document = editor.getDocument();
     MarkupModelEx markupModel = editor.getMarkupModel();
     TextRange textRange = DiffUtil.getLinesRange(document, line1, line2);
@@ -101,7 +102,7 @@ class ApplyPatchChange {
                                                                    HighlighterLayer.LAST, null, HighlighterTargetArea.LINES_IN_RANGE);
 
     PairConsumer<Editor, MouseEvent> clickHandler = myAppliedTo != null ? (e, event) -> handleStatusClick(editor, event) : null;
-    highlighter.setLineMarkerRenderer(LineStatusMarkerRenderer.createRenderer(line1, line2, color, clickHandler));
+    highlighter.setLineMarkerRenderer(LineStatusMarkerRenderer.createRenderer(line1, line2, color, tooltip, clickHandler));
 
     myHighlighters.add(highlighter);
   }
@@ -123,6 +124,20 @@ class ApplyPatchChange {
                                                        topShift);
     DiffUtil.scrollToPoint(resultEditor, new Point(0, offsets[0]), false);
     DiffUtil.scrollToPoint(patchEditor, new Point(0, offsets[1]), false);
+  }
+
+  @NotNull
+  private String getStatusText() {
+    switch (myStatus) {
+      case ALREADY_APPLIED:
+        return "Already applied";
+      case EXACTLY_APPLIED:
+        return "Automatically applied";
+      case NOT_APPLIED:
+        return "Not applied";
+      default:
+        throw new IllegalStateException();
+    }
   }
 
   @NotNull

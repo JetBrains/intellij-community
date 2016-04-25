@@ -1461,16 +1461,19 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       toolTip = renderer.getTooltipText();
     }
     else {
-      ActiveGutterRenderer lineRenderer = getActiveRendererByMouseEvent(e);
-      if (lineRenderer == null) {
-        TextAnnotationGutterProvider provider = getProviderAtPoint(e.getPoint());
-        if (provider != null) {
-          final int line = getLineNumAtPoint(e.getPoint());
-          toolTip = provider.getToolTip(line, myEditor);
-          if (!Comparing.equal(toolTip, myLastGutterToolTip)) {
-            controller.cancelTooltip(GUTTER_TOOLTIP_GROUP, e, true);
-            myLastGutterToolTip = toolTip;
-          }
+      TextAnnotationGutterProvider provider = getProviderAtPoint(e.getPoint());
+      if (provider != null) {
+        final int line = getLineNumAtPoint(e.getPoint());
+        toolTip = provider.getToolTip(line, myEditor);
+        if (!Comparing.equal(toolTip, myLastGutterToolTip)) {
+          controller.cancelTooltip(GUTTER_TOOLTIP_GROUP, e, true);
+          myLastGutterToolTip = toolTip;
+        }
+      }
+      else {
+        ActiveGutterRenderer lineRenderer = getActiveRendererByMouseEvent(e);
+        if (lineRenderer != null) {
+          toolTip = lineRenderer.getTooltipText();
         }
       }
     }

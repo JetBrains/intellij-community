@@ -81,7 +81,7 @@ public abstract class LineStatusMarkerRenderer implements ActiveGutterRenderer {
   }
 
   @NotNull
-  public static LineMarkerRenderer createRenderer(int line1, int line2, @NotNull Color color,
+  public static LineMarkerRenderer createRenderer(int line1, int line2, @NotNull Color color, @Nullable String tooltip,
                                                   @Nullable PairConsumer<Editor, MouseEvent> action) {
     return new ActiveGutterRenderer() {
       @Override
@@ -96,9 +96,15 @@ public abstract class LineStatusMarkerRenderer implements ActiveGutterRenderer {
         }
       }
 
+      @Nullable
+      @Override
+      public String getTooltipText() {
+        return tooltip;
+      }
+
       @Override
       public boolean canDoAction(MouseEvent e) {
-        return action != null && isInsideMarkerArea(e);
+        return isInsideMarkerArea(e);
       }
 
       @Override
