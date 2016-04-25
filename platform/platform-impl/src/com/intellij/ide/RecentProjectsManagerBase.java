@@ -125,6 +125,11 @@ public abstract class RecentProjectsManagerBase implements ProjectManagerListene
     }
   }
 
+  public boolean hasPath(String path) {
+    final State state = getState();
+    return state != null && state.recentPaths.contains(path);
+  }
+
   public String getLastProjectPath() {
     synchronized (myStateLock) {
       return myState.lastPath;
