@@ -30,7 +30,7 @@ import java.util.ResourceBundle;
 public class IdeBundle {
   private static Reference<ResourceBundle> ourBundle;
 
-  @NonNls private static final String BUNDLE = "messages.IdeBundle";
+  @NonNls public static final String BUNDLE = "messages.IdeBundle";
 
   private IdeBundle() {
   }
