@@ -1,5 +1,3 @@
-import org.apache.tools.ant.taskdefs.condition.Os
-
 plugins {
   id "com.jetbrains.python.envs" version "0.0.6"
 }
@@ -12,31 +10,22 @@ envs {
   packages = ["pip", "setuptools"]
   _64Bits = true
 
-  conda "python26", "2.6", ["nose", "pytest", "ipython==0.11", "behave", "lettuce"]
-  textfile "python26/tags.txt", "nose\npytest\nipython\nipython011\nbehave\nlettuce\npackaging"
+  conda "django19", "2.7", ["django==1.9", "tox", "nose", "pytest", "behave", "lettuce"]
+  textfile "django19/tags.txt", "django\nnose\npytest\nbehave\nlettuce\npackaging\ntox"
 
-  conda "django19", "2.7", ["django==1.9"]
-  textfile "django19/tags.txt", "django"
-
-  conda "django16", "2.7", ["django==1.6"]
+  conda "django18", "2.7", ["django==1.6"]
   textfile "django16/tags.txt", "django"
 
   conda "django17", "2.7", ["django==1.7"]
-  textfile "django17/tags.txt", "django"
-
-  conda "tox", "2.7", ["tox", "nose", "pytest"]
-  textfile "tox/tags.txt", "tox"
-
-  conda "ipython12", "2.7", ["ipython==0.12"]
-  textfile "ipython12/tags.txt", "\"ipython\nipython012\nskeletons"
-
+  textfile "django17/tags.txt", "django\nskeletons"
+  
   conda "python34", "3.4", ["ipython==2.1", "django==1.6", "behave", "jinja2", "tox==2.0"]
   textfile "python34/tags.txt", "python3\nipython\nipython200\nskeletons\ndjango\nbehave\ntox\njinja2\npython34\npackaging"
 
-  if (!Os.isFamily(Os.FAMILY_WINDOWS)) {
-    jython "jython25", []
-    textfile "jython25/tags.txt", "jython"
-  }
+//  if (!Os.isFamily(Os.FAMILY_WINDOWS)) {
+//    jython "jython25", []
+//    textfile "jython25/tags.txt", "jython"
+//  }
 
   conda "django_latest", "3.5", ["django"]
   textfile "django_latest/tags.txt", "django"
