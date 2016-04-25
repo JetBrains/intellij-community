@@ -49,24 +49,27 @@
       <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFile"/>
     </action>
 
+    <action id="ChangeCourseInfo" class="com.jetbrains.edu.coursecreator.actions.CCChangeCourseInfo"/>
+
     <group id="CCProjectViewGroup" popup="true" text="Course Creator">
       <action id="AddTaskFile" class="com.jetbrains.edu.coursecreator.actions.CCAddAsTaskFile" text="Add as Task File"/>
       <action id="HideTaskFile" class="com.jetbrains.edu.coursecreator.actions.CCHideFromStudent" text="Hide from Student"/>
       <action id="ShowPreview" class="com.jetbrains.edu.coursecreator.actions.CCShowPreview">
         <add-to-group group-id="EditorTabPopupMenu"/>
       </action>
-      <action id="PackCourse" class="com.jetbrains.edu.coursecreator.actions.CCCreateCourseArchive">
-        <add-to-group group-id="FileMenu" relative-to-action="FileMainSettingsGroup" anchor="before"/>
-      </action>
-      <action id="PushLesson" class="com.jetbrains.edu.coursecreator.actions.CCPushLesson">
-      <add-to-group group-id="FileMenu" relative-to-action="FileMainSettingsGroup" anchor="before"/>
-      </action>
-      <action id="PushCourse" class="com.jetbrains.edu.coursecreator.actions.CCPushCourse">
-      <add-to-group group-id="FileMenu" relative-to-action="FileMainSettingsGroup" anchor="before"/>
-      </action>
-      <action id="ChangeCourseInfo" class="com.jetbrains.edu.coursecreator.actions.CCChangeCourseInfo"/>
-      <separator/>
+      <action id="PackCourse" class="com.jetbrains.edu.coursecreator.actions.CCCreateCourseArchive"/>
+      <action id="PushLesson" class="com.jetbrains.edu.coursecreator.actions.CCPushLesson"/>
+      <action id="PushCourse" class="com.jetbrains.edu.coursecreator.actions.CCPushCourse"/>
+      <reference id="ChangeCourseInfo"/>
       <add-to-group group-id="ProjectViewPopupMenu" anchor="before" relative-to-action="CutCopyPasteGroup"/>
+    </group>
+    
+    <group id="CCFileGroup" popup="true" text="Course Creator">
+      <reference id="ChangeCourseInfo"/>
+      <reference id="PackCourse"/>
+      <reference id="PushLesson"/>
+      <reference id="PushCourse"/>
+      <add-to-group group-id="FileMenu" relative-to-action="FileMainSettingsGroup" anchor="before"/>
     </group>
 
     <group id="AnswerPlaceholderGroup">
