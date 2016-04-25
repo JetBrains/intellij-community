@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -262,7 +262,7 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
     }
   }
 
-  protected final void rawInsertAfterMeWithoutNotifications(TreeElement firstNew) {
+  protected final void rawInsertAfterMeWithoutNotifications(@NotNull TreeElement firstNew) {
     firstNew.rawRemoveUpToWithoutNotifications(null, false);
     final CompositeElement p = getTreeParent();
     final TreeElement treeNext = getTreeNext();
@@ -350,7 +350,7 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
   }
 
   // remove nodes from this[including] to end[excluding] from the parent
-  protected final void rawRemoveUpToWithoutNotifications(TreeElement end, boolean invalidate) {
+  protected final void rawRemoveUpToWithoutNotifications(@Nullable TreeElement end, boolean invalidate) {
     if(this == end) return;
 
     final CompositeElement parent = getTreeParent();
