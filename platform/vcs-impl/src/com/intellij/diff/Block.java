@@ -39,7 +39,7 @@ public class Block {
   private final int myEnd;
 
   public Block(@NotNull String source, int start, int end) {
-    this(LineTokenizer.tokenize(source, false, false), start, end);
+    this(tokenize(source), start, end);
   }
 
   public Block(@NotNull String[] source, int start, int end) {
@@ -49,8 +49,13 @@ public class Block {
   }
 
   @NotNull
+  public static String[] tokenize(@NotNull String text) {
+    return LineTokenizer.tokenize(text, false, false);
+  }
+
+  @NotNull
   public Block createPreviousBlock(@NotNull String prevContent) {
-    return createPreviousBlock(LineTokenizer.tokenize(prevContent, false, false));
+    return createPreviousBlock(tokenize(prevContent));
   }
 
   @NotNull
