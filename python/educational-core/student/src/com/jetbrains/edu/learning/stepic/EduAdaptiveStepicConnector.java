@@ -62,7 +62,9 @@ public class EduAdaptiveStepicConnector {
   public static Task getNextRecommendation(@NotNull final Project project, @NotNull Course course) {
     try {
       final CloseableHttpClient client = getHttpClient(project);
-      final URI uri = new URIBuilder(STEPIC_API_URL + RECOMMENDATIONS_URL).addParameter("course", String.valueOf(course.getId())).build();
+      final URI uri = new URIBuilder(STEPIC_API_URL + RECOMMENDATIONS_URL)
+        .addParameter("course", String.valueOf(course.getId()))
+        .build();
       final HttpGet request = new HttpGet(uri);
       setHeaders(request, CONTENT_TYPE_APPL_JSON);
 
@@ -186,7 +188,7 @@ public class EduAdaptiveStepicConnector {
   }
 
   @NotNull
-  private static Task getTaskFromStep(@NotNull String name, int lessonID, StepicWrappers.Step step) {
+  private static Task getTaskFromStep(@NotNull String name, int lessonID, @NotNull final StepicWrappers.Step step) {
     final Task task = new Task();
     task.setName(name);
     task.setStepicId(lessonID);

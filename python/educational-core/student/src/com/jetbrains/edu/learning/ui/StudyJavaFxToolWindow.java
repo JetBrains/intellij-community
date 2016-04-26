@@ -41,6 +41,6 @@ public class StudyJavaFxToolWindow extends StudyToolWindow {
   @Override
   public void setText(String text) {
     StudyPluginConfigurator configurator = StudyUtils.getConfigurator(ProjectUtil.guessCurrentProject(this));
-      myBrowserWindow.loadContent(text, configurator);
+    myBrowserWindow.loadContent(text, configurator);
   }
 }
