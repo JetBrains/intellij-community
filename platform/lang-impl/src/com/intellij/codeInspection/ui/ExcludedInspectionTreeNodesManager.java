@@ -17,9 +17,9 @@ package com.intellij.codeInspection.ui;
 
 
 import com.intellij.util.containers.FactoryMap;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -32,7 +32,7 @@ public class ExcludedInspectionTreeNodesManager {
     @Nullable
     @Override
     protected Set<Object> create(Class key) {
-      return new HashSet<>();
+      return new THashSet<>();
     }
   };
 

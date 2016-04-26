@@ -45,7 +45,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import java.util.Comparator;
 
 public class InspectionResultsViewComparator implements Comparator {
-  private static final Logger LOG = Logger.getInstance("#" + InspectionResultsViewComparator.class.getName());
+  private static final Logger LOG = Logger.getInstance(InspectionResultsViewComparator.class);
 
   public boolean areEqual(Object o1, Object o2) {
     return o1.getClass().equals(o2.getClass()) && compare(o1, o2) == 0;
@@ -173,26 +173,11 @@ public class InspectionResultsViewComparator implements Comparator {
     return entity2 != null ? 1 : 0;
   }
 
-  private static int compareLineNumbers(final Object userObject, final OfflineProblemDescriptor descriptor) {
-    if (userObject instanceof RefElement) {
-      final RefElement refElement = (RefElement)userObject;
-      final PsiElement psiElement = refElement.getElement();
-      if (psiElement != null) {
-        Document document = PsiDocumentManager.getInstance(psiElement.getProject()).getDocument(psiElement.getContainingFile());
-        if (document != null) {
-          return descriptor.getLine() - document.getLineNumber(psiElement.getTextOffset()) -1;
-        }
-      }
-    }
-    return -1;
-  }
-
   private static class InspectionResultsViewComparatorHolder {
     private static final InspectionResultsViewComparator ourInstance = new InspectionResultsViewComparator();
   }
 
   public static InspectionResultsViewComparator getInstance() {
-
     return InspectionResultsViewComparatorHolder.ourInstance;
   }
 }
