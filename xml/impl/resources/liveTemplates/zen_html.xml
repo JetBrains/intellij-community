@@ -72,7 +72,7 @@
     </context>
   </template>
   <template description="" name="!" toReformat="true" toShortenFQNames="true"
-            value="&lt;!doctype html&gt;&#10;&lt;html lang=&quot;$ENV_LOCALE$&quot;&gt;&#10;&lt;head&gt;&#10;&lt;meta charset=&quot;UTF-8&quot;&gt;&#10;
+            value="&lt;!doctype html&gt;&#10;&lt;html lang=&quot;$ENV_LOCALE$&quot;&gt;&#10;&lt;head&gt;&#10;&lt;meta charset=&quot;$CHARSET$&quot;&gt;&#10;
             &lt;meta name=&quot;viewport&quot; content=&quot;width=$WIDTH$, user-scalable=$SCALABLE$, initial-scale=$INITIAL_SCALE$, maximum-scale=$MAX_SCALE$, minimum-scale=$MIN_SCALE$&quot;&gt;&#10;            
             &lt;meta http-equiv=&quot;X-UA-Compatible&quot; content=&quot;ie=$IE$&quot;&gt;&#10;
             &lt;title&gt;$TITLE$&lt;/title&gt;&#10;&lt;/head&gt;&#10;&lt;body&gt;&#10;  $END$&#10;&lt;/body&gt;&#10;&lt;/html&gt;">
