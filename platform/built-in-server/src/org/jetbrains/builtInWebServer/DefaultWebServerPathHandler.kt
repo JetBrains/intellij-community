@@ -41,7 +41,7 @@ private class DefaultWebServerPathHandler : WebServerPathHandler() {
                        projectName: String,
                        decodedRawPath: String,
                        isCustomHost: Boolean): Boolean {
-    val extraHttpHeaders = validateToken(request, context.channel(), false) ?: return true
+    val extraHttpHeaders = validateToken(request, context.channel()) ?: return true
 
     val channel = context.channel()
     val pathToFileManager = WebServerPathToFileManager.getInstance(project)

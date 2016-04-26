@@ -236,7 +236,7 @@ private fun doProcess(urlDecoder: QueryStringDecoder, request: FullHttpRequest, 
   return false
 }
 
-internal fun validateToken(request: HttpRequest, channel: Channel, redirectToSetCookie: Boolean): HttpHeaders? {
+internal fun validateToken(request: HttpRequest, channel: Channel): HttpHeaders? {
   val cookieString = request.headers().get(HttpHeaderNames.COOKIE)
   if (cookieString != null) {
     val cookies = ServerCookieDecoder.STRICT.decode(cookieString)
@@ -256,17 +256,7 @@ internal fun validateToken(request: HttpRequest, channel: Channel, redirectToSet
   val url = "${channel.uriScheme}://${request.host!!}${urlDecoder.path()}"
   if (token != null && tokens.getIfPresent(token) != null) {
     tokens.invalidate(token)
-    if (redirectToSetCookie) {
-      // we redirect because it is not easy to change and maintain all places where we send response
-      val response = HttpResponseStatus.MOVED_PERMANENTLY.response(request)
-      response.headers().add(HttpHeaderNames.LOCATION, url)
-      response.headers().set(HttpHeaderNames.SET_COOKIE, ServerCookieEncoder.STRICT.encode(STANDARD_COOKIE) + "; SameSite=strict")
-      response.send(channel, request)
-      return response.headers()
-    }
-    else {
-      return DefaultHttpHeaders().set(HttpHeaderNames.SET_COOKIE, ServerCookieEncoder.STRICT.encode(STANDARD_COOKIE) + "; SameSite=strict")
-    }
+    return DefaultHttpHeaders().set(HttpHeaderNames.SET_COOKIE, ServerCookieEncoder.STRICT.encode(STANDARD_COOKIE) + "; SameSite=strict")
   }
 
   SwingUtilities.invokeAndWait {
