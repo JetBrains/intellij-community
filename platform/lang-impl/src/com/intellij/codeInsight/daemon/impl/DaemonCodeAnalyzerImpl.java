@@ -593,7 +593,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
   }
   
   @TestOnly
-  boolean isRunningOrPending() {
+  public boolean isRunningOrPending() {
     return isRunning() || !myAlarm.isEmpty();
   }
 
