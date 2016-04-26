@@ -576,7 +576,7 @@ public class ReflectionUtil {
   public static void copyFieldValue(@NotNull Object from, @NotNull Object to, @NotNull Field field)
     throws IllegalAccessException {
     Class<?> fieldType = field.getType();
-    if (fieldType.isPrimitive() || fieldType.equals(String.class)) {
+    if (fieldType.isPrimitive() || fieldType.equals(String.class) || fieldType.isEnum()) {
       field.set(to, field.get(from));
     }
     else {
