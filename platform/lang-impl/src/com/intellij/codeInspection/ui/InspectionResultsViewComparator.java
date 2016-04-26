@@ -45,7 +45,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import java.util.Comparator;
 
 public class InspectionResultsViewComparator implements Comparator {
-  private static final Logger LOG = Logger.getInstance("#" + InspectionResultsViewComparator.class.getName());
+  private static final Logger LOG = Logger.getInstance(InspectionResultsViewComparator.class);
 
   public boolean areEqual(Object o1, Object o2) {
     return o1.getClass().equals(o2.getClass()) && compare(o1, o2) == 0;
