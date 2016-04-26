@@ -114,6 +114,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   private boolean myRerun;
   private volatile boolean myDisposed;
   private int myUpdatingRequestors; //accessed only in edt
+  private boolean myApplyingFix = false; //accessed only in edt
 
   @NotNull
   private final InspectionRVContentProvider myProvider;
@@ -375,6 +376,11 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     return null;
   }
 
+  public void setApplyingFix(boolean applyingFix) {
+    myApplyingFix = applyingFix;
+    syncRightPanel();
+  }
+
   public void openRightPanelIfNeed() {
     if (mySplitter.getSecondComponent() == null) {
       syncRightPanel();
@@ -387,42 +393,48 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       Disposer.dispose(myLoadingProgressPreview);
       myLoadingProgressPreview = null;
     }
-    if (myTree.getSelectionModel().getSelectionCount() != 1) {
-      if (myTree.getSelectedToolWrapper() == null) {
-        mySplitter.setSecondComponent(InspectionResultsViewUtil.getNothingToShowTextLabel());
-      }
-      else {
-        showInRightPanel(myTree.getCommonSelectedElement());
-      }
-    }
-    else {
-      TreePath pathSelected = myTree.getSelectionModel().getLeadSelectionPath();
-      if (pathSelected != null) {
-        final InspectionTreeNode node = (InspectionTreeNode)pathSelected.getLastPathComponent();
-        if (node instanceof ProblemDescriptionNode) {
-          final ProblemDescriptionNode problemNode = (ProblemDescriptionNode)node;
-          showInRightPanel(problemNode.getElement());
-        }
-        else if (node instanceof InspectionPackageNode ||
-                 node instanceof InspectionModuleNode ||
-                 node instanceof RefElementNode) {
-          showInRightPanel(node.getContainingFileLocalEntity());
-        }
-        else if (node instanceof InspectionNode) {
-          if (myGlobalInspectionContext.getPresentation(((InspectionNode)node).getToolWrapper()).isDummy()) {
-            mySplitter.setSecondComponent(InspectionResultsViewUtil.getNothingToShowTextLabel());
-          }
-          else {
-            showInRightPanel(null);
-          }
-        }
-        else if (node instanceof InspectionRootNode || node instanceof InspectionGroupNode || node instanceof InspectionSeverityGroupNode) {
-          final InspectionViewNavigationPanel panel = new InspectionViewNavigationPanel(node, myTree);
-          myLoadingProgressPreview = panel;
-          mySplitter.setSecondComponent(panel);
+    if (myApplyingFix) {
+      final InspectionToolWrapper wrapper = myTree.getSelectedToolWrapper();
+      LOG.assertTrue(wrapper != null);
+      mySplitter.setSecondComponent(InspectionResultsViewUtil.getApplyingFixLabel(wrapper));
+    } else {
+      if (myTree.getSelectionModel().getSelectionCount() != 1) {
+        if (myTree.getSelectedToolWrapper() == null) {
+          mySplitter.setSecondComponent(InspectionResultsViewUtil.getNothingToShowTextLabel());
         }
         else {
-          LOG.error("Unexpected node: " + node.getClass());
+          showInRightPanel(myTree.getCommonSelectedElement());
+        }
+      }
+      else {
+        TreePath pathSelected = myTree.getSelectionModel().getLeadSelectionPath();
+        if (pathSelected != null) {
+          final InspectionTreeNode node = (InspectionTreeNode)pathSelected.getLastPathComponent();
+          if (node instanceof ProblemDescriptionNode) {
+            final ProblemDescriptionNode problemNode = (ProblemDescriptionNode)node;
+            showInRightPanel(problemNode.getElement());
+          }
+          else if (node instanceof InspectionPackageNode ||
+                   node instanceof InspectionModuleNode ||
+                   node instanceof RefElementNode) {
+            showInRightPanel(node.getContainingFileLocalEntity());
+          }
+          else if (node instanceof InspectionNode) {
+            if (myGlobalInspectionContext.getPresentation(((InspectionNode)node).getToolWrapper()).isDummy()) {
+              mySplitter.setSecondComponent(InspectionResultsViewUtil.getNothingToShowTextLabel());
+            }
+            else {
+              showInRightPanel(null);
+            }
+          }
+          else if (node instanceof InspectionRootNode || node instanceof InspectionGroupNode || node instanceof InspectionSeverityGroupNode) {
+            final InspectionViewNavigationPanel panel = new InspectionViewNavigationPanel(node, myTree);
+            myLoadingProgressPreview = panel;
+            mySplitter.setSecondComponent(panel);
+          }
+          else {
+            LOG.error("Unexpected node: " + node.getClass());
+          }
         }
       }
     }
@@ -506,7 +518,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
         });
       }
       else {
-        myPreviewEditor = (EditorEx)EditorFactory.getInstance().createEditor( document, myProject, file.getVirtualFile(), true);
+        myPreviewEditor = (EditorEx)EditorFactory.getInstance().createEditor(document, myProject, file.getVirtualFile(), true);
         DiffUtil.setFoldingModelSupport(myPreviewEditor);
         final EditorSettings settings = myPreviewEditor.getSettings();
         settings.setLineNumbersShown(false);
