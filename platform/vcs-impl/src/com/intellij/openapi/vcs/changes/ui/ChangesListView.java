@@ -24,7 +24,6 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
@@ -40,7 +39,6 @@ import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
-import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -130,17 +128,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
     myShowFlatten = showFlatten;
   }
 
-  public void updateModel(List<? extends ChangeList> changeLists, Trinity<List<VirtualFile>, Integer, Integer> unversionedFiles, final List<LocallyDeletedChange> locallyDeletedFiles,
-                          List<VirtualFile> modifiedWithoutEditing,
-                          MultiMap<String, VirtualFile> switchedFiles,
-                          @Nullable Map<VirtualFile, String> switchedRoots,
-                          @Nullable List<VirtualFile> ignoredFiles,
-                          final List<VirtualFile> lockedFolders,
-                          @Nullable final Map<VirtualFile, LogicalLock> logicallyLockedFiles) {
-    TreeModelBuilder builder = new TreeModelBuilder(myProject, isShowFlatten());
-    final DefaultTreeModel model = builder.buildModel(changeLists, unversionedFiles, locallyDeletedFiles, modifiedWithoutEditing,
-                                                      switchedFiles, switchedRoots, ignoredFiles, lockedFolders, logicallyLockedFiles);
-
+  public void updateModel(@NotNull DefaultTreeModel model) {
     TreeState state = TreeState.createOn(this, (ChangesBrowserNode)getModel().getRoot());
     state.setScrollToSelection(false);
     DefaultTreeModel oldModel = getModel();

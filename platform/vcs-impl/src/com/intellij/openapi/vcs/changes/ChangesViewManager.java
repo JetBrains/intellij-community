@@ -32,7 +32,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -41,6 +43,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.actions.IgnoredSettingsAction;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
+import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.ui.*;
@@ -67,7 +70,6 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 @State(
@@ -77,8 +79,6 @@ import java.util.List;
 public class ChangesViewManager implements ChangesViewI, ProjectComponent, PersistentStateComponent<ChangesViewManager.State> {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ChangesViewManager");
-
-  private static final int UNVERSIONED_MAX_SIZE = 50;
 
   @NotNull private final ChangesListView myView;
   private JPanel myProgressLabel;
@@ -327,30 +327,18 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     if (!ProjectLevelVcsManager.getInstance(myProject).hasActiveVcss()) return;
 
     ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
-    Trinity<List<VirtualFile>, Integer, Integer> unversionedPair = getUnversionedFilesInfo(changeListManager);
 
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("refresh view, unversioned collections size: " + unversionedPair.getFirst().size() + " unv size passed: " +
-                unversionedPair.getSecond() + " dirs: " + unversionedPair.getThird());
-    }
-    myView.updateModel(changeListManager.getChangeListsCopy(), unversionedPair,
-                       changeListManager.getDeletedFiles(),
-                       changeListManager.getModifiedWithoutEditing(),
-                       changeListManager.getSwitchedFilesMap(),
-                       changeListManager.getSwitchedRoots(),
-                       myState.myShowIgnored ? changeListManager.getIgnoredFiles() : null, changeListManager.getLockedFolders(),
-                       changeListManager.getLogicallyLockedFolders());
+    myView.updateModel(
+      new TreeModelBuilder(myProject, myView.isShowFlatten())
+        .set(changeListManager.getChangeListsCopy(), changeListManager.getDeletedFiles(), changeListManager.getModifiedWithoutEditing(),
+             changeListManager.getSwitchedFilesMap(), changeListManager.getSwitchedRoots(),
+             myState.myShowIgnored ? changeListManager.getIgnoredFiles() : null, changeListManager.getLockedFolders(),
+             changeListManager.getLogicallyLockedFolders())
+        .setUnversioned(changeListManager.getUnversionedFiles(), changeListManager.getUnversionedFilesSize())
+        .build()
+    );
 
     changeDetails();
-  }
-
-  @NotNull
-  public static Trinity<List<VirtualFile>, Integer, Integer> getUnversionedFilesInfo(@NotNull ChangeListManagerImpl manager) {
-    Couple<Integer> size = manager.getUnversionedFilesSize();
-    boolean manyUnversioned = size.getFirst() > UNVERSIONED_MAX_SIZE;
-
-    return Trinity
-      .create(manyUnversioned ? Collections.<VirtualFile>emptyList() : manager.getUnversionedFiles(), size.getFirst(), size.getSecond());
   }
 
   @NotNull

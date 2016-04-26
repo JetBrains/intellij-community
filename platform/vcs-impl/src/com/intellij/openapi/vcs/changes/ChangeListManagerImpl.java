@@ -842,13 +842,15 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
   }
 
+  @NotNull
   public List<VirtualFile> getUnversionedFiles() {
     synchronized (myDataLock) {
       return myComposite.getVFHolder(FileHolder.HolderType.UNVERSIONED).getFiles();
     }
   }
 
-  Couple<Integer> getUnversionedFilesSize() {
+  @NotNull
+  public Couple<Integer> getUnversionedFilesSize() {
     synchronized (myDataLock) {
       final VirtualFileHolder holder = myComposite.getVFHolder(FileHolder.HolderType.UNVERSIONED);
       return Couple.of(holder.getSize(), holder.getNumDirs());
