@@ -28,6 +28,7 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.ui.RowIcon;
@@ -279,24 +280,20 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
   @NotNull
   @Override
   public PsiClassType[] getExtendsListTypes() {
-    return CachedValuesManager.getCachedValue(this, new CachedValueProvider<PsiClassType[]>() {
-      @Override
-      public Result<PsiClassType[]> compute() {
-        return Result.create(GrClassImplUtil.getExtendsListTypes(GrTypeDefinitionImpl.this), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
-      }
-    });
+    return CachedValuesManager.getCachedValue(this, ()-> Result.create(
+      GrClassImplUtil.getExtendsListTypes(this), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT
+    ));
   }
 
   @NotNull
   @Override
-  public PsiClassType[] getImplementsListTypes() {
-    return CachedValuesManager.getCachedValue(this, new CachedValueProvider<PsiClassType[]>() {
-      @Override
-      public Result<PsiClassType[]> compute() {
-        return Result.create(GrClassImplUtil.getImplementsListTypes(GrTypeDefinitionImpl.this),
-                             PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
-      }
-    });
+  public PsiClassType[] getImplementsListTypes(boolean includeSynthetic) {
+    if (!includeSynthetic) {
+      return GrClassImplUtil.getImplementsListTypes(this, false);
+    }
+    return CachedValuesManager.getCachedValue(this, () -> Result.create(
+      GrClassImplUtil.getImplementsListTypes(this, true), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT
+    ));
   }
 
   @Nullable
@@ -318,14 +315,14 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
 
   @NotNull
   @Override
-  public final PsiClass[] getSupers() {
-    return GrClassImplUtil.getSupers(this);
+  public final PsiClass[] getSupers(boolean includeSynthetic) {
+    return GrClassImplUtil.getSupers(this, includeSynthetic);
   }
 
   @NotNull
   @Override
-  public PsiClassType[] getSuperTypes() {
-    return GrClassImplUtil.getSuperTypes(this);
+  public PsiClassType[] getSuperTypes(boolean includeSynthetic) {
+    return GrClassImplUtil.getSuperTypes(this, includeSynthetic);
   }
 
   @NotNull
@@ -379,6 +376,12 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
   @Override
   public PsiClass[] getInnerClasses() {
     return myCache.getInnerClasses();
+  }
+
+  @NotNull
+  @Override
+  public GrTypeDefinition[] getCodeInnerClasses() {
+    return myCache.getCodeInnerClasses();
   }
 
   @NotNull

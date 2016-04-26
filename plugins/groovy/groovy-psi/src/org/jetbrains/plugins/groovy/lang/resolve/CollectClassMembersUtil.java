@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,7 +83,7 @@ public class CollectClassMembersUtil {
     PsiUtilCore.ensureValid(aClass);
     Key<CachedValue<ClassMembers>> key = includeSynthetic ? CACHED_MEMBERS_INCLUDING_SYNTHETIC : CACHED_MEMBERS;
     CachedValue<ClassMembers> cachedValue = aClass.getUserData(key);
-    if (isCyclicDependence(aClass)) {
+    if (includeSynthetic && isCyclicDependence(aClass)) {
       includeSynthetic = false;
     }
     if (cachedValue == null) {
@@ -104,7 +104,7 @@ public class CollectClassMembersUtil {
 
     if (aClass instanceof ClsClassImpl) return true; //optimization
 
-    for (PsiClass psiClass : aClass.getSupers()) {
+    for (PsiClass psiClass : getSupers(aClass, true)) {
       if (!processCyclicDependence(psiClass, classes)) {
         return false;
       }
@@ -176,19 +176,16 @@ public class CollectClassMembersUtil {
       addMethod(allMethods, method, substitutor);
     }
 
-    for (final PsiClass inner : aClass.getInnerClasses()) {
+    for (final PsiClass inner : getInnerClasses(aClass, includeSynthetic)) {
       final String name = inner.getName();
       if (name != null && !allInnerClasses.containsKey(name)) {
         allInnerClasses.put(name, new CandidateInfo(inner, substitutor));
       }
     }
 
-    for (PsiClassType superType : aClass.getSuperTypes()) {
-      PsiClass superClass = superType.resolve();
-      if (superClass != null) {
-        final PsiSubstitutor superSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, aClass, substitutor);
-        processClass(superClass, allFields, allMethods, allInnerClasses, visitedClasses, superSubstitutor, includeSynthetic);
-      }
+    for (PsiClass superClass : getSupers(aClass, includeSynthetic)) {
+      final PsiSubstitutor superSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, aClass, substitutor);
+      processClass(superClass, allFields, allMethods, allInnerClasses, visitedClasses, superSubstitutor, includeSynthetic);
     }
   }
 
@@ -198,6 +195,18 @@ public class CollectClassMembersUtil {
 
   public static PsiMethod[] getMethods(@NotNull PsiClass aClass, boolean includeSynthetic) {
     return includeSynthetic || !(aClass instanceof GrTypeDefinition) ? aClass.getMethods() : ((GrTypeDefinition)aClass).getCodeMethods();
+  }
+
+  public static PsiClass[] getInnerClasses(@NotNull PsiClass aClass, boolean includeSynthetic) {
+    return includeSynthetic || !(aClass instanceof GrTypeDefinition)
+           ? aClass.getInnerClasses()
+           : ((GrTypeDefinition)aClass).getCodeInnerClasses();
+  }
+
+  public static PsiClass[] getSupers(@NotNull PsiClass aClass, boolean includeSynthetic) {
+    return aClass instanceof GrTypeDefinition
+           ? ((GrTypeDefinition)aClass).getSupers(includeSynthetic)
+           : aClass.getSupers();
   }
 
   private static boolean hasExplicitVisibilityModifiers(@NotNull PsiField field) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -217,7 +217,7 @@ public class GrAnonymousClassDefinitionImpl extends GrTypeDefinitionImpl impleme
 
   @NotNull
   @Override
-  public PsiClassType[] getImplementsListTypes() {
+  public PsiClassType[] getImplementsListTypes(boolean includeSynthetic) {
     final PsiClass baseClass = getBaseClass();
     if (baseClass != null && baseClass.isInterface()) {
       return new PsiClassType[]{getBaseClassType(), createTypeByName(GroovyCommonClassNames.DEFAULT_BASE_CLASS_NAME)};

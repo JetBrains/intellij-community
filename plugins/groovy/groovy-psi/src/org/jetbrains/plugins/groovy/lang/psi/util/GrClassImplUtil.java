@@ -82,6 +82,12 @@ public class GrClassImplUtil {
   private static final Condition<PsiMethod> CONSTRUCTOR_CONDITION = PsiMethod::isConstructor;
 
   @NotNull
+  public static GrTypeDefinition[] getBodyCodeInnerClasses(@NotNull GrTypeDefinition definition) {
+    GrTypeDefinitionBody body = definition.getBody();
+    return body != null ? body.getInnerClasses() : GrTypeDefinition.EMPTY_ARRAY;
+  }
+
+  @NotNull
   public static GrMethod[] getCodeConstructors(@NotNull GrTypeDefinition definition) {
     GrMethod[] methods = definition.getCodeMethods();
     List<GrMethod> result = ContainerUtil.filter(methods, CONSTRUCTOR_CONDITION);
@@ -165,15 +171,15 @@ public class GrClassImplUtil {
   }
 
   @NotNull
-  public static PsiClassType[] getImplementsListTypes(GrTypeDefinition grType) {
+  public static PsiClassType[] getImplementsListTypes(GrTypeDefinition grType, boolean includeSynthetic) {
     final Collection<PsiClassType> result = ContainerUtil.newLinkedHashSet();
     final PsiClassType[] implementsTypes = getReferenceListTypes(grType.getImplementsClause());
     final PsiClassType[] extendsTypes = getReferenceListTypes(grType.getExtendsClause());
     result.addAll(Arrays.asList(implementsTypes));
-    result.addAll(AstTransformContributor.runContributorsForImplementsTypes(grType));
-    if (!grType.isInterface() &&
-        !ContainerUtil.or(implementsTypes, IS_GROOVY_OBJECT) &&
-        !ContainerUtil.or(extendsTypes, IS_GROOVY_OBJECT)) {
+    if (includeSynthetic) {
+      result.addAll(AstTransformContributor.runContributorsForImplementsTypes(grType));
+    }
+    if (!grType.isInterface() && !ContainerUtil.or(implementsTypes, IS_GROOVY_OBJECT) && !ContainerUtil.or(extendsTypes, IS_GROOVY_OBJECT)) {
       result.add(getGroovyObjectType(grType));
     }
     return result.toArray(new PsiClassType[result.size()]);
@@ -184,13 +190,13 @@ public class GrClassImplUtil {
   }
 
   @NotNull
-  public static PsiClassType[] getSuperTypes(GrTypeDefinition grType) {
+  public static PsiClassType[] getSuperTypes(GrTypeDefinition grType, boolean includeSynthetic) {
     PsiClassType[] extendsList = grType.getExtendsListTypes();
     if (extendsList.length == 0) {
       extendsList = new PsiClassType[]{createBaseClassType(grType)};
     }
 
-    return ArrayUtil.mergeArrays(extendsList, grType.getImplementsListTypes(), PsiClassType.ARRAY_FACTORY);
+    return ArrayUtil.mergeArrays(extendsList, grType.getImplementsListTypes(includeSynthetic), PsiClassType.ARRAY_FACTORY);
   }
 
   public static PsiClassType createBaseClassType(GrTypeDefinition grType) {
@@ -254,8 +260,8 @@ public class GrClassImplUtil {
   }
 
   @NotNull
-  public static PsiClass[] getSupers(GrTypeDefinition grType) {
-    PsiClassType[] superTypes = grType.getSuperTypes();
+  public static PsiClass[] getSupers(GrTypeDefinition grType, boolean includeSynthetic) {
+    PsiClassType[] superTypes = grType.getSuperTypes(includeSynthetic);
     List<PsiClass> result = new ArrayList<PsiClass>();
     for (PsiClassType superType : superTypes) {
       PsiClass superClass = superType.resolve();

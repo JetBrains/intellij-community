@@ -22,6 +22,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.compiled.ClsClassImpl;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -33,7 +34,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod;
@@ -101,12 +101,18 @@ public class GrTypeDefinitionMembersCache {
       @Override
       public Result<PsiClass[]> compute() {
         final List<PsiClass> result = ContainerUtil.newArrayList();
-        final GrTypeDefinitionBody body = myDefinition.getBody();
-        if (body != null) ContainerUtil.addAll(result, body.getInnerClasses());
+        ContainerUtil.addAll(result, myDefinition.getCodeInnerClasses());
         result.addAll(AstTransformContributor.runContributorsForClasses(myDefinition));
         return Result.create(result.toArray(new PsiClass[result.size()]), myTreeChangeTracker);
       }
     });
+  }
+
+  public GrTypeDefinition[] getCodeInnerClasses() {
+    return CachedValuesManager.getCachedValue(myDefinition, () -> Result.create(
+      GrClassImplUtil.getBodyCodeInnerClasses(myDefinition),
+      myTreeChangeTracker, OUT_OF_CODE_BLOCK_MODIFICATION_COUNT
+    ));
   }
 
   public GrField[] getFields() {

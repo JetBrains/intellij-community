@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,12 @@
  */
 package org.jetbrains.plugins.groovy.lang.resolve.ast;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.RecursionManager;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiMethod;
@@ -35,6 +38,13 @@ import java.util.Collections;
  */
 public abstract class AstTransformContributor {
 
+  public static final Key<Throwable> ourTestKey = Key.create("AstTransformTestKey");
+  private static void checkTest(UserDataHolder dataHolder) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      dataHolder.putUserData(ourTestKey, new Throwable());
+    }
+  }
+
   public static final ExtensionPointName<AstTransformContributor> EP_NAME = ExtensionPointName.create("org.intellij.groovy.astTransformContributor");
 
   public void collectMethods(@NotNull final GrTypeDefinition clazz, Collection<PsiMethod> collector) {
@@ -50,6 +60,7 @@ public abstract class AstTransformContributor {
   }
 
   public static Collection<PsiMethod> runContributorsForMethods(final GrTypeDefinition clazz) {
+    checkTest(clazz);
     Collection<PsiMethod> result = RecursionManager.doPreventingRecursion(clazz, true, new Computable<Collection<PsiMethod>>() {
       @Override
       public Collection<PsiMethod> compute() {
@@ -64,6 +75,7 @@ public abstract class AstTransformContributor {
   }
 
   public static Collection<GrField> runContributorsForFields(final GrTypeDefinition clazz) {
+    checkTest(clazz);
     Collection<GrField> result = RecursionManager.doPreventingRecursion(clazz, true, new Computable<Collection<GrField>>() {
       @Override
       public Collection<GrField> compute() {
@@ -78,6 +90,7 @@ public abstract class AstTransformContributor {
   }
 
   public static Collection<PsiClass> runContributorsForClasses(final GrTypeDefinition clazz) {
+    checkTest(clazz);
     Collection<PsiClass> result = RecursionManager.doPreventingRecursion(clazz, true, new Computable<Collection<PsiClass>>() {
       @Override
       public Collection<PsiClass> compute() {
@@ -92,6 +105,7 @@ public abstract class AstTransformContributor {
   }
 
   public static Collection<PsiClassType> runContributorsForImplementsTypes(final GrTypeDefinition clazz) {
+    checkTest(clazz);
     Collection<PsiClassType> result = RecursionManager.doPreventingRecursion(clazz, true, new Computable<Collection<PsiClassType>>() {
       @Override
       public Collection<PsiClassType> compute() {
