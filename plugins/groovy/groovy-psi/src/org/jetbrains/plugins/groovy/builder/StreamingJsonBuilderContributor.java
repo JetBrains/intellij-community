@@ -17,23 +17,21 @@ package org.jetbrains.plugins.groovy.builder;
 
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierFlags;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
 
 import static com.intellij.psi.CommonClassNames.JAVA_UTIL_MAP;
-import static org.jetbrains.plugins.groovy.builder.JsonDelegateContributor.DELEGATE_FQN;
-import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrDelegatesToUtil.DELEGATES_TO_KEY;
-import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_CLOSURE;
+import static org.jetbrains.plugins.groovy.builder.StreamingJsonBuilderDelegateContributor.addClosureParameter;
 
-public class JsonBuilderContributor extends BuilderMethodsContributor {
+public class StreamingJsonBuilderContributor extends BuilderMethodsContributor {
 
-  private static final String FQN = "groovy.json.JsonBuilder";
-  static final String ORIGIN_INFO = "via JsonBuilder";
+  private static final String FQN = "groovy.json.StreamingJsonBuilder";
+  static final String ORIGIN_INFO = "via StreamingJsonBuilder";
 
   @Nullable
   @Override
@@ -50,47 +48,48 @@ public class JsonBuilderContributor extends BuilderMethodsContributor {
     GrLightMethodBuilder method;
 
     // ()
-    method = createMethod(name, clazz, place);
+    method = createMethod(name, place, qualifierType, clazz);
     if (!processor.process(method)) return false;
 
     // (Closure)
-    method = createMethod(name, clazz, place);
-    method.addAndGetParameter("c", GROOVY_LANG_CLOSURE, false).putUserData(DELEGATES_TO_KEY, DELEGATE_FQN);
+    method = createMethod(name, place, qualifierType, clazz);
+    addClosureParameter(method);
     if (!processor.process(method)) return false;
 
     // (Map)
-    method = createMethod(name, clazz, place);
-    method.addParameter("map", JAVA_UTIL_MAP, false);
+    method = createMethod(name, place, qualifierType, clazz);
+    method.addParameter("args", JAVA_UTIL_MAP);
     if (!processor.process(method)) return false;
 
     // (Map, Closure)
-    method = createMethod(name, clazz, place);
-    method.addParameter("map", JAVA_UTIL_MAP, false);
-    method.addAndGetParameter("c", GROOVY_LANG_CLOSURE, false).putUserData(DELEGATES_TO_KEY, DELEGATE_FQN);
+    method = createMethod(name, place, qualifierType, clazz);
+    method.addParameter("args", JAVA_UTIL_MAP);
+    addClosureParameter(method);
     if (!processor.process(method)) return false;
 
     // (Iterable, Closure)
-    method = createMethod(name, clazz, place);
-    method.addParameter("value", TypesUtil.createIterableType(place, null), false);
-    method.addAndGetParameter("c", GROOVY_LANG_CLOSURE, false).putUserData(DELEGATES_TO_KEY, DELEGATE_FQN);
+    method = createMethod(name, place, qualifierType, clazz);
+    method.addParameter("values", TypesUtil.createIterableType(place, null), false);
+    addClosureParameter(method);
     if (!processor.process(method)) return false;
 
     // (Object[], Closure)
-    method = createMethod(name, clazz, place);
-    method.addParameter("value", TypesUtil.getJavaLangObject(place).createArrayType(), false);
-    method.addAndGetParameter("c", GROOVY_LANG_CLOSURE, false).putUserData(DELEGATES_TO_KEY, DELEGATE_FQN);
+    method = createMethod(name, place, qualifierType, clazz);
+    method.addParameter("values", TypesUtil.getJavaLangObject(place).createArrayType());
+    addClosureParameter(method);
     return processor.process(method);
   }
 
-
+  @NotNull
   private static GrLightMethodBuilder createMethod(@NotNull String name,
-                                                   @NotNull PsiClass clazz,
-                                                   @NotNull PsiElement context) {
-    GrLightMethodBuilder method = new GrLightMethodBuilder(context.getManager(), name);
-    method.setOriginInfo(ORIGIN_INFO);
-    method.addModifier(PsiModifier.PUBLIC);
-    method.setReturnType(JAVA_UTIL_MAP, context.getResolveScope());
+                                                   @NotNull PsiElement place,
+                                                   @NotNull PsiType returnType,
+                                                   @NotNull PsiClass clazz) {
+    GrLightMethodBuilder method = new GrLightMethodBuilder(place.getManager(), name);
+    method.setModifiers(GrModifierFlags.PUBLIC_MASK);
+    method.setReturnType(returnType);
     UtilsKt.setContainingClass(method, clazz);
+    method.setOriginInfo(ORIGIN_INFO);
     return method;
   }
 }

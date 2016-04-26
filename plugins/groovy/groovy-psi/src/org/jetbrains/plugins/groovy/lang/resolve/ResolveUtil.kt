@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.diff.actions.impl;
+package org.jetbrains.plugins.groovy.lang.resolve
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.project.DumbAware;
+import com.intellij.psi.scope.PsiScopeProcessor
+import org.jetbrains.plugins.groovy.lang.resolve.processors.DynamicMembersHint
 
-public abstract class PrevChangeAction extends AnAction implements DumbAware {
-  public PrevChangeAction() {
-    setEnabledInModalContext(true);
-    ActionUtil.copyFrom(this, "Diff.PrevChange");
-  }
+fun shouldProcessDynamicMethods(processor: PsiScopeProcessor): Boolean {
+  return processor.getHint(DynamicMembersHint.KEY)?.shouldProcessMethods() ?: false
 }

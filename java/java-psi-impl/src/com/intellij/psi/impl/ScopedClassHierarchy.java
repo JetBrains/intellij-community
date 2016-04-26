@@ -18,6 +18,7 @@ package com.intellij.psi.impl;
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchScopeUtil;
@@ -25,8 +26,10 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashMap;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,6 +64,14 @@ class ScopedClassHierarchy {
   private final GlobalSearchScope myResolveScope;
   private volatile Map<PsiClass, PsiClassType.ClassResolveResult> mySupersWithSubstitutors;
   private volatile List<PsiClassType.ClassResolveResult> myImmediateSupersWithCapturing;
+  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
+  private final Map<LanguageLevel, Map<PsiClass, PsiSubstitutor>> myAllSupersWithCapturing = new ConcurrentFactoryMap<LanguageLevel, Map<PsiClass, PsiSubstitutor>>() {
+    @Nullable
+    @Override
+    protected Map<PsiClass, PsiSubstitutor> create(LanguageLevel key) {
+      return calcAllMemberSupers(key);
+    }
+  };
 
   private ScopedClassHierarchy(PsiClass psiClass, GlobalSearchScope resolveScope) {
     myPlaceClass = psiClass;
@@ -170,5 +181,27 @@ class ScopedClassHierarchy {
       }
     }
     return list;
+  }
+
+  @NotNull
+  private Map<PsiClass, PsiSubstitutor> calcAllMemberSupers(final LanguageLevel level) {
+    final Map<PsiClass, PsiSubstitutor> map = ContainerUtil.newTroveMap();
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(myPlaceClass.getProject());
+    new PairProcessor<PsiClass, PsiSubstitutor>() {
+      @Override
+      public boolean process(PsiClass eachClass, PsiSubstitutor eachSubstitutor) {
+        if (!map.containsKey(eachClass)) {
+          map.put(eachClass, eachSubstitutor);
+          PsiClassImplUtil.processSuperTypes(eachClass, eachSubstitutor, factory, level, myResolveScope, this);
+        }
+        return true;
+      }
+    }.process(myPlaceClass, PsiSubstitutor.EMPTY);
+    return map;
+  }
+
+  @Nullable
+  PsiSubstitutor getSuperMembersSubstitutor(@NotNull PsiClass superClass, @NotNull LanguageLevel level) {
+    return myAllSupersWithCapturing.get(level).get(superClass);
   }
 }

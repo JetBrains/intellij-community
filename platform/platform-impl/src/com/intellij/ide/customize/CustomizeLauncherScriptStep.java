@@ -40,6 +40,7 @@ public class CustomizeLauncherScriptStep extends AbstractCustomizeWizardStep {
     myCreateScriptCheckBox.setSelected(false);
     myCreateScriptCheckBox.addChangeListener(e -> myScriptPathTextField.setEnabled(myCreateScriptCheckBox.isSelected()));
 
+    myScriptPathTextField.setEnabled(false);
     myScriptPathTextField.setText(CreateLauncherScriptAction.defaultScriptPath());
 
     JPanel content = new JPanel(createSmallBorderLayout());
