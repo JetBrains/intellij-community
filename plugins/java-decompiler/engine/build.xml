@@ -58,10 +58,11 @@
       </batchtest>
     </junit>
     <fail if="tests.failed" message="Tests failed."/>
+    <fail if="tests.stdout.failed" message="Stdout Tests failed."/>
   </target>
 
   <target name="test-stdout" depends="init,test-compile,test-stdout-prepare">
-    <junit printsummary="true" failureproperty="tests.failed" fork="true" >
+    <junit printsummary="true" failureproperty="tests.stdout.failed" fork="true" >
       <classpath path="${test-out}:${out}"/>
       <classpath refid="junit"/>
       <sysproperty key="stdout-tests.expected.dir" value="${stdout-tests.expected.dir}"/>
@@ -79,8 +80,6 @@
     <delete includeemptydirs="true" failonerror="false">
       <fileset dir="${stdout-tests.temp.dir}"/>
     </delete>
-    
-    <fail if="tests.failed" message="Tests failed."/>
   </target>
 
 
