@@ -26,6 +26,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,13 +55,11 @@ public abstract class StubBase<T extends PsiElement> extends ObjectStubBase<Stub
     return myParent;
   }
 
+  @NotNull
   @Override
   @SuppressWarnings("unchecked")
   public List<StubElement> getChildrenStubs() {
-    if (myChildren == null)
-      return Collections.emptyList();
-
-    return myChildren;
+    return ObjectUtils.chooseNotNull(myChildren, Collections.<StubElement>emptyList());
   }
 
   @Override
@@ -104,7 +103,7 @@ public abstract class StubBase<T extends PsiElement> extends ObjectStubBase<Stub
 
 
   @Override
-  public <E extends PsiElement> E[] getChildrenByType(final IElementType elementType, E[] array) {
+  public <E extends PsiElement> E[] getChildrenByType(@NotNull final IElementType elementType, E[] array) {
     final int count = countChildren(elementType);
 
     array = ArrayUtil.ensureExactSize(count, array);
@@ -115,7 +114,7 @@ public abstract class StubBase<T extends PsiElement> extends ObjectStubBase<Stub
   }
 
   @Override
-  public <E extends PsiElement> E[] getChildrenByType(final TokenSet filter, E[] array) {
+  public <E extends PsiElement> E[] getChildrenByType(@NotNull final TokenSet filter, E[] array) {
     final int count = countChildren(filter);
 
     array = ArrayUtil.ensureExactSize(count, array);
@@ -126,7 +125,7 @@ public abstract class StubBase<T extends PsiElement> extends ObjectStubBase<Stub
   }
 
   @Override
-  public <E extends PsiElement> E[] getChildrenByType(final IElementType elementType, final ArrayFactory<E> f) {
+  public <E extends PsiElement> E[] getChildrenByType(@NotNull final IElementType elementType, @NotNull final ArrayFactory<E> f) {
     int count = countChildren(elementType);
 
     E[] result = f.create(count);
@@ -184,7 +183,7 @@ public abstract class StubBase<T extends PsiElement> extends ObjectStubBase<Stub
   }
 
   @Override
-  public <E extends PsiElement> E[] getChildrenByType(final TokenSet filter, final ArrayFactory<E> f) {
+  public <E extends PsiElement> E[] getChildrenByType(@NotNull final TokenSet filter, @NotNull final ArrayFactory<E> f) {
     final int count = countChildren(filter);
 
     E[] array = f.create(count);
@@ -197,7 +196,7 @@ public abstract class StubBase<T extends PsiElement> extends ObjectStubBase<Stub
 
   @Override
   @Nullable
-  public <E extends PsiElement> E getParentStubOfType(final Class<E> parentClass) {
+  public <E extends PsiElement> E getParentStubOfType(@NotNull final Class<E> parentClass) {
     StubElement parent = myParent;
     while (parent != null) {
       PsiElement psi = parent.getPsi();
