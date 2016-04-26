@@ -46,6 +46,8 @@ import java.util.zip.ZipInputStream;
 @Tag("template")
 public abstract class ArchivedProjectTemplate implements ProjectTemplate {
   public static final String INPUT_FIELD = "input-field";
+  public static final String TEMPLATE = "template";
+  public static final String INPUT_DEFAULT = "default";
 
   protected final String myDisplayName;
   @Nullable private final String myCategory;
@@ -132,7 +134,7 @@ public abstract class ArchivedProjectTemplate implements ProjectTemplate {
         @Override
         public WizardInputField fun(Element element) {
           ProjectTemplateParameterFactory factory = WizardInputField.getFactoryById(element.getText());
-          return factory == null ? null : factory.createField(element.getAttributeValue(RemoteTemplatesFactory.INPUT_DEFAULT));
+          return factory == null ? null : factory.createField(element.getAttributeValue(INPUT_DEFAULT));
         }
       });
   }
