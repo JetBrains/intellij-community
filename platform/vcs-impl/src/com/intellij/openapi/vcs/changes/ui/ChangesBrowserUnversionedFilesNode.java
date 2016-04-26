@@ -20,16 +20,21 @@ import com.intellij.openapi.vcs.changes.UnversionedViewDialog;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 
-public class ChangesBrowserManyUnversionedFilesNode extends ChangesBrowserNode {
+public class ChangesBrowserUnversionedFilesNode extends ChangesBrowserNode {
 
   private final int myUnversionedSize;
-  private final int myDirsSize;
+  private final int myUnversionedDirsSize;
+  private boolean myManyUnversioned;
   @NotNull private final Runnable myDialogShower;
 
-  public ChangesBrowserManyUnversionedFilesNode(@NotNull Project project, int unversionedSize, int dirsSize) {
+  public ChangesBrowserUnversionedFilesNode(@NotNull Project project,
+                                            int unversionedSize,
+                                            int unversionedDirsSize,
+                                            boolean manyUnversioned) {
     super(UNVERSIONED_FILES_TAG);
     myUnversionedSize = unversionedSize;
-    myDirsSize = dirsSize;
+    myUnversionedDirsSize = unversionedDirsSize;
+    myManyUnversioned = manyUnversioned;
     myDialogShower = () -> new UnversionedViewDialog(project).show();
   }
 
@@ -40,17 +45,23 @@ public class ChangesBrowserManyUnversionedFilesNode extends ChangesBrowserNode {
   @Override
   public void render(ChangesBrowserNodeRenderer renderer, boolean selected, boolean expanded, boolean hasFocus) {
     super.render(renderer, selected, expanded, hasFocus);
-    renderer.append(" ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
-    renderer.append("browse", SimpleTextAttributes.LINK_ATTRIBUTES, myDialogShower);
+    if (isManyUnversioned()) {
+      renderer.append(" ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      renderer.append("browse", SimpleTextAttributes.LINK_ATTRIBUTES, myDialogShower);
+    }
   }
 
   @Override
   public int getCount() {
-    return myUnversionedSize - myDirsSize;
+    return myUnversionedSize - myUnversionedDirsSize;
   }
 
   @Override
   public int getDirectoryCount() {
-    return myDirsSize;
+    return myUnversionedDirsSize;
+  }
+
+  public boolean isManyUnversioned() {
+    return myManyUnversioned;
   }
 }

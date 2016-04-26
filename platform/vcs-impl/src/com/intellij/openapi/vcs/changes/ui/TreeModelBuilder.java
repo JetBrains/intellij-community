@@ -89,12 +89,12 @@ public class TreeModelBuilder {
     if (!unversionedFiles.isEmpty()) {
       resetGrouping();
 
-      if (unversionedFiles.size() > UNVERSIONED_MAX_SIZE) {
-        ChangesBrowserNode node = new ChangesBrowserManyUnversionedFilesNode(myProject, sizes.getFirst(), sizes.getSecond());
-        model.insertNodeInto(node, root, root.getChildCount());
-      }
-      else {
-        buildVirtualFiles(unversionedFiles, ChangesBrowserNode.UNVERSIONED_FILES_TAG);
+      ChangesBrowserUnversionedFilesNode node = new ChangesBrowserUnversionedFilesNode(
+        myProject, sizes.getFirst(), sizes.getSecond(), unversionedFiles.size() > UNVERSIONED_MAX_SIZE);
+      model.insertNodeInto(node, root, root.getChildCount());
+
+      if (!node.isManyUnversioned()) {
+        insertFilesIntoNode(unversionedFiles, node);
       }
     }
 
