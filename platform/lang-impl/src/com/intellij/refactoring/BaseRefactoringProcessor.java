@@ -566,7 +566,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     }
 
     @TestOnly
-    static void setTestIgnore(boolean myIgnore) {
+    public static void setTestIgnore(boolean myIgnore) {
       myTestIgnore = myIgnore;
     }
 

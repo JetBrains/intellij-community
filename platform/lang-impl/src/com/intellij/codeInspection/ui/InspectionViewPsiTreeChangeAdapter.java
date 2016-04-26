@@ -52,7 +52,7 @@ class InspectionViewPsiTreeChangeAdapter extends PsiTreeChangeAdapter {
     myView = view;
     myExecutor = new BoundedTaskExecutor(AppExecutorUtil.getAppExecutorService(), JobSchedulerImpl.CORES_COUNT, myView);
     myUpdater = new MergingUpdateQueue("inspection.view.psi.update.listener",
-                                       200,
+                                       300,
                                        true,
                                        myView,
                                        myView,
@@ -114,7 +114,11 @@ class InspectionViewPsiTreeChangeAdapter extends PsiTreeChangeAdapter {
                 UIUtil.invokeLaterIfNeeded(() -> {
                   myView.invalidate();
                   myView.repaint();
-                  myView.syncRightPanel();
+                  if (myView.isUpdating()) {
+                    myView.updateRightPanelLoading();
+                  } else {
+                    myView.syncRightPanel();
+                  }
                 });
               }
             }

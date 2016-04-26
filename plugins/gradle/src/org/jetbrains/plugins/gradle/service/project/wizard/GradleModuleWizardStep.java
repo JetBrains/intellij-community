@@ -255,5 +255,10 @@ public class GradleModuleWizardStep extends ModuleWizardStep {
       field.setText(StringUtil.notNullize(text));
     }
   }
+
+  @Override
+  public String getHelpId() {
+    return "Gradle_Archetype_Dialog";
+  }
 }
 

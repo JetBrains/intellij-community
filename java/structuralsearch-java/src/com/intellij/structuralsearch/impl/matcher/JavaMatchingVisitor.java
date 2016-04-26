@@ -719,6 +719,52 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       }
     }
   }
+  private static PsiTypeElement[] getTypeParameters(PsiJavaCodeReferenceElement referenceElement, boolean replaceDiamondWithExplicitTypes) {
+    final PsiReferenceParameterList referenceElementParameterList = referenceElement.getParameterList();
+    if (referenceElementParameterList == null) {
+      return null;
+    }
+    final PsiTypeElement[] typeParameterElements = referenceElementParameterList.getTypeParameterElements();
+    if (typeParameterElements.length != 1 || !replaceDiamondWithExplicitTypes) {
+      return typeParameterElements;
+    }
+    final PsiType type = typeParameterElements[0].getType();
+    if (!(type instanceof PsiDiamondType)) {
+      return typeParameterElements;
+    }
+    final PsiDiamondType diamondType = (PsiDiamondType)type;
+    final PsiDiamondType.DiamondInferenceResult inferenceResult = diamondType.resolveInferredTypes();
+    final StringBuilder text = new StringBuilder(referenceElement.getQualifiedName());
+    text.append('<');
+    boolean comma = false;
+    for (PsiType inferredType : inferenceResult.getInferredTypes()) {
+      if (comma) {
+        text.append(',');
+      }
+      else {
+        comma = true;
+      }
+      text.append(inferredType.getCanonicalText());
+    }
+    text.append('>');
+    final PsiJavaCodeReferenceElement newReferenceElement =
+      JavaPsiFacade.getElementFactory(referenceElement.getProject()).createReferenceFromText(text.toString(), referenceElement);
+    final PsiReferenceParameterList newParameterList = newReferenceElement.getParameterList();
+    return newParameterList == null ? null : newParameterList.getTypeParameterElements();
+  }
+
+  private static boolean hasDiamondTypeParameter(PsiElement element) {
+    if (!(element instanceof PsiJavaCodeReferenceElement)) {
+      return false;
+    }
+    final PsiJavaCodeReferenceElement javaCodeReferenceElement = (PsiJavaCodeReferenceElement)element;
+    final PsiReferenceParameterList parameterList = javaCodeReferenceElement.getParameterList();
+    if (parameterList == null) {
+      return false;
+    }
+    final PsiTypeElement[] elements = parameterList.getTypeParameterElements();
+    return elements.length == 1 && elements[0].getType() instanceof PsiDiamondType;
+  }
 
   private boolean matchType(final PsiElement patternType, final PsiElement matchedType) {
     PsiElement patternElement = getInnermostComponent(patternType);
@@ -726,10 +772,8 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
     PsiElement[] typeParameters = null;
     if (matchedElement instanceof PsiJavaCodeReferenceElement) {
-      final PsiReferenceParameterList parameterList = ((PsiJavaCodeReferenceElement)matchedElement).getParameterList();
-      if (parameterList != null) {
-        typeParameters = parameterList.getTypeParameterElements();
-      }
+      final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)matchedElement;
+      typeParameters = getTypeParameters(referenceElement, !hasDiamondTypeParameter(patternElement));
     }
     else if (matchedElement instanceof PsiTypeParameter) {
       matchedElement = ((PsiTypeParameter)matchedElement).getNameIdentifier();
@@ -821,13 +865,11 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     else {
       final PsiElement element2 = ((PsiJavaReference)matchedElement).resolve();
 
-      if (element2 instanceof PsiClass) {
-        final String name = ((PsiClass)element2).getQualifiedName();
-        return caseSensitive ? text.equals(name) : text.equalsIgnoreCase(name);
+      if (!(element2 instanceof PsiClass)) {
+        return false;
       }
-      else {
-        return MatchUtils.compareWithNoDifferenceToPackage(text, text2, !caseSensitive);
-      }
+      final String name = ((PsiClass)element2).getQualifiedName();
+      return caseSensitive ? text.equals(name) : text.equalsIgnoreCase(name);
     }
   }
 
@@ -837,27 +879,13 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     if (element instanceof PsiClass) {
       result = ((PsiClass)element).getQualifiedName();
       if (result == null) result = element.getText();
+    } else if (element instanceof PsiJavaCodeReferenceElement) {
+      result = ((PsiJavaCodeReferenceElement)element).getCanonicalText();
     } else {
       result = element.getText();
     }
-    final int whitespace = lastIndexOfWhitespace(result);
-    if (whitespace >= 0) {
-      // strips off any annotations
-      result = result.substring(whitespace + 1);
-    }
     final int index = result.indexOf('<');
-    if (index == -1) {
-      return result;
-    }
-    return result.substring(0, index);
-  }
-
-  @Contract(pure = true)
-  private static int lastIndexOfWhitespace(@NotNull CharSequence s) {
-    for (int i = s.length() - 1; i >= 0; i--) {
-      if (Character.isWhitespace(s.charAt(i))) return i;
-    }
-    return -1;
+    return index == -1 ? result : result.substring(0, index);
   }
 
   private boolean checkMatchWithingHierarchy(PsiElement el2, SubstitutionHandler handler, PsiElement context) {

@@ -17,7 +17,6 @@
   <depends>com.jetbrains.edu.coursecreator</depends>
   <depends>com.jetbrains.edu.interactivelearning</depends>
   <depends>com.jetbrains.python.edu.interactivelearning.python</depends>
-  <depends>com.jetbrains.python.edu.core</depends>
 
   <extensions defaultExtensionNs="com.intellij">
     <directoryProjectGenerator implementation="com.jetbrains.edu.coursecreator.PyCCProjectGenerator"/>

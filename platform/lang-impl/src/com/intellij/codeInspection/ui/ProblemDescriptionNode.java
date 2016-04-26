@@ -81,7 +81,7 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
 
   @Override
   public int getProblemCount() {
-    return 1;
+    return myPresentation.isProblemResolved(getElement(), myDescriptor) ? 0 : 1;
   }
 
   @Override

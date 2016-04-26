@@ -456,7 +456,7 @@ public class MethodCandidateInfo extends CandidateInfo{
   public String getParentInferenceErrorMessage(PsiExpressionList list) {
     String errorMessage = getInferenceErrorMessage();
     while (errorMessage == null) {
-      list = PsiTreeUtil.getParentOfType(list, PsiExpressionList.class, true);
+      list = PsiTreeUtil.getParentOfType(list, PsiExpressionList.class, true, PsiCodeBlock.class);
       if (list == null) {
         break;
       }

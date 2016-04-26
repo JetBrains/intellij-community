@@ -30,6 +30,7 @@ import org.gradle.api.artifacts.SelfResolvingDependency
 import org.gradle.api.artifacts.component.ComponentIdentifier
 import org.gradle.api.artifacts.component.ModuleComponentIdentifier
 import org.gradle.api.artifacts.component.ModuleComponentSelector
+import org.gradle.api.artifacts.component.ProjectComponentIdentifier
 import org.gradle.api.artifacts.component.ProjectComponentSelector
 import org.gradle.api.artifacts.result.*
 import org.gradle.api.plugins.WarPlugin
@@ -55,6 +56,9 @@ import java.util.regex.Pattern
  * @since 8/19/2015
  */
 class DependencyResolverImpl implements DependencyResolver {
+
+  private static isArtifactResolutionQuerySupported = GradleVersion.current().compareTo(GradleVersion.version("2.0")) >= 0
+  private static isDependencySubstitutionsSupported = GradleVersion.current().compareTo(GradleVersion.version("2.5")) >= 0
 
   @NotNull
   private final Project myProject
@@ -99,9 +103,6 @@ class DependencyResolverImpl implements DependencyResolver {
     if (configuration.allDependencies.isEmpty()) return [Collections.emptyList(), Collections.emptyList()]
 
     final Collection<ExternalDependency> result = new LinkedHashSet<>()
-
-
-    def isArtifactResolutionQuerySupported = GradleVersion.current().compareTo(GradleVersion.version("2.0")) >= 0
 
     def resolvedFileDependencies = []
     if (!myIsPreview && isArtifactResolutionQuerySupported) {
@@ -836,26 +837,43 @@ class DependencyResolverImpl implements DependencyResolver {
                 artifact = it
                 def packaging = it.extension ?: 'jar'
                 def classifier = it.classifier
-                final dependency = new DefaultExternalLibraryDependency(
-                  name: name,
-                  group: group,
-                  packaging: packaging,
-                  classifier: classifier,
-                  version: version,
-                  scope: scope,
-                  selectionReason: selectionReason,
-                  file: artifact.file
-                )
+                final dependency
+                if (isDependencySubstitutionsSupported && artifact.id.componentIdentifier instanceof ProjectComponentIdentifier) {
+                  def artifactComponentIdentifier = artifact.id.componentIdentifier as ProjectComponentIdentifier
+                  dependency = new DefaultExternalProjectDependency(
+                    name: name,
+                    group: group,
+                    version: version,
+                    scope: scope,
+                    selectionReason: selectionReason,
+                    projectPath: artifactComponentIdentifier.projectPath,
+                    configurationName: Dependency.DEFAULT_CONFIGURATION
+                  )
+                  dependency.projectDependencyArtifacts = artifactMap.get(componentResult.moduleVersion).collect { it.file }
+                  dependency.projectDependencyArtifacts.each { resolvedDepsFiles.add(it) }
+                }
+                else {
+                  dependency = new DefaultExternalLibraryDependency(
+                    name: name,
+                    group: group,
+                    packaging: packaging,
+                    classifier: classifier,
+                    version: version,
+                    scope: scope,
+                    selectionReason: selectionReason,
+                    file: artifact.file
+                  )
 
-                def artifactsResult = componentResultsMap.get(componentIdentifier)
-                if (artifactsResult) {
-                  def sourcesResult = artifactsResult.getArtifacts(SourcesArtifact)?.find { it instanceof ResolvedArtifactResult }
-                  if (sourcesResult) {
-                    dependency.setSource(((ResolvedArtifactResult)sourcesResult).getFile())
-                  }
-                  def javadocResult = artifactsResult.getArtifacts(JavadocArtifact)?.find { it instanceof ResolvedArtifactResult }
-                  if (javadocResult) {
-                    dependency.setJavadoc(((ResolvedArtifactResult)javadocResult).getFile())
+                  def artifactsResult = componentResultsMap.get(componentIdentifier)
+                  if (artifactsResult) {
+                    def sourcesResult = artifactsResult.getArtifacts(SourcesArtifact)?.find { it instanceof ResolvedArtifactResult }
+                    if (sourcesResult) {
+                      dependency.setSource(((ResolvedArtifactResult)sourcesResult).getFile())
+                    }
+                    def javadocResult = artifactsResult.getArtifacts(JavadocArtifact)?.find { it instanceof ResolvedArtifactResult }
+                    if (javadocResult) {
+                      dependency.setJavadoc(((ResolvedArtifactResult)javadocResult).getFile())
+                    }
                   }
                 }
                 if (first) {

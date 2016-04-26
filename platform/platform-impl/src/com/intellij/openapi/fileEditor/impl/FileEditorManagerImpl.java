@@ -995,6 +995,19 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
       }
     };
 
+    commitAndInvoke(runnable);
+
+    EditorWithProviderComposite composite = compositeRef.get();
+    return Pair.create(composite == null ? EMPTY_EDITOR_ARRAY : composite.getEditors(),
+                       composite == null ? EMPTY_PROVIDER_ARRAY : composite.getProviders());
+  }
+
+  /**
+   * Commit all documents and execute the runnable on EDT.
+   * When called not on EDT, performs commit asynchronously to avoid UI freezes:
+   * {@link #restoreEditorState} requires a committed document (to apply folding info in PsiAwareTextEditorProvider#setStateImpl).
+   */
+  private void commitAndInvoke(@NotNull Runnable runnable) {
     if (ApplicationManager.getApplication().isDispatchThread()) {
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
       runnable.run();
@@ -1011,10 +1024,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
       //noinspection StatementWithEmptyBody
       while (!semaphore.waitFor(10) && !myProject.isDisposed());
     }
-
-    EditorWithProviderComposite composite = compositeRef.get();
-    return Pair.create(composite == null ? EMPTY_EDITOR_ARRAY : composite.getEditors(),
-                       composite == null ? EMPTY_PROVIDER_ARRAY : composite.getProviders());
   }
   
   @Nullable

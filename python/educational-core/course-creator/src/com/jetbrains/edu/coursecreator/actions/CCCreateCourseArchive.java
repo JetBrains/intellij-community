@@ -2,7 +2,6 @@ package com.jetbrains.edu.coursecreator.actions;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -21,6 +20,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.io.ZipUtil;
+import com.jetbrains.edu.coursecreator.CCLanguageManager;
+import com.jetbrains.edu.coursecreator.CCUtils;
+import com.jetbrains.edu.coursecreator.ui.CreateCourseArchiveDialog;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
@@ -28,9 +30,6 @@ import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
 import com.jetbrains.edu.learning.courseFormat.Task;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
-import com.jetbrains.edu.coursecreator.CCLanguageManager;
-import com.jetbrains.edu.coursecreator.CCUtils;
-import com.jetbrains.edu.coursecreator.ui.CreateCourseArchiveDialog;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -52,7 +51,7 @@ public class CCCreateCourseArchive extends DumbAwareAction {
   }
 
   public CCCreateCourseArchive() {
-    super("Generate Course Archive", "Generate Course Archive", AllIcons.FileTypes.Archive);
+    super("Generate Course Archive", "Generate Course Archive", null);
   }
 
   @Override

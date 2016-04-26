@@ -181,7 +181,7 @@ public class QuickFixPreviewPanelFactory {
       setBorder(IdeBorderFactory.createEmptyBorder(16, 9, 13, 0));
       AsyncProcessIcon waitingIcon = new AsyncProcessIcon("Inspection preview panel updating...");
       Disposer.register(this, waitingIcon);
-      myWaitingLabel = getLabel(1);
+      myWaitingLabel = getLabel(myView.getTree().getSelectedProblemCount());
       add(myWaitingLabel);
       add(waitingIcon);
     }

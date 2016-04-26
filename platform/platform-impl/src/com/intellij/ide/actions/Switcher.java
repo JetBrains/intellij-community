@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -730,6 +730,9 @@ public class Switcher extends AnAction implements DumbAware {
         case VK_BACK_SPACE: // Mac users
         case VK_Q:
           closeTabOrToolWindow();
+          break;
+        case VK_ESCAPE:
+          cancel();
           break;
       }
     }

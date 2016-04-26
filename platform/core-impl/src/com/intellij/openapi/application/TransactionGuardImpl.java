@@ -16,6 +16,7 @@
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
@@ -37,11 +38,17 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author peter
  */
 public class TransactionGuardImpl extends TransactionGuard {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.application.TransactionGuardImpl");
   private final Queue<Transaction> myQueue = new LinkedBlockingQueue<Transaction>();
   private final Map<ModalityState, TransactionIdImpl> myModality2Transaction = ContainerUtil.createConcurrentWeakMap();
   private final Set<ModalityState> myWriteSafeModalities = Collections.newSetFromMap(ContainerUtil.<ModalityState, Boolean>createConcurrentWeakMap());
   private TransactionIdImpl myCurrentTransaction;
   private boolean myWritingAllowed;
+  /**
+   * A modality started when writing is not allowed (e.g. SwingUtilities.invokeLater). Writing isn't allowed for
+   * all dialogs inside this modality, even from user activity.
+   */
+  private Object myUnsafeModality;
 
   public TransactionGuardImpl() {
     myWriteSafeModalities.add(ModalityState.NON_MODAL);
@@ -50,10 +57,12 @@ public class TransactionGuardImpl extends TransactionGuard {
   @NotNull
   private AccessToken startTransactionUnchecked() {
     final TransactionIdImpl prevTransaction = myCurrentTransaction;
+    final Object prevUnsafeModality = myUnsafeModality;
     final boolean wasWritingAllowed = myWritingAllowed;
 
     myWritingAllowed = true;
     myCurrentTransaction = new TransactionIdImpl();
+    myUnsafeModality = null;
 
     return new AccessToken() {
       @Override
@@ -67,6 +76,7 @@ public class TransactionGuardImpl extends TransactionGuard {
 
         myWritingAllowed = wasWritingAllowed;
         myCurrentTransaction = prevTransaction;
+        myUnsafeModality = prevUnsafeModality;
       }
     };
   }
@@ -77,7 +87,6 @@ public class TransactionGuardImpl extends TransactionGuard {
   }
 
   private void pollQueueLater() {
-    //todo replace with SwingUtilities when write actions are required to run under a guard
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
@@ -88,7 +97,7 @@ public class TransactionGuardImpl extends TransactionGuard {
           runSyncTransaction(next);
         }
       }
-    });
+    }, ModalityState.any());
   }
 
   private void runSyncTransaction(@NotNull Transaction transaction) {
@@ -125,8 +134,7 @@ public class TransactionGuardImpl extends TransactionGuard {
     if (isDispatchThread) {
       runnable.run();
     } else {
-      //todo add ModalityState.any() when write actions are required to run under a guard
-      app.invokeLater(runnable);
+      app.invokeLater(runnable, ModalityState.any());
     }
   }
 
@@ -208,12 +216,13 @@ public class TransactionGuardImpl extends TransactionGuard {
    */
   @NotNull
   public AccessToken startActivity(boolean userActivity) {
-    if (myWritingAllowed == userActivity) {
+    boolean allowWriting = userActivity && myUnsafeModality == null;
+    if (myWritingAllowed == allowWriting) {
       return AccessToken.EMPTY_ACCESS_TOKEN;
     }
 
     final boolean prev = myWritingAllowed;
-    myWritingAllowed = userActivity;
+    myWritingAllowed = allowWriting;
     return new AccessToken() {
       @Override
       public void finish() {
@@ -235,7 +244,7 @@ public class TransactionGuardImpl extends TransactionGuard {
       public void run() {
         submitTransaction(parentDisposable, id, transaction);
       }
-    });
+    }, ModalityState.any());
   }
 
   @Override
@@ -248,13 +257,22 @@ public class TransactionGuardImpl extends TransactionGuard {
     return myWritingAllowed ? myCurrentTransaction : null;
   }
 
-  public void enteredModality(@NotNull ModalityState modality) {
+  public void enteredModality(@NotNull ModalityState modality, @NotNull Object modalityObject) {
     TransactionIdImpl contextTransaction = getContextTransaction();
     if (contextTransaction != null) {
       myModality2Transaction.put(modality, contextTransaction);
     }
     if (myWritingAllowed) {
       myWriteSafeModalities.add(modality);
+    } else if (myUnsafeModality == null) {
+      myUnsafeModality = modalityObject;
+    }
+  }
+
+  public void leftModality(@NotNull Object modalityObject) {
+    if (myUnsafeModality == modalityObject) {
+      myUnsafeModality = null;
+      LOG.assertTrue(!myWritingAllowed, modalityObject);
     }
   }
 

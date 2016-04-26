@@ -273,6 +273,13 @@ public class JavaCompletionUtil {
                 PsiType qualifierType = LambdaUtil.getLambdaParameterFromType(functionalInterfaceType, parameterIndex);
                 if (qualifierType == null) return;
 
+                if (qualifierType instanceof PsiWildcardType) {
+                  PsiType bound = ((PsiWildcardType)qualifierType).getBound();
+                  if (bound != null) {
+                    qualifierType = bound;
+                  }
+                }
+
                 PsiReferenceExpression fakeRef = createReference("xxx.xxx", createContextWithXxxVariable(element, qualifierType));
                 set.addAll(processJavaQualifiedReference(fakeRef.getReferenceNameElement(), fakeRef, elementFilter, options, matcher, parameters));
               });

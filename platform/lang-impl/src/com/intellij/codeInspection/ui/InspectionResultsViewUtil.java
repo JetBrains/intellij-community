@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.ui;
 
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.openapi.editor.Editor;
@@ -53,11 +54,18 @@ public class InspectionResultsViewUtil {
     return createLabelForText(InspectionViewNavigationPanel.getTitleText(false, false));
   }
 
+  @NotNull
   static JComponent getInvalidEntityLabel(@NotNull RefEntity entity) {
     final String name = entity.getName();
     return createLabelForText("\'" + name + "\' is no longer valid.");
   }
 
+  @NotNull
+  static JComponent getApplyingFixLabel(@NotNull InspectionToolWrapper wrapper) {
+    return createLabelForText("Applying quick fix for \'" + wrapper.getDisplayName() + "\'...");
+  }
+
+  @NotNull
   private static JLabel createLabelForText(String text) {
     final JLabel multipleSelectionLabel = new JBLabel(text);
     multipleSelectionLabel.setVerticalAlignment(SwingConstants.TOP);

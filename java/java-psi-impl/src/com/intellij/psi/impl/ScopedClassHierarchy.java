@@ -15,9 +15,12 @@
  */
 package com.intellij.psi.impl;
 
+import com.intellij.openapi.util.RecursionGuard;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -53,26 +56,31 @@ class ScopedClassHierarchy {
       return o1.getManager().areElementsEquivalent(o1, o2);
     }
   };
-  private final Map<PsiClass, PsiClassType.ClassResolveResult> mySupersWithSubstitutors = ContainerUtil.newTroveMap(CLASS_HASHING_STRATEGY);
+  private static final RecursionGuard ourGuard = RecursionManager.createGuard("ScopedClassHierarchy");
+  private final PsiClass myPlaceClass;
+  private final GlobalSearchScope myResolveScope;
+  private volatile Map<PsiClass, PsiClassType.ClassResolveResult> mySupersWithSubstitutors;
+  private volatile List<PsiClassType.ClassResolveResult> myImmediateSupersWithCapturing;
 
   private ScopedClassHierarchy(PsiClass psiClass, GlobalSearchScope resolveScope) {
-    visitType(resolveScope, JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(psiClass, PsiSubstitutor.EMPTY));
+    myPlaceClass = psiClass;
+    myResolveScope = resolveScope;
   }
 
-  private void visitType(GlobalSearchScope resolveScope, @NotNull PsiClassType type) {
+  private void visitType(@NotNull PsiClassType type, Map<PsiClass, PsiClassType.ClassResolveResult> map) {
     PsiClassType.ClassResolveResult resolveResult = type.resolveGenerics();
     PsiClass psiClass = resolveResult.getElement();
-    if (psiClass == null || InheritanceImplUtil.hasObjectQualifiedName(psiClass) || mySupersWithSubstitutors.containsKey(psiClass)) {
+    if (psiClass == null || InheritanceImplUtil.hasObjectQualifiedName(psiClass) || map.containsKey(psiClass)) {
       return;
     }
 
-    mySupersWithSubstitutors.put(psiClass, resolveResult);
+    map.put(psiClass, resolveResult);
 
     for (PsiType superType : getSuperTypes(psiClass)) {
       superType = type.isRaw() && superType instanceof PsiClassType ? ((PsiClassType)superType).rawType() : resolveResult.getSubstitutor().substitute(superType);
-      superType = PsiClassImplUtil.correctType(superType, resolveScope);
+      superType = PsiClassImplUtil.correctType(superType, myResolveScope);
       if (superType instanceof PsiClassType) {
-        visitType(resolveScope, (PsiClassType)superType);
+        visitType((PsiClassType)superType, map);
       }
     }
   }
@@ -89,7 +97,7 @@ class ScopedClassHierarchy {
   }
 
   @NotNull
-  private static ScopedClassHierarchy getHierarchy(@NotNull final PsiClass psiClass, @NotNull final GlobalSearchScope resolveScope) {
+  static ScopedClassHierarchy getHierarchy(@NotNull final PsiClass psiClass, @NotNull final GlobalSearchScope resolveScope) {
     return CachedValuesManager.getCachedValue(psiClass, new CachedValueProvider<Map<GlobalSearchScope, ScopedClassHierarchy>>() {
       @Nullable
       @Override
@@ -108,7 +116,17 @@ class ScopedClassHierarchy {
 
   @Nullable
   static PsiSubstitutor getSuperClassSubstitutor(@NotNull PsiClass derivedClass, @NotNull GlobalSearchScope scope, @NotNull PsiClass superClass) {
-    PsiClassType.ClassResolveResult resolveResult = getHierarchy(derivedClass, scope).mySupersWithSubstitutors.get(superClass);
+    ScopedClassHierarchy hierarchy = getHierarchy(derivedClass, scope);
+    Map<PsiClass, PsiClassType.ClassResolveResult> map = hierarchy.mySupersWithSubstitutors;
+    if (map == null) {
+      map = ContainerUtil.newTroveMap(CLASS_HASHING_STRATEGY);
+      RecursionGuard.StackStamp stamp = ourGuard.markStack();
+      hierarchy.visitType(JavaPsiFacade.getElementFactory(derivedClass.getProject()).createType(derivedClass, PsiSubstitutor.EMPTY), map);
+      if (stamp.mayCacheNow()) {
+        hierarchy.mySupersWithSubstitutors = map;
+      }
+    }
+    PsiClassType.ClassResolveResult resolveResult = map.get(superClass);
     if (resolveResult == null) return null;
 
     PsiClass cachedClass = assertNotNull(resolveResult.getElement());
@@ -131,4 +149,26 @@ class ScopedClassHierarchy {
     return answer;
   }
 
+  @NotNull
+  List<PsiClassType.ClassResolveResult> getImmediateSupersWithCapturing() {
+    List<PsiClassType.ClassResolveResult> list = myImmediateSupersWithCapturing;
+    if (list == null) {
+      RecursionGuard.StackStamp stamp = ourGuard.markStack();
+      list = ContainerUtil.newArrayList();
+      for (PsiClassType type : myPlaceClass.getSuperTypes()) {
+        PsiClassType corrected = PsiClassImplUtil.correctType(type, myResolveScope);
+        if (corrected == null) continue;
+
+        PsiClassType.ClassResolveResult result = ((PsiClassType)PsiUtil.captureToplevelWildcards(corrected, myPlaceClass)).resolveGenerics();
+        PsiClass superClass = result.getElement();
+        if (superClass == null || !PsiSearchScopeUtil.isInScope(myResolveScope, superClass)) continue;
+
+        list.add(result);
+      }
+      if (stamp.mayCacheNow()) {
+        myImmediateSupersWithCapturing = list;
+      }
+    }
+    return list;
+  }
 }
