@@ -39,7 +39,7 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
-abstract class MergeModelBase<S extends MergeModelBase.State> implements Disposable {
+public abstract class MergeModelBase<S extends MergeModelBase.State> implements Disposable {
   public static final Logger LOG = Logger.getInstance(MergeModelBase.class);
 
   @Nullable private final Project myProject;

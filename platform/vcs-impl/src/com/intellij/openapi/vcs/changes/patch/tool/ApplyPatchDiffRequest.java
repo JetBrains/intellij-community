@@ -15,48 +15,52 @@
  */
 package com.intellij.openapi.vcs.changes.patch.tool;
 
+import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ApplyPatchDiffRequest extends DiffRequest {
+public class ApplyPatchDiffRequest extends DiffRequest implements ApplyPatchRequest {
+  @NotNull private final DocumentContent myResultContent;
   @NotNull private final AppliedTextPatch myAppliedPatch;
+
   @NotNull private final String myLocalContent;
-  @Nullable private final VirtualFile myHighlightFile;
 
   @Nullable private final String myWindowTitle;
   @NotNull private final String myLocalTitle;
   @NotNull private final String myResultTitle;
   @NotNull private final String myPatchTitle;
 
-  public ApplyPatchDiffRequest(@NotNull AppliedTextPatch appliedPatch,
+  public ApplyPatchDiffRequest(@NotNull DocumentContent resultContent,
+                               @NotNull AppliedTextPatch appliedPatch,
                                @NotNull String localContent,
-                               @Nullable VirtualFile highlightFile,
                                @Nullable String windowTitle,
                                @NotNull String localTitle,
                                @NotNull String resultTitle,
                                @NotNull String patchTitle) {
+    myResultContent = resultContent;
     myAppliedPatch = appliedPatch;
     myLocalContent = localContent;
-    myHighlightFile = highlightFile;
     myWindowTitle = windowTitle;
     myLocalTitle = localTitle;
     myResultTitle = resultTitle;
     myPatchTitle = patchTitle;
   }
 
+  @Override
+  @NotNull
+  public DocumentContent getResultContent() {
+    return myResultContent;
+  }
+
+  @Override
   @NotNull
   public String getLocalContent() {
     return myLocalContent;
   }
 
-  @Nullable
-  public VirtualFile getHighlightFile() {
-    return myHighlightFile;
-  }
-
+  @Override
   @NotNull
   public AppliedTextPatch getPatch() {
     return myAppliedPatch;
@@ -68,16 +72,19 @@ public class ApplyPatchDiffRequest extends DiffRequest {
     return myWindowTitle;
   }
 
+  @Override
   @NotNull
   public String getLocalTitle() {
     return myLocalTitle;
   }
 
+  @Override
   @NotNull
   public String getResultTitle() {
     return myResultTitle;
   }
 
+  @Override
   @NotNull
   public String getPatchTitle() {
     return myPatchTitle;

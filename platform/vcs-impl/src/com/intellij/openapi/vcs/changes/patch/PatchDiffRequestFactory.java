@@ -93,7 +93,7 @@ public class PatchDiffRequestFactory {
       applier.execute();
 
       final AppliedTextPatch appliedTextPatch = AppliedTextPatch.create(applier.getAppliedInfo());
-      return createBadDiffRequest(file, localContent, appliedTextPatch, null, null, null, null);
+      return createBadDiffRequest(project, file, localContent, appliedTextPatch, null, null, null, null);
     }
     else {
       String localContent = texts.getLocal().toString();
@@ -133,7 +133,8 @@ public class PatchDiffRequestFactory {
   }
 
   @NotNull
-  public static DiffRequest createBadDiffRequest(@Nullable VirtualFile file,
+  public static DiffRequest createBadDiffRequest(@Nullable Project project,
+                                                 @NotNull VirtualFile file,
                                                  @NotNull String localContent,
                                                  @NotNull AppliedTextPatch textPatch,
                                                  @Nullable String windowTitle,
@@ -145,7 +146,9 @@ public class PatchDiffRequestFactory {
     if (resultTitle == null) resultTitle = VcsBundle.message("patch.apply.conflict.patched.somehow.version");
     if (patchTitle == null) patchTitle = VcsBundle.message("patch.apply.conflict.patch");
 
-    return new ApplyPatchDiffRequest(textPatch, localContent, file, windowTitle, localTitle, resultTitle, patchTitle);
+    DocumentContent resultContent = DiffContentFactory.getInstance().createDocument(project, file);
+    if (resultContent == null) resultContent = DiffContentFactory.getInstance().create(localContent, file);
+    return new ApplyPatchDiffRequest(resultContent, textPatch, localContent, windowTitle, localTitle, resultTitle, patchTitle);
   }
 
   @NotNull
@@ -219,7 +222,8 @@ public class PatchDiffRequestFactory {
     if (resultTitle == null) resultTitle = VcsBundle.message("patch.apply.conflict.patched.somehow.version");
     if (patchTitle == null) patchTitle = VcsBundle.message("patch.apply.conflict.patch");
 
-    return new ApplyPatchMergeRequest(project, document, textPatch, localContent,
+    DocumentContent resultContent = DiffContentFactory.getInstance().create(project, document, file);
+    return new ApplyPatchMergeRequest(project, resultContent, textPatch, localContent,
                                       windowTitle, localTitle, resultTitle, patchTitle, callback);
   }
 

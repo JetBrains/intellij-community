@@ -40,9 +40,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
-import com.intellij.openapi.command.undo.DocumentReference;
-import com.intellij.openapi.command.undo.DocumentReferenceManager;
-import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
@@ -54,12 +51,8 @@ import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
@@ -68,8 +61,6 @@ import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
-import javax.swing.event.HyperlinkEvent;
-import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.*;
@@ -300,12 +291,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
       DiffUtil.executeWriteCommand(outputDocument, getProject(), "Init merge content", () -> {
         outputDocument.setText(baseDocument.getCharsSequence());
-
-        UndoManager undoManager = getProject() != null ? UndoManager.getInstance(getProject()) : UndoManager.getGlobalInstance();
-        if (undoManager != null) {
-          DocumentReference ref = DocumentReferenceManager.getInstance().create(outputDocument);
-          undoManager.nonundoableActionPerformed(ref, false);
-        }
+        DiffUtil.putNonundoableOperation(getProject(), outputDocument);
       });
     }
 
@@ -581,26 +567,16 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
         LOG.assertTrue(getFirstUnresolvedChange(true, null) == null);
         ApplicationManager.getApplication().invokeLater(() -> {
           if (isDisposed()) return;
-          String message = "All changes have been processed.<br><a href=\"\">Save changes and finish merging</a>";
-          HyperlinkListener listener = new HyperlinkAdapter() {
-            @Override
-            protected void hyperlinkActivated(HyperlinkEvent e) {
-              if (isDisposed()) return;
-              destroyChangedBlocks();
-              myMergeContext.finishMerge(MergeResult.RESOLVED);
-            }
-          };
 
           JComponent component = getEditor().getComponent();
-          Point point = new Point(component.getWidth() / 2, JBUI.scale(5));
-          Color bgColor = MessageType.INFO.getPopupBackground();
+          RelativePoint point = new RelativePoint(component, new Point(component.getWidth() / 2, JBUI.scale(5)));
 
-          Balloon balloon = JBPopupFactory.getInstance()
-            .createHtmlTextBalloonBuilder(message, null, bgColor, listener)
-            .setAnimationCycle(200)
-            .createBalloon();
-          balloon.show(new RelativePoint(component, point), Balloon.Position.below);
-          Disposer.register(this, balloon);
+          String message = DiffBundle.message("merge.all.changes.processed.message.text");
+          DiffUtil.showSuccessPopup(message, point, this, () -> {
+            if (isDisposed()) return;
+            destroyChangedBlocks();
+            myMergeContext.finishMerge(MergeResult.RESOLVED);
+          });
         });
       }
     }
