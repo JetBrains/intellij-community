@@ -851,6 +851,11 @@ def layoutAndroid(String androidHome, String androidToolsBaseHome) {
         module("chartlib")
         module("builder-model")
         module("builder-test-api")
+        module("instant-run-annotations")
+        module("instant-run-common")
+        module("instant-run-client")
+        module("instant-run-runtime")
+        module("repository")
       }
       jar("androidAnnotations.jar") {
         fileset(dir: "$androidHome/android/annotations")
