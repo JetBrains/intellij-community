@@ -234,7 +234,8 @@ public class JavaFxPsiUtil {
     return null;
   }
 
-  public static PsiMethod findPropertyGetter(@NotNull PsiClass psiClass, @NotNull String propertyName) {
+  public static PsiMethod findPropertyGetter(@NotNull PsiClass psiClass, @Nullable String propertyName) {
+    if (StringUtil.isEmpty(propertyName)) return null;
     PsiMethod getter = findPropertyGetter(psiClass, propertyName, null);
     if (getter != null) {
       return getter;
@@ -255,7 +256,8 @@ public class JavaFxPsiUtil {
     return null;
   }
 
-  public static PsiMethod findObservablePropertyGetter(@NotNull PsiClass psiClass, @NotNull String propertyName) {
+  public static PsiMethod findObservablePropertyGetter(@NotNull PsiClass psiClass, @Nullable String propertyName) {
+    if (StringUtil.isEmpty(propertyName)) return null;
     final PsiMethod[] getters = psiClass.findMethodsByName(propertyName + JavaFxCommonNames.PROPERTY_METHOD_SUFFIX, true);
     for (PsiMethod getter : getters) {
       if (getter.hasModifierProperty(PsiModifier.PUBLIC) &&
@@ -959,7 +961,8 @@ public class JavaFxPsiUtil {
   }
 
   @Nullable
-  public static PsiMethod findInstancePropertySetter(@NotNull PsiClass psiClass, @NotNull String propertyName) {
+  public static PsiMethod findInstancePropertySetter(@NotNull PsiClass psiClass, @Nullable String propertyName) {
+    if (StringUtil.isEmpty(propertyName)) return null;
     final String suggestedSetterName = PropertyUtil.suggestSetterName(propertyName);
     final PsiMethod[] setters = psiClass.findMethodsByName(suggestedSetterName, true);
     for (PsiMethod setter : setters) {

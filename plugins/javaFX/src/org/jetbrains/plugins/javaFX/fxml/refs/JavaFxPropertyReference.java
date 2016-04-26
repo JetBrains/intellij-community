@@ -1,51 +1,55 @@
 package org.jetbrains.plugins.javaFX.fxml.refs;
 
 import com.intellij.psi.*;
-import com.intellij.psi.util.PropertyUtil;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
-
-import java.util.Map;
 
 /**
  * @author Pavel.Dolgov
  */
-public interface JavaFxPropertyReference extends PsiReference {
-  @Nullable
-  PsiMethod getGetter();
+public abstract class JavaFxPropertyReference<T extends PsiElement> extends PsiReferenceBase<T> {
+  protected final PsiClass myPsiClass;
 
-  @Nullable
-  PsiMethod getSetter();
-
-  @Nullable
-  PsiField getField();
-
-  @Nullable
-  PsiMethod getObservableGetter();
-
-  @Nullable
-  PsiType getType();
-
-  static PsiMethod getGetter(PsiClass psiClass, String propertyName) {
-    if (psiClass == null || propertyName == null) return null;
-    return JavaFxPsiUtil.findPropertyGetter(psiClass, propertyName);
+  public JavaFxPropertyReference(@NotNull T element, PsiClass aClass, boolean soft) {
+    super(element, soft);
+    myPsiClass = aClass;
   }
 
-  static PsiMethod getSetter(PsiClass psiClass, String propertyName) {
-    if (psiClass == null || propertyName == null) return null;
-    return JavaFxPsiUtil.findInstancePropertySetter(psiClass, propertyName);
+  public JavaFxPropertyReference(@NotNull T element, PsiClass aClass) {
+    super(element);
+    myPsiClass = aClass;
   }
 
-  static PsiField getField(PsiClass psiClass, String propertyName) {
-    if (psiClass == null || propertyName == null) return null;
-    return psiClass.findFieldByName(propertyName, true);
+  @Nullable
+  public PsiMethod getGetter() {
+    if (myPsiClass == null) return null;
+    return JavaFxPsiUtil.findPropertyGetter(myPsiClass, getPropertyName());
   }
 
-  static PsiMethod getObservableGetter(PsiClass psiClass, String propertyName) {
-    if (psiClass == null || propertyName == null) return null;
-    return JavaFxPsiUtil.findObservablePropertyGetter(psiClass, propertyName);
+  @Nullable
+  public PsiMethod getSetter() {
+    if (myPsiClass == null) return null;
+    return JavaFxPsiUtil.findInstancePropertySetter(myPsiClass, getPropertyName());
   }
+
+  @Nullable
+  public PsiField getField() {
+    if (myPsiClass == null) return null;
+    return myPsiClass.findFieldByName(getPropertyName(), true);
+  }
+
+  @Nullable
+  public PsiMethod getObservableGetter() {
+    if (myPsiClass == null) return null;
+    return JavaFxPsiUtil.findObservablePropertyGetter(myPsiClass, getPropertyName());
+  }
+
+  @Nullable
+  public PsiType getType() {
+    return JavaFxPsiUtil.getReadablePropertyType(resolve());
+  }
+
+  @Nullable
+  protected abstract String getPropertyName();
 }

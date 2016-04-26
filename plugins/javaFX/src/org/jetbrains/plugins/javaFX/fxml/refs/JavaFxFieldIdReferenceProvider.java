@@ -55,13 +55,13 @@ public class JavaFxFieldIdReferenceProvider extends JavaFxControllerBasedReferen
     return new PsiReference[]{new JavaFxControllerFieldRef(xmlAttributeValue, fieldOrGetterMethod, aClass)};
   }
 
-  public static class JavaFxControllerFieldRef extends PsiReferenceBase<XmlAttributeValue> implements JavaFxPropertyReference {
+  public static class JavaFxControllerFieldRef extends JavaFxPropertyReference<XmlAttributeValue> {
     private final XmlAttributeValue myXmlAttributeValue;
     private final PsiMember myFieldOrMethod;
     private final PsiClass myAClass;
 
     public JavaFxControllerFieldRef(XmlAttributeValue xmlAttributeValue, PsiMember fieldOrMethod, PsiClass aClass) {
-      super(xmlAttributeValue, true);
+      super(xmlAttributeValue, aClass, true);
       myXmlAttributeValue = xmlAttributeValue;
       myFieldOrMethod = fieldOrMethod;
       myAClass = aClass;
@@ -127,7 +127,7 @@ public class JavaFxFieldIdReferenceProvider extends JavaFxControllerBasedReferen
       if (myFieldOrMethod instanceof PsiMethod && PropertyUtil.isSimplePropertyGetter((PsiMethod)myFieldOrMethod)) {
         return (PsiMethod)myFieldOrMethod;
       }
-      return JavaFxPropertyReference.getGetter(myAClass, PropertyUtil.getPropertyName(myFieldOrMethod));
+      return super.getGetter();
     }
 
     @Nullable
@@ -136,7 +136,7 @@ public class JavaFxFieldIdReferenceProvider extends JavaFxControllerBasedReferen
       if (myFieldOrMethod instanceof PsiMethod && PropertyUtil.isSimplePropertySetter((PsiMethod)myFieldOrMethod)) {
         return (PsiMethod)myFieldOrMethod;
       }
-      return JavaFxPropertyReference.getSetter(myAClass, PropertyUtil.getPropertyName(myFieldOrMethod));
+      return super.getSetter();
     }
 
     @Nullable
@@ -145,19 +145,13 @@ public class JavaFxFieldIdReferenceProvider extends JavaFxControllerBasedReferen
       if (myFieldOrMethod instanceof PsiField) {
         return (PsiField)myFieldOrMethod;
       }
-      return JavaFxPropertyReference.getField(myAClass, PropertyUtil.getPropertyName(myFieldOrMethod));
+      return super.getField();
     }
 
     @Nullable
     @Override
-    public PsiMethod getObservableGetter() {
-      return JavaFxPropertyReference.getObservableGetter(myAClass, PropertyUtil.getPropertyName(myFieldOrMethod));
-    }
-
-    @Nullable
-    @Override
-    public PsiType getType() {
-      return JavaFxPsiUtil.getReadablePropertyType(myFieldOrMethod);
+    protected String getPropertyName() {
+      return PropertyUtil.getPropertyName(myFieldOrMethod);
     }
 
     @Override

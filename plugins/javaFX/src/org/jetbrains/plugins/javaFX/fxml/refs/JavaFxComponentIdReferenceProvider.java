@@ -43,7 +43,7 @@ import java.util.stream.Collectors;
 /**
 * User: anna
 */
-class JavaFxComponentIdReferenceProvider extends PsiReferenceProvider {
+public class JavaFxComponentIdReferenceProvider extends PsiReferenceProvider {
 
   @NotNull
   @Override
@@ -190,7 +190,7 @@ class JavaFxComponentIdReferenceProvider extends PsiReferenceProvider {
     }
   }
 
-  private static class JavaFxIdReferenceBase extends PsiReferenceBase<XmlAttributeValue> implements JavaFxIdAttributeReference {
+  public static class JavaFxIdReferenceBase extends PsiReferenceBase<XmlAttributeValue> {
     private final Map<String, XmlAttributeValue> myFileIds;
     private final Set<String> myAcceptableIds;
     private final Map<String, TypeMatch> myTypeMatches;
@@ -232,26 +232,23 @@ class JavaFxComponentIdReferenceProvider extends PsiReferenceProvider {
         .toArray(LookupElement[]::new);
     }
 
-    @Override
     public boolean isBuiltIn() {
       return FxmlConstants.CONTROLLER.equals(myReferencesId) || myReferencesId.endsWith(FxmlConstants.CONTROLLER_SUFFIX);
     }
   }
 
-  private static class JavaFxExpressionReferenceBase extends PsiReferenceBase<XmlAttributeValue> implements JavaFxPropertyReference {
-    private final PsiClass myTagClass;
+  private static class JavaFxExpressionReferenceBase extends JavaFxPropertyReference<XmlAttributeValue> {
     private final String myFieldName;
 
-    public JavaFxExpressionReferenceBase(XmlAttributeValue xmlAttributeValue, PsiClass tagClass, String fieldName) {
-      super(xmlAttributeValue);
-      myTagClass = tagClass;
+    public JavaFxExpressionReferenceBase(@NotNull XmlAttributeValue xmlAttributeValue, PsiClass tagClass, @NotNull String fieldName) {
+      super(xmlAttributeValue, tagClass);
       myFieldName = fieldName;
     }
 
     @Nullable
     @Override
     public PsiElement resolve() {
-      return JavaFxPsiUtil.collectReadableProperties(myTagClass).get(myFieldName);
+      return JavaFxPsiUtil.collectReadableProperties(myPsiClass).get(myFieldName);
     }
 
     @NotNull
@@ -259,7 +256,7 @@ class JavaFxComponentIdReferenceProvider extends PsiReferenceProvider {
     public Object[] getVariants() {
       final XmlAttributeValue xmlAttributeValue = getElement();
       final PsiElement declaration = JavaFxPsiUtil.getAttributeDeclaration(xmlAttributeValue);
-      final PsiType propertyType = JavaFxPsiUtil.getWritablePropertyType(myTagClass, declaration);
+      final PsiType propertyType = JavaFxPsiUtil.getWritablePropertyType(myPsiClass, declaration);
       if (propertyType != null) {
         return collectProperties(propertyType, xmlAttributeValue.getProject());
       }
@@ -269,7 +266,7 @@ class JavaFxComponentIdReferenceProvider extends PsiReferenceProvider {
     private Object[] collectProperties(@NotNull PsiType propertyType, @NotNull Project project) {
       final PsiType resolvedType = JavaFxPsiUtil.getWritablePropertyType(propertyType, project);
       final List<LookupElement> objs = new ArrayList<>();
-      final Collection<PsiMember> readableProperties = JavaFxPsiUtil.collectReadableProperties(myTagClass).values();
+      final Collection<PsiMember> readableProperties = JavaFxPsiUtil.collectReadableProperties(myPsiClass).values();
       for (PsiMember readableMember : readableProperties) {
         final PsiType readableType = JavaFxPsiUtil.getReadablePropertyType(readableMember);
         if (readableType == null) continue;
@@ -284,34 +281,10 @@ class JavaFxComponentIdReferenceProvider extends PsiReferenceProvider {
       return ArrayUtil.toObjectArray(objs);
     }
 
-    @Nullable
+    @NotNull
     @Override
-    public PsiMethod getGetter() {
-      return JavaFxPropertyReference.getGetter(myTagClass, myFieldName);
-    }
-
-    @Nullable
-    @Override
-    public PsiMethod getSetter() {
-      return JavaFxPropertyReference.getSetter(myTagClass, myFieldName);
-    }
-
-    @Nullable
-    @Override
-    public PsiField getField() {
-      return JavaFxPropertyReference.getField(myTagClass, myFieldName);
-    }
-
-    @Nullable
-    @Override
-    public PsiMethod getObservableGetter() {
-      return JavaFxPropertyReference.getObservableGetter(myTagClass, myFieldName);
-    }
-
-    @Nullable
-    @Override
-    public PsiType getType() {
-      return JavaFxPsiUtil.getReadablePropertyType(resolve());
+    protected String getPropertyName() {
+      return myFieldName;
     }
 
     @Override

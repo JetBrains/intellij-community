@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
-import org.jetbrains.plugins.javaFX.fxml.refs.JavaFxIdAttributeReference;
+import org.jetbrains.plugins.javaFX.fxml.refs.JavaFxComponentIdReferenceProvider;
 import org.jetbrains.plugins.javaFX.fxml.refs.JavaFxPropertyReference;
 import org.jetbrains.plugins.javaFX.fxml.refs.JavaFxStaticPropertyReference;
 
@@ -57,7 +57,8 @@ public class JavaFxPropertyRenameHandler implements RenameHandler {
   private static void performInvoke(@NotNull Project project, @Nullable Editor editor, DataContext dataContext) {
     PsiReference reference = getReference(dataContext);
     if (reference == null) return;
-    if (reference instanceof JavaFxIdAttributeReference && ((JavaFxIdAttributeReference)reference).isBuiltIn()) {
+    if (reference instanceof JavaFxComponentIdReferenceProvider.JavaFxIdReferenceBase &&
+        ((JavaFxComponentIdReferenceProvider.JavaFxIdReferenceBase)reference).isBuiltIn()) {
       CommonRefactoringUtil.showErrorHint(project, editor, "Cannot rename built-in property", null, null);
       return;
     }
@@ -159,7 +160,9 @@ public class JavaFxPropertyRenameHandler implements RenameHandler {
   private static boolean isKnown(PsiReference reference) {
     if (reference instanceof JavaFxPropertyReference) return true;
     if (reference instanceof JavaFxStaticPropertyReference) return ((JavaFxStaticPropertyReference)reference).getStaticMethod() != null;
-    if (reference instanceof JavaFxIdAttributeReference) return ((JavaFxIdAttributeReference)reference).isBuiltIn();
+    if (reference instanceof JavaFxComponentIdReferenceProvider.JavaFxIdReferenceBase) {
+      return ((JavaFxComponentIdReferenceProvider.JavaFxIdReferenceBase)reference).isBuiltIn();
+    }
     return false;
   }
 
