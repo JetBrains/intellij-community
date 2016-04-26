@@ -105,7 +105,17 @@ public class AssertProcessor {
 
                     ClassNode nd = node;
                     while (nd != null) {
-                      if (nd.getWrapper().getClassStruct().qualifiedName.equals(cexpr.getValue())) {
+                      Object ndFullName = cexpr.getValue();
+                      //we must check renamer... (does the need for this just mask another bug?)
+                      if (DecompilerContext.getPoolInterceptor() != null) {
+                        String lookupName = (String) cexpr.getValue();
+                        lookupName = lookupName.replace('.', '/');
+                        String newName = DecompilerContext.getPoolInterceptor().getName(lookupName);
+                        if (newName != null) {
+                          ndFullName = newName;
+                        }
+                      }
+                      if (nd.getWrapper().getClassStruct().qualifiedName.equals(ndFullName)) {
                         break;
                       }
                       nd = nd.parent;
