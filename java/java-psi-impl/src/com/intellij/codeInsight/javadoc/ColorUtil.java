@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ public class ColorUtil {
     return String.format("<div style=\"padding: 1px; width: 52px; height: 32px; background-color: #555555;\"><div style=\"width: 50px; height: 30px; background-color: #%s;\">&nbsp;</div></div>", com.intellij.ui.ColorUtil.toHex(color));
   }
 
+  @SuppressWarnings("UseJBColor")
   public static void appendColorPreview(final PsiVariable variable, final StringBuilder buffer) {
     final PsiExpression initializer = variable.getInitializer();
     if (initializer != null) {
