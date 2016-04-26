@@ -510,7 +510,7 @@ public abstract class DiffRequestProcessor implements Disposable {
 
   private class ShowInExternalToolAction extends DumbAwareAction {
     public ShowInExternalToolAction() {
-      EmptyAction.setupAction(this, "Diff.ShowInExternalTool", null);
+      ActionUtil.copyFrom(this, "Diff.ShowInExternalTool");
     }
 
     @Override
@@ -595,7 +595,7 @@ public abstract class DiffRequestProcessor implements Disposable {
 
   private class ShowActionGroupPopupAction extends DumbAwareAction {
     public ShowActionGroupPopupAction() {
-      EmptyAction.setupAction(this, "Diff.ShowSettingsPopup", null);
+      ActionUtil.copyFrom(this, "Diff.ShowSettingsPopup");
     }
 
     @Override

@@ -19,6 +19,7 @@ import com.intellij.diff.tools.util.base.HighlightingLevel;
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.impl.EditorImpl;
@@ -159,7 +160,7 @@ public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
 
   private abstract class EditorSettingToggleAction extends ToggleAction implements DumbAware, EditorSettingAction {
     private EditorSettingToggleAction(@NotNull String actionId) {
-      EmptyAction.setupAction(this, actionId, null);
+      ActionUtil.copyFrom(this, actionId);
     }
 
     @Override

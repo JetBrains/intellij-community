@@ -35,8 +35,8 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.EmptyAction;
 import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -86,7 +86,7 @@ public class AnnotateDiffViewerAction extends ToggleAction implements DumbAware 
   };
 
   public AnnotateDiffViewerAction() {
-    EmptyAction.setupAction(this, "Annotate", null);
+    ActionUtil.copyFrom(this, "Annotate");
     setEnabledInModalContext(true);
   }
 
