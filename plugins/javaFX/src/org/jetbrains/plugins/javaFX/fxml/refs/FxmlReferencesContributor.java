@@ -125,6 +125,10 @@ public class FxmlReferencesContributor extends PsiReferenceContributor {
                                                         .withParent(XmlPatterns.xmlTag().withParent(XmlPatterns.xmlTag().withName(FxmlConstants.STYLESHEETS))))
                                           .and(attributeValueInFxml),
                                         new JavaFxLocationReferenceProvider(true, "css"));
+
+    registrar.registerReferenceProvider(XmlPatterns.xmlAttribute().withLocalName(string().contains("."))
+                                          .inVirtualFile(virtualFile().withExtension(JavaFxFileTypeFactory.FXML_EXTENSION)),
+                                        new JavaFxStaticPropertyReferenceProvider());
   }
 
   private static class MyJavaClassReferenceProvider extends JavaClassReferenceProvider {
