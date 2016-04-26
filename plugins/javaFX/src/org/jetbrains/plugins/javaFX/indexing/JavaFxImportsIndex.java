@@ -90,10 +90,6 @@ public class JavaFxImportsIndex extends ScalarIndexExtension<String> {
 
     @Nullable
     private static Map<String, Void> getImportClassNames(String content) {
-      if (!content.contains(JavaFxNamespaceDataProvider.JAVAFX_NAMESPACE)) {
-        return null;
-      }
-
       final Map<String, Void> imports = new HashMap<>();
 
       class StopException extends RuntimeException {

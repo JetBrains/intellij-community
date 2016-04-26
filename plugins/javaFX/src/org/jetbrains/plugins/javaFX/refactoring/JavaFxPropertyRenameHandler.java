@@ -79,11 +79,18 @@ public class JavaFxPropertyRenameHandler implements RenameHandler {
       }
     }
     if (reference instanceof JavaFxStaticPropertyReference) {
-      final Map<String, PsiElement> elementsToRename = getStaticElementsToRename((JavaFxStaticPropertyReference)reference, "a");
+      final JavaFxStaticPropertyReference propertyReference = (JavaFxStaticPropertyReference)reference;
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        final String newName = PsiElementRenameHandler.DEFAULT_NAME.getData(dataContext);
+        assert newName != null : "Rename property";
+        doRenameStatic(propertyReference, newName, false, false);
+        return;
+      }
+      final Map<String, PsiElement> elementsToRename = getStaticElementsToRename(propertyReference, "a");
       for (PsiElement element : elementsToRename.values()) {
         if (!PsiElementRenameHandler.canRename(project, editor, element)) return;
       }
-      final PsiElement psiElement = JavaFxStaticPropertyElement.fromReference((JavaFxStaticPropertyReference)reference);
+      final PsiElement psiElement = JavaFxStaticPropertyElement.fromReference(propertyReference);
       if (psiElement != null) {
         new PropertyRenameDialog(reference, psiElement, project, editor).show();
       }
