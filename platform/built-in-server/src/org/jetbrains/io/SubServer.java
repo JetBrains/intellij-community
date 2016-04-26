@@ -31,7 +31,6 @@ import io.netty.handler.codec.http.QueryStringDecoder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.ide.CustomPortServerManager;
 
-import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Map;
 
@@ -123,7 +122,7 @@ public final class SubServer implements CustomPortServerManager.CustomPortServic
     }
 
     @Override
-    protected boolean process(@NotNull ChannelHandlerContext context, @NotNull FullHttpRequest request, @NotNull QueryStringDecoder urlDecoder) throws IOException {
+    protected boolean process(@NotNull ChannelHandlerContext context, @NotNull FullHttpRequest request, @NotNull QueryStringDecoder urlDecoder) {
       if (handlers.isEmpty()) {
         // not yet initialized, for example, P2PTransport could add handlers after we bound.
         return false;
