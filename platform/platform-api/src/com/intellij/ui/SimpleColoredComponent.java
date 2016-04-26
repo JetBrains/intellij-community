@@ -1026,12 +1026,12 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   @Override
   public AccessibleContext getAccessibleContext() {
     if (accessibleContext == null) {
-      accessibleContext = new MyAccessibleContext();
+      accessibleContext = new AccessibleSimpleColoredComponent();
     }
     return accessibleContext;
   }
 
-  private class MyAccessibleContext extends JComponent.AccessibleJComponent {
+  protected class AccessibleSimpleColoredComponent extends JComponent.AccessibleJComponent {
     @Override
     public String getAccessibleName() {
       return getCharSequence(false).toString();
