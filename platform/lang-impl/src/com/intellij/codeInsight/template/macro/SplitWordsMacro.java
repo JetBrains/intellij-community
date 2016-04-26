@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,10 +39,7 @@ public abstract class SplitWordsMacro extends MacroBase {
   @Override
   protected Result calculateResult(@NotNull Expression[] params, ExpressionContext context, boolean quick) {
     String text = getTextResult(params, context, true);
-    if (StringUtil.isNotEmpty(text)) {
-      return new TextResult(convertString(text));
-    }
-    return null;
+    return text != null ? new TextResult(!text.isEmpty() ? convertString(text) : "") : null;
   }
 
   @VisibleForTesting
