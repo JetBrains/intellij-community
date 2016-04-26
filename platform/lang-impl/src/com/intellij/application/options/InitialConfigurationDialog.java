@@ -164,15 +164,23 @@ public class InitialConfigurationDialog extends DialogWrapper {
 
     final boolean canCreateLauncherScript = canCreateLauncherScript();
     myCreateScriptPanel.setVisible(canCreateLauncherScript);
+    myCreateScriptCheckbox.setVisible(canCreateLauncherScript);
     myCreateScriptCheckbox.setSelected(false);
     if (canCreateLauncherScript) {
       myScriptPathTextField.setText(CreateLauncherScriptAction.defaultScriptPath());
+      myScriptPathTextField.setEnabled(false);
+      myCreateScriptCheckbox.addChangeListener(e -> myScriptPathTextField.setEnabled(myCreateScriptCheckbox.isSelected()));
     }
 
     final boolean canCreateDesktopEntry = canCreateDesktopEntry();
     myCreateEntryPanel.setVisible(canCreateDesktopEntry);
+    myCreateEntryCheckBox.setVisible(canCreateDesktopEntry);
     myCreateEntryCheckBox.setSelected(canCreateDesktopEntry);
     myGlobalEntryCheckBox.setSelected(false);
+    if (canCreateDesktopEntry) {
+      myGlobalEntryCheckBox.setEnabled(true);
+      myCreateEntryCheckBox.addChangeListener(e -> myGlobalEntryCheckBox.setEnabled(myCreateEntryCheckBox.isSelected()));
+    }
 
     myPreferencesLabel.setText("You can use " + CommonBundle.settingsActionPath() + " to configure any of these settings later.");
 
