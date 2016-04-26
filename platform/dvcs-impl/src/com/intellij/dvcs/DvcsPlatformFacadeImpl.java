@@ -20,6 +20,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
@@ -34,7 +35,6 @@ import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -115,12 +115,7 @@ public abstract class DvcsPlatformFacadeImpl implements DvcsPlatformFacade {
 
   @Override
   public void saveAllDocuments() {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        FileDocumentManager.getInstance().saveAllDocuments();
-      }
-    });
+    TransactionGuard.getInstance().submitTransactionAndWait(() -> FileDocumentManager.getInstance().saveAllDocuments());
   }
 
   @NotNull
