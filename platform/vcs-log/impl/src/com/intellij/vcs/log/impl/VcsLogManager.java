@@ -41,6 +41,7 @@ import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.ui.VcsLogColorManagerImpl;
 import com.intellij.vcs.log.ui.VcsLogPanel;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,14 +61,16 @@ public class VcsLogManager implements Disposable {
   @NotNull private final VcsLogColorManagerImpl myColorManager;
   @NotNull private final VcsLogTabsWatcher myTabsLogRefresher;
   @NotNull private final PostponableLogRefresher myPostponableRefresher;
+  private boolean myInitialized = false;
 
   public VcsLogManager(@NotNull Project project, @NotNull VcsLogTabsProperties uiProperties, @NotNull Collection<VcsRoot> roots) {
-    this(project, uiProperties, roots, null);
+    this(project, uiProperties, roots, true, null);
   }
 
   public VcsLogManager(@NotNull Project project,
                        @NotNull VcsLogTabsProperties uiProperties,
                        @NotNull Collection<VcsRoot> roots,
+                       boolean scheduleRefreshImmediately,
                        @Nullable Runnable recreateHandler) {
     myProject = project;
     myUiProperties = uiProperties;
@@ -82,9 +85,24 @@ public class VcsLogManager implements Disposable {
 
     myColorManager = new VcsLogColorManagerImpl(logProviders.keySet());
 
-    myDataManager.refreshCompletely();
+    if (scheduleRefreshImmediately) {
+      scheduleInitialization();
+    }
 
     Disposer.register(project, this);
+  }
+
+  @CalledInAwt
+  public void scheduleInitialization() {
+    if (!myInitialized) {
+      myInitialized = true;
+      myDataManager.refreshCompletely();
+    }
+  }
+
+  @CalledInAwt
+  public boolean isLogVisible() {
+    return myPostponableRefresher.isLogVisible();
   }
 
   @NotNull

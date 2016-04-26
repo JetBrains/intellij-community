@@ -72,6 +72,10 @@ public class PostponableLogRefresher implements VcsLogRefresher {
 
   protected boolean canRefreshNow() {
     if (keepUpToDate()) return true;
+    return isLogVisible();
+  }
+
+  public boolean isLogVisible() {
     for (VcsLogWindow window : myLogWindows) {
       if (window.isVisible()) return true;
     }

@@ -15,11 +15,10 @@
  */
 package com.intellij.vcs.log.impl;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsListener;
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentEP;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -27,7 +26,6 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.TabbedContent;
-import com.intellij.ui.content.impl.ContentManagerImpl;
 import com.intellij.util.ContentUtilEx;
 import com.intellij.util.ContentsUtil;
 import com.intellij.util.NotNullFunction;
@@ -35,6 +33,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcs.log.ui.VcsLogPanel;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -53,37 +52,49 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
   @NotNull private final Project myProject;
   @NotNull private final VcsLogProjectManager myLogManager;
   @NotNull private final JPanel myContainer = new JBPanel(new BorderLayout());
-  private MessageBusConnection myConnection;
 
   public VcsLogContentProvider(@NotNull Project project, @NotNull VcsLogProjectManager logManager) {
     myProject = project;
     myLogManager = logManager;
-    myLogManager.setRecreateMainLogHandler(new Runnable() {
+
+    MessageBusConnection connection = project.getMessageBus().connect(project);
+    connection.subscribe(VcsLogProjectManager.VCS_PROJECT_LOG_CHANGED, new VcsLogProjectManager.ProjectLogListener() {
       @Override
-      public void run() {
-        recreateLog();
+      public void logCreated() {
+        addLogUi();
+      }
+
+      @Override
+      public void logDisposed() {
+        myContainer.removeAll();
+        closeLogTabs();
       }
     });
+
+    if (myLogManager.getLogManager() != null) {
+      addLogUi();
+    }
+  }
+
+  @CalledInAwt
+  private void addLogUi() {
+    myContainer.add(myLogManager.initMainLog(TAB_NAME), BorderLayout.CENTER);
+
+    VcsLogManager manager = myLogManager.getLogManager();
+    assert manager != null;
+    if (manager.isLogVisible()) myLogManager.scheduleInitialization();
   }
 
   @Override
   public JComponent initContent() {
-    myConnection = myProject.getMessageBus().connect();
-    myConnection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, new MyVcsListener());
-    initContentInternal();
+    myLogManager.scheduleInitialization();
     return myContainer;
-  }
-
-  private void initContentInternal() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    myContainer.add(myLogManager.initMainLog(TAB_NAME), BorderLayout.CENTER);
   }
 
   @Override
   public void disposeContent() {
-    myConnection.disconnect();
     myContainer.removeAll();
-    myLogManager.disposeLog();
+    closeLogTabs();
   }
 
   public static void openAnotherLogTab(@NotNull VcsLogManager logManager, @NotNull Project project) {
@@ -97,6 +108,8 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
     ContentUtilEx
       .addTabbedContent(toolWindow.getContentManager(), new VcsLogPanel(logManager, logUi), TAB_NAME, shortName, true, logUi);
     toolWindow.activate(null);
+
+    logManager.scheduleInitialization();
   }
 
   @NotNull
@@ -119,31 +132,12 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
   private void closeLogTabs() {
     ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.VCS);
 
-    for (Content content: toolWindow.getContentManager().getContents()) {
-      if (ContentUtilEx.isContentTab(content, TAB_NAME)) {
-        ContentsUtil.closeContentTab(toolWindow.getContentManager(), content);
-      }
-    }
-  }
-
-  private void recreateLog() {
-    myContainer.removeAll();
-    closeLogTabs();
-
-    myLogManager.disposeLog();
-
-    initContentInternal();
-  }
-
-  private class MyVcsListener implements VcsListener {
-    @Override
-    public void directoryMappingChanged() {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          recreateLog();
+    if (toolWindow != null) {
+      for (Content content : toolWindow.getContentManager().getContents()) {
+        if (ContentUtilEx.isContentTab(content, TAB_NAME)) {
+          ContentsUtil.closeContentTab(toolWindow.getContentManager(), content);
         }
-      });
+      }
     }
   }
 

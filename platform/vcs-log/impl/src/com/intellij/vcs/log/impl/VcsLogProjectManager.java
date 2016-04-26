@@ -15,6 +15,7 @@
  */
 package com.intellij.vcs.log.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
@@ -23,11 +24,14 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsListener;
 import com.intellij.openapi.vcs.VcsRoot;
+import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.messages.Topic;
 import com.intellij.vcs.log.data.VcsLogDataManager;
 import com.intellij.vcs.log.data.VcsLogTabsProperties;
 import com.intellij.vcs.log.ui.VcsLogPanel;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
+import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,7 +41,10 @@ import java.util.Arrays;
 import java.util.Collection;
 
 public class VcsLogProjectManager {
+  public static final Topic<ProjectLogListener> VCS_PROJECT_LOG_CHANGED =
+    Topic.create("Project Vcs Log Created or Disposed", ProjectLogListener.class);
   @NotNull private final Project myProject;
+  @NotNull private final MessageBus myMessageBus;
   @NotNull private final VcsLogTabsProperties myUiProperties;
 
   @NotNull
@@ -46,6 +53,7 @@ public class VcsLogProjectManager {
 
   public VcsLogProjectManager(@NotNull Project project, @NotNull VcsLogTabsProperties uiProperties) {
     myProject = project;
+    myMessageBus = project.getMessageBus();
     myUiProperties = uiProperties;
   }
 
@@ -67,10 +75,6 @@ public class VcsLogProjectManager {
     return new VcsLogPanel(myLogManager.getValue(), myUi);
   }
 
-  public void setRecreateMainLogHandler(@Nullable Runnable recreateMainLogHandler) {
-    myLogManager.setRecreateMainLogHandler(recreateMainLogHandler);
-  }
-
   /**
    * The instance of the {@link VcsLogUiImpl} or null if the log was not initialized yet.
    */
@@ -84,37 +88,46 @@ public class VcsLogProjectManager {
     return myLogManager.getCached();
   }
 
-  public void disposeLog() {
+  @CalledInAny
+  private void recreateLog() {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        disposeLog();
+
+        if (hasDvcsRoots()) {
+          createLog();
+        }
+      }
+    });
+  }
+
+  @CalledInAwt
+  private void disposeLog() {
+    if (myLogManager.getCached() != null) myMessageBus.syncPublisher(VCS_PROJECT_LOG_CHANGED).logDisposed();
     myUi = null;
     myLogManager.drop();
   }
 
-  void initOnStartup() {
-    Runnable command = new Runnable() {
-      @Override
-      public void run() {
-        if (hasDvcsRoots()) {
-          myLogManager.getValue();
-        }
-      }
-    };
+  @CalledInAwt
+  private void createLog() {
+    VcsLogManager logManager = myLogManager.getValue();
 
-    MessageBusConnection connection = myProject.getMessageBus().connect(myProject);
-    connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, new VcsListener() {
-      @Override
-      public void directoryMappingChanged() {
-        if (hasDvcsRoots()) {
-          new HeavyAwareExecutor(myProject).execute(command);
-        }
-        else {
-          disposeLog();
-        }
-      }
-    });
+    myMessageBus.syncPublisher(VCS_PROJECT_LOG_CHANGED).logCreated();
 
-    if (hasDvcsRoots()) {
-      new HeavyAwareExecutor(myProject).execute(command);
+    if (PostponableLogRefresher.keepUpToDate()) {
+      new HeavyAwareExecutor(myProject).execute(new Runnable() {
+        @Override
+        public void run() {
+          logManager.scheduleInitialization();
+        }
+      });
     }
+  }
+
+  public void scheduleInitialization() {
+    VcsLogManager cached = myLogManager.getCached();
+    if (cached != null) cached.scheduleInitialization();
   }
 
   private boolean hasDvcsRoots() {
@@ -127,7 +140,6 @@ public class VcsLogProjectManager {
 
   @SuppressWarnings("NonPrivateFieldAccessedInSynchronizedContext")
   private class LazyVcsLogManager extends ClearableLazyValue<VcsLogManager> {
-    @Nullable private Runnable myRecreateMainLogHandler;
 
     @NotNull
     @CalledInAwt
@@ -140,7 +152,12 @@ public class VcsLogProjectManager {
     @CalledInAwt
     @Override
     protected synchronized VcsLogManager compute() {
-      return new VcsLogManager(myProject, myUiProperties, getVcsRoots(), myRecreateMainLogHandler);
+      return new VcsLogManager(myProject, myUiProperties, getVcsRoots(), false, new Runnable() {
+        @Override
+        public void run() {
+          recreateLog();
+        }
+      });
     }
 
     @CalledInAwt
@@ -154,17 +171,36 @@ public class VcsLogProjectManager {
     public synchronized VcsLogManager getCached() {
       return myValue;
     }
-
-    public synchronized void setRecreateMainLogHandler(@Nullable Runnable recreateMainLogHandler) {
-      myRecreateMainLogHandler = recreateMainLogHandler;
-    }
   }
 
   public static class InitLogStartupActivity implements StartupActivity {
     @Override
     public void runActivity(@NotNull Project project) {
-      if (!PostponableLogRefresher.keepUpToDate()) return;
-      getInstance(project).initOnStartup();
+      VcsLogProjectManager logProjectManager = getInstance(project);
+
+      MessageBusConnection connection = project.getMessageBus().connect(project);
+      connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, new VcsListener() {
+        @Override
+        public void directoryMappingChanged() {
+          logProjectManager.recreateLog();
+        }
+      });
+      if (logProjectManager.hasDvcsRoots()) {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            logProjectManager.createLog();
+          }
+        });
+      }
     }
+  }
+
+  public interface ProjectLogListener {
+    @CalledInAwt
+    void logCreated();
+
+    @CalledInAwt
+    void logDisposed();
   }
 }
