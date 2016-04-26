@@ -119,6 +119,10 @@ final class DelegatingHttpRequestHandler extends DelegatingHttpRequestHandlerBas
    * the url in the FullHttpRequest to strip the token, so that delegated Handlers do not have to deal with the token.
    */
   private boolean authenticateAndUpdateUrlIfNeeded(@NotNull FullHttpRequest request) {
+    // We always allow access to favicon.ico, avoiding the browser will prompt for authentication.
+    if (request.uri().equals("/favicon.ico")) {
+      return true;
+    }
     String expectedToken = null;
     try {
       expectedToken = BuiltinWebServerAccess.getUserAuthenticationToken();
