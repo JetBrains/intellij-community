@@ -25,6 +25,7 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.FactoryMap;
@@ -127,6 +128,13 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
       return getPresentation().getProblemStatus(myDescriptor);
     }
     return FileStatus.NOT_CHANGED;
+  }
+
+  @Override
+  protected void dropCache(Project project) {
+    if (!isQuickFixAppliedFromView()) {
+      super.dropCache(project);
+    }
   }
 
   @Override
