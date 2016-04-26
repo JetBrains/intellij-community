@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,26 +29,24 @@ import javax.swing.*;
 
 public final class TextViewer extends EditorTextField {
   private final boolean myEmbeddedIntoDialogWrapper;
-  private final boolean myUseSoftWraps;
 
-  public TextViewer(@NotNull Project project, boolean embeddedIntoDialogWrapper, boolean useSoftWraps) {
-    this(createDocument(""), project, embeddedIntoDialogWrapper, useSoftWraps);
+  public TextViewer(@NotNull String initialText, @NotNull Project project, boolean viewer) {
+    this(createDocument(initialText), project, true, viewer);
   }
 
   public TextViewer(@NotNull String initialText, @NotNull Project project) {
-    this(createDocument(initialText), project, false, true);
+    this(initialText, project, true);
   }
 
-  public TextViewer(@NotNull Document document, @NotNull Project project, boolean embeddedIntoDialogWrapper, boolean useSoftWraps) {
-    super(document, project, FileTypes.PLAIN_TEXT, true, false);
+  public TextViewer(@NotNull Document document, @NotNull Project project, boolean embeddedIntoDialogWrapper, boolean viewer) {
+    super(document, project, FileTypes.PLAIN_TEXT, viewer, false);
 
     myEmbeddedIntoDialogWrapper = embeddedIntoDialogWrapper;
-    myUseSoftWraps = useSoftWraps;
     setFontInheritedFromLAF(false);
   }
 
   private static Document createDocument(@NotNull String initialText) {
-    final Document document = EditorFactory.getInstance().createDocument(initialText);
+    final Document document = EditorFactory.getInstance().createDocument(StringUtil.convertLineSeparators(initialText));
     //if (document instanceof DocumentImpl) {
     //  ((DocumentImpl)document).setAcceptSlashR(true);
     //}
@@ -68,7 +66,7 @@ public final class TextViewer extends EditorTextField {
     editor.getScrollPane().setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
     editor.setEmbeddedIntoDialogWrapper(myEmbeddedIntoDialogWrapper);
     editor.getComponent().setPreferredSize(null);
-    editor.getSettings().setUseSoftWraps(myUseSoftWraps);
+    editor.getSettings().setUseSoftWraps(true);
 
     editor.setColorsScheme(DebuggerUIUtil.getColorScheme());
     return editor;
