@@ -178,6 +178,14 @@ public class PullUpTest extends LightRefactoringTestCase {
     doTest(false, "Class <b><code>Test.Printer</code></b> already contains a method <b><code>foo()</code></b>", new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class));
   }
 
+  public void testDefaultMethodAsAbstract() throws Exception {
+    doTest(false, new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class, true));
+  }
+
+  public void testDefaultMethodAsDefault() throws Exception {
+    doTest(false, new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class, false));
+  }
+
   public void testPublicMethodFromPrivateClassConflict() {
     doTest(false, new RefactoringTestUtil.MemberDescriptor("HM", PsiClass.class), new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class));
   }
