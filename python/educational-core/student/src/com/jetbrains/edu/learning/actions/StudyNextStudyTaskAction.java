@@ -20,11 +20,6 @@ public class StudyNextStudyTaskAction extends StudyTaskNavigationAction {
   }
 
   @Override
-  protected String getNavigationFinishedMessage() {
-    return "It's the last task";
-  }
-
-  @Override
   protected Task getTargetTask(@NotNull final Task sourceTask) {
     return StudyNavigator.nextTask(sourceTask);
   }

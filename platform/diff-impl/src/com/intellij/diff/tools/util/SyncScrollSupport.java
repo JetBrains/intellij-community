@@ -242,7 +242,7 @@ public class SyncScrollSupport {
       assert startLines.length == count;
       assert endLines.length == count;
 
-      final int[] offsets = getTargetOffsets(editors.toArray(new Editor[count]), startLines, endLines);
+      final int[] offsets = getTargetOffsets(editors.toArray(new Editor[count]), startLines, endLines, -1);
 
       final int[] startOffsets = new int[count];
       for (int i = 0; i < count; i++) {
@@ -411,15 +411,17 @@ public class SyncScrollSupport {
   }
 
   @NotNull
-  private static int[] getTargetOffsets(@NotNull Editor editor1, @NotNull Editor editor2,
-                                        int startLine1, int endLine1, int startLine2, int endLine2) {
+  public static int[] getTargetOffsets(@NotNull Editor editor1, @NotNull Editor editor2,
+                                       int startLine1, int endLine1, int startLine2, int endLine2,
+                                       int preferredTopShift) {
     return getTargetOffsets(new Editor[]{editor1, editor2},
                             new int[]{startLine1, startLine2},
-                            new int[]{endLine1, endLine2});
+                            new int[]{endLine1, endLine2},
+                            preferredTopShift);
   }
 
   @NotNull
-  private static int[] getTargetOffsets(@NotNull Editor[] editors, int[] startLines, int[] endLines) {
+  private static int[] getTargetOffsets(@NotNull Editor[] editors, int[] startLines, int[] endLines, int preferredTopShift) {
     int count = editors.length;
     assert startLines.length == count;
     assert endLines.length == count;
@@ -444,11 +446,12 @@ public class SyncScrollSupport {
 
       // 'shift' here - distance between editor's top and first line of range
 
-      // make whole range visible. If possible, locate it at 'center' (1/3 of height)
+      // make whole range visible. If possible, locate it at 'center' (1/3 of height) (or at 'preferredTopShift' if it was specified)
       // If can't show whole range - show as much as we can
       boolean canShow = 2 * gapLines[i] + rangeHeights[i] <= editorHeights[i];
 
-      topShifts[i] = canShow ? Math.min(editorHeights[i] - gapLines[i] - rangeHeights[i], editorHeights[i] / 3) : gapLines[i];
+      int shift = preferredTopShift != -1 ? preferredTopShift : editorHeights[i] / 3;
+      topShifts[i] = canShow ? Math.min(editorHeights[i] - gapLines[i] - rangeHeights[i], shift) : gapLines[i];
     }
 
     int topShift = min(topShifts);

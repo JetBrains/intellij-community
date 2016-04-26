@@ -608,14 +608,13 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
       if (myInitialRediffFinished) myContentModified = true;
 
-      int line1 = e.getDocument().getLineNumber(e.getOffset());
-      int line2 = e.getDocument().getLineNumber(e.getOffset() + e.getOldLength()) + 1;
+      LineRange lineRange = DiffUtil.getAffectedLineRange(e);
       int shift = DiffUtil.countLinesShift(e);
 
       final List<TextMergeChange.State> corruptedStates = ContainerUtil.newSmartList();
       for (int index = 0; index < myAllMergeChanges.size(); index++) {
         TextMergeChange change = myAllMergeChanges.get(index);
-        TextMergeChange.State oldState = change.processBaseChange(line1, line2, shift);
+        TextMergeChange.State oldState = change.processBaseChange(lineRange.start, lineRange.end, shift);
         if (oldState != null) {
           if (myCurrentMergeCommand == null) {
             corruptedStates.add(oldState);
