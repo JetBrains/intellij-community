@@ -20,6 +20,7 @@ import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -369,7 +370,8 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
         showDiff();
       }
     };
-    EmptyAction.setupAction(myDiffAction, "ChangesView.Diff", myViewer);
+    ActionUtil.copyFrom(myDiffAction, "ChangesView.Diff");
+    myDiffAction.registerCustomShortcutSet(myViewer, null);
     toolBarGroup.add(myDiffAction);
   }
 

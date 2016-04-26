@@ -324,7 +324,7 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
       EmptyAction.registerWithShortcutSet(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST, CommonShortcuts.getMove(), myViewer);
 
     RollbackDialogAction rollback = new RollbackDialogAction();
-    EmptyAction.setupAction(rollback, IdeActions.CHANGES_VIEW_ROLLBACK, this);
+    rollback.registerCustomShortcutSet(this, null);
     toolBarGroup.add(rollback);
 
     EditSourceForDialogAction editSourceAction = new EditSourceForDialogAction(this);
