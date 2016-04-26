@@ -735,24 +735,14 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
 
   @Override
   public boolean isElementIgnored(final RefEntity element) {
-    for (RefEntity entity : getIgnoredElements().keySet()) {
-      if (Comparing.equal(entity, element)) {
-        return true;
-      }
-    }
-    return false;
+    return getIgnoredElements().containsKey(element);
   }
 
   @Override
   public boolean isProblemResolved(RefEntity refEntity, CommonProblemDescriptor descriptor) {
     if (descriptor == null) return true;
-    for (RefEntity entity : getIgnoredElements().keySet()) {
-      if (Comparing.equal(entity, refEntity)) {
-        final CommonProblemDescriptor[] descriptors = getIgnoredElements().get(refEntity);
-        return ArrayUtil.contains(descriptor, descriptors);
-      }
-    }
-    return false;
+    CommonProblemDescriptor[] descriptors = getIgnoredElements().get(refEntity);
+    return descriptors != null && ArrayUtil.contains(descriptor, descriptors);
   }
 
   @Override
