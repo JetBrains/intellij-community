@@ -64,4 +64,9 @@ public class ChangesBrowserUnversionedFilesNode extends ChangesBrowserNode {
   public boolean isManyUnversioned() {
     return myManyUnversioned;
   }
+
+  @Override
+  public int getSortWeight() {
+    return 8;
+  }
 }
