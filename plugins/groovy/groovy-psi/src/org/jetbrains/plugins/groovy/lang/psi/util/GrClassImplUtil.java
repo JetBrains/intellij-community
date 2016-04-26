@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,6 +79,34 @@ public class GrClassImplUtil {
   private GrClassImplUtil() {
   }
 
+  private static final Condition<PsiMethod> CONSTRUCTOR_CONDITION = PsiMethod::isConstructor;
+
+  @NotNull
+  public static GrMethod[] getCodeConstructors(@NotNull GrTypeDefinition definition) {
+    GrMethod[] methods = definition.getCodeMethods();
+    List<GrMethod> result = ContainerUtil.filter(methods, CONSTRUCTOR_CONDITION);
+    return result.toArray(GrMethod.EMPTY_ARRAY);
+  }
+
+  @NotNull
+  public static GrMethod[] getBodyCodeMethods(@NotNull GrTypeDefinition definition) {
+    GrTypeDefinitionBody body = definition.getBody();
+    return body != null ? body.getMethods() : GrMethod.EMPTY_ARRAY;
+  }
+
+  @NotNull
+  public static GrField[] getBodyCodeFields(@NotNull GrTypeDefinition definition) {
+    GrTypeDefinitionBody body = definition.getBody();
+    return body != null ? body.getFields() : GrField.EMPTY_ARRAY;
+  }
+
+  @NotNull
+  public static PsiMethod[] getConstructors(@NotNull GrTypeDefinition definition) {
+    PsiMethod[] methods = definition.getMethods();
+    List<PsiMethod> result = ContainerUtil.filter(methods, CONSTRUCTOR_CONDITION);
+    return result.toArray(PsiMethod.EMPTY_ARRAY);
+  }
+
   @Nullable
   public static PsiClass findInnerClassByName(GrTypeDefinition grType, String name, boolean checkBases) {
     if (!checkBases) {
@@ -127,7 +155,8 @@ public class GrClassImplUtil {
       }
     }
 
-    PsiClass grObSupport = GroovyPsiManager.getInstance(grType.getProject()).findClassWithCache(GroovyCommonClassNames.GROOVY_OBJECT_SUPPORT, grType.getResolveScope());
+    PsiClass grObSupport = GroovyPsiManager.getInstance(grType.getProject())
+      .findClassWithCache(GroovyCommonClassNames.GROOVY_OBJECT_SUPPORT, grType.getResolveScope());
     if (grObSupport != null) {
       final PsiClassType type = JavaPsiFacade.getInstance(grType.getProject()).getElementFactory().createType(grObSupport);
       return ArrayUtil.append(extendsTypes, type, PsiClassType.ARRAY_FACTORY);
@@ -142,7 +171,9 @@ public class GrClassImplUtil {
     final PsiClassType[] extendsTypes = getReferenceListTypes(grType.getExtendsClause());
     result.addAll(Arrays.asList(implementsTypes));
     result.addAll(AstTransformContributor.runContributorsForImplementsTypes(grType));
-    if (!grType.isInterface() && !ContainerUtil.or(implementsTypes, IS_GROOVY_OBJECT) && !ContainerUtil.or(extendsTypes, IS_GROOVY_OBJECT)) {
+    if (!grType.isInterface() &&
+        !ContainerUtil.or(implementsTypes, IS_GROOVY_OBJECT) &&
+        !ContainerUtil.or(extendsTypes, IS_GROOVY_OBJECT)) {
       result.add(getGroovyObjectType(grType));
     }
     return result.toArray(new PsiClassType[result.size()]);
@@ -258,7 +289,8 @@ public class GrClassImplUtil {
     final PsiSubstitutor substitutor = state.get(PsiSubstitutor.KEY);
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(place.getProject());
 
-    boolean processInstanceMethods = (ResolveUtil.shouldProcessMethods(classHint) || ResolveUtil.shouldProcessProperties(classHint)) && shouldProcessInstanceMembers(grType, lastParent);
+    boolean processInstanceMethods = (ResolveUtil.shouldProcessMethods(classHint) || ResolveUtil.shouldProcessProperties(classHint)) &&
+                                     shouldProcessInstanceMembers(grType, lastParent);
 
     LanguageLevel level = PsiUtil.getLanguageLevel(place);
     if (ResolveUtil.shouldProcessProperties(classHint)) {
@@ -273,7 +305,8 @@ public class GrClassImplUtil {
         else if (grType.isTrait() && lastParent != null) {
           PsiField field = findFieldByName(grType, name, false, true);
           if (field != null && field.hasModifierProperty(PsiModifier.PUBLIC)) {
-            if (!processField(grType, processor, state, place, processInstanceMethods, substitutor, factory, level, new CandidateInfo(field, PsiSubstitutor.EMPTY))) {
+            if (!processField(grType, processor, state, place, processInstanceMethods, substitutor, factory, level,
+                              new CandidateInfo(field, PsiSubstitutor.EMPTY))) {
               return false;
             }
           }
@@ -288,7 +321,8 @@ public class GrClassImplUtil {
         if (grType.isTrait() && lastParent != null) {
           for (PsiField field : CollectClassMembersUtil.getFields(grType, true)) {
             if (field.hasModifierProperty(PsiModifier.PUBLIC)) {
-              if (!processField(grType, processor, state, place, processInstanceMethods, substitutor, factory, level, new CandidateInfo(field, PsiSubstitutor.EMPTY))) {
+              if (!processField(grType, processor, state, place, processInstanceMethods, substitutor, factory, level,
+                                new CandidateInfo(field, PsiSubstitutor.EMPTY))) {
                 return false;
               }
             }
@@ -354,7 +388,8 @@ public class GrClassImplUtil {
       return true;
     }
     LOG.assertTrue(field.getContainingClass() != null);
-    final PsiSubstitutor finalSubstitutor = PsiClassImplUtil.obtainFinalSubstitutor(field.getContainingClass(), fieldInfo.getSubstitutor(), grType, substitutor, factory, level);
+    final PsiSubstitutor finalSubstitutor =
+      PsiClassImplUtil.obtainFinalSubstitutor(field.getContainingClass(), fieldInfo.getSubstitutor(), grType, substitutor, factory, level);
 
     return processor.execute(field, state.put(PsiSubstitutor.KEY, finalSubstitutor));
   }
@@ -370,11 +405,14 @@ public class GrClassImplUtil {
                                        boolean placeGroovy,
                                        @NotNull CandidateInfo info) {
     PsiMethod method = (PsiMethod)info.getElement();
-    if (!processInstanceMember(processInstanceMethods, method) || isSameDeclaration(place, method) || !isMethodVisible(placeGroovy, method)) {
+    if (!processInstanceMember(processInstanceMethods, method) ||
+        isSameDeclaration(place, method) ||
+        !isMethodVisible(placeGroovy, method)) {
       return true;
     }
     LOG.assertTrue(method.getContainingClass() != null);
-    final PsiSubstitutor finalSubstitutor = PsiClassImplUtil.obtainFinalSubstitutor(method.getContainingClass(), info.getSubstitutor(), grType, substitutor, factory, level);
+    final PsiSubstitutor finalSubstitutor =
+      PsiClassImplUtil.obtainFinalSubstitutor(method.getContainingClass(), info.getSubstitutor(), grType, substitutor, factory, level);
 
     return processor.execute(method, state.put(PsiSubstitutor.KEY, finalSubstitutor));
   }
@@ -532,7 +570,7 @@ public class GrClassImplUtil {
     final ArrayList<Pair<PsiMethod, PsiSubstitutor>> result = new ArrayList<Pair<PsiMethod, PsiSubstitutor>>();
 
     if (!checkBases) {
-      final PsiMethod[] methods = grType.findMethodsByName( name, false);
+      final PsiMethod[] methods = grType.findMethodsByName(name, false);
       for (PsiMethod method : methods) {
         result.add(Pair.create(method, PsiSubstitutor.EMPTY));
       }

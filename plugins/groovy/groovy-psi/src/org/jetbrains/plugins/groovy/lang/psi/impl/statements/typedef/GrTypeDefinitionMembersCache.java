@@ -16,13 +16,15 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.compiled.ClsClassImpl;
 import com.intellij.psi.infos.CandidateInfo;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -46,6 +48,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.ast.AstTransformContributor;
 
 import java.util.*;
 
+import static com.intellij.psi.util.PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT;
 import static org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierFlags.*;
 import static org.jetbrains.plugins.groovy.lang.resolve.GroovyTraitFieldsFileIndex.HELPER_SUFFIX;
 import static org.jetbrains.plugins.groovy.lang.resolve.GroovyTraitFieldsFileIndex.INDEX_ID;
@@ -57,13 +60,6 @@ import static org.jetbrains.plugins.groovy.lang.resolve.GroovyTraitFieldsFileInd
 public class GrTypeDefinitionMembersCache {
   private static final Logger LOG = Logger.getInstance(GrTypeDefinitionMembersCache.class);
 
-  private static final Condition<PsiMethod> CONSTRUCTOR_CONDITION = new Condition<PsiMethod>() {
-    @Override
-    public boolean value(PsiMethod method) {
-      return method.isConstructor();
-    }
-  };
-
   private final SimpleModificationTracker myTreeChangeTracker = new SimpleModificationTracker();
   private final GrTypeDefinition myDefinition;
 
@@ -72,48 +68,32 @@ public class GrTypeDefinitionMembersCache {
   }
 
   public GrMethod[] getCodeMethods() {
-    return CachedValuesManager.getCachedValue(myDefinition, new CachedValueProvider<GrMethod[]>() {
-      @Nullable
-      @Override
-      public Result<GrMethod[]> compute() {
-        GrTypeDefinitionBody body = myDefinition.getBody();
-        GrMethod[] methods = body != null ? body.getMethods() : GrMethod.EMPTY_ARRAY;
-        return Result.create(methods, myTreeChangeTracker);
-      }
-    });
+    return CachedValuesManager.getCachedValue(myDefinition, () -> CachedValueProvider.Result.create(
+      GrClassImplUtil.getBodyCodeMethods(myDefinition),
+      myTreeChangeTracker, OUT_OF_CODE_BLOCK_MODIFICATION_COUNT
+    ));
+  }
+
+  public GrField[] getCodeFields() {
+    return CachedValuesManager.getCachedValue(myDefinition, () -> CachedValueProvider.Result.create(
+      GrClassImplUtil.getBodyCodeFields(myDefinition),
+      myTreeChangeTracker, OUT_OF_CODE_BLOCK_MODIFICATION_COUNT
+    ));
   }
 
   public GrMethod[] getCodeConstructors() {
-    return CachedValuesManager.getCachedValue(myDefinition, new CachedValueProvider<GrMethod[]>() {
-      @Nullable
-      @Override
-      public Result<GrMethod[]> compute() {
-        GrTypeDefinitionBody body = myDefinition.getBody();
-        GrMethod[] methods;
-        if (body != null) {
-          List<GrMethod> result = ContainerUtil.findAll(body.getMethods(), CONSTRUCTOR_CONDITION);
-          methods = result.toArray(new GrMethod[result.size()]);
-        }
-        else {
-          methods = GrMethod.EMPTY_ARRAY;
-        }
-        return Result.create(methods, myTreeChangeTracker);
-      }
-    });
+    return CachedValuesManager.getCachedValue(myDefinition, () -> CachedValueProvider.Result.create(
+      GrClassImplUtil.getCodeConstructors(myDefinition),
+      myTreeChangeTracker, OUT_OF_CODE_BLOCK_MODIFICATION_COUNT
+    ));
   }
 
   public PsiMethod[] getConstructors() {
-    return CachedValuesManager.getCachedValue(myDefinition, new CachedValueProvider<PsiMethod[]>() {
-      @Nullable
-      @Override
-      public Result<PsiMethod[]> compute() {
-        List<PsiMethod> result = ContainerUtil.findAll(myDefinition.getMethods(), CONSTRUCTOR_CONDITION);
-        return Result.create(result.toArray(new PsiMethod[result.size()]), myTreeChangeTracker,
-                             PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
-      }
-    });
+    return CachedValuesManager.getCachedValue(myDefinition, () -> CachedValueProvider.Result.create(
+      GrClassImplUtil.getConstructors(myDefinition),
+      myTreeChangeTracker, OUT_OF_CODE_BLOCK_MODIFICATION_COUNT
+    ));
   }
-
 
   public PsiClass[] getInnerClasses() {
     return CachedValuesManager.getCachedValue(myDefinition, new CachedValueProvider<PsiClass[]>() {
@@ -136,7 +116,7 @@ public class GrTypeDefinitionMembersCache {
       public Result<GrField[]> compute() {
         List<GrField> fields = getFieldsImpl();
         return Result.create(fields.toArray(new GrField[fields.size()]), myTreeChangeTracker,
-                             PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
+                             OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
       }
     });
   }
@@ -154,7 +134,7 @@ public class GrTypeDefinitionMembersCache {
       @Override
       public Result<Collection<GrField>> compute() {
         return Result.create(AstTransformContributor.runContributorsForFields(myDefinition), myTreeChangeTracker,
-                             PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
+                             OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
       }
     });
   }
@@ -180,7 +160,7 @@ public class GrTypeDefinitionMembersCache {
         result = GrClassImplUtil.filterOutAccessors(result);
 
         return Result.create(result.toArray(new PsiMethod[result.size()]), myTreeChangeTracker,
-                             PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
+                             OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
       }
     });
   }
@@ -365,7 +345,7 @@ public class GrTypeDefinitionMembersCache {
       implementation.getModifierList().removeModifier(ABSTRACT_MASK);
 
       GrReflectedMethod[] reflectedMethods = implementation.getReflectedMethods();
-      return reflectedMethods.length > 0 ? Arrays.<GrMethod>asList(reflectedMethods) : Collections.<GrMethod>singletonList(implementation);
+      return reflectedMethods.length > 0 ? Arrays.asList(reflectedMethods) : Collections.singletonList(implementation);
     }
 
     @NotNull
