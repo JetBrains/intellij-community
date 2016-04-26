@@ -36,6 +36,7 @@ import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffAction;
 import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffContext;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.JdkConstants;
@@ -44,6 +45,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
@@ -60,6 +62,7 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
   private boolean myDataIsDirty;
   protected final Class<T> myClass;
   protected final ChangesTreeList<T> myViewer;
+  protected final JScrollPane myViewerScrollPane;
   protected ChangeList mySelectedChangeList;
   protected Collection<T> myChangesToDisplay;
   protected final Project myProject;
@@ -118,12 +121,18 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
       protected T getLeadSelectedObject(final ChangesBrowserNode node) {
         return ChangesBrowserBase.this.getLeadSelectedObject(node);
       }
+
+      @Override
+      public void setScrollPaneBorder(Border border) {
+        myViewerScrollPane.setBorder(border);
+      }
     };
+    myViewerScrollPane = ScrollPaneFactory.createScrollPane(myViewer);
     myHeaderPanel = new JPanel(new BorderLayout());
   }
 
   protected void init() {
-    add(myViewer, BorderLayout.CENTER);
+    add(myViewerScrollPane, BorderLayout.CENTER);
 
     myHeaderPanel.add(createToolbar(), BorderLayout.CENTER);
     add(myHeaderPanel, BorderLayout.NORTH);
