@@ -367,11 +367,6 @@ public abstract class JBIterable<E> implements Iterable<E> {
             cur = fun.fun(iterator.next()).iterator();
             return skip();
           }
-
-          @Override
-          public void remove() {
-            cur.remove();
-          }
         };
       }
     });

@@ -62,11 +62,6 @@ public abstract class JBIterator<E> implements Iterator<E> {
       protected E nextImpl() {
         return it.hasNext() ? it.next() : stop();
       }
-
-      @Override
-      public void remove() {
-        it.remove();
-      }
     };
   }
 
@@ -222,7 +217,7 @@ public abstract class JBIterator<E> implements Iterator<E> {
   }
 
   @Override
-  public void remove() {
+  public final void remove() {
     throw new UnsupportedOperationException();
   }
 
