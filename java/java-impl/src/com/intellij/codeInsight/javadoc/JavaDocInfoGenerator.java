@@ -2328,7 +2328,7 @@ public class JavaDocInfoGenerator {
     }
 
     @Override
-    public void visitLiteralExpression(PsiLiteralExpression expression) {
+    public void visitExpression(PsiExpression expression) {
       myBuffer.append(StringUtil.escapeXml(expression.getText()));
     }
 
