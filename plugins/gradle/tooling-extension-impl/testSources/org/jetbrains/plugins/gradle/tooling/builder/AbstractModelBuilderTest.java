@@ -155,7 +155,7 @@ public abstract class AbstractModelBuilderTest {
       assertNotNull(initScript);
       String jdkHome = IdeaTestUtil.requireRealJdkHome();
       buildActionExecutor.setJavaHome(new File(jdkHome));
-      buildActionExecutor.setJvmArguments("-Xmx64m", "-XX:MaxPermSize=64m");
+      buildActionExecutor.setJvmArguments("-Xmx128m", "-XX:MaxPermSize=64m");
       buildActionExecutor.withArguments("--info", "--recompile-scripts", GradleConstants.INIT_SCRIPT_CMD_OPTION, initScript.getAbsolutePath());
       allModels = buildActionExecutor.run();
       assertNotNull(allModels);
