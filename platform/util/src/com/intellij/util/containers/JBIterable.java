@@ -20,7 +20,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.Functions;
 import com.intellij.util.PairFunction;
@@ -193,9 +192,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
    */
   @Override
   public String toString() {
-    int max = 50;
-    List<E> list = take(max + 1).toList();
-    return "(" + StringUtil.join(list.subList(0, Math.min(list.size(), max)), ", ") + (list.size() > max ? ", ..." : "") + ")";
+    return myIterable == this ? super.toString() : String.valueOf(myIterable);
   }
 
   /**
@@ -365,11 +362,10 @@ public abstract class JBIterable<E> implements Iterable<E> {
 
           @Override
           public T nextImpl() {
-            while ((cur == null || !cur.hasNext()) && iterator.hasNext()) {
-              cur = fun.fun(iterator.next()).iterator();
-            }
-            if (cur == null || !cur.hasNext()) return stop();
-            return cur.next();
+            if (cur != null && cur.hasNext()) return cur.next();
+            if (!iterator.hasNext()) return stop();
+            cur = fun.fun(iterator.next()).iterator();
+            return skip();
           }
 
           @Override
