@@ -46,12 +46,9 @@ abstract class WebServerPathHandler {
                        isCustomHost: Boolean): Boolean
 }
 
-internal fun redirectToDirectory(request: HttpRequest, channel: Channel, path: String, extraHttpHeader: HttpHeaders?) {
+internal fun redirectToDirectory(request: HttpRequest, channel: Channel, path: String, extraHeaders: HttpHeaders?) {
   val response = HttpResponseStatus.MOVED_PERMANENTLY.response(request)
   val url = VfsUtil.toUri("${channel.uriScheme}://${request.host!!}/$path/")!!
   response.headers().add(HttpHeaderNames.LOCATION, url.toASCIIString())
-  extraHttpHeader?.let {
-
-  }
-  response.send(channel, request, extraHttpHeader)
+  response.send(channel, request, extraHeaders)
 }
