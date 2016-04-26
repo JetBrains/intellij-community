@@ -53,8 +53,10 @@ import org.jetbrains.notification.SingletonNotificationManager
 import java.awt.datatransfer.StringSelection
 import java.io.File
 import java.io.IOException
+import java.math.BigInteger
 import java.net.InetAddress
 import java.nio.file.Path
+import java.security.SecureRandom
 import java.util.*
 import java.util.concurrent.TimeUnit
 import javax.swing.SwingUtilities
@@ -65,7 +67,7 @@ internal val LOG = Logger.getInstance(BuiltInWebServer::class.java)
 private const val IDE_TOKEN_FILE = "user.web.token"
 
 private val notificationManager by lazy {
-  SingletonNotificationManager(BuiltInServerManagerImpl.NOTIFICATION_GROUP.getValue(), NotificationType.INFORMATION, null)
+  SingletonNotificationManager(BuiltInServerManagerImpl.NOTIFICATION_GROUP.value, NotificationType.INFORMATION, null)
 }
 
 class BuiltInWebServer : HttpRequestHandler() {
@@ -105,7 +107,7 @@ class BuiltInWebServer : HttpRequestHandler() {
 
 internal fun isActivatable() = Registry.`is`("ide.built.in.web.server.activatable", false)
 
-internal const val TOKEN_PARAM_NAME = "__ij-st"
+internal const val TOKEN_PARAM_NAME = "_ijt"
 
 private val STANDARD_COOKIE by lazy {
   val productName = ApplicationNamesInfo.getInstance().lowercaseProductName
@@ -140,10 +142,17 @@ private val tokens = CacheBuilder.newBuilder().expireAfterAccess(1, TimeUnit.MIN
 internal fun acquireToken(): String {
   var token = tokens.asMap().keys.firstOrNull()
   if (token == null) {
-    token = UUID.randomUUID().toString()
+    token = TokenGenerator.generate()
     tokens.put(token, java.lang.Boolean.TRUE)
   }
   return token
+}
+
+// http://stackoverflow.com/a/41156 - shorter than UUID, but secure
+private object TokenGenerator {
+  private val random = SecureRandom()
+
+  fun generate(): String = BigInteger(130, random).toString(32)
 }
 
 private fun doProcess(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext, projectNameAsHost: String?): Boolean {
@@ -249,7 +258,7 @@ internal fun validateToken(request: HttpRequest, channel: Channel, redirectToSet
     tokens.invalidate(token)
     if (redirectToSetCookie) {
       // we redirect because it is not easy to change and maintain all places where we send response
-      val response = HttpResponseStatus.TEMPORARY_REDIRECT.response(request)
+      val response = HttpResponseStatus.MOVED_PERMANENTLY.response(request)
       response.headers().add(HttpHeaderNames.LOCATION, url)
       response.headers().set(HttpHeaderNames.SET_COOKIE, ServerCookieEncoder.STRICT.encode(STANDARD_COOKIE) + "; SameSite=strict")
       response.send(channel, request)
