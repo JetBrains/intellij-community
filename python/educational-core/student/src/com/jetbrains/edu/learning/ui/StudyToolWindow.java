@@ -74,12 +74,13 @@ public abstract class StudyToolWindow extends SimpleToolWindowPanel implements D
     JPanel toolbarPanel = createToolbarPanel(getActionGroup(project));
     setToolbar(toolbarPanel);
 
-    final JPanel panel = new JPanel(new VerticalFlowLayout());
+    final JPanel panel = new JPanel(new BorderLayout());
     final Course course = StudyTaskManager.getInstance(project).getCourse();
     if (course != null && course.isAdaptive()) {
-      panel.add(createReactionPanel());
+      panel.add(createReactionPanel(), BorderLayout.NORTH);
     }
-    panel.add(createTaskInfoPanel(project));
+    JComponent taskInfoPanel = createTaskInfoPanel(project);
+    panel.add(taskInfoPanel, BorderLayout.CENTER);
     myContentPanel.add(TASK_INFO_ID, panel);
     mySplitPane.setFirstComponent(myContentPanel);
     addAdditionalPanels(project);
@@ -114,7 +115,7 @@ public abstract class StudyToolWindow extends SimpleToolWindowPanel implements D
       }
     }
   }
-
+  
   public JPanel createReactionPanel() {
     final JPanel panel = new JPanel(new GridBagLayout());
     panel.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, JBColor.border()));
@@ -141,7 +142,7 @@ public abstract class StudyToolWindow extends SimpleToolWindowPanel implements D
     final Project project = ProjectUtil.guessCurrentProject(myContentPanel);
     addMouseListener(hardPanel, () -> EduAdaptiveStepicConnector.addNextRecommendedTask(project, 0));
     addMouseListener(boringPanel, () -> EduAdaptiveStepicConnector.addNextRecommendedTask(project, -1));
-
+    
     return panel;
   }
 
@@ -174,7 +175,7 @@ public abstract class StudyToolWindow extends SimpleToolWindowPanel implements D
       }
     });
   }
-
+  
   public void dispose() {
   }
   
