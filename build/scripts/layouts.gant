@@ -857,7 +857,6 @@ def layoutAndroid(String androidHome, String androidToolsBaseHome) {
         module("instant-run-common")
         module("instant-run-client")
         module("instant-run-runtime")
-        module("repository")
       }
       jar("androidAnnotations.jar") {
         fileset(dir: "$androidHome/android/annotations")
