@@ -29,7 +29,6 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
-import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.ui.JBCardLayout;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.OnePixelSplitter;
@@ -70,12 +69,13 @@ public abstract class StudyToolWindow extends SimpleToolWindowPanel implements D
     JPanel toolbarPanel = createToolbarPanel(project);
     setToolbar(toolbarPanel);
 
-    final JPanel panel = new JPanel(new VerticalFlowLayout());
+    final JPanel panel = new JPanel(new BorderLayout());
     final Course course = StudyTaskManager.getInstance(project).getCourse();
     if (course != null && course.isAdaptive()) {
-      panel.add(createReactionPanel());
+      panel.add(createReactionPanel(), BorderLayout.NORTH);
     }
-    panel.add(createTaskInfoPanel(taskText, project));
+    JComponent taskInfoPanel = createTaskInfoPanel(taskText, project);
+    panel.add(taskInfoPanel, BorderLayout.CENTER);
     myContentPanel.add(TASK_INFO_ID, panel);
     mySplitPane.setFirstComponent(myContentPanel);
     addAdditionalPanels(project);
