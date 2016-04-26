@@ -173,26 +173,11 @@ public class InspectionResultsViewComparator implements Comparator {
     return entity2 != null ? 1 : 0;
   }
 
-  private static int compareLineNumbers(final Object userObject, final OfflineProblemDescriptor descriptor) {
-    if (userObject instanceof RefElement) {
-      final RefElement refElement = (RefElement)userObject;
-      final PsiElement psiElement = refElement.getElement();
-      if (psiElement != null) {
-        Document document = PsiDocumentManager.getInstance(psiElement.getProject()).getDocument(psiElement.getContainingFile());
-        if (document != null) {
-          return descriptor.getLine() - document.getLineNumber(psiElement.getTextOffset()) -1;
-        }
-      }
-    }
-    return -1;
-  }
-
   private static class InspectionResultsViewComparatorHolder {
     private static final InspectionResultsViewComparator ourInstance = new InspectionResultsViewComparator();
   }
 
   public static InspectionResultsViewComparator getInstance() {
-
     return InspectionResultsViewComparatorHolder.ourInstance;
   }
 }
