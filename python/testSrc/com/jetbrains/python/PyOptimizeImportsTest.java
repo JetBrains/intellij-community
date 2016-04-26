@@ -23,6 +23,14 @@ import com.jetbrains.python.fixtures.PyTestCase;
  * @author yole
  */
 public class PyOptimizeImportsTest extends PyTestCase {
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    // importsFromTypingUnusedInTypeComments depends on registered TokenSetContributors
+    PythonDialectsTokenSetProvider.reset();
+  }
+
   public void testSimple() {
     doTest();
   }
