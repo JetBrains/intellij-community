@@ -41,14 +41,14 @@ final class BeanPropertyListCellRenderer extends ColoredListCellRenderer{
     final boolean selected,
     final boolean hasFocus
   ) {
-    final BeanProperty property = (BeanProperty)value;
-    if(property == null){
-      append(UIDesignerBundle.message("property.not.defined"), myAttrs2);
-    }
-    else{
+    if (value instanceof BeanProperty) {
+      final BeanProperty property = (BeanProperty)value;
       append(property.myName, myAttrs1);
       append(" ", myAttrs1);
       append(property.myType, myAttrs2);
+    }
+    else {
+      append(UIDesignerBundle.message("property.not.defined"), myAttrs2);
     }
   }
 }

@@ -118,15 +118,12 @@ public class ParametersFolder {
     PsiExpression mostRanked = null;
     for (int i = mentionedInExpressions.size() - 1; i >= 0; i--) {
       PsiExpression expression = mentionedInExpressions.get(i);
-      if (expression instanceof PsiArrayAccessExpression) {
-        mostRanked = expression;
-        if (!isConditional(expression, scope)) {
-          myFoldingSelectedByDefault = true;
-          break;
-        }
+      boolean arrayAccess = expression instanceof PsiArrayAccessExpression && !isConditional(expression, scope);
+      if (arrayAccess) {
+        myFoldingSelectedByDefault = true;
       }
       final int r = findUsedVariables(data, inputVariables, expression).size();
-      if (currentRank < r) {
+      if (currentRank < r || arrayAccess && currentRank == r) {
         currentRank = r;
         mostRanked = expression;
       }

@@ -35,6 +35,7 @@ import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.diff.util.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -607,14 +608,13 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
       if (myInitialRediffFinished) myContentModified = true;
 
-      int line1 = e.getDocument().getLineNumber(e.getOffset());
-      int line2 = e.getDocument().getLineNumber(e.getOffset() + e.getOldLength()) + 1;
+      LineRange lineRange = DiffUtil.getAffectedLineRange(e);
       int shift = DiffUtil.countLinesShift(e);
 
       final List<TextMergeChange.State> corruptedStates = ContainerUtil.newSmartList();
       for (int index = 0; index < myAllMergeChanges.size(); index++) {
         TextMergeChange change = myAllMergeChanges.get(index);
-        TextMergeChange.State oldState = change.processBaseChange(line1, line2, shift);
+        TextMergeChange.State oldState = change.processBaseChange(lineRange.start, lineRange.end, shift);
         if (oldState != null) {
           if (myCurrentMergeCommand == null) {
             corruptedStates.add(oldState);
@@ -1161,7 +1161,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       public IgnoreSelectedChangesSideAction(@NotNull Side side, boolean shortcut) {
         super(shortcut);
         mySide = side;
-        EmptyAction.setupAction(this, mySide.select("Diff.IgnoreLeftSide", "Diff.IgnoreRightSide"), null);
+        ActionUtil.copyFrom(this, mySide.select("Diff.IgnoreLeftSide", "Diff.IgnoreRightSide"));
       }
 
       @Override
@@ -1222,7 +1222,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       public ApplySelectedChangesAction(@NotNull Side side, boolean shortcut) {
         super(shortcut);
         mySide = side;
-        EmptyAction.setupAction(this, mySide.select("Diff.ApplyLeftSide", "Diff.ApplyRightSide"), null);
+        ActionUtil.copyFrom(this, mySide.select("Diff.ApplyLeftSide", "Diff.ApplyRightSide"));
       }
 
       @Override

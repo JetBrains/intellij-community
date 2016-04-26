@@ -28,7 +28,8 @@
     <projectService serviceInterface="com.intellij.openapi.vcs.CodeSmellDetector"
                     serviceImplementation="com.intellij.openapi.vcs.impl.CodeSmellDetectorImpl"/>
 
-    <diff.merge.MergeTool implementation="com.intellij.openapi.vcs.changes.patch.ApplyPatchMergeTool"/>
+    <diff.merge.MergeTool implementation="com.intellij.openapi.vcs.changes.patch.tool.ApplyPatchMergeTool"/>
+    <diff.DiffTool implementation="com.intellij.openapi.vcs.changes.patch.tool.ApplyPatchDiffTool"/>
 
     <selectInTarget implementation="com.intellij.openapi.vcs.changes.SelectInChangesViewTarget"/>
 

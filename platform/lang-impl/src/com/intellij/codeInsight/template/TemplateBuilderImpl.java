@@ -32,7 +32,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
-import com.intellij.util.DocumentUtil;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
@@ -190,13 +189,13 @@ public class TemplateBuilderImpl implements TemplateBuilder {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
 
     //this is kinda hacky way of doing things, but have not got a better idea
-    DocumentUtil.executeInBulk(myDocument, true, () -> {
+    //DocumentUtil.executeInBulk(myDocument, true, () -> {
       for (RangeMarker element : myElements) {
         if (element != myEndElement) {
           myDocument.deleteString(element.getStartOffset(), element.getEndOffset());
         }
       }
-    });
+    //});
 
     return template;
   }

@@ -19,6 +19,7 @@ import com.intellij.CommonBundle;
 import com.intellij.dvcs.DvcsCommitAdditionalComponent;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.push.ui.VcsPushDialog;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -44,9 +45,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.textCompletion.DefaultTextCompletionValueDescriptor;
 import com.intellij.util.textCompletion.TextCompletionProvider;
 import com.intellij.util.textCompletion.TextFieldWithCompletion;
-import com.intellij.util.textCompletion.ValuesCompletionProvider;
 import com.intellij.util.textCompletion.ValuesCompletionProvider.ValuesCompletionProviderDumbAware;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.VcsUserRegistry;
@@ -227,11 +226,8 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       GitRepositoryManager manager = GitUtil.getRepositoryManager(myProject);
       Collection<GitRepository> repositories = GitUtil.getRepositoriesFromRoots(manager, sortedChanges.keySet());
       final List<GitRepository> preselectedRepositories = ContainerUtil.newArrayList(repositories);
-      UIUtil.invokeLaterIfNeeded(new Runnable() {
-        public void run() {
-          new VcsPushDialog(myProject, preselectedRepositories, GitBranchUtil.getCurrentRepository(myProject)).show();
-        }
-      });
+      TransactionGuard.submitTransaction(myProject, () ->
+        new VcsPushDialog(myProject, preselectedRepositories, GitBranchUtil.getCurrentRepository(myProject)).show());
     }
     return exceptions;
   }

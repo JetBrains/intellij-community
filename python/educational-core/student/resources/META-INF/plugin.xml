@@ -36,7 +36,9 @@
       <with attribute="implementationClass" implements="com.jetbrains.edu.learning.StudyLanguageManager"/>
     </extensionPoint>
     <extensionPoint qualifiedName="Edu.studyPluginConfigurator" interface="com.jetbrains.edu.learning.StudyPluginConfigurator"/>
+    <extensionPoint qualifiedName="Edu.studyActionsProvider" interface="com.jetbrains.edu.learning.StudyActionsProvider"/>
     <extensionPoint qualifiedName="Edu.studyTwitterPluginConfigurator" interface="com.jetbrains.edu.learning.StudyTwitterPluginConfigurator"/>
+    <extensionPoint qualifiedName="Edu.studyActionListener" interface="com.jetbrains.edu.learning.StudyActionListener"/>
     <extensionPoint qualifiedName="Edu.optionsProvider" beanClass="com.jetbrains.edu.learning.settings.StudyOptionsProviderEP">>
       <with attribute="instance" implements="com.jetbrains.edu.learning.settings.StudyOptionsProvider"/>
     </extensionPoint>

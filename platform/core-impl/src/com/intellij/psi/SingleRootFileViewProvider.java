@@ -293,12 +293,12 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   }
 
   public List<PsiFile> getCachedPsiFiles() {
-    return ContainerUtil.createMaybeSingletonList(getCachedPsi(myBaseLanguage));
+    return ContainerUtil.createMaybeSingletonList(getCachedPsi(getBaseLanguage()));
   }
 
   @NotNull
   public List<FileElement> getKnownTreeRoots() {
-    PsiFile psiFile = getCachedPsi(myBaseLanguage);
+    PsiFile psiFile = getCachedPsi(getBaseLanguage());
     if (!(psiFile instanceof PsiFileImpl)) return Collections.emptyList();
     FileElement element = ((PsiFileImpl)psiFile).getTreeElement();
     return ContainerUtil.createMaybeSingletonList(element);
@@ -457,7 +457,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   @NotNull
   @Override
   public SingleRootFileViewProvider createCopy(@NotNull final VirtualFile copy) {
-    return new SingleRootFileViewProvider(getManager(), copy, false, myBaseLanguage);
+    return new SingleRootFileViewProvider(getManager(), copy, false, getBaseLanguage());
   }
 
   @Override
@@ -572,7 +572,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   }
 
   public void markInvalidated() {
-    PsiFile psiFile = getCachedPsi(myBaseLanguage);
+    PsiFile psiFile = getCachedPsi(getBaseLanguage());
     if (psiFile instanceof PsiFileEx) {
       ((PsiFileEx)psiFile).markInvalidated();
     }

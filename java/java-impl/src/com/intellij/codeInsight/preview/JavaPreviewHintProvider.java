@@ -59,6 +59,7 @@ public class JavaPreviewHintProvider implements PreviewHintProvider {
     return file instanceof PsiJavaFile;
   }
 
+  @SuppressWarnings("UseJBColor")
   @Override
   public JComponent getPreviewComponent(@NotNull PsiElement element) {
     final PsiNewExpression psiNewExpression = PsiTreeUtil.getParentOfType(element, PsiNewExpression.class);

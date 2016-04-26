@@ -862,12 +862,20 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     Object hint = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
     g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
     try {
+      List<RangeHighlighter> highlighters = new ArrayList<>();
       processRangeHighlighters(firstVisibleOffset, lastVisibleOffset, new RangeHighlighterProcessor() {
         @Override
         public void process(@NotNull RangeHighlighter highlighter) {
-          paintLineMarkerRenderer(highlighter, g);
+          LineMarkerRenderer renderer = highlighter.getLineMarkerRenderer();
+          if (renderer != null && isLineMarkerVisible(highlighter)) highlighters.add(highlighter);
         }
       });
+
+      ContainerUtil.sort(highlighters, (h1, h2) -> h1.getLayer() - h2.getLayer());
+
+      for (RangeHighlighter highlighter : highlighters) {
+        paintLineMarkerRenderer(highlighter, g);
+      }
     }
     finally {
       g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, hint);
@@ -953,7 +961,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         break;
       case RIGHT:
         w = getRightFreePaintersAreaWidth();
-        x = getLineMarkerFreePaintersAreaOffset() - 1;
+        x = getLineMarkerFreePaintersAreaOffset();
         break;
       case CUSTOM:
         w = getWidth();
@@ -1038,7 +1046,6 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     return Math.max(centerRelative, baselineRelative);
   }
 
-  @Override
   public Color getOutlineColor(boolean isActive) {
     ColorKey key = isActive ? EditorColors.SELECTED_TEARLINE_COLOR : EditorColors.TEARLINE_COLOR;
     Color color = myEditor.getColorsScheme().getColor(key);
@@ -1247,17 +1254,15 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     return EditorUtil.isRealFileEditor(myEditor);
   }
 
-  @Override
-  public boolean isLineMarkersShown() {
+  private boolean isLineMarkersShown() {
     return myEditor.getSettings().isLineMarkerAreaShown();
   }
 
-  @Override
-  public boolean areIconsShown() {
+  private boolean areIconsShown() {
     return myEditor.getSettings().areGutterIconsShown();
   }
 
-  public boolean isLineNumbersShown() {
+  private boolean isLineNumbersShown() {
     return myEditor.getSettings().isLineNumbersShown();
   }
 
@@ -1266,8 +1271,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     return !myTextAnnotationGutters.isEmpty();
   }
 
-  @Override
-  public boolean isFoldingOutlineShown() {
+  private boolean isFoldingOutlineShown() {
     return myEditor.getSettings().isFoldingOutlineShown() &&
            myEditor.getFoldingModel().isFoldingEnabled() &&
            !myEditor.isInPresentationMode();
@@ -1457,16 +1461,19 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       toolTip = renderer.getTooltipText();
     }
     else {
-      ActiveGutterRenderer lineRenderer = getActiveRendererByMouseEvent(e);
-      if (lineRenderer == null) {
-        TextAnnotationGutterProvider provider = getProviderAtPoint(e.getPoint());
-        if (provider != null) {
-          final int line = getLineNumAtPoint(e.getPoint());
-          toolTip = provider.getToolTip(line, myEditor);
-          if (!Comparing.equal(toolTip, myLastGutterToolTip)) {
-            controller.cancelTooltip(GUTTER_TOOLTIP_GROUP, e, true);
-            myLastGutterToolTip = toolTip;
-          }
+      TextAnnotationGutterProvider provider = getProviderAtPoint(e.getPoint());
+      if (provider != null) {
+        final int line = getLineNumAtPoint(e.getPoint());
+        toolTip = provider.getToolTip(line, myEditor);
+        if (!Comparing.equal(toolTip, myLastGutterToolTip)) {
+          controller.cancelTooltip(GUTTER_TOOLTIP_GROUP, e, true);
+          myLastGutterToolTip = toolTip;
+        }
+      }
+      else {
+        ActiveGutterRenderer lineRenderer = getActiveRendererByMouseEvent(e);
+        if (lineRenderer != null) {
+          toolTip = lineRenderer.getTooltipText();
         }
       }
     }
@@ -1669,6 +1676,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       return null;
     }
     final ActiveGutterRenderer[] gutterRenderer = {null};
+    final int[] layer = {-1};
     Rectangle clip = myEditor.getScrollingModel().getVisibleArea();
     int firstVisibleOffset = myEditor.logicalPositionToOffset(
       myEditor.xyToLogicalPosition(new Point(0, clip.y - myEditor.getLineHeight())));
@@ -1679,7 +1687,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       @Override
       public void process(@NotNull RangeHighlighter highlighter) {
         LineMarkerRenderer renderer = highlighter.getLineMarkerRenderer();
-        if (renderer == null || gutterRenderer[0] != null) return;
+        if (renderer == null) return;
+        if (gutterRenderer[0] != null && layer[0] >= highlighter.getLayer()) return;
         Rectangle rectangle = getLineRendererRectangle(highlighter);
         if (rectangle == null) return;
 
@@ -1692,6 +1701,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         if (startY < e.getY() && e.getY() <= endY) {
           if (renderer instanceof ActiveGutterRenderer && ((ActiveGutterRenderer)renderer).canDoAction(e)) {
             gutterRenderer[0] = (ActiveGutterRenderer)renderer;
+            layer[0] = highlighter.getLayer();
           }
         }
       }

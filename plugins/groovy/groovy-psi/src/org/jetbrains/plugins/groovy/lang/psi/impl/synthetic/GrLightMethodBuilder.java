@@ -22,10 +22,7 @@ import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
-import com.intellij.psi.impl.light.LightElement;
-import com.intellij.psi.impl.light.LightIdentifier;
-import com.intellij.psi.impl.light.LightReferenceListBuilder;
-import com.intellij.psi.impl.light.LightTypeParameterListBuilder;
+import com.intellij.psi.impl.light.*;
 import com.intellij.psi.presentation.java.JavaPresentationUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -104,7 +101,7 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod, Orig
 
   @Override
   public boolean hasTypeParameters() {
-    return false;
+    return getTypeParameters().length != 0;
   }
 
   @Override
@@ -264,14 +261,29 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod, Orig
   }
 
   @NotNull
+  public GrLightMethodBuilder addParameter(@NotNull String name, @NotNull String type) {
+    return addParameter(name, type, false);
+  }
+
+  @NotNull
   public GrLightMethodBuilder addParameter(@NotNull String name, @NotNull String type, boolean isOptional) {
     return addParameter(name, JavaPsiFacade.getElementFactory(getProject()).createTypeFromText(type, this), isOptional);
+  }
+
+  @NotNull
+  public GrLightMethodBuilder addParameter(@NotNull String name, @NotNull PsiType type) {
+    return addParameter(name, type, false);
   }
 
   @NotNull
   public GrLightMethodBuilder addParameter(@NotNull String name, @NotNull PsiType type, boolean isOptional) {
     GrLightParameter param = new GrLightParameter(name, type, this).setOptional(isOptional);
     return addParameter(param);
+  }
+
+  @NotNull
+  public GrLightParameter addAndGetParameter(@NotNull String name, @NotNull String type) {
+    return addAndGetParameter(name, type, false);
   }
 
   @NotNull
@@ -534,5 +546,17 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod, Orig
 
   public void setOriginInfo(@Nullable String originInfo) {
     myOriginInfo = originInfo;
+  }
+
+  @NotNull
+  public LightTypeParameterBuilder addTypeParameter(@NotNull String name) {
+    LightTypeParameterBuilder typeParameter = new LightTypeParameterBuilder(name, this, getTypeParameters().length) {
+      @Override
+      public PsiFile getContainingFile() {
+        return GrLightMethodBuilder.this.getContainingFile();
+      }
+    };
+    getTypeParameterList().addParameter(typeParameter);
+    return typeParameter;
   }
 }

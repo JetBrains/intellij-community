@@ -529,7 +529,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
           argsToDelete.removeAll(map[index].args);
         }
         else {
-          values[i] = createDefaultValue(factory, changeInfo, parameter, argumentList);
+          values[i] = createDefaultValue(factory, changeInfo, parameter, argumentList, substitutor);
         }
       }
 
@@ -640,7 +640,8 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
   private static GrExpression createDefaultValue(GroovyPsiElementFactory factory,
                                                  JavaChangeInfo changeInfo,
                                                  JavaParameterInfo info,
-                                                 final GrArgumentList list) {
+                                                 final GrArgumentList list,
+                                                 PsiSubstitutor substitutor) {
     if (info.isUseAnySingleVariable()) {
       final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(list.getProject()).getResolveHelper();
       final PsiType type = info.getTypeWrapper().getType(changeInfo.getMethod(), list.getManager());
@@ -689,7 +690,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
       }
     }
 
-    final PsiElement element = info.getActualValue(list.getParent());
+    final PsiElement element = info.getActualValue(list.getParent(), substitutor);
     if (element instanceof GrExpression) {
       return (GrExpression)element;
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.xdebugger.impl.ui.TextViewer;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.actions.XFetchValueActionBase;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -85,6 +86,12 @@ public class ViewTextAction extends XFetchValueActionBase {
     @NotNull
     protected Action[] createActions() {
       return new Action[] {getCancelAction()};
+    }
+
+    @Nullable
+    @Override
+    public JComponent getPreferredFocusedComponent() {
+      return myTextViewer;
     }
 
     @Override

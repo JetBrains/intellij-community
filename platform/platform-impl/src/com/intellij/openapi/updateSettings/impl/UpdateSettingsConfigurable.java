@@ -41,9 +41,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -122,7 +119,7 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
     myPanel.myCheckForUpdates.setSelected(mySettings.isCheckNeeded());
     myPanel.myUseSecureConnection.setSelected(mySettings.isSecureConnection());
     myPanel.updateLastCheckedLabel();
-    myPanel.setSelectedChannelType(mySettings.getSelectedChannelStatus());
+    myPanel.setSelectedChannelType(mySettings.getSelectedActiveChannel());
   }
 
   @Override
@@ -137,7 +134,7 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
     }
 
     Object channel = myPanel.myUpdateChannels.getSelectedItem();
-    return channel != null && !channel.equals(mySettings.getSelectedChannelStatus());
+    return channel != null && !channel.equals(mySettings.getSelectedActiveChannel());
   }
 
   @Override
@@ -179,34 +176,27 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
       LabelTextReplacingUtil.replaceText(myPanel);
 
       if (checkNowEnabled) {
-        myCheckNow.addActionListener(new ActionListener() {
-          @Override
-          public void actionPerformed(ActionEvent e) {
-            Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myCheckNow));
-            UpdateSettings settings = new UpdateSettings();
-            settings.loadState(mySettings.getState());
-            settings.setSelectedChannelStatus(getSelectedChannelType());
-            settings.setSecureConnection(myUseSecureConnection.isSelected());
-            UpdateChecker.updateAndShowResult(project, settings);
-            updateLastCheckedLabel();
-          }
+        myCheckNow.addActionListener(e -> {
+          Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myCheckNow));
+          UpdateSettings settings = new UpdateSettings();
+          settings.loadState(mySettings.getState());
+          settings.setSelectedChannelStatus(getSelectedChannelType());
+          settings.setSecureConnection(myUseSecureConnection.isSelected());
+          UpdateChecker.updateAndShowResult(project, settings);
+          updateLastCheckedLabel();
         });
       }
       else {
         myCheckNow.setVisible(false);
       }
 
-      final ChannelStatus current = mySettings.getSelectedChannelStatus();
-      //noinspection unchecked
-      myUpdateChannels.setModel(new CollectionComboBoxModel<ChannelStatus>(Arrays.asList(ChannelStatus.values()), current));
-      myUpdateChannels.setEnabled(
-        !ApplicationInfoEx.getInstanceEx().isEAP() || !UpdateStrategyCustomization.getInstance().forceEapUpdateChannelForEapBuilds());
-      myUpdateChannels.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          boolean lessStable = current.compareTo(getSelectedChannelType()) > 0;
-          myChannelWarning.setVisible(lessStable);
-        }
+      UpdateStrategyCustomization tweaker = UpdateStrategyCustomization.getInstance();
+      ChannelStatus current = mySettings.getSelectedActiveChannel();
+      myUpdateChannels.setModel(new CollectionComboBoxModel<ChannelStatus>(mySettings.getActiveChannels(), current));
+      myUpdateChannels.setEnabled(!ApplicationInfoEx.getInstanceEx().isEAP() || !tweaker.forceEapUpdateChannelForEapBuilds());
+      myUpdateChannels.addActionListener(e -> {
+        boolean lessStable = current.compareTo(getSelectedChannelType()) > 0;
+        myChannelWarning.setVisible(lessStable);
       });
       myChannelWarning.setForeground(JBColor.RED);
     }

@@ -25,7 +25,7 @@ import com.intellij.util.ui.JBInsets;
 import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
 import javax.accessibility.AccessibleRole;
-import javax.swing.JComponent;
+import javax.swing.*;
 import java.awt.*;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
@@ -137,7 +137,7 @@ public abstract class CardLayoutPanel<K, UI, V extends Component> extends JCompo
               }
               else callback.setRejected();
             }
-          }, ModalityState.any());
+          }, ModalityState.stateForComponent(CardLayoutPanel.this));
         }
         else callback.setRejected();
       }

@@ -113,12 +113,16 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
     final InspectionResultsView view = getInvoker(e);
     final InspectionTree tree = view.getTree();
     final CommonProblemDescriptor[] descriptors;
-    if (isProblemDescriptorsAcceptable() && (descriptors = tree.getSelectedDescriptors(true)).length > 0) {
-      doApplyFix(view.getProject(), descriptors, tree.getContext());
-    } else {
-      doApplyFix(getSelectedElements(e), view);
+    try {
+      view.setApplyingFix(true);
+      if (isProblemDescriptorsAcceptable() && (descriptors = tree.getSelectedDescriptors(true)).length > 0) {
+        doApplyFix(view.getProject(), descriptors, tree.getContext());
+      } else {
+        doApplyFix(getSelectedElements(e), view);
+      }
+    } finally {
+      view.setApplyingFix(false);
     }
-    view.syncRightPanel();
   }
 
 

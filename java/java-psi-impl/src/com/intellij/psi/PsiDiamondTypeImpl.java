@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,13 +47,12 @@ import java.util.*;
  * @since Jul 30, 2010
  */
 public class PsiDiamondTypeImpl extends PsiDiamondType {
-  private static final Logger LOG = Logger.getInstance("#" + PsiDiamondTypeImpl.class.getName());
+  private static final Logger LOG = Logger.getInstance(PsiDiamondTypeImpl.class);
 
   private final PsiManager myManager;
   private final PsiTypeElement myTypeElement;
 
   public PsiDiamondTypeImpl(PsiManager manager, PsiTypeElement psiTypeElement) {
-    super(PsiAnnotation.EMPTY_ARRAY);
     myManager = manager;
     myTypeElement = psiTypeElement;
   }
@@ -105,7 +104,8 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
 
   @Override
   public DiamondInferenceResult resolveInferredTypes() {
-    final PsiNewExpression newExpression = PsiTreeUtil.getParentOfType(myTypeElement, PsiNewExpression.class);
+    PsiElement typeElementWithDiamondTypeArgument = myTypeElement.getParent();
+    final PsiNewExpression newExpression = PsiTreeUtil.getParentOfType(typeElementWithDiamondTypeArgument, PsiNewExpression.class, true, PsiTypeElement.class);
     if (newExpression == null) {
       return PsiDiamondTypeImpl.DiamondInferenceResult.NULL_RESULT;
     }
@@ -134,9 +134,9 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
 
     final DiamondInferenceResult inferenceResult = resolveInferredTypesNoCheck(newExpression, context);
     if (anonymousClass != null && PsiUtil.isLanguageLevel9OrHigher(newExpression)) {
-      final InferredAnonymTypeVisitor anonymTypeVisitor = new InferredAnonymTypeVisitor(context);
+      final InferredAnonymousTypeVisitor anonymousTypeVisitor = new InferredAnonymousTypeVisitor(context);
       for (PsiType type : inferenceResult.getInferredTypes()) {
-        final Boolean accepted = type.accept(anonymTypeVisitor);
+        final Boolean accepted = type.accept(anonymousTypeVisitor);
         if (accepted != null && !accepted.booleanValue()) {
           return PsiDiamondTypeImpl.DiamondInferenceResult.ANONYMOUS_INNER_RESULT;
         } 
@@ -150,17 +150,16 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
     final PsiSubstitutor inferredSubstitutor = ourDiamondGuard.doPreventingRecursion(context, false, new Computable<PsiSubstitutor>() {
       @Override
       public PsiSubstitutor compute() {
-        final JavaResolveResult staticFactoryCandidateInfo = context == newExpression ? 
-                                                               CachedValuesManager.getCachedValue(newExpression,
-                                                                                                  new CachedValueProvider<JavaResolveResult>() {
-                                                                                                    @Nullable
-                                                                                                    @Override
-                                                                                                    public Result<JavaResolveResult> compute() {
-                                                                                                      return new Result<JavaResolveResult>(getStaticFactoryCandidateInfo(newExpression, newExpression), 
-                                                                                                                                           PsiModificationTracker.MODIFICATION_COUNT);
-                                                                                                    }
-                                                                                                  }) 
-                                                                                        : getStaticFactoryCandidateInfo(newExpression, context);
+        final JavaResolveResult staticFactoryCandidateInfo =
+          context == newExpression
+          ? CachedValuesManager.getCachedValue(newExpression, new CachedValueProvider<JavaResolveResult>() {
+            @Nullable
+            @Override
+            public Result<JavaResolveResult> compute() {
+              return new Result<JavaResolveResult>(getStaticFactoryCandidateInfo(newExpression, newExpression), PsiModificationTracker.MODIFICATION_COUNT);
+            }
+          })
+          : getStaticFactoryCandidateInfo(newExpression, context);
         staticFactoryRef.set(staticFactoryCandidateInfo);
         if (staticFactoryCandidateInfo != null) {
           PsiSubstitutor substitutor = staticFactoryCandidateInfo.getSubstitutor();
@@ -515,10 +514,10 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
    * The term "subexpression" includes type arguments of parameterized types (4.5), bounds of wildcards (4.5.1), and element types of array types (10.1).
    * It excludes bounds of type variables.
    */
-  private static class InferredAnonymTypeVisitor extends PsiTypeVisitor<Boolean> {
+  private static class InferredAnonymousTypeVisitor extends PsiTypeVisitor<Boolean> {
     private final PsiElement myExpression;
 
-    public InferredAnonymTypeVisitor(PsiElement expression) {
+    public InferredAnonymousTypeVisitor(PsiElement expression) {
       myExpression = expression;
     }
 

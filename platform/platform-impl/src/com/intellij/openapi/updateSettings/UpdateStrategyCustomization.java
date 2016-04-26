@@ -16,6 +16,8 @@
 package com.intellij.openapi.updateSettings;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.updateSettings.impl.ChannelStatus;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Override this service in your IDE to customize update behavior. It isn't supposed to be overridden in plugins.
@@ -27,5 +29,9 @@ public class UpdateStrategyCustomization {
 
   public boolean forceEapUpdateChannelForEapBuilds() {
     return true;
+  }
+
+  public boolean isChannelActive(@NotNull ChannelStatus channel) {
+    return channel != ChannelStatus.MILESTONE;
   }
 }

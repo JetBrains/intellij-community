@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class StudyShowHintAction extends StudyToolbarAction {
+public class StudyShowHintAction extends StudyActionWithShortcut {
   public static final String ACTION_ID = "ShowHintAction";
   public static final String SHORTCUT = "ctrl pressed 7";
   private static final String ourWarningMessage = "Put the caret in the answer placeholder to get hint";

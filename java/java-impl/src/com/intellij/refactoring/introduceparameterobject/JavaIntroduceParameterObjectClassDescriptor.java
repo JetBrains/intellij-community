@@ -32,20 +32,19 @@ import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.introduceParameterObject.IntroduceParameterObjectClassDescriptor;
 import com.intellij.refactoring.introduceParameterObject.IntroduceParameterObjectDelegate;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
 public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParameterObjectClassDescriptor<PsiMethod, ParameterInfoImpl> {
   private static final Logger LOG = Logger.getInstance("#" + JavaIntroduceParameterObjectClassDescriptor.class.getName());
-  private final Set<PsiTypeParameter> myTypeParameters = new HashSet<>();
+  private final Set<PsiTypeParameter> myTypeParameters = new LinkedHashSet<>();
   private final Map<ParameterInfoImpl, ParameterBean> myExistingClassProperties = new HashMap<>();
   private final MoveDestination myMoveDestination;
 
@@ -106,12 +105,7 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
   public String createFakeClassTypeText() {
     String text = StringUtil.getQualifiedName(getPackageName(), getClassName());
     if (!myTypeParameters.isEmpty()) {
-      text += "<" + StringUtil.join(myTypeParameters, new Function<PsiTypeParameter, String>() {
-        @Override
-        public String fun(PsiTypeParameter parameter) {
-          return parameter.getName();
-        }
-      }, ", ") + ">";
+      text += "<" + StringUtil.join(myTypeParameters, PsiNamedElement::getName, ", ") + ">";
     }
     return text;
   }
