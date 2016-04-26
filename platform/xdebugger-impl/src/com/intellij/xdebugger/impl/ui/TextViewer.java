@@ -18,6 +18,7 @@ package com.intellij.xdebugger.impl.ui;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.impl.EditorFactoryImpl;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -31,7 +32,7 @@ public final class TextViewer extends EditorTextField {
   private final boolean myEmbeddedIntoDialogWrapper;
 
   public TextViewer(@NotNull String initialText, @NotNull Project project, boolean viewer) {
-    this(createDocument(initialText), project, true, viewer);
+    this(createDocument(initialText, viewer), project, true, viewer);
   }
 
   public TextViewer(@NotNull String initialText, @NotNull Project project) {
@@ -45,17 +46,25 @@ public final class TextViewer extends EditorTextField {
     setFontInheritedFromLAF(false);
   }
 
-  private static Document createDocument(@NotNull String initialText) {
-    final Document document = EditorFactory.getInstance().createDocument(StringUtil.convertLineSeparators(initialText));
-    //if (document instanceof DocumentImpl) {
-    //  ((DocumentImpl)document).setAcceptSlashR(true);
-    //}
-    return document;
+  private static Document createDocument(@NotNull String initialText, boolean viewer) {
+    if (needSlashRSupport(initialText, viewer)){
+      return ((EditorFactoryImpl)EditorFactory.getInstance()).createDocument(initialText, true, false);
+    }
+    else {
+      return EditorFactory.getInstance().createDocument(StringUtil.convertLineSeparators(initialText));
+    }
   }
 
   @Override
   public void setText(@Nullable String text) {
-    super.setText(text != null ? StringUtil.convertLineSeparators(text) : null);
+    if (text != null && !needSlashRSupport(text, isViewer())) {
+      text = StringUtil.convertLineSeparators(text);
+    }
+    super.setText(text);
+  }
+
+  private static boolean needSlashRSupport(String text, boolean viewer) {
+    return !viewer && text.contains("\r");
   }
 
   @Override
