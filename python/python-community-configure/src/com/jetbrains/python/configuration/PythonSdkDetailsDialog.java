@@ -226,6 +226,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
       mySdkSettingsWereModified.run();
     }
     for (SdkModificator modificator : myModifiedModificators) {
+      /* This should always be true barring bug elsewhere, log error on else? */
       if (modificator.isWritable()) {
         modificator.commitChanges();
       }
@@ -433,8 +434,13 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
   }
 
   private void reloadSdk(@NotNull Sdk currentSdk) {
-    // XXX: Here we are reusing a modifier that we are going to commit later
-    PythonSdkUpdater.update(currentSdk, myModificators.get(currentSdk), myProject, null);
+    /* PythonSdkUpdater.update invalidates the modificator so we need to create a new
+      one for further changes
+     */
+    if (PythonSdkUpdater.update(currentSdk, myModificators.get(currentSdk), myProject, null)){
+      myModifiedModificators.remove(myModificators.get(currentSdk));
+      myModificators.put(currentSdk, currentSdk.getSdkModificator());
+    }
   }
 
   private class ToggleVirtualEnvFilterButton extends ToggleActionButton implements DumbAware {

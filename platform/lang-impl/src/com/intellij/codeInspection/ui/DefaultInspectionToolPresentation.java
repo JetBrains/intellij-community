@@ -68,7 +68,7 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
   private static final Object lock = new Object();
   private final Map<RefEntity, CommonProblemDescriptor[]> myProblemElements = Collections.synchronizedMap(new THashMap<RefEntity, CommonProblemDescriptor[]>(
     TObjectHashingStrategy.IDENTITY));
-  private final Map<String, Set<RefEntity>> myContents = Collections.synchronizedMap(new THashMap<String, Set<RefEntity>>(1)); // keys can be null
+  private final Map<String, Set<RefEntity>> myContents = Collections.synchronizedMap(new HashMap<String, Set<RefEntity>>(1)); // keys can be null
   private final Set<RefModule> myModulesProblems = Collections.synchronizedSet(new THashSet<RefModule>(TObjectHashingStrategy.IDENTITY));
   private final Map<CommonProblemDescriptor, RefEntity> myProblemToElements = Collections.synchronizedMap(new THashMap<CommonProblemDescriptor, RefEntity>(TObjectHashingStrategy.IDENTITY));
   private DescriptorComposer myComposer;

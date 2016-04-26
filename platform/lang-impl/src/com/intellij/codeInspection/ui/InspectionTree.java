@@ -337,7 +337,9 @@ public class InspectionTree extends Tree {
     }
 
     if (descriptorChildren != null) {
-      Collections.sort(descriptorChildren, DESCRIPTOR_COMPARATOR);
+      if (descriptorChildren.size() > 1) {
+        Collections.sort(descriptorChildren, DESCRIPTOR_COMPARATOR);
+      }
       descriptors.addAll(descriptorChildren);
     }
   }
