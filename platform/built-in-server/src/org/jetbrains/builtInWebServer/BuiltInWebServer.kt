@@ -57,7 +57,7 @@ import javax.swing.SwingUtilities
 internal val LOG = Logger.getInstance(BuiltInWebServer::class.java)
 
 // name is duplicated in the ConfigImportHelper
-private const val IDE_TOKEN_FILE = "user.token"
+private const val IDE_TOKEN_FILE = "user.web.token"
 
 class BuiltInWebServer : HttpRequestHandler() {
   override fun isAccessible(request: HttpRequest) = request.isLocalOrigin(onlyAnyOrLoopback = false, hostsOnly = true)
