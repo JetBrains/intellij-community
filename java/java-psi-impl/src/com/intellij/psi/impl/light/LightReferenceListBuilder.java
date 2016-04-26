@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,8 +29,8 @@ import java.util.List;
  */
 public class LightReferenceListBuilder extends LightElement implements PsiReferenceList {
   private final List<PsiJavaCodeReferenceElement> myRefs = new ArrayList<PsiJavaCodeReferenceElement>();
-  private PsiJavaCodeReferenceElement[] myCachedRefs = null;
-  private PsiClassType[] myCachedTypes = null;
+  private PsiJavaCodeReferenceElement[] myCachedRefs;
+  private PsiClassType[] myCachedTypes;
   private final Role myRole;
   private final PsiElementFactory myFactory;
 

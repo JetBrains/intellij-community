@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,6 @@
  * limitations under the License.
  */
 
-/**
- * Created by IntelliJ IDEA.
- * User: igork
- * Date: Nov 25, 2002
- * Time: 2:05:49 PM
- * To change this template use Options | File Templates.
- */
 package com.intellij.psi.scope.util;
 
 import com.intellij.openapi.diagnostic.Logger;

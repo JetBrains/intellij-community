@@ -61,8 +61,8 @@ import java.util.Set;
 public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase implements PsiReferenceExpression, SourceJavaCodeReference {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl");
 
-  private volatile String myCachedQName = null;
-  private volatile String myCachedNormalizedText = null;
+  private volatile String myCachedQName;
+  private volatile String myCachedNormalizedText;
 
   public PsiReferenceExpressionImpl() {
     super(JavaElementType.REFERENCE_EXPRESSION);
