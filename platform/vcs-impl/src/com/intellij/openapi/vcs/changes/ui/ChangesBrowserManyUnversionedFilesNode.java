@@ -16,53 +16,41 @@
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.changes.ChangeListOwner;
 import com.intellij.openapi.vcs.changes.UnversionedViewDialog;
 import com.intellij.ui.SimpleTextAttributes;
+import org.jetbrains.annotations.NotNull;
 
 public class ChangesBrowserManyUnversionedFilesNode extends ChangesBrowserNode {
-  private final Project myProject;
+
   private final int myUnversionedSize;
   private final int myDirsSize;
-  private final MyUnversionedShower myShower;
+  @NotNull private final Runnable myDialogShower;
 
-  public ChangesBrowserManyUnversionedFilesNode(Project project, int unversionedSize, int dirsSize) {
+  public ChangesBrowserManyUnversionedFilesNode(@NotNull Project project, int unversionedSize, int dirsSize) {
     super(UNVERSIONED_FILES_TAG);
-    myProject = project;
     myUnversionedSize = unversionedSize;
     myDirsSize = dirsSize;
-    myShower = new MyUnversionedShower(myProject);
+    myDialogShower = () -> new UnversionedViewDialog(project).show();
   }
 
   public int getUnversionedSize() {
     return myUnversionedSize;
   }
 
-  public boolean canAcceptDrop(final ChangeListDragBean dragBean) {
-    return false;
-  }
-
-  public void acceptDrop(final ChangeListOwner dragOwner, final ChangeListDragBean dragBean) {
+  @Override
+  public void render(ChangesBrowserNodeRenderer renderer, boolean selected, boolean expanded, boolean hasFocus) {
+    super.render(renderer, selected, expanded, hasFocus);
+    renderer.append(" ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    renderer.append("browse", SimpleTextAttributes.LINK_ATTRIBUTES, myDialogShower);
   }
 
   @Override
-  public void render(ChangesBrowserNodeRenderer renderer, boolean selected, boolean expanded, boolean hasFocus) {
-    renderer.append(userObject.toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-    final String s = " " + (myDirsSize > 0 ? myDirsSize + " directories and " : "") + (myUnversionedSize - myDirsSize) + " files ";
-    renderer.append(s, SimpleTextAttributes.GRAYED_ATTRIBUTES);
-    renderer.append("browse", SimpleTextAttributes.LINK_ATTRIBUTES, myShower);
+  public int getCount() {
+    return myUnversionedSize - myDirsSize;
   }
 
-  private static class MyUnversionedShower implements Runnable {
-    private final Project myProject;
-
-    public MyUnversionedShower(Project project) {
-      myProject = project;
-    }
-
-    public void run() {
-      final UnversionedViewDialog dialog = new UnversionedViewDialog(myProject);
-      dialog.show();
-    }
+  @Override
+  public int getDirectoryCount() {
+    return myDirsSize;
   }
 }

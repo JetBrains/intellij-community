@@ -79,7 +79,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
 
   private ActionGroup myMenuGroup;
 
-  public ChangesListView(final Project project) {
+  public ChangesListView(@NotNull Project project) {
     myProject = project;
 
     getModel().setRoot(ChangesBrowserNode.create(myProject, TreeModelBuilder.ROOT_NODE_VALUE));
