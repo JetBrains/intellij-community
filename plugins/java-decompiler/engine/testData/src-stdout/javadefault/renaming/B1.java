@@ -42,7 +42,7 @@ public class B1 {
     }
     
     public static void printWhichClass(Object x) {
-      System.out.println("printWhichClass:");
+      System.out.println("B1: printWhichClass:");
       System.out.println(new B1().getClass().equals(x));
       System.out.println(new I().getClass().equals(x));
       System.out.println(new I.J().getClass().equals(x));

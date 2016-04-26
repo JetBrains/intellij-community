@@ -28,6 +28,6 @@ public class A1 {
     a.foo();
     C c = new C();
     c.bar();
-    System.out.println("A0 Done.");
+    System.out.println("A1 Done.");
   }
 }
