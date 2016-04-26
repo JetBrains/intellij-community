@@ -14,7 +14,7 @@ envs {
   textfile "django19/tags.txt", "django\nnose\npytest\nbehave\nlettuce\npackaging\ntox"
 
   conda "django18", "2.7", ["django==1.6"]
-  textfile "django16/tags.txt", "django"
+  textfile "django18/tags.txt", "django"
 
   conda "django17", "2.7", ["django==1.7"]
   textfile "django17/tags.txt", "django\nskeletons"
