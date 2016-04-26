@@ -15,21 +15,15 @@
  */
 package org.jetbrains.java.decompiler;
 
-import org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler;
-import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
-import static org.jetbrains.java.decompiler.DecompilerTestFixture.assertFilesEqual;
-import static org.junit.Assert.assertTrue;
+import org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler;
+import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 
 
 /**
@@ -59,17 +53,25 @@ public class StdoutCompareTestHelper {
     for (String className: classNames) {
       //it could be that we don't find a class because it was renamed on decompile
       //we care about that during output comparison of test (class containing main must not be renamed)
+      Class<?> cl = null;
       Method meth = null;
       try {
-        Class<?> cl = Class.forName(className);
-        meth = cl.getMethod("main", String[].class);
+        cl = Class.forName(className);
       }
-      catch (Exception e) {
-        //write a skip file so we know we are skipping tests...
+      catch (ClassNotFoundException e) {
+        //write a skip file so we know we are skipping tests... (it normally means test case is disabled in build.xml)
         String outFileName = outputDir + "/" + className + ".skip.txt";
         PrintStream out = new PrintStream(outFileName);
         out.println(e);
         out.close();
+      }
+      if (cl != null) {
+        try {
+          meth = cl.getMethod("main", String[].class);
+        }
+        catch (NoSuchMethodException e) {
+          // no problem, this class has no main method
+        }
       }
       if (meth != null) {
         PrintStream origOut = System.out;
