@@ -3,10 +3,10 @@ package javadefault.renaming;
 /**
  * renaming did not work for access to .class
  */
-public class ClassFieldRenaming {
+public class B0_ClassFieldRenaming {
 
     public void f() {
-        Class x = ClassFieldRenaming.class;
+        Class x = B0_ClassFieldRenaming.class;
         Class y = I.class;
         Class z = I.J.class;
         printWhichClass(x);
@@ -16,7 +16,7 @@ public class ClassFieldRenaming {
     
     public static class I {
         public void f() {
-            Class x = ClassFieldRenaming.class;
+            Class x = B0_ClassFieldRenaming.class;
             Class y = I.class;
             Class z = J.class;
             
@@ -30,7 +30,7 @@ public class ClassFieldRenaming {
         
         public static class J {
             public void f() {
-                Class x = ClassFieldRenaming.class;
+                Class x = B0_ClassFieldRenaming.class;
                 Class y = I.class;
                 Class z = J.class;
                 
@@ -43,16 +43,16 @@ public class ClassFieldRenaming {
     
     public static void printWhichClass(Object x) {
       System.out.println("printWhichClass:");
-      System.out.println(new ClassFieldRenaming().getClass().equals(x));
+      System.out.println(new B0_ClassFieldRenaming().getClass().equals(x));
       System.out.println(new I().getClass().equals(x));
       System.out.println(new I.J().getClass().equals(x));
     }
     
     public static void main(String[] args) {
-      new ClassFieldRenaming().f();
+      new B0_ClassFieldRenaming().f();
       new I().f();
       new I.J().f();
-      A.mainXXX(args);
+      B1.mainXXX(args);
     }
 }
 
