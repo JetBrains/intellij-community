@@ -16,7 +16,6 @@
 package com.intellij.psi;
 
 import com.intellij.ide.highlighter.JavaClassFileType;
-import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -46,17 +45,11 @@ public class ClassFileViewProvider extends SingleRootFileViewProvider {
   private static final Key<Boolean> IS_INNER_CLASS = Key.create("java.is.inner.class.key");
 
   public ClassFileViewProvider(@NotNull PsiManager manager, @NotNull VirtualFile file) {
-    super(manager, file);
+    this(manager, file, true);
   }
 
   public ClassFileViewProvider(@NotNull PsiManager manager, @NotNull VirtualFile file, boolean eventSystemEnabled) {
-    super(manager, file, eventSystemEnabled, JavaClassFileType.INSTANCE);
-  }
-
-  @NotNull
-  @Override
-  public Language getBaseLanguage() {
-    return JavaLanguage.INSTANCE;
+    super(manager, file, eventSystemEnabled, JavaLanguage.INSTANCE, JavaClassFileType.INSTANCE);
   }
 
   @Override
