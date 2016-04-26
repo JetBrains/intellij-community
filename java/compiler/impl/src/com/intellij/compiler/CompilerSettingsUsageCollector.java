@@ -39,12 +39,8 @@ public class CompilerSettingsUsageCollector extends AbstractApplicationUsagesCol
     final CompilerWorkspaceConfiguration wsConfig = CompilerWorkspaceConfiguration.getInstance(project);
     
     final Set<UsageDescriptor> result = new HashSet<UsageDescriptor>();
-    if (wsConfig.MAKE_PROJECT_ON_SAVE) {
-      result.add(new UsageDescriptor("auto_make", 1));
-    }
-    if (wsConfig.PARALLEL_COMPILATION) {
-      result.add(new UsageDescriptor("compile_parallel", 1));
-    }
+    result.add(new UsageDescriptor("auto_make", wsConfig.MAKE_PROJECT_ON_SAVE? 1 : 0));
+    result.add(new UsageDescriptor("compile_parallel", wsConfig.PARALLEL_COMPILATION? 1 : 0));
 
     return result;
   }
