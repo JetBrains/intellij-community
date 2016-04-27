@@ -24,4 +24,19 @@ class TestCompilerWarnings {
     m(<warning descr="Argument 'x' might be null">x</warning>);
   }
 
+  void testIteration() {
+    @NotNull String @NotNull [] array = new String[] { "1", "2", "3" };
+    for (int i = 0; i < array.length; i++) {
+      if (<warning descr="Condition 'array[i] == null' is always 'false'">array[i] == null</warning>) {
+        System.out.println("unreachable");
+      }
+    }
+
+    for (String anArray : array) {
+      if (<warning descr="Condition 'anArray == null' is always 'false'">anArray == null</warning>) {
+        System.out.println("unreachable");
+      }
+    }
+  }
+
 }

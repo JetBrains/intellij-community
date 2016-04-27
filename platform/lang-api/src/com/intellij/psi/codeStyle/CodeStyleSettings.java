@@ -402,7 +402,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
   @NonNls public String HTML_INLINE_ELEMENTS =
     "a,abbr,acronym,b,basefont,bdo,big,br,cite,cite,code,dfn,em,font,i,img,input,kbd,label,q,s,samp,select,span,strike,strong,sub,sup,textarea,tt,u,var";
   @NonNls public String HTML_DONT_ADD_BREAKS_IF_INLINE_CONTENT = "title,h1,h2,h3,h4,h5,h6,p";
-
+  public QuoteStyle HTML_QUOTE_STYLE = QuoteStyle.Double;
   // ---------------------------------------------------------------------------------------
 
 
@@ -1019,4 +1019,15 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
     return WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN;
   }
 
+  public enum QuoteStyle {
+    Single("'"),
+    Double("\""),
+    None("");
+
+    public final String quote;
+
+    QuoteStyle(String quote) {
+      this.quote = quote;
+    }
+  }
 }

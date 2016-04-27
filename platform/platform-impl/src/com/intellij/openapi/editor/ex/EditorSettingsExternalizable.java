@@ -51,6 +51,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     public int CARET_BLINKING_PERIOD = 500;
     public boolean IS_RIGHT_MARGIN_SHOWN = true;
     public boolean ARE_LINE_NUMBERS_SHOWN = true;
+    public boolean ARE_GUTTER_ICONS_SHOWN = true;
     public boolean IS_FOLDING_OUTLINE_SHOWN = true;
     public boolean SHOW_BREADCRUMBS = true;
 
@@ -186,6 +187,14 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
 
   public void setLineNumbersShown(boolean val) {
     myOptions.ARE_LINE_NUMBERS_SHOWN = val;
+  }
+
+  public boolean areGutterIconsShown() {
+    return myOptions.ARE_GUTTER_ICONS_SHOWN;
+  }
+
+  public void setGutterIconsShown(boolean val) {
+    myOptions.ARE_GUTTER_ICONS_SHOWN = val;
   }
 
   public int getAdditionalLinesCount() {

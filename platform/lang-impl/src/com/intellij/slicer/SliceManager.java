@@ -38,10 +38,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.regex.Pattern;
 
-@State(
-    name = "SliceManager",
-    storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)}
-)
+@State(name = "SliceManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class SliceManager implements PersistentStateComponent<SliceManager.StoredSettingsBean> {
   private final Project myProject;
   private ContentManager myBackContentManager;
@@ -50,16 +47,16 @@ public class SliceManager implements PersistentStateComponent<SliceManager.Store
   private static final String BACK_TOOLWINDOW_ID = "Analyze Dataflow to";
   private static final String FORTH_TOOLWINDOW_ID = "Analyze Dataflow from";
 
-  public static class StoredSettingsBean {
-    public boolean showDereferences = true; // to show in dataflow/from dialog
-    public AnalysisUIOptions analysisUIOptions = new AnalysisUIOptions();
+  static class StoredSettingsBean {
+    boolean showDereferences = true; // to show in dataflow/from dialog
+    AnalysisUIOptions analysisUIOptions = new AnalysisUIOptions();
   }
 
   public static SliceManager getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, SliceManager.class);
   }
 
-  public SliceManager(@NotNull Project project, PsiManager psiManager) {
+  public SliceManager(@NotNull Project project) {
     myProject = project;
   }
 
@@ -182,9 +179,9 @@ public class SliceManager implements PersistentStateComponent<SliceManager.Store
            "</body></html>";
   }
 
-  public void runInterruptibly(@NotNull ProgressIndicator progress,
-                               @NotNull Runnable onCancel,
-                               @NotNull Runnable runnable) throws ProcessCanceledException {
+  void runInterruptibly(@NotNull ProgressIndicator progress,
+                        @NotNull Runnable onCancel,
+                        @NotNull Runnable runnable) throws ProcessCanceledException {
     Disposable disposable = addPsiListener(progress);
     try {
       progress.checkCanceled();

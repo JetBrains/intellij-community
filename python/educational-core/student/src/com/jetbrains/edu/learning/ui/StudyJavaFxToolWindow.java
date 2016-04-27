@@ -29,10 +29,9 @@ public class StudyJavaFxToolWindow extends StudyToolWindow {
   }
 
   @Override
-  public JComponent createTaskInfoPanel(String taskText, Project project) {
+  public JComponent createTaskInfoPanel(Project project) {
     myBrowserWindow = new StudyBrowserWindow(true, false);
     myBrowserWindow.addBackAndOpenButtons();
-    myBrowserWindow.loadContent(taskText, StudyUtils.getConfigurator(project));
     JPanel panel = new JPanel();
     panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
     panel.add(myBrowserWindow.getPanel());
@@ -40,7 +39,7 @@ public class StudyJavaFxToolWindow extends StudyToolWindow {
   }
 
   @Override
-  public void setTaskText(String text) {
+  public void setText(String text) {
     StudyPluginConfigurator configurator = StudyUtils.getConfigurator(ProjectUtil.guessCurrentProject(this));
       myBrowserWindow.loadContent(text, configurator);
   }

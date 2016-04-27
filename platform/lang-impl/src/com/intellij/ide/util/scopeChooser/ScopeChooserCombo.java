@@ -52,6 +52,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
   private boolean myCurrentSelection = true;
   private boolean myUsageView = true;
   private Condition<ScopeDescriptor> myScopeFilter;
+  private boolean myShowEmptyScopes = false;
 
   public ScopeChooserCombo() {
     super(new IgnoringComboBox(){
@@ -230,7 +231,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     @SuppressWarnings("deprecation") final DataContext context = DataManager.getInstance().getDataContext();
     for (SearchScope scope : PredefinedSearchScopeProvider.getInstance().getPredefinedScopes(myProject, context, mySuggestSearchInLibs,
                                                                                              myPrevSearchFiles, myCurrentSelection,
-                                                                                             myUsageView)) {
+                                                                                             myUsageView, myShowEmptyScopes)) {
       addScopeDescriptor(model, new ScopeDescriptor(scope));
     }
     for (ScopeDescriptorProvider provider : Extensions.getExtensions(ScopeDescriptorProvider.EP_NAME)) {
@@ -248,6 +249,9 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     }
   }
 
+  public void setShowEmptyScopes(boolean showEmptyScopes) {
+    myShowEmptyScopes = showEmptyScopes;
+  }
 
   @Nullable
   public SearchScope getSelectedScope() {

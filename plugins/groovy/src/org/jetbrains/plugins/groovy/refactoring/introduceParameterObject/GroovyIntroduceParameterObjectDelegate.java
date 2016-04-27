@@ -22,6 +22,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.changeSignature.ChangeInfo;
 import com.intellij.refactoring.changeSignature.ParameterInfo;
 import com.intellij.refactoring.introduceParameterObject.IntroduceParameterObjectClassDescriptor;
@@ -42,6 +43,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrC
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.refactoring.changeSignature.GrChangeInfoImpl;
+import org.jetbrains.plugins.groovy.refactoring.changeSignature.GrMethodDescriptor;
 import org.jetbrains.plugins.groovy.refactoring.changeSignature.GrParameterInfo;
 
 import java.util.Collection;
@@ -49,6 +51,21 @@ import java.util.List;
 
 public class GroovyIntroduceParameterObjectDelegate
   extends IntroduceParameterObjectDelegate<GrMethod, GrParameterInfo, GroovyIntroduceObjectClassDescriptor> {
+  @Override
+  public boolean isEnabledOn(PsiElement element) {
+    return false;
+  }
+
+  @Override
+  public RefactoringActionHandler getHandler(PsiElement element) {
+    return null;
+  }
+
+  @Override
+  public List<GrParameterInfo> getAllMethodParameters(GrMethod sourceMethod) {
+    return new GrMethodDescriptor(sourceMethod).getParameters();
+  }
+
   @Override
   public GrParameterInfo createMergedParameterInfo(GroovyIntroduceObjectClassDescriptor descriptor,
                                                    GrMethod method,
@@ -59,10 +76,10 @@ public class GroovyIntroduceParameterObjectDelegate
     return new GrParameterInfo(descriptor.getClassName(), null, null, classType, -1, false) {
       @Nullable
       @Override
-      public PsiElement getActualValue(PsiElement callExpression) {
+      public PsiElement getActualValue(PsiElement callExpression, Object substitutor) {
         final IntroduceParameterObjectDelegate<PsiNamedElement, ParameterInfo, IntroduceParameterObjectClassDescriptor<PsiNamedElement, ParameterInfo>>
           delegate = findDelegate(callExpression);
-        return delegate != null ? delegate.createNewParameterInitializerAtCallSite(callExpression, descriptor, oldMethodParameters) : null;
+        return delegate != null ? delegate.createNewParameterInitializerAtCallSite(callExpression, descriptor, oldMethodParameters, substitutor) : null;
       }
     };
   }
@@ -70,7 +87,8 @@ public class GroovyIntroduceParameterObjectDelegate
   @Override
   public PsiElement createNewParameterInitializerAtCallSite(PsiElement callExpression,
                                                             IntroduceParameterObjectClassDescriptor descriptor,
-                                                            List<? extends ParameterInfo> oldMethodParameters) {
+                                                            List<? extends ParameterInfo> oldMethodParameters,
+                                                            Object substitutor) {
     if (callExpression instanceof GrCallExpression) {
       final GrArgumentList list = ((GrCallExpression)callExpression).getArgumentList();
       if (list == null) {

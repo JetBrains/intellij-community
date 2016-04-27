@@ -317,6 +317,8 @@
         <action id="IntroduceField" class="com.intellij.refactoring.actions.IntroduceFieldAction"/>
         <action id="IntroduceParameter" class="com.intellij.refactoring.actions.IntroduceParameterAction"/>
         <separator/>
+        <action id="IntroduceParameterObject" class="com.intellij.refactoring.actions.IntroduceParameterObjectAction"/>
+        <separator/>
         <action id="ExtractMethod" class="com.intellij.refactoring.actions.ExtractMethodAction"/>
         <separator/>
         <action id="ExtractClass" class="com.intellij.refactoring.actions.ExtractClassAction"/>
@@ -1006,7 +1008,7 @@
         <action id="DisableInspection" class="com.intellij.codeInspection.ui.actions.KeyAwareInspectionViewAction$DisableInspection"/>
         <action id="RunInspectionOn" class="com.intellij.codeInspection.ui.actions.KeyAwareInspectionViewAction$RunInspectionOn"/>
         <separator/>
-        <action id="SuppressFixes" class="com.intellij.codeInspection.ui.actions.SuppressActionWrapper"/>
+        <action id="SuppressFixes" class="com.intellij.codeInspection.ui.actions.suppress.SuppressActionWrapper"/>
       </group>
     </group>
   </actions>

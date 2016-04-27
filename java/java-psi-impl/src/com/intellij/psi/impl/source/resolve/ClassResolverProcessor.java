@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,8 +39,8 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
   private final PsiFile myContainingFile;
   private final PsiElement myPlace;
   private final PsiResolveHelper myResolveHelper;
-  private PsiClass myAccessClass = null;
-  private List<ClassCandidateInfo> myCandidates = null;
+  private PsiClass myAccessClass;
+  private List<ClassCandidateInfo> myCandidates;
   private boolean myHasAccessibleCandidate;
   private boolean myHasInaccessibleCandidate;
   private JavaResolveResult[] myResult = JavaResolveResult.EMPTY_ARRAY;

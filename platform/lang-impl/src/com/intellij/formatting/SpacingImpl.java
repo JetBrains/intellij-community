@@ -16,13 +16,14 @@
 
 package com.intellij.formatting;
 
+import com.intellij.formatting.engine.BlockRangesMap;
 import org.jetbrains.annotations.NonNls;
 
 /**
  * Extends {@link Spacing} in order to keep number of additional settings like <code>'minSpaces'</code>, <code>'minLineFeeds'</code>,
  * <code>'prefLineFeeds'</code> etc.
  */
-class SpacingImpl extends Spacing {
+public class SpacingImpl extends Spacing {
   private int myMinSpaces;
   private int myKeepBlankLines;
   private int myMaxSpaces;
@@ -76,7 +77,7 @@ class SpacingImpl extends Spacing {
     return myMinLineFeeds;
   }
 
-  final boolean isReadOnly(){
+  public final boolean isReadOnly(){
     return (myFlags & READ_ONLY_MASK) != 0;
   }
 
@@ -90,10 +91,8 @@ class SpacingImpl extends Spacing {
 
   /**
    * Allows to ask to refresh current state using given formatter if necessary.
-   *
-   * @param formatter     formatter to use during state refresh
    */
-  public void refresh(FormatProcessor formatter) {
+  public void refresh(BlockRangesMap helper) {
   }
 
   public final boolean shouldKeepLineFeeds() {

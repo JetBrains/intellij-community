@@ -30,6 +30,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.*;
 import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatch;
 import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchBase;
+import com.intellij.openapi.diff.impl.patch.apply.GenericPatchApplier;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -204,7 +205,12 @@ public class ApplyPatchAction extends DumbAwareAction {
         }
       }
       else {
-        request = PatchDiffRequestFactory.createBadMergeRequest(project, document, file, localContent, patchedContent, callback);
+        TextFilePatch textPatch = (TextFilePatch)patch.getPatch();
+        final GenericPatchApplier applier = new GenericPatchApplier(localContent, textPatch.getHunks());
+        applier.execute();
+
+        final AppliedTextPatch appliedTextPatch = new AppliedTextPatch(applier.getAppliedInfo());
+        request = PatchDiffRequestFactory.createBadMergeRequest(project, document, file, localContent, appliedTextPatch, callback);
       }
       request.putUserData(DiffUserDataKeysEx.MERGE_ACTION_CAPTIONS, new Function<MergeResult, String>() {
         @Override

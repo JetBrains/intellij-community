@@ -15,9 +15,6 @@
  */
 package org.jetbrains.java.decompiler.util;
 
-import org.jetbrains.java.decompiler.main.DecompilerContext;
-import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
-
 import java.io.*;
 import java.util.Collection;
 import java.util.HashSet;
@@ -79,16 +76,6 @@ public class InterpreterUtil {
     }
   }
 
-  public static String getIndentString(int length) {
-    if (length == 0) return "";
-    StringBuilder buf = new StringBuilder();
-    String indent = (String)DecompilerContext.getProperty(IFernflowerPreferences.INDENT_STRING);
-    while (length-- > 0) {
-      buf.append(indent);
-    }
-    return buf.toString();
-  }
-
   public static boolean equalSets(Collection<?> c1, Collection<?> c2) {
     if (c1 == null) {
       return c2 == null;
@@ -128,18 +115,6 @@ public class InterpreterUtil {
     }
 
     return false;
-  }
-
-  public static boolean isPrintableUnicode(char c) {
-    int t = Character.getType(c);
-    return t != Character.UNASSIGNED && t != Character.LINE_SEPARATOR && t != Character.PARAGRAPH_SEPARATOR &&
-           t != Character.CONTROL && t != Character.FORMAT && t != Character.PRIVATE_USE && t != Character.SURROGATE;
-  }
-
-  public static String charToUnicodeLiteral(int value) {
-    String sTemp = Integer.toHexString(value);
-    sTemp = ("0000" + sTemp).substring(sTemp.length());
-    return "\\u" + sTemp;
   }
 
   public static String makeUniqueKey(String name, String descriptor) {

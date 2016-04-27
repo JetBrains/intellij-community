@@ -19,7 +19,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
@@ -83,28 +82,6 @@ public abstract class GrMethodCallImpl extends GrCallExpressionImpl implements G
       if (cur instanceof GrExpression) return (GrExpression)cur;
     }
     throw new IncorrectOperationException("invoked expression must not be null");
-  }
-
-  @Override
-  public PsiMethod resolveMethod() {
-    final GrExpression methodExpr = getInvokedExpression();
-    if (methodExpr instanceof GrReferenceExpression) {
-      final PsiElement resolved = ((GrReferenceExpression) methodExpr).resolve();
-      return resolved instanceof PsiMethod ? (PsiMethod) resolved : null;
-    }
-
-    return null;
-  }
-
-  @NotNull
-  @Override
-  public GroovyResolveResult advancedResolve() {
-    final GrExpression methodExpr = getInvokedExpression();
-    if (methodExpr instanceof GrReferenceExpression) {
-      return ((GrReferenceExpression) methodExpr).advancedResolve();
-    }
-
-    return GroovyResolveResult.EMPTY_RESULT;
   }
 
   @Override

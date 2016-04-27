@@ -30,13 +30,14 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.FileStatusManager;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,18 +57,34 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
   }
 
   public void actionPerformed(@NotNull AnActionEvent e) {
-    final List<VirtualFile> unversionedFiles = getUnversionedFiles(e);
-    if (unversionedFiles.isEmpty()) {
-      return;
+    addUnversioned(e.getRequiredData(CommonDataKeys.PROJECT), getUnversionedFiles(e), this::isStatusForAddition,
+                   e.getData(ChangesBrowserBase.DATA_KEY));
+  }
+
+  public static boolean addUnversioned(@NotNull Project project,
+                                       @NotNull List<VirtualFile> files,
+                                       @NotNull Condition<FileStatus> unversionedFileCondition,
+                                       @Nullable ChangesBrowserBase browser) {
+    boolean result = true;
+
+    if (!files.isEmpty()) {
+      FileDocumentManager.getInstance().saveAllDocuments();
+
+      @SuppressWarnings("unchecked")
+      Consumer<List<Change>> consumer = browser == null ? null : changes -> {
+        browser.rebuildList();
+        browser.getViewer().excludeChanges((List)files);
+        browser.getViewer().includeChanges((List)changes);
+      };
+      ChangeListManagerImpl manager = ChangeListManagerImpl.getInstanceImpl(project);
+      LocalChangeList targetChangeList =
+        browser == null ? manager.getDefaultChangeList() : (LocalChangeList)browser.getSelectedChangeList();
+      List<VcsException> exceptions = manager.addUnversionedFiles(targetChangeList, files, unversionedFileCondition, consumer);
+
+      result = exceptions.isEmpty();
     }
-    FileDocumentManager.getInstance().saveAllDocuments();
-    final ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(e.getData(CommonDataKeys.PROJECT));
-    changeListManager.addUnversionedFiles(changeListManager.getDefaultChangeList(), unversionedFiles, new Condition<FileStatus>() {
-      @Override
-      public boolean value(FileStatus status) {
-        return isStatusForAddition(status);
-      }
-    }, null);
+
+    return result;
   }
 
   private boolean thereAreUnversionedFiles(AnActionEvent e) {

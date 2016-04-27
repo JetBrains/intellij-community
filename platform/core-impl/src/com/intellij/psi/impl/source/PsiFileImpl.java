@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -167,6 +167,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     return !myInvalidated;
   }
 
+  @Override
   public void markInvalidated() {
     myInvalidated = true;
     DebugUtil.onInvalidated(this);
@@ -269,8 +270,9 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     }
   }
 
-  private List<Pair<StubBasedPsiElementBase, CompositeElement>> calcStubAstBindings(final ASTNode root,
-                                                                                    final Document cachedDocument, final StubTree stubTree) {
+  private List<Pair<StubBasedPsiElementBase, CompositeElement>> calcStubAstBindings(@NotNull ASTNode root,
+                                                                                    @Nullable final Document cachedDocument,
+                                                                                    @Nullable final StubTree stubTree) {
     if (stubTree == null) {
       return Collections.emptyList();
     }
@@ -329,7 +331,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     return type instanceof IStubFileElementType ? (IStubFileElementType)type : null;
   }
 
-  protected void reportStubAstMismatch(String message, StubTree stubTree, Document cachedDocument) {
+  void reportStubAstMismatch(String message, StubTree stubTree, Document cachedDocument) {
     rebuildStub();
     clearStub(STUB_PSI_MISMATCH);
     scheduleDropCachesWithInvalidStubPsi();

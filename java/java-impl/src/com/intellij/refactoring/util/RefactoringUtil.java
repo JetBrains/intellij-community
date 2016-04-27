@@ -385,7 +385,7 @@ public class RefactoringUtil {
   public static PsiType getTypeByExpressionWithExpectedType(PsiExpression expr) {
     PsiElementFactory factory = JavaPsiFacade.getInstance(expr.getProject()).getElementFactory();
     PsiType type = getTypeByExpression(expr, factory);
-    final boolean isFunctionalType = type instanceof PsiLambdaExpressionType || type instanceof PsiMethodReferenceType || type instanceof PsiLambdaParameterType;
+    final boolean isFunctionalType = LambdaUtil.notInferredType(type);
     final boolean isDenotable = PsiTypesUtil.isDenotableType(expr.getType());
     if (type != null && !isFunctionalType && isDenotable) {
       return type;
@@ -404,9 +404,7 @@ public class RefactoringUtil {
   public static PsiType getTypeByExpression(PsiExpression expr) {
     PsiElementFactory factory = JavaPsiFacade.getInstance(expr.getProject()).getElementFactory();
     PsiType type = getTypeByExpression(expr, factory);
-    if (type instanceof PsiLambdaParameterType ||
-        type instanceof PsiLambdaExpressionType ||
-        type instanceof PsiMethodReferenceType) {
+    if (LambdaUtil.notInferredType(type)) {
       type = factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_OBJECT, expr.getResolveScope());
     }
     return type;
@@ -727,6 +725,8 @@ public class RefactoringUtil {
 
   private static void prepareForInterface(PsiMethod method) {
     PsiUtil.setModifierProperty(method, PsiModifier.PUBLIC, false);
+    PsiUtil.setModifierProperty(method, PsiModifier.PRIVATE, false);
+    PsiUtil.setModifierProperty(method, PsiModifier.PROTECTED, false);
     prepareForAbstract(method);
   }
 

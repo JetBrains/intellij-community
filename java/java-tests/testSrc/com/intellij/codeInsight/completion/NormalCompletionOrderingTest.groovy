@@ -746,4 +746,8 @@ interface TxANotAnno {}
     assert p.strikeout
   }
 
+  public void testPreferClassKeywordWhenExpectedClassType() {
+    checkPreferredItems 0, 'class'
+  }
+
 }

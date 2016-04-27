@@ -43,9 +43,8 @@ public class SuppressLocalWithCommentFix extends SuppressByJavaCommentFix {
   }
 
   @Override
-  protected void createSuppression(@NotNull Project project, @NotNull PsiElement element, @NotNull PsiElement container)
-    throws IncorrectOperationException {
-    suppressWithComment(project, element, container);
+  protected PsiElement getElementToAnnotate(PsiElement element, PsiElement container) {
+    return null;
   }
 
   @NotNull

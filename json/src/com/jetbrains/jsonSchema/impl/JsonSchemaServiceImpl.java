@@ -10,6 +10,7 @@ import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.documentation.CompositeDocumentationProvider;
 import com.intellij.lang.documentation.DocumentationProvider;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -59,8 +60,8 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
                                                         }
                                                       });
     if (project != null) {
-      final JsonSchemaVfsListener listener = new JsonSchemaVfsListener(project, this);
-      VirtualFileManager.getInstance().addVirtualFileListener(listener, project);
+      ApplicationManager
+        .getApplication().getMessageBus().connect(project).subscribe(VirtualFileManager.VFS_CHANGES, new JsonSchemaVfsListener(project, this));
     }
   }
 

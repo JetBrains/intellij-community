@@ -120,9 +120,7 @@ import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.ui.HintListener;
 import com.intellij.ui.LightweightHint;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.ExceptionUtil;
-import com.intellij.util.TimeoutUtil;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.UIUtil;
@@ -136,6 +134,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -500,71 +499,99 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertEquals("Field can be converted to a local variable", infos.get(0).getDescription());
   }
 
+  private static class MyWholeInspection extends LocalInspectionTool {
+    private final List<PsiElement> visited = Collections.synchronizedList(new ArrayList<>());
+
+    @Nls
+    @NotNull
+    @Override
+    public String getGroupDisplayName() {
+      return "fegna";
+    }
+
+    @Nls
+    @NotNull
+    @Override
+    public String getDisplayName() {
+      return getGroupDisplayName();
+    }
+
+    @NotNull
+    @Override
+    public String getShortName() {
+      return getGroupDisplayName();
+    }
+
+    @NotNull
+    @Override
+    public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+      return new PsiElementVisitor() {
+        @Override
+        public void visitFile(PsiFile file) {
+          TimeoutUtil.sleep(1000); // make it run longer that LIP
+          super.visitFile(file);
+        }
+
+        @Override
+        public void visitElement(PsiElement element) {
+          visited.add(element);
+          super.visitElement(element);
+        }
+      };
+    }
+
+    @Override
+    public boolean runForWholeFile() {
+      return true;
+    }
+  }
+
   public void testWholeFileInspectionRestartedOnAllElements() throws Exception {
-    final List<PsiElement> visited = Collections.synchronizedList(new ArrayList<>());
-    final LocalInspectionTool tool = new LocalInspectionTool() {
-      @Nls
-      @NotNull
-      @Override
-      public String getGroupDisplayName() {
-        return "fegna";
-      }
-
-      @Nls
-      @NotNull
-      @Override
-      public String getDisplayName() {
-        return getGroupDisplayName();
-      }
-
-      @NotNull
-      @Override
-      public String getShortName() {
-        return getGroupDisplayName();
-      }
-
-      @NotNull
-      @Override
-      public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-        return new PsiElementVisitor() {
-          @Override
-          public void visitFile(PsiFile file) {
-            TimeoutUtil.sleep(1000); // make it run longer that LIP
-            super.visitFile(file);
-          }
-
-          @Override
-          public void visitElement(PsiElement element) {
-            visited.add(element);
-            super.visitElement(element);
-          }
-        };
-      }
-
-      @Override
-      public boolean runForWholeFile() {
-        return true;
-      }
-    };
+    MyWholeInspection tool = new MyWholeInspection();
     enableInspectionTool(tool);
     disposeOnTearDown(() -> disableInspectionTool(tool.getShortName()));
 
     configureByText(JavaFileType.INSTANCE, "class X { void f() { <caret> } }");
     List<HighlightInfo> infos = doHighlighting(HighlightSeverity.WARNING);
     assertEmpty(infos);
-    int visitedCount = visited.size();
-    visited.clear();
+    int visitedCount = tool.visited.size();
+    tool.visited.clear();
 
     type("  ");  // white space modification
 
     infos = doHighlighting(HighlightSeverity.WARNING);
     assertEmpty(infos);
 
-    int countAfter = visited.size();
+    int countAfter = tool.visited.size();
     assertTrue("visitedCount = "+visitedCount+"; countAfter="+countAfter, countAfter >= visitedCount);
   }
 
-  
+  public void testWholeFileInspectionRestartedEvenIfThereWasAModificationInsideCodeBlockInOtherFile() throws Exception {
+    MyWholeInspection tool = new MyWholeInspection();
+
+    enableInspectionTool(tool);
+    disposeOnTearDown(() -> disableInspectionTool(tool.getShortName()));
+
+    PsiFile file = configureByText(JavaFileType.INSTANCE, "class X { void f() { <caret> } }");
+    PsiFile otherFile = createFile(myModule, file.getContainingDirectory().getVirtualFile(), "otherFile.txt", "xxx");
+    List<HighlightInfo> infos = doHighlighting(HighlightSeverity.WARNING);
+    assertEmpty(infos);
+    int visitedCount = tool.visited.size();
+    assertTrue(tool.visited.toString(), visitedCount > 0);
+    tool.visited.clear();
+
+    Document otherDocument = PsiDocumentManager.getInstance(getProject()).getDocument(otherFile);
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      otherDocument.setText("zzz");
+    });
+
+    infos = doHighlighting(HighlightSeverity.WARNING);
+    assertEmpty(infos);
+
+    int countAfter = tool.visited.size();
+    assertTrue(tool.visited.toString(), countAfter > 0);
+  }
+
   public void testOverriddenMethodMarkers() throws Exception {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
     highlightErrors();
@@ -1637,15 +1664,47 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertTrue(ave < 10);
   }
 
+  private static void startCPUProfiling() {
+    try {
+      Class<?> aClass = Class.forName("com.intellij.util.ProfilingUtil");
+      Method method = ReflectionUtil.getDeclaredMethod(aClass, "startCPUProfiling");
+      method.invoke(null);
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+  private static void stopCPUProfiling() {
+    try {
+      Class<?> aClass = Class.forName("com.intellij.util.ProfilingUtil");
+      Method method = ReflectionUtil.getDeclaredMethod(aClass, "stopCPUProfiling");
+      method.invoke(null);
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  private static String captureCPUSnapshot() {
+    try {
+      Class<?> aClass = Class.forName("com.intellij.util.ProfilingUtil");
+      Method method = ReflectionUtil.getDeclaredMethod(aClass, "captureCPUSnapshot");
+      return (String)method.invoke(null);
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   public void testPostHighlightingPassRunsOnEveryPsiModification() throws Exception {
     PsiFile x = createFile("X.java", "public class X { public static void ffffffffffffff(){} }");
     PsiFile use = createFile("Use.java", "public class Use { { <caret>X.ffffffffffffff(); } }");
     configureByExistingFile(use.getVirtualFile());
 
     InspectionProfile profile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile();
-    HighlightDisplayKey myDeadCodeKey = HighlightDisplayKey.find(UnusedDeclarationInspection.SHORT_NAME);
+    HighlightDisplayKey myDeadCodeKey = HighlightDisplayKey.find(UnusedDeclarationInspectionBase.SHORT_NAME);
     if (myDeadCodeKey == null) {
-      myDeadCodeKey = HighlightDisplayKey.register(UnusedDeclarationInspection.SHORT_NAME, UnusedDeclarationInspection.DISPLAY_NAME);
+      myDeadCodeKey = HighlightDisplayKey.register(UnusedDeclarationInspectionBase.SHORT_NAME, UnusedDeclarationInspectionBase.DISPLAY_NAME);
     }
     UnusedDeclarationInspectionBase myDeadCodeInspection = new UnusedDeclarationInspectionBase(true);
     enableInspectionTool(myDeadCodeInspection);
@@ -1826,9 +1885,9 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertEquals(applied, ContainerUtil.newHashSet(editor1, editor2));
   }
 
-  public void registerFakePass(@NotNull final Set<Editor> applied, @NotNull final Set<Editor> collected) {
+  private void registerFakePass(@NotNull final Set<Editor> applied, @NotNull final Set<Editor> collected) {
     class Fac extends AbstractProjectComponent implements TextEditorHighlightingPassFactory {
-      protected Fac(Project project) {
+      private Fac(Project project) {
         super(project);
       }
 
@@ -1851,7 +1910,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     registrar.registerTextEditorHighlightingPass(new Fac(getProject()), null, null, false, -1);
   }
 
-  volatile boolean runHeavyProcessing;
+  private volatile boolean runHeavyProcessing;
   public void testDaemonDisablesItselfDuringHeavyProcessing() throws Exception {
     runHeavyProcessing = false;
     DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
@@ -1884,7 +1943,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       }
 
       runHeavyProcessing = true;
-      ApplicationManager.getApplication().executeOnPooledThread((Runnable)() -> {
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
         AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("my own heavy op");
         try {
           while (runHeavyProcessing) {
@@ -2217,6 +2276,28 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     finally {
       EditorFactory.getInstance().releaseEditor(myEditor);
     }
+  }
+
+  public void testFileReload() throws Exception {
+    VirtualFile file = createFile("a.java", "").getVirtualFile();
+    Document document = getDocument(file);
+    assertNotNull(document);
+
+    FileStatusMap fileStatusMap = myDaemonCodeAnalyzer.getFileStatusMap();
+
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      PlatformTestUtil.tryGcSoftlyReachableObjects();
+      assertNull(PsiDocumentManager.getInstance(getProject()).getCachedPsiFile(document));
+
+      document.insertString(0, "class X { void foo() {}}");
+      assertEquals(TextRange.from(0, document.getTextLength()), fileStatusMap.getFileDirtyScope(document, Pass.UPDATE_ALL));
+
+      FileContentUtilCore.reparseFiles(file);
+      assertEquals(TextRange.from(0, document.getTextLength()), fileStatusMap.getFileDirtyScope(document, Pass.UPDATE_ALL));
+
+      findClass("X").getMethods()[0].delete();
+      assertEquals(TextRange.from(0, document.getTextLength()), fileStatusMap.getFileDirtyScope(document, Pass.UPDATE_ALL));
+    });
   }
 }
 

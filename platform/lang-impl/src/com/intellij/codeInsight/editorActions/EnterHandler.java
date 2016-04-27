@@ -19,6 +19,7 @@ package com.intellij.codeInsight.editorActions;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate;
+import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.*;
 import com.intellij.lang.documentation.CodeDocumentationProvider;
@@ -41,6 +42,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.autodetect.DetectedIndentOptionsNotificationProvider;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.tree.IElementType;
@@ -170,7 +172,6 @@ public class EnterHandler extends BaseEnterHandler {
     );
     action.setForceIndent(forceIndent);
     action.run();
-    documentManager.commitDocument(document);
     for (EnterHandlerDelegate delegate : delegates) {
       if (delegate.postProcessEnter(file, editor, dataContext) == EnterHandlerDelegate.Result.Stop) {
         break;
@@ -424,7 +425,7 @@ public class EnterHandler extends BaseEnterHandler {
         if (codeInsightSettings.SMART_INDENT_ON_ENTER || myForceIndent || commentContext.docStart || commentContext.docAsterisk
             || commentContext.slashSlash) 
         {
-          myOffset = adjustLineIndent();
+          myOffset = adjustLineIndent(myDocument.getCharsSequence());
           
           if (commentContext.docAsterisk && !StringUtil.isEmpty(indentInsideJavadoc) && myOffset < myDocument.getTextLength()) {
             myDocument.insertString(myOffset + 1, indentInsideJavadoc);
@@ -472,10 +473,15 @@ public class EnterHandler extends BaseEnterHandler {
       }
     }
     
-    private int adjustLineIndent() {
-      final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(getProject());
-      PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
-      return codeStyleManager.adjustLineIndent(myFile, myOffset);
+    private int adjustLineIndent(CharSequence docChars) {
+      int indentStart = CharArrayUtil.shiftBackwardUntil(docChars, myOffset - 1, "\n") + 1;
+      int indentEnd = CharArrayUtil.shiftForward(docChars, indentStart, " \t");
+      String newIndent = CodeStyleFacade.getInstance(getProject()).getLineIndent(myDocument, myOffset);
+      if (newIndent == null) return myOffset;
+      int delta = newIndent.length() - (indentEnd - indentStart);
+      myDocument.replaceString(indentStart, indentEnd, newIndent);
+      DetectedIndentOptionsNotificationProvider.updateIndentNotification(myFile, false);
+      return myOffset + delta;
     }
 
     private void generateJavadoc(CodeDocumentationAwareCommenter commenter) throws IncorrectOperationException {

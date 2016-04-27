@@ -388,10 +388,10 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           return;
         }
         String text = "";
-        if (myEditor != null) {
-          text = myEditor.getSelectionModel().getSelectedText();
-          text = text == null ? "" : text.trim();
-        }
+        //if (myEditor != null) {
+        //  text = myEditor.getSelectionModel().getSelectedText();
+        //  text = text == null ? "" : text.trim();
+        //}
 
         search.setText(text);
         search.getTextEditor().setForeground(UIUtil.getLabelForeground());
@@ -1533,7 +1533,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       if ((actions && !Registry.is("search.everywhere.actions")) || (!actions && !Registry.is("search.everywhere.settings"))) {
         return result;
       }
-      final MinusculeMatcher matcher = new MinusculeMatcher("*" +pattern, NameUtil.MatchingCaseSensitivity.NONE);
+      final MinusculeMatcher matcher = NameUtil.buildMatcher("*" +pattern).build();
       if (myActionProvider == null) {
         myActionProvider = createActionProvider();
       }
@@ -1619,7 +1619,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     private synchronized void buildStructure(final String pattern) {
       if (!Registry.is("search.everywhere.structure") || myStructureModel == null) return;
       final List<StructureViewTreeElement> elements = new ArrayList<StructureViewTreeElement>();
-      final MinusculeMatcher matcher = new MinusculeMatcher("*" + pattern, NameUtil.MatchingCaseSensitivity.NONE);
+      final MinusculeMatcher matcher = NameUtil.buildMatcher("*" + pattern).build();
       fillStructure(myStructureModel.getRoot(), elements, matcher);
       if (elements.size() > 0) {
         SwingUtilities.invokeLater(new Runnable() {
@@ -1712,7 +1712,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       if (!Registry.is("search.everywhere.configurations")) {
         return configurations;
       }
-      MinusculeMatcher matcher = new MinusculeMatcher(pattern, NameUtil.MatchingCaseSensitivity.NONE);
+      final MinusculeMatcher matcher = NameUtil.buildMatcher(pattern).build();
       final ChooseRunConfigurationPopup.ItemWrapper[] wrappers =
         ChooseRunConfigurationPopup.createSettingsList(project, new ExecutorProvider() {
           @Override
@@ -1882,7 +1882,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }
 
     private synchronized void buildRecentFiles(String pattern) {
-      final MinusculeMatcher matcher = new MinusculeMatcher("*" + pattern, NameUtil.MatchingCaseSensitivity.NONE);
+      final MinusculeMatcher matcher = NameUtil.buildMatcher("*" + pattern).build();
       final ArrayList<VirtualFile> files = new ArrayList<VirtualFile>();
       final List<VirtualFile> selected = Arrays.asList(FileEditorManager.getInstance(project).getSelectedFiles());
       for (VirtualFile file : ArrayUtil.reverseArray(EditorHistoryManager.getInstance(project).getFiles())) {

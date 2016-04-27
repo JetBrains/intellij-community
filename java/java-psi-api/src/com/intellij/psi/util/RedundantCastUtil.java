@@ -361,7 +361,7 @@ public class RedundantCastUtil {
               final PsiCall call = LambdaUtil.treeWalkUp(expression);
               if (call != null) {
                 final PsiCall callCopy = (PsiCall)call.copy();
-                newCall = PsiTreeUtil.getParentOfType(callCopy.findElementAt(expression.getTextRange().getStartOffset() - call.getTextRange().getStartOffset()), expression.getClass());
+                newCall = PsiTreeUtil.getParentOfType(callCopy.findElementAt(argumentList.getTextRange().getStartOffset() - call.getTextRange().getStartOffset()), expression.getClass());
               }
               else {
                 newCall = (PsiCall)expression.copy();
@@ -370,6 +370,7 @@ public class RedundantCastUtil {
             final PsiExpressionList argList = newCall.getArgumentList();
             LOG.assertTrue(argList != null);
             PsiExpression[] newArgs = argList.getExpressions();
+            LOG.assertTrue(newArgs.length == args.length, "oldCall: " + expression.getText() + "; newCall: " + newCall.getText());
             PsiTypeCastExpression castExpression = (PsiTypeCastExpression) deparenthesizeExpression(newArgs[i]);
             final PsiTypeElement castTypeElement = cast.getCastType();
             final PsiType castType = castTypeElement != null ? castTypeElement.getType() : null;

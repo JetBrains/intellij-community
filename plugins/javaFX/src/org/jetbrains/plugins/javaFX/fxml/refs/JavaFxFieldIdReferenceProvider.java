@@ -18,8 +18,10 @@ package org.jetbrains.plugins.javaFX.fxml.refs;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,7 +55,7 @@ public class JavaFxFieldIdReferenceProvider extends JavaFxControllerBasedReferen
     return new PsiReference[]{new JavaFxControllerFieldRef(xmlAttributeValue, fieldOrGetterMethod, aClass)};
   }
 
-  public static class JavaFxControllerFieldRef extends PsiReferenceBase<XmlAttributeValue> {
+  public static class JavaFxControllerFieldRef extends PsiReferenceBase<XmlAttributeValue> implements JavaFxPropertyReference {
     private final XmlAttributeValue myXmlAttributeValue;
     private final PsiMember myFieldOrMethod;
     private final PsiClass myAClass;
@@ -117,6 +119,51 @@ public class JavaFxFieldIdReferenceProvider extends JavaFxControllerBasedReferen
         }
       }
       return ArrayUtil.toObjectArray(fieldsToSuggest);
+    }
+
+    @Nullable
+    @Override
+    public PsiMethod getGetter() {
+      if (myFieldOrMethod instanceof PsiMethod && PropertyUtil.isSimplePropertyGetter((PsiMethod)myFieldOrMethod)) {
+        return (PsiMethod)myFieldOrMethod;
+      }
+      return JavaFxPropertyReference.getGetter(myAClass, PropertyUtil.getPropertyName(myFieldOrMethod));
+    }
+
+    @Nullable
+    @Override
+    public PsiMethod getSetter() {
+      if (myFieldOrMethod instanceof PsiMethod && PropertyUtil.isSimplePropertySetter((PsiMethod)myFieldOrMethod)) {
+        return (PsiMethod)myFieldOrMethod;
+      }
+      return JavaFxPropertyReference.getSetter(myAClass, PropertyUtil.getPropertyName(myFieldOrMethod));
+    }
+
+    @Nullable
+    @Override
+    public PsiField getField() {
+      if (myFieldOrMethod instanceof PsiField) {
+        return (PsiField)myFieldOrMethod;
+      }
+      return JavaFxPropertyReference.getField(myAClass, PropertyUtil.getPropertyName(myFieldOrMethod));
+    }
+
+    @Nullable
+    @Override
+    public PsiMethod getObservableGetter() {
+      return JavaFxPropertyReference.getObservableGetter(myAClass, PropertyUtil.getPropertyName(myFieldOrMethod));
+    }
+
+    @Nullable
+    @Override
+    public PsiType getType() {
+      return JavaFxPsiUtil.getReadablePropertyType(myFieldOrMethod);
+    }
+
+    @Override
+    public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+      final String newPropertyName = JavaFxPsiUtil.getPropertyName(newElementName, myFieldOrMethod instanceof PsiMethod);
+      return super.handleElementRename(newPropertyName);
     }
 
     private PsiClass getGuessedTagClass() {

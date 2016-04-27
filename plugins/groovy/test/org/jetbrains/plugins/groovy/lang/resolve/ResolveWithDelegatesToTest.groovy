@@ -347,6 +347,7 @@ test()
 
 ''', 'LinkedHashMap'
   }
+
   void testShouldChooseMethodFromOwnerInJava() {
     myFixture.configureByText("Abc.java", '''\
 import groovy.lang.Closure;
@@ -736,5 +737,55 @@ doX {
     final resolved = assertInstanceOf(ref.resolve(), PsiMethod)
     final containingClass = resolved.containingClass.name
     assertEquals(resolvedClass, containingClass)
+  }
+
+  void 'test delegate within implicit call()'() {
+    assertScript '''\
+class A {
+    def call(@DelegatesTo(Boo) Closure c) {}
+}
+
+class Boo {
+    def foo() {}
+}
+
+def a = new A()
+a {
+    f<caret>oo()
+}
+''', 'Boo'
+  }
+
+  void 'test delegate within index property'() {
+    assertScript '''\
+class A {
+    def getAt(@DelegatesTo(Boo) Closure c) {}
+}
+
+class Boo {
+    def foo() {}
+}
+
+def a = new A()
+a[{
+    fo<caret>o()
+}]
+''', 'Boo'
+  }
+
+  void 'test delegate within constructor argument'() {
+    assertScript '''\
+class A {
+    A(@DelegatesTo(Boo) Closure c) {}
+}
+
+class Boo {
+    def foo() {}
+}
+
+new A({
+    fo<caret>o()
+})
+''', 'Boo'
   }
 }

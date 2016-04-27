@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import java.util.List;
  */
 public class LightTypeParameterListBuilder extends LightElement implements PsiTypeParameterList {
   private final List<PsiTypeParameter> myParameters = new ArrayList<PsiTypeParameter>();
-  private PsiTypeParameter[] cached = null;
+  private PsiTypeParameter[] cached;
 
   public LightTypeParameterListBuilder(PsiManager manager, final Language language) {
     super(manager, language);

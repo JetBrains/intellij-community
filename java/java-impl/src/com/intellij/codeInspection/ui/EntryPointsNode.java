@@ -21,6 +21,7 @@ import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.icons.AllIcons;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -29,7 +30,7 @@ import javax.swing.*;
  */
 public class EntryPointsNode extends InspectionNode {
   public EntryPointsNode(@NotNull GlobalInspectionContextImpl context) {
-    super(createDummyWrapper(context));
+    super(createDummyWrapper(context), context.getCurrentProfile());
   }
 
   private static InspectionToolWrapper createDummyWrapper(@NotNull GlobalInspectionContextImpl context) {
@@ -41,5 +42,11 @@ public class EntryPointsNode extends InspectionNode {
   @Override
   public Icon getIcon(boolean expanded) {
     return AllIcons.Nodes.EntryPoints;
+  }
+
+  @Nullable
+  @Override
+  public String getCustomizedTailText() {
+    return "";
   }
 }

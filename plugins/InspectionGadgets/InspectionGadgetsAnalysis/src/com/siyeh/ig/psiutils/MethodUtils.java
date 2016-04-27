@@ -22,6 +22,7 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
 import com.siyeh.HardcodedMethodConstants;
@@ -326,6 +327,9 @@ public class MethodUtils {
 
   public static boolean isChainable(PsiMethod method) {
     if (method == null) {
+      return false;
+    }
+    if (!InheritanceUtil.isInheritorOrSelf(method.getContainingClass(), PsiUtil.resolveClassInClassTypeOnly(method.getReturnType()), true)) {
       return false;
     }
     final PsiElement navigationElement = method.getNavigationElement();

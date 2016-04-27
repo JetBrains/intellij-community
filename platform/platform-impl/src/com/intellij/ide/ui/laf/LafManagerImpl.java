@@ -760,13 +760,10 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
   }
 
   private static void updateUI(Window window) {
-    if (!window.isDisplayable()) {
-      return;
-    }
     IJSwingUtilities.updateComponentTreeUI(window);
     Window[] children = window.getOwnedWindows();
-    for (Window aChildren : children) {
-      updateUI(aChildren);
+    for (Window w : children) {
+      IJSwingUtilities.updateComponentTreeUI(w);
     }
   }
 

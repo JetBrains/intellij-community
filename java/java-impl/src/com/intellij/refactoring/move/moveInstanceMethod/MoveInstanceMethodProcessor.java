@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
@@ -168,7 +169,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
       }
     }
 
-    if (myTargetClass.isInterface()) {
+    if (myTargetClass.isInterface() && !PsiUtil.isLanguageLevel8OrHigher(myTargetClass)) {
       addInheritorUsages(myTargetClass, searchScope, usages);
     }
 
@@ -240,9 +241,24 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
         final PsiElement expression = ((MethodCallUsageInfo)usage).getMethodCallExpression();
         if (expression instanceof PsiMethodCallExpression) {
           correctMethodCall((PsiMethodCallExpression)expression, false);
-        } else if (expression instanceof PsiMethodReferenceExpression) {
-          PsiExpression newQualifier = JavaPsiFacade.getInstance(myProject).getElementFactory().createExpressionFromText(myTargetVariable.getType().getCanonicalText(), null);
-          ((PsiMethodReferenceExpression)expression).setQualifierExpression(newQualifier);
+        }
+        else if (expression instanceof PsiMethodReferenceExpression) {
+          PsiMethodReferenceExpression methodReferenceExpression = (PsiMethodReferenceExpression)expression;
+          PsiExpression qualifierExpression = methodReferenceExpression.getQualifierExpression();
+          String exprText;
+          if (myTargetVariable instanceof PsiParameter ||
+              qualifierExpression instanceof PsiReferenceExpression && ((PsiReferenceExpression)qualifierExpression).resolve() == myMethod.getContainingClass()) {
+            exprText = myTargetVariable.getType().getCanonicalText();
+          }
+          else if (qualifierExpression instanceof PsiReferenceExpression) {
+            exprText = qualifierExpression.getText() + "." + myTargetVariable.getName();
+          }
+          else {
+            exprText = myTargetVariable.getName();
+          }
+          PsiExpression newQualifier = JavaPsiFacade.getInstance(myProject).getElementFactory().createExpressionFromText(exprText, null);
+          ((PsiMethodReferenceExpression)expression).setQualifierExpression(
+            (PsiExpression)JavaCodeStyleManager.getInstance(myProject).shortenClassReferences(newQualifier));
         }
       }
       else if (usage instanceof JavadocUsageInfo) {
@@ -251,7 +267,17 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
     }
 
     try {
-      if (myTargetClass.isInterface()) patternMethod.getBody().delete();
+      if (myTargetClass.isInterface()) {
+        final PsiModifierList modifierList = patternMethod.getModifierList();
+        if (!PsiUtil.isLanguageLevel8OrHigher(myTargetClass)) {
+          patternMethod.getBody().delete();
+          modifierList.setModifierProperty(PsiModifier.DEFAULT, false);
+        }
+        else {
+          modifierList.setModifierProperty(PsiModifier.DEFAULT, true);
+        }
+        RefactoringUtil.makeMethodAbstract(myTargetClass, patternMethod);
+      }
 
       final PsiMethod method = addMethodToClass(myTargetClass, patternMethod, false);
       myMethod.delete();

@@ -48,7 +48,7 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
   @NotNull private List<MoreCommitsRequest> myRequestsToRun = ContainerUtil.newArrayList();
   @NotNull private List<VisiblePackChangeListener> myVisiblePackChangeListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   @NotNull private volatile VisiblePack myVisiblePack = VisiblePack.EMPTY;
-  private boolean myIsValid = true;
+  private volatile boolean myIsValid = true;
 
   public VcsLogFiltererImpl(@NotNull final Project project,
                             @NotNull VcsLogDataManager dataManager,

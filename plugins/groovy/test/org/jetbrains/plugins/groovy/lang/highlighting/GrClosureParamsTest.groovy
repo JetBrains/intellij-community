@@ -24,7 +24,7 @@ import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnr
 @CompileStatic
 class GrClosureParamsTest extends GrHighlightingTestBase {
   final String basePath = super.basePath + 'closureParams/'
-  final LightProjectDescriptor projectDescriptor = GroovyLightProjectDescriptor.GROOVY_2_3_9
+  final LightProjectDescriptor projectDescriptor = GroovyLightProjectDescriptor.GROOVY_LATEST
 
 
   void 'test from string with non-fqn options no error'() {

@@ -476,7 +476,6 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     return objects;
   }
 
-  @VisibleForTesting
   public enum MatchMode {
     NONE, INTENTION, NAME, DESCRIPTION, GROUP, NON_MENU
   }

@@ -23,7 +23,10 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.editor.markup.HighlighterLayer;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -120,34 +123,11 @@ public class UnifiedDiffChange {
   }
 
   private void createLineHighlighters(@NotNull LineRange deleted, @NotNull LineRange inserted, boolean ignored) {
-    if (!inserted.isEmpty() && !deleted.isEmpty()) {
-      createLineMarker(TextDiffType.DELETED, getLine1(), SeparatorPlacement.TOP);
-      createHighlighter(TextDiffType.DELETED, deleted.start, deleted.end, ignored);
-      createHighlighter(TextDiffType.INSERTED, inserted.start, inserted.end, ignored);
-      createLineMarker(TextDiffType.INSERTED, getLine2() - 1, SeparatorPlacement.BOTTOM);
-    }
-    else if (!inserted.isEmpty()) {
-      createLineMarker(TextDiffType.INSERTED, getLine1(), SeparatorPlacement.TOP);
-      createHighlighter(TextDiffType.INSERTED, inserted.start, inserted.end, ignored);
-      createLineMarker(TextDiffType.INSERTED, getLine2() - 1, SeparatorPlacement.BOTTOM);
-    }
-    else if (!deleted.isEmpty()) {
-      createLineMarker(TextDiffType.DELETED, getLine1(), SeparatorPlacement.TOP);
-      createHighlighter(TextDiffType.DELETED, deleted.start, deleted.end, ignored);
-      createLineMarker(TextDiffType.DELETED, getLine2() - 1, SeparatorPlacement.BOTTOM);
-    }
-  }
-
-  private void createHighlighter(@NotNull TextDiffType type, int startLine, int endLine, boolean ignored) {
-    myHighlighters.addAll(DiffDrawUtil.createHighlighter(myEditor, startLine, endLine, type, ignored));
+    myHighlighters.addAll(DiffDrawUtil.createUnifiedChunkHighlighters(myEditor, deleted, inserted, ignored));
   }
 
   private void createInlineHighlighter(@NotNull TextDiffType type, int start, int end) {
     myHighlighters.addAll(DiffDrawUtil.createInlineHighlighter(myEditor, start, end, type));
-  }
-
-  private void createLineMarker(@NotNull TextDiffType type, int line, @NotNull SeparatorPlacement placement) {
-    myHighlighters.addAll(DiffDrawUtil.createLineMarker(myEditor, line, type, placement));
   }
 
   public int getLine1() {

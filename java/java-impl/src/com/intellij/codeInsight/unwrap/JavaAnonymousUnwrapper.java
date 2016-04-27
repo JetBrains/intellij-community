@@ -51,13 +51,7 @@ public class JavaAnonymousUnwrapper extends JavaUnwrapper {
         final PsiStatement[] statements = body.getStatements();
         if (statements.length == 1 && statements[0] instanceof PsiReturnStatement) {
           final PsiExpression returnValue = ((PsiReturnStatement)statements[0]).getReturnValue();
-          if (from instanceof PsiDeclarationStatement) {
-            final PsiElement[] declaredElements = ((PsiDeclarationStatement)from).getDeclaredElements();
-            if (declaredElements.length == 1 && declaredElements[0] instanceof PsiVariable) {
-              context.setInitializer((PsiVariable)declaredElements[0], returnValue);
-              return;
-            }
-          }
+          if (toAssignment(context, from, returnValue)) return;
         }
       }
     }
@@ -73,7 +67,18 @@ public class JavaAnonymousUnwrapper extends JavaUnwrapper {
     context.deleteExactly(from);
   }
 
-  private static PsiElement findElementToExtractFrom(PsiElement el) {
+  public static boolean toAssignment(Context context, PsiElement from, PsiExpression returnValue) {
+    if (from instanceof PsiDeclarationStatement) {
+      final PsiElement[] declaredElements = ((PsiDeclarationStatement)from).getDeclaredElements();
+      if (declaredElements.length == 1 && declaredElements[0] instanceof PsiVariable) {
+        context.setInitializer((PsiVariable)declaredElements[0], returnValue);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public static PsiElement findElementToExtractFrom(PsiElement el) {
     if (el.getParent() instanceof PsiNewExpression) el = el.getParent();
     el = findTopmostParentOfType(el, PsiMethodCallExpression.class);
     el = findTopmostParentOfType(el, PsiAssignmentExpression.class);

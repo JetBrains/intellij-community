@@ -70,6 +70,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapperDialog;
 import com.intellij.openapi.ui.WindowWrapper;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -217,6 +218,12 @@ public class DiffUtil {
   //
   // Scrolling
   //
+
+  public static void disableBlitting(@NotNull EditorEx editor) {
+    if (Registry.is("diff.divider.repainting.disable.blitting")) {
+      editor.getScrollPane().getViewport().setScrollMode(JViewport.SIMPLE_SCROLL_MODE);
+    }
+  }
 
   public static void moveCaret(@Nullable final Editor editor, int line) {
     if (editor == null) return;
@@ -687,6 +694,22 @@ public class DiffUtil {
     document.replaceString(offset1, offset2, text);
   }
 
+  public static void applyModification(@NotNull Document document,
+                                       int line1,
+                                       int line2,
+                                       @NotNull List<? extends CharSequence> newLines) {
+    if (line1 == line2 && newLines.isEmpty()) return;
+    if (line1 == line2) {
+      insertLines(document, line1, StringUtil.join(newLines, "\n"));
+    }
+    else if (newLines.isEmpty()) {
+      deleteLines(document, line1, line2);
+    }
+    else {
+      replaceLines(document, line1, line2, StringUtil.join(newLines, "\n"));
+    }
+  }
+
   public static void applyModification(@NotNull Document document1,
                                        int line1,
                                        int line2,
@@ -773,17 +796,25 @@ public class DiffUtil {
   // Updating ranges on change
   //
 
+  @NotNull
+  public static LineRange getAffectedLineRange(@NotNull DocumentEvent e) {
+    int line1 = e.getDocument().getLineNumber(e.getOffset());
+    int line2 = e.getDocument().getLineNumber(e.getOffset() + e.getOldLength()) + 1;
+    return new LineRange(line1, line2);
+  }
+
   public static int countLinesShift(@NotNull DocumentEvent e) {
     return StringUtil.countNewLines(e.getNewFragment()) - StringUtil.countNewLines(e.getOldFragment());
   }
 
   @NotNull
   public static UpdatedLineRange updateRangeOnModification(int start, int end, int changeStart, int changeEnd, int shift) {
-    return updateRangeOnModification(start, end, changeStart, changeEnd, shift, false);
+    return updateRangeOnModification(start, end, changeStart, changeEnd, shift, false, false);
   }
 
   @NotNull
-  public static UpdatedLineRange updateRangeOnModification(int start, int end, int changeStart, int changeEnd, int shift, boolean greedy) {
+  public static UpdatedLineRange updateRangeOnModification(int start, int end, int changeStart, int changeEnd, int shift,
+                                                           boolean greedy, boolean strict) {
     if (end <= changeStart) { // change before
       return new UpdatedLineRange(start, end, false);
     }
@@ -792,7 +823,7 @@ public class DiffUtil {
     }
 
     if (start <= changeStart && end >= changeEnd) { // change inside
-      return new UpdatedLineRange(start, end + shift, false);
+      return new UpdatedLineRange(start, end + shift, strict);
     }
 
     // range is damaged. We don't know new boundaries.

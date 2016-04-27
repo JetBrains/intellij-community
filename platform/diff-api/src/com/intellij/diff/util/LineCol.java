@@ -65,6 +65,14 @@ public class LineCol {
   }
 
   public static int toOffset(@NotNull Document document, @NotNull LineCol linecol) {
-    return document.getLineStartOffset(linecol.line) + linecol.column;
+    return linecol.toOffset(document);
+  }
+
+  public static int toOffset(@NotNull Document document, int line, int col) {
+    return new LineCol(line, col).toOffset(document);
+  }
+
+  public int toOffset(@NotNull Document document) {
+    return document.getLineStartOffset(line) + column;
   }
 }

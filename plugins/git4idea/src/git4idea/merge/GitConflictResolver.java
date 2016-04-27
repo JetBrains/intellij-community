@@ -18,6 +18,7 @@ package git4idea.merge;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -29,7 +30,6 @@ import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
@@ -224,12 +224,10 @@ public class GitConflictResolver {
   }
 
   private void showMergeDialog(final Collection<VirtualFile> initiallyUnmergedFiles) {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override public void run() {
-        final MergeProvider mergeProvider = myParams.reverse ?
-                                            new GitMergeProvider(myProject, true) : new GitMergeProvider(myProject, false);
-        myVcsHelper.showMergeDialog(new ArrayList<VirtualFile>(initiallyUnmergedFiles), mergeProvider, myParams.myMergeDialogCustomizer);
-      }
+    TransactionGuard.getInstance().submitTransactionAndWait(() -> {
+      final MergeProvider mergeProvider = myParams.reverse ?
+                                          new GitMergeProvider(myProject, true) : new GitMergeProvider(myProject, false);
+      myVcsHelper.showMergeDialog(new ArrayList<VirtualFile>(initiallyUnmergedFiles), mergeProvider, myParams.myMergeDialogCustomizer);
     });
   }
 

@@ -23,6 +23,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectUtil;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
@@ -44,6 +45,7 @@ import org.jetbrains.builtInWebServer.WebServerPathToFileManager;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -75,6 +77,8 @@ import java.util.regex.Pattern;
 class OpenFileHttpService extends RestService {
   private static final RuntimeException NOT_FOUND = Promise.createError("not found");
   private static final Pattern LINE_AND_COLUMN = Pattern.compile("^(.*?)(?::(\\d+))?(?::(\\d+))?$");
+  private long lastTimeRejected = -1;
+  private long waitUntilNextRequestTimeout = 0;
 
   private volatile long refreshSessionId = 0;
   private final ConcurrentLinkedQueue<OpenFileTask> requests = new ConcurrentLinkedQueue<OpenFileTask>();
@@ -169,16 +173,45 @@ class OpenFileHttpService extends RestService {
 
   @NotNull
   Promise<Void> openFile(@NotNull OpenFileRequest request) {
-    String path = FileUtil.expandUserHome(request.file);
-    final File file = new File(FileUtil.toSystemDependentName(path));
+    String systemIndependentName = FileUtil.toSystemIndependentName(FileUtil.expandUserHome(request.file));
+    final File file = new File(systemIndependentName);
+
     if (file.isAbsolute()) {
+      if (com.intellij.ide.impl.ProjectUtil.isRemotePath(systemIndependentName)) {
+        final Ref<Promise<Void>> result = new Ref<>();
+        try {
+          SwingUtilities.invokeAndWait(new Runnable() {
+            @Override
+            public void run() {
+              if (System.currentTimeMillis() - lastTimeRejected < waitUntilNextRequestTimeout) {
+                return;
+              }
+              boolean value = com.intellij.ide.impl.ProjectUtil
+                .confirmLoadingFromRemotePath(systemIndependentName, "warning.load.file.from.share", "title.load.file.from.share");
+
+              if (value != Boolean.TRUE) {
+                lastTimeRejected = System.currentTimeMillis();
+                waitUntilNextRequestTimeout = Math.min(2 * Math.max(waitUntilNextRequestTimeout, 2000), 60 * 60 * 1000); //to avoid negative values
+                result.set(Promise.reject(NOT_FOUND));
+              } else {
+                waitUntilNextRequestTimeout = 0;
+              }
+            }
+          });
+        } catch (Throwable ignored) {}
+
+        if (result.get() != null) {
+          return result.get();
+        }
+      }
+
       return openAbsolutePath(file, request);
     }
 
     // we don't want to call refresh for each attempt on findFileByRelativePath call, so, we do what ourSaveAndSyncHandlerImpl does on frame activation
     RefreshQueue queue = RefreshQueue.getInstance();
     queue.cancelSession(refreshSessionId);
-    OpenFileTask task = new OpenFileTask(FileUtil.toCanonicalPath(FileUtil.toSystemIndependentName(path), '/'), request);
+    OpenFileTask task = new OpenFileTask(FileUtil.toCanonicalPath(systemIndependentName, '/'), request);
     requests.offer(task);
     RefreshSession session = queue.createSession(true, true, new Runnable() {
       @Override

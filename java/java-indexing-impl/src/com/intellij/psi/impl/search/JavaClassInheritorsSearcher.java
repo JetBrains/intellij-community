@@ -85,7 +85,7 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
       return processLocalScope(project, parameters, (LocalSearchScope)searchScope, baseClass, consumer);
     }
 
-    Iterable<PsiClass> cached = getOrComputeSubClasses(project, parameters.getClassToProcess());
+    Iterable<PsiClass> cached = getOrComputeSubClasses(project, baseClass);
 
     for (final PsiClass subClass : cached) {
       ProgressManager.checkCanceled();
@@ -189,7 +189,7 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
 
   private static class AllSubClassesLazyCollection implements Iterable<PsiClass> {
     // Computes all sub classes of the 'baseClass' transitively by calling DirectClassInheritorsSearch repeatedly.
-    // Already computed subclasses in this collection.
+    // Already computed subclasses are stored in this collection.
     // There are two iterators maintained for this collection:
     // - 'candidatesToFindSubclassesIterator' points to the next element for which direct inheritors haven't been searched yet.
     // - 'subClassIterator' created in AllSubClassesLazyCollection.iterator() maintains state of the AllSubClassesLazyCollection iterator in a lazy fashion. If more elements requested for this iterator, the findNextSubclasses() is called which tries to populate 'subClasses' with more inheritors.

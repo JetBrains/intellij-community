@@ -64,7 +64,7 @@ public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
     return true;
   }
 
-  public boolean isResolved(ExcludedInspectionTreeNodesManager excludedManager){
+  public boolean isExcluded(ExcludedInspectionTreeNodesManager excludedManager){
     return excludedManager.isExcluded(this);
   }
 
@@ -72,25 +72,30 @@ public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
     return false;
   }
 
+  @Nullable
+  public String getCustomizedTailText() {
+    return null;
+  }
+
   public FileStatus getNodeStatus(){
     return FileStatus.NOT_CHANGED;
   }
 
-  public void ignoreElement(ExcludedInspectionTreeNodesManager excludedManager) {
+  public void excludeElement(ExcludedInspectionTreeNodesManager excludedManager) {
     excludedManager.exclude(this);
     Enumeration enumeration = children();
     while (enumeration.hasMoreElements()) {
       InspectionTreeNode child = (InspectionTreeNode)enumeration.nextElement();
-      child.ignoreElement(excludedManager);
+      child.excludeElement(excludedManager);
     }
   }
 
-  public void amnesty(ExcludedInspectionTreeNodesManager excludedManager) {
+  public void amnestyElement(ExcludedInspectionTreeNodesManager excludedManager) {
     excludedManager.amnesty(this);
     Enumeration enumeration = children();
     while (enumeration.hasMoreElements()) {
       InspectionTreeNode child = (InspectionTreeNode)enumeration.nextElement();
-      child.amnesty(excludedManager);
+      child.amnestyElement(excludedManager);
     }
   }
 

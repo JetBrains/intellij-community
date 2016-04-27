@@ -75,7 +75,7 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
   public boolean OVERRIDE_CONSOLE_CYCLE_BUFFER_SIZE = false;
   public int CONSOLE_CYCLE_BUFFER_SIZE_KB = 1024;
   public int EDITOR_TAB_LIMIT = 10;
-  public boolean REUSE_NOT_MODIFIED_TABS = true;
+  public boolean REUSE_NOT_MODIFIED_TABS = false;
   public boolean ANIMATE_WINDOWS = true;
   @Deprecated //todo remove in IDEA 16
   public int ANIMATION_SPEED = 4000; // Pixels per second

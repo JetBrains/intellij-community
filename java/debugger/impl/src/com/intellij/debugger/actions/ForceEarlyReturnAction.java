@@ -226,7 +226,7 @@ public class ForceEarlyReturnAction extends DebuggerAction {
       myProcess = process;
       myFrame = frame;
       myEditor = new XDebuggerExpressionEditor(myProject, myEditorsProvider, "forceReturnValue", myFrame.getSourcePosition(),
-                                               XExpressionImpl.EMPTY_EXPRESSION, false, true);
+                                               XExpressionImpl.EMPTY_EXPRESSION, false, true, false);
 
       setTitle("Return Value");
       init();

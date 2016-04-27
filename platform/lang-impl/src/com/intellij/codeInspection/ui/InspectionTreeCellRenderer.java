@@ -16,7 +16,6 @@
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.reference.RefElement;
@@ -32,7 +31,10 @@ import com.intellij.util.containers.SoftHashMap;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.Comparator;
+import java.util.Locale;
+import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * @author Dmitry Batkovich
@@ -80,49 +82,53 @@ class InspectionTreeCellRenderer extends ColoredTreeCellRenderer {
     InspectionTreeNode node = (InspectionTreeNode)value;
 
     append(node.toString(),
-           patchAttr(node, appearsBold(node) ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : getMainForegroundAttributes(node)));
+           patchMainTextAttrs(node, node.appearsBold()
+                                    ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES
+                                    : getMainForegroundAttributes(node)));
 
-    if (!leaf) {
+    append("  ");
+    final String customizedTailText = node.getCustomizedTailText();
+    if (customizedTailText != null) {
+      append("  ");
+      append(customizedTailText, SimpleTextAttributes.GRAYED_ATTRIBUTES);
+    }
+    else {
       myItemCounter.clear();
       node.visitProblemSeverities(myItemCounter);
-      append("  ");
-      if (isDisableTooNode(node)) {
-        append("Disabled", patchAttr(node, SimpleTextAttributes.GRAYED_ATTRIBUTES));
-      } else {
-        if (myItemCounter.size() > MAX_LEVEL_TYPES) {
-          append(InspectionsBundle.message("inspection.problem.descriptor.count",
-                                           myItemCounter.values().stream().reduce(0, (i, j) -> i + j)) + " ",
-                 patchAttr(node, SimpleTextAttributes.GRAYED_ATTRIBUTES));
-        } else {
-          for (Map.Entry<HighlightDisplayLevel, Integer> entry : myItemCounter.entrySet()) {
-            final HighlightDisplayLevel level = entry.getKey();
-            final Integer occur = entry.getValue();
+      if (myItemCounter.size() > MAX_LEVEL_TYPES) {
+        append(InspectionsBundle.message("inspection.problem.descriptor.count",
+                                         myItemCounter.values().stream().reduce(0, (i, j) -> i + j)) + " ",
+               SimpleTextAttributes.GRAYED_ATTRIBUTES);
+      }
+      else {
+        for (Map.Entry<HighlightDisplayLevel, Integer> entry : myItemCounter.entrySet()) {
+          final HighlightDisplayLevel level = entry.getKey();
+          final Integer occur = entry.getValue();
 
-            SimpleTextAttributes attrs = SimpleTextAttributes.GRAY_ATTRIBUTES;
-            if (level == HighlightDisplayLevel.ERROR && !myView.getGlobalInspectionContext().getUIOptions().GROUP_BY_SEVERITY) {
-              attrs = attrs.derive(-1, JBColor.red.brighter(), null, null);
-            }
-            append(occur + " " + getPresentableName(level, occur > 1) + " ", patchAttr(node, attrs));
+          SimpleTextAttributes attrs = SimpleTextAttributes.GRAY_ATTRIBUTES;
+          if (level == HighlightDisplayLevel.ERROR && !myView.getGlobalInspectionContext().getUIOptions().GROUP_BY_SEVERITY) {
+            attrs = attrs.derive(-1, JBColor.red.brighter(), null, null);
           }
+          append(occur + " " + getPresentableName(level, occur > 1) + " ", attrs);
         }
       }
     }
 
-    if (!node.isValid()) {
-      append(" " + InspectionsBundle.message("inspection.invalid.node.text"), patchAttr(node, SimpleTextAttributes.ERROR_ATTRIBUTES));
-    }
-    else {
-      setIcon(node.getIcon(expanded));
-    }
+    setIcon(node.getIcon(expanded));
     // do not need reset model (for recalculation of prefered size) when digit number of problemCount is growth
     // or INVALID marker appears
     append(StringUtil.repeat(" ", 50));
   }
 
-  public SimpleTextAttributes patchAttr(InspectionTreeNode node, SimpleTextAttributes attributes) {
-    if (node.isResolved(myView.getExcludedManager())) {
-      return new SimpleTextAttributes(attributes.getBgColor(), attributes.getFgColor(), attributes.getWaveColor(),
-                                      attributes.getStyle() | SimpleTextAttributes.STYLE_STRIKEOUT);
+  private SimpleTextAttributes patchMainTextAttrs(InspectionTreeNode node, SimpleTextAttributes attributes) {
+    if (node.isExcluded(myView.getExcludedManager())) {
+      return attributes.derive(attributes.getStyle() | SimpleTextAttributes.STYLE_STRIKEOUT, null, null, null);
+    }
+    if (node instanceof ProblemDescriptionNode && ((ProblemDescriptionNode)node).isQuickFixAppliedFromView()) {
+      return attributes.derive(-1, SimpleTextAttributes.GRAYED_ATTRIBUTES.getFgColor(), null, null);
+    }
+    if (!node.isValid()) {
+      return attributes.derive(-1, FileStatus.IGNORED.getColor(), null, null);
     }
     return attributes;
   }
@@ -146,11 +152,6 @@ class InspectionTreeCellRenderer extends ColoredTreeCellRenderer {
     }
   }
 
-  private boolean isDisableTooNode(InspectionTreeNode node) {
-    return node instanceof InspectionNode && !myView.getCurrentProfile().isToolEnabled(
-      HighlightDisplayKey.find(((InspectionNode)node).getToolWrapper().getShortName()));
-  }
-
   private static SimpleTextAttributes getMainForegroundAttributes(InspectionTreeNode node) {
     SimpleTextAttributes foreground = SimpleTextAttributes.REGULAR_ATTRIBUTES;
     if (node instanceof RefElementNode) {
@@ -169,9 +170,5 @@ class InspectionTreeCellRenderer extends ColoredTreeCellRenderer {
         new SimpleTextAttributes(foreground.getBgColor(), nodeStatus.getColor(), foreground.getWaveColor(), foreground.getStyle());
     }
     return foreground;
-  }
-
-  private static boolean appearsBold(Object node) {
-    return ((InspectionTreeNode)node).appearsBold();
   }
 }

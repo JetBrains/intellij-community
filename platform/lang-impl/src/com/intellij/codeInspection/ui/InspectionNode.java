@@ -16,15 +16,23 @@
 
 package com.intellij.codeInspection.ui;
 
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author max
  */
 public class InspectionNode extends InspectionTreeNode {
-  public InspectionNode(@NotNull InspectionToolWrapper toolWrapper) {
+  private final HighlightDisplayKey myKey;
+  @NotNull private final InspectionProfile myProfile;
+
+  public InspectionNode(@NotNull InspectionToolWrapper toolWrapper, @NotNull InspectionProfile profile) {
     super(toolWrapper);
+    myKey = HighlightDisplayKey.find(toolWrapper.getShortName());
+    myProfile = profile;
   }
 
   public String toString() {
@@ -34,5 +42,11 @@ public class InspectionNode extends InspectionTreeNode {
   @NotNull
   public InspectionToolWrapper getToolWrapper() {
     return (InspectionToolWrapper)getUserObject();
+  }
+
+  @Nullable
+  @Override
+  public String getCustomizedTailText() {
+    return myProfile.isToolEnabled(myKey) ? null : "Disabled";
   }
 }

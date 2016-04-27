@@ -23,7 +23,6 @@ package com.intellij.codeInspection.ex;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.*;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
@@ -36,9 +35,7 @@ import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.tree.DefaultTreeModel;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -190,7 +187,7 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
     @Nullable
     public RefElementContainer getOwner() {
       final RefEntity entity = myElement.getOwner();
-      if (entity instanceof RefElement) {
+      if (entity instanceof RefElement && !(entity instanceof RefDirectory)) {
         return new RefElementContainer(entity, myDescriptors);
       }
       return null;

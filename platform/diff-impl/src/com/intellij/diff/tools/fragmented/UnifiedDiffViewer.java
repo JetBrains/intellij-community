@@ -384,7 +384,13 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
       public void run() {
         myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
 
+        LineCol oldCaretPosition = LineCol.fromOffset(myDocument, myEditor.getCaretModel().getPrimaryCaret().getOffset());
+        Pair<int[], Side> oldCaretLineTwoside = transferLineFromOneside(oldCaretPosition.line);
+
+
         clearDiffPresentation();
+
+
         if (isContentsEqual) {
           boolean equalCharsets = TextDiffViewerUtil.areEqualCharsets(getContents());
           boolean equalSeparators = TextDiffViewerUtil.areEqualLineSeparators(getContents());
@@ -431,7 +437,13 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
           guarderRangeBlocks.add(createGuardedBlock(textLength, textLength));
         }
 
+
         myChangedBlockData = new ChangedBlockData(diffChanges, guarderRangeBlocks, convertor, isContentsEqual);
+
+
+        int newCaretLine = transferLineToOneside(oldCaretLineTwoside.second,
+                                                 oldCaretLineTwoside.second.select(oldCaretLineTwoside.first));
+        myEditor.getCaretModel().moveToOffset(LineCol.toOffset(myDocument, newCaretLine, oldCaretPosition.column));
 
         myFoldingModel.install(changedLines, myRequest, getFoldingModelSettings());
 

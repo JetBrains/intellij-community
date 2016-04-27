@@ -32,10 +32,7 @@ import com.intellij.diff.tools.util.base.HighlightPolicy;
 import com.intellij.diff.tools.util.base.IgnorePolicy;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.diff.tools.util.side.ThreesideTextDiffViewer;
-import com.intellij.diff.util.DiffDividerDrawUtil;
-import com.intellij.diff.util.DiffUtil;
-import com.intellij.diff.util.Side;
-import com.intellij.diff.util.ThreeSide;
+import com.intellij.diff.util.*;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.application.ApplicationManager;
@@ -251,13 +248,12 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
       return;
     }
 
-    int line1 = e.getDocument().getLineNumber(e.getOffset());
-    int line2 = e.getDocument().getLineNumber(e.getOffset() + e.getOldLength()) + 1;
+    LineRange lineRange = DiffUtil.getAffectedLineRange(e);
     int shift = DiffUtil.countLinesShift(e);
 
     List<SimpleThreesideDiffChange> invalid = new ArrayList<SimpleThreesideDiffChange>();
     for (SimpleThreesideDiffChange change : myDiffChanges) {
-      if (change.processChange(line1, line2, shift, side)) {
+      if (change.processChange(lineRange.start, lineRange.end, shift, side)) {
         invalid.add(change);
       }
     }

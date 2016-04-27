@@ -499,4 +499,55 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     assertModules("project", "project1", "project2");
     assertModuleModuleDeps("project2", "project1");
   }
+
+  @Test
+  @TargetVersions("2.5+")
+  public void testProjectSubstitutions() throws Exception {
+    createSettingsFile("include 'core'\n" +
+                       "include 'service'\n" +
+                       "include 'util'\n");
+
+    importProject(
+      "subprojects {\n" +
+      "  apply plugin: 'java'\n" +
+      "  configurations.all {\n" +
+      "    resolutionStrategy.dependencySubstitution {\n" +
+      "      substitute module('mygroup:core') with project(':core')\n" +
+      "      substitute project(':util') with module('junit:junit:4.11')\n" +
+      "    }\n" +
+      "  }\n" +
+      "}\n" +
+      "\n" +
+      "repositories { mavenCentral() }\n" +
+      "\n" +
+      "project(':core') {\n" +
+      "  apply plugin: 'java'\n" +
+      "  repositories { mavenCentral() }\n" +
+      "  dependencies {\n" +
+      "    compile project(':util')\n" +
+      "  }\n" +
+      "}\n" +
+      "\n" +
+      "project(':service') {\n" +
+      "  dependencies {\n" +
+      "    compile 'mygroup:core:latest.release'\n" +
+      "  }\n" +
+      "}\n"
+    );
+
+    assertModules("project", "core", "core_main", "core_test", "service", "service_main", "service_test", "util", "util_main", "util_test");
+
+    assertModuleModuleDeps("service_main", "core_main");
+    assertModuleModuleDepScope("service_main", "core_main", DependencyScope.COMPILE);
+    assertModuleLibDepScope("service_main", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.COMPILE);
+    assertModuleLibDepScope("service_main", "Gradle: junit:junit:4.11", DependencyScope.COMPILE);
+
+    importProjectUsingSingeModulePerGradleProject();
+    assertModules("project", "core", "service", "util");
+
+    assertModuleModuleDeps("service", "core");
+    assertModuleModuleDepScope("service", "core", DependencyScope.COMPILE);
+    assertModuleLibDepScope("service", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.COMPILE);
+    assertModuleLibDepScope("service", "Gradle: junit:junit:4.11", DependencyScope.COMPILE);
+  }
 }

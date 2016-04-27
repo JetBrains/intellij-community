@@ -279,7 +279,7 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
            "</fx:fileset>\n" +
            "<fx:application id=\"jarDeploySigned_id\" name=\"jarDeploySigned\" mainClass=\"Main\">\n" +
            "</fx:application>\n" +
-           "<fx:jar destfile=\"temp" + File.separator + "jarDeploySigned.jar\">\n" +
+           "<fx:jar destfile=\"temp" + "/" + "jarDeploySigned.jar\">\n" +
            "<fx:application refid=\"jarDeploySigned_id\">\n" +
            "</fx:application>\n" +
            "<fileset dir=\"temp\" excludes=\"**/*.jar\">\n" +
@@ -289,7 +289,7 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
            "</fx:fileset>\n" +
            "</fx:resources>\n" +
            "</fx:jar>\n" +
-           "<fx:deploy width=\"800\" height=\"400\" updatemode=\"background\" outdir=\"temp" + File.separator + "deploy\" outfile=\"jarDeploySigned\">\n" +
+           "<fx:deploy width=\"800\" height=\"400\" updatemode=\"background\" outdir=\"temp" + "/" + "deploy\" outfile=\"jarDeploySigned\">\n" +
            "<fx:permissions elevated=\"true\">\n" +
            "</fx:permissions>\n" +
            "<fx:application refid=\"jarDeploySigned_id\">\n" +
@@ -346,7 +346,7 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
   private void doTest(final String expected, Map<String, String> options) {
     final String artifactName = getTestName(true);
     final String artifactFileName = artifactName + ".jar";
-    final MockJavaFxPackager packager = new MockJavaFxPackager(artifactName + File.separator + artifactFileName);
+    final MockJavaFxPackager packager = new MockJavaFxPackager(artifactName + "/" + artifactFileName);
 
     final String title = options.get(TITLE);
     if (title != null) {
@@ -394,15 +394,12 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
     }
 
     final List<JavaFxAntGenerator.SimpleTag> temp = JavaFxAntGenerator
-      .createJarAndDeployTasks(packager, artifactFileName, artifactName, "temp", "temp" + File.separator + "deploy", relativeToBaseDirPath);
+      .createJarAndDeployTasks(packager, artifactFileName, artifactName, "temp", "temp" + "/" + "deploy", relativeToBaseDirPath);
     final StringBuilder buf = new StringBuilder();
     for (JavaFxAntGenerator.SimpleTag tag : temp) {
       tag.generate(buf);
     }
-    assertEquals(expected
-                   .replaceAll("temp/deploy", "temp\\" + File.separator + "deploy")
-                   .replaceAll("temp/" + artifactFileName, "temp\\" + File.separator + artifactFileName),
-                 buf.toString());
+    assertEquals(expected, buf.toString());
   }
 
   private static class MockJavaFxPackager extends AbstractJavaFxPackager {

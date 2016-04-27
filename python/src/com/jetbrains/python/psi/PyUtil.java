@@ -657,7 +657,10 @@ public class PyUtil {
     for (ResolveResult resolveResult : resolveResults) {
       final int rate = resolveResult instanceof RatedResolveResult ? ((RatedResolveResult)resolveResult).getRate() : 0;
       if (rate >= maxRate) {
-        filtered.add(resolveResult.getElement());
+        final PsiElement element = resolveResult.getElement();
+        if (element != null) {
+          filtered.add(element);
+        }
       }
     }
     return filtered;

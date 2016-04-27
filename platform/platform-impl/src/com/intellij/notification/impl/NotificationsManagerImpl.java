@@ -69,6 +69,12 @@ import javax.swing.event.HyperlinkListener;
 import javax.swing.plaf.ButtonUI;
 import javax.swing.plaf.ColorUIResource;
 import javax.swing.text.BadLocationException;
+import javax.swing.text.Element;
+import javax.swing.text.View;
+import javax.swing.text.ViewFactory;
+import javax.swing.text.html.HTMLEditorKit;
+import javax.swing.text.html.ParagraphView;
+import javax.swing.text.html.StyleSheet;
 import java.awt.*;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
@@ -534,7 +540,41 @@ public class NotificationsManagerImpl extends NotificationsManager {
         }
       }
     };
-    text.setEditorKit(UIUtil.getHTMLEditorKit());
+    text.setEditorKit(new HTMLEditorKit() {
+      final HTMLEditorKit kit = UIUtil.getHTMLEditorKit();
+
+      final HTMLFactory factory = new HTMLFactory() {
+        public View create(Element e) {
+          View view = super.create(e);
+          if (view instanceof ParagraphView) {
+            // wrap too long words, for example: ATEST_TABLE_SIGNLE_ROW_UPDATE_AUTOCOMMIT_A_FIK
+            return new ParagraphView(e) {
+              protected SizeRequirements calculateMinorAxisRequirements(int axis, SizeRequirements r) {
+                if (r == null) {
+                  r = new SizeRequirements();
+                }
+                r.minimum = (int)layoutPool.getMinimumSpan(axis);
+                r.preferred = Math.max(r.minimum, (int)layoutPool.getPreferredSpan(axis));
+                r.maximum = Integer.MAX_VALUE;
+                r.alignment = 0.5f;
+                return r;
+              }
+            };
+          }
+          return view;
+        }
+      };
+
+      @Override
+      public StyleSheet getStyleSheet() {
+        return kit.getStyleSheet();
+      }
+
+      @Override
+      public ViewFactory getViewFactory() {
+        return factory;
+      }
+    });
     text.setForeground(foreground);
 
     final HyperlinkListener listener = NotificationsUtil.wrapListener(notification);
@@ -621,7 +661,10 @@ public class NotificationsManagerImpl extends NotificationsManager {
 
     configureBalloonScrollPane(pane);
 
-    if (!showFullContent && layoutData.twoLineHeight < layoutData.fullHeight) {
+    if (showFullContent) {
+      pane.setPreferredSize(text.getPreferredSize());
+    }
+    else if (layoutData.twoLineHeight < layoutData.fullHeight) {
       text.setPreferredSize(null);
       Dimension size = text.getPreferredSize();
       size.height = layoutData.twoLineHeight;

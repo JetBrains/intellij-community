@@ -28,7 +28,9 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.util.Alarm;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import com.jetbrains.python.PyNames;
@@ -44,7 +46,7 @@ import java.util.List;
  */
 public class VFSTestFrameworkListener {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.testing.VFSTestFrameworkListener");
-  private final MergingUpdateQueue myQueue = new MergingUpdateQueue("TestFrameworkChecker", 5000, true, null);
+  private final MergingUpdateQueue myQueue;
   private final PyTestFrameworkService myService;
 
   public VFSTestFrameworkListener() {
@@ -86,6 +88,7 @@ public class VFSTestFrameworkListener {
         }
       }
     });
+    myQueue = new MergingUpdateQueue("TestFrameworkChecker", 5000, true, null, ApplicationManager.getApplication(), null, Alarm.ThreadToUse.POOLED_THREAD);
   }
 
   public void updateAllTestFrameworks(final Sdk sdk) {
@@ -100,8 +103,8 @@ public class VFSTestFrameworkListener {
       @Override
       public void run() {
         final Boolean installed = isTestFrameworkInstalled(sdk, testPackageName);
-        if (installed != null)
-          testInstalled(installed, sdk.getHomePath(), testPackageName);
+        if (installed != null) ApplicationManager.getApplication().invokeLater( ( ()-> testInstalled(installed, sdk.getHomePath(), testPackageName)));
+
       }
     });
   }

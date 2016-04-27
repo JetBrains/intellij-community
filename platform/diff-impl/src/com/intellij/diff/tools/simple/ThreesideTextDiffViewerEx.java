@@ -26,7 +26,7 @@ import com.intellij.diff.util.DiffDividerDrawUtil.DividerPaintable;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.EmptyAction;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Editor;
@@ -266,7 +266,7 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
 
   private class PrevConflictAction extends DumbAwareAction {
     public PrevConflictAction() {
-      EmptyAction.setupAction(this, "Diff.PreviousConflict", null);
+      ActionUtil.copyFrom(this, "Diff.PreviousConflict");
     }
 
     @Override
@@ -278,7 +278,7 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
 
   private class NextConflictAction extends DumbAwareAction {
     public NextConflictAction() {
-      EmptyAction.setupAction(this, "Diff.NextConflict", null);
+      ActionUtil.copyFrom(this, "Diff.NextConflict");
     }
 
     @Override

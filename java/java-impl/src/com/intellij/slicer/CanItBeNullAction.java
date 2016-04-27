@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,17 +19,18 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 
 /**
  * User: cdr
  */
-public class CanItBeNullAction  extends AnAction {
+class CanItBeNullAction extends AnAction {
   private final SliceTreeBuilder myTreeBuilder;
   private static final String TEXT = "Group by leaf expression nullness";
 
-  public CanItBeNullAction(SliceTreeBuilder treeBuilder) {
+  CanItBeNullAction(@NotNull SliceTreeBuilder treeBuilder) {
     super(TEXT, "Determine whether null can flow into this expression", AllIcons.Debugger.Db_disabled_breakpoint_process);
     myTreeBuilder = treeBuilder;
   }
