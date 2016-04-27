@@ -16,6 +16,7 @@
 package com.intellij.diff.tools.fragmented;
 
 import com.intellij.diff.DiffContext;
+import com.intellij.diff.actions.AllLinesIterator;
 import com.intellij.diff.actions.BufferedLineIterator;
 import com.intellij.diff.actions.NavigationContextChecker;
 import com.intellij.diff.actions.impl.OpenInEditorWithMouseAction;
@@ -63,7 +64,6 @@ import org.jetbrains.annotations.*;
 import javax.swing.*;
 import java.util.*;
 
-import static com.intellij.diff.util.DiffUtil.getLineCount;
 import static com.intellij.diff.util.DiffUtil.getLinesContent;
 
 public class UnifiedDiffViewer extends ListenerDiffViewerBase {
@@ -1092,49 +1092,12 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   // Scroll from annotate
   //
 
-  private class AllLinesIterator implements Iterator<Pair<Integer, CharSequence>> {
-    @NotNull private final Side mySide;
-    @NotNull private final Document myDocument;
-    private int myLine = 0;
-
-    private AllLinesIterator(@NotNull Side side) {
-      mySide = side;
-
-      myDocument = getContent(mySide).getDocument();
-    }
-
-    @Override
-    public boolean hasNext() {
-      return myLine < getLineCount(myDocument);
-    }
-
-    @Override
-    public Pair<Integer, CharSequence> next() {
-      int offset1 = myDocument.getLineStartOffset(myLine);
-      int offset2 = myDocument.getLineEndOffset(myLine);
-
-      CharSequence text = myDocument.getImmutableCharSequence().subSequence(offset1, offset2);
-
-      Pair<Integer, CharSequence> pair = new Pair<>(myLine, text);
-      myLine++;
-
-      return pair;
-    }
-
-    @Override
-    public void remove() {
-      throw new UnsupportedOperationException();
-    }
-  }
-
   private class ChangedLinesIterator extends BufferedLineIterator {
-    @NotNull private final Side mySide;
     @NotNull private final List<UnifiedDiffChange> myChanges;
 
     private int myIndex = 0;
 
-    private ChangedLinesIterator(@NotNull Side side, @NotNull List<UnifiedDiffChange> changes) {
-      mySide = side;
+    private ChangedLinesIterator(@NotNull List<UnifiedDiffChange> changes) {
       myChanges = changes;
       init();
     }
@@ -1153,7 +1116,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
 
       LineFragment lineFragment = change.getLineFragment();
 
-      Document document = getContent(mySide).getDocument();
+      Document document = getContent2().getDocument();
       CharSequence insertedText = getLinesContent(document, lineFragment.getStartLine2(), lineFragment.getEndLine2());
 
       int lineNumber = lineFragment.getStartLine2();
@@ -1413,13 +1376,13 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
       if (myNavigationContext == null) return false;
       if (myChangedBlockData == null) return false;
 
-      ChangedLinesIterator changedLinesIterator = new ChangedLinesIterator(Side.RIGHT, myChangedBlockData.getDiffChanges());
+      ChangedLinesIterator changedLinesIterator = new ChangedLinesIterator(myChangedBlockData.getDiffChanges());
       NavigationContextChecker checker = new NavigationContextChecker(changedLinesIterator, myNavigationContext);
       int line = checker.contextMatchCheck();
       if (line == -1) {
         // this will work for the case, when spaces changes are ignored, and corresponding fragments are not reported as changed
         // just try to find target line  -> +-
-        AllLinesIterator allLinesIterator = new AllLinesIterator(Side.RIGHT);
+        AllLinesIterator allLinesIterator = new AllLinesIterator(getContent2().getDocument());
         NavigationContextChecker checker2 = new NavigationContextChecker(allLinesIterator, myNavigationContext);
         line = checker2.contextMatchCheck();
       }

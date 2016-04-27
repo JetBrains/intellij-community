@@ -21,6 +21,7 @@ import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.util.DiffDataKeys;
+import com.intellij.diff.actions.AllLinesIterator;
 import com.intellij.diff.tools.util.base.HighlightPolicy;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.diff.tools.util.side.OnesideTextDiffViewer;
@@ -36,14 +37,12 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import static com.intellij.diff.util.DiffUtil.getLineCount;
@@ -168,7 +167,7 @@ public class SimpleOnesideDiffViewer extends OnesideTextDiffViewer {
   protected boolean doScrollToContext(@NotNull DiffNavigationContext context) {
     if (getSide().isLeft()) return false;
 
-    AllLinesIterator allLinesIterator = new AllLinesIterator();
+    AllLinesIterator allLinesIterator = new AllLinesIterator(getEditor().getDocument());
     NavigationContextChecker checker2 = new NavigationContextChecker(allLinesIterator, context);
     int line = checker2.contextMatchCheck();
     if (line == -1) return false;
@@ -219,42 +218,6 @@ public class SimpleOnesideDiffViewer extends OnesideTextDiffViewer {
     @Override
     protected void onSettingsChanged() {
       rediff();
-    }
-  }
-
-  //
-  // Scroll from annotate
-  //
-
-  private class AllLinesIterator implements Iterator<Pair<Integer, CharSequence>> {
-    @NotNull private final Document myDocument;
-    private int myLine = 0;
-
-    private AllLinesIterator() {
-      myDocument = getEditor().getDocument();
-    }
-
-    @Override
-    public boolean hasNext() {
-      return myLine < getLineCount(myDocument);
-    }
-
-    @Override
-    public Pair<Integer, CharSequence> next() {
-      int offset1 = myDocument.getLineStartOffset(myLine);
-      int offset2 = myDocument.getLineEndOffset(myLine);
-
-      CharSequence text = myDocument.getImmutableCharSequence().subSequence(offset1, offset2);
-
-      Pair<Integer, CharSequence> pair = new Pair<>(myLine, text);
-      myLine++;
-
-      return pair;
-    }
-
-    @Override
-    public void remove() {
-      throw new UnsupportedOperationException();
     }
   }
 

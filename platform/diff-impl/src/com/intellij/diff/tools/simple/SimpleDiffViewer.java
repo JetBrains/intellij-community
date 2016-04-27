@@ -23,6 +23,7 @@ import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.util.*;
+import com.intellij.diff.actions.AllLinesIterator;
 import com.intellij.diff.tools.util.base.HighlightPolicy;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.diff.tools.util.side.TwosideTextDiffViewer;
@@ -43,7 +44,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -56,7 +56,6 @@ import java.util.BitSet;
 import java.util.Iterator;
 import java.util.List;
 
-import static com.intellij.diff.util.DiffUtil.getLineCount;
 import static com.intellij.util.ObjectUtils.assertNotNull;
 
 public class SimpleDiffViewer extends TwosideTextDiffViewer {
@@ -353,13 +352,13 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   }
 
   protected boolean doScrollToContext(@NotNull DiffNavigationContext context) {
-    ChangedLinesIterator changedLinesIterator = new ChangedLinesIterator(Side.RIGHT);
+    ChangedLinesIterator changedLinesIterator = new ChangedLinesIterator();
     NavigationContextChecker checker = new NavigationContextChecker(changedLinesIterator, context);
     int line = checker.contextMatchCheck();
     if (line == -1) {
       // this will work for the case, when spaces changes are ignored, and corresponding fragments are not reported as changed
       // just try to find target line  -> +-
-      AllLinesIterator allLinesIterator = new AllLinesIterator(Side.RIGHT);
+      AllLinesIterator allLinesIterator = new AllLinesIterator(getEditor(Side.RIGHT).getDocument());
       NavigationContextChecker checker2 = new NavigationContextChecker(allLinesIterator, context);
       line = checker2.contextMatchCheck();
     }
@@ -705,47 +704,10 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   // Scroll from annotate
   //
 
-  private class AllLinesIterator implements Iterator<Pair<Integer, CharSequence>> {
-    @NotNull private final Side mySide;
-    @NotNull private final Document myDocument;
-    private int myLine = 0;
-
-    private AllLinesIterator(@NotNull Side side) {
-      mySide = side;
-
-      myDocument = getEditor(mySide).getDocument();
-    }
-
-    @Override
-    public boolean hasNext() {
-      return myLine < getLineCount(myDocument);
-    }
-
-    @Override
-    public Pair<Integer, CharSequence> next() {
-      int offset1 = myDocument.getLineStartOffset(myLine);
-      int offset2 = myDocument.getLineEndOffset(myLine);
-
-      CharSequence text = myDocument.getImmutableCharSequence().subSequence(offset1, offset2);
-
-      Pair<Integer, CharSequence> pair = new Pair<>(myLine, text);
-      myLine++;
-
-      return pair;
-    }
-
-    @Override
-    public void remove() {
-      throw new UnsupportedOperationException();
-    }
-  }
-
   private class ChangedLinesIterator extends BufferedLineIterator {
-    @NotNull private final Side mySide;
     private int myIndex = 0;
 
-    private ChangedLinesIterator(@NotNull Side side) {
-      mySide = side;
+    private ChangedLinesIterator() {
       init();
     }
 
@@ -759,10 +721,10 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       SimpleDiffChange change = myDiffChanges.get(myIndex);
       myIndex++;
 
-      int line1 = change.getStartLine(mySide);
-      int line2 = change.getEndLine(mySide);
+      int line1 = change.getStartLine(Side.RIGHT);
+      int line2 = change.getEndLine(Side.RIGHT);
 
-      Document document = getEditor(mySide).getDocument();
+      Document document = getEditor(Side.RIGHT).getDocument();
 
       for (int i = line1; i < line2; i++) {
         int offset1 = document.getLineStartOffset(i);
