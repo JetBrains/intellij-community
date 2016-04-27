@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,8 @@ import com.intellij.openapi.ui.popup.JBPopupAdapter;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.BalloonImpl;
-import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +41,7 @@ public class BalloonPopupBuilderImpl implements BalloonBuilder {
 
   private final JComponent myContent;
 
-  private Color   myBorder             = new JBColor(JBColor.GRAY, Gray._200);
+  private Color   myBorder             = new JBColor(JBColor.GRAY, new Color(77, 79, 81));
   @Nullable private Insets myBorderInsets = null;
   private Color   myFill               = MessageType.INFO.getPopupBackground();
   private boolean myHideOnMouseOutside = true;
@@ -63,7 +63,7 @@ public class BalloonPopupBuilderImpl implements BalloonBuilder {
   private boolean myDialogMode;
   private String  myTitle;
   private Insets  myContentInsets = new Insets(2, 2, 2, 2);
-  private boolean myShadow        = false;
+  private boolean myShadow        = UIUtil.isUnderDarcula();
   private boolean mySmallVariant  = false;
 
   private Balloon.Layer myLayer;
