@@ -10,10 +10,12 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile
 import com.intellij.psi.PsiFile
+import com.intellij.util.BuiltinWebServerAccess
 import com.intellij.util.SmartList
 import com.intellij.util.Url
 import com.intellij.util.Urls
 import org.jetbrains.ide.BuiltInServerManager
+import java.io.IOException
 
 open class BuiltInWebBrowserUrlProvider : WebBrowserUrlProvider(), DumbAware {
   override fun canHandleElement(request: OpenInBrowserRequest): Boolean {
@@ -55,21 +57,30 @@ fun getBuiltInServerUrls(info: PathInfo, project: Project, currentAuthority: Str
   val effectiveBuiltInServerPort = BuiltInServerOptions.getInstance().effectiveBuiltInServerPort
   val path = info.path
 
+  // Android Studio: BuiltinWebServerAccess
+  val userToken: String
+  try {
+    userToken = BuiltinWebServerAccess.getUserAuthenticationToken()
+  } catch (e: IOException) {
+    LOG.warn(String.format("Unable to get User authentication token for launching path '%s'", path), e);
+    return SmartList()
+  }
+
   val authority = currentAuthority ?: "localhost:$effectiveBuiltInServerPort"
   val query = if (appendAccessToken) "?$TOKEN_PARAM_NAME=${acquireToken()}" else ""
-  val urls = SmartList(Urls.newHttpUrl(authority, "/${project.name}/$path", query))
+  val urls = SmartList(Urls.newHttpUrl(authority, "/$userToken/${project.name}/$path"))
 
   val path2 = info.rootLessPathIfPossible
   if (path2 != null) {
-    urls.add(Urls.newHttpUrl(authority, '/' + project.name + '/' + path2, query))
+    urls.add(Urls.newHttpUrl(authority, '/' + userToken + '/' + project.name + '/' + path2))
   }
 
   val defaultPort = BuiltInServerManager.getInstance().port
   if (currentAuthority == null && defaultPort != effectiveBuiltInServerPort) {
     val defaultAuthority = "localhost:$defaultPort"
-    urls.add(Urls.newHttpUrl(defaultAuthority, "/${project.name}/$path", query))
+    urls.add(Urls.newHttpUrl(defaultAuthority, "/$userToken/${project.name}/$path"))
     if (path2 != null) {
-      urls.add(Urls.newHttpUrl(defaultAuthority, "/${project.name}/$path2", query))
+      urls.add(Urls.newHttpUrl(defaultAuthority, "/$userToken/${project.name}/$path2"))
     }
   }
 

@@ -13,6 +13,7 @@ import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NotNullLazyValue
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.BuiltinWebServerAccess
 import com.intellij.util.SystemProperties
 import com.intellij.util.Url
 import com.intellij.util.Urls
@@ -153,11 +154,23 @@ class BuiltInServerManagerImpl : BuiltInServerManager() {
   }
 
   override fun addAuthToken(url: Url): Url {
+/* Android Studio: BuiltinWebServerAccess
     return when {
       // built-in server url contains query only if token specified
       url.parameters != null -> url
       else -> Urls.newUrl(url.scheme!!, url.authority!!, url.path, Collections.singletonMap(TOKEN_PARAM_NAME, acquireToken()))
     }
+Android Studio: BuiltinWebServerAccess */
+    try {
+      val prefix = "/" + BuiltinWebServerAccess.getUserAuthenticationToken()
+      if (!url.path.startsWith(prefix)) {
+        return Urls.newUrl(url.scheme!!, url.authority!!, prefix + url.path, url.parameters)
+      }
+    }
+    catch (e: IOException) {
+      LOG.warn(String.format("Unable to get User authentication token for launching url '%s'", url), e)
+    }
+    return url
   }
 
   override fun configureRequestToWebServer(connection: URLConnection) {
