@@ -484,8 +484,6 @@
       <with attribute="implementationClass" implements="com.intellij.psi.Weigher"/>
     </extensionPoint>
 
-    <extensionPoint name="forcedElementWeigher" interface="com.intellij.psi.util.proximity.ForcedElementWeigher"/>
-
     <extensionPoint name="completion.contributor" beanClass="com.intellij.codeInsight.completion.CompletionContributorEP">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.CompletionContributor"/>
     </extensionPoint>
