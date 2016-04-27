@@ -25,7 +25,7 @@ envs {
   if (!Os.isFamily(Os.FAMILY_WINDOWS)) {
 //    jython "jython25", []
 //    textfile "jython25/tags.txt", "jython"
-  } else {
+    
     conda "pyqt5", "2.7", ["PyQt5"]
     textfile "pyqt5/tags.txt", "pyqt5"
   }
