@@ -30,6 +30,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.wm.impl.welcomeScreen.AbstractActionWithPanel;
 import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.platform.WebProjectGenerator;
+import com.intellij.platform.templates.TemplateProjectDirectoryGenerator;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBScrollPane;
@@ -219,10 +220,16 @@ public class ProjectSettingsStepBase extends AbstractActionWithPanel implements 
   }
 
   protected JPanel createAndFillContentPanel() {
-    if (!(myProjectGenerator instanceof WebProjectTemplate)) return createContentPanelWithAdvancedSettingsPanel();
-
     WebProjectSettingsStepWrapper settingsStep = new WebProjectSettingsStepWrapper();
-    ((WebProjectTemplate)myProjectGenerator).getPeer().buildUI(settingsStep);
+    if (myProjectGenerator instanceof WebProjectTemplate) {
+      ((WebProjectTemplate)myProjectGenerator).getPeer().buildUI(settingsStep);
+    }
+    else if (myProjectGenerator instanceof TemplateProjectDirectoryGenerator) {
+      ((TemplateProjectDirectoryGenerator)myProjectGenerator).buildUI(settingsStep);
+    }
+    else {
+      return createContentPanelWithAdvancedSettingsPanel();
+    }
 
     //back compatibility: some plugins can implement only GeneratorPeer#getComponent() method
     if (settingsStep.isEmpty()) return createContentPanelWithAdvancedSettingsPanel();

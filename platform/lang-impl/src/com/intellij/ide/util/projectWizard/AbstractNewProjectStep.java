@@ -38,6 +38,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.CustomStepProjectGenerator;
 import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.platform.PlatformProjectOpenProcessor;
+import com.intellij.platform.ProjectTemplate;
+import com.intellij.platform.templates.ArchivedTemplatesFactory;
+import com.intellij.platform.templates.LocalArchivedTemplate;
+import com.intellij.platform.templates.TemplateProjectDirectoryGenerator;
 import com.intellij.projectImport.ProjectOpenedCallback;
 import com.intellij.util.Function;
 import com.intellij.util.NullableConsumer;
@@ -47,6 +51,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.List;
+
+import static com.intellij.platform.ProjectTemplatesFactory.CUSTOM_GROUP;
 
 
 public class AbstractNewProjectStep extends DefaultActionGroup implements DumbAware {
@@ -63,6 +69,14 @@ public class AbstractNewProjectStep extends DefaultActionGroup implements DumbAw
     customization.setUpBasicAction(projectSpecificAction, generators);
 
     addAll(customization.getActions(generators, callback));
+    if (customization.showUserDefinedProjects()) {
+      ArchivedTemplatesFactory factory = new ArchivedTemplatesFactory();
+      ProjectTemplate[] templates = factory.createTemplates(CUSTOM_GROUP, null);
+      for (ProjectTemplate template : templates) {
+        TemplateProjectDirectoryGenerator generator = new TemplateProjectDirectoryGenerator((LocalArchivedTemplate)template);
+        addAll(customization.getActions(generator, callback));
+      }
+    }
     addAll(customization.getExtraActions(callback));
   }
 
@@ -130,6 +144,10 @@ public class AbstractNewProjectStep extends DefaultActionGroup implements DumbAw
 
     public void setUpBasicAction(@NotNull ProjectSpecificAction projectSpecificAction, @NotNull DirectoryProjectGenerator[] generators) {
     }
+
+    public boolean showUserDefinedProjects(){
+      return false;
+    }
   }
 
   protected static abstract class AbstractCallback implements NullableConsumer<ProjectSettingsStepBase> {
@@ -194,16 +212,24 @@ public class AbstractNewProjectStep extends DefaultActionGroup implements DumbAw
         return null;
       }
     }
+
     RecentProjectsManager.getInstance().setLastProjectCreationLocation(location.getParent());
-    final Object finalSettings = settings;
-    return PlatformProjectOpenProcessor.doOpenProject(baseDir, null, false, -1, new ProjectOpenedCallback() {
-      @Override
-      public void projectOpened(Project project, Module module) {
-        if (generator != null) {
-          generator.generateProject(project, baseDir, finalSettings, module);
+
+    ProjectOpenedCallback callback = null;
+    if(generator instanceof TemplateProjectDirectoryGenerator){
+      ((TemplateProjectDirectoryGenerator)generator).generateProject(baseDir.getName(), locationString);
+    } else {
+      final Object finalSettings = settings;
+      callback = new ProjectOpenedCallback() {
+        @Override
+        public void projectOpened(Project project, Module module) {
+          if (generator != null) {
+            generator.generateProject(project, baseDir, finalSettings, module);
+          }
         }
-      }
-    }, false);
+      };
+    }
+    return PlatformProjectOpenProcessor.doOpenProject(baseDir, null, false, -1, callback, false);
   }
 
 }

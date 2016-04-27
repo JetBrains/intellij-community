@@ -167,7 +167,8 @@ public class SaveProjectAsTemplateAction extends AnAction {
                     !fileName.equals(PROJECT_TEMPLATE_XML) &&
                     !fileName.equals("misc.xml") &&
                     !fileName.equals("modules.xml") &&
-                    !fileName.equals("workspace.xml")) {
+                    !fileName.equals("workspace.xml") &&
+                    !fileName.endsWith(".iml")) {
                   return true;
                 }
               }
