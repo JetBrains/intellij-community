@@ -138,6 +138,7 @@ public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEd
     SyncScrollSupport.SyncScrollable scrollable2 = getSyncScrollable(Side.RIGHT);
     if (scrollable1 != null && scrollable2 != null) {
       mySyncScrollSupport = new ThreesideSyncScrollSupport(getEditors(), scrollable1, scrollable2);
+      myEditorSettingsAction.setSyncScrollSupport(mySyncScrollSupport);
     }
   }
 

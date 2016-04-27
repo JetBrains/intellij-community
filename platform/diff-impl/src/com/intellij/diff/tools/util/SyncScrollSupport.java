@@ -44,6 +44,12 @@ public class SyncScrollSupport {
     int transfer(@NotNull Side baseSide, int line);
   }
 
+  public interface Support {
+    void enterDisableScrollSection();
+
+    void exitDisableScrollSection();
+  }
+
   public static class TwosideSyncScrollSupport extends SyncScrollSupportBase {
     @NotNull private final List<? extends Editor> myEditors;
     @NotNull private final SyncScrollable myScrollable;
@@ -212,17 +218,19 @@ public class SyncScrollSupport {
   // Impl
   //
 
-  private abstract static class SyncScrollSupportBase {
+  private abstract static class SyncScrollSupportBase implements Support {
     private int myDuringSyncScrollDepth = 0;
 
     public boolean isDuringSyncScroll() {
       return myDuringSyncScrollDepth > 0;
     }
 
+    @Override
     public void enterDisableScrollSection() {
       myDuringSyncScrollDepth++;
     }
 
+    @Override
     public void exitDisableScrollSection() {
       myDuringSyncScrollDepth--;
       assert myDuringSyncScrollDepth >= 0;

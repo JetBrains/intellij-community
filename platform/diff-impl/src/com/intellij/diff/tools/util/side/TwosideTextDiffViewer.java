@@ -163,6 +163,7 @@ public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditor
     SyncScrollSupport.SyncScrollable scrollable = getSyncScrollable();
     if (scrollable != null) {
       mySyncScrollSupport = new TwosideSyncScrollSupport(getEditors(), scrollable);
+      myEditorSettingsAction.setSyncScrollSupport(mySyncScrollSupport);
     }
   }
 
