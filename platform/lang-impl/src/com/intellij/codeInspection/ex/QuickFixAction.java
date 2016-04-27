@@ -94,7 +94,7 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
     }
 
     if (!isProblemDescriptorsAcceptable() && tree.getSelectedElements().length > 0 ||
-        isProblemDescriptorsAcceptable() && tree.getSelectedDescriptors().length > 0) {
+        isProblemDescriptorsAcceptable() && tree.getSelectedDescriptors(false).length > 0) {
       e.getPresentation().setVisible(true);
       e.getPresentation().setEnabled(true);
     }

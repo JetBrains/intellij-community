@@ -35,7 +35,6 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.util.*;
@@ -97,7 +96,7 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
 
     GlobalInspectionContextImpl context = tree.getContext();
     InspectionToolPresentation presentation = context.getPresentation(toolWrapper);
-    return presentation.extractActiveFixes(selectedRefElements, actions, tree.getSelectedDescriptors());
+    return presentation.extractActiveFixes(selectedRefElements, actions, tree.getSelectedDescriptors(false));
   }
 
   @Override

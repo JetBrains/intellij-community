@@ -212,10 +212,6 @@ public class InspectionTree extends Tree {
     }
   }
 
-  public CommonProblemDescriptor[] getSelectedDescriptors() {
-    return getSelectedDescriptors(false);
-  }
-
   public CommonProblemDescriptor[] getSelectedDescriptors(boolean sortedByPosition) {
     final TreePath[] paths = getSelectionPaths();
     if (paths == null) return CommonProblemDescriptor.EMPTY_ARRAY;
