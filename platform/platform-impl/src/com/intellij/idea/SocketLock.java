@@ -16,14 +16,21 @@
 package com.intellij.idea;
 
 import com.intellij.CommonBundle;
+import com.intellij.ide.IdeBundle;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.io.DataInputStream;
@@ -35,6 +42,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * @author mike
@@ -55,6 +63,7 @@ public class SocketLock {
 
   @Nullable
   private Consumer<List<String>> myActivateListener;
+  private final String myToken = UUID.randomUUID().toString();
 
   public static enum ActivateStatus { ACTIVATED, NO_INSTANCE, CANNOT_ACTIVATE }
 
@@ -78,7 +87,18 @@ public class SocketLock {
     }
   }
 
-  public synchronized ActivateStatus lock(String path, boolean markPort, String... args) {
+  private volatile int acquiredPort = -1;
+
+  public synchronized int getAcquiredPort () {
+    return acquiredPort;
+  }
+
+  @TestOnly
+  public ActivateStatus lock(String path, boolean markPort, String... args) {
+    return lock(path, path, markPort, args);
+  }
+
+  public synchronized ActivateStatus lock(String path, String tokenPath, boolean markPort, String... args) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: lock(path='" + path + "')");
     }
@@ -106,18 +126,43 @@ public class SocketLock {
     if (markPort && port != -1) {
       File portMarker = new File(path, "port");
       try {
-        FileUtil.writeToFile(portMarker, Integer.toString(port).getBytes());
+        FileUtil.writeToFile(portMarker, Integer.toString(port).getBytes(CharsetToolkit.UTF8_CHARSET));
       }
       catch (IOException e) {
         FileUtil.asyncDelete(portMarker);
       }
     }
 
+    File tokenFile = new File(tokenPath, "token");
+    String token = "-";
+    if (tokenFile.exists()) {
+      try {
+        token = FileUtil.loadFile(tokenFile);
+      }
+      catch (IOException ignore) { }
+    }
+
     for (int i = SOCKET_NUMBER_START; i < SOCKET_NUMBER_END; i++) {
       if (isPortForbidden(i) || i == mySocket.getLocalPort()) continue;
-      status = tryActivate(i, path, args);
+      status = tryActivate(i, path, token, args);
       if (status != ActivateStatus.NO_INSTANCE) {
         return status;
+      }
+    }
+
+    if (!markPort) {
+      try {
+        FileUtil.writeToFile(tokenFile, myToken.getBytes(CharsetToolkit.UTF8_CHARSET));
+        if (SystemInfo.isUnix) {
+          tokenFile.setReadable(false, false);
+          tokenFile.setReadable(true, true);
+          tokenFile.setWritable(false, false);
+          tokenFile.setWritable(true, true);
+        }
+        tokenFile.deleteOnExit();
+      }
+      catch (IOException ignored) {
+        FileUtil.asyncDelete(tokenFile);
       }
     }
 
@@ -133,7 +178,7 @@ public class SocketLock {
     return false;
   }
 
-  private static ActivateStatus tryActivate(int portNumber, String path, String[] args) {
+  private static ActivateStatus tryActivate(int portNumber, String path, String token, String[] args) {
     List<String> result = new ArrayList<String>();
 
     try {
@@ -161,7 +206,7 @@ public class SocketLock {
       if (result.contains(path)) {
         try {
           DataOutputStream out = new DataOutputStream(socket.getOutputStream());
-          out.writeUTF(ACTIVATE_COMMAND + new File(".").getAbsolutePath() + "\0" + StringUtil.join(args, "\0"));
+          out.writeUTF(ACTIVATE_COMMAND + token + "\0" + new File(".").getAbsolutePath() + "\0" + StringUtil.join(args, "\0"));
           out.flush();
           String response = in.readUTF();
           if (response.equals("ok")) {
@@ -227,7 +272,16 @@ public class SocketLock {
             if (command.startsWith(ACTIVATE_COMMAND)) {
               if (command.length() <= 8192) {
                 List<String> args = StringUtil.split(command.substring(ACTIVATE_COMMAND.length()), "\0");
-                if (myActivateListener != null) {
+                boolean tokenOK = !args.isEmpty() && myToken.equals(args.get(0));
+                if (!tokenOK) {
+                  LOG.warn("unauthorized request: " + command);
+                  Notifications.Bus.notify(new Notification(
+                    Notifications.SYSTEM_MESSAGES_GROUP_ID,
+                    IdeBundle.message("activation.auth.title"),
+                    IdeBundle.message("activation.auth.message"),
+                    NotificationType.WARNING));
+                }
+                else if (myActivateListener != null) {
                   myActivateListener.consume(args);
                 }
                 out.writeUTF("ok");

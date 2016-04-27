@@ -30,21 +30,24 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
+import java.util.Locale;
+import java.util.Map;
 
 import static com.intellij.util.containers.ContainerUtil.newHashMap;
-import static java.util.Arrays.asList;
 
 /**
  * @author yole
  */
 public class CreateLauncherScriptAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.CreateLauncherScriptAction");
+  private static final String CONTENTS = "/Contents";
 
   public static boolean isAvailable() {
     return SystemInfo.isUnix;
@@ -133,14 +136,18 @@ public class CreateLauncherScriptAction extends DumbAwareAction {
 
   private static File createLauncherScriptFile() throws IOException, ExecutionException {
     String runPath = PathManager.getHomePath();
-    if (!SystemInfo.isMac) {
-      // for Macs just use "*.app"
-      final String productName = ApplicationNamesInfo.getInstance().getProductName().toLowerCase();
-      runPath += "/bin/" + productName + ".sh";
-    }
-    final String launcherContents = ExecUtil.loadTemplate(CreateLauncherScriptAction.class.getClassLoader(), "launcher.py",
-                                                          newHashMap(asList("$CONFIG_PATH$", "$RUN_PATH$"),
-                                                                     asList(PathManager.getConfigPath(), runPath)));
+    String productName = ApplicationNamesInfo.getInstance().getProductName().toLowerCase(Locale.US);
+    if (!SystemInfo.isMac) runPath += "/bin/" + productName + ".sh";
+    else if (runPath.endsWith(CONTENTS)) runPath = runPath.substring(0, runPath.length() - CONTENTS.length());
+
+    ClassLoader loader = CreateLauncherScriptAction.class.getClassLoader();
+    assert loader != null;
+    Map<String, String> variables = newHashMap(
+      Pair.create("$CONFIG_PATH$", PathManager.getConfigPath()),
+      Pair.create("$SYSTEM_PATH$", PathManager.getSystemPath()),
+      Pair.create("$RUN_PATH$", runPath));
+    String launcherContents = StringUtil.convertLineSeparators(ExecUtil.loadTemplate(loader, "launcher.py", variables));
+
     return ExecUtil.createTempExecutableScript("launcher", "", launcherContents);
   }
 

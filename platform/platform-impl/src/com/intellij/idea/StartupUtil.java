@@ -140,9 +140,10 @@ public class StartupUtil {
       ourLock = new SocketLock();
     }
 
-    SocketLock.ActivateStatus activateStatus = ourLock.lock(PathManager.getConfigPath(false), true, args);
+    String configPath = PathManager.getConfigPath(), systemPath = PathManager.getSystemPath();
+    SocketLock.ActivateStatus activateStatus = ourLock.lock(configPath, systemPath, true, args);
     if (activateStatus == SocketLock.ActivateStatus.NO_INSTANCE) {
-      activateStatus = ourLock.lock(PathManager.getSystemPath(), false);
+      activateStatus = ourLock.lock(systemPath, systemPath, false);
     }
 
     if (activateStatus != SocketLock.ActivateStatus.NO_INSTANCE) {
