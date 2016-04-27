@@ -180,7 +180,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     @NotNull private final MyInnerDiffWorker myInnerDiffWorker;
 
     // all changes - both applied and unapplied ones
-    @NotNull private final List<TextMergeChange> myAllMergeChanges = new ArrayList<TextMergeChange>();
+    @NotNull private final List<TextMergeChange> myAllMergeChanges = new ArrayList<>();
 
     private boolean myInitialRediffStarted;
     private boolean myInitialRediffFinished;
@@ -189,7 +189,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     @Nullable private MergeCommandAction myCurrentMergeCommand;
     private int myBulkChangeUpdateDepth;
 
-    private final Set<TextMergeChange> myChangesToUpdate = new HashSet<TextMergeChange>();
+    private final Set<TextMergeChange> myChangesToUpdate = new HashSet<>();
 
     public MyThreesideViewer(@NotNull DiffContext context, @NotNull ContentDiffRequest request) {
       super(context, request);
@@ -221,7 +221,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     @NotNull
     @Override
     protected List<AnAction> createToolbarActions() {
-      List<AnAction> group = new ArrayList<AnAction>();
+      List<AnAction> group = new ArrayList<>();
 
       group.add(new MyHighlightPolicySettingAction());
       group.add(new MyToggleAutoScrollAction());
@@ -243,7 +243,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     @NotNull
     @Override
     protected List<AnAction> createEditorPopupActions() {
-      List<AnAction> group = new ArrayList<AnAction>();
+      List<AnAction> group = new ArrayList<>();
 
       group.add(new ApplySelectedChangesAction(Side.LEFT, false));
       group.add(new ApplySelectedChangesAction(Side.RIGHT, false));
@@ -262,7 +262,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     @Nullable
     @Override
     protected List<AnAction> createPopupActions() {
-      List<AnAction> group = new ArrayList<AnAction>();
+      List<AnAction> group = new ArrayList<>();
 
       group.add(Separator.getInstance());
       group.add(new MyToggleAutoScrollAction());
@@ -557,7 +557,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       private void performRediff(@NotNull final List<TextMergeChange> scheduled,
                                  @NotNull final List<InnerChunkData> data,
                                  @NotNull final ProgressIndicator indicator) {
-        final List<List<MergeWordFragment>> result = new ArrayList<List<MergeWordFragment>>(data.size());
+        final List<List<MergeWordFragment>> result = new ArrayList<>(data.size());
         for (InnerChunkData chunkData : data) {
           result.add(DiffUtil.compareThreesideInner(chunkData.text, ComparisonPolicy.DEFAULT, indicator));
         }
@@ -821,7 +821,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
         if (myUndoManager == null) return;
 
         List<TextMergeChange> affectedChanges = getAffectedChanges();
-        final List<TextMergeChange.State> states = new ArrayList<TextMergeChange.State>(affectedChanges.size());
+        final List<TextMergeChange.State> states = new ArrayList<>(affectedChanges.size());
         for (TextMergeChange change : affectedChanges) {
           states.add(change.storeState());
         }
@@ -990,7 +990,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     private List<TextMergeChange> collectAffectedChanges(@Nullable List<TextMergeChange> directChanges) {
       if (directChanges == null || directChanges.isEmpty()) return null;
 
-      List<TextMergeChange> result = new ArrayList<TextMergeChange>(directChanges.size());
+      List<TextMergeChange> result = new ArrayList<>(directChanges.size());
 
       int directIndex = 0;
       int otherIndex = 0;
@@ -1132,7 +1132,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
         final BitSet lines = DiffUtil.getSelectedLines(getEditor(side));
         List<TextMergeChange> changes = getChanges();
 
-        List<TextMergeChange> affectedChanges = new ArrayList<TextMergeChange>();
+        List<TextMergeChange> affectedChanges = new ArrayList<>();
         for (TextMergeChange change : changes) {
           if (!isEnabled(change)) continue;
           int line1 = change.getStartLine(side);
@@ -1422,7 +1422,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
     public MyUndoableAction(@NotNull TextMergeViewer viewer, @NotNull List<TextMergeChange.State> states, boolean undo) {
       super(viewer.getViewer().getEditor().getDocument());
-      myViewerRef = new WeakReference<TextMergeViewer>(viewer);
+      myViewerRef = new WeakReference<>(viewer);
 
       myStates = states;
       myUndo = undo;

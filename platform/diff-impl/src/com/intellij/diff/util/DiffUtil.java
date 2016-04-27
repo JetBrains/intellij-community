@@ -369,7 +369,7 @@ public class DiffUtil {
       return Collections.nCopies(titles.size(), null);
     }
 
-    List<JComponent> components = new ArrayList<JComponent>(titles.size());
+    List<JComponent> components = new ArrayList<>(titles.size());
     for (int i = 0; i < contents.size(); i++) {
       JComponent title = createTitle(StringUtil.notNullize(titles.get(i)));
       title = createTitleWithNotifications(title, contents.get(i));
@@ -387,7 +387,7 @@ public class DiffUtil {
     boolean equalCharsets = TextDiffViewerUtil.areEqualCharsets(contents);
     boolean equalSeparators = TextDiffViewerUtil.areEqualLineSeparators(contents);
 
-    List<JComponent> result = new ArrayList<JComponent>(contents.size());
+    List<JComponent> result = new ArrayList<>(contents.size());
 
     if (equalCharsets && equalSeparators && !ContainerUtil.exists(titles, Condition.NOT_NULL)) {
       return Collections.nCopies(titles.size(), null);
@@ -408,7 +408,7 @@ public class DiffUtil {
     List<JComponent> notifications = getCustomNotifications(content);
     if (notifications.isEmpty()) return title;
 
-    List<JComponent> components = new ArrayList<JComponent>();
+    List<JComponent> components = new ArrayList<>();
     if (title != null) components.add(title);
     components.addAll(notifications);
     return createStackedComponents(components, TITLE_GAP);
@@ -500,7 +500,7 @@ public class DiffUtil {
   @NotNull
   public static List<JComponent> createSyncHeightComponents(@NotNull final List<JComponent> components) {
     if (!ContainerUtil.exists(components, Condition.NOT_NULL)) return components;
-    List<JComponent> result = new ArrayList<JComponent>();
+    List<JComponent> result = new ArrayList<>();
     for (int i = 0; i < components.size(); i++) {
       result.add(new SyncHeightComponent(components, i));
     }
@@ -783,7 +783,7 @@ public class DiffUtil {
                                                         startLine, endLine, document.getLineCount()));
     }
 
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
     for (int i = startLine; i < endLine; i++) {
       int start = document.getLineStartOffset(i);
       int end = document.getLineEndOffset(i);
@@ -1180,7 +1180,7 @@ public class DiffUtil {
   public static <T extends DiffTool> List<T> filterSuppressedTools(@NotNull List<T> tools) {
     if (tools.size() < 2) return tools;
 
-    final List<Class<? extends DiffTool>> suppressedTools = new ArrayList<Class<? extends DiffTool>>();
+    final List<Class<? extends DiffTool>> suppressedTools = new ArrayList<>();
     for (T tool : tools) {
       try {
         if (tool instanceof SuppressiveDiffTool) suppressedTools.addAll(((SuppressiveDiffTool)tool).getSuppressedTools());

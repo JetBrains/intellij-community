@@ -61,7 +61,7 @@ public class ComparisonManagerImpl extends ComparisonManager {
                                               @NotNull ProgressIndicator indicator) throws DiffTooBigException {
     List<LineFragment> lineFragments = compareLines(text1, text2, policy, indicator);
 
-    List<LineFragment> fineFragments = new ArrayList<LineFragment>(lineFragments.size());
+    List<LineFragment> fineFragments = new ArrayList<>(lineFragments.size());
     int tooBigChunksCount = 0;
 
     for (LineFragment fragment : lineFragments) {
@@ -209,7 +209,7 @@ public class ComparisonManagerImpl extends ComparisonManager {
   public List<LineFragment> squash(@NotNull List<LineFragment> oldFragments) {
     if (oldFragments.isEmpty()) return oldFragments;
 
-    final List<LineFragment> newFragments = new ArrayList<LineFragment>();
+    final List<LineFragment> newFragments = new ArrayList<>();
     processAdjoining(oldFragments, new Consumer<List<LineFragment>>() {
       @Override
       public void consume(List<LineFragment> fragments) {
@@ -228,7 +228,7 @@ public class ComparisonManagerImpl extends ComparisonManager {
     if (!squash && !trim) return oldFragments;
     if (oldFragments.isEmpty()) return oldFragments;
 
-    final List<LineFragment> newFragments = new ArrayList<LineFragment>();
+    final List<LineFragment> newFragments = new ArrayList<>();
     processAdjoining(oldFragments, new Consumer<List<LineFragment>>() {
       @Override
       public void consume(List<LineFragment> fragments) {
@@ -300,7 +300,7 @@ public class ComparisonManagerImpl extends ComparisonManager {
     LineFragment firstFragment = oldFragments.get(0);
     LineFragment lastFragment = oldFragments.get(oldFragments.size() - 1);
 
-    List<DiffFragment> newInnerFragments = new ArrayList<DiffFragment>();
+    List<DiffFragment> newInnerFragments = new ArrayList<>();
     for (LineFragment fragment : oldFragments) {
       for (DiffFragment innerFragment : extractInnerFragments(fragment)) {
         int shift1 = fragment.getStartOffset1() - firstFragment.getStartOffset1();

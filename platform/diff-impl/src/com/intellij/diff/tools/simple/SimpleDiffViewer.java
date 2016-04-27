@@ -67,8 +67,8 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   @NotNull private final PrevNextDifferenceIterable myPrevNextDifferenceIterable;
   @NotNull private final StatusPanel myStatusPanel;
 
-  @NotNull private final List<SimpleDiffChange> myDiffChanges = new ArrayList<SimpleDiffChange>();
-  @NotNull private final List<SimpleDiffChange> myInvalidDiffChanges = new ArrayList<SimpleDiffChange>();
+  @NotNull private final List<SimpleDiffChange> myDiffChanges = new ArrayList<>();
+  @NotNull private final List<SimpleDiffChange> myInvalidDiffChanges = new ArrayList<>();
   private boolean myIsContentsEqual;
 
   @NotNull private final MyFoldingModel myFoldingModel;
@@ -109,7 +109,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   @NotNull
   @Override
   protected List<AnAction> createToolbarActions() {
-    List<AnAction> group = new ArrayList<AnAction>();
+    List<AnAction> group = new ArrayList<>();
 
     group.add(new MyIgnorePolicySettingAction());
     group.add(new MyHighlightPolicySettingAction());
@@ -127,7 +127,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   @NotNull
   @Override
   protected List<AnAction> createPopupActions() {
-    List<AnAction> group = new ArrayList<AnAction>();
+    List<AnAction> group = new ArrayList<>();
 
     group.add(Separator.getInstance());
     group.add(new MyIgnorePolicySettingAction().getPopupGroup());
@@ -146,7 +146,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   @NotNull
   @Override
   protected List<AnAction> createEditorPopupActions() {
-    List<AnAction> group = new ArrayList<AnAction>();
+    List<AnAction> group = new ArrayList<>();
 
     group.add(new ReplaceSelectedChangesAction(Side.LEFT, false));
     group.add(new AppendSelectedChangesAction(Side.LEFT, false));
@@ -325,7 +325,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     LineRange lineRange = DiffUtil.getAffectedLineRange(e);
     int shift = DiffUtil.countLinesShift(e);
 
-    List<SimpleDiffChange> invalid = new ArrayList<SimpleDiffChange>();
+    List<SimpleDiffChange> invalid = new ArrayList<>();
     for (SimpleDiffChange change : myDiffChanges) {
       if (change.processChange(lineRange.start, lineRange.end, shift, side)) {
         invalid.add(change);
@@ -427,7 +427,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   private List<SimpleDiffChange> getSelectedChanges(@NotNull Side side) {
     final BitSet lines = DiffUtil.getSelectedLines(getEditor(side));
 
-    List<SimpleDiffChange> affectedChanges = new ArrayList<SimpleDiffChange>();
+    List<SimpleDiffChange> affectedChanges = new ArrayList<>();
     for (int i = myDiffChanges.size() - 1; i >= 0; i--) {
       SimpleDiffChange change = myDiffChanges.get(i);
       int line1 = change.getStartLine(side);
@@ -738,7 +738,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
 
       CharSequence text = myDocument.getImmutableCharSequence().subSequence(offset1, offset2);
 
-      Pair<Integer, CharSequence> pair = new Pair<Integer, CharSequence>(myLine, text);
+      Pair<Integer, CharSequence> pair = new Pair<>(myLine, text);
       myLine++;
 
       return pair;

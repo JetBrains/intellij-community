@@ -147,11 +147,11 @@ public class LineNumberConvertor {
   }
 
   public static class Builder {
-    @NotNull private final TreeMap<Integer, Integer> myFragments1 = new TreeMap<Integer, Integer>();
-    @NotNull private final TreeMap<Integer, Integer> myFragments2 = new TreeMap<Integer, Integer>();
+    @NotNull private final TreeMap<Integer, Integer> myFragments1 = new TreeMap<>();
+    @NotNull private final TreeMap<Integer, Integer> myFragments2 = new TreeMap<>();
 
-    @NotNull private final TreeMap<Integer, Integer> myInvertedFragments1 = new TreeMap<Integer, Integer>();
-    @NotNull private final TreeMap<Integer, Integer> myInvertedFragments2 = new TreeMap<Integer, Integer>();
+    @NotNull private final TreeMap<Integer, Integer> myInvertedFragments1 = new TreeMap<>();
+    @NotNull private final TreeMap<Integer, Integer> myInvertedFragments2 = new TreeMap<>();
 
     public void put1(int start, int newStart, int length) {
       myFragments1.put(start, newStart);
@@ -219,7 +219,7 @@ public class LineNumberConvertor {
    *
    */
   private class Corrector {
-    private final List<CorrectedChange> myChanges = new SmartList<CorrectedChange>();
+    private final List<CorrectedChange> myChanges = new SmartList<>();
 
     @SuppressWarnings("UnnecessaryLocalVariable")
     public void handleOnesideChange(int startLine, int endLine, int shift, @NotNull Side masterSide) {

@@ -95,7 +95,7 @@ public class DiffDividerDrawUtil {
   public static List<DividerPolygon> createVisiblePolygons(@NotNull Editor editor1,
                                                            @NotNull Editor editor2,
                                                            @NotNull DividerPaintable paintable) {
-    final List<DividerPolygon> polygons = new ArrayList<DividerPolygon>();
+    final List<DividerPolygon> polygons = new ArrayList<>();
 
     final Transformation[] transformations = new Transformation[]{getTransformation(editor1), getTransformation(editor2)};
 
@@ -125,7 +125,7 @@ public class DiffDividerDrawUtil {
   public static List<DividerSeparator> createVisibleSeparators(@NotNull Editor editor1,
                                                                @NotNull Editor editor2,
                                                                @NotNull DividerSeparatorPaintable paintable) {
-    final List<DividerSeparator> separators = new ArrayList<DividerSeparator>();
+    final List<DividerSeparator> separators = new ArrayList<>();
 
     final Transformation[] transformations = new Transformation[]{getTransformation(editor1), getTransformation(editor2)};
 

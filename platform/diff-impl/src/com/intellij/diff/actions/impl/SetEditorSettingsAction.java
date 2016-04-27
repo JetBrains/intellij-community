@@ -151,7 +151,7 @@ public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
   @NotNull
   @Override
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
-    List<AnAction> result = new ArrayList<AnAction>();
+    List<AnAction> result = new ArrayList<>();
     ContainerUtil.addAll(result, myActions);
     result.add(Separator.getInstance());
     result.add(ActionManager.getInstance().getAction(IdeActions.GROUP_DIFF_EDITOR_GUTTER_POPUP));

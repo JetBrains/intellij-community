@@ -44,7 +44,7 @@ public abstract class CacheDiffRequestProcessor<T> extends DiffRequestProcessor 
   private static final Logger LOG = Logger.getInstance(CacheDiffRequestProcessor.class);
 
   @NotNull private final SoftHardCacheMap<T, DiffRequest> myRequestCache =
-    new SoftHardCacheMap<T, DiffRequest>(5, 5);
+    new SoftHardCacheMap<>(5, 5);
 
   @NotNull private final DiffTaskQueue myQueue = new DiffTaskQueue();
 

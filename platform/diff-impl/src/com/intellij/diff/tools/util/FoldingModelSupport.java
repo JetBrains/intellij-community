@@ -64,7 +64,7 @@ public class FoldingModelSupport {
   protected final int myCount;
   @NotNull protected final EditorEx[] myEditors;
 
-  @NotNull protected final List<FoldedBlock[]> myFoldings = new ArrayList<FoldedBlock[]>();
+  @NotNull protected final List<FoldedBlock[]> myFoldings = new ArrayList<>();
 
   private boolean myDuringSynchronize;
   private final boolean[] myShouldUpdateLineNumbers;
@@ -155,7 +155,7 @@ public class FoldingModelSupport {
     }
 
     private void addRange(int[] starts, int[] ends) {
-      List<FoldedBlock> result = new ArrayList<FoldedBlock>(3);
+      List<FoldedBlock> result = new ArrayList<>(3);
       int[] rangeStarts = new int[myCount];
       int[] rangeEnds = new int[myCount];
 
@@ -350,7 +350,7 @@ public class FoldingModelSupport {
 
   private class MyFoldingListener implements FoldingListener {
     private final int myIndex;
-    @NotNull Set<FoldRegion> myModifiedRegions = new HashSet<FoldRegion>();
+    @NotNull Set<FoldRegion> myModifiedRegions = new HashSet<>();
 
     public MyFoldingListener(int index) {
       myIndex = index;
@@ -514,7 +514,7 @@ public class FoldingModelSupport {
   @NotNull
   private List<FoldedRangeState> getFoldedRanges(int index, @NotNull Settings settings) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    List<FoldedRangeState> ranges = new ArrayList<FoldedRangeState>();
+    List<FoldedRangeState> ranges = new ArrayList<>();
     DocumentEx document = myEditors[index].getDocument();
 
     for (FoldedBlock[] blocks : myFoldings) {
@@ -622,7 +622,7 @@ public class FoldingModelSupport {
   protected class FoldedBlock {
     @NotNull private final FoldRegion[] myRegions;
     @NotNull private final int[] myLines;
-    @NotNull private final List<RangeHighlighter> myHighlighters = new ArrayList<RangeHighlighter>(myCount);
+    @NotNull private final List<RangeHighlighter> myHighlighters = new ArrayList<>(myCount);
 
     public FoldedBlock(@NotNull FoldRegion[] regions) {
       assert regions.length == myCount;

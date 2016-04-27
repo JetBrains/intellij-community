@@ -53,7 +53,7 @@ public class SimpleOnesideDiffViewer extends OnesideTextDiffViewer {
 
   @NotNull private final MyInitialScrollHelper myInitialScrollHelper = new MyInitialScrollHelper();
 
-  @NotNull private final List<RangeHighlighter> myHighlighters = new ArrayList<RangeHighlighter>();
+  @NotNull private final List<RangeHighlighter> myHighlighters = new ArrayList<>();
 
   public SimpleOnesideDiffViewer(@NotNull DiffContext context, @NotNull DiffRequest request) {
     super(context, (ContentDiffRequest)request);
@@ -72,7 +72,7 @@ public class SimpleOnesideDiffViewer extends OnesideTextDiffViewer {
   @NotNull
   @Override
   protected List<AnAction> createToolbarActions() {
-    List<AnAction> group = new ArrayList<AnAction>();
+    List<AnAction> group = new ArrayList<>();
 
     group.add(new MyIgnorePolicySettingAction());
     group.add(new MyHighlightPolicySettingAction());
@@ -88,7 +88,7 @@ public class SimpleOnesideDiffViewer extends OnesideTextDiffViewer {
   @NotNull
   @Override
   protected List<AnAction> createPopupActions() {
-    List<AnAction> group = new ArrayList<AnAction>();
+    List<AnAction> group = new ArrayList<>();
 
     group.add(Separator.getInstance());
     group.add(new MyIgnorePolicySettingAction().getPopupGroup());
@@ -251,7 +251,7 @@ public class SimpleOnesideDiffViewer extends OnesideTextDiffViewer {
 
       CharSequence text = myDocument.getImmutableCharSequence().subSequence(offset1, offset2);
 
-      Pair<Integer, CharSequence> pair = new Pair<Integer, CharSequence>(myLine, text);
+      Pair<Integer, CharSequence> pair = new Pair<>(myLine, text);
       myLine++;
 
       return pair;

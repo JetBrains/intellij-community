@@ -47,7 +47,7 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   @NotNull private final TextMergeViewer myMergeViewer;
   @NotNull private final TextMergeViewer.MyThreesideViewer myViewer;
 
-  @NotNull private final List<MyGutterOperation> myOperations = new ArrayList<MyGutterOperation>();
+  @NotNull private final List<MyGutterOperation> myOperations = new ArrayList<>();
 
   @NotNull private final MergeLineFragment myFragment;
 

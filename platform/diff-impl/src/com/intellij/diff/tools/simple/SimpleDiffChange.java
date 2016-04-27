@@ -41,8 +41,8 @@ public class SimpleDiffChange {
   @NotNull private final LineFragment myFragment;
   @Nullable private final List<DiffFragment> myInnerFragments;
 
-  @NotNull private final List<RangeHighlighter> myHighlighters = new ArrayList<RangeHighlighter>();
-  @NotNull private final List<MyGutterOperation> myOperations = new ArrayList<MyGutterOperation>();
+  @NotNull private final List<RangeHighlighter> myHighlighters = new ArrayList<>();
+  @NotNull private final List<MyGutterOperation> myOperations = new ArrayList<>();
 
   private boolean myIsValid = true;
   private int[] myLineStartShifts = new int[2];

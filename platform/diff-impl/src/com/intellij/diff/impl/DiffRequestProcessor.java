@@ -115,7 +115,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     mySettings = DiffSettingsHolder.getInstance().getSettings(myContext.getUserData(DiffUserDataKeys.PLACE));
 
     myAvailableTools = DiffManagerEx.getInstance().getDiffTools();
-    myToolOrder = new ArrayList<DiffTool>(getToolOrderFromSettings(myAvailableTools));
+    myToolOrder = new ArrayList<>(getToolOrderFromSettings(myAvailableTools));
 
     // UI
 
@@ -187,7 +187,7 @@ public abstract class DiffRequestProcessor implements Disposable {
 
   @NotNull
   private List<FrameDiffTool> filterFittedTools(@NotNull List<DiffTool> tools) {
-    List<FrameDiffTool> result = new ArrayList<FrameDiffTool>();
+    List<FrameDiffTool> result = new ArrayList<>();
     for (DiffTool tool : tools) {
       try {
         if (tool instanceof FrameDiffTool && tool.canShow(myContext, myActiveRequest)) {
@@ -349,7 +349,7 @@ public abstract class DiffRequestProcessor implements Disposable {
 
   @NotNull
   protected List<DiffTool> getToolOrderFromSettings(@NotNull List<DiffTool> availableTools) {
-    List<DiffTool> result = new ArrayList<DiffTool>();
+    List<DiffTool> result = new ArrayList<>();
     List<String> savedOrder = getSettings().getDiffToolsOrder();
 
     for (final String clazz : savedOrder) {
@@ -370,7 +370,7 @@ public abstract class DiffRequestProcessor implements Disposable {
   }
 
   protected void updateToolOrderSettings(@NotNull List<DiffTool> toolOrder) {
-    List<String> savedOrder = new ArrayList<String>();
+    List<String> savedOrder = new ArrayList<>();
     for (DiffTool tool : toolOrder) {
       savedOrder.add(tool.getClass().getCanonicalName());
     }
@@ -405,7 +405,7 @@ public abstract class DiffRequestProcessor implements Disposable {
   protected DefaultActionGroup collectToolbarActions(@Nullable List<AnAction> viewerActions) {
     DefaultActionGroup group = new DefaultActionGroup();
 
-    List<AnAction> navigationActions = new ArrayList<AnAction>();
+    List<AnAction> navigationActions = new ArrayList<>();
     navigationActions.addAll(getNavigationActions());
     navigationActions.add(myOpenInEditorAction);
     navigationActions.add(new MyChangeDiffToolAction());
@@ -432,7 +432,7 @@ public abstract class DiffRequestProcessor implements Disposable {
   protected DefaultActionGroup collectPopupActions(@Nullable List<AnAction> viewerActions) {
     DefaultActionGroup group = new DefaultActionGroup();
 
-    List<AnAction> selectToolActions = new ArrayList<AnAction>();
+    List<AnAction> selectToolActions = new ArrayList<>();
     for (DiffTool tool : getAvailableFittedTools()) {
       if (tool == myState.getActiveTool()) continue;
       selectToolActions.add(new DiffToolToggleAction(tool));
@@ -1172,7 +1172,7 @@ public abstract class DiffRequestProcessor implements Disposable {
       FrameDiffTool.ToolbarComponents toolbarComponents1 = myViewer.init();
       FrameDiffTool.ToolbarComponents toolbarComponents2 = myWrapperViewer.init();
 
-      List<AnAction> toolbarActions = new ArrayList<AnAction>();
+      List<AnAction> toolbarActions = new ArrayList<>();
       if (toolbarComponents1.toolbarActions != null) toolbarActions.addAll(toolbarComponents1.toolbarActions);
       if (toolbarComponents2.toolbarActions != null) {
         if (!toolbarActions.isEmpty() && !toolbarComponents2.toolbarActions.isEmpty()) toolbarActions.add(Separator.getInstance());
@@ -1180,7 +1180,7 @@ public abstract class DiffRequestProcessor implements Disposable {
       }
       buildToolbar(toolbarActions);
 
-      List<AnAction> popupActions = new ArrayList<AnAction>();
+      List<AnAction> popupActions = new ArrayList<>();
       if (toolbarComponents1.popupActions != null) popupActions.addAll(toolbarComponents1.popupActions);
       if (toolbarComponents2.popupActions != null) {
         if (!popupActions.isEmpty() && !toolbarComponents2.popupActions.isEmpty()) popupActions.add(Separator.getInstance());

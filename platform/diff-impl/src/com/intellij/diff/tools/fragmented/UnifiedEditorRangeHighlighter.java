@@ -35,7 +35,7 @@ import java.util.List;
 class UnifiedEditorRangeHighlighter {
   public static final Logger LOG = UnifiedDiffViewer.LOG;
 
-  @NotNull private final List<Element> myPieces = new ArrayList<Element>();
+  @NotNull private final List<Element> myPieces = new ArrayList<>();
 
   public UnifiedEditorRangeHighlighter(@Nullable Project project, @NotNull Document document) {
     ApplicationManager.getApplication().assertReadAccessAllowed();

@@ -43,7 +43,7 @@ import java.util.List;
 public abstract class DiffViewerBase implements DiffViewer, DataProvider {
   protected static final Logger LOG = Logger.getInstance(DiffViewerBase.class);
 
-  @NotNull private final List<DiffViewerListener> myListeners = new SmartList<DiffViewerListener>();
+  @NotNull private final List<DiffViewerListener> myListeners = new SmartList<>();
 
   @Nullable protected final Project myProject;
   @NotNull protected final DiffContext myContext;
@@ -209,13 +209,13 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
   }
 
   protected List<AnAction> createToolbarActions() {
-    List<AnAction> group = new ArrayList<AnAction>();
+    List<AnAction> group = new ArrayList<>();
     ContainerUtil.addAll(group, ((ActionGroup)ActionManager.getInstance().getAction(IdeActions.DIFF_VIEWER_TOOLBAR)).getChildren(null));
     return group;
   }
 
   protected List<AnAction> createPopupActions() {
-    List<AnAction> group = new ArrayList<AnAction>();
+    List<AnAction> group = new ArrayList<>();
     ContainerUtil.addAll(group, ((ActionGroup)ActionManager.getInstance().getAction(IdeActions.DIFF_VIEWER_POPUP)).getChildren(null));
     return group;
   }

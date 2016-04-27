@@ -45,8 +45,8 @@ public class UnifiedDiffChange {
 
   @NotNull private final LineFragment myLineFragment;
 
-  @NotNull private final List<RangeHighlighter> myHighlighters = new ArrayList<RangeHighlighter>();
-  @NotNull private final List<MyGutterOperation> myOperations = new ArrayList<MyGutterOperation>();
+  @NotNull private final List<RangeHighlighter> myHighlighters = new ArrayList<>();
+  @NotNull private final List<MyGutterOperation> myOperations = new ArrayList<>();
 
   public UnifiedDiffChange(@NotNull UnifiedDiffViewer viewer, @NotNull ChangedBlock block) {
     myViewer = viewer;

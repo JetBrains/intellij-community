@@ -46,7 +46,7 @@ class UnifiedEditorHighlighter implements EditorHighlighter {
                                   @NotNull List<HighlightRange> ranges,
                                   int textLength) {
     myDocument = document;
-    myPieces = new ArrayList<Element>();
+    myPieces = new ArrayList<>();
     init(highlighter1.createIterator(0), highlighter2.createIterator(0), ranges, textLength);
   }
 

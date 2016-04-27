@@ -186,7 +186,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   @Override
   @CalledInAwt
   public List<AnAction> createToolbarActions() {
-    List<AnAction> group = new ArrayList<AnAction>();
+    List<AnAction> group = new ArrayList<>();
 
     // TODO: allow to choose myMasterSide
     group.add(new MyIgnorePolicySettingAction());
@@ -205,7 +205,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   @Override
   @CalledInAwt
   public List<AnAction> createPopupActions() {
-    List<AnAction> group = new ArrayList<AnAction>();
+    List<AnAction> group = new ArrayList<>();
 
     group.add(Separator.getInstance());
     group.add(new MyIgnorePolicySettingAction().getPopupGroup());
@@ -222,7 +222,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
 
   @NotNull
   protected List<AnAction> createEditorPopupActions() {
-    List<AnAction> group = new ArrayList<AnAction>();
+    List<AnAction> group = new ArrayList<>();
 
     if (isEditable(Side.RIGHT, false)) {
       group.add(new ReplaceSelectedChangesAction(Side.LEFT, false));
@@ -420,12 +420,12 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
         if (data.getRangeHighlighter() != null) data.getRangeHighlighter().apply(myProject, myDocument);
 
 
-        ArrayList<UnifiedDiffChange> diffChanges = new ArrayList<UnifiedDiffChange>(blocks.size());
+        ArrayList<UnifiedDiffChange> diffChanges = new ArrayList<>(blocks.size());
         for (ChangedBlock block : blocks) {
           diffChanges.add(new UnifiedDiffChange(UnifiedDiffViewer.this, block));
         }
 
-        List<RangeMarker> guarderRangeBlocks = new ArrayList<RangeMarker>();
+        List<RangeMarker> guarderRangeBlocks = new ArrayList<>();
         if (!myEditor.isViewer()) {
           for (ChangedBlock block : blocks) {
             LineRange range = myMasterSide.select(block.getRange2(), block.getRange1());
@@ -947,7 +947,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     final BitSet lines = DiffUtil.getSelectedLines(myEditor);
     List<UnifiedDiffChange> changes = myChangedBlockData.getDiffChanges();
 
-    List<UnifiedDiffChange> affectedChanges = new ArrayList<UnifiedDiffChange>();
+    List<UnifiedDiffChange> affectedChanges = new ArrayList<>();
     for (int i = changes.size() - 1; i >= 0; i--) {
       UnifiedDiffChange change = changes.get(i);
       int line1 = change.getLine1();
@@ -1136,7 +1136,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
 
       CharSequence text = myDocument.getImmutableCharSequence().subSequence(offset1, offset2);
 
-      Pair<Integer, CharSequence> pair = new Pair<Integer, CharSequence>(myLine, text);
+      Pair<Integer, CharSequence> pair = new Pair<>(myLine, text);
       myLine++;
 
       return pair;

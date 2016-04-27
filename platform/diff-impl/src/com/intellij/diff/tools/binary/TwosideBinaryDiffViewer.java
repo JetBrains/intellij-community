@@ -86,7 +86,7 @@ public class TwosideBinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolde
 
   @Override
   protected List<AnAction> createToolbarActions() {
-    List<AnAction> group = new ArrayList<AnAction>();
+    List<AnAction> group = new ArrayList<>();
 
     group.add(new MyAcceptSideAction(Side.LEFT));
     group.add(new MyAcceptSideAction(Side.RIGHT));

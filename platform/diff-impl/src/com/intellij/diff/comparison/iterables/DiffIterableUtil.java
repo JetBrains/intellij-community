@@ -143,7 +143,7 @@ public class DiffIterableUtil {
 
   @NotNull
   public static List<DiffFragment> convertIntoFragments(@NotNull DiffIterable changes) {
-    final List<DiffFragment> fragments = new ArrayList<DiffFragment>();
+    final List<DiffFragment> fragments = new ArrayList<>();
     for (Range ch : changes.iterateChanges()) {
       fragments.add(new DiffFragmentImpl(ch.start1, ch.end1, ch.start2, ch.end2));
     }
@@ -368,8 +368,8 @@ public class DiffIterableUtil {
       Range range = pair.first;
       boolean equals = pair.second;
 
-      List<T> data1 = new ArrayList<T>();
-      List<T> data2 = new ArrayList<T>();
+      List<T> data1 = new ArrayList<>();
+      List<T> data2 = new ArrayList<>();
 
       for (int i = range.start1; i < range.end1; i++) {
         data1.add(objects1.get(i));
@@ -378,7 +378,7 @@ public class DiffIterableUtil {
         data2.add(objects2.get(i));
       }
 
-      result.add(new LineRangeData<T>(data1, data2, equals));
+      result.add(new LineRangeData<>(data1, data2, equals));
     }
 
     return result;
