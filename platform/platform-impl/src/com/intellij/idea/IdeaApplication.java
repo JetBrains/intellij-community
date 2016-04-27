@@ -41,12 +41,15 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.accessibility.ScreenReader;
+import com.intellij.util.BuiltinWebServerAccess;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
+import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -369,6 +372,17 @@ public final class IdeaApplication {
       /* Android Studio: disable forked version of GcPauseWatcher
       GcPauseWatcher.Companion.getInstance();
       */
+
+      // Android Studio: BuiltinWebServerAccess
+      try {
+        BuiltinWebServerAccess.ensureUserAuthenticationToken();
+      }
+      catch (NoSuchAlgorithmException e) {
+        LOG.info("Unable to ensure User Authentication Token", e);
+      }
+      catch (IOException e) {
+        LOG.info("Unable to ensure User Authentication Token", e);
+      }
 
       // Event queue should not be changed during initialization of application components.
       // It also cannot be changed before initialization of application components because IdeEventQueue uses other
