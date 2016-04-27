@@ -15,11 +15,13 @@
  */
 package git4idea.rebase;
 
-import org.apache.xmlrpc.XmlRpcClientLite;
+import org.apache.xmlrpc.DefaultXmlRpcTransportFactory;
+import org.apache.xmlrpc.XmlRpcClient;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.net.URL;
 import java.util.Arrays;
 import java.util.Vector;
 
@@ -34,6 +36,7 @@ public class GitRebaseEditorMain {
    * The environment variable for handler no
    */
   @NonNls @NotNull public static final String IDEA_REBASE_HANDER_NO = "IDEA_REBASE_HANDER_NO";
+  @NonNls @NotNull public static final String GIT_REBASE_TOKEN_ENV = "GIT_REBASE_TOKEN";
   /**
    * The exit code used to indicate that editing was canceled or has failed in some other way.
    */
@@ -82,7 +85,12 @@ public class GitRebaseEditorMain {
 
     String file = args[1];
     try {
-      XmlRpcClientLite client = new XmlRpcClientLite("127.0.0.1", port);
+
+      String token = System.getenv(GIT_REBASE_TOKEN_ENV);
+      URL url = new URL("http", "localhost", port, "/RPC2");
+      DefaultXmlRpcTransportFactory factory = new DefaultXmlRpcTransportFactory(url);
+      factory.setBasicAuthentication("_token_", token);
+      XmlRpcClient client = new XmlRpcClient(url, factory);
       Vector<Object> params = new Vector<>();
       params.add(handlerId);
       if (System.getProperty("os.name").toLowerCase().startsWith("windows") && file.startsWith(CYGDRIVE_PREFIX)) {

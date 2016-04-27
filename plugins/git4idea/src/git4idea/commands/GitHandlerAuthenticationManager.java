@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.BuiltinWebServerAccess;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.net.HttpConfigurable;
@@ -65,6 +66,7 @@ class GitHandlerAuthenticationManager implements AutoCloseable {
     myHandler.addCustomEnvironmentVariable(GitAskPassXmlRpcHandler.GIT_ASK_PASS_HANDLER_ENV, myHttpHandler.toString());
     int port = service.getXmlRcpPort();
     myHandler.addCustomEnvironmentVariable(GitAskPassXmlRpcHandler.GIT_ASK_PASS_PORT_ENV, Integer.toString(port));
+    myHandler.addCustomEnvironmentVariable(GitAskPassXmlRpcHandler.GIT_ASK_PASS_TOKEN_ENV, BuiltinWebServerAccess.getUserAuthenticationToken());
     LOG.debug(String.format("myHandler=%s, port=%s", myHttpHandler, port));
 
     myHandler.addLineListener(new GitLineHandlerAdapter() {
@@ -115,6 +117,7 @@ class GitHandlerAuthenticationManager implements AutoCloseable {
     myHandler.addCustomEnvironmentVariable(GitSSHHandler.SSH_HANDLER_ENV, mySshHandler.toString());
     int port = ssh.getXmlRcpPort();
     myHandler.addCustomEnvironmentVariable(GitSSHHandler.SSH_PORT_ENV, Integer.toString(port));
+    myHandler.addCustomEnvironmentVariable(GitSSHHandler.SSH_TOKEN_ENV, BuiltinWebServerAccess.getUserAuthenticationToken());
     LOG.debug(String.format("myHandler=%s, port=%s", mySshHandler, port));
 
     final HttpConfigurable httpConfigurable = HttpConfigurable.getInstance();

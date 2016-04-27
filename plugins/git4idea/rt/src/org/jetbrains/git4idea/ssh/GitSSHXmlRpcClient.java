@@ -15,12 +15,12 @@
  */
 package org.jetbrains.git4idea.ssh;
 
-import org.apache.xmlrpc.XmlRpcClientLite;
-import org.apache.xmlrpc.XmlRpcException;
+import org.apache.xmlrpc.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.net.URL;
 import java.util.Vector;
 
 /**
@@ -31,7 +31,7 @@ public class GitSSHXmlRpcClient implements GitSSHHandler {
   /**
    * XML RPC client
    */
-  @Nullable private final XmlRpcClientLite myClient;
+  @Nullable private final XmlRpcClient myClient;
 
   /**
    * A constructor
@@ -40,9 +40,16 @@ public class GitSSHXmlRpcClient implements GitSSHHandler {
    * @param batchMode if true, the client is run in the batch mode, so nothing should be prompted
    * @throws IOException if there is IO problem
    */
-  GitSSHXmlRpcClient(final int port, final boolean batchMode) throws IOException {
+  GitSSHXmlRpcClient(final int port, final boolean batchMode, String token) throws IOException {
     //noinspection HardCodedStringLiteral
-    myClient = batchMode ? null : new XmlRpcClientLite("127.0.0.1", port);
+    if (!batchMode) {
+      URL url = new URL("http", "localhost", port, "/RPC2");
+      DefaultXmlRpcTransportFactory factory = new DefaultXmlRpcTransportFactory(url);
+      factory.setBasicAuthentication("_token_", token);
+      myClient = new XmlRpcClient(url, factory);
+    } else {
+      myClient = null;
+    }
   }
 
   /**
