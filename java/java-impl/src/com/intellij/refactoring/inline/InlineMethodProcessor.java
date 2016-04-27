@@ -137,7 +137,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       usages.add(new UsageInfo(reference.getElement()));
     }
 
-    OverridingMethodsSearch.search(myMethod).forEach(method -> {
+    OverridingMethodsSearch.search(myMethod, false).forEach(method -> {
       if (AnnotationUtil.isAnnotated(method, Override.class.getName(), false)) {
         usages.add(new UsageInfo(method));
       }
