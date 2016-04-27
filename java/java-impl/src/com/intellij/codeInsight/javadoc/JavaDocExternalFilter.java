@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.util.BuiltinWebServerAccess;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -111,7 +112,8 @@ public class JavaDocExternalFilter extends AbstractExternalFilter {
    public String getExternalDocInfoForElement(@NotNull String docURL, final PsiElement element) throws Exception {
     String externalDoc = null;
     myElement = element;
-    String builtInServer = "http://localhost:" + BuiltInServerOptions.getInstance().getEffectiveBuiltInServerPort() + "/" + myProject.getName() + "/";
+    String builtInServer = "http://localhost:" + BuiltInServerOptions.getInstance().getEffectiveBuiltInServerPort()
+    + "/" + BuiltinWebServerAccess.getUserAuthenticationToken() + "/" + myProject.getName() + "/";
     if (docURL.startsWith(builtInServer)) {
       int refPosition = docURL.lastIndexOf('#');
       VirtualFile file = WebServerPathToFileManager.getInstance(myProject).findVirtualFile(
