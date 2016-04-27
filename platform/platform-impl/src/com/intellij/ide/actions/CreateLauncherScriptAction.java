@@ -30,6 +30,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 
@@ -139,8 +140,9 @@ public class CreateLauncherScriptAction extends DumbAwareAction {
       runPath += "/bin/" + productName + ".sh";
     }
     String launcherContents = ExecUtil.loadTemplate(CreateLauncherScriptAction.class.getClassLoader(), "launcher.py",
-                                                          newHashMap(asList("$CONFIG_PATH$", "$RUN_PATH$"),
-                                                                     asList(PathManager.getConfigPath(), runPath)));
+                                                    newHashMap(Pair.create("$CONFIG_PATH$", PathManager.getConfigPath()),
+                                                               Pair.create("$SYSTEM_PATH$", PathManager.getSystemPath()),
+                                                               Pair.create("$RUN_PATH$", runPath)));
 
     launcherContents = StringUtil.convertLineSeparators(launcherContents);
     return ExecUtil.createTempExecutableScript("launcher", "", launcherContents);
