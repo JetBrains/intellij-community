@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.BuiltinWebServerAccess;
 import com.intellij.util.Url;
 import com.intellij.util.UrlImpl;
 import com.intellij.util.net.NetUtils;
@@ -133,11 +134,16 @@ public class BuiltInServerManagerImpl extends BuiltInServerManager {
 
   @Override
   public Url addAuthToken(@NotNull Url url) {
-    if (url.getParameters() != null) {
-      // built-in server url contains query only if token specified
-      return url;
+    try {
+      String prefix = "/" + BuiltinWebServerAccess.getUserAuthenticationToken();
+      if (!url.getPath().startsWith(prefix)) {
+        return new UrlImpl(url.getScheme(), url.getAuthority(), prefix + url.getPath(), url.getParameters());
+      }
     }
-    return new UrlImpl(url.getScheme(), url.getAuthority(), url.getPath(), "?" + BuiltInWebServerKt.TOKEN_PARAM_NAME + "=" + BuiltInWebServerKt.acquireToken());
+    catch (IOException e) {
+      LOG.warn(String.format("Unable to get User authentication token for launching url '%s'", url), e);
+    }
+    return url;
   }
 
   @Override

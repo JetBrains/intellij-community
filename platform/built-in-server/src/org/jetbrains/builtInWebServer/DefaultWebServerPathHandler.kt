@@ -28,6 +28,7 @@ import com.intellij.util.PathUtilRt
 import com.intellij.util.isDirectory
 import io.netty.channel.Channel
 import io.netty.channel.ChannelHandlerContext
+import io.netty.handler.codec.http.EmptyHttpHeaders
 import io.netty.handler.codec.http.FullHttpRequest
 import io.netty.handler.codec.http.HttpRequest
 import io.netty.handler.codec.http.HttpResponseStatus
@@ -48,8 +49,7 @@ private class DefaultWebServerPathHandler : WebServerPathHandler() {
                        isCustomHost: Boolean): Boolean {
     val channel = context.channel()
 
-    val isSignedRequest = request.isSignedRequest()
-    val extraHeaders = validateToken(request, channel, isSignedRequest) ?: return true
+    val extraHeaders = EmptyHttpHeaders.INSTANCE
 
     val pathToFileManager = WebServerPathToFileManager.getInstance(project)
     var pathInfo = pathToFileManager.pathToInfoCache.getIfPresent(path)
@@ -88,15 +88,6 @@ private class DefaultWebServerPathHandler : WebServerPathHandler() {
       indexUsed = true
       pathInfo = PathInfo(indexFile, indexVirtualFile, pathInfo.root, pathInfo.moduleName, pathInfo.isLibrary)
       pathToFileManager.pathToInfoCache.put(path, pathInfo)
-    }
-
-    val userAgent = request.userAgent
-    if (!isSignedRequest && userAgent != null && request.isRegularBrowser() && request.origin == null && request.referrer == null) {
-      val matcher = chromeVersionFromUserAgent.matcher(userAgent)
-      if (matcher.find() && StringUtil.compareVersionNumbers(matcher.group(1), "51") < 0 && !canBeAccessedDirectly(pathInfo.name)) {
-        Responses.sendStatus(HttpResponseStatus.NOT_FOUND, channel, request)
-        return true
-      }
     }
 
     if (!indexUsed && !endsWithName(path, pathInfo.name)) {
