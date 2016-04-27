@@ -66,23 +66,15 @@ public class InlineConstantFieldHandler extends JavaInlineActionHandler {
 
     if (!field.hasModifierProperty(PsiModifier.FINAL)) {
       final Ref<Boolean> hasWriteUsages = new Ref<Boolean>(false);
-      if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-        @Override
-        public void run() {
-          ApplicationManager.getApplication().runReadAction(new Runnable() {
-            @Override
-            public void run() {
-              for (PsiReference reference : ReferencesSearch.search(field)) {
-                final PsiElement referenceElement = reference.getElement();
-                if (!(referenceElement instanceof PsiExpression && PsiUtil.isAccessedForReading((PsiExpression)referenceElement))) {
-                  hasWriteUsages.set(true);
-                  break;
-                }
-              }
-            }
-          });
+      if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> {
+        for (PsiReference reference : ReferencesSearch.search(field)) {
+          final PsiElement referenceElement = reference.getElement();
+          if (!(referenceElement instanceof PsiExpression) || PsiUtil.isAccessedForWriting((PsiExpression)referenceElement)) {
+            hasWriteUsages.set(true);
+            break;
+          }
         }
-      }, "Check if inline is possible...", true, project)) {
+      }), "Check if Inline Is Possible...", true, project)) {
         return;
       }
       if (hasWriteUsages.get()) {
