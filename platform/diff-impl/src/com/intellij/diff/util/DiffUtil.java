@@ -109,6 +109,10 @@ public class DiffUtil {
   // Editor
   //
 
+  public static boolean isDiffEditor(@NotNull Editor editor) {
+    return editor.getUserData(DiffManagerImpl.EDITOR_IS_DIFF_KEY) != null;
+  }
+
   @Nullable
   public static EditorHighlighter initEditorHighlighter(@Nullable Project project,
                                                         @NotNull DocumentContent content,
