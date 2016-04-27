@@ -56,26 +56,25 @@ public class TransactionGuardImpl extends TransactionGuard {
 
   @NotNull
   private AccessToken startTransactionUnchecked() {
-    final TransactionIdImpl prevTransaction = myCurrentTransaction;
     final Object prevUnsafeModality = myUnsafeModality;
     final boolean wasWritingAllowed = myWritingAllowed;
 
     myWritingAllowed = true;
-    myCurrentTransaction = new TransactionIdImpl();
+    myCurrentTransaction = new TransactionIdImpl(myCurrentTransaction);
     myUnsafeModality = null;
 
     return new AccessToken() {
       @Override
       public void finish() {
-        Queue<Transaction> queue = getQueue(prevTransaction);
+        Queue<Transaction> queue = getQueue(myCurrentTransaction.myParent);
         queue.addAll(myCurrentTransaction.myQueue);
-        myCurrentTransaction.myQueue = queue;
         if (!queue.isEmpty()) {
           pollQueueLater();
         }
 
         myWritingAllowed = wasWritingAllowed;
-        myCurrentTransaction = prevTransaction;
+        myCurrentTransaction.myFinished = true;
+        myCurrentTransaction = myCurrentTransaction.myParent;
         myUnsafeModality = prevUnsafeModality;
       }
     };
@@ -83,6 +82,9 @@ public class TransactionGuardImpl extends TransactionGuard {
 
   @NotNull
   private Queue<Transaction> getQueue(@Nullable TransactionIdImpl transaction) {
+    while (transaction != null && transaction.myFinished) {
+      transaction = transaction.myParent;
+    }
     return transaction == null ? myQueue : transaction.myQueue;
   }
 
@@ -316,7 +318,13 @@ public class TransactionGuardImpl extends TransactionGuard {
   private static class TransactionIdImpl implements TransactionId {
     private static final AtomicLong ourTransactionCounter = new AtomicLong();
     final long myStartCounter = ourTransactionCounter.getAndIncrement();
-    Queue<Transaction> myQueue = new LinkedBlockingQueue<Transaction>();
+    final Queue<Transaction> myQueue = new LinkedBlockingQueue<Transaction>();
+    boolean myFinished;
+    final TransactionIdImpl myParent;
+
+    public TransactionIdImpl(@Nullable TransactionIdImpl parent) {
+      myParent = parent;
+    }
 
     @Override
     public String toString() {
