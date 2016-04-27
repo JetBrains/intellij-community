@@ -10,6 +10,7 @@ public interface GitNativeSshAskPassXmlRpcHandler {
 
   String IJ_SSH_ASK_PASS_HANDLER_ENV = "INTELLIJ_SSH_ASKPASS_HANDLER";
   String IJ_SSH_ASK_PASS_PORT_ENV = "INTELLIJ_SSH_ASKPASS_PORT";
+  String IJ_SSH_ASK_PASS_TOKEN_ENV = "INTELLIJ_SSH_ASKPASS_TOKEN"; // Android Studio: BuiltinWebServerAccess
   String HANDLER_NAME = GitNativeSshAskPassXmlRpcHandler.class.getName();
   String RPC_METHOD_NAME = HANDLER_NAME + ".handleInput";
 

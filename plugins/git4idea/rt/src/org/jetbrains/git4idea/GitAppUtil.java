@@ -1,6 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.git4idea;
 
+import java.net.URL;
+import org.apache.xmlrpc.DefaultXmlRpcTransportFactory;
+import org.apache.xmlrpc.XmlRpcClient;
 import org.apache.xmlrpc.XmlRpcClientLite;
 import org.apache.xmlrpc.XmlRpcException;
 import org.jetbrains.annotations.NotNull;
@@ -11,10 +14,15 @@ import java.util.Arrays;
 import java.util.Vector;
 
 public class GitAppUtil {
+
+  // Android Studio specific authentication to the builtin webserver
   @SuppressWarnings("UseOfObsoleteCollectionType")
-  public static <T> T sendXmlRequest(@NotNull String methodName, int port, @NotNull Object @NotNull ... parameters) {
+  public static <T> T sendXmlRequest(@NotNull String methodName, String token, int port, @NotNull Object @NotNull ... parameters) {
     try {
-      XmlRpcClientLite client = new XmlRpcClientLite("127.0.0.1", port);
+      URL url = new URL("http", "127.0.0.1", port, "/RPC2");
+      DefaultXmlRpcTransportFactory factory = new DefaultXmlRpcTransportFactory(url);
+      factory.setBasicAuthentication("_token_", token);
+      XmlRpcClient client = new XmlRpcClient(url, factory);
       Vector<Object> params = new Vector<>(Arrays.asList(parameters));
       return (T)client.execute(methodName, params);
     }

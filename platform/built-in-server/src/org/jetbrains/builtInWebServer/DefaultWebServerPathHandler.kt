@@ -14,6 +14,7 @@ import com.intellij.util.PathUtilRt
 import com.intellij.util.io.*
 import io.netty.channel.Channel
 import io.netty.channel.ChannelHandlerContext
+import io.netty.handler.codec.http.EmptyHttpHeaders
 import io.netty.handler.codec.http.FullHttpRequest
 import io.netty.handler.codec.http.HttpRequest
 import io.netty.handler.codec.http.HttpResponseStatus
@@ -36,7 +37,7 @@ private class DefaultWebServerPathHandler : WebServerPathHandler() {
     val channel = context.channel()
 
     val isSignedRequest = request.isSignedRequest()
-    val extraHeaders = validateToken(request, channel, isSignedRequest) ?: return true
+    val extraHeaders = EmptyHttpHeaders.INSTANCE  // Android Studio: BuiltinWebServerAccess
 
     val pathToFileManager = WebServerPathToFileManager.getInstance(project)
     var pathInfo = pathToFileManager.pathToInfoCache.getIfPresent(path)
@@ -77,6 +78,7 @@ private class DefaultWebServerPathHandler : WebServerPathHandler() {
       pathToFileManager.pathToInfoCache.put(path, pathInfo)
     }
 
+/* Android Studio: BuiltinWebServerAccess
     val userAgent = request.userAgent
     if (!isSignedRequest && userAgent != null && request.isRegularBrowser() && request.origin == null && request.referrer == null) {
       val matcher = chromeVersionFromUserAgent.matcher(userAgent)
@@ -85,7 +87,7 @@ private class DefaultWebServerPathHandler : WebServerPathHandler() {
         return true
       }
     }
-
+Android Studio: BuiltinWebServerAccess */
     if (!indexUsed && !endsWithName(path, pathInfo.name)) {
       if (endsWithSlash(decodedRawPath)) {
         indexUsed = true

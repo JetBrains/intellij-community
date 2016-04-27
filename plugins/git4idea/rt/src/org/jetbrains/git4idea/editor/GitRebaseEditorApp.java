@@ -9,6 +9,7 @@ import java.util.Arrays;
 
 import static org.jetbrains.git4idea.editor.GitRebaseEditorXmlRpcHandler.ERROR_EXIT_CODE;
 import static org.jetbrains.git4idea.editor.GitRebaseEditorXmlRpcHandler.IJ_EDITOR_HANDLER_ENV;
+import static org.jetbrains.git4idea.editor.GitRebaseEditorXmlRpcHandler.IJ_EDITOR_TOKEN_ENV;
 
 /**
  * The rebase editor application, this editor is invoked by the git.
@@ -38,8 +39,9 @@ public class GitRebaseEditorApp implements GitExternalApp {
       }
 
       String handlerNo = GitAppUtil.getEnv(IJ_EDITOR_HANDLER_ENV);
-
-      Integer response = GitAppUtil.sendXmlRequest(GitRebaseEditorXmlRpcHandler.RPC_METHOD_NAME, xmlRpcPort,
+      // Android Studio: BuiltinWebServerAccess
+      String token = GitAppUtil.getEnv(IJ_EDITOR_TOKEN_ENV);
+      Integer response = GitAppUtil.sendXmlRequest(GitRebaseEditorXmlRpcHandler.RPC_METHOD_NAME, token, xmlRpcPort,
                                                    handlerNo, args[1], new File("").getAbsolutePath());
       int exitCode = response != null ? response.intValue() : ERROR_EXIT_CODE;
 

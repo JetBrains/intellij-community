@@ -24,6 +24,7 @@ public interface GitAskPassXmlRpcHandler {
 
   String IJ_ASK_PASS_HANDLER_ENV = "GIT_ASKPASS_HANDLER";
   String IJ_ASK_PASS_PORT_ENV = "GIT_ASKPASS_PORT";
+  String IJ_ASK_PASS_TOKEN_ENV = "GIT_ASKPASS_TOKEN";  // Android Studio: BuiltinWebServerAccess
   String HANDLER_NAME = GitAskPassXmlRpcHandler.class.getName();
   String RPC_METHOD_NAME = HANDLER_NAME + ".handleInput";
 

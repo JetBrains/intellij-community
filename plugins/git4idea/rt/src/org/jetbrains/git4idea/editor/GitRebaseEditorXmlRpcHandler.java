@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 public interface GitRebaseEditorXmlRpcHandler {
 
   @NonNls String IJ_EDITOR_HANDLER_ENV = "IDEA_REBASE_HANDER_NO";
+  @NonNls String IJ_EDITOR_TOKEN_ENV = "IDEA_REBASE_TOKEN";  // Android Studio: BuiltinWebServerAccess
   @NonNls String HANDLER_NAME = GitRebaseEditorXmlRpcHandler.class.getName();
   String RPC_METHOD_NAME = HANDLER_NAME + ".editCommits";
 
