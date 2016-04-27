@@ -205,7 +205,7 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
     clearRelativeOffsets(next);
   }
 
-  protected static void clearRelativeOffsets(TreeElement element) {
+  static void clearRelativeOffsets(TreeElement element) {
     TreeElement cur = element;
     while (cur != null && cur.myStartOffsetInParent != -1) {
       cur.myStartOffsetInParent = -1;
@@ -262,7 +262,7 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
     }
   }
 
-  protected final void rawInsertAfterMeWithoutNotifications(@NotNull TreeElement firstNew) {
+  final void rawInsertAfterMeWithoutNotifications(@NotNull TreeElement firstNew) {
     firstNew.rawRemoveUpToWithoutNotifications(null, false);
     final CompositeElement p = getTreeParent();
     final TreeElement treeNext = getTreeNext();
@@ -350,7 +350,7 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
   }
 
   // remove nodes from this[including] to end[excluding] from the parent
-  protected final void rawRemoveUpToWithoutNotifications(@Nullable TreeElement end, boolean invalidate) {
+  final void rawRemoveUpToWithoutNotifications(@Nullable TreeElement end, boolean invalidate) {
     if(this == end) return;
 
     final CompositeElement parent = getTreeParent();
