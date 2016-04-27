@@ -320,7 +320,7 @@ public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditor
       }
 
       setCurrentSide(targetSide);
-      currentEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+      targetEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
 
       DiffUtil.requestFocus(getProject(), getPreferredFocusedComponent());
     }
