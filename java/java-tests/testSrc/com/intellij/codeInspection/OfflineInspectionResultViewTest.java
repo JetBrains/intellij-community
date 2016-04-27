@@ -49,7 +49,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-public class OfflineIRVTest extends TestSourceBasedTestCase {
+public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
   private InspectionResultsView myView;
   private LocalInspectionToolWrapper myToolWrapper;
 
