@@ -175,6 +175,7 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
     }
   };
 
+  @SuppressWarnings("Convert2Lambda")
   public static final Function<Object, Boolean> NAVBAR_GETTER = new Function<Object, Boolean>() {
     @Override
     public Boolean fun(Object o) {
@@ -182,6 +183,7 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
     }
   };
 
+  @SuppressWarnings("Convert2Lambda")
   public static final Function<Object, Boolean> TOOLBAR_GETTER = new Function<Object, Boolean>() {
     @Override
     public Boolean fun(Object o) {
