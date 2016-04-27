@@ -30,7 +30,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
 import java.util.List;
 
 public class BinaryMergeTool implements MergeTool {
@@ -119,18 +118,7 @@ public class BinaryMergeTool implements MergeTool {
     @Override
     public Action getResolveAction(@NotNull final MergeResult result) {
       if (result == MergeResult.RESOLVED) return null;
-
-      String caption = MergeUtil.getResolveActionTitle(result, myMergeRequest, myMergeContext);
-      return new AbstractAction(caption) {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          if (result == MergeResult.CANCEL &&
-              !MergeUtil.showExitWithoutApplyingChangesDialog(BinaryMergeViewer.this, myMergeRequest, myMergeContext)) {
-            return;
-          }
-          myMergeContext.finishMerge(result);
-        }
-      };
+      return MergeUtil.createSimpleResolveAction(result, myMergeRequest, myMergeContext, this);
     }
 
     @Override
