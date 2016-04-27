@@ -20,6 +20,7 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ConstantZipperUpdater;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
@@ -39,6 +40,7 @@ import java.util.List;
  */
 public class VcsDirtyScopeVfsListener implements ProjectComponent, BulkFileListener {
   @NotNull private final Project myProject;
+  @NotNull private final ProjectLevelVcsManager myVcsManager;
 
   private boolean myForbid; // for tests only
 
@@ -47,8 +49,9 @@ public class VcsDirtyScopeVfsListener implements ProjectComponent, BulkFileListe
   private final Object myLock;
   private final Runnable myDirtReporter;
 
-  public VcsDirtyScopeVfsListener(@NotNull Project project) {
+  public VcsDirtyScopeVfsListener(@NotNull Project project, @NotNull ProjectLevelVcsManager vcsManager) {
     myProject = project;
+    myVcsManager = vcsManager;
 
     myLock = new Object();
     myQueue = new ArrayList<>();
@@ -111,7 +114,7 @@ public class VcsDirtyScopeVfsListener implements ProjectComponent, BulkFileListe
 
   @Override
   public void before(@NotNull List<? extends VFileEvent> events) {
-    if (myForbid) return;
+    if (myForbid || !myVcsManager.hasAnyMappings()) return;
     final FilesAndDirs dirtyFilesAndDirs = new FilesAndDirs();
     // collect files and directories - sources of events
     for (VFileEvent event : events) {
@@ -131,7 +134,7 @@ public class VcsDirtyScopeVfsListener implements ProjectComponent, BulkFileListe
 
   @Override
   public void after(@NotNull List<? extends VFileEvent> events) {
-    if (myForbid) return;
+    if (myForbid || !myVcsManager.hasAnyMappings()) return;
     final FilesAndDirs dirtyFilesAndDirs = new FilesAndDirs();
     // collect files and directories - sources of events
     for (VFileEvent event : events) {
