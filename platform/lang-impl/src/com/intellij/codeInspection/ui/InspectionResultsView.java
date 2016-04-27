@@ -241,8 +241,19 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
           }
         }
         else if (node instanceof ProblemDescriptionNode) {
-          if (!((ProblemDescriptionNode)node).isValid()) return null;
-          return navigate(((ProblemDescriptionNode)node).getDescriptor());
+          boolean isValid;
+          if (((ProblemDescriptionNode)node).isValid()) {
+            if (((ProblemDescriptionNode)node).isQuickFixAppliedFromView()) {
+              isValid = ((ProblemDescriptionNode)node).calculateIsValid();
+            } else {
+              isValid = true;
+            }
+          } else {
+            isValid = false;
+          }
+          return isValid
+                 ? navigate(((ProblemDescriptionNode)node).getDescriptor())
+                 : InspectionResultsViewUtil.getNavigatableForInvalidNode((ProblemDescriptionNode)node);
         }
         return null;
       }

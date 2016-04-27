@@ -93,7 +93,7 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
   }
 
   @Override
-  public boolean calculateIsValid() {
+  protected boolean calculateIsValid() {
     if (myElement instanceof RefElement && !myElement.isValid()) return false;
     final CommonProblemDescriptor descriptor = getDescriptor();
     if (descriptor instanceof ProblemDescriptor) {
@@ -138,7 +138,7 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
   }
 
   @Override
-  public String calculatePresentableName() {
+  protected String calculatePresentableName() {
     CommonProblemDescriptor descriptor = getDescriptor();
     if (descriptor == null) return "";
     PsiElement element = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getPsiElement() : null;

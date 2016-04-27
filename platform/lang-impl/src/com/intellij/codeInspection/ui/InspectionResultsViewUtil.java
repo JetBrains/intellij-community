@@ -43,6 +43,9 @@ public class InspectionResultsViewUtil {
   @Nullable
   static Navigatable getNavigatableForInvalidNode(ProblemDescriptionNode node) {
     RefEntity element = node.getElement();
+    while (element != null && !element.isValid()) {
+      element = element.getOwner();
+    }
     if (!(element instanceof RefElement)) return null;
     PsiElement containingElement = ((RefElement)element).getElement();
     if (!(containingElement instanceof NavigatablePsiElement) || !containingElement.isValid()) return null;

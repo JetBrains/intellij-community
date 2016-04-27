@@ -70,12 +70,7 @@ class InspectionViewPsiTreeChangeAdapter extends PsiTreeChangeAdapter {
             Set<VirtualFile> files = new HashSet<>();
             for (Update update : updates) {
               VirtualFile file = (VirtualFile)update.getEqualityObjects()[0];
-              VfsUtilCore.iterateChildrenRecursively(file, VirtualFileFilter.ALL, new ContentIterator() {
-                @Override
-                public boolean processFile(VirtualFile fileOrDir) {
-                  return files.add(fileOrDir);
-                }
-              });
+              VfsUtilCore.iterateChildrenRecursively(file, VirtualFileFilter.ALL, files::add);
             }
             final Project project = view.getProject();
 

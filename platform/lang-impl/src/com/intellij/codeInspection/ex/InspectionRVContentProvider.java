@@ -77,17 +77,17 @@ public abstract class InspectionRVContentProvider {
     final TreePath[] treePaths = tree.getSelectionPaths();
     if (treePaths == null) return false;
     for (TreePath selectionPath : treePaths) {
-      if (!TreeUtil.traverseDepth((TreeNode)selectionPath.getLastPathComponent(), new TreeUtil.Traverse() {
-        @Override
-        public boolean accept(final Object node) {
-          if (!((InspectionTreeNode)node).isValid()) return true;
-          if (node instanceof ProblemDescriptionNode) {
-            final CommonProblemDescriptor descriptor = ((ProblemDescriptionNode)node).getDescriptor();
+      if (!TreeUtil.traverseDepth((TreeNode)selectionPath.getLastPathComponent(), node -> {
+        if (!((InspectionTreeNode) node).isValid()) return true;
+        if (node instanceof ProblemDescriptionNode) {
+          ProblemDescriptionNode problemDescriptionNode = (ProblemDescriptionNode)node;
+          if (!problemDescriptionNode.isQuickFixAppliedFromView()) {
+            final CommonProblemDescriptor descriptor = problemDescriptionNode.getDescriptor();
             final QuickFix[] fixes = descriptor != null ? descriptor.getFixes() : null;
             return fixes == null || fixes.length == 0;
           }
-          return true;
         }
+        return true;
       })) {
         return true;
       }
