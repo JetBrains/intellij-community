@@ -18,6 +18,7 @@ package com.intellij.xdebugger.impl.ui;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.EditorFactoryImpl;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
@@ -57,8 +58,13 @@ public final class TextViewer extends EditorTextField {
 
   @Override
   public void setText(@Nullable String text) {
-    if (text != null && !needSlashRSupport(text, isViewer())) {
-      text = StringUtil.convertLineSeparators(text);
+    if (text != null) {
+      if (needSlashRSupport(text, isViewer())) {
+        ((DocumentImpl)getDocument()).setAcceptSlashR(true);
+      }
+      else {
+        text = StringUtil.convertLineSeparators(text);
+      }
     }
     super.setText(text);
   }
