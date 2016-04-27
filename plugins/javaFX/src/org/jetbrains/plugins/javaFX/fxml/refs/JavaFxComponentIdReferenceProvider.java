@@ -283,7 +283,7 @@ public class JavaFxComponentIdReferenceProvider extends PsiReferenceProvider {
 
     @NotNull
     @Override
-    protected String getPropertyName() {
+    public String getPropertyName() {
       return myFieldName;
     }
 

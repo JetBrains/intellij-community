@@ -170,6 +170,11 @@ public class JavaFXRenameTest extends DaemonAnalyzerTestCase {
     assertMethodExists(psiClass, newName);
   }
 
+  public void testStaticPropertyFromLibrary() throws Exception {
+    doTestErrorHint("Foo", "Cannot perform refactoring.\n" +
+                           "Selected method is not located inside the project");
+  }
+
   public void testControllerMethod() throws Exception {
     final PsiClass psiClass = doTestHandler("newName", null);
     assertMethodExists(psiClass, "getNewName");

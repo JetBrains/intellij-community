@@ -30,7 +30,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.javaFX.indexing.JavaFxImportsIndex;
-import org.jetbrains.plugins.javaFX.refactoring.JavaFxStaticPropertyElement;
+import org.jetbrains.plugins.javaFX.refactoring.JavaFxPropertyElement;
 
 import java.util.List;
 
@@ -45,8 +45,13 @@ public class JavaFxMethodSearcher implements QueryExecutor<PsiReference, Referen
     if (elementToSearch instanceof PsiMethod) {
       searchMethod((PsiMethod)elementToSearch, queryParameters, consumer);
     }
-    if (elementToSearch instanceof JavaFxStaticPropertyElement) {
-      searchMethod(((JavaFxStaticPropertyElement)elementToSearch).getMethod(), queryParameters, consumer);
+    if (elementToSearch instanceof JavaFxPropertyElement) {
+      final JavaFxPropertyElement propertyElement = (JavaFxPropertyElement)elementToSearch;
+      final JavaFxPropertyReference propertyReference = propertyElement.getPropertyReference();
+      final PsiMethod staticSetter = propertyReference.getStaticSetter();
+      if (staticSetter != null) {
+        searchMethod(staticSetter, queryParameters, consumer);
+      }
     }
     return true;
   }

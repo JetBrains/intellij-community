@@ -46,10 +46,15 @@ public abstract class JavaFxPropertyReference<T extends PsiElement> extends PsiR
   }
 
   @Nullable
+  public PsiMethod getStaticSetter() {
+    return null;
+  }
+
+  @Nullable
   public PsiType getType() {
     return JavaFxPsiUtil.getReadablePropertyType(resolve());
   }
 
   @Nullable
-  protected abstract String getPropertyName();
+  public abstract String getPropertyName();
 }

@@ -33,7 +33,6 @@ import com.intellij.util.xml.NanoXmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.javaFX.fxml.JavaFxNamespaceDataProvider;
 
 import java.io.Reader;
 import java.io.StringReader;

@@ -6,7 +6,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.xml.XmlFile;
@@ -16,7 +19,7 @@ import com.intellij.refactoring.rename.PsiElementRenameHandler;
 import com.intellij.refactoring.rename.RenameDialog;
 import com.intellij.refactoring.rename.RenameHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.NotNullProducer;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,9 +27,7 @@ import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 import org.jetbrains.plugins.javaFX.fxml.refs.JavaFxComponentIdReferenceProvider;
 import org.jetbrains.plugins.javaFX.fxml.refs.JavaFxPropertyReference;
-import org.jetbrains.plugins.javaFX.fxml.refs.JavaFxStaticPropertyReference;
 
-import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -64,36 +65,22 @@ public class JavaFxPropertyRenameHandler implements RenameHandler {
     }
     if (reference instanceof JavaFxPropertyReference && reference.resolve() != null) {
       final JavaFxPropertyReference propertyReference = (JavaFxPropertyReference)reference;
+      final Map<PsiElement, String> elementsToRename = getElementsToRename(propertyReference, "a");
+      final boolean cannotRename = !elementsToRename.isEmpty() &&
+                                   elementsToRename.keySet().stream()
+                                     .anyMatch(element -> !PsiElementRenameHandler.canRename(project, editor, element));
+      if (cannotRename) {
+        return;
+      }
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         final String newName = PsiElementRenameHandler.DEFAULT_NAME.getData(dataContext);
         assert newName != null : "Rename property";
         doRename(propertyReference, newName, false, false);
         return;
       }
-      final Map<String, PsiElement> elementsToRename = getElementsToRename(propertyReference, "a");
-      for (PsiElement element : elementsToRename.values()) {
-        if (!PsiElementRenameHandler.canRename(project, editor, element)) return;
-      }
       final PsiElement psiElement = JavaFxPropertyElement.fromReference(propertyReference);
       if (psiElement != null) {
         new PropertyRenameDialog(propertyReference, psiElement, project, editor).show();
-      }
-    }
-    if (reference instanceof JavaFxStaticPropertyReference) {
-      final JavaFxStaticPropertyReference propertyReference = (JavaFxStaticPropertyReference)reference;
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        final String newName = PsiElementRenameHandler.DEFAULT_NAME.getData(dataContext);
-        assert newName != null : "Rename property";
-        doRenameStatic(propertyReference, newName, false, false);
-        return;
-      }
-      final Map<String, PsiElement> elementsToRename = getStaticElementsToRename(propertyReference, "a");
-      for (PsiElement element : elementsToRename.values()) {
-        if (!PsiElementRenameHandler.canRename(project, editor, element)) return;
-      }
-      final PsiElement psiElement = JavaFxStaticPropertyElement.fromReference(propertyReference);
-      if (psiElement != null) {
-        new PropertyRenameDialog(reference, psiElement, project, editor).show();
       }
     }
   }
@@ -104,28 +91,11 @@ public class JavaFxPropertyRenameHandler implements RenameHandler {
     final RenameRefactoring rename = new JavaRenameRefactoringImpl(psiElement.getProject(), psiElement, newName, searchInComments, false);
     rename.setPreviewUsages(isPreview);
 
-    final Map<String, PsiElement> elementsToRename = getElementsToRename(reference, newName);
-    for (Map.Entry<String, PsiElement> entry : elementsToRename.entrySet()) {
-      rename.addElement(entry.getValue(), entry.getKey());
-    }
+    final Map<PsiElement, String> elementsToRename = getElementsToRename(reference, newName);
+    elementsToRename.forEach(rename::addElement);
     rename.run();
   }
 
-  private static void doRenameStatic(JavaFxStaticPropertyReference reference,
-                                     String newName,
-                                     final boolean searchInComments,
-                                     boolean isPreview) {
-    final PsiElement psiElement = JavaFxStaticPropertyElement.fromReference(reference);
-    if (psiElement == null) return;
-    final RenameRefactoring rename = new JavaRenameRefactoringImpl(psiElement.getProject(), psiElement, newName, searchInComments, false);
-    rename.setPreviewUsages(isPreview);
-
-    final Map<String, PsiElement> elementsToRename = getStaticElementsToRename(reference, newName);
-    for (Map.Entry<String, PsiElement> entry : elementsToRename.entrySet()) {
-      rename.addElement(entry.getValue(), entry.getKey());
-    }
-    rename.run();
-  }
 
   @Nullable
   private static PsiReference getReference(DataContext dataContext) {
@@ -159,7 +129,6 @@ public class JavaFxPropertyRenameHandler implements RenameHandler {
 
   private static boolean isKnown(PsiReference reference) {
     if (reference instanceof JavaFxPropertyReference) return true;
-    if (reference instanceof JavaFxStaticPropertyReference) return ((JavaFxStaticPropertyReference)reference).getStaticMethod() != null;
     if (reference instanceof JavaFxComponentIdReferenceProvider.JavaFxIdReferenceBase) {
       return ((JavaFxComponentIdReferenceProvider.JavaFxIdReferenceBase)reference).isBuiltIn();
     }
@@ -167,28 +136,26 @@ public class JavaFxPropertyRenameHandler implements RenameHandler {
   }
 
   @NotNull
-  private static Map<String, PsiElement> getElementsToRename(@NotNull JavaFxPropertyReference reference, @NotNull String newPropertyName) {
-    final Map<String, PsiElement> rename = new THashMap<>();
-    ContainerUtil.putIfNotNull(newPropertyName, reference.getField(), rename);
-    ContainerUtil.putIfNotNull(PropertyUtil.suggestGetterName(newPropertyName, reference.getType()), reference.getGetter(), rename);
-    ContainerUtil.putIfNotNull(PropertyUtil.suggestSetterName(newPropertyName), reference.getSetter(), rename);
-    ContainerUtil.putIfNotNull(newPropertyName + JavaFxCommonNames.PROPERTY_METHOD_SUFFIX, reference.getObservableGetter(), rename);
+  private static Map<PsiElement, String> getElementsToRename(@NotNull JavaFxPropertyReference reference, @NotNull String newPropertyName) {
+    final Map<PsiElement, String> rename = new THashMap<>();
+    putIfKeyNotNull(rename, reference.getGetter(), () -> PropertyUtil.suggestGetterName(newPropertyName, reference.getType()));
+    putIfKeyNotNull(rename, reference.getField(), () -> newPropertyName);
+    putIfKeyNotNull(rename, reference.getSetter(), () -> PropertyUtil.suggestSetterName(newPropertyName));
+    putIfKeyNotNull(rename, reference.getObservableGetter(), () -> newPropertyName + JavaFxCommonNames.PROPERTY_METHOD_SUFFIX);
+    putIfKeyNotNull(rename, reference.getStaticSetter(), () -> PropertyUtil.suggestSetterName(newPropertyName));
     //TODO add "name" parameter of the observable property constructor (like new SimpleObjectProperty(this, "name", null);
     return rename;
   }
 
-  private static Map<String, PsiElement> getStaticElementsToRename(@NotNull JavaFxStaticPropertyReference reference,
-                                                                   @NotNull String newPropertyName) {
-    final PsiMethod method = reference.getStaticMethod();
-    if (method == null) return Collections.emptyMap();
-    return Collections.singletonMap(PropertyUtil.suggestSetterName(newPropertyName), method);
+  private static <K, V> void putIfKeyNotNull(Map<K, V> map, K key, NotNullProducer<V> valueProducer) {
+    if (key != null) map.put(key, valueProducer.produce());
   }
 
   private static class PropertyRenameDialog extends RenameDialog {
 
-    private final PsiReference myPropertyReference;
+    private final JavaFxPropertyReference myPropertyReference;
 
-    protected PropertyRenameDialog(@NotNull PsiReference propertyReference,
+    protected PropertyRenameDialog(@NotNull JavaFxPropertyReference propertyReference,
                                    @NotNull PsiElement psiElement,
                                    @NotNull Project project,
                                    Editor editor) {
@@ -199,12 +166,7 @@ public class JavaFxPropertyRenameHandler implements RenameHandler {
     protected void doAction() {
       final String newName = getNewName();
       final boolean searchInComments = isSearchInComments();
-      if (myPropertyReference instanceof JavaFxPropertyReference) {
-        doRename((JavaFxPropertyReference)myPropertyReference, newName, searchInComments, isPreviewUsages());
-      }
-      else if (myPropertyReference instanceof JavaFxStaticPropertyReference) {
-        doRenameStatic((JavaFxStaticPropertyReference)myPropertyReference, newName, searchInComments, isPreviewUsages());
-      }
+      doRename(myPropertyReference, newName, searchInComments, isPreviewUsages());
       close(DialogWrapper.OK_EXIT_CODE);
     }
   }

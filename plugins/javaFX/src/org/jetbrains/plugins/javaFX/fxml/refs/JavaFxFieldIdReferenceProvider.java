@@ -150,7 +150,7 @@ public class JavaFxFieldIdReferenceProvider extends JavaFxControllerBasedReferen
 
     @Nullable
     @Override
-    protected String getPropertyName() {
+    public String getPropertyName() {
       return PropertyUtil.getPropertyName(myFieldOrMethod);
     }
 

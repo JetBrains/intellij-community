@@ -11,14 +11,14 @@ import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 /**
  * @author Pavel.Dolgov
  */
-public class JavaFxStaticPropertyReference extends PsiReferenceBase<XmlAttribute> {
+public class JavaFxStaticPropertyReference extends JavaFxPropertyReference<XmlAttribute> {
   private String myPropertyName;
   private PsiMethod myStaticMethod;
 
   public JavaFxStaticPropertyReference(@NotNull XmlAttribute xmlAttribute,
                                        @Nullable PsiClass psiClass,
                                        @NotNull String propertyName) {
-    super(xmlAttribute);
+    super(xmlAttribute, psiClass);
     myPropertyName = propertyName;
     myStaticMethod = JavaFxPsiUtil.findStaticPropertySetter(propertyName, psiClass);
   }
@@ -29,6 +29,37 @@ public class JavaFxStaticPropertyReference extends PsiReferenceBase<XmlAttribute
     return myStaticMethod;
   }
 
+  @Nullable
+  @Override
+  public PsiMethod getGetter() {
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public PsiMethod getSetter() {
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public PsiField getField() {
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public PsiMethod getObservableGetter() {
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public PsiMethod getStaticSetter() {
+    return myStaticMethod;
+  }
+
+  @Override
   public PsiType getType() {
     if (myStaticMethod != null) {
       final PsiParameter[] parameters = myStaticMethod.getParameterList().getParameters();
@@ -39,12 +70,9 @@ public class JavaFxStaticPropertyReference extends PsiReferenceBase<XmlAttribute
     return null;
   }
 
+  @Override
   public String getPropertyName() {
     return myPropertyName;
-  }
-
-  public PsiMethod getStaticMethod() {
-    return myStaticMethod;
   }
 
   @NotNull
