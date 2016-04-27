@@ -55,10 +55,6 @@ public abstract class ScrollPaneActions extends AnAction {
 
   private JScrollPane getScrollPane(AnActionEvent event) {
     Component component = event.getData(CONTEXT_COMPONENT);
-    if (component == null) {
-      KeyboardFocusManager manager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-      if (manager != null) component = manager.getPermanentFocusOwner();
-    }
     return UIUtil.getParentOfType(JScrollPane.class, component);
   }
 
