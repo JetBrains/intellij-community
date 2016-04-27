@@ -262,16 +262,18 @@ internal fun validateToken(request: HttpRequest, channel: Channel): HttpHeaders?
     return DefaultHttpHeaders().set(HttpHeaderNames.SET_COOKIE, ServerCookieEncoder.STRICT.encode(STANDARD_COOKIE) + "; SameSite=strict")
   }
 
-  SwingUtilities.invokeAndWait {
-    ProjectUtil.focusProjectWindow(null, true)
+  if (!urlDecoder.path().endsWith("/favicon.ico")) {
+    SwingUtilities.invokeAndWait {
+      ProjectUtil.focusProjectWindow(null, true)
 
-    if (MessageDialogBuilder
-        .yesNo("", "Page '" + StringUtil.trimMiddle(url, 50) + "' requested without authorization, " +
-            "\nyou can copy URL and open it in browser to trust it.")
-        .icon(Messages.getWarningIcon())
-        .yesText("Copy authorization URL to clipboard")
-        .show() == Messages.YES) {
-      CopyPasteManager.getInstance().setContents(StringSelection(url + "?" + TOKEN_PARAM_NAME + "=" + acquireToken()))
+      if (MessageDialogBuilder
+          .yesNo("", "Page '" + StringUtil.trimMiddle(url, 50) + "' requested without authorization, " +
+              "\nyou can copy URL and open it in browser to trust it.")
+          .icon(Messages.getWarningIcon())
+          .yesText("Copy authorization URL to clipboard")
+          .show() == Messages.YES) {
+        CopyPasteManager.getInstance().setContents(StringSelection(url + "?" + TOKEN_PARAM_NAME + "=" + acquireToken()))
+      }
     }
   }
 

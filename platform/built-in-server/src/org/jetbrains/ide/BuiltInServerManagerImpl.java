@@ -10,13 +10,21 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.Url;
+import com.intellij.util.net.NetUtils;
 import io.netty.channel.oio.OioEventLoopGroup;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.builtInWebServer.BuiltInServerOptions;
+import org.jetbrains.builtInWebServer.BuiltInWebServerKt;
 import org.jetbrains.io.BuiltInServer;
 import org.jetbrains.io.SubServer;
 
+import java.net.InetAddress;
+import java.net.URLConnection;
+import java.net.UnknownHostException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -116,6 +124,16 @@ public class BuiltInServerManagerImpl extends BuiltInServerManager {
     return server;
   }
 
+  @Override
+  public boolean isOnBuiltInWebServer(@Nullable Url url) {
+    return url != null && !StringUtil.isEmpty(url.getAuthority()) && isOnBuiltInWebServerByAuthority(url.getAuthority());
+  }
+
+  @Override
+  public void configureRequestToWebServer(@NotNull URLConnection connection) {
+    connection.setRequestProperty(BuiltInWebServerKt.TOKEN_HEADER_NAME, BuiltInWebServerKt.acquireToken());
+  }
+
   private static void bindCustomPorts(@NotNull BuiltInServer server) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return;
@@ -129,5 +147,42 @@ public class BuiltInServerManagerImpl extends BuiltInServerManager {
         LOG.error(e);
       }
     }
+  }
+  
+  public static boolean isOnBuiltInWebServerByAuthority(@NotNull String authority) {
+    int portIndex = authority.indexOf(':');
+    if (portIndex < 0 || portIndex == authority.length() - 1) {
+      return false;
+    }
+
+    int port;
+    try {
+      port = Integer.parseInt(authority.substring(portIndex + 1));
+    }
+    catch (NumberFormatException ignored) {
+      return false;
+    }
+
+    if (BuiltInServerOptions.getInstance().builtInServerPort != port && BuiltInServerManager.getInstance().getPort() != port) {
+      return false;
+    }
+
+    String host = authority.substring(0, portIndex);
+    if (NetUtils.isLocalhost(host)) {
+      return true;
+    }
+
+    InetAddress inetAddress;
+    try {
+      inetAddress = InetAddress.getByName(host);
+    }
+    catch (UnknownHostException ignored) {
+      return false;
+    }
+
+    if (inetAddress == null) {
+      return false;
+    }
+    return inetAddress.isLoopbackAddress() || inetAddress.isAnyLocalAddress();
   }
 }

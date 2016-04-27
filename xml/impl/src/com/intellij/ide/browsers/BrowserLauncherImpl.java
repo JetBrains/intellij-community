@@ -30,68 +30,24 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Url;
 import com.intellij.util.Urls;
-import com.intellij.util.net.NetUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.builtInWebServer.BuiltInServerOptions;
 import org.jetbrains.ide.BuiltInServerManager;
 
-import java.net.InetAddress;
 import java.net.URI;
-import java.net.UnknownHostException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 public final class BrowserLauncherImpl extends BrowserLauncherAppless {
   @Override
   public void browse(@NotNull String url, @Nullable WebBrowser browser, @Nullable Project project) {
-    if (Registry.is("ide.built.in.web.server.activatable", false)) {
-      Url parsedUrl = Urls.parse(url, false);
-      if (parsedUrl != null && parsedUrl.getAuthority() != null && isOnBuiltInWebServerByAuthority(parsedUrl.getAuthority())) {
-        PropertiesComponent.getInstance().setValue("ide.built.in.web.server.active", true);
-      }
+    if (Registry.is("ide.built.in.web.server.activatable", false) &&
+        BuiltInServerManager.getInstance().isOnBuiltInWebServer(Urls.parse(url, false))) {
+      PropertiesComponent.getInstance().setValue("ide.built.in.web.server.active", true);
     }
     
     super.browse(url, browser, project);
-  }
-
-  public static boolean isOnBuiltInWebServerByAuthority(@NotNull String authority) {
-    int portIndex = authority.indexOf(':');
-    if (portIndex < 0 || portIndex == authority.length() - 1) {
-      return false;
-    }
-
-    int port;
-    try {
-      port = Integer.parseInt(authority.substring(portIndex + 1));
-    }
-    catch (NumberFormatException ignored) {
-      return false;
-    }
-
-    if (BuiltInServerOptions.getInstance().builtInServerPort != port && BuiltInServerManager.getInstance().getPort() != port) {
-      return false;
-    }
-
-    String host = authority.substring(0, portIndex);
-    if (NetUtils.isLocalhost(host)) {
-      return true;
-    }
-
-    InetAddress inetAddress;
-    try {
-      inetAddress = InetAddress.getByName(host);
-    }
-    catch (UnknownHostException ignored) {
-      return false;
-    }
-
-    if (inetAddress == null) {
-      return false;
-    }
-    return inetAddress.isLoopbackAddress() || inetAddress.isAnyLocalAddress();
   }
 
   @Override

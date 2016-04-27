@@ -29,6 +29,7 @@ import com.intellij.util.Url;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.net.ssl.CertificateManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.ide.BuiltInServerManager;
 
 import java.io.File;
 import java.io.IOException;
@@ -60,6 +61,12 @@ public class DefaultRemoteContentProvider extends RemoteContentProvider {
         .connectTimeout(60 * 1000)
         .productNameAsUserAgent()
         .hostNameVerifier(CertificateManager.HOSTNAME_VERIFIER)
+        .tuner(connection -> {
+          BuiltInServerManager builtInServerManager = BuiltInServerManager.getInstance();
+          if (builtInServerManager.isOnBuiltInWebServer(url)) {
+            builtInServerManager.configureRequestToWebServer(connection);
+          }
+        })
         .connect(new HttpRequests.RequestProcessor<Object>() {
           @Override
           public Object process(@NotNull HttpRequests.Request request) throws IOException {
