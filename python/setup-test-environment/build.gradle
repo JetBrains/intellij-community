@@ -1,3 +1,5 @@
+import org.apache.tools.ant.taskdefs.condition.Os
+
 plugins {
   id "com.jetbrains.python.envs" version "0.0.6"
 }
