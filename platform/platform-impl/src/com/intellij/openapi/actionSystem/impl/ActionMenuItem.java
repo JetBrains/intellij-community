@@ -28,6 +28,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.SizedIcon;
+import com.intellij.ui.components.JBCheckBoxMenuItem;
 import com.intellij.ui.plaf.beg.BegMenuItemUI;
 import com.intellij.ui.plaf.gtk.GtkMenuItemUI;
 import com.intellij.util.PlatformIcons;
@@ -48,7 +49,7 @@ import java.beans.PropertyChangeListener;
 import java.util.HashSet;
 import java.util.Set;
 
-public class ActionMenuItem extends JCheckBoxMenuItem {
+public class ActionMenuItem extends JBCheckBoxMenuItem {
   private static final Icon ourCheckedIcon = new SizedIcon(PlatformIcons.CHECK_ICON, 18, 18);
   private static final Icon ourUncheckedIcon = EmptyIcon.ICON_18;
 
