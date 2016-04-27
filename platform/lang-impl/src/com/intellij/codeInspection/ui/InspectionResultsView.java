@@ -542,16 +542,6 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       }
       myPreviewEditor.getSettings().setFoldingOutlineShown(problemCount != 1);
       myPreviewEditor.getComponent().setBorder(IdeBorderFactory.createEmptyBorder());
-      if (problemCount == 1) {
-        final PsiElement finalSelectedElement = selectedElement;
-        ApplicationManager.getApplication().invokeLater(() -> {
-          if (myPreviewEditor != null && !myPreviewEditor.isDisposed()) {
-            PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-            myPreviewEditor.getCaretModel().moveToOffset(finalSelectedElement.getTextOffset());
-            myPreviewEditor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
-          }
-        }, ModalityState.any());
-      }
       return Pair.create(myPreviewEditor.getComponent(), myPreviewEditor);
     }
     else if (selectedEntity == null) {
