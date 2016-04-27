@@ -108,6 +108,7 @@ class BuiltInWebServer : HttpRequestHandler() {
 internal fun isActivatable() = Registry.`is`("ide.built.in.web.server.activatable", false)
 
 internal const val TOKEN_PARAM_NAME = "_ijt"
+const val TOKEN_HEADER_NAME = "x-ijt"
 
 private val STANDARD_COOKIE by lazy {
   val productName = ApplicationNamesInfo.getInstance().lowercaseProductName
@@ -139,7 +140,7 @@ private val STANDARD_COOKIE by lazy {
 // expire after access because we reuse tokens
 private val tokens = CacheBuilder.newBuilder().expireAfterAccess(1, TimeUnit.MINUTES).build<String, Boolean>()
 
-internal fun acquireToken(): String {
+fun acquireToken(): String {
   var token = tokens.asMap().keys.firstOrNull()
   if (token == null) {
     token = TokenGenerator.generate()
@@ -252,7 +253,9 @@ internal fun validateToken(request: HttpRequest, channel: Channel): HttpHeaders?
 
   val urlDecoder = QueryStringDecoder(request.uri())
   // we must check referrer - if html cached, browser will send request without query
-  val token = urlDecoder.parameters().get(TOKEN_PARAM_NAME)?.firstOrNull() ?: request.referrer?.let { QueryStringDecoder(it).parameters().get(TOKEN_PARAM_NAME)?.firstOrNull() }
+  val token = request.headers().get(TOKEN_HEADER_NAME)
+      ?: urlDecoder.parameters().get(TOKEN_PARAM_NAME)?.firstOrNull()
+      ?: request.referrer?.let { QueryStringDecoder(it).parameters().get(TOKEN_PARAM_NAME)?.firstOrNull() }
   val url = "${channel.uriScheme}://${request.host!!}${urlDecoder.path()}"
   if (token != null && tokens.getIfPresent(token) != null) {
     tokens.invalidate(token)

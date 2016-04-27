@@ -24,7 +24,7 @@ import io.netty.handler.codec.http.QueryStringDecoder
 
 internal abstract class DelegatingHttpRequestHandlerBase : SimpleChannelInboundHandlerAdapter<FullHttpRequest>() {
   override fun messageReceived(context: ChannelHandlerContext, message: FullHttpRequest) {
-    Logger.getInstance(BuiltInServer::class.java).debug { "IN HTTP: $message" }
+    Logger.getInstance(BuiltInServer::class.java).debug { "\n\nIN HTTP: $message\n\n" }
 
     if (!process(context, message, QueryStringDecoder(message.uri()))) {
       HttpResponseStatus.NOT_FOUND.send(context.channel(), message)

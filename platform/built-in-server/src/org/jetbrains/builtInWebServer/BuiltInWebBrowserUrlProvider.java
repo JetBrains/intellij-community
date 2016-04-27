@@ -40,6 +40,11 @@ import java.util.List;
 public class BuiltInWebBrowserUrlProvider extends WebBrowserUrlProvider implements DumbAware {
   @NotNull
   public static List<Url> getUrls(@NotNull VirtualFile file, @NotNull Project project, @Nullable String currentAuthority) {
+    return getUrls(file, project, currentAuthority, true);
+  }
+  
+  @NotNull
+  public static List<Url> getUrls(@NotNull VirtualFile file, @NotNull Project project, @Nullable String currentAuthority, boolean appendAccessToken) {
     if (currentAuthority != null && !compareAuthority(currentAuthority)) {
       return Collections.emptyList();
     }
@@ -53,7 +58,7 @@ public class BuiltInWebBrowserUrlProvider extends WebBrowserUrlProvider implemen
     String path = info.getPath();
 
     String authority = currentAuthority == null ? "localhost:" + effectiveBuiltInServerPort : currentAuthority;
-    String query = "?" + BuiltInWebServerKt.TOKEN_PARAM_NAME + "=" + BuiltInWebServerKt.acquireToken();
+    String query = appendAccessToken ? "?" + BuiltInWebServerKt.TOKEN_PARAM_NAME + "=" + BuiltInWebServerKt.acquireToken() : "";
     List<Url> urls = new SmartList<>(Urls.newHttpUrl(authority, '/' + project.getName() + '/' + path, query));
 
     String path2 = info.getRootLessPathIfPossible();
@@ -118,7 +123,7 @@ public class BuiltInWebBrowserUrlProvider extends WebBrowserUrlProvider implemen
       return Urls.newFromVirtualFile(file);
     }
     else {
-      return ContainerUtil.getFirstItem(getUrls(file, request.getProject(), null));
+      return ContainerUtil.getFirstItem(getUrls(file, request.getProject(), null, request.isAppendAccessToken()));
     }
   }
 }
