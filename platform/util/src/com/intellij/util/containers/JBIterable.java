@@ -182,6 +182,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
     });
   }
 
+  @NotNull
   public <T extends Iterator<E>> T typedIterator() {
     return (T) iterator();
   }
@@ -190,6 +191,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
    * Returns a string representation of this iterable up to 50 elements, with the format
    * {@code (e1, e2, ..., en [, ...] )} for debugging purposes.
    */
+  @NotNull
   @Override
   public String toString() {
     return myIterable == this ? super.toString() : String.valueOf(myIterable);
@@ -226,6 +228,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
   /**
    * Returns element at index if it is present; otherwise {@code null}
    */
+  @Nullable
   public final E get(int index) {
     if (myIterable instanceof List) {
       return index >= ((List)myIterable).size() ? null : ((List<E>)myIterable).get(index);
@@ -240,14 +243,17 @@ public abstract class JBIterable<E> implements Iterable<E> {
    * <p>The returned iterable's {@code Iterator} supports {@code remove()} when the corresponding
    * {@code Iterator} supports it.
    */
+  @NotNull
   public final JBIterable<E> append(@Nullable Iterable<? extends E> other) {
     return other == null ? this : this == EMPTY ? from(other) : of(myIterable, other).flatten(Functions.<Iterable<?>, Iterable<E>>identity());
   }
 
+  @NotNull
   public final <T> JBIterable<E> append(@Nullable Iterable<T> other, @NotNull Function<? super T, ? extends Iterable<? extends E>> fun) {
     return other == null ? this : this == EMPTY ? from(other).flatten(fun) : append(from(other).flatten(fun));
   }
 
+  @NotNull
   public final JBIterable<E> repeat(int count) {
     Function<JBIterable<E>, JBIterable<E>> fun = Functions.identity();
     return generate(this, fun).take(count).flatten(fun);
@@ -257,10 +263,12 @@ public abstract class JBIterable<E> implements Iterable<E> {
    * Returns a {@code JBIterable} whose iterators traverse first the elements of this iterable,
    * followed by {@code elements}.
    */
+  @NotNull
   public final JBIterable<E> append(@NotNull E[] elements) {
     return this == EMPTY ? of(elements) : append(Arrays.asList(elements));
   }
 
+  @NotNull
   public final JBIterable<E> append(@Nullable E e) {
     return e == null ? this : this == EMPTY ? of(e) : append(Collections.singleton(e));
   }
@@ -268,6 +276,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
   /**
    * Returns the elements from this iterable that satisfy a condition.
    */
+  @NotNull
   public final JBIterable<E> filter(@NotNull final Condition<? super E> condition) {
     return intercept(new Function<Iterator<E>, Iterator<E>>() {
       @Override
@@ -281,6 +290,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
    * Returns the elements from this iterable that are instances of class {@code type}.
    * @param type the type of elements desired
    */
+  @NotNull
   public final <T> JBIterable<T> filter(@NotNull Class<T> type) {
     return (JBIterable<T>)filter(Conditions.instanceOf(type));
   }
@@ -426,6 +436,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
    * Returns an {@code List} containing all of the elements from this iterable in
    * proper sequence.
    */
+  @NotNull
   public final List<E> toList() {
     return Collections.unmodifiableList(ContainerUtil.newArrayList(myIterable));
   }
@@ -434,6 +445,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
    * Returns an {@code Set} containing all of the elements from this iterable with
    * duplicates removed.
    */
+  @NotNull
   public final Set<E> toSet() {
     return Collections.unmodifiableSet(ContainerUtil.newLinkedHashSet(myIterable));
   }
@@ -444,6 +456,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
    * elements, the returned map will contain each distinct element once in the order it first
    * appears.
    */
+  @NotNull
   public final <V> Map<E, V> toMap(Convertor<E, V> valueFunction) {
     return Collections.unmodifiableMap(ContainerUtil.newMapFromKeys(iterator(), valueFunction));
   }
@@ -455,6 +468,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
    * @param collection the collection to copy elements to
    * @return {@code collection}, for convenience
    */
+  @NotNull
   public final <C extends Collection<? super E>> C addAllTo(@NotNull C collection) {
     if (myIterable instanceof Collection) {
       collection.addAll((Collection<E>)myIterable);
