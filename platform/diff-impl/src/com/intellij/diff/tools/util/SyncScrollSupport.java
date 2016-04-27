@@ -261,32 +261,26 @@ public class SyncScrollSupport {
       doScrollHorizontally(masterEditor, 0, false); // animation will be canceled by "scroll vertically" anyway
       doScrollVertically(masterEditor, masterOffset, animate);
 
-      masterEditor.getScrollingModel().runActionOnScrollingFinished(new Runnable() {
-        @Override
-        public void run() {
-          for (ScrollHelper helper : helpers) {
-            helper.removeAnchor();
-          }
+      masterEditor.getScrollingModel().runActionOnScrollingFinished(() -> {
+        for (ScrollHelper helper : helpers) {
+          helper.removeAnchor();
+        }
 
-          int masterFinalOffset = masterEditor.getScrollingModel().getVisibleArea().y;
-          boolean animateSlaves = animate && masterFinalOffset == masterStartOffset;
-          for (int i = 0; i < count; i++) {
-            if (i == masterIndex) continue;
-            Editor editor = editors.get(i);
+        int masterFinalOffset = masterEditor.getScrollingModel().getVisibleArea().y;
+        boolean animateSlaves = animate && masterFinalOffset == masterStartOffset;
+        for (int i = 0; i < count; i++) {
+          if (i == masterIndex) continue;
+          Editor editor = editors.get(i);
 
-            int finalOffset = editor.getScrollingModel().getVisibleArea().y;
-            if (finalOffset != offsets[i]) {
-              enterDisableScrollSection();
+          int finalOffset = editor.getScrollingModel().getVisibleArea().y;
+          if (finalOffset != offsets[i]) {
+            enterDisableScrollSection();
 
-              doScrollVertically(editor, offsets[i], animateSlaves);
+            doScrollVertically(editor, offsets[i], animateSlaves);
 
-              editor.getScrollingModel().runActionOnScrollingFinished(new Runnable() {
-                @Override
-                public void run() {
-                  exitDisableScrollSection();
-                }
-              });
-            }
+            editor.getScrollingModel().runActionOnScrollingFinished(() -> {
+              exitDisableScrollSection();
+            });
           }
         }
       });

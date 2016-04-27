@@ -152,52 +152,47 @@ public class DiffIterableUtil {
 
   @NotNull
   public static Iterable<Pair<Range, Boolean>> iterateAll(@NotNull final DiffIterable iterable) {
-    return new Iterable<Pair<Range, Boolean>>() {
+    return () -> new Iterator<Pair<Range, Boolean>>() {
+      @NotNull private final Iterator<Range> myChanges = iterable.changes();
+      @NotNull private final Iterator<Range> myUnchanged = iterable.unchanged();
+
+      @Nullable private Range lastChanged = myChanges.hasNext() ? myChanges.next() : null;
+      @Nullable private Range lastUnchanged = myUnchanged.hasNext() ? myUnchanged.next() : null;
+
       @Override
-      public Iterator<Pair<Range, Boolean>> iterator() {
-        return new Iterator<Pair<Range, Boolean>>() {
-          @NotNull private final Iterator<Range> myChanges = iterable.changes();
-          @NotNull private final Iterator<Range> myUnchanged = iterable.unchanged();
+      public boolean hasNext() {
+        return lastChanged != null || lastUnchanged != null;
+      }
 
-          @Nullable private Range lastChanged = myChanges.hasNext() ? myChanges.next() : null;
-          @Nullable private Range lastUnchanged = myUnchanged.hasNext() ? myUnchanged.next() : null;
+      @Override
+      public Pair<Range, Boolean> next() {
+        boolean equals;
+        if (lastChanged == null) {
+          equals = true;
+        }
+        else if (lastUnchanged == null) {
+          equals = false;
+        }
+        else {
+          equals = lastUnchanged.start1 < lastChanged.start1 || lastUnchanged.start2 < lastChanged.start2;
+        }
 
-          @Override
-          public boolean hasNext() {
-            return lastChanged != null || lastUnchanged != null;
-          }
+        if (equals) {
+          Range range = lastUnchanged;
+          lastUnchanged = myUnchanged.hasNext() ? myUnchanged.next() : null;
+          //noinspection ConstantConditions
+          return Pair.create(range, true);
+        }
+        else {
+          Range range = lastChanged;
+          lastChanged = myChanges.hasNext() ? myChanges.next() : null;
+          return Pair.create(range, false);
+        }
+      }
 
-          @Override
-          public Pair<Range, Boolean> next() {
-            boolean equals;
-            if (lastChanged == null) {
-              equals = true;
-            }
-            else if (lastUnchanged == null) {
-              equals = false;
-            }
-            else {
-              equals = lastUnchanged.start1 < lastChanged.start1 || lastUnchanged.start2 < lastChanged.start2;
-            }
-
-            if (equals) {
-              Range range = lastUnchanged;
-              lastUnchanged = myUnchanged.hasNext() ? myUnchanged.next() : null;
-              //noinspection ConstantConditions
-              return Pair.create(range, true);
-            }
-            else {
-              Range range = lastChanged;
-              lastChanged = myChanges.hasNext() ? myChanges.next() : null;
-              return Pair.create(range, false);
-            }
-          }
-
-          @Override
-          public void remove() {
-            throw new UnsupportedOperationException();
-          }
-        };
+      @Override
+      public void remove() {
+        throw new UnsupportedOperationException();
       }
     };
   }

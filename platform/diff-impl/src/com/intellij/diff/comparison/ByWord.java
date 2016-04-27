@@ -28,7 +28,6 @@ import com.intellij.diff.util.Range;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.MergingCharSequence;
 import org.jetbrains.annotations.NotNull;
@@ -162,12 +161,7 @@ public class ByWord {
 
   @NotNull
   private static List<MergeWordFragment> convertIntoFragments(@NotNull List<MergeRange> conflicts) {
-    return ContainerUtil.map(conflicts, new Function<MergeRange, MergeWordFragment>() {
-      @Override
-      public MergeWordFragment fun(MergeRange ch) {
-        return new MergeWordFragmentImpl(ch);
-      }
-    });
+    return ContainerUtil.map(conflicts, ch -> new MergeWordFragmentImpl(ch));
   }
 
   @NotNull

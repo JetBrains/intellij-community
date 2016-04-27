@@ -84,7 +84,7 @@ public class TextDiffSettingsHolder implements PersistentStateComponent<TextDiff
     }
 
     public void setEnableSyncScroll(boolean value) {
-      this.PLACE_SETTINGS.ENABLE_SYNC_SCROLL = value;
+      PLACE_SETTINGS.ENABLE_SYNC_SCROLL = value;
     }
 
     // Diff settings

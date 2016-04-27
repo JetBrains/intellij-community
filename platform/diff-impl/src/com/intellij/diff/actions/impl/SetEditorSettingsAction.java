@@ -24,7 +24,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -194,12 +193,7 @@ public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
 
     public EditorHighlightingLayerAction() {
       super("Highlighting Level", true);
-      myOptions = ContainerUtil.map(HighlightingLevel.values(), new Function<HighlightingLevel, AnAction>() {
-        @Override
-        public AnAction fun(HighlightingLevel level) {
-          return new OptionAction(level);
-        }
-      }, AnAction.EMPTY_ARRAY);
+      myOptions = ContainerUtil.map(HighlightingLevel.values(), level -> new OptionAction(level), AnAction.EMPTY_ARRAY);
     }
 
     @NotNull

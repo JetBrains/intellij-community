@@ -83,7 +83,6 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.DocumentUtil;
-import com.intellij.util.Function;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
@@ -601,12 +600,7 @@ public class DiffUtil {
 
     List<DiffFragment> wordConflicts = ByWord.compare(chunk1, chunk2, comparisonPolicy, indicator);
 
-    return ContainerUtil.map(wordConflicts, new Function<DiffFragment, MergeWordFragment>() {
-      @Override
-      public MergeWordFragment fun(DiffFragment fragment) {
-        return new MyWordFragment(side1, side2, fragment);
-      }
-    });
+    return ContainerUtil.map(wordConflicts, fragment -> new MyWordFragment(side1, side2, fragment));
   }
 
   private static boolean isChunksEquals(@Nullable CharSequence chunk1,
@@ -939,26 +933,15 @@ public class DiffUtil {
         return;
       }
 
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-            @Override
-            public void run() {
-              if (myUnderBulkUpdate) {
-                DocumentUtil.executeInBulk(myDocument, true, new Runnable() {
-                  @Override
-                  public void run() {
-                    execute();
-                  }
-                });
-              }
-              else {
-                execute();
-              }
-            }
-          }, myCommandName, myCommandGroupId, myConfirmationPolicy, myDocument);
-        }
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        CommandProcessor.getInstance().executeCommand(myProject, () -> {
+          if (myUnderBulkUpdate) {
+            DocumentUtil.executeInBulk(myDocument, true, this::execute);
+          }
+          else {
+            execute();
+          }
+        }, myCommandName, myCommandGroupId, myConfirmationPolicy, myDocument);
       });
     }
 
@@ -1192,13 +1175,7 @@ public class DiffUtil {
 
     if (suppressedTools.isEmpty()) return tools;
 
-    List<T> filteredTools = ContainerUtil.filter(tools, new Condition<T>() {
-      @Override
-      public boolean value(T tool) {
-        return !suppressedTools.contains(tool.getClass());
-      }
-    });
-
+    List<T> filteredTools = ContainerUtil.filter(tools, tool -> !suppressedTools.contains(tool.getClass()));
     return filteredTools.isEmpty() ? tools : filteredTools;
   }
 

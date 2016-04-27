@@ -28,7 +28,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
@@ -306,12 +305,7 @@ public class ByLine {
 
   @NotNull
   private static List<MergeLineFragment> convertIntoFragments(@NotNull List<MergeRange> conflicts) {
-    return ContainerUtil.map(conflicts, new Function<MergeRange, MergeLineFragment>() {
-      @Override
-      public MergeLineFragment fun(MergeRange ch) {
-        return new MergeLineFragmentImpl(ch);
-      }
-    });
+    return ContainerUtil.map(conflicts, ch -> new MergeLineFragmentImpl(ch));
   }
 
   @NotNull

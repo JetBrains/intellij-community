@@ -23,7 +23,6 @@ import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.tools.binary.ThreesideBinaryDiffViewer;
 import com.intellij.diff.tools.holders.BinaryEditorHolder;
-import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.CalledInAwt;
@@ -111,12 +110,7 @@ public class BinaryMergeTool implements MergeTool {
       components.statusPanel = init.statusPanel;
       components.toolbarActions = init.toolbarActions;
 
-      components.closeHandler = new BooleanGetter() {
-        @Override
-        public boolean get() {
-          return MergeUtil.showExitWithoutApplyingChangesDialog(BinaryMergeViewer.this, myMergeRequest, myMergeContext);
-        }
-      };
+      components.closeHandler = () -> MergeUtil.showExitWithoutApplyingChangesDialog(this, myMergeRequest, myMergeContext);
 
       return components;
     }

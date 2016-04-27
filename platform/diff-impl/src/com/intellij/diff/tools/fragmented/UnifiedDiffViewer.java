@@ -56,7 +56,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntFunction;
 import org.jetbrains.annotations.*;
@@ -306,12 +305,9 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
       return apply(editorData, builder.getBlocks(), convertor, changedLines, isContentsEqual);
     }
     catch (DiffTooBigException e) {
-      return new Runnable() {
-        @Override
-        public void run() {
-          clearDiffPresentation();
-          myPanel.setTooBigContent();
-        }
+      return () -> {
+        clearDiffPresentation();
+        myPanel.setTooBigContent();
       };
     }
     catch (ProcessCanceledException e) {
@@ -319,12 +315,9 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     }
     catch (Throwable e) {
       LOG.error(e);
-      return new Runnable() {
-        @Override
-        public void run() {
-          clearDiffPresentation();
-          myPanel.setErrorContent();
-        }
+      return () -> {
+        clearDiffPresentation();
+        myPanel.setErrorContent();
       };
     }
   }
@@ -379,79 +372,73 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
                          @NotNull final LineNumberConvertor convertor,
                          @NotNull final List<LineRange> changedLines,
                          final boolean isContentsEqual) {
-    return new Runnable() {
-      @Override
-      public void run() {
-        myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
+    return () -> {
+      myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
 
-        LineCol oldCaretPosition = LineCol.fromOffset(myDocument, myEditor.getCaretModel().getPrimaryCaret().getOffset());
-        Pair<int[], Side> oldCaretLineTwoside = transferLineFromOneside(oldCaretPosition.line);
+      LineCol oldCaretPosition = LineCol.fromOffset(myDocument, myEditor.getCaretModel().getPrimaryCaret().getOffset());
+      Pair<int[], Side> oldCaretLineTwoside = transferLineFromOneside(oldCaretPosition.line);
 
 
-        clearDiffPresentation();
+      clearDiffPresentation();
 
 
-        if (isContentsEqual) {
-          boolean equalCharsets = TextDiffViewerUtil.areEqualCharsets(getContents());
-          boolean equalSeparators = TextDiffViewerUtil.areEqualLineSeparators(getContents());
-          myPanel.addNotification(DiffNotifications.createEqualContents(equalCharsets, equalSeparators));
-        }
-
-        TIntFunction separatorLines = myFoldingModel.getLineNumberConvertor();
-        myEditor.getGutterComponentEx().setLineNumberConvertor(mergeConverters(data.getLineConvertor1(), separatorLines),
-                                                               mergeConverters(data.getLineConvertor2(), separatorLines));
-
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            myDuringOnesideDocumentModification = true;
-            try {
-              myDocument.setText(data.getText());
-            }
-            finally {
-              myDuringOnesideDocumentModification = false;
-            }
-          }
-        });
-
-        if (data.getHighlighter() != null) myEditor.setHighlighter(data.getHighlighter());
-        DiffUtil.setEditorCodeStyle(myProject, myEditor, data.getFileType());
-
-        if (data.getRangeHighlighter() != null) data.getRangeHighlighter().apply(myProject, myDocument);
-
-
-        ArrayList<UnifiedDiffChange> diffChanges = new ArrayList<>(blocks.size());
-        for (ChangedBlock block : blocks) {
-          diffChanges.add(new UnifiedDiffChange(UnifiedDiffViewer.this, block));
-        }
-
-        List<RangeMarker> guarderRangeBlocks = new ArrayList<>();
-        if (!myEditor.isViewer()) {
-          for (ChangedBlock block : blocks) {
-            LineRange range = myMasterSide.select(block.getRange2(), block.getRange1());
-            TextRange textRange = DiffUtil.getLinesRange(myDocument, range.start, range.end);
-            if (textRange.isEmpty()) continue;
-            guarderRangeBlocks.add(createGuardedBlock(textRange.getStartOffset(), textRange.getEndOffset()));
-          }
-          int textLength = myDocument.getTextLength(); // there are 'fake' newline at the very end
-          guarderRangeBlocks.add(createGuardedBlock(textLength, textLength));
-        }
-
-
-        myChangedBlockData = new ChangedBlockData(diffChanges, guarderRangeBlocks, convertor, isContentsEqual);
-
-
-        int newCaretLine = transferLineToOneside(oldCaretLineTwoside.second,
-                                                 oldCaretLineTwoside.second.select(oldCaretLineTwoside.first));
-        myEditor.getCaretModel().moveToOffset(LineCol.toOffset(myDocument, newCaretLine, oldCaretPosition.column));
-
-        myFoldingModel.install(changedLines, myRequest, getFoldingModelSettings());
-
-        myInitialScrollHelper.onRediff();
-
-        myStatusPanel.update();
-        myPanel.setGoodContent();
+      if (isContentsEqual) {
+        boolean equalCharsets = TextDiffViewerUtil.areEqualCharsets(getContents());
+        boolean equalSeparators = TextDiffViewerUtil.areEqualLineSeparators(getContents());
+        myPanel.addNotification(DiffNotifications.createEqualContents(equalCharsets, equalSeparators));
       }
+
+      TIntFunction separatorLines = myFoldingModel.getLineNumberConvertor();
+      myEditor.getGutterComponentEx().setLineNumberConvertor(mergeConverters(data.getLineConvertor1(), separatorLines),
+                                                             mergeConverters(data.getLineConvertor2(), separatorLines));
+
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        myDuringOnesideDocumentModification = true;
+        try {
+          myDocument.setText(data.getText());
+        }
+        finally {
+          myDuringOnesideDocumentModification = false;
+        }
+      });
+
+      if (data.getHighlighter() != null) myEditor.setHighlighter(data.getHighlighter());
+      DiffUtil.setEditorCodeStyle(myProject, myEditor, data.getFileType());
+
+      if (data.getRangeHighlighter() != null) data.getRangeHighlighter().apply(myProject, myDocument);
+
+
+      ArrayList<UnifiedDiffChange> diffChanges = new ArrayList<>(blocks.size());
+      for (ChangedBlock block : blocks) {
+        diffChanges.add(new UnifiedDiffChange(this, block));
+      }
+
+      List<RangeMarker> guarderRangeBlocks = new ArrayList<>();
+      if (!myEditor.isViewer()) {
+        for (ChangedBlock block : blocks) {
+          LineRange range = myMasterSide.select(block.getRange2(), block.getRange1());
+          TextRange textRange = DiffUtil.getLinesRange(myDocument, range.start, range.end);
+          if (textRange.isEmpty()) continue;
+          guarderRangeBlocks.add(createGuardedBlock(textRange.getStartOffset(), textRange.getEndOffset()));
+        }
+        int textLength = myDocument.getTextLength(); // there are 'fake' newline at the very end
+        guarderRangeBlocks.add(createGuardedBlock(textLength, textLength));
+      }
+
+
+      myChangedBlockData = new ChangedBlockData(diffChanges, guarderRangeBlocks, convertor, isContentsEqual);
+
+
+      int newCaretLine = transferLineToOneside(oldCaretLineTwoside.second,
+                                               oldCaretLineTwoside.second.select(oldCaretLineTwoside.first));
+      myEditor.getCaretModel().moveToOffset(LineCol.toOffset(myDocument, newCaretLine, oldCaretPosition.column));
+
+      myFoldingModel.install(changedLines, myRequest, getFoldingModelSettings());
+
+      myInitialScrollHelper.onRediff();
+
+      myStatusPanel.update();
+      myPanel.setGoodContent();
     };
   }
 
@@ -465,12 +452,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
 
   @Contract("!null, _ -> !null")
   private static TIntFunction mergeConverters(@NotNull final TIntFunction convertor, @NotNull final TIntFunction separatorLines) {
-    return new TIntFunction() {
-      @Override
-      public int execute(int value) {
-        return convertor.execute(separatorLines.execute(value));
-      }
-    };
+    return value -> convertor.execute(separatorLines.execute(value));
   }
 
   /*
@@ -703,13 +685,10 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
       if (isStateIsOutOfDate()) return;
 
       String title = e.getPresentation().getText() + " selected changes";
-      DiffUtil.executeWriteCommand(getDocument(myModifiedSide), e.getProject(), title, new Runnable() {
-        @Override
-        public void run() {
-          // state is invalidated during apply(), but changes are in reverse order, so they should not conflict with each other
-          apply(selectedChanges);
-          scheduleRediff();
-        }
+      DiffUtil.executeWriteCommand(getDocument(myModifiedSide), e.getProject(), title, () -> {
+        // state is invalidated during apply(), but changes are in reverse order, so they should not conflict with each other
+        apply(selectedChanges);
+        scheduleRediff();
       });
     }
 
@@ -1459,13 +1438,9 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     public void install(@Nullable List<LineRange> changedLines,
                         @NotNull UserDataHolder context,
                         @NotNull FoldingModelSupport.Settings settings) {
-      Iterator<int[]> it = map(changedLines, new Function<LineRange, int[]>() {
-        @Override
-        public int[] fun(LineRange line) {
-          return new int[]{
-            line.start,
-            line.end};
-        }
+      Iterator<int[]> it = map(changedLines, line -> new int[]{
+        line.start,
+        line.end
       });
       install(it, context, settings);
     }

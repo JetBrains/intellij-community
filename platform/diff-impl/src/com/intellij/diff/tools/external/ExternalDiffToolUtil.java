@@ -388,11 +388,8 @@ public class ExternalDiffToolUtil {
     @Override
     public void apply() throws IOException {
       final String content = StringUtil.convertLineSeparators(FileUtil.loadFile(myLocalFile, myCharset));
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          myDocument.setText(content);
-        }
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        myDocument.setText(content);
       });
     }
   }

@@ -193,26 +193,23 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
   @NotNull
   private Runnable apply(@NotNull final List<MergeLineFragment> fragments,
                          @NotNull final ComparisonPolicy comparisonPolicy) {
-    return new Runnable() {
-      @Override
-      public void run() {
-        myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
-        clearDiffPresentation();
+    return () -> {
+      myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
+      clearDiffPresentation();
 
-        resetChangeCounters();
-        for (MergeLineFragment fragment : fragments) {
-          SimpleThreesideDiffChange change = new SimpleThreesideDiffChange(fragment, getEditors(), comparisonPolicy);
-          myDiffChanges.add(change);
-          onChangeAdded(change);
-        }
-
-        myFoldingModel.install(fragments, myRequest, getFoldingModelSettings());
-
-        myInitialScrollHelper.onRediff();
-
-        myContentPanel.repaintDividers();
-        myStatusPanel.update();
+      resetChangeCounters();
+      for (MergeLineFragment fragment : fragments) {
+        SimpleThreesideDiffChange change = new SimpleThreesideDiffChange(fragment, getEditors(), comparisonPolicy);
+        myDiffChanges.add(change);
+        onChangeAdded(change);
       }
+
+      myFoldingModel.install(fragments, myRequest, getFoldingModelSettings());
+
+      myInitialScrollHelper.onRediff();
+
+      myContentPanel.repaintDividers();
+      myStatusPanel.update();
     };
   }
 

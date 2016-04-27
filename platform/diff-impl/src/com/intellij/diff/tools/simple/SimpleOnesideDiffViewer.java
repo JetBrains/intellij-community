@@ -122,32 +122,27 @@ public class SimpleOnesideDiffViewer extends OnesideTextDiffViewer {
   @Override
   @NotNull
   protected Runnable performRediff(@NotNull final ProgressIndicator indicator) {
-    indicator.checkCanceled();
+    return () -> {
+      clearDiffPresentation();
 
-    return new Runnable() {
-      @Override
-      public void run() {
-        clearDiffPresentation();
+      boolean shouldHighlight = getTextSettings().getHighlightPolicy() != HighlightPolicy.DO_NOT_HIGHLIGHT;
+      if (shouldHighlight) {
+        final DocumentContent content = getContent();
+        final Document document = content.getDocument();
 
-        boolean shouldHighlight = getTextSettings().getHighlightPolicy() != HighlightPolicy.DO_NOT_HIGHLIGHT;
-        if (shouldHighlight) {
-          final DocumentContent content = getContent();
-          final Document document = content.getDocument();
+        TextDiffType type = getSide().select(TextDiffType.DELETED, TextDiffType.INSERTED);
 
-          TextDiffType type = getSide().select(TextDiffType.DELETED, TextDiffType.INSERTED);
+        myHighlighters.addAll(DiffDrawUtil.createHighlighter(getEditor(), 0, getLineCount(document), type, false));
 
-          myHighlighters.addAll(DiffDrawUtil.createHighlighter(getEditor(), 0, getLineCount(document), type, false));
+        int startLine = 0;
+        int endLine = getLineCount(document);
 
-          int startLine = 0;
-          int endLine = getLineCount(document);
-
-          if (startLine != endLine) {
-            myHighlighters.addAll(DiffDrawUtil.createLineMarker(getEditor(), startLine, endLine, type, false));
-          }
+        if (startLine != endLine) {
+          myHighlighters.addAll(DiffDrawUtil.createLineMarker(getEditor(), startLine, endLine, type, false));
         }
-
-        myInitialScrollHelper.onRediff();
       }
+
+      myInitialScrollHelper.onRediff();
     };
   }
 

@@ -325,32 +325,20 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   private GutterIconRenderer createApplyRenderer(@NotNull final Side side, final boolean modifier) {
     if (isResolved(side)) return null;
     Icon icon = isOnesideAppliedConflict() ? DiffUtil.getArrowDownIcon(side) : DiffUtil.getArrowIcon(side);
-    return createIconRenderer(DiffBundle.message("merge.dialog.apply.change.action.name"), icon, isConflict(), new Runnable() {
-      @Override
-      public void run() {
-        myViewer.executeMergeCommand("Accept change", Collections.singletonList(TextMergeChange.this), new Runnable() {
-          @Override
-          public void run() {
-            myViewer.replaceChange(TextMergeChange.this, side, modifier);
-          }
-        });
-      }
+    return createIconRenderer(DiffBundle.message("merge.dialog.apply.change.action.name"), icon, isConflict(), () -> {
+      myViewer.executeMergeCommand("Accept change", Collections.singletonList(this), () -> {
+        myViewer.replaceChange(this, side, modifier);
+      });
     });
   }
 
   @Nullable
   private GutterIconRenderer createIgnoreRenderer(@NotNull final Side side, final boolean modifier) {
     if (isResolved(side)) return null;
-    return createIconRenderer(DiffBundle.message("merge.dialog.ignore.change.action.name"), AllIcons.Diff.Remove, isConflict(), new Runnable() {
-      @Override
-      public void run() {
-        myViewer.executeMergeCommand("Ignore change", Collections.singletonList(TextMergeChange.this), new Runnable() {
-          @Override
-          public void run() {
-            myViewer.ignoreChange(TextMergeChange.this, side, modifier);
-          }
-        });
-      }
+    return createIconRenderer(DiffBundle.message("merge.dialog.ignore.change.action.name"), AllIcons.Diff.Remove, isConflict(), () -> {
+      myViewer.executeMergeCommand("Ignore change", Collections.singletonList(this), () -> {
+        myViewer.ignoreChange(this, side, modifier);
+      });
     });
   }
 

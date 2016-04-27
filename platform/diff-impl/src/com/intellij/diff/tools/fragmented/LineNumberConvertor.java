@@ -83,22 +83,12 @@ public class LineNumberConvertor {
 
   @NotNull
   public TIntFunction createConvertor1() {
-    return new TIntFunction() {
-      @Override
-      public int execute(int value) {
-        return convert1(value);
-      }
-    };
+    return this::convert1;
   }
 
   @NotNull
   public TIntFunction createConvertor2() {
-    return new TIntFunction() {
-      @Override
-      public int execute(int value) {
-        return convert2(value);
-      }
-    };
+    return this::convert2;
   }
 
   private int convert(int value, @NotNull Side side, boolean fromOneside, boolean approximate) {

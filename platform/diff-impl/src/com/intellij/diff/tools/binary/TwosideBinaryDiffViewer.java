@@ -157,12 +157,9 @@ public class TwosideBinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolde
 
   @NotNull
   private Runnable applyNotification(@Nullable final JComponent notification) {
-    return new Runnable() {
-      @Override
-      public void run() {
-        clearDiffPresentation();
-        if (notification != null) myPanel.addNotification(notification);
-      }
+    return () -> {
+      clearDiffPresentation();
+      if (notification != null) myPanel.addNotification(notification);
     };
   }
 

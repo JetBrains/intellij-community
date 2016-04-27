@@ -44,7 +44,6 @@ import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
@@ -200,12 +199,7 @@ public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditor
   @NotNull
   public List<? extends EditorEx> getEditors() {
     if (myEditors == null) {
-      myEditors = ContainerUtil.map(getEditorHolders(), new Function<TextEditorHolder, EditorEx>() {
-        @Override
-        public EditorEx fun(TextEditorHolder holder) {
-          return holder.getEditor();
-        }
-      });
+      myEditors = ContainerUtil.map(getEditorHolders(), holder -> holder.getEditor());
     }
     return myEditors;
   }

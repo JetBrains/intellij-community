@@ -51,7 +51,10 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.HintHint;
@@ -144,12 +147,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     myState = EmptyState.INSTANCE;
     myContentPanel.setContent(DiffUtil.createMessagePanel(((LoadingDiffRequest)myActiveRequest).getMessage()));
 
-    myOpenInEditorAction = new OpenInEditorAction(new Runnable() {
-      @Override
-      public void run() {
-        onAfterNavigate();
-      }
-    });
+    myOpenInEditorAction = new OpenInEditorAction(() -> onAfterNavigate());
   }
 
   //
@@ -253,16 +251,12 @@ public abstract class DiffRequestProcessor implements Disposable {
 
     force = force || (myQueuedApplyRequest != null && myQueuedApplyRequest.force);
     myQueuedApplyRequest = new ApplyData(request, force, scrollToChangePolicy);
-    Runnable task = new Runnable() {
-      @Override
-      public void run() {
-        if (myQueuedApplyRequest == null || myDisposed) return;
-        doApplyRequest(myQueuedApplyRequest.request, myQueuedApplyRequest.force, myQueuedApplyRequest.scrollToChangePolicy);
-        myQueuedApplyRequest = null;
-      }
-    };
 
-    IdeFocusManager.getInstance(myProject).doWhenFocusSettlesDown(task);
+    IdeFocusManager.getInstance(myProject).doWhenFocusSettlesDown(() -> {
+      if (myQueuedApplyRequest == null || myDisposed) return;
+      doApplyRequest(myQueuedApplyRequest.request, myQueuedApplyRequest.force, myQueuedApplyRequest.scrollToChangePolicy);
+      myQueuedApplyRequest = null;
+    });
   }
 
   @CalledInAwt
@@ -353,12 +347,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     List<String> savedOrder = getSettings().getDiffToolsOrder();
 
     for (final String clazz : savedOrder) {
-      DiffTool tool = ContainerUtil.find(availableTools, new Condition<DiffTool>() {
-        @Override
-        public boolean value(DiffTool tool) {
-          return tool.getClass().getCanonicalName().equals(clazz);
-        }
-      });
+      DiffTool tool = ContainerUtil.find(availableTools, t -> t.getClass().getCanonicalName().equals(clazz));
       if (tool != null) result.add(tool);
     }
 
@@ -380,24 +369,21 @@ public abstract class DiffRequestProcessor implements Disposable {
   @Override
   public void dispose() {
     if (myDisposed) return;
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        if (myDisposed) return;
-        myDisposed = true;
+    UIUtil.invokeLaterIfNeeded(() -> {
+      if (myDisposed) return;
+      myDisposed = true;
 
-        onDispose();
+      onDispose();
 
-        myState.destroy();
-        myToolbarStatusPanel.setContent(null);
-        myToolbarPanel.setContent(null);
-        myContentPanel.setContent(null);
+      myState.destroy();
+      myToolbarStatusPanel.setContent(null);
+      myToolbarPanel.setContent(null);
+      myContentPanel.setContent(null);
 
-        myActiveRequest.onAssigned(false);
+      myActiveRequest.onAssigned(false);
 
-        myState = EmptyState.INSTANCE;
-        myActiveRequest = NoDiffRequest.INSTANCE;
-      }
+      myState = EmptyState.INSTANCE;
+      myActiveRequest = NoDiffRequest.INSTANCE;
     });
   }
 

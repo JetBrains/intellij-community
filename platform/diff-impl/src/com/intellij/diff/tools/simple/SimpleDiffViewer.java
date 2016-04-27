@@ -46,7 +46,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.*;
 
@@ -230,43 +229,37 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
 
   @NotNull
   private Runnable apply(@NotNull final CompareData data) {
-    return new Runnable() {
-      @Override
-      public void run() {
-        myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
-        clearDiffPresentation();
+    return () -> {
+      myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
+      clearDiffPresentation();
 
-        myIsContentsEqual = data.isContentsEqual();
-        if (data.isContentsEqual()) {
-          boolean equalCharsets = TextDiffViewerUtil.areEqualCharsets(getContents());
-          boolean equalSeparators = TextDiffViewerUtil.areEqualLineSeparators(getContents());
-          myPanel.addNotification(DiffNotifications.createEqualContents(equalCharsets, equalSeparators));
-        }
-
-        if (data.getFragments() != null) {
-          for (LineFragment fragment : data.getFragments()) {
-            myDiffChanges.add(new SimpleDiffChange(SimpleDiffViewer.this, fragment));
-          }
-        }
-
-        myFoldingModel.install(data.getFragments(), myRequest, getFoldingModelSettings());
-
-        myInitialScrollHelper.onRediff();
-
-        myContentPanel.repaintDivider();
-        myStatusPanel.update();
+      myIsContentsEqual = data.isContentsEqual();
+      if (data.isContentsEqual()) {
+        boolean equalCharsets = TextDiffViewerUtil.areEqualCharsets(getContents());
+        boolean equalSeparators = TextDiffViewerUtil.areEqualLineSeparators(getContents());
+        myPanel.addNotification(DiffNotifications.createEqualContents(equalCharsets, equalSeparators));
       }
+
+      if (data.getFragments() != null) {
+        for (LineFragment fragment : data.getFragments()) {
+          myDiffChanges.add(new SimpleDiffChange(this, fragment));
+        }
+      }
+
+      myFoldingModel.install(data.getFragments(), myRequest, getFoldingModelSettings());
+
+      myInitialScrollHelper.onRediff();
+
+      myContentPanel.repaintDivider();
+      myStatusPanel.update();
     };
   }
 
   @NotNull
   private Runnable applyNotification(@Nullable final JComponent notification) {
-    return new Runnable() {
-      @Override
-      public void run() {
-        clearDiffPresentation();
-        if (notification != null) myPanel.addNotification(notification);
-      }
+    return () -> {
+      clearDiffPresentation();
+      if (notification != null) myPanel.addNotification(notification);
     };
   }
 
@@ -551,11 +544,8 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       if (!isEditable(myModifiedSide)) return;
 
       String title = e.getPresentation().getText() + " selected changes";
-      DiffUtil.executeWriteCommand(getEditor(myModifiedSide).getDocument(), e.getProject(), title, new Runnable() {
-        @Override
-        public void run() {
-          apply(selectedChanges);
-        }
+      DiffUtil.executeWriteCommand(getEditor(myModifiedSide).getDocument(), e.getProject(), title, () -> {
+        apply(selectedChanges);
       });
     }
 
@@ -912,15 +902,11 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     public void install(@Nullable final List<LineFragment> fragments,
                         @NotNull UserDataHolder context,
                         @NotNull FoldingModelSupport.Settings settings) {
-      Iterator<int[]> it = map(fragments, new Function<LineFragment, int[]>() {
-        @Override
-        public int[] fun(LineFragment fragment) {
-          return new int[]{
-            fragment.getStartLine1(),
-            fragment.getEndLine1(),
-            fragment.getStartLine2(),
-            fragment.getEndLine2()};
-        }
+      Iterator<int[]> it = map(fragments, fragment -> new int[]{
+        fragment.getStartLine1(),
+        fragment.getEndLine1(),
+        fragment.getStartLine2(),
+        fragment.getEndLine2()
       });
       install(it, context, settings);
     }

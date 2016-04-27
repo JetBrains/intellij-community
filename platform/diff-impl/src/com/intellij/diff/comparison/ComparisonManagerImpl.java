@@ -210,12 +210,7 @@ public class ComparisonManagerImpl extends ComparisonManager {
     if (oldFragments.isEmpty()) return oldFragments;
 
     final List<LineFragment> newFragments = new ArrayList<>();
-    processAdjoining(oldFragments, new Consumer<List<LineFragment>>() {
-      @Override
-      public void consume(List<LineFragment> fragments) {
-        newFragments.add(doSquash(fragments));
-      }
-    });
+    processAdjoining(oldFragments, fragments -> newFragments.add(doSquash(fragments)));
     return newFragments;
   }
 
@@ -229,12 +224,7 @@ public class ComparisonManagerImpl extends ComparisonManager {
     if (oldFragments.isEmpty()) return oldFragments;
 
     final List<LineFragment> newFragments = new ArrayList<>();
-    processAdjoining(oldFragments, new Consumer<List<LineFragment>>() {
-      @Override
-      public void consume(List<LineFragment> fragments) {
-        newFragments.addAll(processAdjoining(fragments, text1, text2, policy, squash, trim));
-      }
-    });
+    processAdjoining(oldFragments, fragments -> newFragments.addAll(processAdjoining(fragments, text1, text2, policy, squash, trim)));
     return newFragments;
   }
 
