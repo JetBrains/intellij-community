@@ -803,6 +803,10 @@
       <add-to-group group-id="XDebugger.ValueGroup" anchor="after" relative-to-action="Debugger.Tree.AddToWatches"/>
     </action>
 
+    <action id="PyDebugger.ViewDataFrame" class="com.jetbrains.python.debugger.dataframe.PyViewDataFrameAction" text="View as DataFrame">
+      <add-to-group group-id="XDebugger.ValueGroup" anchor="after" relative-to-action="Debugger.Tree.AddToWatches"/>
+    </action>
+
     <action id="PyConvertModuleToPackage" class="com.jetbrains.python.refactoring.convertModulePackage.PyConvertModuleToPackageAction"
             text="Convert to Python Package"
             description="Create package with the same name and move content of the module to its __init__.py">
