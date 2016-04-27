@@ -316,6 +316,14 @@ public class InlineMethodTest extends LightRefactoringTestCase {
     doTest();
   }
 
+  public void testInaccessibleFieldInSuperClass() throws Exception {
+    doTestConflict("Field <b><code>A.i</code></b> that is used in inlined method is not accessible from call site(s) in method <b><code>B.bar()</code></b>");
+  }
+
+  public void testPrivateFieldInSuperClassInSameFile() throws Exception {
+    doTest();
+  }
+
   private void doTestInlineThisOnly() {
     @NonNls String fileName = "/refactoring/inlineMethod/" + getTestName(false) + ".java";
     configureByFile(fileName);
