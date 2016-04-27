@@ -555,6 +555,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     protected void onBeforeDocumentChange(@NotNull DocumentEvent e) {
       super.onBeforeDocumentChange(e);
       enterBulkChangeUpdateBlock();
+      if (isDisposed()) return;
       if (myAllMergeChanges.isEmpty()) return;
 
       List<Document> documents = ContainerUtil.map(getEditors(), Editor::getDocument);
@@ -643,10 +644,12 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       if (getChangesCount() == 0 && getConflictsCount() == 0) {
         LOG.assertTrue(getFirstUnresolvedChange(true, null) == null);
         ApplicationManager.getApplication().invokeLater(() -> {
+          if (isDisposed()) return;
           String message = "All changes have been processed.<br><a href=\"\">Save changes and finish merging</a>";
           HyperlinkListener listener = new HyperlinkAdapter() {
             @Override
             protected void hyperlinkActivated(HyperlinkEvent e) {
+              if (isDisposed()) return;
               destroyChangedBlocks();
               myMergeContext.finishMerge(MergeResult.RESOLVED);
             }
