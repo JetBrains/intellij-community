@@ -39,6 +39,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.Html;
 import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +47,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.border.EmptyBorder;
 import javax.swing.text.*;
 import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLEditorKit;
@@ -314,7 +314,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
       .setRequestFocus(tooltip.isRequestFocus())
       .setLayer(tooltip.getLayer());
     tooltip.getTipComponent().setForeground(fg);
-    tooltip.getTipComponent().setBorder(new EmptyBorder(1, 3, 2, 3));
+    tooltip.getTipComponent().setBorder(JBUI.Borders.empty(1, 3, 2, 3));
     tooltip.getTipComponent().setFont(tooltip.getFont() != null ? tooltip.getFont() : getTextFont(true));
 
 
@@ -629,7 +629,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
 
   public static void setBorder(JComponent pane) {
     pane.setBorder(
-      BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Color.black), BorderFactory.createEmptyBorder(0, 5, 0, 5)));
+      BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Color.black), JBUI.Borders.empty(0, 5)));
   }
 
   @NotNull
