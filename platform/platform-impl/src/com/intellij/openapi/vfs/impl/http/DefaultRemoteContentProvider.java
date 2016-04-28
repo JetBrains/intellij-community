@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.Url;
 import com.intellij.util.io.HttpRequests;
+import com.intellij.util.io.RequestBuilder;
 import com.intellij.util.net.ssl.CertificateManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.ide.BuiltInServerManager;
@@ -36,6 +37,15 @@ import java.io.IOException;
 
 public class DefaultRemoteContentProvider extends RemoteContentProvider {
   private static final Logger LOG = Logger.getInstance(DefaultRemoteContentProvider.class);
+
+  @NotNull
+  public static RequestBuilder addRequestTuner(@NotNull Url url, @NotNull RequestBuilder requestBuilder) {
+    BuiltInServerManager builtInServerManager = BuiltInServerManager.getInstance();
+    if (builtInServerManager.isOnBuiltInWebServer(url)) {
+      requestBuilder.tuner(builtInServerManager::configureRequestToWebServer);
+    }
+    return requestBuilder;
+  }
 
   @Override
   public boolean canProvideContent(@NotNull Url url) {
@@ -57,16 +67,10 @@ public class DefaultRemoteContentProvider extends RemoteContentProvider {
     final String presentableUrl = StringUtil.trimMiddle(url.trimParameters().toDecodedForm(), 40);
     callback.setProgressText(VfsBundle.message("download.progress.connecting", presentableUrl), true);
     try {
-      HttpRequests.request(url.toExternalForm())
+      addRequestTuner(url, HttpRequests.request(url.toExternalForm()))
         .connectTimeout(60 * 1000)
         .productNameAsUserAgent()
         .hostNameVerifier(CertificateManager.HOSTNAME_VERIFIER)
-        .tuner(connection -> {
-          BuiltInServerManager builtInServerManager = BuiltInServerManager.getInstance();
-          if (builtInServerManager.isOnBuiltInWebServer(url)) {
-            builtInServerManager.configureRequestToWebServer(connection);
-          }
-        })
         .connect(new HttpRequests.RequestProcessor<Object>() {
           @Override
           public Object process(@NotNull HttpRequests.Request request) throws IOException {

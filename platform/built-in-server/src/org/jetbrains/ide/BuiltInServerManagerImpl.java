@@ -22,9 +22,10 @@ import org.jetbrains.builtInWebServer.BuiltInWebServerKt;
 import org.jetbrains.io.BuiltInServer;
 import org.jetbrains.io.SubServer;
 
+import java.io.IOException;
 import java.net.InetAddress;
+import java.net.NetworkInterface;
 import java.net.URLConnection;
-import java.net.UnknownHostException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -148,22 +149,15 @@ public class BuiltInServerManagerImpl extends BuiltInServerManager {
       }
     }
   }
-  
+
   public static boolean isOnBuiltInWebServerByAuthority(@NotNull String authority) {
     int portIndex = authority.indexOf(':');
     if (portIndex < 0 || portIndex == authority.length() - 1) {
       return false;
     }
 
-    int port;
-    try {
-      port = Integer.parseInt(authority.substring(portIndex + 1));
-    }
-    catch (NumberFormatException ignored) {
-      return false;
-    }
-
-    if (BuiltInServerOptions.getInstance().builtInServerPort != port && BuiltInServerManager.getInstance().getPort() != port) {
+    int port = StringUtil.parseInt(authority.substring(portIndex + 1), -1);
+    if (port == -1 || (BuiltInServerOptions.getInstance().builtInServerPort != port && BuiltInServerManager.getInstance().getPort() != port)) {
       return false;
     }
 
@@ -172,17 +166,12 @@ public class BuiltInServerManagerImpl extends BuiltInServerManager {
       return true;
     }
 
-    InetAddress inetAddress;
     try {
-      inetAddress = InetAddress.getByName(host);
+      InetAddress inetAddress = InetAddress.getByName(host);
+      return inetAddress.isLoopbackAddress() || inetAddress.isAnyLocalAddress() || NetworkInterface.getByInetAddress(inetAddress) != null;
     }
-    catch (UnknownHostException ignored) {
+    catch (IOException e) {
       return false;
     }
-
-    if (inetAddress == null) {
-      return false;
-    }
-    return inetAddress.isLoopbackAddress() || inetAddress.isAnyLocalAddress();
   }
 }
