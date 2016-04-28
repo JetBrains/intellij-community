@@ -29,14 +29,13 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
-import gnu.trove.THashSet;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 import org.jetbrains.plugins.javaFX.refactoring.JavaFxPropertyElement;
-
-import java.util.Set;
 
 /**
  * @author Pavel.Dolgov
@@ -91,25 +90,15 @@ public class JavaFxMethodSearcher implements QueryExecutor<PsiReference, Referen
       if (className == null) return;
 
       final GlobalSearchScope fxmlScope = new JavaFxScopeEnlarger.GlobalFxmlSearchScope((GlobalSearchScope)scope);
-      final Set<VirtualFile> filteredFiles = new THashSet<>();
-      ApplicationManager.getApplication().runReadAction(
-        () -> searchWord(project, fxmlScope, className, file -> {
-          filteredFiles.add(file.getViewProvider().getVirtualFile());
-          return true;
-        }));
-      if (filteredFiles.isEmpty()) return;
+      final VirtualFile[] filteredFiles = ApplicationManager.getApplication().runReadAction((Computable<VirtualFile[]>)() ->
+        CacheManager.SERVICE.getInstance(project).getVirtualFilesWithWord(className, UsageSearchContext.IN_PLAIN_TEXT, fxmlScope, true));
+      if (ArrayUtil.isEmpty(filteredFiles)) return;
 
-      final GlobalSearchScope filteredScope = GlobalSearchScope.filesScope(project, filteredFiles);
+      final GlobalSearchScope filteredScope = GlobalSearchScope.filesScope(project, ContainerUtil.newHashSet(filteredFiles));
       ApplicationManager.getApplication().runReadAction(
-        () -> searchWord(project, filteredScope, propertyName, file -> searchMethodInFile(psiMethod, file, consumer)));
+        (Runnable)() -> CacheManager.SERVICE.getInstance(project).processFilesWithWord(
+          file -> searchMethodInFile(psiMethod, file, consumer), propertyName, UsageSearchContext.IN_PLAIN_TEXT, filteredScope, true));
     }
-  }
-
-  private static void searchWord(@NotNull Project project,
-                                 @NotNull GlobalSearchScope scope,
-                                 @NotNull String wordToSearch,
-                                 @NotNull Processor<PsiFile> consumer) {
-    CacheManager.SERVICE.getInstance(project).processFilesWithWord(consumer, wordToSearch, UsageSearchContext.IN_PLAIN_TEXT, scope, true);
   }
 
   private static boolean searchMethodInFile(@NotNull PsiMethod psiMethod,
