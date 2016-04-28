@@ -62,6 +62,9 @@ public class CCProjectService implements PersistentStateComponent<CCProjectServi
     if (!lessonDirName.contains(EduNames.LESSON)) {
       return null;
     }
+    if (myCourse == null) {
+      return null;
+    }
     Lesson lesson = myCourse.getLesson(lessonDirName);
     if (lesson == null) {
       return null;
