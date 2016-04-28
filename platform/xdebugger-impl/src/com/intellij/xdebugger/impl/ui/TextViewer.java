@@ -16,6 +16,7 @@
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.DocumentImpl;
@@ -60,7 +61,12 @@ public final class TextViewer extends EditorTextField {
   public void setText(@Nullable String text) {
     if (text != null) {
       if (needSlashRSupport(text, isViewer())) {
-        ((DocumentImpl)getDocument()).setAcceptSlashR(true);
+        if (!((DocumentImpl)getDocument()).setAcceptSlashR(true)) {
+          Editor editor = getEditor();
+          if (editor instanceof EditorEx) {
+            ((EditorEx)editor).reinitSettings();
+          }
+        }
       }
       else {
         text = StringUtil.convertLineSeparators(text);
