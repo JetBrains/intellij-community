@@ -27,6 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierL
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
+import org.jetbrains.plugins.groovy.transformations.TransformationUtilKt;
 
 import java.util.*;
 
@@ -81,34 +82,30 @@ public class CollectClassMembersUtil {
   @NotNull
   private static ClassMembers getCachedMembers(@NotNull PsiClass aClass, boolean includeSynthetic) {
     PsiUtilCore.ensureValid(aClass);
-    Key<CachedValue<ClassMembers>> key = includeSynthetic ? CACHED_MEMBERS_INCLUDING_SYNTHETIC : CACHED_MEMBERS;
-    CachedValue<ClassMembers> cachedValue = aClass.getUserData(key);
-    if (includeSynthetic && isCyclicDependence(aClass)) {
+    if (includeSynthetic && !checkClass(aClass)) {
       includeSynthetic = false;
     }
-    if (cachedValue == null) {
-      cachedValue = buildCache(aClass, includeSynthetic);
-      aClass.putUserData(key, cachedValue);
-    }
-    return cachedValue.getValue();
+    return buildCache(aClass, includeSynthetic);
   }
 
-  private static boolean isCyclicDependence(PsiClass aClass) {
-    return !processCyclicDependence(aClass, ContainerUtil.<PsiClass>newHashSet());
-  }
+  private static boolean checkClass(PsiClass aClass) {
+    Set<PsiClass> visited = ContainerUtil.newHashSet();
+    Queue<PsiClass> queue = ContainerUtil.newLinkedList(aClass);
 
-  private static boolean processCyclicDependence(PsiClass aClass, Set<PsiClass> classes) {
-    if (!classes.add(aClass)) {
-      return aClass.isInterface() || CommonClassNames.JAVA_LANG_OBJECT.equals(aClass.getQualifiedName());
-    }
-
-    if (aClass instanceof ClsClassImpl) return true; //optimization
-
-    for (PsiClass psiClass : getSupers(aClass, true)) {
-      if (!processCyclicDependence(psiClass, classes)) {
+    while (!queue.isEmpty()) {
+      PsiClass current = queue.poll();
+      if (visited.add(current)) {
+        if (aClass instanceof ClsClassImpl) continue;
+        if (TransformationUtilKt.isUnderTransformation(current)) return false;
+        for (PsiClass superClass : getSupers(current, true)) {
+          queue.offer(superClass);
+        }
+      }
+      else if (!current.isInterface() && !CommonClassNames.JAVA_LANG_OBJECT.equals(current.getQualifiedName())) {
         return false;
       }
     }
+
     return true;
   }
 
@@ -124,18 +121,17 @@ public class CollectClassMembersUtil {
     return getAllFields(aClass, true);
   }
 
-  private static CachedValue<ClassMembers> buildCache(@NotNull final PsiClass aClass, final boolean includeSynthetic) {
-    return CachedValuesManager.getManager(aClass.getProject()).createCachedValue(new CachedValueProvider<ClassMembers>() {
-      @Override
-      public Result<ClassMembers> compute() {
-        LinkedHashMap<String, CandidateInfo> allFields = ContainerUtil.newLinkedHashMap();
-        LinkedHashMap<String, List<CandidateInfo>> allMethods = ContainerUtil.newLinkedHashMap();
-        LinkedHashMap<String, CandidateInfo> allInnerClasses = ContainerUtil.newLinkedHashMap();
+  private static ClassMembers buildCache(@NotNull final PsiClass aClass, final boolean includeSynthetic) {
+    Key<CachedValue<ClassMembers>> key = includeSynthetic ? CACHED_MEMBERS_INCLUDING_SYNTHETIC : CACHED_MEMBERS;
+    return CachedValuesManager.getManager(aClass.getProject()).getCachedValue(aClass, key, () -> {
+      LinkedHashMap<String, CandidateInfo> allFields = ContainerUtil.newLinkedHashMap();
+      LinkedHashMap<String, List<CandidateInfo>> allMethods = ContainerUtil.newLinkedHashMap();
+      LinkedHashMap<String, CandidateInfo> allInnerClasses = ContainerUtil.newLinkedHashMap();
 
-        processClass(aClass, allFields, allMethods, allInnerClasses, new HashSet<PsiClass>(), PsiSubstitutor.EMPTY, includeSynthetic);
-        return Result.create(ClassMembers.create(allFields, allMethods, allInnerClasses),
-                             PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
-      }
+      processClass(aClass, allFields, allMethods, allInnerClasses, new HashSet<PsiClass>(), PsiSubstitutor.EMPTY, includeSynthetic);
+      return CachedValueProvider.Result.create(
+        ClassMembers.create(allFields, allMethods, allInnerClasses), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT
+      );
     }, false);
   }
 

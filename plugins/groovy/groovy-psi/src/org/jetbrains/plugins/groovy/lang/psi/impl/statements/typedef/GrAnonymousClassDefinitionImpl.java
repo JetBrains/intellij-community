@@ -186,7 +186,7 @@ public class GrAnonymousClassDefinitionImpl extends GrTypeDefinitionImpl impleme
 
   @NotNull
   @Override
-  public PsiClassType[] getExtendsListTypes() {
+  public PsiClassType[] getExtendsListTypes(boolean includeSynthetic) {
     final PsiClass baseClass = getBaseClass();
 
     if (baseClass != null) {
@@ -202,7 +202,7 @@ public class GrAnonymousClassDefinitionImpl extends GrTypeDefinitionImpl impleme
         }
       }
     }
-    return super.getExtendsListTypes();
+    return super.getExtendsListTypes(includeSynthetic);
   }
 
   @Override

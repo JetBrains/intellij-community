@@ -46,6 +46,12 @@ public interface GrTypeDefinition extends PsiClass, GrTopLevelDefinition, GrDocC
 
   @NotNull
   @Override
+  default PsiClassType[] getExtendsListTypes() {
+    return getExtendsListTypes(true);
+  }
+
+  @NotNull
+  @Override
   default PsiClass[] getSupers() {
     return getSupers(true);
   }
@@ -58,6 +64,9 @@ public interface GrTypeDefinition extends PsiClass, GrTopLevelDefinition, GrDocC
 
   @NotNull
   PsiClassType[] getImplementsListTypes(boolean includeSynthetic);
+
+  @NotNull
+  PsiClassType[] getExtendsListTypes(boolean includeSynthetic);
 
   @NotNull
   PsiClass[] getSupers(boolean includeSynthetic);
