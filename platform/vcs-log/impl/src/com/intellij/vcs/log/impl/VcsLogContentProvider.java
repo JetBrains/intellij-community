@@ -27,6 +27,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.TabbedContent;
+import com.intellij.ui.content.impl.ContentManagerImpl;
 import com.intellij.util.ContentUtilEx;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
@@ -123,9 +124,10 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
   private void closeLogTabs() {
     ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.VCS);
 
-    TabbedContent content = ContentUtilEx.findTabbedContent(toolWindow.getContentManager(), TAB_NAME);
-    if (content != null) {
-      toolWindow.getContentManager().removeContent(content, true);
+    for (Content content: toolWindow.getContentManager().getContents()) {
+      if (ContentUtilEx.isContentTab(content, TAB_NAME)) {
+        ContentUtilEx.closeContentTab(toolWindow.getContentManager(), content);
+      }
     }
   }
 
