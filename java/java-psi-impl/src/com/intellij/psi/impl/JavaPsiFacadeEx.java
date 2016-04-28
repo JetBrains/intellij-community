@@ -19,9 +19,7 @@
  */
 package com.intellij.psi.impl;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -40,7 +38,4 @@ public abstract class JavaPsiFacadeEx extends JavaPsiFacade {
   public PsiClass findClass(@NotNull String qualifiedName) {
     return findClass(qualifiedName, GlobalSearchScope.allScope(getProject()));
   }
-
-  @TestOnly
-  public abstract void setAssertOnFileLoadingFilter(@NotNull VirtualFileFilter filter, @NotNull Disposable parentDisposable);
 }

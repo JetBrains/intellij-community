@@ -15,11 +15,14 @@
  */
 package com.intellij.psi.impl;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.file.impl.FileManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 /**
  * @author peter
@@ -30,6 +33,10 @@ public abstract class PsiManagerEx extends PsiManager {
   }
   public abstract boolean isBatchFilesProcessingMode();
 
+  @TestOnly
+  public abstract void setAssertOnFileLoadingFilter(@NotNull VirtualFileFilter filter, @NotNull Disposable parentDisposable);
+
+  @TestOnly
   public abstract boolean isAssertOnFileLoading(@NotNull VirtualFile file);
 
   /**
