@@ -37,6 +37,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
+import com.intellij.psi.impl.cache.impl.id.IdIndex;
+import com.intellij.psi.impl.cache.impl.id.IdIndexEntry;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -46,6 +48,7 @@ import com.intellij.psi.util.*;
 import com.intellij.slicer.*;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.FileBasedIndex;
 import gnu.trove.THashSet;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.Nls;
@@ -418,6 +421,12 @@ public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
   }
 
   private static AllowedValues parseBeanInfo(@NotNull PsiModifierListOwner owner, @NotNull PsiManager manager) {
+    PsiFile containingFile = owner.getContainingFile();
+    GlobalSearchScope sourceFile = GlobalSearchScope.fileScope((PsiFile)containingFile.getNavigationElement());
+    if (FileBasedIndex.getInstance().getContainingFiles(IdIndex.NAME, new IdIndexEntry("beaninfo", true), sourceFile).isEmpty()) {
+      // optimisation: do not parse library sources if there are no "beaninfo" text in the file
+      return null;
+    }
     PsiMethod method = null;
     if (owner instanceof PsiParameter) {
       PsiParameter parameter = (PsiParameter)owner;
