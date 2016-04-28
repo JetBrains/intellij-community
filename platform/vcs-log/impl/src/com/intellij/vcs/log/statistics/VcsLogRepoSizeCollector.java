@@ -27,7 +27,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.data.DataPack;
-import com.intellij.vcs.log.data.VcsLogDataManager;
+import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.impl.VcsProjectLog;
 import org.jetbrains.annotations.NotNull;
@@ -47,9 +47,9 @@ public class VcsLogRepoSizeCollector extends AbstractApplicationUsagesCollector 
   @Override
   public Set<UsageDescriptor> getProjectUsages(@NotNull Project project) throws CollectUsagesException {
     VcsProjectLog projectLog = VcsProjectLog.getInstance(project);
-    VcsLogDataManager dataManager = projectLog.getDataManager();
-    if (dataManager != null) {
-      DataPack dataPack = dataManager.getDataPack();
+    VcsLogData logData = projectLog.getDataManager();
+    if (logData != null) {
+      DataPack dataPack = logData.getDataPack();
       if (dataPack.isFull()) {
         PermanentGraph<Integer> permanentGraph = dataPack.getPermanentGraph();
         MultiMap<VcsKey, VirtualFile> groupedRoots = groupRootsByVcs(dataPack.getLogProviders());

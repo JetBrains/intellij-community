@@ -43,7 +43,7 @@ public class ContainingBranchesGetter {
   private static final Logger LOG = Logger.getInstance(ContainingBranchesGetter.class);
 
   @NotNull private final SequentialLimitedLifoExecutor<Task> myTaskExecutor;
-  @NotNull private final VcsLogDataManager myDataManager;
+  @NotNull private final VcsLogData myLogData;
 
   // other fields accessed only from EDT
   @NotNull private final List<Runnable> myLoadingFinishedListeners = ContainerUtil.newArrayList();
@@ -51,12 +51,12 @@ public class ContainingBranchesGetter {
   @NotNull private Map<VirtualFile, ContainedInBranchCondition> myConditions = ContainerUtil.newHashMap();
   private int myCurrentBranchesChecksum;
 
-  ContainingBranchesGetter(@NotNull VcsLogDataManager dataManager, @NotNull Disposable parentDisposable) {
-    myDataManager = dataManager;
+  ContainingBranchesGetter(@NotNull VcsLogData logData, @NotNull Disposable parentDisposable) {
+    myLogData = logData;
     myTaskExecutor = new SequentialLimitedLifoExecutor<Task>(parentDisposable, 10, new ThrowableConsumer<Task, Throwable>() {
       @Override
       public void consume(final Task task) throws Throwable {
-        final List<String> branches = task.getContainingBranches(myDataManager);
+        final List<String> branches = task.getContainingBranches(myLogData);
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {
@@ -68,7 +68,7 @@ public class ContainingBranchesGetter {
         });
       }
     });
-    myDataManager.addDataPackChangeListener(new DataPackChangeListener() {
+    myLogData.addDataPackChangeListener(new DataPackChangeListener() {
       @Override
       public void onDataPackChange(@NotNull DataPack dataPack) {
         Collection<VcsRef> currentBranches = dataPack.getRefsModel().getBranches();
@@ -127,7 +127,7 @@ public class ContainingBranchesGetter {
     LOG.assertTrue(EventQueue.isDispatchThread());
     List<String> refs = myCache.get(new CommitId(hash, root));
     if (refs == null) {
-      DataPack dataPack = myDataManager.getDataPack();
+      DataPack dataPack = myLogData.getDataPack();
       myTaskExecutor.queue(new Task(root, hash, myCache, dataPack.getPermanentGraph(), dataPack.getRefsModel()));
     }
     return refs;
@@ -142,7 +142,7 @@ public class ContainingBranchesGetter {
   public Condition<CommitId> getContainedInBranchCondition(@NotNull final String branchName, @NotNull final VirtualFile root) {
     LOG.assertTrue(EventQueue.isDispatchThread());
 
-    DataPack dataPack = myDataManager.getDataPack();
+    DataPack dataPack = myLogData.getDataPack();
     if (dataPack == DataPack.EMPTY) return Conditions.alwaysFalse();
 
     PermanentGraph<Integer> graph = dataPack.getPermanentGraph();
@@ -158,7 +158,7 @@ public class ContainingBranchesGetter {
     ContainedInBranchCondition condition = myConditions.get(root);
     if (condition == null || !condition.getBranch().equals(branchName)) {
       condition = new ContainedInBranchCondition(graph.getContainedInBranchCondition(
-        Collections.singleton(myDataManager.getCommitIndex(branchRef.getCommitHash(), branchRef.getRoot()))), branchName);
+        Collections.singleton(myLogData.getCommitIndex(branchRef.getCommitHash(), branchRef.getRoot()))), branchName);
       myConditions.put(root, condition);
     }
     return condition;
@@ -189,11 +189,11 @@ public class ContainingBranchesGetter {
     }
 
     @NotNull
-    public List<String> getContainingBranches(VcsLogDataManager dataManager) {
+    public List<String> getContainingBranches(VcsLogData logData) {
       try {
-        VcsLogProvider provider = dataManager.getLogProvider(root);
+        VcsLogProvider provider = logData.getLogProvider(root);
         if (graph != null && refs != null && VcsLogProperties.get(provider, VcsLogProperties.LIGHTWEIGHT_BRANCHES)) {
-          Set<Integer> branchesIndexes = graph.getContainingBranches(dataManager.getCommitIndex(hash, root));
+          Set<Integer> branchesIndexes = graph.getContainingBranches(logData.getCommitIndex(hash, root));
 
           Collection<VcsRef> branchesRefs = new HashSet<VcsRef>();
           for (Integer index : branchesIndexes) {
@@ -238,7 +238,7 @@ public class ContainingBranchesGetter {
     @Override
     public boolean value(CommitId commitId) {
       if (isDisposed) return false;
-      return myCondition.value(myDataManager.getCommitIndex(commitId.getHash(), commitId.getRoot()));
+      return myCondition.value(myLogData.getCommitIndex(commitId.getHash(), commitId.getRoot()));
     }
 
     public void dispose() {

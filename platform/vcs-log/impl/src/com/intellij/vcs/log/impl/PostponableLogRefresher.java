@@ -24,7 +24,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogRefresher;
 import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.DataPackChangeListener;
-import com.intellij.vcs.log.data.VcsLogDataManager;
+import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogFilterer;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,13 +33,13 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class PostponableLogRefresher implements VcsLogRefresher {
-  @NotNull protected final VcsLogDataManager myDataManager;
+  @NotNull protected final VcsLogData myLogData;
   @NotNull private final Set<VirtualFile> myRootsToRefresh = ContainerUtil.newHashSet();
   @NotNull private final Set<VcsLogWindow> myLogWindows = ContainerUtil.newHashSet();
 
-  public PostponableLogRefresher(@NotNull VcsLogDataManager dataManager) {
-    myDataManager = dataManager;
-    myDataManager.addDataPackChangeListener(new DataPackChangeListener() {
+  public PostponableLogRefresher(@NotNull VcsLogData logData) {
+    myLogData = logData;
+    myLogData.addDataPackChangeListener(new DataPackChangeListener() {
       @Override
       public void onDataPackChange(@NotNull DataPack dataPack) {
         for (VcsLogWindow window : myLogWindows) {
@@ -107,7 +107,7 @@ public class PostponableLogRefresher implements VcsLogRefresher {
       @Override
       public void run() {
         if (canRefreshNow()) {
-          myDataManager.refresh(Collections.singleton(root));
+          myLogData.refresh(Collections.singleton(root));
         }
         else {
           myRootsToRefresh.add(root);
@@ -119,7 +119,7 @@ public class PostponableLogRefresher implements VcsLogRefresher {
   protected void refreshPostponedRoots() {
     Set<VirtualFile> toRefresh = new HashSet<VirtualFile>(myRootsToRefresh);
     myRootsToRefresh.removeAll(toRefresh); // clear the set, but keep roots which could possibly arrive after collecting them in the var.
-    myDataManager.refresh(toRefresh);
+    myLogData.refresh(toRefresh);
   }
 
   @NotNull

@@ -43,7 +43,7 @@ import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.data.LoadingDetails;
-import com.intellij.vcs.log.data.VcsLogDataManager;
+import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VisiblePack;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.render.VcsRefPainter;
@@ -81,7 +81,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
   private static final String STANDARD_LAYER = "Standard";
   private static final String MESSAGE_LAYER = "Message";
 
-  @NotNull private final VcsLogDataManager myLogDataManager;
+  @NotNull private final VcsLogData myLogData;
   @NotNull private final VcsLogGraphTable myGraphTable;
 
   @NotNull private final ReferencesPanel myReferencesPanel;
@@ -96,18 +96,18 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
   @NotNull private VisiblePack myDataPack;
   @Nullable private VcsFullCommitDetails myCurrentCommitDetails;
 
-  DetailsPanel(@NotNull VcsLogDataManager logDataManager,
+  DetailsPanel(@NotNull VcsLogData logData,
                @NotNull VcsLogGraphTable graphTable,
                @NotNull VcsLogColorManager colorManager,
                @NotNull VisiblePack initialDataPack,
                @NotNull Disposable parent) {
-    myLogDataManager = logDataManager;
+    myLogData = logData;
     myGraphTable = graphTable;
     myColorManager = colorManager;
     myDataPack = initialDataPack;
 
     myReferencesPanel = new ReferencesPanel(myColorManager);
-    myCommitDetailsPanel = new DataPanel(logDataManager.getProject(), logDataManager.isMultiRoot(), logDataManager);
+    myCommitDetailsPanel = new DataPanel(logData.getProject(), logData.isMultiRoot(), logData);
 
     myScrollPane = new JBScrollPane(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     myScrollPane.getVerticalScrollBar().setUnitIncrement(8);
@@ -200,7 +200,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
 
       List<String> branches = null;
       if (!(commitData instanceof LoadingDetails)) {
-        branches = myLogDataManager.getContainingBranchesGetter().requestContainingBranches(commitData.getRoot(), commitData.getId());
+        branches = myLogData.getContainingBranchesGetter().requestContainingBranches(commitData.getRoot(), commitData.getId());
       }
       myCommitDetailsPanel.setBranches(branches);
 
@@ -240,7 +240,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
   @NotNull
   private List<VcsRef> sortRefs(@NotNull Hash hash, @NotNull VirtualFile root) {
     Collection<VcsRef> refs = myDataPack.getRefs().refsToCommit(hash, root);
-    return ContainerUtil.sorted(refs, myLogDataManager.getLogProvider(root).getReferenceManager().getLabelsOrderComparator());
+    return ContainerUtil.sorted(refs, myLogData.getLogProvider(root).getReferenceManager().getLabelsOrderComparator());
   }
 
   private static class DataPanel extends JEditorPane {

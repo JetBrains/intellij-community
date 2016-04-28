@@ -34,7 +34,7 @@ import com.intellij.ui.SearchTextField;
 import com.intellij.ui.SearchTextFieldWithStoredHistory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.data.VcsLogDataManager;
+import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl;
 import com.intellij.vcs.log.impl.VcsLogHashFilterImpl;
@@ -64,7 +64,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
 
   @NotNull private final VcsLogUiImpl myUi;
 
-  @NotNull private final VcsLogDataManager myLogDataManager;
+  @NotNull private final VcsLogData myLogData;
   @NotNull private final VcsLogUiProperties myUiProperties;
 
   @NotNull private VcsLogDataPack myDataPack;
@@ -76,11 +76,11 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
   @NotNull private final TextFilterModel myTextFilterModel;
 
   public VcsLogClassicFilterUi(@NotNull VcsLogUiImpl ui,
-                               @NotNull VcsLogDataManager logDataManager,
+                               @NotNull VcsLogData logData,
                                @NotNull VcsLogUiProperties uiProperties,
                                @NotNull VcsLogDataPack initialDataPack) {
     myUi = ui;
-    myLogDataManager = logDataManager;
+    myLogData = logData;
     myUiProperties = uiProperties;
     myDataPack = initialDataPack;
 
@@ -108,7 +108,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
         public void run() {
           myUi.applyFiltersAndUpdateUi();
           myBranchFilterModel
-            .onStructureFilterChanged(new HashSet<VirtualFile>(myLogDataManager.getRoots()), myStructureFilterModel.getFilter());
+            .onStructureFilterChanged(new HashSet<VirtualFile>(myLogData.getRoots()), myStructureFilterModel.getFilter());
         }
       });
     }
@@ -167,7 +167,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     actionGroup.add(new FilterActionComponent(new Computable<JComponent>() {
       @Override
       public JComponent compute() {
-        return new UserFilterPopupComponent(myUiProperties, myLogDataManager, myUserFilterModel).initUi();
+        return new UserFilterPopupComponent(myUiProperties, myLogData, myUserFilterModel).initUi();
       }
     }));
     actionGroup.add(new FilterActionComponent(new Computable<JComponent>() {

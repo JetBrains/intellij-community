@@ -27,7 +27,7 @@ import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
-import com.intellij.vcs.log.data.VcsLogDataManager;
+import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogTabsProperties;
 import com.intellij.vcs.log.ui.VcsLogPanel;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
@@ -58,7 +58,7 @@ public class VcsProjectLog {
   }
 
   @Nullable
-  public VcsLogDataManager getDataManager() {
+  public VcsLogData getDataManager() {
     VcsLogManager cached = myLogManager.getCached();
     if (cached == null) return null;
     return cached.getDataManager();

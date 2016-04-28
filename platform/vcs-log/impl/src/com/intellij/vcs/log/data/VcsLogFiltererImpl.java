@@ -40,7 +40,7 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
 
   @NotNull private final SingleTaskController<Request, VisiblePack> myTaskController;
   @NotNull private final VisiblePackBuilder myVisiblePackBuilder;
-  @NotNull private final VcsLogDataManager myDataManager;
+  @NotNull private final VcsLogData myLogData;
 
   @NotNull private VcsLogFilterCollection myFilters;
   @NotNull private PermanentGraph.SortType mySortType;
@@ -51,10 +51,10 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
   private volatile boolean myIsValid = true;
 
   public VcsLogFiltererImpl(@NotNull final Project project,
-                            @NotNull VcsLogDataManager dataManager,
+                            @NotNull VcsLogData logData,
                             @NotNull PermanentGraph.SortType initialSortType) {
-    myDataManager = dataManager;
-    myVisiblePackBuilder = myDataManager.createVisiblePackBuilder();
+    myLogData = logData;
+    myVisiblePackBuilder = myLogData.createVisiblePackBuilder();
     myFilters = new VcsLogFilterCollectionImpl(null, null, null, null, null, null, null);
     mySortType = initialSortType;
 
@@ -198,7 +198,7 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
           if (filterRequest != null) {
             frozenVisiblePack = refresh(visiblePack, filterRequest, moreCommitsRequests);
           }
-          return new FakeVisiblePackBuilder(myDataManager.getHashMap()).build(frozenVisiblePack);
+          return new FakeVisiblePackBuilder(myLogData.getHashMap()).build(frozenVisiblePack);
         }
       }
     }
@@ -206,7 +206,7 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
     private VisiblePack refresh(@Nullable VisiblePack visiblePack,
                                 @Nullable FilterRequest filterRequest,
                                 @NotNull List<MoreCommitsRequest> moreCommitsRequests) {
-      DataPack dataPack = myDataManager.getDataPack();
+      DataPack dataPack = myLogData.getDataPack();
 
       if (dataPack == DataPack.EMPTY) { // when filter is set during initialization, just remember filters
         return visiblePack;

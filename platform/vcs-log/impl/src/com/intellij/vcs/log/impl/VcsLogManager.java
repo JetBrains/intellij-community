@@ -33,7 +33,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsLogRefresher;
-import com.intellij.vcs.log.data.VcsLogDataManager;
+import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogFiltererImpl;
 import com.intellij.vcs.log.data.VcsLogTabsProperties;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
@@ -57,7 +57,7 @@ public class VcsLogManager implements Disposable {
   @NotNull private final VcsLogTabsProperties myUiProperties;
   @Nullable private final Runnable myRecreateMainLogHandler;
 
-  @NotNull private final VcsLogDataManager myDataManager;
+  @NotNull private final VcsLogData myLogData;
   @NotNull private final VcsLogColorManagerImpl myColorManager;
   @NotNull private final VcsLogTabsWatcher myTabsLogRefresher;
   @NotNull private final PostponableLogRefresher myPostponableRefresher;
@@ -77,11 +77,11 @@ public class VcsLogManager implements Disposable {
     myRecreateMainLogHandler = recreateHandler;
 
     Map<VirtualFile, VcsLogProvider> logProviders = findLogProviders(roots, myProject);
-    myDataManager = new VcsLogDataManager(myProject, logProviders, new MyFatalErrorsConsumer());
-    myPostponableRefresher = new PostponableLogRefresher(myDataManager);
-    myTabsLogRefresher = new VcsLogTabsWatcher(myProject, myPostponableRefresher, myDataManager);
+    myLogData = new VcsLogData(myProject, logProviders, new MyFatalErrorsConsumer());
+    myPostponableRefresher = new PostponableLogRefresher(myLogData);
+    myTabsLogRefresher = new VcsLogTabsWatcher(myProject, myPostponableRefresher, myLogData);
 
-    refreshLogOnVcsEvents(logProviders, myPostponableRefresher, myDataManager);
+    refreshLogOnVcsEvents(logProviders, myPostponableRefresher, myLogData);
 
     myColorManager = new VcsLogColorManagerImpl(logProviders.keySet());
 
@@ -96,7 +96,7 @@ public class VcsLogManager implements Disposable {
   public void scheduleInitialization() {
     if (!myInitialized) {
       myInitialized = true;
-      myDataManager.refreshCompletely();
+      myLogData.refreshCompletely();
     }
   }
 
@@ -106,8 +106,8 @@ public class VcsLogManager implements Disposable {
   }
 
   @NotNull
-  public VcsLogDataManager getDataManager() {
-    return myDataManager;
+  public VcsLogData getDataManager() {
+    return myLogData;
   }
 
   @NotNull
@@ -120,8 +120,8 @@ public class VcsLogManager implements Disposable {
   public VcsLogUiImpl createLogUi(@NotNull String logId, @Nullable String contentTabName) {
     VcsLogUiProperties properties = myUiProperties.createProperties(logId);
     VcsLogFiltererImpl filterer =
-      new VcsLogFiltererImpl(myProject, myDataManager, PermanentGraph.SortType.values()[properties.getBekSortType()]);
-    VcsLogUiImpl ui = new VcsLogUiImpl(myDataManager, myProject, myColorManager, properties, filterer);
+      new VcsLogFiltererImpl(myProject, myLogData, PermanentGraph.SortType.values()[properties.getBekSortType()]);
+    VcsLogUiImpl ui = new VcsLogUiImpl(myLogData, myProject, myColorManager, properties, filterer);
 
     Disposable disposable;
     if (contentTabName != null) {
@@ -173,7 +173,7 @@ public class VcsLogManager implements Disposable {
   }
 
   public void disposeLog() {
-    Disposer.dispose(myDataManager);
+    Disposer.dispose(myLogData);
   }
 
   /*
