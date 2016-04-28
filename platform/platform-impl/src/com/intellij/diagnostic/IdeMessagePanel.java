@@ -16,8 +16,20 @@
 package com.intellij.diagnostic;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationAction;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.impl.NotificationsManagerImpl;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.IconLikeCustomStatusBarWidget;
+import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.StatusBar;
+import com.intellij.ui.BalloonLayout;
+import com.intellij.ui.BalloonLayoutData;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.popup.NotificationPopup;
 import com.intellij.util.concurrency.EdtExecutorService;
@@ -214,6 +226,10 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
           String notificationText = tryGetFromMessages(myMessagePool.getFatalErrors(false, false));
+          if (NotificationsManagerImpl.newEnabled()) {
+            showErrorNotification(notificationText);
+            return;
+          }
           if (notificationText == null) {
             notificationText = INTERNAL_ERROR_NOTICE;
           }
@@ -229,6 +245,44 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
       myNotificationPopupAlreadyShown = true;
     }
   }
+
+  private static final String ERROR_TITLE = DiagnosticBundle.message("error.new.notification.title");
+  private static final String ERROR_LINK = DiagnosticBundle.message("error.new.notification.link");
+
+  private void showErrorNotification(@Nullable String notificationText) {
+    Notification notification = new Notification("", AllIcons.Ide.FatalError, notificationText == null ? ERROR_TITLE : "", null,
+                                                 notificationText == null ? "" : notificationText, NotificationType.ERROR, null);
+
+    if (notificationText == null) {
+      notification.addAction(new NotificationAction(ERROR_LINK) {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+          notification.expire();
+          _openFatals(null);
+        }
+      });
+    }
+
+    Window window = SwingUtilities.getWindowAncestor(this);
+    assert window instanceof IdeFrame;
+
+    IdeFrame frame = (IdeFrame)window;
+    BalloonLayout layout = frame.getBalloonLayout();
+    assert layout != null;
+
+    BalloonLayoutData layoutData = new BalloonLayoutData();
+    layoutData.groupId = "";
+    layoutData.showSettingButton = false;
+    layoutData.fadeoutTime = 5000;
+    layoutData.fillColor = new JBColor(0XF5E6E7, 0X593D41);
+    layoutData.borderColor = new JBColor(0XE0A8A9, 0X73454B);
+
+    Project project = frame.getProject();
+    assert project != null;
+
+    Balloon balloon = NotificationsManagerImpl.createBalloon(frame, notification, false, false, new Ref<>(layoutData), project);
+    layout.add(balloon);
+}
 
   private static String tryGetFromMessages(List<AbstractMessage> messages) {
     String result = null;
