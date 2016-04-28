@@ -345,6 +345,17 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
     assertNotNull(aClass);
     verifyJavaDoc(aClass, Collections.singletonList("dummyUrl"));
   }
+
+  public void testDocumentationForJdkClassWithReferencesToClassesFromJavaLang() throws Exception {
+    doTestAtCaret();
+  }
+
+  private void doTestAtCaret() throws Exception {
+    configureByFile("/codeInsight/javadocIG/" + getTestName(true) + ".java");
+    String docInfo = JavaExternalDocumentationTest.getDocumentationText(myFile, myEditor.getCaretModel().getOffset());
+    assertNotNull(docInfo);
+    assertEquals(exampleHtmlFileText(getTestName(true)), replaceEnvironmentDependentContent(docInfo));
+  }
   
   public void testLibraryPackageDocumentation() throws Exception {
     final VirtualFile libClasses = JavaExternalDocumentationTest.getJarFile("library.jar");
