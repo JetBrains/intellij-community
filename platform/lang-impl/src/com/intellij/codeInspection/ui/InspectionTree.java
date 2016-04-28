@@ -37,7 +37,6 @@ import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -45,8 +44,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.TreeExpansionEvent;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
 import javax.swing.event.TreeWillExpandListener;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.ExpandVetoException;
@@ -87,20 +84,12 @@ public class InspectionTree extends Tree {
     myState.getExpandedUserObjects().add(project);
 
     TreeUtil.installActions(this);
-    new TreeSpeedSearch(this, new Convertor<TreePath, String>() {
-      @Override
-      public String convert(TreePath o) {
-        return InspectionsConfigTreeComparator.getDisplayTextToSort(o.getLastPathComponent().toString());
-      }
-    });
+    new TreeSpeedSearch(this, o -> InspectionsConfigTreeComparator.getDisplayTextToSort(o.getLastPathComponent().toString()));
 
-    addTreeSelectionListener(new TreeSelectionListener() {
-      @Override
-      public void valueChanged(TreeSelectionEvent e) {
-        TreePath newSelection = e.getNewLeadSelectionPath();
-        if (newSelection != null && !isUnderQueueUpdate()) {
-          myState.setSelectionPath(newSelection);
-        }
+    addTreeSelectionListener(e -> {
+      TreePath newSelection = e.getNewLeadSelectionPath();
+      if (newSelection != null && !isUnderQueueUpdate()) {
+        myState.setSelectionPath(newSelection);
       }
     });
   }
@@ -292,7 +281,7 @@ public class InspectionTree extends Tree {
   public int getSelectedProblemCount() {
     if (getSelectionCount() == 0) return 0;
     final TreePath[] paths = getSelectionPaths();
-
+    LOG.assertTrue(paths != null);
     Set<InspectionTreeNode> result = new HashSet<>();
     MultiMap<InspectionTreeNode, InspectionTreeNode> rootDependencies = new MultiMap<>();
     for (TreePath path : paths) {
