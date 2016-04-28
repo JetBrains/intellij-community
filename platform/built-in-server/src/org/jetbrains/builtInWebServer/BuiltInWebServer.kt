@@ -248,11 +248,25 @@ private fun doProcess(urlDecoder: QueryStringDecoder, request: FullHttpRequest, 
   return false
 }
 
-internal fun validateToken(request: HttpRequest, channel: Channel): HttpHeaders? {
-  val cookieString = request.headers().get(HttpHeaderNames.COOKIE)
-  if (cookieString != null) {
-    val cookies = ServerCookieDecoder.STRICT.decode(cookieString)
-    for (cookie in cookies) {
+internal fun HttpRequest.isSignedRequest(): Boolean {
+  // we must check referrer - if html cached, browser will send request without query
+  val token = headers().get(TOKEN_HEADER_NAME)
+      ?: QueryStringDecoder(uri()).parameters().get(TOKEN_PARAM_NAME)?.firstOrNull()
+      ?: referrer?.let { QueryStringDecoder(it).parameters().get(TOKEN_PARAM_NAME)?.firstOrNull() }
+
+  if (token != null && tokens.getIfPresent(token) != null) {
+    tokens.invalidate(token)
+    return true
+  }
+  else {
+    return false
+  }
+}
+
+@JvmOverloads
+internal fun validateToken(request: HttpRequest, channel: Channel, isSignedRequest: Boolean = request.isSignedRequest()): HttpHeaders? {
+  request.headers().get(HttpHeaderNames.COOKIE)?.let {
+    for (cookie in ServerCookieDecoder.STRICT.decode(it)) {
       if (cookie.name() == STANDARD_COOKIE.name()) {
         if (cookie.value() == STANDARD_COOKIE.value()) {
           return EmptyHttpHeaders.INSTANCE
@@ -262,18 +276,13 @@ internal fun validateToken(request: HttpRequest, channel: Channel): HttpHeaders?
     }
   }
 
-  val urlDecoder = QueryStringDecoder(request.uri())
-  // we must check referrer - if html cached, browser will send request without query
-  val token = request.headers().get(TOKEN_HEADER_NAME)
-      ?: urlDecoder.parameters().get(TOKEN_PARAM_NAME)?.firstOrNull()
-      ?: request.referrer?.let { QueryStringDecoder(it).parameters().get(TOKEN_PARAM_NAME)?.firstOrNull() }
-  val url = "${channel.uriScheme}://${request.host!!}${urlDecoder.path()}"
-  if (token != null && tokens.getIfPresent(token) != null) {
-    tokens.invalidate(token)
+  if (isSignedRequest) {
     return DefaultHttpHeaders().set(HttpHeaderNames.SET_COOKIE, ServerCookieEncoder.STRICT.encode(STANDARD_COOKIE) + "; SameSite=strict")
   }
 
+  val urlDecoder = QueryStringDecoder(request.uri())
   if (!urlDecoder.path().endsWith("/favicon.ico")) {
+    val url = "${channel.uriScheme}://${request.host!!}${urlDecoder.path()}"
     SwingUtilities.invokeAndWait {
       ProjectUtil.focusProjectWindow(null, true)
 
