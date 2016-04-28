@@ -40,6 +40,6 @@
     <orderEntry type="library" name="jayatana" level="project" />
     <orderEntry type="module" module-name="editor-ui-ex" exported="" />
     <orderEntry type="library" name="gson" level="project" />
+    <orderEntry type="module" module-name="xml" />
   </component>
 </module>
-
