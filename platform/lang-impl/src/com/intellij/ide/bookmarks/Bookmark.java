@@ -213,6 +213,9 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
     if (!getFile().isValid()) {
       return false;
     }
+    if (getLine() ==-1) {
+      return true;
+    }
     RangeHighlighterEx highlighter = findMyHighlighter();
     return highlighter != null && highlighter.isValid();
   }
