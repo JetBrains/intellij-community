@@ -540,6 +540,9 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
         myPreviewEditor.getColorsScheme().setColor(EditorColors.GUTTER_BACKGROUND, myPreviewEditor.getColorsScheme().getDefaultBackground());
         myPreviewEditor.getScrollPane().setBorder(IdeBorderFactory.createEmptyBorder());
       }
+      if (problemCount == 0) {
+        myPreviewEditor.getScrollingModel().scrollTo(myPreviewEditor.offsetToLogicalPosition(selectedElement.getTextOffset()), ScrollType.CENTER_UP);
+      }
       myPreviewEditor.getSettings().setFoldingOutlineShown(problemCount != 1);
       myPreviewEditor.getComponent().setBorder(IdeBorderFactory.createEmptyBorder());
       return Pair.create(myPreviewEditor.getComponent(), myPreviewEditor);
