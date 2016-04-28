@@ -428,7 +428,6 @@ binding.setVariable("platformImplementationModules", [
   "vcs-impl",
   "vcs-log-graph",
   "vcs-log-impl",
-  "vcs-tests",
   "xdebugger-impl",
   "xml-analysis-impl",
   "xml-psi-impl",
