@@ -178,12 +178,6 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
   @Override
   @NotNull PsiClassType createType(@NotNull PsiClass resolve, @NotNull PsiSubstitutor substitutor, @Nullable LanguageLevel languageLevel);
 
-  @Override
-  @NotNull PsiClassType createType(@NotNull PsiClass resolve,
-                                   @NotNull PsiSubstitutor substitutor,
-                                   @Nullable LanguageLevel languageLevel,
-                                   @NotNull PsiAnnotation[] annotations);
-
   /**
    * Creates a class type for the specified reference pointing to a class.
    *

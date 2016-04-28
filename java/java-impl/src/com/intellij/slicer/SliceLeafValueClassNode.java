@@ -28,7 +28,7 @@ import java.util.ArrayList;
 class SliceLeafValueClassNode extends SliceLeafValueRootNode {
   private final String myClassName;
 
-  public SliceLeafValueClassNode(@NotNull Project project, SliceNode root, String className) {
+  SliceLeafValueClassNode(@NotNull Project project, @NotNull SliceNode root, @NotNull String className) {
     super(project, root.getValue().getElement(), root, new ArrayList<SliceNode>(), root.getValue().params);
     myClassName = className;
   }

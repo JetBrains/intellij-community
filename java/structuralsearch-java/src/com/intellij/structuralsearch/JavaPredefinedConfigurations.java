@@ -33,51 +33,51 @@ class JavaPredefinedConfigurations {
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.string.literals"),"\"'_String\"",EXPRESSION_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.all.expressions.of.some.type"),"'_Expression:[exprtype( SomeType )]",EXPRESSION_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.sample.method.invokation.with.constant.argument"),"Integer.parseInt('_a:[script( \"com.intellij.psi.util.PsiUtil.isConstantExpression(__context__)\" )])",EXPRESSION_TYPE),
-      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.method.references"), "'_Qualifier::'methodName", EXPRESSION_TYPE),
+      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.method.references"), "'_Qualifier::'Method", EXPRESSION_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.string.concatenations"), "[exprtype( java\\.lang\\.String )]'_a + '_b+", EXPRESSION_TYPE),
 
       // Operators
-      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.block.dcls"),"{\n  '_Type+ 'Var+ = '_Init*;\n  '_BlockStatements*;\n}",OPERATOR_TYPE),
-      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.trys"),"try {\n  '_TryStatement+;\n} catch('_ExceptionType '_ExceptionDcl) {\n  '_CatchStatement*;\n}",OPERATOR_TYPE),
+      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.block.dcls"),"{\n  '_Type 'Var+ = '_Init?;\n  '_BlockStatements*;\n}",OPERATOR_TYPE),
+      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.trys"),"try {\n  '_TryStatement+;\n} catch('_ExceptionType '_Exception) {\n  '_CatchStatement*;\n}",OPERATOR_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.ifs"),"if ('_Condition) {\n  '_ThenStatement*;\n} else {\n  '_ElseStatement*;\n}",OPERATOR_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.switches"),"switch('_Condition) {\n  '_Statement*;\n}",OPERATOR_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.foreaches"), "for ('_Type '_Variable : '_Expression) {\n  '_Statement*;\n}", OPERATOR_TYPE),
-      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.logging.without.if"),"[!within( \"if('_a) { 'st*; }\" )]LOG.debug('_params*);",OPERATOR_TYPE),
+      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.logging.without.if"),"[!within( \"if('_a) { 'st*; }\" )]LOG.debug('_Argument*);",OPERATOR_TYPE),
 
       // Class based
       createSearchTemplateInfo(
         SSRBundle.message("predefined.configuration.methods.of.the.class"),
-        "'_ReturnType+ '_MethodName+('_ParameterType* '_Parameter*);",
+        "'_ReturnType '_Method('_ParameterType '_Parameter*);",
         CLASS_TYPE
       ),
       createSearchTemplateInfo(
         SSRBundle.message("predefined.configuration.fields.of.the.class"),
-        "class '_Class { \n  '_FieldType+ 'FieldName+ = '_Init*;\n}",
+        "class '_Class { \n  '_FieldType 'Field+ = '_Init?;\n}",
         CLASS_TYPE
       ),
       createSearchTemplateInfo(
         SSRBundle.message("predefined.configuration.all.methods.of.the.class.within.hierarchy"),
-        "class '_ { \n  '_ReturnType+ 'MethodName+:* ('_ParameterType* '_Parameter*);\n}",
+        "class '_ { \n  '_ReturnType 'Method+:* ('_ParameterType '_Parameter*);\n}",
         CLASS_TYPE
       ),
       createSearchTemplateInfo(
         SSRBundle.message("predefined.configuration.all.fields.of.the.class"),
-        "class '_Class { \n  '_FieldType+ 'FieldName+:* = '_Init*;\n}",
+        "class '_Class { \n  '_FieldType 'Field+:* = '_Init?;\n}",
         CLASS_TYPE
       ),
       createSearchTemplateInfo(
         SSRBundle.message("predefined.configuration.instance.fields.of.the.class"),
-        "class '_Class { \n  @Modifier(\"Instance\") '_FieldType+ 'FieldName+ = '_Init*;\n}",
+        "class '_Class { \n  @Modifier(\"Instance\") '_FieldType 'Field+ = '_Init?;\n}",
         CLASS_TYPE
       ),
       createSearchTemplateInfo(
         SSRBundle.message("predefined.configuration.packagelocal.fields.of.the.class"),
-        "class '_Class { \n @Modifier(\"packageLocal\") '_FieldType+ 'FieldName+ = '_Init*;\n}",
+        "@Modifier(\"packageLocal\") '_FieldType 'Field = '_Init?;",
         CLASS_TYPE
       ),
       createSearchTemplateInfo(
         SSRBundle.message("predefined.configuration.constructors.of.the.class"),
-        "class 'Class {\n  'Class('_ParameterType* '_ParameterName*) {\n    '_Statement*;\n  }\n}",
+        "class 'Class {\n  'Class('_ParameterType '_Parameter*) {\n    '_Statement*;\n  }\n}",
         CLASS_TYPE
       ),
       createSearchTemplateInfo(
@@ -144,7 +144,7 @@ class JavaPredefinedConfigurations {
 
       createSearchTemplateInfo(
         SSRBundle.message("predefined.configuration.class.with.parameterless.constructors"),
-        "class 'Class {\n  '_Method{0,0}:[ script( \"__context__.constructor\" ) ]('_ParamType+ '_ParameterName+);\n}",
+        "class 'Class {\n  '_Method{0,0}:[ script( \"__context__.constructor\" ) ]('_ParameterType '_Parameter+);\n}",
         CLASS_TYPE
       ),
 
@@ -162,17 +162,17 @@ class JavaPredefinedConfigurations {
 
       // Generics
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.generic.classes"),"class 'GenericClass<'_TypeParameter+> {} ", GENERICS_TYPE),
-      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.generic.methods"),"<'_TypeParameter+> '_Type+ '_Method+('_ParameterType* '_ParameterDcl*);", GENERICS_TYPE),
+      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.generic.methods"),"<'_TypeParameter+> '_Type '_Method('_ParameterType '_Parameter*);", GENERICS_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.typed.symbol"),"'Symbol <'_GenericArgument+>", GENERICS_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.generic.casts"),"( '_Type <'_GenericArgument+> ) '_Expr", GENERICS_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.type.var.substitutions.in.intanceof.with.generic.types"),"'_Expr instanceof '_Type <'Substitutions+> ", GENERICS_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.variables.of.generic.types"),"'_Type <'_GenericArgument+>  'Var = '_Init?;", GENERICS_TYPE),
-      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.diamond.operators"), "new 'ClassName<>('_Argument*)", GENERICS_TYPE),
+      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.diamond.operators"), "new 'Class<>('_Argument*)", GENERICS_TYPE),
 
       // Add comments and metadata
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.comments"),"/* 'CommentContent */", METADATA_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.javadoc.annotated.class"),"/** @'_Tag+ '_TagValue* */\nclass '_Class {\n}", METADATA_TYPE),
-      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.javadoc.annotated.methods"),"/** @'_Tag+ '_TagValue* */\n'_Type+ '_Method+('_ParameterType* '_ParameterDcl*);", METADATA_TYPE),
+      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.javadoc.annotated.methods"),"/** @'_Tag+ '_TagValue* */\n'_Type+ '_Method+('_ParameterType '_Parameter*);", METADATA_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.javadoc.annotated.fields"),"class '_Class {\n  /** @'_Tag+ '_TagValue* */\n  '_Type+ 'Field+ = '_Init*;\n}", METADATA_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.javadoc.tags"),"/** @'Tag+ '_TagValue* */", METADATA_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.xdoclet.metadata"),"/** @'Tag \n  '_Property+\n*/", METADATA_TYPE),
@@ -184,13 +184,13 @@ class JavaPredefinedConfigurations {
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.annotated.fields"),
                                "class '_Class {\n" +
                                "  @'_Annotation+( )\n" +
-                               "  '_FieldType+ 'FieldName+ = '_FieldInitial*;\n" +
+                               "  '_FieldType 'Field+ = '_Init?;\n" +
                                "}", METADATA_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.annotated.methods"),
-                               "@'_Annotation+( )\n'_MethodType+ '_MethodName+('_ParameterType* '_ParameterName*);", METADATA_TYPE),
+                               "@'_Annotation+( )\n'_MethodType '_Method+('_ParameterType '_Parameter*);", METADATA_TYPE),
 
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.not.annotated.methods"),
-                               "@'_Annotation{0,0}\n'_MethodType+ '_MethodName+('_ParameterType* '_ParameterName*);", METADATA_TYPE),
+                               "@'_Annotation{0,0}\n'_MethodType '_Method+('_ParameterType '_Parameter*);", METADATA_TYPE),
 
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.annotation.declarations"),
                                "@interface 'Interface {}", METADATA_TYPE),
@@ -205,7 +205,7 @@ class JavaPredefinedConfigurations {
       createSearchTemplateInfoSimple(SSRBundle.message("predefined.configuration.entity.ejb"),"class 'EntityBean implements EntityBean {\n" +
                                                                                               "  EntityContext '_Context?;\n\n" +
                                                                                               "  public void setEntityContext(EntityContext '_Context2);\n\n" +
-                                                                                              "  public '_RetType ejbCreate('_CreateType* '_CreateDcl*);\n" +
+                                                                                              "  public '_RetType ejbCreate('_CreateType '_CreateDcl*);\n" +
                                                                                               "  public void ejbActivate();\n\n" +
                                                                                               "  public void ejbLoad();\n\n" +
                                                                                               "  public void ejbPassivate();\n\n" +
@@ -215,13 +215,13 @@ class JavaPredefinedConfigurations {
       createSearchTemplateInfoSimple(SSRBundle.message("predefined.configuration.session.ejb"),"class 'SessionBean implements SessionBean {\n" +
                                                                                                "  SessionContext '_Context?;\n\n" +
                                                                                                "  public void '_setSessionContext(SessionContext '_Context2);\n\n" +
-                                                                                               "  public '_RetType ejbCreate('_CreateParameterType* '_CreateParameterDcl*);\n" +
+                                                                                               "  public '_RetType ejbCreate('_CreateParameterType '_CreateParameterDcl*);\n" +
                                                                                                "  public void ejbActivate();\n\n" +
                                                                                                "  public void ejbPassivate();\n\n" +
                                                                                                "  public void ejbRemove();\n" +
                                                                                                "}", J2EE_TYPE),
       createSearchTemplateInfoSimple(SSRBundle.message("predefined.configuration.ejb.interface"),"interface 'EjbInterface extends EJBObject {\n" +
-                                                                                                 "  '_Type+ '_Method+('_ParamType* '_ParamName*);\n" +
+                                                                                                 "  '_Type '_Method+('_ParameterType '_Param*);\n" +
                                                                                                  "}", J2EE_TYPE),
       createSearchTemplateInfoSimple(SSRBundle.message("predefined.configuration.servlets"),"public class 'Servlet extends '_ParentClass:*HttpServlet {\n" +
                                                                                             "  public void '_InitServletMethod?:init ();\n" +
@@ -254,7 +254,7 @@ class JavaPredefinedConfigurations {
                                                                                                      "  public void '_testMethod+:test.* ();\n" +
                                                                                                      "}", MISC_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.singletons"),"class 'Class {\n" +
-                                                                                        "  private 'Class('_ParameterType* '_ParameterDcl*) {\n" +
+                                                                                        "  private 'Class('_ParameterType '_Parameter*) {\n" +
                                                                                         "   '_ConstructorStatement*;\n" +
                                                                                         "  }\n"+
                                                                                         "  private static '_Class '_Instance;\n" +
@@ -264,10 +264,10 @@ class JavaPredefinedConfigurations {
                                                                                         "  }\n"+
                                                                                         "}",MISC_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.similar.methods.structure"),
-                               "'_RetType '_Method+('_ParameterType* '_Parameter) throws 'ExceptionType {\n" +
+                               "'_RetType '_Method+('_ParameterType '_Parameter) throws 'ExceptionType {\n" +
                                "  try {\n" +
                                "    '_OtherStatements+;\n" +
-                               "  } catch('_SomeException '_ExceptionDcl) {\n" +
+                               "  } catch('_SomeException '_Exception) {\n" +
                                "    '_CatchStatement*;\n" +
                                "    throw new 'ExceptionType('_ExceptionConstructorArgs*);\n" +
                                "  }\n" +

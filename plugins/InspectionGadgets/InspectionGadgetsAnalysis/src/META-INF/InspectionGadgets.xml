@@ -1276,7 +1276,7 @@
     <!--group.names.javadoc.issues-->
     <localInspection groupPath="Java" language="JAVA" shortName="DanglingJavadoc" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="dangling.javadoc.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.javadoc.issues" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.javadoc.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.javadoc.DanglingJavadocInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="HtmlTagCanBeJavadocTag" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="html.tag.can.be.javadoc.tag.display.name" groupBundle="messages.InspectionsBundle"

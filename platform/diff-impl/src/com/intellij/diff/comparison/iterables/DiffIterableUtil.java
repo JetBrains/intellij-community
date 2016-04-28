@@ -143,7 +143,7 @@ public class DiffIterableUtil {
 
   @NotNull
   public static List<DiffFragment> convertIntoFragments(@NotNull DiffIterable changes) {
-    final List<DiffFragment> fragments = new ArrayList<DiffFragment>();
+    final List<DiffFragment> fragments = new ArrayList<>();
     for (Range ch : changes.iterateChanges()) {
       fragments.add(new DiffFragmentImpl(ch.start1, ch.end1, ch.start2, ch.end2));
     }
@@ -152,52 +152,47 @@ public class DiffIterableUtil {
 
   @NotNull
   public static Iterable<Pair<Range, Boolean>> iterateAll(@NotNull final DiffIterable iterable) {
-    return new Iterable<Pair<Range, Boolean>>() {
+    return () -> new Iterator<Pair<Range, Boolean>>() {
+      @NotNull private final Iterator<Range> myChanges = iterable.changes();
+      @NotNull private final Iterator<Range> myUnchanged = iterable.unchanged();
+
+      @Nullable private Range lastChanged = myChanges.hasNext() ? myChanges.next() : null;
+      @Nullable private Range lastUnchanged = myUnchanged.hasNext() ? myUnchanged.next() : null;
+
       @Override
-      public Iterator<Pair<Range, Boolean>> iterator() {
-        return new Iterator<Pair<Range, Boolean>>() {
-          @NotNull private final Iterator<Range> myChanges = iterable.changes();
-          @NotNull private final Iterator<Range> myUnchanged = iterable.unchanged();
+      public boolean hasNext() {
+        return lastChanged != null || lastUnchanged != null;
+      }
 
-          @Nullable private Range lastChanged = myChanges.hasNext() ? myChanges.next() : null;
-          @Nullable private Range lastUnchanged = myUnchanged.hasNext() ? myUnchanged.next() : null;
+      @Override
+      public Pair<Range, Boolean> next() {
+        boolean equals;
+        if (lastChanged == null) {
+          equals = true;
+        }
+        else if (lastUnchanged == null) {
+          equals = false;
+        }
+        else {
+          equals = lastUnchanged.start1 < lastChanged.start1 || lastUnchanged.start2 < lastChanged.start2;
+        }
 
-          @Override
-          public boolean hasNext() {
-            return lastChanged != null || lastUnchanged != null;
-          }
+        if (equals) {
+          Range range = lastUnchanged;
+          lastUnchanged = myUnchanged.hasNext() ? myUnchanged.next() : null;
+          //noinspection ConstantConditions
+          return Pair.create(range, true);
+        }
+        else {
+          Range range = lastChanged;
+          lastChanged = myChanges.hasNext() ? myChanges.next() : null;
+          return Pair.create(range, false);
+        }
+      }
 
-          @Override
-          public Pair<Range, Boolean> next() {
-            boolean equals;
-            if (lastChanged == null) {
-              equals = true;
-            }
-            else if (lastUnchanged == null) {
-              equals = false;
-            }
-            else {
-              equals = lastUnchanged.start1 < lastChanged.start1 || lastUnchanged.start2 < lastChanged.start2;
-            }
-
-            if (equals) {
-              Range range = lastUnchanged;
-              lastUnchanged = myUnchanged.hasNext() ? myUnchanged.next() : null;
-              //noinspection ConstantConditions
-              return Pair.create(range, true);
-            }
-            else {
-              Range range = lastChanged;
-              lastChanged = myChanges.hasNext() ? myChanges.next() : null;
-              return Pair.create(range, false);
-            }
-          }
-
-          @Override
-          public void remove() {
-            throw new UnsupportedOperationException();
-          }
-        };
+      @Override
+      public void remove() {
+        throw new UnsupportedOperationException();
       }
     };
   }
@@ -368,8 +363,8 @@ public class DiffIterableUtil {
       Range range = pair.first;
       boolean equals = pair.second;
 
-      List<T> data1 = new ArrayList<T>();
-      List<T> data2 = new ArrayList<T>();
+      List<T> data1 = new ArrayList<>();
+      List<T> data2 = new ArrayList<>();
 
       for (int i = range.start1; i < range.end1; i++) {
         data1.add(objects1.get(i));
@@ -378,7 +373,7 @@ public class DiffIterableUtil {
         data2.add(objects2.get(i));
       }
 
-      result.add(new LineRangeData<T>(data1, data2, equals));
+      result.add(new LineRangeData<>(data1, data2, equals));
     }
 
     return result;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ public class MessageType {
                                                           new JBColor(new Color(255, 204, 204), new Color(112, 71, 69)),
                                                           new JBColor(new Color(0xAC0013), new Color(0xEF5F65)));
   public static final MessageType INFO = new MessageType(AllIcons.General.NotificationInfo,
-                                                         new JBColor(new Color(186, 238, 186), new Color(73, 117, 73)),
+                                                         new JBColor(new Color(186, 238, 186), new Color(60, 63, 65)),
                                                          new JBColor(new Color(0x000000), new Color(0xbbbbbb)));
   public static final MessageType WARNING = new MessageType(AllIcons.General.NotificationWarning,
                                                             new JBColor(new Color(249, 247, 142), new Color(90, 82, 33)),

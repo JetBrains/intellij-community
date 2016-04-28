@@ -42,7 +42,7 @@ public class TextDiffTypeFactory {
     new TextDiffTypeImpl(DiffColors.DIFF_CONFLICT, DiffBundle.message("diff.type.conflict.name"));
 
   private static final TextDiffTypeFactory ourInstance = new TextDiffTypeFactory();
-  private final List<TextDiffTypeImpl> myTypes = new ArrayList<TextDiffTypeImpl>();
+  private final List<TextDiffTypeImpl> myTypes = new ArrayList<>();
 
   private TextDiffTypeFactory() {
     ContainerUtil.addAll(myTypes, INSERTED, DELETED, MODIFIED, CONFLICT);

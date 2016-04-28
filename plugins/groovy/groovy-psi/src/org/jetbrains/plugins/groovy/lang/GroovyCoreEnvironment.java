@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,6 +56,7 @@ import org.jetbrains.plugins.groovy.annotator.GrKeywordAndDeclarationHighlightFa
 import org.jetbrains.plugins.groovy.annotator.GrReferenceHighlighterFactory;
 import org.jetbrains.plugins.groovy.annotator.GroovyFrameworkConfigNotification;
 import org.jetbrains.plugins.groovy.annotator.checkers.*;
+import org.jetbrains.plugins.groovy.builder.XmlMarkupBuilderNonCodeMemberContributor;
 import org.jetbrains.plugins.groovy.codeInsight.GroovyClsCustomNavigationPolicy;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyQuickFixFactory;
 import org.jetbrains.plugins.groovy.codeInspection.declaration.GrMethodMayBeStaticInspectionFilter;
@@ -96,7 +97,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.ast.*;
 import org.jetbrains.plugins.groovy.lang.resolve.noncode.GrCollectionTypeMembersProvider;
 import org.jetbrains.plugins.groovy.lang.resolve.noncode.MixinMemberContributor;
 import org.jetbrains.plugins.groovy.lang.stubs.GroovyShortNamesCache;
-import org.jetbrains.plugins.groovy.markup.XmlMarkupBuilderNonCodeMemberContributor;
 import org.jetbrains.plugins.groovy.spock.SpockMemberContributor;
 import org.jetbrains.plugins.groovy.spock.SpockPomDeclarationSearcher;
 import org.jetbrains.plugins.groovy.structure.GroovyStructureViewFactory;

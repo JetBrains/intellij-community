@@ -42,7 +42,7 @@ public class VariableInIncompleteCodeSearcher extends QueryExecutorBase<PsiRefer
     SearchScope scope = p.getEffectiveSearchScope();
     if (!(scope instanceof LocalSearchScope)) {
       final PsiFile file = refElement.getContainingFile();
-      if (file == null) return;
+      if (file == null || file instanceof PsiCompiledElement) return;
       //process incomplete references to the 'field' in the same file only
       scope = new LocalSearchScope(new PsiElement[]{file}, null, !PsiSearchHelperImpl.shouldProcessInjectedPsi(p.getScopeDeterminedByUser()));
     }

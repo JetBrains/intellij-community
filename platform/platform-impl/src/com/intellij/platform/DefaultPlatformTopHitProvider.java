@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,8 @@ public class DefaultPlatformTopHitProvider extends ActionsTopHitProvider {
      {"new e", "new enum ", "NewClass"},
      {"line", "line numbers ", "EditorToggleShowLineNumbers"},
      {"show li", "show line numbers ", "EditorToggleShowLineNumbers"},
+     {"gutt", "gutter icons ", "EditorToggleShowGutterIcons"},
+     {"show gu", "show gutter icons ", "EditorToggleShowGutterIcons"},
      {"ann", "annotate ", "Annotate"},
      {"wrap", "wraps ", "EditorToggleUseSoftWraps"},
      {"soft w", "soft wraps ", "EditorToggleUseSoftWraps"},

@@ -99,9 +99,9 @@ class CompoundRendererConfigurable extends JPanel {
 
     JavaDebuggerEditorsProvider editorsProvider = new JavaDebuggerEditorsProvider();
 
-    myLabelEditor = new XDebuggerExpressionEditor(myProject, editorsProvider, "ClassLabelExpression", null, XExpressionImpl.EMPTY_EXPRESSION, false, false);
-    myChildrenEditor = new XDebuggerExpressionEditor(myProject, editorsProvider, "ClassChildrenExpression", null, XExpressionImpl.EMPTY_EXPRESSION, false, false);
-    myChildrenExpandedEditor = new XDebuggerExpressionEditor(myProject, editorsProvider, "ClassChildrenExpression", null, XExpressionImpl.EMPTY_EXPRESSION, false, false);
+    myLabelEditor = new XDebuggerExpressionEditor(myProject, editorsProvider, "ClassLabelExpression", null, XExpressionImpl.EMPTY_EXPRESSION, false, false, true);
+    myChildrenEditor = new XDebuggerExpressionEditor(myProject, editorsProvider, "ClassChildrenExpression", null, XExpressionImpl.EMPTY_EXPRESSION, false, false, true);
+    myChildrenExpandedEditor = new XDebuggerExpressionEditor(myProject, editorsProvider, "ClassChildrenExpression", null, XExpressionImpl.EMPTY_EXPRESSION, false, false, true);
     JComponent myChildrenListEditor = createChildrenListEditor(editorsProvider);
 
     final ItemListener updateListener = new ItemListener() {
@@ -224,10 +224,10 @@ class CompoundRendererConfigurable extends JPanel {
   private JComponent createChildrenListEditor(JavaDebuggerEditorsProvider editorsProvider) {
     final MyTableModel tableModel = new MyTableModel();
     myTable = new JBTable(tableModel);
-    myListChildrenEditor = new XDebuggerExpressionEditor(myProject, editorsProvider, "NamedChildrenConfigurable", null, XExpressionImpl.EMPTY_EXPRESSION, false, false);
+    myListChildrenEditor = new XDebuggerExpressionEditor(myProject, editorsProvider, "NamedChildrenConfigurable", null, XExpressionImpl.EMPTY_EXPRESSION, false, false, false);
+    JComponent editorComponent = myListChildrenEditor.getComponent();
 
-    final TableColumn exprColumn = myTable.getColumnModel().getColumn(EXPRESSION_TABLE_COLUMN);
-    exprColumn.setCellEditor(new AbstractTableCellEditor() {
+    AbstractTableCellEditor editor = new AbstractTableCellEditor() {
       @Override
       public Object getCellEditorValue() {
         return TextWithImportsImpl.fromXExpression(myListChildrenEditor.getExpression());
@@ -236,9 +236,16 @@ class CompoundRendererConfigurable extends JPanel {
       @Override
       public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
         myListChildrenEditor.setExpression(TextWithImportsImpl.toXExpression((TextWithImports)value));
-        return myListChildrenEditor.getComponent();
+        return editorComponent;
       }
-    });
+    };
+    editorComponent.registerKeyboardAction(e -> editor.stopCellEditing(), KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0),
+                           JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+    editorComponent.registerKeyboardAction(e -> editor.cancelCellEditing(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),
+                           JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+
+    TableColumn exprColumn = myTable.getColumnModel().getColumn(EXPRESSION_TABLE_COLUMN);
+    exprColumn.setCellEditor(editor);
     exprColumn.setCellRenderer(new DefaultTableCellRenderer() {
       @NotNull
       @Override

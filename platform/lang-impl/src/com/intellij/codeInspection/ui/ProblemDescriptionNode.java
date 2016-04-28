@@ -25,6 +25,7 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.FactoryMap;
@@ -38,12 +39,10 @@ import static com.intellij.codeInspection.ProblemDescriptorUtil.TRIM_AT_TREE_END
 /**
  * @author max
  */
-public class ProblemDescriptionNode extends SuppressableInspectionTreeNode implements RefElementAware {
+public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
   protected RefEntity myElement;
   private final CommonProblemDescriptor myDescriptor;
   protected final InspectionToolWrapper myToolWrapper;
-  @NotNull
-  protected final InspectionToolPresentation myPresentation;
   private final HighlightDisplayLevel myLevel;
 
   public ProblemDescriptionNode(RefEntity element,
@@ -54,13 +53,17 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode imple
     myElement = element;
     myDescriptor = descriptor;
     myToolWrapper = toolWrapper;
-    myPresentation = presentation;
     final InspectionProfileImpl profile = (InspectionProfileImpl)presentation.getContext().getCurrentProfile();
     myLevel = descriptor instanceof ProblemDescriptor
               ? profile.getErrorLevel(HighlightDisplayKey.find(toolWrapper.getShortName()), ((ProblemDescriptor)descriptor).getStartElement())
               : profile.getTools(toolWrapper.getID(), element.getRefManager().getProject()).getLevel();
-    init();
+    init(presentation.getContext().getProject());
 }
+
+  @Override
+  public boolean canSuppress() {
+    return super.canSuppress() && !isQuickFixAppliedFromView();
+  }
 
   @NotNull
   public InspectionToolWrapper getToolWrapper() {
@@ -79,16 +82,18 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode imple
 
   @Override
   public int getProblemCount() {
-    return 1;
+    return myPresentation.isProblemResolved(getElement(), myDescriptor) ? 0 : 1;
   }
 
   @Override
   public void visitProblemSeverities(FactoryMap<HighlightDisplayLevel, Integer> counter) {
-    counter.put(myLevel, counter.get(myLevel) + 1);
+    if (!myPresentation.isProblemResolved(getElement(), myDescriptor)) {
+      counter.put(myLevel, counter.get(myLevel) + 1);
+    }
   }
 
   @Override
-  public boolean calculateIsValid() {
+  protected boolean calculateIsValid() {
     if (myElement instanceof RefElement && !myElement.isValid()) return false;
     final CommonProblemDescriptor descriptor = getDescriptor();
     if (descriptor instanceof ProblemDescriptor) {
@@ -126,7 +131,14 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode imple
   }
 
   @Override
-  public String calculatePresentableName() {
+  protected void dropCache(Project project) {
+    if (!isQuickFixAppliedFromView()) {
+      super.dropCache(project);
+    }
+  }
+
+  @Override
+  protected String calculatePresentableName() {
     CommonProblemDescriptor descriptor = getDescriptor();
     if (descriptor == null) return "";
     PsiElement element = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getPsiElement() : null;
@@ -136,7 +148,7 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode imple
   }
 
   public boolean isQuickFixAppliedFromView() {
-    return myPresentation.isProblemResolved(getElement(), myDescriptor);
+    return myPresentation.isProblemResolved(getElement(), myDescriptor) && !isAlreadySuppressedFromView();
   }
 
   @Nullable

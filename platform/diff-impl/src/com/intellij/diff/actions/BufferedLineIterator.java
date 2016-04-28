@@ -26,7 +26,7 @@ public abstract class BufferedLineIterator implements Iterator<Pair<Integer, Cha
   @NotNull private final List<Pair<Integer, CharSequence>> myBuffer;
 
   public BufferedLineIterator() {
-    myBuffer = new LinkedList<Pair<Integer, CharSequence>>();
+    myBuffer = new LinkedList<>();
   }
 
   public abstract boolean hasNextBlock();

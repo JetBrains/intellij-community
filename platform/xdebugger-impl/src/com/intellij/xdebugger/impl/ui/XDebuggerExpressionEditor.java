@@ -50,7 +50,8 @@ public class XDebuggerExpressionEditor extends XDebuggerEditorBase {
                                    @Nullable XSourcePosition sourcePosition,
                                    @NotNull XExpression text,
                                    final boolean multiline,
-                                   boolean editorFont) {
+                                   boolean editorFont,
+                                   boolean showEditor) {
     super(project, debuggerEditorsProvider, multiline ? EvaluationMode.CODE_FRAGMENT : EvaluationMode.EXPRESSION, historyId, sourcePosition);
     myExpression = XExpressionImpl.changeMode(text, getMode());
     myEditorTextField =
@@ -78,7 +79,7 @@ public class XDebuggerExpressionEditor extends XDebuggerEditorBase {
       myEditorTextField.setFontInheritedFromLAF(false);
       myEditorTextField.setFont(EditorUtil.getEditorFont());
     }
-    myComponent = decorate(myEditorTextField, multiline, false);
+    myComponent = decorate(myEditorTextField, multiline, showEditor);
   }
 
   @Override
@@ -99,7 +100,7 @@ public class XDebuggerExpressionEditor extends XDebuggerEditorBase {
 
   @Override
   public XExpression getExpression() {
-    return getEditorsProvider().createExpression(getProject(), myEditorTextField.getDocument(), myExpression.getLanguage(), getMode());
+    return getEditorsProvider().createExpression(getProject(), myEditorTextField.getDocument(), myExpression.getLanguage(), myExpression.getMode());
   }
 
   @Override

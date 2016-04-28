@@ -52,7 +52,7 @@ public class JavaSliceUsage extends SliceUsage {
 
   @Override
   protected void processUsagesFlownFromThe(PsiElement element, Processor<SliceUsage> uniqueProcessor) {
-    SliceForwardUtil.processUsagesFlownFromThe(element, uniqueProcessor, this);
+    SliceForwardUtil.processUsagesFlownFromThe(element, this, uniqueProcessor);
   }
 
   @Override

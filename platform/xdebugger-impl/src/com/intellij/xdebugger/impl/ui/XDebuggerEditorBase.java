@@ -303,7 +303,9 @@ public abstract class XDebuggerEditorBase {
       @Nullable
       @Override
       protected JComponent createCenterPanel() {
-        return inputComponent.getMainComponent();
+        JPanel component = inputComponent.getMainComponent();
+        component.setPreferredSize(JBUI.size(300, 200));
+        return component;
       }
 
       @Override

@@ -190,7 +190,7 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
   private static Condition<PsiMember> getQualifiedNameMatcher(String completePattern) {
     final Condition<PsiMember> qualifiedMatcher;
     if (completePattern.contains(".")) {
-      final MinusculeMatcher matcher = new MinusculeMatcher("*" + StringUtil.replace(completePattern, ".", ".*"), NameUtil.MatchingCaseSensitivity.NONE);
+      final MinusculeMatcher matcher = NameUtil.buildMatcher("*" + StringUtil.replace(completePattern, ".", ".*")).build();
       qualifiedMatcher = new Condition<PsiMember>() {
         @Override
         public boolean value(PsiMember member) {

@@ -454,10 +454,9 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   @Override
-  protected void createComponents(@Nullable final ProgressIndicator indicator) {
+  protected void createComponents(@Nullable ProgressIndicator indicator) {
     // we cannot wrap "init()" call because ProgressManager instance could be created only after component registration (our "componentsRegistered" callback)
     Runnable task = () -> ApplicationImpl.super.createComponents(indicator);
-
 
     if (indicator == null) {
       // no splash, no need to to use progress manager

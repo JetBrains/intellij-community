@@ -240,6 +240,14 @@ class Test88 {
     configureByTestName()
     myFixture.assertPreferredCompletionItems(0, 'toString', 'wait')
   }
+  public void testLambdaWithSuperWildcardInAmbiguousCall() {
+    configureByTestName()
+    myFixture.assertPreferredCompletionItems(0, 'substring', 'substring', 'subSequence')
+  }
+  public void testLambdaWithCapturedSuperWildcardInAmbiguousCall() {
+    configureByTestName()
+    myFixture.assertPreferredCompletionItems(0, 'substring', 'substring', 'subSequence')
+  }
   public void testUnexpectedLambdaInAmbiguousCall() { doAntiTest() }
 
   public void testNoCollectorsInComment() { doAntiTest() }

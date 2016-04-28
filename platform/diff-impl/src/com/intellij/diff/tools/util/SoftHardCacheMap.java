@@ -25,8 +25,8 @@ public class SoftHardCacheMap<K, V> {
   @NotNull private final SoftValueHashMap<K, V> mySoftLinkMap;
 
   public SoftHardCacheMap(final int protectedQueueSize, final int probationalQueueSize) {
-    mySLRUMap = new SLRUMap<K, V>(protectedQueueSize, probationalQueueSize);
-    mySoftLinkMap = new SoftValueHashMap<K, V>();
+    mySLRUMap = new SLRUMap<>(protectedQueueSize, probationalQueueSize);
+    mySoftLinkMap = new SoftValueHashMap<>();
   }
 
   @Nullable

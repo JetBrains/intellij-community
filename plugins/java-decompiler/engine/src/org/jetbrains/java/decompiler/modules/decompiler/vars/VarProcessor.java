@@ -21,6 +21,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
 import org.jetbrains.java.decompiler.struct.StructMethod;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
+import org.jetbrains.java.decompiler.util.TextUtil;
 
 import java.util.*;
 import java.util.Map.Entry;
@@ -64,8 +65,11 @@ public class VarProcessor {
       String name = mapVarNames.get(pair);
 
       Integer index = mapOriginalVarIndices.get(pair.var);
-      if (index != null && mapDebugVarNames.containsKey(index)) {
-        name = mapDebugVarNames.get(index);
+      if (index != null) {
+        String debugName = mapDebugVarNames.get(index);
+        if (debugName != null && TextUtil.isValidIdentifier(debugName, method.getClassStruct().getBytecodeVersion())) {
+          name = debugName;
+        }
       }
 
       Integer counter = mapNames.get(name);

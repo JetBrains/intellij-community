@@ -61,8 +61,8 @@ public class ExternalDiffTool {
                           @NotNull final DiffDialogHints hints) {
     try {
       //noinspection unchecked
-      final Ref<List<DiffRequest>> requestsRef = new Ref<List<DiffRequest>>();
-      final Ref<Throwable> exceptionRef = new Ref<Throwable>();
+      final Ref<List<DiffRequest>> requestsRef = new Ref<>();
+      final Ref<Throwable> exceptionRef = new Ref<>();
       ProgressManager.getInstance().run(new Task.Modal(project, "Loading Requests", true) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
@@ -77,7 +77,7 @@ public class ExternalDiffTool {
 
       if (!exceptionRef.isNull()) throw exceptionRef.get();
 
-      List<DiffRequest> showInBuiltin = new ArrayList<DiffRequest>();
+      List<DiffRequest> showInBuiltin = new ArrayList<>();
       for (DiffRequest request : requestsRef.get()) {
         if (canShow(request)) {
           showRequest(project, request);
@@ -103,10 +103,10 @@ public class ExternalDiffTool {
   private static List<DiffRequest> collectRequests(@Nullable Project project,
                                                    @NotNull final DiffRequestChain chain,
                                                    @NotNull ProgressIndicator indicator) {
-    List<DiffRequest> requests = new ArrayList<DiffRequest>();
+    List<DiffRequest> requests = new ArrayList<>();
 
     UserDataHolderBase context = new UserDataHolderBase();
-    List<String> errorRequests = new ArrayList<String>();
+    List<String> errorRequests = new ArrayList<>();
 
     // TODO: show all changes on explicit selection
     List<? extends DiffRequestProducer> producers = Collections.singletonList(chain.getRequests().get(chain.getIndex()));

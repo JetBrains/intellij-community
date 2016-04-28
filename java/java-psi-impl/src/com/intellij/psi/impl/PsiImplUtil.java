@@ -359,6 +359,10 @@ public class PsiImplUtil {
     }
   }
 
+  /**
+   * Types should be proceed by the callers themselves
+   */
+  @Deprecated
   public static PsiType normalizeWildcardTypeByPosition(@NotNull PsiType type, @NotNull PsiExpression expression) {
     PsiUtilCore.ensureValid(expression);
     PsiUtil.ensureValidType(type);
@@ -383,21 +387,6 @@ public class PsiImplUtil {
   }
 
   private static PsiType doNormalizeWildcardByPosition(PsiType type, @NotNull PsiExpression expression, PsiExpression topLevel) {
-    if (type instanceof PsiCapturedWildcardType) {
-      final PsiWildcardType wildcardType = ((PsiCapturedWildcardType)type).getWildcard();
-      if (expression instanceof PsiReferenceExpression && LambdaUtil.isLambdaReturnExpression(expression)) {
-        return type;
-      }
-
-      if (PsiUtil.isAccessedForWriting(topLevel)) {
-        return wildcardType.isSuper() ? wildcardType.getBound() : PsiCapturedWildcardType.create(wildcardType, expression);
-      }
-      else {
-        final PsiType upperBound = ((PsiCapturedWildcardType)type).getUpperBound();
-        return upperBound instanceof PsiWildcardType ? doNormalizeWildcardByPosition(upperBound, expression, topLevel) : upperBound;
-      }
-    }
-
 
     if (type instanceof PsiWildcardType) {
       final PsiWildcardType wildcardType = (PsiWildcardType)type;

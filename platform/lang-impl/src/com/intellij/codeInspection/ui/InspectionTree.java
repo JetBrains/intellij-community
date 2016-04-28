@@ -73,7 +73,7 @@ public class InspectionTree extends Tree {
     myExcludedManager = view.getExcludedManager();
 
     setCellRenderer(new InspectionTreeCellRenderer(view));
-    setRootVisible(!myContext.isSingleInspectionRun());
+    setRootVisible(false);
     setShowsRootHandles(true);
     UIUtil.setLineStyleAngled(this);
     addTreeWillExpandListener(new ExpandListener());
@@ -337,13 +337,18 @@ public class InspectionTree extends Tree {
     }
 
     if (descriptorChildren != null) {
-      Collections.sort(descriptorChildren, DESCRIPTOR_COMPARATOR);
+      if (descriptorChildren.size() > 1) {
+        Collections.sort(descriptorChildren, DESCRIPTOR_COMPARATOR);
+      }
       descriptors.addAll(descriptorChildren);
     }
   }
 
   private boolean isNodeValidAndIncluded(ProblemDescriptionNode node) {
-    return node.isValid() && !node.isExcluded(myExcludedManager) && !node.isQuickFixAppliedFromView();
+    return node.isValid() &&
+           !node.isExcluded(myExcludedManager) &&
+           !node.isAlreadySuppressedFromView() &&
+           !node.isQuickFixAppliedFromView();
   }
 
   private void nodeStructureChanged(InspectionTreeNode node) {

@@ -369,7 +369,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
 
   protected void writeClassesPerModule(String packageName, JavaParameters javaParameters, Map<Module, List<String>> perModule)
     throws FileNotFoundException, UnsupportedEncodingException, CantRunException {
-    if (perModule != null && perModule.size() > 1) {
+    if (perModule != null) {
       final String classpath = getScope() == TestSearchScope.WHOLE_PROJECT
                                ? null : javaParameters.getClassPath().getPathsString();
 

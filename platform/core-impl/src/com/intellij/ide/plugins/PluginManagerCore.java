@@ -94,7 +94,7 @@ public class PluginManagerCore {
       if (ourBuildNumber == null) {
         ourBuildNumber = BUILD_NUMBER == null ? null : BuildNumber.fromString(BUILD_NUMBER);
         if (ourBuildNumber == null) {
-          ourBuildNumber = BuildNumber.fallback();
+          ourBuildNumber = BuildNumber.currentVersion();
         }
       }
       return ourBuildNumber;
@@ -1134,7 +1134,7 @@ public class PluginManagerCore {
       }
     }
 
-    if (!StringUtil.isEmpty(untilBuild) && !buildNumber.isSnapshot()) {
+    if (!StringUtil.isEmpty(untilBuild)) {
       BuildNumber untilBuildNumber = BuildNumber.fromString(untilBuild, descriptorName);
       if (untilBuildNumber.compareTo(buildNumber) < 0) {
         if (descriptorDebugString != null) {

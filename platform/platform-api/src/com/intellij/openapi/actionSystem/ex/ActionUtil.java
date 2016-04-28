@@ -17,6 +17,7 @@ package com.intellij.openapi.actionSystem.ex;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -189,12 +190,14 @@ public class ActionUtil {
   }
 
   public static void performActionDumbAware(AnAction action, AnActionEvent e) {
-    try {
-      action.actionPerformed(e);
-    }
-    catch (IndexNotReadyException e1) {
-      showDumbModeWarning(e);
-    }
+    TransactionGuard.getInstance().submitTransactionAndWait(() -> {
+      try {
+        action.actionPerformed(e);
+      }
+      catch (IndexNotReadyException e1) {
+        showDumbModeWarning(e);
+      }
+    });
   }
 
   @NotNull

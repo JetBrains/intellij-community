@@ -95,7 +95,7 @@ public class EduUtils {
         fileWindows = taskDir.createChildData(taskFile, name);
         printWriter = new PrintWriter(new FileOutputStream(fileWindows.getPath()));
         for (AnswerPlaceholder answerPlaceholder : taskFile.getAnswerPlaceholders()) {
-          int length = useLength ? answerPlaceholder.getLength() : answerPlaceholder.getPossibleAnswerLength();
+          int length = answerPlaceholder.getRealLength();
           if (!answerPlaceholder.isValid(document, length)) {
             printWriter.println("#educational_plugin_window = ");
             continue;
@@ -192,6 +192,13 @@ public class EduUtils {
         });
       }
     }, "Create Student File", "Create Student File");
+    createStudentDocument(project, taskFile, file, document);
+  }
+
+  public static void createStudentDocument(@NotNull Project project,
+                                           @NotNull TaskFile taskFile,
+                                           VirtualFile file,
+                                           final Document document) {
     EduDocumentListener listener = new EduDocumentListener(taskFile, false);
     document.addDocumentListener(listener);
     taskFile.sortAnswerPlaceholders();

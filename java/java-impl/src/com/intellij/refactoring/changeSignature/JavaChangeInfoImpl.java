@@ -214,7 +214,7 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
     }
     if (!method.isConstructor()){
       try {
-        isReturnTypeChanged = !deepTypeEqual(newReturnType.getType(this.method, method.getManager()), this.method.getReturnType());
+        isReturnTypeChanged = !deepTypeEqual(newReturnType.getType(this.method), this.method.getReturnType());
       }
       catch (IncorrectOperationException e) {
         isReturnTypeChanged = true;
@@ -309,7 +309,7 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
   @Nullable
   public PsiExpression getValue(int i, PsiCallExpression expr) throws IncorrectOperationException {
     if (defaultValues[i] != null) return defaultValues[i];
-    final PsiElement valueAtCallSite = newParms[i].getActualValue(expr);
+    final PsiElement valueAtCallSite = newParms[i].getActualValue(expr, PsiSubstitutor.EMPTY);
     return valueAtCallSite instanceof PsiExpression ? (PsiExpression)valueAtCallSite : null;
   }
 

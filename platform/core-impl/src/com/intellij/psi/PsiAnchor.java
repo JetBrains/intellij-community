@@ -116,7 +116,7 @@ public abstract class PsiAnchor {
   }
 
   @NotNull
-  public static PsiAnchor wrapperOrHardReference(@NotNull PsiElement element) {
+  private static PsiAnchor wrapperOrHardReference(@NotNull PsiElement element) {
     for (SmartPointerAnchorProvider provider : SmartPointerAnchorProvider.EP_NAME.getExtensions()) {
       PsiElement anchorElement = provider.getAnchor(element);
       if (anchorElement != null && anchorElement != element) {
@@ -399,7 +399,8 @@ public abstract class PsiAnchor {
   @Nullable
   public static PsiElement restoreFromStubIndex(PsiFileWithStubSupport fileImpl,
                                                 int index,
-                                                @NotNull IStubElementType elementType, boolean throwIfNull) {
+                                                @NotNull IStubElementType elementType,
+                                                boolean throwIfNull) {
     if (fileImpl == null) {
       if (throwIfNull) throw new AssertionError("Null file");
       return null;
@@ -504,11 +505,7 @@ public abstract class PsiAnchor {
       }
       catch (AssertionError e) {
         String msg = e.getMessage();
-        if (file == null) {
-          msg += "\n no PSI file";
-        } else {
-          msg += "\n current file stamp=" + (short)file.getModificationStamp();
-        }
+        msg += file == null ? "\n no PSI file" : "\n current file stamp=" + (short)file.getModificationStamp();
         final Document document = FileDocumentManager.getInstance().getCachedDocument(myVirtualFile);
         if (document != null) {
           msg += "\n committed=" + PsiDocumentManager.getInstance(myProject).isCommitted(document);

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.ex;
 
+import com.intellij.diff.util.DiffUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -80,11 +81,11 @@ public class LineStatusTrackerDrawing {
       group.add(toggleWordDiff);
 
       JComponent editorComponent = myEditor.getComponent();
-      EmptyAction.setupAction(localShowPrevAction, "VcsShowPrevChangeMarker", editorComponent);
-      EmptyAction.setupAction(localShowNextAction, "VcsShowNextChangeMarker", editorComponent);
-      EmptyAction.setupAction(rollback, IdeActions.SELECTED_CHANGES_ROLLBACK, editorComponent);
-      EmptyAction.setupAction(showDiff, "ChangesView.Diff", editorComponent);
-      EmptyAction.setupAction(copyRange, IdeActions.ACTION_COPY, editorComponent);
+      DiffUtil.registerAction(localShowPrevAction, editorComponent);
+      DiffUtil.registerAction(localShowNextAction, editorComponent);
+      DiffUtil.registerAction(rollback, editorComponent);
+      DiffUtil.registerAction(showDiff, editorComponent);
+      DiffUtil.registerAction(copyRange, editorComponent);
 
       final List<AnAction> actionList = ActionUtil.getActions(editorComponent);
       Disposer.register(parentDisposable, new Disposable() {

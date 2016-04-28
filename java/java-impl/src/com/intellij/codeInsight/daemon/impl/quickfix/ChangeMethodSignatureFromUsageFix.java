@@ -125,7 +125,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
     StringBuilder result = new StringBuilder();
     try {
       for (ParameterInfoImpl info : infos) {
-        PsiType type = info.createType(context, context.getManager());
+        PsiType type = info.createType(context);
         if (type == null) return null;
         if (result.length() != 0) result.append(", ");
         result.append(type.getPresentableText());

@@ -21,7 +21,6 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.ui.*;
@@ -78,10 +77,6 @@ public class InspectionNodeInfo extends JPanel {
     description.setContentType(UIUtil.HTML_MIME);
     description.setEditable(false);
     description.setOpaque(false);
-    if (Registry.is("ide.scroll.background.auto")) {
-      description.setBackground(UIUtil.getLabelBackground());
-      description.setForeground(UIUtil.getLabelForeground());
-    }
     description.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
     final String toolDescription = toolWrapper.loadDescription();
     SingleInspectionProfilePanel.readHTML(description, SingleInspectionProfilePanel.toHTML(description, toolDescription == null ? "" : toolDescription, false));

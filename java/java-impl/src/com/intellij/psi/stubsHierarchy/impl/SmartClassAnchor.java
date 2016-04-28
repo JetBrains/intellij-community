@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,33 +16,37 @@
 package com.intellij.psi.stubsHierarchy.impl;
 
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.stubsHierarchy.impl.ClassAnchor.*;
+import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.stubsHierarchy.impl.ClassAnchor.DirectClassAnchor;
+import com.intellij.psi.stubsHierarchy.impl.ClassAnchor.StubClassAnchor;
 
 public class SmartClassAnchor {
 
-  public final static SmartClassAnchor[] EMPTY_ARRAY = new SmartClassAnchor[0];
+  public static final SmartClassAnchor[] EMPTY_ARRAY = new SmartClassAnchor[0];
 
   public final int myId;
   public final int myFileId;
 
-  public SmartClassAnchor(int id, int fileId) {
-    this.myId = id;
+  private SmartClassAnchor(int id, int fileId) {
+    myId = id;
     myFileId = fileId;
   }
 
-  public static class StubSmartClassAnchor extends SmartClassAnchor {
-    public final int myStubId;
+  static class StubSmartClassAnchor extends SmartClassAnchor {
+    final int myStubId;
+    final IStubElementType myStubElementType;
 
-    public StubSmartClassAnchor(int id, int fileId, int stubId) {
+    StubSmartClassAnchor(int id, int fileId, int stubId, IStubElementType stubElementType) {
       super(id, fileId);
       myStubId = stubId;
+      myStubElementType = stubElementType;
     }
   }
 
-  public static class DirectSmartClassAnchor extends SmartClassAnchor {
+  static class DirectSmartClassAnchor extends SmartClassAnchor {
     public final PsiClass myPsiClass;
 
-    public DirectSmartClassAnchor(int id, int fileId, PsiClass psiClass) {
+    DirectSmartClassAnchor(int id, int fileId, PsiClass psiClass) {
       super(id, fileId);
       myPsiClass = psiClass;
     }
@@ -50,7 +54,7 @@ public class SmartClassAnchor {
 
   static SmartClassAnchor create(int symbolId, ClassAnchor classAnchor) {
     if (classAnchor instanceof StubClassAnchor) {
-      return new StubSmartClassAnchor(symbolId, classAnchor.myFileId, ((StubClassAnchor)classAnchor).myStubId);
+      return new StubSmartClassAnchor(symbolId, classAnchor.myFileId, ((StubClassAnchor)classAnchor).myStubId, ((StubClassAnchor)classAnchor).myStubElementType);
     }
     if (classAnchor instanceof DirectClassAnchor) {
       return new DirectSmartClassAnchor(symbolId, classAnchor.myFileId, ((DirectClassAnchor)classAnchor).myPsiClass);

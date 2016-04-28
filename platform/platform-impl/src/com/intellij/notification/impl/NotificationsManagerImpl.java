@@ -520,6 +520,13 @@ public class NotificationsManagerImpl extends NotificationsManager {
     }
     layoutDataRef.set(layoutData);
 
+    if (layoutData.fillColor == null) {
+      layoutData.fillColor = FILL_COLOR;
+    }
+    if (layoutData.borderColor == null) {
+      layoutData.borderColor = BORDER_COLOR;
+    }
+
     boolean actions = !notification.getActions().isEmpty();
     boolean showFullContent = layoutData.showFullContent || notification instanceof NotificationActionProvider;
 
@@ -647,7 +654,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
         @Nullable
         @Override
         protected Color getViewColor() {
-          return FILL_COLOR;
+          return layoutData.fillColor;
         }
 
         @Override
@@ -659,7 +666,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
       });
     }
 
-    configureBalloonScrollPane(pane);
+    configureBalloonScrollPane(pane, layoutData.fillColor);
 
     if (showFullContent) {
       pane.setPreferredSize(text.getPreferredSize());
@@ -726,12 +733,13 @@ public class NotificationsManagerImpl extends NotificationsManager {
 
           int height = title instanceof JEditorPane ? getFirstLineHeight((JEditorPane)title) : title.getHeight();
 
-          g.setColor(FILL_COLOR);
+          g.setColor(layoutData.fillColor);
           g.fillRect(x, y, width, height);
 
           width = layoutData.configuration.beforeGearSpace;
           x -= width;
-          ((Graphics2D)g).setPaint(new GradientPaint(x, y, ColorUtil.withAlpha(FILL_COLOR, 0.2), x + width, y, FILL_COLOR));
+          ((Graphics2D)g)
+            .setPaint(new GradientPaint(x, y, ColorUtil.withAlpha(layoutData.fillColor, 0.2), x + width, y, layoutData.fillColor));
           g.fillRect(x, y, width, height);
         }
       }
@@ -802,7 +810,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
     }
 
     final BalloonBuilder builder = JBPopupFactory.getInstance().createBalloonBuilder(content);
-    builder.setFillColor(FILL_COLOR)
+    builder.setFillColor(layoutData.fillColor)
       .setCloseButtonEnabled(buttons == null)
       .setShowCallout(showCallout)
       .setShadow(false)
@@ -810,14 +818,18 @@ public class NotificationsManagerImpl extends NotificationsManager {
       .setHideOnAction(hideOnClickOutside)
       .setHideOnKeyOutside(hideOnClickOutside)
       .setHideOnFrameResize(false)
-      .setBorderColor(BORDER_COLOR)
+      .setBorderColor(layoutData.borderColor)
       .setBorderInsets(new Insets(0, 0, 0, 0));
+
+    if (layoutData.fadeoutTime != 0) {
+      builder.setFadeoutTime(layoutData.fadeoutTime);
+    }
 
     final BalloonImpl balloon = (BalloonImpl)builder.createBalloon();
     balloon.setAnimationEnabled(false);
     notification.setBalloon(balloon);
 
-    balloon.setShadowBorderProvider(new NotificationBalloonShadowBorderProvider(FILL_COLOR, BORDER_COLOR));
+    balloon.setShadowBorderProvider(new NotificationBalloonShadowBorderProvider(layoutData.fillColor, layoutData.borderColor));
 
     if (!layoutData.welcomeScreen && buttons == null) {
       balloon.setActionProvider(
@@ -832,20 +844,20 @@ public class NotificationsManagerImpl extends NotificationsManager {
   public static JScrollPane createBalloonScrollPane(@NotNull Component content, boolean configure) {
     JScrollPane pane = ScrollPaneFactory.createScrollPane(content, true);
     if (configure) {
-      configureBalloonScrollPane(pane);
+      configureBalloonScrollPane(pane, FILL_COLOR);
     }
     return pane;
   }
 
-  public static void configureBalloonScrollPane(@NotNull JScrollPane pane) {
+  public static void configureBalloonScrollPane(@NotNull JScrollPane pane, @NotNull Color fillColor) {
     pane.setOpaque(false);
     pane.getViewport().setOpaque(false);
     if (!Registry.is("ide.scroll.new.layout")) {
       pane.getVerticalScrollBar().setUI(ButtonlessScrollBarUI.createTransparent());
     }
-    pane.setBackground(FILL_COLOR);
-    pane.getViewport().setBackground(FILL_COLOR);
-    pane.getVerticalScrollBar().setBackground(FILL_COLOR);
+    pane.setBackground(fillColor);
+    pane.getViewport().setBackground(fillColor);
+    pane.getVerticalScrollBar().setBackground(fillColor);
   }
 
   private static void createActionPanel(@NotNull final Notification notification, @NotNull JPanel centerPanel, int gap) {

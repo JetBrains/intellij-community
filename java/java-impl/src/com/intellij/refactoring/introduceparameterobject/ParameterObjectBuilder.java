@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -137,8 +137,8 @@ class ParameterObjectBuilder {
             out.append(CodeStyleSettingsManager.getSettings(myProject).GENERATE_FINAL_PARAMETERS ? " final " : "");
             final String parameterName = parameter.getName();
           final PsiType type = field.getType();
-          final PsiType fieldType = parameter.isVarArgs() && type instanceof PsiArrayType ? 
-                                    PsiEllipsisType.createEllipsis(((PsiArrayType)type).getComponentType(), PsiAnnotation.EMPTY_ARRAY) : type;
+          final PsiType fieldType = parameter.isVarArgs() && type instanceof PsiArrayType ?
+                                    new PsiEllipsisType(((PsiArrayType)type).getComponentType()) : type;
             out.append(' ' + fieldType.getCanonicalText() + ' ' + parameterName);
             if (iterator.hasNext()) {
                 out.append(", ");

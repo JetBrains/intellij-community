@@ -358,6 +358,9 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
   public Result postProcessEnter(@NotNull PsiFile file,
                                  @NotNull Editor editor,
                                  @NotNull DataContext dataContext) {
+    if (!(file instanceof PyFile)) {
+      return Result.Continue;
+    }
     if (myPostprocessShift > 0) {
       editor.getCaretModel().moveCaretRelatively(myPostprocessShift, 0, false, false, false);
       myPostprocessShift = 0;

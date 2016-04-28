@@ -500,6 +500,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testArrayAccessWithTopExpression() throws Exception {
+    doTest();
+  }
+
   public void testArrayAccessWithDuplicates() throws Exception {
     doDuplicatesTest();
   }

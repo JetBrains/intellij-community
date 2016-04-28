@@ -27,7 +27,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.search.PsiSearchScopeUtil;
@@ -865,7 +864,7 @@ public class TypeMigrationLabeler {
         }
         else if (element instanceof PsiVariable) {
           if (ref instanceof PsiReferenceExpression) {
-            getTypeEvaluator().setType(new TypeMigrationUsageInfo(ref), PsiImplUtil.normalizeWildcardTypeByPosition(migrationType, (PsiReferenceExpression)ref));
+            getTypeEvaluator().setType(new TypeMigrationUsageInfo(ref), PsiUtil.captureToplevelWildcards(migrationType, ref));
           }
         }
         else {

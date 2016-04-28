@@ -176,7 +176,9 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
 
   @Override
   public String toString() {
-    return traverse().toString();
+    return getClass().getSimpleName() + "{" +
+           "traversal=" + meta.traversal +
+           '}';
   }
 
   public abstract static class EdgeFilter<T> extends JBIterable.StatefulFilter<T> {

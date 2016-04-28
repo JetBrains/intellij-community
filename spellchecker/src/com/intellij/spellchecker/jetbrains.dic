@@ -92,6 +92,7 @@ codesign
 commandline
 committer
 commonjs
+comparision
 concat
 cond
 conf
@@ -162,6 +163,7 @@ expr
 externalizer
 facebook
 facelet
+facelets
 fallthrough
 favicon
 filename
@@ -244,6 +246,7 @@ inout
 instantiable
 insteadof
 intellij
+intrinsics
 iphone
 iphoneos
 isnan

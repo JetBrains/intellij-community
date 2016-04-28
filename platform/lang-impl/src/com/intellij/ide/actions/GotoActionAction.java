@@ -30,11 +30,11 @@ import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.application.TransactionGuardImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.keymap.impl.ActionShortcutRestrictions;
 import com.intellij.openapi.keymap.impl.KeymapManagerImpl;
 import com.intellij.openapi.keymap.impl.ui.KeymapPanel;
 import com.intellij.openapi.progress.util.ProgressWindow;
@@ -196,7 +196,7 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
               KeymapManagerImpl km = ((KeymapManagerImpl)KeymapManager.getInstance());
               Keymap k = km.getActiveKeymap();
               if (!k.canModify()) return;
-              KeymapPanel.addKeyboardShortcut(id, ArrayUtil.getFirstElement(k.getShortcuts(id)), k, component, new QuickList[]{});
+              KeymapPanel.addKeyboardShortcut(id, ActionShortcutRestrictions.getInstance().getForActionId(id), k, component);
               popup.repaintListImmediate();
             }
           }
@@ -237,12 +237,8 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
                                                @Nullable AnActionEvent e) {
     if (element instanceof OptionDescription) {
       final String configurableId = ((OptionDescription)element).getConfigurableId();
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          ShowSettingsUtilImpl.showSettingsDialog(project, configurableId, enteredText);
-        }
-      });
+      TransactionGuard.submitTransaction(project, () ->
+        ShowSettingsUtilImpl.showSettingsDialog(project, configurableId, enteredText));
     }
     else {
       performAction(element, component, e);
@@ -251,10 +247,9 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
 
   public static void performAction(Object element, @Nullable final Component component, @Nullable final AnActionEvent e) {
     // element could be AnAction (SearchEverywhere)
+    if (component == null) return;
     final AnAction action = element instanceof AnAction ? (AnAction)element : ((GotoActionModel.ActionWrapper)element).getAction();
-    ApplicationManager.getApplication().invokeLater(() -> {
-      if (component == null) return;
-      ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(() -> {
+    TransactionGuard.submitTransaction(ApplicationManager.getApplication(), () -> {
         DataManager instance = DataManager.getInstance();
         DataContext context = instance != null ? instance.getDataContext(component) : DataContext.EMPTY_CONTEXT;
         InputEvent inputEvent = e == null ? null : e.getInputEvent();
@@ -276,8 +271,7 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
             ActionUtil.performActionDumbAware(action, event);
           }
         }
-      });
-    }, ModalityState.NON_MODAL);
+    });
   }
 
   @Override

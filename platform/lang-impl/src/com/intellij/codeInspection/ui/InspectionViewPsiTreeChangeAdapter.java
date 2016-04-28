@@ -20,8 +20,10 @@ import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ReadTask;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -43,6 +45,8 @@ import java.util.Set;
  * @author Dmitry Batkovich
  */
 class InspectionViewPsiTreeChangeAdapter extends PsiTreeChangeAdapter {
+  private final static int MAX_UPDATES_FOR_CANCELLABLE_ACTION = 100;
+
   private final InspectionResultsView myView;
   private final MergingUpdateQueue myUpdater;
   private final BoundedTaskExecutor myExecutor;
@@ -51,7 +55,7 @@ class InspectionViewPsiTreeChangeAdapter extends PsiTreeChangeAdapter {
     myView = view;
     myExecutor = new BoundedTaskExecutor(AppExecutorUtil.getAppExecutorService(), JobSchedulerImpl.CORES_COUNT, myView);
     myUpdater = new MergingUpdateQueue("inspection.view.psi.update.listener",
-                                       200,
+                                       300,
                                        true,
                                        myView,
                                        myView,
@@ -66,56 +70,72 @@ class InspectionViewPsiTreeChangeAdapter extends PsiTreeChangeAdapter {
             Set<VirtualFile> files = new HashSet<>();
             for (Update update : updates) {
               VirtualFile file = (VirtualFile)update.getEqualityObjects()[0];
-              VfsUtilCore.iterateChildrenRecursively(file, VirtualFileFilter.ALL, new ContentIterator() {
-                @Override
-                public boolean processFile(VirtualFile fileOrDir) {
-                  return files.add(fileOrDir);
-                }
-              });
+              VfsUtilCore.iterateChildrenRecursively(file, VirtualFileFilter.ALL, files::add);
             }
+            final Project project = view.getProject();
 
-            synchronized (myView.getTreeStructureUpdateLock()) {
-              InspectionTreeNode root = myView.getTree().getRoot();
-              boolean[] needUpdateUI = {false};
-              processNodesIfNeed(root, (node) -> {
-                if (node instanceof CachedInspectionTreeNode) {
-                  //indicator.checkCanceled();
-                  RefEntity element = ((CachedInspectionTreeNode)node).getElement();
-                  if (element instanceof RefElement) {
-                    final SmartPsiElementPointer pointer = ((RefElement)element).getPointer();
-                    VirtualFile containingFile = pointer.getVirtualFile();
-                    if (files.contains(containingFile)) {
-                      ((CachedInspectionTreeNode)node).dropCache();
+            final Runnable runnable = () -> {
+              synchronized (myView.getTreeStructureUpdateLock()) {
+                InspectionTreeNode root = myView.getTree().getRoot();
+                boolean[] needUpdateUI = {false};
+                processNodesIfNeed(root, (node) -> {
+                  if (node instanceof CachedInspectionTreeNode) {
+                    RefEntity element = ((CachedInspectionTreeNode)node).getElement();
+                    if (element instanceof RefElement) {
+                      final SmartPsiElementPointer pointer = ((RefElement)element).getPointer();
+                      VirtualFile strictVirtualFile = pointer.getVirtualFile();
+                      if (strictVirtualFile == null || !strictVirtualFile.isValid()) {
+                        final PsiFile file = pointer.getContainingFile();
+                        if (file != null && file.isValid()) {
+                          strictVirtualFile = file.getVirtualFile();
+                        }
+                      }
+                      if (strictVirtualFile == null || files.contains(strictVirtualFile)) {
+                        ((CachedInspectionTreeNode)node).dropCache(project);
+                        if (!needUpdateUI[0]) {
+                          needUpdateUI[0] = true;
+                        }
+                      }
+                      return false;
+                    }
+                    else {
+                      ((CachedInspectionTreeNode)node).dropCache(project);
                       if (!needUpdateUI[0]) {
                         needUpdateUI[0] = true;
                       }
+                      return false;
                     }
-                    return false;
                   }
-                  else {
-                    ((CachedInspectionTreeNode)node).dropCache();
-                    if (!needUpdateUI[0]) {
-                      needUpdateUI[0] = true;
-                    }
-                    return false;
-                  }
-                }
-                return true;
-              });
-              if (needUpdateUI[0]) {
-                UIUtil.invokeLaterIfNeeded(() -> {
-                  myView.invalidate();
-                  myView.repaint();
-                  myView.syncRightPanel();
+                  return true;
                 });
+                if (needUpdateUI[0]) {
+                  UIUtil.invokeLaterIfNeeded(() -> {
+                    myView.invalidate();
+                    myView.repaint();
+                    if (myView.isUpdating()) {
+                      myView.updateRightPanelLoading();
+                    }
+                    else {
+                      myView.syncRightPanel();
+                    }
+                  });
+                }
               }
+            };
+
+            if (updates.length > MAX_UPDATES_FOR_CANCELLABLE_ACTION) {
+              ProgressManager.getInstance().executeNonCancelableSection(runnable);
+            } else {
+              runnable.run();
             }
           }
 
           @Override
           public void onCanceled(@NotNull ProgressIndicator indicator) {
             if (!myView.isDisposed()) {
-              ProgressIndicatorUtils.scheduleWithWriteActionPriority(myExecutor, this);
+              for (Update update : updates) {
+                myUpdater.queue(update);
+              }
             }
           }
         };
