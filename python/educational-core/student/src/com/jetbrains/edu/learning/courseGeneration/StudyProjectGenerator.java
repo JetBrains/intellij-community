@@ -105,7 +105,7 @@ public class StudyProjectGenerator {
     finally {
       StudyUtils.closeSilently(reader);
     }
-    final Course course = EduStepicConnector.getCourse(project, mySelectedCourseInfo, myUser.getEmail());
+    final Course course = EduStepicConnector.getCourse(project, mySelectedCourseInfo);
     if (course != null) {
       flushCourse(project, course);
     }
