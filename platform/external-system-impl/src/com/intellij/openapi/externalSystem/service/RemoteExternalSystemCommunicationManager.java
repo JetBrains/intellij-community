@@ -66,6 +66,7 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import kotlin.Unit;
+import kotlin.reflect.KotlinReflectionInternalError;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -154,6 +155,7 @@ public class RemoteExternalSystemCommunicationManager implements ExternalSystemC
 
         // add Kotlin runtime
         ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(Unit.class), classPath);
+        ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(KotlinReflectionInternalError.class), classPath);
 
         // External system module jars
         ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(getClass()), classPath);
