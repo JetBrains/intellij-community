@@ -207,17 +207,14 @@ public abstract class MergeRequestProcessor implements Disposable {
   @Override
   public void dispose() {
     if (myDisposed) return;
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        if (myDisposed) return;
-        myDisposed = true;
+    UIUtil.invokeLaterIfNeeded(() -> {
+      if (myDisposed) return;
+      myDisposed = true;
 
-        onDispose();
+      onDispose();
 
-        destroyViewer();
-        applyRequestResult(MergeResult.CANCEL);
-      }
+      destroyViewer();
+      applyRequestResult(MergeResult.CANCEL);
     });
   }
 

@@ -214,7 +214,7 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
     }
     if (!method.isConstructor()){
       try {
-        isReturnTypeChanged = !deepTypeEqual(newReturnType.getType(this.method, method.getManager()), this.method.getReturnType());
+        isReturnTypeChanged = !deepTypeEqual(newReturnType.getType(this.method), this.method.getReturnType());
       }
       catch (IncorrectOperationException e) {
         isReturnTypeChanged = true;

@@ -73,11 +73,11 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   private DiffElement mySrc;
   private DiffElement myTrg;
   private DTree myTree;
-  private final List<DirDiffElementImpl> myElements = new ArrayList<DirDiffElementImpl>();
+  private final List<DirDiffElementImpl> myElements = new ArrayList<>();
   private final AtomicBoolean myUpdating = new AtomicBoolean(false);
   private JBTable myTable;
   public String DECORATOR = "DIFF_TABLE_DECORATOR";
-  public final AtomicReference<String> text = new AtomicReference<String>(prepareText(""));
+  public final AtomicReference<String> text = new AtomicReference<>(prepareText(""));
   private Updater myUpdater;
   private List<DirDiffModelListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private TableSelectionConfig mySelectionConfig;
@@ -282,7 +282,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
       myTree.setTarget(myTrg);
       myTree.update(mySettings);
 
-      ArrayList<DirDiffElementImpl> elements = new ArrayList<DirDiffElementImpl>();
+      ArrayList<DirDiffElementImpl> elements = new ArrayList<>();
       fillElements(myTree, elements);
       myElements.clear();
       myElements.addAll(elements);
@@ -333,7 +333,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
       public void run() {
         if (myDisposed) return;
         myTree.updateVisibility(mySettings);
-        final ArrayList<DirDiffElementImpl> elements = new ArrayList<DirDiffElementImpl>();
+        final ArrayList<DirDiffElementImpl> elements = new ArrayList<>();
         fillElements(myTree, elements);
         final Runnable uiThread = new Runnable() {
           public void run() {
@@ -512,7 +512,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
 
   public List<DirDiffElementImpl> getSelectedElements() {
     final int[] rows = myTable.getSelectedRows();
-    final ArrayList<DirDiffElementImpl> elements = new ArrayList<DirDiffElementImpl>();
+    final ArrayList<DirDiffElementImpl> elements = new ArrayList<>();
     for (int row : rows) {
       final DirDiffElementImpl element = getElementAt(row);
       if (element == null || element.isSeparator()) continue;
@@ -604,8 +604,8 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
       final String path = element.getParentNode().getPath();
 
       if (source instanceof BackgroundOperatingDiffElement) {
-        final Ref<String> errorMessage = new Ref<String>();
-        final Ref<DiffElement> diff = new Ref<DiffElement>();
+        final Ref<String> errorMessage = new Ref<>();
+        final Ref<DiffElement> diff = new Ref<>();
         Runnable onFinish = new Runnable() {
           @Override
           public void run() {
@@ -662,8 +662,8 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
       final String path = element.getParentNode().getPath();
 
       if (target instanceof BackgroundOperatingDiffElement) {
-        final Ref<String> errorMessage = new Ref<String>();
-        final Ref<DiffElement> diff = new Ref<DiffElement>();
+        final Ref<String> errorMessage = new Ref<>();
+        final Ref<DiffElement> diff = new Ref<>();
         Runnable onFinish = new Runnable() {
           @Override
           public void run() {
@@ -744,7 +744,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     final DiffElement target = element.getTarget();
     LOG.assertTrue(source == null || target == null);
     if (source instanceof BackgroundOperatingDiffElement || target instanceof BackgroundOperatingDiffElement) {
-      final Ref<String> errorMessage = new Ref<String>();
+      final Ref<String> errorMessage = new Ref<>();
       Runnable onFinish = new Runnable() {
         @Override
         public void run() {
@@ -805,7 +805,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   }
 
   public void synchronizeAll() {
-    List<DirDiffElementImpl> elements = new ArrayList<DirDiffElementImpl>(myElements);
+    List<DirDiffElementImpl> elements = new ArrayList<>(myElements);
     if (!checkCanDelete(elements)) {
       return;
     }

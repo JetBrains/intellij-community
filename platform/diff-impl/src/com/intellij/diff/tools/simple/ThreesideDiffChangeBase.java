@@ -36,8 +36,8 @@ import java.util.List;
 public abstract class ThreesideDiffChangeBase {
   @NotNull private final ConflictType myType;
 
-  @NotNull protected final List<RangeHighlighter> myHighlighters = new ArrayList<RangeHighlighter>();
-  @NotNull protected final List<RangeHighlighter> myInnerHighlighters = new ArrayList<RangeHighlighter>();
+  @NotNull protected final List<RangeHighlighter> myHighlighters = new ArrayList<>();
+  @NotNull protected final List<RangeHighlighter> myInnerHighlighters = new ArrayList<>();
 
   public ThreesideDiffChangeBase(@NotNull MergeLineFragment fragment,
                                  @NotNull List<? extends EditorEx> editors,

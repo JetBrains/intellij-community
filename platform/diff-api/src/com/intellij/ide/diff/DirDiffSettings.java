@@ -46,10 +46,10 @@ public class DirDiffSettings {
   public boolean showInFrame = true; // in dialog otherwise
 
   //Usually used to set additional compare settings
-  private final List<AnAction> extraToolbarActions = new ArrayList<AnAction>();
+  private final List<AnAction> extraToolbarActions = new ArrayList<>();
 
   //Non-standard diff tools can store additional data here to use it while building data model
-  public final HashMap<Object, Object> customSettings = new HashMap<Object, Object>();
+  public final HashMap<Object, Object> customSettings = new HashMap<>();
 
   private String filter = "";
   private Pattern filterPattern = PatternUtil.fromMask("*");
