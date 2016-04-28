@@ -44,7 +44,7 @@ public class GroovyIntroduceObjectClassDescriptor extends IntroduceParameterObje
   }
 
   @Override
-  public void initExistingClass(GrMethod method) {
+  public GrMethod findCompatibleConstructorInExistingClass(GrMethod method) {
     throw new UnsupportedOperationException();
   }
 

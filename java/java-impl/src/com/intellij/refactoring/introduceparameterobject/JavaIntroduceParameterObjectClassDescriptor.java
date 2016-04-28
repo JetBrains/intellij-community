@@ -48,8 +48,6 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
   private final Map<ParameterInfoImpl, ParameterBean> myExistingClassProperties = new HashMap<>();
   private final MoveDestination myMoveDestination;
 
-  private PsiMethod myExistingClassCompatibleConstructor;
-
   public JavaIntroduceParameterObjectClassDescriptor(String className,
                                                      String packageName,
                                                      MoveDestination moveDestination,
@@ -110,25 +108,10 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
     return text;
   }
 
-  public PsiMethod getExistingClassCompatibleConstructor() {
-    return myExistingClassCompatibleConstructor;
-  }
-
-  public void setExistingClassCompatibleConstructor(PsiMethod existingClassCompatibleConstructor) {
-    myExistingClassCompatibleConstructor = existingClassCompatibleConstructor;
-  }
 
   @Override
   public PsiClass getExistingClass() {
     return (PsiClass)super.getExistingClass();
-  }
-
-  @Override
-  public void setExistingClass(PsiElement existingClass) {
-    super.setExistingClass(existingClass);
-    if (isUseExistingClass()) {
-      setExistingClassCompatibleConstructor(findCompatibleConstructor((PsiClass)existingClass));
-    }
   }
 
   public String getGetter(ParameterInfoImpl param) {
@@ -170,11 +153,12 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
   }
 
   @Override
-  public void initExistingClass(PsiMethod method) {
+  public PsiMethod findCompatibleConstructorInExistingClass(PsiMethod method) {
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(method.getProject());
     final String qualifiedName = StringUtil.getQualifiedName(getPackageName(), getClassName());
     final PsiClass existingClass = psiFacade.findClass(qualifiedName, method.getResolveScope());
     setExistingClass(existingClass);
+    return findCompatibleConstructor(existingClass);
   }
 
   @Nullable

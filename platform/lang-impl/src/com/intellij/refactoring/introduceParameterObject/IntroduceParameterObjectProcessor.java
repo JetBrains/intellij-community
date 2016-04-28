@@ -85,7 +85,7 @@ public class IntroduceParameterObjectProcessor<M extends PsiNamedElement, P exte
   @Override
   protected void findUsages(@NotNull List<FixableUsageInfo> usages) {
     if (myClassDescriptor.isUseExistingClass()) {
-      myClassDescriptor.initExistingClass(myMethod);
+      myClassDescriptor.setExistingClassCompatibleConstructor(myClassDescriptor.findCompatibleConstructorInExistingClass(myMethod));
     }
     List<PsiNamedElement> methodHierarchy = new ArrayList<>();
     methodHierarchy.add(myMethod);
