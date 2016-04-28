@@ -25,6 +25,7 @@ import com.jetbrains.edu.learning.courseFormat.Task;
 import com.jetbrains.edu.learning.stepic.EduAdaptiveStepicConnector;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroundable {
 
@@ -75,21 +76,36 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
   public void run(@NotNull ProgressIndicator indicator) {
     final Course course = StudyTaskManager.getInstance(myProject).getCourse();
     if (course != null && course.isAdaptive()) {
-      checkAdaptiveCourse(indicator);
+      checkForAdaptiveCourse(indicator);
     }
     else {
-      if (checkCourse(indicator)) return;
+      checkForEduCourse(indicator);
     }
-    runAfterTaskSolvedActions();
   }
 
-  private boolean checkCourse(@NotNull ProgressIndicator indicator) {
+  private void checkForEduCourse(@NotNull ProgressIndicator indicator) {
+    final StudyTestsOutputParser.TestsOutput testsOutput = getTestOutput(indicator);
+
+    postAttemptToStepic(testsOutput);
+
+    if (testsOutput != null) {
+      if (testsOutput.isSuccess()) {
+        onTaskSolved(testsOutput.getMessage());
+      }
+      else {
+        onTaskFailed(testsOutput.getMessage());
+      }
+      runAfterTaskCheckedActions();
+    }
+  }
+
+  @Nullable
+  private StudyTestsOutputParser.TestsOutput getTestOutput(@NotNull ProgressIndicator indicator) {
     final CapturingProcessHandler handler = new CapturingProcessHandler(myTestProcess, null, myCommandLine);
     final ProcessOutput output = handler.runProcessWithProgressIndicator(indicator);
     if (indicator.isCanceled()) {
       ApplicationManager.getApplication().invokeLater(
         () -> StudyCheckUtils.showTestResultPopUp("Check cancelled", MessageType.WARNING.getPopupBackground(), myProject));
-      return true;
     }
 
 
@@ -102,64 +118,64 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
                                                                                             myProject));
       //log error output of tests
       LOG.info("#educational " + stderr);
-      return true;
+      return null;
     }
-
-    postAttemptToStepic(testsOutput);
-
-
-    if (testsOutput.isSuccess()) {
-      onTaskSolved(testsOutput.getMessage());
-    }
-    else {
-      onTaskFailed(testsOutput.getMessage());
-    }
-    return false;
+    return testsOutput;
   }
 
-  private void checkAdaptiveCourse(ProgressIndicator indicator) {
+  private void checkForAdaptiveCourse(ProgressIndicator indicator) {
     ProgressManager.getInstance().runProcessWithProgressAsynchronously(new Backgroundable(myProject, "Checking Task") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        final Pair<Boolean, String> pair = EduAdaptiveStepicConnector.checkTask(myProject, myTask);
-        if (pair != null) {
-          final String checkMessage = pair.getSecond();
-          if (pair.getFirst()) {
-            onTaskSolved(checkMessage);
+        final StudyTestsOutputParser.TestsOutput testOutput = getTestOutput(indicator);
+        if (testOutput != null) {
+          if (testOutput.isSuccess()) {
+            final Pair<Boolean, String> pair = EduAdaptiveStepicConnector.checkTask(myProject, myTask);
+            if (pair != null && !pair.getSecond().isEmpty()) {
+              final String checkMessage = pair.getSecond();
+              if (pair.getFirst()) {
+                onTaskSolved(checkMessage);
+              }
+              else {
+                onTaskFailed(checkMessage);
+              }
+              runAfterTaskCheckedActions();
+            }
+            else {
+              ApplicationManager.getApplication().invokeLater(() ->
+                                                                StudyCheckUtils.showTestResultPopUp("Failed to launch checking",
+                                                                                                    MessageType.WARNING
+                                                                                                      .getPopupBackground(),
+                                                                                                    myProject));
+            }
           }
           else {
-            onTaskFailed(checkMessage);
+            onTaskFailed(testOutput.getMessage());
           }
-        }
-        else {
-          ApplicationManager.getApplication().invokeLater(() ->
-                                                            StudyCheckUtils.showTestResultPopUp("Failed to launch checking",
-                                                                                                MessageType.WARNING.getPopupBackground(),
-                                                                                                myProject));
         }
       }
     }, indicator);
-    
   }
 
-  protected void onTaskFailed( String message) {
+  protected void onTaskFailed(String message) {
     myTaskManger.setStatus(myTask, StudyStatus.Failed);
     ApplicationManager.getApplication().invokeLater(
-      () -> StudyCheckUtils.showTestResultPopUp(message, MessageType.ERROR.getPopupBackground(), myProject));
+      () -> StudyCheckUtils.showTestResults(myProject, message));
   }
 
   protected void onTaskSolved(String message) {
     myTaskManger.setStatus(myTask, StudyStatus.Solved);
+
     ApplicationManager.getApplication().invokeLater(
-      () -> StudyCheckUtils.showTestResultPopUp(message, MessageType.INFO.getPopupBackground(), myProject));
+      () -> StudyCheckUtils.showTestResults(myProject, message));
   }
 
-  private void runAfterTaskSolvedActions() {
+  private void runAfterTaskCheckedActions() {
     StudyPluginConfigurator configurator = StudyUtils.getConfigurator(myProject);
     if (configurator != null) {
       StudyAfterCheckAction[] checkActions = configurator.getAfterCheckActions();
       if (checkActions != null) {
-        for (StudyAfterCheckAction action: checkActions) {
+        for (StudyAfterCheckAction action : checkActions) {
           action.run(myProject, myTask, myStatusBeforeCheck);
         }
       }

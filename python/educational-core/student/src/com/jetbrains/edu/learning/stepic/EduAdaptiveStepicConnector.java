@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.jetbrains.edu.learning.StudyTaskManager;
@@ -42,6 +43,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static com.jetbrains.edu.learning.stepic.EduStepicConnector.getHttpClient;
@@ -57,6 +59,8 @@ public class EduAdaptiveStepicConnector {
   private static final String RECOMMENDATION_REACTIONS_URL = "recommendation-reactions";
   private static final String ATTEMPTS_URL = "attempts";
   private static final String SUBMISSION_URL = "submissions";
+  private static final String PYTHON2 = "python2";
+  private static final String PYTHON3 = "python3";
 
   @Nullable
   public static Task getNextRecommendation(@NotNull final Project project, @NotNull Course course) {
@@ -88,9 +92,11 @@ public class EduAdaptiveStepicConnector {
           for (int stepId : realLesson.steps) {
             final StepicWrappers.Step step = EduStepicConnector.getStep(stepId);
             if (step.name.equals("code")) {
-              return getTaskFromStep(realLesson.getName(), stepId, step);
+              return getTaskFromStep(project, stepId, step, realLesson.getName());
             }
           }
+
+          LOG.warn("Got a lesson without code part as a recommendation");
         }
       }
       else {
@@ -106,8 +112,8 @@ public class EduAdaptiveStepicConnector {
     return null;
   }
 
-  public static boolean postRecommendationReaction(@NotNull final Project project, @NotNull final String lessonId, 
-                                                   @NotNull final String user,int reaction) {
+  public static boolean postRecommendationReaction(@NotNull final Project project, @NotNull final String lessonId,
+                                                   @NotNull final String user, int reaction) {
 
     final HttpPost post = new HttpPost(STEPIC_API_URL + RECOMMENDATION_REACTIONS_URL);
     final String json = new Gson()
@@ -132,7 +138,7 @@ public class EduAdaptiveStepicConnector {
       // TODO: get user from settings
       final StepicUser user = StudyTaskManager.getInstance(project).getUser();
       if (user != null &&
-          postRecommendationReaction(project, String.valueOf(editor.getTaskFile().getTask().getLesson().id), 
+          postRecommendationReaction(project, String.valueOf(editor.getTaskFile().getTask().getLesson().id),
                                      String.valueOf(user.id), reaction)) {
         final Task task = getNextRecommendation(project, course);
 
@@ -188,14 +194,35 @@ public class EduAdaptiveStepicConnector {
   }
 
   @NotNull
-  private static Task getTaskFromStep(@NotNull String name, int lessonID, @NotNull final StepicWrappers.Step step) {
+  private static Task getTaskFromStep(Project project,
+                                      int lessonID,
+                                      @NotNull final StepicWrappers.Step step, @NotNull String name) {
     final Task task = new Task();
     task.setName(name);
     task.setStepicId(lessonID);
     task.setText(step.text);
+    if (step.options.samples != null) {
+      final StringBuilder builder = new StringBuilder();
+      for (List<String> sample : step.options.samples) {
+        if (sample.size() == 2) {
+          builder.append("<b>Sample Input:</b><br>");
+          builder.append(sample.get(0));
+          builder.append("<br>");
+          builder.append("<b>Sample Output:</b><br>");
+          builder.append(sample.get(1));
+          builder.append("<br><br>");
+        }
+      }
+      task.setText(task.getText() + "<br>" + builder.toString());
+    }
     if (step.options.test != null) {
       for (StepicWrappers.TestFileWrapper wrapper : step.options.test) {
         task.addTestsTexts(wrapper.name, wrapper.text);
+      }
+    }
+    else {
+      if (step.options.samples != null) {
+        createTestFileFromSamples(project, task, step.options.samples);
       }
     }
 
@@ -218,37 +245,39 @@ public class EduAdaptiveStepicConnector {
   public static Pair<Boolean, String> checkTask(@NotNull final Project project, @NotNull final Task task) {
     try {
       final int attemptId = getAttemptId(project, task, ATTEMPTS_URL);
-      final Editor editor = StudyUtils.getSelectedEditor(project);
-      String language = getLanguageString(task, project);
-      if (editor != null && language != null) {
-        final StepicWrappers.SubmissionToPostWrapper submissionToPostWrapper =
-          new StepicWrappers.SubmissionToPostWrapper(String.valueOf(attemptId), "python3", editor.getDocument().getText());
-        final HttpPost httpPost = new HttpPost(STEPIC_API_URL + SUBMISSION_URL);
-        httpPost.setEntity(new StringEntity(new Gson().toJson(submissionToPostWrapper)));
-        final CloseableHttpClient client = getHttpClient(project);
-        setHeaders(httpPost, CONTENT_TYPE_APPL_JSON);
-        final CloseableHttpResponse execute = client.execute(httpPost);
-        StepicWrappers.ResultSubmissionWrapper wrapper =
-          new Gson().fromJson(EntityUtils.toString(execute.getEntity()), StepicWrappers.ResultSubmissionWrapper.class);
+      if (attemptId != -1) {
+        final Editor editor = StudyUtils.getSelectedEditor(project);
+        String language = getLanguageString(task, project);
+        if (editor != null && language != null) {
+          final StepicWrappers.SubmissionToPostWrapper submissionToPostWrapper =
+            new StepicWrappers.SubmissionToPostWrapper(String.valueOf(attemptId), language, editor.getDocument().getText());
+          final HttpPost httpPost = new HttpPost(STEPIC_API_URL + SUBMISSION_URL);
+          httpPost.setEntity(new StringEntity(new Gson().toJson(submissionToPostWrapper)));
+          final CloseableHttpClient client = getHttpClient(project);
+          setHeaders(httpPost, CONTENT_TYPE_APPL_JSON);
+          final CloseableHttpResponse execute = client.execute(httpPost);
+          StepicWrappers.ResultSubmissionWrapper wrapper =
+            new Gson().fromJson(EntityUtils.toString(execute.getEntity()), StepicWrappers.ResultSubmissionWrapper.class);
 
-        final StepicUser user = StudyTaskManager.getInstance(project).getUser();
-        if (user != null) {
-          final int id = user.getId();
-          while (wrapper.submissions.length == 1 && wrapper.submissions[0].status.equals("evaluation")) {
-            TimeUnit.MILLISECONDS.sleep(500);
-            final URI submissionURI = new URIBuilder(STEPIC_API_URL + SUBMISSION_URL)
-              .addParameter("attempt", String.valueOf(attemptId))
-              .addParameter("order", "desc")
-              .addParameter("user", String.valueOf(id))
-              .build();
-            final HttpGet httpGet = new HttpGet(submissionURI);
-            setHeaders(httpGet, CONTENT_TYPE_APPL_JSON);
-            final CloseableHttpResponse httpResponse = client.execute(httpGet);
-            wrapper = new Gson().fromJson(EntityUtils.toString(httpResponse.getEntity()), StepicWrappers.ResultSubmissionWrapper.class);
-          }
-          if (wrapper.submissions.length == 1) {
-            final boolean isSolved = !wrapper.submissions[0].status.equals("wrong");
-            return Pair.create(isSolved, wrapper.submissions[0].hint);
+          final StepicUser user = StudyTaskManager.getInstance(project).getUser();
+          if (user != null) {
+            final int id = user.getId();
+            while (wrapper.submissions.length == 1 && wrapper.submissions[0].status.equals("evaluation")) {
+              TimeUnit.MILLISECONDS.sleep(500);
+              final URI submissionURI = new URIBuilder(STEPIC_API_URL + SUBMISSION_URL)
+                .addParameter("attempt", String.valueOf(attemptId))
+                .addParameter("order", "desc")
+                .addParameter("user", String.valueOf(id))
+                .build();
+              final HttpGet httpGet = new HttpGet(submissionURI);
+              setHeaders(httpGet, CONTENT_TYPE_APPL_JSON);
+              final CloseableHttpResponse httpResponse = client.execute(httpGet);
+              wrapper = new Gson().fromJson(EntityUtils.toString(httpResponse.getEntity()), StepicWrappers.ResultSubmissionWrapper.class);
+            }
+            if (wrapper.submissions.length == 1) {
+              final boolean isSolved = !wrapper.submissions[0].status.equals("wrong");
+              return Pair.create(isSolved, wrapper.submissions[0].hint);
+            }
           }
         }
       }
@@ -272,11 +301,12 @@ public class EduAdaptiveStepicConnector {
   private static String getLanguageString(@NotNull Task task, @NotNull Project project) {
     final Sdk sdk = StudyUtils.findSdk(task, project);
     if (sdk != null) {
-      if (sdk.getVersionString() != null && sdk.getVersionString().startsWith("3")) {
-        return "python3";
-      }
-      else {
-        return "python2";
+      final String versionString = sdk.getVersionString();
+      if (versionString != null ) {
+        final List<String> versionStringParts = StringUtil.split(versionString, " ");
+        if (versionStringParts.size() == 2) {
+          return versionStringParts.get(1).startsWith("2") ? PYTHON2 : PYTHON3;
+        }
       }
     }
     else {
@@ -296,6 +326,15 @@ public class EduAdaptiveStepicConnector {
     final CloseableHttpResponse httpResponse = client.execute(post);
     final StepicWrappers.AttemptContainer container =
       new Gson().fromJson(EntityUtils.toString(httpResponse.getEntity()), StepicWrappers.AttemptContainer.class);
-    return container.attempts.get(0).id;
+    return (container.attempts != null && !container.attempts.isEmpty()) ? container.attempts.get(0).id : -1;
+  }
+
+  private static void createTestFileFromSamples(@NotNull final Project project,
+                                                @NotNull final Task task,
+                                                @NotNull final List<List<String>> samples) {
+    String testText = "from test_helper import check_samples\n\n" +
+                      "if __name__ == '__main__':\n" +
+                      "    check_samples(samples=" + new GsonBuilder().create().toJson(samples) + ")";
+    task.addTestsTexts("tests.py", testText);
   }
 }

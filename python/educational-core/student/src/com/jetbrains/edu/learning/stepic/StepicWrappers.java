@@ -47,6 +47,8 @@ public class StepicWrappers {
     @Expose String title;
     @Expose List<TaskFile> files;
     @Expose String text;
+    @Expose List<List<String>> samples;
+    
 
     public static StepOptions fromTask(final Project project, @NotNull final Task task) {
       final StepOptions source = new StepOptions();
