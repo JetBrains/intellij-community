@@ -20,19 +20,23 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.javaFX.indexing.JavaFxImportsIndex;
+import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 import org.jetbrains.plugins.javaFX.refactoring.JavaFxPropertyElement;
 
-import java.util.List;
+import java.util.Set;
 
 /**
  * @author Pavel.Dolgov
@@ -58,28 +62,62 @@ public class JavaFxMethodSearcher implements QueryExecutor<PsiReference, Referen
 
   private static void searchMethod(@NotNull PsiMethod psiMethod, @NotNull ReferencesSearch.SearchParameters queryParameters,
                                    @NotNull Processor<PsiReference> consumer) {
-    final PsiClass containingClass = ApplicationManager.getApplication().runReadAction((Computable<PsiClass>)psiMethod::getContainingClass);
-    if (containingClass != null) {
-      final String qualifiedName = ApplicationManager.getApplication().runReadAction((Computable<String>)containingClass::getQualifiedName);
-      if (qualifiedName != null) {
-        final Project project = PsiUtilCore.getProjectInReadAction(containingClass);
-        final List<PsiFile> withImport = JavaFxImportsIndex.findFxmlWithImport(project, qualifiedName);
-        for (final PsiFile file : withImport) {
-          ApplicationManager.getApplication().runReadAction(() -> searchMethodInFile(psiMethod, file, queryParameters, consumer));
+    final Project project = PsiUtilCore.getProjectInReadAction(psiMethod);
+    final SearchScope scope =
+      ApplicationManager.getApplication().runReadAction((Computable<SearchScope>)queryParameters::getEffectiveSearchScope);
+    if (scope instanceof LocalSearchScope) {
+      final VirtualFile[] vFiles = ((LocalSearchScope)scope).getVirtualFiles();
+      for (VirtualFile vFile : vFiles) {
+        if (JavaFxFileTypeFactory.isFxml(vFile)) {
+          final PsiFile psiFile = PsiManager.getInstance(project).findFile(vFile);
+          if (psiFile != null) {
+            final Boolean goOn = ApplicationManager.getApplication().runReadAction(
+              (Computable<Boolean>)() -> searchMethodInFile(psiMethod, psiFile, consumer));
+            if (!goOn) break;
+          }
         }
       }
     }
+    else if (scope instanceof GlobalSearchScope) {
+      final String propertyName = ApplicationManager.getApplication().runReadAction(
+        (Computable<String>)() -> PropertyUtil.getPropertyName(psiMethod.getName()));
+      if (propertyName == null) return;
+
+      final String className = ApplicationManager.getApplication().runReadAction(
+        (Computable<String>)() -> {
+          final PsiClass psiClass = psiMethod.getContainingClass();
+          return psiClass != null ? psiClass.getName() : null;
+        });
+      if (className == null) return;
+
+      final GlobalSearchScope fxmlScope = new JavaFxScopeEnlarger.GlobalFxmlSearchScope((GlobalSearchScope)scope);
+      final Set<VirtualFile> filteredFiles = new THashSet<>();
+      ApplicationManager.getApplication().runReadAction(
+        () -> searchWord(project, fxmlScope, className, file -> {
+          filteredFiles.add(file.getViewProvider().getVirtualFile());
+          return true;
+        }));
+      if (filteredFiles.isEmpty()) return;
+
+      final GlobalSearchScope filteredScope = GlobalSearchScope.filesScope(project, filteredFiles);
+      ApplicationManager.getApplication().runReadAction(
+        () -> searchWord(project, filteredScope, propertyName, file -> searchMethodInFile(psiMethod, file, consumer)));
+    }
   }
 
-  private static void searchMethodInFile(@NotNull PsiMethod psiMethod,
-                                         @NotNull PsiFile file,
-                                         @NotNull ReferencesSearch.SearchParameters queryParameters,
-                                         @NotNull Processor<PsiReference> consumer) {
-    final VirtualFile virtualFile = file.getViewProvider().getVirtualFile();
-    final SearchScope searchScope = queryParameters.getEffectiveSearchScope();
-    boolean contains = searchScope instanceof LocalSearchScope ? ((LocalSearchScope)searchScope).isInScope(virtualFile) :
-                       ((GlobalSearchScope)searchScope).contains(virtualFile);
-    if (contains) {
+  private static void searchWord(@NotNull Project project,
+                                 @NotNull GlobalSearchScope scope,
+                                 @NotNull String wordToSearch,
+                                 @NotNull Processor<PsiFile> consumer) {
+    CacheManager.SERVICE.getInstance(project).processFilesWithWord(consumer, wordToSearch, UsageSearchContext.IN_PLAIN_TEXT, scope, true);
+  }
+
+  private static boolean searchMethodInFile(@NotNull PsiMethod psiMethod,
+                                            @NotNull PsiFile file,
+                                            @NotNull Processor<PsiReference> consumer) {
+    class StopException extends RuntimeException {
+    }
+    try {
       file.accept(new XmlRecursiveElementVisitor() {
         @Override
         public void visitXmlAttribute(XmlAttribute attribute) {
@@ -87,11 +125,17 @@ public class JavaFxMethodSearcher implements QueryExecutor<PsiReference, Referen
           for (PsiReference reference : references) {
             if ((reference instanceof JavaFxStaticPropertyReference || reference instanceof JavaFxEventHandlerReference) &&
                 reference.isReferenceTo(psiMethod)) {
-              consumer.process(reference);
+              if (!consumer.process(reference)) {
+                throw new StopException();
+              }
             }
           }
         }
       });
+      return true;
+    }
+    catch (StopException unused) {
+      return false;
     }
   }
 }

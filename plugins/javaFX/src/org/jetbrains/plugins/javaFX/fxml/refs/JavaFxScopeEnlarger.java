@@ -16,7 +16,9 @@
 package org.jetbrains.plugins.javaFX.fxml.refs;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.DelegatingGlobalSearchScope;
@@ -61,15 +63,10 @@ public class JavaFxScopeEnlarger extends UseScopeEnlarger {
         if (qualifiedName != null && !JavaFxControllerClassIndex.findFxmlWithController(project, qualifiedName).isEmpty() ||
             InheritanceUtil.isInheritor(containingClass, JavaFxCommonNames.JAVAFX_SCENE_NODE)) {
           final GlobalSearchScope projectScope = GlobalSearchScope.projectScope(project);
-          return new DelegatingGlobalSearchScope(projectScope){
-            @Override
-            public boolean contains(@NotNull VirtualFile file) {
-              return super.contains(file) && JavaFxFileTypeFactory.isFxml(file);
-            }
-          };
+          return new GlobalFxmlSearchScope(projectScope);
         }
       }
-    } 
+    }
 
     return null;
   }
@@ -84,5 +81,16 @@ public class JavaFxScopeEnlarger extends UseScopeEnlarger {
     return isStatic && method.getParameterList().getParametersCount() == 2 ||
            !isStatic && !method.hasModifierProperty(PsiModifier.PUBLIC) &&
            AnnotationUtil.isAnnotated(method, JavaFxCommonNames.JAVAFX_FXML_ANNOTATION, false);
+  }
+
+  static class GlobalFxmlSearchScope extends DelegatingGlobalSearchScope {
+    public GlobalFxmlSearchScope(GlobalSearchScope baseScope) {
+      super(baseScope);
+    }
+
+    @Override
+    public boolean contains(@NotNull VirtualFile file) {
+      return super.contains(file) && JavaFxFileTypeFactory.isFxml(file);
+    }
   }
 }
