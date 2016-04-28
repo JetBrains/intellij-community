@@ -649,7 +649,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
               if (defaultValue == null && parameter.getOldIndex() == -1) {
                 ((ParameterInfoImpl)parameter).setDefaultValue("");
                 if (!ApplicationManager.getApplication().isUnitTestMode()) {
-                  final PsiType type = ((ParameterInfoImpl)parameter).getTypeWrapper().getType(element, element.getManager());
+                  final PsiType type = ((ParameterInfoImpl)parameter).getTypeWrapper().getType(element);
                   final DefaultValueChooser chooser =
                     new DefaultValueChooser(project, parameter.getName(), PsiTypesUtil.getDefaultValueOfType(type));
                   if (chooser.showAndGet()) {
@@ -945,7 +945,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
                                                  PsiSubstitutor... substitutor) throws IncorrectOperationException {
     final PsiParameterList list = changeInfo.getMethod().getParameterList();
     final PsiElementFactory factory = JavaPsiFacade.getInstance(list.getProject()).getElementFactory();
-    PsiType type = newParm.createType(list, list.getManager());
+    PsiType type = newParm.createType(list);
     for (PsiSubstitutor psiSubstitutor : substitutor) {
       type = psiSubstitutor.substitute(type);
     }

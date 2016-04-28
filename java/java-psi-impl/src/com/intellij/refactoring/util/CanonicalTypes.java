@@ -37,7 +37,11 @@ public class CanonicalTypes {
 
   public abstract static class Type {
     @NotNull
-    public abstract PsiType getType(PsiElement context, PsiManager manager) throws IncorrectOperationException;
+    public abstract PsiType getType(@Nullable PsiElement context, PsiManager manager) throws IncorrectOperationException;
+
+    public PsiType getType(@NotNull PsiElement context) {
+      return getType(context, context.getManager());
+    }
 
     @NonNls
     public abstract String getTypeText();

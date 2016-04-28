@@ -76,7 +76,7 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
       }
     };
     for (ParameterInfoImpl parameterInfo : paramsToMerge) {
-      parameterInfo.getTypeWrapper().getType(method, method.getManager()).accept(typeParametersVisitor);
+      parameterInfo.getTypeWrapper().getType(method).accept(typeParametersVisitor);
     }
   }
 
@@ -149,7 +149,7 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
       setter = bean != null && bean.getField() != null
                ? GenerateMembersUtil.suggestSetterName(bean.getField())
                : GenerateMembersUtil
-                 .suggestSetterName(parameterInfo.getName(), parameterInfo.getTypeWrapper().getType(context, context.getManager()),
+                 .suggestSetterName(parameterInfo.getName(), parameterInfo.getTypeWrapper().getType(context),
                                     context.getProject());
     }
 
@@ -163,7 +163,7 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
     if (getter == null) {
       getter = bean != null && bean.getField() != null ? GenerateMembersUtil.suggestGetterName(bean.getField())
                                                        : GenerateMembersUtil
-                 .suggestGetterName(paramInfo.getName(), paramInfo.getTypeWrapper().getType(context, context.getManager()),
+                 .suggestGetterName(paramInfo.getName(), paramInfo.getTypeWrapper().getType(context),
                                     context.getProject());
     }
     return getter;
@@ -192,7 +192,7 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
     ParameterInfoImpl[] paramsToMerge = getParamsToMerge();
     if (paramsToMerge.length == 1) {
       final ParameterInfoImpl parameterInfo = paramsToMerge[0];
-      final PsiType paramType = parameterInfo.getTypeWrapper().getType(aClass, aClass.getManager());
+      final PsiType paramType = parameterInfo.getTypeWrapper().getType(aClass);
       if (TypeConversionUtil.isPrimitiveWrapper(aClass.getQualifiedName())) {
         ParameterBean bean = new ParameterBean();
         bean.setField(aClass.findFieldByName("value", false));
@@ -257,8 +257,7 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
       return false;
     }
     for (int i = 0; i < actual.length; i++) {
-      if (!TypeConversionUtil.isAssignable(actual[i].getType(),
-                                           getParameterInfo(i).getTypeWrapper().getType(context, context.getManager()))) {
+      if (!TypeConversionUtil.isAssignable(actual[i].getType(), getParameterInfo(i).getTypeWrapper().getType(context))) {
         return false;
       }
     }
@@ -290,7 +289,7 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
       final boolean setterRequired = accessors[i] == IntroduceParameterObjectDelegate.Accessor.Setter;
       final String newName = parameterInfos[i].getName();
       beanClassBuilder
-        .addField(parameter, newName, parameterInfos[i].getTypeWrapper().getType(method, method.getManager()), setterRequired);
+        .addField(parameter, newName, parameterInfos[i].getTypeWrapper().getType(method), setterRequired);
     }
 
     final String classString = beanClassBuilder.buildBeanClass();
