@@ -71,7 +71,7 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
       TreeUtil.traverseDepth((TreeNode)selectionPath.getLastPathComponent(), node -> {
         if (!((InspectionTreeNode)node).isValid()) return true;
         if (node instanceof OfflineProblemDescriptorNode) {
-          if (!((OfflineProblemDescriptorNode)node).isQuickFixAppliedFromView()) return true;
+          if (((OfflineProblemDescriptorNode)node).isQuickFixAppliedFromView()) return true;
           final OfflineProblemDescriptorNode descriptorNode = (OfflineProblemDescriptorNode)node;
           final RefEntity element = descriptorNode.getElement();
           selectedElements.add(element);
