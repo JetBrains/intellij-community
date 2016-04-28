@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,5 +42,5 @@ public abstract class JavaPsiFacadeEx extends JavaPsiFacade {
   }
 
   @TestOnly
-  public abstract void setAssertOnFileLoadingFilter(@NotNull VirtualFileFilter filter, Disposable parentDisposable);
+  public abstract void setAssertOnFileLoadingFilter(@NotNull VirtualFileFilter filter, @NotNull Disposable parentDisposable);
 }

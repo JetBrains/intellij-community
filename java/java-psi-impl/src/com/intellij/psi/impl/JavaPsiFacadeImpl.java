@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -414,7 +414,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
 
   @TestOnly
   @Override
-  public void setAssertOnFileLoadingFilter(@NotNull final VirtualFileFilter filter, Disposable parentDisposable) {
+  public void setAssertOnFileLoadingFilter(@NotNull final VirtualFileFilter filter, @NotNull Disposable parentDisposable) {
     ((PsiManagerImpl)PsiManager.getInstance(myProject)).setAssertOnFileLoadingFilter(filter, parentDisposable);
   }
 
