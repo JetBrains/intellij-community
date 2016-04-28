@@ -4,7 +4,7 @@ import com.intellij.execution.process.ProcessOutput;
 import org.jetbrains.annotations.NotNull;
 
 public class StudyTestsOutputParser {
-  private static final String ourStudyPrefix = "#educational_plugin";
+  private static final String STUDY_PREFIX = "#educational_plugin";
   public static final String TEST_OK = "test OK";
   private static final String TEST_FAILED = "FAILED + ";
   private static final String CONGRATS_MESSAGE = "CONGRATS_MESSAGE ";
@@ -32,7 +32,7 @@ public class StudyTestsOutputParser {
   public static TestsOutput getTestsOutput(@NotNull final ProcessOutput processOutput) {
     String congratulations = CONGRATULATIONS;
     for (String line : processOutput.getStdoutLines()) {
-      if (line.startsWith(ourStudyPrefix)) {
+      if (line.startsWith(STUDY_PREFIX)) {
         if (line.contains(TEST_OK)) {
           continue;
         }

@@ -219,5 +219,5 @@ public abstract class StudyToolWindow extends SimpleToolWindowPanel implements D
     }
   }
 
-  public abstract void setTaskText(String text) ;
+  public abstract void setTaskText(String text);
 }

@@ -69,6 +69,7 @@ public abstract class StudyBasePluginConfigurator implements StudyPluginConfigur
           Task task = getTask(file);
           setTaskText(task, file.getParent());
         }
+        toolWindow.setBottomComponent(null);
       }
 
       @Nullable

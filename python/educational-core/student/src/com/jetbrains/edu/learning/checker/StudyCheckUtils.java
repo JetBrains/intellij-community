@@ -15,23 +15,25 @@ import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.ui.content.Content;
+import com.jetbrains.edu.learning.StudyState;
+import com.jetbrains.edu.learning.StudyTaskManager;
+import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduDocumentListener;
 import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.learning.courseFormat.Task;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
-import com.jetbrains.edu.learning.StudyState;
-import com.jetbrains.edu.learning.StudyTaskManager;
-import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.navigation.StudyNavigator;
+import com.jetbrains.edu.learning.ui.StudyTestResultsToolWindow;
+import com.jetbrains.edu.learning.ui.StudyTestResultsToolWindowFactory;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
 import java.util.List;
@@ -61,9 +63,9 @@ public class StudyCheckUtils {
   }
 
   public static void navigateToFailedPlaceholder(@NotNull final StudyState studyState,
-                                                  @NotNull final Task task,
-                                                  @NotNull final VirtualFile taskDir,
-                                                  @NotNull final Project project) {
+                                                 @NotNull final Task task,
+                                                 @NotNull final VirtualFile taskDir,
+                                                 @NotNull final Project project) {
     TaskFile selectedTaskFile = studyState.getTaskFile();
     Editor editor = studyState.getEditor();
     TaskFile taskFileToNavigate = selectedTaskFile;
@@ -109,10 +111,10 @@ public class StudyCheckUtils {
 
 
   public static void runSmartTestProcess(@NotNull final VirtualFile taskDir,
-                                     @NotNull final StudyTestRunner testRunner,
-                                     final String taskFileName,
-                                     @NotNull final TaskFile taskFile,
-                                     @NotNull final Project project) {
+                                         @NotNull final StudyTestRunner testRunner,
+                                         final String taskFileName,
+                                         @NotNull final TaskFile taskFile,
+                                         @NotNull final Project project) {
     final TaskFile answerTaskFile = new TaskFile();
     answerTaskFile.name = taskFileName;
     final VirtualFile virtualFile = taskDir.findChild(taskFileName);
@@ -135,11 +137,10 @@ public class StudyCheckUtils {
   }
 
 
-
   private static VirtualFile getCopyWithAnswers(@NotNull final VirtualFile taskDir,
-                                         @NotNull final VirtualFile file,
-                                         @NotNull final TaskFile source,
-                                         @NotNull final TaskFile target) {
+                                                @NotNull final VirtualFile file,
+                                                @NotNull final TaskFile source,
+                                                @NotNull final TaskFile target) {
     VirtualFile copy = null;
     try {
 
@@ -191,6 +192,24 @@ public class StudyCheckUtils {
         continue;
       }
       EduUtils.flushWindows(taskFile, virtualFile, true);
+    }
+  }
+
+  public static void showTestResults(@NotNull final Project project, @NotNull final String message) {
+    final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
+    ToolWindow window = toolWindowManager.getToolWindow("Test Results");
+    if (window == null) {
+      toolWindowManager.registerToolWindow("Test Results", true, ToolWindowAnchor.BOTTOM);
+      window = toolWindowManager.getToolWindow("Test Results");
+      new StudyTestResultsToolWindowFactory().createToolWindowContent(project, window);
+    }
+    final Content[] contents = window.getContentManager().getContents();
+    for (Content content : contents) {
+      final JComponent component = content.getComponent();
+      if (component instanceof StudyTestResultsToolWindow) {
+        ((StudyTestResultsToolWindow)component).setText(message);
+        component.setVisible(true);
+      }
     }
   }
 }

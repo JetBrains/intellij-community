@@ -35,7 +35,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 
-class StudyBrowserWindow extends JFrame {
+public class StudyBrowserWindow extends JFrame {
   private static final Logger LOG = Logger.getInstance(StudyToolWindow.class);
   private static final String EVENT_TYPE_CLICK = "click";
   private JFXPanel myPanel;

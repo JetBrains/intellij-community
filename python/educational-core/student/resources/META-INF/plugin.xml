@@ -85,6 +85,7 @@
 
     <toolWindow id="Task Description" anchor="right" factoryClass="com.jetbrains.edu.learning.ui.StudyToolWindowFactory" conditionClass="com.jetbrains.edu.learning.ui.StudyCondition"/>
     <toolWindow id="Course Progress" anchor="left" factoryClass="com.jetbrains.edu.learning.ui.StudyProgressToolWindowFactory" conditionClass="com.jetbrains.edu.learning.ui.StudyCondition"/>
+    <toolWindow id="Test Results" anchor="bottom" factoryClass="com.jetbrains.edu.learning.ui.StudyTestResultsToolWindowFactory" conditionClass="com.jetbrains.edu.learning.ui.StudyCondition"/>
     <fileEditorProvider implementation="com.jetbrains.edu.learning.editor.StudyFileEditorProvider"/>
     <treeStructureProvider implementation="com.jetbrains.edu.learning.projectView.StudyTreeStructureProvider"/>
     <highlightErrorFilter implementation="com.jetbrains.edu.learning.editor.StudyHighlightErrorFilter"/>

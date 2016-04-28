@@ -7,7 +7,6 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.jetbrains.edu.learning.actions.StudyCheckAction;
@@ -15,10 +14,12 @@ import com.jetbrains.edu.learning.actions.StudyRunAction;
 import com.jetbrains.edu.learning.checker.StudyCheckTask;
 import com.jetbrains.edu.learning.checker.StudyCheckUtils;
 import com.jetbrains.edu.learning.checker.StudyTestRunner;
+import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.StudyStatus;
 import com.jetbrains.edu.learning.courseFormat.Task;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.editor.StudyEditor;
+import com.jetbrains.edu.learning.ui.StudyToolWindow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,8 +41,8 @@ public class PyStudyCheckAction extends StudyCheckAction {
         }
         if (StudyCheckUtils.hasBackgroundProcesses(project)) return;
 
-
-        if (!runTask(project)) return;
+        final Course course = StudyTaskManager.getInstance(project).getCourse();
+        if (course != null && !course.isAdaptive() && !runTask(project)) return;
 
         final Task task = studyState.getTask();
         final VirtualFile taskDir = studyState.getTaskDir();
@@ -90,34 +91,37 @@ public class PyStudyCheckAction extends StudyCheckAction {
                                       final Process testProcess,
                                       final String commandLine) {
     return new StudyCheckTask(project, studyState, myCheckInProgress, testProcess, commandLine) {
-            @Override
-            protected void onTaskFailed(String message) {
-              ApplicationManager.getApplication().invokeLater(() -> {
-                if (myTaskDir == null) return;
-                myTaskManger.setStatus(myTask, StudyStatus.Failed);
-                for (Map.Entry<String, TaskFile> entry : myTask.getTaskFiles().entrySet()) {
-                  final String name = entry.getKey();
-                  final TaskFile taskFile = entry.getValue();
-                  if (taskFile.getAnswerPlaceholders().size() < 2) {
-                    myTaskManger.setStatus(taskFile, StudyStatus.Failed);
-                    continue;
-                  }
-                  CommandProcessor.getInstance().runUndoTransparentAction(() -> ApplicationManager.getApplication().runWriteAction(() -> {
-                    StudyCheckUtils.runSmartTestProcess(myTaskDir, testRunner, name, taskFile, project);
-                  }));
-                }
-                StudyCheckUtils.showTestResultPopUp(message, MessageType.ERROR.getPopupBackground(), project);
-                StudyCheckUtils.navigateToFailedPlaceholder(myStudyState, myTask, myTaskDir, project);
-              });
+      @Override
+      protected void onTaskFailed(String message) {
+        ApplicationManager.getApplication().invokeLater(() -> {
+          if (myTaskDir == null) return;
+          myTaskManger.setStatus(myTask, StudyStatus.Failed);
+          for (Map.Entry<String, TaskFile> entry : myTask.getTaskFiles().entrySet()) {
+            final String name = entry.getKey();
+            final TaskFile taskFile = entry.getValue();
+            if (taskFile.getAnswerPlaceholders().size() < 2) {
+              myTaskManger.setStatus(taskFile, StudyStatus.Failed);
+              continue;
             }
-          };
+            CommandProcessor.getInstance().runUndoTransparentAction(() -> ApplicationManager.getApplication().runWriteAction(() -> {
+              StudyCheckUtils.runSmartTestProcess(myTaskDir, testRunner, name, taskFile, project);
+            }));
+          }
+          final StudyToolWindow toolWindow = StudyUtils.getStudyToolWindow(project);
+          if (toolWindow != null) {
+            StudyCheckUtils.showTestResults(project, message);
+            StudyCheckUtils.navigateToFailedPlaceholder(myStudyState, myTask, myTaskDir, project);
+          }
+        });
+      }
+    };
   }
 
 
   @Nullable
   private static VirtualFile getTaskVirtualFile(@NotNull final StudyState studyState,
-                                         @NotNull final Task task,
-                                         @NotNull final VirtualFile taskDir) {
+                                                @NotNull final Task task,
+                                                @NotNull final VirtualFile taskDir) {
     VirtualFile taskVirtualFile = studyState.getVirtualFile();
     for (Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
       String name = entry.getKey();
@@ -131,7 +135,7 @@ public class PyStudyCheckAction extends StudyCheckAction {
     }
     return taskVirtualFile;
   }
-  
+
   @NotNull
   @Override
   public String getActionId() {
