@@ -31,6 +31,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
+import java.util.Set;
 
 public class IgnoreResultOfCallInspectionBase extends BaseInspection {
 
@@ -148,29 +149,37 @@ public class IgnoreResultOfCallInspectionBase extends BaseInspection {
         registerMethodCallError(call, aClass);
         return;
       }
-      if (!myMethodMatcher.matches(method) && findAnnotationInTree(method, "javax.annotation.CheckReturnValue") == null) {
+      if (!myMethodMatcher.matches(method) &&
+          findAnnotationInTree(method, Collections.singleton("javax.annotation.CheckReturnValue")) == null) {
         return;
       }
       registerMethodCallError(call, aClass);
     }
 
-    private PsiAnnotation findAnnotationInTree(PsiMethod method, String fqAnnotationName) {
-      final PsiAnnotation methodAnnotation =
-        AnnotationUtil.findAnnotationInHierarchy(method, Collections.singleton(fqAnnotationName));
-      if (methodAnnotation != null) {
-        return methodAnnotation;
+    private PsiAnnotation findAnnotationInTree(PsiElement element, Set<String> fqAnnotationNames) {
+      while (element != null) {
+        if (element instanceof PsiModifierListOwner) {
+          final PsiModifierListOwner modifierListOwner = (PsiModifierListOwner)element;
+          final PsiAnnotation annotation =
+            AnnotationUtil.findAnnotationInHierarchy(modifierListOwner, fqAnnotationNames);
+          if (annotation != null) {
+            return annotation;
+          }
+        }
+
+        if (element instanceof PsiClassOwner) {
+          final PsiClassOwner classOwner = (PsiClassOwner)element;
+          final String packageName = classOwner.getPackageName();
+          final PsiPackage aPackage = JavaPsiFacade.getInstance(element.getProject()).findPackage(packageName);
+          if (aPackage == null) {
+            return null;
+          }
+          return AnnotationUtil.findAnnotation(aPackage, fqAnnotationNames);
+        }
+
+        element = element.getContext();
       }
-      final PsiClass aClass = method.getContainingClass();
-      if (aClass == null) {
-        return null;
-      }
-      final PsiAnnotation classAnnotation = AnnotationUtil.findAnnotation(aClass, fqAnnotationName);
-      if (classAnnotation != null) {
-        return classAnnotation;
-      }
-      final PsiDirectory directory = aClass.getContainingFile().getContainingDirectory();
-      final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
-      return AnnotationUtil.findAnnotation(aPackage, fqAnnotationName);
+      return null;
     }
   }
 }
