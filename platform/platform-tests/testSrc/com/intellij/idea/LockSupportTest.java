@@ -15,16 +15,33 @@
  */
 package com.intellij.idea;
 
+import com.intellij.openapi.util.io.FileUtil;
 import junit.framework.TestCase;
+
+import java.io.File;
 
 /**
  * @author mike
  */
 public class LockSupportTest extends TestCase {
+  private String tempDir;
+
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+    tempDir = FileUtil.createTempDirectory("idea-lock-support-test.", ".dir").getPath();
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    FileUtil.delete(new File(tempDir));
+    super.tearDown();
+  }
+
   public void testLock() throws Exception {
     final SocketLock lock = new SocketLock();
     try {
-      assertEquals(SocketLock.ActivateStatus.NO_INSTANCE, lock.lock("abc", false));
+      assertEquals(SocketLock.ActivateStatus.NO_INSTANCE, lock.lock(tempDir + "/abc", false));
     }
     finally {
       lock.dispose();
@@ -36,12 +53,12 @@ public class LockSupportTest extends TestCase {
     final SocketLock lock2 = new SocketLock();
 
     try {
-      assertEquals(SocketLock.ActivateStatus.NO_INSTANCE, lock1.lock("1", false));
-      assertEquals(SocketLock.ActivateStatus.NO_INSTANCE, lock1.lock("1.1", false));
-      assertEquals(SocketLock.ActivateStatus.NO_INSTANCE, lock2.lock("2", false));
-      assertEquals(SocketLock.ActivateStatus.ACTIVATED, lock1.lock("2", false));
-      assertEquals(SocketLock.ActivateStatus.ACTIVATED, lock2.lock("1", false));
-      assertEquals(SocketLock.ActivateStatus.ACTIVATED, lock2.lock("1.1", false));
+      assertEquals(SocketLock.ActivateStatus.NO_INSTANCE, lock1.lock(tempDir + "/1", false));
+      assertEquals(SocketLock.ActivateStatus.NO_INSTANCE, lock1.lock(tempDir + "/1.1", false));
+      assertEquals(SocketLock.ActivateStatus.NO_INSTANCE, lock2.lock(tempDir + "/2", false));
+      assertEquals(SocketLock.ActivateStatus.ACTIVATED, lock1.lock(tempDir + "/2", false));
+      assertEquals(SocketLock.ActivateStatus.ACTIVATED, lock2.lock(tempDir + "/1", false));
+      assertEquals(SocketLock.ActivateStatus.ACTIVATED, lock2.lock(tempDir + "/1.1", false));
     }
     finally {
       lock1.dispose();
@@ -53,11 +70,11 @@ public class LockSupportTest extends TestCase {
     final SocketLock lock1 = new SocketLock();
     final SocketLock lock2 = new SocketLock();
 
-    assertEquals(SocketLock.ActivateStatus.NO_INSTANCE, lock1.lock("1", false));
-    assertEquals(SocketLock.ActivateStatus.ACTIVATED, lock2.lock("1", false));
+    assertEquals(SocketLock.ActivateStatus.NO_INSTANCE, lock1.lock(tempDir + "/1", false));
+    assertEquals(SocketLock.ActivateStatus.ACTIVATED, lock2.lock(tempDir + "/1", false));
 
     lock1.dispose();
-    assertEquals(SocketLock.ActivateStatus.NO_INSTANCE, lock2.lock("1", false));
+    assertEquals(SocketLock.ActivateStatus.NO_INSTANCE, lock2.lock(tempDir + "/1", false));
     lock2.dispose();
   }
 }
