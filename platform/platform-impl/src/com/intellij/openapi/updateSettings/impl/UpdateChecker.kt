@@ -20,6 +20,7 @@ import com.intellij.externalDependencies.DependencyOnPlugin
 import com.intellij.externalDependencies.ExternalDependenciesManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.*
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.NotificationDisplayType
 import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationListener
@@ -408,7 +409,7 @@ object UpdateChecker {
 
   private fun prepareUpdateCheckArgs(uriBuilder: URIBuilder) {
     addUpdateRequestParameter("build", ApplicationInfo.getInstance().build.asString())
-    addUpdateRequestParameter("uid", PermanentInstallationID.get())
+    addUpdateRequestParameter("uid", getInstallationUID(PropertiesComponent.getInstance()))
     addUpdateRequestParameter("os", SystemInfo.OS_NAME + ' ' + SystemInfo.OS_VERSION)
     if (ApplicationInfoEx.getInstanceEx().isEAP) {
       addUpdateRequestParameter("eap", "")
@@ -417,6 +418,14 @@ object UpdateChecker {
     for ((name, value) in ourAdditionalRequestOptions) {
       uriBuilder.addParameter(name, if (StringUtil.isEmpty(value)) null else value)
     }
+  }
+
+  /**
+   * @Deprecated, left for compatibility. Use PermanentInstallationID.get() directly 
+   */
+  @JvmStatic
+  fun getInstallationUID(propertiesComponent: PropertiesComponent): String {
+    return PermanentInstallationID.get();
   }
 
   @JvmStatic
