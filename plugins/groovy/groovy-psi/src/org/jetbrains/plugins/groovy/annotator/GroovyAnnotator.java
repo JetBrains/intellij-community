@@ -105,7 +105,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.ast.GrInheritConstructorContributor;
+import org.jetbrains.plugins.groovy.lang.resolve.ast.InheritConstructorContributor;
 
 import java.util.*;
 
@@ -485,7 +485,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     final PsiClass superClass = typeDefinition.getSuperClass();
     if (superClass == null) return;
 
-    if (GrInheritConstructorContributor.hasInheritConstructorsAnnotation(typeDefinition)) return;
+    if (InheritConstructorContributor.hasInheritConstructorsAnnotation(typeDefinition)) return;
 
     PsiMethod defConstructor = getDefaultConstructor(superClass);
     boolean hasImplicitDefConstructor = superClass.getConstructors().length == 0;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,31 +23,31 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
-
-import java.util.Collection;
+import org.jetbrains.plugins.groovy.transformations.AstTransformationSupport;
+import org.jetbrains.plugins.groovy.transformations.TransformationContext;
 
 /**
  * @author Maxim.Medvedev
  */
-public class GrInheritConstructorContributor extends AstTransformContributor {
+public class InheritConstructorContributor implements AstTransformationSupport {
 
   @Override
-  public void collectMethods(@NotNull GrTypeDefinition psiClass, @NotNull Collection<PsiMethod> collector) {
+  public void applyTransformation(@NotNull TransformationContext context) {
+    GrTypeDefinition psiClass = context.getCodeClass();
     if (psiClass.isAnonymous() || psiClass.isInterface() || psiClass.isEnum()) {
       return;
     }
 
     if (!hasInheritConstructorsAnnotation(psiClass)) return;
 
-    final PsiClass superClass = psiClass.getSuperClass();
+    final PsiClass superClass = context.getSuperClass();
     if (superClass == null) return;
 
     final PsiSubstitutor superClassSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, psiClass, PsiSubstitutor.EMPTY);
     for (PsiMethod constructor : superClass.getConstructors()) {
       if (constructor.hasModifierProperty(PsiModifier.PRIVATE)) continue;
 
-      final GrLightMethodBuilder inheritedConstructor = new GrLightMethodBuilder(psiClass.getManager(), psiClass.getName());
-      inheritedConstructor.setContainingClass(psiClass);
+      final GrLightMethodBuilder inheritedConstructor = new GrLightMethodBuilder(context.getManager(), context.getClassName());
       inheritedConstructor.setConstructor(true);
       inheritedConstructor.setNavigationElement(psiClass);
       inheritedConstructor.addModifier(VisibilityUtil.getVisibilityModifier(constructor.getModifierList()));
@@ -58,9 +58,7 @@ public class GrInheritConstructorContributor extends AstTransformContributor {
         PsiType type = superClassSubstitutor.substitute(parameter.getType());
         inheritedConstructor.addParameter(name, type, false);
       }
-      if (psiClass.findCodeMethodsBySignature(inheritedConstructor, false).length == 0) {
-        collector.add(inheritedConstructor);
-      }
+      context.addMethod(inheritedConstructor);
     }
   }
 

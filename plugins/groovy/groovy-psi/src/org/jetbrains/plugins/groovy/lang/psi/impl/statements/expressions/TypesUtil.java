@@ -463,6 +463,11 @@ public class TypesUtil {
   }
 
   @NotNull
+  public static PsiClassType createType(@NotNull PsiClass clazz) {
+    return createType(clazz, null);
+  }
+
+  @NotNull
   public static PsiClassType createType(@NotNull PsiClass clazz, @Nullable PsiElement context, PsiType... parameters) {
     return JavaPsiFacade.getInstance(
       (context == null ? clazz : context).getProject()
