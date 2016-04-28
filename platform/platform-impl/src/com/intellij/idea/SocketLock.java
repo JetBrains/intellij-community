@@ -271,20 +271,22 @@ public class SocketLock {
             DataInputStream stream = new DataInputStream(socket.getInputStream());
             final String command = stream.readUTF();
             if (command.startsWith(ACTIVATE_COMMAND)) {
-              List<String> args = StringUtil.split(command.substring(ACTIVATE_COMMAND.length()), "\0");
-              boolean tokenOK = !args.isEmpty() && myToken.equals(args.get(0));
-              if (!tokenOK) {
-                LOG.warn("unauthorized request: " + command);
-                Notifications.Bus.notify(new Notification(
-                  Notifications.SYSTEM_MESSAGES_GROUP_ID,
-                  IdeBundle.message("activation.auth.title"),
-                  IdeBundle.message("activation.auth.message"),
-                  NotificationType.WARNING));
+              if (command.length() <= 8192) {
+                List<String> args = StringUtil.split(command.substring(ACTIVATE_COMMAND.length()), "\0");
+                boolean tokenOK = !args.isEmpty() && myToken.equals(args.get(0));
+                if (!tokenOK) {
+                  LOG.warn("unauthorized request: " + command);
+                  Notifications.Bus.notify(new Notification(
+                    Notifications.SYSTEM_MESSAGES_GROUP_ID,
+                    IdeBundle.message("activation.auth.title"),
+                    IdeBundle.message("activation.auth.message"),
+                    NotificationType.WARNING));
+                }
+                else if (myActivateListener != null) {
+                  myActivateListener.consume(args);
+                }
+                out.writeUTF("ok");
               }
-              else if (myActivateListener != null) {
-                myActivateListener.consume(args);
-              }
-              out.writeUTF("ok");
             }
             out.close();
           }
