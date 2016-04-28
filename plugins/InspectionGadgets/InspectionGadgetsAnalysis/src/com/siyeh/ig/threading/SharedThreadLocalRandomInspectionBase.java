@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,18 @@
  */
 package com.siyeh.ig.threading;
 
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.MethodMatcher;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
+import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +34,16 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public class SharedThreadLocalRandomInspection extends BaseInspection {
+public class SharedThreadLocalRandomInspectionBase extends BaseInspection {
+
+  protected final MethodMatcher myMethodMatcher;
+
+  public SharedThreadLocalRandomInspectionBase() {
+    myMethodMatcher = new MethodMatcher(true, "ignoreArgumentToMethods")
+      .add("java.math.BigInteger", ".*")
+      .add("java.util.Collections", "shuffle");
+  }
+
   @Nls
   @NotNull
   @Override
@@ -45,11 +58,23 @@ public class SharedThreadLocalRandomInspection extends BaseInspection {
   }
 
   @Override
+  public void readSettings(@NotNull Element element) throws InvalidDataException {
+    super.readSettings(element);
+    myMethodMatcher.readSettings(element);
+  }
+
+  @Override
+  public void writeSettings(@NotNull Element element) throws WriteExternalException {
+    super.writeSettings(element);
+    myMethodMatcher.writeSettings(element);
+  }
+
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new SharedThreadLocalRandomVisitor();
   }
 
-  private static class SharedThreadLocalRandomVisitor extends BaseInspectionVisitor {
+  private class SharedThreadLocalRandomVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitMethodCallExpression(PsiMethodCallExpression expression) {
@@ -77,24 +102,28 @@ public class SharedThreadLocalRandomInspection extends BaseInspection {
         }
         else if (variable instanceof PsiLocalVariable) {
           final PsiCodeBlock context = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
-          if (VariableAccessUtils.variableIsPassedAsMethodArgument(variable, context) ||
-              VariableAccessUtils.variableIsUsedInInnerClass(variable, context)) {
+          final boolean passed = VariableAccessUtils.variableIsPassedAsMethodArgument(variable, context, myMethodMatcher::matches);
+          if (passed || VariableAccessUtils.variableIsUsedInInnerClass(variable, context)) {
             registerMethodCallError(expression);
           }
         }
       }
     }
 
-    private static boolean isArgumentToMethodCall(PsiExpression expression) {
+    private boolean isArgumentToMethodCall(PsiExpression expression) {
       final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(expression);
       if (!(parent instanceof PsiExpressionList)) {
         return false;
       }
       final PsiElement grandParent = parent.getParent();
-      return grandParent instanceof PsiMethodCallExpression;
+      if (!(grandParent instanceof PsiMethodCallExpression)) {
+        return false;
+      }
+      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
+      return !myMethodMatcher.matches(methodCallExpression);
     }
 
-    private static PsiVariable assignedToVariable(PsiMethodCallExpression expression) {
+    private PsiVariable assignedToVariable(PsiMethodCallExpression expression) {
       final PsiElement parent = PsiTreeUtil.skipParentsOfType(expression, PsiParenthesizedExpression.class);
       if (parent instanceof PsiVariable) {
         return (PsiVariable)parent;
