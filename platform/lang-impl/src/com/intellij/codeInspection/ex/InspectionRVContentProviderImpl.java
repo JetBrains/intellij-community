@@ -26,7 +26,6 @@ import com.intellij.codeInspection.ui.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -116,24 +115,6 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
               computeContainer,
               showStructure,
               node -> merge(node, toolNode, true));
-
-    if (presentation.isOldProblemsIncluded()) {
-      final Map<RefEntity, CommonProblemDescriptor[]> oldProblems = presentation.getOldProblemElements();
-      computeContainer = new Function<RefEntity, UserObjectContainer<RefEntity>>() {
-        @Override
-        public UserObjectContainer<RefEntity> fun(final RefEntity refElement) {
-          return new RefElementContainer(refElement, oldProblems != null ? oldProblems.get(refElement) : null);
-        }
-      };
-
-      buildTree(context,
-                presentation.getOldContent(),
-                true,
-                toolWrapper,
-                computeContainer,
-                showStructure,
-                node -> merge(node, toolNode, true));
-    }
     merge(toolNode, parentNode, false);
   }
 
@@ -146,15 +127,11 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
     final RefElementContainer refElementDescriptor = (RefElementContainer)container;
     final RefEntity refElement = refElementDescriptor.getUserObject();
     InspectionToolPresentation presentation = context.getPresentation(toolWrapper);
-    if (context.getUIOptions().SHOW_ONLY_DIFF && presentation.getElementStatus(refElement) == FileStatus.NOT_CHANGED) return;
     final CommonProblemDescriptor[] problems = refElementDescriptor.getProblemDescriptors();
     if (problems != null) {
         final RefElementNode elemNode = addNodeToParent(container, presentation, pNode);
         for (CommonProblemDescriptor problem : problems) {
           assert problem != null;
-          if (context.getUIOptions().SHOW_ONLY_DIFF && presentation.getProblemStatus(problem) == FileStatus.NOT_CHANGED) {
-            continue;
-          }
           insertByIndex(new ProblemDescriptionNode(refElement, problem, toolWrapper,presentation), elemNode);
           if (problems.length == 1) {
             elemNode.setProblem(problems[0]);
