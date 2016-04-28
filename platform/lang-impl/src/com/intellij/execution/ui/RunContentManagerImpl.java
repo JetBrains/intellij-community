@@ -64,9 +64,11 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
   public static final Key<Boolean> ALWAYS_USE_DEFAULT_STOPPING_BEHAVIOUR_KEY = Key.create("ALWAYS_USE_DEFAULT_STOPPING_BEHAVIOUR_KEY");
   private static final Logger LOG = Logger.getInstance(RunContentManagerImpl.class);
   private static final Key<RunContentDescriptor> DESCRIPTOR_KEY = Key.create("Descriptor");
+  public static final Key<Executor> EXECUTOR_KEY = Key.create("Executor");
 
   private final Project myProject;
   private final Map<String, ContentManager> myToolwindowIdToContentManagerMap = new THashMap<>();
+  // TODO: may need to investigate all the usages
   private final Map<String, Icon> myToolwindowIdToBaseIconMap = new THashMap<>();
   private final LinkedList<String> myToolwindowIdZBuffer = new LinkedList<>();
 
@@ -196,7 +198,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
   @Override
   public void hideRunContent(@NotNull final Executor executor, final RunContentDescriptor descriptor) {
     ApplicationManager.getApplication().invokeLater(() -> {
-      ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(executor.getToolWindowId());
+      ToolWindow toolWindow = getContentToolWindow(executor, descriptor);
       if (toolWindow != null) {
         toolWindow.hide(null);
       }
@@ -254,7 +256,13 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
       return;
     }
 
-    final ContentManager contentManager = getContentManagerForRunner(executor);
+    //RunnerLayoutUi ui = descriptor.getRunnerLayoutUi();
+    //final ContentManager contentManager = ui == null ? getContentManagerForRunner(executor) : ui.getContentManager();
+
+    ContentManager contentManager = descriptor.getContentManager();
+    if (contentManager == null) {
+      contentManager = getContentManagerForRunner(executor);
+    }
     RunContentDescriptor oldDescriptor = chooseReuseContentForDescriptor(contentManager, descriptor, executionId, descriptor.getDisplayName());
     final Content content;
     if (oldDescriptor == null) {
@@ -330,7 +338,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     }
 
     ApplicationManager.getApplication().invokeLater(() -> {
-      ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(executor.getToolWindowId());
+      ToolWindow window = getContentToolWindow(executor, descriptor);
       // let's activate tool window, but don't move focus
       //
       // window.show() isn't valid here, because it will not
@@ -342,6 +350,18 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     }, myProject.getDisposed());
   }
 
+  private ToolWindow getContentToolWindow(@NotNull final Executor executor, @NotNull final RunContentDescriptor descriptor) {
+    ContentManager contentManager = descriptor.getContentManager();
+    if (contentManager != null) {
+      ToolWindow contentToolWindow
+        = (ToolWindow)DataManager.getInstance().getDataContext(contentManager.getComponent())
+        .getData(PlatformDataKeys.TOOL_WINDOW.getName());
+      if (contentToolWindow != null) {
+        return contentToolWindow;
+      }
+    }
+    return ToolWindowManager.getInstance(myProject).getToolWindow(executor.getToolWindowId());
+  }
 
   @Nullable
   @Override
@@ -458,6 +478,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     final Content content = ContentFactory.SERVICE.getInstance().createContent(descriptor.getComponent(), processDisplayName, true);
     content.putUserData(DESCRIPTOR_KEY, descriptor);
     content.putUserData(ToolWindow.SHOW_CONTENT_ICON, Boolean.TRUE);
+    content.putUserData(EXECUTOR_KEY, executor);
     contentManager.addContent(content);
     new CloseListener(content, executor);
     return content;

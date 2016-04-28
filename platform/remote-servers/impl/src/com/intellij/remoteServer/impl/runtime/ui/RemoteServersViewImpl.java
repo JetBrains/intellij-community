@@ -4,6 +4,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.remoteServer.runtime.ServerConnection;
 import com.intellij.remoteServer.runtime.ui.RemoteServersView;
 import com.intellij.util.ui.UIUtil;
@@ -32,8 +33,9 @@ public class RemoteServersViewImpl extends RemoteServersView {
     }
   }
 
-  private static ServersToolWindowContent getServersViewComponent(ToolWindow toolWindow) {
+  public static ServersToolWindowContent getServersViewComponent(ToolWindow toolWindow) {
     //todo[nik] register ServersToolWindowContent as project service?
+    ((ToolWindowImpl)toolWindow).ensureContentInitialized();
     return UIUtil.findComponentOfType(toolWindow.getComponent(), ServersToolWindowContent.class);
   }
 

@@ -24,6 +24,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
+import com.intellij.util.BooleanFunction;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -323,6 +324,22 @@ public class ServersToolWindowContent extends JPanel implements Disposable, Serv
       TreeNodeSelector nodeSelector = myContribution.createLogNodeSelector(connection, deploymentName, logName);
       myBuilder.select(nodeSelector.getNodeClass(), nodeSelector, null, false);
     });
+  }
+
+  public <T> void select(@NotNull Class<T> valueClass, @NotNull BooleanFunction<T> valueVisitor) {
+    myBuilder.getUi().queueUpdate(myBuilder.getRootElement())
+      .doWhenDone(new Runnable() {
+        @Override
+        public void run() {
+          myBuilder.select(AbstractTreeNode.class, new TreeVisitor<AbstractTreeNode>() {
+            @Override
+            public boolean visit(@NotNull AbstractTreeNode node) {
+              T valueCandidate = ObjectUtils.tryCast(node.getValue(), valueClass);
+              return valueCandidate != null && valueVisitor.fun(valueCandidate);
+            }
+          }, null, false);
+        }
+      });
   }
 
   private static boolean isServerNodeMatch(@NotNull final ServersTreeStructure.RemoteServerNode node,

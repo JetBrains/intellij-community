@@ -18,6 +18,7 @@ package com.intellij.execution;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.ui.content.ContentManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,13 +28,15 @@ import java.util.List;
 /**
  * @author dyoma
  */
-public class DefaultExecutionResult implements ExecutionResult {
+public class DefaultExecutionResult implements ExecutionResultEx {
   private final ExecutionConsole myConsole;
   private final ProcessHandler myProcessHandler;
   private AnAction[] myActions;
   @NotNull
   private AnAction[] myRestartActions = AnAction.EMPTY_ARRAY;
   private final List<AnAction> myStopActions = new ArrayList<>();
+  //private RunnerLayoutUi myUi;
+  private ContentManager myContentManager;
 
   public DefaultExecutionResult() {
     myConsole = null;
@@ -88,4 +91,22 @@ public class DefaultExecutionResult implements ExecutionResult {
   public ProcessHandler getProcessHandler() {
     return myProcessHandler;
   }
+
+  @Override
+  public ContentManager getContentManager() {
+    return myContentManager;
+  }
+
+  public void setContentManager(ContentManager contentManager) {
+    myContentManager = contentManager;
+  }
+
+  //public void setUi(RunnerLayoutUi ui) {
+  //  myUi = ui;
+  //}
+  //
+  //@Override
+  //public RunnerLayoutUi getUi() {
+  //  return myUi;
+  //}
 }

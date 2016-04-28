@@ -46,6 +46,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.AppUIUtil;
+import com.intellij.ui.content.ContentManager;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.SmartHashSet;
@@ -113,6 +114,7 @@ public class XDebugSessionImpl implements XDebugSession {
   private final List<AnAction> myRestartActions = new SmartList<>();
   private final List<AnAction> myExtraStopActions = new SmartList<>();
   private final List<AnAction> myExtraActions = new SmartList<>();
+  private ContentManager myContentManager;
   private ConsoleView myConsoleView;
   private final Icon myIcon;
 
@@ -212,6 +214,14 @@ public class XDebugSessionImpl implements XDebugSession {
     if (extraStopActions != null) {
       Collections.addAll(myExtraStopActions, extraStopActions);
     }
+  }
+
+  public ContentManager getContentManager() {
+    return myContentManager;
+  }
+
+  public void setContentManager(ContentManager contentManager) {
+    myContentManager = contentManager;
   }
 
   @Override

@@ -17,6 +17,7 @@ package com.intellij.execution.ui;
 
 import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionResult;
+import com.intellij.execution.ExecutionResultEx;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.ide.HelpIdProvider;
@@ -25,6 +26,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,6 +51,8 @@ public class RunContentDescriptor implements Disposable {
   @NotNull
   private final AnAction[] myRestartActions;
 
+  private final ContentManager myContentManager;
+
   @Nullable
   private final Runnable myActivationCallback;
 
@@ -58,7 +62,7 @@ public class RunContentDescriptor implements Disposable {
                               String displayName,
                               @Nullable Icon icon,
                               @Nullable Runnable activationCallback) {
-    this(executionConsole, processHandler, component, displayName, icon, activationCallback, null);
+    this(executionConsole, processHandler, component, displayName, icon, activationCallback, null, null);
   }
 
   public RunContentDescriptor(@Nullable ExecutionConsole executionConsole,
@@ -67,7 +71,8 @@ public class RunContentDescriptor implements Disposable {
                               String displayName,
                               @Nullable Icon icon,
                               @Nullable Runnable activationCallback,
-                              @Nullable AnAction[] restartActions) {
+                              @Nullable AnAction[] restartActions,
+                              @Nullable ContentManager contentManager) {
     myExecutionConsole = executionConsole;
     myProcessHandler = processHandler;
     myComponent = component;
@@ -80,6 +85,7 @@ public class RunContentDescriptor implements Disposable {
     }
 
     myRestartActions = restartActions == null ? AnAction.EMPTY_ARRAY : restartActions;
+    myContentManager = contentManager;
   }
 
   public RunContentDescriptor(@Nullable ExecutionConsole executionConsole,
@@ -87,14 +93,14 @@ public class RunContentDescriptor implements Disposable {
                               @NotNull JComponent component,
                               String displayName,
                               @Nullable Icon icon) {
-    this(executionConsole, processHandler, component, displayName, icon, null, null);
+    this(executionConsole, processHandler, component, displayName, icon, null, null, null);
   }
 
   public RunContentDescriptor(@Nullable ExecutionConsole executionConsole,
                               @Nullable ProcessHandler processHandler,
                               @NotNull JComponent component,
                               String displayName) {
-    this(executionConsole, processHandler, component, displayName, null, null, null);
+    this(executionConsole, processHandler, component, displayName, null, null, null, null);
   }
 
   public RunContentDescriptor(@NotNull RunProfile profile, @NotNull ExecutionResult executionResult, @NotNull RunnerLayoutUi ui) {
@@ -104,8 +110,10 @@ public class RunContentDescriptor implements Disposable {
          profile.getName(),
          profile.getIcon(),
          null,
-         executionResult instanceof DefaultExecutionResult ? ((DefaultExecutionResult)executionResult).getRestartActions() : null);
+         executionResult instanceof DefaultExecutionResult ? ((DefaultExecutionResult)executionResult).getRestartActions() : null,
+         executionResult instanceof ExecutionResultEx ? ((ExecutionResultEx)executionResult).getContentManager() : null);
     myRunnerLayoutUi = ui;
+    //myRunnerLayoutUi = executionResult instanceof ExecutionResultEx ? ((ExecutionResultEx)executionResult).getUi() :  ui;
   }
 
   public Runnable getActivationCallback() {
@@ -229,8 +237,13 @@ public class RunContentDescriptor implements Disposable {
    * @since 14.1
    * @return the RunnerLayoutUi instance or null if this tab does not use RunnerLayoutUi for managing its contents.
    */
-  @Nullable
+  @Nullable // TODO: may reuse (currently unused) RunnerLayoutUi instead of ContentManager
   public RunnerLayoutUi getRunnerLayoutUi() {
     return myRunnerLayoutUi;
+  }
+
+  @Nullable
+  public ContentManager getContentManager() {
+    return myContentManager;
   }
 }

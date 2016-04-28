@@ -117,11 +117,10 @@ public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
   }
 
 
-
-
-  private class MyTabbedPaneWrapper extends TabbedPaneWrapper.AsJTabbedPane {
+  private class MyTabbedPaneWrapper extends TabbedPaneWrapper.AsJTabbedPane { //AsJBTabs {
     public MyTabbedPaneWrapper(int tabPlacement) {
       super(tabPlacement);
+      //super(null, tabPlacement, TabbedPaneImpl.DEFAULT_PREV_NEXT_SHORTCUTS, TabbedPaneContentUI.this);
     }
 
     protected TabbedPane createTabbedPane(int tabPlacement) {
