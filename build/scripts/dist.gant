@@ -214,11 +214,14 @@ def layoutAll(Map args, String home, String out, Paths _paths = null, buildJps =
   String macZip = "$paths.artifacts/${archiveName}.mac.zip"
   buildMacZip(macAppRoot, macZip, [paths.distAll], paths.distMac, productProperties.extraMacBins)
 
-  buildTarGz(linuxAppRoot, "$paths.artifacts/${archiveName}-no-jdk.tar", [paths.distAll, paths.distUnix], productProperties.extraLinuxBins)
-  requireProperty("jdk.linux", "false")
-  if (p("jdk.linux") != "false") {
-    buildTarGz(linuxAppRoot, "$paths.artifacts/${archiveName}.tar", [paths.distAll, paths.distUnix, "${paths.sandbox}/jdk.linux"], ["jre/jre/bin/*"] + productProperties.extraLinuxBins)
-  }
+  // Studio: continue building non JDK versions as ${archiveName}.tar (removed -no-jdk.tar suffix).
+  // This should be reverted once we bundle JDK
+  buildTarGz(linuxAppRoot, "$paths.artifacts/${archiveName}.tar", [paths.distAll, paths.distUnix], productProperties.extraLinuxBins)
+//  buildTarGz(linuxAppRoot, "$paths.artifacts/${archiveName}-no-jdk.tar", [paths.distAll, paths.distUnix], productProperties.extraLinuxBins)
+//  requireProperty("jdk.linux", "false")
+//  if (p("jdk.linux") != "false") {
+//    buildTarGz(linuxAppRoot, "$paths.artifacts/${archiveName}.tar", [paths.distAll, paths.distUnix, "${paths.sandbox}/jdk.linux"], ["jre/jre/bin/*"] + productProperties.extraLinuxBins)
+//  }
   return info
 }
 
