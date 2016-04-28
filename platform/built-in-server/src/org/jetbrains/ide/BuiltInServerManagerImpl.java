@@ -157,7 +157,13 @@ public class BuiltInServerManagerImpl extends BuiltInServerManager {
     }
 
     int port = StringUtil.parseInt(authority.substring(portIndex + 1), -1);
-    if (port == -1 || (BuiltInServerOptions.getInstance().builtInServerPort != port && BuiltInServerManager.getInstance().getPort() != port)) {
+    if (port == -1) {
+      return false;
+    }
+
+    BuiltInServerOptions options = BuiltInServerOptions.getInstance();
+    int idePort = BuiltInServerManager.getInstance().getPort();
+    if (options.builtInServerPort != port && idePort != port) {
       return false;
     }
 
@@ -168,7 +174,9 @@ public class BuiltInServerManagerImpl extends BuiltInServerManager {
 
     try {
       InetAddress inetAddress = InetAddress.getByName(host);
-      return inetAddress.isLoopbackAddress() || inetAddress.isAnyLocalAddress() || NetworkInterface.getByInetAddress(inetAddress) != null;
+      return inetAddress.isLoopbackAddress() ||
+             inetAddress.isAnyLocalAddress() ||
+             (options.builtInServerAvailableExternally && idePort != port && NetworkInterface.getByInetAddress(inetAddress) != null);
     }
     catch (IOException e) {
       return false;
