@@ -80,7 +80,7 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
   public QuickFixAction[] getQuickFixes(@NotNull final InspectionToolWrapper toolWrapper, @NotNull final InspectionTree tree) {
     final RefEntity[] refEntities = tree.getSelectedElements();
     InspectionToolPresentation presentation = tree.getContext().getPresentation(toolWrapper);
-    return refEntities.length == 0 ? null : presentation.getQuickFixes(refEntities, tree.getSelectedDescriptors(false));
+    return refEntities.length == 0 ? null : presentation.getQuickFixes(refEntities, tree.getSelectedDescriptors());
   }
 
 

@@ -96,7 +96,7 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
 
     GlobalInspectionContextImpl context = tree.getContext();
     InspectionToolPresentation presentation = context.getPresentation(toolWrapper);
-    return presentation.extractActiveFixes(selectedRefElements, actions, tree.getSelectedDescriptors(false));
+    return presentation.extractActiveFixes(selectedRefElements, actions, tree.getSelectedDescriptors());
   }
 
   @Override

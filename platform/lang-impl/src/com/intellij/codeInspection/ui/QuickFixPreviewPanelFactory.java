@@ -66,7 +66,7 @@ public class QuickFixPreviewPanelFactory {
       myView = view;
       myWrapper = view.getTree().getSelectedToolWrapper();
       LOG.assertTrue(myWrapper != null);
-      CommonProblemDescriptor[] descriptors = myView.getTree().getSelectedDescriptors(false);
+      CommonProblemDescriptor[] descriptors = myView.getTree().getSelectedDescriptors();
       if (editor != null) {
         new ProblemPreviewEditorPresentation(editor, view.getProject(), descriptors);
       }
