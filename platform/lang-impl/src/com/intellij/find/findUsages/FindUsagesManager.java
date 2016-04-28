@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,8 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -281,24 +283,17 @@ public class FindUsagesManager {
                                                      @NotNull final Processor<Usage> processor,
                                                      @NotNull final FindUsagesOptions findUsagesOptions,
                                                      @NotNull final Runnable onComplete) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     final ProgressIndicatorBase indicator = new ProgressIndicatorBase();
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+    Task.Backgroundable task = new Task.Backgroundable(handler.getProject(), "Finding Usages") {
       @Override
-      public void run() {
-        try {
-          ProgressManager.getInstance().runProcess(new Runnable() {
-            @Override
-            public void run() {
-              final UsageSearcher usageSearcher = createUsageSearcher(primaryElements, secondaryElements, handler, findUsagesOptions, null);
-              usageSearcher.generate(processor);
-            }
-          }, indicator);
-        }
-        finally {
-          onComplete.run();
-        }
+      public void run(@NotNull ProgressIndicator indicator) {
+        final UsageSearcher usageSearcher = createUsageSearcher(primaryElements, secondaryElements, handler, findUsagesOptions, null);
+        usageSearcher.generate(processor);
       }
-    });
+    };
+
+    ((ProgressManagerImpl)ProgressManager.getInstance()).runProcessWithProgressAsynchronously(task, indicator, onComplete);
 
     return indicator;
   }
