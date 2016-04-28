@@ -853,8 +853,9 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
   public void cleanup() {
     if (myView != null) {
       myView.setUpdating(false);
+    } else {
+      super.cleanup();
     }
-    super.cleanup();
   }
 
   public void refreshViews() {
@@ -863,10 +864,11 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     }
   }
 
-  private final ConcurrentMap<InspectionToolWrapper, InspectionToolPresentation> myPresentationMap = ContainerUtil.newConcurrentMap();
+  private final ConcurrentMap<String, InspectionToolPresentation> myPresentationMap = ContainerUtil.newConcurrentMap();
   @NotNull
   public InspectionToolPresentation getPresentation(@NotNull InspectionToolWrapper toolWrapper) {
-    InspectionToolPresentation presentation = myPresentationMap.get(toolWrapper);
+    final String shortName = toolWrapper.getShortName();
+    InspectionToolPresentation presentation = myPresentationMap.get(shortName);
     if (presentation == null) {
       String presentationClass = StringUtil.notNullize(toolWrapper.myEP == null ? null : toolWrapper.myEP.presentation, DefaultInspectionToolPresentation.class.getName());
 
@@ -878,7 +880,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
         LOG.error(e);
         throw new RuntimeException(e);
       }
-      presentation = ConcurrencyUtil.cacheOrGet(myPresentationMap, toolWrapper, presentation);
+      presentation = ConcurrencyUtil.cacheOrGet(myPresentationMap, shortName, presentation);
     }
     return presentation;
   }
