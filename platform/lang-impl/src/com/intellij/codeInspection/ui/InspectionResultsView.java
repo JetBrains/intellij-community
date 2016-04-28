@@ -680,8 +680,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
         setUpdating(true);
         synchronized (getTreeStructureUpdateLock()) {
           myGroups.clear();
-          final Map<String, Tools> tools = myGlobalInspectionContext.getTools();
-          addTools(tools.values());
+          addTools(myGlobalInspectionContext.getTools().values());
         }
       }
       finally {
