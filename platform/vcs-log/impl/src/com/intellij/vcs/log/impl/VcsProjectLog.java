@@ -90,14 +90,11 @@ public class VcsProjectLog {
 
   @CalledInAny
   private void recreateLog() {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        disposeLog();
+    ApplicationManager.getApplication().invokeLater(() -> {
+      disposeLog();
 
-        if (hasDvcsRoots()) {
-          createLog();
-        }
+      if (hasDvcsRoots()) {
+        createLog();
       }
     });
   }
@@ -116,12 +113,7 @@ public class VcsProjectLog {
     myMessageBus.syncPublisher(VCS_PROJECT_LOG_CHANGED).logCreated();
 
     if (PostponableLogRefresher.keepUpToDate()) {
-      new HeavyAwareExecutor(myProject).execute(new Runnable() {
-        @Override
-        public void run() {
-          logManager.scheduleInitialization();
-        }
-      });
+      new HeavyAwareExecutor(myProject).execute(logManager::scheduleInitialization);
     }
   }
 
@@ -179,19 +171,9 @@ public class VcsProjectLog {
       VcsProjectLog projectLog = getInstance(project);
 
       MessageBusConnection connection = project.getMessageBus().connect(project);
-      connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, new VcsListener() {
-        @Override
-        public void directoryMappingChanged() {
-          projectLog.recreateLog();
-        }
-      });
+      connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, projectLog::recreateLog);
       if (projectLog.hasDvcsRoots()) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            projectLog.createLog();
-          }
-        });
+        ApplicationManager.getApplication().invokeLater(projectLog::createLog);
       }
     }
   }
