@@ -16,7 +16,7 @@ import com.intellij.util.io.TestFileSystemItem
  * @author nik
  */
 public abstract class JpsRebuildTestCase: JpsBuildTestCase() {
-  protected val myOutputDirectory: File by Delegates.lazy {
+  protected val myOutputDirectory: File by lazy {
     FileUtil.createTempDirectory("jps-build-output", "")
   }
 

@@ -22,8 +22,6 @@ import java.util.jar.Attributes
 import java.util.jar.Manifest
 import java.io.File
 import java.io.FileInputStream
-import kotlin.test.assertTrue
-import kotlin.test.assertEquals
 
 /**
  * @author nik
