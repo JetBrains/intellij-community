@@ -189,7 +189,7 @@ public class ContainingBranchesGetter {
     }
 
     @NotNull
-    public List<String> getContainingBranches(VcsLogData logData) {
+    public List<String> getContainingBranches(@NotNull VcsLogData logData) {
       try {
         VcsLogProvider provider = logData.getLogProvider(root);
         if (graph != null && refs != null && VcsLogProperties.get(provider, VcsLogProperties.LIGHTWEIGHT_BRANCHES)) {
