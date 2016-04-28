@@ -23,7 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.vcs.log.impl.VcsLogContentProvider;
 import com.intellij.vcs.log.impl.VcsLogManager;
-import com.intellij.vcs.log.impl.VcsLogProjectManager;
+import com.intellij.vcs.log.impl.VcsProjectLog;
 import com.intellij.vcs.log.ui.VcsLogDataKeys;
 
 public class OpenAnotherLogTabAction extends DumbAwareAction {
@@ -38,10 +38,10 @@ public class OpenAnotherLogTabAction extends DumbAwareAction {
       e.getPresentation().setEnabledAndVisible(false);
       return;
     }
-    VcsLogProjectManager logProjectManager = VcsLogProjectManager.getInstance(project);
+    VcsProjectLog projectLog = VcsProjectLog.getInstance(project);
     VcsLogManager logManager = e.getData(VcsLogDataKeys.LOG_MANAGER);
     e.getPresentation()
-      .setEnabledAndVisible(logManager != null && logProjectManager.getLogManager() == logManager); // only for main log (it is a question, how and where we want to open tabs for external logs)
+      .setEnabledAndVisible(logManager != null && projectLog.getLogManager() == logManager); // only for main log (it is a question, how and where we want to open tabs for external logs)
   }
 
   @Override

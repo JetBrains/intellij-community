@@ -40,7 +40,7 @@ import javax.swing.*;
 import java.util.Arrays;
 import java.util.Collection;
 
-public class VcsLogProjectManager {
+public class VcsProjectLog {
   public static final Topic<ProjectLogListener> VCS_PROJECT_LOG_CHANGED =
     Topic.create("Project Vcs Log Created or Disposed", ProjectLogListener.class);
   @NotNull private final Project myProject;
@@ -51,7 +51,7 @@ public class VcsLogProjectManager {
   private final LazyVcsLogManager myLogManager = new LazyVcsLogManager();
   private volatile VcsLogUiImpl myUi;
 
-  public VcsLogProjectManager(@NotNull Project project, @NotNull VcsLogTabsProperties uiProperties) {
+  public VcsProjectLog(@NotNull Project project, @NotNull VcsLogTabsProperties uiProperties) {
     myProject = project;
     myMessageBus = project.getMessageBus();
     myUiProperties = uiProperties;
@@ -134,8 +134,8 @@ public class VcsLogProjectManager {
     return !VcsLogManager.findLogProviders(getVcsRoots(), myProject).isEmpty();
   }
 
-  public static VcsLogProjectManager getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, VcsLogProjectManager.class);
+  public static VcsProjectLog getInstance(@NotNull Project project) {
+    return ServiceManager.getService(project, VcsProjectLog.class);
   }
 
   @SuppressWarnings("NonPrivateFieldAccessedInSynchronizedContext")
@@ -176,20 +176,20 @@ public class VcsLogProjectManager {
   public static class InitLogStartupActivity implements StartupActivity {
     @Override
     public void runActivity(@NotNull Project project) {
-      VcsLogProjectManager logProjectManager = getInstance(project);
+      VcsProjectLog projectLog = getInstance(project);
 
       MessageBusConnection connection = project.getMessageBus().connect(project);
       connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, new VcsListener() {
         @Override
         public void directoryMappingChanged() {
-          logProjectManager.recreateLog();
+          projectLog.recreateLog();
         }
       });
-      if (logProjectManager.hasDvcsRoots()) {
+      if (projectLog.hasDvcsRoots()) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {
-            logProjectManager.createLog();
+            projectLog.createLog();
           }
         });
       }

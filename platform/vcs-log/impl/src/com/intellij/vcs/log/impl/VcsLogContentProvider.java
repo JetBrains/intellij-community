@@ -50,15 +50,15 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
   public static final String TAB_NAME = "Log";
 
   @NotNull private final Project myProject;
-  @NotNull private final VcsLogProjectManager myLogManager;
+  @NotNull private final VcsProjectLog myProjectLog;
   @NotNull private final JPanel myContainer = new JBPanel(new BorderLayout());
 
-  public VcsLogContentProvider(@NotNull Project project, @NotNull VcsLogProjectManager logManager) {
+  public VcsLogContentProvider(@NotNull Project project, @NotNull VcsProjectLog projectLog) {
     myProject = project;
-    myLogManager = logManager;
+    myProjectLog = projectLog;
 
     MessageBusConnection connection = project.getMessageBus().connect(project);
-    connection.subscribe(VcsLogProjectManager.VCS_PROJECT_LOG_CHANGED, new VcsLogProjectManager.ProjectLogListener() {
+    connection.subscribe(VcsProjectLog.VCS_PROJECT_LOG_CHANGED, new VcsProjectLog.ProjectLogListener() {
       @Override
       public void logCreated() {
         addLogUi();
@@ -71,23 +71,23 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
       }
     });
 
-    if (myLogManager.getLogManager() != null) {
+    if (myProjectLog.getLogManager() != null) {
       addLogUi();
     }
   }
 
   @CalledInAwt
   private void addLogUi() {
-    myContainer.add(myLogManager.initMainLog(TAB_NAME), BorderLayout.CENTER);
+    myContainer.add(myProjectLog.initMainLog(TAB_NAME), BorderLayout.CENTER);
 
-    VcsLogManager manager = myLogManager.getLogManager();
+    VcsLogManager manager = myProjectLog.getLogManager();
     assert manager != null;
-    if (manager.isLogVisible()) myLogManager.scheduleInitialization();
+    if (manager.isLogVisible()) myProjectLog.scheduleInitialization();
   }
 
   @Override
   public JComponent initContent() {
-    myLogManager.scheduleInitialization();
+    myProjectLog.scheduleInitialization();
     return myContainer;
   }
 

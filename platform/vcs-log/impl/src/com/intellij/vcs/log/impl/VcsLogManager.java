@@ -183,7 +183,7 @@ public class VcsLogManager implements Disposable {
   @Nullable
   @Deprecated
   public static VcsLogManager getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, VcsLogProjectManager.class).getLogManager();
+    return ServiceManager.getService(project, VcsProjectLog.class).getLogManager();
   }
 
   /*
@@ -193,7 +193,7 @@ public class VcsLogManager implements Disposable {
   @Nullable
   @Deprecated
   public VcsLogUiImpl getMainLogUi() {
-    return ServiceManager.getService(myProject, VcsLogProjectManager.class).getMainLogUi();
+    return ServiceManager.getService(myProject, VcsProjectLog.class).getMainLogUi();
   }
 
   @Override
