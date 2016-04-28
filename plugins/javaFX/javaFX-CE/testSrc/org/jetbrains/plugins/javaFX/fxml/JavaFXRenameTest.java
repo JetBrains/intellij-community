@@ -22,6 +22,8 @@ import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.refactoring.RenameRefactoring;
+import com.intellij.refactoring.openapi.impl.JavaRenameRefactoringImpl;
 import com.intellij.refactoring.rename.PsiElementRenameHandler;
 import com.intellij.refactoring.rename.RenameHandler;
 import com.intellij.refactoring.rename.RenameHandlerRegistry;
@@ -30,12 +32,11 @@ import com.intellij.refactoring.rename.inplace.MemberInplaceRenameHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.testFramework.MapDataContext;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.javaFX.refactoring.JavaFxPropertyRenameHandler;
 
 import java.util.Arrays;
-import java.util.Locale;
-import java.util.stream.Collectors;
 
 public class JavaFXRenameTest extends DaemonAnalyzerTestCase {
   @Override
@@ -108,11 +109,70 @@ public class JavaFXRenameTest extends DaemonAnalyzerTestCase {
   }
 
   public void testPropertyRenameHandlerPresent() throws Exception {
-    configureByFiles(null, getTestName(true) + ".fxml", getTestName(false) + ".java");
+    doTestPropertyRenameHandler(getTestName(true) + ".fxml", getTestName(false) + ".java");
+  }
+
+  public void testPropertyRenameHandlerPresentForStatic() throws Exception {
+    doTestPropertyRenameHandler(getTestName(true) + ".fxml", "container/MyCustomContainer.java");
+  }
+
+  public void doTestPropertyRenameHandler(String... files) throws Exception {
+    configureByFiles(null, files);
     final MapDataContext dataContext = new MapDataContext();
     dataContext.put(CommonDataKeys.EDITOR, myEditor);
     final RenameHandler renameHandler = RenameHandlerRegistry.getInstance().getRenameHandler(dataContext);
     assertTrue(renameHandler instanceof JavaFxPropertyRenameHandler);
+  }
+
+  public void testStaticPropertyImportClass() throws Exception {
+    doTestStaticProperty("newPropName2", "container.MyCustomContainer");
+  }
+
+  public void testStaticPropertyImportPackage() throws Exception {
+    doTestStaticProperty("newPropName2", "container.MyCustomContainer");
+  }
+
+  public void doTestStaticProperty(@NonNls String newName, String className) throws Exception {
+    configureByFiles(null, getTestName(true) + ".fxml", className.replace('.', '/') + ".java");
+
+    final MapDataContext dataContext = new MapDataContext();
+    dataContext.put(CommonDataKeys.EDITOR, myEditor);
+    dataContext.put(PsiElementRenameHandler.DEFAULT_NAME, newName);
+
+    final JavaFxPropertyRenameHandler renameHandler = new JavaFxPropertyRenameHandler();
+    assertTrue(renameHandler.isAvailableOnDataContext(dataContext));
+    renameHandler.invoke(myProject, myEditor, null, dataContext);
+    checkResultByFile(getTestName(true) + "_after.fxml");
+
+    final PsiClass psiClass = findClass(className);
+    assertNotNull(psiClass);
+
+    final String propName = newName.substring(0, 1).toUpperCase() + newName.substring(1);
+    assertMethodExists(psiClass, "set" + propName);
+  }
+
+  public void testStaticPropertyMethod() throws Exception {
+    final String className="container.MyCustomContainer";
+    final String methodName = "setStaticProp";
+    final String newName = "setNewMethodName";
+    configureByFiles(null, getTestName(true) + ".fxml", className.replace('.', '/') + ".java");
+
+    final PsiClass psiClass = findClass(className);
+    assertNotNull(psiClass);
+    final PsiMethod[] methods = psiClass.findMethodsByName(methodName, false);
+    assertEquals(1, methods.length);
+    final PsiMethod method = methods[0];
+
+    final RenameRefactoring rename = new JavaRenameRefactoringImpl(myProject, method, newName, false, false);
+    rename.run();
+
+    checkResultByFile(getTestName(true) + "_after.fxml");
+    assertMethodExists(psiClass, newName);
+  }
+
+  public void testStaticPropertyFromLibrary() throws Exception {
+    doTestErrorHint("Foo", "Cannot perform refactoring.\n" +
+                           "Selected method is not located inside the project");
   }
 
   public void testControllerMethod() throws Exception {
@@ -140,9 +200,9 @@ public class JavaFXRenameTest extends DaemonAnalyzerTestCase {
     doTestProperty(name, null, isBoolean);
   }
 
-  public void doTestProperty(String name, String className, boolean isBoolean) throws Exception {
+  public void doTestProperty(@NonNls String name, String className, boolean isBoolean) throws Exception {
     final PsiClass psiClass = doTestHandler(name, className);
-    final String propName = name.substring(0, 1).toUpperCase(Locale.ENGLISH) + name.substring(1);
+    final String propName = name.substring(0, 1).toUpperCase() + name.substring(1);
     assertMethodExists(psiClass, (isBoolean ? "is" : "get") + propName);
     assertMethodExists(psiClass, "set" + propName);
     assertMethodExists(psiClass, name + "Property");

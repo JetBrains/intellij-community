@@ -49,11 +49,15 @@ builder.people {
         boolCall true
         varArgs '1111', 22222
         empty()
+        <warning>someProperty</warning>
     }
+    <warning>someProperty</warning>
 }
 
+builder.<warning>root</warning>
 builder.root<warning>(new Object())</warning>
 builder.root<warning>(new Object[0])</warning>
+builder.root<warning>([new Object(), new Object()])</warning>
 builder.root<warning>([], new Object(), {})</warning>
 '''
     fixture.enableInspections GroovyAssignabilityCheckInspection, GrUnresolvedAccessInspection

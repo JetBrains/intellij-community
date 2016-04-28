@@ -87,7 +87,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
   public void setValue(String valueText) throws IncorrectOperationException {
     final ASTNode value = XmlChildRole.ATTRIBUTE_VALUE_FINDER.findChild(this);
     final PomModel model = PomManager.getModel(getProject());
-    final XmlAttribute attribute = XmlElementFactory.getInstance(getProject()).createXmlAttribute("a", valueText);
+    final XmlAttribute attribute = XmlElementFactory.getInstance(getProject()).createAttribute("a", valueText, this);
     final ASTNode newValue = XmlChildRole.ATTRIBUTE_VALUE_FINDER.findChild((ASTNode)attribute);
     final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
     model.runTransaction(new PomTransactionBase(this, aspect) {

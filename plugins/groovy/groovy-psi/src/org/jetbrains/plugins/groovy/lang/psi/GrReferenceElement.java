@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
 /**
  * @author ven
@@ -32,10 +33,16 @@ public interface GrReferenceElement<Q extends PsiElement> extends GroovyPsiEleme
   @Nullable
   String getReferenceName();
 
+  @Nullable
   @Override
-  PsiElement resolve();
+  default PsiElement resolve() {
+    return advancedResolve().getElement();
+  }
 
-  GroovyResolveResult advancedResolve();
+  @NotNull
+  default GroovyResolveResult advancedResolve() {
+    return PsiImplUtil.extractUniqueResult(multiResolve(false));
+  }
 
   @Override
   @NotNull

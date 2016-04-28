@@ -1695,14 +1695,8 @@ public abstract class DialogWrapper {
       ActionUtil.registerForEveryKeyboardShortcut(getRootPane(), cancelKeyboardAction, CommonShortcuts.getCloseActiveWindow());
     }
 
-    if (ApplicationInfo.contextHelpAvailable()) {
-      ActionListener helpAction = new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          doHelpAction();
-        }
-      };
-
+    if (ApplicationInfo.contextHelpAvailable() && !isProgressDialog()) {
+      ActionListener helpAction = e -> doHelpAction();
       ActionUtil.registerForEveryKeyboardShortcut(getRootPane(), helpAction, CommonShortcuts.getContextHelp());
       rootPane.registerKeyboardAction(helpAction, KeyStroke.getKeyStroke(KeyEvent.VK_HELP, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
     }

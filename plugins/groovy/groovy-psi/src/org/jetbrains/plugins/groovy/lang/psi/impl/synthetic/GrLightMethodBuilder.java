@@ -261,14 +261,29 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod, Orig
   }
 
   @NotNull
+  public GrLightMethodBuilder addParameter(@NotNull String name, @NotNull String type) {
+    return addParameter(name, type, false);
+  }
+
+  @NotNull
   public GrLightMethodBuilder addParameter(@NotNull String name, @NotNull String type, boolean isOptional) {
     return addParameter(name, JavaPsiFacade.getElementFactory(getProject()).createTypeFromText(type, this), isOptional);
+  }
+
+  @NotNull
+  public GrLightMethodBuilder addParameter(@NotNull String name, @NotNull PsiType type) {
+    return addParameter(name, type, false);
   }
 
   @NotNull
   public GrLightMethodBuilder addParameter(@NotNull String name, @NotNull PsiType type, boolean isOptional) {
     GrLightParameter param = new GrLightParameter(name, type, this).setOptional(isOptional);
     return addParameter(param);
+  }
+
+  @NotNull
+  public GrLightParameter addAndGetParameter(@NotNull String name, @NotNull String type) {
+    return addAndGetParameter(name, type, false);
   }
 
   @NotNull

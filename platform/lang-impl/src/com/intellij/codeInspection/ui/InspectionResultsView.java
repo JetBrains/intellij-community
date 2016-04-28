@@ -241,8 +241,19 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
           }
         }
         else if (node instanceof ProblemDescriptionNode) {
-          if (!((ProblemDescriptionNode)node).isValid()) return null;
-          return navigate(((ProblemDescriptionNode)node).getDescriptor());
+          boolean isValid;
+          if (((ProblemDescriptionNode)node).isValid()) {
+            if (((ProblemDescriptionNode)node).isQuickFixAppliedFromView()) {
+              isValid = ((ProblemDescriptionNode)node).calculateIsValid();
+            } else {
+              isValid = true;
+            }
+          } else {
+            isValid = false;
+          }
+          return isValid
+                 ? navigate(((ProblemDescriptionNode)node).getDescriptor())
+                 : InspectionResultsViewUtil.getNavigatableForInvalidNode((ProblemDescriptionNode)node);
         }
         return null;
       }
@@ -531,16 +542,6 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       }
       myPreviewEditor.getSettings().setFoldingOutlineShown(problemCount != 1);
       myPreviewEditor.getComponent().setBorder(IdeBorderFactory.createEmptyBorder());
-      if (problemCount == 1) {
-        final PsiElement finalSelectedElement = selectedElement;
-        ApplicationManager.getApplication().invokeLater(() -> {
-          if (myPreviewEditor != null && !myPreviewEditor.isDisposed()) {
-            PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-            myPreviewEditor.getCaretModel().moveToOffset(finalSelectedElement.getTextOffset());
-            myPreviewEditor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
-          }
-        }, ModalityState.any());
-      }
       return Pair.create(myPreviewEditor.getComponent(), myPreviewEditor);
     }
     else if (selectedEntity == null) {

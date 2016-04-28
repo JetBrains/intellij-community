@@ -398,7 +398,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
     }
     else {
       buf.append("(").append(StringUtil.join(constructor.getParameterList().getParameters(), new Function<PsiParameter, String>() {
-        int myIdx = 0;
+        int myIdx;
         @Override
         public String fun(PsiParameter psiParameter) {
           return psiParameter.getType().getCanonicalText() + " p" + myIdx++;

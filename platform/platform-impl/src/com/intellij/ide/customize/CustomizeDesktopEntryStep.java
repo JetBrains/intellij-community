@@ -68,6 +68,7 @@ public class CustomizeDesktopEntryStep extends AbstractCustomizeWizardStep {
     myCreateEntryCheckBox.setSelected(!"true".equals(System.getProperty("idea.debug.mode")));
 
     myGlobalEntryCheckBox.setSelected(false);
+    myGlobalEntryCheckBox.setEnabled(myCreateEntryCheckBox.isSelected());
   }
 
   @Override

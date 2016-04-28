@@ -574,6 +574,10 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     myIsViewer = !enabled;
   }
 
+  public boolean isViewer() {
+    return myIsViewer;
+  }
+
   @Override
   public Color getBackground() {
     Color color = getBackgroundColor(isEnabled(), EditorColorsUtil.getGlobalOrDefaultColorScheme());

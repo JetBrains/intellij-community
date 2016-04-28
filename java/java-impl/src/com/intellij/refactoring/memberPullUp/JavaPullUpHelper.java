@@ -227,7 +227,7 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
         method.findSuperMethods(myTargetSuperClass).length == 0) {
       deleteOverrideAnnotationIfFound(methodCopy);
     }
-    boolean isOriginalMethodAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT) || method.hasModifierProperty(PsiModifier.DEFAULT);
+    boolean isOriginalMethodAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
     if (myIsTargetInterface || info.isToAbstract()) {
       ChangeContextUtil.clearContextInfo(method);
 
@@ -235,7 +235,11 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
         //pull as default
         RefactoringUtil.makeMethodDefault(methodCopy);
         isOriginalMethodAbstract = true;
-      } else {
+      }
+      else {
+        if (info.isToAbstract() && method.hasModifierProperty(PsiModifier.DEFAULT)) {
+          PsiUtil.setModifierProperty(methodCopy, PsiModifier.DEFAULT, false);
+        }
         RefactoringUtil.makeMethodAbstract(myTargetSuperClass, methodCopy);
       }
 

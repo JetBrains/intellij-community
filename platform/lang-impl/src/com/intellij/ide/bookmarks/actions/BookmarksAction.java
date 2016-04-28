@@ -67,7 +67,10 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
     final Project project = e.getProject();
     if (project == null) return;
 
-    if (myPopup != null && myPopup.isVisible()) return;
+    if (myPopup != null && myPopup.isVisible()) {
+      myPopup.cancel();
+      return;
+    }
 
     final JBList list = new JBList(buildModel(project));
 

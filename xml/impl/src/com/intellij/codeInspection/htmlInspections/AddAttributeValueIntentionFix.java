@@ -68,7 +68,7 @@ public class AddAttributeValueIntentionFix extends LocalQuickFixAndIntentionActi
     new WriteCommandAction(project) {
       @Override
       protected void run(@NotNull final Result result) {
-        final XmlAttribute attributeWithValue = XmlElementFactory.getInstance(getProject()).createXmlAttribute(attribute.getName(), "");
+        final XmlAttribute attributeWithValue = XmlElementFactory.getInstance(getProject()).createAttribute(attribute.getName(), "", startElement);
         final PsiElement newAttribute = attribute.replace(attributeWithValue);
         
         if (editor != null && newAttribute != null && newAttribute instanceof XmlAttribute && newAttribute.isValid()) {

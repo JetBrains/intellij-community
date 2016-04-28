@@ -20,6 +20,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.Functions;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.Iterator;
@@ -52,20 +53,17 @@ public abstract class JBIterator<E> implements Iterator<E> {
   private static final Object STOP = new String("#stop");
   private static final Object SKIP = new String("#skip");
 
+  @NotNull
   public static <E extends JBIterator<?>> JBIterable<E> cursor(@NotNull E iterator) {
     return JBIterable.generate(iterator, Functions.<E, E>identity()).takeWhile(ADVANCE);
   }
 
-  public static <E> JBIterator<E> from(final Iterator<E> it) {
+  @NotNull
+  public static <E> JBIterator<E> from(@NotNull final Iterator<E> it) {
     return it instanceof JBIterator ? (JBIterator<E>)it : new JBIterator<E>() {
       @Override
       protected E nextImpl() {
         return it.hasNext() ? it.next() : stop();
-      }
-
-      @Override
-      public void remove() {
-        it.remove();
       }
     };
   }
@@ -89,6 +87,7 @@ public abstract class JBIterator<E> implements Iterator<E> {
   /**
    * Notifies the iterator that there's no more elements.
    */
+  @Nullable
   protected final E stop() {
     myNext = STOP;
     return null;
@@ -97,6 +96,7 @@ public abstract class JBIterator<E> implements Iterator<E> {
   /**
    * Notifies the iterator to skip and re-invoke nextImpl().
    */
+  @Nullable
   protected final E skip() {
     myNext = SKIP;
     return null;
@@ -108,6 +108,7 @@ public abstract class JBIterator<E> implements Iterator<E> {
     return myNext != STOP;
   }
 
+  @Nullable
   @Override
   public final E next() {
     advance();
@@ -130,6 +131,7 @@ public abstract class JBIterator<E> implements Iterator<E> {
   /**
    * Returns the current element if any; otherwise throws exception.
    */
+  @Nullable
   public final E current() {
     if (myCurrent == NONE) throw new NoSuchElementException();
     return (E)myCurrent;
@@ -222,7 +224,7 @@ public abstract class JBIterator<E> implements Iterator<E> {
   }
 
   @Override
-  public void remove() {
+  public final void remove() {
     throw new UnsupportedOperationException();
   }
 
