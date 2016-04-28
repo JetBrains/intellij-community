@@ -223,10 +223,10 @@ public class JavaIntroduceParameterObjectDelegate
   }
 
   @Override
-  public void collectAccessibilityUsages(Collection<FixableUsageInfo> usages,
-                                         PsiMethod method,
-                                         JavaIntroduceParameterObjectClassDescriptor descriptor,
-                                         ReadWriteAccessDetector.Access[] accessors) {
+  public void collectUsagesToGenerateMissedFieldAccessors(Collection<FixableUsageInfo> usages,
+                                                          PsiMethod method,
+                                                          JavaIntroduceParameterObjectClassDescriptor descriptor,
+                                                          ReadWriteAccessDetector.Access[] accessors) {
     final ParameterInfoImpl[] parameterInfos = descriptor.getParamsToMerge();
     final PsiClass existingClass = descriptor.getExistingClass();
     final boolean useExisting = descriptor.isGenerateAccessors() || !(descriptor.isUseExistingClass() && existingClass != null);
@@ -249,14 +249,21 @@ public class JavaIntroduceParameterObjectDelegate
         }
       }
     }
+  }
 
+  @Override
+  public void collectAdditionalFixes(Collection<FixableUsageInfo> usages,
+                                     final PsiMethod method,
+                                     final JavaIntroduceParameterObjectClassDescriptor descriptor) {
+
+    if (method.getDocComment() != null) {
+      usages.add(new ConstructorJavadocUsageInfo(method, descriptor));
+    }
 
     final String newVisibility = descriptor.getNewVisibility();
     if (newVisibility != null) {
-      usages.add(new BeanClassVisibilityUsageInfo(existingClass, usages.toArray(UsageInfo.EMPTY_ARRAY), newVisibility, descriptor));
+      usages.add(new BeanClassVisibilityUsageInfo(descriptor.getExistingClass(), usages.toArray(UsageInfo.EMPTY_ARRAY), newVisibility, descriptor));
     }
-
-    usages.add(new ConstructorJavadocUsageInfo(method, descriptor));
 
     if (!descriptor.isUseExistingClass()) {
       usages.add(new FixableUsageInfo(method) {

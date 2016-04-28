@@ -142,10 +142,17 @@ public class GroovyIntroduceParameterObjectDelegate
   }
 
   @Override
-  public void collectAccessibilityUsages(Collection<FixableUsageInfo> usages,
-                                         GrMethod method,
-                                         GroovyIntroduceObjectClassDescriptor descriptor,
-                                         ReadWriteAccessDetector.Access[] accessors) {
+  public void collectUsagesToGenerateMissedFieldAccessors(Collection<FixableUsageInfo> usages,
+                                                          GrMethod method,
+                                                          GroovyIntroduceObjectClassDescriptor descriptor,
+                                                          ReadWriteAccessDetector.Access[] accessors) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void collectAdditionalFixes(Collection<FixableUsageInfo> usages,
+                                     GrMethod method,
+                                     GroovyIntroduceObjectClassDescriptor descriptor) {
     throw new UnsupportedOperationException();
   }
 

@@ -111,7 +111,10 @@ public class IntroduceParameterObjectProcessor<M extends PsiNamedElement, P exte
       }
     }
 
-    myDelegate.collectAccessibilityUsages(usages, myMethod, myClassDescriptor, myAccessors);
+    myDelegate.collectUsagesToGenerateMissedFieldAccessors(usages, myMethod, myClassDescriptor, myAccessors);
+    myDelegate.collectAdditionalFixes(usages, myMethod, myClassDescriptor);
+
+
   }
 
   @Override
@@ -129,7 +132,7 @@ public class IntroduceParameterObjectProcessor<M extends PsiNamedElement, P exte
         if (element != null && IntroduceParameterObjectDelegate.findDelegate(element) == null) {
           final PsiFile containingFile = element.getContainingFile();
           if (filesWithUsages.add(containingFile)) {
-            conflicts.putValue(element, "Usage in not supported language is detected: " + containingFile.getName());
+            conflicts.putValue(element, "Method is overridden in a language that doesn't support this refactoring: " + containingFile.getName());
           }
         }
         changeSignatureUsages.add(info);

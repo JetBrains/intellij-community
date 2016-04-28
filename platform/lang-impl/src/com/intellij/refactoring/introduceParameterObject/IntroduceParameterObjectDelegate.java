@@ -116,7 +116,7 @@ public abstract class IntroduceParameterObjectDelegate<M extends PsiNamedElement
    * @param <M1>               method type of the original delegate
    * @param <P1>               parameter info type of the original delegate
    *
-   * @return                   access level which is required for a parameter {@link ReadWriteAccessDetector.Access}
+   * @return                   access level which is required for a parameter {@link ReadWriteAccessDetector.Access}. If write access is needed, both accessors are expected.
    */
   @Nullable
   public abstract <M1 extends PsiNamedElement, P1 extends ParameterInfo>
@@ -127,18 +127,26 @@ public abstract class IntroduceParameterObjectDelegate<M extends PsiNamedElement
                                                        String mergedParamName);
 
   /**
-   * Collect in usages accessibility fixes.
+   * Collect in <code>usages</code> fixes to generate field's accessors.
    * If {@link #collectInternalUsages(Collection, PsiNamedElement, IntroduceParameterObjectClassDescriptor, ParameterInfo, String)}
-   * did return @NotNull value, corresponding parameter requires some accessor. If current language doesn't provide implicitly accessors,
-   * then they should be generated according to the accessors[descriptor.getParamsToMerge()[paramIdx].getOldIdx()]
+   * returns @NotNull value, corresponding to the parameter field requires an accessor.
+   *
+   * To detect what accessor is required, use <code>accessors[descriptor.getParamsToMerge()[paramIdx].getOldIdx()]</code>
    */
-  public abstract void collectAccessibilityUsages(Collection<FixableUsageInfo> usages,
-                                                  M method,
-                                                  C descriptor,
-                                                  ReadWriteAccessDetector.Access[] accessors);
+  public abstract void collectUsagesToGenerateMissedFieldAccessors(Collection<FixableUsageInfo> usages,
+                                                                   M method,
+                                                                   C descriptor,
+                                                                   ReadWriteAccessDetector.Access[] accessors);
 
   /**
-   * Collect conflicts in conflicts
+   * Collect in <code>usages</code> necessary fixes to change visibility, javadocs, etc
+   */
+  public abstract void collectAdditionalFixes(Collection<FixableUsageInfo> usages,
+                                              M method,
+                                              C descriptor);
+
+  /**
+   * Collect conflicts in <code>conflicts</code>
    */
   public abstract void collectConflicts(MultiMap<PsiElement, String> conflicts, UsageInfo[] infos, M method, C classDescriptor);
 }
