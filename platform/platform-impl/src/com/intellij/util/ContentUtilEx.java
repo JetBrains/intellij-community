@@ -17,10 +17,7 @@ package com.intellij.util;
 
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.*;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
@@ -37,6 +34,8 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public class ContentUtilEx extends ContentsUtil {
+  public static final String DISPOSABLE_KEY = "TabContentDisposable";
+
   public static void addTabbedContent(ContentManager manager, JComponent contentComponent, String groupPrefix, String tabName, boolean select) {
     addTabbedContent(manager, contentComponent, groupPrefix, tabName, select, null);
   }
@@ -56,6 +55,9 @@ public class ContentUtilEx extends ContentsUtil {
         }
       }
       addContent(manager, content, select);
+
+      registerDisposable(content, childDisposable, contentComponent);
+
       return;
     }
 
@@ -79,8 +81,23 @@ public class ContentUtilEx extends ContentsUtil {
       tabbedContent.addContent(contentComponent, tabName, true);
     }
 
+    registerDisposable(tabbedContent, childDisposable, contentComponent);
+  }
+
+  private static void registerDisposable(@NotNull Content content,
+                                         @Nullable Disposable childDisposable,
+                                         @NotNull JComponent contentComponent) {
     if (childDisposable != null) {
-      Disposer.register(tabbedContent, childDisposable);
+      Disposer.register(content, childDisposable);
+      assert contentComponent.getClientProperty(DISPOSABLE_KEY) == null;
+      contentComponent.putClientProperty(DISPOSABLE_KEY, childDisposable);
+      Disposer.register(childDisposable, () -> contentComponent.putClientProperty(DISPOSABLE_KEY, null));
+    }
+    else {
+      Object disposableByKey = contentComponent.getClientProperty(DISPOSABLE_KEY);
+      if (disposableByKey != null && disposableByKey instanceof Disposable) {
+        Disposer.register(content, (Disposable)disposableByKey);
+      }
     }
   }
 
@@ -154,7 +171,7 @@ public class ContentUtilEx extends ContentsUtil {
   public static int getSelectedTab(@NotNull TabbedContent content) {
     final JComponent current = content.getComponent();
     int index = 0;
-    for (Pair<String,JComponent> tab : content.getTabs()) {
+    for (Pair<String, JComponent> tab : content.getTabs()) {
       if (tab.second == current) {
         return index;
       }
