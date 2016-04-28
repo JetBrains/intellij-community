@@ -16,6 +16,7 @@
 package com.intellij.refactoring.introduceparameterobject;
 
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
+import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.util.PackageUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -31,7 +32,6 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.introduceParameterObject.IntroduceParameterObjectClassDescriptor;
-import com.intellij.refactoring.introduceParameterObject.IntroduceParameterObjectDelegate;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
@@ -127,7 +127,7 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
   public void setExistingClass(PsiElement existingClass) {
     super.setExistingClass(existingClass);
     if (isUseExistingClass()) {
-      setExistingClassCompatibleConstructor(existingClassIsCompatible((PsiClass)existingClass));
+      setExistingClassCompatibleConstructor(findCompatibleConstructor((PsiClass)existingClass));
     }
   }
 
@@ -142,7 +142,7 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
   }
 
   @Override
-  public String getSetterName(ParameterInfoImpl parameterInfo, PsiElement context) {
+  public String getSetterName(ParameterInfoImpl parameterInfo, @NotNull PsiElement context) {
     final ParameterBean bean = getBean(parameterInfo);
     @NonNls String setter = bean != null ? bean.getSetter() : null;
     if (setter == null) {
@@ -157,7 +157,7 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
   }
 
   @Override
-  public String getGetterName(ParameterInfoImpl paramInfo, PsiElement context) {
+  public String getGetterName(ParameterInfoImpl paramInfo, @NotNull PsiElement context) {
     final ParameterBean bean = getBean(paramInfo);
     @NonNls String getter = bean != null ? bean.getGetter() : null;
     if (getter == null) {
@@ -188,7 +188,7 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
   }
 
   @Nullable
-  private PsiMethod existingClassIsCompatible(@NotNull PsiClass aClass) {
+  private PsiMethod findCompatibleConstructor(@NotNull PsiClass aClass) {
     ParameterInfoImpl[] paramsToMerge = getParamsToMerge();
     if (paramsToMerge.length == 1) {
       final ParameterInfoImpl parameterInfo = paramsToMerge[0];
@@ -199,14 +199,14 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
         bean.setGetter(paramType.getCanonicalText() + "Value");
         myExistingClassProperties.put(parameterInfo, bean);
         for (PsiMethod constructor : aClass.getConstructors()) {
-          if (constructorIsCompatible(constructor, new ParameterInfoImpl[]{parameterInfo}, aClass)) return constructor;
+          if (isConstructorCompatible(constructor, new ParameterInfoImpl[]{parameterInfo}, aClass)) return constructor;
         }
       }
     }
     final PsiMethod[] constructors = aClass.getConstructors();
     PsiMethod compatibleConstructor = null;
     for (PsiMethod constructor : constructors) {
-      if (constructorIsCompatible(constructor, paramsToMerge, aClass)) {
+      if (isConstructorCompatible(constructor, paramsToMerge, aClass)) {
         compatibleConstructor = constructor;
         break;
       }
@@ -246,7 +246,7 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
     return compatibleConstructor;
   }
 
-  private boolean constructorIsCompatible(PsiMethod constructor, ParameterInfoImpl[] paramsToMerge, PsiElement context) {
+  private boolean isConstructorCompatible(PsiMethod constructor, ParameterInfoImpl[] paramsToMerge, PsiElement context) {
     final PsiParameterList parameterList = constructor.getParameterList();
     final PsiParameter[] constructorParams = parameterList.getParameters();
     return areTypesCompatible(paramsToMerge, constructorParams, context);
@@ -271,7 +271,7 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
   }
 
   @Override
-  public PsiClass createClass(PsiMethod method, IntroduceParameterObjectDelegate.Accessor[] accessors) {
+  public PsiClass createClass(PsiMethod method, ReadWriteAccessDetector.Access[] accessors) {
     if (isUseExistingClass()) {
       return getExistingClass();
     }
@@ -286,7 +286,7 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
     final ParameterInfoImpl[] parameterInfos = getParamsToMerge();
     for (int i = 0; i < parameterInfos.length; i++) {
       PsiParameter parameter = parameters[parameterInfos[i].getOldIndex()];
-      final boolean setterRequired = accessors[i] == IntroduceParameterObjectDelegate.Accessor.Setter;
+      final boolean setterRequired = accessors[i] == ReadWriteAccessDetector.Access.Write;
       final String newName = parameterInfos[i].getName();
       beanClassBuilder
         .addField(parameter, newName, parameterInfos[i].getTypeWrapper().getType(method), setterRequired);

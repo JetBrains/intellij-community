@@ -15,9 +15,11 @@
  */
 package com.intellij.refactoring.introduceParameterObject;
 
+import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.refactoring.changeSignature.ParameterInfo;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class IntroduceParameterObjectClassDescriptor<M extends PsiNamedElement, P extends ParameterInfo> {
   private final String myClassName;
@@ -90,10 +92,10 @@ public abstract class IntroduceParameterObjectClassDescriptor<M extends PsiNamed
     return null;
   }
 
-  public abstract String getSetterName(P paramInfo, PsiElement context);
-  public abstract String getGetterName(P paramInfo, PsiElement context);
+  public abstract String getSetterName(P paramInfo, @NotNull PsiElement context);
+  public abstract String getGetterName(P paramInfo, @NotNull PsiElement context);
 
   public abstract void initExistingClass(M method);
 
-  public abstract PsiElement createClass(M method, IntroduceParameterObjectDelegate.Accessor[] accessors);
+  public abstract PsiElement createClass(M method, ReadWriteAccessDetector.Access[] accessors);
 }

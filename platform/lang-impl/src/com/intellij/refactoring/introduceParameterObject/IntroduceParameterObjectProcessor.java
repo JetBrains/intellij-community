@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.introduceParameterObject;
 
+import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
@@ -46,7 +47,7 @@ public class IntroduceParameterObjectProcessor<M extends PsiNamedElement, P exte
   private final ChangeInfo myChangeInfo;
   private final P myMergedParameterInfo;
   private final IntroduceParameterObjectDelegate<M, P, C> myDelegate;
-  private final IntroduceParameterObjectDelegate.Accessor[] myAccessors;
+  private final ReadWriteAccessDetector.Access[] myAccessors;
 
   public IntroduceParameterObjectProcessor(M method,
                                            C classDescriptor,
@@ -78,7 +79,7 @@ public class IntroduceParameterObjectProcessor<M extends PsiNamedElement, P exte
     newParams.add(anchor, myMergedParameterInfo);
 
     myChangeInfo = myDelegate.createChangeSignatureInfo(myMethod, newParams, keepMethodAsDelegate);
-    myAccessors = new IntroduceParameterObjectDelegate.Accessor[paramsToMerge.length];
+    myAccessors = new ReadWriteAccessDetector.Access[paramsToMerge.length];
   }
 
   @Override
@@ -100,11 +101,11 @@ public class IntroduceParameterObjectProcessor<M extends PsiNamedElement, P exte
       final IntroduceParameterObjectDelegate delegate = IntroduceParameterObjectDelegate.findDelegate(element);
       if (delegate != null) {
         for (int i = 0; i < paramsToMerge.length; i++) {
-          final IntroduceParameterObjectDelegate.Accessor accessor =
+          ReadWriteAccessDetector.Access access =
             delegate.collectInternalUsages(usages, (PsiNamedElement)element, myClassDescriptor, paramsToMerge[i],
                                            myMergedParameterInfo.getName());
-          if (myAccessors[i] == null || accessor == IntroduceParameterObjectDelegate.Accessor.Setter) {
-            myAccessors[i] = accessor;
+          if (myAccessors[i] == null || access == ReadWriteAccessDetector.Access.Write) {
+            myAccessors[i] = access;
           }
         }
       }

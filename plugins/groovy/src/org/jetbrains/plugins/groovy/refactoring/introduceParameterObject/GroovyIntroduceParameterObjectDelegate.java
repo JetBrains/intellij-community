@@ -15,10 +15,10 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.introduceParameterObject;
 
+import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -31,7 +31,6 @@ import com.intellij.refactoring.introduceparameterobject.JavaIntroduceParameterO
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.util.Processor;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.Nullable;
@@ -120,27 +119,24 @@ public class GroovyIntroduceParameterObjectDelegate
   }
 
   @Override
-  public <M1 extends PsiNamedElement, P1 extends ParameterInfo> Accessor collectInternalUsages(Collection<FixableUsageInfo> usages,
-                                                                                               GrMethod overridingMethod,
-                                                                                               IntroduceParameterObjectClassDescriptor<M1, P1> classDescriptor,
-                                                                                               P1 parameterInfo,
-                                                                                               String mergedParamName) {
+  public <M1 extends PsiNamedElement, P1 extends ParameterInfo> ReadWriteAccessDetector.Access collectInternalUsages(Collection<FixableUsageInfo> usages,
+                                                                                                                     GrMethod overridingMethod,
+                                                                                                                     IntroduceParameterObjectClassDescriptor<M1, P1> classDescriptor,
+                                                                                                                     P1 parameterInfo,
+                                                                                                                     String mergedParamName) {
     final int oldIndex = parameterInfo.getOldIndex();
     final GrParameter parameter = overridingMethod.getParameterList().getParameters()[oldIndex];
-    final Accessor[] accessors = new Accessor[1];
+    final ReadWriteAccessDetector.Access[] accessors = new ReadWriteAccessDetector.Access[1];
     final String setter = classDescriptor.getSetterName(parameterInfo, overridingMethod);
     final String getter = classDescriptor.getGetterName(parameterInfo, overridingMethod);
-    ReferencesSearch.search(parameter, new LocalSearchScope(overridingMethod)).forEach(new Processor<PsiReference>() {
-      @Override
-      public boolean process(PsiReference reference) {
-        final PsiElement element = reference.getElement();
-        if (element instanceof GrReferenceExpression) {
-          accessors[0] = Accessor.Getter;
-          //todo proceed with write access
-          usages.add(new GrReplaceParameterReferenceWithCall(element, getter, mergedParamName));
-        }
-        return true;
+    ReferencesSearch.search(parameter, new LocalSearchScope(overridingMethod)).forEach(reference -> {
+      final PsiElement element = reference.getElement();
+      if (element instanceof GrReferenceExpression) {
+        accessors[0] = ReadWriteAccessDetector.Access.Read;
+        //todo proceed with write access
+        usages.add(new GrReplaceParameterReferenceWithCall(element, getter, mergedParamName));
       }
+      return true;
     });
     return accessors[0];
   }
@@ -149,7 +145,7 @@ public class GroovyIntroduceParameterObjectDelegate
   public void collectAccessibilityUsages(Collection<FixableUsageInfo> usages,
                                          GrMethod method,
                                          GroovyIntroduceObjectClassDescriptor descriptor,
-                                         Accessor[] accessors) {
+                                         ReadWriteAccessDetector.Access[] accessors) {
     throw new UnsupportedOperationException();
   }
 

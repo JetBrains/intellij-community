@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.introduceParameterObject;
 
+import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
@@ -38,19 +39,6 @@ import java.util.List;
  */
 public abstract class IntroduceParameterObjectDelegate<M extends PsiNamedElement, P extends ParameterInfo, C extends IntroduceParameterObjectClassDescriptor<M, P>> {
 
-  /**
-   * If language does not provide implicit accessors, then accessors must be generated based on usages of parameters inside method and it's overriders
-   */
-  public enum Accessor {
-    /**
-     * Only read usages were detected
-     */
-    Getter,
-    /**
-     * Write usages were detected. Currently it's assumed that if field requires setter, getter would be generated unconditionally
-     */
-    Setter
-  }
 
   public static final LanguageExtension<IntroduceParameterObjectDelegate> EP_NAME = new LanguageExtension<IntroduceParameterObjectDelegate>("com.intellij.refactoring.introduceParameterObject");
 
@@ -128,15 +116,15 @@ public abstract class IntroduceParameterObjectDelegate<M extends PsiNamedElement
    * @param <M1>               method type of the original delegate
    * @param <P1>               parameter info type of the original delegate
    *
-   * @return                   access level which is required for a parameter (@link {@link Accessor})
+   * @return                   access level which is required for a parameter {@link ReadWriteAccessDetector.Access}
    */
   @Nullable
   public abstract <M1 extends PsiNamedElement, P1 extends ParameterInfo>
-  Accessor collectInternalUsages(Collection<FixableUsageInfo> usages,
-                                 M overridingMethod,
-                                 IntroduceParameterObjectClassDescriptor<M1, P1> classDescriptor,
-                                 P1 parameterInfo,
-                                 String mergedParamName);
+  ReadWriteAccessDetector.Access collectInternalUsages(Collection<FixableUsageInfo> usages,
+                                                       M overridingMethod,
+                                                       IntroduceParameterObjectClassDescriptor<M1, P1> classDescriptor,
+                                                       P1 parameterInfo,
+                                                       String mergedParamName);
 
   /**
    * Collect in usages accessibility fixes.
@@ -147,7 +135,7 @@ public abstract class IntroduceParameterObjectDelegate<M extends PsiNamedElement
   public abstract void collectAccessibilityUsages(Collection<FixableUsageInfo> usages,
                                                   M method,
                                                   C descriptor,
-                                                  Accessor[] accessors);
+                                                  ReadWriteAccessDetector.Access[] accessors);
 
   /**
    * Collect conflicts in conflicts
