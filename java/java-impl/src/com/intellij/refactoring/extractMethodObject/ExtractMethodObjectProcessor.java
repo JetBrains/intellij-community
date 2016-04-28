@@ -81,7 +81,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
   private PsiField[] myOutputFields;
 
   private PsiMethod myInnerMethod;
-  private boolean myMadeStatic = false;
+  private boolean myMadeStatic;
   private final Set<MethodToMoveUsageInfo> myUsages = new LinkedHashSet<MethodToMoveUsageInfo>();
   private PsiClass myInnerClass;
   private boolean myChangeReturnType;

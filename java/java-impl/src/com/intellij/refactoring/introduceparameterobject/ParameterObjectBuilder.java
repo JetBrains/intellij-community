@@ -30,8 +30,8 @@ import java.util.Iterator;
 import java.util.List;
 
 class ParameterObjectBuilder {
-    private String className = null;
-    private String packageName = null;
+    private String className;
+    private String packageName;
     private final List<ParameterSpec> fields = new ArrayList<ParameterSpec>(5);
     private final List<PsiTypeParameter> typeParams = new ArrayList<PsiTypeParameter>();
     private Project myProject;

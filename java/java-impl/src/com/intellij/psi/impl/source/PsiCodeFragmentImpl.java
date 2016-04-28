@@ -93,7 +93,7 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements JavaCodeFragment
     return clone;
   }
 
-  private FileViewProvider myViewProvider = null;
+  private FileViewProvider myViewProvider;
 
   @Override
   @NotNull

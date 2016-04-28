@@ -77,7 +77,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
   final List<EntryPoint> myExtensions = ContainerUtil.createLockFreeCopyOnWriteList();
   final UnusedSymbolLocalInspectionBase myLocalInspectionBase = createUnusedSymbolLocalInspection();
 
-  private Set<RefElement> myProcessedSuspicious = null;
+  private Set<RefElement> myProcessedSuspicious;
   private int myPhase;
   private GlobalInspectionContext myContext;
   private final boolean myEnabledInEditor;

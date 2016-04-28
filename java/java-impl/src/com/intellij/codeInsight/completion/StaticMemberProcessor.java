@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,10 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 /**
 * @author peter
@@ -40,7 +43,7 @@ public abstract class StaticMemberProcessor {
   private final PsiElement myPosition;
   private final Project myProject;
   private final PsiResolveHelper myResolveHelper;
-  private boolean myHintShown = false;
+  private boolean myHintShown;
   private final boolean myPackagedContext;
 
   public StaticMemberProcessor(final PsiElement position) {
