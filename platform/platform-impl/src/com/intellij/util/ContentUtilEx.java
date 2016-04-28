@@ -23,6 +23,7 @@ import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.TabbedContent;
 import com.intellij.ui.content.impl.TabbedContentImpl;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -102,7 +103,7 @@ public class ContentUtilEx extends ContentsUtil {
   }
 
   @Nullable
-  public static TabbedContent findTabbedContent(ContentManager manager, String groupPrefix) {
+  public static TabbedContent findTabbedContent(@NotNull ContentManager manager, @NotNull String groupPrefix) {
     TabbedContent tabbedContent = null;
     for (Content content : manager.getContents()) {
       if (content instanceof TabbedContent && content.getTabName().startsWith(getFullPrefix(groupPrefix))) {
@@ -111,6 +112,24 @@ public class ContentUtilEx extends ContentsUtil {
       }
     }
     return tabbedContent;
+  }
+
+  public static boolean isContentTab(@NotNull Content content, @NotNull String groupPrefix) {
+    return (content instanceof TabbedContent && content.getTabName().startsWith(getFullPrefix(groupPrefix))) ||
+           groupPrefix.equals(content.getUserData(Content.TAB_GROUP_NAME_KEY));
+  }
+
+  public static void closeContentTab(@NotNull ContentManager contentManager, @NotNull Content content) {
+    if (content instanceof TabbedContent) {
+      TabbedContent tabbedContent = (TabbedContent)content;
+      if (tabbedContent.getTabs().size() > 1) {
+        JComponent component = tabbedContent.getComponent();
+        tabbedContent.removeContent(component);
+        contentManager.setSelectedContent(tabbedContent, true, true);
+        return;
+      }
+    }
+    contentManager.removeContent(content, true);
   }
 
   @NotNull
