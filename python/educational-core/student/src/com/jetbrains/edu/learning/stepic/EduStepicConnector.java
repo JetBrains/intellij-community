@@ -255,7 +255,7 @@ public class EduStepicConnector {
     return coursesContainer.meta.containsKey("has_next") && coursesContainer.meta.get("has_next") == Boolean.TRUE;
   }
 
-  public static Course getCourse(@NotNull final Project project, @NotNull final CourseInfo info, @NotNull final String username) {
+  public static Course getCourse(@NotNull final Project project, @NotNull final CourseInfo info) {
     final Course course = new Course();
     course.setAuthors(info.getAuthors());
     course.setDescription(info.getDescription());
