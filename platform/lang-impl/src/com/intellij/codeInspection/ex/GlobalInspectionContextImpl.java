@@ -854,6 +854,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     if (myView != null) {
       myView.setUpdating(false);
     } else {
+      myPresentationMap.clear();
       super.cleanup();
     }
   }
