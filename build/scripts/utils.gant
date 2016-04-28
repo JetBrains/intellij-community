@@ -140,8 +140,8 @@ binding.setVariable("guessHome", {
 })
 
 binding.setVariable("loadProject", {
-  defineJdk("IDEA jdk", setupJdkPath("jdkHome", "$home/build/jdk/jre6", "JDK_16_x64"))
-  defineJdk("1.8", setupJdkPath("jdk8Home", "$home/build/jdk/jbsdk8", "JDK_18_x64"))
+  defineJdk("IDEA jdk", setupJdkPath("jdkHome", "$home/build/jdk/1.6", "JDK_16_x64"))
+  defineJdk("1.8", setupJdkPath("jdk8Home", "$home/build/jdk/1.8", "JDK_18_x64"))
   def bundledKotlinPath = "$home/build/kotlinc"
   if (!new File(bundledKotlinPath, "lib/kotlin-runtime.jar").exists()) {
     bundledKotlinPath = "$home/community/build/kotlinc"

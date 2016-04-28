@@ -60,7 +60,7 @@ private void unpackJdk(File osDir, File jdkDir, String majorVersion) {
   }
 
   File jdkFile = jdkFiles.first()
-  def destDir = new File(jdkDir, majorVersion)
+  def destDir = new File(jdkDir, ("1." + majorVersion.substring(majorVersion.length()-1, majorVersion.length())))
   FileUtil.delete(destDir)
   projectBuilder.info("Extracting $jdkFile to $destDir")
   ant.mkdir(dir: destDir)
