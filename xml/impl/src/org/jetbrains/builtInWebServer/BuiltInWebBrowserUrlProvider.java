@@ -12,9 +12,9 @@ import com.intellij.util.Url;
 import com.intellij.util.Urls;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.HtmlUtil;
-import org.jetbrains.ide.BuiltInServerManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.ide.BuiltInServerManager;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -42,7 +42,7 @@ public class BuiltInWebBrowserUrlProvider extends WebBrowserUrlProvider implemen
   }
 
   public static boolean compareAuthority(@Nullable String currentAuthority) {
-    if (currentAuthority == null) {
+    if (StringUtil.isEmpty(currentAuthority)) {
       return false;
     }
 

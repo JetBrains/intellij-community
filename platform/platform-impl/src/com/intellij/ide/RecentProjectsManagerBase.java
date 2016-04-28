@@ -169,6 +169,11 @@ public abstract class RecentProjectsManagerBase implements ProjectManagerListene
     return duplicates;
   }
 
+  public boolean hasPath(String path) {
+    final State state = getState();
+    return state != null && state.recentPaths.contains(path);
+  }
+
   /**
    * @param addClearListItem whether the "Clear List" action should be added to the end of the list.
    */
