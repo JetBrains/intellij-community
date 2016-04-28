@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
+import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
@@ -39,8 +40,16 @@ public class PyStepIntoMyCodeAction extends XDebuggerActionBase {
     myStepIntoMyCodeHandler = new XDebuggerSuspendedActionHandler() {
       @Override
       protected void perform(@NotNull final XDebugSession session, final DataContext dataContext) {
-        PyDebugProcess debugProcess = (PyDebugProcess)session.getDebugProcess();
-        debugProcess.startStepIntoMyCode(debugProcess.getSession().getSuspendContext());
+        final XDebugProcess debugProcess = session.getDebugProcess();
+        if (debugProcess instanceof PyDebugProcess) {
+          PyDebugProcess pyDebugProcess = (PyDebugProcess)debugProcess;
+          pyDebugProcess.startStepIntoMyCode(debugProcess.getSession().getSuspendContext());
+        }
+      }
+
+      @Override
+      public boolean isEnabled(@NotNull Project project, AnActionEvent event) {
+        return super.isEnabled(project, event) && isPythonConfigurationSelected(project);
       }
     };
   }
@@ -51,19 +60,21 @@ public class PyStepIntoMyCodeAction extends XDebuggerActionBase {
     return myStepIntoMyCodeHandler;
   }
 
-  @Override
-  protected boolean isHidden(AnActionEvent event) {
-    Project project = event.getData(CommonDataKeys.PROJECT);
+  protected boolean isPythonConfigurationSelected(Project project) {
     if (project != null) {
       RunnerAndConfigurationSettings settings = RunManager.getInstance(project).getSelectedConfiguration();
       if (settings != null) {
         RunConfiguration runConfiguration = settings.getConfiguration();
         if (runConfiguration instanceof AbstractPythonRunConfiguration) {
-          return false;
+          return true;
         }
       }
     }
+    return false;
+  }
 
-    return true;
+  @Override
+  protected boolean isHidden(AnActionEvent event) {
+    return !isPythonConfigurationSelected(event.getData(CommonDataKeys.PROJECT));
   }
 }
