@@ -126,10 +126,18 @@ public class ContentUtilEx extends ContentsUtil {
         JComponent component = tabbedContent.getComponent();
         tabbedContent.removeContent(component);
         contentManager.setSelectedContent(tabbedContent, true, true);
+        dispose(component);
         return;
       }
     }
     contentManager.removeContent(content, true);
+  }
+
+  private static void dispose(@NotNull JComponent component) {
+    Object disposable = component.getClientProperty(DISPOSABLE_KEY);
+    if (disposable != null && disposable instanceof Disposable) {
+      Disposer.dispose((Disposable)disposable);
+    }
   }
 
   @NotNull
