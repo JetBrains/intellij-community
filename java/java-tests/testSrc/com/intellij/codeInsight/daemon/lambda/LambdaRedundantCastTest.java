@@ -81,6 +81,10 @@ public class LambdaRedundantCastTest extends LightDaemonAnalyzerTestCase {
 
   public void testInvalidResolveWithoutCast() { doTest();}
 
+  public void testRejectReturnTypeChange() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(BASE_PATH + "/" + getTestName(false) + ".java", true, false);
   }
