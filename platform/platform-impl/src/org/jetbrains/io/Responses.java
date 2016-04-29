@@ -26,7 +26,6 @@ import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
-import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.*;
 import io.netty.util.CharsetUtil;
 import org.jetbrains.annotations.NotNull;
@@ -138,12 +137,6 @@ public final class Responses {
 
   public static void sendStatus(@NotNull HttpResponseStatus responseStatus, Channel channel, @Nullable String description, @Nullable HttpRequest request) {
     send(createStatusResponse(responseStatus, request, description), channel, request);
-  }
-
-  public static void sendUnauthorizedAuthenticate(ChannelHandlerContext context, HttpRequest request, String realm) {
-    HttpResponse response = Responses.createStatusResponse(HttpResponseStatus.UNAUTHORIZED, request, "Unauthorized");
-    response.headers().add("WWW-Authenticate", String.format("Basic realm=\"%s\"", realm));
-    Responses.send(response, context.channel(), request);
   }
 
   private static HttpResponse createStatusResponse(HttpResponseStatus responseStatus, @Nullable HttpRequest request, @Nullable String description) {
