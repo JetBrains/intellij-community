@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class TestOnlyInspectionTest extends InspectionTestCase {
   @Override
-  protected void setupRootModel(String testDir, VirtualFile[] sourceDir, String jdkName) {
+  protected void setupRootModel(@NotNull String testDir, @NotNull VirtualFile[] sourceDir, String jdkName) {
     super.setupRootModel(testDir, sourceDir, jdkName);
     VirtualFile projectDir = LocalFileSystem.getInstance().findFileByPath(testDir);
     assertNotNull(projectDir);

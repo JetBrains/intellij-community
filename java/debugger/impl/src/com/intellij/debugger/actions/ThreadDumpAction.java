@@ -14,11 +14,6 @@
  * limitations under the License.
  */
 
-/**
- * class ExportThreadsAction
- * @author Eugene Zhuravlev
- * @author Sascha Weinreuter
- */
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.DebuggerBundle;

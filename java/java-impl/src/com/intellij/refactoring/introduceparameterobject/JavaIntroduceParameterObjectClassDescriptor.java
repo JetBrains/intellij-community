@@ -324,7 +324,7 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
 
     private final PsiParameter param;
 
-    private PsiField fieldAssigned = null;
+    private PsiField fieldAssigned;
 
     ParamAssignmentFinder(PsiParameter param) {
       this.param = param;

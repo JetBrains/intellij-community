@@ -21,24 +21,24 @@ package org.jetbrains.java.generate.config;
  */
 public class Config {
 
-    public boolean useFullyQualifiedName = false;
+    public boolean useFullyQualifiedName;
     public InsertWhere insertNewMethodOption = InsertWhere.AT_CARET;
     public DuplicationPolicy whenDuplicatesOption = DuplicationPolicy.ASK;
     public boolean filterConstantField = true;
-    public boolean filterEnumField = false;
-    public boolean filterTransientModifier = false;
+    public boolean filterEnumField;
+    public boolean filterTransientModifier;
     public boolean filterStaticModifier = true;
-    public String filterFieldName = null;
-    public String filterMethodName = null;
-    public String filterMethodType = null;
-    public String filterFieldType = null;
+    public String filterFieldName;
+    public String filterMethodName;
+    public String filterMethodType;
+    public String filterFieldType;
     public boolean filterLoggers = true;
-    public boolean addImplementSerializable = false;
-    public boolean enableMethods = false;
+    public boolean addImplementSerializable;
+    public boolean enableMethods;
     public boolean jumpToMethod = true; // jump cursor to toString method
-    public int sortElements = 0; // 0 = none, 1 = asc, 2 = desc
+    public int sortElements; // 0 = none, 1 = asc, 2 = desc
 
-    private FilterPattern myPattern = null;
+    private FilterPattern myPattern;
 
     public boolean isUseFullyQualifiedName() {
         return useFullyQualifiedName;

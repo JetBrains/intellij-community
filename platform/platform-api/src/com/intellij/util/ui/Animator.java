@@ -40,7 +40,7 @@ public abstract class Animator implements Disposable {
   private long myStartTime;
   private long myStartDeltaTime;
   private boolean myInitialStep;
-  private volatile boolean myDisposed = false;
+  private volatile boolean myDisposed;
 
   public Animator(@NonNls final String name,
                   final int totalFrames,

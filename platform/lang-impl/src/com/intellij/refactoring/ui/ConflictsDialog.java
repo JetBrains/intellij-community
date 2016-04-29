@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/**
- * created at Sep 12, 2001
- * @author Jeka
- */
 package com.intellij.refactoring.ui;
 
 import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;

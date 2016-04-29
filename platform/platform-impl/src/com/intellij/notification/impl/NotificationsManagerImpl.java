@@ -36,6 +36,7 @@ import com.intellij.openapi.ui.DialogWrapperDialog;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
@@ -55,10 +56,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.FontUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IconUtil;
-import com.intellij.util.ui.AbstractLayoutManager;
-import com.intellij.util.ui.ButtonlessScrollBarUI;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -76,8 +74,7 @@ import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.ParagraphView;
 import javax.swing.text.html.StyleSheet;
 import java.awt.*;
-import java.awt.event.AdjustmentEvent;
-import java.awt.event.AdjustmentListener;
+import java.awt.event.*;
 import java.awt.geom.Rectangle2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -790,9 +787,19 @@ public class NotificationsManagerImpl extends NotificationsManager {
       buttons.setBorder(new EmptyBorder(0, 0, JBUI.scale(5), JBUI.scale(7)));
     }
 
-    if (buttons == null && actions) {
-      createActionPanel(notification, centerPanel, layoutData.configuration.actionGap);
+    HoverAdapter hoverAdapter = new HoverAdapter();
+    hoverAdapter.addSource(content);
+    hoverAdapter.addSource(centerPanel);
+
+    if (expandAction != null) {
+      hoverAdapter.addComponent(expandAction, new Insets(5, 5, 7, 7));
     }
+
+    if (buttons == null && actions) {
+      createActionPanel(notification, centerPanel, layoutData.configuration.actionGap, hoverAdapter);
+    }
+
+    hoverAdapter.initListeners();
 
     if (layoutData.mergeData != null) {
       createMergeAction(layoutData, content);
@@ -860,7 +867,10 @@ public class NotificationsManagerImpl extends NotificationsManager {
     pane.getVerticalScrollBar().setBackground(fillColor);
   }
 
-  private static void createActionPanel(@NotNull final Notification notification, @NotNull JPanel centerPanel, int gap) {
+  private static void createActionPanel(@NotNull final Notification notification,
+                                        @NotNull JPanel centerPanel,
+                                        int gap,
+                                        @NotNull HoverAdapter hoverAdapter) {
     JPanel actionPanel = new NonOpaquePanel(new HorizontalLayout(gap, SwingConstants.CENTER));
     centerPanel.add(BorderLayout.SOUTH, actionPanel);
 
@@ -896,6 +906,110 @@ public class NotificationsManagerImpl extends NotificationsManager {
             Notification.fire(notification, action);
           }
         }, action));
+    }
+
+    Insets hover = new Insets(8, 5, 8, 7);
+    int count = actionPanel.getComponentCount();
+
+    for (int i = 0; i < count; i++) {
+      hoverAdapter.addComponent(actionPanel.getComponent(i), hover);
+    }
+
+    hoverAdapter.addSource(actionPanel);
+  }
+
+  private static class HoverAdapter extends MouseAdapter implements MouseMotionListener {
+    private final List<Pair<Component, Insets>> myComponents = new ArrayList<>();
+    private List<Component> mySources = new ArrayList<>();
+    private Component myLastComponent;
+
+    public void addComponent(@NotNull Component component, @NotNull Insets hover) {
+      myComponents.add(Pair.create(component, hover));
+    }
+
+    public void addSource(@NotNull Component component) {
+      mySources.add(component);
+    }
+
+    public void initListeners() {
+      if (!myComponents.isEmpty()) {
+        for (Component source : mySources) {
+          source.addMouseMotionListener(this);
+          source.addMouseListener(this);
+        }
+        mySources = null;
+      }
+    }
+
+    public void mousePressed(MouseEvent e) {
+      handleEvent(e, true, false);
+    }
+
+    public void mouseReleased(MouseEvent e) {
+      handleEvent(e, false, false);
+    }
+
+    public void mouseMoved(MouseEvent e) {
+      handleEvent(e, false, true);
+    }
+
+    public void mouseExited(MouseEvent e) {
+      if (myLastComponent != null) {
+        mouseExited(e, myLastComponent);
+        myLastComponent = null;
+      }
+    }
+
+    private void handleEvent(MouseEvent e, boolean pressed, boolean moved) {
+      for (Pair<Component, Insets> p : myComponents) {
+        Component component = p.first;
+        Rectangle bounds = component.getBounds();
+        JBInsets.addTo(bounds, p.second);
+        if (bounds.contains(SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), component.getParent()))) {
+          if (myLastComponent != null && myLastComponent != component) {
+            mouseExited(e, myLastComponent);
+          }
+          myLastComponent = component;
+
+          MouseEvent event = createEvent(e, component);
+          if (moved) {
+            for (MouseMotionListener listener : component.getMouseMotionListeners()) {
+              listener.mouseMoved(event);
+            }
+          }
+          else {
+            MouseListener[] listeners = component.getMouseListeners();
+            if (pressed) {
+              for (MouseListener listener : listeners) {
+                listener.mousePressed(event);
+              }
+            }
+            else {
+              for (MouseListener listener : listeners) {
+                listener.mouseReleased(event);
+              }
+            }
+          }
+          return;
+        }
+        else if (component == myLastComponent) {
+          myLastComponent = null;
+          mouseExited(e, component);
+        }
+      }
+    }
+
+    private static void mouseExited(MouseEvent e, Component component) {
+      MouseEvent event = createEvent(e, component);
+      MouseListener[] listeners = component.getMouseListeners();
+      for (MouseListener listener : listeners) {
+        listener.mouseExited(event);
+      }
+    }
+
+    @NotNull
+    private static MouseEvent createEvent(MouseEvent e, Component c) {
+      return new MouseEvent(c, e.getID(), e.getWhen(), e.getModifiers(), 5, 5, e.getClickCount(), e.isPopupTrigger(), e.getButton());
     }
   }
 

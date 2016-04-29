@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,12 +54,12 @@ public abstract class ProjectManagerEx extends ProjectManager {
   @TestOnly
   public abstract void openTestProject(@NotNull Project project);
 
-  @TestOnly
-  @NotNull
   /**
    * Without save and "check can close".
    * Returns remaining open test projects.
    */
+  @TestOnly
+  @NotNull
   public abstract Collection<Project> closeTestProject(@NotNull Project project);
 
   // returns true on success

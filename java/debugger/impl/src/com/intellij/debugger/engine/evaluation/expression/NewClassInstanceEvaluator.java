@@ -14,11 +14,6 @@
  * limitations under the License.
  */
 
-/**
- * class NewArrayInstanceEvaluator
- * created Jun 27, 2001
- * @author Jeka
- */
 package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.debugger.DebuggerBundle;

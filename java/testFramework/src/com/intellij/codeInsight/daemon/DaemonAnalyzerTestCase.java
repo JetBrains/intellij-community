@@ -59,7 +59,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.JavaPsiFacadeEx;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.impl.search.IndexPatternBuilder;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
@@ -275,10 +275,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     if (!DumbService.isDumb(getProject())) {
       CacheManager.SERVICE.getInstance(myProject).getFilesWithWord("XXX", UsageSearchContext.IN_COMMENTS, GlobalSearchScope.allScope(myProject), true);
     }
-    final JavaPsiFacadeEx facade = getJavaFacade();
-    if (facade != null) {
-      facade.setAssertOnFileLoadingFilter(myVirtualFileFilter, myTestRootDisposable); // check repository work
-    }
+    PsiManagerEx.getInstanceEx(getProject()).setAssertOnFileLoadingFilter(myVirtualFileFilter, myTestRootDisposable);
 
     try {
       Collection<HighlightInfo> infos = doHighlighting();
@@ -289,9 +286,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
       return infos;
     }
     finally {
-      if (facade != null) {
-        facade.setAssertOnFileLoadingFilter(VirtualFileFilter.NONE, myTestRootDisposable);
-      }
+      PsiManagerEx.getInstanceEx(getProject()).setAssertOnFileLoadingFilter(VirtualFileFilter.NONE, myTestRootDisposable);
     }
   }
 

@@ -31,7 +31,7 @@ public class DummyHolder extends PsiFileImpl {
   private final CharTable myTable;
   private final Boolean myExplicitlyValid;
   private final Language myLanguage;
-  private volatile FileElement myFileElement = null;
+  private volatile FileElement myFileElement;
   @SuppressWarnings("EmptyClass") private static class DummyHolderTreeLock {}
   private final DummyHolderTreeLock myTreeElementLock = new DummyHolderTreeLock();
 
@@ -162,7 +162,7 @@ public class DummyHolder extends PsiFileImpl {
     return psiClone;
   }
 
-  private FileViewProvider myViewProvider = null;
+  private FileViewProvider myViewProvider;
 
   @Override
   @NotNull

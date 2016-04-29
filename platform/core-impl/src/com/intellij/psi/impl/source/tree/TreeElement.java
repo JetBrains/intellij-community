@@ -23,7 +23,6 @@ import com.intellij.openapi.project.ProjectCoreUtil;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLock;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.ElementBase;
@@ -70,7 +69,7 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
   public PsiManagerEx getManager() {
     Project project = ProjectCoreUtil.theOnlyOpenProject();
     if (project != null) {
-      return (PsiManagerEx)PsiManager.getInstance(project);
+      return PsiManagerEx.getInstanceEx(project);
     }
     TreeElement element;
     for (element = this; element.getTreeParent() != null; element = element.getTreeParent()) {

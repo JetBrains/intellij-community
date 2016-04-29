@@ -29,12 +29,12 @@ import java.beans.PropertyChangeListener;
 
 abstract class DocumentsSynchronizer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.DocumentsSynchonizer");
-  private Document myOriginal = null;
-  private Document myCopy = null;
+  private Document myOriginal;
+  private Document myCopy;
   private final Project myProject;
 
-  private volatile boolean myDuringModification = false;
-  private int myAssignedCount = 0;
+  private volatile boolean myDuringModification;
+  private int myAssignedCount;
 
   private final DocumentAdapter myOriginalListener = new DocumentAdapter() {
     @Override
