@@ -182,14 +182,14 @@ public class ExternalDiffToolUtil {
     assert contents.size() == 2 || contents.size() == 3;
     assert titles.size() == contents.size();
 
-    List<InputFile> files = new ArrayList<InputFile>();
+    List<InputFile> files = new ArrayList<>();
     for (int i = 0; i < contents.size(); i++) {
       files.add(createFile(contents.get(i), titles.get(i), windowTitle));
     }
 
     CommandLineTokenizer parameterTokenizer = new CommandLineTokenizer(settings.getDiffParameters(), true);
 
-    List<String> args = new ArrayList<String>();
+    List<String> args = new ArrayList<>();
     while (parameterTokenizer.hasMoreTokens()) {
       String arg = parameterTokenizer.nextToken();
       if ("%1".equals(arg)) {
@@ -224,7 +224,7 @@ public class ExternalDiffToolUtil {
     throws IOException, ExecutionException {
     boolean success = false;
     OutputFile outputFile = null;
-    List<InputFile> inputFiles = new ArrayList<InputFile>();
+    List<InputFile> inputFiles = new ArrayList<>();
     try {
       DiffContent outputContent = request.getOutputContent();
       List<? extends DiffContent> contents = request.getContents();
@@ -242,7 +242,7 @@ public class ExternalDiffToolUtil {
 
       CommandLineTokenizer parameterTokenizer = new CommandLineTokenizer(settings.getMergeParameters(), true);
 
-      List<String> args = new ArrayList<String>();
+      List<String> args = new ArrayList<>();
       while (parameterTokenizer.hasMoreTokens()) {
         String arg = parameterTokenizer.nextToken();
         if ("%1".equals(arg)) {
@@ -269,7 +269,7 @@ public class ExternalDiffToolUtil {
       final Process process = commandLine.createProcess();
 
       if (settings.isMergeTrustExitCode()) {
-        final Ref<Boolean> resultRef = new Ref<Boolean>();
+        final Ref<Boolean> resultRef = new Ref<>();
 
         ProgressManager.getInstance().run(new Task.Modal(project, "Waiting for external tool", true) {
           @Override
@@ -388,11 +388,8 @@ public class ExternalDiffToolUtil {
     @Override
     public void apply() throws IOException {
       final String content = StringUtil.convertLineSeparators(FileUtil.loadFile(myLocalFile, myCharset));
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          myDocument.setText(content);
-        }
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        myDocument.setText(content);
       });
     }
   }

@@ -713,7 +713,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
         }
 
         final SmartTypePointer type = SmartTypePointerManager.getInstance(myProject).createSmartTypePointer(myType);
-        initializer = IntroduceVariableBase.replaceExplicitWithDiamondWhenApplicable(initializer, myType);
+        initializer = IntroduceVariableBase.simplifyVariableInitializer(initializer, myType);
 
         final PsiMethod enclosingConstructor = getEnclosingConstructor(myParentClass, myAnchorElement);
         PsiClass destClass = mySettings.getDestinationClass() == null ? myParentClass : mySettings.getDestinationClass();

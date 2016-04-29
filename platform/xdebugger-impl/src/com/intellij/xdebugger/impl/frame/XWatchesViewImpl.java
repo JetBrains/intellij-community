@@ -23,7 +23,6 @@ import com.intellij.ide.dnd.DnDNativeTarget;
 import com.intellij.openapi.CompositeDisposable;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
@@ -71,7 +70,6 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
   private WatchesRootNode myRootNode;
 
   private final CompositeDisposable myDisposables = new CompositeDisposable();
-  private boolean myRebuildNeeded;
   private final boolean myWatchesInVariables;
 
   public XWatchesViewImpl(@NotNull XDebugSessionImpl session, boolean watchesInVariables) {
@@ -289,19 +287,8 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
     }
   }
 
-  public boolean rebuildNeeded() {
-    return myRebuildNeeded;
-  }
-
-  @Override
-  public void processSessionEvent(@NotNull final SessionEvent event) {
-    if (getPanel().isShowing() || ApplicationManager.getApplication().isUnitTestMode()) {
-      myRebuildNeeded = false;
-    }
-    else {
-      myRebuildNeeded = true;
-    }
-    super.processSessionEvent(event);
+  public void computeWatches() {
+    myRootNode.computeWatches();
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,6 +89,7 @@ import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.DebugUtil;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.psi.impl.cache.CacheManager;
@@ -1626,7 +1627,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     final VirtualFileFilter fileTreeAccessFilter = myVirtualFileFilter;
     Disposable disposable = Disposer.newDisposable();
     if (fileTreeAccessFilter != null) {
-      ((PsiManagerImpl)PsiManager.getInstance(project)).setAssertOnFileLoadingFilter(fileTreeAccessFilter, disposable);
+      PsiManagerEx.getInstanceEx(project).setAssertOnFileLoadingFilter(fileTreeAccessFilter, disposable);
     }
 
     //    ProfilingUtil.startCPUProfiling();

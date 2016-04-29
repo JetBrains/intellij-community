@@ -137,7 +137,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       usages.add(new UsageInfo(reference.getElement()));
     }
 
-    OverridingMethodsSearch.search(myMethod).forEach(method -> {
+    OverridingMethodsSearch.search(myMethod, false).forEach(method -> {
       if (AnnotationUtil.isAnnotated(method, Override.class.getName(), false)) {
         usages.add(new UsageInfo(method));
       }
@@ -363,8 +363,8 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   private static Map<PsiMember, Set<PsiMember>> getInaccessible(HashSet<PsiMember> referencedElements,
                                                                 UsageInfo[] usages,
                                                                 PsiElement elementToInline) {
-    Map<PsiMember, Set<PsiMember>> result = new HashMap<PsiMember, Set<PsiMember>>();
-
+    final Map<PsiMember, Set<PsiMember>> result = new HashMap<PsiMember, Set<PsiMember>>();
+    final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(elementToInline.getProject()).getResolveHelper();
     for (UsageInfo usage : usages) {
       final PsiElement usageElement = usage.getElement();
       if (usageElement == null) continue;
@@ -379,7 +379,10 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
           if (PsiTreeUtil.isAncestor(elementToInline, member, false)) continue;
           if (elementToInline instanceof PsiClass && 
               InheritanceUtil.isInheritorOrSelf((PsiClass)elementToInline, member.getContainingClass(), true)) continue;
-          if (!PsiUtil.isAccessible(usage.getProject(), member, usageElement, null)) {
+          PsiElement resolveScope = usageElement instanceof PsiReferenceExpression
+                                    ? ((PsiReferenceExpression)usageElement).advancedResolve(false).getCurrentFileResolveScope()
+                                    : null;
+          if (!resolveHelper.isAccessible(member, member.getModifierList(), usageElement, null, resolveScope)) {
             inaccessibleReferenced.add(member);
           }
         }

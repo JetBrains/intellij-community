@@ -95,6 +95,21 @@ public class IgnoreResultOfCallInspectionTest extends LightInspectionTestCase {
            "}");
   }
 
+  public void testJSR305Annotation3() {
+    doTest("import javax.annotation.CheckReturnValue;" +
+           "@CheckReturnValue " +
+           "class Parent {" +
+           "  class A {" +
+           "    Object a() {" +
+           "      return null;" +
+           "    }" +
+           "    void b() {" +
+           "      /*Result of 'A.a()' is ignored*/a/**/();" +
+           "    }" +
+           "  }" +
+           "}");
+  }
+
   public void testPureMethod() {
     doTest """
 import org.jetbrains.annotations.Contract;

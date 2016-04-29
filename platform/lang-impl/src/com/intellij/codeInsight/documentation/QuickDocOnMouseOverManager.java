@@ -64,7 +64,7 @@ public class QuickDocOnMouseOverManager {
   @NotNull private final Runnable                  myHintCloseCallback   = new MyCloseDocCallback();
   @NotNull private final Map<Document, Boolean>    myMonitoredDocuments  = new WeakHashMap<Document, Boolean>();
 
-  private final Map<Editor, Reference<PsiElement> /** PSI element which is located under the current mouse position */> myActiveElements
+  private final Map<Editor, Reference<PsiElement> /* PSI element which is located under the current mouse position */> myActiveElements
     = new WeakHashMap<>();
 
   /** Holds a reference (if any) to the documentation manager used last time to show an 'auto quick doc' popup. */

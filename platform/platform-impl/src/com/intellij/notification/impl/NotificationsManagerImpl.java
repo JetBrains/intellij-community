@@ -36,6 +36,7 @@ import com.intellij.openapi.ui.DialogWrapperDialog;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
@@ -55,10 +56,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.FontUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IconUtil;
-import com.intellij.util.ui.AbstractLayoutManager;
-import com.intellij.util.ui.ButtonlessScrollBarUI;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -76,8 +74,7 @@ import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.ParagraphView;
 import javax.swing.text.html.StyleSheet;
 import java.awt.*;
-import java.awt.event.AdjustmentEvent;
-import java.awt.event.AdjustmentListener;
+import java.awt.event.*;
 import java.awt.geom.Rectangle2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -520,6 +517,13 @@ public class NotificationsManagerImpl extends NotificationsManager {
     }
     layoutDataRef.set(layoutData);
 
+    if (layoutData.fillColor == null) {
+      layoutData.fillColor = FILL_COLOR;
+    }
+    if (layoutData.borderColor == null) {
+      layoutData.borderColor = BORDER_COLOR;
+    }
+
     boolean actions = !notification.getActions().isEmpty();
     boolean showFullContent = layoutData.showFullContent || notification instanceof NotificationActionProvider;
 
@@ -647,7 +651,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
         @Nullable
         @Override
         protected Color getViewColor() {
-          return FILL_COLOR;
+          return layoutData.fillColor;
         }
 
         @Override
@@ -659,7 +663,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
       });
     }
 
-    configureBalloonScrollPane(pane);
+    configureBalloonScrollPane(pane, layoutData.fillColor);
 
     if (showFullContent) {
       pane.setPreferredSize(text.getPreferredSize());
@@ -726,12 +730,13 @@ public class NotificationsManagerImpl extends NotificationsManager {
 
           int height = title instanceof JEditorPane ? getFirstLineHeight((JEditorPane)title) : title.getHeight();
 
-          g.setColor(FILL_COLOR);
+          g.setColor(layoutData.fillColor);
           g.fillRect(x, y, width, height);
 
           width = layoutData.configuration.beforeGearSpace;
           x -= width;
-          ((Graphics2D)g).setPaint(new GradientPaint(x, y, ColorUtil.withAlpha(FILL_COLOR, 0.2), x + width, y, FILL_COLOR));
+          ((Graphics2D)g)
+            .setPaint(new GradientPaint(x, y, ColorUtil.withAlpha(layoutData.fillColor, 0.2), x + width, y, layoutData.fillColor));
           g.fillRect(x, y, width, height);
         }
       }
@@ -782,9 +787,19 @@ public class NotificationsManagerImpl extends NotificationsManager {
       buttons.setBorder(new EmptyBorder(0, 0, JBUI.scale(5), JBUI.scale(7)));
     }
 
-    if (buttons == null && actions) {
-      createActionPanel(notification, centerPanel, layoutData.configuration.actionGap);
+    HoverAdapter hoverAdapter = new HoverAdapter();
+    hoverAdapter.addSource(content);
+    hoverAdapter.addSource(centerPanel);
+
+    if (expandAction != null) {
+      hoverAdapter.addComponent(expandAction, new Insets(5, 5, 7, 7));
     }
+
+    if (buttons == null && actions) {
+      createActionPanel(notification, centerPanel, layoutData.configuration.actionGap, hoverAdapter);
+    }
+
+    hoverAdapter.initListeners();
 
     if (layoutData.mergeData != null) {
       createMergeAction(layoutData, content);
@@ -802,7 +817,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
     }
 
     final BalloonBuilder builder = JBPopupFactory.getInstance().createBalloonBuilder(content);
-    builder.setFillColor(FILL_COLOR)
+    builder.setFillColor(layoutData.fillColor)
       .setCloseButtonEnabled(buttons == null)
       .setShowCallout(showCallout)
       .setShadow(false)
@@ -810,14 +825,18 @@ public class NotificationsManagerImpl extends NotificationsManager {
       .setHideOnAction(hideOnClickOutside)
       .setHideOnKeyOutside(hideOnClickOutside)
       .setHideOnFrameResize(false)
-      .setBorderColor(BORDER_COLOR)
+      .setBorderColor(layoutData.borderColor)
       .setBorderInsets(new Insets(0, 0, 0, 0));
+
+    if (layoutData.fadeoutTime != 0) {
+      builder.setFadeoutTime(layoutData.fadeoutTime);
+    }
 
     final BalloonImpl balloon = (BalloonImpl)builder.createBalloon();
     balloon.setAnimationEnabled(false);
     notification.setBalloon(balloon);
 
-    balloon.setShadowBorderProvider(new NotificationBalloonShadowBorderProvider(FILL_COLOR, BORDER_COLOR));
+    balloon.setShadowBorderProvider(new NotificationBalloonShadowBorderProvider(layoutData.fillColor, layoutData.borderColor));
 
     if (!layoutData.welcomeScreen && buttons == null) {
       balloon.setActionProvider(
@@ -832,23 +851,26 @@ public class NotificationsManagerImpl extends NotificationsManager {
   public static JScrollPane createBalloonScrollPane(@NotNull Component content, boolean configure) {
     JScrollPane pane = ScrollPaneFactory.createScrollPane(content, true);
     if (configure) {
-      configureBalloonScrollPane(pane);
+      configureBalloonScrollPane(pane, FILL_COLOR);
     }
     return pane;
   }
 
-  public static void configureBalloonScrollPane(@NotNull JScrollPane pane) {
+  public static void configureBalloonScrollPane(@NotNull JScrollPane pane, @NotNull Color fillColor) {
     pane.setOpaque(false);
     pane.getViewport().setOpaque(false);
     if (!Registry.is("ide.scroll.new.layout")) {
       pane.getVerticalScrollBar().setUI(ButtonlessScrollBarUI.createTransparent());
     }
-    pane.setBackground(FILL_COLOR);
-    pane.getViewport().setBackground(FILL_COLOR);
-    pane.getVerticalScrollBar().setBackground(FILL_COLOR);
+    pane.setBackground(fillColor);
+    pane.getViewport().setBackground(fillColor);
+    pane.getVerticalScrollBar().setBackground(fillColor);
   }
 
-  private static void createActionPanel(@NotNull final Notification notification, @NotNull JPanel centerPanel, int gap) {
+  private static void createActionPanel(@NotNull final Notification notification,
+                                        @NotNull JPanel centerPanel,
+                                        int gap,
+                                        @NotNull HoverAdapter hoverAdapter) {
     JPanel actionPanel = new NonOpaquePanel(new HorizontalLayout(gap, SwingConstants.CENTER));
     centerPanel.add(BorderLayout.SOUTH, actionPanel);
 
@@ -884,6 +906,110 @@ public class NotificationsManagerImpl extends NotificationsManager {
             Notification.fire(notification, action);
           }
         }, action));
+    }
+
+    Insets hover = new Insets(8, 5, 8, 7);
+    int count = actionPanel.getComponentCount();
+
+    for (int i = 0; i < count; i++) {
+      hoverAdapter.addComponent(actionPanel.getComponent(i), hover);
+    }
+
+    hoverAdapter.addSource(actionPanel);
+  }
+
+  private static class HoverAdapter extends MouseAdapter implements MouseMotionListener {
+    private final List<Pair<Component, Insets>> myComponents = new ArrayList<>();
+    private List<Component> mySources = new ArrayList<>();
+    private Component myLastComponent;
+
+    public void addComponent(@NotNull Component component, @NotNull Insets hover) {
+      myComponents.add(Pair.create(component, hover));
+    }
+
+    public void addSource(@NotNull Component component) {
+      mySources.add(component);
+    }
+
+    public void initListeners() {
+      if (!myComponents.isEmpty()) {
+        for (Component source : mySources) {
+          source.addMouseMotionListener(this);
+          source.addMouseListener(this);
+        }
+        mySources = null;
+      }
+    }
+
+    public void mousePressed(MouseEvent e) {
+      handleEvent(e, true, false);
+    }
+
+    public void mouseReleased(MouseEvent e) {
+      handleEvent(e, false, false);
+    }
+
+    public void mouseMoved(MouseEvent e) {
+      handleEvent(e, false, true);
+    }
+
+    public void mouseExited(MouseEvent e) {
+      if (myLastComponent != null) {
+        mouseExited(e, myLastComponent);
+        myLastComponent = null;
+      }
+    }
+
+    private void handleEvent(MouseEvent e, boolean pressed, boolean moved) {
+      for (Pair<Component, Insets> p : myComponents) {
+        Component component = p.first;
+        Rectangle bounds = component.getBounds();
+        JBInsets.addTo(bounds, p.second);
+        if (bounds.contains(SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), component.getParent()))) {
+          if (myLastComponent != null && myLastComponent != component) {
+            mouseExited(e, myLastComponent);
+          }
+          myLastComponent = component;
+
+          MouseEvent event = createEvent(e, component);
+          if (moved) {
+            for (MouseMotionListener listener : component.getMouseMotionListeners()) {
+              listener.mouseMoved(event);
+            }
+          }
+          else {
+            MouseListener[] listeners = component.getMouseListeners();
+            if (pressed) {
+              for (MouseListener listener : listeners) {
+                listener.mousePressed(event);
+              }
+            }
+            else {
+              for (MouseListener listener : listeners) {
+                listener.mouseReleased(event);
+              }
+            }
+          }
+          return;
+        }
+        else if (component == myLastComponent) {
+          myLastComponent = null;
+          mouseExited(e, component);
+        }
+      }
+    }
+
+    private static void mouseExited(MouseEvent e, Component component) {
+      MouseEvent event = createEvent(e, component);
+      MouseListener[] listeners = component.getMouseListeners();
+      for (MouseListener listener : listeners) {
+        listener.mouseExited(event);
+      }
+    }
+
+    @NotNull
+    private static MouseEvent createEvent(MouseEvent e, Component c) {
+      return new MouseEvent(c, e.getID(), e.getWhen(), e.getModifiers(), 5, 5, e.getClickCount(), e.isPopupTrigger(), e.getButton());
     }
   }
 

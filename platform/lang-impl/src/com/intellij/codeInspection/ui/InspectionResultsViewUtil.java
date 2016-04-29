@@ -69,7 +69,7 @@ public class InspectionResultsViewUtil {
   }
 
   @NotNull
-  private static JLabel createLabelForText(String text) {
+  static JLabel createLabelForText(String text) {
     final JLabel multipleSelectionLabel = new JBLabel(text);
     multipleSelectionLabel.setVerticalAlignment(SwingConstants.TOP);
     multipleSelectionLabel.setBorder(IdeBorderFactory.createEmptyBorder(16, 12, 0, 0));

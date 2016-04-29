@@ -75,8 +75,8 @@ binding.setVariable("isEap", {
   return "true" == p("component.version.eap")
 })
 
-binding.setVariable("mem32", "-server -Xms128m -Xmx512m -XX:MaxPermSize=250m -XX:ReservedCodeCacheSize=240m")
-binding.setVariable("mem64", "-Xms128m -Xmx750m -XX:MaxPermSize=350m -XX:ReservedCodeCacheSize=240m")
+binding.setVariable("mem32", "-server -Xms128m -Xmx512m -XX:ReservedCodeCacheSize=240m")
+binding.setVariable("mem64", "-Xms128m -Xmx750m -XX:ReservedCodeCacheSize=240m")
 binding.setVariable("common_vmoptions", "-XX:+UseConcMarkSweepGC -XX:SoftRefLRUPolicyMSPerMB=50 -ea " +
                                         "-Dsun.io.useCanonCaches=false -Djava.net.preferIPv4Stack=true " +
                                         "-XX:+HeapDumpOnOutOfMemoryError -XX:-OmitStackTraceInFastThrow")
@@ -428,7 +428,6 @@ binding.setVariable("platformImplementationModules", [
   "vcs-impl",
   "vcs-log-graph",
   "vcs-log-impl",
-  "vcs-tests",
   "xdebugger-impl",
   "xml-analysis-impl",
   "xml-psi-impl",
@@ -885,7 +884,7 @@ binding.setVariable("bundledJDK64s"){
 private bundledJDK(boolean win64) {
   requireProperty("artifact.linux.no.jdk", "true")
   requireProperty("artifact.mac.no.jdk", "true")
-  requireProperty("jdk.oracle.win", "jdk1.8")
+  requireProperty("jdk.oracle.win", "jdk8u")
   requireProperty("jdk.win",   "openjdk.1.8")
   requireProperty("jdk.mac",   "openjdk.1.8")
   requireProperty("jdk.linux", "openjdk.1.8")
@@ -893,19 +892,18 @@ private bundledJDK(boolean win64) {
   if (new File("${home}/build/jdk").exists()) {
     def jdkDir = new File("${home}/build/jdk/win")
     if (p("jdk.oracle.win") != "false" && (jdkDir.exists() && jdkDir.isDirectory())) {
-      setProperty("winJDK", getPathToBundledJDK(jdkDir, p("jdk.oracle.win"), (win64 ? "x64.zip": "x32.zip")))
+      setProperty("winJDK", getPathToBundledJDK(jdkDir, p("jdk.oracle.win"), (win64 ? "x64.tar.gz": "x86.tar.gz")))
       extractRedistJre(winJDK, "${paths.sandbox}/jdk.oracle.win/jre")
     }
-    jdkDir = new File("${home}/build/jdk/win/custom")
     if (p("jdk.win") != "false" && (jdkDir.exists() && jdkDir.isDirectory())) {
       setProperty("winCustomJDKx32", getPathToBundledJDK(jdkDir, p("jdk.win"), (win64 ? "x64.tar.gz": "x32.tar.gz")))
       extractRedistJre(winCustomJDKx32, "${paths.sandbox}/jdk.win")
     }
-    jdkDir = new File("${home}/build/jdk/mac/custom")
+    jdkDir = new File("${home}/build/jdk/mac")
     if (p("jdk.mac") != "false" && (jdkDir.exists() && jdkDir.isDirectory())) {
       setProperty("macCustomJDK", getPathToBundledJDK(jdkDir, p("jdk.mac"), ".tar.gz"))
     }
-    jdkDir = new File("${home}/build/jdk/linux/custom")
+    jdkDir = new File("${home}/build/jdk/linux")
     if (p("jdk.linux") != "false" && (jdkDir.exists() && jdkDir.isDirectory())) {
       setProperty("linuxJDK", getPathToBundledJDK(jdkDir, p("jdk.linux"), ".tar.gz"))
       extractRedistJre(linuxJDK, "${paths.sandbox}/jdk.linux")

@@ -77,7 +77,7 @@ public class TypeMigrationLabeler {
   private final LinkedHashMap<TypeMigrationUsageInfo, PsiType> myNewExpressionTypeChange;
   private final LinkedHashMap<TypeMigrationUsageInfo, PsiClassType> myClassTypeArgumentsChange;
 
-  private TypeMigrationUsageInfo[] myMigratedUsages = null;
+  private TypeMigrationUsageInfo[] myMigratedUsages;
 
   private TypeMigrationUsageInfo myCurrentRoot;
   private final Map<TypeMigrationUsageInfo, HashSet<Pair<TypeMigrationUsageInfo, PsiType>>> myRootsTree =

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -154,7 +154,7 @@ public class AllClassesGetter {
     int limit = Registry.intValue("ide.completion.variant.limit");
 
     Processor<PsiClass> processor = new Processor<PsiClass>() {
-      int count = 0;
+      int count;
       final Set<String> qNames = new THashSet<String>();
       final boolean pkgContext = JavaCompletionUtil.inSomePackage(context);
       final String packagePrefix = getPackagePrefix(context, parameters.getOffset());

@@ -80,7 +80,7 @@ class RunConfigurable extends BaseConfigurable {
     }
   };
 
-  private volatile boolean isDisposed = false;
+  private volatile boolean isDisposed;
 
   private final Project myProject;
   private RunDialogBase myRunDialog;

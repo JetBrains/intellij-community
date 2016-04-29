@@ -35,8 +35,8 @@ public class ComparisonMergeUtil {
 
     FairMergeBuilder builder = new FairMergeBuilder();
 
-    PeekIterator<Range> unchanged1 = new PeekIterator<Range>(fragments1.unchanged());
-    PeekIterator<Range> unchanged2 = new PeekIterator<Range>(fragments2.unchanged());
+    PeekIterator<Range> unchanged1 = new PeekIterator<>(fragments1.unchanged());
+    PeekIterator<Range> unchanged2 = new PeekIterator<>(fragments2.unchanged());
 
     while (!unchanged1.atEnd() || !unchanged2.atEnd()) {
       indicator.checkCanceled();
@@ -69,7 +69,7 @@ public class ComparisonMergeUtil {
   }
 
   private static class FairMergeBuilder {
-    @NotNull private final ArrayList<MergeRange> myResult = new ArrayList<MergeRange>();
+    @NotNull private final ArrayList<MergeRange> myResult = new ArrayList<>();
 
     @NotNull private final EqualPair[] myPairs = new EqualPair[2]; // LEFT, RIGHT
     @NotNull private final int[] myProcessed = new int[]{0, 0, 0}; // LEFT, RIGHT, BASE

@@ -51,12 +51,7 @@ public class DiffRequestPanelImpl implements DiffRequestPanel {
   @Override
   public void setRequest(@Nullable DiffRequest request) {
     myProcessor.setRequest(request);
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        myProcessor.updateRequest();
-      }
-    });
+    UIUtil.invokeLaterIfNeeded(() -> myProcessor.updateRequest());
   }
 
   @Override

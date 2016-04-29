@@ -27,6 +27,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -67,7 +68,10 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
     final Project project = e.getProject();
     if (project == null) return;
 
-    if (myPopup != null && myPopup.isVisible()) return;
+    if (myPopup != null && myPopup.isVisible()) {
+      myPopup.cancel();
+      return;
+    }
 
     final JBList list = new JBList(buildModel(project));
 
@@ -246,13 +250,23 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
       myLine = -1;
 
       BookmarkManager bookmarkManager = BookmarkManager.getInstance(myProject);
-      if (ToolWindowManager.getInstance(myProject).isEditorComponentActive()) {
-        Editor editor = CommonDataKeys.EDITOR.getData(myDataContext);
-        if (editor != null) {
+      Editor editor = CommonDataKeys.EDITOR.getData(myDataContext);
+      if (editor != null) {
+        if (ToolWindowManager.getInstance(myProject).isEditorComponentActive()) {
           Document document = editor.getDocument();
           myLine = editor.getCaretModel().getLogicalPosition().line;
           myFile = FileDocumentManager.getInstance().getFile(document);
           myBookmarkAtPlace = bookmarkManager.findEditorBookmark(document, myLine);
+        }
+        else {
+          myFile = CommonDataKeys.VIRTUAL_FILE.getData(myDataContext);
+          if (myFile != null) {
+            Document document = editor.getDocument();
+            if (Comparing.equal(myFile, FileDocumentManager.getInstance().getFile(document))) {
+              myLine = editor.getCaretModel().getLogicalPosition().line;
+              myBookmarkAtPlace = bookmarkManager.findEditorBookmark(document, myLine);
+            }
+          }
         }
       }
 

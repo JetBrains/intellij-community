@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -584,11 +585,11 @@ public class SrcRepositoryUseTest extends PsiTestCase{
   }
 
   private void teardownLoadingFilter() {
-    getJavaFacade().setAssertOnFileLoadingFilter(VirtualFileFilter.NONE, myTestRootDisposable);
+    PsiManagerEx.getInstanceEx(getProject()).setAssertOnFileLoadingFilter(VirtualFileFilter.NONE, myTestRootDisposable);
   }
 
   private void setupLoadingFilter() {
-    getJavaFacade().setAssertOnFileLoadingFilter(VirtualFileFilter.ALL, myTestRootDisposable);
+    PsiManagerEx.getInstanceEx(getProject()).setAssertOnFileLoadingFilter(VirtualFileFilter.ALL, myTestRootDisposable);
   }
 
   public void testAnonymousClass2() throws Exception {

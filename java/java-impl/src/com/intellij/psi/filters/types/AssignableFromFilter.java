@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,8 +31,8 @@ import org.jetbrains.annotations.Nullable;
  * To change this template use Options | File Templates.
  */
 public class AssignableFromFilter implements ElementFilter{
-  private PsiType myType = null;
-  private String myClassName = null;
+  private PsiType myType;
+  private String myClassName;
 
   public AssignableFromFilter(PsiType type){
     myType = type;

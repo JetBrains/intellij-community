@@ -34,7 +34,7 @@ import java.util.*;
 import java.util.List;
 
 public class DefUseInspectionBase extends BaseJavaBatchLocalInspectionTool {
-  public boolean REPORT_PREFIX_EXPRESSIONS = false;
+  public boolean REPORT_PREFIX_EXPRESSIONS;
   public boolean REPORT_POSTFIX_EXPRESSIONS = true;
   public boolean REPORT_REDUNDANT_INITIALIZER = true;
 

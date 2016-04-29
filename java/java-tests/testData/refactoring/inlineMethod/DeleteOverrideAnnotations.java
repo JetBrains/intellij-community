@@ -10,3 +10,8 @@ class B extends A {
     super.foo();
   }
 }
+
+class C extends B {
+  @Override
+  void foo() {}
+}

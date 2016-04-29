@@ -19,6 +19,7 @@ import com.intellij.diff.comparison.DiffTooBigException;
 import com.intellij.diff.util.TextDiffType;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.ui.EditorNotificationPanel;
+import com.intellij.ui.HyperlinkLabel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -90,11 +91,8 @@ public class DiffNotifications {
     panel.text(text);
     panel.setBackgroundColor(background);
     if (showHideAction) {
-      panel.createActionLabel("Hide", new Runnable() {
-        public void run() {
-          panel.setVisible(false);
-        }
-      }).setToolTipText("Hide this notification");
+      HyperlinkLabel link = panel.createActionLabel("Hide", () -> panel.setVisible(false));
+      link.setToolTipText("Hide this notification");
     }
     return panel;
   }

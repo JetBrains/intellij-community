@@ -40,7 +40,7 @@ public class DialogAppender extends AppenderSkeleton {
   private static final ErrorLogger DEFAULT_LOGGER = new DefaultIdeaErrorLogger();
   private static final int MAX_ASYNC_LOGGING_EVENTS = 5;
 
-  private volatile Runnable myDialogRunnable = null;
+  private volatile Runnable myDialogRunnable;
   private final AtomicInteger myPendingAppendCounts = new AtomicInteger();
 
   @Override

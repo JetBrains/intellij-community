@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-/**
- * @author Dmitry Avdeev
- */
 package com.intellij.refactoring.rename;
 
 import com.intellij.openapi.extensions.Extensions;
@@ -26,9 +23,6 @@ import com.intellij.util.Function;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class RenameInputValidatorRegistry {
   private RenameInputValidatorRegistry() {

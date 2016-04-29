@@ -334,10 +334,10 @@ public class JDOMUtil {
     return loadDocument(new InputStreamReader(stream, CharsetToolkit.UTF8_CHARSET));
   }
 
-  @Contract("null -> null; !null -> !null")
   /**
    * @deprecated Use com.intellij.util.loadElement
    */
+  @Contract("null -> null; !null -> !null")
   public static Element load(Reader reader) throws JDOMException, IOException {
     return reader == null ? null : loadDocument(reader).detachRootElement();
   }

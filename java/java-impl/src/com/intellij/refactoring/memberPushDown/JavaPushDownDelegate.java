@@ -45,6 +45,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -90,11 +91,21 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
   }
 
   @Override
-  public void checkTargetClassConflicts(PsiElement targetClass,
+  public void checkTargetClassConflicts(@Nullable PsiElement targetClass,
                                         PushDownData<MemberInfo, PsiMember> pushDownData,
-                                        MultiMap<PsiElement, String> conflicts) {
+                                        MultiMap<PsiElement, String> conflicts,
+                                        NewSubClassData subClassData) {
     List<MemberInfo> toMove = pushDownData.getMembersToMove();
-    new PushDownConflicts((PsiClass)pushDownData.getSourceClass(), toMove.toArray(new MemberInfo[0]), conflicts).checkTargetClassConflicts(targetClass, targetClass);
+    PsiElement context = targetClass;
+    if (context == null) {
+      assert subClassData != null;
+      Object newClassContext = subClassData.getContext();
+      if (newClassContext instanceof PsiElement) {
+        context = (PsiElement)newClassContext;
+      }
+    }
+    new PushDownConflicts((PsiClass)pushDownData.getSourceClass(), toMove.toArray(new MemberInfo[0]), conflicts)
+      .checkTargetClassConflicts(targetClass, context);
   }
 
   @Override

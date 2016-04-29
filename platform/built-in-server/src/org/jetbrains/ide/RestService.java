@@ -104,10 +104,10 @@ public abstract class RestService extends HttpRequestHandler {
     return false;
   }
 
-  @NotNull
   /**
    * Use human-readable name or UUID if it is an internal service.
    */
+  @NotNull
   protected abstract String getServiceName();
 
   protected abstract boolean isMethodSupported(@NotNull HttpMethod method);
@@ -144,10 +144,10 @@ public abstract class RestService extends HttpRequestHandler {
     }
   }
 
-  @Nullable("error text or null if successful")
   /**
    * Return error or send response using {@link #sendOk(FullHttpRequest, ChannelHandlerContext)}, {@link #send(BufferExposingByteArrayOutputStream, FullHttpRequest, ChannelHandlerContext)}
    */
+  @Nullable("error text or null if successful")
   public abstract String execute(@NotNull QueryStringDecoder urlDecoder, @NotNull FullHttpRequest request, @NotNull ChannelHandlerContext context) throws IOException;
 
   @NotNull

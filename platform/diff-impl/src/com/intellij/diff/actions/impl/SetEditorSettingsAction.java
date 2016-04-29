@@ -15,16 +15,17 @@
  */
 package com.intellij.diff.actions.impl;
 
+import com.intellij.diff.tools.util.SyncScrollSupport;
 import com.intellij.diff.tools.util.base.HighlightingLevel;
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.actions.AbstractToggleUseSoftWrapsAction;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,6 +36,7 @@ import java.util.List;
 public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
   @NotNull private final TextDiffSettingsHolder.TextDiffSettings myTextSettings;
   @NotNull private final List<? extends Editor> myEditors;
+  @Nullable private SyncScrollSupport.Support mySyncScrollSupport;
 
   @NotNull private final AnAction[] myActions;
 
@@ -123,8 +125,14 @@ public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
 
         @Override
         public void apply(@NotNull Editor editor, boolean value) {
-          if (editor.getSettings().isUseSoftWraps() != value) {
-            editor.getSettings().setUseSoftWraps(value);
+          if (editor.getSettings().isUseSoftWraps() == value) return;
+
+          if (mySyncScrollSupport != null) mySyncScrollSupport.enterDisableScrollSection();
+          try {
+            AbstractToggleUseSoftWrapsAction.toggleSoftWraps(editor, null, value);
+          }
+          finally {
+            if (mySyncScrollSupport != null) mySyncScrollSupport.exitDisableScrollSection();
           }
         }
 
@@ -142,6 +150,10 @@ public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
     };
   }
 
+  public void setSyncScrollSupport(@Nullable SyncScrollSupport.Support syncScrollSupport) {
+    mySyncScrollSupport = syncScrollSupport;
+  }
+
   public void applyDefaults() {
     for (AnAction action : myActions) {
       ((EditorSettingAction)action).applyDefaults(myEditors);
@@ -151,7 +163,7 @@ public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
   @NotNull
   @Override
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
-    List<AnAction> result = new ArrayList<AnAction>();
+    List<AnAction> result = new ArrayList<>();
     ContainerUtil.addAll(result, myActions);
     result.add(Separator.getInstance());
     result.add(ActionManager.getInstance().getAction(IdeActions.GROUP_DIFF_EDITOR_GUTTER_POPUP));
@@ -194,12 +206,7 @@ public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
 
     public EditorHighlightingLayerAction() {
       super("Highlighting Level", true);
-      myOptions = ContainerUtil.map(HighlightingLevel.values(), new Function<HighlightingLevel, AnAction>() {
-        @Override
-        public AnAction fun(HighlightingLevel level) {
-          return new OptionAction(level);
-        }
-      }, AnAction.EMPTY_ARRAY);
+      myOptions = ContainerUtil.map(HighlightingLevel.values(), level -> new OptionAction(level), AnAction.EMPTY_ARRAY);
     }
 
     @NotNull

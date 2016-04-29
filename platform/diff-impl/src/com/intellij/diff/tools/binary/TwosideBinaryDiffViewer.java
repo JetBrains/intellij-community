@@ -86,7 +86,7 @@ public class TwosideBinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolde
 
   @Override
   protected List<AnAction> createToolbarActions() {
-    List<AnAction> group = new ArrayList<AnAction>();
+    List<AnAction> group = new ArrayList<>();
 
     group.add(new MyAcceptSideAction(Side.LEFT));
     group.add(new MyAcceptSideAction(Side.RIGHT));
@@ -157,12 +157,9 @@ public class TwosideBinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolde
 
   @NotNull
   private Runnable applyNotification(@Nullable final JComponent notification) {
-    return new Runnable() {
-      @Override
-      public void run() {
-        clearDiffPresentation();
-        if (notification != null) myPanel.addNotification(notification);
-      }
+    return () -> {
+      clearDiffPresentation();
+      if (notification != null) myPanel.addNotification(notification);
     };
   }
 

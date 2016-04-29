@@ -22,8 +22,11 @@ import com.intellij.util.ui.UIUtil;
 import javax.swing.Action;
 import javax.swing.ActionMap;
 import javax.swing.JScrollPane;
+import java.awt.Component;
 import java.awt.KeyboardFocusManager;
 import java.awt.event.ActionEvent;
+
+import static com.intellij.openapi.actionSystem.PlatformDataKeys.CONTEXT_COMPONENT;
 
 /**
  * @author Sergey.Malenkov
@@ -50,9 +53,9 @@ public abstract class ScrollPaneActions extends AnAction {
     action.actionPerformed(new ActionEvent(pane, ActionEvent.ACTION_PERFORMED, mySwingActionId));
   }
 
-  private JScrollPane getScrollPane(@SuppressWarnings("UnusedParameters") AnActionEvent event) {
-    KeyboardFocusManager manager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-    return manager == null ? null : UIUtil.getParentOfType(JScrollPane.class, manager.getPermanentFocusOwner());
+  private JScrollPane getScrollPane(AnActionEvent event) {
+    Component component = event.getData(CONTEXT_COMPONENT);
+    return UIUtil.getParentOfType(JScrollPane.class, component);
   }
 
   private Action getSwingAction(JScrollPane pane) {

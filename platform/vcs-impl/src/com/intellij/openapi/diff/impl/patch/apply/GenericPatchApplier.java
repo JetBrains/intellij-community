@@ -34,6 +34,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.openapi.diff.impl.patch.ApplyPatchStatus.ALREADY_APPLIED;
+
 public class GenericPatchApplier {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.patch.apply.GenericPatchApplier");
   private final static int ourMaxWalk = 1000;
@@ -72,7 +74,7 @@ public class GenericPatchApplier {
     if (! myNotExact.isEmpty()) {
       return ApplyPatchStatus.FAILURE;
     } else {
-      if (myTransformations.isEmpty() && myHadAlreadyAppliedMet) return ApplyPatchStatus.ALREADY_APPLIED;
+      if (myTransformations.isEmpty() && myHadAlreadyAppliedMet) return ALREADY_APPLIED;
       boolean haveAlreadyApplied = myHadAlreadyAppliedMet;
       boolean haveTrue = false;
       for (MyAppliedData data : myTransformations.values()) {
@@ -82,7 +84,7 @@ public class GenericPatchApplier {
           haveTrue = true;
         }
       }
-      if (haveAlreadyApplied && ! haveTrue) return ApplyPatchStatus.ALREADY_APPLIED;
+      if (haveAlreadyApplied && ! haveTrue) return ALREADY_APPLIED;
       if (haveAlreadyApplied) return ApplyPatchStatus.PARTIAL;
       return ApplyPatchStatus.SUCCESS;
     }
@@ -570,7 +572,8 @@ public class GenericPatchApplier {
     if (hunk != null) {
       // +1 to the end  because end range is always not included -> [i;j); except add modification;
       int newStart = lineWithPartContextApplied.getStartOffset() + contextRangeShift.val1;
-      int newEnd = hunk.isInsertion() ? newStart : lineWithPartContextApplied.getEndOffset() + 1 - contextRangeShift.val2;
+      int newEnd = hunk.isInsertion() && hunkStatus != AppliedTextPatch.HunkStatus.ALREADY_APPLIED
+                   ? newStart : lineWithPartContextApplied.getEndOffset() + 1 - contextRangeShift.val2;
       myAppliedInfo.add(new AppliedTextPatch.AppliedSplitPatchHunk(hunk, newStart, newEnd, hunkStatus));
     }
   }

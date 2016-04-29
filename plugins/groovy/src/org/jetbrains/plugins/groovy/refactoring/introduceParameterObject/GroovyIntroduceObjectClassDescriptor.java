@@ -15,9 +15,10 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.introduceParameterObject;
 
+import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.introduceParameterObject.IntroduceParameterObjectClassDescriptor;
-import com.intellij.refactoring.introduceParameterObject.IntroduceParameterObjectDelegate;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.refactoring.changeSignature.GrParameterInfo;
 
@@ -33,22 +34,22 @@ public class GroovyIntroduceObjectClassDescriptor extends IntroduceParameterObje
   }
 
   @Override
-  public String getSetterName(GrParameterInfo paramInfo, PsiElement context) {
+  public String getSetterName(GrParameterInfo paramInfo, @NotNull PsiElement context) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public String getGetterName(GrParameterInfo paramInfo, PsiElement context) {
+  public String getGetterName(GrParameterInfo paramInfo, @NotNull PsiElement context) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public void initExistingClass(GrMethod method) {
+  public GrMethod findCompatibleConstructorInExistingClass(GrMethod method) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public PsiElement createClass(GrMethod method, IntroduceParameterObjectDelegate.Accessor[] accessors) {
+  public PsiElement createClass(GrMethod method, ReadWriteAccessDetector.Access[] accessors) {
     throw new UnsupportedOperationException();
   }
 }
