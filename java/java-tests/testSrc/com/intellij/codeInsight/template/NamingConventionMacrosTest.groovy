@@ -41,7 +41,7 @@ class NamingConventionMacrosTest extends TestCase {
     assert "a_b_c_d_e_f_g" == snakeCase("a-b.c/d|e*f+g")
     assert "a_b" == snakeCase("a--b")
     assert "foo_bar" == snakeCase("FOO BAR")
-    assert "" == snakeCase("0")
+    assert "" == snakeCase("")
   }
 
   public void "test lowercase and dash"() {

@@ -15,6 +15,7 @@
  */
 package com.intellij.remoteServer.agent.impl;
 
+import com.intellij.util.concurrency.SequentialTaskExecutor;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Proxy;
@@ -38,7 +39,10 @@ public class RemoteAgentThreadProxyCreator {
 
     return agentInterface.cast(Proxy.newProxyInstance(callerClassLoader,
                                                       new Class[]{agentInterface},
-                                                      new ThreadInvocationHandler(callerClassLoader, agentInstance,
-                                                                                  myPreWrapperCreator)));
+                                                      new ThreadInvocationHandler(
+                                                        SequentialTaskExecutor.createSequentialApplicationPoolExecutor(),
+                                                        callerClassLoader, agentInstance,
+                                                        myPreWrapperCreator
+                                                      )));
   }
 }

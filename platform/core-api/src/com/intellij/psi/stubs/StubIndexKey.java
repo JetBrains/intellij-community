@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,13 +22,15 @@ package com.intellij.psi.stubs;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.indexing.ID;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public final class StubIndexKey<K, Psi extends PsiElement> extends ID<K, Psi> {
   private StubIndexKey(@NonNls String name) {
     super(name);
   }
 
-  public static synchronized <K, Psi extends PsiElement> StubIndexKey<K, Psi> createIndexKey(@NonNls String name) {
+  @NotNull
+  public static synchronized <K, Psi extends PsiElement> StubIndexKey<K, Psi> createIndexKey(@NonNls @NotNull String name) {
     return new StubIndexKey<K, Psi>(name);
   }
 

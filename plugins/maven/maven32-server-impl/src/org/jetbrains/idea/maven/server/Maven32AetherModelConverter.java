@@ -95,6 +95,7 @@ public class Maven32AetherModelConverter extends MavenModelConverter {
         scope = winnerNode.getDependency().getScope();
         Artifact winnerArtifact = RepositoryUtils.toArtifact(winnerNode.getDependency().getArtifact());
         relatedArtifact = convertArtifact(winnerArtifact, nativeToConvertedMap, localRepository);
+        nativeToConvertedMap.put(a, relatedArtifact);
         if (!StringUtil.equals(each.getVersion().toString(), winnerNode.getVersion().toString())) {
           state = MavenArtifactState.CONFLICT;
         }

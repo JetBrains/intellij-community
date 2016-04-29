@@ -69,27 +69,25 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
     final List<RefEntity> selectedElements = new ArrayList<RefEntity>();
     final Map<RefEntity, CommonProblemDescriptor[]> actions = new HashMap<>();
     for (TreePath selectionPath : treePaths) {
-      TreeUtil.traverseDepth((TreeNode)selectionPath.getLastPathComponent(), new TreeUtil.Traverse() {
-        @Override
-        public boolean accept(final Object node) {
-          if (!((InspectionTreeNode)node).isValid()) return true;
-          if (node instanceof OfflineProblemDescriptorNode) {
-            final OfflineProblemDescriptorNode descriptorNode = (OfflineProblemDescriptorNode)node;
-            final RefEntity element = descriptorNode.getElement();
-            selectedElements.add(element);
-            CommonProblemDescriptor[] descriptors = actions.get(element);
-            final CommonProblemDescriptor descriptor = descriptorNode.getDescriptor();
-            final CommonProblemDescriptor[] descriptorAsArray = descriptor == null ? CommonProblemDescriptor.EMPTY_ARRAY
-                                                                                   : new CommonProblemDescriptor[]{descriptor};
-            actions.put(element, descriptors == null ?
-                                 descriptorAsArray :
-                                 DefaultInspectionToolPresentation.mergeDescriptors(descriptors, descriptorAsArray));
-          }
-          else if (node instanceof RefElementNode) {
-            selectedElements.add(((RefElementNode)node).getElement());
-          }
-          return true;
+      TreeUtil.traverseDepth((TreeNode)selectionPath.getLastPathComponent(), node -> {
+        if (!((InspectionTreeNode)node).isValid()) return true;
+        if (node instanceof OfflineProblemDescriptorNode) {
+          if (!((OfflineProblemDescriptorNode)node).isQuickFixAppliedFromView()) return true;
+          final OfflineProblemDescriptorNode descriptorNode = (OfflineProblemDescriptorNode)node;
+          final RefEntity element = descriptorNode.getElement();
+          selectedElements.add(element);
+          CommonProblemDescriptor[] descriptors = actions.get(element);
+          final CommonProblemDescriptor descriptor = descriptorNode.getDescriptor();
+          final CommonProblemDescriptor[] descriptorAsArray = descriptor == null ? CommonProblemDescriptor.EMPTY_ARRAY
+                                                                                 : new CommonProblemDescriptor[]{descriptor};
+          actions.put(element, descriptors == null ?
+                               descriptorAsArray :
+                               DefaultInspectionToolPresentation.mergeDescriptors(descriptors, descriptorAsArray));
         }
+        else if (node instanceof RefElementNode) {
+          selectedElements.add(((RefElementNode)node).getElement());
+        }
+        return true;
       });
     }
 

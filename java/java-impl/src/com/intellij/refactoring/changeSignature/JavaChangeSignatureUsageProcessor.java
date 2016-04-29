@@ -317,7 +317,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
     //methods' throws lists are already modified, may use ExceptionUtil.collectUnhandledExceptions
     newExceptions = filterCheckedExceptions(newExceptions);
 
-    PsiElement context = PsiTreeUtil.getParentOfType(ref, PsiTryStatement.class, PsiMethod.class);
+    PsiElement context = PsiTreeUtil.getParentOfType(ref, PsiTryStatement.class, PsiMethod.class, PsiLambdaExpression.class);
     if (context instanceof PsiTryStatement) {
       PsiTryStatement tryStatement = (PsiTryStatement)context;
       PsiCodeBlock tryBlock = tryStatement.getTryBlock();
@@ -346,7 +346,16 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
         //Add new try statement
         PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(ref.getProject());
         PsiTryStatement tryStatement = (PsiTryStatement)elementFactory.createStatementFromText("try {} catch (Exception e) {}", null);
-        PsiStatement anchor = PsiTreeUtil.getParentOfType(ref, PsiStatement.class);
+        PsiStatement anchor;
+        PsiElement lambdaBody = context instanceof PsiLambdaExpression ? ((PsiLambdaExpression)context).getBody() : null;
+        if (lambdaBody instanceof PsiExpression) {
+          PsiCodeBlock codeBlock = (PsiCodeBlock)((PsiLambdaExpression)RefactoringUtil.expandExpressionLambdaToCodeBlock(lambdaBody)).getBody();
+          LOG.assertTrue(codeBlock != null);
+          anchor = codeBlock.getStatements()[0];
+        }
+        else {
+          anchor = PsiTreeUtil.getParentOfType(ref, PsiStatement.class);
+        }
         LOG.assertTrue(anchor != null);
         tryStatement.getTryBlock().add(anchor);
         tryStatement = (PsiTryStatement)anchor.getParent().addAfter(tryStatement, anchor);
@@ -356,6 +365,10 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
         tryStatement.getCatchSections()[0].delete(); //Delete dummy catch section
       }
     }
+  }
+
+  public static boolean hasNewCheckedExceptions(JavaChangeInfo changeInfo) {
+    return filterCheckedExceptions(getPrimaryChangedExceptionInfo(changeInfo)).length > 0;
   }
 
   private static PsiClassType[] filterCheckedExceptions(PsiClassType[] exceptions) {

@@ -5,7 +5,6 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.beanProperties.BeanPropertyElement;
-import com.intellij.psi.util.PropertyUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.refs.JavaFxPropertyReference;
@@ -13,10 +12,10 @@ import org.jetbrains.plugins.javaFX.fxml.refs.JavaFxPropertyReference;
 /**
  * @author Pavel.Dolgov
  */
-class JavaFxPropertyElement extends BeanPropertyElement {
+public class JavaFxPropertyElement extends BeanPropertyElement {
   private final JavaFxPropertyReference myPropertyReference;
 
-  private JavaFxPropertyElement(JavaFxPropertyReference propertyReference, String propertyName, PsiMethod method) {
+  private JavaFxPropertyElement(PsiMethod method, String propertyName, JavaFxPropertyReference propertyReference) {
     super(method, propertyName);
     myPropertyReference = propertyReference;
   }
@@ -32,14 +31,18 @@ class JavaFxPropertyElement extends BeanPropertyElement {
     return "property";
   }
 
+  @NotNull
+  public JavaFxPropertyReference getPropertyReference() {
+    return myPropertyReference;
+  }
+
   @Nullable
   static PsiElement fromReference(@NotNull final JavaFxPropertyReference propertyReference) {
     final PsiElement element = propertyReference.resolve();
     if (element instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod)element;
-      final String propertyName = PropertyUtil.getPropertyName(method);
+      final String propertyName = propertyReference.getPropertyName();
       if (propertyName != null) {
-        return new JavaFxPropertyElement(propertyReference, propertyName, method);
+        return new JavaFxPropertyElement((PsiMethod)element, propertyName, propertyReference);
       }
     }
     if (element instanceof PsiField) {

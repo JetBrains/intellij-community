@@ -179,4 +179,6 @@ public abstract class PsiDiamondType extends PsiType {
     }
     return null;
   }
+
+  public abstract JavaResolveResult getStaticFactory();
 }

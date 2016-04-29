@@ -193,13 +193,16 @@ class TransactionTest extends LightPlatformTestCase {
       TransactionId id = null
       TransactionGuard.submitTransaction testRootDisposable, {
         log << '2'
-        id = guard.contextTransaction
+        TransactionGuard.submitTransaction testRootDisposable, {
+          log << '3'
+          id = guard.contextTransaction
+        }
       }
       SwingUtilities.invokeLater {
-        guard.submitTransaction testRootDisposable, id, { log << '3' }
+        guard.submitTransaction testRootDisposable, id, { log << '4' }
       }
       UIUtil.dispatchAllInvocationEvents()
-      assert log == ['1', '2', '3']
+      assert log == ['1', '2', '3', '4']
     }
   }
 

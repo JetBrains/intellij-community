@@ -60,15 +60,16 @@ public class QuickFixPreviewPanelFactory {
   private static class QuickFixReadyPanel extends JPanel {
     @NotNull private final InspectionResultsView myView;
     private final InspectionToolWrapper myWrapper;
-    private final ProblemPreviewEditorPresentation myFoldings;
     private final boolean myEmpty;
 
     public QuickFixReadyPanel(@NotNull InspectionResultsView view, EditorEx editor) {
       myView = view;
       myWrapper = view.getTree().getSelectedToolWrapper();
       LOG.assertTrue(myWrapper != null);
-      myFoldings = editor == null ? null : new ProblemPreviewEditorPresentation(editor, view.getProject());
       CommonProblemDescriptor[] descriptors = myView.getTree().getSelectedDescriptors();
+      if (editor != null) {
+        new ProblemPreviewEditorPresentation(editor, view.getProject(), descriptors);
+      }
       QuickFixAction[] fixes = view.getProvider().getQuickFixes(myWrapper, view.getTree());
       myEmpty = fillPanel(fixes, descriptors);
     }
@@ -79,7 +80,6 @@ public class QuickFixPreviewPanelFactory {
 
     private boolean fillPanel(@Nullable QuickFixAction[] fixes,
                               CommonProblemDescriptor[] descriptors) {
-      if (myFoldings != null) myFoldings.appendFoldings(descriptors);
       boolean hasFixes = fixes != null && fixes.length != 0;
       int problemCount = descriptors.length;
       boolean multipleDescriptors = problemCount > 1;

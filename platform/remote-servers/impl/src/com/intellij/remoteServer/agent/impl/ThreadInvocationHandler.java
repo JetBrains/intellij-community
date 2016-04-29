@@ -41,9 +41,9 @@ public class ThreadInvocationHandler implements InvocationHandler {
   private final Object myTarget;
   private final ChildWrapperCreator myPreWrapperFactory;
 
-  public ThreadInvocationHandler(ClassLoader callerClassLoader, Object target,
+  public ThreadInvocationHandler(ExecutorService taskExecutor, ClassLoader callerClassLoader, Object target,
                                  @Nullable ChildWrapperCreator preWrapperCreator) {
-    myTaskExecutor = com.intellij.util.concurrency.SequentialTaskExecutor.createSequentialApplicationPoolExecutor();
+    myTaskExecutor = taskExecutor;
     myCallerClassLoader = callerClassLoader;
     myTarget = target;
     myPreWrapperFactory = preWrapperCreator;
@@ -74,7 +74,7 @@ public class ThreadInvocationHandler implements InvocationHandler {
 
       boolean childCall = method.getAnnotation(ChildCall.class) != null;
       if (childCall) {
-        Object child = immediateCall ? taskCallable.call() : execute(taskCallable);
+        Object child = immediateCall ? taskCallable.call() : executeAndWait(taskCallable);
         if (child == null) {
           return null;
         }
@@ -118,7 +118,7 @@ public class ThreadInvocationHandler implements InvocationHandler {
         return null;
       }
       else {
-        return execute(taskCallable);
+        return executeAndWait(taskCallable);
       }
     }
     finally {
@@ -129,8 +129,9 @@ public class ThreadInvocationHandler implements InvocationHandler {
     }
   }
 
-  private Object execute(Callable<Object> taskCallable) throws Throwable {
-    Object child;Future<Object> future = myTaskExecutor.submit(taskCallable);
+  private Object executeAndWait(Callable<Object> taskCallable) throws Throwable {
+    Object child;
+    Future<Object> future = myTaskExecutor.submit(taskCallable);
     try {
       child = future.get();
     }
@@ -168,7 +169,10 @@ public class ThreadInvocationHandler implements InvocationHandler {
 
     return Proxy.newProxyInstance(myCallerClassLoader,
                                   new Class[]{callerChildInterface},
-                                  new ThreadInvocationHandler(myCallerClassLoader, preWrappedChild,
-                                                              myPreWrapperFactory));
+                                  new ThreadInvocationHandler(
+                                    myTaskExecutor,
+                                    myCallerClassLoader, preWrappedChild,
+                                    myPreWrapperFactory
+                                  ));
   }
 }

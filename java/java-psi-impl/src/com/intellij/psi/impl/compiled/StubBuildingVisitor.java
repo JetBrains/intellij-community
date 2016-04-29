@@ -482,8 +482,8 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     private final StringBuilder myBuilder = new StringBuilder();
     private final Function<String, String> myMapping;
     private final Consumer<String> myCallback;
-    private boolean hasPrefix = false;
-    private boolean hasParams = false;
+    private boolean hasPrefix;
+    private boolean hasParams;
 
     public AnnotationTextCollector(@Nullable String desc, Function<String, String> mapping, Consumer<String> callback) {
       super(ASM_API);
@@ -559,7 +559,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
   private static class FieldAnnotationCollectingVisitor extends FieldVisitor {
     private final PsiModifierListStub myModList;
     private final Function<String, String> myMapping;
-    private Set<String> myFilter = null;
+    private Set<String> myFilter;
 
     private FieldAnnotationCollectingVisitor(PsiModifierListStub modList, Function<String, String> mapping) {
       super(ASM_API);
@@ -600,8 +600,8 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     private final int myParamCount;
     private final PsiParameterStubImpl[] myParamStubs;
     private final Function<String, String> myMapping;
-    private int myUsedParamSize = 0;
-    private int myUsedParamCount = 0;
+    private int myUsedParamSize;
+    private int myUsedParamCount;
     private List<Set<String>> myFilters;
 
     private MethodAnnotationCollectingVisitor(PsiMethodStub owner,

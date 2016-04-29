@@ -41,12 +41,12 @@ public class ReferenceParser {
   public static final int INCOMPLETE_ANNO = 0x40;
 
   public static class TypeInfo {
-    public boolean isPrimitive = false;
-    public boolean isParameterized = false;
-    public boolean isArray = false;
-    public boolean isVarArg = false;
-    public boolean hasErrors = false;
-    public PsiBuilder.Marker marker = null;
+    public boolean isPrimitive;
+    public boolean isParameterized;
+    public boolean isArray;
+    public boolean isVarArg;
+    public boolean hasErrors;
+    public PsiBuilder.Marker marker;
   }
 
   private static final TokenSet WILDCARD_KEYWORD_SET = TokenSet.create(JavaTokenType.EXTENDS_KEYWORD, JavaTokenType.SUPER_KEYWORD);

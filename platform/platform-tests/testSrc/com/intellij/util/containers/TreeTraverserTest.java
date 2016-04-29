@@ -245,7 +245,7 @@ public class TreeTraverserTest extends TestCase {
   // JBIterable ----------------------------------------------
 
   public void testAppend() {
-    JBIterable<Integer> it = JBIterable.of(1, 2, 3).append(JBIterable.of(4, 5, 6)).append(7);
+    JBIterable<Integer> it = JBIterable.of(1, 2, 3).append(JBIterable.of(4, 5, 6)).append(JBIterable.empty()).append(7);
     assertEquals(7, it.size());
     assertEquals(Arrays.asList(1, 2, 3, 4, 5, 6, 7), it.toList());
     assertTrue(it.contains(5));

@@ -31,6 +31,7 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiElementProcessorAdapter;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -160,8 +161,10 @@ public class RefactoringHierarchyUtil {
 
     if (elementClass == null) return false;
     if (superClass != null) {
-      return !superClass.getManager().areElementsEquivalent(superClass, elementClass) &&
-             elementClass.isInheritor(superClass, true);
+      if (elementClass.isInheritor(superClass, true)) {
+        return !superClass.getManager().areElementsEquivalent(superClass, elementClass);
+      }
+      return PsiTreeUtil.isAncestor(elementClass, subClass, false) && !PsiTreeUtil.isAncestor(elementClass, superClass, false);
     }
     else {
       return subClass.getManager().areElementsEquivalent(subClass, elementClass);
