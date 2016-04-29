@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.memberPushDown;
 
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
@@ -62,7 +63,7 @@ public class JavaPushDownHandler implements RefactoringActionHandler, ElementsHa
       return;
     }
 
-    invoke(project, elements.toArray(new PsiElement[0]), dataContext);
+    invoke(project, elements.toArray(PsiElement.EMPTY_ARRAY), dataContext);
   }
 
   private static String collectElementsUnderCaret(PsiElement element, List<PsiElement> elements) {
@@ -71,7 +72,7 @@ public class JavaPushDownHandler implements RefactoringActionHandler, ElementsHa
         return RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("the.caret.should.be.positioned.inside.a.class.to.push.members.from"));
       }
 
-      if (element instanceof PsiClass || element instanceof PsiField || element instanceof PsiMethod) {
+      if (element instanceof PsiClass && ((PsiClass)element).getQualifiedName() != null || element instanceof PsiField || element instanceof PsiMethod) {
         if (element instanceof JspClass) {
           return RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("refactoring.is.not.supported.for.jsp.classes"));
         }
@@ -85,6 +86,16 @@ public class JavaPushDownHandler implements RefactoringActionHandler, ElementsHa
   public void invoke(@NotNull final Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     PsiClass aClass = PsiTreeUtil.getParentOfType(PsiTreeUtil.findCommonParent(elements), PsiClass.class, false);
     if (aClass == null) return;
+
+    String qualifiedName = aClass.getQualifiedName();
+    if (qualifiedName == null) return;
+
+    final Editor editor = dataContext != null ? CommonDataKeys.EDITOR.getData(dataContext) : null;
+    if (aClass.hasModifierProperty(PsiModifier.FINAL)) {
+      CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.message("refactoring.cannot.be.performed") +
+                                                           ": Class " + aClass.getName() + " is final", REFACTORING_NAME, HelpID.MEMBERS_PUSH_DOWN);
+      return;
+    }
 
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, aClass)) return;
     MemberInfoStorage memberInfoStorage = new MemberInfoStorage(aClass, element -> !(element instanceof PsiEnumConstant));
