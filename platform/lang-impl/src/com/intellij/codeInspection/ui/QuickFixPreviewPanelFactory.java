@@ -198,7 +198,7 @@ public class QuickFixPreviewPanelFactory {
     @Override
     public void treeLoaded() {
       ApplicationManager.getApplication().invokeLater(() -> {
-        if (myView.isValid()) {
+        if (!myView.isDisposed()) {
           myView.syncRightPanel();
         }
       });
