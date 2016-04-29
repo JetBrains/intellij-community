@@ -341,6 +341,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
 
   private void init(@NotNull final VirtualFile patchFile) {
     myPatchFile.setText(patchFile.getPresentableUrl());
+    myRecentPathFileChange.set(new FilePresentationModel(patchFile));
   }
 
   public void setHelpId(String s) {
@@ -416,6 +417,11 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     private FilePresentationModel(@NotNull String path) {
       myPath = path;
       myVf = null; // don't try to find vf for each typing; only when requested
+    }
+
+    public FilePresentationModel(@NotNull VirtualFile file) {
+      myPath = file.getPath();
+      myVf = file;
     }
 
     @Nullable
