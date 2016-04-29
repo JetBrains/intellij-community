@@ -27,6 +27,7 @@ import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.*;
 import io.netty.util.CharsetUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.Charset;
@@ -123,6 +124,11 @@ public final class Responses {
     addServer(response);
     addDate(response);
     addAllowAnyOrigin(response);
+    if (!response.headers().contains("X-Frame-Options")) {
+      response.headers().set("X-Frame-Options", "SameOrigin");
+    }
+    response.headers().set("X-Content-Type-Options", "nosniff");
+    response.headers().set("x-xss-protection", "1; mode=block");
   }
 
   public static void send(CharSequence content, Channel channel, @Nullable HttpRequest request) {
@@ -154,6 +160,11 @@ public final class Responses {
 
   public static void sendStatus(HttpResponseStatus responseStatus, Channel channel, @Nullable HttpRequest request) {
     sendStatus(responseStatus, channel, null, request);
+  }
+
+  public static HttpResponseStatus okInSafeMode(@NotNull HttpResponseStatus status) {
+    Application app = ApplicationManager.getApplication();
+    return app != null && app.isUnitTestMode() ? status : HttpResponseStatus.OK;
   }
 
   public static void sendStatus(HttpResponseStatus responseStatus, Channel channel, @Nullable String description, @Nullable HttpRequest request) {

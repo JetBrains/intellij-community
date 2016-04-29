@@ -15,6 +15,7 @@
  */
 package org.jetbrains.ide;
 
+import com.intellij.ide.browsers.Url;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import org.jetbrains.annotations.Nullable;
@@ -30,4 +31,6 @@ public abstract class BuiltInServerManager {
 
   @Nullable
   public abstract Disposable getServerDisposable();
+
+  public abstract boolean isOnBuiltInWebServer(@Nullable Url url);
 }

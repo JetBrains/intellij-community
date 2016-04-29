@@ -29,6 +29,7 @@ import io.netty.util.AttributeKey;
 import org.apache.sanselan.ImageFormat;
 import org.apache.sanselan.ImageWriteException;
 import org.apache.sanselan.Sanselan;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.ide.HttpRequestHandler;
 
 import javax.swing.*;
@@ -39,12 +40,20 @@ import java.io.IOException;
 final class DelegatingHttpRequestHandler extends DelegatingHttpRequestHandlerBase {
   private static final AttributeKey<HttpRequestHandler> PREV_HANDLER = new AttributeKey<HttpRequestHandler>("DelegatingHttpRequestHandler.handler");
 
+  private static boolean checkAndProcess(@NotNull HttpRequestHandler handler,
+                                 @NotNull ChannelHandlerContext context,
+                                 @NotNull FullHttpRequest request,
+                                 @NotNull QueryStringDecoder urlDecoder) throws IOException {
+    return handler.isSupported(request) && !NettyUtil.isWriteFromBrowserWithoutOrigin(request) && handler.isAccessible(request) && handler.process(urlDecoder, request, context);
+  }
+
   @Override
   protected boolean process(ChannelHandlerContext context, FullHttpRequest request, QueryStringDecoder urlDecoder) throws IOException, ImageWriteException {
     Attribute<HttpRequestHandler> prevHandlerAttribute = context.attr(PREV_HANDLER);
     HttpRequestHandler connectedHandler = prevHandlerAttribute.get();
+
     if (connectedHandler != null) {
-      if (connectedHandler.isSupported(request) && connectedHandler.process(urlDecoder, request, context)) {
+      if (checkAndProcess(connectedHandler, context, request, urlDecoder)) {
         return true;
       }
       // prev cached connectedHandler is not suitable for this request, so, let's find it again
@@ -53,7 +62,7 @@ final class DelegatingHttpRequestHandler extends DelegatingHttpRequestHandlerBas
 
     for (HttpRequestHandler handler : HttpRequestHandler.EP_NAME.getExtensions()) {
       try {
-        if (handler.isSupported(request) && handler.process(urlDecoder, request, context)) {
+        if (checkAndProcess(handler, context, request, urlDecoder)) {
           prevHandlerAttribute.set(handler);
           return true;
         }

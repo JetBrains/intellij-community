@@ -1,9 +1,9 @@
 package org.jetbrains.ide;
 
-import com.intellij.notification.Notification;
+import com.intellij.ide.browsers.Url;
 import com.intellij.notification.NotificationDisplayType;
+import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -13,19 +13,32 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.ShutDownTracker;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.net.NetUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.io.BuiltInServer;
 
+import java.io.IOException;
+import java.net.InetAddress;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class BuiltInServerManagerImpl extends BuiltInServerManager {
   private static final Logger LOG = Logger.getInstance(BuiltInServerManager.class);
+
+  public static final NotNullLazyValue<NotificationGroup> NOTIFICATION_GROUP = new NotNullLazyValue<NotificationGroup>() {
+    @NotNull
+    @Override
+    protected NotificationGroup compute() {
+      return new NotificationGroup("Built-in Server", NotificationDisplayType.STICKY_BALLOON, true);
+    }
+  };
 
   @NonNls
   public static final String PROPERTY_RPC_PORT = "rpc.port";
@@ -112,9 +125,7 @@ public class BuiltInServerManagerImpl extends BuiltInServerManager {
         }
         catch (Exception e) {
           LOG.info(e);
-          String groupDisplayId = "Built-in Server";
-          Notifications.Bus.register(groupDisplayId, NotificationDisplayType.STICKY_BALLOON);
-          new Notification(groupDisplayId, "Internal HTTP server disabled",
+          NOTIFICATION_GROUP.getValue().createNotification(
                            "Cannot start internal HTTP server. Git integration, JavaScript debugger and LiveEdit may operate with errors. " +
                            "Please check your firewall settings and restart " + ApplicationNamesInfo.getInstance().getFullProductName(),
                            NotificationType.ERROR).notify(null);
@@ -146,6 +157,44 @@ public class BuiltInServerManagerImpl extends BuiltInServerManager {
   @Nullable
   public Disposable getServerDisposable() {
     return server;
+  }
+
+  @Override
+  public boolean isOnBuiltInWebServer(@Nullable Url url) {
+    return url != null && !StringUtil.isEmpty(url.getAuthority()) && isOnBuiltInWebServerByAuthority(url.getAuthority());
+  }
+
+  private static boolean isOnBuiltInWebServerByAuthority(@NotNull String authority) {
+    int portIndex = authority.indexOf(':');
+    if (portIndex < 0 || portIndex == authority.length() - 1) {
+      return false;
+    }
+
+    int port = StringUtil.parseInt(authority.substring(portIndex + 1), -1);
+    if (port == -1) {
+      return false;
+    }
+
+    //BuiltInServerOptions options = BuiltInServerOptions.getInstance();
+    //int idePort = BuiltInServerManager.getInstance().getPort();
+    //if (options.builtInServerPort != port && idePort != port) {
+    //  return false;
+    //}
+
+    String host = authority.substring(0, portIndex);
+    if (NetUtils.isLocalhost(host)) {
+      return true;
+    }
+
+    try {
+      InetAddress inetAddress = InetAddress.getByName(host);
+      return inetAddress.isLoopbackAddress() ||
+             inetAddress.isAnyLocalAddress() /*||
+             (options.builtInServerAvailableExternally && idePort != port && NetworkInterface.getByInetAddress(inetAddress) != null)*/;
+    }
+    catch (IOException e) {
+      return false;
+    }
   }
 
   /**
