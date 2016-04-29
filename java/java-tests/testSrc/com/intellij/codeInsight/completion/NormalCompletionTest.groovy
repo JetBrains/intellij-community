@@ -1106,6 +1106,7 @@ public class ListUtils {
     myFixture.performEditorAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_COMPLETE_STATEMENT)
     checkResult()
   }
+  void testSynchronizedArgumentSmartEnter() { doTest(Lookup.COMPLETE_STATEMENT_SELECT_CHAR as String) }
 
   public void testImportStringValue() throws Throwable {
     myFixture.addClass("package foo; public class StringValue {}")
