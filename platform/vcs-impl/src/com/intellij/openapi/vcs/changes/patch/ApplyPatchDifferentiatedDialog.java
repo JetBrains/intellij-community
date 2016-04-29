@@ -426,7 +426,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     public VirtualFile getVf() {
       if (myVf == null) {
         final VirtualFile file = VfsUtil.findFileByIoFile(new File(myPath), true);
-        myVf = (file != null) && (!file.isDirectory()) ? file : null;
+        myVf = file != null && !file.isDirectory() ? file : null;
       }
       return myVf;
     }

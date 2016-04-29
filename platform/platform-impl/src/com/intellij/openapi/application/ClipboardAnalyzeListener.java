@@ -22,20 +22,21 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class ClipboardAnalyzeListener extends ApplicationActivationListener.Adapter {
   private static final int MAX_SIZE = 100 * 1024;
-  private String myCachesClipboardValue = null;
+  @Nullable private String myCachedClipboardValue;
 
   @Override
   public void applicationActivated(final IdeFrame ideFrame) {
     final Runnable processClipboard = () -> {
       final String clipboard = ClipboardUtil.getTextInClipboard();
-      if (clipboard != null && clipboard.length() < MAX_SIZE && !clipboard.equals(myCachesClipboardValue)) {
-        myCachesClipboardValue = clipboard;
+      if (clipboard != null && clipboard.length() < MAX_SIZE && !clipboard.equals(myCachedClipboardValue)) {
+        myCachedClipboardValue = clipboard;
         final Project project = ideFrame.getProject();
-        if (project != null && canHandle(myCachesClipboardValue)) {
-          handle(project, myCachesClipboardValue);
+        if (project != null && !project.isDefault() && canHandle(myCachedClipboardValue)) {
+          handle(project, myCachedClipboardValue);
         }
       }
     };
@@ -54,10 +55,8 @@ public abstract class ClipboardAnalyzeListener extends ApplicationActivationList
   @Override
   public void applicationDeactivated(IdeFrame ideFrame) {
     if (SystemInfo.isMac) return;
-
-    myCachesClipboardValue = ClipboardUtil.getTextInClipboard();
+    myCachedClipboardValue = ClipboardUtil.getTextInClipboard();
   }
-
 
   public abstract boolean canHandle(@NotNull String value);
 }

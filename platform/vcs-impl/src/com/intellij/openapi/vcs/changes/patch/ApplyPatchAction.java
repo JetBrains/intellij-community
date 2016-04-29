@@ -142,8 +142,7 @@ public class ApplyPatchAction extends DumbAwareAction {
       return false;
     }
     final ApplyPatchDifferentiatedDialog dialog = new ApplyPatchDifferentiatedDialog(project, new ApplyPatchDefaultExecutor(project),
-                                                                                     Collections
-                                                                                       .singletonList(new ImportToShelfExecutor(project)),
+                                                                                     Collections.emptyList(),
                                                                                      ApplyPatchMode.APPLY_PATCH_IN_MEMORY, vFile);
     dialog.setModal(true);
     return dialog.showAndGet();
