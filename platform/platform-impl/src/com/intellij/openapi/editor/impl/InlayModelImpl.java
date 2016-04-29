@@ -58,7 +58,6 @@ public class InlayModelImpl implements InlayModel, Disposable {
   @Override
   public Inlay addInlineElement(int offset, int widthInPixels, @Nullable Inlay.Renderer renderer) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (!getInlineElementsInRange(offset, offset).isEmpty()) return null;
     DocumentEx document = myEditor.getDocument();
     offset = Math.max(0, Math.min(document.getTextLength(), offset));
     InlayImpl inlay = new InlayImpl(myEditor, offset, widthInPixels, renderer);
@@ -72,7 +71,7 @@ public class InlayModelImpl implements InlayModel, Disposable {
     ApplicationManager.getApplication().assertIsDispatchThread();
     List<Inlay> result = new ArrayList<>();
     myInlayTree.processOverlappingWith(startOffset, endOffset, inlay -> {
-      if (startOffset == endOffset || inlay.getOffset() != startOffset) result.add(inlay);
+      if (startOffset == endOffset || inlay.getOffset() != endOffset) result.add(inlay);
       return true;
     });
     Collections.sort(result, Comparator.comparingInt(Inlay::getOffset));

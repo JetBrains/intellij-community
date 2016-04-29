@@ -24,7 +24,7 @@ public interface InlayModel {
   @Nullable
   Inlay addInlineElement(int offset, int widthInPixels, Inlay.Renderer renderer);
 
-  // startOffset exclusive, endOffset inclusive
+  // startOffset inclusive, endOffset exclusive
   @NotNull
   List<Inlay> getInlineElementsInRange(int startOffset, int endOffset);
 }

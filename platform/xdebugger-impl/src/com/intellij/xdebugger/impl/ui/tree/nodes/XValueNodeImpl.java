@@ -167,15 +167,15 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
               FileEditor editor = FileEditorManager.getInstance(myTree.getProject()).getSelectedEditor(file);
               if (editor instanceof TextEditor) {
                 Editor e = ((TextEditor)editor).getEditor();
-                List<Inlay> existing = e.getInlayModel().getInlineElementsInRange(position.getOffset(), position.getOffset());
+                CharSequence text = e.getDocument().getImmutableCharSequence();
+                int offset = position.getOffset();
+                while (offset < text.length() && Character.isJavaIdentifierPart(text.charAt(offset))) offset++;
+                List<Inlay> existing = e.getInlayModel().getInlineElementsInRange(offset, offset);
                 for (Inlay inlay : existing) {
                   if (inlay.getRenderer() instanceof MyRenderer) {
                     Disposer.dispose(inlay);
                   }
                 }
-                CharSequence text = e.getDocument().getImmutableCharSequence();
-                int offset = position.getOffset();
-                while (offset < text.length() && Character.isJavaIdentifierPart(text.charAt(offset))) offset++;
                 int width = MyRenderer.FONT.fontMetrics().stringWidth(finalValue) + 5;
                 e.getInlayModel().addInlineElement(offset, width, new MyRenderer(finalValue));
               }

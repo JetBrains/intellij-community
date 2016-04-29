@@ -15,10 +15,7 @@
  */
 package com.intellij.openapi.editor.impl.view;
 
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.FoldRegion;
-import com.intellij.openapi.editor.Inlay;
-import com.intellij.openapi.editor.SoftWrap;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorImpl;
@@ -27,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -73,8 +71,6 @@ class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterato
   private Iterator<LineLayout.VisualFragment> myFragmentIterator;
   private List<Inlay> myInlays;
   private int myCurrentInlayIndex;
-  private boolean myIsInlay;
-  private float myInlaysTotalWidth;
   private float myCurrentX;
   private int myCurrentVisualColumn;
   private LineLayout.VisualFragment myDelegate;
@@ -152,20 +148,60 @@ class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterato
       myCurrentVisualColumn = currentOrPrevWrap.getIndentInColumns();
     }
     myNextWrapOffset = followingWrap == null ? Integer.MAX_VALUE : followingWrap.getStart();
-    setFragmentIterator();
+    setInlaysAndFragmentIterator();
+  }
+
+  private void setInlaysAndFragmentIterator() {
+    mySegmentEndOffset = getCurrentFoldRegionStartOffset();
+    if (mySegmentEndOffset > mySegmentStartOffset) {
+      mySegmentEndOffset = Math.min(myNextWrapOffset, Math.min(mySegmentEndOffset, myDocument.getLineEndOffset(myCurrentEndLogicalLine)));
+      boolean normalLineEnd = mySegmentEndOffset < getCurrentFoldRegionStartOffset() && mySegmentEndOffset < myNextWrapOffset;
+      myInlays = mySegmentEndOffset > mySegmentStartOffset
+                 ? myView.getEditor().getInlayModel().getInlineElementsInRange(mySegmentStartOffset, mySegmentEndOffset +
+                                                                                                     // including inlays at line end
+                                                                                                     (normalLineEnd ? 1 : 0))
+                 : Collections.emptyList();
+      if (!myInlays.isEmpty() && myInlays.get(0).getOffset() == mySegmentStartOffset) {
+        myCurrentInlayIndex = 0;
+        myFragmentIterator = null;
+      }
+      else {
+        myCurrentInlayIndex = -1;
+        setFragmentIterator();
+      }
+    }
   }
 
   private void setFragmentIterator() {
-    mySegmentEndOffset = getCurrentFoldRegionStartOffset();
-    if (mySegmentEndOffset > mySegmentStartOffset) {
-      int line = myDocument.getLineNumber(mySegmentStartOffset);
-      mySegmentEndOffset = Math.min(myNextWrapOffset, Math.min(mySegmentEndOffset, myDocument.getLineEndOffset(line)));
-      int lineStartOffset = myDocument.getLineStartOffset(line);
-      myFragmentIterator = myView.getTextLayoutCache().getLineLayout(line).
-        getFragmentsInVisualOrder(myView, line, myCurrentX, myCurrentVisualColumn,
-                                  mySegmentStartOffset - lineStartOffset, mySegmentEndOffset - lineStartOffset,
-                                  myQuickEvaluationListener);
+    int startOffset = myCurrentInlayIndex < 0 ? mySegmentStartOffset : myInlays.get(myCurrentInlayIndex).getOffset();
+    int nextIndex = getNextInlayIndex();
+    int endOffset = nextIndex < myInlays.size() ? myInlays.get(nextIndex).getOffset() : mySegmentEndOffset;
+    int lineStartOffset = myDocument.getLineStartOffset(myCurrentEndLogicalLine);
+    myFragmentIterator = myView.getTextLayoutCache().getLineLayout(myCurrentEndLogicalLine).
+      getFragmentsInVisualOrder(myView, myCurrentEndLogicalLine, myCurrentX, myCurrentVisualColumn,
+                                startOffset - lineStartOffset, endOffset - lineStartOffset,
+                                myQuickEvaluationListener);
+  }
+
+  private int getNextInlayIndex() {
+    if (myCurrentInlayIndex < 0) return 0;
+    if (myCurrentInlayIndex >= myInlays.size()) return myCurrentInlayIndex;
+    int currentOffset = myInlays.get(myCurrentInlayIndex).getOffset();
+    int nextIndex = myCurrentInlayIndex + 1;
+    while (nextIndex < myInlays.size() && myInlays.get(nextIndex).getOffset() == currentOffset) nextIndex++;
+    return nextIndex;
+  }
+
+  private List<Inlay> getCurrentInlays() {
+    return myInlays.subList(myCurrentInlayIndex, getNextInlayIndex());
+  }
+
+  private int getCurrentInlaysWidth() {
+    int width = 0;
+    for (Inlay inlay : getCurrentInlays()) {
+      width += inlay.getWidthInPixels();
     }
+    return width;
   }
 
   private int getCurrentFoldRegionStartOffset() {
@@ -211,10 +247,7 @@ class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterato
 
   @Override
   public boolean hasNext() {
-    return mySegmentStartOffset == getCurrentFoldRegionStartOffset()
-           || myInlays != null && (myCurrentInlayIndex < myInlays.size() ||
-                                   myIsInlay && myInlays.get(myCurrentInlayIndex - 1).getOffset() < myDelegate.getMaxOffset() + myDocument.getLineStartOffset(myCurrentStartLogicalLine))
-           || myFragmentIterator.hasNext();
+    return mySegmentStartOffset == getCurrentFoldRegionStartOffset() || myFragmentIterator == null || myFragmentIterator.hasNext();
   }
 
   @Override
@@ -222,45 +255,36 @@ class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterato
     if (!hasNext()) throw new NoSuchElementException();
     if (mySegmentStartOffset == getCurrentFoldRegionStartOffset()) {
       myDelegate = null;
-      myInlays = null;
-      myCurrentInlayIndex = 0;
-      myIsInlay = false;
       myFoldRegion = myRegions[myCurrentFoldRegionIndex];
       assert myFoldRegion.isValid();
-      
+
       mySegmentStartOffset = myFoldRegion.getEndOffset();
       myCurrentX += getFoldRegionWidthInPixels(myFoldRegion);
       myCurrentVisualColumn += getFoldRegionWidthInColumns(myFoldRegion);
       myCurrentStartLogicalLine = myCurrentEndLogicalLine;
       myCurrentEndLogicalLine = myDocument.getLineNumber(mySegmentStartOffset);
       myCurrentFoldRegionIndex++;
+      setInlaysAndFragmentIterator();
+    }
+    else if (myFragmentIterator == null) {
+      myDelegate = null;
+      myFoldRegion = null;
+      myCurrentStartLogicalLine = myCurrentEndLogicalLine;
+      myCurrentX += getCurrentInlaysWidth();
       setFragmentIterator();
     }
     else {
-      if (myInlays != null) {
-        if (!myIsInlay && myCurrentInlayIndex < myInlays.size() ||
-            myIsInlay && myInlays.get(myCurrentInlayIndex).getOffset() < myDelegate.getMaxOffset() + myDocument.getLineStartOffset(myCurrentStartLogicalLine)) {
-          if (myIsInlay) myCurrentInlayIndex++;
-          myIsInlay = !myIsInlay;
+      myDelegate = myFragmentIterator.next();
+      myFoldRegion = null;
+      myCurrentX = myDelegate.getEndX();
+      myCurrentVisualColumn = myDelegate.getEndVisualColumn();
+      myCurrentStartLogicalLine = myCurrentEndLogicalLine;
+      if (!myFragmentIterator.hasNext()) {
+        myCurrentInlayIndex = getNextInlayIndex();
+        if (myCurrentInlayIndex < myInlays.size()) {
+          myFragmentIterator = null;
         }
         else {
-          for (Inlay inlay : myInlays) {
-            myInlaysTotalWidth += inlay.getWidthInPixels();
-          }
-          myInlays = null;
-        }
-      }
-      if (myInlays == null) {
-        myDelegate = myFragmentIterator.next();
-        myFoldRegion = null;
-        myCurrentX = myDelegate.getEndX();
-        myCurrentVisualColumn = myDelegate.getEndVisualColumn();
-        myCurrentStartLogicalLine = myCurrentEndLogicalLine;
-        int lineStartOffset = myDocument.getLineStartOffset(myCurrentStartLogicalLine);
-        myInlays = myView.getEditor().getInlayModel().getInlineElementsInRange(myDelegate.getMinOffset() + lineStartOffset, myDelegate.getMaxOffset() + lineStartOffset);
-        myCurrentInlayIndex = 0;
-        myIsInlay = false;
-        if (!myFragmentIterator.hasNext()) {
           mySegmentStartOffset = mySegmentEndOffset;
         }
       }
@@ -281,43 +305,31 @@ class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterato
     boolean isCollapsedFoldRegion() {
       return myDelegate == null;
     }
-    
+
     int getMinLogicalColumn() {
-      return myDelegate == null ? myView.offsetToLogicalPosition(myFoldRegion.getStartOffset()).column :
-             myIsInlay ? myView.offsetToLogicalPosition(myInlays.get(myCurrentInlayIndex).getOffset()).column :
-             myCurrentInlayIndex == 0 ? myDelegate.getMinLogicalColumn() :
-             myView.offsetToLogicalPosition(myInlays.get(myCurrentInlayIndex - 1).getOffset()).column;
+      return myDelegate == null ? myView.offsetToLogicalPosition(getMinOffset()).column : myDelegate.getMinLogicalColumn();
     }
-    
+
     int getMaxLogicalColumn() {
-      return myDelegate == null ? myView.offsetToLogicalPosition(myFoldRegion.getEndOffset()).column :
-             myIsInlay ? myView.offsetToLogicalPosition(myInlays.get(myCurrentInlayIndex).getOffset()).column :
-             myCurrentInlayIndex == myInlays.size() ? myDelegate.getMaxLogicalColumn() :
-             myView.offsetToLogicalPosition(myInlays.get(myCurrentInlayIndex).getOffset()).column;
+      return myDelegate == null ? myView.offsetToLogicalPosition(getMaxOffset()).column : myDelegate.getMaxLogicalColumn();
     }
-    
+
     int getStartLogicalColumn() {
-      return myDelegate == null ? myView.offsetToLogicalPosition(myFoldRegion.getStartOffset()).column :
-             myIsInlay ? myView.offsetToLogicalPosition(myInlays.get(myCurrentInlayIndex).getOffset()).column :
-             myCurrentInlayIndex == 0 ? myDelegate.getStartLogicalColumn() :
-             myView.offsetToLogicalPosition(myInlays.get(myCurrentInlayIndex - 1).getOffset()).column;
+      return myDelegate == null ? myView.offsetToLogicalPosition(getStartOffset()).column : myDelegate.getStartLogicalColumn();
     }
 
     int getEndLogicalColumn() {
-      return myDelegate == null ? myView.offsetToLogicalPosition(myFoldRegion.getEndOffset()).column :
-             myIsInlay ? myView.offsetToLogicalPosition(myInlays.get(myCurrentInlayIndex).getOffset()).column :
-             myCurrentInlayIndex == myInlays.size() ? myDelegate.getEndLogicalColumn() :
-             myView.offsetToLogicalPosition(myInlays.get(myCurrentInlayIndex).getOffset()).column;
+      return myDelegate == null ? myView.offsetToLogicalPosition(getEndOffset()).column : myDelegate.getEndLogicalColumn();
     }
-    
+
     int getStartVisualColumn() {
-      return myDelegate == null ? myCurrentVisualColumn - getFoldRegionWidthInColumns(myFoldRegion):
-              myDelegate.logicalToVisualColumn(getStartLogicalColumn());
+      return myDelegate != null
+             ? myDelegate.getStartVisualColumn()
+             : myFoldRegion != null ? myCurrentVisualColumn - getFoldRegionWidthInColumns(myFoldRegion) : myCurrentVisualColumn;
     }
 
     int getEndVisualColumn() {
-      return myDelegate == null ? myCurrentVisualColumn :
-              myDelegate.logicalToVisualColumn(getEndLogicalColumn());
+      return myDelegate == null ? myCurrentVisualColumn : myDelegate.getEndVisualColumn();
     }
     
     int getStartLogicalLine() {
@@ -327,111 +339,90 @@ class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterato
     int getEndLogicalLine() {
       return myCurrentEndLogicalLine;
     }
-    
+
     float getStartX() {
-      if (myDelegate == null) {
-        return myInlaysTotalWidth + myCurrentX - getFoldRegionWidthInPixels(myFoldRegion);
-      }
-      return offsetToX(getMinOffset()) - (myIsInlay ? myInlays.get(myCurrentInlayIndex).getWidthInPixels() : 0);
+      return  myDelegate != null ? myDelegate.getStartX()
+                                 : myCurrentX - (myFoldRegion != null ? getFoldRegionWidthInPixels(myFoldRegion) : getCurrentInlaysWidth());
     }
 
     float getEndX() {
-      return offsetToX(getMaxOffset());
+      return myCurrentX;
     }
 
     // column is expected to be between minLogicalColumn and maxLogicalColumn for this fragment
     int logicalToVisualColumn(int column) {
-      return myDelegate == null ? myCurrentVisualColumn - getFoldRegionWidthInColumns(myFoldRegion) :
-             myDelegate.logicalToVisualColumn(column);
+      return myDelegate != null ? myDelegate.logicalToVisualColumn(column)
+             : myFoldRegion != null ? myCurrentVisualColumn - getFoldRegionWidthInColumns(myFoldRegion) : getEndVisualColumn();
     }
 
     // column is expected to be between startVisualColumn and endVisualColumn for this fragment
     int visualToLogicalColumn(int column) {
-      return myDelegate == null ? (column == myCurrentVisualColumn ? getEndLogicalColumn() : getStartLogicalColumn()) :
-             myDelegate.visualToLogicalColumn(column);
+      return myDelegate != null ? myDelegate.visualToLogicalColumn(column)
+                                : myFoldRegion != null ? (column == myCurrentVisualColumn ? getEndLogicalColumn() : getStartLogicalColumn())
+                                                       : getEndLogicalColumn();
     }
 
     // returns array of two elements 
     // - first one is visual column, 
     // - second one is 1 if target location is closer to larger columns and 0 otherwise
     int[] xToVisualColumn(float x) {
-      if (myDelegate == null) {
+      if (myDelegate != null) {
+        return myDelegate.xToVisualColumn(x);
+      }
+      else if (myFoldRegion != null) {
         int[] column = getVisualColumnForXInsideFoldRegion(myFoldRegion, x - getStartX());
         column[0] += getStartVisualColumn();
         return column;
       }
-      if (myIsInlay) {
+      else {
         boolean closerToStart = x < (getStartX() + getEndX()) / 2;
         return new int[]{getEndVisualColumn(), closerToStart ? 0 : 1};
       }
-      x -= myInlaysTotalWidth;
-      for (int i = 0; i < myCurrentInlayIndex; i++) x -= myInlays.get(i).getWidthInPixels();
-      return myDelegate.xToVisualColumn(x);
     }
 
     float visualColumnToX(int column) {
-      if (myDelegate == null) {
-        return getStartX() +
-               getXForVisualColumnInsideFoldRegion(myFoldRegion, column - getStartVisualColumn());
-      }
-      if (myIsInlay) {
-        return getEndX();
-      }
-      float inlaysSize = 0;
-      for (int i = 0; i < myCurrentInlayIndex; i++) {
-        inlaysSize += myInlays.get(i).getWidthInPixels();
-      }
-      return myInlaysTotalWidth + inlaysSize + myDelegate.visualColumnToX(column);
+      return myDelegate != null
+             ? myDelegate.visualColumnToX(column)
+             : myFoldRegion != null
+               ? getStartX() + getXForVisualColumnInsideFoldRegion(myFoldRegion, column - myCurrentVisualColumn +
+                                                                                 getFoldRegionWidthInColumns(myFoldRegion))
+               : getEndX();
     }
 
     // absolute
     int getStartOffset() {
-      return myDelegate == null ? myFoldRegion.getStartOffset() :
-             myIsInlay ? myInlays.get(myCurrentInlayIndex).getOffset() :
-             myCurrentInlayIndex == 0 ? myDelegate.getStartOffset() + myDocument.getLineStartOffset(myCurrentStartLogicalLine) :
-             myInlays.get(myCurrentInlayIndex - 1).getOffset();
+      return myDelegate != null ? myDelegate.getStartOffset() + myDocument.getLineStartOffset(myCurrentStartLogicalLine)
+                                : myFoldRegion != null ? myFoldRegion.getStartOffset() : myInlays.get(myCurrentInlayIndex).getOffset();
     }
 
     // absolute
     int getEndOffset() {
-      return myDelegate == null ? myFoldRegion.getEndOffset() :
-             myIsInlay ? myInlays.get(myCurrentInlayIndex).getOffset() :
-             myCurrentInlayIndex == myInlays.size() ? myDelegate.getEndOffset() + myDocument.getLineStartOffset(myCurrentStartLogicalLine) :
-             myInlays.get(myCurrentInlayIndex).getOffset();
+      return myDelegate != null ? myDelegate.getEndOffset() + myDocument.getLineStartOffset(myCurrentStartLogicalLine)
+                                : myFoldRegion != null ? myFoldRegion.getEndOffset() : myInlays.get(myCurrentInlayIndex).getOffset();
     }
 
     // absolute
     int getMinOffset() {
-      return myDelegate == null ? myFoldRegion.getStartOffset() :
-             myIsInlay ? myInlays.get(myCurrentInlayIndex).getOffset() :
-             myCurrentInlayIndex == 0 ? myDelegate.getMinOffset() + myDocument.getLineStartOffset(myCurrentStartLogicalLine) :
-             myInlays.get(myCurrentInlayIndex - 1).getOffset();
+      return myDelegate != null ? myDelegate.getMinOffset() + myDocument.getLineStartOffset(myCurrentStartLogicalLine)
+                                : myFoldRegion != null ? myFoldRegion.getStartOffset() : myInlays.get(myCurrentInlayIndex).getOffset();
     }
 
     // absolute
     int getMaxOffset() {
-      return myDelegate == null ? myFoldRegion.getEndOffset() :
-             myIsInlay ? myInlays.get(myCurrentInlayIndex).getOffset() :
-             myCurrentInlayIndex == myInlays.size() ? myDelegate.getMaxOffset() + myDocument.getLineStartOffset(myCurrentStartLogicalLine) :
-             myInlays.get(myCurrentInlayIndex).getOffset();
+      return myDelegate != null ? myDelegate.getMaxOffset() + myDocument.getLineStartOffset(myCurrentStartLogicalLine)
+                                : myFoldRegion != null ? myFoldRegion.getEndOffset() : myInlays.get(myCurrentInlayIndex).getOffset();
     }
 
     // offset is absolute
     float offsetToX(int offset) {
-      if (myDelegate == null) {
-        return getStartX() + getXForOffsetInsideFoldRegion(myFoldRegion, offset);
-      }
-      float inlaysSize = 0;
-      for (int i = 0; i < myCurrentInlayIndex + (myIsInlay ? 1 : 0); i++) {
-        inlaysSize += myInlays.get(i).getWidthInPixels();
-      }
-      return myInlaysTotalWidth + inlaysSize + myDelegate.offsetToX(offset - myDocument.getLineStartOffset(myCurrentStartLogicalLine));
+      return myDelegate != null
+             ? myDelegate.offsetToX(offset - myDocument.getLineStartOffset(myCurrentStartLogicalLine))
+             : myFoldRegion != null ? getStartX() + getXForOffsetInsideFoldRegion(myFoldRegion, offset) : getEndX();
     }
 
     // offsets are absolute
     float offsetToX(float startX, int startOffset, int offset) {
       assert myDelegate != null;
-      if (myIsInlay) return startX + myInlays.get(myCurrentInlayIndex).getWidthInPixels();
       int lineStartOffset = myDocument.getLineStartOffset(myCurrentStartLogicalLine);
       return myDelegate.offsetToX(startX, startOffset - lineStartOffset, offset - lineStartOffset);
     }
@@ -444,25 +435,25 @@ class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterato
       return myFoldRegion;
     }
 
-    Inlay getCurrentInlay() {
-      return myIsInlay ? myInlays.get(myCurrentInlayIndex) : null;
+    List<Inlay> getCurrentInlays() {
+      if (myDelegate != null || myFoldRegion != null) return null;
+      return VisualLineFragmentsIterator.this.getCurrentInlays();
     }
 
     // columns are visual (relative to fragment's start)
     void draw(Graphics2D g, float x, float y, int startRelativeColumn, int endRelativeColumn) {
-      if (myDelegate == null) {
+      if (myDelegate != null) {
+        myDelegate.draw(g, x, y, startRelativeColumn, endRelativeColumn);
+      }
+      else if (myFoldRegion != null) {
         for (LineLayout.VisualFragment fragment : myView.getFoldRegionLayout(myFoldRegion).getFragmentsInVisualOrder(x)) {
           int fragmentStart = fragment.getStartVisualColumn();
           int fragmentEnd = fragment.getEndVisualColumn();
           if (fragmentStart < endRelativeColumn && fragmentEnd > startRelativeColumn) {
-            fragment.draw(g, fragment.getStartX(), y, 
+            fragment.draw(g, fragment.getStartX(), y,
                           Math.max(0, startRelativeColumn - fragmentStart), Math.min(fragmentEnd, endRelativeColumn) - fragmentStart);
           }
         }
-      }
-      else if (!myIsInlay) {
-        int columnShift = myCurrentInlayIndex == 0 ? 0 : myInlays.get(myCurrentInlayIndex - 1).getOffset() - myDelegate.getStartOffset() - myDocument.getLineStartOffset(myCurrentStartLogicalLine);
-        myDelegate.draw(g, x, y, startRelativeColumn + columnShift, endRelativeColumn + columnShift);
       }
     }
   }

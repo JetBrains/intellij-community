@@ -42,9 +42,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.List;
 
 /**
  * Renders editor contents.
@@ -364,11 +363,15 @@ class EditorPainter implements TextDrawingCallback {
         @Override
         public void paint(Graphics2D g, VisualLineFragmentsIterator.Fragment fragment, int start, int end, 
                           TextAttributes attributes, float xStart, float xEnd, int y) {
-          Inlay inlay = fragment.getCurrentInlay();
-          if (inlay != null) {
-            Inlay.Renderer renderer = inlay.getRenderer();
-            if (renderer != null) {
-              renderer.paint(g, new Rectangle((int) xStart, y - myView.getAscent(), (int) xEnd - (int) xStart, myView.getLineHeight()));
+          List<Inlay> inlays = fragment.getCurrentInlays();
+          if (inlays != null) {
+            for (Inlay inlay : inlays) {
+              Inlay.Renderer renderer = inlay.getRenderer();
+              int width = inlay.getWidthInPixels();
+              if (renderer != null) {
+                renderer.paint(g, new Rectangle((int) xStart, y - myView.getAscent(), width, myView.getLineHeight()));
+              }
+              xStart += width;
             }
             return;
           }

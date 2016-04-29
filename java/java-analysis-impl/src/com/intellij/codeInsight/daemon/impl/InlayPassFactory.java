@@ -41,6 +41,7 @@ import java.awt.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class InlayPassFactory extends AbstractProjectComponent implements TextEditorHighlightingPassFactory {
   public InlayPassFactory(Project project, TextEditorHighlightingPassRegistrar registrar) {
@@ -141,12 +142,12 @@ public class InlayPassFactory extends AbstractProjectComponent implements TextEd
     @Override
     public void doApplyInformationToEditor() {
       assert myDocument != null;
-      for (Inlay inlay : myEditor.getInlayModel().getInlineElementsInRange(-1, myDocument.getTextLength())) {
+      for (Inlay inlay : myEditor.getInlayModel().getInlineElementsInRange(0, myDocument.getTextLength() + 1)) {
         if (!(inlay.getRenderer() instanceof MyRenderer)) continue;
         int offset = inlay.getOffset();
         String oldText = ((MyRenderer)inlay.getRenderer()).myText;
         String newText = myAnnotations.get(offset);
-        if (newText == null || newText.equals(oldText)) Disposer.dispose(inlay);
+        if (!Objects.equals(newText, oldText)) Disposer.dispose(inlay);
         else myAnnotations.remove(offset);
       }
       for (Map.Entry<Integer, String> e : myAnnotations.entrySet()) {
