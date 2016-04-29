@@ -1145,12 +1145,12 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       fireWriteActionFinished(clazz);
       // fire listeners before popping stack because if somebody starts write action in a listener,
       // there is a danger of unlocking the write lock before other listeners have been run (since write lock became non-reentrant).
+    }
+    finally {
       myWriteActionsStack.pop();
       if (gatherWriteActionStatistics && myWriteActionsStack.isEmpty() && !myWriteActionPending) {
         writePauses.finished("write action ("+clazz+")");
       }
-    }
-    finally {
       if (myWriteActionsStack.isEmpty()) {
         myLock.writeUnlock();
       }
