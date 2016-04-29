@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,9 +34,9 @@ import java.util.List;
 import java.util.Set;
 
 import static com.intellij.codeInspection.bytecodeAnalysis.AbstractValues.*;
+import static com.intellij.codeInspection.bytecodeAnalysis.Direction.In;
 import static com.intellij.codeInspection.bytecodeAnalysis.PResults.*;
 import static org.jetbrains.org.objectweb.asm.Opcodes.*;
-import static com.intellij.codeInspection.bytecodeAnalysis.Direction.*;
 
 abstract class PResults {
   // SoP = sum of products
@@ -211,9 +211,9 @@ class NonNullInAnalysis extends Analysis<PResult> {
     }
   }
 
-  private int id = 0;
-  private Frame<BasicValue> nextFrame = null;
-  private PResult subResult = null;
+  private int id;
+  private Frame<BasicValue> nextFrame;
+  private PResult subResult;
 
   @NotNull
   protected Equation analyze() throws AnalyzerException {
@@ -383,7 +383,7 @@ class NonNullInAnalysis extends Analysis<PResult> {
 
   }
 
-  private int pendingTop = 0;
+  private int pendingTop;
 
   private void pendingPush(PendingAction action) throws AnalyzerException {
     if (pendingTop >= STEPS_LIMIT) {
@@ -437,11 +437,11 @@ class NullableInAnalysis extends Analysis<PResult> {
     }
   }
 
-  private int id = 0;
-  private Frame<BasicValue> nextFrame = null;
+  private int id;
+  private Frame<BasicValue> nextFrame;
   private PResult myResult = Identity;
   private PResult subResult = Identity;
-  private boolean top = false;
+  private boolean top;
 
   @NotNull
   protected Equation analyze() throws AnalyzerException {
@@ -573,7 +573,7 @@ class NullableInAnalysis extends Analysis<PResult> {
 
   }
 
-  private int pendingTop = 0;
+  private int pendingTop;
 
   private void pendingPush(State state) throws AnalyzerException {
     if (pendingTop >= STEPS_LIMIT) {
@@ -602,7 +602,7 @@ class NullableInAnalysis extends Analysis<PResult> {
 }
 
 abstract class NullityInterpreter extends BasicInterpreter {
-  boolean top = false;
+  boolean top;
   final boolean nullableAnalysis;
   final int nullityMask;
   private PResult subResult = Identity;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.GenerateMembersHandlerBase");
 
   private final String myChooserTitle;
-  protected boolean myToCopyJavaDoc = false;
+  protected boolean myToCopyJavaDoc;
 
   public GenerateMembersHandlerBase(String chooserTitle) {
     myChooserTitle = chooserTitle;

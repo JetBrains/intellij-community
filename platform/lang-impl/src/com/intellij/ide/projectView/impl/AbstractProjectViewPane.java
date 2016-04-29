@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-/**
- * @author cdr
- */
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.DataManager;

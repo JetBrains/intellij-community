@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,11 @@
  * limitations under the License.
  */
 
-/**
- * @author cdr
- */
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
@@ -68,6 +66,18 @@ public class IntentionDescriptionPanel {
   private final List<IntentionUsagePanel> myAfterUsagePanels = new ArrayList<IntentionUsagePanel>();
   @NonNls private static final String BEFORE_TEMPLATE = "before.java.template";
   @NonNls private static final String AFTER_TEMPLATE = "after.java.template";
+
+  public IntentionDescriptionPanel() {
+    myDescriptionBrowser.addHyperlinkListener(
+      new HyperlinkListener() {
+        public void hyperlinkUpdate(HyperlinkEvent e) {
+          if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+            BrowserUtil.browse(e.getURL());
+          }
+        }
+      }
+    );
+  }
 
   // TODO 134099: see SingleInspectionProfilePanel#readHTML
   private boolean readHTML(String text) {

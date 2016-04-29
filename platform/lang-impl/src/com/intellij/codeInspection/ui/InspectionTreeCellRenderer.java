@@ -28,10 +28,10 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.SoftHashMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Comparator;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
@@ -59,20 +59,14 @@ class InspectionTreeCellRenderer extends ColoredTreeCellRenderer {
 
       @Override
       protected Map<HighlightDisplayLevel, Integer> createMap() {
-        return new TreeMap<>(new Comparator<Object>() {
-
-          @Override
-          public int compare(Object o1, Object o2) {
-            return -myRegistrar.compare(((HighlightDisplayLevel) o1).getSeverity(), ((HighlightDisplayLevel) o2).getSeverity());
-          }
-        });
+        return new TreeMap<>((o1, o2) -> -myRegistrar.compare(o1.getSeverity(), o2.getSeverity()));
       }
     };
     myView = view;
   }
 
   @Override
-  public void customizeCellRenderer(JTree tree,
+  public void customizeCellRenderer(@NotNull JTree tree,
                                     Object value,
                                     boolean selected,
                                     boolean expanded,

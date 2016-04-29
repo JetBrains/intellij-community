@@ -247,7 +247,7 @@ public class PsiModificationTrackerTest extends CodeInsightTestCase {
 
     // gc softly-referenced file and AST
     PlatformTestUtil.tryGcSoftlyReachableObjects();
-    final PsiManagerEx psiManager = (PsiManagerEx)PsiManager.getInstance(getProject());
+    final PsiManagerEx psiManager = PsiManagerEx.getInstanceEx(getProject());
     assertNull(psiManager.getFileManager().getCachedPsiFile(file));
 
     assertFalse(count1 == tracker.getJavaStructureModificationCount());
@@ -257,7 +257,7 @@ public class PsiModificationTrackerTest extends CodeInsightTestCase {
 
   public void testClassShouldNotDisappearWithoutEvents_NoDocument() throws IOException {
     PsiModificationTracker tracker = PsiManager.getInstance(getProject()).getModificationTracker();
-    final PsiManagerEx psiManager = (PsiManagerEx)PsiManager.getInstance(getProject());
+    final PsiManagerEx psiManager = PsiManagerEx.getInstanceEx(getProject());
 
     final VirtualFile file = addFileToProject("Foo.java", "class Foo {}").getVirtualFile();
     assertNotNull(JavaPsiFacade.getInstance(getProject()).findClass("Foo", GlobalSearchScope.allScope(getProject())));
@@ -279,7 +279,7 @@ public class PsiModificationTrackerTest extends CodeInsightTestCase {
     PsiModificationTracker tracker = PsiManager.getInstance(getProject()).getModificationTracker();
     long count0 = tracker.getJavaStructureModificationCount();
 
-    final PsiManagerEx psiManager = (PsiManagerEx)PsiManager.getInstance(getProject());
+    final PsiManagerEx psiManager = PsiManagerEx.getInstanceEx(getProject());
     VirtualFile parentDir = createChildDirectory(getProject().getBaseDir(), "tmp");
 
     assertNull(((FileManagerImpl)psiManager.getFileManager()).getCachedDirectory(parentDir));
@@ -296,7 +296,7 @@ public class PsiModificationTrackerTest extends CodeInsightTestCase {
     PsiModificationTracker tracker = PsiManager.getInstance(getProject()).getModificationTracker();
     long count0 = tracker.getJavaStructureModificationCount();
 
-    final PsiManagerEx psiManager = (PsiManagerEx)PsiManager.getInstance(getProject());
+    final PsiManagerEx psiManager = PsiManagerEx.getInstanceEx(getProject());
     VirtualFile parentDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(createTempDirectory());
     assertNull(((FileManagerImpl)psiManager.getFileManager()).getCachedDirectory(parentDir));
 
@@ -310,7 +310,7 @@ public class PsiModificationTrackerTest extends CodeInsightTestCase {
 
   public void testClassShouldNotDisappearWithoutEvents_VirtualFileDeleted() throws IOException {
     PsiModificationTracker tracker = PsiManager.getInstance(getProject()).getModificationTracker();
-    final PsiManagerEx psiManager = (PsiManagerEx)PsiManager.getInstance(getProject());
+    final PsiManagerEx psiManager = PsiManagerEx.getInstanceEx(getProject());
 
     final VirtualFile file = addFileToProject("Foo.java", "class Foo {}").getVirtualFile();
     assertNotNull(JavaPsiFacade.getInstance(getProject()).findClass("Foo", GlobalSearchScope.allScope(getProject())));
@@ -328,7 +328,7 @@ public class PsiModificationTrackerTest extends CodeInsightTestCase {
 
   public void testClassShouldNotDisappearWithoutEvents_ParentVirtualDirectoryDeleted() throws Exception {
     PsiModificationTracker tracker = PsiManager.getInstance(getProject()).getModificationTracker();
-    final PsiManagerEx psiManager = (PsiManagerEx)PsiManager.getInstance(getProject());
+    final PsiManagerEx psiManager = PsiManagerEx.getInstanceEx(getProject());
 
     final VirtualFile file = addFileToProject("foo/Foo.java", "package foo; class Foo {}").getVirtualFile();
     assertNotNull(JavaPsiFacade.getInstance(getProject()).findClass("foo.Foo", GlobalSearchScope.allScope(getProject())));
@@ -347,7 +347,7 @@ public class PsiModificationTrackerTest extends CodeInsightTestCase {
 
   public void testVirtualFileRename_WithPsi() throws IOException {
     PsiModificationTracker tracker = PsiManager.getInstance(getProject()).getModificationTracker();
-    final PsiManagerEx psiManager = (PsiManagerEx)PsiManager.getInstance(getProject());
+    final PsiManagerEx psiManager = PsiManagerEx.getInstanceEx(getProject());
     GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
 
     final VirtualFile file = addFileToProject("foo/Foo.java", "package foo; class Foo {}").getVirtualFile();

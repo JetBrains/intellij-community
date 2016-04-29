@@ -29,8 +29,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.NullableFunction;
-import com.intellij.util.PairProcessor;
 import com.intellij.util.WalkingState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
@@ -42,7 +40,7 @@ import java.util.*;
 /**
  * User: cdr
  */
-public class SliceNullnessAnalyzer {
+class SliceNullnessAnalyzer {
   private static void groupByNullness(NullAnalysisResult result, SliceRootNode oldRoot, final Map<SliceNode, NullAnalysisResult> map) {
     SliceRootNode root = createNewTree(result, oldRoot, map);
 
@@ -51,13 +49,13 @@ public class SliceNullnessAnalyzer {
   }
 
   @NotNull
-  public static SliceRootNode createNewTree(NullAnalysisResult result, SliceRootNode oldRoot, final Map<SliceNode, NullAnalysisResult> map) {
+  static SliceRootNode createNewTree(NullAnalysisResult result, SliceRootNode oldRoot, final Map<SliceNode, NullAnalysisResult> map) {
     SliceRootNode root = oldRoot.copy();
     assert oldRoot.myCachedChildren.size() == 1;
     SliceNode oldRootStart = oldRoot.myCachedChildren.get(0);
     root.setChanged();
     root.targetEqualUsages.clear();
-    root.myCachedChildren = new ArrayList<SliceNode>();
+    root.myCachedChildren = new ArrayList<>();
 
     createValueRootNode(result, oldRoot, map, root, oldRootStart, "Null Values", NullAnalysisResult.NULLS);
     createValueRootNode(result, oldRoot, map, root, oldRootStart, "NotNull Values", NullAnalysisResult.NOT_NULLS);
@@ -80,37 +78,31 @@ public class SliceNullnessAnalyzer {
     SliceLeafValueClassNode valueRoot = new SliceLeafValueClassNode(root.getProject(), root, nodeName);
     root.myCachedChildren.add(valueRoot);
 
-    Set<PsiElement> uniqueValues = new THashSet<PsiElement>(groupedByValue, SliceLeafAnalyzer.LEAF_ELEMENT_EQUALITY);
+    Set<PsiElement> uniqueValues = new THashSet<>(groupedByValue, SliceLeafAnalyzer.LEAF_ELEMENT_EQUALITY);
     for (final PsiElement expression : uniqueValues) {
-      SliceNode newRoot = SliceLeafAnalyzer.filterTree(oldRootStart, new NullableFunction<SliceNode, SliceNode>() {
-        @Override
-        public SliceNode fun(SliceNode oldNode) {
-          if (oldNode.getDuplicate() != null) {
-            return null;
-          }
-
-          for (PsiElement nullSuspect : group(oldNode, map, group)) {
-            if (PsiEquivalenceUtil.areElementsEquivalent(nullSuspect, expression)) {
-              return oldNode.copy();
-            }
-          }
+      SliceNode newRoot = SliceLeafAnalyzer.filterTree(oldRootStart, oldNode -> {
+        if (oldNode.getDuplicate() != null) {
           return null;
         }
-      },new PairProcessor<SliceNode, List<SliceNode>>() {
-        @Override
-        public boolean process(SliceNode node, List<SliceNode> children) {
-          if (!children.isEmpty()) return true;
-          PsiElement element = node.getValue().getElement();
-          if (element == null) return false;
-          return PsiEquivalenceUtil.areElementsEquivalent(element, expression); // leaf can be there only if it's filtering expression
+
+        for (PsiElement nullSuspect : group(oldNode, map, group)) {
+          if (PsiEquivalenceUtil.areElementsEquivalent(nullSuspect, expression)) {
+            return oldNode.copy();
+          }
         }
+        return null;
+      }, (node, children) -> {
+        if (!children.isEmpty()) return true;
+        PsiElement element = node.getValue().getElement();
+        if (element == null) return false;
+        return PsiEquivalenceUtil.areElementsEquivalent(element, expression); // leaf can be there only if it's filtering expression
       });
       valueRoot.myCachedChildren.add(new SliceLeafValueRootNode(root.getProject(), expression, valueRoot, Collections.singletonList(newRoot),
                                                                 oldRoot.getValue().params));
     }
   }
 
-  public static void startAnalyzeNullness(@NotNull AbstractTreeStructure treeStructure, @NotNull Runnable finish) {
+  static void startAnalyzeNullness(@NotNull AbstractTreeStructure treeStructure, @NotNull Runnable finish) {
     final SliceRootNode root = (SliceRootNode)treeStructure.getRootElement();
     final Ref<NullAnalysisResult> leafExpressions = Ref.create(null);
     final Map<SliceNode, NullAnalysisResult> map = createMap();
@@ -151,7 +143,7 @@ public class SliceNullnessAnalyzer {
 
       @Override
       protected Map<SliceNode, NullAnalysisResult> createMap() {
-        return ContainerUtil.<SliceNode, NullAnalysisResult>newIdentityTroveMap();
+        return ContainerUtil.newIdentityTroveMap();
       }
     };
   }
@@ -164,9 +156,9 @@ public class SliceNullnessAnalyzer {
   }
 
   @NotNull
-  public static NullAnalysisResult calcNullableLeaves(@NotNull final SliceNode root,
-                                                      @NotNull AbstractTreeStructure treeStructure,
-                                                      @NotNull final Map<SliceNode, NullAnalysisResult> map) {
+  static NullAnalysisResult calcNullableLeaves(@NotNull final SliceNode root,
+                                               @NotNull AbstractTreeStructure treeStructure,
+                                               @NotNull final Map<SliceNode, NullAnalysisResult> map) {
     final SliceLeafAnalyzer.SliceNodeGuide guide = new SliceLeafAnalyzer.SliceNodeGuide(treeStructure);
     WalkingState<SliceNode> walkingState = new WalkingState<SliceNode>(guide) {
       @Override
@@ -279,10 +271,10 @@ public class SliceNullnessAnalyzer {
   }
 
   static class NullAnalysisResult {
-    public static int NULLS = 0;
-    public static int NOT_NULLS = 1;
-    public static int UNKNOWNS = 2;
-    public final Collection<PsiElement>[] groupedByValue = new Collection[] {new THashSet<PsiElement>(),new THashSet<PsiElement>(),new THashSet<PsiElement>()};
+    static final int NULLS = 0;
+    static final int NOT_NULLS = 1;
+    static final int UNKNOWNS = 2;
+    final Collection<PsiElement>[] groupedByValue = new Collection[] {new THashSet<PsiElement>(),new THashSet<PsiElement>(),new THashSet<PsiElement>()};
 
     public void clear() {
       for (Collection<PsiElement> elements : groupedByValue) {

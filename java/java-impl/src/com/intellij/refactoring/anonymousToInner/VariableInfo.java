@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,13 @@
  * limitations under the License.
  */
 
-/**
- * created at Sep 7, 2001
- * @author Jeka
- */
 package com.intellij.refactoring.anonymousToInner;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiVariable;
 
 public class VariableInfo {
   public PsiVariable variable;
-  public boolean saveInField = false;
+  public boolean saveInField;
   public boolean passAsParameter = true;
   public String parameterName;
   public String fieldName;

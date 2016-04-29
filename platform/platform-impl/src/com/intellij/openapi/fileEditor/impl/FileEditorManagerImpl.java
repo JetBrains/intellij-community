@@ -1510,8 +1510,8 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
     final FileStatusManager fileStatusManager = FileStatusManager.getInstance(myProject);
     if (fileStatusManager != null) {
-      /**
-       * Updates tabs colors
+      /*
+        Updates tabs colors
        */
       final MyFileStatusListener myFileStatusListener = new MyFileStatusListener();
       fileStatusManager.addFileStatusListener(myFileStatusListener, myProject);
@@ -1519,13 +1519,13 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     connection.subscribe(FileTypeManager.TOPIC, new MyFileTypeListener());
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, new MyRootsListener());
 
-    /**
-     * Updates tabs names
+    /*
+      Updates tabs names
      */
     final MyVirtualFileListener myVirtualFileListener = new MyVirtualFileListener();
     VirtualFileManager.getInstance().addVirtualFileListener(myVirtualFileListener, myProject);
-    /**
-     * Extends/cuts number of opened tabs. Also updates location of tabs.
+    /*
+      Extends/cuts number of opened tabs. Also updates location of tabs.
      */
     final MyUISettingsListener myUISettingsListener = new MyUISettingsListener();
     UISettings.getInstance().addUISettingsListener(myUISettingsListener, myProject);

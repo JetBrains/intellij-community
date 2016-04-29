@@ -177,6 +177,10 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
     if (settings == null) {
       return false;
     }
+    return doExecuteTask(env, settings);
+  }
+
+  public static boolean doExecuteTask(@NotNull final ExecutionEnvironment env, @NotNull final RunnerAndConfigurationSettings settings) {
     final Executor executor = DefaultRunExecutor.getRunExecutorInstance();
     final String executorId = executor.getId();
     ExecutionEnvironmentBuilder builder = ExecutionEnvironmentBuilder.createOrNull(executor, settings);
@@ -199,7 +203,7 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
       final Ref<Boolean> result = new Ref<Boolean>(false);
       final Disposable disposable = Disposer.newDisposable();
 
-      myProject.getMessageBus().connect(disposable).subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionAdapter() {
+      env.getProject().getMessageBus().connect(disposable).subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionAdapter() {
         @Override
         public void processStartScheduled(final String executorIdLocal, final ExecutionEnvironment environmentLocal) {
           if (executorId.equals(executorIdLocal) && environment.equals(environmentLocal)) {
