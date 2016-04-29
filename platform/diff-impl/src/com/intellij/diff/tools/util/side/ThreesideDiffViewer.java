@@ -97,7 +97,7 @@ public abstract class ThreesideDiffViewer<T extends EditorHolder> extends Listen
   protected List<T> createEditorHolders(@NotNull EditorHolderFactory<T> factory) {
     List<DiffContent> contents = myRequest.getContents();
 
-    List<T> holders = new ArrayList<T>(3);
+    List<T> holders = new ArrayList<>(3);
     for (int i = 0; i < 3; i++) {
       DiffContent content = contents.get(i);
       holders.add(factory.create(content, myContext));

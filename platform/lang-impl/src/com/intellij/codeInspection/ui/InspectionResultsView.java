@@ -291,8 +291,6 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     specialGroup.add(myGlobalInspectionContext.getUIOptions().createGroupBySeverityAction(this));
     specialGroup.add(myGlobalInspectionContext.getUIOptions().createGroupByDirectoryAction(this));
     specialGroup.add(myGlobalInspectionContext.getUIOptions().createFilterResolvedItemsAction(this));
-    specialGroup.add(myGlobalInspectionContext.getUIOptions().createShowOutdatedProblemsAction(this));
-    specialGroup.add(myGlobalInspectionContext.getUIOptions().createShowDiffOnlyAction(this));
     specialGroup.add(ActionManager.getInstance().getAction("EditInspectionSettings"));
     specialGroup.add(new InvokeQuickFixAction(this));
     specialGroup.add(new InspectionsOptionsToolbarAction(this));
@@ -520,6 +518,9 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       }
       final PsiFile file = selectedElement.getContainingFile();
       final Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+      if (document == null) {
+        return Pair.create(InspectionResultsViewUtil.createLabelForText("Can't open preview for \'" + file.getName() + "\'"), null);
+      }
 
       if (reuseEditorFor(document)) {
         myPreviewEditor.putUserData(PREVIEW_EDITOR_IS_REUSED_KEY, true);
@@ -539,6 +540,9 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
         settings.setLeadingWhitespaceShown(true);
         myPreviewEditor.getColorsScheme().setColor(EditorColors.GUTTER_BACKGROUND, myPreviewEditor.getColorsScheme().getDefaultBackground());
         myPreviewEditor.getScrollPane().setBorder(IdeBorderFactory.createEmptyBorder());
+      }
+      if (problemCount == 0) {
+        myPreviewEditor.getScrollingModel().scrollTo(myPreviewEditor.offsetToLogicalPosition(selectedElement.getTextOffset()), ScrollType.CENTER_UP);
       }
       myPreviewEditor.getSettings().setFoldingOutlineShown(problemCount != 1);
       myPreviewEditor.getComponent().setBorder(IdeBorderFactory.createEmptyBorder());
@@ -674,8 +678,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
         setUpdating(true);
         synchronized (getTreeStructureUpdateLock()) {
           myGroups.clear();
-          final Map<String, Tools> tools = myGlobalInspectionContext.getTools();
-          addTools(tools.values());
+          addTools(myGlobalInspectionContext.getTools().values());
         }
       }
       finally {

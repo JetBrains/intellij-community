@@ -161,8 +161,8 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
     if (document == null) return null;
     MarkupModelEx markup = (MarkupModelEx)DocumentMarkupModel.forDocument(document, myProject, true);
     final Document markupDocument = markup.getDocument();
-    final int startOffset = markupDocument.getLineStartOffset(0);
-    final int endOffset = markupDocument.getLineEndOffset(markupDocument.getLineCount() - 1);
+    final int startOffset = 0;
+    final int endOffset = markupDocument.getTextLength();
 
     final Ref<RangeHighlighterEx> found = new Ref<RangeHighlighterEx>();
     markup.processRangeHighlightersOverlappingWith(startOffset, endOffset, new Processor<RangeHighlighterEx>() {
@@ -212,6 +212,9 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
   public boolean isValid() {
     if (!getFile().isValid()) {
       return false;
+    }
+    if (getLine() ==-1) {
+      return true;
     }
     RangeHighlighterEx highlighter = findMyHighlighter();
     return highlighter != null && highlighter.isValid();

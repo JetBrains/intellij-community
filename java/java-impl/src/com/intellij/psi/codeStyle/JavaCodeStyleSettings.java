@@ -21,19 +21,19 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings {
     super("JavaCodeStyleSettings", container);
   }
 
-  public boolean SPACES_WITHIN_ANGLE_BRACKETS = false;
+  public boolean SPACES_WITHIN_ANGLE_BRACKETS;
 
   //Type arguments
-  public boolean SPACE_AFTER_CLOSING_ANGLE_BRACKET_IN_TYPE_ARGUMENT = false;
+  public boolean SPACE_AFTER_CLOSING_ANGLE_BRACKET_IN_TYPE_ARGUMENT;
 
   //Type parameters
-  public boolean SPACE_BEFORE_OPENING_ANGLE_BRACKET_IN_TYPE_PARAMETER = false;
+  public boolean SPACE_BEFORE_OPENING_ANGLE_BRACKET_IN_TYPE_PARAMETER;
   public boolean SPACE_AROUND_TYPE_BOUNDS_IN_TYPE_PARAMETERS = true;
 
-  public boolean DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION = false;
+  public boolean DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION;
 
   public int ANNOTATION_PARAMETER_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
-  public boolean ALIGN_MULTILINE_ANNOTATION_PARAMETERS = false;
+  public boolean ALIGN_MULTILINE_ANNOTATION_PARAMETERS;
 
   public int BLANK_LINES_AROUND_INITIALIZER = 1;
   

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.JarUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -45,7 +46,6 @@ public class LibraryJarUsagesCollector extends AbstractApplicationUsagesCollecto
 
   private static final String DIGIT_VERSION_PATTERN_PART = "(\\d+.\\d+|\\d+)";
   private static final Pattern JAR_FILE_NAME_PATTERN = Pattern.compile("[\\w|\\-|\\.]+-(" + DIGIT_VERSION_PATTERN_PART + "[\\w|\\.]*)jar");
-  private static final Pattern DIGIT_VERSION_PATTERN = Pattern.compile(DIGIT_VERSION_PATTERN_PART + ".*");
 
   @NotNull
   @Override
@@ -70,7 +70,10 @@ public class LibraryJarUsagesCollector extends AbstractApplicationUsagesCollecto
             version = getVersionByJarFileName(jarFile.getName());
           }
 
-          if (version == null) continue;
+          if (version == null ||
+              !StringUtil.containsChar(version, '.')) {
+            continue;
+          }
 
           result.add(new UsageDescriptor(descriptor.myName + "_" + version, 1));
         }
@@ -81,13 +84,7 @@ public class LibraryJarUsagesCollector extends AbstractApplicationUsagesCollecto
 
   @Nullable
   private static String getVersionByJarManifest(@NotNull VirtualFile file) {
-    String version = JarUtil.getJarAttribute(VfsUtilCore.virtualToIoFile(file), Attributes.Name.IMPLEMENTATION_VERSION);
-    if (version == null) return null;
-
-    Matcher versionMatcher = DIGIT_VERSION_PATTERN.matcher(version);
-    if (!versionMatcher.matches()) return null;
-
-    return versionMatcher.group(1);
+    return JarUtil.getJarAttribute(VfsUtilCore.virtualToIoFile(file), Attributes.Name.IMPLEMENTATION_VERSION);
   }
 
   @Nullable
@@ -95,7 +92,7 @@ public class LibraryJarUsagesCollector extends AbstractApplicationUsagesCollecto
     Matcher fileNameMatcher = JAR_FILE_NAME_PATTERN.matcher(fileName);
     if (!fileNameMatcher.matches()) return null;
 
-    return fileNameMatcher.group(2);
+    return StringUtil.trimTrailing(fileNameMatcher.group(1), '.');
   }
 
   @NotNull

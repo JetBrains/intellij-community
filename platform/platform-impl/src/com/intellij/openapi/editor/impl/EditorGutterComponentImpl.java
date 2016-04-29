@@ -867,11 +867,11 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         @Override
         public void process(@NotNull RangeHighlighter highlighter) {
           LineMarkerRenderer renderer = highlighter.getLineMarkerRenderer();
-          if (renderer != null && isLineMarkerVisible(highlighter)) highlighters.add(highlighter);
+          if (renderer != null) highlighters.add(highlighter);
         }
       });
 
-      ContainerUtil.sort(highlighters, (h1, h2) -> h1.getLayer() - h2.getLayer());
+      ContainerUtil.sort(highlighters, Comparator.comparingInt(RangeHighlighter::getLayer));
 
       for (RangeHighlighter highlighter : highlighters) {
         paintLineMarkerRenderer(highlighter, g);

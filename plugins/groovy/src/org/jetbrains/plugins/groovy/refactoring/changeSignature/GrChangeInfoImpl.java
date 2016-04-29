@@ -87,7 +87,7 @@ public class GrChangeInfoImpl implements JavaChangeInfo {
         oldReturnType = method.getReturnType();
       }
       try {
-        PsiType newReturnType = returnType == null ? null : returnType.getType(method, getMethod().getManager());
+        PsiType newReturnType = returnType == null ? null : returnType.getType(method);
         if ((oldReturnType == null && newReturnType != null) || (oldReturnType != null && !oldReturnType.equals(newReturnType))) {
           myIsReturnTypeChanged = true;
         }
@@ -122,7 +122,7 @@ public class GrChangeInfoImpl implements JavaChangeInfo {
           myIsParameterNamesChanged = true;
         }
         try {
-          PsiType type = parameter.createType(method, method.getManager());
+          PsiType type = parameter.createType(method);
           PsiType oldType = params[i].getType();
           if (!oldType.equals(type)) {
             myIsParameterTypesChanged = true;

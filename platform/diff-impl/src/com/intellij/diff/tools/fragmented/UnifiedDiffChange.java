@@ -45,8 +45,8 @@ public class UnifiedDiffChange {
 
   @NotNull private final LineFragment myLineFragment;
 
-  @NotNull private final List<RangeHighlighter> myHighlighters = new ArrayList<RangeHighlighter>();
-  @NotNull private final List<MyGutterOperation> myOperations = new ArrayList<MyGutterOperation>();
+  @NotNull private final List<RangeHighlighter> myHighlighters = new ArrayList<>();
+  @NotNull private final List<MyGutterOperation> myOperations = new ArrayList<>();
 
   public UnifiedDiffChange(@NotNull UnifiedDiffViewer viewer, @NotNull ChangedBlock block) {
     myViewer = viewer;
@@ -218,12 +218,9 @@ public class UnifiedDiffChange {
         final Project project = e.getProject();
         final Document document = myViewer.getDocument(sourceSide.other());
 
-        DiffUtil.executeWriteCommand(document, project, "Replace change", new Runnable() {
-          @Override
-          public void run() {
-            myViewer.replaceChange(UnifiedDiffChange.this, sourceSide);
-            myViewer.scheduleRediff();
-          }
+        DiffUtil.executeWriteCommand(document, project, "Replace change", () -> {
+          myViewer.replaceChange(UnifiedDiffChange.this, sourceSide);
+          myViewer.scheduleRediff();
         });
         // applyChange() will schedule rediff, but we want to try to do it in sync
         // and we can't do it inside write action

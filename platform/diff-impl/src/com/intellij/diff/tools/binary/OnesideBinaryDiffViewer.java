@@ -61,7 +61,7 @@ public class OnesideBinaryDiffViewer extends OnesideDiffViewer<BinaryEditorHolde
 
   @Override
   protected List<AnAction> createToolbarActions() {
-    List<AnAction> group = new ArrayList<AnAction>();
+    List<AnAction> group = new ArrayList<>();
     group.add(myTransferableStateSupport.createToggleAction());
     group.addAll(super.createToolbarActions());
     return group;
@@ -80,12 +80,9 @@ public class OnesideBinaryDiffViewer extends OnesideDiffViewer<BinaryEditorHolde
 
   @NotNull
   private Runnable applyNotification(@Nullable final JComponent notification) {
-    return new Runnable() {
-      @Override
-      public void run() {
-        clearDiffPresentation();
-        if (notification != null) myPanel.addNotification(notification);
-      }
+    return () -> {
+      clearDiffPresentation();
+      if (notification != null) myPanel.addNotification(notification);
     };
   }
 

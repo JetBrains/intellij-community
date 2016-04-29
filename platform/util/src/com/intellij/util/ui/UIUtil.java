@@ -354,9 +354,9 @@ public class UIUtil {
       return isRetina;
     }
 
-    /**
-     * Could be quite easily implemented with [NSScreen backingScaleFactor]
-     * and JNA
+    /*
+      Could be quite easily implemented with [NSScreen backingScaleFactor]
+      and JNA
      */
     //private static boolean isAppleRetina (Graphics2D g2d) {
     //  return false;

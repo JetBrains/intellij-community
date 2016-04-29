@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.diff.actions;
+import org.intellij.lang.annotations.MagicConstant;
 
-import org.jetbrains.annotations.NonNls;
+import java.awt.*;
+import javax.swing.*;
 
-/**
- * @author dyoma
- */
-public interface DiffActions {
-  @NonNls String COMPARE_WITH_CLIPBOARD = "CompareClipboardWithSelection";
+public class X {
+  void f(JFrame frame) {
+    frame.setDefaultCloseOperation(2);  // there is beanInfo in in JFrame.java, have to parse (but added to exceptions, so ok)
+  }
+
+  void f(Frame frame) {
+    frame.setState(2);  // no beanInfo in Frame.java, no need to parse
+  }
 }

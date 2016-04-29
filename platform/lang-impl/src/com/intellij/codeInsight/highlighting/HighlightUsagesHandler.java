@@ -411,12 +411,12 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     highlightRanges(highlightManager, editor, attributes, clearHighlights, textRanges);
   }
 
-  @SuppressWarnings("unused")
-  @NotNull
-  @Deprecated
   /**
    * @deprecated Use {@link #collectRangesToHighlight}
    */
+  @SuppressWarnings("unused")
+  @NotNull
+  @Deprecated
   public static List<TextRange> getRangesToHighlight(@NotNull PsiReference ref) {
     return collectRangesToHighlight(ref, new ArrayList<TextRange>());
   }

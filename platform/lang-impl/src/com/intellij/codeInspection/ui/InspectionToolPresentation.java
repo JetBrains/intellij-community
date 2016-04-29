@@ -50,7 +50,6 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
   @NotNull
   Map<String, Set<RefEntity>> getContent();
 
-  Map<String, Set<RefEntity>> getOldContent();
   void ignoreCurrentElement(RefEntity refEntity);
   void amnesty(RefEntity refEntity);
   void cleanup();
@@ -76,9 +75,6 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
   Collection<CommonProblemDescriptor> getProblemDescriptors();
   @NotNull
   FileStatus getProblemStatus(@NotNull CommonProblemDescriptor descriptor);
-  boolean isOldProblemsIncluded();
-  @Nullable
-  Map<RefEntity, CommonProblemDescriptor[]> getOldProblemElements();
   boolean isProblemResolved(RefEntity refEntity, CommonProblemDescriptor descriptor);
   void ignoreCurrentElementProblem(RefEntity refEntity, CommonProblemDescriptor descriptor);
   void addProblemElement(RefEntity refElement, boolean filterSuppressed, @NotNull CommonProblemDescriptor... descriptions);
