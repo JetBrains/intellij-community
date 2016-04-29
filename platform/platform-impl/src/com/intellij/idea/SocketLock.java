@@ -283,7 +283,7 @@ public class SocketLock {
                     NotificationType.WARNING));
                 }
                 else if (myActivateListener != null) {
-                  myActivateListener.consume(args);
+                  myActivateListener.consume(args.subList(1, args.size()));
                 }
                 out.writeUTF("ok");
               }
