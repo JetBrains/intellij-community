@@ -35,7 +35,6 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public class ContentUtilEx extends ContentsUtil {
-  public static final String DISPOSABLE_KEY = "TabContentDisposable";
 
   public static void addTabbedContent(ContentManager manager, JComponent contentComponent, String groupPrefix, String tabName, boolean select) {
     addTabbedContent(manager, contentComponent, groupPrefix, tabName, select, null);
@@ -117,27 +116,6 @@ public class ContentUtilEx extends ContentsUtil {
   public static boolean isContentTab(@NotNull Content content, @NotNull String groupPrefix) {
     return (content instanceof TabbedContent && content.getTabName().startsWith(getFullPrefix(groupPrefix))) ||
            groupPrefix.equals(content.getUserData(Content.TAB_GROUP_NAME_KEY));
-  }
-
-  public static void closeContentTab(@NotNull ContentManager contentManager, @NotNull Content content) {
-    if (content instanceof TabbedContent) {
-      TabbedContent tabbedContent = (TabbedContent)content;
-      if (tabbedContent.getTabs().size() > 1) {
-        JComponent component = tabbedContent.getComponent();
-        tabbedContent.removeContent(component);
-        contentManager.setSelectedContent(tabbedContent, true, true);
-        dispose(component);
-        return;
-      }
-    }
-    contentManager.removeContent(content, true);
-  }
-
-  private static void dispose(@NotNull JComponent component) {
-    Object disposable = component.getClientProperty(DISPOSABLE_KEY);
-    if (disposable != null && disposable instanceof Disposable) {
-      Disposer.dispose((Disposable)disposable);
-    }
   }
 
   @NotNull

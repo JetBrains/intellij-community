@@ -29,6 +29,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.TabbedContent;
 import com.intellij.ui.content.impl.ContentManagerImpl;
 import com.intellij.util.ContentUtilEx;
+import com.intellij.util.ContentsUtil;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -126,7 +127,7 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
 
     for (Content content: toolWindow.getContentManager().getContents()) {
       if (ContentUtilEx.isContentTab(content, TAB_NAME)) {
-        ContentUtilEx.closeContentTab(toolWindow.getContentManager(), content);
+        ContentsUtil.closeContentTab(toolWindow.getContentManager(), content);
       }
     }
   }

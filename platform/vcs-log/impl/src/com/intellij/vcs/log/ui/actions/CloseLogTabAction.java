@@ -24,6 +24,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.ContentUtilEx;
+import com.intellij.util.ContentsUtil;
 import com.intellij.vcs.log.impl.VcsLogContentProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,7 +53,7 @@ public class CloseLogTabAction extends CloseTabToolbarAction {
     if (contentManager == null) return;
     Content selectedContent = getTabbedContent(contentManager);
     if (selectedContent != null) {
-      ContentUtilEx.closeContentTab(contentManager, selectedContent);
+      ContentsUtil.closeContentTab(contentManager, selectedContent);
     }
   }
 
