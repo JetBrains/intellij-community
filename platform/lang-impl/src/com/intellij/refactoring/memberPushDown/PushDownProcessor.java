@@ -109,7 +109,7 @@ public class PushDownProcessor<MemberInfo extends MemberInfoBase<Member>,
     }
     Runnable runnable = () -> ApplicationManager.getApplication().runReadAction(() -> {
       if (mySubClassData != null) {
-        myDelegate.checkTargetClassConflicts(null, myPushDownData, conflicts);
+        myDelegate.checkTargetClassConflicts(null, myPushDownData, conflicts, mySubClassData);
       }
       else {
         for (UsageInfo usage : usagesIn) {
@@ -117,7 +117,7 @@ public class PushDownProcessor<MemberInfo extends MemberInfoBase<Member>,
           if (element != null) {
             final PushDownDelegate delegate = PushDownDelegate.findDelegateForTarget(myPushDownData.getSourceClass(), element);
             if (delegate != null) {
-              delegate.checkTargetClassConflicts(element, myPushDownData, conflicts);
+              delegate.checkTargetClassConflicts(element, myPushDownData, conflicts, null);
             }
             else {
               conflicts.putValue(element, "Not supported source/target pair detected");
