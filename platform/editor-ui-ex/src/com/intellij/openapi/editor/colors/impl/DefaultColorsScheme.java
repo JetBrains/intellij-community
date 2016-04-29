@@ -90,6 +90,7 @@ public class DefaultColorsScheme extends AbstractColorsScheme implements ReadOnl
     EditorColorsSchemeImpl newScheme = new EditorColorsSchemeImpl(this);
     copyTo(newScheme);
     newScheme.setName(DEFAULT_SCHEME_NAME);
+    newScheme.setDefaultMetaInfo(this);
     return newScheme;
   }
 }
