@@ -54,10 +54,10 @@ import java.util.List;
  */
 public class GroovyScriptClass extends LightElement implements PsiClass, SyntheticElement {
   private final GroovyFile myFile;
-  private volatile PsiMethod myMainMethod = null;
-  private volatile PsiMethod myRunMethod = null;
+  private volatile PsiMethod myMainMethod;
+  private volatile PsiMethod myRunMethod;
 
-  private volatile boolean myInitialized = false;
+  private volatile boolean myInitialized;
 
   private final LightModifierList myModifierList;
 

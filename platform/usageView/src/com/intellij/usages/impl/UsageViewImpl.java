@@ -108,7 +108,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   private final ButtonPanel myButtonPanel = new ButtonPanel();
   private final JComponent myAdditionalComponent = new JPanel(new BorderLayout());
   private volatile boolean isDisposed;
-  private volatile boolean myChangesDetected = false;
+  private volatile boolean myChangesDetected;
   public static final Comparator<Usage> USAGE_COMPARATOR = new Comparator<Usage>() {
     @Override
     public int compare(final Usage o1, final Usage o2) {

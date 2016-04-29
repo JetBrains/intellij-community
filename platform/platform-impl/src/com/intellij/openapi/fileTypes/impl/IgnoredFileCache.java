@@ -37,7 +37,7 @@ class IgnoredFileCache {
   private final ConcurrentBitSet myCheckedIds = new ConcurrentBitSet();
   private final ConcurrentIntObjectMap<Object> myIgnoredIds = ContainerUtil.createConcurrentIntObjectMap();
   private final IgnoredPatternSet myIgnoredPatterns;
-  private volatile int myVfsEventNesting = 0;
+  private volatile int myVfsEventNesting;
 
   IgnoredFileCache(@NotNull IgnoredPatternSet ignoredPatterns) {
     myIgnoredPatterns = ignoredPatterns;

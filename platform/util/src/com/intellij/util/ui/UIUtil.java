@@ -292,7 +292,7 @@ public class UIUtil {
     }
   };
 
-  private static volatile Pair<String, Integer> ourSystemFontData = null;
+  private static volatile Pair<String, Integer> ourSystemFontData;
 
   public static final float DEF_SYSTEM_FONT_SIZE = 12f; // TODO: consider 12 * 1.33 to compensate JDK's 72dpi font scale
 
@@ -3503,7 +3503,7 @@ public class UIUtil {
     return null;
   }
 
-  private static Map<String, String> ourRealFontFamilies = null;
+  private static Map<String, String> ourRealFontFamilies;
 
   //Experimental, seems to be reliable under MacOS X only
 

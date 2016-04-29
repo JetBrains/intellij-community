@@ -101,13 +101,13 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
     }
   };
   private final int myHC = ourHC++;
-  private volatile String myName = null;
+  private volatile String myName;
   private volatile String myLocalName;
-  private volatile XmlAttribute[] myAttributes = null;
-  private volatile TextRange[] myTextElements = null;
-  private volatile Map<String, String> myAttributeValueMap = null;
-  private volatile XmlTagValue myValue = null;
-  private volatile boolean myHasNamespaceDeclarations = false;
+  private volatile XmlAttribute[] myAttributes;
+  private volatile TextRange[] myTextElements;
+  private volatile Map<String, String> myAttributeValueMap;
+  private volatile XmlTagValue myValue;
+  private volatile boolean myHasNamespaceDeclarations;
 
   public XmlTagImpl() {
     this(XmlElementType.XML_TAG);
@@ -1270,7 +1270,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
     private final ASTNode myAnchor;
     private final boolean myBefore;
     private final PomModel myModel;
-    private TreeElement myFirstInserted = null;
+    private TreeElement myFirstInserted;
 
     public InsertAttributeTransaction(final TreeElement child, final ASTNode anchor, final boolean before, final PomModel model) {
       super(XmlTagImpl.this);
