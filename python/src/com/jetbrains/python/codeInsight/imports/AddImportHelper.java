@@ -95,6 +95,8 @@ public class AddImportHelper {
     THIRD_PARTY,
     PROJECT
   }
+  
+  private static final ImportPriority UNRESOLVED_SYMBOL_PRIORITY = ImportPriority.THIRD_PARTY;
 
   private AddImportHelper() {
   }
@@ -227,21 +229,30 @@ public class AddImportHelper {
     else {
       final PyImportElement firstImportElement = ArrayUtil.getFirstElement(importStatement.getImportElements());
       if (firstImportElement == null) {
-        return ImportPriority.THIRD_PARTY;
+        return UNRESOLVED_SYMBOL_PRIORITY;
       }
       resolved = firstImportElement.resolve();
     }
     if (resolved == null) {
-      return ImportPriority.THIRD_PARTY;
+      return UNRESOLVED_SYMBOL_PRIORITY;
     }
 
     final PsiFileSystemItem resolvedFileOrDir;
     if (resolved instanceof PsiDirectory) {
       resolvedFileOrDir = (PsiFileSystemItem)resolved;
     }
+    // resolved symbol may be PsiPackage in Jython
+    else if (resolved instanceof PsiDirectoryContainer) {
+      resolvedFileOrDir = ArrayUtil.getFirstElement(((PsiDirectoryContainer)resolved).getDirectories());
+    }
     else {
       resolvedFileOrDir = resolved.getContainingFile();
     }
+    
+    if (resolvedFileOrDir == null) {
+      return UNRESOLVED_SYMBOL_PRIORITY;
+    }
+    
     return getImportPriority(importStatement, resolvedFileOrDir);
   }
 
@@ -249,7 +260,7 @@ public class AddImportHelper {
   public static ImportPriority getImportPriority(@NotNull PsiElement importLocation, @NotNull PsiFileSystemItem toImport) {
     final VirtualFile vFile = toImport.getVirtualFile();
     if (vFile == null) {
-      return ImportPriority.THIRD_PARTY;
+      return UNRESOLVED_SYMBOL_PRIORITY;
     }
     final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(toImport.getProject());
     if (projectRootManager.getFileIndex().isInContent(vFile)) {

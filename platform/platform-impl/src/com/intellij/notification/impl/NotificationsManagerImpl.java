@@ -792,7 +792,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
     hoverAdapter.addSource(centerPanel);
 
     if (expandAction != null) {
-      hoverAdapter.addComponent(expandAction, new Insets(5, 5, 7, 7));
+      hoverAdapter.addComponent(expandAction, JBUI.insets(5, 5, 7, 7));
     }
 
     if (buttons == null && actions) {
@@ -908,7 +908,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
         }, action));
     }
 
-    Insets hover = new Insets(8, 5, 8, 7);
+    Insets hover = JBUI.insets(8, 5, 8, 7);
     int count = actionPanel.getComponentCount();
 
     for (int i = 0; i < count; i++) {

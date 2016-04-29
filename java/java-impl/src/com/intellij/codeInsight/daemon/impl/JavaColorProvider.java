@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,9 @@
  */
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ElementColorProvider;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
@@ -118,37 +121,44 @@ public class JavaColorProvider implements ElementColorProvider {
     
     PsiExpression[] expr = argumentList.getExpressions();
     ColorConstructors type = getConstructorType(argumentList.getExpressionTypes());
-
+    final Document document = PsiDocumentManager.getInstance(element.getProject()).getDocument(element.getContainingFile());
     assert type != null;
+    CommandProcessor.getInstance().executeCommand(element.getProject(), new Runnable() {
+      @Override
+      public void run() {
 
-    switch (type) {
-      case INT:        
-      case INT_BOOL:
-        replaceInt(expr[0], color.getRGB(), true);
-        return;
-      case INT_x3:        
-      case INT_x4:
-        replaceInt(expr[0], color.getRed());
-        replaceInt(expr[1], color.getGreen());
-        replaceInt(expr[2], color.getBlue());
-        if (type == ColorConstructors.INT_x4) {
-          replaceInt(expr[3], color.getAlpha());
-        } else if (color.getAlpha() != 255) {
-          //todo add alpha
+
+        switch (type) {
+          case INT:
+          case INT_BOOL:
+            replaceInt(expr[0], color.getRGB(), true);
+            return;
+          case INT_x3:
+          case INT_x4:
+            replaceInt(expr[0], color.getRed());
+            replaceInt(expr[1], color.getGreen());
+            replaceInt(expr[2], color.getBlue());
+            if (type == ColorConstructors.INT_x4) {
+              replaceInt(expr[3], color.getAlpha());
+            }
+            else if (color.getAlpha() != 255) {
+              //todo add alpha
+            }
+            return;
+          case FLOAT_x3:
+          case FLOAT_x4:
+            float[] rgba = color.getColorComponents(null);
+            replaceFloat(expr[0], rgba[0]);
+            replaceFloat(expr[1], rgba[1]);
+            replaceFloat(expr[2], rgba[2]);
+            if (type == ColorConstructors.FLOAT_x4) {
+              replaceFloat(expr[3], rgba.length == 4 ? rgba[3] : 0f);
+            }
+            else if (color.getAlpha() != 255) {
+              //todo add alpha
+            }
         }
-        return;
-      case FLOAT_x3:
-      case FLOAT_x4:
-        float[] rgba = color.getColorComponents(null);
-        replaceFloat(expr[0], rgba[0]);
-        replaceFloat(expr[1], rgba[1]);
-        replaceFloat(expr[2], rgba[2]);
-        if (type == ColorConstructors.FLOAT_x4) {
-          replaceFloat(expr[3], rgba.length == 4 ? rgba[3] : 0f);
-        } else if (color.getAlpha() != 255) {
-          //todo add alpha
-        }
-    }
+      }}, IdeBundle.message("change.color.command.text"), null, document);
   }
 
   private static void replaceInt(PsiExpression expr, int newValue) {

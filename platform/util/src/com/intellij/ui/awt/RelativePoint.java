@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -134,6 +134,13 @@ public class RelativePoint {
   public static RelativePoint getSouthWestOf(@NotNull JComponent component) {
     final Rectangle visibleRect = component.getVisibleRect();
     final Point point = new Point(visibleRect.x, visibleRect.y + visibleRect.height);
+    return new RelativePoint(component, point);
+  }
+
+  @NotNull
+  public static RelativePoint getSouthOf(@NotNull JComponent component) {
+    final Rectangle visibleRect = component.getVisibleRect();
+    final Point point = new Point(visibleRect.x + visibleRect.width / 2, visibleRect.y + visibleRect.height);
     return new RelativePoint(component, point);
   }
 
