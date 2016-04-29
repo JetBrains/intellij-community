@@ -43,6 +43,10 @@ public class CompleteStatementTest extends EditorActionTestCase {
 
   public void testCompleteIfStatementGoesToThen() throws Exception { doTest(); }
 
+  public void testAddBracesToIfAndElse() { doTest(); }
+
+  public void testAddBracesToIfThenOneLiner() { doTest(); }
+
   public void testCompleteIfKeywordStatementGoesToThen() throws Exception { doTest(); }
 
   public void testIndentation() throws Exception { doTest(); }
