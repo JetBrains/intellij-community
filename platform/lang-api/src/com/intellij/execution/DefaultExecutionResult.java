@@ -61,7 +61,7 @@ public class DefaultExecutionResult implements ExecutionResult {
     return myActions;
   }
 
-  public void setActions(@NotNull final AnAction[] actions) {
+  public void setActions(@NotNull final AnAction... actions) {
     myActions = actions;
   }
 

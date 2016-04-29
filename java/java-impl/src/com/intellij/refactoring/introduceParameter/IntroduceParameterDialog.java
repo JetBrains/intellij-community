@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,7 +60,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
   private final boolean myMustBeFinal;
   private final PsiExpression myExpression;
   private final PsiLocalVariable myLocalVar;
-  protected JCheckBox myCbDeclareFinal = null;
+  protected JCheckBox myCbDeclareFinal;
   protected JCheckBox myCbCollapseToLambda;
 
   //  private JComponent myParameterNameField = null;
@@ -73,7 +73,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
   private NameSuggestionsField.DataChanged myParameterNameChangedListener;
 
   private final IntroduceParameterSettingsPanel myPanel;
-  private boolean myHasWriteAccess = false;
+  private boolean myHasWriteAccess;
 
   IntroduceParameterDialog(@NotNull Project project,
                            @NotNull List<UsageInfo> classMembersList,

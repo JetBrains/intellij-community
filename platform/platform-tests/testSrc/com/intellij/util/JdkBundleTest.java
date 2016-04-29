@@ -139,7 +139,8 @@ public class JdkBundleTest {
 
     assertNotNull(verUpdate);
 
-    assertEquals(verStr, verUpdate.first.toString() + "_" + verUpdate.second.toString());
+    final String evalVerStr = verUpdate.first.toString() + "_" + verUpdate.second.toString();
+    assertTrue(evalVerStr + " is not the same with " + verStr, verStr.contains(evalVerStr));
   }
 
   @Test
@@ -164,6 +165,7 @@ public class JdkBundleTest {
 
     assertNotNull(verUpdate);
 
-    assertEquals(verStr, verUpdate.first.toString() + "_" + verUpdate.second.toString());
+    final String evalVerStr = verUpdate.first.toString() + "_" + verUpdate.second.toString();
+    assertTrue(evalVerStr + " is not the same with " + verStr, verStr.contains(evalVerStr));
   }
 }

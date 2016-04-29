@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ public class DeprecationInspection extends BaseJavaBatchLocalInspectionTool {
   public static final String DISPLAY_NAME = DeprecationUtil.DEPRECATION_DISPLAY_NAME;
   public static final String IGNORE_METHODS_OF_DEPRECATED_NAME = "IGNORE_METHODS_OF_DEPRECATED";
 
-  public boolean IGNORE_INSIDE_DEPRECATED = false;
+  public boolean IGNORE_INSIDE_DEPRECATED;
   public boolean IGNORE_ABSTRACT_DEPRECATED_OVERRIDES = true;
   public boolean IGNORE_IMPORT_STATEMENTS = true;
   public boolean IGNORE_METHODS_OF_DEPRECATED = true;

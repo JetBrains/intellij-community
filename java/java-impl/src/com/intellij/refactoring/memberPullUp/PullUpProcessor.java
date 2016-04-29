@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,8 +66,8 @@ public class PullUpProcessor extends BaseRefactoringProcessor implements PullUpD
   private final PsiClass myTargetSuperClass;
   private final MemberInfo[] myMembersToMove;
   private final DocCommentPolicy myJavaDocPolicy;
-  private Set<PsiMember> myMembersAfterMove = null;
-  private Set<PsiMember> myMovedMembers = null;
+  private Set<PsiMember> myMembersAfterMove;
+  private Set<PsiMember> myMovedMembers;
   private final Map<Language, PullUpHelper<MemberInfo>> myProcessors = ContainerUtil.newHashMap();
 
   public PullUpProcessor(PsiClass sourceClass, PsiClass targetSuperClass, MemberInfo[] membersToMove, DocCommentPolicy javaDocPolicy) {

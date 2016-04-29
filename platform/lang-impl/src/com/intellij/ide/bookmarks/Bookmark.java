@@ -65,7 +65,7 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
   public static final Icon DEFAULT_ICON = new MyCheckedIcon();
 
   private final VirtualFile myFile;
-  @NotNull private final OpenFileDescriptor myTarget;
+  @NotNull private OpenFileDescriptor myTarget;
   private final Project myProject;
 
   private String myDescription;
@@ -90,7 +90,7 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
     if (i != 0) return i;
     i = myFile.getName().compareTo(o.getFile().getName());
     if (i != 0) return i;
-    return myTarget.compareTo(o.myTarget);
+    return getTarget().compareTo(o.getTarget());
   }
 
   public void updateHighlighter() {
@@ -222,17 +222,17 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
 
   @Override
   public boolean canNavigate() {
-    return myTarget.canNavigate();
+    return getTarget().canNavigate();
   }
 
   @Override
   public boolean canNavigateToSource() {
-    return myTarget.canNavigateToSource();
+    return getTarget().canNavigateToSource();
   }
 
   @Override
   public void navigate(boolean requestFocus) {
-    myTarget.navigate(requestFocus);
+    getTarget().navigate(requestFocus);
   }
 
   public int getLine() {
@@ -252,6 +252,14 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
       return document.getLineNumber(marker.getStartOffset());
     }
     return targetLine;
+  }
+
+  private OpenFileDescriptor getTarget() {
+    int line = getLine();
+    if (line != myTarget.getLine()) {
+      myTarget = new OpenFileDescriptor(myProject, myFile, line, -1, true);
+    }
+    return myTarget;
   }
 
   @Override

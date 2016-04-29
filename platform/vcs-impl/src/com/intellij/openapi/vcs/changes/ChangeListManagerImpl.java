@@ -1722,11 +1722,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       return true;
     }
     myVfsListener.flushDirt();
-    final EnsureUpToDateFromNonAWTThread worker = new EnsureUpToDateFromNonAWTThread(myProject);
-    worker.execute();
     myUpdater.waitUntilRefreshed();
     waitUpdateAlarm();
-    return worker.isDone();
+    return true;
   }
 
   @Override

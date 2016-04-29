@@ -40,7 +40,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class FindInProjectManager {
   private final Project myProject;
-  private volatile boolean myIsFindInProgress = false;
+  private volatile boolean myIsFindInProgress;
 
   public static FindInProjectManager getInstance(Project project) {
     return ServiceManager.getService(project, FindInProjectManager.class);

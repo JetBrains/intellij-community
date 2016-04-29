@@ -39,7 +39,6 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
@@ -49,7 +48,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.datatransfer.DataFlavor;
+
+import static com.intellij.openapi.application.ex.ClipboardUtil.getTextInClipboard;
 
 /**
  * @author yole
@@ -69,11 +69,6 @@ public class AnalyzeStacktraceUtil {
       consoleView.print(text, ConsoleViewContentType.ERROR_OUTPUT);
       consoleView.scrollTo(0);
     }
-  }
-
-  @Nullable
-  public static String getTextInClipboard() {
-    return CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
   }
 
   public interface ConsoleFactory {

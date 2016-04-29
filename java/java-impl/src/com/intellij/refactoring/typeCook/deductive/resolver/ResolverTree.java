@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@ public class ResolverTree {
   private final Project myProject;
   private final TObjectIntHashMap<PsiTypeVariable> myBindingDegree; //How many times this type variable is bound in the system
   private final Settings mySettings;
-  private boolean mySolutionFound = false;
+  private boolean mySolutionFound;
 
   private Set<Constraint> myConstraints;
 
@@ -244,7 +244,7 @@ public class ResolverTree {
     final Map<PsiTypeVariable, Integer> index = new HashMap<PsiTypeVariable, Integer>();
 
     sccs.forEach(new TIntProcedure() {
-      int myTNumber = 0;
+      int myTNumber;
 
       @Override
       public boolean execute(int size) {
