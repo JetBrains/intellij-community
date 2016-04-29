@@ -29,7 +29,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.util.Function;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -91,13 +90,8 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
                                     @NotNull final Map<String, Set<RefEntity>> contents,
                                     @NotNull final Map<RefEntity, CommonProblemDescriptor[]> problems) {
     final InspectionToolWrapper toolWrapper = toolNode.getToolWrapper();
+    merge(toolNode, parentNode, false);
 
-    Function<RefEntity, UserObjectContainer<RefEntity>> computeContainer = new Function<RefEntity, UserObjectContainer<RefEntity>>() {
-      @Override
-      public UserObjectContainer<RefEntity> fun(final RefEntity refElement) {
-        return new RefElementContainer(refElement, problems.get(refElement));
-      }
-    };
     InspectionToolPresentation presentation = context.getPresentation(toolWrapper);
     final Set<RefModule> moduleProblems = presentation.getModuleProblems();
     if (!moduleProblems.isEmpty()) {
@@ -112,10 +106,9 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
               contents,
               false,
               toolWrapper,
-              computeContainer,
+              refElement -> new RefElementContainer(refElement, problems.get(refElement)),
               showStructure,
               node -> merge(node, toolNode, true));
-    merge(toolNode, parentNode, false);
   }
 
   @Override
