@@ -42,25 +42,25 @@ def unpackJdks() {
     return
   }
 
-  unpackJdk(osDir, jdkDir, "jre6")
-  unpackJdk(osDir, jdkDir, "jbsdk8")
+  unpackJdk(osDir, jdkDir, "jre6", "1.6")
+  unpackJdk(osDir, jdkDir, "jbsdk8", "1.8")
 }
 
-private void unpackJdk(File osDir, File jdkDir, String majorVersion) {
-  def jdkFiles = osDir.listFiles().findAll { it.name.startsWith("$majorVersion") }
+private void unpackJdk(File osDir, File jdkDir, String archiveFileNamePrefix, String targetDirectoryName) {
+  def jdkFiles = osDir.listFiles().findAll { it.name.startsWith(archiveFileNamePrefix) }
   if (SystemInfo.isWindows) {
     def arch = System.getenv("ProgramFiles(x86)") != null ? "x64" : "x86"
     jdkFiles = jdkFiles.findAll { it.name.endsWith("_${arch}.tar.gz") }
   }
   if (jdkFiles.empty) {
-    projectBuilder.error("Cannot unpack JDK: $majorVersion not found in $osDir")
+    projectBuilder.error("Cannot unpack JDK: $archiveFileNamePrefix not found in $osDir")
   }
   if (jdkFiles.size() > 1) {
     projectBuilder.error("Cannot unpack JDK: several matching files are found ($jdkFiles)")
   }
 
   File jdkFile = jdkFiles.first()
-  def destDir = new File(jdkDir, ("1." + majorVersion.substring(majorVersion.length()-1, majorVersion.length())))
+  def destDir = new File(jdkDir, targetDirectoryName)
   FileUtil.delete(destDir)
   projectBuilder.info("Extracting $jdkFile to $destDir")
   ant.mkdir(dir: destDir)
