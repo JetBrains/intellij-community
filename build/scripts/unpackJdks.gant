@@ -77,6 +77,15 @@ private void unpackJdk(File osDir, File jdkDir, String archiveFileNamePrefix, St
         arg(value: "--directory")
         arg(value: destDir)
       }
+      def jdkContents = new File(destDir, "jdk/Contents")
+      if (SystemInfo.isMac && jdkContents.exists()) {
+        jdkContents.listFiles().each { file ->
+          ant.exec(executable: "mv", dir: destDir) {
+            arg(value: file.absolutePath)
+            arg(value: destDir)
+          }
+        }
+      }
     }
   }
   else {
