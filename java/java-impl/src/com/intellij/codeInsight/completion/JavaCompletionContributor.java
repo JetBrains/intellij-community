@@ -227,7 +227,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     PrefixMatcher matcher = result.getPrefixMatcher();
     PsiElement parent = position.getParent();
 
-    final InheritorsHolder inheritors = new InheritorsHolder(result);
+    JavaCompletionSession inheritors = new JavaCompletionSession(result);
     if (position instanceof PsiIdentifier) {
       addIdentifierVariants(parameters, position, result, matcher, parent, inheritors);
     }
@@ -260,34 +260,28 @@ public class JavaCompletionContributor extends CompletionContributor {
   private static void addIdentifierVariants(@NotNull CompletionParameters parameters,
                                             PsiElement position,
                                             final CompletionResultSet result,
-                                            PrefixMatcher matcher, PsiElement parent, final InheritorsHolder inheritors) {
+                                            PrefixMatcher matcher, PsiElement parent, JavaCompletionSession session) {
     if (TypeArgumentCompletionProvider.IN_TYPE_ARGS.accepts(position)) {
-      new TypeArgumentCompletionProvider(false, inheritors).addCompletions(parameters, new ProcessingContext(), result);
+      new TypeArgumentCompletionProvider(false, session).addCompletions(parameters, new ProcessingContext(), result);
     }
 
     result.addAllElements(FunctionalExpressionCompletionProvider.getLambdaVariants(parameters, true));
 
     if (JavaSmartCompletionContributor.AFTER_NEW.accepts(position)) {
-      new JavaInheritorsGetter(ConstructorInsertHandler.BASIC_INSTANCE).generateVariants(parameters, matcher, inheritors);
+      new JavaInheritorsGetter(ConstructorInsertHandler.BASIC_INSTANCE).generateVariants(parameters, matcher, session);
     }
 
     if (MethodReturnTypeProvider.IN_METHOD_RETURN_TYPE.accepts(position)) {
-      MethodReturnTypeProvider.addProbableReturnTypes(parameters, new Consumer<LookupElement>() {
-        @Override
-        public void consume(LookupElement element) {
-          registerClassFromTypeElement(element, inheritors);
-          result.addElement(element);
-        }
+      MethodReturnTypeProvider.addProbableReturnTypes(parameters, element -> {
+        registerClassFromTypeElement(element, session);
+        result.addElement(element);
       });
     }
 
     if (SmartCastProvider.shouldSuggestCast(parameters)) {
-      SmartCastProvider.addCastVariants(parameters, new Consumer<LookupElement>() {
-        @Override
-        public void consume(LookupElement element) {
-          registerClassFromTypeElement(element, inheritors);
-          result.addElement(PrioritizedLookupElement.withPriority(element, 1));
-        }
+      SmartCastProvider.addCastVariants(parameters, element -> {
+        registerClassFromTypeElement(element, session);
+        result.addElement(PrioritizedLookupElement.withPriority(element, 1));
       });
     }
 
@@ -306,7 +300,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     addExpressionVariants(parameters, position, result);
   }
 
-  private static void registerClassFromTypeElement(LookupElement element, InheritorsHolder inheritors) {
+  private static void registerClassFromTypeElement(LookupElement element, JavaCompletionSession inheritors) {
     PsiType type = assertNotNull(element.as(PsiTypeLookupItem.CLASS_CONDITION_KEY)).getType();
     PsiClass aClass =
       type instanceof PsiClassType && ((PsiClassType)type).getParameterCount() == 0 ? ((PsiClassType)type).resolve() : null;
@@ -331,18 +325,15 @@ public class JavaCompletionContributor extends CompletionContributor {
 
   public static void addAllClasses(final CompletionParameters parameters,
                                    final CompletionResultSet result,
-                                   final InheritorsHolder inheritors) {
+                                   final JavaCompletionSession session) {
     if (!isClassNamePossible(parameters) || !mayStartClassName(result)) {
       return;
     }
 
     if (parameters.getInvocationCount() >= 2) {
-      JavaClassNameCompletionContributor.addAllClasses(parameters, parameters.getInvocationCount() <= 2, result.getPrefixMatcher(), new Consumer<LookupElement>() {
-        @Override
-        public void consume(LookupElement element) {
-          if (!inheritors.alreadyProcessed(element)) {
-            result.addElement(JavaClassNameCompletionContributor.highlightIfNeeded((JavaPsiClassReferenceElement)element, parameters));
-          }
+      JavaClassNameCompletionContributor.addAllClasses(parameters, parameters.getInvocationCount() <= 2, result.getPrefixMatcher(), element -> {
+        if (!session.alreadyProcessed(element)) {
+          result.addElement(JavaClassNameCompletionContributor.highlightIfNeeded((JavaPsiClassReferenceElement)element, parameters));
         }
       });
     } else {
@@ -356,7 +347,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
   }
 
-  private static Set<String> addReferenceVariants(final CompletionParameters parameters, CompletionResultSet result, final InheritorsHolder inheritors) {
+  private static Set<String> addReferenceVariants(final CompletionParameters parameters, CompletionResultSet result, JavaCompletionSession session) {
     final Set<String> usedWords = new HashSet<String>();
     final PsiElement position = parameters.getPosition();
     final boolean first = parameters.getInvocationCount() <= 1;
@@ -385,7 +376,7 @@ public class JavaCompletionContributor extends CompletionContributor {
                                                                                   new ElementExtractorFilter(filter),
                                                                                   options,
                                                                                   result.getPrefixMatcher(), parameters)) {
-              if (inheritors.alreadyProcessed(element)) {
+              if (session.alreadyProcessed(element)) {
                 continue;
               }
 
@@ -403,12 +394,9 @@ public class JavaCompletionContributor extends CompletionContributor {
                   final PsiMethod method = call.getObject();
                   if (method.getTypeParameters().length > 0) {
                     final PsiType returned = TypeConversionUtil.erasure(method.getReturnType());
-                    PsiType matchingExpectation = returned == null ? null : ContainerUtil.find(expectedTypes, new Condition<PsiType>() {
-                      @Override
-                      public boolean value(PsiType type) {
-                        return type.isAssignableFrom(returned);
-                      }
-                    });
+                    PsiType matchingExpectation = returned == null
+                                                  ? null
+                                                  : ContainerUtil.find(expectedTypes, type -> type.isAssignableFrom(returned));
                     if (matchingExpectation != null) {
                       call.setInferenceSubstitutor(SmartCompletionDecorator.calculateMethodReturnTypeSubstitutor(method, matchingExpectation), position);
                     }
@@ -435,18 +423,17 @@ public class JavaCompletionContributor extends CompletionContributor {
           if (completion == null) {
             LOG.error("Position=" + position + "\n;Reference=" + reference + "\n;variants=" + Arrays.toString(variants));
           }
-          if (completion instanceof LookupElement && !inheritors.alreadyProcessed((LookupElement)completion)) {
+          if (completion instanceof LookupElement && !session.alreadyProcessed((LookupElement)completion)) {
             usedWords.add(((LookupElement)completion).getLookupString());
             result.addElement((LookupElement)completion);
           }
           else if (completion instanceof PsiClass) {
-            for (JavaPsiClassReferenceElement item : JavaClassNameCompletionContributor.createClassLookupItems((PsiClass)completion, isAfterNew,
-                                                                                                               JavaClassNameInsertHandler.JAVA_CLASS_INSERT_HANDLER, new Condition<PsiClass>() {
-              @Override
-              public boolean value(PsiClass psiClass) {
-                return !inheritors.alreadyProcessed(psiClass) && JavaCompletionUtil.isSourceLevelAccessible(position, psiClass, pkgContext);
-              }
-            })) {
+            Condition<PsiClass> condition = psiClass -> !session.alreadyProcessed(psiClass) &&
+                                                        JavaCompletionUtil.isSourceLevelAccessible(position, psiClass, pkgContext);
+            for (JavaPsiClassReferenceElement item : JavaClassNameCompletionContributor.createClassLookupItems((PsiClass)completion,
+                                                                                                               isAfterNew,
+                                                                                                               JavaClassNameInsertHandler.JAVA_CLASS_INSERT_HANDLER,
+                                                                                                               condition)) {
               usedWords.add(item.getLookupString());
               result.addElement(item);
             }
@@ -543,7 +530,7 @@ public class JavaCompletionContributor extends CompletionContributor {
       for (final LookupElement element : set) {
         result.addElement(element);
       }
-      addAllClasses(parameters, result, new InheritorsHolder(result));
+      addAllClasses(parameters, result, new JavaCompletionSession(result));
     }
 
     if (annoClass != null) {

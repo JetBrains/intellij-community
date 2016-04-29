@@ -52,11 +52,11 @@ class TypeArgumentCompletionProvider extends CompletionProvider<CompletionParame
   static final ElementPattern<PsiElement> IN_TYPE_ARGS = psiElement().inside(PsiReferenceParameterList.class);
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.TypeArgumentCompletionProvider");
   private final boolean mySmart;
-  @Nullable private final InheritorsHolder myInheritors;
+  @Nullable private final JavaCompletionSession mySession;
 
-  TypeArgumentCompletionProvider(boolean smart, @Nullable InheritorsHolder inheritors) {
+  TypeArgumentCompletionProvider(boolean smart, @Nullable JavaCompletionSession session) {
     mySmart = smart;
-    myInheritors = inheritors;
+    mySession = session;
   }
 
   @Override
@@ -114,7 +114,7 @@ class TypeArgumentCompletionProvider extends CompletionProvider<CompletionParame
 
     boolean hasParameters = ConstructorInsertHandler.hasConstructorParameters(actualClass, context);
     TypeArgsLookupElement element = new TypeArgsLookupElement(typeItems, globalTail, hasParameters);
-    element.registerSingleClass(myInheritors);
+    element.registerSingleClass(mySession);
     resultSet.addElement(element);
   }
 
@@ -216,7 +216,7 @@ class TypeArgumentCompletionProvider extends CompletionProvider<CompletionParame
       return myTypeItems.get(0).getObject();
     }
 
-    public void registerSingleClass(@Nullable InheritorsHolder inheritors) {
+    public void registerSingleClass(@Nullable JavaCompletionSession inheritors) {
       if (inheritors != null && myTypeItems.size() == 1) {
         PsiType type = myTypeItems.get(0).getType();
         PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);

@@ -29,11 +29,11 @@ import java.util.Set;
 /**
 * @author peter
 */
-public class InheritorsHolder implements Consumer<LookupElement> {
+public class JavaCompletionSession implements Consumer<LookupElement> {
   private final Set<String> myAddedClasses = new HashSet<String>();
   private final CompletionResultSet myResult;
 
-  public InheritorsHolder(CompletionResultSet result) {
+  public JavaCompletionSession(CompletionResultSet result) {
     myResult = result;
   }
 
