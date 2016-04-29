@@ -35,8 +35,10 @@ public abstract class BuiltInServerManager extends ApplicationComponent.Adapter 
 
   @Nullable
   public abstract Disposable getServerDisposable();
-  
+
   public abstract boolean isOnBuiltInWebServer(@Nullable Url url);
-  
+
   public abstract void configureRequestToWebServer(@NotNull URLConnection connection);
+
+  public abstract Url addAuthToken(@NotNull Url url);
 }

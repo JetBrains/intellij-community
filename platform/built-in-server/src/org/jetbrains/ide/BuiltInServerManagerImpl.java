@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Url;
+import com.intellij.util.UrlImpl;
 import com.intellij.util.net.NetUtils;
 import io.netty.channel.oio.OioEventLoopGroup;
 import org.jetbrains.annotations.NonNls;
@@ -128,6 +129,15 @@ public class BuiltInServerManagerImpl extends BuiltInServerManager {
   @Override
   public boolean isOnBuiltInWebServer(@Nullable Url url) {
     return url != null && !StringUtil.isEmpty(url.getAuthority()) && isOnBuiltInWebServerByAuthority(url.getAuthority());
+  }
+
+  @Override
+  public Url addAuthToken(@NotNull Url url) {
+    if (url.getParameters() != null) {
+      // built-in server url contains query only if token specified
+      return url;
+    }
+    return new UrlImpl(url.getScheme(), url.getAuthority(), url.getPath(), "?" + BuiltInWebServerKt.TOKEN_PARAM_NAME + "=" + BuiltInWebServerKt.acquireToken());
   }
 
   @Override

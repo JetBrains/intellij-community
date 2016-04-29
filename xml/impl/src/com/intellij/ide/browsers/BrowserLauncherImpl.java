@@ -30,6 +30,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Url;
 import com.intellij.util.Urls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,11 +43,16 @@ import java.util.concurrent.TimeUnit;
 public final class BrowserLauncherImpl extends BrowserLauncherAppless {
   @Override
   public void browse(@NotNull String url, @Nullable WebBrowser browser, @Nullable Project project) {
-    if (Registry.is("ide.built.in.web.server.activatable", false) &&
-        BuiltInServerManager.getInstance().isOnBuiltInWebServer(Urls.parse(url, false))) {
-      PropertiesComponent.getInstance().setValue("ide.built.in.web.server.active", true);
+    BuiltInServerManager serverManager = BuiltInServerManager.getInstance();
+    Url parsedUrl = Urls.parse(url, false);
+    if (parsedUrl != null && serverManager.isOnBuiltInWebServer(parsedUrl)) {
+      if (Registry.is("ide.built.in.web.server.activatable", false)) {
+        PropertiesComponent.getInstance().setValue("ide.built.in.web.server.active", true);
+      }
+
+      url = serverManager.addAuthToken(parsedUrl).toExternalForm();
     }
-    
+
     super.browse(url, browser, project);
   }
 
