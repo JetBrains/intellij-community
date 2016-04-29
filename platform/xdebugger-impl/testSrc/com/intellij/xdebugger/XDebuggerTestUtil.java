@@ -130,9 +130,13 @@ public class XDebuggerTestUtil {
   }
 
   public static List<XStackFrame> collectStacks(XExecutionStack thread, long timeout) throws InterruptedException {
+    return collectStacksWithError(thread, timeout).first;
+  }
+
+  public static Pair<List<XStackFrame>, String> collectStacksWithError(XExecutionStack thread, long timeout) throws InterruptedException {
     XTestStackFrameContainer container = new XTestStackFrameContainer();
     thread.computeStackFrames(0, container);
-    return container.waitFor(timeout).first;
+    return container.waitFor(timeout);
   }
 
   public static List<XValue> collectVariables(XStackFrame frame) throws InterruptedException {
