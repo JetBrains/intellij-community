@@ -264,7 +264,7 @@ public class JavaCompletionContributor extends CompletionContributor {
       new TypeArgumentCompletionProvider(false, session).addCompletions(parameters, new ProcessingContext(), result);
     }
 
-    result.addAllElements(FunctionalExpressionCompletionProvider.getLambdaVariants(parameters, true));
+    result.addAllElements(FunctionalExpressionCompletionProvider.getLambdaVariants(parameters, false));
 
     if (JavaSmartCompletionContributor.AFTER_NEW.accepts(position)) {
       new JavaInheritorsGetter(ConstructorInsertHandler.BASIC_INSTANCE).generateVariants(parameters, matcher, session);
