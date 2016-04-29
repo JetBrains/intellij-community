@@ -660,6 +660,11 @@ public class ListUtils {
 
   public void testInnerEnumConstant() throws Throwable { doTest('\n'); }
 
+  public void testNoExpectedReturnTypeDuplication() {
+    configure()
+    assert myFixture.lookupElementStrings == ['boolean', 'byte']
+  }
+
   public void testMethodReturnType() throws Throwable {
     doTest();
   }
@@ -950,7 +955,7 @@ public class ListUtils {
   public void testTabReplacesMethodNameWithLocalVariableName() throws Throwable { doTest('\t'); }
   public void testMethodParameterAnnotationClass() throws Throwable { doTest(); }
   public void testInnerAnnotation() { doTest('\n'); }
-  public void testPrimitiveCastOverwrite() throws Throwable { doTest '\t' }
+  public void testPrimitiveCastOverwrite() throws Throwable { doTest() }
   public void testClassReferenceInFor() throws Throwable { doTest ' ' }
   public void testClassReferenceInFor2() throws Throwable { doTest ' ' }
   public void testClassReferenceInFor3() throws Throwable {

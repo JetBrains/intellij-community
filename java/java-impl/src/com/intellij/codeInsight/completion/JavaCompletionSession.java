@@ -30,7 +30,8 @@ import java.util.Set;
 * @author peter
 */
 public class JavaCompletionSession implements Consumer<LookupElement> {
-  private final Set<String> myAddedClasses = new HashSet<String>();
+  private final Set<String> myAddedClasses = new HashSet<>();
+  private Set<String> myKeywords = new HashSet<>();
   private final CompletionResultSet myResult;
 
   public JavaCompletionSession(CompletionResultSet result) {
@@ -64,5 +65,13 @@ public class JavaCompletionSession implements Consumer<LookupElement> {
   public boolean alreadyProcessed(@NotNull PsiClass object) {
     final String name = getClassName(object);
     return name == null || myAddedClasses.contains(name);
+  }
+
+  public boolean isKeywordAlreadyProcessed(@NotNull String keyword) {
+    return myKeywords.contains(keyword);
+  }
+
+  public void registerKeyword(@NotNull String keyword) {
+    myKeywords.add(keyword);
   }
 }
