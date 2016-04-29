@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MostlySingularMultiMap;
 import com.intellij.util.containers.hash.HashSet;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
@@ -634,6 +635,31 @@ public class GrClassImplUtil {
       public boolean value(PsiMethod method) {
         return !(method instanceof GrAccessorMethod) || map.get(method.getName()) <= 1;
       }
+    });
+  }
+
+  @NotNull
+  public static Map<PsiMethod, MethodSignature> getDuplicatedMethods(@NotNull PsiClass clazz) {
+    return CachedValuesManager.getCachedValue(clazz, () -> {
+      PsiElementFactory factory = JavaPsiFacade.getInstance(clazz.getProject()).getElementFactory();
+
+      MostlySingularMultiMap<MethodSignature, PsiMethod> signatures = MostlySingularMultiMap.newMap();
+      for (PsiMethod method : clazz.getMethods()) {
+        MethodSignature signature = method.getSignature(factory.createRawSubstitutor(method));
+        signatures.add(signature, method);
+      }
+
+      Map<PsiMethod, MethodSignature> result = ContainerUtil.newHashMap();
+      for (MethodSignature signature : signatures.keySet()) {
+        if (signatures.valuesForKey(signature) > 1) {
+          signatures.processForKey(signature, m -> {
+            result.put(m, signature);
+            return true;
+          });
+        }
+      }
+
+      return CachedValueProvider.Result.create(result, clazz);
     });
   }
 }
