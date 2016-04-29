@@ -14,7 +14,7 @@
     <content url="file://$MODULE_DIR$/../../plugins/generate-tostring/testSrc">
       <sourceFolder url="file://$MODULE_DIR$/../../plugins/generate-tostring/testSrc" isTestSource="true" />
     </content>
-    <orderEntry type="jdk" jdkName="1.8" jdkType="JavaSDK" />
+    <orderEntry type="jdk" jdkName="IDEA jdk" jdkType="JavaSDK" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="testFramework-java" />
     <orderEntry type="module" module-name="java-impl" />
