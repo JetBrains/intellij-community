@@ -41,22 +41,18 @@ private class DefaultWebServerPathHandler : WebServerPathHandler() {
                        projectName: String,
                        decodedRawPath: String,
                        isCustomHost: Boolean): Boolean {
-    val isSignedRequest = request.isSignedRequest()
-    val extraHttpHeaders = validateToken(request, context.channel(), isSignedRequest) ?: return true
-
     val channel = context.channel()
+
+    val isSignedRequest = request.isSignedRequest()
+    val extraHttpHeaders = validateToken(request, channel, isSignedRequest) ?: return true
+
     val pathToFileManager = WebServerPathToFileManager.getInstance(project)
     var pathInfo = pathToFileManager.pathToInfoCache.getIfPresent(path)
     if (pathInfo == null || !pathInfo.isValid) {
       pathInfo = pathToFileManager.doFindByRelativePath(path)
       if (pathInfo == null) {
-        if (path.isEmpty()) {
-          HttpResponseStatus.NOT_FOUND.send(channel, request, "Index file doesn't exist.", extraHttpHeaders)
-          return true
-        }
-        else {
-          return false
-        }
+        HttpResponseStatus.NOT_FOUND.send(channel, request, if (path.isEmpty()) "Index file doesn't exist." else null, extraHttpHeaders)
+        return true
       }
 
       pathToFileManager.pathToInfoCache.put(path, pathInfo)
@@ -91,7 +87,7 @@ private class DefaultWebServerPathHandler : WebServerPathHandler() {
 
     // if extraHttpHeaders is not empty, it means that we get request wih token in the query
     if (!isSignedRequest && request.origin == null && request.referrer == null && request.isRegularBrowser() && !canBeAccessedDirectly(pathInfo.name)) {
-      HttpResponseStatus.NOT_FOUND.send(context.channel(), request)
+      HttpResponseStatus.NOT_FOUND.send(channel, request)
       return true
     }
 
@@ -121,7 +117,10 @@ private class DefaultWebServerPathHandler : WebServerPathHandler() {
         }
       }
     }
-    return false
+
+    // we registered as a last handler, so, we should just return 404 and send extra headers
+    HttpResponseStatus.NOT_FOUND.send(channel, request, extraHeaders = extraHttpHeaders)
+    return true
   }
 }
 
