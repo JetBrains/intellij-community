@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,10 @@
  */
 package org.jetbrains.java.decompiler.main.decompiler;
 
+import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.Fernflower;
 import org.jetbrains.java.decompiler.main.extern.IBytecodeProvider;
+import org.jetbrains.java.decompiler.main.extern.IClassNameHelper;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
 import org.jetbrains.java.decompiler.main.extern.IResultSaver;
 
@@ -34,6 +36,10 @@ public class BaseDecompiler {
 
   public void addSpace(File file, boolean isOwn) throws IOException {
     fernflower.getStructContext().addSpace(file, isOwn);
+  }
+
+  public void setClassNameProvider(IClassNameHelper provider) {
+    DecompilerContext.setClassNameProvider(provider);
   }
 
   public void decompileContext() {

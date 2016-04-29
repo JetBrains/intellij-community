@@ -29,6 +29,7 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DefaultProjectFactory
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
@@ -36,9 +37,11 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
+import com.intellij.psi.PsiManager
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.compiled.ClassFileDecompilers
 import com.intellij.psi.impl.compiled.ClsFileImpl
+import com.intellij.psi.util.ClassUtil
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.java.decompiler.main.decompiler.BaseDecompiler
@@ -157,6 +160,21 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
       val saver = MyResultSaver()
       val decompiler = BaseDecompiler(provider, saver, options, myLogger.value)
       files.keys.forEach { path -> decompiler.addSpace(File(path), true) }
+
+      ApplicationManager.getApplication().runReadAction {
+        val openProjects = ProjectManager.getInstance().openProjects
+        val project = openProjects.filter { p -> PsiManager.getInstance(p).findFile(file) != null }.firstOrNull()
+
+        project?.let {
+          decompiler.setClassNameProvider {
+            fqn ->
+            ApplicationManager.getApplication().runReadAction<String> {
+              ClassUtil.findPsiClass(PsiManager.getInstance(project), fqn.replace("/", "."), null, true)?.qualifiedName
+            }
+          }
+        }
+      }
+
       decompiler.decompileContext()
 
       val mapping = saver.myMapping

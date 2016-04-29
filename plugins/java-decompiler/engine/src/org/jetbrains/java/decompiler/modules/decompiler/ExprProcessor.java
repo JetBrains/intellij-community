@@ -22,6 +22,7 @@ import org.jetbrains.java.decompiler.code.cfg.BasicBlock;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.TextBuffer;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
+import org.jetbrains.java.decompiler.main.extern.IClassNameHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
 import org.jetbrains.java.decompiler.modules.decompiler.sforms.DirectGraph;
 import org.jetbrains.java.decompiler.modules.decompiler.sforms.DirectNode;
@@ -776,6 +777,14 @@ public class ExprProcessor implements CodeConstants {
   }
 
   public static String buildJavaClassName(String name) {
+    IClassNameHelper classNameProvider = DecompilerContext.getClassNameProvider();
+    if (classNameProvider != null) {
+      String res = classNameProvider.getClassName(name);
+      if (res != null) {
+        return res;
+      }
+    }
+
     String res = name.replace('/', '.');
 
     if (res.contains("$")) { // attempt to invoke foreign member
