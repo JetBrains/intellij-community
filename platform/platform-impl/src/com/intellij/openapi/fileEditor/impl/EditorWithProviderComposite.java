@@ -66,8 +66,7 @@ public class EditorWithProviderComposite extends EditorComposite {
       return Pair.create(myEditors[0], myProviders[0]);
     }
     else { // we have to get myEditor from tabbed pane
-      LOG.assertTrue(myTabbedPaneWrapper != null);
-      int index = myTabbedPaneWrapper.getSelectedIndex();
+      int index = myTabbedPaneWrapper != null ? myTabbedPaneWrapper.getSelectedIndex() : 0;
       if (index == -1) {
         index = 0;
       }
