@@ -152,10 +152,10 @@ public class WebServerManagerImpl extends WebServerManager {
     }
 
     //BuiltInServerOptions options = BuiltInServerOptions.getInstance();
-    //int idePort = BuiltInServerManager.getInstance().getPort();
-    //if (options.builtInServerPort != port && idePort != port) {
-    //  return false;
-    //}
+    int idePort = WebServerManager.getInstance().getPort();
+    if (/*options.builtInServerPort != port &&*/ idePort != port) {
+      return false;
+    }
 
     String host = authority.substring(0, portIndex);
     if (NetUtils.isLocalhost(host)) {
