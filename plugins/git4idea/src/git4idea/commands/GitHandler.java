@@ -34,7 +34,6 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.BuiltinWebServerAccess;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ObjectUtils;
@@ -467,7 +466,6 @@ public abstract class GitHandler {
     myEnv.put(GitAskPassXmlRpcHandler.GIT_ASK_PASS_HANDLER_ENV, Integer.toString(myHttpHandler));
     int port = service.getXmlRcpPort();
     myEnv.put(GitAskPassXmlRpcHandler.GIT_ASK_PASS_PORT_ENV, Integer.toString(port));
-    myEnv.put(GitAskPassXmlRpcHandler.GIT_ASK_PASS_TOKEN_ENV, BuiltinWebServerAccess.getUserAuthenticationToken());
     LOG.debug(String.format("handler=%s, port=%s", myHttpHandler, port));
     addAuthListener(httpAuthenticator);
   }
@@ -480,7 +478,6 @@ public abstract class GitHandler {
     myEnv.put(GitSSHHandler.SSH_HANDLER_ENV, Integer.toString(mySshHandler));
     int port = ssh.getXmlRcpPort();
     myEnv.put(GitSSHHandler.SSH_PORT_ENV, Integer.toString(port));
-    myEnv.put(GitSSHHandler.SSH_TOKEN_ENV, BuiltinWebServerAccess.getUserAuthenticationToken());
     LOG.debug(String.format("handler=%s, port=%s", mySshHandler, port));
 
     final HttpConfigurable httpConfigurable = HttpConfigurable.getInstance();

@@ -19,7 +19,6 @@ import com.intellij.ide.browsers.OpenInBrowserRequest;
 import com.intellij.ide.browsers.WebBrowserService;
 import com.intellij.ide.browsers.WebBrowserUrlProvider;
 import com.intellij.lang.Language;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -27,7 +26,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.util.BuiltinWebServerAccess;
 import com.intellij.util.Url;
 import com.intellij.util.Urls;
 import com.intellij.util.containers.ContainerUtil;
@@ -35,14 +33,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.BuiltInServerManager;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 public class BuiltInWebBrowserUrlProvider extends WebBrowserUrlProvider implements DumbAware {
-  private static final Logger LOG = Logger.getInstance(BuiltInWebBrowserUrlProvider.class);
-
   @NotNull
   public static List<Url> getUrls(@NotNull VirtualFile file, @NotNull Project project, @Nullable String currentAuthority) {
     if (currentAuthority != null && !compareAuthority(currentAuthority)) {
@@ -55,16 +50,7 @@ public class BuiltInWebBrowserUrlProvider extends WebBrowserUrlProvider implemen
     }
 
     int effectiveBuiltInServerPort = BuiltInServerOptions.getInstance().getEffectiveBuiltInServerPort();
-    Url url = null;
-    try {
-      url = Urls.newHttpUrl(currentAuthority == null
-                            ? "localhost:" + effectiveBuiltInServerPort : currentAuthority,
-                            '/' + BuiltinWebServerAccess.getUserAuthenticationToken() +'/' + project.getName() + '/' + path);
-    }
-    catch (IOException e){
-      LOG.warn(String.format("Unable to get User authentication token for launching path '%s'", path), e);
-      return Collections.emptyList();
-    }
+    Url url = Urls.newHttpUrl(currentAuthority == null ? "localhost:" + effectiveBuiltInServerPort : currentAuthority, '/' + project.getName() + '/' + path);
     int defaultPort = BuiltInServerManager.getInstance().getPort();
     if (currentAuthority != null || defaultPort == effectiveBuiltInServerPort) {
       return Collections.singletonList(url);

@@ -122,8 +122,7 @@ public class SSHMain implements GitExternalApp {
     myHost = config.lookup(username, host, port);
     myHandlerNo = Integer.parseInt(System.getenv(GitSSHHandler.SSH_HANDLER_ENV));
     int xmlRpcPort = Integer.parseInt(System.getenv(GitSSHHandler.SSH_PORT_ENV));
-    String xmlRpcToken = System.getenv(GitSSHHandler.SSH_TOKEN_ENV);
-    myXmlRpcClient = new GitSSHXmlRpcClient(xmlRpcPort, myHost.isBatchMode(), xmlRpcToken);
+    myXmlRpcClient = new GitSSHXmlRpcClient(xmlRpcPort, myHost.isBatchMode());
     myCommand = command;
   }
 
