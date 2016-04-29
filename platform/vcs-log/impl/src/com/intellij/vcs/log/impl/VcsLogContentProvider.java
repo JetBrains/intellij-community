@@ -93,7 +93,7 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
   }
 
   @NotNull
-  private static String generateShortName(ToolWindow toolWindow) {
+  private static String generateShortName(@NotNull ToolWindow toolWindow) {
     TabbedContent tabbedContent = ContentUtilEx.findTabbedContent(toolWindow.getContentManager(), TAB_NAME);
     if (tabbedContent != null) {
       return String.valueOf(tabbedContent.getTabs().size() + 1);
