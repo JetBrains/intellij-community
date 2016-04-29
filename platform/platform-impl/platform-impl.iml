@@ -36,6 +36,6 @@
     <orderEntry type="library" name="Sanselan" level="project" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module" module-name="jps-model-impl" />
+    <orderEntry type="module" module-name="xml" />
   </component>
 </module>
-

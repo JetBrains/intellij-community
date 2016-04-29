@@ -19,6 +19,8 @@ import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.handler.codec.http.HttpMethod;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.QueryStringDecoder;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.io.NettyUtil;
 
 import java.io.IOException;
 
@@ -29,4 +31,15 @@ public abstract class HttpRequestHandler {
 
   public abstract boolean process(QueryStringDecoder urlDecoder, HttpRequest request, ChannelHandlerContext context)
     throws IOException;
+
+  /**
+   * Write request from browser without Origin will be always blocked regardles of your implementation.
+   */
+  @SuppressWarnings("SpellCheckingInspection")
+  public boolean isAccessible(@NotNull HttpRequest request) {
+    String host = NettyUtil.host(request);
+    // If attacker.com DNS rebound to 127.0.0.1 and user open site directly — no Origin or Referer headers.
+    // So we should check Host header.
+    return host != null && NettyUtil.isLocalOrigin(request) && NettyUtil.parseAndCheckIsLocalHost("http://" + host);
+  }
 }

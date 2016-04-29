@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.SystemInfo;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -82,6 +83,10 @@ public class NetUtils {
       socket.close();
     }
     return ports;
+  }
+
+  public static boolean isLocalhost(@NotNull String host) {
+    return host.equalsIgnoreCase("localhost") || host.equals("127.0.0.1") || host.equals("::1");
   }
 
   public static String getLocalHostString() {
