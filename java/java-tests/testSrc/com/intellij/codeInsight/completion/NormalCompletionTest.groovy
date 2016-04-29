@@ -1045,6 +1045,7 @@ public class ListUtils {
   public void testNoFieldsInImplements() throws Throwable { doTest() }
 
   public void testSwitchConstantsFromReferencedClass() throws Throwable { doTest('\n') }
+  public void testSwitchValueFinishWithColon() throws Throwable { doTest(':') }
 
   public void testUnfinishedMethodTypeParameter() throws Throwable {
     configure()
