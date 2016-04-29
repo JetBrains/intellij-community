@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/**
- * created at Sep 7, 2001
- * @author Jeka
- */
 package com.intellij.refactoring.anonymousToInner;
 
 import com.intellij.psi.PsiVariable;

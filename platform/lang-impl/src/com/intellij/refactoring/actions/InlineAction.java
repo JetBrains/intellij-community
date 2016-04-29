@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +14,6 @@
  * limitations under the License.
  */
 
-/**
- * class InlineAction
- * created Aug 28, 2001
- * @author Jeka
- */
 package com.intellij.refactoring.actions;
 
 import com.intellij.lang.Language;
@@ -37,7 +32,6 @@ import com.intellij.refactoring.inline.InlineRefactoringActionHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.List;
 
 public class InlineAction extends BasePlatformRefactoringAction {

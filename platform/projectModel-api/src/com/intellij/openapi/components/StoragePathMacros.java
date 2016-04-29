@@ -37,25 +37,23 @@ public class StoragePathMacros {
 
   /**
    * Points to the application-level options root directory.
+   * @deprecated Not required anymore. See {@link State#storages()}.
    */
   @SuppressWarnings("unused")
   @Deprecated
-  /**
-   * @deprecated Not required anymore. See {@link State#storages()}.
-   */
   public static final String APP_CONFIG = "$APP_CONFIG$";
 
-  @Deprecated
   /**
    * @deprecated Not required anymore. See {@link State#storages()}.
    */
+  @Deprecated
   public static final String PROJECT_FILE = "$PROJECT_FILE$";
 
-  @SuppressWarnings("unused")
-  @Deprecated
   /**
    * @deprecated Not required anymore. See {@link State#storages()}.
    */
+  @SuppressWarnings("unused")
+  @Deprecated
   public static final String PROJECT_CONFIG_DIR = "$PROJECT_CONFIG_DIR$";
 
   /**

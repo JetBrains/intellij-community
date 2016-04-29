@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-/**
- * @author Yura Cangea
- */
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.application.options.EditorFontsConstants;

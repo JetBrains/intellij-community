@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,6 @@
  * limitations under the License.
  */
 
-/******************************************************************************
- * Copyright (C) 2013  Fabio Zadrozny
- *
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- *
- * Contributors:
- *     Fabio Zadrozny <fabiofz@gmail.com> - initial API and implementation
- ******************************************************************************/
 package com.intellij.execution.process;
 
 import com.intellij.execution.process.impl.ProcessListUtil;
@@ -38,6 +27,17 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+/******************************************************************************
+ * Copyright (C) 2013  Fabio Zadrozny
+ *
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Fabio Zadrozny <fabiofz@gmail.com> - initial API and implementation
+ ******************************************************************************/
 public class OSProcessUtil {
   private static final Logger LOG = Logger.getInstance(OSProcessUtil.class);
 
