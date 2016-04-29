@@ -2,23 +2,39 @@ package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.application.ApplicationActivationListener;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.ex.ClipboardUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.VcsApplicationSettings;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.messages.MessageBusConnection;
+import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.util.Collections;
 
 public class ApplyPatchFromClipboardAction extends DumbAwareAction {
+  private static final PatchClipboardListener LISTENER = new PatchClipboardListener();
+
+  public ApplyPatchFromClipboardAction() {
+    MessageBusConnection connection = ApplicationManagerEx.getApplicationEx().getMessageBus().connect();
+    connection.subscribe(ApplicationActivationListener.TOPIC, LISTENER);
+  }
 
   @Override
   public void update(AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     String text = ClipboardUtil.getTextInClipboard();
-    e.getPresentation().setEnabled(project != null && PatchFileUtil.isPatchContent(text));
+    // allow to apply from clipboard even we do not detect it as a patch, because during applying we parse content more precisely
+    e.getPresentation().setEnabled(project != null && text != null);
   }
 
   public void actionPerformed(AnActionEvent e) {
@@ -28,8 +44,34 @@ public class ApplyPatchFromClipboardAction extends DumbAwareAction {
 
     String clipboardText = ClipboardUtil.getTextInClipboard();
     assert clipboardText != null;
-    VirtualFile vFile = new LightVirtualFile("clipboardPatchFile", clipboardText);
-    new ApplyPatchDifferentiatedDialog(project, new ApplyPatchDefaultExecutor(project), Collections.emptyList(),
-                                       ApplyPatchMode.APPLY_PATCH_IN_MEMORY, vFile).show();
+    new MyApplyPatchFromClipboardDialog(project, clipboardText).show();
+  }
+
+  @NotNull
+  private static JCheckBox createAnalyzeOnTheFlyOptionPanel() {
+    final JCheckBox removeOptionCheckBox = new JCheckBox("Analyze and Apply Patch from Clipboard on the Fly");
+    removeOptionCheckBox.setMnemonic(KeyEvent.VK_L);
+    removeOptionCheckBox.setSelected(VcsApplicationSettings.getInstance().DETECT_PATCH_ON_THE_FLY);
+    removeOptionCheckBox.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        VcsApplicationSettings.getInstance().DETECT_PATCH_ON_THE_FLY = removeOptionCheckBox.isSelected();
+      }
+    });
+    return removeOptionCheckBox;
+  }
+
+  public static class MyApplyPatchFromClipboardDialog extends ApplyPatchDifferentiatedDialog {
+    private static final JCheckBox FLY_OPTION_PANEL = createAnalyzeOnTheFlyOptionPanel();
+
+    public MyApplyPatchFromClipboardDialog(@NotNull Project project, @NotNull String clipboardText) {
+      super(project, new ApplyPatchDefaultExecutor(project), Collections.emptyList(), ApplyPatchMode.APPLY_PATCH_IN_MEMORY,
+            new LightVirtualFile("clipboardPatchFile", clipboardText));
+    }
+
+    @Override
+    protected JComponent createSouthPanel() {
+      return addDoNotShowCheckBox(ObjectUtils.assertNotNull(super.createSouthPanel()), FLY_OPTION_PANEL);
+    }
   }
 }
