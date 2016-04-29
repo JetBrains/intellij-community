@@ -30,6 +30,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.vcs.vfs.ContentRevisionVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -118,7 +119,7 @@ public abstract class BaseOpenInBrowserAction extends DumbAwareAction {
         if (psiFile == null) {
           psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
         }
-        if (psiFile != null) {
+        if (psiFile != null && !(psiFile.getVirtualFile() instanceof ContentRevisionVirtualFile)) {
           return new OpenInBrowserRequest(psiFile) {
             private PsiElement element;
 
@@ -142,7 +143,7 @@ public abstract class BaseOpenInBrowserAction extends DumbAwareAction {
         psiFile = PsiManager.getInstance(project).findFile(virtualFile);
       }
 
-      if (psiFile != null) {
+      if (psiFile != null && !(psiFile.getVirtualFile() instanceof ContentRevisionVirtualFile)) {
         return OpenInBrowserRequest.create(psiFile);
       }
     }
