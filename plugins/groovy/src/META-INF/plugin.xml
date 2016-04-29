@@ -129,9 +129,12 @@
 
     <astTransformationSupport implementation="org.jetbrains.plugins.groovy.lang.resolve.ast.LoggingContributor"/>
     <astTransformationSupport implementation="org.jetbrains.plugins.groovy.transformations.impl.CategoryTransformationSupport"/>
-    <astTransformationSupport implementation="org.jetbrains.plugins.groovy.transformations.impl.DelegateTransformationSupport"/>
-    <astTransformationSupport implementation="org.jetbrains.plugins.groovy.transformations.impl.DefaultTransformationSupport" order="before delegateSupport"/>
-    <astTransformationSupport implementation="org.jetbrains.plugins.groovy.transformations.impl.TraitTransformationSupport" order="last"/>
+    <astTransformationSupport id="defaultSupport"
+                              implementation="org.jetbrains.plugins.groovy.transformations.impl.DefaultTransformationSupport"/>
+    <astTransformationSupport id="delegateSupport" order="after defaultSupport"
+                              implementation="org.jetbrains.plugins.groovy.transformations.impl.DelegateTransformationSupport"/>
+    <astTransformationSupport id="traitSupport" order="last"
+                              implementation="org.jetbrains.plugins.groovy.transformations.impl.TraitTransformationSupport"/>
 
     <positionManagerDelegate implementation="org.jetbrains.plugins.groovy.gant.GantPositionManagerHelper"/>
 
