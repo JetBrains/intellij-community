@@ -409,6 +409,24 @@ MAXIMUM_ARRAY_SIZE = 100
 MAX_SLICE_SIZE = 1000
 
 
+def table_like_struct_to_xml(array, name, roffset, coffset, rows, cols, format):
+    _, type_name, _ = get_type(array)
+    if type_name == 'ndarray':
+        array, metaxml, r, c, f = array_to_meta_xml(array, name, format)
+        xml = metaxml
+        format = '%' + f
+        if rows == -1 and cols == -1:
+            rows = r
+            cols = c
+        xml += array_to_xml(array, roffset, coffset, rows, cols, format)
+    elif type_name == 'DataFrame':
+        xml = dataframe_to_xml(array, name, roffset, coffset, rows, cols, format)
+    else:
+        raise VariableError("Do not know how to convert type %s to table" % (type_name))
+
+    return "<xml>%s</xml>" % xml
+
+
 def array_to_xml(array, roffset, coffset, rows, cols, format):
     xml = ""
     rows = min(rows, MAXIMUM_ARRAY_SIZE)
