@@ -306,7 +306,8 @@ class EditorCoordinateMapper {
       int visualLineStartOffset = visualLineToOffset(visualLine);
       int maxOffset = 0;
       for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView, visualLineStartOffset, false)) {
-        if (column < fragment.getStartVisualColumn()) {
+        int startVisualColumn = fragment.getStartVisualColumn();
+        if (column < startVisualColumn || column == startVisualColumn && !pos.leansRight) {
           break;
         }
         int endColumn = fragment.getEndVisualColumn();
