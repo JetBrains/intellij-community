@@ -256,6 +256,10 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
     doTest(true);
   }
 
+  public void testInsertNarrowingCastToAvoidSemanticsChange() throws Exception {
+    doTest(false);
+  }
+
   public void testLocalVarInsideLambdaBodyWriteUsage() throws Exception {
     doTest(true, "Cannot perform refactoring.\n" +
                  "Variable 'hello' is accessed for writing");
