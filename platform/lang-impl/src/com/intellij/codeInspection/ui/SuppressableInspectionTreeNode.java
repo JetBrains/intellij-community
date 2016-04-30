@@ -36,11 +36,12 @@ import java.util.Set;
  */
 public abstract class SuppressableInspectionTreeNode extends CachedInspectionTreeNode implements RefElementAndDescriptorAware {
   private final static Logger LOG = Logger.getInstance(SuppressableInspectionTreeNode.class);
+  @NotNull
   private final InspectionResultsView myView;
   private volatile Set<SuppressIntentionAction> myAvailableSuppressActions;
   protected final InspectionToolPresentation myPresentation;
 
-  protected SuppressableInspectionTreeNode(Object userObject, InspectionToolPresentation presentation) {
+  protected SuppressableInspectionTreeNode(Object userObject, @NotNull InspectionToolPresentation presentation) {
     super(userObject);
     myView = presentation.getContext().getView();
     myPresentation = presentation;
