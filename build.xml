@@ -44,6 +44,7 @@
   </target>
 
   <target name="init">
+    <ant antfile="${project.home}/../adt/idea/android/build.xml" target="preBuild"/>
     <mkdir dir="${out.dir}"/>
     <mkdir dir="${tmp.dir}"/>
     <delete dir="${project.home}/build/kotlinc" />
