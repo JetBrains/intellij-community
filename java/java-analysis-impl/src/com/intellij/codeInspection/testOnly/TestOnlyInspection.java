@@ -100,7 +100,6 @@ public class TestOnlyInspection extends BaseJavaBatchLocalInspectionTool {
       if (JavaResolveUtil.isAccessible(member, member.getContainingClass(), modList, reference, null, null)) {
         return;
       }
-      int a = 1;
     }
 
     reportProblem(reference, member, h);
