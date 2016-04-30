@@ -110,6 +110,16 @@ public class XDebuggerTestUtil {
     return session.getSuspendContext().getActiveExecutionStack();
   }
 
+  public static List<XExecutionStack> collectThreads(@NotNull XDebugSession session) throws InterruptedException {
+    return collectThreadsWithErrors(session).first;
+  }
+
+  public static Pair<List<XExecutionStack>, String> collectThreadsWithErrors(@NotNull XDebugSession session) throws InterruptedException {
+    XTestExecutionStackContainer container = new XTestExecutionStackContainer();
+    session.getSuspendContext().computeExecutionStacks(container);
+    return container.waitFor(TIMEOUT);
+  }
+
   public static List<XStackFrame> collectFrames(@NotNull XDebugSession session) throws InterruptedException {
     return collectFrames(null, session);
   }
@@ -509,6 +519,18 @@ public class XDebuggerTestUtil {
     assertEquals(expectedExpression, expression);
     return expression;
   }
+  
+  public static class XTestExecutionStackContainer extends XTestContainer<XExecutionStack> implements XSuspendContext.XExecutionStackContainer {
+    @Override
+    public void errorOccurred(@NotNull String errorMessage) {
+      setErrorMessage(errorMessage);
+    }
+
+    @Override
+    public void addExecutionStack(@NotNull List<? extends XExecutionStack> executionStacks, boolean last) {
+      addChildren(executionStacks, last);
+    }
+  } 
 
   public static class XTestStackFrameContainer extends XTestContainer<XStackFrame> implements XExecutionStack.XStackFrameContainer {
     public void addStackFrames(@NotNull List<? extends XStackFrame> stackFrames, boolean last) {
