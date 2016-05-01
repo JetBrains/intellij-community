@@ -18,7 +18,6 @@ package com.intellij.vcs.log.impl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentEP;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -79,15 +78,11 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
   @CalledInAwt
   private void addLogUi() {
     myContainer.add(myProjectLog.initMainLog(TAB_NAME), BorderLayout.CENTER);
-
-    VcsLogManager manager = myProjectLog.getLogManager();
-    assert manager != null;
-    if (manager.isLogVisible()) myProjectLog.scheduleInitialization();
   }
 
   @Override
   public JComponent initContent() {
-    myProjectLog.scheduleInitialization();
+    myProjectLog.createLog();
     return myContainer;
   }
 

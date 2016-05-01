@@ -19,10 +19,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
-import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.RecursionGuard;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsListener;
 import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
@@ -101,25 +101,20 @@ public class VcsProjectLog {
 
   @CalledInAwt
   private void disposeLog() {
-    if (myLogManager.getCached() != null) myMessageBus.syncPublisher(VCS_PROJECT_LOG_CHANGED).logDisposed();
     myUi = null;
     myLogManager.drop();
   }
 
   @CalledInAwt
-  private void createLog() {
+  public void createLog() {
     VcsLogManager logManager = myLogManager.getValue();
 
-    myMessageBus.syncPublisher(VCS_PROJECT_LOG_CHANGED).logCreated();
-
-    if (PostponableLogRefresher.keepUpToDate()) {
+    if (logManager.isLogVisible()) {
+      logManager.scheduleInitialization();
+    }
+    else if (PostponableLogRefresher.keepUpToDate()) {
       new HeavyAwareExecutor(myProject).execute(logManager::scheduleInitialization);
     }
-  }
-
-  public void scheduleInitialization() {
-    VcsLogManager cached = myLogManager.getCached();
-    if (cached != null) cached.scheduleInitialization();
   }
 
   private boolean hasDvcsRoots() {
@@ -130,33 +125,32 @@ public class VcsProjectLog {
     return ServiceManager.getService(project, VcsProjectLog.class);
   }
 
-  @SuppressWarnings("NonPrivateFieldAccessedInSynchronizedContext")
-  private class LazyVcsLogManager extends ClearableLazyValue<VcsLogManager> {
+  private class LazyVcsLogManager {
+    @Nullable private VcsLogManager myValue;
 
     @NotNull
     @CalledInAwt
-    @Override
     public synchronized VcsLogManager getValue() {
-      return super.getValue();
+      if (myValue == null) {
+        myValue = compute();
+        myMessageBus.syncPublisher(VCS_PROJECT_LOG_CHANGED).logCreated();
+      }
+      return myValue;
     }
 
     @NotNull
     @CalledInAwt
-    @Override
     protected synchronized VcsLogManager compute() {
-      return new VcsLogManager(myProject, myUiProperties, getVcsRoots(), false, new Runnable() {
-        @Override
-        public void run() {
-          recreateLog();
-        }
-      });
+      return new VcsLogManager(myProject, myUiProperties, getVcsRoots(), false, VcsProjectLog.this::recreateLog);
     }
 
     @CalledInAwt
-    @Override
     public synchronized void drop() {
-      if (myValue != null) Disposer.dispose(myValue);
-      super.drop();
+      if (myValue != null) {
+        myMessageBus.syncPublisher(VCS_PROJECT_LOG_CHANGED).logDisposed();
+        Disposer.dispose(myValue);
+      }
+      myValue = null;
     }
 
     @Nullable
@@ -173,7 +167,7 @@ public class VcsProjectLog {
       MessageBusConnection connection = project.getMessageBus().connect(project);
       connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, projectLog::recreateLog);
       if (projectLog.hasDvcsRoots()) {
-        ApplicationManager.getApplication().invokeLater(projectLog::createLog);
+        ApplicationManager.getApplication().invokeLater(() -> projectLog.createLog());
       }
     }
   }
