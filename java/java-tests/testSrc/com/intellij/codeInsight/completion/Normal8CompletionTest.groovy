@@ -174,7 +174,12 @@ class Test88 {
 }
 """
   }
-  
+
+  public void testInheritorConstructorRef() {
+    configureByTestName()
+    myFixture.assertPreferredCompletionItems 0, 'ArrayList::new', 'ArrayList'
+  }
+
   public void "test constructor ref without start"() {
     myFixture.configureByText "a.java", """
 interface Foo9 {

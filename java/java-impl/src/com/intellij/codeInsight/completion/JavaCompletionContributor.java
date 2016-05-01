@@ -246,6 +246,10 @@ public class JavaCompletionContributor extends CompletionContributor {
 
     addAllClasses(parameters, result, session);
 
+    if (position instanceof PsiIdentifier) {
+      FunctionalExpressionCompletionProvider.addFunctionalVariants(parameters, false, true, result);
+    }
+
     if (position instanceof PsiIdentifier &&
         parent instanceof PsiReferenceExpression &&
         !((PsiReferenceExpression)parent).isQualified() &&
@@ -264,7 +268,7 @@ public class JavaCompletionContributor extends CompletionContributor {
       new TypeArgumentCompletionProvider(false, session).addCompletions(parameters, new ProcessingContext(), result);
     }
 
-    result.addAllElements(FunctionalExpressionCompletionProvider.getLambdaVariants(parameters, false));
+    FunctionalExpressionCompletionProvider.addFunctionalVariants(parameters, false, false, result);
 
     if (JavaSmartCompletionContributor.AFTER_NEW.accepts(position)) {
       new JavaInheritorsGetter(ConstructorInsertHandler.BASIC_INSTANCE).generateVariants(parameters, matcher, session);
