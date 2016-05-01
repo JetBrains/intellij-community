@@ -15,6 +15,8 @@
  */
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.util.TextRange;
@@ -100,6 +102,16 @@ public class JavaCopyPasteReferenceProcessor extends CopyPasteReferenceProcessor
         }
       }
     }
+
+    if (CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY) {
+      for (int i = 0; i < refs.length; i++) {
+        PsiJavaCodeReferenceElement ref = refs[i];
+        if (ref != null && new ImportClassFix(ref).getClassesToImport().size() <= 1) {
+          refs[i] = null;
+        }
+      }
+    }
+
     return refs;
   }
 
