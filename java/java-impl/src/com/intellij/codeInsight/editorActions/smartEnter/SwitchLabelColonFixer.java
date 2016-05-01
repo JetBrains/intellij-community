@@ -23,13 +23,14 @@ import com.intellij.util.IncorrectOperationException;
 /**
  * @author peter
  */
-public class CaseColonFixer implements Fixer {
+public class SwitchLabelColonFixer implements Fixer {
   @Override
   public void apply(Editor editor, JavaSmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
-    if (psiElement instanceof PsiSwitchLabelStatement &&
-        ((PsiSwitchLabelStatement)psiElement).getCaseValue() != null &&
-        !psiElement.getText().endsWith(":")) {
-      editor.getDocument().insertString(psiElement.getTextRange().getEndOffset(), ":");
+    if (psiElement instanceof PsiSwitchLabelStatement && !psiElement.getText().endsWith(":")) {
+      PsiSwitchLabelStatement statement = (PsiSwitchLabelStatement)psiElement;
+      if (statement.getCaseValue() != null || statement.isDefaultCase()) {
+        editor.getDocument().insertString(psiElement.getTextRange().getEndOffset(), ":");
+      }
     }
   }
 }

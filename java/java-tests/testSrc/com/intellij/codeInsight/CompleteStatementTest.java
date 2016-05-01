@@ -226,6 +226,7 @@ public class CompleteStatementTest extends EditorActionTestCase {
   public void testSwitchKeywordWithCondition() throws Exception { doTest(); }
   public void testSwitchBraces() { doTest(); }
   public void testCaseColon() { doTest(); }
+  public void testDefaultColon() { doTest(); }
 
   public void testNewInParentheses() throws Exception { doTest(); }
   
