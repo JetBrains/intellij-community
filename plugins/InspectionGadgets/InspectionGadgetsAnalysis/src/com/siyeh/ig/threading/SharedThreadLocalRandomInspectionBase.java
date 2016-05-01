@@ -39,9 +39,10 @@ public class SharedThreadLocalRandomInspectionBase extends BaseInspection {
   protected final MethodMatcher myMethodMatcher;
 
   public SharedThreadLocalRandomInspectionBase() {
-    myMethodMatcher = new MethodMatcher(true, "ignoreArgumentToMethods")
+    myMethodMatcher = new MethodMatcher(false, "ignoreArgumentToMethods")
       .add("java.math.BigInteger", ".*")
-      .add("java.util.Collections", "shuffle");
+      .add("java.util.Collections", "shuffle")
+      .finishDefault();
   }
 
   @Nls
