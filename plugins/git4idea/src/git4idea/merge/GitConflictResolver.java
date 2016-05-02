@@ -18,7 +18,7 @@ package git4idea.merge;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -224,11 +224,11 @@ public class GitConflictResolver {
   }
 
   private void showMergeDialog(final Collection<VirtualFile> initiallyUnmergedFiles) {
-    TransactionGuard.getInstance().submitTransactionAndWait(() -> {
+    ApplicationManager.getApplication().invokeAndWait(() -> {
       final MergeProvider mergeProvider = myParams.reverse ?
                                           new GitMergeProvider(myProject, true) : new GitMergeProvider(myProject, false);
       myVcsHelper.showMergeDialog(new ArrayList<VirtualFile>(initiallyUnmergedFiles), mergeProvider, myParams.myMergeDialogCustomizer);
-    });
+    }, ModalityState.defaultModalityState());
   }
 
   private void notifyException(VcsException e) {
