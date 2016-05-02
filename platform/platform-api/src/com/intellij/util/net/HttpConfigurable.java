@@ -210,7 +210,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   }
 
   private static String decode(String value) {
-    return new String(Base64.decode(value));
+    return new String(Base64.decode(value), CharsetToolkit.UTF8_CHARSET);
   }
 
   @Transient
@@ -219,7 +219,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   }
 
   private static String encode(String password) {
-    return new String(Base64.encode(password.getBytes(CharsetToolkit.UTF8_CHARSET)));
+    return Base64.encode(password.getBytes(CharsetToolkit.UTF8_CHARSET));
   }
 
   public PasswordAuthentication getGenericPromptedAuthentication(final String prefix, final String host, final String prompt, final int port, final boolean remember) {
