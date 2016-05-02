@@ -16,11 +16,13 @@
 package com.intellij.psi.resolve;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DependenciesBuilder;
@@ -224,6 +226,18 @@ public class ResolveClassTest extends ResolveTestCase {
     long start = System.currentTimeMillis();
     assertNull(ref.resolve());
     PlatformTestUtil.assertTiming("exponent?", 20000, System.currentTimeMillis() - start);
+  }
+
+  public void testQualifiedAnonymousClass() throws Exception {
+    RecursionManager.assertOnRecursionPrevention(myTestRootDisposable);
+
+    PsiReference ref = configure();
+    VirtualFile file = ref.getElement().getContainingFile().getVirtualFile();
+    assertNotNull(file);
+    VirtualFile pkg = WriteAction.compute(() -> file.getParent().createChildDirectory(this, "foo"));
+    createFile(myModule, pkg, "Outer.java", "package foo; public class Outer { protected static class Inner { protected Inner() {} } }");
+
+    assertEquals("Inner", assertInstanceOf(ref.resolve(), PsiClass.class).getName());
   }
 
   @SuppressWarnings({"ConstantConditions"})
