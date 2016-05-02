@@ -15,6 +15,7 @@
  */
 package com.intellij.configurationStore
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.impl.stores.StateStorageBase
 import com.intellij.openapi.util.JDOMUtil
@@ -40,9 +41,6 @@ class StateGetter<S : Any, T : Any>(private val component: PersistentStateCompon
     LOG.assertTrue(serializedState == null)
 
     serializedState = storage.getSerializedState(storageData, component, componentName, false)
-    if (serializedState != null) {
-      //System.out.println("open $componentName to read state, ${hashCode()} $storage, ${Thread.currentThread()}")
-    }
     return storage.deserializeState(serializedState, stateClass, mergeInto)
   }
 
@@ -50,8 +48,6 @@ class StateGetter<S : Any, T : Any>(private val component: PersistentStateCompon
     if (serializedState == null) {
       return
     }
-
-    //System.out.println("close $componentName to read state, ${hashCode()} $storage, ${Thread.currentThread()}")
 
     val stateAfterLoad: S?
     try {
@@ -69,6 +65,12 @@ class StateGetter<S : Any, T : Any>(private val component: PersistentStateCompon
       serializeState(stateAfterLoad)?.normalizeRootName().let {
         if (JDOMUtil.isEmpty(it)) null else it
       }
+    }
+
+    if (ApplicationManager.getApplication().isUnitTestMode &&
+      serializedState != serializedStateAfterLoad &&
+      (serializedStateAfterLoad == null || !JDOMUtil.areElementsEqual(serializedState, serializedStateAfterLoad))) {
+      LOG.warn("$componentName state changed after load. \nOld: ${JDOMUtil.writeElement(serializedState!!)}\n\nNew: ${serializedStateAfterLoad?.let { JDOMUtil.writeElement(it) } ?: "null"}\n")
     }
 
     storage.archiveState(storageData, componentName, serializedStateAfterLoad)

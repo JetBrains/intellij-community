@@ -96,17 +96,7 @@ public class JDOMUtil {
   private static final EmptyTextFilter CONTENT_FILTER = new EmptyTextFilter();
 
   public static int getTreeHash(@NotNull Element root) {
-    return getTreeHash(root, false);
-  }
-
-  public static int getTreeHash(@NotNull Element root, boolean skipEmptyText) {
-    return addToHash(0, root, skipEmptyText);
-  }
-
-  @SuppressWarnings("unused")
-  @Deprecated
-  public static int getTreeHash(@NotNull Document document) {
-    return getTreeHash(document.getRootElement());
+    return addToHash(0, root, true);
   }
 
   private static int addToHash(int i, @NotNull Element element, boolean skipEmptyText) {
@@ -256,25 +246,6 @@ public class JDOMUtil {
 
   private static boolean attEqual(@NotNull Attribute a1, @NotNull Attribute a2) {
     return a1.getName().equals(a2.getName()) && a1.getValue().equals(a2.getValue());
-  }
-
-  public static boolean areDocumentsEqual(@NotNull Document d1, @NotNull Document d2) {
-    if(d1.hasRootElement() != d2.hasRootElement()) return false;
-
-    if(!d1.hasRootElement()) return true;
-
-    CharArrayWriter w1 = new CharArrayWriter();
-    CharArrayWriter w2 = new CharArrayWriter();
-
-    try {
-      writeDocument(d1, w1, "\n");
-      writeDocument(d2, w2, "\n");
-    }
-    catch (IOException e) {
-      getLogger().error(e);
-    }
-
-    return w1.size() == w2.size() && w1.toString().equals(w2.toString());
   }
 
   @NotNull
