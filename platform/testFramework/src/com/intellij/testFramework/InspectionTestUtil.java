@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -143,9 +143,7 @@ expected:
 
     File file = new File(testDir + "/expected.xml");
     try {
-      Document expectedDocument = JDOMUtil.loadDocument(file);
-
-      compareWithExpected(expectedDocument, doc, checkRange);
+      compareWithExpected(JDOMUtil.loadDocument(file), doc, checkRange);
     }
     catch (Exception e) {
       throw new RuntimeException(e);
