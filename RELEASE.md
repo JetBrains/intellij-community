@@ -58,7 +58,7 @@ betas.)
 
     This should be set to -da in production builds.
 
- 6. Make sure -OmitStackTraceInFastThrow is removed.
+ 6. Make sure `-OmitStackTraceInFastThrow` is removed.
 
     This is controlled by `build/scripts/utils.gant`:
 
@@ -72,10 +72,10 @@ betas.)
     Edit .idea/compiler.xml and make sure null assertions are disabled by
     adding the following line:
 
-    ```
-        <option name="BUILD_PROCESS_HEAP_SIZE" value="1100" />
-   +    <addNotNullAssertions enabled="false" />
-        <excludeFromCompile>
+    ```diff
+         <option name="BUILD_PROCESS_HEAP_SIZE" value="1100" />
+    +    <addNotNullAssertions enabled="false" />
+         <excludeFromCompile>
     ```
 
     (We don't leave it in with enabled="true" because the IDE will automatically
@@ -83,9 +83,9 @@ betas.)
     for all developers who open the project.)
 
  8. Turn off CLASS retention in
-    platform/annotations/java8/src/org/jetbrains/annotations
+    `platform/annotations/java8/src/org/jetbrains/annotations`
     (Sadly, we can't also do this in
-      platform/annotations/java5/src/org/jetbrains/annotations
+      `platform/annotations/java5/src/org/jetbrains/annotations`
      because the Kotlin compiler seems to require class retention; without it
      compilation fails.)
 
