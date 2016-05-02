@@ -24,10 +24,10 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.MoveChangesToAnotherListAction;
@@ -57,7 +57,8 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
   @NotNull private final EventDispatcher<SelectedListChangeListener> myDispatcher =
     EventDispatcher.create(SelectedListChangeListener.class);
   @Nullable private final Runnable myRebuildListListener;
-  private boolean myShowUnversioned;
+  @NotNull private final VcsConfiguration myVcsConfiguration;
+  private final boolean myUnversionedFilesEnabled;
   private Collection<Change> myAllChanges;
   private boolean myInRebuildList;
   private AnAction myMoveActionWithCustomShortcut;
@@ -71,14 +72,18 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
                                    boolean highlightProblems,
                                    @Nullable Runnable rebuildListListener,
                                    @Nullable Runnable inclusionListener,
-                                   boolean showUnversioned) {
+                                   boolean unversionedFilesEnabled) {
     super(project, changeLists, changes, initialListSelection, capableOfExcludingChanges, highlightProblems, inclusionListener,
           ChangesBrowser.MyUseCase.LOCAL_CHANGES, null, Object.class);
     myRebuildListListener = rebuildListListener;
-    myShowUnversioned = showUnversioned;
+    myVcsConfiguration = ObjectUtils.assertNotNull(VcsConfiguration.getInstance(myProject));
+    myUnversionedFilesEnabled = unversionedFilesEnabled;
 
     myChangeListChooser = new ChangeListChooser();
     myChangeListChooser.updateLists(changeLists);
+    // rebuild toolbar to ensure "myUnversionedFilesEnabled" is considered
+    myHeaderPanel.removeAll();
+    myHeaderPanel.add(createToolbar(), BorderLayout.CENTER);
     myHeaderPanel.add(myChangeListChooser, BorderLayout.EAST);
     ChangeListManager.getInstance(myProject).addChangeListListener(myChangeListListener);
 
@@ -104,8 +109,8 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
     }, this);
   }
 
-  public void setShowUnversioned(boolean showUnversioned) {
-    myShowUnversioned = showUnversioned;
+  private boolean isShowUnversioned() {
+    return myUnversionedFilesEnabled && myVcsConfiguration.SHOW_UNVERSIONED_FILES_WHILE_COMMIT;
   }
 
   @Override
@@ -190,7 +195,7 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
     TreeModelBuilder builder = new TreeModelBuilder(myProject, showFlatten);
 
     builder.setChanges(findChanges(objects), changeNodeDecorator);
-    if (myShowUnversioned) {
+    if (isShowUnversioned()) {
       builder.setUnversioned(ChangesViewManager.getUnversionedFilesInfo(manager));
     }
 
@@ -203,7 +208,7 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
     List<Object> result = ContainerUtil.newArrayList();
 
     result.addAll(node.getAllChangesUnder());
-    if (myShowUnversioned && isUnderUnversioned(node)) {
+    if (isShowUnversioned() && isUnderUnversioned(node)) {
       result.addAll(node.getAllFilesUnder());
     }
 
@@ -216,7 +221,7 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
     Object result = null;
     Object userObject = node.getUserObject();
 
-    if (userObject instanceof Change || myShowUnversioned && isUnderUnversioned(node) && userObject instanceof VirtualFile) {
+    if (userObject instanceof Change || isShowUnversioned() && isUnderUnversioned(node) && userObject instanceof VirtualFile) {
       result = userObject;
     }
 
@@ -233,7 +238,7 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
   @NotNull
   @Override
   public List<VirtualFile> getIncludedUnversionedFiles() {
-    return myShowUnversioned
+    return isShowUnversioned()
            ? ContainerUtil.findAll(myViewer.getIncludedChanges(), VirtualFile.class)
            : Collections.<VirtualFile>emptyList();
   }
@@ -242,7 +247,7 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
   public int getUnversionedFilesCount() {
     int result = 0;
 
-    if (myShowUnversioned) {
+    if (isShowUnversioned()) {
       ChangesBrowserNode<?> node = findUnversionedFilesNode();
 
       if (node != null) {
@@ -311,7 +316,8 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
         rebuildList();
       }
     });
-    if (Registry.is("vcs.unversioned.files.in.commit")) {
+    if (myUnversionedFilesEnabled) {
+      toolBarGroup.add(new ShowHideUnversionedFilesAction());
       toolBarGroup.add(UnversionedViewDialog.getUnversionedActionGroup());
     }
     else {
@@ -420,6 +426,24 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
   private class MyChangeListListener extends ChangeListAdapter {
     public void changeListAdded(ChangeList list) {
       updateListsInChooser();
+    }
+  }
+
+  private class ShowHideUnversionedFilesAction extends ToggleAction {
+
+    private ShowHideUnversionedFilesAction() {
+      super("Show Unversioned Files", null, AllIcons.Debugger.Disable_value_calculation);
+    }
+
+    @Override
+    public boolean isSelected(@NotNull AnActionEvent e) {
+      return myVcsConfiguration.SHOW_UNVERSIONED_FILES_WHILE_COMMIT;
+    }
+
+    @Override
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
+      myVcsConfiguration.SHOW_UNVERSIONED_FILES_WHILE_COMMIT = state;
+      rebuildList();
     }
   }
 
