@@ -82,7 +82,7 @@ public abstract class PyBaseConvertCollectionLiteralIntention extends BaseIntent
     return isAvailableForCollection(literal);
   }
 
-  protected boolean isAvailableForCollection(PySequenceExpression literal) {
+  protected boolean isAvailableForCollection(@NotNull PySequenceExpression literal) {
     return true;
   }
 

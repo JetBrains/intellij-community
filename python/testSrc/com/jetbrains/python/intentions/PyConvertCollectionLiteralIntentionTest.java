@@ -143,4 +143,14 @@ public class PyConvertCollectionLiteralIntentionTest extends PyIntentionTestCase
   public void testConvertOneElementTupleWithCommentToList() {
     doIntentionTest(CONVERT_TUPLE_TO_LIST);
   }
+
+  // PY-19399
+  public void testCannotConvertEmptyTupleToSet() {
+    doNegativeTest(CONVERT_TUPLE_TO_SET);
+  }
+  
+  // PY-19399
+  public void testCannotConvertEmptyListToSet() {
+    doNegativeTest(CONVERT_LIST_TO_SET);
+  }
 }
