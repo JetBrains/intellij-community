@@ -498,7 +498,7 @@ public class GitBranchWorkerTest extends GitPlatformTest {
     // IDEA-99849
     prepareLocalChangesOverwrittenBy(myUltimate);
 
-    GitBranchWorker brancher = new GitBranchWorker(myProject, myPlatformFacade, myGit, new TestUiHandler() {
+    GitBranchWorker brancher = new GitBranchWorker(myProject, myGit, new TestUiHandler() {
       @Override
       public int showSmartOperationDialog(@NotNull Project project,
                                           @NotNull List<Change> changes,
@@ -526,7 +526,7 @@ public class GitBranchWorkerTest extends GitPlatformTest {
     unmergedFiles(myCommunity);
 
     final Ref<Boolean> rollbackProposed = Ref.create(false);
-    GitBranchWorker brancher = new GitBranchWorker(myProject, myPlatformFacade, myGit, new TestUiHandler() {
+    GitBranchWorker brancher = new GitBranchWorker(myProject, myGit, new TestUiHandler() {
       @Override
       public boolean showUnmergedFilesMessageWithRollback(@NotNull String operationName, @NotNull String rollbackProposal) {
         rollbackProposed.set(true);
@@ -695,7 +695,7 @@ public class GitBranchWorkerTest extends GitPlatformTest {
 
     // delete feature fully merged to current HEAD, but not to the upstream
     final Ref<Boolean> dialogShown = Ref.create(false);
-    GitBranchWorker brancher = new GitBranchWorker(myProject, myPlatformFacade, myGit, new TestUiHandler() {
+    GitBranchWorker brancher = new GitBranchWorker(myProject, myGit, new TestUiHandler() {
       @Override
       public boolean showBranchIsNotFullyMergedDialog(@NotNull Project project,
                                                       @NotNull Map<GitRepository, List<GitCommit>> history,
@@ -902,27 +902,27 @@ public class GitBranchWorkerTest extends GitPlatformTest {
   }
 
   private void checkoutNewBranch(String name, GitBranchUiHandler uiHandler) {
-    GitBranchWorker brancher = new GitBranchWorker(myProject, myPlatformFacade, myGit, uiHandler);
+    GitBranchWorker brancher = new GitBranchWorker(myProject, myGit, uiHandler);
     brancher.checkoutNewBranch(name, myRepositories);
   }
 
   private void checkoutBranch(String name, GitBranchUiHandler uiHandler) {
-    GitBranchWorker brancher = new GitBranchWorker(myProject, myPlatformFacade, myGit, uiHandler);
+    GitBranchWorker brancher = new GitBranchWorker(myProject, myGit, uiHandler);
     brancher.checkout(name, false, myRepositories);
   }
 
   private void checkoutRevision(String reference, GitBranchUiHandler uiHandler) {
-    GitBranchWorker brancher = new GitBranchWorker(myProject, myPlatformFacade, myGit, uiHandler);
+    GitBranchWorker brancher = new GitBranchWorker(myProject, myGit, uiHandler);
     brancher.checkout(reference, true, myRepositories);
   }
 
   private void mergeBranch(String name, GitBranchUiHandler uiHandler) {
-    GitBranchWorker brancher = new GitBranchWorker(myProject, myPlatformFacade, myGit, uiHandler);
+    GitBranchWorker brancher = new GitBranchWorker(myProject, myGit, uiHandler);
     brancher.merge(name, GitBrancher.DeleteOnMergeOption.PROPOSE, myRepositories);
   }
 
   private void deleteBranch(String name, GitBranchUiHandler uiHandler) {
-    GitBranchWorker brancher = new GitBranchWorker(myProject, myPlatformFacade, myGit, uiHandler);
+    GitBranchWorker brancher = new GitBranchWorker(myProject, myGit, uiHandler);
     brancher.deleteBranch(name, myRepositories);
   }
 
