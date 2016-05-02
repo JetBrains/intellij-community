@@ -223,11 +223,10 @@ public class GitConflictResolver {
 
   }
 
-  private void showMergeDialog(final Collection<VirtualFile> initiallyUnmergedFiles) {
+  private void showMergeDialog(@NotNull final Collection<VirtualFile> initiallyUnmergedFiles) {
     ApplicationManager.getApplication().invokeAndWait(() -> {
-      final MergeProvider mergeProvider = myParams.reverse ?
-                                          new GitMergeProvider(myProject, true) : new GitMergeProvider(myProject, false);
-      myVcsHelper.showMergeDialog(new ArrayList<VirtualFile>(initiallyUnmergedFiles), mergeProvider, myParams.myMergeDialogCustomizer);
+      MergeProvider mergeProvider = new GitMergeProvider(myProject, myParams.reverse);
+      myVcsHelper.showMergeDialog(new ArrayList<>(initiallyUnmergedFiles), mergeProvider, myParams.myMergeDialogCustomizer);
     }, ModalityState.defaultModalityState());
   }
 
