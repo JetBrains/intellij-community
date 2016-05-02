@@ -24,7 +24,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.openapi.application.ModalityState.defaultModalityState;
@@ -81,7 +80,7 @@ public class GitFreezingProcess {
 
   public void saveAndBlock() {
     myProjectManager.blockReloadingProjectOnExternalChanges();
-    myApplication.invokeAndWait(() -> FileDocumentManager.getInstance().saveAllDocuments(), defaultModalityState());
+    FileDocumentManager.getInstance().saveAllDocuments();
     mySaveAndSyncHandler.blockSaveOnFrameDeactivation();
     mySaveAndSyncHandler.blockSyncOnFrameActivation();
   }
@@ -92,7 +91,7 @@ public class GitFreezingProcess {
         saveAndBlock();
       }
     });
-    UIUtil.invokeAndWaitIfNeeded(rethrowingRunnable);
+    myApplication.invokeAndWait(rethrowingRunnable, defaultModalityState());
     rethrowingRunnable.rethrowIfHappened();
   }
 
@@ -102,7 +101,7 @@ public class GitFreezingProcess {
         unblock();
       }
     });
-    UIUtil.invokeAndWaitIfNeeded(rethrowingRunnable);
+    myApplication.invokeAndWait(rethrowingRunnable, defaultModalityState());
     rethrowingRunnable.rethrowIfHappened();
   }
 
@@ -126,7 +125,7 @@ public class GitFreezingProcess {
         unfreeze();
       }
     });
-    UIUtil.invokeAndWaitIfNeeded(rethrowingRunnable);
+    myApplication.invokeAndWait(rethrowingRunnable, defaultModalityState());
     rethrowingRunnable.rethrowIfHappened();
   }
 
