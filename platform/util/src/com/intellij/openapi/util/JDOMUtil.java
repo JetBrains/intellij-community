@@ -426,18 +426,13 @@ public class JDOMUtil {
   }
 
   @NotNull
-  public static String writeChildren(@Nullable final Element element, @NotNull final String lineSeparator) {
-    try {
-      final StringWriter writer = new StringWriter();
-      for (Element child : getChildren(element)) {
-        writeElement(child, writer, lineSeparator);
-        writer.append(lineSeparator);
-      }
-      return writer.toString();
+  public static String writeChildren(@NotNull final Element element, @NotNull final String lineSeparator) throws IOException {
+    final StringWriter writer = new StringWriter();
+    for (Element child : element.getChildren()) {
+      writeElement(child, writer, lineSeparator);
+      writer.append(lineSeparator);
     }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    return writer.toString();
   }
 
   public static void writeDocument(@NotNull Document document, @NotNull Writer writer, String lineSeparator) throws IOException {
@@ -546,8 +541,7 @@ public class JDOMUtil {
       System.err.println(prefix);
     }
 
-    List<Element> children = getChildren(element);
-    for (final Element child : children) {
+    for (final Element child : element.getChildren()) {
       printDiagnostics(child, prefix);
     }
   }
