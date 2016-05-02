@@ -128,4 +128,19 @@ public class PyConvertCollectionLiteralIntentionTest extends PyIntentionTestCase
   public void testConvertOneElementListWithCommaAfterCommentToTuple() {
     doIntentionTest(CONVERT_LIST_TO_TUPLE);
   }
+
+  // PY-16553
+  public void testConvertOneElementTupleToList() {
+    doIntentionTest(CONVERT_TUPLE_TO_LIST);
+  }
+
+  // PY-16553
+  public void testConvertOneElementTupleWithoutParenthesesToSet() {
+    doIntentionTest(CONVERT_TUPLE_TO_SET);
+  }
+
+  // PY-16553
+  public void testConvertOneElementTupleWithCommentToList() {
+    doIntentionTest(CONVERT_TUPLE_TO_LIST);
+  }
 }

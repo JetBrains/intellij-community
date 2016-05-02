@@ -26,6 +26,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -103,6 +104,17 @@ public abstract class PyBaseConvertCollectionLiteralIntention extends BaseIntent
 
   @NotNull
   protected PsiElement prepareOriginalElementCopy(@NotNull PsiElement copy) {
+    final PySequenceExpression sequence = unwrapCollection(copy);
+    if (sequence instanceof PyTupleExpression) {
+      final PyExpression[] elements = sequence.getElements();
+      if (elements.length == 1) {
+        final PsiElement next = PyPsiUtils.getNextNonCommentSibling(elements[0], true);
+        // Strictly speaking single element tuple must contain trailing comma, but lets check explicitly nonetheless
+        if (next != null && next.getNode().getElementType() == PyTokenTypes.COMMA) {
+          next.delete();
+        }
+      }
+    }
     return copy;
   }
 
