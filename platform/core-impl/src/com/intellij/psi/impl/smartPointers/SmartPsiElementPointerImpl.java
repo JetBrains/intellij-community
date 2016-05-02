@@ -21,7 +21,6 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.ProperTextRange;
@@ -182,9 +181,9 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
       }
     }
 
-    for(SmartPointerElementInfoFactory factory: Extensions.getExtensions(SmartPointerElementInfoFactory.EP_NAME)) {
-      final SmartPointerElementInfo result = factory.createElementInfo(element, containingFile);
-      if (result != null) return result;
+    SmartPointerElementInfo info = AnchorElementInfoFactory.createElementInfo(element, containingFile);
+    if (info != null) {
+      return info;
     }
 
     if (element instanceof PsiFile) {
