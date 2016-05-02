@@ -233,8 +233,15 @@ public class TransactionGuardImpl extends TransactionGuard {
     };
   }
 
-  public boolean isWriteActionAllowed() {
-    return !Registry.is("ide.require.transaction.for.model.changes", false) || myWritingAllowed;
+  public void assertWriteActionAllowed() {
+    if (Registry.is("ide.require.transaction.for.model.changes", false) && !myWritingAllowed) {
+      String message = "Write access is allowed from model transactions only, see TransactionGuard documentation for details";
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        message += "; current modality=" + ModalityState.current() + "; unsafe modality=" + myUnsafeModality;
+      }
+      // please assign exceptions here to Peter
+      LOG.error(message);
+    }
   }
 
   @Override
