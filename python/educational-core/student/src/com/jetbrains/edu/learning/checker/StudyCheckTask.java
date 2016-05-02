@@ -6,7 +6,6 @@ import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Pair;
@@ -124,37 +123,31 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
   }
 
   private void checkForAdaptiveCourse(ProgressIndicator indicator) {
-    ProgressManager.getInstance().runProcessWithProgressAsynchronously(new Backgroundable(myProject, "Checking Task") {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        final StudyTestsOutputParser.TestsOutput testOutput = getTestOutput(indicator);
-        if (testOutput != null) {
-          if (testOutput.isSuccess()) {
-            final Pair<Boolean, String> pair = EduAdaptiveStepicConnector.checkTask(myProject, myTask);
-            if (pair != null && !pair.getSecond().isEmpty()) {
-              final String checkMessage = pair.getSecond();
-              if (pair.getFirst()) {
-                onTaskSolved(checkMessage);
-              }
-              else {
-                onTaskFailed(checkMessage);
-              }
-              runAfterTaskCheckedActions();
-            }
-            else {
-              ApplicationManager.getApplication().invokeLater(() ->
-                                                                StudyCheckUtils.showTestResultPopUp("Failed to launch checking",
+    final StudyTestsOutputParser.TestsOutput testOutput = getTestOutput(indicator);
+    if (testOutput != null) {
+      if (testOutput.isSuccess()) {
+        final Pair<Boolean, String> pair = EduAdaptiveStepicConnector.checkTask(myProject, myTask);
+        if (pair != null && !pair.getSecond().isEmpty()) {
+          final String checkMessage = pair.getSecond();
+          if (pair.getFirst()) {
+            onTaskSolved(checkMessage);
+          }
+          else {
+            onTaskFailed(checkMessage);
+          }
+          runAfterTaskCheckedActions();
+        }
+        else {
+          ApplicationManager.getApplication().invokeLater(() -> StudyCheckUtils.showTestResultPopUp("Failed to launch checking",
                                                                                                     MessageType.WARNING
                                                                                                       .getPopupBackground(),
                                                                                                     myProject));
-            }
-          }
-          else {
-            onTaskFailed(testOutput.getMessage());
-          }
         }
       }
-    }, indicator);
+      else {
+        onTaskFailed(testOutput.getMessage());
+      }
+    }
   }
 
   protected void onTaskFailed(String message) {
