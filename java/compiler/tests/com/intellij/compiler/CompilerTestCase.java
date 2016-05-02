@@ -25,7 +25,6 @@ import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.AssertionFailedError;
 import org.apache.log4j.Level;
-import org.jdom.Document;
 
 import java.io.File;
 import java.io.IOException;
@@ -71,7 +70,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
     //System.out.println("================BEGIN "+getName()+"====================");
     //CompileDriver.ourDebugMode = true;
     //TranslatingCompilerFilesMonitor.ourDebugMode = true;
-    
+
     mySemaphore = new Semaphore();
     final Exception[] ex = {null};
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
@@ -152,7 +151,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
 
     //System.out.println("\n\n=====================SECOND PASS===============================\n\n");
     final AtomicBoolean upToDateStatus = new AtomicBoolean(false);
-    
+
     ApplicationManager.getApplication().invokeAndWait(new Runnable() {
       @Override
       public void run() {
@@ -185,7 +184,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
           };
           compilerManager.addCompilationStatusListener(listener);
           upToDateStatus.set(compilerManager.isUpToDate(compilerManager.createProjectCompileScope(myProject)));
-          
+
           doCompile(new CompileStatusNotification() {
             @Override
             public void finished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {
@@ -323,8 +322,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
           //}
           myData = new CompilerTestData();
           File file = new File(myDataDir.getPath().replace('/', File.separatorChar) + File.separator + DATA_FILE_NAME);
-          Document document = JDOMUtil.loadDocument(file);
-          myData.readExternal(document.getRootElement());
+          myData.readExternal(JDOMUtil.load(file));
           PlatformTestUtil.saveProject(myProject);
 
         }
@@ -369,7 +367,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
         }
       }
       if (!urls.isEmpty()) {
-        ModuleRootModificationUtil.addModuleLibrary(myModule, "module-lib", urls, Collections.<String>emptyList());
+        ModuleRootModificationUtil.addModuleLibrary(myModule, "module-lib", urls, Collections.emptyList());
       }
     }
     // configure source and output path
@@ -391,7 +389,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
   protected final void copyFiles(VirtualFile dataDir, VirtualFile destDir, VirtualFileFilter filter) throws Exception {
     final boolean stampsChanged = doCopyFiles(dataDir, destDir, filter);
     if (stampsChanged) {
-      // need this to ensure that the compilation start timestamp will be ahead of any stamps of copied files 
+      // need this to ensure that the compilation start timestamp will be ahead of any stamps of copied files
       Thread.sleep(TIMESTAMP_DELTA);
     }
   }
@@ -519,6 +517,5 @@ public abstract class CompilerTestCase extends ModuleTestCase {
       catch (Exception ingored2) {
       }
     }
-
   }
 }
