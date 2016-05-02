@@ -30,6 +30,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil;
+import com.intellij.psi.impl.source.tree.java.MethodReferenceResolver;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -151,7 +152,7 @@ public class FunctionalExpressionCompletionProvider extends CompletionProvider<C
             result.consume(createConstructorReferenceLookup(functionalInterfaceType, eachReturnType));
           }
         }
-        if (constructors.length == 0 && params.length == 0 && !psiClass.isInterface() && !psiClass.isEnum()) {
+        if (constructors.length == 0 && params.length == 0 && MethodReferenceResolver.canBeConstructed(psiClass)) {
           result.consume(createConstructorReferenceLookup(functionalInterfaceType, eachReturnType));
         }
       }
