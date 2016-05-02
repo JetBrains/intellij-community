@@ -72,7 +72,9 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
 
   @NotNull private final Consumer<Exception> myFatalErrorsConsumer;
 
-  public VcsLogData(@NotNull Project project, @NotNull Map<VirtualFile, VcsLogProvider> logProviders, @NotNull Consumer<Exception> fatalErrorsConsumer) {
+  public VcsLogData(@NotNull Project project,
+                    @NotNull Map<VirtualFile, VcsLogProvider> logProviders,
+                    @NotNull Consumer<Exception> fatalErrorsConsumer) {
     myProject = project;
     myLogProviders = logProviders;
     myDataLoaderQueue = new BackgroundTaskQueue(project, "Loading history...");
@@ -234,7 +236,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
   }
 
   private void runInBackground(final ThrowableConsumer<ProgressIndicator, VcsException> task, final String title) {
-    myDataLoaderQueue.run(new Task.Backgroundable(myProject, title, false) {
+    Task.Backgroundable backgroundable = new Task.Backgroundable(myProject, title, false) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         indicator.setIndeterminate(true);
@@ -245,7 +247,8 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
           throw new RuntimeException(e); // TODO
         }
       }
-    });
+    };
+    myDataLoaderQueue.run(backgroundable, null, () -> myRefresher.getProgress().createProgressIndicator());
   }
 
   /**
@@ -287,5 +290,10 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
   @NotNull
   public VcsUserRegistryImpl getUserRegistry() {
     return myUserRegistry;
+  }
+
+  @NotNull
+  public VcsLogProgress getProgress() {
+    return myRefresher.getProgress();
   }
 }

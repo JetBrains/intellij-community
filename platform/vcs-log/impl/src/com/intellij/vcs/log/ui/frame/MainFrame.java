@@ -14,7 +14,6 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.TextRevisionNumber;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vcs.changes.committed.RepositoryChangesBrowser;
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
@@ -24,11 +23,13 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
 import com.intellij.vcs.CommittedChangeListForRevision;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogData;
+import com.intellij.vcs.log.data.VcsLogProgress;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.data.VisiblePack;
 import com.intellij.vcs.log.impl.VcsLogUtil;
@@ -221,9 +222,10 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     settings.setReservePlaceAutoPopupIcon(false);
     settings.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
 
-    JPanel panel = new JPanel(new MigLayout("ins 0, fill", "[left]0[left, fill]push[right]"));
+    JPanel panel = new JPanel(new MigLayout("ins 0, fill", "[left]0[left, fill]push[center]0[right]", "center"));
     panel.add(textFilter);
     panel.add(toolbar.getComponent());
+    panel.add(new ToolbarProgressIcon());
     panel.add(settings.getComponent());
     return panel;
   }
@@ -334,6 +336,44 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
     myDetailsSplitter.dispose();
     myChangesBrowserSplitter.dispose();
+  }
+
+  private class ToolbarProgressIcon extends AsyncProcessIcon implements VcsLogProgress.ProgressListener {
+    public ToolbarProgressIcon() {
+      super("Updating Log");
+      suspend();
+      myLogData.getProgress().addProgressIndicatorListener(this, this);
+      Disposer.register(MainFrame.this, this);
+    }
+
+    @Override
+    public void progressStarted() {
+      resume();
+      myToolbar.revalidate();
+    }
+
+    @Override
+    public void progressStopped() {
+      suspend();
+      myToolbar.revalidate();
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+      if (!isRunning()) return new Dimension(0, 0);
+      return super.getPreferredSize();
+    }
+
+    @Override
+    public void paint(Graphics g) {
+      g.translate(-1, -1);
+      try {
+        super.paint(g);
+      }
+      finally {
+        g.translate(1, 1);
+      }
+    }
   }
 
   private class CommitSelectionListener implements ListSelectionListener {
