@@ -203,12 +203,15 @@ public class StudyCheckUtils {
       window = toolWindowManager.getToolWindow("Test Results");
       new StudyTestResultsToolWindowFactory().createToolWindowContent(project, window);
     }
+
     final Content[] contents = window.getContentManager().getContents();
     for (Content content : contents) {
       final JComponent component = content.getComponent();
       if (component instanceof StudyTestResultsToolWindow) {
         ((StudyTestResultsToolWindow)component).setText(message);
-        component.setVisible(true);
+        window.setAvailable(true, () -> {});
+        window.show(() -> {});
+        return;
       }
     }
   }
