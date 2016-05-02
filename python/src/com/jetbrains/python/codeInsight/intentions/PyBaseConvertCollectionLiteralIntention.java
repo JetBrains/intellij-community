@@ -90,27 +90,39 @@ public abstract class PyBaseConvertCollectionLiteralIntention extends BaseIntent
     final PySequenceExpression literal = findCollectionLiteralUnderCaret(editor, file);
     assert literal != null;
 
-    final PsiElement replacedElement;
-    if (literal instanceof PyTupleExpression && literal.getParent() instanceof PyParenthesizedExpression) {
-      replacedElement = literal.getParent();
-    }
-    else {
-      replacedElement = literal;
-    }
+    final PsiElement replacedElement = wrapCollection(literal);
+    final PsiElement copy = prepareOriginalElementCopy(replacedElement.copy());
 
-    final TextRange contentRange = getRangeOfContentWithoutBraces(replacedElement);
+    final TextRange contentRange = getRangeOfContentWithoutBraces(copy);
+    final String contentToWrap = contentRange.substring(copy.getText());
     final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-    final String contentToWrap = prepareContent(replacedElement, literal, contentRange);
     final PyExpression newLiteral = elementGenerator.createExpressionFromText(LanguageLevel.forElement(file),
                                                                               myLeftBrace + contentToWrap + myRightBrace);
     replacedElement.replace(newLiteral);
   }
 
   @NotNull
-  protected String prepareContent(@NotNull PsiElement replacedElement, 
-                                  @NotNull PySequenceExpression collection, 
-                                  @NotNull TextRange contentRange) {
-    return contentRange.substring(replacedElement.getText());
+  protected PsiElement prepareOriginalElementCopy(@NotNull PsiElement copy) {
+    return copy;
+  }
+
+  @NotNull
+  protected static PySequenceExpression unwrapCollection(@NotNull PsiElement literal) {
+    final PyParenthesizedExpression parenthesizedExpression = as(literal, PyParenthesizedExpression.class);
+    if (parenthesizedExpression != null) {
+      final PyExpression containedExpression = parenthesizedExpression.getContainedExpression();
+      assert containedExpression != null;
+      return (PyTupleExpression)containedExpression;
+    }
+    return (PySequenceExpression)literal;
+  }
+
+  @NotNull
+  protected static PsiElement wrapCollection(@NotNull PySequenceExpression literal) {
+    if (literal instanceof PyTupleExpression && literal.getParent() instanceof PyParenthesizedExpression) {
+      return literal.getParent();
+    }
+    return literal;
   }
 
   @NotNull

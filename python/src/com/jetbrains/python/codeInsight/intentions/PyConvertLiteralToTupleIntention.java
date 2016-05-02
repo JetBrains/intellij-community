@@ -15,10 +15,10 @@
  */
 package com.jetbrains.python.codeInsight.intentions;
 
-import com.intellij.openapi.util.TextRange;
+import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PySequenceExpression;
 import com.jetbrains.python.psi.PyTupleExpression;
@@ -33,43 +33,20 @@ public class PyConvertLiteralToTupleIntention extends PyBaseConvertCollectionLit
     super(PyTupleExpression.class, "tuple", "(", ")");
   }
 
-
   @NotNull
   @Override
-  protected String prepareContent(@NotNull PsiElement replacedElement, 
-                                  @NotNull PySequenceExpression collection, 
-                                  @NotNull TextRange contentRange) {
-    assert !(collection instanceof PyTupleExpression);
-
-    final String contentWithoutBraces = super.prepareContent(replacedElement, collection, contentRange);
-    
-    final PyExpression[] elements = collection.getElements();
-    if (elements.length != 1) {
-      return contentWithoutBraces;
-    }
-    
-    final PsiElement lastChild = collection.getLastChild();
-    boolean endsWithComma = false;
-    final IElementType lastChildType = lastChild.getNode().getElementType();
-    if (lastChildType == PyTokenTypes.COMMA) {
-      endsWithComma = true;
-    }
-    else if (PyTokenTypes.CLOSE_BRACES.contains(lastChildType)) {
-      final PsiElement prev = PyPsiUtils.getPrevNonWhitespaceSibling(lastChild);
-      if (prev != null && prev.getNode().getElementType() == PyTokenTypes.COMMA) {
-        endsWithComma = true;
+  protected PsiElement prepareOriginalElementCopy(@NotNull PsiElement copy) {
+    final PySequenceExpression sequenceExpression = unwrapCollection(copy);
+    final PyExpression[] elements = sequenceExpression.getElements();
+    if (elements.length == 1) {
+      final PyExpression onlyElement = elements[0];
+      final PsiElement next = PyPsiUtils.getNextNonCommentSibling(onlyElement, true);
+      if (next != null && next.getNode().getElementType() != PyTokenTypes.COMMA) {
+        final PyElementGenerator generator = PyElementGenerator.getInstance(copy.getProject());
+        final ASTNode anchor = onlyElement.getNode().getTreeNext();
+        sequenceExpression.getNode().addChild(generator.createComma(), anchor);
       }
     }
-    if (endsWithComma) {
-      return contentWithoutBraces;
-    }
-
-    final PyExpression singleElem = elements[0];
-    final int commaOffset = singleElem.getTextRange().getEndOffset() - replacedElement.getTextRange().getStartOffset();
-
-    final String wholeText = replacedElement.getText();
-    return wholeText.substring(contentRange.getStartOffset(), commaOffset) + 
-           "," + 
-           wholeText.substring(commaOffset, contentRange.getEndOffset());
+    return copy;
   }
 }
