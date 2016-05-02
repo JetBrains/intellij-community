@@ -204,8 +204,14 @@ def check_samples(samples=()):
             output = get_file_output(arg_string=str(sample[0]))
             if "\n".join(output) != sample[1]:
                 failed(
-                    "<b>Input</b>:<br> {} <br><br><b>Expected:</b><br> {} <br><br> <b>Your result</b>:<br> {}".format(
-                        sample[0].replace("\n", "<br>"), sample[1].replace("\n", "<br>"), "\n".join(output)))
+                    "Test from samples failed: <br> <br>"
+                    "<b>Input</b>:<br> {} "
+                    "<br> <br>"
+                    "<b>Expected:</b><br> {} "
+                    "<br> <br>"
+                    "<b>Your result</b>:<br> {}".format(sample[0].replace("\n", "<br>"), 
+                                                        sample[1].replace("\n", "<br>"), 
+                                                        "\n".join(output)))
                 return
         set_congratulation_message("All test from samples passed. Now we are checking your solution on Stepic server.")
 
