@@ -118,7 +118,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   };
   private final ChangelistConflictTracker myConflictTracker;
   private VcsDirtyScopeManager myDirtyScopeManager;
-  private final VcsDirtyScopeVfsListener myVfsListener;
 
   private boolean myModalNotificationsBlocked;
   @NotNull private final Collection<LocalChangeList> myListsToBeDeleted = new HashSet<LocalChangeList>();
@@ -137,7 +136,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     myFreezeName = new AtomicReference<String>(null);
     myAdditionalInfo = null;
     myChangesViewManager = myProject.isDefault() ? new DummyChangesView(myProject) : ChangesViewManager.getInstance(myProject);
-    myVfsListener = VcsDirtyScopeVfsListener.getInstance(project);
     myFileStatusManager = FileStatusManager.getInstance(myProject);
     myComposite = new FileHolderComposite(project);
     myIgnoredIdeaLevel = new IgnoredFilesComponent(myProject, true);
@@ -1644,7 +1642,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   @TestOnly
   public void waitUntilRefreshed() {
-    myVfsListener.flushDirt();
+    VcsDirtyScopeVfsListener.getInstance(myProject).flushDirt();
     myUpdater.waitUntilRefreshed();
     waitUpdateAlarm();
   }
@@ -1713,7 +1711,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       updateImmediately();
       return true;
     }
-    myVfsListener.flushDirt();
+    VcsDirtyScopeVfsListener.getInstance(myProject).flushDirt();
     myUpdater.waitUntilRefreshed();
     waitUpdateAlarm();
     return true;

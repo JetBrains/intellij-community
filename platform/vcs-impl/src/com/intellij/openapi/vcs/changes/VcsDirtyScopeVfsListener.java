@@ -15,9 +15,11 @@
  */
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.ConstantZipperUpdater;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -38,8 +40,7 @@ import java.util.List;
 /**
  * Listens to file system events and notifies VcsDirtyScopeManagers responsible for changed files to mark these files dirty.
  */
-public class VcsDirtyScopeVfsListener implements ProjectComponent, BulkFileListener {
-  @NotNull private final Project myProject;
+public class VcsDirtyScopeVfsListener implements BulkFileListener, Disposable {
   @NotNull private final ProjectLevelVcsManager myVcsManager;
 
   private boolean myForbid; // for tests only
@@ -49,8 +50,9 @@ public class VcsDirtyScopeVfsListener implements ProjectComponent, BulkFileListe
   private final Object myLock;
   private final Runnable myDirtReporter;
 
-  public VcsDirtyScopeVfsListener(@NotNull Project project, @NotNull ProjectLevelVcsManager vcsManager) {
-    myProject = project;
+  public VcsDirtyScopeVfsListener(@NotNull Project project,
+                                  @NotNull ProjectLevelVcsManager vcsManager,
+                                  @NotNull VcsDirtyScopeManager dirtyScopeManager) {
     myVcsManager = vcsManager;
 
     myLock = new Object();
@@ -65,16 +67,19 @@ public class VcsDirtyScopeVfsListener implements ProjectComponent, BulkFileListe
         }
 
         for (FilesAndDirs filesAndDirs : list) {
-          dirtyScopeManager().filePathsDirty(filesAndDirs.dirtyFiles, filesAndDirs.dirtyDirs);
+          dirtyScopeManager.filePathsDirty(filesAndDirs.dirtyFiles, filesAndDirs.dirtyDirs);
         }
       }
     };
     myZipperUpdater = new ConstantZipperUpdater(300, Alarm.ThreadToUse.POOLED_THREAD, ApplicationManager.getApplication(),
                                                 myDirtReporter);
+
+    Disposer.register(project, this);
+    project.getMessageBus().connect().subscribe(VirtualFileManager.VFS_CHANGES, this);
   }
 
   public static VcsDirtyScopeVfsListener getInstance(@NotNull Project project) {
-    return project.getComponent(VcsDirtyScopeVfsListener.class);
+    return ServiceManager.getService(project, VcsDirtyScopeVfsListener.class);
   }
 
   public void setForbid(boolean forbid) {
@@ -87,29 +92,10 @@ public class VcsDirtyScopeVfsListener implements ProjectComponent, BulkFileListe
   }
 
   @Override
-  @NotNull
-  public String getComponentName() {
-    return VcsDirtyScopeVfsListener.class.getName();
-  }
-
-  @Override
-  public void initComponent() {
-    myProject.getMessageBus().connect().subscribe(VirtualFileManager.VFS_CHANGES, this);
-  }
-
-  @Override
-  public void disposeComponent() {
+  public void dispose() {
     synchronized (myLock) {
       myQueue.clear();
     }
-  }
-
-  @Override
-  public void projectOpened() {
-  }
-
-  @Override
-  public void projectClosed() {
   }
 
   @Override
@@ -165,11 +151,6 @@ public class VcsDirtyScopeVfsListener implements ProjectComponent, BulkFileListe
       }
     }
     markDirtyOnPooled(dirtyFilesAndDirs);
-  }
-
-  @NotNull
-  private VcsDirtyScopeManager dirtyScopeManager() {
-    return VcsDirtyScopeManager.getInstance(myProject);
   }
 
   private void markDirtyOnPooled(@NotNull FilesAndDirs dirtyFilesAndDirs) {
