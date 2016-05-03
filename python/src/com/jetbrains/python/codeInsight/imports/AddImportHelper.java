@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -263,7 +264,8 @@ public class AddImportHelper {
       return UNRESOLVED_SYMBOL_PRIORITY;
     }
     final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(toImport.getProject());
-    if (projectRootManager.getFileIndex().isInContent(vFile)) {
+    final ProjectFileIndex fileIndex = projectRootManager.getFileIndex();
+    if (fileIndex.isInContent(vFile) && !fileIndex.isInLibraryClasses(vFile)) {
       return ImportPriority.PROJECT;
     }
     final Module module = ModuleUtilCore.findModuleForPsiElement(importLocation);
