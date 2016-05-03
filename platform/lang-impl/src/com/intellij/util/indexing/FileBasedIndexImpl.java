@@ -537,24 +537,13 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   }
 
   private void removeDataFromIndicesForFile(final int fileId) {
-    // All (indices) IDs should be valid in this running session (e.g. we can have ID instance existing but index is not registered)
-    final List<ID<?, ?>> currentFileIndexedStates = IndexingStamp.getNontrivialFileIndexedStates(fileId);
-    Collection<ID<?, ?>> states = currentFileIndexedStates;
-    IndexConfiguration state = getState();
-
-    for(ID<?,?> currentFileIndexedState: currentFileIndexedStates) {
-      if (!state.hasIndex(currentFileIndexedState)) {
-        states = ContainerUtil.intersection(currentFileIndexedStates, state.getIndexIDs());
-        break;
-      }
-    }
+    final List<ID<?, ?>> states = IndexingStamp.getNontrivialFileIndexedStates(fileId);
 
     if (!states.isEmpty()) {
-      final Collection<ID<?, ?>> finalStates = states;
       ProgressManager.getInstance().executeNonCancelableSection(new Runnable() {
         @Override
         public void run() {
-          removeFileDataFromIndices(finalStates, fileId);
+          removeFileDataFromIndices(states, fileId);
         }
       });
     }
