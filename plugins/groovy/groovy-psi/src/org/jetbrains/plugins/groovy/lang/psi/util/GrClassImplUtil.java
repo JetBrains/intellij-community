@@ -35,7 +35,6 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MostlySingularMultiMap;
 import com.intellij.util.containers.hash.HashSet;
-import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -645,50 +644,6 @@ public class GrClassImplUtil {
       }
     }
     return new PsiMethod[]{method};
-  }
-
-  public static void addExpandingReflectedMethods(Collection<PsiMethod> result, PsiMethod method) {
-    if (method instanceof GrMethod) {
-      final GrReflectedMethod[] reflectedMethods = ((GrMethod)method).getReflectedMethods();
-      if (reflectedMethods.length > 0) {
-        result.addAll(Arrays.asList(reflectedMethods));
-        return;
-      }
-    }
-    result.add(method);
-  }
-
-  public static void collectMethodsFromBody(@NotNull GrTypeDefinition definition, Collection<PsiMethod> result) {
-    for (GrMethod method : definition.getCodeMethods()) {
-      addExpandingReflectedMethods(result, method);
-    }
-
-    //for (GrField field : definition.getFields()) {
-    //  if (!field.isProperty()) continue;
-    //  ContainerUtil.addAll(result, field.getGetters());
-    //  ContainerUtil.addIfNotNull(result, field.getSetter());
-    //}
-  }
-
-  public static Collection<PsiMethod> filterOutAccessors(Collection<PsiMethod> result) {
-    final TObjectIntHashMap<String> map = new TObjectIntHashMap<String>();
-    for (PsiMethod method : result) {
-      if (method instanceof GrAccessorMethod || GroovyPropertyUtils.isSimplePropertyAccessor(method)) {
-        final String methodName = method.getName();
-        if (map.containsKey(methodName)) {
-          map.adjustValue(methodName, 1);
-        }
-        else {
-          map.put(methodName, 1);
-        }
-      }
-    }
-    return ContainerUtil.filter(result, new Condition<PsiMethod>() {
-      @Override
-      public boolean value(PsiMethod method) {
-        return !(method instanceof GrAccessorMethod) || map.get(method.getName()) <= 1;
-      }
-    });
   }
 
   @NotNull
