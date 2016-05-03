@@ -141,13 +141,13 @@ public class TransactionGuardImpl extends TransactionGuard {
   }
 
   private boolean canRunTransactionNow(Transaction transaction, boolean sync) {
+    if (sync && !myWritingAllowed) {
+      return false;
+    }
+
     TransactionIdImpl currentId = myCurrentTransaction;
     if (currentId == null) {
       return true;
-    }
-
-    if (sync && !myWritingAllowed) {
-      return false;
     }
 
     return transaction.expectedContext != null && currentId.myStartCounter <= transaction.expectedContext.myStartCounter;
@@ -159,9 +159,9 @@ public class TransactionGuardImpl extends TransactionGuard {
     if (app.isDispatchThread()) {
       Transaction transaction = new Transaction(runnable, getContextTransaction(), app);
       if (!canRunTransactionNow(transaction, true)) {
-        throw new AssertionError("Cannot run synchronous submitTransactionAndWait from invokeLater. " +
-                                 "Please use asynchronous submit*Transaction. " +
-                                 "See TransactionGuard FAQ for details.");
+        LOG.error("Cannot run synchronous submitTransactionAndWait from invokeLater. " +
+                  "Please use asynchronous submit*Transaction. " +
+                  "See TransactionGuard FAQ for details.");
       }
       runSyncTransaction(transaction);
       return;

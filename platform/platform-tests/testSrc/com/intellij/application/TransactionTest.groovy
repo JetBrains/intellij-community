@@ -97,16 +97,19 @@ class TransactionTest extends LightPlatformTestCase {
     assert log == ['1']
   }
 
-  public void "test no current id inside invokeLater"() {
-    SwingUtilities.invokeLater {
-      log << '2'
-      assert !guard.contextTransaction
-    }
+  public void "test no context transaction inside invokeLater"() {
     TransactionGuard.submitTransaction testRootDisposable, {
+      SwingUtilities.invokeLater {
+        log << '2'
+        assert !guard.contextTransaction
+      }
       log << '1'
       UIUtil.dispatchAllInvocationEvents()
+      log << '3'
     }
-    assert log == ['1', '2']
+    assert log == [] // the test is also run inside an invokeLater, so transaction is asynchronous
+    UIUtil.dispatchAllInvocationEvents()
+    assert log == ['1', '2', '3']
   }
 
 
@@ -122,6 +125,7 @@ class TransactionTest extends LightPlatformTestCase {
       }
       assert log == ['1', '2']
     }
+    UIUtil.dispatchAllInvocationEvents()
     assert log == ['1', '2']
   }
 
@@ -136,6 +140,7 @@ class TransactionTest extends LightPlatformTestCase {
                                                                      log << '2'
                                                                    }, 'title', true, project)
     }
+    UIUtil.dispatchAllInvocationEvents()
     assert log == ['1', '2']
   }
   public void "test no id on pooled thread"() {
@@ -147,6 +152,7 @@ class TransactionTest extends LightPlatformTestCase {
         log << '2'
       }).get()
     }
+    UIUtil.dispatchAllInvocationEvents()
     assert log == ['1', '2']
   }
 
@@ -157,7 +163,6 @@ class TransactionTest extends LightPlatformTestCase {
       UIUtil.dispatchAllInvocationEvents()
       assert log == ['1']
     }
-    assert log == ['1']
     UIUtil.dispatchAllInvocationEvents()
     assert log == ['1', '2']
   }
@@ -265,6 +270,20 @@ class TransactionTest extends LightPlatformTestCase {
     }
     UIUtil.dispatchAllInvocationEvents()
     assert log == ['1', '2', '3']
+  }
+
+  public void "test no synchronous transactions inside invokeLater"() {
+    SwingUtilities.invokeLater {
+      log << '1'
+      try {
+        guard.submitTransactionAndWait { log << 'not run' }
+      }
+      catch (AssertionError ignore) {
+        log << 'assert'
+      }
+    }
+    UIUtil.dispatchAllInvocationEvents()
+    assert log == ['1', 'assert']
   }
 
 }
