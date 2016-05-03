@@ -14607,6 +14607,7 @@
     <option name="use" hit="Use &quot;safe write&quot; (save changes to a temporary file first)" />
     <option name="write" hit="Use &quot;safe write&quot; (save changes to a temporary file first)" />
     <option name="sec" hit="sec." />
+    <option name="accessibility" hit="Accessibility" />
   </configurable>
   <configurable id="reference.webide.settings.project.settings.php.composer" configurable_name="Composer">
     <option name="" hit="" />
