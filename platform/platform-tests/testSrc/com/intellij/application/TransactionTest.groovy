@@ -8,6 +8,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.NotNull
 
 import javax.swing.*
 /**
@@ -22,6 +23,12 @@ class TransactionTest extends LightPlatformTestCase {
 
   static Application getApp() {
     return ApplicationManager.getApplication()
+  }
+
+  @Override
+  protected void invokeTestRunnable(@NotNull Runnable runnable) throws Exception {
+    SwingUtilities.invokeLater(runnable)
+    UIUtil.dispatchAllInvocationEvents()
   }
 
   @Override

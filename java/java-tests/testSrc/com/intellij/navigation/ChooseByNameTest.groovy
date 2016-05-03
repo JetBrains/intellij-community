@@ -31,6 +31,8 @@ import com.intellij.util.concurrency.Semaphore
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 
+import javax.swing.SwingUtilities
+
 /**
  * @author peter
  */
@@ -323,7 +325,7 @@ class Intf {
     List<Object> elements = ['empty']
     def semaphore = new Semaphore()
     semaphore.down()
-    edt {
+    SwingUtilities.invokeLater {
       popup.scheduleCalcElements(text, checkboxState, ModalityState.NON_MODAL, { set ->
         elements = set as List
         semaphore.up()
