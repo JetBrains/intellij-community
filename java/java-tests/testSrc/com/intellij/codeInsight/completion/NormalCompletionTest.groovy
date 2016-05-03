@@ -30,6 +30,7 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.psi.impl.PsiDocumentManagerBase
+import com.intellij.util.ui.UIUtil
 import com.siyeh.ig.style.UnqualifiedFieldAccessInspection
 
 public class NormalCompletionTest extends LightFixtureCompletionTestCase {
@@ -1544,6 +1545,7 @@ class Bar {
     myFixture.configureByText "a.java", "class Foo {int i; ge<caret>}"
     myFixture.enableInspections(new UnqualifiedFieldAccessInspection())
     myFixture.complete(CompletionType.BASIC)
+    UIUtil.dispatchAllInvocationEvents()
     myFixture.checkResult '''class Foo {int i;
 
     public int getI() {
