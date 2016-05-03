@@ -46,6 +46,7 @@ import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -441,6 +442,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     for (ID<?, ?> key : ids) {
       indicesToDrop.remove(key.toString());
     }
+    LOG.info("Dropping indices:" + StringUtil.join(indicesToDrop, ","));
     for (String s : indicesToDrop) {
       FileUtil.deleteWithRenaming(IndexInfrastructure.getIndexRootDir(ID.create(s)));
     }
@@ -827,6 +829,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
                                         @NotNull final GlobalSearchScope filter,
                                         @NotNull ThrowableConvertor<UpdatableIndex<K, V, FileContent>, R, StorageException> computable) {
     try {
+      waitUntilIndicesAreInitialized();
       final UpdatableIndex<K, V, FileContent> index = getIndex(indexId);
       if (index == null) {
         return null;
