@@ -16,7 +16,6 @@
 package com.intellij.vcs
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.service
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
@@ -144,7 +143,7 @@ class VcsDirtyScopeManagerTest : VcsPlatformTest() {
   }
 
   private fun disableVcsDirtyScopeVfsListener() {
-    myProject.service<VcsDirtyScopeVfsListener>().setForbid(true)
+    myProject.getComponent(VcsDirtyScopeVfsListener::class.java).setForbid(true)
   }
 
   private fun disableChangeListManager() {
