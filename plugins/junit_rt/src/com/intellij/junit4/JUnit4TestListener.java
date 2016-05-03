@@ -46,6 +46,10 @@ public class JUnit4TestListener extends RunListener {
   private long myCurrentTestStart;
   private int myFinishedCount = 0;
 
+  private Description myCurrentTest;
+  private Map myWaitingQueue = new LinkedHashMap();
+
+
   public JUnit4TestListener() {
     this(System.out);
   }
@@ -77,7 +81,8 @@ public class JUnit4TestListener extends RunListener {
     }
   }
 
-  public void testRunFinished(Result result) throws Exception {
+  public void testRunFinished(Result result) {
+    dumpQueue();
     for (int i = myStartedSuites.size() - 1; i>= 0; i--) {
       Object parent = JUnit4ReflectionUtil.getClassName((Description)myStartedSuites.get(i));
       myPrintStream.println("##teamcity[testSuiteFinished name=\'" + escapeName(getShortName((String)parent)) + "\']");
@@ -85,7 +90,14 @@ public class JUnit4TestListener extends RunListener {
     myStartedSuites.clear();
   }
 
-  public void testStarted(Description description) throws Exception {
+  public void testStarted(Description description) {
+    if (myCurrentTest != null) {
+      myWaitingQueue.put(description, new TestEvent());
+      return;
+    }
+
+    myCurrentTest = description;
+
     final String classFQN = JUnit4ReflectionUtil.getClassName(description);
 
     final List parents = (List)myParents.get(description);
@@ -148,7 +160,32 @@ public class JUnit4TestListener extends RunListener {
     return System.currentTimeMillis();
   }
 
-  public void testFinished(Description description) throws Exception {
+  public void testFinished(Description description) {
+    if (startedInParallel(description)) {
+      TestEvent testEvent = (TestEvent)myWaitingQueue.get(description);
+      testEvent.setFinished(true);
+      return;
+    }
+    testFinishedNoDumping(description);
+
+    dumpQueue();
+  }
+
+  /**
+   * <code>myCurrentTest == null</code> means that initially started test was already finished but no new test were started:
+   * test1 started  | myCurrentTest == test1
+   * test2 started  | myWaitingQueue contains test2
+   * test1 finished | myCurrentTest == null
+   * test2 finished | testEvent from myWaitingQueue is marked as finished. Next dumping would dump test2 started/test2 finished
+   *
+   * <code>myCurrentTest.equals(description)</code> means that finish/failure/ignore event was fired against last started test
+   * if in the previous example test2 finishes before test1, then myCurrentTest != description, testEvent in myWaitingQueue needs to be updated
+   */
+  private boolean startedInParallel(Description description) {
+    return myCurrentTest == null || !myCurrentTest.equals(description);
+  }
+
+  private void testFinishedNoDumping(Description description) {
     final String methodName = getFullMethodName(description);
     if (methodName != null) {
       myFinishedCount++;
@@ -156,16 +193,27 @@ public class JUnit4TestListener extends RunListener {
       myPrintStream.println("\n##teamcity[testFinished name=\'" + escapeName(methodName) +
                             (duration > 0 ? "\' duration=\'"  + Long.toString(duration) : "") + "\']");
     }
+    myCurrentTest = null;
   }
 
-  public void testFailure(Failure failure) throws Exception {
-    testFailure(failure, failure.getDescription(), MapSerializerUtil.TEST_FAILED, true);
+  public void testFailure(Failure failure) {
+    testFailure(failure, failure.getDescription(), MapSerializerUtil.TEST_FAILED);
   }
 
-  private void testFailure(Failure failure, Description description, String messageName, boolean local) throws Exception {
+  private void testFailure(Failure failure, Description description, String messageName) {
+    final boolean isIgnored = MapSerializerUtil.TEST_IGNORED.equals(messageName);
+    if (startedInParallel(description)) {
+      TestEvent testEvent = (TestEvent)myWaitingQueue.get(description);
+      if (testEvent == null) {
+        testEvent = new TestEvent();
+        myWaitingQueue.put(description, testEvent);
+      }
+      testEvent.setIgnored(isIgnored);
+      testEvent.setFailure(failure);
+      return;
+    }
     String methodName = getFullMethodName(description);
     if (methodName == null) { //class setUp/tearDown failed
-      final boolean isIgnored = MapSerializerUtil.TEST_IGNORED.equals(messageName);
       if (!isIgnored) {
         methodName = "Class Configuration";
         myPrintStream.println("##teamcity[testStarted name=\'" + escapeName(methodName) + "\' " + getClassLocation(JUnit4ReflectionUtil.getClassName(description))+ " ]");
@@ -176,14 +224,15 @@ public class JUnit4TestListener extends RunListener {
       if (myFinishedCount == 0) {
         //only setup failures
         for (Iterator iterator = description.getChildren().iterator(); iterator.hasNext(); ) {
-          testFailure(isIgnored ? failure : null, (Description)iterator.next(), MapSerializerUtil.TEST_IGNORED, false);
+          Description next = (Description)iterator.next();
+          testStarted(next);
+          testFailure(isIgnored ? failure : null, next, MapSerializerUtil.TEST_IGNORED);
+          testFinished(next);
         }
       }
     }
     else {
-      if (!local) testStarted(description);
       testFailure(failure, messageName, methodName);
-      if (!local) testFinished(description);
     }
   }
 
@@ -218,11 +267,7 @@ public class JUnit4TestListener extends RunListener {
   }
 
   public void testAssumptionFailure(Failure failure) {
-    final Description description = failure.getDescription();
-    try {
-      testFailure(failure, description, MapSerializerUtil.TEST_IGNORED, true);
-    }
-    catch (Exception ignore) {}
+    testFailure(failure, failure.getDescription(), MapSerializerUtil.TEST_IGNORED);
   }
 
   private String getFullMethodName(Description description) {
@@ -246,7 +291,7 @@ public class JUnit4TestListener extends RunListener {
     return methodName;
   }
   
-  public synchronized void testIgnored(Description description) throws Exception {
+  public void testIgnored(Description description) {
     final String methodName = getFullMethodName(description);
     if (methodName == null) {
       for (Iterator iterator = description.getChildren().iterator(); iterator.hasNext(); ) {
@@ -259,7 +304,7 @@ public class JUnit4TestListener extends RunListener {
     }
   }
 
-  private void testIgnored(Description description, String methodName) throws Exception {
+  private void testIgnored(Description description, String methodName) {
     testStarted(description);
     Map attrs = new HashMap();
     try {
@@ -275,8 +320,87 @@ public class JUnit4TestListener extends RunListener {
       //junit < 4.4
     }
     attrs.put("name", methodName);
-    myPrintStream.println(MapSerializerUtil.asString(MapSerializerUtil.TEST_IGNORED, attrs));
+
+    if (startedInParallel(description)) {
+      TestEvent testEvent = (TestEvent)myWaitingQueue.get(description);
+      if (testEvent == null) {
+        testEvent = new TestEvent();
+        myWaitingQueue.put(description, testEvent);
+      }
+      testEvent.setIgnored(true);
+      testEvent.setAttrs(attrs);
+    }
+    else {
+      myPrintStream.println(MapSerializerUtil.asString(MapSerializerUtil.TEST_IGNORED, attrs));
+    }
     testFinished(description);
+  }
+
+  private void dumpQueue() {
+    for (Iterator iterator = myWaitingQueue.keySet().iterator(); iterator.hasNext(); ) {
+      Description description = (Description)iterator.next();
+      TestEvent testEvent = (TestEvent)myWaitingQueue.get(description);
+      if (testEvent != null && testEvent.isFinished()) {
+        iterator.remove();
+
+        testStarted(description);
+
+        Failure failure = testEvent.getFailure();
+        if (testEvent.isIgnored()) {
+          Map attrs = testEvent.getAttrs();
+          if (attrs == null) {
+            testFailure(failure, description, MapSerializerUtil.TEST_IGNORED);
+          }
+          else {
+            myPrintStream.println(MapSerializerUtil.asString(MapSerializerUtil.TEST_IGNORED, attrs));
+          }
+        }
+        else if (failure != null) {
+          testFailure(failure);
+        }
+
+        testFinishedNoDumping(description);
+      }
+    }
+  }
+
+  private static class TestEvent {
+    private Failure myFailure;
+    private boolean myIgnored;
+    private boolean myFinished;
+    private Map myAttrs;
+
+    public Failure getFailure() {
+      return myFailure;
+    }
+
+    public boolean isIgnored() {
+      return myIgnored;
+    }
+
+    public boolean isFinished() {
+      return myFinished;
+    }
+
+    public void setFinished(boolean finished) {
+      myFinished = finished;
+    }
+
+    public void setFailure(Failure failure) {
+      myFailure = failure;
+    }
+
+    public void setIgnored(boolean ignored) {
+      myIgnored = ignored;
+    }
+
+    public void setAttrs(Map attrs) {
+      myAttrs = attrs;
+    }
+
+    public Map getAttrs() {
+      return myAttrs;
+    }
   }
 
   private void sendTree(Description description, Description parent, List currentParents) {

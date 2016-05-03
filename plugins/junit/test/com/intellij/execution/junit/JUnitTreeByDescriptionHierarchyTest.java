@@ -367,7 +367,9 @@ public class JUnitTreeByDescriptionHierarchyTest {
     sender.testRunStarted(testA);
     final Exception exception = new Exception();
     exception.setStackTrace(new StackTraceElement[0]);
+    sender.testStarted(testA);
     sender.testAssumptionFailure(new Failure(testA, exception));
+    sender.testFinished(testA);
     sender.testRunFinished(new Result());
 
     Assert.assertEquals("output: " + buf, "##teamcity[rootName name = 'root' location = 'java:suite://root']\n" +
@@ -404,7 +406,9 @@ public class JUnitTreeByDescriptionHierarchyTest {
     sender.testRunStarted(testA);
     final Exception exception = new Exception();
     exception.setStackTrace(new StackTraceElement[0]);
+    sender.testStarted(testA);
     sender.testFailure(new Failure(testA, exception));
+    sender.testFinished(testA);
     sender.testRunFinished(new Result());
 
     Assert.assertEquals("output: " + buf, "##teamcity[rootName name = 'root' location = 'java:suite://root']\n" +
@@ -422,7 +426,52 @@ public class JUnitTreeByDescriptionHierarchyTest {
                                           "##teamcity[testFinished name='TestA.testName']\n" +
                                           "##teamcity[testSuiteFinished name='TestA']\n", StringUtil.convertLineSeparators(buf.toString()));
   }
-  
+
+  @Test
+  public void testParallelExecution() throws Exception {
+    final Description root = Description.createSuiteDescription("root");
+    Description testA = Description.createTestDescription("TestA", "test1");
+    root.addChild(testA);
+
+    Description testB = Description.createTestDescription("TestB", "test2");
+    root.addChild(testB);
+
+    final StringBuffer buf = new StringBuffer();
+    final JUnit4TestListener sender = createListener(buf);
+    sender.sendTree(root);
+
+    Assert.assertEquals("output: " + buf, "##teamcity[enteredTheMatrix]\n" +
+                                          "##teamcity[suiteTreeNode name='TestA.test1' locationHint='java:test://TestA.test1']\n" +
+                                          "##teamcity[suiteTreeNode name='TestB.test2' locationHint='java:test://TestB.test2']\n" +
+                                          "##teamcity[treeEnded]\n", StringUtil.convertLineSeparators(buf.toString()));
+
+    buf.setLength(0);
+
+    sender.testRunStarted(root);
+    sender.testStarted(testA);
+
+    sender.testStarted(testB);
+    sender.testFinished(testB);
+
+    final Exception exception = new Exception();
+    exception.setStackTrace(new StackTraceElement[0]);
+    sender.testFailure(new Failure(testA, exception));
+    sender.testFinished(testA);
+    sender.testRunFinished(new Result());
+
+    Assert.assertEquals("output: " + buf, "##teamcity[rootName name = 'root' location = 'java:suite://root']\n" +
+                                          "\n" +
+                                          "##teamcity[testStarted name='TestA.test1' locationHint='java:test://TestA.test1']\n" +
+                                          "\n" +
+                                          "##teamcity[testFailed name='TestA.test1' details='java.lang.Exception|n' error='true' message='']\n" +
+                                          "\n" +
+                                          "##teamcity[testFinished name='TestA.test1']\n" +
+                                          "\n" +
+                                          "##teamcity[testStarted name='TestB.test2' locationHint='java:test://TestB.test2']\n" +
+                                          "\n" +
+                                          "##teamcity[testFinished name='TestB.test2']\n", StringUtil.convertLineSeparators(buf.toString()));
+  }
+
   @Test
   public void testTearDownClassFailure() throws Exception {
     final Description root = Description.createSuiteDescription("root");
@@ -448,7 +497,9 @@ public class JUnitTreeByDescriptionHierarchyTest {
     exception.setStackTrace(new StackTraceElement[0]);
     sender.testStarted(testName);
     sender.testFinished(testName);
+    sender.testStarted(testA);
     sender.testFailure(new Failure(testA, exception));
+    sender.testFinished(testA);
     sender.testRunFinished(new Result());
 
     Assert.assertEquals("output: " + buf, "##teamcity[rootName name = 'root' location = 'java:suite://root']\n" +
@@ -492,7 +543,9 @@ public class JUnitTreeByDescriptionHierarchyTest {
     sender.testRunStarted(testA);
     final Exception exception = new Exception();
     exception.setStackTrace(new StackTraceElement[0]);
+    sender.testStarted(testA);
     sender.testAssumptionFailure(new Failure(testA, exception));
+    sender.testFinished(testA);
     sender.testRunFinished(new Result());
 
     Assert.assertEquals("output: " + buf, "##teamcity[rootName name = 'root' location = 'java:suite://root']\n" +
@@ -508,14 +561,21 @@ public class JUnitTreeByDescriptionHierarchyTest {
                                           "##teamcity[testSuiteFinished name='TestA']\n", StringUtil.convertLineSeparators(buf.toString()));
     buf.setLength(0);
 
-    //testStarted and testFinished are called by the framework
     sender.testRunStarted(testA);
+    sender.testStarted(testName);
     sender.testAssumptionFailure(new Failure(testName, exception));
+    sender.testFinished(testName);
     sender.testRunFinished(new Result());
 
     Assert.assertEquals("output: " + buf, "##teamcity[rootName name = 'root' location = 'java:suite://root']\n" +
+                                          "##teamcity[testSuiteStarted name='TestA']\n" +
                                           "\n" +
-                                          "##teamcity[testIgnored name='TestA.testName' details='java.lang.Exception|n' error='true' message='']\n", StringUtil.convertLineSeparators(buf.toString()));
+                                          "##teamcity[testStarted name='TestA.testName' locationHint='java:test://TestA.testName']\n" +
+                                          "\n" +
+                                          "##teamcity[testIgnored name='TestA.testName' details='java.lang.Exception|n' error='true' message='']\n" +
+                                          "\n" +
+                                          "##teamcity[testFinished name='TestA.testName']\n" +
+                                          "##teamcity[testSuiteFinished name='TestA']\n", StringUtil.convertLineSeparators(buf.toString()));
     
   }
 
