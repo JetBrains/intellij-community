@@ -10,6 +10,7 @@
       <module fileurl="file://$PROJECT_DIR$/RegExpSupport/RegExpSupport.iml" filepath="$PROJECT_DIR$/RegExpSupport/RegExpSupport.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/plugins/ShortcutPromoter/ShortcutPromoter.iml" filepath="$PROJECT_DIR$/plugins/ShortcutPromoter/ShortcutPromoter.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/adt-branding/adt-branding.iml" filepath="$PROJECT_DIR$/../adt/idea/adt-branding/adt-branding.iml" group="android" />
+      <module fileurl="file://$PROJECT_DIR$/../adt/idea/adt-ui/adt-ui.iml" filepath="$PROJECT_DIR$/../adt/idea/adt-ui/adt-ui.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/platform/analysis-api/analysis-api.iml" filepath="$PROJECT_DIR$/platform/analysis-api/analysis-api.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/analysis-impl/analysis-impl.iml" filepath="$PROJECT_DIR$/platform/analysis-impl/analysis-impl.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/google/analytics/analytics.iml" filepath="$PROJECT_DIR$/../vendor/google/analytics/analytics.iml" group="android" />
@@ -40,7 +41,6 @@
       <module fileurl="file://$PROJECT_DIR$/platform/built-in-server/built-in-server.iml" filepath="$PROJECT_DIR$/platform/built-in-server/built-in-server.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/built-in-server-api/built-in-server-api.iml" filepath="$PROJECT_DIR$/platform/built-in-server-api/built-in-server-api.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/built-in-server/built-in-server-tests.iml" filepath="$PROJECT_DIR$/platform/built-in-server/built-in-server-tests.iml" group="platform" />
-      <module fileurl="file://$PROJECT_DIR$/../base/chartlib/chartlib.iml" filepath="$PROJECT_DIR$/../base/chartlib/chartlib.iml" group="android/sdktools" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-common/cidr-common.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-common/cidr-common.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-debugger/cidr-debugger.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-debugger/cidr-debugger.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-lang/cidr-lang.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-lang/cidr-lang.iml" group="java" />

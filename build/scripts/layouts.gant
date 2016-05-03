@@ -822,6 +822,7 @@ def layoutAndroid(String androidHome, String androidToolsBaseHome) {
 
       jar("android-common.jar") {
         module("android-common")
+        module("adt-ui")
       }
       jar("repository.jar") {
         module("repository")
@@ -862,7 +863,6 @@ def layoutAndroid(String androidHome, String androidToolsBaseHome) {
         module("ninepatch")
         module("perflib")
         module("rpclib")
-        module("chartlib")
         //module("builder-model")
         module("builder-test-api")
       }
