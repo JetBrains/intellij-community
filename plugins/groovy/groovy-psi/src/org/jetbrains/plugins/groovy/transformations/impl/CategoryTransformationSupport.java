@@ -13,28 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.resolve.ast;
+package org.jetbrains.plugins.groovy.transformations.impl;
 
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.impl.light.LightMethodBuilder;
+import com.intellij.psi.PsiClassType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrReflectedMethodImpl;
+import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.transformations.AstTransformationSupport;
 import org.jetbrains.plugins.groovy.transformations.TransformationContext;
 
-/**
- * @author Max Medvedev
- */
-public class AutoCloneContributor implements AstTransformationSupport {
+public class CategoryTransformationSupport implements AstTransformationSupport {
 
   @Override
   public void applyTransformation(@NotNull TransformationContext context) {
-    if (!context.hasAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_AUTO_CLONE)) return;
-
-    final LightMethodBuilder clone = new LightMethodBuilder(context.getManager(), "clone");
-    clone.addModifier(PsiModifier.PUBLIC);
-    clone.addException(CloneNotSupportedException.class.getName());
-    clone.setOriginInfo("created by @AutoClone");
-    context.addMethod(clone);
+    PsiClassType type = GdkMethodUtil.getCategoryType(context.getCodeClass());
+    if (type == null) return;
+    for (GrMethod method : context.getCodeClass().getCodeMethods()) {
+      context.removeMethod(method);
+      context.addMethods(GrReflectedMethodImpl.doCreateReflectedMethods(method, type, method.getParameters()));
+    }
   }
 }
