@@ -989,9 +989,12 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
                                                           final PsiType expectedType) {
 
     if (initializer instanceof PsiTypeCastExpression) {
-      PsiTypeElement castType = ((PsiTypeCastExpression)initializer).getCastType();
-      if (castType != null && TypeConversionUtil.isAssignable(expectedType, castType.getType())) {
-        return ((PsiTypeCastExpression)initializer).getOperand();
+      PsiExpression operand = ((PsiTypeCastExpression)initializer).getOperand();
+      if (operand != null) {
+        PsiType operandType = operand.getType();
+        if (operandType != null && TypeConversionUtil.isAssignable(expectedType, operandType)) {
+          return operand;
+        }
       }
     }
     else if (initializer instanceof PsiNewExpression) {
