@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,6 +46,7 @@ import com.intellij.util.textCompletion.DefaultTextCompletionValueDescriptor;
 import com.intellij.util.textCompletion.TextCompletionProvider;
 import com.intellij.util.textCompletion.TextFieldWithCompletion;
 import com.intellij.util.textCompletion.ValuesCompletionProvider.ValuesCompletionProviderDumbAware;
+import com.intellij.util.ui.JBUI;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.VcsUserRegistry;
@@ -587,7 +588,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     GitCheckinOptions(@NotNull final Project project, @NotNull CheckinProjectPanel panel) {
       super(project, panel);
       myVcs = GitVcs.getInstance(project);
-      final Insets insets = new Insets(2, 2, 2, 2);
+      final Insets insets = JBUI.insets(2);
       // add authors drop down
       GridBagConstraints c = new GridBagConstraints();
       c.gridx = 0;
