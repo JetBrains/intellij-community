@@ -273,6 +273,7 @@ class TransactionTest extends LightPlatformTestCase {
   }
 
   public void "test no synchronous transactions inside invokeLater"() {
+    LoggedErrorProcessor.instance.disableStderrDumping(testRootDisposable)
     SwingUtilities.invokeLater {
       log << '1'
       try {
@@ -284,6 +285,20 @@ class TransactionTest extends LightPlatformTestCase {
     }
     UIUtil.dispatchAllInvocationEvents()
     assert log == ['1', 'assert']
+  }
+
+  public void "test write-unsafe modality ends inside a transaction"() {
+    LaterInvocator.enterModal(new Object())
+    guard.performUserActivity { assertWritingProhibited() }
+    TransactionGuard.submitTransaction testRootDisposable, {
+      LaterInvocator.leaveAllModals()
+      log << '1'
+    }
+    UIUtil.dispatchAllInvocationEvents()
+    assert log == ['1']
+    assert ModalityState.current() == ModalityState.NON_MODAL
+    guard.performUserActivity { app.runWriteAction { log << '2' } }
+    assert log == ['1', '2']
   }
 
 }
