@@ -438,7 +438,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
               showInRightPanel(null);
             }
           }
-          else if (node instanceof InspectionRootNode || node instanceof InspectionGroupNode || node instanceof InspectionSeverityGroupNode) {
+          else if (node instanceof InspectionGroupNode || node instanceof InspectionSeverityGroupNode) {
             final InspectionViewNavigationPanel panel = new InspectionViewNavigationPanel(node, myTree);
             myLoadingProgressPreview = panel;
             mySplitter.setSecondComponent(panel);
