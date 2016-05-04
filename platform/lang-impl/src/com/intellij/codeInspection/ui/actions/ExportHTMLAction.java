@@ -17,15 +17,14 @@
 package com.intellij.codeInspection.ui.actions;
 
 import com.intellij.codeEditor.printing.ExportToHTMLSettings;
-import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.InspectionApplication;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.ScopeToolState;
 import com.intellij.codeInspection.ex.Tools;
-import com.intellij.codeInspection.export.*;
-import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.codeInspection.export.ExportToHTMLDialog;
+import com.intellij.codeInspection.export.InspectionTreeHtmlWriter;
 import com.intellij.codeInspection.ui.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
@@ -53,7 +52,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * User: anna
@@ -141,22 +141,9 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
           final Set<InspectionToolWrapper> toolWrappers = getWorkedTools(toolNode);
           for (InspectionToolWrapper wrapper : toolWrappers) {
             InspectionToolPresentation presentation = myView.getGlobalInspectionContext().getPresentation(wrapper);
-            if (!toolNode.isExcluded(myView.getExcludedManager())) {
-              final Set<RefEntity> excludedEntities = new HashSet<>();
-              final Set<CommonProblemDescriptor> excludedDescriptors = new HashSet<>();
-              TreeUtil.traverse(toolNode, o -> {
-                InspectionTreeNode n = (InspectionTreeNode)o;
-                if (n.isExcluded(myView.getExcludedManager())) {
-                  if (n instanceof RefElementNode) {
-                    excludedEntities.add(((RefElementNode)n).getElement());
-                  }
-                  if (n instanceof ProblemDescriptionNode) {
-                    excludedDescriptors.add(((ProblemDescriptionNode)n).getDescriptor());
-                  }
-                }
-                return true;
-              });
-              presentation.exportResults(problems, excludedEntities, excludedDescriptors);
+            final ExcludedInspectionTreeNodesManager excludedManager = myView.getExcludedManager();
+            if (!toolNode.isExcluded(excludedManager)) {
+              presentation.exportResults(problems, excludedManager::containsRefEntity, excludedManager::containsProblemDescriptor);
             }
           }
           PathMacroManager.getInstance(myView.getProject()).collapsePaths(problems);
