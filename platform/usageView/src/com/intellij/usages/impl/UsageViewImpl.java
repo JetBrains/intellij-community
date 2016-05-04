@@ -1360,7 +1360,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       if (usage instanceof UsageInFile) {
         UsageInFile usageInFile = (UsageInFile)usage;
         VirtualFile file = usageInFile.getFile();
-        if (file != null) result.add(file);
+        if (file != null && file.isValid()) result.add(file);
       }
 
       if (usage instanceof UsageInFiles) {
