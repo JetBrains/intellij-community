@@ -79,6 +79,10 @@ public class PushDownTest extends LightRefactoringTestCase {
     doTestImplements(true);
   }
 
+  public void testErasureIfInheritsWithRawSubstitution() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }
