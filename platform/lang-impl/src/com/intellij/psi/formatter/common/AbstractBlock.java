@@ -59,6 +59,13 @@ public abstract class AbstractBlock implements ASTBlock {
   public List<Block> getSubBlocks() {
     if (mySubBlocks == null) {
 
+      try {
+        Thread.sleep(100);
+      }
+      catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+
       List<Block> list = buildChildren();
       if (list.isEmpty()) {
         list = buildInjectedBlocks();

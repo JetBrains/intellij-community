@@ -15,7 +15,9 @@
  */
 package com.intellij.psi.codeStyle.autodetect;
 
-import com.intellij.formatting.*;
+import com.intellij.formatting.Block;
+import com.intellij.formatting.FormattingModel;
+import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.PsiDocumentManager;
@@ -61,7 +63,7 @@ public abstract class AbstractNewLineBlocksIteratorTest extends LightPlatformCod
     Document document = PsiDocumentManager.getInstance(getProject()).getDocument(myFile);
     Assert.assertNotNull(document);
 
-    return new NewLineBlocksIterator(root, document);
+    return new NewLineBlocksIterator(root, document, null);
   }
 
 }
