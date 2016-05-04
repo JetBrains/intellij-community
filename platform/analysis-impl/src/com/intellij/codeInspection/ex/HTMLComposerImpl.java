@@ -198,12 +198,9 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
     buf.append(A_CLOSING);
   }
 
-  protected void appendQuickFix(@NonNls final StringBuffer buf, String text, int index) {
+  protected void appendQuickFix(@NonNls final StringBuffer buf, String text) {
     if (myExporter == null) {
-      buf.append("<a HREF=\"file://bred.txt#invoke:").append(index);
-      buf.append("\">");
       buf.append(text);
-      buf.append("</a>");
     }
   }
 
@@ -304,7 +301,7 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
           listStarted = true;
         }
         startListItem(buf);
-        appendQuickFix(buf, text, i);
+        appendQuickFix(buf, text);
         doneListItem(buf);
       }
 
