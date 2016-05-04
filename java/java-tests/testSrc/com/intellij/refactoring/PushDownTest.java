@@ -83,6 +83,10 @@ public class PushDownTest extends LightRefactoringTestCase {
     doTest();
   }
 
+  public void testAlreadyContainsMethodWithTheSignatureForGenericsSuperclass() throws Exception {
+    doTest(true);
+  }
+
   private void doTest() {
     doTest(false);
   }
