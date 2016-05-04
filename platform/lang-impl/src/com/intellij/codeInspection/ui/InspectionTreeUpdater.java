@@ -38,8 +38,8 @@ public class InspectionTreeUpdater {
   }
 
   public void updateWithPreviewPanel(@Nullable TreeNode node) {
+    myDoUpdatePreviewPanel.set(true);
     update(node, false);
-    myDoUpdatePreviewPanel.compareAndSet(false, true);
   }
 
   public void update(@Nullable TreeNode node, boolean force) {
@@ -61,8 +61,6 @@ public class InspectionTreeUpdater {
       try {
         tree.setQueueUpdate(true);
         ((DefaultTreeModel)tree.getModel()).reload();
-        tree.revalidate();
-        tree.repaint();
         tree.restoreExpansionAndSelection(tree.getRoot());
         myView.openRightPanelIfNeed();
         if (myDoUpdatePreviewPanel.compareAndSet(true, false)) {
