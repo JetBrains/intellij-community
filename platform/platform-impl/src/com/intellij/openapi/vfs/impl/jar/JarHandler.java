@@ -174,6 +174,7 @@ public class JarHandler extends ZipHandler {
       return mirrorFile;
     }
     catch (IOException ex) {
+      CacheLibraryInfo.ourCachedLibraryInfo.markCorrupted();
       reportIOErrorWithJars(originalFile, mirrorFile != null ? mirrorFile : new File(jarDir, originalFile.getName()), ex);
       return originalFile;
     }
