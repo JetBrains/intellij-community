@@ -206,10 +206,10 @@ public class EduAdaptiveStepicConnector {
       for (List<String> sample : step.options.samples) {
         if (sample.size() == 2) {
           builder.append("<b>Sample Input:</b><br>");
-          builder.append(sample.get(0));
+          builder.append(StringUtil.replace(sample.get(0), "\n", "<br>"));
           builder.append("<br>");
           builder.append("<b>Sample Output:</b><br>");
-          builder.append(sample.get(1));
+          builder.append(StringUtil.replace(sample.get(1), "\n", "<br>"));
           builder.append("<br><br>");
         }
       }
