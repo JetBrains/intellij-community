@@ -509,10 +509,12 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
       indicesToDrop.remove(key.toString());
     }
 
-    LOG.info("Dropping indices:" + StringUtil.join(indicesToDrop, ","));
+    if (!indicesToDrop.isEmpty()) {
+      LOG.info("Dropping indices:" + StringUtil.join(indicesToDrop, ","));
 
-    for (String s : indicesToDrop) {
-      FileUtil.delete(IndexInfrastructure.getIndexRootDir(StubIndexKey.createIndexKey(s)));
+      for (String s : indicesToDrop) {
+        FileUtil.delete(IndexInfrastructure.getIndexRootDir(StubIndexKey.createIndexKey(s)));
+      }
     }
   }
 

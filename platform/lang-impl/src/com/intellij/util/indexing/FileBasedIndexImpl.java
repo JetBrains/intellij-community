@@ -442,9 +442,11 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     for (ID<?, ?> key : ids) {
       indicesToDrop.remove(key.toString());
     }
-    LOG.info("Dropping indices:" + StringUtil.join(indicesToDrop, ","));
-    for (String s : indicesToDrop) {
-      FileUtil.deleteWithRenaming(IndexInfrastructure.getIndexRootDir(ID.create(s)));
+    if (!indicesToDrop.isEmpty()) {
+      LOG.info("Dropping indices:" + StringUtil.join(indicesToDrop, ","));
+      for (String s : indicesToDrop) {
+        FileUtil.deleteWithRenaming(IndexInfrastructure.getIndexRootDir(ID.create(s)));
+      }
     }
 
     try {
