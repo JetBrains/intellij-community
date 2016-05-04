@@ -256,6 +256,14 @@ public class XDebuggerTestUtil {
     assertVariableValueMatches(findVar(vars, name), name, type, valuePattern);
   }
 
+  public static void assertVariableValueMatches(@NotNull Collection<XValue> vars,
+                                                @Nullable String name,
+                                                @Nullable String type,
+                                                @Nullable @Language("RegExp") String valuePattern,
+                                                @Nullable Boolean hasChildren) throws InterruptedException {
+    assertVariableValueMatches(findVar(vars, name), name, type, valuePattern, hasChildren);
+  }
+
   public static void assertVariableValueMatches(@NotNull XValue var,
                                                 @Nullable String name,
                                                 @Nullable @Language("RegExp") String valuePattern) throws InterruptedException {
@@ -266,12 +274,21 @@ public class XDebuggerTestUtil {
                                                 @Nullable String name,
                                                 @Nullable String type,
                                                 @Nullable @Language("RegExp") String valuePattern) throws InterruptedException {
+    assertVariableValueMatches(var, name, type, valuePattern, null);
+  }
+
+  public static void assertVariableValueMatches(@NotNull XValue var,
+                                                @Nullable String name,
+                                                @Nullable String type,
+                                                @Nullable @Language("RegExp") String valuePattern,
+                                                @Nullable Boolean hasChildren) throws InterruptedException {
     XTestValueNode node = computePresentation(var);
     if (name != null) assertEquals(name, node.myName);
     if (type != null) assertEquals(type, node.myType);
     if (valuePattern != null) {
       assertTrue("Expected value: " + valuePattern + " Actual value: " + node.myValue, node.myValue.matches(valuePattern));
     }
+    if (hasChildren != null) assertEquals(hasChildren, node.myHasChildren);
   }
 
   public static void assertVariableTypeMatches(@NotNull Collection<XValue> vars,
