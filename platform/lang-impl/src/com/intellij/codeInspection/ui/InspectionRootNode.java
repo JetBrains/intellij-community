@@ -16,14 +16,8 @@
 
 package com.intellij.codeInspection.ui;
 
-import com.intellij.icons.AllIcons;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
 
 /**
  * @author max
