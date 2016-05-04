@@ -20,6 +20,7 @@ import com.intellij.formatting.FormattingModel;
 import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -44,17 +45,28 @@ public class IndentOptionsDetectorImpl implements IndentOptionsDetector {
     myProject = file.getProject();
     myDocument = PsiDocumentManager.getInstance(myProject).getDocument(myFile);
   }
-
+  
+  @Override
+  @Nullable
+  public IndentOptionsAdjuster getIndentOptionsAdjuster(@Nullable ProgressIndicator indicator) {
+    List<LineIndentInfo> linesInfo = calcLineIndentInfo(indicator);
+    if (linesInfo != null) {
+      IndentUsageStatistics stats = new IndentUsageStatisticsImpl(linesInfo);
+      return new IndentOptionsAdjusterImpl(stats);
+    }
+    return null;
+  }
+  
   @Override
   @NotNull
-  public IndentOptions getIndentOptions() {
+  public IndentOptions getIndentOptions(@Nullable ProgressIndicator indicator) {
     IndentOptions indentOptions =
       (IndentOptions)CodeStyleSettingsManager.getSettings(myProject).getIndentOptions(myFile.getFileType()).clone();
 
-    List<LineIndentInfo> linesInfo = calcLineIndentInfo();
+    List<LineIndentInfo> linesInfo = calcLineIndentInfo(indicator);
     if (linesInfo != null) {
       IndentUsageStatistics stats = new IndentUsageStatisticsImpl(linesInfo);
-      IndentOptionsAdjuster adjuster = new IndentOptionsAdjuster(stats);
+      IndentOptionsAdjuster adjuster = new IndentOptionsAdjusterImpl(stats);
       adjuster.adjust(indentOptions);
     }
 
@@ -62,7 +74,7 @@ public class IndentOptionsDetectorImpl implements IndentOptionsDetector {
   }
 
   @Nullable
-  private List<LineIndentInfo> calcLineIndentInfo() {
+  private List<LineIndentInfo> calcLineIndentInfo(@Nullable ProgressIndicator indicator) {
     if (myDocument == null || myDocument.getLineCount() < 3 || isFileBigToDetect()) {
       return null;
     }
@@ -73,7 +85,7 @@ public class IndentOptionsDetectorImpl implements IndentOptionsDetector {
 
     FormattingModel model = modelBuilder.createModel(myFile, settings);
     Block rootBlock = model.getRootBlock();
-    return new FormatterBasedLineIndentInfoBuilder(myDocument, rootBlock).build();
+    return new FormatterBasedLineIndentInfoBuilder(myDocument, rootBlock, indicator).build();
   }
 
   private boolean isFileBigToDetect() {

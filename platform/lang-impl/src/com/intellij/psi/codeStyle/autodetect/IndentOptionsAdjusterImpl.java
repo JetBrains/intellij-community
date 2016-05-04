@@ -18,7 +18,7 @@ package com.intellij.psi.codeStyle.autodetect;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 
-class IndentOptionsAdjuster {
+class IndentOptionsAdjusterImpl implements IndentOptionsAdjuster {
   private static final double RATE_THRESHOLD = 0.8;
   private static final int MAX_INDENT_TO_DETECT = 8;
 
@@ -26,12 +26,13 @@ class IndentOptionsAdjuster {
   private final boolean isSpacesUsed;
   private final int newIndentSize;
 
-  public IndentOptionsAdjuster(IndentUsageStatistics stats) {
+  public IndentOptionsAdjusterImpl(IndentUsageStatistics stats) {
     isTabsUsed = isTabsUsed(stats);
     isSpacesUsed = isSpacesUsed(stats);
     newIndentSize = isSpacesUsed ? getPositiveIndentSize(stats) : 0;
   }
 
+  @Override
   public void adjust(@NotNull CommonCodeStyleSettings.IndentOptions indentOptions) {
     if (isTabsUsed) {
       adjustForTabUsage(indentOptions);

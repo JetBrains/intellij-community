@@ -97,7 +97,7 @@ public abstract class AbstractIndentAutoDetectionTest extends LightPlatformCodeI
     Assert.assertNotNull(builder);
     
     FormattingModel model = builder.createModel(myFile, CodeStyleSettingsManager.getSettings(getProject()));
-    List<LineIndentInfo> lines = new FormatterBasedLineIndentInfoBuilder(document, model.getRootBlock()).build();
+    List<LineIndentInfo> lines = new FormatterBasedLineIndentInfoBuilder(document, model.getRootBlock(), null).build();
     
     IndentUsageStatistics statistics = new IndentUsageStatisticsImpl(lines);
     return statistics.getKMostUsedIndentInfo(0);
@@ -106,6 +106,6 @@ public abstract class AbstractIndentAutoDetectionTest extends LightPlatformCodeI
   @NotNull
   public static CommonCodeStyleSettings.IndentOptions detectIndentOptions() {
     IndentOptionsDetector detector = new IndentOptionsDetectorImpl(myFile);
-    return detector.getIndentOptions();
+    return detector.getIndentOptions(null);
   }
 }
