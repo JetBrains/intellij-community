@@ -19,6 +19,8 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author max
@@ -30,37 +32,37 @@ public class MissingIfBranchesFixer implements Fixer {
 
     PsiIfStatement ifStatement = (PsiIfStatement) psiElement;
     final Document doc = editor.getDocument();
-    final PsiStatement elseBranch = ifStatement.getElseBranch();
     final PsiKeyword elseElement = ifStatement.getElseElement();
-    if (elseElement != null && (elseBranch == null || !(elseBranch instanceof PsiBlockStatement) &&
-                                                      startLine(doc, elseBranch) > startLine(doc, elseElement))) {
-      doc.insertString(elseElement.getTextRange().getEndOffset(), "{}");
+    if (elseElement != null) {
+      handleBranch(doc, ifStatement, elseElement, ifStatement.getElseBranch());
     }
 
-    PsiElement thenBranch = ifStatement.getThenBranch();
-    if (thenBranch instanceof PsiBlockStatement) return;
-
-    boolean transformingOneLiner = false;
-    if (thenBranch != null && startLine(doc, thenBranch) == startLine(doc, ifStatement)) {
-      if (ifStatement.getCondition() != null) {
-        return;
-      }
-      transformingOneLiner = true;
-    }
-
-    final PsiJavaToken rParenth = ifStatement.getRParenth();
+    PsiJavaToken rParenth = ifStatement.getRParenth();
     assert rParenth != null;
-
-    if (elseBranch == null && !transformingOneLiner || thenBranch == null) {
-      doc.insertString(rParenth.getTextRange().getEndOffset(), "{}");
-    }
-    else {
-      doc.insertString(rParenth.getTextRange().getEndOffset(), "{");
-      doc.insertString(thenBranch.getTextRange().getEndOffset() + 1, "}");
-    }
+    handleBranch(doc, ifStatement, rParenth, ifStatement.getThenBranch());
   }
 
-  private static int startLine(Document doc, PsiElement psiElement) {
+  private static void handleBranch(@NotNull Document doc, @NotNull PsiIfStatement ifStatement, @NotNull PsiElement beforeBranch, @Nullable PsiStatement branch) {
+    if (branch instanceof PsiBlockStatement) return;
+    boolean transformingOneLiner = branch != null && (startLine(doc, beforeBranch) == startLine(doc, branch) ||
+                                                      startCol(doc, ifStatement) < startCol(doc, branch));
+
+    if (!transformingOneLiner) {
+      doc.insertString(beforeBranch.getTextRange().getEndOffset(), "{}");
+    }
+    else {
+      doc.insertString(beforeBranch.getTextRange().getEndOffset(), "{");
+      doc.insertString(branch.getTextRange().getEndOffset() + 1, "}");
+    }
+
+  }
+
+  private static int startLine(Document doc, @NotNull PsiElement psiElement) {
     return doc.getLineNumber(psiElement.getTextRange().getStartOffset());
+  }
+
+  private static int startCol(Document doc, @NotNull PsiElement psiElement) {
+    int offset = psiElement.getTextRange().getStartOffset();
+    return offset - doc.getLineStartOffset(doc.getLineNumber(offset));
   }
 }

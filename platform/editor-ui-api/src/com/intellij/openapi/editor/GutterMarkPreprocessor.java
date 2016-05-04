@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.usages.actions;
+package com.intellij.openapi.editor;
 
-import com.intellij.usages.Usage;
-import com.intellij.usages.UsageView;
+import com.intellij.codeInsight.daemon.GutterMark;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.sun.istack.internal.NotNull;
 
-/**
- * @author max
- */
-public class ExcludeUsageAction extends IncludeExcludeActionBase {
-  @Override
-  protected void process(Usage[] usages, UsageView usageView) {
-    usageView.excludeUsages(usages);
-  }
+import java.util.List;
+
+public interface GutterMarkPreprocessor {
+  ExtensionPointName<GutterMarkPreprocessor> EP_NAME = ExtensionPointName.create("com.intellij.gutterMarkPreprocessor");
+
+  @NotNull
+  List<GutterMark> processMarkers(@NotNull List<GutterMark> list);
 }

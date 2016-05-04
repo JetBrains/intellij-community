@@ -48,6 +48,8 @@ import org.jetbrains.jps.service.SharedThreadPool;
 
 import javax.tools.*;
 import java.io.File;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -96,8 +98,14 @@ public class ExternalJavacManager {
                                    compilationRequestsHandler);
       }
     });
-    myChannelRegistrar.add(bootstrap.bind(listenPort).syncUninterruptibly().channel());
-    myListenPort = listenPort;
+    try {
+      final InetAddress loopback = InetAddress.getByName(null);
+      myChannelRegistrar.add(bootstrap.bind(loopback, listenPort).syncUninterruptibly().channel());
+      myListenPort = listenPort;
+    }
+    catch (UnknownHostException e) {
+      throw new RuntimeException(e);
+    }
   }
   
 

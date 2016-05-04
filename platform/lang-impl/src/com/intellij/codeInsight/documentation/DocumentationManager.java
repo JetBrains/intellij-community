@@ -757,37 +757,31 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
           return;
         }
         final String documentationText = text;
-        //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-
-            if (!element.isValid()) {
-              LOG.debug("Element for which documentation was requested is not valid");
-              callback.setDone();
-              return;
-            }
-
-            if (documentationText == null) {
-              component.setText(CodeInsightBundle.message("no.documentation.found"), element, true, clearHistory);
-            }
-            else if (documentationText.isEmpty()) {
-              component.setText(component.getText(), element, true, clearHistory);
-            }
-            else {
-              component.setData(element, documentationText, clearHistory, provider.getEffectiveExternalUrl(), provider.getRef());
-            }
-
-            final AbstractPopup jbPopup = (AbstractPopup)getDocInfoHint();
-            if(jbPopup==null){
-              callback.setDone();
-              return;
-            }
-            jbPopup.setDimensionServiceKey(JAVADOC_LOCATION_AND_SIZE);
-            jbPopup.setCaption(getTitle(element, false));
+        PsiDocumentManager.getInstance(myProject).performLaterWhenAllCommitted(() -> {
+          if (!element.isValid()) {
+            LOG.debug("Element for which documentation was requested is not valid");
             callback.setDone();
+            return;
           }
+
+          if (documentationText == null) {
+            component.setText(CodeInsightBundle.message("no.documentation.found"), element, true, clearHistory);
+          }
+          else if (documentationText.isEmpty()) {
+            component.setText(component.getText(), element, true, clearHistory);
+          }
+          else {
+            component.setData(element, documentationText, clearHistory, provider.getEffectiveExternalUrl(), provider.getRef());
+          }
+
+          final AbstractPopup jbPopup = (AbstractPopup)getDocInfoHint();
+          if(jbPopup==null){
+            callback.setDone();
+            return;
+          }
+          jbPopup.setDimensionServiceKey(JAVADOC_LOCATION_AND_SIZE);
+          jbPopup.setCaption(getTitle(element, false));
+          callback.setDone();
         });
       }
     }, 10);

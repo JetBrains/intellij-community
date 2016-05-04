@@ -83,7 +83,7 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   public boolean USE_COMMIT_MESSAGE_MARGIN = false;
   public int COMMIT_MESSAGE_MARGIN_SIZE = 72;
   public boolean WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = false;
-  public boolean SHOW_UNVERSIONED_FILES_WHILE_COMMIT = false;
+  public boolean SHOW_UNVERSIONED_FILES_WHILE_COMMIT = true;
   public boolean LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN = false;
 
   @AbstractCollection(surroundWithTag = false, elementTag = "path")

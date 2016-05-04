@@ -84,6 +84,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
   private final TemplateContext myContext;
   private JBPopup myContextPopup;
   private Dimension myLastSize;
+  private JPanel myTemplateOptionsPanel;
 
   public LiveTemplateSettingsEditor(TemplateImpl template,
                                     final String defaultShortcut,
@@ -165,7 +166,9 @@ public class LiveTemplateSettingsEditor extends JPanel {
     myEditVariablesButton.setMaximumSize(myEditVariablesButton.getPreferredSize());
     panel.add(myEditVariablesButton, gb.next().weighty(0));
 
-    panel.add(createTemplateOptionsPanel(), gb.nextLine().next().next().coverColumn(2).weighty(1));
+    myTemplateOptionsPanel = new JPanel(new BorderLayout());
+    myTemplateOptionsPanel.add(createTemplateOptionsPanel());
+    panel.add(myTemplateOptionsPanel, gb.nextLine().next().next().coverColumn(2).weighty(1));
 
     panel.add(createShortContextPanel(allowNoContexts), gb.nextLine().next().weighty(0).fillCellNone().anchor(GridBagConstraints.WEST));
 
@@ -240,7 +243,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
 
     gbConstraints.gridx = 1;
     gbConstraints.insets = new Insets(0, 4, 0, 0);
-    myExpandByCombo = new ComboBox(new String[]{myDefaultShortcutItem, SPACE, TAB, ENTER});
+    myExpandByCombo = new ComboBox<String>(new String[]{myDefaultShortcutItem, SPACE, TAB, ENTER});
     myExpandByCombo.addItemListener(new ItemListener() {
       @Override
       public void itemStateChanged(@NotNull ItemEvent e) {
@@ -274,17 +277,12 @@ public class LiveTemplateSettingsEditor extends JPanel {
     panel.add(myCbReformat, gbConstraints);
 
     for (final TemplateOptionalProcessor processor: myOptions.keySet()) {
-      if (!processor.isVisible(myTemplate)) continue;
+      if (!processor.isVisible(myTemplate, myContext)) continue;
       gbConstraints.gridy++;
       final JCheckBox cb = new JCheckBox(processor.getOptionName());
       panel.add(cb, gbConstraints);
       cb.setSelected(myOptions.get(processor).booleanValue());
-      cb.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(@NotNull ActionEvent e) {
-          myOptions.put(processor, cb.isSelected());
-        }
-      });
+      cb.addActionListener(e -> myOptions.put(processor, cb.isSelected()));
     }
 
     gbConstraints.weighty = 1;
@@ -347,6 +345,9 @@ public class LiveTemplateSettingsEditor extends JPanel {
         ctxLabel.setText(StringUtil.first(contexts, 100, true));
         ctxLabel.setForeground(noContexts ? allowNoContexts ? JBColor.GRAY : JBColor.RED : UIUtil.getLabelForeground());
         change.setText(noContexts ? "Define" : "Change");
+
+        myTemplateOptionsPanel.removeAll();
+        myTemplateOptionsPanel.add(createTemplateOptionsPanel());
       }
     };
 

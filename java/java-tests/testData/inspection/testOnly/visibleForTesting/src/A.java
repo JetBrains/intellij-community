@@ -18,4 +18,16 @@ public class A {
   void relaxedToPackageLevel(int a) {
 
   }
+
+  @com.google.common.annotations.VisibleForTesting
+  static class FooException extends RuntimeException {
+    FooException(String message) {
+      super(message);
+    }
+  }
+
+  public static void usingExceptionPrivately(String[] args) {
+    A.FooException exception =
+      new A.FooException("");
+  }
 }

@@ -233,6 +233,14 @@ public class TestsPresentationUtil {
           if (presentation != null) {
             parentName = presentation;
             parentStartsWith = name.startsWith(parentName);
+
+            if (!parentStartsWith) {
+              String comment = ((SMTestProxy.SMRootTestProxy)parent).getComment();
+              if (comment != null) {
+                parentName = StringUtil.getQualifiedName(comment, presentation);
+                parentStartsWith = name.startsWith(parentName);
+              }
+            }
           }
         }
         if (parentStartsWith) {

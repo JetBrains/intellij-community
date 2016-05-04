@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.ui.tree.TreeUtil;
 
 import javax.swing.*;
 import javax.swing.tree.MutableTreeNode;
@@ -53,8 +54,8 @@ abstract class TreeNodeExclusionAction<T extends MutableTreeNode> extends AnActi
       return;
     }
     JTree tree = (JTree) component;
-    final TreePath[] selection = tree.getSelectionPaths();
-    if (selection == null) {
+    final TreePath[] selection = TreeUtil.selectMaximals(tree.getSelectionPaths());
+    if (selection.length == 0) {
       presentation.setEnabledAndVisible(false);
       return;
     }

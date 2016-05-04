@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,23 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package com.intellij.psi.impl.smartPointers;
+package org.jetbrains.plugins.groovy.transformations;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-/**
- * This is internal API, please don't use it.
- * @author yole
- */
-@Deprecated
-public abstract class SmartPointerElementInfoFactory {
-  public static final ExtensionPointName<SmartPointerElementInfoFactory> EP_NAME = ExtensionPointName.create("com.intellij.smartPointerElementInfoFactory");
+public interface AstTransformationSupport {
 
-  @Nullable
-  public abstract SmartPointerElementInfo createElementInfo(@NotNull PsiElement element, @NotNull PsiFile containingFile);
+  ExtensionPointName<AstTransformationSupport> EP_NAME = ExtensionPointName.create("org.intellij.groovy.astTransformationSupport");
+
+  void applyTransformation(@NotNull TransformationContext context);
 }

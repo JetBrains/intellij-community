@@ -122,7 +122,7 @@ public final class ExecutionHandler {
 
       builder.getCommandLine().setCharset(EncodingProjectManager.getInstance(buildFile.getProject()).getDefaultCharset());
 
-      messageView = prepareMessageView(buildMessageViewToReuse, buildFile, targets);
+      messageView = prepareMessageView(buildMessageViewToReuse, buildFile, targets, additionalProperties);
       commandLine = CommandLineBuilder.createFromJavaParameters(builder.getCommandLine());
       messageView.setBuildCommandLine(commandLine.getCommandLineString());
     }
@@ -300,14 +300,14 @@ public final class ExecutionHandler {
 
   private static AntBuildMessageView prepareMessageView(@Nullable AntBuildMessageView buildMessageViewToReuse,
                                                         AntBuildFileBase buildFile,
-                                                        String[] targets) throws RunCanceledException {
+                                                        String[] targets, List<BuildFileProperty> additionalProperties) throws RunCanceledException {
     AntBuildMessageView messageView;
     if (buildMessageViewToReuse != null) {
       messageView = buildMessageViewToReuse;
       messageView.emptyAll();
     }
     else {
-      messageView = AntBuildMessageView.openBuildMessageView(buildFile.getProject(), buildFile, targets);
+      messageView = AntBuildMessageView.openBuildMessageView(buildFile.getProject(), buildFile, targets, additionalProperties);
       if (messageView == null) {
         throw new RunCanceledException(AntBundle.message("canceled.by.user.error.message"));
       }

@@ -19,10 +19,12 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ElementColorProvider;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,6 +33,7 @@ import java.awt.*;
 /**
  * @author Konstantin Bulenkov
  */
+@SuppressWarnings("UseJBColor")
 public class JavaColorProvider implements ElementColorProvider {
   @Override
   public Color getColorFrom(@NotNull PsiElement element) {
@@ -57,8 +60,32 @@ public class JavaColorProvider implements ElementColorProvider {
       if (isColorType(expr.getType())) {
         return getColor(expr.getArgumentList());
       }
+    } else if (isIntLiteralInsideNewJBColorExpression(element)) {
+      final String text = element.getText();
+      boolean hasAlpha = text != null && StringUtil.startsWithIgnoreCase(text, "0x") && text.length() > 8;
+      return new Color(getInt((PsiExpression)element), hasAlpha);
     }
     return null;
+  }
+
+  private static boolean isIntLiteralInsideNewJBColorExpression(PsiElement element) {
+    if (element instanceof PsiLiteralExpression && PsiType.INT.equals(((PsiLiteralExpression)element).getType())) {
+      PsiElement parent = element.getParent();
+      if (parent != null) {
+        return isNewJBColorExpression(parent.getParent());
+      }
+    }
+    return false;
+  }
+
+  private static boolean isNewJBColorExpression(PsiElement element) {
+    if (element instanceof PsiNewExpression) {
+      final PsiClass psiClass = PsiTypesUtil.getPsiClass(((PsiNewExpression)element).getType());
+      if (psiClass != null && JBColor.class.getName().equals(psiClass.getQualifiedName())) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Nullable
@@ -116,49 +143,63 @@ public class JavaColorProvider implements ElementColorProvider {
 
   @Override
   public void setColorTo(@NotNull PsiElement element, @NotNull Color color) {
-    PsiExpressionList argumentList = ((PsiNewExpression)element).getArgumentList();
-    assert argumentList != null;
-    
-    PsiExpression[] expr = argumentList.getExpressions();
-    ColorConstructors type = getConstructorType(argumentList.getExpressionTypes());
+    Runnable command;
     final Document document = PsiDocumentManager.getInstance(element.getProject()).getDocument(element.getContainingFile());
-    assert type != null;
-    CommandProcessor.getInstance().executeCommand(element.getProject(), new Runnable() {
-      @Override
-      public void run() {
 
-
-        switch (type) {
-          case INT:
-          case INT_BOOL:
-            replaceInt(expr[0], color.getRGB(), true);
-            return;
-          case INT_x3:
-          case INT_x4:
-            replaceInt(expr[0], color.getRed());
-            replaceInt(expr[1], color.getGreen());
-            replaceInt(expr[2], color.getBlue());
-            if (type == ColorConstructors.INT_x4) {
-              replaceInt(expr[3], color.getAlpha());
-            }
-            else if (color.getAlpha() != 255) {
-              //todo add alpha
-            }
-            return;
-          case FLOAT_x3:
-          case FLOAT_x4:
-            float[] rgba = color.getColorComponents(null);
-            replaceFloat(expr[0], rgba[0]);
-            replaceFloat(expr[1], rgba[1]);
-            replaceFloat(expr[2], rgba[2]);
-            if (type == ColorConstructors.FLOAT_x4) {
-              replaceFloat(expr[3], rgba.length == 4 ? rgba[3] : 0f);
-            }
-            else if (color.getAlpha() != 255) {
-              //todo add alpha
-            }
+    if (isIntLiteralInsideNewJBColorExpression(element)) {
+      command = new Runnable() {
+        @Override
+        public void run() {
+          replaceInt((PsiExpression)element, color.getRGB(), true, color.getAlpha() != 255);
         }
-      }}, IdeBundle.message("change.color.command.text"), null, document);
+      };
+    } else {
+      PsiExpressionList argumentList = ((PsiNewExpression)element).getArgumentList();
+      assert argumentList != null;
+
+      PsiExpression[] expr = argumentList.getExpressions();
+      ColorConstructors type = getConstructorType(argumentList.getExpressionTypes());
+
+      assert type != null;
+      command = new Runnable() {
+        @Override
+        public void run() {
+          switch (type) {
+            case INT:
+            case INT_BOOL:
+              replaceInt(expr[0], color.getRGB(), true);
+              return;
+            case INT_x3:
+            case INT_x4:
+              replaceInt(expr[0], color.getRed());
+              replaceInt(expr[1], color.getGreen());
+              replaceInt(expr[2], color.getBlue());
+              if (type == ColorConstructors.INT_x4) {
+                replaceInt(expr[3], color.getAlpha());
+              }
+              else if (color.getAlpha() != 255) {
+                //todo add alpha
+              }
+              return;
+            case FLOAT_x3:
+            case FLOAT_x4:
+              float[] rgba = color.getColorComponents(null);
+              replaceFloat(expr[0], rgba[0]);
+              replaceFloat(expr[1], rgba[1]);
+              replaceFloat(expr[2], rgba[2]);
+              if (type == ColorConstructors.FLOAT_x4) {
+                replaceFloat(expr[3], rgba.length == 4 ? rgba[3] : 0f);
+              }
+              else if (color.getAlpha() != 255) {
+                //todo add alpha
+              }
+          }
+        }
+      };
+    }
+    if (command != null) {
+      CommandProcessor.getInstance().executeCommand(element.getProject(), command, IdeBundle.message("change.color.command.text"), null, document);
+    }
   }
 
   private static void replaceInt(PsiExpression expr, int newValue) {
@@ -166,9 +207,24 @@ public class JavaColorProvider implements ElementColorProvider {
   }
 
   private static void replaceInt(PsiExpression expr, int newValue, boolean hex) {
+    replaceInt(expr, newValue, hex, false);
+  }
+
+  private static void replaceInt(PsiExpression expr, int newValue, boolean hex, boolean hasAlpha) {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(expr.getProject());
     if (getInt(expr) != newValue) {
-      String text = hex ? "0x" + ColorUtil.toHex(new Color(newValue)).toUpperCase() : Integer.toString(newValue);
+      final Color c = new Color(newValue, hasAlpha);
+      String text;
+      if (hex) {
+        text = "0x";
+        if (hasAlpha) {
+          text += Integer.toHexString(c.getAlpha());
+        }
+        text += ColorUtil.toHex(c).toUpperCase();
+      } else {
+        text = Integer.toString(newValue);
+      }
+
       expr.replace(factory.createExpressionFromText(text, null));
     }
   }

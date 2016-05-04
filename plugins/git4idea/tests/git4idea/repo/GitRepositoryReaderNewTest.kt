@@ -162,7 +162,7 @@ class GitRepositoryReaderNewTest : GitSingleRepoTest() {
 
   private fun readState(): GitBranchState {
     val gitFiles = myRepo.repositoryFiles
-    val config = GitConfig.read(myPlatformFacade, gitFiles.configFile)
+    val config = GitConfig.read(gitFiles.configFile)
     val reader = GitRepositoryReader(gitFiles)
     val remotes = config.parseRemotes()
     return reader.readState(remotes)

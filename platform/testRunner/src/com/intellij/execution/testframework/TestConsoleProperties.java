@@ -223,7 +223,7 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
   }
 
   @JdkConstants.TreeSelectionMode
-  protected int getSelectionMode() {
+  public int getSelectionMode() {
     return TreeSelectionModel.SINGLE_TREE_SELECTION;
   }
   

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,7 +59,7 @@ public abstract class DvcsCommitAdditionalComponent implements RefreshableOnComp
   public DvcsCommitAdditionalComponent(@NotNull final Project project, @NotNull CheckinProjectPanel panel) {
     myCheckinPanel = panel;
     myPanel = new JPanel(new GridBagLayout());
-    final Insets insets = new Insets(2, 2, 2, 2);
+    final Insets insets = JBUI.insets(2);
     // add amend checkbox
     GridBagConstraints c = new GridBagConstraints();
     //todo change to MigLayout

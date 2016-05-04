@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.hash.HashSet;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
@@ -124,7 +125,7 @@ public class SelectCreateExternalTargetDialog extends RepositoryBrowserDialog {
     final JComponent repositoryPanel = super.createCenterPanel();
     final JPanel wrapper = new JPanel(new GridBagLayout());
     final GridBagConstraints gb = new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
-                                                         new Insets(1, 1, 1, 1), 0, 0);
+                                                         JBUI.insets(1), 0, 0);
     gb.weightx = 1;
     gb.weighty = 1;
     gb.gridwidth = 2;

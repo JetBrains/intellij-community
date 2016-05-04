@@ -190,7 +190,7 @@ public class LaterInvocator {
 
     TransactionGuardImpl guard = IdeaApplication.isLoaded() ? (TransactionGuardImpl)TransactionGuard.getInstance() : null;
     if (guard != null) {
-      guard.enteredModality(ourModalityStack.peek(), modalEntity);
+      guard.enteredModality(ourModalityStack.peek());
     }
   }
 
@@ -209,11 +209,6 @@ public class LaterInvocator {
     ourModalityStack.remove(index + 1);
     for (int i = 1; i < ourModalityStack.size(); i++) {
       ((ModalityStateEx)ourModalityStack.get(i)).removeModality(modalEntity);
-    }
-
-    TransactionGuardImpl guard = IdeaApplication.isLoaded() ? (TransactionGuardImpl)TransactionGuard.getInstance() : null;
-    if (guard != null) {
-      guard.leftModality(modalEntity);
     }
 
     ourQueueSkipCount = 0;

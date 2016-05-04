@@ -19,7 +19,9 @@ import com.intellij.diff.util.DiffPlaces;
 import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.Extensions;
@@ -49,13 +51,14 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SplitterWithSecondHideable;
-import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.OnOffListener;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.*;
-import com.intellij.util.ui.components.BorderLayoutPanel;
+import com.intellij.util.ui.AbstractLayoutManager;
+import com.intellij.util.ui.ButtonlessScrollBarUI;
+import com.intellij.util.ui.GridBag;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -292,8 +295,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       myBrowser = new AlienChangeListBrowser(project, changeLists, changes, initialSelection, true, true, singleVcs);
     } else {
       //noinspection unchecked
-      boolean showUnversioned =
-        myShowVcsCommit && myVcsConfiguration.SHOW_UNVERSIONED_FILES_WHILE_COMMIT && Registry.is("vcs.unversioned.files.in.commit");
+      boolean unversionedFilesEnabled = myShowVcsCommit && Registry.is("vcs.unversioned.files.in.commit");
       MultipleChangeListBrowser browser = new MultipleChangeListBrowser(project, changeLists, (List)changes, initialSelection, true, true,
                                                                         new Runnable() {
                                                                           @Override
@@ -308,7 +310,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
                                                                               handler.includedChangesChanged();
                                                                             }
                                                                           }
-                                                                        }, showUnversioned) {
+                                                                        }, unversionedFilesEnabled) {
         @Override
         protected void afterDiffRefresh() {
           myBrowser.rebuildList();
@@ -1009,11 +1011,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     myChangesInfoCalculator = new ChangeInfoCalculator();
     myLegend = new CommitLegendPanel(myChangesInfoCalculator);
 
-    BorderLayoutPanel bottomPanel = JBUI.Panels.simplePanel().addToRight(myLegend.getComponent());
-    if (myShowVcsCommit && !myIsAlien && Registry.is("vcs.unversioned.files.in.commit")) {
-      bottomPanel.addToLeft(createShowUnversionedFilesLabel());
-    }
-    myBrowser.getBottomPanel().add(bottomPanel, BorderLayout.SOUTH);
+    myBrowser.getBottomPanel().add(JBUI.Panels.simplePanel().addToRight(myLegend.getComponent()), BorderLayout.SOUTH);
 
     JPanel mainPanel;
     if (myAdditionalOptionsPanel != null) {
@@ -1108,20 +1106,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     };
 
     return myDetailsSplitter.getComponent();
-  }
-
-  @NotNull
-  private JComponent createShowUnversionedFilesLabel() {
-    ShowHideUnversionedFilesAction action = new ShowHideUnversionedFilesAction();
-    ActionLink link = new ActionLink(action.getText(myVcsConfiguration.SHOW_UNVERSIONED_FILES_WHILE_COMMIT), null, action);
-
-    JLabel label = new JLabel(" unversioned files");
-    label.setEnabled(false);
-
-    JPanel panel = SwingHelper.newHorizontalPanel(Component.CENTER_ALIGNMENT, link, label);
-    panel.setFont(JBUI.Fonts.smallFont());
-
-    return panel;
   }
 
   private void initMainSplitter() {
@@ -1399,27 +1383,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       int optionsWidth = Math.max(Math.min(availableWidth, preferredWidth), myMinOptionsWidth);
       myPanel.setBounds(new Rectangle(0, 0, bounds.width - optionsWidth, bounds.height));
       myOptions.setBounds(new Rectangle(bounds.width - optionsWidth, 0, optionsWidth, bounds.height));
-    }
-  }
-
-  private class ShowHideUnversionedFilesAction extends ToggleAction {
-
-    @Override
-    public boolean isSelected(@NotNull AnActionEvent e) {
-      return myVcsConfiguration.SHOW_UNVERSIONED_FILES_WHILE_COMMIT;
-    }
-
-    @Override
-    public void setSelected(@NotNull AnActionEvent e, boolean state) {
-      myVcsConfiguration.SHOW_UNVERSIONED_FILES_WHILE_COMMIT = state;
-      ((MultipleChangeListBrowser)myBrowser).setShowUnversioned(state);
-      myBrowser.rebuildList();
-      ((JLabel)e.getInputEvent().getSource()).setText(getText(state));
-    }
-
-    @NotNull
-    public String getText(boolean showUnversionedState) {
-      return showUnversionedState ? "Hide" : "Show";
     }
   }
 }

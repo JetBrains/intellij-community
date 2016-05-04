@@ -164,18 +164,13 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
     return couldContainReference(position);
   }
 
-  private static void addAllClasses(CompletionParameters parameters, final CompletionResultSet result, final InheritorsHolder inheritors) {
-    addAllClasses(parameters, new Consumer<LookupElement>() {
-      @Override
-      public void consume(LookupElement element) {
-        result.addElement(element);
-      }
-    }, inheritors, result.getPrefixMatcher());
+  private static void addAllClasses(CompletionParameters parameters, final CompletionResultSet result, final JavaCompletionSession session) {
+    addAllClasses(parameters, result::addElement, session, result.getPrefixMatcher());
   }
 
   public static void addAllClasses(CompletionParameters parameters,
                                    final Consumer<LookupElement> consumer,
-                                   final InheritorsHolder inheritors, final PrefixMatcher matcher) {
+                                   final JavaCompletionSession inheritors, final PrefixMatcher matcher) {
     final PsiElement position = parameters.getPosition();
     final boolean afterNew = JavaClassNameCompletionContributor.AFTER_NEW.accepts(position);
     AllClassesGetter.processJavaClasses(parameters, matcher, parameters.getInvocationCount() <= 1, new Consumer<PsiClass>() {
@@ -197,7 +192,7 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
   @NotNull
   static Runnable completeReference(final CompletionParameters parameters,
                                     final GrReferenceElement reference,
-                                    final InheritorsHolder inheritorsHolder,
+                                    final JavaCompletionSession inheritorsHolder,
                                     final PrefixMatcher matcher,
                                     final Consumer<LookupElement> _consumer) {
     final Consumer<LookupElement> consumer = new Consumer<LookupElement>() {
@@ -473,7 +468,7 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
     if (reference == null) {
       if (parameters.getInvocationCount() >= 2) {
         result.stopHere();
-        addAllClasses(parameters, result.withPrefixMatcher(CompletionUtil.findJavaIdentifierPrefix(parameters)), new InheritorsHolder(result));
+        addAllClasses(parameters, result.withPrefixMatcher(CompletionUtil.findJavaIdentifierPrefix(parameters)), new JavaCompletionSession(result));
       }
       return;
     }
@@ -482,7 +477,7 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
       result.addElement(LookupElementBuilder.create("*"));
     }
 
-    InheritorsHolder inheritors = new InheritorsHolder(result);
+    JavaCompletionSession inheritors = new JavaCompletionSession(result);
     if (GroovySmartCompletionContributor.AFTER_NEW.accepts(position)) {
       GroovySmartCompletionContributor.generateInheritorVariants(parameters, result.getPrefixMatcher(), inheritors);
     }
