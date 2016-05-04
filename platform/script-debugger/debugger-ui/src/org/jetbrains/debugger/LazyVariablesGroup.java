@@ -13,129 +13,95 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.debugger;
+package org.jetbrains.debugger
 
-import com.intellij.xdebugger.frame.XCompositeNode;
-import com.intellij.xdebugger.frame.XValueChildrenList;
-import com.intellij.xdebugger.frame.XValueGroup;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.debugger.values.ObjectValue;
-import org.jetbrains.debugger.values.ValueType;
+import com.intellij.xdebugger.frame.XCompositeNode
+import com.intellij.xdebugger.frame.XValueChildrenList
+import com.intellij.xdebugger.frame.XValueGroup
+import org.jetbrains.debugger.values.ObjectValue
+import org.jetbrains.debugger.values.ValueType
+import java.util.*
 
-import java.util.ArrayList;
-import java.util.List;
+internal fun lazyVariablesGroup(variables: ObjectValue, start: Int, end: Int, context: VariableContext) = LazyVariablesGroup(variables, start, end, context)
 
-public final class LazyVariablesGroup extends XValueGroup {
-  public static final ValueGroupFactory<ObjectValue> GROUP_FACTORY = new ValueGroupFactory<ObjectValue>() {
-    @Override
-    public XValueGroup create(@NotNull ObjectValue value, int start, int end, @NotNull VariableContext context) {
-      return new LazyVariablesGroup(value, start, end, context);
-    }
-  };
+class LazyVariablesGroup(private val value: ObjectValue, private val startInclusive: Int, private val endInclusive: Int, private val context: VariableContext, private val componentType: ValueType? = null, private val sparse: Boolean = true) : XValueGroup(String.format("[%,d \u2026 %,d]", startInclusive, endInclusive)) {
+  override fun computeChildren(node: XCompositeNode) {
+    node.setAlreadySorted(true)
 
-  private final ObjectValue value;
-
-  private final int startInclusive;
-  private final int endInclusive;
-  private final VariableContext context;
-
-  private final ValueType componentType;
-  private final boolean sparse;
-
-  public LazyVariablesGroup(@NotNull ObjectValue value, int startInclusive, int endInclusive, @NotNull VariableContext context) {
-    this(value, startInclusive, endInclusive, context, null, true);
-  }
-
-  public LazyVariablesGroup(@NotNull ObjectValue value, int startInclusive, int endInclusive, @NotNull VariableContext context, @Nullable ValueType componentType, boolean sparse) {
-    super(String.format("[%,d \u2026 %,d]", startInclusive, endInclusive));
-
-    this.value = value;
-
-    this.startInclusive = startInclusive;
-    this.endInclusive = endInclusive;
-
-    this.context = context;
-
-    this.componentType = componentType;
-    this.sparse = sparse;
-  }
-
-  @Override
-  public void computeChildren(@NotNull XCompositeNode node) {
-    node.setAlreadySorted(true);
-
-    int bucketThreshold = XCompositeNode.MAX_CHILDREN_TO_SHOW;
-    if (!sparse && (endInclusive - startInclusive) > bucketThreshold) {
-      node.addChildren(XValueChildrenList.topGroups(computeNotSparseGroups(value, context, startInclusive, endInclusive + 1, bucketThreshold)), true);
-      return;
+    val bucketThreshold = XCompositeNode.MAX_CHILDREN_TO_SHOW
+    if (!sparse && endInclusive - startInclusive > bucketThreshold) {
+      node.addChildren(XValueChildrenList.topGroups(computeNotSparseGroups(value, context, startInclusive, endInclusive + 1, bucketThreshold)), true)
+      return
     }
 
-    value.getIndexedProperties(startInclusive, endInclusive + 1, bucketThreshold, new VariableView.ObsolescentIndexedVariablesConsumer(node) {
-      @Override
-      public void consumeRanges(@Nullable int[] ranges) {
+    value.getIndexedProperties(startInclusive, endInclusive + 1, bucketThreshold, object : VariableView.ObsolescentIndexedVariablesConsumer(node) {
+      override fun consumeRanges(ranges: IntArray?) {
         if (ranges == null) {
-          XValueChildrenList groupList = new XValueChildrenList();
-          addGroups(value, GROUP_FACTORY, groupList, startInclusive, endInclusive, XCompositeNode.MAX_CHILDREN_TO_SHOW, context);
-          getNode().addChildren(groupList, true);
+          val groupList = XValueChildrenList()
+          addGroups(value, ::lazyVariablesGroup, groupList, startInclusive, endInclusive, XCompositeNode.MAX_CHILDREN_TO_SHOW, context)
+          node.addChildren(groupList, true)
         }
         else {
-          addRanges(value, ranges, getNode(), context, true);
+          addRanges(value, ranges, node, context, true)
         }
       }
 
-      @Override
-      public void consumeVariables(@NotNull List<Variable> variables) {
-        getNode().addChildren(VariablesKt.createVariablesList(variables, context, null), true);
+      override fun consumeVariables(variables: List<Variable>) {
+        node.addChildren(createVariablesList(variables, context, null), true)
       }
-    }, componentType);
+    }, componentType)
   }
+}
 
-  @NotNull
-  public static List<XValueGroup> computeNotSparseGroups(@NotNull ObjectValue value, @NotNull VariableContext context, int fromInclusive, int toExclusive, int bucketThreshold) {
-    int size = toExclusive - fromInclusive;
-    int bucketSize = (int)Math.pow(bucketThreshold, Math.ceil(Math.log(size) / Math.log(bucketThreshold)) - 1);
-    List<XValueGroup> groupList = new ArrayList<XValueGroup>((int)Math.ceil(size / bucketSize));
-    for (; fromInclusive < toExclusive; fromInclusive += bucketSize) {
-      groupList.add(new LazyVariablesGroup(value, fromInclusive, fromInclusive + (Math.min(bucketSize, toExclusive - fromInclusive) - 1), context, ValueType.NUMBER, false));
+fun computeNotSparseGroups(value: ObjectValue, context: VariableContext, _fromInclusive: Int, toExclusive: Int, bucketThreshold: Int): List<XValueGroup> {
+  var fromInclusive = _fromInclusive
+  val size = toExclusive - fromInclusive
+  val bucketSize = Math.pow(bucketThreshold.toDouble(), Math.ceil(Math.log(size.toDouble()) / Math.log(bucketThreshold.toDouble())) - 1).toInt()
+  val groupList = ArrayList<XValueGroup>(Math.ceil((size / bucketSize).toDouble()).toInt())
+  while (fromInclusive < toExclusive) {
+    groupList.add(LazyVariablesGroup(value, fromInclusive, fromInclusive + (Math.min(bucketSize, toExclusive - fromInclusive) - 1), context, ValueType.NUMBER, false))
+    fromInclusive += bucketSize
+  }
+  return groupList
+}
+
+fun addRanges(value: ObjectValue, ranges: IntArray, node: XCompositeNode, context: VariableContext, isLast: Boolean) {
+  val groupList = XValueChildrenList(ranges.size / 2)
+  var i = 0
+  val n = ranges.size
+  while (i < n) {
+    groupList.addTopGroup(LazyVariablesGroup(value, ranges[i], ranges[i + 1], context))
+    i += 2
+  }
+  node.addChildren(groupList, isLast)
+}
+
+internal fun <T> addGroups(data: T,
+                  groupFactory: (data: T, start: Int, end: Int, context: VariableContext) -> XValueGroup,
+                  groupList: XValueChildrenList,
+                  _from: Int,
+                  limit: Int,
+                  bucketSize: Int,
+                  context: VariableContext) {
+  var from = _from
+  var to = Math.min(bucketSize, limit)
+  var done = false
+  do {
+    val groupFrom = from
+    var groupTo = to
+
+    from += bucketSize
+    to = from + Math.min(bucketSize, limit - from)
+
+    // don't create group for only one member
+    if (to - from == 1) {
+      groupTo++
+      done = true
     }
-    return groupList;
-  }
-
-  public static void addRanges(@NotNull ObjectValue value, int[] ranges, @NotNull XCompositeNode node, @NotNull VariableContext context, boolean isLast) {
-    XValueChildrenList groupList = new XValueChildrenList(ranges.length / 2);
-    for (int i = 0, n = ranges.length; i < n; i += 2) {
-      groupList.addTopGroup(new LazyVariablesGroup(value, ranges[i], ranges[i + 1], context));
+    groupList.addTopGroup(groupFactory(data, groupFrom, groupTo, context))
+    if (from >= limit) {
+      break
     }
-    node.addChildren(groupList, isLast);
   }
-
-  public static <T> void addGroups(@NotNull T data,
-                                   @NotNull ValueGroupFactory<T> groupFactory,
-                                   @NotNull XValueChildrenList groupList,
-                                   int from,
-                                   int limit,
-                                   int bucketSize,
-                                   @NotNull VariableContext context) {
-    int to = Math.min(bucketSize, limit);
-    boolean done = false;
-    do {
-      int groupFrom = from;
-      int groupTo = to;
-
-      from += bucketSize;
-      to = from + Math.min(bucketSize, limit - from);
-
-      // don't create group for only one member
-      if (to - from == 1) {
-        groupTo++;
-        done = true;
-      }
-      groupList.addTopGroup(groupFactory.create(data, groupFrom, groupTo, context));
-      if (from >= limit) {
-        break;
-      }
-    }
-    while (!done);
-  }
+  while (!done)
 }
