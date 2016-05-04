@@ -45,7 +45,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
@@ -97,12 +96,12 @@ public class LookupCellRenderer implements ListCellRenderer {
     myNameComponent.setMyBorder(null);
 
     myTailComponent = new MySimpleColoredComponent();
-    myTailComponent.setIpad(new Insets(0, 0, 0, 0));
-    myTailComponent.setBorder(new EmptyBorder(0, 0, 0, JBUI.scale(10)));
+    myTailComponent.setIpad(JBUI.emptyInsets());
+    myTailComponent.setBorder(JBUI.Borders.emptyRight(10));
 
     myTypeLabel = new MySimpleColoredComponent();
-    myTypeLabel.setIpad(new Insets(0, 0, 0, 0));
-    myTypeLabel.setBorder(new EmptyBorder(0, 0, 0, JBUI.scale(6)));
+    myTypeLabel.setIpad(JBUI.emptyInsets());
+    myTypeLabel.setBorder(JBUI.Borders.emptyRight(6));
 
     myPanel = new LookupPanel();
     myPanel.add(myNameComponent, BorderLayout.WEST);
