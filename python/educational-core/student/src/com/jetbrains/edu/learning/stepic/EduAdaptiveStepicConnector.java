@@ -3,6 +3,7 @@ package com.jetbrains.edu.learning.stepic;
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -14,6 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
+import com.jetbrains.edu.learning.checker.StudyExecutor;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
@@ -50,6 +52,9 @@ import static com.jetbrains.edu.learning.stepic.EduStepicConnector.getHttpClient
 import static com.jetbrains.edu.learning.stepic.EduStepicConnector.setHeaders;
 
 public class EduAdaptiveStepicConnector {
+  public static final String PYTHON27 = "python27";
+  public static final String PYTHON3 = "python3";
+  
   private static final Logger LOG = Logger.getInstance(EduAdaptiveStepicConnector.class);
   private static final String STEPIC_URL = "https://stepic.org/";
   private static final String STEPIC_API_URL = STEPIC_URL + "api/";
@@ -59,8 +64,6 @@ public class EduAdaptiveStepicConnector {
   private static final String RECOMMENDATION_REACTIONS_URL = "recommendation-reactions";
   private static final String ATTEMPTS_URL = "attempts";
   private static final String SUBMISSION_URL = "submissions";
-  private static final String PYTHON2 = "python2";
-  private static final String PYTHON3 = "python3";
 
   @Nullable
   public static Task getNextRecommendation(@NotNull final Project project, @NotNull Course course) {
@@ -215,6 +218,17 @@ public class EduAdaptiveStepicConnector {
       }
       task.setText(task.getText() + "<br>" + builder.toString());
     }
+
+    if (step.options.executionMemoryLimit != null && step.options.executionTimeLimit != null) {
+      String builder = "<b>Memory limit</b>: " +
+                       step.options.executionMemoryLimit + " Mb" +
+                       "<br>" +
+                       "<b>Time limit</b>: " +
+                       step.options.executionTimeLimit + "s" +
+                       "<br><br>";
+      task.setText(task.getText() + builder);
+    }
+    
     if (step.options.test != null) {
       for (StepicWrappers.TestFileWrapper wrapper : step.options.test) {
         task.addTestsTexts(wrapper.name, wrapper.text);
@@ -222,7 +236,7 @@ public class EduAdaptiveStepicConnector {
     }
     else {
       if (step.options.samples != null) {
-        createTestFileFromSamples(project, task, step.options.samples);
+        createTestFileFromSamples(task, step.options.samples);
       }
     }
 
@@ -235,10 +249,24 @@ public class EduAdaptiveStepicConnector {
     else {
       final TaskFile taskFile = new TaskFile();
       taskFile.name = "code";
-      taskFile.text = "# write your answer here \n";
+      final String templateForTask = getCodeTemplateForTask(step.options.codeTemplates, task, project);
+      taskFile.text = templateForTask == null ? "# write your answer here \n" : templateForTask;
       task.taskFiles.put("code.py", taskFile);
     }
     return task;
+  }
+  
+  private static String getCodeTemplateForTask(@Nullable StepicWrappers.CodeTemplatesWrapper codeTemplates,
+                                               @NotNull final Task task, @NotNull final Project project) {
+
+    if (codeTemplates != null) {
+      final String languageString = getLanguageString(task, project);
+      if (languageString != null) {
+        return codeTemplates.getTemplateForLanguage(languageString);
+      }
+    }
+    
+    return null;
   }
 
   @Nullable
@@ -299,18 +327,21 @@ public class EduAdaptiveStepicConnector {
 
   @Nullable
   private static String getLanguageString(@NotNull Task task, @NotNull Project project) {
-    final Sdk sdk = StudyUtils.findSdk(task, project);
-    if (sdk != null) {
-      final String versionString = sdk.getVersionString();
-      if (versionString != null ) {
-        final List<String> versionStringParts = StringUtil.split(versionString, " ");
-        if (versionStringParts.size() == 2) {
-          return versionStringParts.get(1).startsWith("2") ? PYTHON2 : PYTHON3;
+    final Language pythonLanguage = Language.findLanguageByID("Python");
+    if (pythonLanguage != null) {
+      final Sdk language = StudyExecutor.INSTANCE.forLanguage(pythonLanguage).findSdk(project);
+      if (language != null) {
+        final String versionString = language.getVersionString();
+        if (versionString != null ) {
+          final List<String> versionStringParts = StringUtil.split(versionString, " ");
+          if (versionStringParts.size() == 2) {
+            return versionStringParts.get(1).startsWith("2") ? PYTHON27 : PYTHON3;
+          }
         }
       }
-    }
-    else {
-      StudyUtils.showNoSdkNotification(task, project);
+      else {
+        StudyUtils.showNoSdkNotification(task, project);
+      }
     }
     return null;
   }
@@ -329,8 +360,7 @@ public class EduAdaptiveStepicConnector {
     return (container.attempts != null && !container.attempts.isEmpty()) ? container.attempts.get(0).id : -1;
   }
 
-  private static void createTestFileFromSamples(@NotNull final Project project,
-                                                @NotNull final Task task,
+  private static void createTestFileFromSamples(@NotNull final Task task,
                                                 @NotNull final List<List<String>> samples) {
     String testText = "from test_helper import check_samples\n\n" +
                       "if __name__ == '__main__':\n" +

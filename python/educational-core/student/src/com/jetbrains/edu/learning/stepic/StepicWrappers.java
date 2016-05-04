@@ -14,6 +14,7 @@ import com.jetbrains.edu.learning.courseFormat.Task;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import org.apache.commons.codec.binary.Base64;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -48,8 +49,10 @@ public class StepicWrappers {
     @Expose List<TaskFile> files;
     @Expose String text;
     @Expose List<List<String>> samples;
+    @Expose Integer executionMemoryLimit;
+    @Expose Integer executionTimeLimit;
+    @Expose CodeTemplatesWrapper codeTemplates;
     
-
     public static StepOptions fromTask(final Project project, @NotNull final Task task) {
       final StepOptions source = new StepOptions();
       setTests(task, source, project);
@@ -108,6 +111,24 @@ public class StepicWrappers {
           source.test.add(new TestFileWrapper(entry.getKey(), entry.getValue()));
         }
       }
+    }
+  }
+  
+  static class CodeTemplatesWrapper {
+    String python3;
+    String python27;
+    
+    @Nullable
+    public String getTemplateForLanguage(@NotNull final String langauge) {
+      if (langauge.equals(EduAdaptiveStepicConnector.PYTHON27)) {
+        return python27;
+      }
+      
+      if (langauge.equals(EduAdaptiveStepicConnector.PYTHON3)) {
+        return python3;
+      }
+      
+      return null;
     }
   }
 
