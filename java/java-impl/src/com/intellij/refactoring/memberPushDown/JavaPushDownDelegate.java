@@ -229,28 +229,20 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
           }
 
           if (memberInfo.isToAbstract()) {
-            if (sourceClass.isInterface()) {
-              if (oldMethod.hasModifierProperty(PsiModifier.DEFAULT)) {
-                PsiUtil.setModifierProperty(oldMethod, PsiModifier.DEFAULT, false);
-                RefactoringUtil.makeMethodAbstract(sourceClass, oldMethod);
-              }
-            }
-            else {
-              if (newMember.hasModifierProperty(PsiModifier.PRIVATE)) {
-                PsiUtil.setModifierProperty(newMember, PsiModifier.PROTECTED, true);
-              }
+            if (newMember.hasModifierProperty(PsiModifier.PRIVATE)) {
+              PsiUtil.setModifierProperty(newMember, PsiModifier.PROTECTED, true);
             }
 
             pushDownData.getCommentPolicy().processNewJavaDoc(((PsiMethod)newMember).getDocComment());
-          }
-          if (memberInfo.isToAbstract()) {
             OverrideImplementUtil.annotateOnOverrideImplement((PsiMethod)newMember, targetClass, (PsiMethod)memberInfo.getMember());
           }
         }
         else { //abstract method: remove @Override
-          final PsiAnnotation annotation = AnnotationUtil.findAnnotation(methodBySignature, "java.lang.Override");
-          if (annotation != null && !leaveOverrideAnnotation(sourceClass, substitutor, method)) {
-            annotation.delete();
+          if (!memberInfo.isToAbstract()) {
+            final PsiAnnotation annotation = AnnotationUtil.findAnnotation(methodBySignature, "java.lang.Override");
+            if (annotation != null && !leaveOverrideAnnotation(sourceClass, substitutor, method)) {
+              annotation.delete();
+            }
           }
           final PsiDocComment oldDocComment = method.getDocComment();
           if (oldDocComment != null) {
@@ -317,6 +309,9 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
           final PsiMethod method = (PsiMethod)member;
           if (method.hasModifierProperty(PsiModifier.PRIVATE)) {
             PsiUtil.setModifierProperty(method, PsiModifier.PROTECTED, true);
+          }
+          if (method.hasModifierProperty(PsiModifier.DEFAULT)) {
+            PsiUtil.setModifierProperty(method, PsiModifier.DEFAULT, false);
           }
           RefactoringUtil.makeMethodAbstract((PsiClass)pushDownData.getSourceClass(), method);
           pushDownData.getCommentPolicy().processOldJavaDoc(method.getDocComment());

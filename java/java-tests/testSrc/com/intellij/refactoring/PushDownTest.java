@@ -95,6 +95,10 @@ public class PushDownTest extends LightRefactoringTestCase {
     doTestImplements(true);
   }
 
+  public void testPreserveOverrideAnnotationAfterConflict() throws Exception {
+    doTestImplements(true, true);
+  }
+
   private void doTest() {
     doTest(false);
   }
@@ -135,7 +139,7 @@ public class PushDownTest extends LightRefactoringTestCase {
                           new DocCommentPolicy(DocCommentPolicy.ASIS)) {
       @Override
       protected boolean showConflicts(@NotNull MultiMap<PsiElement, String> conflicts, UsageInfo[] usages) {
-        if (failure ? conflicts.isEmpty() : !conflicts.isEmpty()) {
+        if (failure == conflicts.isEmpty()) {
           fail(failure ? "Conflict was not detected" : "False conflict was detected");
         }
         return true;
@@ -150,6 +154,10 @@ public class PushDownTest extends LightRefactoringTestCase {
   }
 
   private void doTestImplements(boolean toAbstract) {
+    doTestImplements(toAbstract, false);
+  }
+
+  private void doTestImplements(boolean toAbstract, boolean failure) {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
 
     PsiClass currentClass = JavaPsiFacade.getInstance(getProject()).findClass("Test", GlobalSearchScope.projectScope(getProject()));
@@ -166,6 +174,9 @@ public class PushDownTest extends LightRefactoringTestCase {
                           new DocCommentPolicy(DocCommentPolicy.ASIS)) {
       @Override
       protected boolean showConflicts(@NotNull MultiMap<PsiElement, String> conflicts, UsageInfo[] usages) {
+        if (failure == conflicts.isEmpty()) {
+          fail(failure ? "Conflict was not detected" : "False conflict was detected");
+        }
         return true;
       }
     }.run();
