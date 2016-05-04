@@ -99,6 +99,10 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     checkPreferredItems(0, "getService", "getService", "class");
   }
 
+  public void testGenericityDoesNotMatterWhenNoTypeIsExpected() {
+    checkPreferredItems 0, "generic", "nonGeneric", "clone", "equals"
+  }
+
   public void testClassStaticMembersInVoidContext() throws Throwable {
     checkPreferredItems(0, "booleanMethod", "voidMethod", "AN_OBJECT", "BOOLEAN", "class");
   }

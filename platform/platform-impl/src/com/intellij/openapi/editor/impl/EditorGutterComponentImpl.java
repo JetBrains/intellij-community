@@ -68,6 +68,7 @@ import gnu.trove.TIntArrayList;
 import gnu.trove.TIntFunction;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TIntObjectProcedure;
+import gnu.trove.TObjectFunction;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -114,6 +115,7 @@ import java.util.List;
  */
 class EditorGutterComponentImpl extends EditorGutterComponentEx implements MouseListener, MouseMotionListener, DataProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorGutterComponentImpl");
+  private static final int START_ICON_AREA_WIDTH = JBUI.scale(17);
   private static final int FREE_PAINTERS_LEFT_AREA_WIDTH = JBUI.scale(8);
   private static final int FREE_PAINTERS_RIGHT_AREA_WIDTH = JBUI.scale(5);
   private static final int GAP_BETWEEN_ICONS = JBUI.scale(3);
@@ -775,9 +777,23 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
           myLineToGutterRenderers.put(line, renderers);
         }
 
-        if (renderers.size() < 5) { // Don't allow more than 5 icons per line
-          renderers.add(renderer);
+        renderers.add(renderer);
+      }
+    });
+
+    myLineToGutterRenderers.transformValues(new TObjectFunction<List<GutterMark>, List<GutterMark>>() {
+      @Override
+      public List<GutterMark> execute(List<GutterMark> value) {
+        List<GutterMark> newValue = value;
+        for (GutterMarkPreprocessor preprocessor : GutterMarkPreprocessor.EP_NAME.getExtensions()) {
+          newValue = preprocessor.processMarkers(value);
         }
+
+        if (newValue.size() >= 5) { // Don't allow more than 5 icons per line
+          newValue = newValue.subList(0, 4);
+        }
+
+        return newValue;
       }
     });
   }
@@ -804,10 +820,11 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       return;
     }
 
+    int minWidth = (int)(START_ICON_AREA_WIDTH * myEditor.getScale());
     if (canShrink) {
-      myIconsAreaWidth = myEditor.getLineHeight();
+      myIconsAreaWidth = minWidth;
     } else {
-      myIconsAreaWidth = Math.max(myIconsAreaWidth, myEditor.getLineHeight());
+      myIconsAreaWidth = Math.max(myIconsAreaWidth, minWidth);
     }
 
     processGutterRenderers((line, renderers) -> {
@@ -867,11 +884,11 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         @Override
         public void process(@NotNull RangeHighlighter highlighter) {
           LineMarkerRenderer renderer = highlighter.getLineMarkerRenderer();
-          if (renderer != null && isLineMarkerVisible(highlighter)) highlighters.add(highlighter);
+          if (renderer != null) highlighters.add(highlighter);
         }
       });
 
-      ContainerUtil.sort(highlighters, (h1, h2) -> h1.getLayer() - h2.getLayer());
+      ContainerUtil.sort(highlighters, Comparator.comparingInt(RangeHighlighter::getLayer));
 
       for (RangeHighlighter highlighter : highlighters) {
         paintLineMarkerRenderer(highlighter, g);

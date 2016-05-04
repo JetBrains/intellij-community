@@ -16,11 +16,11 @@
 package git4idea.crlf;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
 import git4idea.attributes.GitAttribute;
 import git4idea.attributes.GitCheckAttrParser;
@@ -28,6 +28,7 @@ import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.config.GitConfigUtil;
 import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -55,21 +56,20 @@ public class GitCrlfProblemsDetector {
   private static final String CRLF = "\r\n";
 
   @NotNull private final Project myProject;
-  @NotNull private final GitPlatformFacade myPlatformFacade;
   @NotNull private final Git myGit;
+  @NotNull private final GitRepositoryManager myRepositoryManager;
 
   private final boolean myShouldWarn;
 
   @NotNull
-  public static GitCrlfProblemsDetector detect(@NotNull Project project, @NotNull GitPlatformFacade platformFacade,
-                                               @NotNull Git git, @NotNull Collection<VirtualFile> files) {
-    return new GitCrlfProblemsDetector(project, platformFacade, git, files);
+  public static GitCrlfProblemsDetector detect(@NotNull Project project, @NotNull Git git, @NotNull Collection<VirtualFile> files) {
+    return new GitCrlfProblemsDetector(project, git, files);
   }
 
-  private GitCrlfProblemsDetector(@NotNull Project project, @NotNull GitPlatformFacade platformFacade, @NotNull Git git,
+  private GitCrlfProblemsDetector(@NotNull Project project, @NotNull Git git,
                                   @NotNull Collection<VirtualFile> files) {
     myProject = project;
-    myPlatformFacade = platformFacade;
+    myRepositoryManager = GitUtil.getRepositoryManager(project);
     myGit = git;
 
     Map<VirtualFile, List<VirtualFile>> filesByRoots = sortFilesByRoots(files);
@@ -101,7 +101,7 @@ public class GitCrlfProblemsDetector {
 
   @NotNull
   private Collection<VirtualFile> findFilesWithoutAttrs(@NotNull VirtualFile root, @NotNull Collection<VirtualFile> files) {
-    GitRepository repository = myPlatformFacade.getRepositoryManager(myProject).getRepositoryForRoot(root);
+    GitRepository repository = myRepositoryManager.getRepositoryForRoot(root);
     if (repository == null) {
       LOG.warn("Repository is null for " + root);
       return Collections.emptyList();
@@ -148,7 +148,7 @@ public class GitCrlfProblemsDetector {
     Collection<VirtualFile> filesWithCrlf = new ArrayList<VirtualFile>();
     for (VirtualFile file : files) {
       ProgressIndicatorProvider.checkCanceled();
-      String separator = myPlatformFacade.getLineSeparator(file, true);
+      String separator = LoadTextUtil.detectLineSeparator(file, true);
       if (CRLF.equals(separator)) {
         filesWithCrlf.add(file);
       }
@@ -170,7 +170,7 @@ public class GitCrlfProblemsDetector {
   }
 
   private boolean isAutoCrlfSetRight(@NotNull VirtualFile root) {
-    GitRepository repository = myPlatformFacade.getRepositoryManager(myProject).getRepositoryForRoot(root);
+    GitRepository repository = myRepositoryManager.getRepositoryForRoot(root);
     if (repository == null) {
       LOG.warn("Repository is null for " + root);
       return true;

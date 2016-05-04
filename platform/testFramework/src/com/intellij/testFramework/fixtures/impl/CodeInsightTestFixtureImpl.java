@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,6 +89,7 @@ import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.DebugUtil;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.psi.impl.cache.CacheManager;
@@ -1056,18 +1057,13 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public void moveFile(@NotNull final String filePath, @NotNull final String to, @NotNull final String... additionalFiles) {
     assertInitialized();
     final Project project = getProject();
-    new WriteCommandAction.Simple(project) {
-      @Override
-      protected void run() throws Exception {
-        configureByFiles(ArrayUtil.reverseArray(ArrayUtil.append(additionalFiles, filePath)));
-        final VirtualFile file = findFileInTempDir(to);
-        Assert.assertNotNull("Directory " + to + " not found", file);
-        Assert.assertTrue(to + " is not a directory", file.isDirectory());
-        final PsiDirectory directory = myPsiManager.findDirectory(file);
-        new MoveFilesOrDirectoriesProcessor(project, new PsiElement[]{getFile()}, directory,
-                                            false, false, null, null).run();
-      }
-    }.execute().throwException();
+    configureByFiles(ArrayUtil.reverseArray(ArrayUtil.append(additionalFiles, filePath)));
+    final VirtualFile file = findFileInTempDir(to);
+    Assert.assertNotNull("Directory " + to + " not found", file);
+    Assert.assertTrue(to + " is not a directory", file.isDirectory());
+    final PsiDirectory directory = myPsiManager.findDirectory(file);
+    new MoveFilesOrDirectoriesProcessor(project, new PsiElement[]{getFile()}, directory,
+                                        false, false, null, null).run();
   }
 
   @Override
@@ -1626,7 +1622,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     final VirtualFileFilter fileTreeAccessFilter = myVirtualFileFilter;
     Disposable disposable = Disposer.newDisposable();
     if (fileTreeAccessFilter != null) {
-      ((PsiManagerImpl)PsiManager.getInstance(project)).setAssertOnFileLoadingFilter(fileTreeAccessFilter, disposable);
+      PsiManagerEx.getInstanceEx(project).setAssertOnFileLoadingFilter(fileTreeAccessFilter, disposable);
     }
 
     //    ProfilingUtil.startCPUProfiling();
@@ -1826,7 +1822,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return result.toString();
   }
 
-  private void testFoldingRegions(@NotNull String verificationFileName, boolean doCheckCollapseStatus) {
+  private void testFoldingRegions(@NotNull String verificationFileName, @Nullable String destinationFileName, boolean doCheckCollapseStatus) {
     String expectedContent;
     try {
       expectedContent = FileUtil.loadFile(new File(verificationFileName));
@@ -1838,21 +1834,35 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
     expectedContent = StringUtil.replace(expectedContent, "\r", "");
     final String cleanContent = expectedContent.replaceAll(START_FOLD, "").replaceAll(END_FOLD, "");
-
-    configureByText(FileTypeManager.getInstance().getFileTypeByFileName(verificationFileName), cleanContent);
+    if (destinationFileName == null) {
+      configureByText(FileTypeManager.getInstance().getFileTypeByFileName(verificationFileName), cleanContent);
+    }
+    else {
+      try {
+        FileUtil.writeToFile(new File(destinationFileName), cleanContent);
+        configureFromExistingVirtualFile(LocalFileSystem.getInstance().refreshAndFindFileByPath(destinationFileName));
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
     final String actual = getFoldingDescription(doCheckCollapseStatus);
-
     Assert.assertEquals(expectedContent, actual);
   }
 
   @Override
   public void testFoldingWithCollapseStatus(@NotNull final String verificationFileName) {
-    testFoldingRegions(verificationFileName, true);
+    testFoldingRegions(verificationFileName, null, true);
+  }
+
+  @Override
+  public void testFoldingWithCollapseStatus(@NotNull final String verificationFileName, @Nullable String destinationFileName) {
+    testFoldingRegions(verificationFileName, destinationFileName, true);
   }
 
   @Override
   public void testFolding(@NotNull final String verificationFileName) {
-    testFoldingRegions(verificationFileName, false);
+    testFoldingRegions(verificationFileName, null, false);
   }
 
   @Override

@@ -361,7 +361,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
         } else {
           view = null;
         }
-        if (!(myView == null ? view : myView).hasProblems() && !getUIOptions().SHOW_ONLY_DIFF) {
+        if (!(myView == null ? view : myView).hasProblems()) {
           NOTIFICATION_GROUP.createNotification(InspectionsBundle.message("inspection.no.problems.message", scope.getFileCount(), scope.getDisplayName()), MessageType.INFO).notify(getProject());
           close(true);
           if (view != null) {
@@ -369,8 +369,8 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
           }
         }
         else if (view != null) {
-          view.update();
           addView(view);
+          view.update();
         }
         if (myView != null) {
           myView.setUpdating(false);
@@ -853,8 +853,10 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
   public void cleanup() {
     if (myView != null) {
       myView.setUpdating(false);
+    } else {
+      myPresentationMap.clear();
+      super.cleanup();
     }
-    super.cleanup();
   }
 
   public void refreshViews() {
@@ -863,10 +865,11 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     }
   }
 
-  private final ConcurrentMap<InspectionToolWrapper, InspectionToolPresentation> myPresentationMap = ContainerUtil.newConcurrentMap();
+  private final ConcurrentMap<String, InspectionToolPresentation> myPresentationMap = ContainerUtil.newConcurrentMap();
   @NotNull
   public InspectionToolPresentation getPresentation(@NotNull InspectionToolWrapper toolWrapper) {
-    InspectionToolPresentation presentation = myPresentationMap.get(toolWrapper);
+    final String shortName = toolWrapper.getShortName();
+    InspectionToolPresentation presentation = myPresentationMap.get(shortName);
     if (presentation == null) {
       String presentationClass = StringUtil.notNullize(toolWrapper.myEP == null ? null : toolWrapper.myEP.presentation, DefaultInspectionToolPresentation.class.getName());
 
@@ -878,7 +881,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
         LOG.error(e);
         throw new RuntimeException(e);
       }
-      presentation = ConcurrencyUtil.cacheOrGet(myPresentationMap, toolWrapper, presentation);
+      presentation = ConcurrencyUtil.cacheOrGet(myPresentationMap, shortName, presentation);
     }
     return presentation;
   }

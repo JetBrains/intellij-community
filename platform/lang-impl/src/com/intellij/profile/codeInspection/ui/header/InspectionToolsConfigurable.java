@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,10 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -59,7 +62,6 @@ import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.util.Alarm;
-import com.intellij.util.Consumer;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
@@ -185,13 +187,10 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
 
   @Override
   public Runnable enableSearch(final String option) {
-    return new Runnable() {
-      @Override
-      public void run() {
-        SingleInspectionProfilePanel panel = getSelectedPanel();
-        if (panel != null) {
-          panel.setFilter(option);
-        }
+    return () -> {
+      SingleInspectionProfilePanel panel = getSelectedPanel();
+      if (panel != null) {
+        panel.setFilter(option);
       }
     };
   }
@@ -382,30 +381,27 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
       public void export() {
         final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
         descriptor.setDescription("Choose directory to store profile file");
-        FileChooser.chooseFile(descriptor, getProject(), wholePanel, null, new Consumer<VirtualFile>() {
-          @Override
-          public void consume(VirtualFile file) {
-            final Element element = new Element("inspections");
-            try {
-              final SingleInspectionProfilePanel panel = getSelectedPanel();
-              LOG.assertTrue(panel != null);
-              final InspectionProfileImpl profile = getSelectedObject();
-              LOG.assertTrue(true);
-              profile.writeExternal(element);
-              final String filePath =
-                FileUtil.toSystemDependentName(file.getPath()) + File.separator + FileUtil.sanitizeFileName(profile.getName()) + ".xml";
-              if (new File(filePath).isFile()) {
-                if (Messages
-                      .showOkCancelDialog(wholePanel, "File \'" + filePath + "\' already exist. Do you want to overwrite it?", "Warning",
-                                          Messages.getQuestionIcon()) != Messages.OK) {
-                  return;
-                }
+        FileChooser.chooseFile(descriptor, getProject(), wholePanel, null, file -> {
+          final Element element = new Element("inspections");
+          try {
+            final SingleInspectionProfilePanel panel = getSelectedPanel();
+            LOG.assertTrue(panel != null);
+            final InspectionProfileImpl profile = getSelectedObject();
+            LOG.assertTrue(true);
+            profile.writeExternal(element);
+            final String filePath =
+              FileUtil.toSystemDependentName(file.getPath()) + File.separator + FileUtil.sanitizeFileName(profile.getName()) + ".xml";
+            if (new File(filePath).isFile()) {
+              if (Messages
+                    .showOkCancelDialog(wholePanel, "File \'" + filePath + "\' already exist. Do you want to overwrite it?", "Warning",
+                                        Messages.getQuestionIcon()) != Messages.OK) {
+                return;
               }
-              JDOMUtil.writeDocument(new Document(element), filePath, SystemProperties.getLineSeparator());
             }
-            catch (IOException e1) {
-              LOG.error(e1);
-            }
+            JDOMUtil.writeDocument(new Document(element), filePath, SystemProperties.getLineSeparator());
+          }
+          catch (IOException e1) {
+            LOG.error(e1);
           }
         });
       }
@@ -419,38 +415,35 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
           }
         };
         descriptor.setDescription("Choose profile file");
-        FileChooser.chooseFile(descriptor, getProject(), wholePanel, null, new Consumer<VirtualFile>() {
-          @Override
-          public void consume(VirtualFile file) {
-            if (file != null) {
-              final InspectionProfileImpl profile;
-              try {
-                Element rootElement = JDOMUtil.loadDocument(VfsUtilCore.virtualToIoFile(file)).getRootElement();
-                profile = importInspectionProfile(rootElement, myApplicationProfileManager, getProject(), wholePanel);
-                if (getProfilePanel(profile) != null) {
-                  if (Messages.showOkCancelDialog(wholePanel, "Profile with name \'" +
-                                                              profile.getName() +
-                                                              "\' already exists. Do you want to overwrite it?", "Warning",
-                                                  Messages.getInformationIcon()) != Messages.OK) {
-                    return;
-                  }
+        FileChooser.chooseFile(descriptor, getProject(), wholePanel, null, file -> {
+          if (file != null) {
+            final InspectionProfileImpl profile;
+            try {
+              Element rootElement = JDOMUtil.load(VfsUtilCore.virtualToIoFile(file));
+              profile = importInspectionProfile(rootElement, myApplicationProfileManager, getProject(), wholePanel);
+              if (getProfilePanel(profile) != null) {
+                if (Messages.showOkCancelDialog(wholePanel, "Profile with name \'" +
+                                                            profile.getName() +
+                                                            "\' already exists. Do you want to overwrite it?", "Warning",
+                                                Messages.getInformationIcon()) != Messages.OK) {
+                  return;
                 }
-                final ModifiableModel model = profile.getModifiableModel();
-                model.setModified(true);
-                addProfile((InspectionProfileImpl)model, profile);
+              }
+              final ModifiableModel model = profile.getModifiableModel();
+              model.setModified(true);
+              addProfile((InspectionProfileImpl)model, profile);
 
-                //TODO myDeletedProfiles ? really need this
-                myDeletedProfiles.remove(profile);
-              }
-              catch (JDOMException e) {
-                LOG.error(e);
-              }
-              catch (IOException e) {
-                LOG.error(e);
-              }
-              catch (InvalidDataException e) {
-                LOG.error(e);
-              }
+              //TODO myDeletedProfiles ? really need this
+              myDeletedProfiles.remove(profile);
+            }
+            catch (JDOMException e) {
+              LOG.error(e);
+            }
+            catch (IOException e) {
+              LOG.error(e);
+            }
+            catch (InvalidDataException e) {
+              LOG.error(e);
             }
           }
         });
@@ -628,12 +621,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
       panel.setVisible(true);//make sure that UI was initialized
       mySelectionAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
       mySelectionAlarm.cancelAllRequests();
-      mySelectionAlarm.addRequest(new Runnable() {
-        @Override
-        public void run() {
-          panel.updateSelection();
-        }
-      }, 200);
+      mySelectionAlarm.addRequest(panel::updateSelection, 200);
     }
   }
 

@@ -43,7 +43,6 @@ import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.util.PlatformUtils
 import com.intellij.util.SystemProperties
 import com.intellij.util.containers.ContainerUtil
@@ -72,7 +71,6 @@ object UpdateChecker {
   @JvmField
   val NOTIFICATIONS = NotificationGroup(IdeBundle.message("update.notifications.group"), NotificationDisplayType.STICKY_BALLOON, true)
 
-  private val INSTALLATION_UID = "installation.uid"
   private val DISABLED_UPDATE = "disabled_update.txt"
   private val NO_PLATFORM_UPDATE = "ide.no.platform.update"
 
@@ -422,53 +420,13 @@ object UpdateChecker {
     }
   }
 
+  /**
+   * @Deprecated, left for compatibility. Use PermanentInstallationID.get() directly 
+   */
   @JvmStatic
   fun getInstallationUID(propertiesComponent: PropertiesComponent): String {
-    if (SystemInfo.isWindows) {
-      val uid = getInstallationUIDOnWindows(propertiesComponent)
-      if (uid != null) {
-        return uid
-      }
-    }
-
-    var uid = propertiesComponent.getValue(INSTALLATION_UID)
-    if (uid == null) {
-      uid = generateUUID()
-      propertiesComponent.setValue(INSTALLATION_UID, uid)
-    }
-    return uid
+    return PermanentInstallationID.get();
   }
-
-  private fun getInstallationUIDOnWindows(propertiesComponent: PropertiesComponent): String? {
-    val appdata = System.getenv("APPDATA")
-    if (appdata != null) {
-      val jetBrainsDir = File(appdata, "JetBrains")
-      if (jetBrainsDir.isDirectory || jetBrainsDir.mkdirs()) {
-        val permanentIdFile = File(jetBrainsDir, "PermanentUserId")
-        try {
-          if (permanentIdFile.exists()) {
-            val bytes = permanentIdFile.readBytes()
-            val offset = if (CharsetToolkit.hasUTF8Bom(bytes)) CharsetToolkit.UTF8_BOM.size else 0
-            return String(bytes, offset, bytes.size - offset, Charsets.UTF_8)
-          }
-
-          val uuid = propertiesComponent.getValue(INSTALLATION_UID) ?: generateUUID()
-          permanentIdFile.writeText(uuid, Charsets.UTF_8)
-          return uuid
-        }
-        catch (e: IOException) {
-          LOG.debug(e)
-        }
-      }
-    }
-
-    return null
-  }
-
-  private fun generateUUID(): String =
-      try { UUID.randomUUID().toString() }
-      catch (ignored: Exception) { "" }
-      catch (ignored: InternalError) { "" }
 
   @JvmStatic
   @Throws(IOException::class)

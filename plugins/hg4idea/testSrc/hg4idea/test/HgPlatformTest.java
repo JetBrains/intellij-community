@@ -59,13 +59,13 @@ public abstract class HgPlatformTest extends VcsPlatformTest {
     super.setUp();
 
     cd(myProjectRoot);
-    hg("version");
-
-    createRepository(myProjectRoot);
     myVcs = HgVcs.getInstance(myProject);
     assertNotNull(myVcs);
     myVcs.getGlobalSettings().setHgExecutable(HgExecutor.getHgExecutable());
+    myVcs.getProjectSettings().setCheckIncomingOutgoing(false);
     myVcs.checkVersion();
+    hg("version");
+    createRepository(myProjectRoot);
     myRepository = myProjectRoot;
     setUpHgrc(myRepository);
   }

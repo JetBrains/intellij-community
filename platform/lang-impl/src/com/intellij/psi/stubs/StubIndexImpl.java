@@ -33,6 +33,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullComputable;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
@@ -138,11 +139,10 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
 
     for (int attempt = 0; attempt < 2; attempt++) {
       try {
-        StubIdExternalizer externalizer = new StubIdExternalizer();
         final MapIndexStorage<K, StubIdList> storage = new MapIndexStorage<K, StubIdList>(
           IndexInfrastructure.getStorageFile(indexKey),
           extension.getKeyDescriptor(),
-          externalizer,
+          StubIdExternalizer.INSTANCE,
           extension.getCacheSize(),
           false,
           extension instanceof StringStubIndexExtension && ((StringStubIndexExtension)extension).traceKeyHashToVirtualFileMapping()
@@ -171,7 +171,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
           @NotNull
           @Override
           public DataExternalizer<StubIdList> getValueExternalizer() {
-            return externalizer;
+            return StubIdExternalizer.INSTANCE;
           }
 
           @Override
@@ -215,6 +215,8 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
   }
 
   private static class StubIdExternalizer implements DataExternalizer<StubIdList> {
+    private static final StubIdExternalizer INSTANCE = new StubIdExternalizer();
+
     @Override
     public void save(@NotNull final DataOutput out, @NotNull final StubIdList value) throws IOException {
       int size = value.size();
@@ -507,8 +509,12 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
       indicesToDrop.remove(key.toString());
     }
 
-    for (String s : indicesToDrop) {
-      FileUtil.delete(IndexInfrastructure.getIndexRootDir(ID.create(s)));
+    if (!indicesToDrop.isEmpty()) {
+      LOG.info("Dropping indices:" + StringUtil.join(indicesToDrop, ","));
+
+      for (String s : indicesToDrop) {
+        FileUtil.delete(IndexInfrastructure.getIndexRootDir(StubIndexKey.createIndexKey(s)));
+      }
     }
   }
 

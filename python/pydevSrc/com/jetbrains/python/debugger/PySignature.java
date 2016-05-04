@@ -5,7 +5,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -110,7 +109,7 @@ public class PySignature {
     @NotNull
     private static List<String> parseTypes(@NotNull String type) {
       if (type.startsWith(UNION_PREFIX) && type.endsWith("]")) {
-        return Arrays.asList(type.substring(UNION_PREFIX.length(), type.length() - 1).split("\\s*,\\s*"));
+        return Lists.newArrayList(type.substring(UNION_PREFIX.length(), type.length() - 1).split("\\s*,\\s*"));
       }
       else {
         String[] parts = type.split(" or ");

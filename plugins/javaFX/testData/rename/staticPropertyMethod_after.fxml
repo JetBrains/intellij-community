@@ -2,4 +2,5 @@
 <?import container.MyCustomContainer?>
 <MyCustomContainer>
   <Button text="abc" MyCustomContainer.newMethodName="123"/>
+  <Button text="abc" MyCustomContainer.newMethodName="42"/>
 </MyCustomContainer>

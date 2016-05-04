@@ -38,11 +38,9 @@ import com.intellij.diff.tools.util.base.HighlightPolicy;
 import com.intellij.diff.tools.util.base.IgnorePolicy;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.DataManager;
 import com.intellij.lang.Language;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.CommandProcessor;
@@ -83,7 +81,6 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.DocumentUtil;
-import com.intellij.util.Function;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
@@ -109,6 +106,10 @@ public class DiffUtil {
   //
   // Editor
   //
+
+  public static boolean isDiffEditor(@NotNull Editor editor) {
+    return editor.getUserData(DiffManagerImpl.EDITOR_IS_DIFF_KEY) != null;
+  }
 
   @Nullable
   public static EditorHighlighter initEditorHighlighter(@Nullable Project project,
@@ -356,6 +357,15 @@ public class DiffUtil {
     return result.toString();
   }
 
+  public static void performAction(@NotNull AnAction action, @Nullable JComponent contextComponent) {
+    DataContext context = DataManager.getInstance().getDataContext(contextComponent);
+    AnActionEvent actionEvent = AnActionEvent.createFromAnAction(action, null, ActionPlaces.UNKNOWN, context);
+    action.update(actionEvent);
+    if (actionEvent.getPresentation().isEnabledAndVisible()) {
+      action.actionPerformed(actionEvent);
+    }
+  }
+
   //
   // Titles
   //
@@ -369,7 +379,7 @@ public class DiffUtil {
       return Collections.nCopies(titles.size(), null);
     }
 
-    List<JComponent> components = new ArrayList<JComponent>(titles.size());
+    List<JComponent> components = new ArrayList<>(titles.size());
     for (int i = 0; i < contents.size(); i++) {
       JComponent title = createTitle(StringUtil.notNullize(titles.get(i)));
       title = createTitleWithNotifications(title, contents.get(i));
@@ -387,7 +397,7 @@ public class DiffUtil {
     boolean equalCharsets = TextDiffViewerUtil.areEqualCharsets(contents);
     boolean equalSeparators = TextDiffViewerUtil.areEqualLineSeparators(contents);
 
-    List<JComponent> result = new ArrayList<JComponent>(contents.size());
+    List<JComponent> result = new ArrayList<>(contents.size());
 
     if (equalCharsets && equalSeparators && !ContainerUtil.exists(titles, Condition.NOT_NULL)) {
       return Collections.nCopies(titles.size(), null);
@@ -408,7 +418,7 @@ public class DiffUtil {
     List<JComponent> notifications = getCustomNotifications(content);
     if (notifications.isEmpty()) return title;
 
-    List<JComponent> components = new ArrayList<JComponent>();
+    List<JComponent> components = new ArrayList<>();
     if (title != null) components.add(title);
     components.addAll(notifications);
     return createStackedComponents(components, TITLE_GAP);
@@ -500,7 +510,7 @@ public class DiffUtil {
   @NotNull
   public static List<JComponent> createSyncHeightComponents(@NotNull final List<JComponent> components) {
     if (!ContainerUtil.exists(components, Condition.NOT_NULL)) return components;
-    List<JComponent> result = new ArrayList<JComponent>();
+    List<JComponent> result = new ArrayList<>();
     for (int i = 0; i < components.size(); i++) {
       result.add(new SyncHeightComponent(components, i));
     }
@@ -601,12 +611,7 @@ public class DiffUtil {
 
     List<DiffFragment> wordConflicts = ByWord.compare(chunk1, chunk2, comparisonPolicy, indicator);
 
-    return ContainerUtil.map(wordConflicts, new Function<DiffFragment, MergeWordFragment>() {
-      @Override
-      public MergeWordFragment fun(DiffFragment fragment) {
-        return new MyWordFragment(side1, side2, fragment);
-      }
-    });
+    return ContainerUtil.map(wordConflicts, fragment -> new MyWordFragment(side1, side2, fragment));
   }
 
   private static boolean isChunksEquals(@Nullable CharSequence chunk1,
@@ -783,7 +788,7 @@ public class DiffUtil {
                                                         startLine, endLine, document.getLineCount()));
     }
 
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
     for (int i = startLine; i < endLine; i++) {
       int start = document.getLineStartOffset(i);
       int end = document.getLineEndOffset(i);
@@ -939,26 +944,15 @@ public class DiffUtil {
         return;
       }
 
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-            @Override
-            public void run() {
-              if (myUnderBulkUpdate) {
-                DocumentUtil.executeInBulk(myDocument, true, new Runnable() {
-                  @Override
-                  public void run() {
-                    execute();
-                  }
-                });
-              }
-              else {
-                execute();
-              }
-            }
-          }, myCommandName, myCommandGroupId, myConfirmationPolicy, myDocument);
-        }
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        CommandProcessor.getInstance().executeCommand(myProject, () -> {
+          if (myUnderBulkUpdate) {
+            DocumentUtil.executeInBulk(myDocument, true, this::execute);
+          }
+          else {
+            execute();
+          }
+        }, myCommandName, myCommandGroupId, myConfirmationPolicy, myDocument);
       });
     }
 
@@ -1180,7 +1174,7 @@ public class DiffUtil {
   public static <T extends DiffTool> List<T> filterSuppressedTools(@NotNull List<T> tools) {
     if (tools.size() < 2) return tools;
 
-    final List<Class<? extends DiffTool>> suppressedTools = new ArrayList<Class<? extends DiffTool>>();
+    final List<Class<? extends DiffTool>> suppressedTools = new ArrayList<>();
     for (T tool : tools) {
       try {
         if (tool instanceof SuppressiveDiffTool) suppressedTools.addAll(((SuppressiveDiffTool)tool).getSuppressedTools());
@@ -1192,13 +1186,7 @@ public class DiffUtil {
 
     if (suppressedTools.isEmpty()) return tools;
 
-    List<T> filteredTools = ContainerUtil.filter(tools, new Condition<T>() {
-      @Override
-      public boolean value(T tool) {
-        return !suppressedTools.contains(tool.getClass());
-      }
-    });
-
+    List<T> filteredTools = ContainerUtil.filter(tools, tool -> !suppressedTools.contains(tool.getClass()));
     return filteredTools.isEmpty() ? tools : filteredTools;
   }
 

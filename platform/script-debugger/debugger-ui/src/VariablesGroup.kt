@@ -28,13 +28,7 @@ internal class VariablesGroup(private val start: Int, private val end: Int, priv
   }
 }
 
-internal val GROUP_FACTORY: ValueGroupFactory<List<Variable>> = object : ValueGroupFactory<List<Variable>> {
-  override fun create(data: List<Variable>, start: Int, end: Int, context: VariableContext): XValueGroup {
-    return createArrayRangeGroup(start, end, data, context)
-  }
-}
-
-private fun createArrayRangeGroup(start: Int, end: Int, variables: List<Variable>, variableContext: VariableContext): VariablesGroup {
+internal fun createArrayRangeGroup(variables: List<Variable>, start: Int, end: Int, variableContext: VariableContext): VariablesGroup {
   val name = "[" + variables[start].name + " \u2026 " + variables[end - 1].name + "]"
   return VariablesGroup(start, end, variables, variableContext, name)
 }

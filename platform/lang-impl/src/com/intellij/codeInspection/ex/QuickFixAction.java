@@ -19,6 +19,7 @@ package com.intellij.codeInspection.ex;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
@@ -30,11 +31,14 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -112,11 +116,18 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
   public void actionPerformed(final AnActionEvent e) {
     final InspectionResultsView view = getInvoker(e);
     final InspectionTree tree = view.getTree();
-    final CommonProblemDescriptor[] descriptors;
     try {
-      view.setApplyingFix(true);
-      if (isProblemDescriptorsAcceptable() && (descriptors = tree.getSelectedDescriptors(true)).length > 0) {
-        doApplyFix(view.getProject(), descriptors, tree.getContext());
+      Ref<CommonProblemDescriptor[]> descriptors = Ref.create();
+      Set<VirtualFile> readOnlyFiles = new THashSet<>();
+      if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ReadAction.run(() -> {
+        final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+        indicator.setText("Checking problem descriptors...");
+        descriptors.set(tree.getSelectedDescriptors(true, readOnlyFiles));
+      }), InspectionsBundle.message("preparing.for.apply.fix"), true, e.getProject())) {
+        return;
+      }
+      if (isProblemDescriptorsAcceptable() && descriptors.get().length > 0) {
+        doApplyFix(view.getProject(), descriptors.get(), readOnlyFiles, tree.getContext());
       } else {
         doApplyFix(getSelectedElements(e), view);
       }
@@ -134,19 +145,11 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
 
   private void doApplyFix(@NotNull final Project project,
                           @NotNull final CommonProblemDescriptor[] descriptors,
+                          @NotNull Set<VirtualFile> readOnlyFiles,
                           @NotNull final GlobalInspectionContextImpl context) {
-    final Set<VirtualFile> readOnlyFiles = new THashSet<VirtualFile>();
-    for (CommonProblemDescriptor descriptor : descriptors) {
-      final PsiElement psiElement = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getPsiElement() : null;
-      if (psiElement != null && !psiElement.isWritable()) {
-        readOnlyFiles.add(psiElement.getContainingFile().getVirtualFile());
-      }
-    }
-
     if (!FileModificationService.getInstance().prepareVirtualFilesForWrite(project, readOnlyFiles)) return;
     
     final RefManagerImpl refManager = (RefManagerImpl)context.getRefManager();
-
     final boolean initial = refManager.isInProcess();
 
     refManager.inspectionReadActionFinished();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,8 +46,8 @@ public class RedundantCastInspection extends GenericsInspectionToolBase {
   private static final String DISPLAY_NAME = InspectionsBundle.message("inspection.redundant.cast.display.name");
   @NonNls private static final String SHORT_NAME = "RedundantCast";
 
-  public boolean IGNORE_ANNOTATED_METHODS = false;
-  public boolean IGNORE_SUSPICIOUS_METHOD_CALLS = false;
+  public boolean IGNORE_ANNOTATED_METHODS;
+  public boolean IGNORE_SUSPICIOUS_METHOD_CALLS;
 
 
   public RedundantCastInspection() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -128,8 +128,8 @@ public class ExtractMethodProcessor implements MatchProvider {
   protected PsiStatement myFirstExitStatementCopy;
   private PsiMethod myExtractedMethod;
   private PsiMethodCallExpression myMethodCall;
-  protected boolean myNullConditionalCheck = false;
-  protected boolean myNotNullConditionalCheck = false;
+  protected boolean myNullConditionalCheck;
+  protected boolean myNotNullConditionalCheck;
   private Nullness myNullness;
 
   public ExtractMethodProcessor(Project project,
@@ -1140,7 +1140,8 @@ public class ExtractMethodProcessor implements MatchProvider {
       }
     }
     PsiDeclarationStatement statement = myElementFactory.createVariableDeclarationStatement(name, type, myMethodCall);
-    statement = (PsiDeclarationStatement)addToMethodCallLocation(statement);
+    statement =
+      (PsiDeclarationStatement)JavaCodeStyleManager.getInstance(myProject).shortenClassReferences(addToMethodCallLocation(statement));
     PsiVariable var = (PsiVariable)statement.getDeclaredElements()[0];
     myMethodCall = (PsiMethodCallExpression)var.getInitializer();
     if (myOutputVariable != null) {
@@ -1228,8 +1229,12 @@ public class ExtractMethodProcessor implements MatchProvider {
     return result;
   }
 
-  public PsiElement processMatch(Match match) throws IncorrectOperationException {
+  @Override
+  public void prepareSignature(Match match) {
     MatchUtil.changeSignature(match, myExtractedMethod);
+  }
+
+  public PsiElement processMatch(Match match) throws IncorrectOperationException {
     if (RefactoringUtil.isInStaticContext(match.getMatchStart(), myExtractedMethod.getContainingClass())) {
       PsiUtil.setModifierProperty(myExtractedMethod, PsiModifier.STATIC, true);
     }

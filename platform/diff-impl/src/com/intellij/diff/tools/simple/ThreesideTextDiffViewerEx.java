@@ -35,7 +35,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
@@ -118,12 +117,9 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
 
   @NotNull
   protected Runnable applyNotification(@Nullable final JComponent notification) {
-    return new Runnable() {
-      @Override
-      public void run() {
-        clearDiffPresentation();
-        if (notification != null) myPanel.addNotification(notification);
-      }
+    return () -> {
+      clearDiffPresentation();
+      if (notification != null) myPanel.addNotification(notification);
     };
   }
 
@@ -455,17 +451,13 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
     public void install(@Nullable List<MergeLineFragment> fragments,
                         @NotNull UserDataHolder context,
                         @NotNull FoldingModelSupport.Settings settings) {
-      Iterator<int[]> it = map(fragments, new Function<MergeLineFragment, int[]>() {
-        @Override
-        public int[] fun(MergeLineFragment fragment) {
-          return new int[]{
-            fragment.getStartLine(ThreeSide.LEFT),
-            fragment.getEndLine(ThreeSide.LEFT),
-            fragment.getStartLine(ThreeSide.BASE),
-            fragment.getEndLine(ThreeSide.BASE),
-            fragment.getStartLine(ThreeSide.RIGHT),
-            fragment.getEndLine(ThreeSide.RIGHT)};
-        }
+      Iterator<int[]> it = map(fragments, fragment -> new int[]{
+        fragment.getStartLine(ThreeSide.LEFT),
+        fragment.getEndLine(ThreeSide.LEFT),
+        fragment.getStartLine(ThreeSide.BASE),
+        fragment.getEndLine(ThreeSide.BASE),
+        fragment.getStartLine(ThreeSide.RIGHT),
+        fragment.getEndLine(ThreeSide.RIGHT)
       });
       install(it, context, settings);
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,11 +23,11 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public abstract class BeforeCheckinDialogHandler {
-  @Deprecated
   /**
    * @deprecated see {@link #beforeCommitDialogShown(com.intellij.openapi.project.Project, java.util.List, Iterable, boolean)}
    * @return false to cancel commit
    */
+  @Deprecated
   public boolean beforeCommitDialogShownCallback(Iterable<CommitExecutor> executors, boolean showVcsCommit) {
     throw new AbstractMethodError();
   }

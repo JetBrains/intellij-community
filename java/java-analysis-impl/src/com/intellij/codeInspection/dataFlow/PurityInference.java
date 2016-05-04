@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
@@ -25,7 +24,6 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -43,18 +41,9 @@ public class PurityInference {
       return false;
     }
 
-    return CachedValuesManager.getCachedValue(method, new CachedValueProvider<Boolean>() {
-      @Nullable
-      @Override
-      public Result<Boolean> compute() {
-        boolean pure = RecursionManager.doPreventingRecursion(method, true, new Computable<Boolean>() {
-          @Override
-          public Boolean compute() {
-            return doInferPurity(method);
-          }
-        }) == Boolean.TRUE;
-        return Result.create(pure, method);
-      }
+    return CachedValuesManager.getCachedValue(method, () -> {
+      boolean pure = RecursionManager.doPreventingRecursion(method, true, () -> doInferPurity(method)) == Boolean.TRUE;
+      return CachedValueProvider.Result.create(pure, method);
     });
   }
 

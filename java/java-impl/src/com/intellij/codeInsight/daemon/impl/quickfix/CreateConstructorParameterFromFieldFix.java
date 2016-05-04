@@ -371,7 +371,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
     for (int i = 0; i < newParameters.length; i++) {
       if (parameterInfos[i].getOldIndex() == -1) {
         final PsiParameter parameter = newParameters[i];
-        final PsiType paramType = parameterInfos[i].getTypeWrapper().getType(parameter, parameter.getManager());
+        final PsiType paramType = parameterInfos[i].getTypeWrapper().getType(parameter);
         if (type.isAssignableFrom(paramType)){
           return parameter;
         }

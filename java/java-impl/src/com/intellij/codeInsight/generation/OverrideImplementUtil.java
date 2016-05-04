@@ -28,10 +28,8 @@ import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
 import com.intellij.ide.util.MemberChooser;
-import com.intellij.idea.ActionsBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
-import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
@@ -52,6 +50,7 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -184,7 +183,7 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
                                           boolean toCopyJavaDoc,
                                           boolean insertOverrideIfPossible,
                                           PsiMethod result) {
-    PsiUtil.setModifierProperty(result, PsiModifier.ABSTRACT, aClass.isInterface());
+    PsiUtil.setModifierProperty(result, PsiModifier.ABSTRACT, aClass.isInterface() && method.hasModifierProperty(PsiModifier.ABSTRACT));
     PsiUtil.setModifierProperty(result, PsiModifier.NATIVE, false);
 
     if (!toCopyJavaDoc){
@@ -368,7 +367,7 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
                                      final PsiClass targetClass,
                                      final FileTemplate template) throws IncorrectOperationException {
     if (targetClass.isInterface()) {
-      if (isImplementInterfaceInJava8Interface(targetClass)) {
+      if (isImplementInterfaceInJava8Interface(targetClass) || originalMethod.hasModifierProperty(PsiModifier.DEFAULT)) {
         PsiUtil.setModifierProperty(result, PsiModifier.DEFAULT, true);
       }
       else {
@@ -424,10 +423,8 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
     if (!PsiUtil.isLanguageLevel8OrHigher(targetClass)){
       return false;
     }
-    final String implementMethodsName = ActionsBundle.message("action.ImplementMethods.text");
-    final Presentation presentation = new Presentation();
-    presentation.setText(implementMethodsName);
-    return presentation.getText().equals(CommandProcessor.getInstance().getCurrentCommandName());
+    String commandName = CommandProcessor.getInstance().getCurrentCommandName();
+    return commandName != null && StringUtil.containsIgnoreCase(commandName, "implement");
   }
 
   public static void chooseAndOverrideMethods(Project project, Editor editor, PsiClass aClass){

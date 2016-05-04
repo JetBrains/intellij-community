@@ -36,7 +36,10 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.PersistentFSConstants;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiBinaryFile;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiPlainTextFile;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -234,7 +237,7 @@ public class FileTypesTest extends PlatformTestCase {
 
     assertEquals(PlainTextFileType.INSTANCE, vFile.getFileType()); // type autodetected during indexing
 
-    PsiFile psiFile = ((PsiManagerEx)PsiManager.getInstance(getProject())).getFileManager().findFile(vFile); // autodetect text file if needed
+    PsiFile psiFile = PsiManagerEx.getInstanceEx(getProject()).getFileManager().findFile(vFile); // autodetect text file if needed
     assertNotNull(psiFile);
     assertEquals(PlainTextFileType.INSTANCE, psiFile.getFileType());
   }

@@ -15,9 +15,9 @@
  */
 package com.intellij.openapi.diff.impl.incrementalMerge.ui;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diff.DiffBundle;
@@ -38,7 +38,7 @@ public class ApplyNonConflicts extends AnAction implements DumbAware {
   @Nullable private final DiffPanelOuterComponent myDiffPanel;
 
   public ApplyNonConflicts(@Nullable DiffPanelOuterComponent diffPanel) {
-    super(DiffBundle.message("merge.dialog.apply.all.non.conflicting.changes.action.name"), null, AllIcons.Diff.ApplyNotConflicts);
+    ActionUtil.copyFrom(this, "Diff.ApplyNonConflicts");
     myDiffPanel = diffPanel;
   }
 

@@ -754,10 +754,10 @@ public class SingleInspectionProfilePanel extends JPanel {
       if (filter != null && !filter.isEmpty() && !isDescriptorAccepted(descriptor, filter, forceInclude, keySetList, quoted)) {
         continue;
       }
-      if (!emptyFilter && !myInspectionsFilter.matches(mySelectedProfile.getTools(toolDescriptors.getDefaultDescriptor().getKey().toString(), project))) {
+      final InspectionConfigTreeNode node = new InspectionConfigTreeNode(toolDescriptors);
+      if (!emptyFilter && !myInspectionsFilter.matches(mySelectedProfile.getTools(toolDescriptors.getDefaultDescriptor().getKey().toString(), project), node)) {
         continue;
       }
-      final InspectionConfigTreeNode node = new InspectionConfigTreeNode(toolDescriptors);
       getGroupNode(myRoot, toolDescriptors.getDefaultDescriptor().getGroup()).add(node);
       myRoot.dropCache();
     }

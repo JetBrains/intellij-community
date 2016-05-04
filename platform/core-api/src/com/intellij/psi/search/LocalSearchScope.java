@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -87,7 +88,7 @@ public class LocalSearchScope extends SearchScope {
       }
     }
     myScope = PsiUtilCore.toPsiElementArray(localScope);
-    myVirtualFiles = virtualFiles.isEmpty() ? VirtualFile.EMPTY_ARRAY : virtualFiles.toArray(VirtualFile.EMPTY_ARRAY);
+    myVirtualFiles = VfsUtilCore.toVirtualFileArray(virtualFiles);
   }
 
   public boolean isIgnoreInjectedPsi() {

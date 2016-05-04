@@ -342,7 +342,8 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
     myViewer.setAlwaysExpandList(value);
   }
 
-  private JComponent createToolbar() {
+  @NotNull
+  protected JComponent createToolbar() {
     DefaultActionGroup toolbarGroups = new DefaultActionGroup();
     myToolBarGroup = new DefaultActionGroup();
     toolbarGroups.add(myToolBarGroup);
