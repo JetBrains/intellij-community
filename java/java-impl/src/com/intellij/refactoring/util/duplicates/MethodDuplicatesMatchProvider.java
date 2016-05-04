@@ -47,8 +47,12 @@ class MethodDuplicatesMatchProvider implements MatchProvider {
   }
 
   @Override
-  public PsiElement processMatch(Match match) throws IncorrectOperationException {
+  public void prepareSignature(Match match) {
     MatchUtil.changeSignature(match, myMethod);
+  }
+
+  @Override
+  public PsiElement processMatch(Match match) throws IncorrectOperationException {
     final PsiClass containingClass = myMethod.getContainingClass();
     if (isEssentialStaticContextAbsent(match)) {
       PsiUtil.setModifierProperty(myMethod, PsiModifier.STATIC, true);

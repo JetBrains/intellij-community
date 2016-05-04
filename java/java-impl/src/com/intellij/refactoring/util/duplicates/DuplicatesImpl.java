@@ -140,6 +140,9 @@ public class DuplicatesImpl {
       HighlightManager.getInstance(project).removeSegmentHighlighter(editor, highlighters.get(0));
     }
 
+    // call change signature when needed
+    provider.prepareSignature(match);
+
     new WriteCommandAction(project, MethodDuplicatesHandler.REFACTORING_NAME, MethodDuplicatesHandler.REFACTORING_NAME) {
       @Override
       protected void run(@NotNull Result result) throws Throwable {

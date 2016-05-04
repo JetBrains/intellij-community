@@ -1229,8 +1229,12 @@ public class ExtractMethodProcessor implements MatchProvider {
     return result;
   }
 
-  public PsiElement processMatch(Match match) throws IncorrectOperationException {
+  @Override
+  public void prepareSignature(Match match) {
     MatchUtil.changeSignature(match, myExtractedMethod);
+  }
+
+  public PsiElement processMatch(Match match) throws IncorrectOperationException {
     if (RefactoringUtil.isInStaticContext(match.getMatchStart(), myExtractedMethod.getContainingClass())) {
       PsiUtil.setModifierProperty(myExtractedMethod, PsiModifier.STATIC, true);
     }
