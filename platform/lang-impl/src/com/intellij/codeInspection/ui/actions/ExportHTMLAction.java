@@ -102,7 +102,7 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
         }
         else {
           try {
-            new InspectionTreeHtmlWriter(myView.getTree(), outputDirectoryName);
+            new InspectionTreeHtmlWriter(myView, outputDirectoryName);
           }
           catch (ProcessCanceledException e) {
             // Do nothing here.
