@@ -41,6 +41,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogData;
+import com.intellij.vcs.log.data.VcsLogProgress;
 import com.intellij.vcs.log.data.VisiblePack;
 import com.intellij.vcs.log.graph.*;
 import com.intellij.vcs.log.graph.actions.GraphAction;
@@ -110,6 +111,8 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
     myUi = ui;
     myLogData = logData;
     myGraphCommitCellRenderer = new GraphCommitCellRenderer(logData, myGraphCellPainter, this);
+
+    myLogData.getProgress().addProgressIndicatorListener(new MyProgressListener(), ui);
 
     setDefaultRenderer(VirtualFile.class, new RootCellRenderer(myUi));
     setDefaultRenderer(GraphCommitCell.class, myGraphCommitCellRenderer);
@@ -926,6 +929,21 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
     @Override
     public void valueChanged(ListSelectionEvent e) {
       mySelection = null;
+    }
+  }
+
+  private class MyProgressListener implements VcsLogProgress.ProgressListener {
+    @NotNull private String myText = "";
+
+    @Override
+    public void progressStarted() {
+      myText = getEmptyText().getText();
+      getEmptyText().setText("Loading History...");
+    }
+
+    @Override
+    public void progressStopped() {
+      getEmptyText().setText(myText);
     }
   }
 }
