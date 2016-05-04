@@ -909,20 +909,6 @@ public class DiffUtil {
 
     public DiffCommandAction(@Nullable Project project,
                              @NotNull Document document,
-                             @Nullable String commandName) {
-      this(project, document, commandName, null, UndoConfirmationPolicy.DEFAULT);
-    }
-
-    public DiffCommandAction(@Nullable Project project,
-                             @NotNull Document document,
-                             @Nullable String commandName,
-                             @Nullable String commandGroupId,
-                             @NotNull UndoConfirmationPolicy confirmationPolicy) {
-      this(project, document, commandName, commandGroupId, confirmationPolicy, false);
-    }
-
-    public DiffCommandAction(@Nullable Project project,
-                             @NotNull Document document,
                              @Nullable String commandName,
                              @Nullable String commandGroupId,
                              @NotNull UndoConfirmationPolicy confirmationPolicy,
@@ -965,7 +951,7 @@ public class DiffUtil {
                                          @Nullable final Project project,
                                          @Nullable final String name,
                                          @NotNull final Runnable task) {
-    new DiffCommandAction(project, document, name) {
+    new DiffCommandAction(project, document, name, null, UndoConfirmationPolicy.DEFAULT, false) {
       @Override
       protected void execute() {
         task.run();

@@ -40,7 +40,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
-import com.intellij.openapi.command.undo.*;
+import com.intellij.openapi.command.undo.DocumentReference;
+import com.intellij.openapi.command.undo.DocumentReferenceManager;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
@@ -61,8 +63,8 @@ import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.hash.HashSet;
 import com.intellij.util.ui.JBUI;
+import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -70,7 +72,6 @@ import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.List;
 
@@ -166,8 +167,9 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
   //
 
   public class MyThreesideViewer extends ThreesideTextDiffViewerEx {
+    @NotNull private final MergeModelBase myModel;
+
     @NotNull private final ModifierProvider myModifierProvider;
-    @Nullable private final UndoManager myUndoManager;
     @NotNull private final MyInnerDiffWorker myInnerDiffWorker;
 
     // all changes - both applied and unapplied ones
@@ -177,16 +179,12 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     private boolean myInitialRediffFinished;
     private boolean myContentModified;
 
-    @Nullable private MergeCommandAction myCurrentMergeCommand;
-    private int myBulkChangeUpdateDepth;
-
-    private final Set<TextMergeChange> myChangesToUpdate = new HashSet<>();
-
     public MyThreesideViewer(@NotNull DiffContext context, @NotNull ContentDiffRequest request) {
       super(context, request);
 
+      myModel = new MyMergeModel(getProject(), getEditor().getDocument());
+
       myModifierProvider = new ModifierProvider();
-      myUndoManager = getProject() != null ? UndoManager.getInstance(getProject()) : UndoManager.getGlobalInstance();
       myInnerDiffWorker = new MyInnerDiffWorker();
 
       DiffUtil.registerAction(new ApplySelectedChangesAction(Side.LEFT, true), myPanel);
@@ -205,7 +203,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
     @Override
     protected void onDispose() {
-      LOG.assertTrue(myBulkChangeUpdateDepth == 0);
+      Disposer.dispose(myModel);
       super.onDispose();
     }
 
@@ -302,9 +300,11 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
       DiffUtil.executeWriteCommand(outputDocument, getProject(), "Init merge content", () -> {
         outputDocument.setText(baseDocument.getCharsSequence());
-        if (myUndoManager != null) {
+
+        UndoManager undoManager = getProject() != null ? UndoManager.getInstance(getProject()) : UndoManager.getGlobalInstance();
+        if (undoManager != null) {
           DocumentReference ref = DocumentReferenceManager.getInstance().create(outputDocument);
-          myUndoManager.nonundoableActionPerformed(ref, false);
+          undoManager.nonundoableActionPerformed(ref, false);
         }
       });
     }
@@ -395,9 +395,12 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
         clearDiffPresentation();
         resetChangeCounters();
 
+        myModel.setChanges(ContainerUtil.map(fragments, f -> new LineRange(f.getStartLine(ThreeSide.BASE),
+                                                                           f.getEndLine(ThreeSide.BASE))));
+
         for (int index = 0; index < fragments.size(); index++) {
           MergeLineFragment fragment = fragments.get(index);
-          TextMergeChange change = new TextMergeChange(fragment, index, TextMergeViewer.this);
+          TextMergeChange change = new TextMergeChange(TextMergeViewer.this, index, fragment);
           myAllMergeChanges.add(change);
           onChangeAdded(change);
         }
@@ -428,6 +431,8 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
         change.destroy();
       }
       myAllMergeChanges.clear();
+
+      myModel.setChanges(Collections.emptyList());
     }
 
     //
@@ -558,84 +563,11 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     @CalledInAwt
     protected void onBeforeDocumentChange(@NotNull DocumentEvent e) {
       super.onBeforeDocumentChange(e);
-      enterBulkChangeUpdateBlock();
-      if (isDisposed()) return;
-      if (myAllMergeChanges.isEmpty()) return;
-
-      List<Document> documents = ContainerUtil.map(getEditors(), Editor::getDocument);
-      ThreeSide side = ThreeSide.fromValue(documents, e.getDocument());
-      if (side == null) {
-        LOG.warn("Unknown document changed");
-        return;
-      }
-
-      if (side != ThreeSide.BASE) {
-        LOG.error("Non-base side was changed"); // unsupported operation
-        return;
-      }
-
       if (myInitialRediffFinished) myContentModified = true;
-
-      LineRange lineRange = DiffUtil.getAffectedLineRange(e);
-      int shift = DiffUtil.countLinesShift(e);
-
-      final List<TextMergeChange.State> corruptedStates = ContainerUtil.newSmartList();
-      for (int index = 0; index < myAllMergeChanges.size(); index++) {
-        TextMergeChange change = myAllMergeChanges.get(index);
-        TextMergeChange.State oldState = change.processBaseChange(lineRange.start, lineRange.end, shift);
-        if (oldState != null) {
-          if (myCurrentMergeCommand == null) {
-            corruptedStates.add(oldState);
-          }
-          reinstallHighlighter(change); // document state is not updated yet - can't reinstall range here
-        }
-      }
-
-      if (!corruptedStates.isEmpty() && myUndoManager != null) {
-        // document undo is registered inside onDocumentChange, so our undo() will be called after its undo().
-        // thus thus we can avoid checks for isUndoInProgress() (to avoid modification of the same TextMergeChange by this listener)
-        myUndoManager.undoableActionPerformed(new MyUndoableAction(TextMergeViewer.this, corruptedStates, true));
-      }
-    }
-
-    @Override
-    protected void onDocumentChange(@NotNull DocumentEvent e) {
-      super.onDocumentChange(e);
-      exitBulkChangeUpdateBlock();
     }
 
     public void repaintDividers() {
       myContentPanel.repaintDividers();
-    }
-
-    @CalledInAwt
-    public void reinstallHighlighter(@NotNull TextMergeChange change) {
-      if (myBulkChangeUpdateDepth > 0) {
-        myChangesToUpdate.add(change);
-      }
-      else {
-        change.reinstallHighlighters();
-        myInnerDiffWorker.scheduleRediff(change);
-      }
-    }
-
-    @CalledInAwt
-    public void enterBulkChangeUpdateBlock() {
-      myBulkChangeUpdateDepth++;
-    }
-
-    @CalledInAwt
-    public void exitBulkChangeUpdateBlock() {
-      myBulkChangeUpdateDepth--;
-      LOG.assertTrue(myBulkChangeUpdateDepth >= 0);
-
-      if (myBulkChangeUpdateDepth == 0) {
-        for (TextMergeChange change : myChangesToUpdate) {
-          change.reinstallHighlighters();
-        }
-        myInnerDiffWorker.scheduleRediff(myChangesToUpdate);
-        myChangesToUpdate.clear();
-      }
     }
 
     private void onChangeResolved(@NotNull TextMergeChange change) {
@@ -686,6 +618,11 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     //
 
     @NotNull
+    public MergeModelBase getModel() {
+      return myModel;
+    }
+
+    @NotNull
     @Override
     public List<TextMergeChange> getAllChanges() {
       return myAllMergeChanges;
@@ -728,92 +665,24 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     // Modification operations
     //
 
-    private void restoreChangeState(@NotNull TextMergeChange.State state) {
-      TextMergeChange change = myAllMergeChanges.get(state.myIndex);
-
-      boolean wasResolved = change.isResolved();
-      change.restoreState(state);
-      reinstallHighlighter(change);
-      if (wasResolved != change.isResolved()) onChangeResolved(change);
-    }
-
-    private abstract class MergeCommandAction extends DiffUtil.DiffCommandAction {
-      @Nullable private final List<TextMergeChange> myAffectedChanges;
-
-      public MergeCommandAction(@Nullable Project project,
-                                @Nullable String commandName,
-                                boolean underBulkUpdate,
-                                @Nullable List<TextMergeChange> changes) {
-        this(project, commandName, null, UndoConfirmationPolicy.DEFAULT, underBulkUpdate, changes);
-      }
-
-      public MergeCommandAction(@Nullable Project project,
-                                @Nullable String commandName,
-                                @Nullable String commandGroupId,
-                                @NotNull UndoConfirmationPolicy confirmationPolicy,
-                                boolean underBulkUpdate,
-                                @Nullable List<TextMergeChange> changes) {
-        super(project, getEditor().getDocument(), commandName, commandGroupId, confirmationPolicy, underBulkUpdate);
-        myAffectedChanges = collectAffectedChanges(changes);
-      }
-
-      @Override
-      @CalledWithWriteLock
-      protected final void execute() {
-        LOG.assertTrue(myCurrentMergeCommand == null);
-        myContentModified = true;
-
-        // We should restore states after changes in document (by DocumentUndoProvider) to avoid corruption by our onBeforeDocumentChange()
-        // Undo actions are performed in backward order, while redo actions are performed in forward order.
-        // Thus we should register two UndoableActions.
-
-        myCurrentMergeCommand = this;
-        registerUndoRedo(true);
-        enterBulkChangeUpdateBlock();
-        try {
-          doExecute();
-        }
-        finally {
-          exitBulkChangeUpdateBlock();
-          registerUndoRedo(false);
-          myCurrentMergeCommand = null;
-        }
-      }
-
-      private void registerUndoRedo(final boolean undo) {
-        if (myUndoManager == null) return;
-
-        List<TextMergeChange> affectedChanges = getAffectedChanges();
-        final List<TextMergeChange.State> states = new ArrayList<>(affectedChanges.size());
-        for (TextMergeChange change : affectedChanges) {
-          states.add(change.storeState());
-        }
-
-        myUndoManager.undoableActionPerformed(new MyUndoableAction(TextMergeViewer.this, states, undo));
-      }
-
-      @NotNull
-      private List<TextMergeChange> getAffectedChanges() {
-        return myAffectedChanges != null ? myAffectedChanges : myAllMergeChanges;
-      }
-
-      @CalledWithWriteLock
-      protected abstract void doExecute();
-    }
-
     /*
      * affected changes should be sorted
      */
     public void executeMergeCommand(@Nullable String commandName,
                                     boolean underBulkUpdate,
                                     @Nullable List<TextMergeChange> affected,
-                                    @NotNull final Runnable task) {
-      new MergeCommandAction(getProject(), commandName, underBulkUpdate, affected) {
-        @Override
-        protected void doExecute() {
-          task.run();
+                                    @NotNull Runnable task) {
+      myContentModified = true;
+
+      TIntArrayList affectedIndexes = null;
+      if (affected != null) {
+        affectedIndexes = new TIntArrayList(affected.size());
+        for (TextMergeChange change : affected) {
+          affectedIndexes.add(change.getIndex());
         }
-      }.run();
+      }
+
+      myModel.executeMergeCommand(commandName, null, UndoConfirmationPolicy.DEFAULT, underBulkUpdate, affectedIndexes, task);
     }
 
     public void executeMergeCommand(@Nullable String commandName,
@@ -829,7 +698,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       change.setResolved(Side.RIGHT, true);
 
       onChangeResolved(change);
-      reinstallHighlighter(change);
+      myModel.invalidateHighlighters(change.getIndex());
     }
 
     @CalledInAwt
@@ -838,7 +707,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       change.setResolved(side, true);
 
       if (change.isResolved()) onChangeResolved(change);
-      reinstallHighlighter(change);
+      myModel.invalidateHighlighters(change.getIndex());
     }
 
     public void ignoreChange(@NotNull TextMergeChange change, @NotNull Side side, boolean resolveChange) {
@@ -852,7 +721,6 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
     @CalledWithWriteLock
     public void replaceChange(@NotNull TextMergeChange change, @NotNull Side side, boolean resolveChange) {
-      LOG.assertTrue(myCurrentMergeCommand != null);
       if (change.isResolved(side)) return;
       if (!change.isChange(side)) {
         markChangeResolved(change);
@@ -861,131 +729,78 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
       ThreeSide sourceSide = side.select(ThreeSide.LEFT, ThreeSide.RIGHT);
       ThreeSide oppositeSide = side.select(ThreeSide.RIGHT, ThreeSide.LEFT);
-      ThreeSide outputSide = ThreeSide.BASE;
 
-      int outputStartLine = change.getStartLine(outputSide);
-      int outputEndLine = change.getEndLine(outputSide);
+      Document sourceDocument = getContent(sourceSide).getDocument();
       int sourceStartLine = change.getStartLine(sourceSide);
       int sourceEndLine = change.getEndLine(sourceSide);
+      List<String> newContent = DiffUtil.getLines(sourceDocument, sourceStartLine, sourceEndLine);
 
-      enterBulkChangeUpdateBlock();
-      try {
-        if (change.isConflict()) {
-          boolean append = change.isOnesideAppliedConflict();
-          int actualOutputStartLine = append ? outputEndLine : outputStartLine;
-
-          DiffUtil.applyModification(getContent(outputSide).getDocument(), actualOutputStartLine, outputEndLine,
-                                     getContent(sourceSide).getDocument(), sourceStartLine, sourceEndLine);
-
-          if (outputStartLine == outputEndLine || append) { // onBeforeDocumentChange() should process other cases correctly
-            int newOutputEndLine = actualOutputStartLine + (sourceEndLine - sourceStartLine);
-            moveChangesAfterInsertion(change, outputStartLine, newOutputEndLine);
-          }
-
-          if (resolveChange || change.getStartLine(oppositeSide) == change.getEndLine(oppositeSide)) {
-            markChangeResolved(change);
-          } else {
-            change.markOnesideAppliedConflict();
-            markChangeResolved(change, side);
-          }
+      if (change.isConflict()) {
+        boolean append = change.isOnesideAppliedConflict();
+        if (append) {
+          myModel.appendChange(change.getIndex(), newContent);
         }
         else {
-          DiffUtil.applyModification(getContent(outputSide).getDocument(), outputStartLine, outputEndLine,
-                                     getContent(sourceSide).getDocument(), sourceStartLine, sourceEndLine);
+          myModel.replaceChange(change.getIndex(), newContent);
+        }
 
-          if (outputStartLine == outputEndLine) { // onBeforeDocumentChange() should process other cases correctly
-            int newOutputEndLine = outputStartLine + (sourceEndLine - sourceStartLine);
-            moveChangesAfterInsertion(change, outputStartLine, newOutputEndLine);
-          }
-
+        if (resolveChange || change.getStartLine(oppositeSide) == change.getEndLine(oppositeSide)) {
           markChangeResolved(change);
         }
-      }
-      finally {
-        exitBulkChangeUpdateBlock();
-      }
-    }
-
-    /*
-     * We want to include inserted block into change, so we are updating endLine(BASE).
-     *
-     * It could break order of changes if there are other changes that starts/ends at this line.
-     * So we should check all other changes and shift them if necessary.
-     */
-    private void moveChangesAfterInsertion(@NotNull TextMergeChange change,
-                                           int newOutputStartLine,
-                                           int newOutputEndLine) {
-      LOG.assertTrue(myCurrentMergeCommand != null);
-      if (change.getStartLine() != newOutputStartLine ||
-          change.getEndLine() != newOutputEndLine) {
-        change.setStartLine(newOutputStartLine);
-        change.setEndLine(newOutputEndLine);
-        reinstallHighlighter(change);
-      }
-
-      boolean beforeChange = true;
-      for (TextMergeChange otherChange : getAllChanges()) {
-        int startLine = otherChange.getStartLine();
-        int endLine = otherChange.getEndLine();
-        if (endLine < newOutputStartLine) continue;
-        if (startLine > newOutputEndLine) break;
-        if (otherChange == change) {
-          beforeChange = false;
-          continue;
+        else {
+          change.markOnesideAppliedConflict();
+          markChangeResolved(change, side);
         }
+      }
+      else {
+        myModel.replaceChange(change.getIndex(), newContent);
 
-        int newStartLine = beforeChange ? Math.min(startLine, newOutputStartLine) : Math.max(startLine, newOutputEndLine);
-        int newEndLine = beforeChange ? Math.min(endLine, newOutputStartLine) : Math.max(endLine, newOutputEndLine);
-        if (startLine != newStartLine || endLine != newEndLine) {
-          otherChange.setStartLine(newStartLine);
-          otherChange.setEndLine(newEndLine);
-          reinstallHighlighter(otherChange);
-        }
+        markChangeResolved(change);
       }
     }
 
-    /*
-     * Nearby changes could be affected as well (ex: by moveChangesAfterInsertion)
-     *
-     * null means all changes could be affected
-     */
-    @Nullable
-    private List<TextMergeChange> collectAffectedChanges(@Nullable List<TextMergeChange> directChanges) {
-      if (directChanges == null || directChanges.isEmpty()) return null;
-
-      List<TextMergeChange> result = new ArrayList<>(directChanges.size());
-
-      int directIndex = 0;
-      int otherIndex = 0;
-      while (directIndex < directChanges.size() && otherIndex < myAllMergeChanges.size()) {
-        TextMergeChange directChange = directChanges.get(directIndex);
-        TextMergeChange otherChange = myAllMergeChanges.get(otherIndex);
-
-        if (directChange == otherChange) {
-          result.add(directChange);
-          otherIndex++;
-          continue;
-        }
-
-        int directStart = directChange.getStartLine();
-        int directEnd = directChange.getEndLine();
-        int otherStart = otherChange.getStartLine();
-        int otherEnd = otherChange.getEndLine();
-        if (otherEnd < directStart) {
-          otherIndex++;
-          continue;
-        }
-        if (otherStart > directEnd) {
-          directIndex++;
-          continue;
-        }
-
-        result.add(otherChange);
-        otherIndex++;
+    private class MyMergeModel extends MergeModelBase<TextMergeChange.State> {
+      public MyMergeModel(@Nullable Project project, @NotNull Document document) {
+        super(project, document);
       }
 
-      LOG.assertTrue(directChanges.size() <= result.size());
-      return result;
+      @Override
+      protected void reinstallHighlighters(int index) {
+        TextMergeChange change = myAllMergeChanges.get(index);
+        change.reinstallHighlighters();
+        myInnerDiffWorker.scheduleRediff(change);
+      }
+
+      @NotNull
+      @Override
+      protected TextMergeChange.State storeChangeState(int index) {
+        TextMergeChange change = myAllMergeChanges.get(index);
+        return change.storeState();
+      }
+
+      @Override
+      protected void restoreChangeState(@NotNull TextMergeChange.State state) {
+        super.restoreChangeState(state);
+        TextMergeChange change = myAllMergeChanges.get(state.myIndex);
+
+        boolean wasResolved = change.isResolved();
+        change.restoreState(state);
+        if (wasResolved != change.isResolved()) onChangeResolved(change);
+      }
+
+      @Nullable
+      @Override
+      protected TextMergeChange.State processDocumentChange(int index, int oldLine1, int oldLine2, int shift) {
+        TextMergeChange.State state = super.processDocumentChange(index, oldLine1, oldLine2, shift);
+
+        TextMergeChange mergeChange = myAllMergeChanges.get(index);
+        if (mergeChange.getStartLine() == mergeChange.getEndLine() &&
+            mergeChange.getDiffType() == TextDiffType.DELETED && !mergeChange.isResolved()) {
+          myViewer.markChangeResolved(mergeChange);
+        }
+
+        return state;
+      }
     }
 
     //
@@ -1362,49 +1177,6 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       int startLine = change.getStartLine(side);
       int endLine = change.getEndLine(side);
       return startLine != endLine ? DiffUtil.getLinesContent(side.select(documents), startLine, endLine) : null;
-    }
-  }
-
-  private static class MyUndoableAction extends BasicUndoableAction {
-    @NotNull private final WeakReference<TextMergeViewer> myViewerRef;
-    @NotNull private final List<TextMergeChange.State> myStates;
-    private final boolean myUndo;
-
-    public MyUndoableAction(@NotNull TextMergeViewer viewer, @NotNull List<TextMergeChange.State> states, boolean undo) {
-      super(viewer.getViewer().getEditor().getDocument());
-      myViewerRef = new WeakReference<>(viewer);
-
-      myStates = states;
-      myUndo = undo;
-    }
-
-    @Override
-    public final void undo() throws UnexpectedUndoException {
-      TextMergeViewer mergeViewer = getViewer();
-      if (mergeViewer != null && myUndo) restoreStates(mergeViewer);
-    }
-
-    @Override
-    public final void redo() throws UnexpectedUndoException {
-      TextMergeViewer mergeViewer = getViewer();
-      if (mergeViewer != null && !myUndo) restoreStates(mergeViewer);
-    }
-
-    @Nullable
-    private TextMergeViewer getViewer() {
-      TextMergeViewer viewer = myViewerRef.get();
-      return viewer != null && !viewer.getViewer().isDisposed() ? viewer : null;
-    }
-
-    private void restoreStates(@NotNull TextMergeViewer mergeViewer) {
-      MyThreesideViewer viewer = mergeViewer.getViewer();
-      if (viewer.myAllMergeChanges.isEmpty()) return; // is possible between destroyChangedBlocks() and dispose() calls
-
-      viewer.enterBulkChangeUpdateBlock();
-      for (TextMergeChange.State state : myStates) {
-        viewer.restoreChangeState(state);
-      }
-      viewer.exitBulkChangeUpdateBlock();
     }
   }
 }
