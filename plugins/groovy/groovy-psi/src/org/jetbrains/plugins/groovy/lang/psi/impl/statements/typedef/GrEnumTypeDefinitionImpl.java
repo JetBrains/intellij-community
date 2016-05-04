@@ -26,7 +26,6 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.ArrayUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
@@ -42,14 +41,13 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeDefinitionStub;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_ENUM;
+
 /**
  * @author Dmitry.Krasilschikov
  * @date 18.03.2007
  */
 public class GrEnumTypeDefinitionImpl extends GrTypeDefinitionImpl implements GrEnumTypeDefinition {
-  @NonNls
-  private static final String JAVA_LANG_ENUM = "java.lang.Enum";
-  private static final String ENUM_SIMPLE_NAME = "Enum";
 
   public GrEnumTypeDefinitionImpl(@NotNull ASTNode node) {
     super(node);
@@ -77,11 +75,6 @@ public class GrEnumTypeDefinitionImpl extends GrTypeDefinitionImpl implements Gr
   @NotNull
   public PsiClassType[] getExtendsListTypes(boolean includeSynthetic) {
     return new PsiClassType[]{createEnumType(), createGroovyObjectSupportType()};
-  }
-
-  @Override
-  protected String[] getExtendsNames() {
-    return new String[]{ENUM_SIMPLE_NAME};
   }
 
   private PsiClassType createEnumType() {

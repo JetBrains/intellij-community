@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListImpl;
 
@@ -88,6 +90,12 @@ public class GrStubUtils {
   @Nullable
   public static String getTypeText(@Nullable GrTypeElement typeElement) {
     return typeElement == null ? null : typeElement.getText();
+  }
+
+  @Nullable
+  public static String getBaseClassName(@NotNull GrTypeDefinition psi) {
+    if (!(psi instanceof GrAnonymousClassDefinition)) return null;
+    return ((GrAnonymousClassDefinition)psi).getBaseClassReferenceGroovy().getReferenceName();
   }
 
   public static String[] getAnnotationNames(PsiModifierListOwner psi) {

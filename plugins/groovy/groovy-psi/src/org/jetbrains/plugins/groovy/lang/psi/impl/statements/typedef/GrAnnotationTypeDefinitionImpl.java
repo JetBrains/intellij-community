@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiClassType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
@@ -53,18 +54,13 @@ public class GrAnnotationTypeDefinitionImpl extends GrTypeDefinitionImpl impleme
   }
 
   @Override
-  protected String[] getExtendsNames() {
-    return new String[]{"Annotation"};
-  }
-
-  @Override
   @NotNull
   public PsiClassType[] getExtendsListTypes(boolean includeSynthetic) {
     return new PsiClassType[]{createAnnotationType()};
   }
 
   private PsiClassType createAnnotationType() {
-    return TypesUtil.createTypeByFQClassName("java.lang.annotation.Annotation", this);
+    return TypesUtil.createTypeByFQClassName(CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION, this);
   }
 
   @Override

@@ -115,9 +115,6 @@ public interface GrTypeDefinition extends PsiClass, GrTopLevelDefinition, GrDocC
   GrImplementsClause getImplementsClause();
 
   @NotNull
-  String[] getSuperClassNames();
-
-  @NotNull
   GrMethod[] getCodeMethods();
 
   @NotNull

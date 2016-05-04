@@ -21,7 +21,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.InheritanceImplUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +45,6 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeParameterStub;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -89,17 +87,6 @@ public class GrTypeParameterImpl extends GrStubElementBase<GrTypeParameterStub> 
   @Override
   public GrImplementsClause getImplementsClause() {
     return null;
-  }
-
-  @NotNull
-  @Override
-  public String[] getSuperClassNames() {
-    final PsiReference[] types = getExtendsList().getReferences();
-    List<String> names = new ArrayList<String>(types.length);
-    for (PsiReference type : types) {
-      names.add(type.getCanonicalText());
-    }
-    return ArrayUtil.toStringArray(names);
   }
 
   @Override
