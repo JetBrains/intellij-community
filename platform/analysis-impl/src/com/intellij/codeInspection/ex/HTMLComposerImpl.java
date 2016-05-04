@@ -292,8 +292,7 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
     if (where instanceof RefElement && !where.isValid()) return;
     if (quickFixes != null) {
       boolean listStarted = false;
-      for (int i = 0; i < quickFixes.length; i++) {
-        final String text = quickFixes[i];
+      for (final String text : quickFixes) {
         if (text == null) continue;
         if (!listStarted) {
           appendHeading(buf, InspectionsBundle.message("inspection.problem.resolution"));
