@@ -87,6 +87,14 @@ public class PushDownTest extends LightRefactoringTestCase {
     doTest(true);
   }
 
+  public void testJavadocWhenKeepAsAbstractInterface() throws Exception {
+    doTestImplements(true);
+  }
+
+  public void testJavadocWhenKeepAsAbstractClass() throws Exception {
+    doTestImplements(true);
+  }
+
   private void doTest() {
     doTest(false);
   }

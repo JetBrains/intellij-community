@@ -217,27 +217,30 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
         PsiMethod methodBySignature = MethodSignatureUtil.findMethodBySuperSignature(targetClass, method.getSignature(substitutor), false);
         if (methodBySignature == null) {
           newMember = (PsiMethod)targetClass.add(method);
-          if (sourceClass.isInterface()) {
-            final PsiMethod oldMethod = (PsiMethod)memberInfo.getMember();
-            if (!targetClass.isInterface()) {
-              PsiUtil.setModifierProperty(newMember, PsiModifier.PUBLIC, true);
-              if (oldMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
-                RefactoringUtil.makeMethodAbstract(targetClass, (PsiMethod)newMember);
+          final PsiMethod oldMethod = (PsiMethod)memberInfo.getMember();
+          if (sourceClass.isInterface() && !targetClass.isInterface()) {
+            PsiUtil.setModifierProperty(newMember, PsiModifier.PUBLIC, true);
+            if (oldMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
+              RefactoringUtil.makeMethodAbstract(targetClass, (PsiMethod)newMember);
+            }
+            else {
+              PsiUtil.setModifierProperty(newMember, PsiModifier.DEFAULT, false);
+            }
+          }
+
+          if (memberInfo.isToAbstract()) {
+            if (sourceClass.isInterface()) {
+              if (oldMethod.hasModifierProperty(PsiModifier.DEFAULT)) {
+                PsiUtil.setModifierProperty(oldMethod, PsiModifier.DEFAULT, false);
+                RefactoringUtil.makeMethodAbstract(sourceClass, oldMethod);
               }
-              else {
-                PsiUtil.setModifierProperty(newMember, PsiModifier.DEFAULT, false);
+            }
+            else {
+              if (newMember.hasModifierProperty(PsiModifier.PRIVATE)) {
+                PsiUtil.setModifierProperty(newMember, PsiModifier.PROTECTED, true);
               }
             }
 
-            if (memberInfo.isToAbstract() && oldMethod.hasModifierProperty(PsiModifier.DEFAULT)) {
-              PsiUtil.setModifierProperty(oldMethod, PsiModifier.DEFAULT, false);
-              RefactoringUtil.makeMethodAbstract(sourceClass, oldMethod);
-            }
-          }
-          else if (memberInfo.isToAbstract()) {
-            if (newMember.hasModifierProperty(PsiModifier.PRIVATE)) {
-              PsiUtil.setModifierProperty(newMember, PsiModifier.PROTECTED, true);
-            }
             pushDownData.getCommentPolicy().processNewJavaDoc(((PsiMethod)newMember).getDocComment());
           }
           if (memberInfo.isToAbstract()) {
