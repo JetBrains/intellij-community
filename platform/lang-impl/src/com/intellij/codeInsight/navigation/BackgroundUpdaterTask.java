@@ -136,13 +136,12 @@ public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
 
   @Override
   public void onSuccess() {
-    onFinished();
     myPopup.setCaption(getCaption(getCurrentSize()));
     paintBusy(false);
   }
 
   @Override
-  protected void onFinished() {
+  public void onFinished() {
     myFinished = true;
   }
 

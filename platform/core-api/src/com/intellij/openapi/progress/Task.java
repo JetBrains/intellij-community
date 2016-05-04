@@ -61,19 +61,32 @@ public abstract class Task implements TaskInfo, Progressive {
 
   /**
    * This callback will be invoked on AWT dispatch thread.
+   *
+   * Callback executed when run() throws {@link ProcessCanceledException} or if its {@link ProgressIndicator} was canceled.
    */
   public void onCancel() {
-    onFinished();
   }
 
   /**
    * This callback will be invoked on AWT dispatch thread.
    */
   public void onSuccess() {
-    onFinished();
   }
 
-  protected void onFinished() {}
+  /**
+   * This callback will be invoked on AWT dispatch thread.
+   *
+   * Callback executed when run() throws an exception (except PCE).
+   */
+  public void onError(@NotNull Exception error) {
+    LOG.error(error);
+  }
+
+  /**
+   * This callback will be invoked on AWT dispatch thread, after other specific handlers
+   */
+  public void onFinished() {
+  }
 
   public final Project getProject() {
     return myProject;
