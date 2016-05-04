@@ -64,7 +64,17 @@ public class PushDownTest extends LightRefactoringTestCase {
   public void testInterfaceConstants() { doTest();}
 
   public void testReferenceForMovedInnerClass() { doTest();}
-  
+
+  public void testDefaultMethodToInterface() {doTest();}
+  public void testDefaultMethodToInterfaceKeepAbstract() {doTestImplements(true);}
+  public void testDefaultMethodToClass() {doTest();}
+  public void testDefaultMethodToClassKeepAbstract() { doTestImplements(true); }
+
+  public void testInterfaceStaticMethodToInterface() { doTest(); }
+  public void testInterfaceStaticMethodToClass() { doTest(); }
+
+  public void testInterfaceMethodToClass() { doTest();}
+
   public void testInsertOverrideWhenKeepAbstract() throws Exception {
     doTestImplements(true);
   }

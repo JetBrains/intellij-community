@@ -218,14 +218,20 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
         if (methodBySignature == null) {
           newMember = (PsiMethod)targetClass.add(method);
           if (sourceClass.isInterface()) {
+            final PsiMethod oldMethod = (PsiMethod)memberInfo.getMember();
             if (!targetClass.isInterface()) {
               PsiUtil.setModifierProperty(newMember, PsiModifier.PUBLIC, true);
-              if (newMember.hasModifierProperty(PsiModifier.DEFAULT)) {
-                PsiUtil.setModifierProperty(newMember, PsiModifier.DEFAULT, false);
+              if (oldMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
+                RefactoringUtil.makeMethodAbstract(targetClass, (PsiMethod)newMember);
               }
               else {
-                PsiUtil.setModifierProperty(newMember, PsiModifier.ABSTRACT, true);
+                PsiUtil.setModifierProperty(newMember, PsiModifier.DEFAULT, false);
               }
+            }
+
+            if (memberInfo.isToAbstract() && oldMethod.hasModifierProperty(PsiModifier.DEFAULT)) {
+              PsiUtil.setModifierProperty(oldMethod, PsiModifier.DEFAULT, false);
+              RefactoringUtil.makeMethodAbstract(sourceClass, oldMethod);
             }
           }
           else if (memberInfo.isToAbstract()) {
