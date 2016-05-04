@@ -109,7 +109,7 @@ public class PyStudyCheckAction extends StudyCheckAction {
           }
           final StudyToolWindow toolWindow = StudyUtils.getStudyToolWindow(project);
           if (toolWindow != null) {
-            StudyCheckUtils.showTestResults(project, message);
+            StudyCheckUtils.showTestResults(project, message, false);
             StudyCheckUtils.navigateToFailedPlaceholder(myStudyState, myTask, myTaskDir, project);
           }
         });

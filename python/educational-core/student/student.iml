@@ -22,5 +22,6 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="platform-api" />
+    <orderEntry type="module" module-name="python-community" />
   </component>
 </module>

@@ -153,14 +153,14 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
   protected void onTaskFailed(String message) {
     myTaskManger.setStatus(myTask, StudyStatus.Failed);
     ApplicationManager.getApplication().invokeLater(
-      () -> StudyCheckUtils.showTestResults(myProject, message));
+      () -> StudyCheckUtils.showTestResults(myProject, message, false));
   }
 
   protected void onTaskSolved(String message) {
     myTaskManger.setStatus(myTask, StudyStatus.Solved);
 
     ApplicationManager.getApplication().invokeLater(
-      () -> StudyCheckUtils.showTestResults(myProject, message));
+      () -> StudyCheckUtils.showTestResults(myProject, message, true));
   }
 
   private void runAfterTaskCheckedActions() {

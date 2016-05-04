@@ -473,7 +473,7 @@ public class StudyUtils {
     return null;
   }
 
-
+  @Nullable
   public static String getTaskText(@NotNull final Project project) {
     VirtualFile[] files = FileEditorManager.getInstance(project).getSelectedFiles();
     TaskFile taskFile = null;
@@ -489,6 +489,22 @@ public class StudyUtils {
     final Task task = taskFile.getTask();
     if (task != null) {
       return getTaskTextFromTask(task, task.getTaskDir(project));
+    }
+    return null;
+  }
+  
+  @Nullable
+  public static Task getCurrentTask(@NotNull final Project project) {
+    VirtualFile[] files = FileEditorManager.getInstance(project).getSelectedFiles();
+    TaskFile taskFile = null;
+    for (VirtualFile file : files) {
+      taskFile = getTaskFile(project, file);
+      if (taskFile != null) {
+        break;
+      }
+    }
+    if (taskFile != null) {
+      return taskFile.getTask();
     }
     return null;
   }
