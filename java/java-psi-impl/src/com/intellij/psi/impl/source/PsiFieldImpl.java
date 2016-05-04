@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,8 +50,8 @@ import java.util.Set;
 public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements PsiField, PsiVariableEx, Queryable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiFieldImpl");
 
-  private volatile SoftReference<PsiType> myCachedType = null;
-  private volatile Object myCachedInitializerValue = null; // PsiExpression on constant value for literal
+  private volatile SoftReference<PsiType> myCachedType;
+  private volatile Object myCachedInitializerValue; // PsiExpression on constant value for literal
 
   public PsiFieldImpl(final PsiFieldStub stub) {
     this(stub, JavaStubElementTypes.FIELD);

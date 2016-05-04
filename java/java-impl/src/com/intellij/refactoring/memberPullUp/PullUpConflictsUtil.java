@@ -156,19 +156,10 @@ public class PullUpConflictsUtil {
     }
     RefactoringConflictsUtil.analyzeModuleConflicts(subclass.getProject(), checkModuleConflictsList,
                                            new UsageInfo[0], targetRepresentativeElement, conflicts);
-    final String fqName = subclass.getQualifiedName();
-    final String packageName;
-    if (fqName != null) {
-      packageName = StringUtil.getPackageName(fqName);
-    } else {
-      final PsiFile psiFile = PsiTreeUtil.getParentOfType(subclass, PsiFile.class);
-      if (psiFile instanceof PsiClassOwner) {
-        packageName = ((PsiClassOwner)psiFile).getPackageName();
-      } else {
-        packageName = null;
-      }
-    }
-    final boolean toDifferentPackage = !Comparing.strEqual(targetPackage.getQualifiedName(), packageName);
+
+    final PsiFile psiFile = PsiTreeUtil.getParentOfType(subclass, PsiClassOwner.class);
+    final boolean toDifferentPackage = !Comparing.strEqual(targetPackage.getQualifiedName(),
+                                                           psiFile != null ? ((PsiClassOwner)psiFile).getPackageName() : null);
     for (final PsiMethod abstractMethod : abstractMethods) {
       abstractMethod.accept(new ClassMemberReferencesVisitor(subclass) {
         @Override

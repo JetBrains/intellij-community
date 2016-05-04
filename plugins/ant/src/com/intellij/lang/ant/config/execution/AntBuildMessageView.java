@@ -30,6 +30,7 @@ import com.intellij.lang.ant.config.AntBuildFileBase;
 import com.intellij.lang.ant.config.AntBuildListener;
 import com.intellij.lang.ant.config.actions.*;
 import com.intellij.lang.ant.config.impl.AntBuildFileImpl;
+import com.intellij.lang.ant.config.impl.BuildFileProperty;
 import com.intellij.lang.ant.config.impl.HelpID;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -65,6 +66,7 @@ import java.awt.*;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 public final class AntBuildMessageView extends JPanel implements DataProvider, OccurenceNavigator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ant.execution.AntBuildMessageView");
@@ -92,6 +94,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
   private final CardLayout myCardLayout;
   private AntBuildFileBase myBuildFile;
   private final String[] myTargets;
+  private final List<BuildFileProperty> myAdditionalProperties;
   private int myPriorityThreshold = PRIORITY_BRIEF;
   private volatile int myErrorCount;
   private volatile int myWarningCount;
@@ -143,11 +146,12 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
   };
   @NonNls public static final String FILE_PREFIX = "file:";
 
-  private AntBuildMessageView(Project project, AntBuildFileBase buildFile, String[] targets) {
+  private AntBuildMessageView(Project project, AntBuildFileBase buildFile, String[] targets, List<BuildFileProperty> additionalProperties) {
     super(new BorderLayout(2, 0));
     myProject = project;
     myBuildFile = buildFile;
     myTargets = targets;
+    myAdditionalProperties = additionalProperties;
     setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
 
     myPlainTextView = new PlainTextView(project);
@@ -235,7 +239,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
    * @return can be null if user cancelled operation
    */
   @Nullable
-  public static AntBuildMessageView openBuildMessageView(Project project, AntBuildFileBase buildFile, String[] targets) {
+  public static AntBuildMessageView openBuildMessageView(Project project, AntBuildFileBase buildFile, String[] targets, List<BuildFileProperty> additionalProperties) {
     final VirtualFile antFile = buildFile.getVirtualFile();
     if (!LOG.assertTrue(antFile != null)) {
       return null;
@@ -278,7 +282,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
       }
     }
 
-    final AntBuildMessageView messageView = new AntBuildMessageView(project, buildFile, targets);
+    final AntBuildMessageView messageView = new AntBuildMessageView(project, buildFile, targets, additionalProperties);
     String contentName = buildFile.getPresentableName();
     contentName = BUILD_CONTENT_NAME + " (" + contentName + ")";
 
@@ -765,6 +769,10 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
 
   public String[] getTargets() {
     return myTargets;
+  }
+
+  public List<BuildFileProperty> getAdditionalProperties() {
+    return myAdditionalProperties;
   }
 
   private int getErrorCount() {

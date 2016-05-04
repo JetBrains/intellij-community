@@ -149,7 +149,12 @@ public class CommonTest extends IncrementalTestCase {
     JpsModuleRootModificationUtil.addDependency(moduleB, moduleA);
     doTestBuild(1).assertSuccessful();
   }
-  
+
+  public void testIntegrateOnSuperclassRemovedAndRestored() throws Exception {
+    setupInitialProject();
+
+    doTestBuild(2);
+  }
   public void testMoveToplevelClassToAnotherFile() throws Exception {
     doTest();
   }
@@ -157,5 +162,8 @@ public class CommonTest extends IncrementalTestCase {
   public void testMoveClassToAnotherRoot() throws Exception {
     doTest();
   }
-  
+
+  public void testIntegrateOnNonIncrementalMake() throws Exception {
+    doTest();
+  }
 }

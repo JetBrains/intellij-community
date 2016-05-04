@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.find.FindManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
 import com.intellij.ide.actions.CloseTabToolbarAction;
+import com.intellij.ide.actions.exclusion.ExclusionHandler;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -102,13 +103,14 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   private final ExporterToTextFile myTextFileExporter = new ExporterToTextFile(this);
   private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
+  private final ExclusionHandler<Node> myExclusionHandler;
   private final UsageModelTracker myModelTracker;
   private final Map<Usage, UsageNode> myUsageNodes = new ConcurrentHashMap<Usage, UsageNode>();
   public static final UsageNode NULL_NODE = new UsageNode(NullUsage.INSTANCE, new UsageViewTreeModelBuilder(new UsageViewPresentation(), UsageTarget.EMPTY_ARRAY));
   private final ButtonPanel myButtonPanel = new ButtonPanel();
   private final JComponent myAdditionalComponent = new JPanel(new BorderLayout());
   private volatile boolean isDisposed;
-  private volatile boolean myChangesDetected = false;
+  private volatile boolean myChangesDetected;
   public static final Comparator<Usage> USAGE_COMPARATOR = new Comparator<Usage>() {
     @Override
     public int compare(final Usage o1, final Usage o2) {
@@ -274,6 +276,36 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
         return isDisposed || project.isDisposed();
       }
     },200);
+    myExclusionHandler = new ExclusionHandler<Node>() {
+      @Override
+      public boolean isNodeExcluded(@NotNull Node node) {
+        return node.isDataExcluded();
+      }
+
+      @Override
+      public void excludeNode(@NotNull Node node) {
+        final HashSet<Usage> usages = new HashSet<>();
+        collectUsages(node, usages);
+        excludeUsages(usages.toArray(new Usage[usages.size()]));
+      }
+
+      @Override
+      public void includeNode(@NotNull Node node) {
+        final HashSet<Usage> usages = new HashSet<>();
+        collectUsages(node, usages);
+        includeUsages(usages.toArray(new Usage[usages.size()]));
+      }
+
+      @Override
+      public boolean isActionEnabled(boolean isExcludeAction) {
+        return true;
+      }
+
+      @Override
+      public void onDone(boolean isExcludeAction) {
+
+      }
+    };
   }
 
   protected boolean searchHasBeenCancelled() {
@@ -779,7 +811,8 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     }
   }
 
-  private void expandAll() {
+  public void expandAll() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     expandingAll = true;
     try {
       TreeUtil.expandAll(myTree);
@@ -1570,6 +1603,9 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       }
       else if (key == USAGE_VIEW_KEY) {
         sink.put(USAGE_VIEW_KEY, UsageViewImpl.this);
+      }
+      else if (key == ExclusionHandler.EXCLUSION_HANDLER) {
+        sink.put(ExclusionHandler.EXCLUSION_HANDLER, myExclusionHandler);
       }
 
       else if (key == CommonDataKeys.NAVIGATABLE_ARRAY) {

@@ -211,10 +211,10 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
   }
 
   private void addRoot(PsiElement resolveResult, boolean isModuleSource) {
-    if (isModuleSource) {
+    if (isModuleSource && (mySourceResults.isEmpty() || myQualifiedName.getComponentCount() == 0)) {
       mySourceResults.add(resolveResult);
     }
-    else {
+    else if (myLibResults.isEmpty() || myQualifiedName.getComponentCount() == 0) {
       myLibResults.add(resolveResult);
     }
   }
@@ -262,13 +262,13 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
     }
 
     if (!myWithoutForeign) {
-      for (PyImportResolver resolver : Extensions.getExtensions(PyImportResolver.EP_NAME)) {
-        PsiElement foreign = resolver.resolveImportReference(myQualifiedName, myContext, !myWithoutRoots);
-        if (foreign != null) {
-          myForeignResults.add(foreign);
-        }
-      }
       if (mySourceResults.isEmpty() || myQualifiedName.getComponentCount() == 0) {
+        for (PyImportResolver resolver : Extensions.getExtensions(PyImportResolver.EP_NAME)) {
+          PsiElement foreign = resolver.resolveImportReference(myQualifiedName, myContext, !myWithoutRoots);
+          if (foreign != null) {
+            myForeignResults.add(foreign);
+          }
+        }
         mySourceResults.addAll(myForeignResults);
         myForeignResults.clear();
       }
@@ -306,8 +306,9 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
         if (skeletonsDir == null) return;
         final PsiDirectory directory = myContext.getPsiManager().findDirectory(skeletonsDir);
         final PsiElement psiElement = absoluteVisitor.resolveModuleAt(directory);
-        if (psiElement != null)
-          myLibResults.add(psiElement);
+        if (psiElement != null) {
+          addRoot(psiElement, false);
+        }
       }
     }
   }

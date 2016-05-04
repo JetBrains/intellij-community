@@ -51,7 +51,10 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.HintHint;
@@ -115,7 +118,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     mySettings = DiffSettingsHolder.getInstance().getSettings(myContext.getUserData(DiffUserDataKeys.PLACE));
 
     myAvailableTools = DiffManagerEx.getInstance().getDiffTools();
-    myToolOrder = new ArrayList<DiffTool>(getToolOrderFromSettings(myAvailableTools));
+    myToolOrder = new ArrayList<>(getToolOrderFromSettings(myAvailableTools));
 
     // UI
 
@@ -144,12 +147,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     myState = EmptyState.INSTANCE;
     myContentPanel.setContent(DiffUtil.createMessagePanel(((LoadingDiffRequest)myActiveRequest).getMessage()));
 
-    myOpenInEditorAction = new OpenInEditorAction(new Runnable() {
-      @Override
-      public void run() {
-        onAfterNavigate();
-      }
-    });
+    myOpenInEditorAction = new OpenInEditorAction(() -> onAfterNavigate());
   }
 
   //
@@ -187,7 +185,7 @@ public abstract class DiffRequestProcessor implements Disposable {
 
   @NotNull
   private List<FrameDiffTool> filterFittedTools(@NotNull List<DiffTool> tools) {
-    List<FrameDiffTool> result = new ArrayList<FrameDiffTool>();
+    List<FrameDiffTool> result = new ArrayList<>();
     for (DiffTool tool : tools) {
       try {
         if (tool instanceof FrameDiffTool && tool.canShow(myContext, myActiveRequest)) {
@@ -253,16 +251,12 @@ public abstract class DiffRequestProcessor implements Disposable {
 
     force = force || (myQueuedApplyRequest != null && myQueuedApplyRequest.force);
     myQueuedApplyRequest = new ApplyData(request, force, scrollToChangePolicy);
-    Runnable task = new Runnable() {
-      @Override
-      public void run() {
-        if (myQueuedApplyRequest == null || myDisposed) return;
-        doApplyRequest(myQueuedApplyRequest.request, myQueuedApplyRequest.force, myQueuedApplyRequest.scrollToChangePolicy);
-        myQueuedApplyRequest = null;
-      }
-    };
 
-    IdeFocusManager.getInstance(myProject).doWhenFocusSettlesDown(task);
+    IdeFocusManager.getInstance(myProject).doWhenFocusSettlesDown(() -> {
+      if (myQueuedApplyRequest == null || myDisposed) return;
+      doApplyRequest(myQueuedApplyRequest.request, myQueuedApplyRequest.force, myQueuedApplyRequest.scrollToChangePolicy);
+      myQueuedApplyRequest = null;
+    });
   }
 
   @CalledInAwt
@@ -349,16 +343,11 @@ public abstract class DiffRequestProcessor implements Disposable {
 
   @NotNull
   protected List<DiffTool> getToolOrderFromSettings(@NotNull List<DiffTool> availableTools) {
-    List<DiffTool> result = new ArrayList<DiffTool>();
+    List<DiffTool> result = new ArrayList<>();
     List<String> savedOrder = getSettings().getDiffToolsOrder();
 
     for (final String clazz : savedOrder) {
-      DiffTool tool = ContainerUtil.find(availableTools, new Condition<DiffTool>() {
-        @Override
-        public boolean value(DiffTool tool) {
-          return tool.getClass().getCanonicalName().equals(clazz);
-        }
-      });
+      DiffTool tool = ContainerUtil.find(availableTools, t -> t.getClass().getCanonicalName().equals(clazz));
       if (tool != null) result.add(tool);
     }
 
@@ -370,7 +359,7 @@ public abstract class DiffRequestProcessor implements Disposable {
   }
 
   protected void updateToolOrderSettings(@NotNull List<DiffTool> toolOrder) {
-    List<String> savedOrder = new ArrayList<String>();
+    List<String> savedOrder = new ArrayList<>();
     for (DiffTool tool : toolOrder) {
       savedOrder.add(tool.getClass().getCanonicalName());
     }
@@ -380,24 +369,21 @@ public abstract class DiffRequestProcessor implements Disposable {
   @Override
   public void dispose() {
     if (myDisposed) return;
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        if (myDisposed) return;
-        myDisposed = true;
+    UIUtil.invokeLaterIfNeeded(() -> {
+      if (myDisposed) return;
+      myDisposed = true;
 
-        onDispose();
+      onDispose();
 
-        myState.destroy();
-        myToolbarStatusPanel.setContent(null);
-        myToolbarPanel.setContent(null);
-        myContentPanel.setContent(null);
+      myState.destroy();
+      myToolbarStatusPanel.setContent(null);
+      myToolbarPanel.setContent(null);
+      myContentPanel.setContent(null);
 
-        myActiveRequest.onAssigned(false);
+      myActiveRequest.onAssigned(false);
 
-        myState = EmptyState.INSTANCE;
-        myActiveRequest = NoDiffRequest.INSTANCE;
-      }
+      myState = EmptyState.INSTANCE;
+      myActiveRequest = NoDiffRequest.INSTANCE;
     });
   }
 
@@ -405,7 +391,7 @@ public abstract class DiffRequestProcessor implements Disposable {
   protected DefaultActionGroup collectToolbarActions(@Nullable List<AnAction> viewerActions) {
     DefaultActionGroup group = new DefaultActionGroup();
 
-    List<AnAction> navigationActions = new ArrayList<AnAction>();
+    List<AnAction> navigationActions = new ArrayList<>();
     navigationActions.addAll(getNavigationActions());
     navigationActions.add(myOpenInEditorAction);
     navigationActions.add(new MyChangeDiffToolAction());
@@ -432,7 +418,7 @@ public abstract class DiffRequestProcessor implements Disposable {
   protected DefaultActionGroup collectPopupActions(@Nullable List<AnAction> viewerActions) {
     DefaultActionGroup group = new DefaultActionGroup();
 
-    List<AnAction> selectToolActions = new ArrayList<AnAction>();
+    List<AnAction> selectToolActions = new ArrayList<>();
     for (DiffTool tool : getAvailableFittedTools()) {
       if (tool == myState.getActiveTool()) continue;
       selectToolActions.add(new DiffToolToggleAction(tool));
@@ -510,7 +496,7 @@ public abstract class DiffRequestProcessor implements Disposable {
 
   private class ShowInExternalToolAction extends DumbAwareAction {
     public ShowInExternalToolAction() {
-      EmptyAction.setupAction(this, "Diff.ShowInExternalTool", null);
+      ActionUtil.copyFrom(this, "Diff.ShowInExternalTool");
     }
 
     @Override
@@ -595,7 +581,7 @@ public abstract class DiffRequestProcessor implements Disposable {
 
   private class ShowActionGroupPopupAction extends DumbAwareAction {
     public ShowActionGroupPopupAction() {
-      EmptyAction.setupAction(this, "Diff.ShowSettingsPopup", null);
+      ActionUtil.copyFrom(this, "Diff.ShowSettingsPopup");
     }
 
     @Override
@@ -1172,7 +1158,7 @@ public abstract class DiffRequestProcessor implements Disposable {
       FrameDiffTool.ToolbarComponents toolbarComponents1 = myViewer.init();
       FrameDiffTool.ToolbarComponents toolbarComponents2 = myWrapperViewer.init();
 
-      List<AnAction> toolbarActions = new ArrayList<AnAction>();
+      List<AnAction> toolbarActions = new ArrayList<>();
       if (toolbarComponents1.toolbarActions != null) toolbarActions.addAll(toolbarComponents1.toolbarActions);
       if (toolbarComponents2.toolbarActions != null) {
         if (!toolbarActions.isEmpty() && !toolbarComponents2.toolbarActions.isEmpty()) toolbarActions.add(Separator.getInstance());
@@ -1180,7 +1166,7 @@ public abstract class DiffRequestProcessor implements Disposable {
       }
       buildToolbar(toolbarActions);
 
-      List<AnAction> popupActions = new ArrayList<AnAction>();
+      List<AnAction> popupActions = new ArrayList<>();
       if (toolbarComponents1.popupActions != null) popupActions.addAll(toolbarComponents1.popupActions);
       if (toolbarComponents2.popupActions != null) {
         if (!popupActions.isEmpty() && !toolbarComponents2.popupActions.isEmpty()) popupActions.add(Separator.getInstance());

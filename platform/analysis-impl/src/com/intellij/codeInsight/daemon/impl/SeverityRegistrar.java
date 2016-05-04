@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -140,6 +140,7 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity> {
     for (Element infoElement : element.getChildren(INFO_TAG)) {
       SeverityBasedTextAttributes highlightInfo = new SeverityBasedTextAttributes(infoElement);
       String colorStr = infoElement.getAttributeValue(COLOR_ATTRIBUTE);
+      @SuppressWarnings("UseJBColor")
       Color color = colorStr == null ? null : new Color(Integer.parseInt(colorStr, 16));
       registerSeverity(highlightInfo, color);
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -172,14 +172,14 @@ public class GrTypeParameterImpl extends GrStubElementBase<GrTypeParameterStub> 
 
   @Override
   @NotNull
-  public PsiClassType[] getExtendsListTypes() {
+  public PsiClassType[] getExtendsListTypes(boolean includeSynthetic) {
     return getExtendsList().getReferencedTypes();
   }
 
   @Override
   @NotNull
-  public PsiClassType[] getImplementsListTypes() {
-    return new PsiClassType[0];
+  public PsiClassType[] getImplementsListTypes(boolean includeSynthetic) {
+    return PsiClassType.EMPTY_ARRAY;
   }
 
   @Override
@@ -195,14 +195,14 @@ public class GrTypeParameterImpl extends GrStubElementBase<GrTypeParameterStub> 
 
   @Override
   @NotNull
-  public PsiClass[] getSupers() {
-    return GrClassImplUtil.getSupers(this);
+  public PsiClass[] getSupers(boolean includeSynthetic) {
+    return GrClassImplUtil.getSupers(this, includeSynthetic);
   }
 
   @Override
   @NotNull
-  public PsiClassType[] getSuperTypes() {
-    return GrClassImplUtil.getSuperTypes(this);
+  public PsiClassType[] getSuperTypes(boolean includeSynthetic) {
+    return GrClassImplUtil.getSuperTypes(this, includeSynthetic);
   }
 
   @Override

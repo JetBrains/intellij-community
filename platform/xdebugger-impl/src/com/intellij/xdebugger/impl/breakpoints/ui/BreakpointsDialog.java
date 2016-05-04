@@ -352,7 +352,7 @@ public class BreakpointsDialog extends DialogWrapper {
     JPanel decoratedTree = decorator.createPanel();
     decoratedTree.setBorder(IdeBorderFactory.createEmptyBorder());
 
-    JScrollPane pane = UIUtil.findParentByClass(tree, JScrollPane.class);
+    JScrollPane pane = UIUtil.getParentOfType(JScrollPane.class, tree);
     if (pane != null) pane.setBorder(IdeBorderFactory.createBorder());
 
     myTreeController.setTreeView(tree);

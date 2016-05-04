@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.codeInsight.template.emmet.nodes.GenerationNode;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
@@ -32,8 +33,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.regex.Pattern;
 
-import static com.google.common.base.Strings.isNullOrEmpty;
-import static com.google.common.base.Strings.nullToEmpty;
 import static com.google.common.collect.Iterables.*;
 import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Lists.newLinkedList;
@@ -132,22 +131,30 @@ public class BemEmmetFilter extends ZenCodingFilter {
     BemState bemState = extractBemStateFromClassName(className);
     List<String> result = newLinkedList();
     if (!bemState.isEmpty()) {
+      String nodeBlockValue = nodeBemState != null ? nodeBemState.getBlock() : null;
+      
       String block = bemState.getBlock();
-      if (isNullOrEmpty(block)) {
-        block = nullToEmpty(nodeBemState != null ? nodeBemState.getBlock() : null);
+      if (StringUtil.isEmpty(block)) {
+        block = StringUtil.notNullize(nodeBlockValue);
         bemState.setBlock(block);
       }
       String prefix = block;
       String element = bemState.getElement();
-      if (!isNullOrEmpty(element)) {
+      if (StringUtil.isNotEmpty(element)) {
         prefix += ELEMENT_SEPARATOR + element;
       }
       result.add(prefix);
       String modifier = bemState.getModifier();
-      if (!isNullOrEmpty(modifier)) {
+      if (StringUtil.isNotEmpty(modifier)) {
         result.add(prefix + MODIFIER_SEPARATOR + modifier);
       }
-      BEM_STATE.set(node, bemState.copy());
+      
+      BemState newNodeBemState = bemState.copy();
+      if (StringUtil.isNotEmpty(nodeBlockValue) && StringUtil.isEmpty(modifier)) {
+        // save old value 
+        newNodeBemState.setBlock(nodeBlockValue);   
+      }
+      BEM_STATE.set(node, newNodeBemState);
     }
     else {
       result.add(className);
@@ -218,9 +225,9 @@ public class BemEmmetFilter extends ZenCodingFilter {
       BemState bemState = BEM_STATE.get(donor);
       if (bemState != null) {
         String prefix = bemState.getBlock();
-        if (!isNullOrEmpty(prefix)) {
+        if (!StringUtil.isEmpty(prefix)) {
           String element = bemState.getElement();
-          if (MODIFIER_SEPARATOR.equals(separator) && !isNullOrEmpty(element)) {
+          if (MODIFIER_SEPARATOR.equals(separator) && !StringUtil.isEmpty(element)) {
             prefix = prefix + separator + element;
           }
           return prefix + separator + cleanStringAndDepth.first;
@@ -313,10 +320,10 @@ public class BemEmmetFilter extends ZenCodingFilter {
     }
 
     public boolean isEmpty() {
-      return isNullOrEmpty(block) && isNullOrEmpty(element) && isNullOrEmpty(modifier);
+      return StringUtil.isEmpty(block) && StringUtil.isEmpty(element) && StringUtil.isEmpty(modifier);
     }
 
-    @Nullable
+    @NotNull
     public BemState copy() {
       return new BemState(block, element, modifier);
     }

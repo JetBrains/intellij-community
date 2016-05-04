@@ -1,5 +1,5 @@
 Types:
-PsiMethodCallExpression:p.get(0) : java.lang.Number
+PsiMethodCallExpression:p.get(0) : ? extends java.lang.Number
 PsiParameter:p : java.lang.Integer[]
 PsiReferenceExpression:p : java.lang.Integer[]
 

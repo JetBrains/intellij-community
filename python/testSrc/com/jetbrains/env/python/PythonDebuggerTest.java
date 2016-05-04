@@ -4,6 +4,8 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.xdebugger.XDebuggerTestUtil;
@@ -23,6 +25,7 @@ import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -538,6 +541,77 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       }
     });
   }
+
+
+  public void testWinEggDebug() throws Exception {
+    if (UsefulTestCase.IS_UNDER_TEAMCITY && !SystemInfo.isWindows) {
+       return; // Only needs to run on windows
+    }
+    runPythonTest(new PyDebuggerTask("/debug", "test_winegg.py") {
+      @Override
+      public void before() throws Exception {
+        String egg = getFilePath("wintestegg-0.1.egg");
+        toggleBreakpointInEgg(egg, "eggxample/lower_case.py", 2);
+        toggleBreakpointInEgg(egg, "eggxample/MIXED_case.py", 2);
+
+        PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(getRunConfiguration().getSdkHome());
+        if (flavor != null) {
+          flavor.initPythonPath(Lists.newArrayList(egg), getRunConfiguration().getEnvs());
+        }
+        else {
+          getRunConfiguration().getEnvs().put("PYTHONPATH", egg);
+        }
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        eval("ret").hasValue("16");
+        resume();
+
+        waitForPause();
+        eval("ret").hasValue("17");
+        resume();
+      }
+
+      @NotNull
+      @Override
+      public Set<String> getTags() {
+        return ImmutableSet.of("-jython"); //TODO: fix that for Jython if anybody needs it
+      }
+    });
+  }
+
+  public void testWinLongName() throws Exception {
+    if (UsefulTestCase.IS_UNDER_TEAMCITY && !SystemInfo.isWindows) {
+      return; // Only needs to run on windows
+    }
+    runPythonTest(new PyDebuggerTask("/debug", "long_n~1.py") {
+      @Override
+      public void before() throws Exception {
+        String scriptPath = getScriptPath();
+        String longPath = FileUtil
+          .toSystemDependentName((new File(scriptPath).getCanonicalPath()));
+        LocalFileSystem.getInstance().refreshAndFindFileByPath(longPath);
+        toggleBreakpoint(longPath, 2);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        eval("x").hasValue("10");
+        resume();
+      }
+
+      @NotNull
+      @Override
+      public Set<String> getTags() {
+        return ImmutableSet.of("-jython"); //TODO: fix that for Jython if anybody needs it
+      }
+    });
+  }
+
+
 
   public void testStepOverConditionalBreakpoint() throws Exception {
     runPythonTest(new PyDebuggerTask("/debug", "test_stepOverCondition.py") {

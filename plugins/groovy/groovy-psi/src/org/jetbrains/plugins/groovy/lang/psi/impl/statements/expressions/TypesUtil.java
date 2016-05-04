@@ -463,6 +463,18 @@ public class TypesUtil {
   }
 
   @NotNull
+  public static PsiClassType createType(@NotNull PsiClass clazz) {
+    return createType(clazz, null);
+  }
+
+  @NotNull
+  public static PsiClassType createType(@NotNull PsiClass clazz, @Nullable PsiElement context, PsiType... parameters) {
+    return JavaPsiFacade.getInstance(
+      (context == null ? clazz : context).getProject()
+    ).getElementFactory().createType(clazz, parameters);
+  }
+
+  @NotNull
   public static PsiClassType getJavaLangObject(@NotNull PsiElement context) {
     return LazyFqnClassType.getLazyType(CommonClassNames.JAVA_LANG_OBJECT, context);
   }
@@ -605,15 +617,15 @@ public class TypesUtil {
   }
 
   @NotNull
-  public static PsiType getLeastUpperBound(PsiClass[] classes, PsiManager manager) {
+  public static PsiType getLeastUpperBound(PsiType[] classes, PsiManager manager) {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
 
     if (classes.length == 0) return factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_OBJECT);
 
-    PsiType type = factory.createType(classes[0]);
+    PsiType type = classes[0];
 
     for (int i = 1; i < classes.length; i++) {
-      PsiType t = getLeastUpperBound(type, factory.createType(classes[i]), manager);
+      PsiType t = getLeastUpperBound(type, classes[i], manager);
       if (t != null) {
         type = t;
       }
@@ -680,27 +692,35 @@ public class TypesUtil {
   }
 
   @NotNull
+  public static PsiClassType createGenericType(@NotNull String fqn, @NotNull PsiElement context, @Nullable PsiType type) {
+    JavaPsiFacade facade = JavaPsiFacade.getInstance(context.getProject());
+    GlobalSearchScope resolveScope = context.getResolveScope();
+    PsiClass clazz = facade.findClass(fqn, resolveScope);
+    if (clazz == null || clazz.getTypeParameters().length != 1) {
+      return facade.getElementFactory().createTypeByFQClassName(fqn, resolveScope);
+    }
+    return type == null ? facade.getElementFactory().createType(clazz) : facade.getElementFactory().createType(clazz, type);
+  }
+
+  @NotNull
+  public static PsiClassType createIterableType(@NotNull PsiElement context, @Nullable PsiType type) {
+    return createGenericType(CommonClassNames.JAVA_LANG_ITERABLE, context, type);
+  }
+
+  @NotNull
+  public static PsiClassType createListType(@NotNull PsiElement context, @Nullable PsiType type) {
+    return createGenericType(CommonClassNames.JAVA_UTIL_LIST, context, type);
+  }
+
+  @NotNull
   public static PsiClassType createListType(@NotNull PsiClass elements) {
     JavaPsiFacade facade = JavaPsiFacade.getInstance(elements.getProject());
-    GlobalSearchScope resolveScope = elements.getResolveScope();
-    PsiClass listClass = facade.findClass(CommonClassNames.JAVA_UTIL_LIST, resolveScope);
-    if (listClass == null) {
-      return facade.getElementFactory().createTypeByFQClassName(CommonClassNames.JAVA_UTIL_LIST, resolveScope);
-    }
-    return facade.getElementFactory().createType(listClass, facade.getElementFactory().createType(elements));
+    return createGenericType(CommonClassNames.JAVA_UTIL_LIST, elements, facade.getElementFactory().createType(elements));
   }
 
   @NotNull
   public static PsiType createSetType(@NotNull PsiElement context, @NotNull PsiType type) {
-    JavaPsiFacade facade = JavaPsiFacade.getInstance(context.getProject());
-    GlobalSearchScope resolveScope = context.getResolveScope();
-
-    PsiClass setClass = facade.findClass(CommonClassNames.JAVA_UTIL_SET, resolveScope);
-    if (setClass != null && setClass.getTypeParameters().length == 1) {
-      return facade.getElementFactory().createType(setClass, type);
-    }
-
-    return facade.getElementFactory().createTypeByFQClassName(CommonClassNames.JAVA_UTIL_SET, resolveScope);
+    return createGenericType(CommonClassNames.JAVA_UTIL_SET, context, type);
   }
 
   public static boolean isAnnotatedCheckHierarchyWithCache(@NotNull PsiClass aClass, @NotNull String annotationFQN) {

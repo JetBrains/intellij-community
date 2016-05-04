@@ -27,7 +27,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.impl.ShadowBorderPainter;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -113,7 +113,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
         final boolean insideBalloon = isInsideBalloon(me);
 
         if (myHideOnMouse && id == MouseEvent.MOUSE_PRESSED) {
-          if (!insideBalloon && !hasModalDialog(me) && !isWithinChildWindow(me)) {
+          if (!insideBalloon && !isWithinChildWindow(me)) {
             if (myHideListener == null) {
               hide();
             }
@@ -192,12 +192,6 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     return false;
   }
 
-  private static boolean hasModalDialog(MouseEvent e) {
-    final Component c = e.getComponent();
-    final DialogWrapper dialog = DialogWrapper.findInstance(c);
-    return dialog != null && dialog.isModal();
-  }
-
   private final long myFadeoutTime;
   private Dimension myDefaultPrefSize;
   private final ActionListener myClickHandler;
@@ -222,7 +216,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
   private JLabel myTitleLabel;
 
   private boolean myAnimationEnabled = true;
-  private boolean myShadow = false;
+  private boolean myShadow = UIUtil.isUnderDarcula();
   private final Layer myLayer;
   private final boolean myBlockClicks;
   private RelativePoint myPrevMousePoint = null;
@@ -631,11 +625,13 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
       // contained view. This is useful for Tooltip popups, for example.
       if (focusComponent instanceof JScrollPane) {
         JViewport viewport = ((JScrollPane)focusComponent).getViewport();
-        if (viewport == null)
+        if (viewport == null) {
           break;
+        }
         Component child = viewport.getView();
-        if (child == null)
+        if (child == null) {
           break;
+        }
         focusComponent = child;
         continue;
       }
@@ -945,8 +941,19 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     hideAndDispose(false);
   }
 
+  private boolean myTraceDispose;
+
+  public void traceDispose(boolean value) {
+    myTraceDispose = value;
+  }
+
   private void hideAndDispose(final boolean ok) {
     if (myDisposed) return;
+
+    if (myTraceDispose) {
+      Logger.getInstance("#com.intellij.ui.BalloonImpl").error("Dispose balloon before showing", new Throwable());
+    }
+
     myDisposed = true;
     hideComboBoxPopups();
 

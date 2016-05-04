@@ -20,7 +20,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -152,27 +151,43 @@ public class VcsFileStatusProvider implements FileStatusProvider, VcsBaseContent
 
   @Override
   @Nullable
-  public Pair<VcsRevisionNumber, String> getBaseRevision(@NotNull final VirtualFile file) {
+  public BaseContent getBaseRevision(@NotNull final VirtualFile file) {
     final Change change = ChangeListManager.getInstance(myProject).getChange(file);
-    if (change != null) {
-      final ContentRevision beforeRevision = change.getBeforeRevision();
-      if (beforeRevision instanceof BinaryContentRevision) return null;
-      if (beforeRevision != null) {
-        String content;
-        try {
-          content = beforeRevision.getContent();
-        }
-        catch (VcsException ex) {
-          content = null;
-        }
-        if (content == null) {
-          myHaveEmptyContentRevisions = true;
-          return null;
-        }
-        return Pair.create(beforeRevision.getRevisionNumber(), content);
-      }
-      return null;
+    if (change == null) return null;
+    final ContentRevision beforeRevision = change.getBeforeRevision();
+    if (beforeRevision == null) return null;
+    if (beforeRevision instanceof BinaryContentRevision) return null;
+    return new BaseContentImpl(beforeRevision);
+  }
+
+  private class BaseContentImpl implements BaseContent {
+    @NotNull private final ContentRevision myContentRevision;
+
+    public BaseContentImpl(@NotNull ContentRevision contentRevision) {
+      myContentRevision = contentRevision;
     }
-    return null;
+
+    @NotNull
+    @Override
+    public VcsRevisionNumber getRevisionNumber() {
+      return myContentRevision.getRevisionNumber();
+    }
+
+    @Nullable
+    @Override
+    public String loadContent() {
+      String content;
+      try {
+        content = myContentRevision.getContent();
+      }
+      catch (VcsException ex) {
+        content = null;
+      }
+      if (content == null) {
+        myHaveEmptyContentRevisions = true;
+        return null;
+      }
+      return content;
+    }
   }
 }

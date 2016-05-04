@@ -231,7 +231,12 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
   }
 
   public Color getColor() {
-    return myColor;
+    if (myColorWheelPanel.myColorWheel.myOpacity == 255) {
+      return myColor;
+    } else {
+      //noinspection UseJBColor
+      return new Color(myColor.getRed(), myColor.getGreen(), myColor.getBlue(), myColorWheelPanel.myColorWheel.myOpacity);
+    }
   }
 
   @Override

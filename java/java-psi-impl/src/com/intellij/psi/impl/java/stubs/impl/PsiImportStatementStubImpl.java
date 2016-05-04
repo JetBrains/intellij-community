@@ -36,7 +36,7 @@ import org.jetbrains.annotations.Nullable;
 public class PsiImportStatementStubImpl extends StubBase<PsiImportStatementBase> implements PsiImportStatementStub {
   private final byte myFlags;
   private final StringRef myText;
-  private SoftReference<PsiJavaCodeReferenceElement> myReference = null;
+  private SoftReference<PsiJavaCodeReferenceElement> myReference;
 
   private static final int ON_DEMAND = 0x01;
   private static final int STATIC = 0x02;

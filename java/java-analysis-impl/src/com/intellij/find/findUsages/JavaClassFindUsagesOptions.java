@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,13 +26,13 @@ import java.util.LinkedHashSet;
  * @author peter
  */
 public class JavaClassFindUsagesOptions extends JavaFindUsagesOptions {
-  public boolean isMethodsUsages = false;
-  public boolean isFieldsUsages = false;
-  public boolean isDerivedClasses = false;
-  public boolean isImplementingClasses = false;
-  public boolean isDerivedInterfaces = false;
+  public boolean isMethodsUsages;
+  public boolean isFieldsUsages;
+  public boolean isDerivedClasses;
+  public boolean isImplementingClasses;
+  public boolean isDerivedInterfaces;
   public boolean isCheckDeepInheritance = true;
-  public boolean isIncludeInherited = false;
+  public boolean isIncludeInherited;
 
   public JavaClassFindUsagesOptions(@NotNull Project project) {
     super(project);

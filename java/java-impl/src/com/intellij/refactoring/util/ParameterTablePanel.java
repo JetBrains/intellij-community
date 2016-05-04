@@ -84,9 +84,13 @@ public abstract class ParameterTablePanel extends AbstractParameterTablePanel<Va
     typeColumn.setCellEditor(new AbstractTableCellEditor() {
       TypeSelector myCurrentSelector;
       final JBComboBoxTableCellEditorComponent myEditorComponent = new JBComboBoxTableCellEditorComponent();
+      final JLabel myTypeLabel = new JLabel();
 
       @Nullable
       public Object getCellEditorValue() {
+        if (myCurrentSelector.getComponent() instanceof JLabel) {
+          return myCurrentSelector.getSelectedType();
+        }
         return myEditorComponent.getEditorValue();
       }
 
@@ -95,12 +99,19 @@ public abstract class ParameterTablePanel extends AbstractParameterTablePanel<Va
                                                    final boolean isSelected,
                                                    final int row,
                                                    final int column) {
+        myCurrentSelector = myParameterTypeSelectors[row];
+        if (myParameterTypeSelectors[row].getComponent() instanceof JLabel) {
+          PsiType selectedType = myCurrentSelector.getSelectedType();
+          if (selectedType != null) {
+            myTypeLabel.setText(selectedType.getPresentableText());
+          }
+          return myTypeLabel;
+        }
         myEditorComponent.setCell(table, row, column);
-        myEditorComponent.setOptions(myParameterTypeSelectors[row].getTypes());
+        myEditorComponent.setOptions(myCurrentSelector.getTypes());
         myEditorComponent.setDefaultValue(getVariableData()[row].type);
         myEditorComponent.setToString(o -> ((PsiType)o).getPresentableText());
 
-        myCurrentSelector = myParameterTypeSelectors[row];
         return myEditorComponent;
       }
     });

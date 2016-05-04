@@ -972,4 +972,9 @@ public class XDebugSessionImpl implements XDebugSession {
   XExpression[] getWatchExpressions() {
     return myDebuggerManager.getWatchesManager().getWatches(getConfigurationName());
   }
+
+  @Nullable
+  public ExecutionEnvironment getExecutionEnvironment() {
+    return myEnvironment;
+  }
 }

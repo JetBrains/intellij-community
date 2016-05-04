@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.svn;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ObjectsConvertor;
@@ -39,8 +38,7 @@ public class SvnTestDirtyScopeStateTest extends Svn17TestCase {
     myInitChangeListManager = false;
     super.setUp();
 
-    final VcsDirtyScopeVfsListener vfsListener = ApplicationManager.getApplication().getComponent(VcsDirtyScopeVfsListener.class);
-    vfsListener.setForbid(true);
+    VcsDirtyScopeVfsListener.getInstance(myProject).setForbid(true);
   }
 
   @Test

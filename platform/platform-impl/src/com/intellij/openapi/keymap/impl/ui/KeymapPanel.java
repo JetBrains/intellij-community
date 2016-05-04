@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,6 +53,7 @@ import com.intellij.ui.FilterComponent;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.ComboBoxModelEditor;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ListItemEditor;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashSet;
@@ -259,7 +260,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
             copyKeymap();
       }
     });
-    Insets insets = new Insets(2, 2, 2, 2);
+    Insets insets = JBUI.insets(2);
     myCopyButton.setMargin(insets);
     final GridBagConstraints gc =
       new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 5, 0, 0), 0, 0);
@@ -466,24 +467,15 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     myActionsTree.filter(option, myQuickLists);
   }
 
-  private void addKeyboardShortcut(@NotNull String actionId, @Nullable Shortcut shortcut) {
-    Keymap keymapSelected = myEditor.getModel().getSelected();
-    assert keymapSelected != null;
-    addKeyboardShortcut(actionId, shortcut, keymapSelected, this, myQuickLists);
-    repaintLists();
-    currentKeymapChanged();
-  }
-
   public static void addKeyboardShortcut(@NotNull String actionId,
-                                         @Nullable Shortcut shortcut,
+                                         @NotNull ShortcutRestrictions restrictions,
                                          @NotNull Keymap keymapSelected,
                                          @NotNull Component parent,
-                                         @NotNull QuickList[] quickLists) {
-    KeyboardShortcutDialog dialog = new KeyboardShortcutDialog(parent);
-    KeyboardShortcut keyboardShortcut = dialog.showAndGet(shortcut, actionId, keymapSelected, quickLists);
-    if (keyboardShortcut == null) {
-      return;
-    }
+                                         @NotNull QuickList... quickLists) {
+    if (!restrictions.allowKeyboardShortcut) return;
+    KeyboardShortcutDialog dialog = new KeyboardShortcutDialog(parent, restrictions.allowKeyboardSecondStroke);
+    KeyboardShortcut keyboardShortcut = dialog.showAndGet(actionId, keymapSelected, quickLists);
+    if (keyboardShortcut == null) return;
 
     Keymap keymap = null;
     if (dialog.hasConflicts()) {
@@ -518,25 +510,21 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     }
   }
 
-  private void addMouseShortcut(Shortcut shortcut, ShortcutRestrictions restrictions) {
-    String actionId = myActionsTree.getSelectedActionId();
-    if (actionId == null) {
-      return;
-    }
-
-    Keymap keymapSelected = myEditor.getModel().getSelected();
-
-    MouseShortcutDialog dialog = new MouseShortcutDialog(this, restrictions.allowMouseDoubleClick);
-    MouseShortcut mouseShortcut = dialog.showAndGet(shortcut, actionId, keymapSelected, myQuickLists);
-    if (mouseShortcut == null) {
-      return;
-    }
+  private static void addMouseShortcut(@NotNull String actionId,
+                                       @NotNull ShortcutRestrictions restrictions,
+                                       @NotNull Keymap keymapSelected,
+                                       @NotNull Component parent,
+                                       @NotNull QuickList... quickLists) {
+    if (!restrictions.allowMouseShortcut) return;
+    MouseShortcutDialog dialog = new MouseShortcutDialog(parent, restrictions.allowMouseDoubleClick);
+    MouseShortcut mouseShortcut = dialog.showAndGet(actionId, keymapSelected, quickLists);
+    if (mouseShortcut == null) return;
 
     Keymap keymap = null;
     if (dialog.hasConflicts()) {
-      int result = showConfirmationDialog(this);
+      int result = showConfirmationDialog(parent);
       if (result == Messages.YES) {
-        keymap = createKeymapCopyIfNeededAndPossible(this, keymapSelected);
+        keymap = createKeymapCopyIfNeededAndPossible(parent, keymapSelected);
         String[] actionIds = keymap.getActionIds(mouseShortcut);
         for (String id : actionIds) {
           keymap.removeShortcut(id, mouseShortcut);
@@ -549,7 +537,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
     // if shortcut is already registered to this action, just select it in the list
 
-    if (keymap == null) keymap = createKeymapCopyIfNeededAndPossible(this, keymapSelected);
+    if (keymap == null) keymap = createKeymapCopyIfNeededAndPossible(parent, keymapSelected);
     Shortcut[] shortcuts = keymap.getShortcuts(actionId);
     for (Shortcut shortcut1 : shortcuts) {
       if (shortcut1.equals(mouseShortcut)) {
@@ -561,9 +549,6 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     if (StringUtil.startsWithChar(actionId, '$')) {
       keymap.addShortcut(KeyMapBundle.message("editor.shortcut", actionId.substring(1)), mouseShortcut);
     }
-
-    repaintLists();
-    currentKeymapChanged();
   }
 
   private void repaintLists() {
@@ -813,17 +798,11 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       group.add(new DumbAwareAction("Add Keyboard Shortcut") {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
-          Shortcut firstShortcut = null;
-          Keymap keymap = myEditor.getModel().getSelected();
-          assert keymap != null;
-          for (Shortcut shortcut : keymap.getShortcuts(actionId)) {
-            if (shortcut instanceof KeyboardShortcut) {
-              firstShortcut = shortcut;
-              break;
-            }
-          }
-
-          addKeyboardShortcut(actionId, firstShortcut);
+          Keymap keymapSelected = myEditor.getModel().getSelected();
+          assert keymapSelected != null;
+          addKeyboardShortcut(actionId, restrictions, keymapSelected, KeymapPanel.this, myQuickLists);
+          repaintLists();
+          currentKeymapChanged();
         }
       });
     }
@@ -832,16 +811,11 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       group.add(new DumbAwareAction("Add Mouse Shortcut") {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
-          Shortcut firstMouse = null;
-          Keymap keymap = myEditor.getModel().getSelected();
-          assert keymap != null;
-          for (Shortcut shortcut : keymap.getShortcuts(actionId)) {
-            if (shortcut instanceof MouseShortcut) {
-              firstMouse = shortcut;
-              break;
-            }
-          }
-          addMouseShortcut(firstMouse, restrictions);
+          Keymap keymapSelected = myEditor.getModel().getSelected();
+          assert keymapSelected != null;
+          addMouseShortcut(actionId, restrictions, keymapSelected, KeymapPanel.this, myQuickLists);
+          repaintLists();
+          currentKeymapChanged();
         }
       });
     }

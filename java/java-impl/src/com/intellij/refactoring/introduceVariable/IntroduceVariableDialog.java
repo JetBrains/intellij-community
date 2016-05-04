@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.refactoring.introduceVariable;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.PsiType;
@@ -48,7 +47,7 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
 
   private NameSuggestionsField myNameField;
   private JCheckBox myCbReplaceAll;
-  private StateRestoringCheckBox myCbReplaceWrite = null;
+  private StateRestoringCheckBox myCbReplaceWrite;
   private JCheckBox myCbFinal;
   private boolean myCbFinalState;
   private TypeSelector myTypeSelector;

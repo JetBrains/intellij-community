@@ -150,6 +150,7 @@ public class JavaBuilderUtil {
                                        Collection<File> successfullyCompiled,
                                        @Nullable FileFilter skipMarkingDirtyFilter) throws IOException {
     try {
+      boolean performIntegrate = true;
       boolean additionalPassRequired = false;
 
       final Set<String> removedPaths = getRemovedPaths(chunk, dirtyFilesHolder);
@@ -226,11 +227,22 @@ public class JavaBuilderUtil {
             }
           }
           else {
+            // non-incremental mode
             final String messageText = "Marking " + chunk.getPresentableShortName() + " and direct dependants for recompilation";
             LOG.info("Non-incremental mode: " + messageText);
             context.processMessage(new ProgressMessage(messageText));
 
-            additionalPassRequired = isCompileJavaIncrementally(context);
+            final boolean alreadyMarkedDirty = FSOperations.isMarkedDirty(context, chunk);
+            additionalPassRequired = isCompileJavaIncrementally(context) && !alreadyMarkedDirty;
+
+            if (alreadyMarkedDirty) {
+              // need this to make sure changes data stored in Delta is complete
+              globalMappings.differentiateOnNonIncrementalMake(delta, removedPaths, filesToCompile);
+            }
+            else {
+              performIntegrate = false;
+            }
+
             FileFilter toBeMarkedFilter = skipMarkingDirtyFilter == null ? null : new NegationFileFilter(skipMarkingDirtyFilter);
             FSOperations.markDirtyRecursively(context, CompilationRound.NEXT, chunk, toBeMarkedFilter);
           }
@@ -255,9 +267,10 @@ public class JavaBuilderUtil {
         return false;
       }
 
-      context.processMessage(new ProgressMessage("Updating dependency information... [" + chunk.getPresentableShortName() + "]"));
-
-      globalMappings.integrate(delta);
+      if (performIntegrate) {
+        context.processMessage(new ProgressMessage("Updating dependency information... [" + chunk.getPresentableShortName() + "]"));
+        globalMappings.integrate(delta);
+      }
 
       return additionalPassRequired;
     }

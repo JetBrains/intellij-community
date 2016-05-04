@@ -271,6 +271,9 @@ public class JavaCompletionUtil {
               final Set<LookupElement> set = new LinkedHashSet<LookupElement>();
               final boolean overloadsFound = LambdaUtil.processParentOverloads(lambdaExpression, functionalInterfaceType -> {
                 PsiType qualifierType = LambdaUtil.getLambdaParameterFromType(functionalInterfaceType, parameterIndex);
+                if (qualifierType instanceof PsiWildcardType) {
+                  qualifierType = ((PsiWildcardType)qualifierType).getBound();
+                }
                 if (qualifierType == null) return;
 
                 PsiReferenceExpression fakeRef = createReference("xxx.xxx", createContextWithXxxVariable(element, qualifierType));
@@ -281,10 +284,10 @@ public class JavaCompletionUtil {
           }
         }
       }
-    } 
+    }
     return processJavaQualifiedReference(element, javaReference, elementFilter, options, matcher, parameters);
   }
-  
+
   private static Set<LookupElement> processJavaQualifiedReference(PsiElement element, PsiJavaReference javaReference, ElementFilter elementFilter,
                                                         JavaCompletionProcessor.Options options,
                                                         final PrefixMatcher matcher, CompletionParameters parameters) {

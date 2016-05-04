@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -128,8 +128,8 @@ public class ExtractMethodProcessor implements MatchProvider {
   protected PsiStatement myFirstExitStatementCopy;
   private PsiMethod myExtractedMethod;
   private PsiMethodCallExpression myMethodCall;
-  protected boolean myNullConditionalCheck = false;
-  protected boolean myNotNullConditionalCheck = false;
+  protected boolean myNullConditionalCheck;
+  protected boolean myNotNullConditionalCheck;
   private Nullness myNullness;
 
   public ExtractMethodProcessor(Project project,

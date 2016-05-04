@@ -87,7 +87,7 @@ public class GrChangeInfoImpl implements JavaChangeInfo {
         oldReturnType = method.getReturnType();
       }
       try {
-        PsiType newReturnType = returnType == null ? null : returnType.getType(method, getMethod().getManager());
+        PsiType newReturnType = returnType == null ? null : returnType.getType(method);
         if ((oldReturnType == null && newReturnType != null) || (oldReturnType != null && !oldReturnType.equals(newReturnType))) {
           myIsReturnTypeChanged = true;
         }
@@ -122,7 +122,7 @@ public class GrChangeInfoImpl implements JavaChangeInfo {
           myIsParameterNamesChanged = true;
         }
         try {
-          PsiType type = parameter.createType(method, method.getManager());
+          PsiType type = parameter.createType(method);
           PsiType oldType = params[i].getType();
           if (!oldType.equals(type)) {
             myIsParameterTypesChanged = true;
@@ -336,7 +336,7 @@ public class GrChangeInfoImpl implements JavaChangeInfo {
   @Override
   public PsiExpression getValue(int i, PsiCallExpression callExpression) {
     if (defaultValues[i] != null) return defaultValues[i];
-    final PsiElement valueAtCallSite = parameters.get(i).getActualValue(callExpression);
+    final PsiElement valueAtCallSite = parameters.get(i).getActualValue(callExpression, PsiSubstitutor.EMPTY);
     return valueAtCallSite instanceof PsiExpression ? (PsiExpression)valueAtCallSite : null;
   }
 

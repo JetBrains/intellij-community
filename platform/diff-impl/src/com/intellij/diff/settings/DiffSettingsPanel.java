@@ -69,7 +69,7 @@ public class DiffSettingsPanel {
       setPaintLabels(true);
 
       //noinspection UseOfObsoleteCollectionType
-      Dictionary<Integer, JLabel> sliderLabels = new Hashtable<Integer, JLabel>();
+      Dictionary<Integer, JLabel> sliderLabels = new Hashtable<>();
       for (int i = 0; i < TextDiffSettingsHolder.CONTEXT_RANGE_MODES.length; i++) {
         sliderLabels.put(i, new JLabel(TextDiffSettingsHolder.CONTEXT_RANGE_MODE_LABELS[i]));
       }

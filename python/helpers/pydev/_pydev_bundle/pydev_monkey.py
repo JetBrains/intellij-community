@@ -62,9 +62,37 @@ def is_python(path):
 
     return False
 
+
+def remove_quotes_from_args(args):
+    new_args = []
+    for x in args:
+        if x.startswith('"') and x.endswith('"'):
+            x = x.strip('"')
+        new_args.append(x)
+    return new_args
+
+
+def quote_args(args):
+    if sys.platform == "win32":
+        quoted_args = []
+        for x in args:
+            if x.startswith('"') and x.endswith('"'):
+                quoted_args.append(x)
+            else:
+                if ' ' in x:
+                    x = x.replace('"', '\\"')
+                    quoted_args.append('"%s"' % x)
+                else:
+                    quoted_args.append(x)
+        return quoted_args
+    else:
+        return args
+
+
 def patch_args(args):
     try:
         log_debug("Patching args: %s"% str(args))
+        args = remove_quotes_from_args(args)
 
         import sys
         new_args = []
@@ -76,10 +104,7 @@ def patch_args(args):
             try:
                 indC = args.index('-c')
             except ValueError:
-                try:
-                    indC = args.index('"-c"')
-                except ValueError:
-                    indC = -1
+                indC = -1
 
             if indC != -1:
                 host, port = _get_host_port()
@@ -87,7 +112,7 @@ def patch_args(args):
                 if port is not None:
                     new_args.extend(args)
                     new_args[indC + 1] = _get_python_c_args(host, port, indC, args)
-                    return new_args
+                    return quote_args(new_args)
             else:
                 # Check for Python ZIP Applications and don't patch the args for them.
                 # Assumes the first non `-<flag>` argument is what we need to check.
@@ -121,16 +146,12 @@ def patch_args(args):
         #  '--vm_type', 'python', '--client', '127.0.0.1', '--port', '56352', '--file', 'x:\\snippet1.py']
         original = sys.original_argv[:]
         while i < len(args):
-            if sys.platform == "win32" and args[i].endswith('"'):
-                arg = args[i].strip('"')
-            else:
-                arg = args[i]
-            if arg == '-m':
+            if args[i] == '-m':
                 # Always insert at pos == 1 (i.e.: pydevd "--module" --multiprocess ...)
                 original.insert(1, '--module')
             else:
-                if arg.startswith('-'):
-                    new_args.append(arg)
+                if args[i].startswith('-'):
+                    new_args.append(args[i])
                 else:
                     break
             i += 1
@@ -142,12 +163,8 @@ def patch_args(args):
         if i >= len(args) or _is_managed_arg(args[i]):  # no need to add pydevd twice
             return args
 
-        for x in original:  # @UndefinedVariable
-            if sys.platform == "win32" and not x.endswith('"'):
-                arg = '"%s"' % x
-            else:
-                arg = x
-            new_args.append(arg)
+        for x in original:
+            new_args.append(x)
             if x == '--file':
                 break
 
@@ -155,25 +172,10 @@ def patch_args(args):
             new_args.append(args[i])
             i += 1
 
-        return new_args
+        return quote_args(new_args)
     except:
         traceback.print_exc()
         return args
-
-
-def args_to_str(args):
-    quoted_args = []
-    for x in args:
-        if x.startswith('"') and x.endswith('"'):
-            quoted_args.append(x)
-        else:
-            if ' ' in x:
-                x = x.replace('"', '\\"')
-                quoted_args.append('"%s"' % x)
-            else:
-                quoted_args.append(x)
-
-    return ' '.join(quoted_args)
 
 
 def str_to_args_windows(args):
@@ -265,7 +267,7 @@ def patch_arg_str_win(arg_str):
     # Fix https://youtrack.jetbrains.com/issue/PY-9767 (args may be empty)
     if not args or not is_python(args[0]):
         return arg_str
-    arg_str = args_to_str(patch_args(args))
+    arg_str = ' '.join(patch_args(args))
     log_debug("New args: %s" % arg_str)
     return arg_str
 

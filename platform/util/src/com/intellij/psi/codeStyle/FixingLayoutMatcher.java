@@ -25,6 +25,8 @@ import java.util.Map;
 
 /**
  * @author Dmitry Avdeev
+ *
+ * @see NameUtil#buildMatcher(String)
  */
 public class FixingLayoutMatcher extends MinusculeMatcher {
 
@@ -48,10 +50,10 @@ public class FixingLayoutMatcher extends MinusculeMatcher {
   @Nullable
   private final MinusculeMatcher myFixedMatcher;
 
-  public FixingLayoutMatcher(@NotNull String pattern, @NotNull NameUtil.MatchingCaseSensitivity options) {
-    super(pattern, options);
+  FixingLayoutMatcher(@NotNull String pattern, @NotNull NameUtil.MatchingCaseSensitivity options, String hardSeparators) {
+    super(pattern, options, hardSeparators);
     String s = fixPattern(pattern);
-    myFixedMatcher = s == null ? null : new MinusculeMatcher(s, options);
+    myFixedMatcher = s == null ? null : new MinusculeMatcher(s, options, hardSeparators);
   }
 
   @Nullable

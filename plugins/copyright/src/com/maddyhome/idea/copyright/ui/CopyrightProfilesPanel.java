@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.MasterDetailsComponent;
@@ -166,7 +167,7 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
   @Nullable
   protected ArrayList<AnAction> createActions(boolean fromPopup) {
     ArrayList<AnAction> result = new ArrayList<AnAction>();
-    result.add(new AnAction("Add", "Add", IconUtil.getAddIcon()) {
+    result.add(new DumbAwareAction("Add", "Add", IconUtil.getAddIcon()) {
       {
         registerCustomShortcutSet(CommonShortcuts.INSERT, myTree);
       }
@@ -180,7 +181,7 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
       }
     });
     result.add(new MyDeleteAction());
-    result.add(new AnAction("Copy", "Copy", PlatformIcons.COPY_ICON) {
+    result.add(new DumbAwareAction("Copy", "Copy", PlatformIcons.COPY_ICON) {
       {
         registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, InputEvent.CTRL_MASK)), myTree);
       }
@@ -201,7 +202,7 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
         event.getPresentation().setEnabled(getSelectedObject() != null);
       }
     });
-    result.add(new AnAction("Import", "Import", PlatformIcons.IMPORT_ICON) {
+    result.add(new DumbAwareAction("Import", "Import", PlatformIcons.IMPORT_ICON) {
       @Override
       public void actionPerformed(AnActionEvent event) {
         FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
@@ -212,7 +213,7 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
               return fileType != PlainTextFileType.INSTANCE && (fileType == StdFileTypes.IDEA_MODULE || fileType == StdFileTypes.XML);
             }
           })
-          .withTitle("Choose file containing copyright notice");
+          .withTitle("Choose File Containing Copyright Notice");
         FileChooser.chooseFile(descriptor, myProject, null, new Consumer<VirtualFile>() {
           @Override
           public void consume(VirtualFile file) {

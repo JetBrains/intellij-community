@@ -63,6 +63,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.FocusTrackback;
 import com.intellij.ui.docking.DockContainer;
@@ -71,6 +72,7 @@ import com.intellij.ui.docking.impl.DockManagerImpl;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
+import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.impl.MessageListenerList;
@@ -873,7 +875,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
       newProviders = null;
       builders = null;
     }
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+    Runnable runnable = new Runnable() {
       @Override
       public void run() {
         if (myProject.isDisposed() || !file.isValid()) {
@@ -991,10 +993,37 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
           window.setFilePinned(file, pin);
         }
       }
-    });
+    };
+
+    commitAndInvoke(runnable);
+
     EditorWithProviderComposite composite = compositeRef.get();
     return Pair.create(composite == null ? EMPTY_EDITOR_ARRAY : composite.getEditors(),
                        composite == null ? EMPTY_PROVIDER_ARRAY : composite.getProviders());
+  }
+
+  /**
+   * Commit all documents and execute the runnable on EDT.
+   * When called not on EDT, performs commit asynchronously to avoid UI freezes:
+   * {@link #restoreEditorState} requires a committed document (to apply folding info in PsiAwareTextEditorProvider#setStateImpl).
+   */
+  private void commitAndInvoke(@NotNull Runnable runnable) {
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+      runnable.run();
+    } else {
+      Semaphore semaphore = new Semaphore();
+      semaphore.down();
+      PsiDocumentManager.getInstance(myProject).performLaterWhenAllCommitted(() -> {
+        try {
+          runnable.run();
+        } finally {
+          semaphore.up();
+        }
+      });
+      //noinspection StatementWithEmptyBody
+      while (!semaphore.waitFor(10) && !myProject.isDisposed());
+    }
   }
   
   @Nullable
@@ -1481,8 +1510,8 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
     final FileStatusManager fileStatusManager = FileStatusManager.getInstance(myProject);
     if (fileStatusManager != null) {
-      /**
-       * Updates tabs colors
+      /*
+        Updates tabs colors
        */
       final MyFileStatusListener myFileStatusListener = new MyFileStatusListener();
       fileStatusManager.addFileStatusListener(myFileStatusListener, myProject);
@@ -1490,13 +1519,13 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     connection.subscribe(FileTypeManager.TOPIC, new MyFileTypeListener());
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, new MyRootsListener());
 
-    /**
-     * Updates tabs names
+    /*
+      Updates tabs names
      */
     final MyVirtualFileListener myVirtualFileListener = new MyVirtualFileListener();
     VirtualFileManager.getInstance().addVirtualFileListener(myVirtualFileListener, myProject);
-    /**
-     * Extends/cuts number of opened tabs. Also updates location of tabs.
+    /*
+      Extends/cuts number of opened tabs. Also updates location of tabs.
      */
     final MyUISettingsListener myUISettingsListener = new MyUISettingsListener();
     UISettings.getInstance().addUISettingsListener(myUISettingsListener, myProject);

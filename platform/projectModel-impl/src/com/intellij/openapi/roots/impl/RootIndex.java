@@ -249,7 +249,7 @@ public class RootIndex {
             final Module depModule = moduleOrderEntry.getModule();
             if (depModule != null) {
               Node node = graph.myNodes.get(depModule);
-              OrderEnumerator en = OrderEnumerator.orderEntries(depModule).exportedOnly();
+              OrderEnumerator en = OrderEnumerator.orderEntries(depModule).exportedOnly().recursively();
               if (node == null) {
                 node = new Node();
                 node.myKey = depModule;

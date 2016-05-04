@@ -292,7 +292,7 @@ public class UIUtil {
     }
   };
 
-  private static volatile Pair<String, Integer> ourSystemFontData = null;
+  private static volatile Pair<String, Integer> ourSystemFontData;
 
   public static final float DEF_SYSTEM_FONT_SIZE = 12f; // TODO: consider 12 * 1.33 to compensate JDK's 72dpi font scale
 
@@ -354,9 +354,9 @@ public class UIUtil {
       return isRetina;
     }
 
-    /**
-     * Could be quite easily implemented with [NSScreen backingScaleFactor]
-     * and JNA
+    /*
+      Could be quite easily implemented with [NSScreen backingScaleFactor]
+      and JNA
      */
     //private static boolean isAppleRetina (Graphics2D g2d) {
     //  return false;
@@ -2053,14 +2053,9 @@ public class UIUtil {
     return null;
   }
 
+  @Deprecated
   public static <T extends Component> T findParentByClass(@NotNull Component c, Class<T> cls) {
-    for (Component component = c; component != null; component = component.getParent()) {
-      if (cls.isAssignableFrom(component.getClass())) {
-        @SuppressWarnings({"unchecked"}) final T t = (T)component;
-        return t;
-      }
-    }
-    return null;
+    return getParentOfType(cls, c);
   }
 
   @Language("HTML")
@@ -2762,18 +2757,24 @@ public class UIUtil {
     return child == parent;
   }
 
+  /**
+   * Searches above in the component hierarchy starting from the specified component.
+   * Note that the initial component is also checked.
+   *
+   * @param type      expected class
+   * @param component initial component
+   * @return a component of the specified type, or {@code null} if the search is failed
+   * @see SwingUtilities#getAncestorOfClass
+   */
   @Nullable
-  public static <T> T getParentOfType(Class<? extends T> cls, Component c) {
-    Component eachParent = c;
-    while (eachParent != null) {
-      if (cls.isAssignableFrom(eachParent.getClass())) {
-        @SuppressWarnings({"unchecked"}) final T t = (T)eachParent;
-        return t;
+  public static <T> T getParentOfType(@NotNull Class<? extends T> type, Component component) {
+    while (component != null) {
+      if (type.isInstance(component)) {
+        //noinspection unchecked
+        return (T)component;
       }
-
-      eachParent = eachParent.getParent();
+      component = component.getParent();
     }
-
     return null;
   }
 
@@ -3502,7 +3503,7 @@ public class UIUtil {
     return null;
   }
 
-  private static Map<String, String> ourRealFontFamilies = null;
+  private static Map<String, String> ourRealFontFamilies;
 
   //Experimental, seems to be reliable under MacOS X only
 

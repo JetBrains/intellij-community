@@ -17,6 +17,7 @@ package com.intellij.execution;
 
 import com.intellij.ExtensionPoints;
 import com.intellij.debugger.impl.GenericDebuggerRunnerSettings;
+import com.intellij.diagnostic.logging.OutputFileUtil;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
@@ -124,7 +125,8 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
       @Override
       public void startNotified(ProcessEvent event) {
         if (getConfiguration().isSaveOutputToFile()) {
-          root.setOutputFilePath(getConfiguration().getOutputFilePath());
+          final File file = OutputFileUtil.getOutputFile(getConfiguration());
+          root.setOutputFilePath(file != null ? file.getAbsolutePath() : null);
         }
       }
 
@@ -369,7 +371,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
 
   protected void writeClassesPerModule(String packageName, JavaParameters javaParameters, Map<Module, List<String>> perModule)
     throws FileNotFoundException, UnsupportedEncodingException, CantRunException {
-    if (perModule != null && perModule.size() > 1) {
+    if (perModule != null) {
       final String classpath = getScope() == TestSearchScope.WHOLE_PROJECT
                                ? null : javaParameters.getClassPath().getPathsString();
 

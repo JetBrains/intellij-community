@@ -84,7 +84,7 @@ public abstract class ValueContainer<Value> {
     return true;
   }
 
-  private volatile boolean myNeedsCompacting = false;
+  private volatile boolean myNeedsCompacting;
 
   boolean needsCompacting() {
     return myNeedsCompacting;

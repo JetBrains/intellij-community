@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,8 +34,9 @@ import java.util.List;
 import java.util.Set;
 
 import static com.intellij.codeInspection.bytecodeAnalysis.AbstractValues.*;
+import static com.intellij.codeInspection.bytecodeAnalysis.Direction.InOut;
+import static com.intellij.codeInspection.bytecodeAnalysis.Direction.Out;
 import static org.jetbrains.org.objectweb.asm.Opcodes.*;
-import static com.intellij.codeInspection.bytecodeAnalysis.Direction.*;
 
 class InOutAnalysis extends Analysis<Result> {
 
@@ -47,8 +48,8 @@ class InOutAnalysis extends Analysis<Result> {
   private final Value inValue;
   private final int generalizeShift;
   private Result internalResult;
-  private int id = 0;
-  private int pendingTop = 0;
+  private int id;
+  private int pendingTop;
 
   protected InOutAnalysis(RichControlFlow richControlFlow, Direction direction, boolean[] resultOrigins, boolean stable, State[] pending) {
     super(richControlFlow, direction, stable);
@@ -273,7 +274,7 @@ class InOutInterpreter extends BasicInterpreter {
   final boolean[] resultOrigins;
   final boolean nullAnalysis;
 
-  boolean deReferenced = false;
+  boolean deReferenced;
 
   InOutInterpreter(Direction direction, InsnList insns, boolean[] resultOrigins) {
     this.direction = direction;

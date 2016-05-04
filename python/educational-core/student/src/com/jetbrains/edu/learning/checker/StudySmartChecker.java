@@ -54,10 +54,10 @@ public class StudySmartChecker {
         EduDocumentListener listener = new EduDocumentListener(windowTaskFile);
         windowDocument.addDocumentListener(listener);
         int start = placeholder.getRealStartOffset(windowDocument);
-        int end = start + placeholder.getLength();
+        int end = start + placeholder.getRealLength();
         final AnswerPlaceholder userAnswerPlaceholder = usersTaskFile.getAnswerPlaceholders().get(placeholder.getIndex());
         int userStart = userAnswerPlaceholder.getRealStartOffset(usersDocument);
-        int userEnd = userStart + userAnswerPlaceholder.getLength();
+        int userEnd = userStart + userAnswerPlaceholder.getRealLength();
         String text = usersDocument.getText(new TextRange(userStart, userEnd));
         windowDocument.replaceString(start, end, text);
         ApplicationManager.getApplication().runWriteAction(() -> {

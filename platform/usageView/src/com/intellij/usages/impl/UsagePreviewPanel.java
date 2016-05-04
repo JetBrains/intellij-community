@@ -18,7 +18,6 @@ package com.intellij.usages.impl;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -126,22 +125,6 @@ public class UsagePreviewPanel extends UsageContextPanelBase {
                                @NotNull final Project project,
                                boolean highlightOnlyNameElements,
                                int highlightLayer) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (project.isDisposed()) return;
-        if (!editor.isDisposed()) {
-          doHighlight(infos, editor, project, highlightOnlyNameElements, highlightLayer);
-        }
-      }
-    }, ModalityState.current());
-  }
-
-  private static void doHighlight(@NotNull List<UsageInfo> infos,
-                                  @NotNull Editor editor,
-                                  @NotNull Project project,
-                                  boolean highlightOnlyNameElements,
-                                  int highlightLayer) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     MarkupModel markupModel = editor.getMarkupModel();

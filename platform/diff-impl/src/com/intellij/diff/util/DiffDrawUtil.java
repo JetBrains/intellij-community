@@ -33,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.awt.geom.CubicCurve2D;
 import java.awt.geom.Path2D;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -236,6 +237,31 @@ public class DiffDrawUtil {
   //
 
   // TODO: desync of range and 'border' line markers on typing
+
+  @NotNull
+  public static List<RangeHighlighter> createUnifiedChunkHighlighters(@NotNull Editor editor,
+                                                                      @NotNull LineRange deleted,
+                                                                      @NotNull LineRange inserted,
+                                                                      boolean ignored) {
+    List<RangeHighlighter> list = new ArrayList<>();
+    if (!inserted.isEmpty() && !deleted.isEmpty()) {
+      list.addAll(createLineMarker(editor, deleted.start, TextDiffType.DELETED, SeparatorPlacement.TOP));
+      list.addAll(createHighlighter(editor, deleted.start, deleted.end, TextDiffType.DELETED, ignored));
+      list.addAll(createHighlighter(editor, inserted.start, inserted.end, TextDiffType.INSERTED, ignored));
+      list.addAll(createLineMarker(editor, inserted.end - 1, TextDiffType.INSERTED, SeparatorPlacement.BOTTOM));
+    }
+    else if (!inserted.isEmpty()) {
+      list.addAll(createLineMarker(editor, inserted.start, TextDiffType.INSERTED, SeparatorPlacement.TOP));
+      list.addAll(createHighlighter(editor, inserted.start, inserted.end, TextDiffType.INSERTED, ignored));
+      list.addAll(createLineMarker(editor, inserted.end - 1, TextDiffType.INSERTED, SeparatorPlacement.BOTTOM));
+    }
+    else if (!deleted.isEmpty()) {
+      list.addAll(createLineMarker(editor, deleted.start, TextDiffType.DELETED, SeparatorPlacement.TOP));
+      list.addAll(createHighlighter(editor, deleted.start, deleted.end, TextDiffType.DELETED, ignored));
+      list.addAll(createLineMarker(editor, deleted.end - 1, TextDiffType.DELETED, SeparatorPlacement.BOTTOM));
+    }
+    return list;
+  }
 
   @NotNull
   public static List<RangeHighlighter> createHighlighter(@NotNull Editor editor, int startLine, int endLine, @NotNull TextDiffType type,

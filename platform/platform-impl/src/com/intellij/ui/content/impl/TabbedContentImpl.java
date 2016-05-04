@@ -16,6 +16,7 @@
 package com.intellij.ui.content.impl;
 
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.TabbedContent;
@@ -76,7 +77,7 @@ public class TabbedContentImpl extends ContentImpl implements TabbedContent {
     int index = myTabs.indexOf(toRemove);
     if (index != -1) {
       myTabs.remove(index);
-      index = index > 0 ? index-1 : index;
+      index = index > 0 ? index - 1 : index;
       if (index < myTabs.size()) {
         selectContent(index);
       }
@@ -144,7 +145,7 @@ public class TabbedContentImpl extends ContentImpl implements TabbedContent {
     int selectedTab = ContentUtilEx.getSelectedTab(this);
     ContentManager manager = getManager();
     String prefix = getTitlePrefix();
-    manager.removeContent(this, true);
+    manager.removeContent(this, false);
     PropertiesComponent.getInstance().setValue(SPLIT_PROPERTY_PREFIX + prefix, Boolean.TRUE.toString());
     for (int i = 0; i < copy.size(); i++) {
       final boolean select = i == selectedTab;
@@ -152,6 +153,7 @@ public class TabbedContentImpl extends ContentImpl implements TabbedContent {
       final String tabName = copy.get(i).first;
       ContentUtilEx.addTabbedContent(manager, component, prefix, tabName, select);
     }
+    Disposer.dispose(this);
   }
 
   @Override

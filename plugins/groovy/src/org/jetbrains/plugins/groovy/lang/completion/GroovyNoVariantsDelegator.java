@@ -93,7 +93,7 @@ public class GroovyNoVariantsDelegator extends CompletionContributor {
         }
         result.addElement(element);
       }
-    }, new InheritorsHolder(result), result.getPrefixMatcher());
+    }, new JavaCompletionSession(result), result.getPrefixMatcher());
   }
 
   private static void suggestChainedCalls(CompletionParameters parameters, CompletionResultSet result) {
@@ -114,25 +114,21 @@ public class GroovyNoVariantsDelegator extends CompletionContributor {
 
     String fullPrefix = position.getContainingFile().getText().substring(parent.getTextRange().getStartOffset(), parameters.getOffset());
     final CompletionResultSet qualifiedCollector = result.withPrefixMatcher(fullPrefix);
-    InheritorsHolder inheritors = new InheritorsHolder(result);
-    for (final LookupElement base : suggestQualifierItems(parameters, (GrReferenceElement)qualifier, inheritors)) {
+    JavaCompletionSession session = new JavaCompletionSession(result);
+    for (final LookupElement base : suggestQualifierItems(parameters, (GrReferenceElement)qualifier, session)) {
       final PsiType type = getPsiType(base.getObject());
       if (type != null && !PsiType.VOID.equals(type)) {
         GrReferenceElement ref = createMockReference(position, type, base);
         PsiElement refName = ref.getReferenceNameElement();
         assert refName != null;
         CompletionParameters newParams = parameters.withPosition(refName, refName.getTextRange().getStartOffset());
-        GrMainCompletionProvider.completeReference(newParams, ref, inheritors, result.getPrefixMatcher(), new Consumer<LookupElement>() {
-          @Override
-          public void consume(LookupElement element) {
-            qualifiedCollector.addElement(new JavaChainLookupElement(base, element) {
-              @Override
-              protected boolean shouldParenthesizeQualifier(PsiFile file, int startOffset, int endOffset) {
-                return false;
-              }
-            });
-          }
-        });
+        GrMainCompletionProvider.completeReference(newParams, ref, session, result.getPrefixMatcher(), element ->
+          qualifiedCollector.addElement(new JavaChainLookupElement(base, element) {
+            @Override
+            protected boolean shouldParenthesizeQualifier(PsiFile file, int startOffset, int endOffset) {
+              return false;
+            }
+          }));
       }
     }
   }
@@ -170,7 +166,7 @@ public class GroovyNoVariantsDelegator extends CompletionContributor {
 
   private static Set<LookupElement> suggestQualifierItems(CompletionParameters _parameters,
                                                           GrReferenceElement qualifier,
-                                                          InheritorsHolder inheritors) {
+                                                          JavaCompletionSession session) {
     CompletionParameters parameters =
       _parameters.withPosition(qualifier.getReferenceNameElement(), qualifier.getTextRange().getEndOffset());
     String referenceName = qualifier.getReferenceName();
@@ -180,12 +176,9 @@ public class GroovyNoVariantsDelegator extends CompletionContributor {
 
     final PrefixMatcher qMatcher = new CamelHumpMatcher(referenceName);
     final Set<LookupElement> variants = new LinkedHashSet<LookupElement>();
-    GrMainCompletionProvider.completeReference(parameters, qualifier, inheritors, qMatcher, new Consumer<LookupElement>() {
-      @Override
-      public void consume(LookupElement element) {
-        if (qMatcher.prefixMatches(element)) {
-          variants.add(element);
-        }
+    GrMainCompletionProvider.completeReference(parameters, qualifier, session, qMatcher, element -> {
+      if (qMatcher.prefixMatches(element)) {
+        variants.add(element);
       }
     });
 
@@ -195,14 +188,11 @@ public class GroovyNoVariantsDelegator extends CompletionContributor {
 
 
     if (variants.isEmpty()) {
-      GrMainCompletionProvider.addAllClasses(parameters, new Consumer<LookupElement>() {
-        @Override
-        public void consume(LookupElement element) {
-          if (qMatcher.prefixMatches(element)) {
-            variants.add(element);
-          }
+      GrMainCompletionProvider.addAllClasses(parameters, element -> {
+        if (qMatcher.prefixMatches(element)) {
+          variants.add(element);
         }
-      }, inheritors, qMatcher);
+      }, session, qMatcher);
     }
     return variants;
   }

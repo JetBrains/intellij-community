@@ -147,7 +147,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private int myLinePaintersWidth;
 
   static {
-    ComplementaryFontsRegistry.getFontAbleToDisplay(' ', 0, 0, UIManager.getFont("Label.font").getFamily()); // load costly font info
+    ComplementaryFontsRegistry.getFontAbleToDisplay(' ', 0, Font.PLAIN, UIManager.getFont("Label.font").getFamily()); // load costly font info
   }
 
   private final CommandProcessor myCommandProcessor;
@@ -1174,16 +1174,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     document.addDocumentListener(highlighter);
     myHighlighter = highlighter;
-    myHighlighterDisposable = new Disposable() {
-      @Override
-      public void dispose() {
-        document.removeDocumentListener(highlighter);
-      }
-    };
+    myHighlighterDisposable = () -> document.removeDocumentListener(highlighter);
     Disposer.register(myDisposable, myHighlighterDisposable);
     highlighter.setEditor(this);
     highlighter.setText(document.getImmutableCharSequence());
-    EditorHighlighterCache.rememberEditorHighlighterForCachesOptimization(document, highlighter);
+    if (!(highlighter instanceof EmptyEditorHighlighter)) {
+      EditorHighlighterCache.rememberEditorHighlighterForCachesOptimization(document, highlighter);
+    }
 
     if (myPanel != null) {
       reinitSettings();
@@ -1947,10 +1944,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     boolean painted = false;
     if (myDocument.getTextLength() > 0) {
-      int startDocLine = myDocument.getLineNumber(e.getOffset());
-      int endDocLine = myDocument.getLineNumber(e.getOffset() + e.getNewLength());
-      if (e.getOldLength() > e.getNewLength() || startDocLine != endDocLine || StringUtil.indexOf(e.getOldFragment(), '\n') != -1) {
-        updateGutterSize();
+      if (startLine != endLine || StringUtil.indexOf(e.getOldFragment(), '\n') != -1) {
+        myGutterComponent.clearLineToGutterRenderersCache();
       }
 
       if (countLineFeeds(e.getOldFragment()) != countLineFeeds(e.getNewFragment())) {
@@ -2036,7 +2031,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       dim = mySizeAdjustmentStrategy.adjust(dim, myPreferredSize, this);
       myPreferredSize = dim;
 
-      myGutterComponent.updateSize();
+      updateGutterSize();
 
       myEditorComponent.setSize(dim);
       myEditorComponent.fireResized();
@@ -4415,7 +4410,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return;
     }
 
-    if (getMouseEventArea(e) == EditorMouseEventArea.LINE_MARKERS_AREA) {
+    EditorMouseEventArea eventArea = getMouseEventArea(e);
+    if (eventArea == EditorMouseEventArea.LINE_MARKERS_AREA ||
+        eventArea == EditorMouseEventArea.FOLDING_OUTLINE_AREA && !isInsideGutterWhitespaceArea(e)) {
       // The general idea is that we don't want to change caret position on gutter marker area click (e.g. on setting a breakpoint)
       // but do want to allow bulk selection on gutter marker mouse drag. However, when a drag is performed, the first event is
       // a 'mouse pressed' event, that's why we remember target line on 'mouse pressed' processing and use that information on
@@ -5859,7 +5856,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         myExpectedCaretOffset = -1;
       }
 
-      if (event.getArea() == EditorMouseEventArea.LINE_MARKERS_AREA) {
+      if (event.getArea() == EditorMouseEventArea.LINE_MARKERS_AREA ||
+          event.getArea() == EditorMouseEventArea.FOLDING_OUTLINE_AREA && !isInsideGutterWhitespaceArea(e)) {
         myDragOnGutterSelectionStartLine = EditorUtil.yPositionToLogicalLine(EditorImpl.this, e);
       }
 

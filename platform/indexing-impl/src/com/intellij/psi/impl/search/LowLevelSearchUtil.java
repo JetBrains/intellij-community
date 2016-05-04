@@ -229,7 +229,8 @@ public class LowLevelSearchUtil {
     LOG.error(msg);
   }
 
-  private static final ConcurrentMap<CharSequence, Map<StringSearcher, int[]>> cache = ContainerUtil.createConcurrentWeakMap();
+  private static final ConcurrentMap<CharSequence, Map<StringSearcher, int[]>> cache =
+    ContainerUtil.createConcurrentWeakMap(ContainerUtil.identityStrategy());
   public static boolean processTextOccurrences(@NotNull CharSequence text,
                                                int startOffset,
                                                int endOffset,

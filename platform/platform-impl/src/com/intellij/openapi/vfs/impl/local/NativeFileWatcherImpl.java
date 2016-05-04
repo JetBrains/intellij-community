@@ -65,8 +65,8 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
   private File myExecutable;
 
   private volatile MyProcessHandler myProcessHandler;
-  private volatile int myStartAttemptCount = 0;
-  private volatile boolean myIsShuttingDown = false;
+  private volatile int myStartAttemptCount;
+  private volatile boolean myIsShuttingDown;
   private final AtomicInteger mySettingRoots = new AtomicInteger(0);
   private volatile List<String> myRecursiveWatchRoots = Collections.emptyList();
   private volatile List<String> myFlatWatchRoots = Collections.emptyList();
@@ -287,7 +287,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
 
   private class MyProcessHandler extends OSProcessHandler {
     private final BufferedWriter myWriter;
-    private WatcherOp myLastOp = null;
+    private WatcherOp myLastOp;
     private final List<String> myLines = ContainerUtil.newArrayList();
 
     @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")

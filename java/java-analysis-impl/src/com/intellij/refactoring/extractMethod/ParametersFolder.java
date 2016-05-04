@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ public class ParametersFolder {
   private final Set<String> myUsedNames = new HashSet<String>();
 
   private final Set<PsiVariable> myDeleted = new HashSet<PsiVariable>();
-  private boolean myFoldingSelectedByDefault = false;
+  private boolean myFoldingSelectedByDefault;
 
 
   public void clear() {
@@ -118,15 +118,12 @@ public class ParametersFolder {
     PsiExpression mostRanked = null;
     for (int i = mentionedInExpressions.size() - 1; i >= 0; i--) {
       PsiExpression expression = mentionedInExpressions.get(i);
-      if (expression instanceof PsiArrayAccessExpression) {
-        mostRanked = expression;
-        if (!isConditional(expression, scope)) {
-          myFoldingSelectedByDefault = true;
-          break;
-        }
+      boolean arrayAccess = expression instanceof PsiArrayAccessExpression && !isConditional(expression, scope);
+      if (arrayAccess) {
+        myFoldingSelectedByDefault = true;
       }
       final int r = findUsedVariables(data, inputVariables, expression).size();
-      if (currentRank < r) {
+      if (currentRank < r || arrayAccess && currentRank == r) {
         currentRank = r;
         mostRanked = expression;
       }

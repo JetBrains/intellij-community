@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -106,7 +106,15 @@ public class ActionsTree {
             }
           }
         }
+      }
 
+      @Override
+      public String convertValueToText(Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+        if (value instanceof DefaultMutableTreeNode) {
+          String path = ActionsTree.this.getPath((DefaultMutableTreeNode)value);
+          return StringUtil.notNullize(path);
+        }
+        return super.convertValueToText(value, selected, expanded, leaf, row, hasFocus);
       }
     };
     myTree.setRootVisible(false);
@@ -604,7 +612,7 @@ public class ActionsTree {
         }
         if (!myHaveLink) {
           Color background = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
-          SearchUtil.appendFragments(myFilter, text, Font.PLAIN, foreground, background, this);
+          SearchUtil.appendFragments(myFilter, text, SimpleTextAttributes.STYLE_PLAIN, foreground, background, this);
           if (actionId != null && myPaintInternalInfo) {
             String pluginName = myPluginNames.get(actionId);
             if (pluginName != null) {

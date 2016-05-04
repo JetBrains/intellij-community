@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ class DetailExceptionsPredicate implements PsiElementPredicate {
     }
     final PsiTryStatement tryStatement = (PsiTryStatement)parent;
     final PsiCodeBlock tryBlock = tryStatement.getTryBlock();
-    final Set<PsiType> exceptionsThrown = ExceptionUtils.calculateExceptionsThrown(tryBlock);
+    final Set<PsiClassType> exceptionsThrown = ExceptionUtils.calculateExceptionsThrown(tryBlock);
     ExceptionUtils.calculateExceptionsThrown(tryStatement.getResourceList(), exceptionsThrown);
     final Set<PsiType> exceptionsCaught = ExceptionUtils.getExceptionTypesHandled(tryStatement);
     for (PsiType typeThrown : exceptionsThrown) {

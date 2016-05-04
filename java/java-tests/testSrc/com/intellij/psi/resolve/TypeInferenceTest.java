@@ -8,6 +8,10 @@ import org.jetbrains.annotations.NonNls;
  */
 public class TypeInferenceTest extends Resolve15TestCase {
   public void testInferInCall1 () throws Exception {
+    doTestObject();
+  }
+
+  private void doTestObject() throws Exception {
     PsiReferenceExpression ref = configure();
     PsiType type = ref.getType();
     assertTrue(type instanceof PsiClassType);
@@ -26,21 +30,11 @@ public class TypeInferenceTest extends Resolve15TestCase {
   }
 
   public void testInferInAssign2() throws Exception {
-    PsiReferenceExpression ref = configure();
-    PsiType type = ref.getType();
-    assertTrue(type instanceof PsiClassType);
-    PsiType[] paramTypes = ((PsiClassType)type).getParameters();
-    assertEquals(1, paramTypes.length);
-    assertEquals(CommonClassNames.JAVA_LANG_OBJECT, paramTypes[0].getCanonicalText());
+    doTestObject();
   }
 
   public void testInferInCast () throws Exception {
-    PsiReferenceExpression ref = configure();
-    PsiType type = ref.getType();
-    assertTrue(type instanceof PsiClassType);
-    PsiType[] paramTypes = ((PsiClassType)type).getParameters();
-    assertEquals(1, paramTypes.length);
-    assertEquals(CommonClassNames.JAVA_LANG_OBJECT, paramTypes[0].getCanonicalText());
+    doTestObject();
   }
 
   public void testInferWithBounds () throws Exception {

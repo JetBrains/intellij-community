@@ -53,7 +53,7 @@ public class SchemaDefinitionsSearch implements QueryExecutor<PsiElement, PsiEle
   public boolean execute(@NotNull final PsiElement queryParameters, @NotNull final Processor<PsiElement> consumer) {
     if (queryParameters instanceof XmlTagImpl) {
       final XmlTagImpl xml = (XmlTagImpl) queryParameters;
-      if (isTypeElement(xml)) {
+      if (ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> isTypeElement(xml))) {
         final Collection<SchemaTypeInfo> infos = ApplicationManager.getApplication().runReadAction(new Computable<Collection<SchemaTypeInfo>>() {
 
           @Override

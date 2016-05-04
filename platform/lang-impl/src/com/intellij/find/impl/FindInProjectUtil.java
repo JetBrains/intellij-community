@@ -299,7 +299,7 @@ public class FindInProjectUtil {
         final TextRange range = new TextRange(result.getStartOffset(), result.getEndOffset());
         if (!((LocalSearchScope)customScope).containsRange(psiFile, range)) continue;
       }
-      UsageInfo info = new FindResultUsageInfo(findManager, psiFile, offset, findModel, result);
+      UsageInfo info = new FindResultUsageInfo(findManager, psiFile, prevOffset, findModel, result);
       if (!consumer.process(info)){
         throw new ProcessCanceledException();
       }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
@@ -52,7 +53,7 @@ public class SSLCredentialsDialog extends DialogWrapper {
   private void initUI(final String authRealm, final boolean authSaveAllowed) {
     myPanel = new JPanel(new GridBagLayout());
     final GridBagConstraints gb =
-      new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(1, 1, 1, 1), 0, 0);
+      new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.insets(1), 0, 0);
     gb.fill = GridBagConstraints.HORIZONTAL;
 
     gb.gridwidth = 2;

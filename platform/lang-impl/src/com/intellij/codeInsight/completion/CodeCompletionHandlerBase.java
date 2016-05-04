@@ -752,6 +752,10 @@ public class CodeCompletionHandlerBase {
     }
 
     final PsiFile copy = (PsiFile)file.copy();
+    if (copy.isPhysical() || copy.getViewProvider().isEventSystemEnabled()) {
+      LOG.error("File copy should be non-physical and non-event-system-enabled! Language=" + file.getLanguage() + "; file=" + file + " of " + file.getClass());
+    }
+
     if (mayCacheCopy) {
       final Document document = copy.getViewProvider().getDocument();
       assert document != null;

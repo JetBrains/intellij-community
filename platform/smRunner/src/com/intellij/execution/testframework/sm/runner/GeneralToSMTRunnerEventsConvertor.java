@@ -22,6 +22,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -220,7 +221,8 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
         }
 
         SMTestProxy parentSuite = getCurrentSuite();
-        SMTestProxy testProxy = findChildByName(parentSuite, fullName);
+        SMTestProxy testProxy = locationUrl != null ? findChildByLocation(parentSuite, locationUrl)
+                                                    : findChildByName(parentSuite, fullName);
         if (testProxy == null) {
           // creates test
           testProxy = new SMTestProxy(testName, false, locationUrl);
@@ -261,7 +263,8 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
         final String locationUrl = suiteStartedEvent.getLocationUrl();
 
         SMTestProxy parentSuite = getCurrentSuite();
-        SMTestProxy newSuite = findChildByName(parentSuite, suiteName);
+        SMTestProxy newSuite = locationUrl != null ? findChildByLocation(parentSuite, locationUrl)
+                                                   : findChildByName(parentSuite, suiteName);
         if (newSuite == null) {
           //new suite
           newSuite = new SMTestProxy(suiteName, true, locationUrl, parentSuite.isPreservePresentableName());
@@ -286,10 +289,18 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
   }
 
   private SMTestProxy findChildByName(SMTestProxy parentSuite, String fullName) {
+    return findChild(parentSuite, fullName, SMTestProxy::getName);
+  }
+
+  private SMTestProxy findChildByLocation(SMTestProxy parentSuite, String fullName) {
+    return findChild(parentSuite, fullName, SMTestProxy::getLocationUrl);
+  }
+
+  private SMTestProxy findChild(SMTestProxy parentSuite, String fullName, final Function<SMTestProxy, String> nameFunction) {
     if (myTreeBuildBeforeStart) {
       final Collection<? extends SMTestProxy> children = myGetChildren ? parentSuite.getChildren() : myCurrentChildren;
       for (SMTestProxy proxy : children) {
-        if (fullName.equals(proxy.getName()) && !proxy.isFinal()) {
+        if (fullName.equals(nameFunction.fun(proxy)) && !proxy.isFinal()) {
           return proxy;
         }
       }
@@ -409,7 +420,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
         if (comparisionFailureActualText != null && comparisionFailureExpectedText != null) {
           testProxy.setTestComparisonFailed(localizedMessage, stackTrace,
                                             comparisionFailureActualText, comparisionFailureExpectedText, 
-                                            testFailedEvent.getFilePath(), testFailedEvent.getActualFilePath());
+                                            testFailedEvent.getExpectedFilePath(), testFailedEvent.getActualFilePath());
         }
         else if (comparisionFailureActualText == null && comparisionFailureExpectedText == null) {
           testProxy.setTestFailed(localizedMessage, stackTrace, isTestError);

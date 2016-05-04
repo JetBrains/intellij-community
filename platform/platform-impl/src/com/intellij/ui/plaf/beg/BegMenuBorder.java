@@ -1,6 +1,6 @@
 
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,15 @@
  */
 package com.intellij.ui.plaf.beg;
 
+import com.intellij.util.ui.JBUI;
+
 import javax.swing.*;
 import javax.swing.border.AbstractBorder;
 import javax.swing.plaf.UIResource;
 import java.awt.*;
 
 public class BegMenuBorder extends AbstractBorder implements UIResource {
-  protected static Insets borderInsets = new Insets(2, 2, 2, 2);
+  protected static Insets borderInsets = JBUI.insets(2);
 
   public void paintBorder(Component c, Graphics g, int x, int y, int w, int h) {
     JMenuItem b = (JMenuItem)c;

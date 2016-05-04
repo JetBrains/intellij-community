@@ -17,6 +17,7 @@ package org.jetbrains.idea.svn.actions;
 
 import com.intellij.diff.DiffManager;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -52,7 +53,6 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
-import javax.swing.*;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -148,26 +148,24 @@ public abstract class AbstractShowPropertiesDiffAction extends AnAction implemen
         myException = exc;
       }
 
-      // since sometimes called from modal dialog (commit changes dialog)
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          if (myException != null) {
-            Messages.showErrorDialog(myException.getMessage(), myErrorTitle);
-            return;
+      ApplicationManager.getApplication().invokeLater(() -> {
+        if (myException != null) {
+          Messages.showErrorDialog(myException.getMessage(), myErrorTitle);
+          return;
+        }
+        if (myBeforeContent != null && myAfterContent != null && myBeforeRevisionValue != null && myAfterRevision != null) {
+          SvnPropertiesDiffRequest diffRequest;
+          if (compareRevisions(myBeforeRevisionValue, myAfterRevision) > 0) {
+            diffRequest = new SvnPropertiesDiffRequest(getDiffWindowTitle(myChange),
+                                                       new PropertyContent(myAfterContent), new PropertyContent(myBeforeContent),
+                                                       revisionToString(myAfterRevision), revisionToString(myBeforeRevisionValue));
           }
-          if (myBeforeContent != null && myAfterContent != null && myBeforeRevisionValue != null && myAfterRevision != null) {
-            SvnPropertiesDiffRequest diffRequest;
-            if (compareRevisions(myBeforeRevisionValue, myAfterRevision) > 0) {
-              diffRequest = new SvnPropertiesDiffRequest(getDiffWindowTitle(myChange),
-                                                    new PropertyContent(myAfterContent), new PropertyContent(myBeforeContent),
-                                                    revisionToString(myAfterRevision), revisionToString(myBeforeRevisionValue));
-            } else {
-              diffRequest = new SvnPropertiesDiffRequest(getDiffWindowTitle(myChange),
-                                                    new PropertyContent(myBeforeContent), new PropertyContent(myAfterContent),
-                                                    revisionToString(myBeforeRevisionValue), revisionToString(myAfterRevision));
-            }
-            DiffManager.getInstance().showDiff(myProject, diffRequest);
+          else {
+            diffRequest = new SvnPropertiesDiffRequest(getDiffWindowTitle(myChange),
+                                                       new PropertyContent(myBeforeContent), new PropertyContent(myAfterContent),
+                                                       revisionToString(myBeforeRevisionValue), revisionToString(myAfterRevision));
           }
+          DiffManager.getInstance().showDiff(myProject, diffRequest);
         }
       });
     }

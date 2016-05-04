@@ -66,18 +66,22 @@ public abstract class AbstractToggleUseSoftWrapsAction extends ToggleAction impl
       return;
     }
 
+    toggleSoftWraps(editor, myGlobal ? myAppliancePlace : null, state);
+  }
+
+  public static void toggleSoftWraps(@NotNull Editor editor, @Nullable SoftWrapAppliancePlaces places, boolean state) {
     Point point = editor.getScrollingModel().getVisibleArea().getLocation();
     LogicalPosition anchorPosition = editor.xyToLogicalPosition(point);
     int intraLineShift = point.y - editor.logicalPositionToXY(anchorPosition).y;
-    
-    if (myGlobal) {
-      EditorSettingsExternalizable.getInstance().setUseSoftWraps(state, myAppliancePlace);
+
+    if (places != null) {
+      EditorSettingsExternalizable.getInstance().setUseSoftWraps(state, places);
       EditorFactory.getInstance().refreshAllEditors();
     }
     if (editor.getSettings().isUseSoftWraps() != state) {
       editor.getSettings().setUseSoftWraps(state);
     }
-    
+
     editor.getScrollingModel().disableAnimation();
     editor.getScrollingModel().scrollVertically(editor.logicalPositionToXY(anchorPosition).y + intraLineShift);
     editor.getScrollingModel().enableAnimation();

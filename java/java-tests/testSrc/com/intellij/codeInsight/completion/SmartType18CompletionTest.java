@@ -17,11 +17,8 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.lookup.Lookup;
-import com.intellij.idea.Bombed;
 import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Calendar;
 
 public class SmartType18CompletionTest extends LightFixtureCompletionTestCase {
   @Override
@@ -88,6 +85,19 @@ public class SmartType18CompletionTest extends LightFixtureCompletionTestCase {
     doTest(false);
   }
 
+  public void testInheritorConstructorRef() {
+    myFixture.addClass("package intf; public interface Intf<T> {}");
+    myFixture.addClass("package foo; public class ImplBar implements intf.Intf<String> {}");
+    myFixture.addClass("package foo; public class ImplFoo<T> implements intf.Intf<T> {}");
+    myFixture.addClass("package foo; public class ImplIncompatible implements intf.Intf<Integer> {}");
+    myFixture.addClass("package foo; class ImplInaccessible implements intf.Intf<String> {}");
+
+    configureByTestName();
+    myFixture.assertPreferredCompletionItems(0, "ImplBar::new", "ImplFoo::new", "()");
+    myFixture.type('\n');
+    checkResultByFile("/" + getTestName(false) + "-out.java");
+  }
+
   public void testFilteredMethodReference() throws Exception {
     doTest(false);
   }
@@ -129,6 +139,8 @@ public class SmartType18CompletionTest extends LightFixtureCompletionTestCase {
   public void testSimpleMethodReference() throws Exception {
     doTest(true);
   }
+
+  public void testMethodReferenceOnAncestor() { doTest(true); }
 
   public void testNoLambdaSuggestionForGenericsFunctionalInterfaceMethod() throws Exception {
     configureByFile("/" + getTestName(false) + ".java");
@@ -186,7 +198,6 @@ public void testConvertToObjectStream() {
     checkResultByFile("/" + getTestName(false) + "-out.java");
   }
 
-  @Bombed(user = "anna/peter", month = Calendar.MAY, day = 4)
   public void testOnlyCompatibleTypes() {
     configureByTestName();
     assertOrderedEquals(myFixture.getLookupElementStrings(), "get2");

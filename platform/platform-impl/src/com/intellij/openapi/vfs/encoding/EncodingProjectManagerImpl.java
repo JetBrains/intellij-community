@@ -24,6 +24,7 @@ package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -43,7 +44,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jdom.Element;
@@ -345,12 +345,7 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
         Document cachedDocument = FileDocumentManager.getInstance().getCachedDocument(file);
         if (cachedDocument == null) return true;
         ProgressManager.progress("Reloading files...", file.getPresentableUrl());
-        UIUtil.invokeLaterIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            clearAndReload(file);
-          }
-        });
+        TransactionGuard.submitTransaction(ApplicationManager.getApplication(), () -> clearAndReload(file));
         return true;
       }
     };
@@ -421,12 +416,7 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
             Document cachedDocument = FileDocumentManager.getInstance().getCachedDocument(file);
             if (cachedDocument != null) {
               ProgressManager.progress("Reloading file...", file.getPresentableUrl());
-              UIUtil.invokeLaterIfNeeded(new Runnable() {
-                @Override
-                public void run() {
-                  reload(file);
-                }
-              });
+              TransactionGuard.submitTransaction(myProject, () -> reload(file));
             }
             // for not loaded files deep under project, reset encoding to give them chance re-detect the right one later
             else if (file.isCharsetSet() && !file.equals(root)) {

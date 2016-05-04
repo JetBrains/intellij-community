@@ -17,6 +17,7 @@ package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.updateSettings.UpdateStrategyCustomization;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -27,6 +28,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @State(
   name = "UpdatesConfigurable",
@@ -110,6 +113,23 @@ public class UpdateSettings implements PersistentStateComponent<UpdateSettings.S
 
   public void setSelectedChannelStatus(@NotNull ChannelStatus channel) {
     myState.UPDATE_CHANNEL_TYPE = channel.getCode();
+  }
+
+  @NotNull
+  public List<ChannelStatus> getActiveChannels() {
+    UpdateStrategyCustomization tweaker = UpdateStrategyCustomization.getInstance();
+    return Stream.of(ChannelStatus.values())
+      .filter((ch) -> ch == ChannelStatus.EAP || ch == ChannelStatus.RELEASE || tweaker.isChannelActive(ch))
+      .collect(Collectors.toList());
+  }
+
+  @NotNull
+  public ChannelStatus getSelectedActiveChannel() {
+    UpdateStrategyCustomization tweaker = UpdateStrategyCustomization.getInstance();
+    ChannelStatus current = getSelectedChannelStatus();
+    return tweaker.isChannelActive(current)
+           ? current
+           : getActiveChannels().stream().filter(ch -> ch.compareTo(current) > 0).findFirst().orElse(ChannelStatus.RELEASE);
   }
 
   public List<String> getPluginHosts() {

@@ -84,7 +84,7 @@ public class TextDiffSettingsHolder implements PersistentStateComponent<TextDiff
     }
 
     public void setEnableSyncScroll(boolean value) {
-      this.PLACE_SETTINGS.ENABLE_SYNC_SCROLL = value;
+      PLACE_SETTINGS.ENABLE_SYNC_SCROLL = value;
     }
 
     // Diff settings
@@ -226,7 +226,7 @@ public class TextDiffSettingsHolder implements PersistentStateComponent<TextDiff
 
   @NotNull
   public static Map<String, PlaceSettings> getDefaultPlaceSettings() {
-    Map<String, PlaceSettings> map = new TreeMap<String, PlaceSettings>();
+    Map<String, PlaceSettings> map = new TreeMap<>();
 
     PlaceSettings changes = new PlaceSettings();
     changes.EXPAND_BY_DEFAULT = false;

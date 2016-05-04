@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,12 +32,11 @@ import java.util.Map;
  * Service for creating instances of Java, JavaDoc, JSP and XML PSI elements which don't have
  * an underlying source code file.
  *
- * @see com.intellij.psi.JavaPsiFacade#getElementFactory()
+ * @see JavaPsiFacade#getElementFactory()
  */
 public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactory {
   class SERVICE {
-    private SERVICE() {
-    }
+    private SERVICE() { }
 
     public static PsiElementFactory getInstance(Project project) {
       return ServiceManager.getService(project, PsiElementFactory.class);
@@ -179,12 +178,6 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
   @Override
   @NotNull PsiClassType createType(@NotNull PsiClass resolve, @NotNull PsiSubstitutor substitutor, @Nullable LanguageLevel languageLevel);
 
-  @Override
-  @NotNull PsiClassType createType(@NotNull PsiClass resolve,
-                                   @NotNull PsiSubstitutor substitutor,
-                                   @Nullable LanguageLevel languageLevel,
-                                   @NotNull PsiAnnotation[] annotations);
-
   /**
    * Creates a class type for the specified reference pointing to a class.
    *
@@ -230,7 +223,7 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
 
   /**
    * The same as {@link #createTypeByFQClassName(String, GlobalSearchScope)}
-   * with {@link GlobalSearchScope#allScope(com.intellij.openapi.project.Project)}.
+   * with {@link GlobalSearchScope#allScope(Project)}.
    *
    * @param qName the full-qualified name of the class to create the reference to.
    * @return the class type instance.
@@ -464,7 +457,7 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
   /**
    * Create a lightweight PsiElement of given element type in a lightweight non-physical PsiFile (aka DummyHolder) in a given context.
    * Element type's language should have a parser definition which supports parsing for this element type (first
-   * parameter in {@link com.intellij.lang.PsiParser#parse(com.intellij.psi.tree.IElementType, com.intellij.lang.PsiBuilder)}.
+   * parameter in {@link com.intellij.lang.PsiParser#parse(IElementType, com.intellij.lang.PsiBuilder)}.
    * @param text text to parse
    * @param type node type
    * @param context context

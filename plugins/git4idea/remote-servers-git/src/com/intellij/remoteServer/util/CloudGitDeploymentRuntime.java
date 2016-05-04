@@ -24,7 +24,6 @@ import com.intellij.remoteServer.runtime.deployment.DeploymentLogManager;
 import com.intellij.remoteServer.runtime.deployment.DeploymentTask;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.Semaphore;
-import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
 import git4idea.actions.GitInit;
 import git4idea.commands.*;
@@ -161,8 +160,7 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
     if (myGit == null) {
       throw new ServerRuntimeException("Can't initialize GIT");
     }
-    GitPlatformFacade gitPlatformFacade = ServiceManager.getService(GitPlatformFacade.class);
-    myChangeListManager = gitPlatformFacade.getChangeListManager(project);
+    myChangeListManager = ChangeListManagerImpl.getInstanceImpl(project);
   }
 
   @Override

@@ -140,12 +140,14 @@ public class RunIdeConsoleAction extends DumbAwareAction {
 
     prepareEngine(project, engine, descriptor);
     try {
+      long ts = System.currentTimeMillis();
       //myHistoryController.getModel().addToHistory(command);
       consoleView.print("> " + command, ConsoleViewContentType.USER_INPUT);
       consoleView.print("\n", ConsoleViewContentType.USER_INPUT);
       String script = profile == null ? command : profile + "\n" + command;
       Object o = engine.eval(script);
-      consoleView.print("=> " + o, ConsoleViewContentType.NORMAL_OUTPUT);
+      String prefix = "["+(StringUtil.formatDuration(System.currentTimeMillis() - ts))+"]";
+      consoleView.print(prefix + "=> " + o, ConsoleViewContentType.NORMAL_OUTPUT);
       consoleView.print("\n", ConsoleViewContentType.NORMAL_OUTPUT);
     }
     catch (Throwable e) {

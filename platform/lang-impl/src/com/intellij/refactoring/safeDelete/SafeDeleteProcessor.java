@@ -219,7 +219,9 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
           final int exitCode = dialog.getExitCode();
           prepareSuccessful(); // dialog is always dismissed;
           if (exitCode == UnsafeUsagesDialog.VIEW_USAGES_EXIT_CODE) {
-            showUsages(usages);
+            showUsages(Arrays.stream(usages)
+                         .filter(usage -> usage instanceof SafeDeleteReferenceUsageInfo &&
+                                          !((SafeDeleteReferenceUsageInfo)usage).isSafeDelete()).toArray(UsageInfo[]::new));
           }
           return false;
         }
@@ -311,23 +313,18 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
 
     @Override
     public void run() {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-            myUsageView.close();
-            ArrayList<PsiElement> elements = new ArrayList<PsiElement>();
-            for (SmartPsiElementPointer pointer : myPointers) {
-              final PsiElement element = pointer.getElement();
-              if (element != null) {
-                elements.add(element);
-              }
-            }
-            if(!elements.isEmpty()) {
-              SafeDeleteHandler.invoke(myProject, PsiUtilCore.toPsiElementArray(elements), true);
-            }
-          }
-        });
+      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+      myUsageView.close();
+      ArrayList<PsiElement> elements = new ArrayList<PsiElement>();
+      for (SmartPsiElementPointer pointer : myPointers) {
+        final PsiElement element = pointer.getElement();
+        if (element != null) {
+          elements.add(element);
+        }
+      }
+      if(!elements.isEmpty()) {
+        SafeDeleteHandler.invoke(myProject, PsiUtilCore.toPsiElementArray(elements), true);
+      }
     }
   }
 
