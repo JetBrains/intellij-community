@@ -1237,10 +1237,6 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     }
 
     public abstract class ApplyNonConflictsActionBase extends DumbAwareAction {
-      public ApplyNonConflictsActionBase(@Nullable String text, @Nullable String description, @Nullable Icon icon) {
-        super(text, description, icon);
-      }
-
       @Override
       public void actionPerformed(AnActionEvent e) {
         executeMergeCommand("Apply Non Conflicted Changes", true, null, () -> {
@@ -1257,7 +1253,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
     public class ApplyNonConflictsAction extends ApplyNonConflictsActionBase {
       public ApplyNonConflictsAction() {
-        super(DiffBundle.message("merge.dialog.apply.all.non.conflicting.changes.action.name"), null, AllIcons.Diff.ApplyNotConflicts);
+        ActionUtil.copyFrom(this, "Diff.ApplyNonConflicts");
       }
 
       @Override
@@ -1281,10 +1277,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       @NotNull private final Side mySide;
 
       public ApplySideNonConflictsAction(@NotNull Side side) {
-        super(side.select(DiffBundle.message("merge.dialog.apply.left.non.conflicting.changes.action.name"),
-                          DiffBundle.message("merge.dialog.apply.right.non.conflicting.changes.action.name")),
-              null,
-              side.select(AllIcons.Diff.ApplyNotConflictsLeft, AllIcons.Diff.ApplyNotConflictsRight));
+        ActionUtil.copyFrom(this, side.select("Diff.ApplyNonConflicts.Left", "Diff.ApplyNonConflicts.Right"));
         mySide = side;
       }
 
