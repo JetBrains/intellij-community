@@ -1140,7 +1140,8 @@ public class ExtractMethodProcessor implements MatchProvider {
       }
     }
     PsiDeclarationStatement statement = myElementFactory.createVariableDeclarationStatement(name, type, myMethodCall);
-    statement = (PsiDeclarationStatement)addToMethodCallLocation(statement);
+    statement =
+      (PsiDeclarationStatement)JavaCodeStyleManager.getInstance(myProject).shortenClassReferences(addToMethodCallLocation(statement));
     PsiVariable var = (PsiVariable)statement.getDeclaredElements()[0];
     myMethodCall = (PsiMethodCallExpression)var.getInitializer();
     if (myOutputVariable != null) {
