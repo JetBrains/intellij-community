@@ -92,17 +92,13 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
     if (refEntity instanceof RefElement) {
       RefElement refElement = (RefElement)refEntity;
 
-      appendHeading(buf, InspectionsBundle.message("inspection.offline.view.tool.display.name.title"));
-      buf.append(BR);
-      appendAfterHeaderIndention(buf);
-
-      appendShortName(buf, refElement);
-      buf.append(BR).append(BR);
-
       appendHeading(buf, InspectionsBundle.message("inspection.export.results.capitalized.location"));
+      buf.append("<div class=\"location\">");
+      appendShortName(buf, refElement);
       buf.append(BR);
-      appendAfterHeaderIndention(buf);
+      buf.append("in ");
       appendLocation(buf, refElement);
+      buf.append("</div>");
       buf.append(BR).append(BR);
     }
   }
