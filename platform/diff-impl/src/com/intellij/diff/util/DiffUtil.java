@@ -38,11 +38,9 @@ import com.intellij.diff.tools.util.base.HighlightPolicy;
 import com.intellij.diff.tools.util.base.IgnorePolicy;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.DataManager;
 import com.intellij.lang.Language;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.CommandProcessor;
@@ -357,6 +355,15 @@ public class DiffUtil {
     }
     result.append("</body></html>");
     return result.toString();
+  }
+
+  public static void performAction(@NotNull AnAction action, @Nullable JComponent contextComponent) {
+    DataContext context = DataManager.getInstance().getDataContext(contextComponent);
+    AnActionEvent actionEvent = AnActionEvent.createFromAnAction(action, null, ActionPlaces.UNKNOWN, context);
+    action.update(actionEvent);
+    if (actionEvent.getPresentation().isEnabledAndVisible()) {
+      action.actionPerformed(actionEvent);
+    }
   }
 
   //
