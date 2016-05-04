@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.maven.project;
+package org.jetbrains.idea.maven.project.importing;
 
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
 import org.jetbrains.idea.maven.importing.MavenFoldersImporter;
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
