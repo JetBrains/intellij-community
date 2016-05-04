@@ -3,6 +3,8 @@ package com.jetbrains.edu.learning.checker;
 import com.intellij.execution.process.ProcessOutput;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 public class StudyTestsOutputParser {
   private static final String STUDY_PREFIX = "#educational_plugin";
   public static final String TEST_OK = "test OK";
@@ -31,7 +33,9 @@ public class StudyTestsOutputParser {
   @NotNull
   public static TestsOutput getTestsOutput(@NotNull final ProcessOutput processOutput) {
     String congratulations = CONGRATULATIONS;
-    for (String line : processOutput.getStdoutLines()) {
+    final List<String> lines = processOutput.getStdoutLines();
+    for (int i = 0; i < lines.size(); i++) {
+      final String line = lines.get(i);
       if (line.startsWith(STUDY_PREFIX)) {
         if (line.contains(TEST_OK)) {
           continue;
@@ -42,7 +46,18 @@ public class StudyTestsOutputParser {
         }
 
         if (line.contains(TEST_FAILED)) {
-          return new TestsOutput(false, line.substring(line.indexOf(TEST_FAILED) + TEST_FAILED.length()));
+          final StringBuilder builder = new StringBuilder(line.substring(line.indexOf(TEST_FAILED) + TEST_FAILED.length()) + "\n");
+          for (int j = i + 1; j < lines.size(); j++) {
+            final String failedTextLine = lines.get(j);
+            if (!failedTextLine.contains(STUDY_PREFIX) || !failedTextLine.contains(CONGRATS_MESSAGE)) {
+              builder.append(failedTextLine);
+              builder.append("\n");
+            }
+            else {
+              break;
+            }
+          }
+          return new TestsOutput(false, builder.toString());
         }
       }
     }

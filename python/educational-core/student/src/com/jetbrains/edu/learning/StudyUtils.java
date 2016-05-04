@@ -358,7 +358,6 @@ public class StudyUtils {
     }
   }
 
-
   @Nullable
   public static VirtualFile getPatternFile(@NotNull TaskFile taskFile, String name) {
     Task task = taskFile.getTask();
@@ -497,7 +496,7 @@ public class StudyUtils {
     return null;
   }
 
-
+  @Nullable
   public static String getTaskText(@NotNull final Project project) {
     TaskFile taskFile = getSelectedTaskFile(project);
     if (taskFile == null) {
@@ -520,6 +519,22 @@ public class StudyUtils {
       }
     }
     return taskFile;
+  }
+
+  @Nullable
+  public static Task getCurrentTask(@NotNull final Project project) {
+    VirtualFile[] files = FileEditorManager.getInstance(project).getSelectedFiles();
+    TaskFile taskFile = null;
+    for (VirtualFile file : files) {
+      taskFile = getTaskFile(project, file);
+      if (taskFile != null) {
+        break;
+      }
+    }
+    if (taskFile != null) {
+      return taskFile.getTask();
+    }
+    return null;
   }
 
   public static void updateStudyToolWindow(Project project) {

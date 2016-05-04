@@ -6,20 +6,30 @@ import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindow
+import com.jetbrains.edu.learning.StudyUtils
+import com.jetbrains.python.console.PythonConsoleView
 
 
 class StudyTestResultsToolWindowFactory: StudyToolWindowFactory() {  
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
-    val testResultsToolWindow = StudyTestResultsToolWindow()
-    testResultsToolWindow.init()
+    val currentTask = StudyUtils.getCurrentTask(project)
+    if (currentTask != null) {
+      val sdk = StudyUtils.findSdk(currentTask, project)
+      if (sdk != null) {
+        val testResultsToolWindow = PythonConsoleView(project, "Local test results", sdk);
 
-    toolWindow.isToHideOnEmptyContent = true
-    
-    val contentManager = toolWindow.contentManager
-    val content = contentManager.factory.createContent(testResultsToolWindow, null, false)
-    contentManager.addContent(content)
+        toolWindow.isToHideOnEmptyContent = true
 
-    project.messageBus.connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, getFileEditorManagerListener(toolWindow))
+        val contentManager = toolWindow.contentManager
+        val content = contentManager.factory.createContent(testResultsToolWindow.component, null, false)
+        contentManager.addContent(content)
+
+        project.messageBus.connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, getFileEditorManagerListener(toolWindow))
+      }
+      else {
+        StudyUtils.showNoSdkNotification(currentTask, project)
+      }
+    }
   }
 
   fun getFileEditorManagerListener(toolWindow: ToolWindow): FileEditorManagerListener {

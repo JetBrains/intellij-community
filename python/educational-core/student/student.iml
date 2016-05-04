@@ -24,5 +24,6 @@
     <orderEntry type="module" module-name="xml" />
     <orderEntry type="library" name="markdownj" level="project" />
     <orderEntry type="module" module-name="platform-api" />
+    <orderEntry type="module" module-name="python-community" />
   </component>
 </module>
