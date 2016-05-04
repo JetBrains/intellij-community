@@ -304,7 +304,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
   }
 
   public static class AnySupers extends JavaRecursiveElementWalkingVisitor {
-    private boolean myResult = false;
+    private boolean myResult;
     @Override public void visitSuperExpression(PsiSuperExpression expression) {
       myResult = true;
     }
@@ -319,7 +319,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
   }
 
   public class AnySameNameVariables extends JavaRecursiveElementWalkingVisitor {
-    private Pair<PsiElement, String> conflict = null;
+    private Pair<PsiElement, String> conflict;
 
     public Pair<PsiElement, String> getConflict() {
       return conflict;

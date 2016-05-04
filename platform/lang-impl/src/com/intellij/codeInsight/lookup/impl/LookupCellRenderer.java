@@ -45,7 +45,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
@@ -64,16 +63,16 @@ public class LookupCellRenderer implements ListCellRenderer {
   private final FontMetrics myNormalMetrics;
   private final FontMetrics myBoldMetrics;
 
-  public static final Color BACKGROUND_COLOR = new JBColor(new Color(235, 244, 254), JBColor.background());
+  public static final Color BACKGROUND_COLOR = new JBColor(() -> (JBColor.isBright() ? new Color(235, 244, 254) : JBColor.background()));
   private static final Color FOREGROUND_COLOR = JBColor.foreground();
   private static final Color GRAYED_FOREGROUND_COLOR = new JBColor(Gray._160, Gray._110);
   private static final Color SELECTED_BACKGROUND_COLOR = new Color(0, 82, 164);
-  private static final Color SELECTED_NON_FOCUSED_BACKGROUND_COLOR = new JBColor(new Color(110, 142, 162), new Color(85, 88, 90));
-  private static final Color SELECTED_FOREGROUND_COLOR = new JBColor(JBColor.WHITE, JBColor.foreground());
-  private static final Color SELECTED_GRAYED_FOREGROUND_COLOR = new JBColor(JBColor.WHITE, JBColor.foreground());
+  private static final Color SELECTED_NON_FOCUSED_BACKGROUND_COLOR = new JBColor(0x6e8ea2, 0x55585a);
+  private static final Color SELECTED_FOREGROUND_COLOR = new JBColor(() -> (JBColor.isBright() ? JBColor.WHITE : JBColor.foreground()));
+  private static final Color SELECTED_GRAYED_FOREGROUND_COLOR = new JBColor(() -> (JBColor.isBright() ? JBColor.WHITE: JBColor.foreground()));
 
-  static final Color PREFIX_FOREGROUND_COLOR = new JBColor(new Color(176, 0, 176), new Color(209, 122, 214));
-  private static final Color SELECTED_PREFIX_FOREGROUND_COLOR = new JBColor(new Color(249, 236, 204), new Color(209, 122, 214));
+  static final Color PREFIX_FOREGROUND_COLOR = new JBColor(0xb000b0, 0xd17ad6);
+  private static final Color SELECTED_PREFIX_FOREGROUND_COLOR = new JBColor(0xf9eccc, 0xd17ad6);
 
   private final LookupImpl myLookup;
 
@@ -97,12 +96,12 @@ public class LookupCellRenderer implements ListCellRenderer {
     myNameComponent.setMyBorder(null);
 
     myTailComponent = new MySimpleColoredComponent();
-    myTailComponent.setIpad(new Insets(0, 0, 0, 0));
-    myTailComponent.setBorder(new EmptyBorder(0, 0, 0, JBUI.scale(10)));
+    myTailComponent.setIpad(JBUI.emptyInsets());
+    myTailComponent.setBorder(JBUI.Borders.emptyRight(10));
 
     myTypeLabel = new MySimpleColoredComponent();
-    myTypeLabel.setIpad(new Insets(0, 0, 0, 0));
-    myTypeLabel.setBorder(new EmptyBorder(0, 0, 0, JBUI.scale(6)));
+    myTypeLabel.setIpad(JBUI.emptyInsets());
+    myTypeLabel.setBorder(JBUI.Borders.emptyRight(6));
 
     myPanel = new LookupPanel();
     myPanel.add(myNameComponent, BorderLayout.WEST);

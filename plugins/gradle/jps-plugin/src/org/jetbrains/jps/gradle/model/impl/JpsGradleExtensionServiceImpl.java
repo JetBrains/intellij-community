@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.xmlb.XmlSerializer;
 import gnu.trove.THashMap;
-import org.jdom.Document;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
@@ -122,8 +121,7 @@ public class JpsGradleExtensionServiceImpl extends JpsGradleExtensionService {
       if (config == null) {
         config = new GradleProjectConfiguration();
         try {
-          final Document document = JDOMUtil.loadDocument(configFile);
-          XmlSerializer.deserializeInto(config, document.getRootElement());
+          XmlSerializer.deserializeInto(config, JDOMUtil.load(configFile));
         }
         catch (Exception e) {
           LOG.info(e);

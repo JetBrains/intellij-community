@@ -107,8 +107,8 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
     }
   };
 
-  private volatile XmlElementDescriptor[] myElementDescriptors = null;
-  private volatile XmlAttributeDescriptor[] myAttributeDescriptors = null;
+  private volatile XmlElementDescriptor[] myElementDescriptors;
+  private volatile XmlAttributeDescriptor[] myAttributeDescriptors;
   @NonNls
   private static final String PROHIBITED_ATTR_VALUE = "prohibited";
   @NonNls

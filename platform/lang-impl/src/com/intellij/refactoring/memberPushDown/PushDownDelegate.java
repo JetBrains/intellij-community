@@ -54,7 +54,7 @@ public abstract class PushDownDelegate<MemberInfo extends MemberInfoBase<Member>
    * Implementations are supposed to override this method when overriding default behaviour for the language, 
    * e.g. pushing members from groovy class to java, groovy could provide additional delegate which inherits delegate for java and accepts groovy sources.
    * Methods to process target class should be updated to cope with source of another language (e.g. calling super on PushDownData translated to java): 
-   * {@link #checkTargetClassConflicts(PsiElement, PushDownData, MultiMap) },
+   * {@link #checkTargetClassConflicts(PsiElement, PushDownData, MultiMap, NewSubClassData) },
    * {@link #pushDownToClass(PsiElement, PushDownData)}
    */
   protected abstract boolean isApplicableForSource(@NotNull PsiElement sourceClass);
@@ -78,10 +78,13 @@ public abstract class PushDownDelegate<MemberInfo extends MemberInfoBase<Member>
    * Collect conflicts inside targetClass assuming methods would be pushed,
    * e.g. check if target class already has field with the same name, some references types
    * won't be accessible anymore, etc
+   *
+   * If <code>targetClass == null</code> (target class should be created), then subClassData would be not null
    */
-  protected abstract void checkTargetClassConflicts(PsiElement targetClass,
+  protected abstract void checkTargetClassConflicts(@Nullable PsiElement targetClass,
                                                     PushDownData<MemberInfo, Member> pushDownData,
-                                                    MultiMap<PsiElement, String> conflicts);
+                                                    MultiMap<PsiElement, String> conflicts,
+                                                    @Nullable NewSubClassData subClassData);
 
   /**
    * Could be used e.g. to encode mutual references between moved members 

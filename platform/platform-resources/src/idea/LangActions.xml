@@ -636,12 +636,16 @@
       <add-to-group group-id="EditorTabPopupMenu" anchor="last"/>
     </group>
 
+    <group id="TreeNodeExclusion">
+      <action id="UsageView.Include" class="com.intellij.ide.actions.exclusion.IncludeTreeNodeAction"/>
+      <action id="UsageView.Exclude" class="com.intellij.ide.actions.exclusion.ExcludeTreeNodeAction" use-shortcut-of="$Delete"/>
+    </group>>
+
     <group id="UsageView.Popup">
       <action id="UsageView.Rerun" class="com.intellij.usages.actions.RerunSearchAction" icon="AllIcons.Actions.Rerun" use-shortcut-of="Rerun"/>
       <separator/>
       <reference ref="EditSource"/>
-      <action id="UsageView.Include" class="com.intellij.usages.actions.IncludeUsageAction"/>
-      <action id="UsageView.Exclude" class="com.intellij.usages.actions.ExcludeUsageAction" use-shortcut-of="$Delete"/>
+      <reference ref="TreeNodeExclusion"/>
       <action id="UsageView.Remove" class="com.intellij.usages.actions.RemoveUsageAction" use-shortcut-of="SafeDelete"/>
       <separator/>
       <action id="UsageView.ShowRecentFindUsages" class="com.intellij.find.impl.ShowRecentFindUsagesAction" icon="AllIcons.Actions.Back"
@@ -990,11 +994,6 @@
     </group>
 
     <action id="SeverityEditorDialog" class="com.intellij.codeInspection.ex.SeverityEditorDialogAction"/>
-
-    <group id="TreeNodeExclusion">
-      <action id="TreeNodeExclusionInclude" class="com.intellij.ide.actions.exclusion.IncludeTreeNodeAction"/>
-      <action id="TreeNodeExclusionExclude" class="com.intellij.ide.actions.exclusion.ExcludeTreeNodeAction" use-shortcut-of="$Delete"/>
-    </group>>
 
     <group id="InspectionToolWindow.TreePopup" compact="true">
       <reference ref="EditSource"/>

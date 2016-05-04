@@ -24,8 +24,8 @@ import javax.swing.tree.TreeNode;
  * @author Dmitry Batkovich
  */
 public abstract class CachedInspectionTreeNode extends InspectionTreeNode implements RefElementAndDescriptorAware {
-  private volatile String myPresentableName = null;
-  private volatile Boolean myValid = null;
+  private volatile String myPresentableName;
+  private volatile Boolean myValid;
 
   protected CachedInspectionTreeNode(Object userObject) {
     super(userObject);

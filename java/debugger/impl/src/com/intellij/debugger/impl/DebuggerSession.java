@@ -632,7 +632,9 @@ public class DebuggerSession implements AbstractDebuggerSession {
 
       final DebuggerContextImpl debuggerContext =
         DebuggerContextImpl.createDebuggerContext(DebuggerSession.this, suspendContext, currentThread, null);
-      debuggerContext.setPositionCache(position);
+      if (suspendContext.getThread() == currentThread) {
+        debuggerContext.setPositionCache(position);
+      }
 
       DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
         @Override

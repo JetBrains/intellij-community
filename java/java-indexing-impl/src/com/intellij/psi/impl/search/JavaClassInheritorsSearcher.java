@@ -260,7 +260,7 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
           }
           currentlyProcessingClasses.down(); // tell other threads we are going to process this candidate
         }
-        PsiClass candidate = next == null ? myBaseClass : (PsiClass)next.retrieve();
+        PsiClass candidate = next == null ? myBaseClass : ApplicationManager.getApplication().runReadAction((Computable<PsiClass>)() -> (PsiClass)next.retrieve());
 
         boolean added;
         try {

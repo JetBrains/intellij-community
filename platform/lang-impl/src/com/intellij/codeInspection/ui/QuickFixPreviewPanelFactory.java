@@ -108,7 +108,7 @@ public class QuickFixPreviewPanelFactory {
       }
 
       if (hasComponents) {
-        setBorder(IdeBorderFactory.createEmptyBorder(2, 8, 0, 0));
+        setBorder(IdeBorderFactory.createEmptyBorder(hasFixes ? 2 : 9, (hasFixes || problemCount > 1) ? 8 : 5, hasFixes ? 0 : 8, 0));
       }
       return !hasComponents;
     }
@@ -198,7 +198,7 @@ public class QuickFixPreviewPanelFactory {
     @Override
     public void treeLoaded() {
       ApplicationManager.getApplication().invokeLater(() -> {
-        if (myView.isValid()) {
+        if (!myView.isDisposed()) {
           myView.syncRightPanel();
         }
       });

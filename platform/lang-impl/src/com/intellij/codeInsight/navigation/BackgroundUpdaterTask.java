@@ -50,7 +50,7 @@ public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
   private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private final Object lock = new Object();
 
-  private volatile boolean myCanceled = false;
+  private volatile boolean myCanceled;
 
   public BackgroundUpdaterTask(Project project, String title, boolean canBeCancelled) {
     super(project, title, canBeCancelled);

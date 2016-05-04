@@ -60,9 +60,9 @@ public class JavaRefactoringSettings implements PersistentStateComponent<JavaRef
   public boolean TYPE_COOK_DROP_CASTS = true;
   public boolean TYPE_COOK_PRESERVE_RAW_ARRAYS = true;
   public boolean TYPE_COOK_LEAVE_OBJECT_PARAMETERIZED_TYPES_RAW = true;
-  public boolean TYPE_COOK_EXHAUSTIVE = false;
-  public boolean TYPE_COOK_COOK_OBJECTS = false;
-  public boolean TYPE_COOK_PRODUCE_WILDCARDS = false;
+  public boolean TYPE_COOK_EXHAUSTIVE;
+  public boolean TYPE_COOK_COOK_OBJECTS;
+  public boolean TYPE_COOK_PRODUCE_WILDCARDS;
 
   public boolean TYPE_MIGRATION_PREVIEW_USAGES = true;
 
@@ -85,11 +85,11 @@ public class JavaRefactoringSettings implements PersistentStateComponent<JavaRef
   public boolean INHERITANCE_TO_DELEGATION_DELEGATE_OTHER;
   //public boolean REPLACE_CONSTRUCTOR_WITH_FACTORY_PREVIEW_USAGES;
   public String INTRODUCE_CONSTANT_VISIBILITY;
-  public boolean INTRODUCE_CONSTANT_MOVE_TO_ANOTHER_CLASS = false;
+  public boolean INTRODUCE_CONSTANT_MOVE_TO_ANOTHER_CLASS;
   public boolean CONVERT_TO_INSTANCE_METHOD_PREVIEW_USAGES = true;
 
-  public Boolean INTRODUCE_LOCAL_CREATE_FINALS = null;
-  public Boolean INTRODUCE_PARAMETER_CREATE_FINALS = null;
+  public Boolean INTRODUCE_LOCAL_CREATE_FINALS;
+  public Boolean INTRODUCE_PARAMETER_CREATE_FINALS;
 
   public boolean INLINE_CLASS_SEARCH_IN_COMMENTS = true;
   public boolean INLINE_CLASS_SEARCH_IN_NON_JAVA = true;

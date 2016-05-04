@@ -58,7 +58,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     }
   };
   private static Throwable ourForcedTrace;
-  private volatile boolean myDumb = false;
+  private volatile boolean myDumb;
   private volatile Throwable myDumbStart;
   private volatile TransactionId myDumbStartTransaction;
   private boolean myUpdateFinishedQueued;

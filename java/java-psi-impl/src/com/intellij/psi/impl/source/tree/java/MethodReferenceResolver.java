@@ -54,9 +54,7 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
       final PsiElement element = reference.getReferenceNameElement();
       final boolean isConstructor = reference.isConstructor();
       if (element instanceof PsiIdentifier || isConstructor) {
-        if (isConstructor && (containingClass.isEnum() ||
-                              containingClass.hasModifierProperty(PsiModifier.ABSTRACT) ||
-                              containingClass instanceof PsiTypeParameter)) {
+        if (isConstructor && !canBeConstructed(containingClass)) {
           return JavaResolveResult.EMPTY_ARRAY;
         }
         final PsiType functionalInterfaceType = getInterfaceType(reference);
@@ -164,6 +162,10 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
       }
     }
     return JavaResolveResult.EMPTY_ARRAY;
+  }
+
+  public static boolean canBeConstructed(@NotNull PsiClass psiClass) {
+    return !psiClass.isEnum() && !psiClass.hasModifierProperty(PsiModifier.ABSTRACT) && !(psiClass instanceof PsiTypeParameter);
   }
 
   private static boolean isLocatedInStaticContext(PsiClass containingClass, PsiMethodReferenceExpression reference) {

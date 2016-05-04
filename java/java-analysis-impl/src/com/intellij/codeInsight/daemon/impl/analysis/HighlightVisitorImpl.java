@@ -1272,7 +1272,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       myHolder.add(info);
     } else {
       final TextAttributesScheme colorsScheme = myHolder.getColorsScheme();
-      if (method instanceof PsiMethod) {
+      if (method instanceof PsiMethod && !expression.isConstructor()) {
         final PsiElement methodNameElement = expression.getReferenceNameElement();
         myHolder.add(HighlightNamesUtil.highlightMethodName((PsiMethod)method, methodNameElement, false, colorsScheme));
       }

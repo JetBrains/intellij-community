@@ -97,19 +97,19 @@ public class CreateParameterFromUsageFix extends CreateVarFromUsageFix {
     }
 
     final Application application = ApplicationManager.getApplication();
-    if (application.isUnitTestMode()) {
-      ParameterInfoImpl[] array = parameterInfos.toArray(new ParameterInfoImpl[parameterInfos.size()]);
-      String modifier = PsiUtil.getAccessModifier(PsiUtil.getAccessLevel(method.getModifierList()));
-      ChangeSignatureProcessor processor =
-        new ChangeSignatureProcessor(project, method, false, modifier, method.getName(), method.getReturnType(), array);
-      processor.run();
-    }
-    else {
-      final PsiMethod finalMethod = method;
-      application.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          if (project.isDisposed()) return;
+    final PsiMethod finalMethod = method;
+    application.invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        if (project.isDisposed()) return;
+        if (application.isUnitTestMode()) {
+          ParameterInfoImpl[] array = parameterInfos.toArray(new ParameterInfoImpl[parameterInfos.size()]);
+          String modifier = PsiUtil.getAccessModifier(PsiUtil.getAccessLevel(finalMethod.getModifierList()));
+          ChangeSignatureProcessor processor =
+            new ChangeSignatureProcessor(project, finalMethod, false, modifier, finalMethod.getName(), finalMethod.getReturnType(), array);
+          processor.run();
+        }
+        else {
           try {
             JavaChangeSignatureDialog dialog =
               JavaChangeSignatureDialog.createAndPreselectNew(project, finalMethod, parameterInfos, true, myReferenceExpression);
@@ -141,8 +141,8 @@ public class CreateParameterFromUsageFix extends CreateVarFromUsageFix {
             throw new RuntimeException(e);
           }
         }
-      });
-    }
+      }
+    });
   }
 
   @Override

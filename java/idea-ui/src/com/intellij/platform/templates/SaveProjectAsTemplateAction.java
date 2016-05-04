@@ -25,6 +25,7 @@ import com.intellij.ide.util.projectWizard.ProjectTemplateParameterFactory;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
@@ -122,16 +123,8 @@ public class SaveProjectAsTemplateAction extends AnAction {
 
     final Map<String, String> parameters = computeParameters(project, replaceParameters);
     indicator.setText("Saving project...");
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            project.save();
-          }
-        });
-      }
-    });
+    ApplicationManager.getApplication().invokeAndWait(() -> WriteAction.run(project::save),
+                                                      indicator.getModalityState());
     indicator.setText("Processing project files...");
     ZipOutputStream stream = null;
     try {
@@ -139,10 +132,10 @@ public class SaveProjectAsTemplateAction extends AnAction {
       stream = new ZipOutputStream(new FileOutputStream(zipFile));
 
       final VirtualFile dir = getDirectoryToSave(project, moduleToSave);
-      writeFile(LocalArchivedTemplate.DESCRIPTION_PATH, description, project, dir, stream, true);
+      writeFile(LocalArchivedTemplate.DESCRIPTION_PATH, description, project, dir, stream, true, indicator);
       if (replaceParameters) {
         String text = getInputFieldsText(parameters);
-        writeFile(LocalArchivedTemplate.TEMPLATE_DESCRIPTOR, text, project, dir, stream, false);
+        writeFile(LocalArchivedTemplate.TEMPLATE_DESCRIPTOR, text, project, dir, stream, false, indicator);
       }
 
       FileIndex index = moduleToSave == null
@@ -205,7 +198,7 @@ public class SaveProjectAsTemplateAction extends AnAction {
 
   private static void writeFile(String path,
                                 final String text,
-                                Project project, VirtualFile dir, ZipOutputStream stream, boolean overwrite) throws IOException {
+                                Project project, VirtualFile dir, ZipOutputStream stream, boolean overwrite, ProgressIndicator indicator) throws IOException {
     final VirtualFile descriptionFile = getDescriptionFile(project, path);
     if (descriptionFile == null) {
       stream.putNextEntry(new ZipEntry(dir.getName() + "/" + path));
@@ -213,21 +206,14 @@ public class SaveProjectAsTemplateAction extends AnAction {
       stream.closeEntry();
     }
     else if (overwrite) {
-      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-        public void run() {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              try {
-                VfsUtil.saveText(descriptionFile, text);
-              }
-              catch (IOException e) {
-                LOG.error(e);
-              }
-            }
-          });
+      ApplicationManager.getApplication().invokeAndWait(() -> WriteAction.run(() -> {
+        try {
+          VfsUtil.saveText(descriptionFile, text);
         }
-      });
+        catch (IOException e) {
+          LOG.error(e);
+        }
+      }), indicator.getModalityState());
     }
   }
 

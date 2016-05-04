@@ -25,15 +25,17 @@ import java.awt.*;
 
 public class MessageType {
 
-  public static final MessageType ERROR = new MessageType(AllIcons.General.NotificationError,
-                                                          new JBColor(new Color(255, 204, 204), new Color(112, 71, 69)),
-                                                          new JBColor(new Color(0xAC0013), new Color(0xEF5F65)));
-  public static final MessageType INFO = new MessageType(AllIcons.General.NotificationInfo,
-                                                         new JBColor(new Color(186, 238, 186), new Color(60, 63, 65)),
-                                                         new JBColor(new Color(0x000000), new Color(0xbbbbbb)));
-  public static final MessageType WARNING = new MessageType(AllIcons.General.NotificationWarning,
-                                                            new JBColor(new Color(249, 247, 142), new Color(90, 82, 33)),
-                                                            new JBColor(new Color(164, 145, 82), new Color(0xBBB529)));
+  public static MessageType ERROR = new MessageType(AllIcons.General.NotificationError,
+                                                          new JBColor(0xffcccc, 0x704745),
+                                                          new JBColor(0xac0013, 0xef5f65));
+
+  public static MessageType INFO = new MessageType(AllIcons.General.NotificationInfo,
+                                                         new JBColor(0xbaeeba, 0x33412E),
+                                                         new JBColor(0x000000, 0xbbbbbb));
+
+  public static MessageType WARNING = new MessageType(AllIcons.General.NotificationWarning,
+                                                            new JBColor(0xf9f78e, 0x5a5221),
+                                                            new JBColor(0xa49152, 0xbbb529));
 
   private final Icon myDefaultIcon;
   private final Color myPopupBackground;

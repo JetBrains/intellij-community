@@ -17,6 +17,7 @@ package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsListener;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider;
@@ -24,9 +25,13 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.components.JBPanel;
+import com.intellij.ui.content.Content;
 import com.intellij.ui.content.TabbedContent;
+import com.intellij.ui.content.impl.ContentManagerImpl;
 import com.intellij.util.ContentUtilEx;
+import com.intellij.util.ContentsUtil;
 import com.intellij.util.NotNullFunction;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import org.jetbrains.annotations.NotNull;
@@ -34,6 +39,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * Provides the Content tab to the ChangesView log toolwindow.
@@ -52,11 +58,11 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
     myProject = project;
     myLogManager = logManager;
     myLogManager.setRecreateMainLogHandler(new Runnable() {
-          @Override
-          public void run() {
-            recreateLog();
-          }
-        });
+      @Override
+      public void run() {
+        recreateLog();
+      }
+    });
   }
 
   @Override
@@ -83,10 +89,26 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
     VcsLogManager logManager = VcsLogManager.getInstance(project);
     ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS);
 
-    TabbedContent tabbedContent = ContentUtilEx.findTabbedContent(toolWindow.getContentManager(), TAB_NAME);
-    String shortName = String.valueOf(tabbedContent == null ? 1 : tabbedContent.getTabs().size() + 1);
+    String shortName = generateShortName(toolWindow);
     VcsLogUiImpl logUi = logManager.createLog(ContentUtilEx.getFullName(TAB_NAME, shortName));
     addLogTab(logManager, toolWindow, logUi, shortName);
+  }
+
+  @NotNull
+  private static String generateShortName(@NotNull ToolWindow toolWindow) {
+    TabbedContent tabbedContent = ContentUtilEx.findTabbedContent(toolWindow.getContentManager(), TAB_NAME);
+    if (tabbedContent != null) {
+      return String.valueOf(tabbedContent.getTabs().size() + 1);
+    }
+    else {
+      List<Content> contents = ContainerUtil.filter(toolWindow.getContentManager().getContents(), new Condition<Content>() {
+        @Override
+        public boolean value(Content content) {
+          return TAB_NAME.equals(content.getUserData(Content.TAB_GROUP_NAME_KEY));
+        }
+      });
+      return String.valueOf(contents.size() + 1);
+    }
   }
 
   private static void addLogTab(@NotNull VcsLogManager logManager,
@@ -103,9 +125,10 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
   private void closeLogTabs() {
     ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.VCS);
 
-    TabbedContent content = ContentUtilEx.findTabbedContent(toolWindow.getContentManager(), TAB_NAME);
-    if (content != null) {
-      toolWindow.getContentManager().removeContent(content, true);
+    for (Content content: toolWindow.getContentManager().getContents()) {
+      if (ContentUtilEx.isContentTab(content, TAB_NAME)) {
+        ContentsUtil.closeContentTab(toolWindow.getContentManager(), content);
+      }
     }
   }
 

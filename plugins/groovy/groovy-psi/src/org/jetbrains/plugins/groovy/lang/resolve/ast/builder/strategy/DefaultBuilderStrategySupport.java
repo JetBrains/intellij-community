@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,61 +26,42 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.ast.Members;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.builder.BuilderAnnotationContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.builder.BuilderHelperLightPsiClass;
+import org.jetbrains.plugins.groovy.transformations.TransformationContext;
 
-import java.util.Collection;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.createType;
 
 public class DefaultBuilderStrategySupport extends BuilderAnnotationContributor {
 
   public static final String DEFAULT_STRATEGY_NAME = "DefaultStrategy";
 
   @Override
-  public void collectClasses(@NotNull GrTypeDefinition clazz, Collection<PsiClass> collector) {
-    collector.addAll(collect(clazz).getClasses());
-  }
-
-  @Override
-  public void collectMethods(@NotNull GrTypeDefinition clazz, Collection<PsiMethod> collector) {
-    collector.addAll(collect(clazz).getMethods());
-  }
-
-  @NotNull
-  public Members collect(@NotNull final GrTypeDefinition typeDefinition) {
-    return new DefaultBuilderStrategyHandler(typeDefinition).doProcess();
+  public void applyTransformation(@NotNull TransformationContext context) {
+    new DefaultBuilderStrategyHandler(context).doProcess();
   }
 
   private static class DefaultBuilderStrategyHandler {
 
+    private final @NotNull TransformationContext myContext;
     private final @NotNull GrTypeDefinition myContainingClass;
-    private final @NotNull PsiElementFactory myElementFactory;
-    private final Members myMembers;
 
-    private DefaultBuilderStrategyHandler(@NotNull GrTypeDefinition typeDefinition) {
-      myContainingClass = typeDefinition;
-      myElementFactory = PsiElementFactory.SERVICE.getInstance(typeDefinition.getProject());
-      myMembers = Members.create();
+    private DefaultBuilderStrategyHandler(@NotNull TransformationContext context) {
+      myContext = context;
+      myContainingClass = context.getCodeClass();
     }
 
-    @NotNull
-    private PsiManager getManager() {
-      return myContainingClass.getManager();
-    }
-
-    @NotNull
-    public Members doProcess() {
+    public void doProcess() {
       processTypeDefinition();
       processMethods();
-      return myMembers;
     }
 
     private void processTypeDefinition() {
       final PsiAnnotation builderAnno = PsiImplUtil.getAnnotation(myContainingClass, BUILDER_FQN);
       if (!isApplicable(builderAnno, DEFAULT_STRATEGY_NAME)) return;
-      final PsiClass builderClass = createBuilderClass(builderAnno, myContainingClass.getCodeFields());
-      myMembers.getMethods().add(createBuilderMethod(builderClass, builderAnno));
-      myMembers.getClasses().add(builderClass);
+      final PsiClass builderClass = createBuilderClass(builderAnno, myContext.getCodeClass().getCodeFields());
+      myContext.addMethod(createBuilderMethod(builderClass, builderAnno));
+      myContext.addInnerClass(builderClass);
     }
 
     @NotNull
@@ -101,24 +82,23 @@ public class DefaultBuilderStrategySupport extends BuilderAnnotationContributor 
       }
 
       final LightMethodBuilder buildMethod = createBuildMethod(
-        annotation, builtType == null ? myElementFactory.createType(myContainingClass) : builtType, builderClass
+        annotation, builtType == null ? createType(myContainingClass) : builtType
       );
       return builderClass.addMethod(buildMethod);
     }
 
     @NotNull
     private LightMethodBuilder createBuilderMethod(@NotNull PsiClass builderClass, @NotNull PsiAnnotation annotation) {
-      final LightMethodBuilder builderMethod = new LightMethodBuilder(getManager(), getBuilderMethodName(annotation));
+      final LightMethodBuilder builderMethod = new LightMethodBuilder(myContext.getManager(), getBuilderMethodName(annotation));
       builderMethod.addModifier(PsiModifier.STATIC);
-      builderMethod.setContainingClass(myContainingClass);
       builderMethod.setOriginInfo(ORIGIN_INFO);
       builderMethod.setNavigationElement(annotation);
-      builderMethod.setMethodReturnType(myElementFactory.createType(builderClass));
+      builderMethod.setMethodReturnType(createType(builderClass));
       return builderMethod;
     }
 
     private void processMethods() {
-      for (GrMethod method : myContainingClass.getCodeMethods()) {
+      for (GrMethod method : myContext.getCodeClass().getCodeMethods()) {
         processMethod(method);
       }
     }
@@ -136,14 +116,14 @@ public class DefaultBuilderStrategySupport extends BuilderAnnotationContributor 
 
     private void processConstructor(@NotNull GrMethod method, PsiAnnotation annotation) {
       PsiClass builderClass = createBuilderClass(annotation, method.getParameters());
-      myMembers.getMethods().add(createBuilderMethod(builderClass, annotation));
-      myMembers.getClasses().add(builderClass);
+      myContext.addMethod(createBuilderMethod(builderClass, annotation));
+      myContext.addInnerClass(builderClass);
     }
 
     private void processFactoryMethod(@NotNull GrMethod method, PsiAnnotation annotation) {
       PsiClass builderClass = createBuilderClass(annotation, method.getParameters(), method.getReturnType());
-      myMembers.getMethods().add(createBuilderMethod(builderClass, annotation));
-      myMembers.getClasses().add(builderClass);
+      myContext.addMethod(createBuilderMethod(builderClass, annotation));
+      myContext.addInnerClass(builderClass);
     }
 
     @NotNull
@@ -160,9 +140,8 @@ public class DefaultBuilderStrategySupport extends BuilderAnnotationContributor 
   }
 
   @NotNull
-  public static LightMethodBuilder createBuildMethod(@NotNull PsiAnnotation annotation, @NotNull PsiType builtType, PsiClass builderClass) {
+  public static LightMethodBuilder createBuildMethod(@NotNull PsiAnnotation annotation, @NotNull PsiType builtType) {
     final LightMethodBuilder buildMethod = new LightMethodBuilder(annotation.getManager(), getBuildMethodName(annotation));
-    buildMethod.setContainingClass(builderClass);
     buildMethod.setOriginInfo(ORIGIN_INFO);
     buildMethod.setMethodReturnType(builtType);
     return buildMethod;

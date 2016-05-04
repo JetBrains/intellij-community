@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,9 +27,6 @@ import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.IStubElementType;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
@@ -78,7 +75,8 @@ import java.util.List;
 /**
  * @author ilyas
  */
-public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefinitionStub> implements GrTypeDefinition, StubBasedPsiElement<GrTypeDefinitionStub> {
+public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefinitionStub>
+  implements GrTypeDefinition, StubBasedPsiElement<GrTypeDefinitionStub> {
 
   private final GrTypeDefinitionMembersCache myCache = new GrTypeDefinitionMembersCache(this);
 
@@ -278,25 +276,14 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
 
   @NotNull
   @Override
-  public PsiClassType[] getExtendsListTypes() {
-    return CachedValuesManager.getCachedValue(this, new CachedValueProvider<PsiClassType[]>() {
-      @Override
-      public Result<PsiClassType[]> compute() {
-        return Result.create(GrClassImplUtil.getExtendsListTypes(GrTypeDefinitionImpl.this), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
-      }
-    });
+  public PsiClassType[] getExtendsListTypes(boolean includeSynthetic) {
+    return myCache.getExtendsListTypes(includeSynthetic);
   }
 
   @NotNull
   @Override
-  public PsiClassType[] getImplementsListTypes() {
-    return CachedValuesManager.getCachedValue(this, new CachedValueProvider<PsiClassType[]>() {
-      @Override
-      public Result<PsiClassType[]> compute() {
-        return Result.create(GrClassImplUtil.getImplementsListTypes(GrTypeDefinitionImpl.this),
-                             PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
-      }
-    });
+  public PsiClassType[] getImplementsListTypes(boolean includeSynthetic) {
+    return myCache.getImplementsListTypes(includeSynthetic);
   }
 
   @Nullable
@@ -307,36 +294,25 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
 
   @Override
   public PsiClass[] getInterfaces() {
-    return CachedValuesManager.getCachedValue(this, new CachedValueProvider<PsiClass[]>() {
-      @Override
-      public Result<PsiClass[]> compute() {
-        return Result
-          .create(GrClassImplUtil.getInterfaces(GrTypeDefinitionImpl.this), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
-      }
-    });
+    return GrClassImplUtil.getInterfaces(this);
   }
 
   @NotNull
   @Override
-  public final PsiClass[] getSupers() {
-    return GrClassImplUtil.getSupers(this);
+  public final PsiClass[] getSupers(boolean includeSynthetic) {
+    return GrClassImplUtil.getSupers(this, includeSynthetic);
   }
 
   @NotNull
   @Override
-  public PsiClassType[] getSuperTypes() {
-    return GrClassImplUtil.getSuperTypes(this);
+  public PsiClassType[] getSuperTypes(boolean includeSynthetic) {
+    return GrClassImplUtil.getSuperTypes(this, includeSynthetic);
   }
 
   @NotNull
   @Override
   public GrField[] getCodeFields() {
-    GrTypeDefinitionBody body = getBody();
-    if (body != null) {
-      return body.getFields();
-    }
-
-    return GrField.EMPTY_ARRAY;
+    return myCache.getCodeFields();
   }
 
   @Override
@@ -384,6 +360,12 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
   @Override
   public PsiClass[] getInnerClasses() {
     return myCache.getInnerClasses();
+  }
+
+  @NotNull
+  @Override
+  public GrTypeDefinition[] getCodeInnerClasses() {
+    return myCache.getCodeInnerClasses();
   }
 
   @NotNull
@@ -771,7 +753,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
     return null;
   }
 
-    // TODO remove as soon as an arrangement sub-system is provided for groovy.
+  // TODO remove as soon as an arrangement sub-system is provided for groovy.
   public static int getMemberOrderWeight(PsiElement member, GroovyCodeStyleSettingsFacade settings) {
     if (member instanceof PsiField) {
       if (member instanceof PsiEnumConstant) {

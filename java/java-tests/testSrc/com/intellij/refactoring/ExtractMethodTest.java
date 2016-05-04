@@ -744,6 +744,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTestReturnTypeChanged(PsiType.INT);
   }
 
+  public void testShortenClassRefsInNewReturnType() throws Exception {
+    doTestReturnTypeChanged(PsiType.getTypeByName(CommonClassNames.JAVA_UTIL_COLLECTION, getProject(), GlobalSearchScope.allScope(getProject())));
+  }
+
   public void testPassFieldAsParameterAndMakeStatic() throws Exception {
     doTestPassFieldsAsParams();
   }

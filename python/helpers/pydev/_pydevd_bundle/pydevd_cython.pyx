@@ -207,7 +207,8 @@ from _pydevd_bundle import pydevd_vars
 from _pydevd_bundle.pydevd_breakpoints import get_exception_breakpoint
 from _pydevd_bundle.pydevd_comm import CMD_STEP_CAUGHT_EXCEPTION, CMD_STEP_RETURN, CMD_STEP_OVER, CMD_SET_BREAK, \
     CMD_STEP_INTO, CMD_SMART_STEP_INTO, CMD_RUN_TO_LINE, CMD_SET_NEXT_STATEMENT, CMD_STEP_INTO_MY_CODE
-from _pydevd_bundle.pydevd_constants import STATE_SUSPEND, dict_contains, get_thread_id, STATE_RUN, dict_iter_values
+from _pydevd_bundle.pydevd_constants import STATE_SUSPEND, dict_contains, get_thread_id, STATE_RUN, dict_iter_values, IS_PY3K
+from _pydevd_bundle.pydevd_dont_trace_files import DONT_TRACE, PYDEV_FILE
 from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame, just_raised
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame
 
@@ -228,6 +229,7 @@ IGNORE_EXCEPTION_TAG = re.compile('[^#]*#.*@IgnoreException')
 DEBUG_START = ('pydevd.py', 'run')
 DEBUG_START_PY3K = ('_pydev_execfile.py', 'execfile')
 TRACE_PROPERTY = 'pydevd_traceproperty.py'
+get_file_type = DONT_TRACE.get
 
 
 #=======================================================================================================================
@@ -779,6 +781,15 @@ class PyDBFrame: # No longer cdef because object was dying when only a reference
 
                 else:
                     stop = False
+
+                if stop and step_cmd != -1 and IS_PY3K:
+                    # in Py3k we start script via our custom `execfile` function, and we shouldn't stop there
+                    # while stepping when execution is finished
+                    if event == 'return' and hasattr(frame, "f_back"):
+                        back_filename = os.path.basename(frame.f_back.f_code.co_filename)
+                        file_type = get_file_type(back_filename)
+                        if file_type == PYDEV_FILE:
+                            stop = False
 
                 if plugin_stop:
                     stopped_on_plugin = plugin_manager.stop(main_debugger, frame, event, self._args, stop_info, arg, step_cmd)

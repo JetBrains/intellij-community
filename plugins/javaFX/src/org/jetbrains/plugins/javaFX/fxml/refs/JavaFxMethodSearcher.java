@@ -18,6 +18,7 @@ package org.jetbrains.plugins.javaFX.fxml.refs;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.cache.CacheManager;
@@ -29,6 +30,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
@@ -104,27 +106,29 @@ public class JavaFxMethodSearcher implements QueryExecutor<PsiReference, Referen
   private static boolean searchMethodInFile(@NotNull PsiMethod psiMethod,
                                             @NotNull PsiFile file,
                                             @NotNull Processor<PsiReference> consumer) {
-    class StopException extends RuntimeException {
-    }
-    try {
-      file.accept(new XmlRecursiveElementVisitor() {
-        @Override
-        public void visitXmlAttribute(XmlAttribute attribute) {
-          final PsiReference[] references = attribute.getReferences();
-          for (PsiReference reference : references) {
-            if ((reference instanceof JavaFxStaticPropertyReference || reference instanceof JavaFxEventHandlerReference) &&
-                reference.isReferenceTo(psiMethod)) {
-              if (!consumer.process(reference)) {
-                throw new StopException();
-              }
+    final Ref<Boolean> stopped = new Ref<>(false);
+    file.accept(new XmlRecursiveElementVisitor() {
+      @Override
+      public void visitXmlElement(XmlElement element) {
+        if (stopped.get()) return;
+        super.visitXmlElement(element);
+      }
+
+      @Override
+      public void visitXmlAttribute(XmlAttribute attribute) {
+        if (stopped.get()) return;
+        final PsiReference[] references = attribute.getReferences();
+        for (PsiReference reference : references) {
+          if ((reference instanceof JavaFxStaticPropertyReference || reference instanceof JavaFxEventHandlerReference) &&
+              reference.isReferenceTo(psiMethod)) {
+            if (!consumer.process(reference)) {
+              stopped.set(true);
+              return;
             }
           }
         }
-      });
-      return true;
-    }
-    catch (StopException unused) {
-      return false;
-    }
+      }
+    });
+    return !stopped.get();
   }
 }

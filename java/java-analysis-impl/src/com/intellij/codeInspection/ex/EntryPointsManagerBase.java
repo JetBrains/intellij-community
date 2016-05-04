@@ -77,7 +77,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
   @NonNls private static final String VERSION_ATTR = "version";
   @NonNls private static final String ENTRY_POINT_ATTR = "entry_point";
   private boolean myAddNonJavaEntries = true;
-  private boolean myResolved = false;
+  private boolean myResolved;
   protected final Project myProject;
   private long myLastModificationCount = -1;
 

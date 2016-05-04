@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,6 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
-import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -62,6 +61,7 @@ public class ExistingModuleLoader extends ModuleBuilder {
     return moduleLoader;
   }
 
+  @Override
   @NotNull
   public Module createModule(@NotNull ModifiableModuleModel moduleModel)
     throws InvalidDataException, IOException, ModuleWithNameAlreadyExists, JDOMException, ConfigurationException {
@@ -75,14 +75,17 @@ public class ExistingModuleLoader extends ModuleBuilder {
     return moduleModel.loadModule(moduleFilePath);
   }
 
+  @Override
   public void setupRootModel(ModifiableRootModel modifiableRootModel) throws ConfigurationException {
     // empty
   }
 
+  @Override
   public ModuleType getModuleType() {
     return null; // no matter
   }
 
+  @Override
   public boolean validate(final Project current, final Project dest) {
     if (getName() == null) return false;
     String moduleFilePath = getModuleFilePath();
@@ -94,8 +97,7 @@ public class ExistingModuleLoader extends ModuleBuilder {
         if (result.openingIsCanceled()) {
           return false;
         }
-        final Document document = JDOMUtil.loadDocument(file);
-        final Element root = document.getRootElement();
+        final Element root = JDOMUtil.load(file);
         final Set<String> usedMacros = PathMacrosCollector.getMacroNames(root);
         final Set<String> definedMacros = PathMacros.getInstance().getAllMacroNames();
         usedMacros.remove("$" + PathMacrosImpl.MODULE_DIR_MACRO_NAME + "$");

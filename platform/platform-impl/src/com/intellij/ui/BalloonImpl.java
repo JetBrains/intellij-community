@@ -28,7 +28,6 @@ import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.impl.ShadowBorderPainter;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -114,7 +113,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
         final boolean insideBalloon = isInsideBalloon(me);
 
         if (myHideOnMouse && id == MouseEvent.MOUSE_PRESSED) {
-          if (!insideBalloon && !hasModalDialog(me) && !isWithinChildWindow(me)) {
+          if (!insideBalloon && !isWithinChildWindow(me)) {
             if (myHideListener == null) {
               hide();
             }
@@ -191,12 +190,6 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
       }
     }
     return false;
-  }
-
-  private static boolean hasModalDialog(MouseEvent e) {
-    final Component c = e.getComponent();
-    final DialogWrapper dialog = DialogWrapper.findInstance(c);
-    return dialog != null && dialog.isModal();
   }
 
   private final long myFadeoutTime;

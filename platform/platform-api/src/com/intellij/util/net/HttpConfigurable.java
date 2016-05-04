@@ -40,6 +40,8 @@ import com.intellij.util.WaitForProgressToShow;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.proxy.CommonProxy;
 import com.intellij.util.proxy.JavaProxyProperty;
+import com.intellij.util.proxy.SharedProxyConfig;
+import com.intellij.util.xmlb.SkipDefaultsSerializationFilter;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Transient;
@@ -129,6 +131,32 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
 
   @Override
   public void initComponent() {
+
+    final HttpConfigurable currentState = getState();
+    if (currentState != null) {
+      final Element serialized = XmlSerializer.serializeIfNotDefault(currentState, new SkipDefaultsSerializationFilter());
+      if (serialized == null) {
+        // all settings are defaults
+        // trying user's proxy configuration entered while obtaining the license
+        final SharedProxyConfig.ProxyParameters cfg = SharedProxyConfig.load();
+        if (cfg != null) {
+          SharedProxyConfig.clear();
+          if (cfg.host != null) {
+            USE_HTTP_PROXY = true;
+            PROXY_HOST = cfg.host;
+            PROXY_PORT = cfg.port;
+            if (cfg.login != null) {
+              setPlainProxyPassword(new String(cfg.password));
+              PROXY_LOGIN = cfg.login;
+              PROXY_AUTHENTICATION = true;
+              KEEP_PROXY_PASSWORD = true;
+            }
+          }
+        }
+      }
+    }
+
+
     mySelector = new IdeaWideProxySelector(this);
     String name = getClass().getName();
     CommonProxy.getInstance().setCustom(name, mySelector);
@@ -210,7 +238,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   }
 
   private static String decode(String value) {
-    return new String(Base64.decode(value));
+    return new String(Base64.decode(value), CharsetToolkit.UTF8_CHARSET);
   }
 
   @Transient
@@ -219,7 +247,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   }
 
   private static String encode(String password) {
-    return new String(Base64.encode(password.getBytes(CharsetToolkit.UTF8_CHARSET)));
+    return Base64.encode(password.getBytes(CharsetToolkit.UTF8_CHARSET));
   }
 
   public PasswordAuthentication getGenericPromptedAuthentication(final String prefix, final String host, final String prompt, final int port, final boolean remember) {

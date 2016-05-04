@@ -138,17 +138,17 @@ public class JavaFxPropertyRenameHandler implements RenameHandler {
   @NotNull
   private static Map<PsiElement, String> getElementsToRename(@NotNull JavaFxPropertyReference reference, @NotNull String newPropertyName) {
     final Map<PsiElement, String> rename = new THashMap<>();
-    putIfKeyNotNull(rename, reference.getGetter(), () -> PropertyUtil.suggestGetterName(newPropertyName, reference.getType()));
-    putIfKeyNotNull(rename, reference.getField(), () -> newPropertyName);
-    putIfKeyNotNull(rename, reference.getSetter(), () -> PropertyUtil.suggestSetterName(newPropertyName));
-    putIfKeyNotNull(rename, reference.getObservableGetter(), () -> newPropertyName + JavaFxCommonNames.PROPERTY_METHOD_SUFFIX);
-    putIfKeyNotNull(rename, reference.getStaticSetter(), () -> PropertyUtil.suggestSetterName(newPropertyName));
+    putIfKeyNotNull(rename, reference.getGetter(), PropertyUtil.suggestGetterName(newPropertyName, reference.getType()));
+    putIfKeyNotNull(rename, reference.getField(), newPropertyName);
+    putIfKeyNotNull(rename, reference.getSetter(), PropertyUtil.suggestSetterName(newPropertyName));
+    putIfKeyNotNull(rename, reference.getObservableGetter(), newPropertyName + JavaFxCommonNames.PROPERTY_METHOD_SUFFIX);
+    putIfKeyNotNull(rename, reference.getStaticSetter(), PropertyUtil.suggestSetterName(newPropertyName));
     //TODO add "name" parameter of the observable property constructor (like new SimpleObjectProperty(this, "name", null);
     return rename;
   }
 
-  private static <K, V> void putIfKeyNotNull(Map<K, V> map, K key, NotNullProducer<V> valueProducer) {
-    if (key != null) map.put(key, valueProducer.produce());
+  private static <K, V> void putIfKeyNotNull(@NotNull Map<K, V> map, @Nullable K key, @NotNull V value) {
+    if (key != null) map.put(key, value);
   }
 
   private static class PropertyRenameDialog extends RenameDialog {

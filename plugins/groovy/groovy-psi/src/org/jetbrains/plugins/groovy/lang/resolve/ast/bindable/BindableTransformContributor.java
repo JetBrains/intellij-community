@@ -24,12 +24,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.resolve.ast.AstTransformContributor;
+import org.jetbrains.plugins.groovy.transformations.AstTransformationSupport;
+import org.jetbrains.plugins.groovy.transformations.TransformationContext;
 
-import java.util.Collection;
 import java.util.List;
 
-public class BindableTransformContributor extends AstTransformContributor {
+public class BindableTransformContributor implements AstTransformationSupport {
 
   private static final String BINDABLE_FQN = "groovy.beans.Bindable";
   private static final String PCL_FQN = "java.beans.PropertyChangeListener";
@@ -49,7 +49,8 @@ public class BindableTransformContributor extends AstTransformContributor {
   }
 
   @Override
-  public void collectMethods(@NotNull GrTypeDefinition clazz, Collection<PsiMethod> collector) {
+  public void applyTransformation(@NotNull TransformationContext context) {
+    GrTypeDefinition clazz = context.getCodeClass();
     if (!isApplicable(clazz)) return;
 
     final PsiManager manager = clazz.getManager();
@@ -108,11 +109,10 @@ public class BindableTransformContributor extends AstTransformContributor {
     );
 
     for (LightMethodBuilder method : methods) {
-      method.setContainingClass(clazz);
       method.addModifier(PsiModifier.PUBLIC);
       method.setOriginInfo(ORIGIN_INFO);
     }
 
-    collector.addAll(methods);
+    context.addMethods(methods);
   }
 }

@@ -422,10 +422,12 @@ public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
 
   private static AllowedValues parseBeanInfo(@NotNull PsiModifierListOwner owner, @NotNull PsiManager manager) {
     PsiFile containingFile = owner.getContainingFile();
-    GlobalSearchScope sourceFile = GlobalSearchScope.fileScope((PsiFile)containingFile.getNavigationElement());
-    if (FileBasedIndex.getInstance().getContainingFiles(IdIndex.NAME, new IdIndexEntry("beaninfo", true), sourceFile).isEmpty()) {
-      // optimisation: do not parse library sources if there are no "beaninfo" text in the file
-      return null;
+    if (containingFile != null) {
+      GlobalSearchScope sourceFile = GlobalSearchScope.fileScope((PsiFile)containingFile.getNavigationElement());
+      if (FileBasedIndex.getInstance().getContainingFiles(IdIndex.NAME, new IdIndexEntry("beaninfo", true), sourceFile).isEmpty()) {
+        // optimisation: do not parse library sources if there are no "beaninfo" text in the file
+        return null;
+      }
     }
     PsiMethod method = null;
     if (owner instanceof PsiParameter) {

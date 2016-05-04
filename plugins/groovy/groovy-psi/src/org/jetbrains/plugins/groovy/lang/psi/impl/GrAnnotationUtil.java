@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,17 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Max Medvedev
@@ -29,6 +34,11 @@ public class GrAnnotationUtil {
   @Nullable
   public static String inferStringAttribute(@NotNull PsiAnnotation annotation, @NotNull String attributeName) {
     final PsiAnnotationMemberValue targetValue = annotation.findAttributeValue(attributeName);
+    return getString(targetValue);
+  }
+
+  @Nullable
+  public static String getString(@Nullable PsiAnnotationMemberValue targetValue) {
     if (targetValue instanceof PsiLiteral) {
       final Object value = ((PsiLiteral)targetValue).getValue();
       if (value instanceof String) return (String)value;
@@ -56,9 +66,19 @@ public class GrAnnotationUtil {
     return null;
   }
 
+  public static boolean inferBooleanAttributeNotNull(@NotNull PsiAnnotation annotation, @NotNull String attributeName) {
+    Boolean result = inferBooleanAttribute(annotation, attributeName);
+    return result != null && result;
+  }
+
   @Nullable
   public static PsiClass inferClassAttribute(@NotNull PsiAnnotation annotation, @NotNull String attributeName) {
     final PsiAnnotationMemberValue targetValue = annotation.findAttributeValue(attributeName);
+    return getPsiClass(targetValue);
+  }
+
+  @Nullable
+  private static PsiClass getPsiClass(@Nullable PsiAnnotationMemberValue targetValue) {
     if (targetValue instanceof PsiClassObjectAccessExpression) {
       PsiType type = ((PsiClassObjectAccessExpression)targetValue).getOperand().getType();
       if (type instanceof PsiClassType) {
@@ -109,5 +129,35 @@ public class GrAnnotationUtil {
     if (owner instanceof PsiModifierList) return ((PsiModifierList)owner).getParent();
 
     return (PsiElement)owner;
+  }
+
+  public static List<PsiClass> getClassArrayValue(@NotNull PsiAnnotation annotation, @NotNull String attributeName) {
+    PsiAnnotationMemberValue value = annotation.findAttributeValue(attributeName);
+    if (value instanceof PsiArrayInitializerMemberValue) {
+      return ContainerUtil.mapNotNull(((PsiArrayInitializerMemberValue)value).getInitializers(), GrAnnotationUtil::getPsiClass);
+    }
+    else if (value instanceof PsiReference) {
+      PsiClass psiClass = getPsiClass(value);
+      if (psiClass != null) return Collections.singletonList(psiClass);
+    }
+
+    return Collections.emptyList();
+  }
+
+  public static List<String> getStringArrayValue(@NotNull PsiAnnotation annotation, @NotNull String attributeName) {
+    PsiAnnotationMemberValue value = annotation.findAttributeValue(attributeName);
+    if (value instanceof PsiArrayInitializerMemberValue) {
+      return ContainerUtil.mapNotNull(((PsiArrayInitializerMemberValue)value).getInitializers(), memberValue -> {
+        String string = getString(memberValue);
+        return StringUtil.isEmpty(string) ? null : string;
+      });
+    }
+    else {
+      String string = getString(value);
+      if (!StringUtil.isEmpty(string)) {
+        return Collections.singletonList(string);
+      }
+    }
+    return Collections.emptyList();
   }
 }

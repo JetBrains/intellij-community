@@ -610,8 +610,8 @@ public class PsiVFSListener extends VirtualFileAdapter {
   }
 
   private class MyModuleRootListener implements ModuleRootListener {
-    private VirtualFile[] myOldContentRoots = null;
-    private volatile int depthCounter = 0;
+    private VirtualFile[] myOldContentRoots;
+    private volatile int depthCounter;
     @Override
     public void beforeRootsChange(final ModuleRootEvent event) {
       if (!myFileManager.isInitialized()) return;

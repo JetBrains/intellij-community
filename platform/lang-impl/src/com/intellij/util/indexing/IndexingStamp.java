@@ -206,6 +206,7 @@ public class IndexingStamp {
             ID<?, ?> id = ID.findById(DataInputOutputUtil.readINT(stream));
             if (id != null) {
               long stamp = getIndexCreationStamp(id);
+              if (stamp == 0) continue; // All (indices) IDs should be valid in this running session (e.g. we can have ID instance existing but index is not registered)
               if (myIndexStamps == null) myIndexStamps = new TObjectLongHashMap<ID<?, ?>>(5, 0.98f);
               if (stamp <= dominatingIndexStamp) myIndexStamps.put(id, stamp);
             }
@@ -294,14 +295,10 @@ public class IndexingStamp {
     }
 
     private void set(ID<?, ?> id, long tmst) {
-      try {
-        if (myIndexStamps == null) myIndexStamps = new TObjectLongHashMap<ID<?, ?>>(5, 0.98f);
+      if (myIndexStamps == null) myIndexStamps = new TObjectLongHashMap<ID<?, ?>>(5, 0.98f);
 
-        myIndexStamps.put(id, tmst);
-      }
-      finally {
-        myIsDirty = true;
-      }
+      long previous = myIndexStamps.put(id, tmst);
+      if (previous != tmst) myIsDirty = true;
     }
 
     public boolean isDirty() {

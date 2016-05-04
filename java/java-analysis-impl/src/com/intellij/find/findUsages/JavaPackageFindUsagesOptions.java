@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,9 +26,9 @@ import java.util.LinkedHashSet;
  * @author peter
  */
 public class JavaPackageFindUsagesOptions extends JavaFindUsagesOptions {
-  public boolean isClassesUsages = false;
+  public boolean isClassesUsages;
   public boolean isIncludeSubpackages = true;
-  public boolean isSkipPackageStatements = false;
+  public boolean isSkipPackageStatements;
 
   public JavaPackageFindUsagesOptions(@NotNull Project project) {
     super(project);

@@ -569,10 +569,20 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
         if (document.getLineCount() <= line) {
           continue;
         }
-        int start = document.getLineStartOffset(line);
-        int end = document.getLineEndOffset(line);
-        String lineContent = document.getText(new TextRange(start, end));
-        if (entry.getKey().third.equals(lineContent) && findEditorBookmark(document, line) == null) {
+
+        String lineContent = getLineContent(document, line);
+
+        String bookmarkedText = entry.getKey().third;
+        //'move statement up' action kills line bookmark: fix for single line movement up/down
+        if (!bookmarkedText.equals(lineContent)
+            && line > 1
+            && (bookmarkedText.equals(StringUtil.trimEnd(e.getNewFragment().toString(), "\n"))
+                ||
+                bookmarkedText.equals(StringUtil.trimEnd(e.getOldFragment().toString(), "\n")))) {
+          line -= 2;
+          lineContent = getLineContent(document, line);
+        }
+        if (bookmarkedText.equals(lineContent) && findEditorBookmark(document, line) == null) {
           Bookmark restored = addTextBookmark(bookmark.getFile(), line, bookmark.getDescription());
           if (bookmark.getMnemonic() != 0) {
             setMnemonic(restored, bookmark.getMnemonic());
@@ -580,6 +590,12 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
           iterator.remove();
         }
       }
+    }
+
+    private String getLineContent(Document document, int line) {
+      int start = document.getLineStartOffset(line);
+      int end = document.getLineEndOffset(line);
+      return document.getText(new TextRange(start, end));
     }
   }
 }

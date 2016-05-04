@@ -111,7 +111,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     }) {
       @Override
       protected boolean isActive() {
-        return isFocused();
+        return myToolWindow.isActive();
       }
 
       @Override

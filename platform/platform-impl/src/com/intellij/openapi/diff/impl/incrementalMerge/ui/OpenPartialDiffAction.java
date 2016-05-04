@@ -15,7 +15,9 @@
  */
 package com.intellij.openapi.diff.impl.incrementalMerge.ui;
 
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.DocumentContent;
@@ -77,13 +79,13 @@ class OpenPartialDiffAction extends AnAction implements DumbAware {
 
   private String composeName() {
     if (myLeftIndex == 0 && myRightIndex == 1) {
-      return DiffBundle.message("merge.partial.diff.action.name.0.1");
+      return ActionsBundle.actionText("Diff.ComparePartial.Base.Left");
     }
     if (myLeftIndex == 1 && myRightIndex == 2) {
-      return DiffBundle.message("merge.partial.diff.action.name.1.2");
+      return ActionsBundle.actionText("Diff.ComparePartial.Base.Right");
     }
       
-    return DiffBundle.message("merge.partial.diff.action.name");
+    return ActionsBundle.actionText("Diff.ComparePartial.Left.Right");
   }
 
   @Nullable
