@@ -59,8 +59,6 @@ public class JavaAllOverridingMethodsSearcher implements QueryExecutor<Pair<PsiM
 
       for (String name : potentials.keySet()) {
         ProgressManager.checkCanceled();
-        if (inheritor.findMethodsByName(name, true).length == 0) continue;
-
         for (PsiMethod superMethod : potentials.get(name)) {
           ProgressManager.checkCanceled();
           if (superMethod.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) &&

@@ -55,8 +55,8 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
   private static final Function<GrListOrMapImpl, PsiType> TYPES_CALCULATOR = new MyTypesCalculator();
 
   private final PsiReference myLiteralReference = new LiteralConstructorReference(this);
-  private volatile GrExpression[] myInitializers = null;
-  private volatile GrNamedArgument[] myNamedArguments = null;
+  private volatile GrExpression[] myInitializers;
+  private volatile GrNamedArgument[] myNamedArguments;
 
   public GrListOrMapImpl(@NotNull ASTNode node) {
     super(node);

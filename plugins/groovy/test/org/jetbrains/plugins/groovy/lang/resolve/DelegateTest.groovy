@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -176,10 +176,11 @@ new B().test()
 new C().test()
 ''') as GroovyFile
 
-    file.statements.each {
+    def result = file.statements.findAll {
       def method = (it as GrMethodCall).resolveMethod()
-      assertNotNull method
+      !method
     }
+    assert result.size() <= 1: result.collect { it.text }
   }
 
 

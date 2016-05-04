@@ -300,10 +300,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
    */
   public void saveAllDocuments(boolean isExplicit) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (!((TransactionGuardImpl)TransactionGuard.getInstance()).isWriteActionAllowed()) {
-      // please assign exceptions here to Peter
-      LOG.error("Write access is not allowed in this context, see TransactionGuard documentation for details");
-    }
+    ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
 
     myMultiCaster.beforeAllDocumentsSaving();
     if (myUnsavedDocuments.isEmpty()) return;
@@ -344,10 +341,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
 
   public void saveDocument(@NotNull final Document document, final boolean explicit) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (!((TransactionGuardImpl)TransactionGuard.getInstance()).isWriteActionAllowed()) {
-      // please assign exceptions here to Peter
-      LOG.error("Write access is not allowed in this context, see TransactionGuard documentation for details");
-    }
+    ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
 
     if (!myUnsavedDocuments.contains(document)) return;
 

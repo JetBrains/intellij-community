@@ -67,7 +67,6 @@ public class SelectWordAtCaretAction extends TextComponentEditorAction implement
       if (lineNumber >= document.getLineCount()) {
         return;
       }
-      CharSequence text = document.getCharsSequence();
 
       boolean camel = editor.getSettings().isCamelWords();
       List<TextRange> ranges = new ArrayList<TextRange>();
@@ -76,7 +75,7 @@ public class SelectWordAtCaretAction extends TextComponentEditorAction implement
       if (caretOffset == textLength) caretOffset--;
       if (caretOffset < 0) return;
 
-      SelectWordUtil.addWordSelection(camel, text, caretOffset, ranges);
+      SelectWordUtil.addWordOrLexemeSelection(camel, editor, caretOffset, ranges);
 
       if (ranges.isEmpty()) return;
 

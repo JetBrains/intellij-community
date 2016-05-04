@@ -245,15 +245,21 @@ public class IgnoreUnversionedDialog extends DialogWrapper {
     return "IgnoreUnversionedDialog";
   }
 
-  public static void ignoreSelectedFiles(final Project project, final List<VirtualFile> files) {
+  public static void ignoreSelectedFiles(@NotNull Project project, @NotNull List<VirtualFile> files, @Nullable Runnable callback) {
     IgnoreUnversionedDialog dlg = new IgnoreUnversionedDialog(project);
     dlg.setFilesToIgnore(files);
-    if (!dlg.showAndGet()) {
-      return;
-    }
-    final IgnoredFileBean[] ignoredFiles = dlg.getSelectedIgnoredFiles();
-    if (ignoredFiles.length > 0) {
-      ChangeListManager.getInstance(project).addFilesToIgnore(ignoredFiles);
+
+    if (dlg.showAndGet()) {
+      IgnoredFileBean[] ignoredFiles = dlg.getSelectedIgnoredFiles();
+
+      if (ignoredFiles.length > 0) {
+        ChangeListManager manager = ChangeListManager.getInstance(project);
+
+        manager.addFilesToIgnore(ignoredFiles);
+        if (callback != null) {
+          manager.invokeAfterUpdate(callback, InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE, "Ignore unversioned files", null);
+        }
+      }
     }
   }
 }

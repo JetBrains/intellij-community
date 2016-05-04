@@ -41,14 +41,14 @@ import java.awt.*;
  */
 public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
   private final JComponent myComponent;
-  private final ComboBox myComboBox;
+  private final ComboBox<XExpression> myComboBox;
   private EditorComboBoxEditor myEditor;
   private XExpression myExpression;
 
-  public XDebuggerExpressionComboBox(final @NotNull Project project, final @NotNull XDebuggerEditorsProvider debuggerEditorsProvider, final @Nullable @NonNls String historyId,
-                                     final @Nullable XSourcePosition sourcePosition) {
+  public XDebuggerExpressionComboBox(@NotNull Project project, @NotNull XDebuggerEditorsProvider debuggerEditorsProvider, @Nullable @NonNls String historyId,
+                                     @Nullable XSourcePosition sourcePosition, boolean showEditor) {
     super(project, debuggerEditorsProvider, EvaluationMode.EXPRESSION, historyId, sourcePosition);
-    myComboBox = new ComboBox(100);
+    myComboBox = new ComboBox<>(100);
     myComboBox.setEditable(true);
     myExpression = XExpressionImpl.EMPTY_EXPRESSION;
     Dimension minimumSize = new Dimension(myComboBox.getMinimumSize());
@@ -56,7 +56,7 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
     myComboBox.setMinimumSize(minimumSize);
     initEditor();
     fillComboBox();
-    myComponent = addChooseFactoryLabel(myComboBox, false);
+    myComponent = decorate(myComboBox, false, showEditor);
   }
 
   public ComboBox getComboBox() {
@@ -146,7 +146,7 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
   public XExpression getExpression() {
     Object document = myEditor.getItem();
     if (document instanceof Document) { // sometimes null on Mac
-      return getEditorsProvider().createExpression(getProject(), (Document)document, myExpression.getLanguage(), EvaluationMode.EXPRESSION);
+      return getEditorsProvider().createExpression(getProject(), (Document)document, myExpression.getLanguage(), myExpression.getMode());
     }
     return myExpression;
   }

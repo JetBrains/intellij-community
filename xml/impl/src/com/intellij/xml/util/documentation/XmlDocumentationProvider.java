@@ -62,6 +62,10 @@ public class XmlDocumentationProvider implements DocumentationProvider {
     if (element instanceof SchemaPrefix) {
       return ((SchemaPrefix)element).getQuickNavigateInfo();
     }
+    if (element instanceof XmlEntityDecl) {
+      final XmlAttributeValue value = ((XmlEntityDecl)element).getValueElement();
+      return value != null ? value.getText() : null;
+    }
     return null;
   }
 

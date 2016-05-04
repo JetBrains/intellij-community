@@ -820,7 +820,6 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       Document document = myEditor.getDocument();
       final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
       if (file == null) return;
-      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
       if (EditorUtil.inVirtualSpace(myEditor, myPosition)) {
         disposeHighlighter();
@@ -834,18 +833,19 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
 
       if (offset >= selStart && offset < selEnd) return;
 
-      ProgressIndicatorUtils.scheduleWithWriteActionPriority(myProgress, new ReadTask() {
-        @Nullable
-        @Override
-        public Continuation performInReadAction(@NotNull ProgressIndicator indicator) throws ProcessCanceledException {
-          return doExecute(file, offset);
-        }
+      PsiDocumentManager.getInstance(myProject).performWhenAllCommitted(
+        () -> ProgressIndicatorUtils.scheduleWithWriteActionPriority(myProgress, new ReadTask() {
+          @Nullable
+          @Override
+          public Continuation performInReadAction(@NotNull ProgressIndicator indicator) throws ProcessCanceledException {
+            return doExecute(file, offset);
+          }
 
-        @Override
-        public void onCanceled(@NotNull ProgressIndicator indicator) {
-          LOG.debug("Highlighting was cancelled");
-        }
-      });
+          @Override
+          public void onCanceled(@NotNull ProgressIndicator indicator) {
+            LOG.debug("Highlighting was cancelled");
+          }
+        }));
     }
 
     @Nullable

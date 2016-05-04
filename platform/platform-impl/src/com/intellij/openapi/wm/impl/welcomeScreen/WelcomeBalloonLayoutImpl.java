@@ -165,9 +165,13 @@ public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
   private void layoutPopup() {
     Dimension layeredSize = myLayeredPane.getSize();
     Dimension size = new Dimension(myPopupBalloon.getPreferredSize());
+    Point location = myButtonLocation.compute();
     int x = layeredSize.width - size.width - 5;
-    int fullHeight = myButtonLocation.compute().y;
+    int fullHeight = location.y;
 
+    if (x > location.x) {
+      x = location.x - 20;
+    }
     if (size.height > fullHeight) {
       size.height = fullHeight;
     }

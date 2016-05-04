@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ import java.io.*;
 public class ID<K, V> {
   private static final TIntObjectHashMap<ID> ourRegistry = new TIntObjectHashMap<ID>();
   private static final TObjectIntHashMap<String> ourNameToIdRegistry = new TObjectIntHashMap<String>();
-  public static final int MAX_NUMBER_OF_INDICES = Short.MAX_VALUE;
+  static final int MAX_NUMBER_OF_INDICES = Short.MAX_VALUE;
 
   private final String myName;
   private final short myUniqueId;
@@ -119,7 +119,7 @@ public class ID<K, V> {
     }
   }
 
-  public static <K, V> ID<K, V> create(@NonNls String name) {
+  public static <K, V> ID<K, V> create(@NonNls @NotNull String name) {
     final ID<K, V> found = findByName(name);
     return found != null ? found : new ID<K, V>(name);
   }

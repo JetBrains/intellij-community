@@ -27,7 +27,7 @@ import java.util.List;
  * @author peter
  */
 @SuppressWarnings("ForLoopReplaceableByForEach")
-public class ElementPatternCondition<T> {
+public final class ElementPatternCondition<T> {
 
   private final InitialPatternCondition<T> myInitialCondition;
   private final List<PatternCondition<? super T>> myConditions;
@@ -37,8 +37,12 @@ public class ElementPatternCondition<T> {
     myConditions = Collections.emptyList();
   }
 
-  protected ElementPatternCondition(final ElementPatternCondition<T> original,
-                                    final PatternCondition<? super T> condition) {
+  ElementPatternCondition(InitialPatternCondition<T> initialCondition, List<PatternCondition<? super T>> conditions) {
+    myInitialCondition = initialCondition;
+    myConditions = conditions;
+  }
+
+  private ElementPatternCondition(ElementPatternCondition<T> original, PatternCondition<? super T> condition) {
     myInitialCondition = original.getInitialCondition();
     myConditions = new SmartList<PatternCondition<? super T>>(original.getConditions());
     myConditions.add(condition);

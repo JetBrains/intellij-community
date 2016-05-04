@@ -679,10 +679,10 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
         e.consume();
       }
     }
-    /**
-     * Returns true if <code>mouseX</code> falls
-     * in the area of row that is used to expand/collapse the node and
-     * the node at <code>row</code> does not represent a leaf.
+    /*
+      Returns true if <code>mouseX</code> falls
+      in the area of row that is used to expand/collapse the node and
+      the node at <code>row</code> does not represent a leaf.
      */
   }
 

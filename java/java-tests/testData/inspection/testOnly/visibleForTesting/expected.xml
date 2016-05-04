@@ -10,4 +10,15 @@
     <line>5</line>
     <description>Test-only method is called in production code</description>
   </problem>
+  <problem>
+    <file>B.java</file>
+    <line>6</line>
+    <description>Test-only class is referenced in production code</description>
+  </problem>
+  <problem>
+    <file>B.java</file>
+    <line>7</line>
+    <description>Test-only method is called in production code</description>
+  </problem>
+
 </problems>

@@ -28,6 +28,7 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
@@ -356,11 +357,14 @@ public class PyDebugRunner extends GenericProgramRunner {
       final RunConfiguration configuration = selectedConfiguration.getConfiguration();
       if (configuration instanceof AbstractPythonRunConfiguration) {
         AbstractPythonRunConfiguration runConfiguration = (AbstractPythonRunConfiguration)configuration;
-        List<String> roots = Lists.newArrayList();
-        for (VirtualFile contentRoot : runConfiguration.getSdk().getSdkModificator().getRoots(OrderRootType.CLASSES)) {
-          roots.add(contentRoot.getPath());
+        final Sdk sdk = runConfiguration.getSdk();
+        if (sdk != null) {
+          List<String> roots = Lists.newArrayList();
+          for (VirtualFile contentRoot : sdk.getSdkModificator().getRoots(OrderRootType.CLASSES)) {
+            roots.add(contentRoot.getPath());
+          }
+          commandLine.getEnvironment().put(LIBRARY_ROOTS, StringUtil.join(roots, File.pathSeparator));
         }
-        commandLine.getEnvironment().put(LIBRARY_ROOTS, StringUtil.join(roots, File.pathSeparator));
       }
     }
   }

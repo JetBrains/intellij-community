@@ -17,8 +17,14 @@ package com.intellij.execution.console;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
+import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.LayeredIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,7 +46,16 @@ public class IdeConsoleRootType extends ConsoleRootType {
   @Nullable
   @Override
   public Icon substituteIcon(@NotNull Project project, @NotNull VirtualFile file) {
-    return AllIcons.Debugger.ToolConsole;
+    FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(file.getName());
+    if (fileType == UnknownFileType.INSTANCE || fileType == PlainTextFileType.INSTANCE) {
+      return AllIcons.Debugger.ToolConsole;
+    }
+    Icon icon = fileType.getIcon();
+    Icon subscript = ((ScalableIcon)AllIcons.Debugger.ToolConsole).scale(.5f);
+    LayeredIcon icons = new LayeredIcon(2);
+    icons.setIcon(icon, 0);
+    icons.setIcon(subscript, 1, 8, 8);
+    return icons;
   }
 
   @Override

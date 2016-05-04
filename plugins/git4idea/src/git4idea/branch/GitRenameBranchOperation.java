@@ -33,13 +33,12 @@ public class GitRenameBranchOperation extends GitBranchOperation {
   @NotNull private final String myNewName;
 
   public GitRenameBranchOperation(@NotNull Project project,
-                                  @NotNull GitPlatformFacade facade,
                                   @NotNull Git git,
                                   @NotNull GitBranchUiHandler uiHandler,
                                   @NotNull String currentName,
                                   @NotNull String newName,
                                   @NotNull List<GitRepository> repositories) {
-    super(project, facade, git, uiHandler, repositories);
+    super(project, git, uiHandler, repositories);
     myCurrentName = currentName;
     myNewName = newName;
     myNotifier = VcsNotifier.getInstance(myProject);

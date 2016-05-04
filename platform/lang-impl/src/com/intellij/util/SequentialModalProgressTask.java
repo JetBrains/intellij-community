@@ -15,11 +15,11 @@
  */
 package com.intellij.util;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -86,27 +86,18 @@ public class SequentialModalProgressTask extends Task.Modal {
         task.stop();
         break;
       }
-      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          long start = System.currentTimeMillis();
-          try {
-            while (!task.isDone() && System.currentTimeMillis() - start < myMinIterationTime) {
-              task.iteration();
-            }
-          }
-          catch (RuntimeException e) {
-            task.stop();
-            throw e;
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        long start = System.currentTimeMillis();
+        try {
+          while (!task.isDone() && System.currentTimeMillis() - start < myMinIterationTime) {
+            task.iteration();
           }
         }
-      });
-      //if (ApplicationManager.getApplication().isDispatchThread()) {
-      //  runnable.run();
-      //}
-      //else {
-      //  ApplicationManagerEx.getApplicationEx().suspendReadAccessAndRunWriteAction(runnable);
-      //}
+        catch (RuntimeException e) {
+          task.stop();
+          throw e;
+        }
+      }, indicator.getModalityState());
     }
   }
 

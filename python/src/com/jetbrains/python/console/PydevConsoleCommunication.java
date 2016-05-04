@@ -575,7 +575,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
 
   @Nullable
   @Override
-  public XSourcePosition getSourcePositionForName(String name) {
+  public XSourcePosition getSourcePositionForName(String name, String parentType) {
     return null;
   }
 

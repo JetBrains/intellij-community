@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,10 +88,10 @@ public abstract class AutomaticUsageRenamer<T> {
     return myElements;
   }
 
-  @Nullable
   /**
    * Element source, path. For example, package. Taken into account while sorting.
    */
+  @Nullable
   public String getSourceName(T element) {
     return null;
   }

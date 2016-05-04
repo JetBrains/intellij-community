@@ -123,6 +123,11 @@ class VcsPreviewPanel implements PreviewPanel {
     RangeHighlighter highlighter = LineStatusMarkerRenderer.createRangeHighlighter(range, textRange, myEditor.getMarkupModel());
     highlighter.setLineMarkerRenderer(new LineStatusMarkerRenderer(range) {
       @Override
+      public boolean canDoAction(MouseEvent e) {
+        return isInsideMarkerArea(e);
+      }
+
+      @Override
       public void doAction(Editor editor, MouseEvent e) {
         myDispatcher.getMulticaster().selectionInPreviewChanged(colorKey.getExternalName());
       }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -388,7 +388,8 @@ public class IdeEventQueue extends EventQueue {
     AWTEvent oldEvent = myCurrentEvent;
     myCurrentEvent = e;
 
-    try (AccessToken ignored = ourTransactionGuard == null ? null : ourTransactionGuard.startActivity(myIsInInputEvent)) {
+    boolean userActivity = myIsInInputEvent || e instanceof ItemEvent;
+    try (AccessToken ignored = ourTransactionGuard == null ? null : ourTransactionGuard.startActivity(userActivity)) {
       _dispatchEvent(e, false);
     }
     catch (Throwable t) {
@@ -787,7 +788,7 @@ public class IdeEventQueue extends EventQueue {
     if (e instanceof WindowEvent) {
       final WindowEvent we = (WindowEvent)e;
 
-      ApplicationActivationStateManager.get().updateState(we);
+      ApplicationActivationStateManager.updateState(we);
 
       storeLastFocusedComponent(we);
     }

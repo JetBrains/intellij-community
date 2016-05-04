@@ -24,23 +24,13 @@ abstract class DiffIterableBase implements DiffIterable {
   @NotNull
   @Override
   public Iterable<Range> iterateUnchanged() {
-    return new Iterable<Range>() {
-      @Override
-      public Iterator<Range> iterator() {
-        return unchanged();
-      }
-    };
+    return this::unchanged;
   }
 
   @NotNull
   @Override
   public Iterable<Range> iterateChanges() {
-    return new Iterable<Range>() {
-      @Override
-      public Iterator<Range> iterator() {
-        return changes();
-      }
-    };
+    return this::changes;
   }
 
   protected static abstract class MyIterator<T> implements Iterator<T> {

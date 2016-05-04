@@ -35,6 +35,7 @@ public class ReferencedElementsCollector extends JavaRecursiveElementVisitor {
     if (psiElement instanceof PsiMember) {
       checkAddMember((PsiMember)psiElement);
     }
+    super.visitReferenceElement(reference);
   }
 
   protected void checkAddMember(@NotNull final PsiMember member) {

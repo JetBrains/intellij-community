@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -116,6 +116,10 @@ public class IElementTypeTest extends LightPlatformCodeInsightFixtureTestCase {
     // ParserDefinitions: 128
     // Total: 8864 element types
 
+    // 19.04.2016:
+    // Preloaded: 4397 element types
+    // ParserDefinitions: 135
+    // Total: 9231 element types
   }
 
   public void testManipulatorRegistered() {

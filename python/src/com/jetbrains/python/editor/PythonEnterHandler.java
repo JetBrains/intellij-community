@@ -358,6 +358,9 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
   public Result postProcessEnter(@NotNull PsiFile file,
                                  @NotNull Editor editor,
                                  @NotNull DataContext dataContext) {
+    if (!(file instanceof PyFile)) {
+      return Result.Continue;
+    }
     if (myPostprocessShift > 0) {
       editor.getCaretModel().moveCaretRelatively(myPostprocessShift, 0, false, false, false);
       myPostprocessShift = 0;
@@ -369,6 +372,7 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
 
   private static void addGoogleDocStringSectionIndent(@NotNull PsiFile file, @NotNull Editor editor, int offset) {
     final Document document = editor.getDocument();
+    PsiDocumentManager.getInstance(file.getProject()).commitDocument(document);
     final PsiElement element = file.findElementAt(offset);
     if (element != null) {
       // Insert additional indentation after section header in Google code style docstrings

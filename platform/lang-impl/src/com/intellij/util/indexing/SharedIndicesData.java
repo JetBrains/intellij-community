@@ -351,24 +351,25 @@ public class SharedIndicesData {
 
   private static <Key, Value> void doAssociateData(int id,
                                                    final ID<Key, ?> indexId,
-                                                   final Value keys,
-                                                   final DataExternalizer<Value> externalizer,
+                                                   Value keys,
+                                                   DataExternalizer<Value> externalizer,
                                                    FileAccessorCache<Integer, IndexedState> states,
                                                    PersistentHashMap<Integer, byte[]> index)
     throws IOException {
+    final BufferExposingByteArrayOutputStream savedKeysData;
+    if (keys != null) {
+      //noinspection IOResourceOpenedButNotSafelyClosed
+      externalizer.save(new DataOutputStream(savedKeysData = new BufferExposingByteArrayOutputStream()), keys);
+    } else {
+      savedKeysData = null;
+    }
+
     FileAccessorCache.Handle<IndexedState> stateHandle = states.getIfCached(id);
 
     try {
-
       index.appendData(id, new PersistentHashMap.ValueDataAppender() {
         @Override
         public void append(DataOutput out) throws IOException {
-          BufferExposingByteArrayOutputStream savedKeysData = null;
-          if (keys != null) {
-            //noinspection IOResourceOpenedButNotSafelyClosed
-            externalizer.save(new DataOutputStream(savedKeysData = new BufferExposingByteArrayOutputStream()), keys);
-          }
-
           byte[] internalBuffer = null;
           int size = 0;
           if (savedKeysData != null) {

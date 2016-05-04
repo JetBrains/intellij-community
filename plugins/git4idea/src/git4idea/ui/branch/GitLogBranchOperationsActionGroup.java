@@ -21,11 +21,8 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.data.RefsModel;
-import git4idea.GitPlatformFacade;
 import git4idea.config.GitVcsSettings;
 import git4idea.log.GitRefManager;
 import git4idea.repo.GitRepository;
@@ -90,7 +87,7 @@ public class GitLogBranchOperationsActionGroup extends ActionGroup implements Du
 
     if (vcsRefs.isEmpty()) return AnAction.EMPTY_ARRAY;
 
-    GitVcsSettings settings = ServiceManager.getService(project, GitPlatformFacade.class).getSettings(project);
+    GitVcsSettings settings = GitVcsSettings.getInstance(project);
     boolean showBranchesPopup = vcsRefs.size() > MAX_BRANCH_GROUPS;
 
     List<AnAction> branchActionGroups = new ArrayList<AnAction>();

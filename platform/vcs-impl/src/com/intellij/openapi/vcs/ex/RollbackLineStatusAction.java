@@ -12,11 +12,11 @@
  */
 package com.intellij.openapi.vcs.ex;
 
+import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.diff.impl.DiffUtil;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -88,10 +88,6 @@ public class RollbackLineStatusAction extends DumbAwareAction {
     }
 
     Document document = editor.getDocument();
-    int totalLines = getLineCount(document);
-
-    BitSet lines = new BitSet(totalLines + 1);
-
     List<Caret> carets = editor.getCaretModel().getAllCarets();
 
     if (carets.size() == 1) {
@@ -102,20 +98,7 @@ public class RollbackLineStatusAction extends DumbAwareAction {
       }
     }
 
-    for (Caret caret : carets) {
-      if (caret.hasSelection()) {
-        int line1 = editor.offsetToLogicalPosition(caret.getSelectionStart()).line;
-        int line2 = editor.offsetToLogicalPosition(caret.getSelectionEnd()).line;
-        lines.set(line1, line2 + 1);
-        if (caret.getSelectionEnd() == document.getTextLength()) lines.set(totalLines);
-      }
-      else {
-        lines.set(caret.getLogicalPosition().line);
-        if (caret.getOffset() == document.getTextLength()) lines.set(totalLines);
-      }
-    }
-
-    doRollback(tracker, lines);
+    doRollback(tracker, DiffUtil.getSelectedLines(editor));
   }
 
   private static void doRollback(@NotNull final LineStatusTracker tracker, @NotNull final Range range) {
@@ -160,9 +143,5 @@ public class RollbackLineStatusAction extends DumbAwareAction {
         });
       }
     }, VcsBundle.message("command.name.rollback.change"), null);
-  }
-
-  private static int getLineCount(@NotNull Document document) {
-    return Math.max(document.getLineCount(), 1);
   }
 }

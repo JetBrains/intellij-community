@@ -37,6 +37,7 @@ import com.intellij.openapi.wm.*;
 import com.intellij.ui.BalloonLayoutData;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.content.Content;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ObjectUtils;
@@ -136,9 +137,10 @@ public class EventLog {
     if (NotificationsManagerImpl.newEnabled() && !actions.isEmpty()) {
       String text = "<p>" + StringUtil.join(actions, new Function<AnAction, String>() {
         private int index;
+
         @Override
         public String fun(AnAction action) {
-          return "<a href=\"" + index++ + "\">" + action.getTemplatePresentation().getText()+"</a>";
+          return "<a href=\"" + index++ + "\">" + action.getTemplatePresentation().getText() + "</a>";
         }
       }, isLongLine(actions) ? "<br>" : "&nbsp;") + "</p>";
       Notification n = new Notification("", "", ".", NotificationType.INFORMATION, new NotificationListener() {
@@ -280,14 +282,19 @@ public class EventLog {
         }
       }
 
-      hasHtml = true;
-      if (NEW_LINES.contains(tagStart)) {
-        if (initialLen != document.getTextLength()) {
-          lineSeparators.add(document.createRangeMarker(TextRange.from(document.getTextLength(), 0)));
+      if (isTag(HTML_TAGS, tagStart)) {
+        hasHtml = true;
+        if (NEW_LINES.contains(tagStart)) {
+          if (initialLen != document.getTextLength()) {
+            lineSeparators.add(document.createRangeMarker(TextRange.from(document.getTextLength(), 0)));
+          }
+        }
+        else if (!isTag(SKIP_TAGS, tagStart)) {
+          showMore.set(true);
         }
       }
-      else if (!"<html>".equals(tagStart) && !"</html>".equals(tagStart) && !"<body>".equals(tagStart) && !"</body>".equals(tagStart)) {
-        showMore.set(true);
+      else {
+        appendText(document, content.substring(tagMatcher.start(), tagMatcher.end()));
       }
       content = content.substring(tagMatcher.end());
     }
@@ -298,6 +305,28 @@ public class EventLog {
       }
     }
     return hasHtml;
+  }
+
+  private static final String[] HTML_TAGS =
+    {"a", "abbr", "acronym", "address", "applet", "area", "article", "aside", "audio", "b", "base", "basefont", "bdi", "bdo", "big",
+      "blockquote", "body", "br", "button", "canvas", "caption", "center", "cite", "code", "col", "colgroup", "command", "datalist", "dd",
+      "del", "details", "dfn", "dir", "div", "dl", "dt", "em", "embed", "fieldset", "figcaption", "figure", "font", "footer", "form",
+      "frame", "frameset", "h1", "h2", "h3", "h4", "h5", "h6", "head", "header", "hgroup", "hr", "html", "i", "iframe", "img", "input",
+      "ins", "kbd", "keygen", "label", "legend", "li", "link", "map", "mark", "menu", "meta", "meter", "nav", "noframes", "noscript",
+      "object", "ol", "optgroup", "option", "output", "p", "param", "pre", "progress", "q", "rp", "rt", "ruby", "s", "samp", "script",
+      "section", "select", "small", "source", "span", "strike", "strong", "style", "sub", "summary", "sup", "table", "tbody", "td",
+      "textarea", "tfoot", "th", "thead", "time", "title", "tr", "track", "tt", "u", "ul", "var", "video", "wbr"};
+
+  private static final String[] SKIP_TAGS = {"html", "body", "b", "i", "font"};
+
+  private static boolean isTag(@NotNull String []tags, @NotNull String tag) {
+    tag = tag.substring(1, tag.length() - 1); // skip <>
+    tag = StringUtil.trimEnd(StringUtil.trimStart(tag, "/"), "/"); // skip /
+    int index = tag.indexOf(' ');
+    if (index != -1) {
+      tag = tag.substring(0, index);
+    }
+    return ArrayUtil.indexOf(tags, tag) != -1;
   }
 
   private static void insertNewLineSubstitutors(Document document, AtomicBoolean showMore, List<RangeMarker> lineSeparators) {

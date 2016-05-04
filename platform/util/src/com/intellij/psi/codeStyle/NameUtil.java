@@ -402,9 +402,38 @@ public class NameUtil {
     return buildMatcher(pattern, options);
   }
 
+  public static class MatcherBuilder {
+    private String pattern;
+    private String separators = "";
+    private MatchingCaseSensitivity caseSensitivity = MatchingCaseSensitivity.NONE;
+
+    public MatcherBuilder(String pattern) {
+      this.pattern = pattern;
+    }
+
+    public MatcherBuilder withCaseSensitivity(MatchingCaseSensitivity caseSensitivity) {
+      this.caseSensitivity = caseSensitivity;
+      return this;
+    }
+
+    public MatcherBuilder withSeparators(String separators) {
+      this.separators = separators;
+      return this;
+    }
+
+    public MinusculeMatcher build() {
+      return new FixingLayoutMatcher(pattern, caseSensitivity, separators);
+    }
+  }
+
+  @NotNull
+  public static MatcherBuilder buildMatcher(@NotNull String pattern) {
+    return new MatcherBuilder(pattern);
+  }
+
   @NotNull
   public static MinusculeMatcher buildMatcher(@NotNull String pattern, @NotNull MatchingCaseSensitivity options) {
-    return new FixingLayoutMatcher(pattern, options);
+    return buildMatcher(pattern).withCaseSensitivity(options).build();
   }
 
   public enum MatchingCaseSensitivity {

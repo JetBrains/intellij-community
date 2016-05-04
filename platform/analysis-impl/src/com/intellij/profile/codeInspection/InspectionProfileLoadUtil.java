@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,7 +60,7 @@ public class InspectionProfileLoadUtil {
   public static Profile load(@NotNull File file,
                              @NotNull InspectionToolRegistrar registrar,
                              @NotNull ProfileManager profileManager) throws JDOMException, IOException, InvalidDataException {
-    Element element = JDOMUtil.loadDocument(file).getRootElement();
+    Element element = JDOMUtil.load(file);
     InspectionProfileImpl profile = new InspectionProfileImpl(getProfileName(file, element), registrar, profileManager);
     final Element profileElement = element.getChild(PROFILE_TAG);
     if (profileElement != null) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,24 +27,10 @@ import javax.swing.*;
 import java.awt.*;
 
 public abstract class EditorGutterComponentEx extends JComponent implements EditorGutter {
-
-  public abstract boolean isFoldingOutlineShown();
-
-  public abstract boolean isLineMarkersShown();
-
   @Nullable
   public abstract FoldRegion findFoldingAnchorAt(int x, int y);
 
   public abstract int getWhitespaceSeparatorOffset();
-
-  public abstract Color getOutlineColor(boolean isActive);
-
-  /**
-   * @deprecated use getOutlineColor
-   */
-  public Color getFoldingColor(boolean isActive) {
-    return getOutlineColor(isActive);
-  }
 
   public abstract void revalidateMarkup();
 

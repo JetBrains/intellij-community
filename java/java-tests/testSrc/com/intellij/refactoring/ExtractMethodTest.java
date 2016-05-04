@@ -500,6 +500,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testArrayAccessWithTopExpression() throws Exception {
+    doTest();
+  }
+
   public void testArrayAccessWithDuplicates() throws Exception {
     doDuplicatesTest();
   }
@@ -738,6 +742,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
 
   public void testReassignFinalFieldInside() throws Exception {
     doTestReturnTypeChanged(PsiType.INT);
+  }
+
+  public void testShortenClassRefsInNewReturnType() throws Exception {
+    doTestReturnTypeChanged(PsiType.getTypeByName(CommonClassNames.JAVA_UTIL_COLLECTION, getProject(), GlobalSearchScope.allScope(getProject())));
   }
 
   public void testPassFieldAsParameterAndMakeStatic() throws Exception {

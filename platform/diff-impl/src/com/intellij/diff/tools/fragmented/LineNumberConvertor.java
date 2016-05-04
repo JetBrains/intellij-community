@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-class LineNumberConvertor {
+public class LineNumberConvertor {
   // Oneside -> Twoside
   @NotNull private final TreeMap<Integer, Integer> myFragments1;
   @NotNull private final TreeMap<Integer, Integer> myFragments2;
@@ -83,22 +83,12 @@ class LineNumberConvertor {
 
   @NotNull
   public TIntFunction createConvertor1() {
-    return new TIntFunction() {
-      @Override
-      public int execute(int value) {
-        return convert1(value);
-      }
-    };
+    return this::convert1;
   }
 
   @NotNull
   public TIntFunction createConvertor2() {
-    return new TIntFunction() {
-      @Override
-      public int execute(int value) {
-        return convert2(value);
-      }
-    };
+    return this::convert2;
   }
 
   private int convert(int value, @NotNull Side side, boolean fromOneside, boolean approximate) {
@@ -147,11 +137,11 @@ class LineNumberConvertor {
   }
 
   public static class Builder {
-    @NotNull private final TreeMap<Integer, Integer> myFragments1 = new TreeMap<Integer, Integer>();
-    @NotNull private final TreeMap<Integer, Integer> myFragments2 = new TreeMap<Integer, Integer>();
+    @NotNull private final TreeMap<Integer, Integer> myFragments1 = new TreeMap<>();
+    @NotNull private final TreeMap<Integer, Integer> myFragments2 = new TreeMap<>();
 
-    @NotNull private final TreeMap<Integer, Integer> myInvertedFragments1 = new TreeMap<Integer, Integer>();
-    @NotNull private final TreeMap<Integer, Integer> myInvertedFragments2 = new TreeMap<Integer, Integer>();
+    @NotNull private final TreeMap<Integer, Integer> myInvertedFragments1 = new TreeMap<>();
+    @NotNull private final TreeMap<Integer, Integer> myInvertedFragments2 = new TreeMap<>();
 
     public void put1(int start, int newStart, int length) {
       myFragments1.put(start, newStart);
@@ -219,7 +209,7 @@ class LineNumberConvertor {
    *
    */
   private class Corrector {
-    private final List<CorrectedChange> myChanges = new SmartList<CorrectedChange>();
+    private final List<CorrectedChange> myChanges = new SmartList<>();
 
     @SuppressWarnings("UnnecessaryLocalVariable")
     public void handleOnesideChange(int startLine, int endLine, int shift, @NotNull Side masterSide) {

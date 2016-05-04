@@ -41,10 +41,9 @@ public class GrApplicationStatementImpl extends GrMethodCallImpl implements GrAp
     return "Call expression";
   }
 
-  @NotNull
   @Override
   public GrCommandArgumentList getArgumentList() {
-    return findNotNullChildByClass(GrCommandArgumentList.class);
+    return findChildByClass(GrCommandArgumentList.class);
   }
 
   @Override

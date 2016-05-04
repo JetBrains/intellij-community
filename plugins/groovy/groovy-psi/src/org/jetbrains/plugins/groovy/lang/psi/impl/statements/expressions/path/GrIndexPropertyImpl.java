@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -352,18 +352,6 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
   @Override
   public GrClosableBlock[] getClosureArguments() {
     return GrClosableBlock.EMPTY_ARRAY;
-  }
-
-  @Override
-  public PsiMethod resolveMethod() {
-    return PsiImplUtil.extractUniqueElement(multiResolve(false));
-  }
-
-  @NotNull
-  @Override
-  public GroovyResolveResult advancedResolve() {
-    GroovyResolveResult[] results = multiResolve(false);
-    return results.length == 1 ? results[0] : GroovyResolveResult.EMPTY_RESULT;
   }
 
   @Override

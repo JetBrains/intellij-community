@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package org.jetbrains.java.decompiler.code;
 import org.jetbrains.java.decompiler.code.interpreter.Util;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.struct.StructContext;
-import org.jetbrains.java.decompiler.util.InterpreterUtil;
+import org.jetbrains.java.decompiler.util.TextUtil;
 import org.jetbrains.java.decompiler.util.VBStyleCollection;
 
 import java.io.DataOutputStream;
@@ -157,7 +157,7 @@ public int getOffset(int index) {
     StringBuilder buf = new StringBuilder();
 
     for (int i = 0; i < collinstr.size(); i++) {
-    buf.append(InterpreterUtil.getIndentString(indent));
+    buf.append(TextUtil.getIndentString(indent));
       buf.append(collinstr.getKey(i).intValue());
       buf.append(": ");
       buf.append(collinstr.get(i).toString());

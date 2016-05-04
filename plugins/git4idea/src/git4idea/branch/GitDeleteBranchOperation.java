@@ -22,7 +22,6 @@ import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitCommit;
-import git4idea.GitPlatformFacade;
 import git4idea.commands.*;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
@@ -36,8 +35,6 @@ import java.util.regex.Pattern;
  * Deletes a branch.
  * If branch is not fully merged to the current branch, shows a dialog with the list of unmerged commits and with a list of branches
  * current branch are merged to, and makes force delete, if wanted.
- *
- * @author Kirill Likhodedov
  */
 class GitDeleteBranchOperation extends GitBranchOperation {
   
@@ -45,9 +42,9 @@ class GitDeleteBranchOperation extends GitBranchOperation {
 
   private final String myBranchName;
 
-  GitDeleteBranchOperation(@NotNull Project project, GitPlatformFacade facade, @NotNull Git git, @NotNull GitBranchUiHandler uiHandler,
+  GitDeleteBranchOperation(@NotNull Project project, @NotNull Git git, @NotNull GitBranchUiHandler uiHandler,
                            @NotNull Collection<GitRepository> repositories, @NotNull String branchName) {
-    super(project, facade, git, uiHandler, repositories);
+    super(project, git, uiHandler, repositories);
     myBranchName = branchName;
   }
 

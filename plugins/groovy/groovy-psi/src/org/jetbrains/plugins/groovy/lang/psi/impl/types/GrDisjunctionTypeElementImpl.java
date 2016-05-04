@@ -33,7 +33,7 @@ import java.util.ArrayList;
  * @author Max Medvedev
  */
 public class GrDisjunctionTypeElementImpl extends GroovyPsiElementImpl implements GrDisjunctionTypeElement {
-  private volatile PsiType myCachedType = null;
+  private volatile PsiType myCachedType;
 
   public GrDisjunctionTypeElementImpl(@NotNull ASTNode node) {
     super(node);

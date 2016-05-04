@@ -60,12 +60,9 @@ public class UnknownFileTypeDiffRequest extends ComponentDiffRequest {
       label.append("Associate", SimpleTextAttributes.LINK_ATTRIBUTES, new Runnable() {
         @Override
         public void run() {
-          DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
-            @Override
-            public void run() {
-              FileType type = FileTypeChooser.associateFileType(myFileName);
-              if (type != null) onSuccess(context);
-            }
+          DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, () -> {
+            FileType type = FileTypeChooser.associateFileType(myFileName);
+            if (type != null) onSuccess(context);
           });
         }
       });

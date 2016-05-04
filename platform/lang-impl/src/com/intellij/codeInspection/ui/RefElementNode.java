@@ -22,9 +22,7 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.reference.RefDirectory;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.ui.ComputableIcon;
 import com.intellij.util.containers.FactoryMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,15 +33,13 @@ import javax.swing.tree.MutableTreeNode;
 /**
  * @author max
  */
-public class RefElementNode extends CachedInspectionTreeNode implements RefElementAware {
+public class RefElementNode extends SuppressableInspectionTreeNode {
   private boolean myHasDescriptorsUnder = false;
   private CommonProblemDescriptor mySingleDescriptor = null;
-  protected final InspectionToolPresentation myToolPresentation;
   private final Icon myIcon;
   public RefElementNode(@Nullable RefEntity userObject, @NotNull InspectionToolPresentation presentation) {
-    super(userObject);
-    myToolPresentation = presentation;
-    init();
+    super(userObject, presentation);
+    init(presentation.getContext().getProject());
     final RefEntity refEntity = getElement();
     myIcon = refEntity == null ? null : refEntity.getIcon(false);
   }
@@ -66,11 +62,10 @@ public class RefElementNode extends CachedInspectionTreeNode implements RefEleme
   @Override
   protected String calculatePresentableName() {
     final RefEntity element = getElement();
-    if (element == null || !element.isValid()) {
+    if (element == null) {
       return InspectionsBundle.message("inspection.reference.invalid");
-    } else {
-      return element.getRefManager().getRefinedElement(element).getName();
     }
+    return element.getRefManager().getRefinedElement(element).getName();
   }
 
   @Override
@@ -80,25 +75,20 @@ public class RefElementNode extends CachedInspectionTreeNode implements RefEleme
   }
 
   @Override
-  public boolean isResolved(ExcludedInspectionTreeNodesManager excludedManager) {
-    return myToolPresentation.isElementIgnored(getElement());
+  public void excludeElement(ExcludedInspectionTreeNodesManager excludedManager) {
+    myPresentation.ignoreCurrentElement(getElement());
+    super.excludeElement(excludedManager);
   }
 
   @Override
-  public void ignoreElement(ExcludedInspectionTreeNodesManager excludedManager) {
-    myToolPresentation.ignoreCurrentElement(getElement());
-    super.ignoreElement(excludedManager);
-  }
-
-  @Override
-  public void amnesty(ExcludedInspectionTreeNodesManager excludedManager) {
-    myToolPresentation.amnesty(getElement());
-    super.amnesty(excludedManager);
+  public void amnestyElement(ExcludedInspectionTreeNodesManager excludedManager) {
+    myPresentation.amnesty(getElement());
+    super.amnestyElement(excludedManager);
   }
 
   @Override
   public FileStatus getNodeStatus() {
-    return  myToolPresentation.getElementStatus(getElement());
+    return myPresentation.getElementStatus(getElement());
   }
 
   @Override
@@ -113,7 +103,9 @@ public class RefElementNode extends CachedInspectionTreeNode implements RefEleme
     mySingleDescriptor = descriptor;
   }
 
-  public CommonProblemDescriptor getProblem() {
+  @Nullable
+  @Override
+  public CommonProblemDescriptor getDescriptor() {
     return mySingleDescriptor;
   }
 
@@ -137,5 +129,18 @@ public class RefElementNode extends CachedInspectionTreeNode implements RefEleme
       return;
     }
     super.visitProblemSeverities(counter);
+  }
+
+  @Nullable
+  @Override
+  public String getCustomizedTailText() {
+    if (myPresentation.isDummy()) {
+      return "";
+    }
+    final String customizedText = super.getCustomizedTailText();
+    if (customizedText != null) {
+      return customizedText;
+    }
+    return isLeaf() ? "" : null;
   }
 }

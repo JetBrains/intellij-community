@@ -65,11 +65,11 @@ public class StartupManagerImpl extends StartupManagerEx {
 
   private final List<Runnable> myDumbAwarePostStartupActivities = Collections.synchronizedList(new LinkedList<Runnable>());
   private final List<Runnable> myNotDumbAwarePostStartupActivities = Collections.synchronizedList(new LinkedList<Runnable>());
-  private boolean myPostStartupActivitiesPassed = false; // guarded by this
+  private boolean myPostStartupActivitiesPassed; // guarded by this
 
-  private volatile boolean myPreStartupActivitiesPassed = false;
-  private volatile boolean myStartupActivitiesRunning = false;
-  private volatile boolean myStartupActivitiesPassed = false;
+  private volatile boolean myPreStartupActivitiesPassed;
+  private volatile boolean myStartupActivitiesRunning;
+  private volatile boolean myStartupActivitiesPassed;
 
   private final Project myProject;
 

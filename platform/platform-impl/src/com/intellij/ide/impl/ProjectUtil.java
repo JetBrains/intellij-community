@@ -44,6 +44,7 @@ import com.intellij.util.SystemProperties;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
 import javax.swing.*;
 import java.awt.*;
@@ -178,12 +179,7 @@ public class ProjectUtil {
     }
 
     if (isRemotePath(path) && !RecentProjectsManager.getInstance().hasPath(path)) {
-      final Window window = getActiveFrameOrWelcomeScreen();
-      final String msg = IdeBundle.message("warning.load.project.from.share", path);
-      final String title = IdeBundle.message("title.load.project.from.share");
-      final Icon icon = Messages.getWarningIcon();
-      final int answer = window == null ? Messages.showYesNoDialog(msg, title, icon) : Messages.showYesNoDialog(window, msg, title, icon);
-      if (answer != Messages.YES) {
+      if (!confirmLoadingFromRemotePath(path, "warning.load.project.from.share", "title.load.project.from.share")) {
         return null;
       }
     }
@@ -210,6 +206,17 @@ public class ProjectUtil {
     return project;
   }
 
+  public static boolean confirmLoadingFromRemotePath(@NotNull String path,
+                                                     @NotNull @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String msgKey,
+                                                     @NotNull @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String titleKey) {
+    final Window window = getActiveFrameOrWelcomeScreen();
+    final String msg = IdeBundle.message(msgKey, path);
+    final String title = IdeBundle.message(titleKey);
+    final Icon icon = Messages.getWarningIcon();
+    final int answer = window == null ? Messages.showYesNoDialog(msg, title, icon) : Messages.showYesNoDialog(window, msg, title, icon);
+    return answer == Messages.YES;
+  }
+
   private static Window getActiveFrameOrWelcomeScreen() {
     Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
     if (window != null)  return window;
@@ -223,8 +230,8 @@ public class ProjectUtil {
     return null;
   }
 
-  private static boolean isRemotePath(@NotNull String path) {
-    return path.contains("//") || path.contains("\\\\");
+  public static boolean isRemotePath(@NotNull String path) {
+    return path.contains("://") || path.contains("\\\\");
   }
 
   @Nullable

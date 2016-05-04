@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.jetbrains.idea.svn.history;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.ui.CommitMessage;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
@@ -52,7 +53,7 @@ public class SvnEditCommitMessageDialog extends DialogWrapper {
     final JLabel label1 = new JLabel(SvnBundle.message("svn.edit.commit.message.attention"));
     parentPanel.setMinimumSize(new Dimension(label1.getPreferredSize().width + 50, 150));
     final GridBagConstraints gb = new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
-                                                                  new Insets(1, 1, 1, 1), 0, 0);
+                                                         JBUI.insets(1), 0, 0);
     label1.setFont(label1.getFont().deriveFont(Font.BOLD));
     labelPanel.add(label1, gb);
     ++ gb.gridy;

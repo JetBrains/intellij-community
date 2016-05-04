@@ -79,7 +79,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
 
   private volatile Boolean myScript;
   private volatile GroovyScriptClass myScriptClass;
-  private volatile GrParameter mySyntheticArgsParameter = null;
+  private volatile GrParameter mySyntheticArgsParameter;
   private volatile PsiElement myContext;
 
   public GroovyFileImpl(FileViewProvider viewProvider) {

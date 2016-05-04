@@ -15,12 +15,18 @@
  */
 package git4idea.util;
 
+import com.intellij.ide.SaveAndSyncHandler;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
-import com.intellij.util.ui.UIUtil;
-import git4idea.GitPlatformFacade;
 import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.openapi.application.ModalityState.defaultModalityState;
 
 /**
  * Executes an action surrounding it with freezing-unfreezing of the ChangeListManager
@@ -30,17 +36,22 @@ public class GitFreezingProcess {
 
   private static final Logger LOG = Logger.getInstance(GitFreezingProcess.class);
 
-  @NotNull private final GitPlatformFacade myFacade;
   @NotNull private final String myOperationTitle;
   @NotNull private final Runnable myRunnable;
-  @NotNull private final ChangeListManagerEx myChangeListManager;
 
-  public GitFreezingProcess(@NotNull Project project, @NotNull GitPlatformFacade facade,
-                            @NotNull String operationTitle, @NotNull Runnable runnable) {
-    myFacade = facade;
+  @NotNull private final Application myApplication;
+  @NotNull private final ChangeListManagerEx myChangeListManager;
+  @NotNull private final ProjectManagerEx myProjectManager;
+  @NotNull private final SaveAndSyncHandler mySaveAndSyncHandler;
+
+  public GitFreezingProcess(@NotNull Project project, @NotNull String operationTitle, @NotNull Runnable runnable) {
     myOperationTitle = operationTitle;
     myRunnable = runnable;
-    myChangeListManager = myFacade.getChangeListManager(project);
+
+    myApplication = ApplicationManager.getApplication();
+    myChangeListManager = (ChangeListManagerEx)ChangeListManager.getInstance(project);
+    myProjectManager = ProjectManagerEx.getInstanceEx();
+    mySaveAndSyncHandler = SaveAndSyncHandler.getInstance();
   }
 
   public void execute() {
@@ -67,37 +78,37 @@ public class GitFreezingProcess {
     LOG.debug("finished.");
   }
 
-  public static void saveAndBlock(@NotNull GitPlatformFacade platformFacade) {
-    platformFacade.getProjectManager().blockReloadingProjectOnExternalChanges();
-    platformFacade.saveAllDocuments();
-    platformFacade.getSaveAndSyncHandler().blockSaveOnFrameDeactivation();
-    platformFacade.getSaveAndSyncHandler().blockSyncOnFrameActivation();
+  public void saveAndBlock() {
+    myProjectManager.blockReloadingProjectOnExternalChanges();
+    FileDocumentManager.getInstance().saveAllDocuments();
+    mySaveAndSyncHandler.blockSaveOnFrameDeactivation();
+    mySaveAndSyncHandler.blockSyncOnFrameActivation();
   }
 
   private void saveAndBlockInAwt() {
     RethrowingRunnable rethrowingRunnable = new RethrowingRunnable(new Runnable() {
       @Override public void run() {
-        saveAndBlock(myFacade);
+        saveAndBlock();
       }
     });
-    UIUtil.invokeAndWaitIfNeeded(rethrowingRunnable);
+    myApplication.invokeAndWait(rethrowingRunnable, defaultModalityState());
     rethrowingRunnable.rethrowIfHappened();
   }
 
   private void unblockInAwt() {
     RethrowingRunnable rethrowingRunnable = new RethrowingRunnable(new Runnable() {
       @Override public void run() {
-        unblock(myFacade);
+        unblock();
       }
     });
-    UIUtil.invokeAndWaitIfNeeded(rethrowingRunnable);
+    myApplication.invokeAndWait(rethrowingRunnable, defaultModalityState());
     rethrowingRunnable.rethrowIfHappened();
   }
 
-  public static void unblock(@NotNull GitPlatformFacade platformFacade) {
-    platformFacade.getProjectManager().unblockReloadingProjectOnExternalChanges();
-    platformFacade.getSaveAndSyncHandler().unblockSaveOnFrameDeactivation();
-    platformFacade.getSaveAndSyncHandler().unblockSyncOnFrameActivation();
+  public void unblock() {
+    myProjectManager.unblockReloadingProjectOnExternalChanges();
+    mySaveAndSyncHandler.unblockSaveOnFrameDeactivation();
+    mySaveAndSyncHandler.unblockSyncOnFrameActivation();
   }
 
   private void freeze() {
@@ -114,7 +125,7 @@ public class GitFreezingProcess {
         unfreeze();
       }
     });
-    UIUtil.invokeAndWaitIfNeeded(rethrowingRunnable);
+    myApplication.invokeAndWait(rethrowingRunnable, defaultModalityState());
     rethrowingRunnable.rethrowIfHappened();
   }
 

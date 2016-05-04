@@ -160,6 +160,9 @@ final class PaintersHelper implements Painter.Listener {
         String value = System.getProperty(propertyName);
         if (!Comparing.equal(value, current)) {
           current = value;
+          if (scaled != null) {
+            scaled.flush();
+          }
           image = scaled = null;
           insets = JBUI.emptyInsets();
           loadImage(value);
@@ -232,10 +235,9 @@ final class PaintersHelper implements Painter.Listener {
           sw = cw < w ? w : (cw + w) / w * w;
           sh = ch < h ? h : (ch + h) / h * h;
         }
-        if (sw0 != sw || sh0 != sh || scaled != null && scaled.contentsLost()) {
-          if (sw0 != sw || sh0 != sh || scaled == null) {
-            scaled = createImage(g, sw, sh);
-          }
+        boolean rescale = sw0 != sw || sh0 != sh;
+        while ((scaled = validateImage(scaled, g)) == null || rescale) {
+          scaled = createImage(g, sw, sh);
           Graphics2D gg = scaled.createGraphics();
           gg.setComposite(AlphaComposite.Src);
           if (fillType == FillType.SCALE) {
@@ -251,18 +253,19 @@ final class PaintersHelper implements Painter.Listener {
             }
           }
           gg.dispose();
+          rescale = false;
         }
         w = sw;
         h = sh;
       }
-      else if (scaled == null || scaled.contentsLost()) {
-        if (scaled == null) {
+      else {
+        while ((scaled = validateImage(scaled, g)) == null) {
           scaled = createImage(g, w, h);
+          Graphics2D gg = scaled.createGraphics();
+          gg.setComposite(AlphaComposite.Src);
+          gg.drawImage(image, 0, 0, null);
+          gg.dispose();
         }
-        Graphics2D gg = scaled.createGraphics();
-        gg.setComposite(AlphaComposite.Src);
-        gg.drawImage(image, 0, 0, null);
-        gg.dispose();
       }
 
       int x, y;
@@ -297,15 +300,31 @@ final class PaintersHelper implements Painter.Listener {
       cfg.restore();
     }
 
+    @Nullable
+    private static VolatileImage validateImage(@Nullable VolatileImage scaled, @NotNull Graphics2D g) {
+      if (scaled == null) return null;
+      boolean b1 = scaled.validate(g.getDeviceConfiguration()) != VolatileImage.IMAGE_OK;
+      boolean b2 = scaled.contentsLost();
+      if (b1 || b2) {
+        scaled.flush();
+        return null;
+      }
+      return scaled;
+    }
+
     @NotNull
     private static VolatileImage createImage(Graphics2D g, int w, int h) {
+      VolatileImage image;
       GraphicsConfiguration configuration = g.getDeviceConfiguration();
       try {
-        return configuration.createCompatibleVolatileImage(w, h, new ImageCapabilities(true), Transparency.TRANSLUCENT);
+        image = configuration.createCompatibleVolatileImage(w, h, new ImageCapabilities(true), Transparency.TRANSLUCENT);
       }
       catch (Exception e) {
-        return configuration.createCompatibleVolatileImage(w, h, Transparency.TRANSLUCENT);
+        image = configuration.createCompatibleVolatileImage(w, h, Transparency.TRANSLUCENT);
       }
+      // validate first time (it's always RESTORED & cleared)
+      image.validate(configuration);
+      return image;
     }
   }
 }

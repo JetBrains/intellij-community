@@ -18,8 +18,6 @@ package com.jetbrains.python.sdk;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -143,12 +141,7 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
   }
 
   private void createLocalSdk() {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-      SdkConfigurationUtil.createSdk(myProject, myExistingSdks, mySdkAddedCallback, false, PythonSdkType.getInstance());
-      }
-    }, ModalityState.any());
+    SdkConfigurationUtil.createSdk(myProject, myExistingSdks, mySdkAddedCallback, false, PythonSdkType.getInstance());
   }
 
   private void createRemoteSdk() {
@@ -247,10 +240,6 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
 
   @Override
   public PopupStep onChosen(final String selectedValue, boolean finalChoice) {
-    return doFinalStep(new Runnable() {
-      public void run() {
-        optionSelected(selectedValue);
-      }
-    });
+    return doFinalStep(() -> optionSelected(selectedValue));
   }
 }
