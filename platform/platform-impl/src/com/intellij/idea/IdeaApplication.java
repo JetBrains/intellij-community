@@ -46,6 +46,7 @@ import com.intellij.platform.PlatformProjectOpenProcessor;
 import com.intellij.ui.CustomProtocolHandler;
 import com.intellij.ui.Splash;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.BuiltinWebServerAccess;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NonNls;
@@ -55,6 +56,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
+import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -153,7 +156,7 @@ public class IdeaApplication {
     System.setProperty("sun.awt.noerasebackground", "true");
 
     IdeEventQueue.getInstance(); // replace system event queue
-    
+
     if (headless) return;
 
     if (Patches.SUN_BUG_ID_6209673) {
@@ -310,6 +313,15 @@ public class IdeaApplication {
       // if OS has dock, RecentProjectsManager will be already created, but not all OS have dock, so, we trigger creation here to ensure that RecentProjectsManager app listener will be added
       RecentProjectsManager.getInstance();
 
+      try {
+        BuiltinWebServerAccess.ensureUserAuthenticationToken();
+      }
+      catch (NoSuchAlgorithmException e) {
+        LOG.info("Unable to ensure User Authentication Token", e);
+      }
+      catch (IOException e) {
+        LOG.info("Unable to ensure User Authentication Token", e);
+      }
       // Event queue should not be changed during initialization of application components.
       // It also cannot be changed before initialization of application components because IdeEventQueue uses other
       // application components. So it is proper to perform replacement only here.
