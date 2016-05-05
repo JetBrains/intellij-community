@@ -93,7 +93,9 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
         }
       }
     }
-    return new XDebugSessionTab(session, icon, environment);
+    XDebugSessionTab tab = new XDebugSessionTab(session, icon, environment);
+    tab.myRunContentDescriptor.setActivateToolWindowWhenAdded(contentToReuse == null || contentToReuse.isActivateToolWindowWhenAdded());
+    return tab;
   }
 
   @NotNull
