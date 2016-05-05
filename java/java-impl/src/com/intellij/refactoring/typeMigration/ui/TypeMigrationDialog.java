@@ -59,7 +59,7 @@ import java.util.List;
  * Date: 25-Mar-2008
  */
 public abstract class TypeMigrationDialog extends RefactoringDialog {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.typeMigration.ui.TypeMigrationDialog");
+  private static final Logger LOG = Logger.getInstance(TypeMigrationDialog.class);
 
   public static final String REFACTORING_NAME = "Type Migration";
 
@@ -68,7 +68,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
   private final ScopeChooserCombo myScopeChooserCombo;
 
   public TypeMigrationDialog(@NotNull Project project,
-                             PsiElement roots[],
+                             PsiElement[] roots,
                              TypeMigrationRules rules) {
     super(project, false);
     myRoots = roots;
@@ -150,14 +150,16 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
     private final EditorComboBox myToTypeEditor;
 
     public SingleElement(@NotNull Project project,
-                         PsiElement root,
+                         PsiElement[] roots,
                          PsiType migrationType,
                          TypeMigrationRules rules) {
-      super(project, new PsiElement[]{root}, rules);
+      super(project, roots, rules);
+      LOG.assertTrue(roots.length > 0);
       final PsiType rootType = getRootType();
       final String text = migrationType != null ? migrationType.getCanonicalText(true) :
                           rootType != null ? rootType.getCanonicalText(true) : "";
       int flags = 0;
+      PsiElement root = roots[0];
       if (root instanceof PsiParameter) {
         final PsiElement scope = ((PsiParameter)root).getDeclarationScope();
         if (scope instanceof PsiMethod) {
