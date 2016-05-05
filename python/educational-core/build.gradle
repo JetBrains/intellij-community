@@ -25,6 +25,7 @@ subprojects {
     version ideaVersion
     updateSinceUntilBuild true
     downloadSources Boolean.valueOf(downloadIdeaSources)
+    sandboxDirectory = new File(rootProject.projectDir, "gradleBuild/idea-sandbox")
   }
 
   processResources {
@@ -39,6 +40,8 @@ subprojects {
       archiveName = "$intellij.pluginName-$version-${buildNumber}.zip"
     }
   }
+
+  buildDir = new File(rootProject.projectDir, "gradleBuild/" + project.name)
 }
 
 project(':student') {
