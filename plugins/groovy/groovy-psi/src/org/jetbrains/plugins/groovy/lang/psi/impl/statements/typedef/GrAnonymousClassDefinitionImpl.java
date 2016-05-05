@@ -173,12 +173,6 @@ public class GrAnonymousClassDefinitionImpl extends GrTypeDefinitionImpl impleme
     return TypesUtil.createTypeByFQClassName(className, this);
   }
 
-  @NotNull
-  @Override
-  public String[] getSuperClassNames() {
-    return new String[]{getBaseClassReferenceGroovy().getClassNameText()};
-  }
-
   @Override
   public PsiClass getContainingClass() {
     return null;

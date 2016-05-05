@@ -16,6 +16,7 @@
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.debugger.ui.DebuggerContentInfo;
+import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.Executor;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -29,12 +30,15 @@ import com.intellij.execution.ui.layout.impl.ViewImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.ContextHelpAction;
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.ui.AppIcon;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManagerAdapter;
@@ -344,6 +348,39 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
           ui.restoreContent(tab.getWatchesContentId());
         }
       }
+    }
+  }
+
+  public void toFront(boolean focus, @Nullable final Runnable onShowCallback) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (myRunContentDescriptor != null) {
+        ToolWindow toolWindow = ExecutionManager.getInstance(myProject).getContentManager()
+          .getToolWindowByDescriptor(myRunContentDescriptor);
+        if (toolWindow != null) {
+          if (!toolWindow.isVisible()) {
+            toolWindow.show(() -> {
+              if (onShowCallback != null) {
+                onShowCallback.run();
+              }
+              myRebuildWatchesRunnable.run();
+            });
+          }
+          //noinspection ConstantConditions
+          toolWindow.getContentManager().setSelectedContent(myRunContentDescriptor.getAttachedContent());
+        }
+      }
+    });
+
+    if (focus) {
+      ApplicationManager.getApplication().invokeLater(() -> {
+        boolean focusWnd = Registry.is("debugger.mayBringFrameToFrontOnBreakpoint");
+        ProjectUtil.focusProjectWindow(myProject, focusWnd);
+        if (!focusWnd) {
+          AppIcon.getInstance().requestAttention(myProject, true);
+        }
+      });
     }
   }
 
