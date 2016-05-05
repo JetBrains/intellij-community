@@ -78,6 +78,6 @@ public class NewLineBlocksIteratorTest extends AbstractNewLineBlocksIteratorTest
     TestFormattingModel model = new TestFormattingModel(text);
     Document document = model.getDocument();
     TestBlock block = new FormattingModelXmlReader(model).readTestBlock(getTestDataPath(), getFileName() + ".xml");
-    return new NewLineBlocksIterator(block, document);
+    return new NewLineBlocksIterator(block, document, null);
   }
 }
