@@ -36,6 +36,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -59,10 +60,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class ExecutionManagerImpl extends ExecutionManager implements Disposable {
   public static final Key<Object> EXECUTION_SESSION_ID_KEY = Key.create("EXECUTION_SESSION_ID_KEY");
@@ -72,7 +70,8 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
   private static final ProcessHandler[] EMPTY_PROCESS_HANDLERS = new ProcessHandler[0];
 
   private final Project myProject;
-  private final Alarm awaitingTerminationAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final Alarm myAwaitingTerminationAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final Map<RunProfile, ExecutionEnvironment> myAwaitingRunProfiles = ContainerUtil.newHashMap();
   private final List<Trinity<RunContentDescriptor, RunnerAndConfigurationSettings, Executor>> myRunningConfigurations =
     ContainerUtil.createLockFreeCopyOnWriteList();
   private RunContentManagerImpl myContentManager;
@@ -479,24 +478,44 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
       }
     }
 
-    awaitingTerminationAlarm.addRequest(new Runnable() {
+    if (myAwaitingRunProfiles.get(environment.getRunProfile()) == environment) {
+      // defense from rerunning exactly the same ExecutionEnvironment
+      return;
+    }
+    myAwaitingRunProfiles.put(environment.getRunProfile(), environment);
+
+    awaitTermination(new Runnable() {
       @Override
       public void run() {
+        if (myAwaitingRunProfiles.get(environment.getRunProfile()) != environment) {
+          // a new rerun has been requested before starting this one, ignore this rerun
+          return;
+        }
         if ((DumbService.getInstance(myProject).isDumb() && !Registry.is("dumb.aware.run.configurations")) || ExecutorRegistry.getInstance().isStarting(environment)) {
-          awaitingTerminationAlarm.addRequest(this, 100);
+          awaitTermination(this, 100);
           return;
         }
 
         for (RunContentDescriptor descriptor : runningOfTheSameType) {
           ProcessHandler processHandler = descriptor.getProcessHandler();
           if (processHandler != null && !processHandler.isProcessTerminated()) {
-            awaitingTerminationAlarm.addRequest(this, 100);
+            awaitTermination(this, 100);
             return;
           }
         }
+        myAwaitingRunProfiles.remove(environment.getRunProfile());
         start(environment);
       }
     }, 50);
+  }
+
+  private void awaitTermination(@NotNull Runnable request, long delayMillis) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      ApplicationManager.getApplication().invokeLater(request, ModalityState.any());
+    }
+    else {
+      myAwaitingTerminationAlarm.addRequest(request, delayMillis);
+    }
   }
 
   @TestOnly
