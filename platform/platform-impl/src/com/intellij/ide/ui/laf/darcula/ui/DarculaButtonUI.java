@@ -16,6 +16,7 @@
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.SystemInfo;
@@ -100,6 +101,8 @@ public class DarculaButtonUI extends BasicButtonUI {
       }
     }
     g.setColor(fg);
+
+    UISettings.setupAntialiasing(g);
 
     FontMetrics metrics = SwingUtilities2.getFontMetrics(c, g);
     int mnemonicIndex = DarculaLaf.isAltPressed() ? button.getDisplayedMnemonicIndex() : -1;

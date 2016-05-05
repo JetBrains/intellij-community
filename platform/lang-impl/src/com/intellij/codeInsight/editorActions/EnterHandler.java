@@ -28,6 +28,7 @@ import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataContextWrapper;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
@@ -35,8 +36,10 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -48,7 +51,6 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -58,6 +60,7 @@ public class EnterHandler extends BaseEnterHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.EnterHandler");
 
   private final EditorActionHandler myOriginalHandler;
+  private final static Key<Language> CONTEXT_LANGUAGE = Key.create("EnterHandler.Language");
 
   public EnterHandler(EditorActionHandler originalHandler) {
     super(true);
@@ -76,7 +79,7 @@ public class EnterHandler extends BaseEnterHandler {
       PostprocessReformattingAspect.getInstance(project).disablePostprocessFormattingInside(new Runnable() {
         @Override
         public void run() {
-          executeWriteActionInner(editor, caret, dataContext, project);
+          executeWriteActionInner(editor, caret, getExtendedContext(dataContext, project, caret), project);
         }
       });
     }
@@ -120,7 +123,6 @@ public class EnterHandler extends BaseEnterHandler {
 
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     documentManager.commitDocument(document);
-    Commenter langCommenter = LanguageCommenters.INSTANCE.forLanguage(PsiUtilCore.getLanguageAtOffset(file, caretOffset));
 
     boolean forceIndent = false;
     boolean forceSkipIndent = false;
@@ -168,7 +170,7 @@ public class EnterHandler extends BaseEnterHandler {
     }
 
     final DoEnterAction action = new DoEnterAction(
-      file, editor, document, dataContext, caretOffset, !insertSpace, caretAdvanceRef.get(), project, langCommenter
+      file, editor, document, dataContext, caretOffset, !insertSpace, caretAdvanceRef.get(), project
     );
     action.setForceIndent(forceIndent);
     action.run();
@@ -177,6 +179,15 @@ public class EnterHandler extends BaseEnterHandler {
         break;
       }
     }
+  }
+  
+  @NotNull
+  private static DataContext getExtendedContext(@NotNull DataContext originalContext, 
+                                                @NotNull Project project,
+                                                @NotNull Caret caret) {
+    DataContext context = originalContext instanceof UserDataHolder ? originalContext : new DataContextWrapper(originalContext);
+    ((UserDataHolder)context).putUserData(CONTEXT_LANGUAGE, PsiUtilBase.getLanguageInEditor(caret, project));
+    return context;
   }
 
   public static boolean isCommentComplete(PsiComment comment, CodeDocumentationAwareCommenter commenter, Editor editor) {
@@ -301,14 +312,13 @@ public class EnterHandler extends BaseEnterHandler {
     private final boolean myInsertSpace;
     private final Editor myEditor;
     private final Project myProject;
-    private Commenter myCommenter;
     private int myCaretAdvance;
 
     private boolean myForceIndent = false;
     private static final String LINE_SEPARATOR = "\n";
 
     public DoEnterAction(PsiFile file, Editor view, Document document, DataContext dataContext, int offset, boolean insertSpace,
-                         int caretAdvance, Project project, Commenter commenter) 
+                         int caretAdvance, Project project) 
     {
       myEditor = view;
       myFile = file;
@@ -318,7 +328,6 @@ public class EnterHandler extends BaseEnterHandler {
       myInsertSpace = insertSpace;
       myCaretAdvance = caretAdvance;
       myProject = project;
-      myCommenter = commenter;
     }
 
     public void setForceIndent(boolean forceIndent) {
@@ -334,8 +343,10 @@ public class EnterHandler extends BaseEnterHandler {
         i = CharArrayUtil.shiftBackwardUntil(chars, i, LINE_SEPARATOR) + 1;
         if (i < 0) i = 0;
         int lineStart = CharArrayUtil.shiftForward(chars, i, " \t");
+        Language language = myDataContext instanceof UserDataHolder ? CONTEXT_LANGUAGE.get((UserDataHolder)myDataContext):null;
+        Commenter langCommenter = language != null ? LanguageCommenters.INSTANCE.forLanguage(language) : null;
         CodeDocumentationUtil.CommentContext commentContext 
-          = CodeDocumentationUtil.tryParseCommentContext(myCommenter, chars, myOffset, lineStart);
+          = CodeDocumentationUtil.tryParseCommentContext(langCommenter, chars, myOffset, lineStart);
 
         PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(getProject());
         if (commentContext.docStart) {
@@ -721,5 +732,14 @@ public class EnterHandler extends BaseEnterHandler {
       }
       return docAsterisk;
     }
+  }
+  
+  
+  @Nullable
+  public static Language getLanguage(@NotNull DataContext dataContext) {
+    if (dataContext instanceof UserDataHolder) {
+      return CONTEXT_LANGUAGE.get((UserDataHolder)dataContext);
+    }
+    return null;
   }
 }

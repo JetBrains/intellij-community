@@ -217,31 +217,32 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
         PsiMethod methodBySignature = MethodSignatureUtil.findMethodBySuperSignature(targetClass, method.getSignature(substitutor), false);
         if (methodBySignature == null) {
           newMember = (PsiMethod)targetClass.add(method);
-          if (sourceClass.isInterface()) {
-            if (!targetClass.isInterface()) {
-              PsiUtil.setModifierProperty(newMember, PsiModifier.PUBLIC, true);
-              if (newMember.hasModifierProperty(PsiModifier.DEFAULT)) {
-                PsiUtil.setModifierProperty(newMember, PsiModifier.DEFAULT, false);
-              }
-              else {
-                PsiUtil.setModifierProperty(newMember, PsiModifier.ABSTRACT, true);
-              }
+          final PsiMethod oldMethod = (PsiMethod)memberInfo.getMember();
+          if (sourceClass.isInterface() && !targetClass.isInterface()) {
+            PsiUtil.setModifierProperty(newMember, PsiModifier.PUBLIC, true);
+            if (oldMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
+              RefactoringUtil.makeMethodAbstract(targetClass, (PsiMethod)newMember);
+            }
+            else {
+              PsiUtil.setModifierProperty(newMember, PsiModifier.DEFAULT, false);
             }
           }
-          else if (memberInfo.isToAbstract()) {
+
+          if (memberInfo.isToAbstract()) {
             if (newMember.hasModifierProperty(PsiModifier.PRIVATE)) {
               PsiUtil.setModifierProperty(newMember, PsiModifier.PROTECTED, true);
             }
+
             pushDownData.getCommentPolicy().processNewJavaDoc(((PsiMethod)newMember).getDocComment());
-          }
-          if (memberInfo.isToAbstract()) {
             OverrideImplementUtil.annotateOnOverrideImplement((PsiMethod)newMember, targetClass, (PsiMethod)memberInfo.getMember());
           }
         }
         else { //abstract method: remove @Override
-          final PsiAnnotation annotation = AnnotationUtil.findAnnotation(methodBySignature, "java.lang.Override");
-          if (annotation != null && !leaveOverrideAnnotation(sourceClass, substitutor, method)) {
-            annotation.delete();
+          if (!memberInfo.isToAbstract()) {
+            final PsiAnnotation annotation = AnnotationUtil.findAnnotation(methodBySignature, "java.lang.Override");
+            if (annotation != null && !leaveOverrideAnnotation(sourceClass, substitutor, method)) {
+              annotation.delete();
+            }
           }
           final PsiDocComment oldDocComment = method.getDocComment();
           if (oldDocComment != null) {
@@ -308,6 +309,9 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
           final PsiMethod method = (PsiMethod)member;
           if (method.hasModifierProperty(PsiModifier.PRIVATE)) {
             PsiUtil.setModifierProperty(method, PsiModifier.PROTECTED, true);
+          }
+          if (method.hasModifierProperty(PsiModifier.DEFAULT)) {
+            PsiUtil.setModifierProperty(method, PsiModifier.DEFAULT, false);
           }
           RefactoringUtil.makeMethodAbstract((PsiClass)pushDownData.getSourceClass(), method);
           pushDownData.getCommentPolicy().processOldJavaDoc(method.getDocComment());

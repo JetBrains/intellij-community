@@ -31,6 +31,7 @@ import javax.swing.*;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
 
 public interface InspectionToolPresentation extends ProblemDescriptionsProcessor {
 
@@ -64,7 +65,7 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
   IntentionAction findQuickFixes(@NotNull CommonProblemDescriptor descriptor, final String hint);
   @NotNull
   HTMLComposerImpl getComposer();
-  void exportResults(@NotNull final Element parentNode, @NotNull RefEntity refEntity, Set<CommonProblemDescriptor> excludedDescriptions);
+  void exportResults(@NotNull final Element parentNode, @NotNull RefEntity refEntity, Predicate<CommonProblemDescriptor> isDescriptorExcluded);
   @NotNull
   Set<RefModule> getModuleProblems();
   @Nullable
@@ -88,8 +89,8 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
                                       @NotNull Map<RefEntity, CommonProblemDescriptor[]> descriptorMap,
                                       @Nullable CommonProblemDescriptor[] allowedDescriptors);
   void exportResults(@NotNull final Element parentNode,
-                     @NotNull final Set<RefEntity> excludedEntities,
-                     @NotNull final Set<CommonProblemDescriptor> excludedDescriptors);
+                     @NotNull final Predicate<RefEntity> isEntityExcluded,
+                     @NotNull final Predicate<CommonProblemDescriptor> isProblemExcluded);
 
   default JComponent getCustomPreviewPanel(RefEntity entity) {
     return null;

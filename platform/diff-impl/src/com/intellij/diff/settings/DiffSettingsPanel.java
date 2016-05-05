@@ -29,6 +29,7 @@ public class DiffSettingsPanel {
   private JPanel myPane;
   private ContextRangePanel myContextRangeComponent;
   private JCheckBox myGoToNextFileOnNextDifferenceCheckbox;
+  private JCheckBox myAutoApplyNonConflictedChangesCheckbox;
 
   @NotNull private TextDiffSettings myTextSettings = TextDiffSettings.getSettings();
   @NotNull private DiffSettings myDiffSettings = DiffSettings.getSettings();
@@ -41,17 +42,20 @@ public class DiffSettingsPanel {
   public boolean isModified() {
     if (myContextRangeComponent.isModified()) return true;
     if (myGoToNextFileOnNextDifferenceCheckbox.isSelected() != myDiffSettings.isGoToNextFileOnNextDifference()) return true;
+    if (myAutoApplyNonConflictedChangesCheckbox.isSelected() != myTextSettings.isAutoApplyNonConflictedChanges()) return true;
     return false;
   }
 
   public void apply() {
     myContextRangeComponent.apply();
     myDiffSettings.setGoToNextFileOnNextDifference(myGoToNextFileOnNextDifferenceCheckbox.isSelected());
+    myTextSettings.setAutoApplyNonConflictedChanges(myAutoApplyNonConflictedChangesCheckbox.isSelected());
   }
 
   public void reset() {
     myContextRangeComponent.reset();
     myGoToNextFileOnNextDifferenceCheckbox.setSelected(myDiffSettings.isGoToNextFileOnNextDifference());
+    myAutoApplyNonConflictedChangesCheckbox.setSelected(myTextSettings.isAutoApplyNonConflictedChanges());
   }
 
   private void createUIComponents() {

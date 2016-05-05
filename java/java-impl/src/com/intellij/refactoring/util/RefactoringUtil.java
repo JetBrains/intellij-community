@@ -803,17 +803,39 @@ public class RefactoringUtil {
                                                       final PsiElementFactory factory) {
     final Map<PsiElement, PsiElement> replacement = new LinkedHashMap<PsiElement, PsiElement>();
     for (PsiTypeParameter parameter : parametersIterable) {
-      PsiType substitutedType = substitutor.substitute(parameter);
-      if (substitutedType == null) {
-        substitutedType = TypeConversionUtil.erasure(factory.createType(parameter));
-      }
+      final PsiType substitutedType = substitutor.substitute(parameter);
+      final PsiType erasedType = substitutedType == null ? TypeConversionUtil.erasure(factory.createType(parameter))
+                                                         : substitutedType;
       for (PsiReference reference : ReferencesSearch.search(parameter, new LocalSearchScope(member))) {
         final PsiElement element = reference.getElement();
         final PsiElement parent = element.getParent();
         if (parent instanceof PsiTypeElement) {
-          replacement.put(parent, factory.createTypeElement(substitutedType));
-        } else if (element instanceof PsiJavaCodeReferenceElement && substitutedType instanceof PsiClassType) {
-          replacement.put(element, factory.createReferenceElementByType((PsiClassType)substitutedType));
+          if (substitutedType == null) {
+            //extends/implements list of type parameters: S extends List<T>
+            final PsiJavaCodeReferenceElement codeReferenceElement = PsiTreeUtil.getTopmostParentOfType(parent, PsiJavaCodeReferenceElement.class);
+            if (codeReferenceElement != null) {
+              final PsiJavaCodeReferenceElement copy = (PsiJavaCodeReferenceElement)codeReferenceElement.copy();
+              final PsiReferenceParameterList parameterList = copy.getParameterList();
+              if (parameterList != null) {
+                parameterList.delete();
+              }
+              replacement.put(codeReferenceElement, copy);
+            }
+            else {
+              //nested types List<List<T> listOfLists;
+              PsiTypeElement topPsiTypeElement = PsiTreeUtil.getTopmostParentOfType(parent, PsiTypeElement.class);
+              if (topPsiTypeElement == null) {
+                topPsiTypeElement = (PsiTypeElement)parent;
+              }
+              replacement.put(topPsiTypeElement, factory.createTypeElement(TypeConversionUtil.erasure(topPsiTypeElement.getType())));
+            }
+          }
+          else {
+            replacement.put(parent, factory.createTypeElement(substitutedType));
+          }
+        }
+        else if (element instanceof PsiJavaCodeReferenceElement && erasedType instanceof PsiClassType) {
+          replacement.put(element, factory.createReferenceElementByType((PsiClassType)erasedType));
         }
       }
     }

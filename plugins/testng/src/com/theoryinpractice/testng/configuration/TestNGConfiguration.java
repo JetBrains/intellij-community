@@ -129,12 +129,6 @@ public class TestNGConfiguration extends JavaTestConfigurationBase {
   }
 
   @Override
-  protected ModuleBasedConfiguration createInstance() {
-    return new TestNGConfiguration(getName(), getProject(), data.clone(),
-                                   TestNGConfigurationType.getInstance().getConfigurationFactories()[0]);
-  }
-
-  @Override
   public Collection<Module> getValidModules() {
     //TODO add handling for package
     return JavaRunConfigurationModule.getModulesForClass(getProject(), data.getMainClassName());

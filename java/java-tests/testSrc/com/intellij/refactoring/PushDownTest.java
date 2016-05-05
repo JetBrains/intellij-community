@@ -64,9 +64,39 @@ public class PushDownTest extends LightRefactoringTestCase {
   public void testInterfaceConstants() { doTest();}
 
   public void testReferenceForMovedInnerClass() { doTest();}
-  
+
+  public void testDefaultMethodToInterface() {doTest();}
+  public void testDefaultMethodToInterfaceKeepAbstract() {doTestImplements(true);}
+  public void testDefaultMethodToClass() {doTest();}
+  public void testDefaultMethodToClassKeepAbstract() { doTestImplements(true); }
+
+  public void testInterfaceStaticMethodToInterface() { doTest(); }
+  public void testInterfaceStaticMethodToClass() { doTest(); }
+
+  public void testInterfaceMethodToClass() { doTest();}
+
   public void testInsertOverrideWhenKeepAbstract() throws Exception {
     doTestImplements(true);
+  }
+
+  public void testErasureIfInheritsWithRawSubstitution() throws Exception {
+    doTest();
+  }
+
+  public void testAlreadyContainsMethodWithTheSignatureForGenericsSuperclass() throws Exception {
+    doTest(true);
+  }
+
+  public void testJavadocWhenKeepAsAbstractInterface() throws Exception {
+    doTestImplements(true);
+  }
+
+  public void testJavadocWhenKeepAsAbstractClass() throws Exception {
+    doTestImplements(true);
+  }
+
+  public void testPreserveOverrideAnnotationAfterConflict() throws Exception {
+    doTestImplements(true, true);
   }
 
   private void doTest() {
@@ -109,7 +139,7 @@ public class PushDownTest extends LightRefactoringTestCase {
                           new DocCommentPolicy(DocCommentPolicy.ASIS)) {
       @Override
       protected boolean showConflicts(@NotNull MultiMap<PsiElement, String> conflicts, UsageInfo[] usages) {
-        if (failure ? conflicts.isEmpty() : !conflicts.isEmpty()) {
+        if (failure == conflicts.isEmpty()) {
           fail(failure ? "Conflict was not detected" : "False conflict was detected");
         }
         return true;
@@ -124,6 +154,10 @@ public class PushDownTest extends LightRefactoringTestCase {
   }
 
   private void doTestImplements(boolean toAbstract) {
+    doTestImplements(toAbstract, false);
+  }
+
+  private void doTestImplements(boolean toAbstract, boolean failure) {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
 
     PsiClass currentClass = JavaPsiFacade.getInstance(getProject()).findClass("Test", GlobalSearchScope.projectScope(getProject()));
@@ -140,6 +174,9 @@ public class PushDownTest extends LightRefactoringTestCase {
                           new DocCommentPolicy(DocCommentPolicy.ASIS)) {
       @Override
       protected boolean showConflicts(@NotNull MultiMap<PsiElement, String> conflicts, UsageInfo[] usages) {
+        if (failure == conflicts.isEmpty()) {
+          fail(failure ? "Conflict was not detected" : "False conflict was detected");
+        }
         return true;
       }
     }.run();

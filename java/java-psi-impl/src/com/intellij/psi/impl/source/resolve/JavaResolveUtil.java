@@ -38,6 +38,7 @@ public class JavaResolveUtil {
     PsiElement prev = element;
     PsiElement scope = element.getContext();
     while (scope != null) {
+      // skip the class if coming from its extends/implements list: those references only rely on the outer context for resolve
       if (scope instanceof PsiClass && (prev instanceof PsiMember || prev instanceof PsiDocComment)) {
         return (PsiClass)scope;
       }
@@ -115,6 +116,7 @@ public class JavaResolveUtil {
       if (memberClass == null) {
         return false;
       }
+      // if resolving supertype reference, skip its containing class with getContextClass
       PsiClass contextClass = member instanceof PsiClass ? getContextClass(place)
                                                          : PsiTreeUtil.getContextOfType(place, PsiClass.class, false);
       while (contextClass != null) {

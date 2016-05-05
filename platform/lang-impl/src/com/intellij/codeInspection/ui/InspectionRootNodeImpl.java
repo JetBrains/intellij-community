@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.debugger
+package com.intellij.codeInspection.ui;
 
-import com.intellij.xdebugger.frame.XValueGroup
-
-internal interface ValueGroupFactory<T> {
-  fun create(data: T, start: Int, end: Int, context: VariableContext): XValueGroup
+/**
+ * @author Dmitry Batkovich
+ */
+public class InspectionRootNodeImpl {
 }

@@ -411,6 +411,10 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
         myInnerDiffWorker.onSettingsChanged();
         myInitialRediffFinished = true;
+
+        if (myViewer.getTextSettings().isAutoApplyNonConflictedChanges()) {
+          DiffUtil.performAction(new ApplyNonConflictsAction(), null);
+        }
       };
     }
 
