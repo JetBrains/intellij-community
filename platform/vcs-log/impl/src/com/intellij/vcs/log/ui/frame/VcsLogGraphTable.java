@@ -105,7 +105,7 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
     }
   };
 
-  public VcsLogGraphTable(@NotNull VcsLogUiImpl ui, @NotNull final VcsLogData logData, @NotNull VisiblePack initialDataPack) {
+  public VcsLogGraphTable(@NotNull VcsLogUiImpl ui, @NotNull VcsLogData logData, @NotNull VisiblePack initialDataPack) {
     super(new GraphTableModel(initialDataPack, logData, ui));
     myUi = ui;
     myLogData = logData;
