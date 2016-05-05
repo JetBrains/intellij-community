@@ -37,7 +37,7 @@ subprojects {
 
   afterEvaluate {
     tasks.getByName('buildPlugin') {
-      archiveName = "$intellij.pluginName-$version-${buildNumber}.zip"
+      archiveName = "$intellij.pluginName-$version-${pycharmVersion}.zip"
     }
   }
 

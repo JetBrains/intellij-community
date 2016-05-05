@@ -56,6 +56,12 @@ subprojects {
     sandboxDirectory = new File(rootProject.projectDir, "gradleBuild/idea-sandbox")
   }
 
+  afterEvaluate {
+    tasks.getByName('buildPlugin') {
+      archiveName = "$intellij.pluginName-$version-${pycharmVersion}.zip"
+    }
+  }
+
   buildDir = new File(rootProject.projectDir, "gradleBuild/" + project.name)
 }
 
