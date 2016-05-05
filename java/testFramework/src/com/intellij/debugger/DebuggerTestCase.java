@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,6 +70,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.StringTokenizer;
 
 public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCase {
+  public static final int DEFAULT_ADDRESS = 3456;
   protected DebuggerSession myDebuggerSession;
 
   @Override
@@ -201,7 +202,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
 
     GenericDebuggerRunnerSettings debuggerRunnerSettings = new GenericDebuggerRunnerSettings();
     debuggerRunnerSettings.LOCAL = true;
-    debuggerRunnerSettings.setDebugPort("3456");
+    debuggerRunnerSettings.setDebugPort(String.valueOf(DEFAULT_ADDRESS));
 
     ExecutionEnvironment environment = new ExecutionEnvironmentBuilder(myProject, DefaultDebugExecutor.getDebugExecutorInstance())
       .runnerSettings(debuggerRunnerSettings)
@@ -256,7 +257,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     RemoteConnection remoteConnection = new RemoteConnection(
       useSockets,
       "127.0.0.1",
-      "3456",
+      String.valueOf(DEFAULT_ADDRESS),
       serverMode);
 
     String launchCommandLine = remoteConnection.getLaunchCommandLine();
