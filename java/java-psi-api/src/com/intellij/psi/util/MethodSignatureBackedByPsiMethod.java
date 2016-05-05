@@ -84,7 +84,7 @@ public class MethodSignatureBackedByPsiMethod extends MethodSignatureBase {
       PsiParameter parameter = parameters[i];
       PsiType type = parameter.getType();
       parameterTypes[i] = isRaw ? TypeConversionUtil.erasure(substitutor.substitute(type)) : type;
-      if (!parameterTypes[i].isValid()) {
+      if (parameterTypes[i] != null && !parameterTypes[i].isValid()) {
         PsiUtil.ensureValidType(parameterTypes[i], "Method " + method + " of " + method.getClass() + "; param " + parameter + " of " + parameter.getClass());
       }
     }

@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.ui.laf.darcula.ui;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.util.ui.JBInsets;
 import sun.swing.MenuItemLayoutHelper;
 import sun.swing.SwingUtilities2;
@@ -78,6 +79,7 @@ public class DarculaMenuItemUIBase extends BasicMenuItemUI {
     paintCheckIcon(g, lh, lr, holdc, foreground);
     paintIcon(g, lh, lr, holdc);
     g.setColor(foreground);
+    UISettings.setupAntialiasing(g);
     paintText(g, lh, lr);
     paintAccText(g, lh, lr);
     paintArrowIcon(g, lh, lr, foreground);
@@ -177,6 +179,7 @@ public class DarculaMenuItemUIBase extends BasicMenuItemUI {
               lh.getHtmlView().paint(g, lr.getTextRect());
           } else {
               // Text isn't HTML
+              UISettings.setupAntialiasing(g);
               paintText(g, lh.getMenuItem(), lr.getTextRect(), lh.getText());
           }
       }

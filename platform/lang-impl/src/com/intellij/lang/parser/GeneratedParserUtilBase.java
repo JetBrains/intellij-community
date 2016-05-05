@@ -473,6 +473,7 @@ public class GeneratedParserUtilBase {
 
     if (((frame.modifiers & _AND_) | (frame.modifiers & _NOT_)) != 0) {
       close_marker_impl_(frame, marker, null, false);
+      replace_variants_with_name_(state, frame, builder, result, pinned);
       state.predicateCount--;
       if ((frame.modifiers & _NOT_) != 0) state.predicateSign = !state.predicateSign;
     }
@@ -492,11 +493,7 @@ public class GeneratedParserUtilBase {
                                          @Nullable Parser eatMore) {
     int initialPos = builder.rawTokenIndex();
     boolean willFail = !result && !pinned;
-    if (willFail && initialPos == frame.position && state.lastExpectedVariantPos == frame.position &&
-        frame.name != null && state.variants.size() - frame.variantCount > 1) {
-      state.clearVariants(true, frame.variantCount);
-      addVariantInner(state, initialPos, frame.name);
-    }
+    replace_variants_with_name_(state, frame, builder, result, pinned);
     int lastErrorPos = getLastVariantPos(state, initialPos);
     if (!state.suppressErrors && eatMore != null) {
       state.suppressErrors = true;
@@ -649,6 +646,20 @@ public class GeneratedParserUtilBase {
         }
       }
       marker.rollbackTo();
+    }
+  }
+
+  private static void replace_variants_with_name_(ErrorState state,
+                                                  Frame frame,
+                                                  PsiBuilder builder,
+                                                  boolean result,
+                                                  boolean pinned) {
+    int initialPos = builder.rawTokenIndex();
+    boolean willFail = !result && !pinned;
+    if (willFail && initialPos == frame.position && state.lastExpectedVariantPos == frame.position &&
+        frame.name != null && state.variants.size() - frame.variantCount > 1) {
+      state.clearVariants(true, frame.variantCount);
+      addVariantInner(state, initialPos, frame.name);
     }
   }
 

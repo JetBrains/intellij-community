@@ -45,14 +45,6 @@ public class JUnitTestDiscoveryConfiguration extends TestDiscoveryConfiguration 
           new JUnitConfiguration("", project, JUnitConfigurationType.getInstance().getConfigurationFactories()[0]));
   }
 
-  @Override
-  protected ModuleBasedConfiguration createInstance() {
-    final JUnitTestDiscoveryConfigurationType configurationType =
-      ConfigurationTypeUtil.findConfigurationType(JUnitTestDiscoveryConfigurationType.class);
-    final ConfigurationFactory[] factories = configurationType.getConfigurationFactories();
-    return new JUnitTestDiscoveryConfiguration(getName(), getProject(), factories[0]);
-  }
-
   @Nullable
   @Override
   public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment environment) throws ExecutionException {

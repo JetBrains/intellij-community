@@ -22,6 +22,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
@@ -118,5 +119,10 @@ public class ActionLink extends LinkLabel implements DataProvider {
     }
 
     return null;
+  }
+
+  @TestOnly
+  public AnAction getAction() {
+    return myAction;
   }
 }

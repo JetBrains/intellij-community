@@ -17,6 +17,7 @@ package com.intellij.testFramework
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.annotations.TestOnly
 import java.lang.reflect.InvocationTargetException
@@ -37,7 +38,7 @@ class EdtTestUtil {
 @TestOnly
 fun runInEdtAndWait(runnable: () -> Unit) {
   val application = ApplicationManager.getApplication()
-  if (application != null) {
+  if (application is ApplicationImpl) {
     application.invokeAndWait(runnable, ModalityState.defaultModalityState())
     return
   }

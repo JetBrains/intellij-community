@@ -843,6 +843,9 @@ def layoutAndroid(String androidHome, String androidToolsBaseHome) {
       jar("manifest-merger.jar") {
         module("manifest-merger")
       }
+      jar("repository.jar") {
+        module("repository")
+      }
       jar("sdk-tools.jar") {
         module("assetstudio")
         module("ddmlib")
@@ -856,6 +859,9 @@ def layoutAndroid(String androidHome, String androidToolsBaseHome) {
         module("chartlib")
         module("builder-model")
         module("builder-test-api")
+        module("instant-run-common")
+        module("instant-run-client")
+        module("instant-run-runtime")
       }
       jar("androidAnnotations.jar") {
         fileset(dir: "$androidHome/android/annotations")

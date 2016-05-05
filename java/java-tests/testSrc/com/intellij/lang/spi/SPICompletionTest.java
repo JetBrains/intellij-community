@@ -15,7 +15,13 @@
  */
 package com.intellij.lang.spi;
 
+import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+
+import java.io.IOException;
 
 /**
  * @author peter
@@ -29,6 +35,21 @@ public class SPICompletionTest extends LightCodeInsightFixtureTestCase {
       myFixture.addFileToProject("META-INF/services/com.foo.Interface", "com.f<caret>").getVirtualFile());
     myFixture.completeBasic();
     myFixture.checkResult("com.foo.Implementation");
+  }
+
+  public void testCompletionAfterRenaming() throws IOException {
+    VirtualFile file = myFixture.addFileToProject("META-INF/services/aaa", "<caret>").getVirtualFile();
+    myFixture.configureFromExistingVirtualFile(file);
+    assertEmpty(myFixture.completeBasic());
+    LookupManager.getInstance(getProject()).hideActiveLookup();
+
+    WriteCommandAction.runWriteCommandAction(getProject(), (ThrowableComputable<Void, IOException>)() -> {
+      file.rename(this, "java.lang.Runnable");
+      return null;
+    });
+
+    myFixture.completeBasic();
+    myFixture.assertPreferredCompletionItems(0, "java.lang.Thread");
   }
 
 }
