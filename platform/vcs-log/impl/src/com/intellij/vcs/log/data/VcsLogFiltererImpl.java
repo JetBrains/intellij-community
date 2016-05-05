@@ -71,8 +71,9 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
         UIUtil.invokeLaterIfNeeded(new Runnable() {
           @Override
           public void run() {
-            ProgressManager.getInstance().runProcessWithProgressAsynchronously(new MyTask(project, "Applying filters..."),
-                                                                               myLogData.getProgress().createProgressIndicator());
+            MyTask task = new MyTask(project, "Applying filters...");
+            ProgressManager.getInstance().runProcessWithProgressAsynchronously(task,
+                                                                               myLogData.getProgress().createProgressIndicator(task));
           }
         });
       }

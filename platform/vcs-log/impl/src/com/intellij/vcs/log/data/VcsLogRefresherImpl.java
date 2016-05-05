@@ -93,7 +93,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
       @Override
       public void run() {
         LOG.debug("Starting a background task...");
-        ProgressManager.getInstance().runProcessWithProgressAsynchronously(refreshTask, myProgress.createProgressIndicator());
+        ProgressManager.getInstance().runProcessWithProgressAsynchronously(refreshTask, myProgress.createProgressIndicator(refreshTask));
       }
     });
   }

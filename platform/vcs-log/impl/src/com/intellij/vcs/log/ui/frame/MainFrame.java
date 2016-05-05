@@ -348,6 +348,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
     @Override
     public void progressStarted() {
+      if (!myLogData.getProgress().showProgressInLog()) return;
       resume();
       myToolbar.revalidate();
     }
@@ -360,7 +361,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
     @Override
     public Dimension getPreferredSize() {
-      if (!isRunning()) return new Dimension(0, 0);
+      if (!isRunning() || !myLogData.getProgress().showProgressInLog()) return new Dimension(0, 0);
       return super.getPreferredSize();
     }
 

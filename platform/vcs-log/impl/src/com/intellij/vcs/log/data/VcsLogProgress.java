@@ -17,8 +17,13 @@ package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorBase;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,8 +37,16 @@ public class VcsLogProgress {
   private int myRunningTasksCount = 0;
 
   @NotNull
-  public VcsLogProgressIndicator createProgressIndicator() {
-    return new VcsLogProgressIndicator();
+  public ProgressIndicator createProgressIndicator(@NotNull Task.Backgroundable task) {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      return new EmptyProgressIndicator();
+    }
+    else if (showProgressInLog()) {
+      return new VcsLogProgressIndicator();
+    }
+    else {
+      return new BackgroundableProcessIndicator(task);
+    }
   }
 
   public void addProgressIndicatorListener(@NotNull ProgressListener listener, @Nullable Disposable parentDisposable) {
@@ -77,6 +90,10 @@ public class VcsLogProgress {
       List<ProgressListener> list = ContainerUtil.newArrayList(myListeners);
       ApplicationManager.getApplication().invokeLater(() -> list.forEach(action));
     }
+  }
+
+  public boolean showProgressInLog() {
+    return Registry.is("vcs.log.keep.up.to.date");
   }
 
   private class VcsLogProgressIndicator extends AbstractProgressIndicatorBase {

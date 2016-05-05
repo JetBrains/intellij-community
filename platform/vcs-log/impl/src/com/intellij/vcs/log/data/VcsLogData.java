@@ -248,7 +248,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
         }
       }
     };
-    myDataLoaderQueue.run(backgroundable, null, () -> myRefresher.getProgress().createProgressIndicator());
+    myDataLoaderQueue.run(backgroundable, null, () -> myRefresher.getProgress().createProgressIndicator(backgroundable));
   }
 
   /**
