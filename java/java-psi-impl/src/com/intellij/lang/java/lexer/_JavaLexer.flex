@@ -37,7 +37,7 @@ import com.intellij.lexer.FlexLexer;
   public void goTo(int offset) {
     zzCurrentPos = zzMarkedPos = zzStartRead = offset;
     zzPushbackPos = 0;
-    zzAtEOF = offset < zzEndRead;
+    zzAtEOF = false;
   }
 %}
 
