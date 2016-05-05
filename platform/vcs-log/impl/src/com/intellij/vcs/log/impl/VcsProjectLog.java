@@ -20,8 +20,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.RecursionGuard;
-import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.util.messages.MessageBus;
@@ -167,7 +165,7 @@ public class VcsProjectLog {
       MessageBusConnection connection = project.getMessageBus().connect(project);
       connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, projectLog::recreateLog);
       if (projectLog.hasDvcsRoots()) {
-        ApplicationManager.getApplication().invokeLater(() -> projectLog.createLog());
+        ApplicationManager.getApplication().invokeLater(projectLog::createLog);
       }
     }
   }
