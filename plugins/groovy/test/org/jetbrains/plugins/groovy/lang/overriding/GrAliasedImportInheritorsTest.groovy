@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.overriding
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 
 @CompileStatic
@@ -65,5 +66,68 @@ new Roo<Double>() {}
       assert resolveResult.element == iface
       assert resolveResult.substitutor.substitute(iface.typeParameters.first())
     }
+  }
+
+  void 'test aliased import fqn'() {
+    myFixture.addClass '''\
+package foo;
+interface Foo{}
+'''
+    def iface = myFixture.addClass('''\
+package bar;
+interface Bar{}
+''')
+    myFixture.addFileToProject 'a.groovy', '''\
+package test
+
+import foo.Foo as Bar
+
+new bar.Bar(){}
+'''
+    def inheritors = DirectClassInheritorsSearch.search(iface).findAll()
+    assert inheritors.size() == 1
+    def clazz = inheritors.first()
+    assert clazz
+    assert clazz instanceof GrAnonymousClassDefinition
+  }
+
+  void 'test aliased import redefined in same package'() {
+    def iface = myFixture.addClass('''\
+package foo;
+interface Foo {}
+''')
+    myFixture.addClass '''\
+package test;
+class Bar {}
+'''
+    myFixture.addFileToProject 'test/a.groovy', '''\
+package test
+
+import foo.Foo as Bar
+
+new Bar() {} // inherits foo.Foo
+'''
+    def inheritors = DirectClassInheritorsSearch.search(iface).findAll()
+    assert inheritors.size() == 1
+    assert inheritors.first()
+  }
+
+  void 'test aliased import redefined in same file'() {
+    def iface = myFixture.addClass('''\
+package foo;
+interface Foo {}
+''')
+    myFixture.addFileToProject 'test/a.groovy', '''\
+package test
+
+import foo.Foo as Bar
+
+class Bar {}
+
+new Bar() {} // inherits foo.Foo
+'''
+    def inheritors = DirectClassInheritorsSearch.search(iface).findAll()
+    assert inheritors.size() == 1
+    assert inheritors.first()
   }
 }

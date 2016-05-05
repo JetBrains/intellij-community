@@ -129,7 +129,7 @@ public class GrStubUtils {
     // alias: Foo<String> -> java.util.List<String>
     // unqualified ref: List<String> -> List<String>
     // qualified ref: java.util.List<String> -> java.util.List<String>
-    return mappedFqn == null ? fullText : fullText.replace(referenceName, mappedFqn);
+    return mappedFqn == null || element.isQualified() ? fullText : fullText.replace(referenceName, mappedFqn);
   }
 
   @Nullable
