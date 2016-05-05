@@ -160,7 +160,7 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
     try {
       FileDocumentManager.getInstance().saveDocument(myDocument);
 
-      mySceneBuilder = SceneBuilderKitWrapper.create(new File(myFile.getPath()).toURI().toURL(), this);
+      mySceneBuilder = SceneBuilder.create(new File(myFile.getPath()).toURI().toURL(), myProject, this);
 
       myPanel.add(mySceneBuilder.getPanel(), SCENE_CARD);
       myLayout.show(myPanel, SCENE_CARD);
@@ -258,7 +258,6 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
 
   private class ExternalChangeListener extends DocumentAdapter {
     private volatile boolean myRunState;
-    private String myContent;
 
     public ExternalChangeListener() {
       myDocument.addDocumentListener(this);
@@ -267,14 +266,12 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
     public void start() {
       if (!myRunState) {
         myRunState = true;
-        myContent = null;
       }
     }
 
     public void stop() {
       if (myRunState) {
         myRunState = false;
-        myContent = myDocument.getText();
       }
     }
 
@@ -284,13 +281,6 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
 
     public void dispose() {
       myDocument.removeDocumentListener(this);
-    }
-
-    public void checkContent() {
-      if (!myRunState && !myDocument.getText().equals(myContent)) {
-        addSceneBuilder();
-        start();
-      }
     }
 
     @Override
