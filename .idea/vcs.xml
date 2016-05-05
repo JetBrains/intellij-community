@@ -32,7 +32,6 @@
     <mapping directory="$PROJECT_DIR$/../studio/google/cloud/tools" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/../studio/google/services" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/../vendor/google" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/../vendor/google3/aswb" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/../vendor/google3/blaze" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/../vendor/intellij/cidr" vcs="Git" />
   </component>
