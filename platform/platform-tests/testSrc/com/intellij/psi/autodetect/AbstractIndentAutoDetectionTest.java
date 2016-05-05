@@ -106,6 +106,6 @@ public abstract class AbstractIndentAutoDetectionTest extends LightPlatformCodeI
   @NotNull
   public static CommonCodeStyleSettings.IndentOptions detectIndentOptions() {
     IndentOptionsDetector detector = new IndentOptionsDetectorImpl(myFile);
-    return detector.getIndentOptions(null);
+    return detector.getIndentOptions();
   }
 }
