@@ -63,7 +63,7 @@ public abstract class AbstractNewLineBlocksIteratorTest extends LightPlatformCod
     Document document = PsiDocumentManager.getInstance(getProject()).getDocument(myFile);
     Assert.assertNotNull(document);
 
-    return new NewLineBlocksIterator(root, document, null);
+    return new NewLineBlocksIterator(root, document);
   }
 
 }

@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.codeStyle.autodetect;
 
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,9 +22,9 @@ import org.jetbrains.annotations.Nullable;
 public interface IndentOptionsDetector {
 
   @Nullable
-  IndentOptionsAdjuster getIndentOptionsAdjuster(@Nullable ProgressIndicator indicator);
+  IndentOptionsAdjuster getIndentOptionsAdjuster();
 
   @NotNull
-  CommonCodeStyleSettings.IndentOptions getIndentOptions(@Nullable ProgressIndicator indicator);
+  CommonCodeStyleSettings.IndentOptions getIndentOptions();
 
 }

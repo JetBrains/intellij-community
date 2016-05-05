@@ -30,6 +30,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
 
@@ -39,17 +40,27 @@ public class IndentOptionsDetectorImpl implements IndentOptionsDetector {
   private final PsiFile myFile;
   private final Project myProject;
   private final Document myDocument;
+  private final ProgressIndicator myProgressIndicator;
 
+  public IndentOptionsDetectorImpl(@NotNull PsiFile file, @NotNull ProgressIndicator indicator) {
+    myFile = file;
+    myProject = file.getProject();
+    myDocument = PsiDocumentManager.getInstance(myProject).getDocument(myFile);
+    myProgressIndicator = indicator;
+  }
+  
+  @TestOnly
   public IndentOptionsDetectorImpl(@NotNull PsiFile file) {
     myFile = file;
     myProject = file.getProject();
     myDocument = PsiDocumentManager.getInstance(myProject).getDocument(myFile);
+    myProgressIndicator = null;
   }
   
   @Override
   @Nullable
-  public IndentOptionsAdjuster getIndentOptionsAdjuster(@Nullable ProgressIndicator indicator) {
-    List<LineIndentInfo> linesInfo = calcLineIndentInfo(indicator);
+  public IndentOptionsAdjuster getIndentOptionsAdjuster() {
+    List<LineIndentInfo> linesInfo = calcLineIndentInfo(myProgressIndicator);
     if (linesInfo != null) {
       IndentUsageStatistics stats = new IndentUsageStatisticsImpl(linesInfo);
       return new IndentOptionsAdjusterImpl(stats);
@@ -59,14 +70,12 @@ public class IndentOptionsDetectorImpl implements IndentOptionsDetector {
   
   @Override
   @NotNull
-  public IndentOptions getIndentOptions(@Nullable ProgressIndicator indicator) {
+  public IndentOptions getIndentOptions() {
     IndentOptions indentOptions =
       (IndentOptions)CodeStyleSettingsManager.getSettings(myProject).getIndentOptions(myFile.getFileType()).clone();
 
-    List<LineIndentInfo> linesInfo = calcLineIndentInfo(indicator);
-    if (linesInfo != null) {
-      IndentUsageStatistics stats = new IndentUsageStatisticsImpl(linesInfo);
-      IndentOptionsAdjuster adjuster = new IndentOptionsAdjusterImpl(stats);
+    IndentOptionsAdjuster adjuster = getIndentOptionsAdjuster();
+    if (adjuster != null) {
       adjuster.adjust(indentOptions);
     }
 

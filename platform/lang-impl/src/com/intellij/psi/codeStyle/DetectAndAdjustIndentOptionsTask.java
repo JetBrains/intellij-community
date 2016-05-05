@@ -70,8 +70,8 @@ class DetectAndAdjustIndentOptionsTask extends ReadTask {
     PsiFile file = getFile();
     if (file == null) return;
     
-    IndentOptionsDetectorImpl detector = new IndentOptionsDetectorImpl(file);
-    IndentOptionsAdjuster adjuster = detector.getIndentOptionsAdjuster(indicator);
+    IndentOptionsDetectorImpl detector = new IndentOptionsDetectorImpl(file, indicator);
+    IndentOptionsAdjuster adjuster = detector.getIndentOptionsAdjuster();
     if (adjuster != null) {
       adjustOptions(adjuster);
     }
