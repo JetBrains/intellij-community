@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,22 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.codeInspection.ui;
 
-import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.NotNull;
-
 /**
- * @author max
+ * @author Dmitry Batkovich
  */
-public class InspectionRootNode extends InspectionTreeNode {
-  public InspectionRootNode(Project project, @NotNull InspectionTreeUpdater updater) {
-    super(project);
-    myUpdater = updater;
-  }
-
-  public InspectionTreeUpdater getUpdater() {
-    return myUpdater;
-  }
+public class InspectionRootNodeImpl {
 }

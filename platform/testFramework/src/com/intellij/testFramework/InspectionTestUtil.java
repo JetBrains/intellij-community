@@ -33,7 +33,6 @@ import java.io.CharArrayReader;
 import java.io.File;
 import java.io.StreamTokenizer;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class InspectionTestUtil {
@@ -139,7 +138,7 @@ expected:
     InspectionToolPresentation presentation = context.getPresentation(toolWrapper);
 
     presentation.updateContent();  //e.g. dead code need check for reachables
-    presentation.exportResults(root, Collections.emptySet(), Collections.emptySet());
+    presentation.exportResults(root, x -> false, x -> false);
 
     File file = new File(testDir + "/expected.xml");
     try {

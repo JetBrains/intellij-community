@@ -23,6 +23,7 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.*;
+import com.intellij.codeInspection.offlineViewer.OfflineInspectionRVContentProvider;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.ui.actions.ExportHTMLAction;
@@ -121,7 +122,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   private final ExclusionHandler<InspectionTreeNode> myExclusionHandler;
   private EditorEx myPreviewEditor;
   private InspectionTreeLoadingProgressAware myLoadingProgressPreview;
-  private final ExcludedInspectionTreeNodesManager myExcludedInspectionTreeNodesManager = new ExcludedInspectionTreeNodesManager();
+  private final ExcludedInspectionTreeNodesManager myExcludedInspectionTreeNodesManager;
   private final Set<Object> mySuppressedNodes = new HashSet<>();
   private final ConcurrentMap<InspectionToolWrapper, Set<SuppressIntentionAction>> mySuppressActions = new ConcurrentHashMap<>();
 
@@ -135,6 +136,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     myScope = globalInspectionContext.getCurrentScope();
     myGlobalInspectionContext = globalInspectionContext;
     myProvider = provider;
+    myExcludedInspectionTreeNodesManager = new ExcludedInspectionTreeNodesManager(provider instanceof OfflineInspectionRVContentProvider);
 
     myTree = new InspectionTree(myProject, globalInspectionContext, this);
     initTreeListeners();
@@ -436,7 +438,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
               showInRightPanel(null);
             }
           }
-          else if (node instanceof InspectionRootNode || node instanceof InspectionGroupNode || node instanceof InspectionSeverityGroupNode) {
+          else if (node instanceof InspectionGroupNode || node instanceof InspectionSeverityGroupNode) {
             final InspectionViewNavigationPanel panel = new InspectionViewNavigationPanel(node, myTree);
             myLoadingProgressPreview = panel;
             mySplitter.setSecondComponent(panel);
