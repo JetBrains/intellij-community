@@ -6,15 +6,15 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.JdkOrderEntry;
-import com.intellij.openapi.roots.OrderEnumerator;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.LibraryScopeCache;
+import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiModifier;
@@ -26,6 +26,7 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.Query;
 import com.intellij.util.containers.FixedHashMap;
 import com.intellij.util.containers.IntArrayList;
+import com.intellij.util.xml.NanoXmlUtil;
 import com.oracle.javafx.scenebuilder.kit.editor.EditorController;
 import com.oracle.javafx.scenebuilder.kit.editor.panel.content.ContentPanelController;
 import com.oracle.javafx.scenebuilder.kit.editor.panel.hierarchy.treeview.HierarchyTreeViewController;
@@ -38,6 +39,7 @@ import com.oracle.javafx.scenebuilder.kit.library.BuiltinLibrary;
 import com.oracle.javafx.scenebuilder.kit.library.Library;
 import com.oracle.javafx.scenebuilder.kit.library.LibraryItem;
 import com.oracle.javafx.scenebuilder.kit.metadata.util.PropertyName;
+import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
@@ -54,17 +56,19 @@ import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
+import java.io.Reader;
+import java.io.StringReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.*;
+import java.util.function.Predicate;
 
 /**
  * @author Alexander Lobas
  */
 public class SceneBuilderImpl implements SceneBuilder {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.javaFX.sceneBuilder.SceneBuilderImpl");
-  private static final String CUSTOM_SECTION = "Custom";
 
   private final URL myFileURL;
   private final Project myProject;
@@ -99,8 +103,8 @@ public class SceneBuilderImpl implements SceneBuilder {
     }
     FXMLLoader.setDefaultClassLoader(SceneBuilderImpl.class.getClassLoader());
 
-    final Collection<CustomComponent> customComponents = ApplicationManager.getApplication().runReadAction(
-      (Computable<Collection<CustomComponent>>)this::collectCustomComponents);
+    final Collection<CustomComponent> customComponents = DumbService.getInstance(myProject)
+      .runReadActionInSmartMode(this::collectCustomComponents);
 
     myEditorController = new EditorController();
     if (!customComponents.isEmpty()) {
@@ -157,18 +161,58 @@ public class SceneBuilderImpl implements SceneBuilder {
       });
       return CachedValueProvider.Result.create(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
     });
+    if (psiClasses.isEmpty()) {
+      return Collections.emptyList();
+    }
+
+    return prepareCustomComponents(psiClasses);
+  }
+
+  @NotNull
+  private Collection<CustomComponent> prepareCustomComponents(Collection<PsiClass> psiClasses) {
+    final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(myProject);
+    final GlobalSearchScope scope = GlobalSearchScope.allScope(myProject);
+    final Map<String, BuiltinComponent> builtinComponents =
+      loadBuiltinComponents(className -> psiFacade.findClass(className, scope) != null);
 
     final List<CustomComponent> customComponents = new ArrayList<>();
-    final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     for (PsiClass psiClass : psiClasses) {
-      final String fqn = psiClass.getQualifiedName();
+      final String qualifiedName = psiClass.getQualifiedName();
       final String name = psiClass.getName();
-      if (fqn != null && name != null) {
-        final Module module = projectFileIndex.getModuleForFile(psiClass.getContainingFile().getVirtualFile());
-        customComponents.add(new CustomComponent(name, fqn, module != null ? module.getName() : ""));
+      if (qualifiedName != null && name != null) {
+        BuiltinComponent parentComponent = null;
+        for (PsiClass aClass = psiClass; aClass != null; aClass = aClass.getSuperClass()) {
+          final BuiltinComponent component = builtinComponents.get(aClass.getQualifiedName());
+          if (component != null) {
+            parentComponent = component;
+            break;
+          }
+        }
+        final String moduleName = getComponentModuleName(psiClass);
+        final Map<String, String> attributes = parentComponent != null ? parentComponent.getAttributes() : Collections.emptyMap();
+        customComponents.add(new CustomComponent(name, qualifiedName, moduleName, attributes));
       }
     }
     return customComponents;
+  }
+
+  @NotNull
+  private String getComponentModuleName(@NotNull PsiClass psiClass) {
+    final VirtualFile vFile = psiClass.getContainingFile().getVirtualFile();
+    final Module module = ProjectRootManager.getInstance(myProject).getFileIndex().getModuleForFile(vFile);
+    if (module != null) {
+      return module.getName();
+    }
+    else {
+      final OrderEntry entry = LibraryUtil.findLibraryEntry(vFile, myProject);
+      if (entry instanceof LibraryOrderEntry) {
+        final String libraryName = ((LibraryOrderEntry)entry).getLibraryName();
+        if (libraryName != null) {
+          return libraryName;
+        }
+      }
+    }
+    return "";
   }
 
   @NotNull
@@ -341,35 +385,116 @@ public class SceneBuilderImpl implements SceneBuilder {
     }
   }
 
+  @NotNull
+  private static Map<String, BuiltinComponent> loadBuiltinComponents(Predicate<String> psiClassExists) {
+    final Map<String, BuiltinComponent> components = new THashMap<>();
+    for (LibraryItem item : BuiltinLibrary.getLibrary().getItems()) {
+      final Ref<String> refQualifiedName = new Ref<>();
+      final List<String> imports = new ArrayList<>();
+      final Map<String, String> attributes = new THashMap<>();
+      final Ref<Boolean> rootTagProcessed = new Ref<>(false);
+      NanoXmlUtil.parse(new StringReader(item.getFxmlText()), new NanoXmlUtil.IXMLBuilderAdapter() {
+        @Override
+        public void newProcessingInstruction(String target, Reader reader) throws Exception {
+          if ("import".equals(target)) {
+            final String imported = StreamUtil.readTextFrom(reader);
+            imports.add(imported);
+          }
+        }
+
+        @Override
+        public void addAttribute(String key, String nsPrefix, String nsURI, String value, String type) throws Exception {
+          if (rootTagProcessed.get()) return;
+          if (key != null && value != null && StringUtil.isEmpty(nsPrefix)) {
+            attributes.put(key, value);
+          }
+        }
+
+        @Override
+        public void elementAttributesProcessed(String name, String nsPrefix, String nsURI) throws Exception {
+          rootTagProcessed.set(true);
+        }
+
+        @Override
+        public void startElement(String name, String nsPrefix, String nsURI, String systemID, int lineNr) throws Exception {
+          if (rootTagProcessed.get()) return;
+          for (String imported : imports) {
+            if (imported.equals(name) || imported.endsWith("." + name)) {
+              refQualifiedName.set(imported);
+              break;
+            }
+            if (imported.endsWith(".*")) {
+              String className = imported.substring(0, imported.length() - 1) + name;
+              if (psiClassExists.test(className)) {
+                refQualifiedName.set(className);
+                break;
+              }
+            }
+          }
+        }
+      });
+      final String qualifiedName = refQualifiedName.get();
+      if (!StringUtil.isEmpty(qualifiedName)) {
+        final BuiltinComponent previous = components.get(qualifiedName);
+        if (previous == null || previous.getAttributes().size() < attributes.size()) {
+          components.put(qualifiedName, new BuiltinComponent(attributes));
+        }
+      }
+    }
+    return components;
+  }
+
+  private static class BuiltinComponent {
+    private final Map<String, String> myAttributes;
+
+    public BuiltinComponent(Map<String, String> attributes) {
+      myAttributes = attributes;
+    }
+
+    public Map<String, String> getAttributes() {
+      return myAttributes;
+    }
+  }
+
   private static class CustomComponent {
     private final String myName;
-    private final String myFqName;
+    private final String myQualifiedName;
     private final String myModule;
+    private final Map<String, String> myAttributes;
 
-    public CustomComponent(@NotNull String name, @NotNull String fqName, @NotNull String module) {
+    public CustomComponent(@NotNull String name,
+                           @NotNull String qualifiedName,
+                           @NotNull String module,
+                           @NotNull Map<String, String> attributes) {
       myName = name;
-      myFqName = fqName;
+      myQualifiedName = qualifiedName;
       myModule = module;
+      myAttributes = attributes;
     }
 
     public String getDisplayName() {
-      return !StringUtil.isEmpty(myModule) ? myName + "(" + myModule + ")" : myName;
+      return !StringUtil.isEmpty(myModule) ? myName + " (" + myModule + ")" : myName;
     }
 
     public String getFxmlText() {
-      return String.format("<?xml version=\"1.0\" encoding=\"UTF-8\"?><?import %s?><%s/>", myFqName, myName);
+      final StringBuilder builder =
+        new StringBuilder(String.format("<?xml version=\"1.0\" encoding=\"UTF-8\"?><?import %s?><%s", myQualifiedName, myName));
+      myAttributes.forEach((name, value) -> builder.append(String.format(" %s=\"%s\"", name, value.replace("\"", "&quot;"))));
+      builder.append("/>");
+      return builder.toString();
     }
   }
 
   private static class CustomLibrary extends Library {
+    private static final String CUSTOM_SECTION = "Custom";
+
     public CustomLibrary(ClassLoader classLoader, Collection<CustomComponent> customComponents) {
       classLoaderProperty.set(classLoader);
 
       final List<LibraryItem> libraryItems = getItems();
       libraryItems.addAll(BuiltinLibrary.getLibrary().getItems());
       for (CustomComponent component : customComponents) {
-        final LibraryItem item = new LibraryItem(component.getDisplayName(), CUSTOM_SECTION, component.getFxmlText(), null, this);
-        libraryItems.add(item);
+        libraryItems.add(new LibraryItem(component.getDisplayName(), CUSTOM_SECTION, component.getFxmlText(), null, this));
       }
     }
 
