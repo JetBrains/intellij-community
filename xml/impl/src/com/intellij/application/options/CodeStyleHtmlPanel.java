@@ -29,6 +29,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.ui.EnumComboBoxModel;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PlatformIcons;
@@ -68,6 +69,7 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
   private JBScrollPane myJBScrollPane;
   private JPanel myRightMarginPanel;
   private JComboBox myQuotesCombo;
+  private JBCheckBox myKeepWhiteSpacesInTextCheckBox;
   private RightMarginForm myRightMarginForm;
 
   public CodeStyleHtmlPanel(CodeStyleSettings settings) {
@@ -166,6 +168,7 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     settings.HTML_KEEP_LINE_BREAKS = myShouldKeepBlankLines.isSelected();
     settings.HTML_KEEP_LINE_BREAKS_IN_TEXT = myShouldKeepLineBreaksInText.isSelected();
     settings.HTML_QUOTE_STYLE = (CodeStyleSettings.QuoteStyle)myQuotesCombo.getSelectedItem();
+    settings.HTML_KEEP_WHITESPACES_IN_TEXT = myKeepWhiteSpacesInTextCheckBox.isSelected();
     myRightMarginForm.apply(settings);
   }
 
@@ -206,6 +209,7 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     myKeepWhiteSpacesTagNames.setText(settings.HTML_KEEP_WHITESPACES_INSIDE);
     myRightMarginForm.reset(settings);
     myQuotesCombo.setSelectedItem(settings.HTML_QUOTE_STYLE);
+    myKeepWhiteSpacesInTextCheckBox.setSelected(settings.HTML_KEEP_WHITESPACES_IN_TEXT);
   }
 
   @Override
@@ -277,6 +281,10 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     }
 
     if (myQuotesCombo.getSelectedItem() != settings.HTML_QUOTE_STYLE) {
+      return true;
+    }
+
+    if (myKeepWhiteSpacesInTextCheckBox.isSelected() != settings.HTML_KEEP_WHITESPACES_IN_TEXT) {
       return true;
     }
 

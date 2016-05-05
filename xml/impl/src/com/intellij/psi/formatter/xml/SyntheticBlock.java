@@ -103,8 +103,11 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block, Rea
     boolean firstIsEntityRef = isEntityRef(node1);
     boolean secondIsEntityRef = isEntityRef(node2);
 
-    if (isSpaceInText(firstIsTag, secondIsTag, firstIsText, secondIsText) && keepWhiteSpaces()) {
-        return Spacing.getReadOnlySpacing();
+    boolean keepWhiteSpacesBetweenTags = firstIsTag && secondIsTag && keepWhiteSpaces();
+    boolean keepWhiteSpacesBetweenText = isSpaceInText(firstIsTag, secondIsTag, firstIsText, secondIsText) && keepWhiteSpacesInText();
+
+    if (keepWhiteSpacesBetweenText || keepWhiteSpacesBetweenTags) {
+      return Spacing.getReadOnlySpacing();
     }
 
     if (firstIsEntityRef || secondIsEntityRef) {
@@ -207,19 +210,23 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block, Rea
     return myXmlFormattingPolicy.getShouldAddSpaceAroundTagName();
   }
 
-  private boolean isSpaceInText(final boolean firstIsTag,
-                                final boolean secondIsTag,
-                                final boolean firstIsText,
-                                final boolean secondIsText) {
-    return
-      (firstIsText && secondIsText)
-      || (firstIsTag && secondIsTag)
-      || (firstIsTag && secondIsText)
-      || (firstIsText && secondIsTag);
+  private static boolean isSpaceInText(final boolean firstIsTag,
+                                       final boolean secondIsTag,
+                                       final boolean firstIsText,
+                                       final boolean secondIsText) {
+    return (firstIsText && secondIsText) ||
+           (firstIsTag && secondIsText)  ||
+           (firstIsText && secondIsTag);
   }
 
   private boolean keepWhiteSpaces() {
-    return (myXmlFormattingPolicy.keepWhiteSpacesInsideTag( getTag()) || myXmlFormattingPolicy.getShouldKeepWhiteSpaces());
+    return myXmlFormattingPolicy.keepWhiteSpacesInsideTag(getTag()) ||
+           myXmlFormattingPolicy.getShouldKeepWhiteSpaces();
+  }
+
+  private boolean keepWhiteSpacesInText() {
+    return myXmlFormattingPolicy.keepWhiteSpacesInsideTag(getTag()) ||
+           myXmlFormattingPolicy.getShouldKeepWhiteSpacesInText();
   }
 
   protected boolean isTextFragment(final ASTNode node) {

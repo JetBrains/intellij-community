@@ -25,8 +25,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.xml.XmlCodeStyleSettings;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBScrollPane;
-import org.apache.xmlbeans.XmlLanguage;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -51,6 +51,7 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
   private JCheckBox myKeepWhitespaceInsideCDATACheckBox;
   private JBScrollPane myJBScrollPane;
   private JPanel myRightMarginPanel;
+  private JBCheckBox myKeepWhiteSpacesInTextCheckBox;
   private RightMarginForm myRightMarginForm;
 
   public CodeStyleXmlPanel(CodeStyleSettings settings) {
@@ -87,6 +88,7 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
     xmlSettings.XML_SPACE_INSIDE_EMPTY_TAG = myInEmptyTag.isSelected();
     xmlSettings.XML_WHITE_SPACE_AROUND_CDATA = myWhiteSpaceAroundCDATA.getSelectedIndex();
     xmlSettings.XML_KEEP_WHITE_SPACES_INSIDE_CDATA = myKeepWhitespaceInsideCDATACheckBox.isSelected();
+    xmlSettings.XML_KEEP_WHITESPACES_IN_TEXT = myKeepWhiteSpacesInTextCheckBox.isSelected();
     myRightMarginForm.apply(settings);
   }
 
@@ -114,6 +116,7 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
     myWrapText.setSelected(wrapText(settings));
     myWhiteSpaceAroundCDATA.setSelectedIndex(xmlSettings.XML_WHITE_SPACE_AROUND_CDATA);
     myKeepWhitespaceInsideCDATACheckBox.setSelected(xmlSettings.XML_KEEP_WHITE_SPACES_INSIDE_CDATA);
+    myKeepWhiteSpacesInTextCheckBox.setSelected(xmlSettings.XML_KEEP_WHITESPACES_IN_TEXT);
     myRightMarginForm.reset(settings);
   }
 
@@ -159,6 +162,10 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
       return true;
     }
     if (xmlSettings.XML_KEEP_WHITE_SPACES_INSIDE_CDATA != this.myKeepWhitespaceInsideCDATACheckBox.isSelected()) {
+      return true;
+    }
+
+    if (xmlSettings.XML_KEEP_WHITESPACES_IN_TEXT != myKeepWhiteSpacesInTextCheckBox.isSelected()) {
       return true;
     }
 

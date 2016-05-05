@@ -379,6 +379,8 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
 
   // ---------------------------------- HTML formatting options -------------------------
   public boolean HTML_KEEP_WHITESPACES;
+  public boolean HTML_KEEP_WHITESPACES_IN_TEXT;
+
   public int HTML_ATTRIBUTE_WRAP = WRAP_AS_NEEDED;
   public int HTML_TEXT_WRAP = WRAP_AS_NEEDED;
 

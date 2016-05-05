@@ -249,11 +249,11 @@ public class XmlTagBlock extends AbstractXmlBlock{
 
     if (myXmlFormattingPolicy.keepWhiteSpacesInsideTag(getTag())) return Spacing.getReadOnlySpacing();
 
-    if (myXmlFormattingPolicy.getShouldKeepWhiteSpaces()) {
+    if (!syntheticBlock1.endsWithText() && !syntheticBlock2.startsWithText() && myXmlFormattingPolicy.getShouldKeepWhiteSpaces()) {
       return Spacing.getReadOnlySpacing();
     }
 
-    if (syntheticBlock2.startsWithTag() ) {
+    if (syntheticBlock2.startsWithTag()) {
       final XmlTag startTag = syntheticBlock2.getStartTag();
       if (myXmlFormattingPolicy.keepWhiteSpacesInsideTag(startTag) && startTag.textContains('\n')) {
         return getChildrenIndent() != Indent.getNoneIndent() ? Spacing.getReadOnlySpacing():Spacing.createSpacing(0,0,0,true,myXmlFormattingPolicy.getKeepBlankLines());
@@ -263,13 +263,18 @@ public class XmlTagBlock extends AbstractXmlBlock{
     boolean saveSpacesBetweenTagAndText = myXmlFormattingPolicy.shouldSaveSpacesBetweenTagAndText() &&
       syntheticBlock1.getTextRange().getEndOffset() < syntheticBlock2.getTextRange().getStartOffset();
 
+    if ((syntheticBlock1.endsWithText() || syntheticBlock2.startsWithText()) && myXmlFormattingPolicy.getShouldKeepWhiteSpacesInText()) {
+      return Spacing.getReadOnlySpacing();
+    }
+
     if (syntheticBlock1.endsWithTextElement() && syntheticBlock2.startsWithTextElement()) {
       return Spacing.createSafeSpacing(myXmlFormattingPolicy.getShouldKeepLineBreaksInText(), myXmlFormattingPolicy.getKeepBlankLines());
     }
 
     if (syntheticBlock1.endsWithText()) { //text</tag
       if (syntheticBlock1.insertLineFeedAfter()) {
-        return Spacing.createDependentLFSpacing(0, 0, getTag().getTextRange(), myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines());
+        return Spacing.createDependentLFSpacing(0, 0, getTag().getTextRange(), myXmlFormattingPolicy.getShouldKeepLineBreaks(),
+                                                myXmlFormattingPolicy.getKeepBlankLines());
       }
       if (saveSpacesBetweenTagAndText) {
         return Spacing.createSafeSpacing(myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines());

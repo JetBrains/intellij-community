@@ -120,6 +120,8 @@ public abstract class XmlFormattingPolicy {
 
   public abstract boolean getShouldKeepWhiteSpaces();
 
+  public abstract boolean getShouldKeepWhiteSpacesInText();
+
   public abstract boolean getShouldAddSpaceAroundEqualityInAttribute();
 
   public abstract boolean getShouldAddSpaceAroundTagName();

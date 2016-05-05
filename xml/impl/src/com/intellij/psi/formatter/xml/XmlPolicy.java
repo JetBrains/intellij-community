@@ -113,6 +113,11 @@ public class XmlPolicy extends XmlFormattingPolicy{
   }
 
   @Override
+  public boolean getShouldKeepWhiteSpacesInText() {
+    return myXmlSettings.XML_KEEP_WHITESPACES_IN_TEXT;
+  }
+
+  @Override
   public boolean getShouldAddSpaceAroundEqualityInAttribute() {
     return myXmlSettings.XML_SPACE_AROUND_EQUALITY_IN_ATTRIBUTE;
   }

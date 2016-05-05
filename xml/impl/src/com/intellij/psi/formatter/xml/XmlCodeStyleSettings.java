@@ -30,6 +30,8 @@ public class XmlCodeStyleSettings extends CustomCodeStyleSettings {
   public static final int WS_AROUND_CDATA_NEW_LINES = 2;
 
   public boolean XML_KEEP_WHITESPACES = false;
+  public boolean XML_KEEP_WHITESPACES_IN_TEXT = false;
+
   public int XML_ATTRIBUTE_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
   public int XML_TEXT_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
 

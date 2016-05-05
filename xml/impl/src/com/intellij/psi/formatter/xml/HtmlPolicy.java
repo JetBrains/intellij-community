@@ -225,6 +225,11 @@ public class HtmlPolicy extends XmlFormattingPolicy {
   }
 
   @Override
+  public boolean getShouldKeepWhiteSpacesInText() {
+    return mySettings.HTML_KEEP_WHITESPACES_IN_TEXT;
+  }
+
+  @Override
   public boolean getShouldAddSpaceAroundEqualityInAttribute() {
     return mySettings.HTML_SPACE_AROUND_EQUALITY_IN_ATTRINUTE;
   }
