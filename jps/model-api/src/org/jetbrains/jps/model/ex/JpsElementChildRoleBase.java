@@ -25,7 +25,7 @@ public class JpsElementChildRoleBase<E extends JpsElement> extends JpsElementChi
   private String myDebugName;
 
   protected JpsElementChildRoleBase(String debugName) {
-    myDebugName = debugName.intern();
+    myDebugName = debugName;
   }
 
   @Override
