@@ -36,7 +36,7 @@ public class AsyncProcessIcon extends AnimatedIcon {
     this(name, SMALL_ICONS, AllIcons.Process.Step_passive);
   }
 
-  private AsyncProcessIcon(@NonNls String name, Icon[] icons, Icon passive) {
+  protected AsyncProcessIcon(@NonNls String name, Icon[] icons, Icon passive) {
     super(name, icons, passive, CYCLE_LENGTH);
     setUseMask(false);
   }
