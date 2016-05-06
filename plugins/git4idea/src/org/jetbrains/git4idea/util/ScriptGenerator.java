@@ -15,8 +15,6 @@
  */
 package org.jetbrains.git4idea.util;
 
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -127,18 +125,13 @@ public class ScriptGenerator {
     String title = SystemInfo.isWindows ? "@echo off" : "#!/bin/sh";
     String parametersPassthrough = SystemInfo.isWindows ? " %*" : " \"$@\"";
     String content = title + "\n" + commandLine() + parametersPassthrough + "\n";
-    try {
-      File file = ExecUtil.createTempExecutableScript(myPrefix, SCRIPT_EXT, content);
-      if (SystemInfo.isWindows && file.getPath().contains(" ")) {
-        file = FileUtil.createTempFile(myPrefix, SCRIPT_EXT, true);
-        FileUtil.writeToFile(file, content);
-        FileUtil.setExecutableAttribute(file.getPath(), true);
-      }
-      return file;
+    File file = new File(PathManager.getTempPath(), myPrefix + SCRIPT_EXT);
+    if (SystemInfo.isWindows && file.getPath().contains(" ")) {
+      file = new File(FileUtil.getTempDirectory(), myPrefix + SCRIPT_EXT);
     }
-    catch (ExecutionException e) {
-      throw new IOException("The script providing interactive execution of Git commands couldn't be made executable", e);
-    }
+    FileUtil.writeToFile(file, content);
+    FileUtil.setExecutableAttribute(file.getPath(), true);
+    return file;
   }
 
   /**
