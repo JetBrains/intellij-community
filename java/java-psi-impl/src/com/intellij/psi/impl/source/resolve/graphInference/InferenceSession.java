@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.*;
@@ -700,15 +701,15 @@ public class InferenceSession {
         LOG.assertTrue(returnType instanceof PsiClassType);
         PsiClassType substitutedCapture = (PsiClassType)PsiUtil.captureToplevelWildcards(returnType, myContext);
         final PsiTypeParameter[] typeParameters = psiClass.getTypeParameters();
-        final InferenceVariable[] copy = initBounds(null, typeParameters);
-
         final PsiType[] parameters = substitutedCapture.getParameters();
+        final InferenceVariable[] copy = initFreshVariablesForCapturedBounds(typeParameters, parameters);
         final PsiType[] newParameters = new PsiType[parameters.length];
         final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myManager.getProject());
+        int idx = 0;
         for (int i = 0; i < parameters.length; i++) {
           newParameters[i] = parameters[i];
           if (parameters[i] instanceof PsiCapturedWildcardType) {
-            newParameters[i] = elementFactory.createType(copy[i]);
+            newParameters[i] = elementFactory.createType(copy[idx++]);
           }
         }
         substitutedCapture = elementFactory.createType(psiClass, newParameters);
@@ -729,6 +730,25 @@ public class InferenceSession {
         addConstraint(new TypeCompatibilityConstraint(targetType, returnType));
       }
     }
+  }
+
+  private InferenceVariable[] initFreshVariablesForCapturedBounds(PsiTypeParameter[] typeParameters, PsiType[] parameters) {
+    if (Registry.is("javac.fresh.variables.for.captured.wildcards.only")) {
+      final List<PsiTypeParameter> capturedParams = new ArrayList<PsiTypeParameter>();
+
+      PsiSubstitutor restParamSubstitution = PsiSubstitutor.EMPTY;
+      for (int i = 0; i < parameters.length; i++) {
+        PsiType parameter = parameters[i];
+        if (parameter instanceof PsiCapturedWildcardType) {
+          capturedParams.add(typeParameters[i]);
+        }
+        else {
+          restParamSubstitution = restParamSubstitution.put(typeParameters[i], parameter);
+        }
+      }
+      return initBounds(null, restParamSubstitution, capturedParams.toArray(new PsiTypeParameter[0]));
+    }
+    return initBounds(null, typeParameters);
   }
 
   private InferenceVariable shouldResolveAndInstantiate(PsiType returnType, PsiType targetType) {
