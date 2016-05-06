@@ -28,6 +28,7 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
 import com.intellij.psi.codeStyle.autodetect.IndentOptionsAdjuster;
 import com.intellij.psi.codeStyle.autodetect.IndentOptionsDetectorImpl;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.openapi.progress.util.ProgressIndicatorUtils.scheduleWithWriteActionPriority;
 
@@ -68,18 +69,23 @@ class DetectAndAdjustIndentOptionsTask extends ReadTask {
     return PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument);
   }
 
+  @Nullable
   @Override
-  public void computeInReadAction(@NotNull ProgressIndicator indicator) throws ProcessCanceledException {
+  public Continuation performInReadAction(@NotNull ProgressIndicator indicator) throws ProcessCanceledException {
     PsiFile file = getFile();
-    if (file == null) return;
+    if (file == null) {
+      return null;
+    }
     
     IndentOptionsDetectorImpl detector = new IndentOptionsDetectorImpl(file, indicator);
     IndentOptionsAdjuster adjuster = detector.getIndentOptionsAdjuster();
     if (adjuster != null) {
-      adjustOptions(adjuster);
+      return new Continuation(() -> adjustOptions(adjuster));
     }
+    
+    return null;
   }
-
+  
   private void adjustOptions(IndentOptionsAdjuster adjuster) {
     long stamp = myDocument.getModificationStamp();
     adjuster.adjust(myOptionsToAdjust);
