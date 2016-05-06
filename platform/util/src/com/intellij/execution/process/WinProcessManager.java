@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@ import com.intellij.util.ReflectionUtil;
 import com.sun.jna.Pointer;
 import com.sun.jna.platform.win32.Kernel32;
 import com.sun.jna.platform.win32.WinNT;
+
+import java.io.IOException;
 
 /**
  * @author Alexey.Ushakov
@@ -48,5 +50,15 @@ public class WinProcessManager {
     } else {
       throw new IllegalStateException("Unknown Process implementation");
     }
+  }
+
+  /**
+   * Force kill a process (tree)
+   * @param process Windows process
+   * @param tree true to also kill all subprocesses
+   */
+  public static void kill(Process process, boolean tree) throws IOException, InterruptedException {
+    int pid = getProcessPid(process);
+    Runtime.getRuntime().exec("taskkill /PID " + pid + (tree ? " /t" : "") + " /f").waitFor();
   }
 }

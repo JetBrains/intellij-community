@@ -24,7 +24,9 @@ import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -91,12 +93,29 @@ public class ExecutionManagerTest extends LightPlatformTestCase {
   @NotNull
   private static FakeProcessHandler getProcessHandler(@NotNull ExecutionManagerImpl executionManager) {
     List<RunContentDescriptor> descriptors = executionManager.getRunningDescriptors(Conditions.alwaysTrue());
-    assertEquals(1, descriptors.size());
+    String actualDescriptorsMsg = stringifyDescriptors(descriptors);
+    assertEquals(actualDescriptorsMsg, 1, descriptors.size());
     RunContentDescriptor descriptor = ContainerUtil.getFirstItem(descriptors);
-    assertNotNull(descriptor);
+    assertNotNull(actualDescriptorsMsg, descriptor);
     ProcessHandler processHandler = descriptor.getProcessHandler();
-    assertNotNull(processHandler);
+    assertNotNull(actualDescriptorsMsg, processHandler);
     return (FakeProcessHandler)processHandler;
+  }
+
+  @NotNull
+  private static String stringifyDescriptors(@NotNull List<RunContentDescriptor> descriptors) {
+    return "Actual descriptors: " + StringUtil.join(descriptors, new Function<RunContentDescriptor, String>() {
+      @Override
+      public String fun(RunContentDescriptor descriptor) {
+        if (descriptor == null) {
+          return "null";
+        }
+        ProcessHandler processHandler = descriptor.getProcessHandler();
+        return String.format("[%s, %s]",
+                             descriptor.getDisplayName(),
+                             processHandler != null ? processHandler.getClass().getName() : null);
+      }
+    }, ", ");
   }
 
   @NotNull
