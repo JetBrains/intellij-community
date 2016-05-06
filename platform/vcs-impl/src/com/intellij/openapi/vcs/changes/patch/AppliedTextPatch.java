@@ -22,6 +22,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.List;
 
 import static com.intellij.openapi.vcs.changes.patch.AppliedTextPatch.HunkStatus.NOT_APPLIED;
@@ -32,9 +33,32 @@ public class AppliedTextPatch {
 
   public enum HunkStatus {ALREADY_APPLIED, EXACTLY_APPLIED, NOT_APPLIED}
 
-  public AppliedTextPatch(@NotNull List<AppliedSplitPatchHunk> splitPatchHunkList) {
-    mySplitPatchHunkList = ContainerUtil.sorted(splitPatchHunkList,
-                                                (o1, o2) -> Integer.compare(o1.getLineRangeBefore().start, o2.getLineRangeBefore().start));
+  public static AppliedTextPatch create(@NotNull List<AppliedSplitPatchHunk> splitPatchHunkList) {
+    List<AppliedSplitPatchHunk> hunks = new ArrayList<>(splitPatchHunkList);
+
+    // ensure, that `appliedTo` ranges do not overlap
+    BitSet appliedLines = new BitSet();
+    for (int i = 0; i < hunks.size(); i++) {
+      AppliedSplitPatchHunk hunk = hunks.get(i);
+      LineRange appliedTo = hunk.getAppliedTo();
+      if (appliedTo == null) continue;
+
+      int nextAppliedLine = appliedLines.nextSetBit(appliedTo.start);
+      if (nextAppliedLine != -1 && nextAppliedLine < appliedTo.end) {
+        hunks.set(i, new AppliedSplitPatchHunk(hunk, -1, -1, NOT_APPLIED));
+      }
+      else {
+        appliedLines.set(appliedTo.start, appliedTo.end, true);
+      }
+    }
+
+    ContainerUtil.sort(hunks, (o1, o2) -> Integer.compare(o1.getLineRangeBefore().start, o2.getLineRangeBefore().start));
+
+    return new AppliedTextPatch(hunks);
+  }
+
+  private AppliedTextPatch(@NotNull List<AppliedSplitPatchHunk> hunks) {
+    mySplitPatchHunkList = hunks;
   }
 
   @NotNull
@@ -77,6 +101,22 @@ public class AppliedTextPatch {
         myDeletedLines.addAll(step.getBefore());
         myInsertedLines.addAll(step.getAfter());
       }
+    }
+
+    private AppliedSplitPatchHunk(@NotNull AppliedSplitPatchHunk hunk,
+                                  int appliedToLinesStart,
+                                  int appliedToLinesEnd,
+                                  @NotNull HunkStatus status) {
+      myStatus = status;
+      myAppliedToLinesStart = appliedToLinesStart;
+      myAppliedToLinesEnd = appliedToLinesEnd;
+
+      myContextBefore = hunk.myContextBefore;
+      myContextAfter = hunk.myContextAfter;
+      myDeletedLines = hunk.myDeletedLines;
+      myInsertedLines = hunk.myInsertedLines;
+      myStartLineBefore = hunk.myStartLineBefore;
+      myStartLineAfter = hunk.myStartLineAfter;
     }
 
     /*

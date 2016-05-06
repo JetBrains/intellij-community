@@ -92,7 +92,7 @@ public class PatchDiffRequestFactory {
       final GenericPatchApplier applier = new GenericPatchApplier(localContent, patch.getHunks());
       applier.execute();
 
-      final AppliedTextPatch appliedTextPatch = new AppliedTextPatch(applier.getAppliedInfo());
+      final AppliedTextPatch appliedTextPatch = AppliedTextPatch.create(applier.getAppliedInfo());
       return createBadDiffRequest(file, localContent, appliedTextPatch, null, null, null, null);
     }
     else {
