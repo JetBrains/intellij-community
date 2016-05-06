@@ -638,6 +638,9 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       }
       //TODO Dmitrii Batkovich it's a hack (preview panel should be created during selection update)
       if (!hasUpdatingRequestors && mySplitter.getSecondComponent() == null) {
+        if (myTree.getSelectionModel().getSelectionPath() == null) {
+          TreeUtil.selectFirstNode(myTree);
+        }
         syncRightPanel();
       }
     };
