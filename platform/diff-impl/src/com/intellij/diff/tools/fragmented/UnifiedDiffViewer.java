@@ -438,6 +438,8 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
 
       myStatusPanel.update();
       myPanel.setGoodContent();
+
+      myEditor.getGutterComponentEx().revalidateMarkup();
     };
   }
 
