@@ -28,6 +28,17 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+/******************************************************************************
+ * Copyright (C) 2013  Fabio Zadrozny
+ *
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Fabio Zadrozny <fabiofz@gmail.com> - initial API and implementation
+ ******************************************************************************/
 public class OSProcessUtil {
   private static final Logger LOG = Logger.getInstance(OSProcessUtil.class);
 
