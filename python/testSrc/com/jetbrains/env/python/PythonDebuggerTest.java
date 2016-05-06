@@ -349,7 +349,8 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     });
   }
 
-  @Test public void testRunToLine() throws Exception {
+  @Test
+  public void testRunToLine() throws Exception {
     runPythonTest(new PyDebuggerTask("/debug", "test_runtoline.py") {
       @Override
       public void before() throws Exception {
@@ -377,7 +378,8 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     XDebuggerTestUtil.addBreakpoint(fixture.getProject(), PyExceptionBreakpointType.class, properties);
   }
 
-  @Test public void testExceptionBreakpointOnTerminate() throws Exception {
+  @Test
+  public void testExceptionBreakpointOnTerminate() throws Exception {
     runPythonTest(new PyDebuggerTask("/debug", "test_exceptbreak.py") {
       @Override
       public void before() throws Exception {
@@ -419,7 +421,8 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     addExceptionBreakpoint(fixture, properties);
   }
 
-  @Test public void testExceptionBreakpointOnFirstRaise() throws Exception {
+  @Test
+  public void testExceptionBreakpointOnFirstRaise() throws Exception {
     runPythonTest(new PyDebuggerTask("/debug", "test_exceptbreak.py") {
       @Override
       public void before() throws Exception {
@@ -443,9 +446,9 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   public static void createExceptionBreak(IdeaProjectTestFixture fixture,
-                                           boolean notifyOnTerminate,
-                                           boolean notifyOnFirst,
-                                           boolean ignoreLibraries) {
+                                          boolean notifyOnTerminate,
+                                          boolean notifyOnFirst,
+                                          boolean ignoreLibraries) {
     XDebuggerTestUtil.removeAllBreakpoints(fixture.getProject());
     XDebuggerTestUtil.setDefaultBreakpointEnabled(fixture.getProject(), PyExceptionBreakpointType.class, false);
 
@@ -456,7 +459,8 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     addExceptionBreakpoint(fixture, properties);
   }
 
-  @Test public void testExceptionBreakpointIgnoreLibrariesOnRaise() throws Exception {
+  @Test
+  public void testExceptionBreakpointIgnoreLibrariesOnRaise() throws Exception {
     runPythonTest(new PyDebuggerTask("/debug", "test_ignore_lib.py") {
       @Override
       public void before() throws Exception {
@@ -479,7 +483,8 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     });
   }
 
-  @Test public void testExceptionBreakpointIgnoreLibrariesOnTerminate() throws Exception {
+  @Test
+  public void testExceptionBreakpointIgnoreLibrariesOnTerminate() throws Exception {
     runPythonTest(new PyDebuggerTask("/debug", "test_ignore_lib.py") {
       @Override
       public void before() throws Exception {
@@ -502,7 +507,8 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     });
   }
 
-  @Test public void testMultithreading() throws Exception {
+  @Test
+  public void testMultithreading() throws Exception {
     runPythonTest(new PyDebuggerTask("/debug", "test_multithread.py") {
       @Override
       public void before() throws Exception {
@@ -528,7 +534,8 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     });
   }
 
-  @Test public void testEggDebug() throws Exception {
+  @Test
+  public void testEggDebug() throws Exception {
     runPythonTest(new PyDebuggerTask("/debug", "test_egg.py") {
       @Override
       public void before() throws Exception {
@@ -559,9 +566,10 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
 
-  @Test public void testWinEggDebug() throws Exception {
+  @Test
+  public void testWinEggDebug() throws Exception {
     if (UsefulTestCase.IS_UNDER_TEAMCITY && !SystemInfo.isWindows) {
-       return; // Only needs to run on windows
+      return; // Only needs to run on windows
     }
     runPythonTest(new PyDebuggerTask("/debug", "test_winegg.py") {
       @Override
@@ -598,7 +606,8 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     });
   }
 
-  @Test public void testWinLongName() throws Exception {
+  @Test
+  public void testWinLongName() throws Exception {
     if (UsefulTestCase.IS_UNDER_TEAMCITY && !SystemInfo.isWindows) {
       return; // Only needs to run on windows
     }
@@ -628,8 +637,8 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
 
-
-  @Test public void testStepOverConditionalBreakpoint() throws Exception {
+  @Test
+  public void testStepOverConditionalBreakpoint() throws Exception {
     runPythonTest(new PyDebuggerTask("/debug", "test_stepOverCondition.py") {
       @Override
       public void before() throws Exception {
@@ -648,7 +657,8 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     });
   }
 
-  @Test public void testMultiprocess() throws Exception {
+  @Test
+  public void testMultiprocess() throws Exception {
     runPythonTest(new PyDebuggerTask("/debug", "test_multiprocess.py") {
       @Override
       protected void init() {
@@ -679,7 +689,9 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     });
   }
 
-  @Test public void testPyQtQThreadInheritor() throws Exception {
+  @Test
+  @Staging
+  public void testPyQtQThreadInheritor() throws Exception {
     if (UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows) {
       return; //Don't run under Windows
     }
@@ -719,7 +731,9 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     });
   }
 
-  @Test public void testPyQtMoveToThread() throws Exception {
+  @Test
+  @Staging
+  public void testPyQtMoveToThread() throws Exception {
     if (UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows) {
       return; //Don't run under Windows
     }
@@ -760,7 +774,9 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
 
-  @Test public void testPyQtQRunnableInheritor() throws Exception {
+  @Test
+  @Staging
+  public void testPyQtQRunnableInheritor() throws Exception {
     if (UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows) {
       return; //Don't run under Windows
     }
@@ -801,7 +817,8 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
 
-  @Test public void testStepOverYieldFrom() throws Exception {
+  @Test
+  public void testStepOverYieldFrom() throws Exception {
     runPythonTest(new PyDebuggerTask("/debug", "test_step_over_yield.py") {
       @Override
       protected void init() {
@@ -847,7 +864,8 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     });
   }
 
-  @Test public void testSteppingFilter() throws Exception {
+  @Test
+  public void testSteppingFilter() throws Exception {
     runPythonTest(new PyDebuggerTask("/debug", "test_stepping_filter.py") {
       @Override
       public void before() throws Exception {
@@ -883,13 +901,14 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
   //TODO: fix me as I don't work properly sometimes (something connected with process termination on agent)
   @Staging
-  @Test public void testResume() throws Exception {
+  @Test
+  public void testResume() throws Exception {
     runPythonTest(new PyDebuggerTask("/debug", "Test_Resume.py") {
       @Override
       public void before() throws Exception {
         toggleBreakpoint(getScriptPath(), 2);
       }
-  
+
       @Override
       public void testing() throws Exception {
         waitForPause();
@@ -907,13 +926,14 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   // (first line is executed in first case and last line in second)
 
   @Staging
-  @Test public void testBreakOnContinuationLine() throws Exception {
+  @Test
+  public void testBreakOnContinuationLine() throws Exception {
     runPythonTest(new PyDebuggerTask("/debug", "test_continuation.py") {
       @Override
       public void before() throws Exception {
         toggleBreakpoint(getScriptPath(), 13);
       }
-  
+
       @Override
       public void testing() throws Exception {
         waitForPause();
