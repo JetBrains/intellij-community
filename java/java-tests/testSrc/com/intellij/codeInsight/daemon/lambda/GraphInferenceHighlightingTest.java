@@ -464,6 +464,10 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
     }
   }
 
+  public void testCreateFreshVariablesOnlyForWildcardPlacesDuringReturnTypeProcessing() throws Exception {
+    doTest();
+  }
+
   private void doTest() throws Exception {
     doTest(false);
   }
