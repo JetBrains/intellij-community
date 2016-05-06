@@ -24,6 +24,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.ByteSequence;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -323,6 +324,21 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     finally {
       lock.unlock();
     }
+  }
+
+  @Override
+  public void setIndexedStateForFile(int fileId, @NotNull VirtualFile file) {
+    IndexingStamp.setFileIndexedStateCurrent(fileId, myIndexId);
+  }
+
+  @Override
+  public void resetIndexedStateForFile(int fileId) {
+    IndexingStamp.setFileIndexedStateOutdated(fileId, myIndexId);
+  }
+
+  @Override
+  public boolean isIndexedStateForFile(int fileId, @NotNull VirtualFile file) {
+    return IndexingStamp.isFileIndexedStateCurrent(fileId, myIndexId);
   }
 
   private static void doClose(PersistentHashMap<?, ?> index) {

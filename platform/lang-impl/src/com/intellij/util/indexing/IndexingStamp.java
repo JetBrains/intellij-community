@@ -20,9 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.util.SmartList;
 import com.intellij.util.SystemProperties;
@@ -151,10 +149,6 @@ public class IndexingStamp {
     ourIndexIdToCreationStamp.putIfAbsent(indexName, stamp);
 
     return stamp;
-  }
-
-  public static boolean isFileIndexedStateCurrent(VirtualFile file, ID<?, ?> indexName) {
-    return file instanceof NewVirtualFile && isFileIndexedStateCurrent(((NewVirtualFile)file).getId(), indexName);
   }
 
   public static boolean isFileIndexedStateCurrent(int fileId, ID<?, ?> indexName) {
