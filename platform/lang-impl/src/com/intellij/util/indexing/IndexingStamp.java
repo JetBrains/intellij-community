@@ -141,7 +141,7 @@ public class IndexingStamp {
     }
   }
 
-  static long getIndexCreationStamp(@NotNull ID<?, ?> indexName) {
+  public static long getIndexCreationStamp(@NotNull ID<?, ?> indexName) {
     Long version = ourIndexIdToCreationStamp.get(indexName);
     if (version != null) return version.longValue();
 

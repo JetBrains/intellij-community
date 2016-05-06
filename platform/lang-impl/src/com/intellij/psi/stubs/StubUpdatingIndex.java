@@ -28,19 +28,18 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
-import com.intellij.util.io.DataExternalizer;
-import com.intellij.util.io.DataInputOutputUtil;
-import com.intellij.util.io.IntInlineKeyDescriptor;
-import com.intellij.util.io.KeyDescriptor;
+import com.intellij.util.io.*;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
+import java.io.DataOutputStream;
 import java.util.*;
 
 /*
@@ -48,7 +47,8 @@ import java.util.*;
  */
 public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtension<Integer, SerializedStubTree, FileContent>
   implements PsiDependentIndex, CustomInputsIndexFileBasedIndexExtension<Integer> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubs.StubUpdatingIndex");
+  static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubs.StubUpdatingIndex");
+  private static final int VERSION = 30  + (PersistentHashMapValueStorage.COMPRESSION_ENABLED ? 1 : 0);
 
   // todo remove once we don't need this for stub-ast mismatch debug info
   private static final FileAttribute INDEXED_STAMP = new FileAttribute("stubIndexStamp", 2, true);
@@ -314,7 +314,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
 
   @Override
   public int getVersion() {
-    return CumulativeStubVersion.getCumulativeVersion() + 1;
+    return VERSION;
   }
 
   @NotNull
@@ -398,6 +398,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
 
   private static class MyIndex extends MapReduceIndex<Integer, SerializedStubTree, FileContent> {
     private StubIndexImpl myStubIndex;
+    private final StubVersionMap myStubVersionMap = new StubVersionMap();
 
     public MyIndex(FileBasedIndexExtension<Integer, SerializedStubTree> extension, IndexStorage<Integer, SerializedStubTree> storage)
       throws StorageException, IOException {
@@ -526,6 +527,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
         if (stubIndex != null) {
           stubIndex.clearAllIndices();
         }
+        myStubVersionMap.clear();
         super.clear();
       }
       finally {
@@ -544,6 +546,40 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
       }
       finally {
         getStubIndex().dispose();
+      }
+    }
+
+    private static final FileAttribute VERSION_STAMP = new FileAttribute("stubIndex.versionStamp", 2, true);
+
+    @Override
+    public void setIndexedStateForFile(int fileId, @NotNull VirtualFile file) {
+      super.setIndexedStateForFile(fileId, file);
+
+      try {
+        DataOutputStream stream = FSRecords.writeAttribute(fileId, VERSION_STAMP);
+        DataInputOutputUtil.writeINT(stream, myStubVersionMap.getIndexingTimestampDiffForFileType(file.getFileType()));
+        stream.close();
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
+    }
+
+    @Override
+    public boolean isIndexedStateForFile(int fileId, @NotNull VirtualFile file) {
+      boolean indexedStateForFile = super.isIndexedStateForFile(fileId, file);
+      if (!indexedStateForFile) return false;
+
+      try {
+        DataInputStream stream = FSRecords.readAttributeWithLock(fileId, VERSION_STAMP);
+        int diff = stream != null ? DataInputOutputUtil.readINT(stream) : 0;
+        if (diff == 0) return false;
+        FileType fileType = myStubVersionMap.getFileTypeByIndexingTimestampDiff(diff);
+        return fileType != null && myStubVersionMap.getStamp(file.getFileType()) == myStubVersionMap.getStamp(fileType);
+      }
+      catch (IOException e) {
+        LOG.error(e);
+        return false;
       }
     }
   }
