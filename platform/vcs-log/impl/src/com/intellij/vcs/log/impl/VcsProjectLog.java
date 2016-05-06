@@ -160,6 +160,8 @@ public class VcsProjectLog {
   public static class InitLogStartupActivity implements StartupActivity {
     @Override
     public void runActivity(@NotNull Project project) {
+      if (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment()) return;
+
       VcsProjectLog projectLog = getInstance(project);
 
       MessageBusConnection connection = project.getMessageBus().connect(project);
