@@ -27,6 +27,7 @@ import com.jetbrains.python.testing.tox.PyToxConfigurationFactory;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
+import org.junit.Test;
 
 import java.util.*;
 
@@ -43,6 +44,7 @@ public final class PyToxTest extends PyEnvTestCase {
   /**
    * Simply ensure tox runner works
    */
+  @Test
   public void testToxSimpleRun() {
     runPythonTest(new MyPyProcessWithConsoleTestTask(2,
                                                      new MyTestProcessRunner("/testData/toxtest/toxSimpleRun/"),
@@ -58,6 +60,7 @@ public final class PyToxTest extends PyEnvTestCase {
   /**
    * Check tox nose runner
    */
+  @Test
   public void testToxNose() {
     runPythonTest(new MyPyProcessWithConsoleTestTask(1,
                                                      new MyTestProcessRunner("/testData/toxtest/toxNose/"),
@@ -75,6 +78,7 @@ public final class PyToxTest extends PyEnvTestCase {
   /**
    * Check tox pytest runner
    */
+  @Test
   public void testToxPyTest() {
     runPythonTest(new MyPyProcessWithConsoleTestTask(1,
                                                      new MyTestProcessRunner("/testData/toxtest/toxPyTest/"),
@@ -92,6 +96,7 @@ public final class PyToxTest extends PyEnvTestCase {
   /**
    * Check tox unit runner
    */
+  @Test
   public void testToxUnitTest() {
     runPythonTest(new MyPyProcessWithConsoleTestTask(1,
                                                      new MyTestProcessRunner("/testData/toxtest/toxUnitTest/"),
@@ -109,6 +114,7 @@ public final class PyToxTest extends PyEnvTestCase {
   /**
    * Big test which should run on any interpreter and check its output
    */
+  @Test
   public void testToxSuccessTest() {
     runPythonTest(new MyPyProcessWithConsoleTestTask(1,
                                                      new MyTestProcessRunner("/testData/toxtest/toxSuccess/"),

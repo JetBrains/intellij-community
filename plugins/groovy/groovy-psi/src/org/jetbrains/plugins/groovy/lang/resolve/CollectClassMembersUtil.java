@@ -94,8 +94,8 @@ public class CollectClassMembersUtil {
 
     while (!queue.isEmpty()) {
       PsiClass current = queue.poll();
+      if (current instanceof ClsClassImpl) continue;
       if (visited.add(current)) {
-        if (aClass instanceof ClsClassImpl) continue;
         if (TransformationUtilKt.isUnderTransformation(current)) return false;
         for (PsiClass superClass : getSupers(current, true)) {
           queue.offer(superClass);

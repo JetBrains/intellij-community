@@ -41,8 +41,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class VcsLogDataManager implements Disposable, VcsLogDataProvider {
-  private static final Logger LOG = Logger.getInstance(VcsLogDataManager.class);
+public class VcsLogData implements Disposable, VcsLogDataProvider {
+  private static final Logger LOG = Logger.getInstance(VcsLogData.class);
   private static final int RECENT_COMMITS_COUNT = Registry.intValue("vcs.log.recent.commits.count");
 
   @NotNull private final Project myProject;
@@ -72,7 +72,7 @@ public class VcsLogDataManager implements Disposable, VcsLogDataProvider {
 
   @NotNull private final Consumer<Exception> myFatalErrorsConsumer;
 
-  public VcsLogDataManager(@NotNull Project project, @NotNull Map<VirtualFile, VcsLogProvider> logProviders, @NotNull Consumer<Exception> fatalErrorsConsumer) {
+  public VcsLogData(@NotNull Project project, @NotNull Map<VirtualFile, VcsLogProvider> logProviders, @NotNull Consumer<Exception> fatalErrorsConsumer) {
     myProject = project;
     myLogProviders = logProviders;
     myDataLoaderQueue = new BackgroundTaskQueue(project, "Loading history...");

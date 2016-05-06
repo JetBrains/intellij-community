@@ -41,7 +41,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.LoadingDetails;
-import com.intellij.vcs.log.data.VcsLogDataManager;
+import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VisiblePack;
 import com.intellij.vcs.log.graph.*;
 import com.intellij.vcs.log.graph.actions.GraphAction;
@@ -89,7 +89,7 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
   private static final int MAX_ROWS_TO_CALC_OFFSET = 100;
 
   @NotNull private final VcsLogUiImpl myUi;
-  @NotNull private final VcsLogDataManager myLogDataManager;
+  @NotNull private final VcsLogData myLogData;
   @NotNull private final MyDummyTableCellEditor myDummyEditor = new MyDummyTableCellEditor();
   @NotNull private final TableCellRenderer myDummyRenderer = new DefaultTableCellRenderer();
   @NotNull private final GraphCommitCellRenderer myGraphCommitCellRenderer;
@@ -105,11 +105,11 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
     }
   };
 
-  public VcsLogGraphTable(@NotNull VcsLogUiImpl ui, @NotNull final VcsLogDataManager logDataManager, @NotNull VisiblePack initialDataPack) {
-    super(new GraphTableModel(initialDataPack, logDataManager, ui));
+  public VcsLogGraphTable(@NotNull VcsLogUiImpl ui, @NotNull VcsLogData logData, @NotNull VisiblePack initialDataPack) {
+    super(new GraphTableModel(initialDataPack, logData, ui));
     myUi = ui;
-    myLogDataManager = logDataManager;
-    myGraphCommitCellRenderer = new GraphCommitCellRenderer(logDataManager, myGraphCellPainter, this);
+    myLogData = logData;
+    myGraphCommitCellRenderer = new GraphCommitCellRenderer(logData, myGraphCellPainter, this);
 
     setDefaultRenderer(VirtualFile.class, new RootCellRenderer(myUi));
     setDefaultRenderer(GraphCommitCell.class, myGraphCommitCellRenderer);
@@ -230,7 +230,7 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
 
   private int calculateMaxRootWidth() {
     int width = 0;
-    for (VirtualFile file : myLogDataManager.getRoots()) {
+    for (VirtualFile file : myLogData.getRoots()) {
       Font tableFont = UIManager.getFont("Table.font");
       width = Math.max(getFontMetrics(tableFont).stringWidth(file.getName() + "  "), width);
     }
@@ -352,7 +352,7 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
       .createStyle(rowInfo.getRowType() == RowType.UNMATCHED ? JBColor.GRAY : dummyRendererComponent.getForeground(),
                    dummyRendererComponent.getBackground(), VcsLogHighlighter.TextStyle.NORMAL);
 
-    final VcsShortCommitDetails details = myLogDataManager.getMiniDetailsGetter().getCommitDataIfAvailable(rowInfo.getCommit());
+    final VcsShortCommitDetails details = myLogData.getMiniDetailsGetter().getCommitDataIfAvailable(rowInfo.getCommit());
     if (details == null || details instanceof LoadingDetails) return defaultStyle;
 
     List<VcsLogHighlighter.VcsCommitStyle> styles =
@@ -392,7 +392,7 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
 
   @Nullable
   private TableColumn getRootColumnOrNull(@NotNull MouseEvent e) {
-    if (!myLogDataManager.isMultiRoot()) return null;
+    if (!myLogData.isMultiRoot()) return null;
     int column = convertColumnIndexToModel(columnAtPoint(e.getPoint()));
     if (column == GraphTableModel.ROOT_COLUMN) {
       return getColumnModel().getColumn(column);
@@ -444,12 +444,12 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
       details = getModel().getShortDetails(row); // preload rows around the commit
     }
     else {
-      details = myLogDataManager.getMiniDetailsGetter().getCommitData(commit, Collections.singleton(commit)); // preload just the commit
+      details = myLogData.getMiniDetailsGetter().getCommitData(commit, Collections.singleton(commit)); // preload just the commit
     }
 
     String balloonText = "";
     if (details instanceof LoadingDetails) {
-      CommitId commitId = myLogDataManager.getCommitId(commit);
+      CommitId commitId = myLogData.getCommitId(commit);
       if (commitId != null) {
         balloonText = "Jump to commit" + " " + commitId.getHash().toShortString();
         if (myUi.isMultipleRoots()) {
@@ -661,7 +661,7 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
 
   private int getXOffset() {
     TableColumn rootColumn = getColumnModel().getColumn(GraphTableModel.ROOT_COLUMN);
-    return myLogDataManager.isMultiRoot() ? rootColumn.getWidth() : 0;
+    return myLogData.isMultiRoot() ? rootColumn.getWidth() : 0;
   }
 
   private static class RootCellRenderer extends JBLabel implements TableCellRenderer {

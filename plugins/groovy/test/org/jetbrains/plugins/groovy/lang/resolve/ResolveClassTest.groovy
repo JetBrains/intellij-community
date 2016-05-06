@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -574,6 +574,45 @@ def bar = new bar.Foo()
 bar/*comment*/
     .Capital<caret>ized
 ''', GrTypeDefinition)
+  }
+
+  void 'test prefer alias over class in the same package'() {
+    myFixture.addClass '''\
+package foo;
+interface Foo {}
+'''
+    myFixture.addClass '''\
+package test;
+class Bar {}
+'''
+    def file = myFixture.addFileToProject('test/a.groovy', '''
+package test
+
+import foo.Foo as Bar
+
+new Ba<caret>r() {}
+''')
+    myFixture.configureFromExistingVirtualFile file.containingFile.virtualFile
+    def resolved = myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset).resolve()
+    assert resolved instanceof PsiClass
+    assert resolved.qualifiedName == 'foo.Foo'
+  }
+
+  void 'test prefer alias over class in the same file'() {
+    myFixture.addClass '''\
+package foo;
+interface Foo {}
+'''
+    def file = myFixture.addFileToProject('test/a.groovy', '''\
+package test
+import foo.Foo as Bar
+interface Bar {}
+new B<caret>ar() {}
+''')
+    myFixture.configureFromExistingVirtualFile file.containingFile.virtualFile
+    def resolved = myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset).resolve()
+    assert resolved instanceof PsiClass
+    assert resolved.qualifiedName == 'foo.Foo'
   }
 
   private void doTest(String fileName = getTestName(false) + ".groovy") { resolve(fileName, PsiClass) }

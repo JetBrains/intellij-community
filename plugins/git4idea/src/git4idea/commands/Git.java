@@ -153,9 +153,6 @@ public interface Git {
   GitCommandResult stashPop(@NotNull GitRepository repository, @NotNull GitLineHandlerListener... listeners);
 
   @NotNull
-  List<GitCommit> history(@NotNull GitRepository repository, @NotNull String range);
-
-  @NotNull
   GitCommandResult fetch(@NotNull GitRepository repository,
                          @NotNull GitRemote remote,
                          @NotNull List<GitLineHandlerListener> listeners,

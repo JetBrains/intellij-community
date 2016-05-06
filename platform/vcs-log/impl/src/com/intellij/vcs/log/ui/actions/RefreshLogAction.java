@@ -18,11 +18,8 @@ package com.intellij.vcs.log.ui.actions;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.RefreshAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.project.Project;
-import com.intellij.vcs.log.VcsLogDataKeys;
-import com.intellij.vcs.log.data.VcsLogDataManager;
 import com.intellij.vcs.log.impl.VcsLogManager;
+import com.intellij.vcs.log.ui.VcsLogDataKeys;
 
 public class RefreshLogAction extends RefreshAction {
   public RefreshLogAction() {
@@ -31,19 +28,13 @@ public class RefreshLogAction extends RefreshAction {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-    VcsLogManager.getInstance(project).getDataManager().refreshCompletely();
+    VcsLogManager logManager = e.getRequiredData(VcsLogDataKeys.LOG_MANAGER);
+    logManager.getDataManager().refreshCompletely();
   }
 
   @Override
   public void update(AnActionEvent e) {
-    Project project = e.getProject();
-    if (project == null) {
-      e.getPresentation().setEnabledAndVisible(false);
-    }
-    else {
-      VcsLogDataManager dataManager = VcsLogManager.getInstance(project).getDataManager();
-      e.getPresentation().setEnabledAndVisible(dataManager != null && e.getData(VcsLogDataKeys.VCS_LOG_UI) != null);
-    }
+    VcsLogManager logManager = e.getData(VcsLogDataKeys.LOG_MANAGER);
+    e.getPresentation().setEnabledAndVisible(logManager != null);
   }
 }

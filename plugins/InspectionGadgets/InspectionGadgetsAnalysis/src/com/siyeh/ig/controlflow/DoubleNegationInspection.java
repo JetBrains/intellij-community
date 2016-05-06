@@ -151,7 +151,7 @@ public class DoubleNegationInspection extends BaseInspection {
     }
   }
 
-  static boolean isNegation(@Nullable PsiExpression expression) {
+  public static boolean isNegation(@Nullable PsiExpression expression) {
     expression = ParenthesesUtils.stripParentheses(expression);
     if (expression instanceof PsiPrefixExpression) return isNegation((PsiPrefixExpression)expression);
     if (expression instanceof PsiPolyadicExpression) return isNegation((PsiPolyadicExpression)expression);

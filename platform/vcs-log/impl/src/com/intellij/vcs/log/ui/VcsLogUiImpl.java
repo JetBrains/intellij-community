@@ -49,7 +49,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
 
   @NotNull private VisiblePack myVisiblePack;
 
-  public VcsLogUiImpl(@NotNull VcsLogDataManager logDataManager,
+  public VcsLogUiImpl(@NotNull VcsLogData logData,
                       @NotNull Project project,
                       @NotNull VcsLogColorManager manager,
                       @NotNull VcsLogUiProperties uiProperties,
@@ -57,15 +57,15 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
     myProject = project;
     myColorManager = manager;
     myUiProperties = uiProperties;
-    Disposer.register(logDataManager, this);
+    Disposer.register(logData, this);
 
     myFilterer = filterer;
-    myLog = new VcsLogImpl(logDataManager, this);
+    myLog = new VcsLogImpl(logData, this);
     myVisiblePack = VisiblePack.EMPTY;
-    myMainFrame = new MainFrame(logDataManager, this, project, uiProperties, myLog, myVisiblePack);
+    myMainFrame = new MainFrame(logData, this, project, uiProperties, myLog, myVisiblePack);
 
     for (VcsLogHighlighterFactory factory : Extensions.getExtensions(LOG_HIGHLIGHTER_FACTORY_EP, myProject)) {
-      getTable().addHighlighter(factory.createHighlighter(logDataManager, this));
+      getTable().addHighlighter(factory.createHighlighter(logData, this));
     }
 
     myVisiblePackChangeListener = new VisiblePackChangeListener() {

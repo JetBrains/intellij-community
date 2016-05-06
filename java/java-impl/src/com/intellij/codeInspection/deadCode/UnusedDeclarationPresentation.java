@@ -70,6 +70,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.net.URL;
 import java.util.*;
+import java.util.function.Predicate;
 
 public class UnusedDeclarationPresentation extends DefaultInspectionToolPresentation {
   private final Map<String, Set<RefEntity>> myPackageContents = Collections.synchronizedMap(new HashMap<String, Set<RefEntity>>());
@@ -125,7 +126,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
   @Override
   public void exportResults(@NotNull final Element parentNode,
                             @NotNull RefEntity refEntity,
-                            @NotNull Set<CommonProblemDescriptor> excludedDescriptions) {
+                            @NotNull Predicate<CommonProblemDescriptor> excludedDescriptions) {
     if (!(refEntity instanceof RefJavaElement)) return;
     final RefFilter filter = getFilter();
     if (!getIgnoredRefElements().contains(refEntity) && filter.accepts((RefJavaElement)refEntity)) {

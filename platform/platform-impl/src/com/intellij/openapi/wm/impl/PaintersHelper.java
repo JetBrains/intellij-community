@@ -16,6 +16,7 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.AbstractPainter;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.Painter;
@@ -40,6 +41,8 @@ import java.util.Map;
 import java.util.Set;
 
 final class PaintersHelper implements Painter.Listener {
+  private static final Logger LOG = Logger.getInstance(PaintersHelper.class);
+
   private final Set<Painter> myPainters = ContainerUtil.newLinkedHashSet();
   private final Map<Painter, Component> myPainter2Component = ContainerUtil.newLinkedHashMap();
 
@@ -211,6 +214,7 @@ final class PaintersHelper implements Painter.Listener {
   private abstract static class ImagePainter extends AbstractPainter {
 
     VolatileImage scaled;
+    int scaledW = -1, scaledH = -1;
 
     public void executePaint(Graphics2D g, Component component, Image image, FillType fillType, float alpha, Insets insets) {
       int cw0 = component.getWidth();
@@ -223,8 +227,6 @@ final class PaintersHelper implements Painter.Listener {
       if (w <= 0 || h <= 0) return;
       // performance: pre-compute scaled image or tiles
       if (fillType == FillType.SCALE || fillType == FillType.TILE) {
-        int sw0 = scaled == null ? -1 : scaled.getWidth(null);
-        int sh0 = scaled == null ? -1 : scaled.getHeight(null);
         int sw, sh;
         if (fillType == FillType.SCALE) {
           boolean useWidth = cw * h > ch * w;
@@ -235,9 +237,13 @@ final class PaintersHelper implements Painter.Listener {
           sw = cw < w ? w : (cw + w) / w * w;
           sh = ch < h ? h : (ch + h) / h * h;
         }
-        boolean rescale = sw0 != sw || sh0 != sh;
+        int sw0 = scaled == null ? -1 : scaled.getWidth(null);
+        int sh0 = scaled == null ? -1 : scaled.getHeight(null);
+        boolean rescale = scaledW != sw || scaledH != sh;
         while ((scaled = validateImage(scaled, g)) == null || rescale) {
-          scaled = createImage(g, sw, sh);
+          if (scaled == null || sw0 < sw || sh0 < sh) {
+            scaled = createImage(g, sw + sw / 10, sh + sh / 10); // + 10 percent
+          }
           Graphics2D gg = scaled.createGraphics();
           gg.setComposite(AlphaComposite.Src);
           if (fillType == FillType.SCALE) {
@@ -255,8 +261,8 @@ final class PaintersHelper implements Painter.Listener {
           gg.dispose();
           rescale = false;
         }
-        w = sw;
-        h = sh;
+        w = scaledW = sw;
+        h = scaledH = sh;
       }
       else {
         while ((scaled = validateImage(scaled, g)) == null) {
@@ -287,8 +293,7 @@ final class PaintersHelper implements Painter.Listener {
       }
 
       GraphicsConfig cfg = new GraphicsConfig(g).setAlpha(alpha);
-
-      UIUtil.drawImage(g, scaled, x, y, null);
+      UIUtil.drawImage(g, scaled, x, y, w, h, null);
       if (fillType == FillType.BG_CENTER) {
         g.setColor(component.getBackground());
         g.fillRect(0, 0, x, ch0);
@@ -303,9 +308,17 @@ final class PaintersHelper implements Painter.Listener {
     @Nullable
     private static VolatileImage validateImage(@Nullable VolatileImage scaled, @NotNull Graphics2D g) {
       if (scaled == null) return null;
-      boolean b1 = scaled.validate(g.getDeviceConfiguration()) != VolatileImage.IMAGE_OK;
-      boolean b2 = scaled.contentsLost();
-      if (b1 || b2) {
+      boolean lost1 = scaled.contentsLost();
+      GraphicsConfiguration cfg = g.getDeviceConfiguration();
+      int validated = scaled.validate(cfg);
+      boolean lost2 = scaled.contentsLost();
+      if (!lost1 && !lost2 && validated == VolatileImage.IMAGE_INCOMPATIBLE &&
+        scaled.getCapabilities().isAccelerated()) {
+        // todo painting to BufferedImage.. see RepaintManager#volatileMap for solution
+        return scaled;
+      }
+      if (lost1 || lost2 || validated != VolatileImage.IMAGE_OK) {
+        LOG.info("validate(" + cfg.getClass().getSimpleName() + ")=" + validated + "; contentsLost()=" + lost1 + "||" + lost2 + "; flushing..");
         scaled.flush();
         return null;
       }
@@ -324,6 +337,12 @@ final class PaintersHelper implements Painter.Listener {
       }
       // validate first time (it's always RESTORED & cleared)
       image.validate(configuration);
+      image.setAccelerationPriority(1f);
+      ImageCapabilities caps = image.getCapabilities();
+      LOG.info(w + "x" + h + " " +
+               (caps.isAccelerated()? "accelerated " : "") +
+               (caps.isTrueVolatile()? "volatile " : "") +
+               "image created");
       return image;
     }
   }

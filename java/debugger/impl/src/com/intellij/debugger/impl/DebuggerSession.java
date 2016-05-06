@@ -15,10 +15,7 @@
  */
 package com.intellij.debugger.impl;
 
-import com.intellij.debugger.DebugEnvironment;
-import com.intellij.debugger.DebuggerBundle;
-import com.intellij.debugger.DebuggerInvocationUtil;
-import com.intellij.debugger.SourcePosition;
+import com.intellij.debugger.*;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationListener;
@@ -113,6 +110,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
 
   public void clearSteppingThrough() {
     mySteppingThroughThread.set(null);
+    resetIgnoreStepFiltersFlag();
   }
 
   @NotNull
@@ -348,7 +346,6 @@ public class DebuggerSession implements AbstractDebuggerSession {
     final SuspendContextImpl suspendContext = getSuspendContext();
     if(suspendContext != null) {
       clearSteppingThrough();
-      resetIgnoreStepFiltersFlag();
       resumeAction(myDebugProcess.createResumeCommand(suspendContext), Event.RESUME);
     }
   }
@@ -756,6 +753,14 @@ public class DebuggerSession implements AbstractDebuggerSession {
     @Override
     public void threadStopped(DebugProcess proc, ThreadReference thread) {
       notifyThreadsRefresh();
+      ThreadReferenceProxyImpl steppingThread = mySteppingThroughThread.get();
+      if (steppingThread != null && steppingThread.getThreadReference() == thread) {
+        clearSteppingThrough();
+      }
+      DebugProcessImpl debugProcess = (DebugProcessImpl)proc;
+      if (debugProcess.getRequestsManager().getFilterThread() == thread) {
+        DebuggerManagerEx.getInstanceEx(proc.getProject()).getBreakpointManager().applyThreadFilter(debugProcess, null);
+      }
     }
 
     private void notifyThreadsRefresh() {

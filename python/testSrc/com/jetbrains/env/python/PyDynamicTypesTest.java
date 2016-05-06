@@ -22,19 +22,26 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.EditorTestUtil;
 import com.jetbrains.env.PyEnvTestCase;
+import com.jetbrains.env.Staging;
 import com.jetbrains.env.python.debug.PyDebuggerTask;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
 import com.jetbrains.python.debugger.PySignatureCacheManagerImpl;
+import org.junit.Test;
 
 import java.io.IOException;
+
+import static com.intellij.testFramework.UsefulTestCase.edt;
 
 /**
  * @author traff
  */
 
 public class PyDynamicTypesTest extends PyEnvTestCase {
+  
+  @Staging
+  @Test
   public void test1() throws Exception {
     doTest(getTestName(true) + ".py");
   }

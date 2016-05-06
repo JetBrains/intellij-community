@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.maven.indices;
+package org.jetbrains.idea.maven;
 
-import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
-import org.jetbrains.idea.maven.MavenTestCase;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
 import org.jetbrains.idea.maven.utils.MavenPluginInfo;
@@ -25,16 +23,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MavenPluginInfoReaderTest extends MavenTestCase {
-  private MavenCustomRepositoryHelper myRepositoryHelper;
   private MavenPluginInfo p;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myRepositoryHelper = new MavenCustomRepositoryHelper(myDir, "plugins");
-
-    setRepositoryPath(myRepositoryHelper.getTestDataPath("plugins"));
-
+    setRepositoryPath(new MavenCustomRepositoryHelper(myDir, "plugins").getTestDataPath("plugins"));
     MavenId id = new MavenId("org.apache.maven.plugins", "maven-compiler-plugin", "2.0.2");
     p = MavenArtifactUtil.readPluginInfo(getRepositoryFile(), id);
   }

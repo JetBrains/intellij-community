@@ -38,7 +38,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.vcs.log.VcsLog;
 import com.intellij.vcs.log.impl.VcsLogContentProvider;
-import com.intellij.vcs.log.impl.VcsLogManager;
+import com.intellij.vcs.log.impl.VcsProjectLog;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import git4idea.GitVcs;
 import git4idea.i18n.GitBundle;
@@ -106,12 +106,12 @@ public class GitShowCommitInLogAction extends DumbAwareAction {
       return;
     }
 
-    VcsLogManager logManager = VcsLogManager.getInstance(project);
-    if (logManager == null) {
+    VcsProjectLog projectLog = VcsProjectLog.getInstance(project);
+    if (projectLog == null) {
       showLogNotReadyMessage(project);
       return;
     }
-    VcsLogUiImpl logUi = logManager.getMainLogUi();
+    VcsLogUiImpl logUi = projectLog.getMainLogUi();
     if (logUi == null) {
       showLogNotReadyMessage(project);
       return;
@@ -145,16 +145,16 @@ public class GitShowCommitInLogAction extends DumbAwareAction {
     super.update(e);
     Project project = e.getProject();
     e.getPresentation().setEnabled(project != null &&
-                                   VcsLogManager.getInstance(project) != null &&
+                                   VcsProjectLog.getInstance(project) != null &&
                                    getRevisionNumber(e) != null &&
                                    Comparing.equal(getVcsKey(e), GitVcs.getKey()));
   }
 
   @Nullable
   private static VcsLog findLog(@NotNull Project project) {
-    VcsLogManager manager = VcsLogManager.getInstance(project);
-    if (manager != null) {
-      VcsLogUiImpl ui = manager.getMainLogUi();
+    VcsProjectLog projectLog = VcsProjectLog.getInstance(project);
+    if (projectLog != null) {
+      VcsLogUiImpl ui = projectLog.getMainLogUi();
       if (ui != null) {
         return ui.getVcsLog();
       }
