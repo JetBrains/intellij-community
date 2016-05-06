@@ -36,6 +36,7 @@ import java.awt.*;
 import java.awt.image.VolatileImage;
 import java.io.File;
 import java.net.URL;
+import java.util.Iterator;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -155,22 +156,26 @@ final class PaintersHelper implements Painter.Listener {
 
       @Override
       public void executePaint(Component component, Graphics2D g) {
-        if (!ensureImageLoaded()) return;
+        if (image == null) return; // covered by needsRepaint()
         executePaint(g, component, image, fillType, alpha, insets);
       }
 
       boolean ensureImageLoaded() {
+        boolean prevOk = image != null;
         String value = System.getProperty(propertyName);
-        if (!Comparing.equal(value, current)) {
-          current = value;
-          if (scaled != null) {
-            scaled.flush();
+        if (Comparing.equal(value, current)) return prevOk;
+        current = value;
+        clearImages(-1);
+        image = null;
+        insets = JBUI.emptyInsets();
+        loadImage(value);
+        boolean newOk = image != null;
+        if (prevOk || newOk) {
+          for (Window window : Window.getWindows()) {
+            window.repaint();
           }
-          image = scaled = null;
-          insets = JBUI.emptyInsets();
-          loadImage(value);
         }
-        return image != null;
+        return newOk;
       }
 
       void loadImage(@Nullable String propertyValue) {
@@ -211,10 +216,20 @@ final class PaintersHelper implements Painter.Listener {
     };
   }
 
+  private static class Cached {
+    final VolatileImage image;
+    final Dimension used;
+    long touched;
+
+    Cached(VolatileImage image, Dimension dim) {
+      this.image = image;
+      used = dim;
+    }
+  }
+  
   private abstract static class ImagePainter extends AbstractPainter {
 
-    VolatileImage scaled;
-    int scaledW = -1, scaledH = -1;
+    final Map<GraphicsConfiguration, Cached> cachedMap = ContainerUtil.newHashMap();
 
     public void executePaint(Graphics2D g, Component component, Image image, FillType fillType, float alpha, Insets insets) {
       int cw0 = component.getWidth();
@@ -226,6 +241,9 @@ final class PaintersHelper implements Painter.Listener {
       int h = image.getHeight(null);
       if (w <= 0 || h <= 0) return;
       // performance: pre-compute scaled image or tiles
+      GraphicsConfiguration deviceCfg = g.getDeviceConfiguration();
+      Cached cached = cachedMap.get(deviceCfg);
+      VolatileImage scaled = cached == null ? null : cached.image;
       if (fillType == FillType.SCALE || fillType == FillType.TILE) {
         int sw, sh;
         if (fillType == FillType.SCALE) {
@@ -239,10 +257,14 @@ final class PaintersHelper implements Painter.Listener {
         }
         int sw0 = scaled == null ? -1 : scaled.getWidth(null);
         int sh0 = scaled == null ? -1 : scaled.getHeight(null);
-        boolean rescale = scaledW != sw || scaledH != sh;
-        while ((scaled = validateImage(scaled, g)) == null || rescale) {
+        boolean rescale = cached == null || cached.used.width != sw || cached.used.height != sh;
+        while ((scaled = validateImage(deviceCfg, scaled)) == null || rescale) {
           if (scaled == null || sw0 < sw || sh0 < sh) {
-            scaled = createImage(g, sw + sw / 10, sh + sh / 10); // + 10 percent
+            scaled = createImage(deviceCfg, sw + sw / 10, sh + sh / 10); // + 10 percent
+            cachedMap.put(deviceCfg, cached = new Cached(scaled, new Dimension(sw, sh)));
+          }
+          else {
+            cached.used.setSize(sw, sh);
           }
           Graphics2D gg = scaled.createGraphics();
           gg.setComposite(AlphaComposite.Src);
@@ -261,17 +283,23 @@ final class PaintersHelper implements Painter.Listener {
           gg.dispose();
           rescale = false;
         }
-        w = scaledW = sw;
-        h = scaledH = sh;
+        w = sw;
+        h = sh;
       }
       else {
-        while ((scaled = validateImage(scaled, g)) == null) {
-          scaled = createImage(g, w, h);
+        while ((scaled = validateImage(deviceCfg, scaled)) == null) {
+          scaled = createImage(deviceCfg, w, h);
+          cachedMap.put(deviceCfg, cached = new Cached(scaled, new Dimension(w, h)));
           Graphics2D gg = scaled.createGraphics();
           gg.setComposite(AlphaComposite.Src);
           gg.drawImage(image, 0, 0, null);
           gg.dispose();
         }
+      }
+      long currentTime = System.currentTimeMillis();
+      cached.touched = currentTime;
+      if (cachedMap.size() > 2) {
+        clearImages(currentTime);
       }
 
       int x, y;
@@ -305,43 +333,55 @@ final class PaintersHelper implements Painter.Listener {
       cfg.restore();
     }
 
-    @Nullable
-    private static VolatileImage validateImage(@Nullable VolatileImage scaled, @NotNull Graphics2D g) {
-      if (scaled == null) return null;
-      boolean lost1 = scaled.contentsLost();
-      GraphicsConfiguration cfg = g.getDeviceConfiguration();
-      int validated = scaled.validate(cfg);
-      boolean lost2 = scaled.contentsLost();
-      if (!lost1 && !lost2 && validated == VolatileImage.IMAGE_INCOMPATIBLE &&
-        scaled.getCapabilities().isAccelerated()) {
-        // todo painting to BufferedImage.. see RepaintManager#volatileMap for solution
-        return scaled;
+    void clearImages(long currentTime) {
+      boolean all = currentTime <= 0;
+      for (Iterator<GraphicsConfiguration> it = cachedMap.keySet().iterator(); it.hasNext(); ) {
+        GraphicsConfiguration cfg = it.next();
+        Cached c = cachedMap.get(cfg);
+        if (all || currentTime - c.touched > 2 * 60 * 1000L) {
+          it.remove();
+          int w = c.image.getWidth();
+          int h = c.image.getHeight();
+          LOG.info("(" + cfg.getClass().getSimpleName() + ") " + w + "x" + h + " image flushed" +
+                   (all ? "" : "; untouched for " + StringUtil.formatDuration(currentTime - c.touched)));
+          c.image.flush();
+        }
       }
+    }
+
+    @Nullable
+    private static VolatileImage validateImage(@NotNull GraphicsConfiguration cfg, @Nullable VolatileImage image) {
+      if (image == null) return null;
+      boolean lost1 = image.contentsLost();
+      int validated = image.validate(cfg);
+      boolean lost2 = image.contentsLost();
       if (lost1 || lost2 || validated != VolatileImage.IMAGE_OK) {
-        LOG.info("validate(" + cfg.getClass().getSimpleName() + ")=" + validated + "; contentsLost()=" + lost1 + "||" + lost2 + "; flushing..");
-        scaled.flush();
+        int w = image.getWidth();
+        int h = image.getHeight();
+        LOG.info("(" + cfg.getClass().getSimpleName() + ") " + w + "x" + h + " image flushed" +
+                 ": contentsLost=" + lost1 + "||" + lost2 + "; validate=" + validated);
+        image.flush();
         return null;
       }
-      return scaled;
+      return image;
     }
 
     @NotNull
-    private static VolatileImage createImage(Graphics2D g, int w, int h) {
+    private static VolatileImage createImage(@NotNull GraphicsConfiguration cfg, int w, int h) {
       VolatileImage image;
-      GraphicsConfiguration configuration = g.getDeviceConfiguration();
       try {
-        image = configuration.createCompatibleVolatileImage(w, h, new ImageCapabilities(true), Transparency.TRANSLUCENT);
+        image = cfg.createCompatibleVolatileImage(w, h, new ImageCapabilities(true), Transparency.TRANSLUCENT);
       }
       catch (Exception e) {
-        image = configuration.createCompatibleVolatileImage(w, h, Transparency.TRANSLUCENT);
+        image = cfg.createCompatibleVolatileImage(w, h, Transparency.TRANSLUCENT);
       }
       // validate first time (it's always RESTORED & cleared)
-      image.validate(configuration);
+      image.validate(cfg);
       image.setAccelerationPriority(1f);
       ImageCapabilities caps = image.getCapabilities();
-      LOG.info(w + "x" + h + " " +
-               (caps.isAccelerated()? "accelerated " : "") +
-               (caps.isTrueVolatile()? "volatile " : "") +
+      LOG.info("(" + cfg.getClass().getSimpleName() + ") " + w + "x" + h + " " +
+               (caps.isAccelerated() ? "" : "non-") + "accelerated " +
+               (caps.isTrueVolatile() ? "" : "non-") + "volatile " +
                "image created");
       return image;
     }
