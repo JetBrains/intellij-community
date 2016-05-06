@@ -15,10 +15,11 @@
  */
 package com.intellij.psi.codeStyle;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.progress.DumbProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ReadTask;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
@@ -27,6 +28,8 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
 import com.intellij.psi.codeStyle.autodetect.IndentOptionsAdjuster;
 import com.intellij.psi.codeStyle.autodetect.IndentOptionsDetectorImpl;
 import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.openapi.progress.util.ProgressIndicatorUtils.scheduleWithWriteActionPriority;
 
 
 class TimeStampedIndentOptions extends IndentOptions {
@@ -87,6 +90,17 @@ class DetectAndAdjustIndentOptionsTask extends ReadTask {
 
   @Override
   public void onCanceled(@NotNull ProgressIndicator indicator) {
-    ProgressIndicatorUtils.scheduleWithWriteActionPriority(this);
+    scheduleInBackgroundForCommittedDocument();
   }
+
+  public void scheduleInBackgroundForCommittedDocument() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      computeInReadAction(new DumbProgressIndicator());
+    }
+    else {
+      PsiDocumentManager manager = PsiDocumentManager.getInstance(myProject);
+      manager.performForCommittedDocument(myDocument, () -> scheduleWithWriteActionPriority(this));
+    }
+  }
+  
 }

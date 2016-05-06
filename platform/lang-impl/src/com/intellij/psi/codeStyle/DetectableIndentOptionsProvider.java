@@ -25,8 +25,6 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.progress.DumbProgressIndicator;
-import com.intellij.openapi.progress.util.ReadTask;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiCompiledFile;
@@ -41,7 +39,6 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
 
-import static com.intellij.openapi.progress.util.ProgressIndicatorUtils.scheduleWithWriteActionPriority;
 import static com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
 import static com.intellij.psi.codeStyle.EditorNotificationInfo.ActionLabelData;
 
@@ -76,20 +73,11 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider i
     indentOptions.associateWithDocument(document);
 
     DetectAndAdjustIndentOptionsTask task = new DetectAndAdjustIndentOptionsTask(project, document, indentOptions);
-    scheduleTask(psiManager, document, task);
+    task.scheduleInBackgroundForCommittedDocument();
 
     return indentOptions;
   }
-
-  private static void scheduleTask(PsiDocumentManager psiManager, Document document, ReadTask task) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      task.computeInReadAction(new DumbProgressIndicator());
-    }
-    else {
-      psiManager.performForCommittedDocument(document, () -> scheduleWithWriteActionPriority(task));
-    }
-  }
-
+  
   @NotNull
   private static TimeStampedIndentOptions getDefault(@NotNull FileType fileType, Project project, long timeStamp) {
     CodeStyleSettings manager = CodeStyleSettingsManager.getSettings(project);
