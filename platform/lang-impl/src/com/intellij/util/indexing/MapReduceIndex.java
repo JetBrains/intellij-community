@@ -95,6 +95,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
                         @NotNull IndexStorage<Key, Value> storage) throws IOException {
     myIndexId = extension.getName();
     myExtension = extension;
+    SharedIndicesData.registerIndex(myIndexId, extension);
     myIndexer = extension.getIndexer();
     myStorage = storage;
     myHasSnapshotMapping = extension instanceof FileBasedIndexExtension &&
