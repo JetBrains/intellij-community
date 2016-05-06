@@ -125,7 +125,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
   public void testFindChildWithTrailingSpace() throws IOException {
     File tempDir = myTempDir.newFolder();
     VirtualFile vDir = LocalFileSystem.getInstance().findFileByIoFile(tempDir);
-    assertNotNull(vDir);
+    assertNotNull("Can't find " + tempDir, vDir);
     assertTrue(vDir.isDirectory());
 
     VirtualFile child = vDir.findChild(" ");
