@@ -72,10 +72,12 @@ public class AbstractNewProjectStep extends DefaultActionGroup implements DumbAw
     if (customization.showUserDefinedProjects()) {
       ArchivedTemplatesFactory factory = new ArchivedTemplatesFactory();
       ProjectTemplate[] templates = factory.createTemplates(CUSTOM_GROUP, null);
-      for (ProjectTemplate template : templates) {
-        TemplateProjectDirectoryGenerator generator = new TemplateProjectDirectoryGenerator((LocalArchivedTemplate)template);
-        addAll(customization.getActions(generator, callback));
-      }
+      DirectoryProjectGenerator[] projectGenerators = ContainerUtil.map(templates,
+                                                                        (ProjectTemplate template) ->
+                                                                          new TemplateProjectDirectoryGenerator(
+                                                                            (LocalArchivedTemplate)template),
+                                                                        new DirectoryProjectGenerator[templates.length]);
+      addAll(customization.getActions(projectGenerators, callback));
     }
     addAll(customization.getExtraActions(callback));
   }
