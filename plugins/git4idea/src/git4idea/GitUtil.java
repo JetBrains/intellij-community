@@ -1054,4 +1054,18 @@ public class GitUtil {
   public static Collection<GitRepository> getRepositories(@NotNull Project project) {
     return getRepositoryManager(project).getRepositories();
   }
+
+  /**
+   * Checks if the given paths are equal only by case.
+   * It is expected that the paths are different at least by the case.
+   */
+  public static boolean isCaseOnlyChange(@NotNull String oldPath, @NotNull String newPath) {
+    if (oldPath.equalsIgnoreCase(newPath)) {
+      if (oldPath.equals(newPath)) {
+        LOG.error("Comparing perfectly equal paths: " + newPath);
+      }
+      return true;
+    }
+    return false;
+  }
 }
