@@ -20,15 +20,10 @@ import com.intellij.ide.fileTemplates.impl.UrlUtil;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.ClearableLazyValue;
-import com.intellij.openapi.util.Pair;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplatesFactory;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,8 +33,6 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * @author Dmitry Avdeev
@@ -49,55 +42,6 @@ public class ArchivedTemplatesFactory extends ProjectTemplatesFactory {
   private final static Logger LOG = Logger.getInstance(ArchivedTemplatesFactory.class);
 
   static final String ZIP = ".zip";
-
-  private final ClearableLazyValue<MultiMap<String, Pair<URL, ClassLoader>>> myGroups = new ClearableLazyValue<MultiMap<String, Pair<URL, ClassLoader>>>() {
-    @NotNull
-    @Override
-    protected MultiMap<String, Pair<URL, ClassLoader>> compute() {
-      MultiMap<String, Pair<URL, ClassLoader>> map = MultiMap.createSmart();
-      Map<URL, ClassLoader> urls = new THashMap<URL, ClassLoader>();
-      //for (IdeaPluginDescriptor plugin : plugins) {
-      //  if (!plugin.isEnabled()) continue;
-      //  try {
-      //    ClassLoader loader = plugin.getPluginClassLoader();
-      //    Enumeration<URL> resources = loader.getResources("resources/projectTemplates");
-      //    ArrayList<URL> list = Collections.list(resources);
-      //    for (URL url : list) {
-      //      urls.put(url, loader);
-      //    }
-      //  }
-      //  catch (IOException e) {
-      //    LOG.error(e);
-      //  }
-      //}
-
-      URL configURL = getCustomTemplatesURL();
-      urls.put(configURL, ClassLoader.getSystemClassLoader());
-
-      for (Map.Entry<URL, ClassLoader> url : urls.entrySet()) {
-        try {
-          List<String> children = UrlUtil.getChildrenRelativePaths(url.getKey());
-          if (configURL == url.getKey() && !children.isEmpty()) {
-            map.putValue(CUSTOM_GROUP, Pair.create(url.getKey(), url.getValue()));
-            continue;
-          }
-
-          for (String child : children) {
-            int index = child.indexOf('/');
-            if (index != -1) {
-              child = child.substring(0, index);
-            }
-            String name = child.replace('_', ' ');
-            map.putValue(name, Pair.create(new URL(url.getKey().toExternalForm() + "/" + child), url.getValue()));
-          }
-        }
-        catch (IOException e) {
-          LOG.error(e);
-        }
-      }
-      return map;
-    }
-  };
 
   @NotNull
   private static URL getCustomTemplatesURL() {
@@ -121,34 +65,31 @@ public class ArchivedTemplatesFactory extends ProjectTemplatesFactory {
   @NotNull
   @Override
   public String[] getGroups() {
-    myGroups.drop();
-    Set<String> groups = myGroups.getValue().keySet();
-    return ArrayUtil.toStringArray(groups);
+    return new String[]{CUSTOM_GROUP};
   }
 
   @NotNull
   @Override
   public ProjectTemplate[] createTemplates(@Nullable String group, WizardContext context) {
     // myGroups contains only not-null keys
-    if (group == null) {
+    if (!CUSTOM_GROUP.equals(group)) {
       return ProjectTemplate.EMPTY_ARRAY;
     }
 
     List<ProjectTemplate> templates = null;
-    for (Pair<URL, ClassLoader> url : myGroups.getValue().get(group)) {
-      try {
-        for (String child : UrlUtil.getChildrenRelativePaths(url.first)) {
-          if (child.endsWith(ZIP)) {
-            if (templates == null) {
-              templates = new SmartList<ProjectTemplate>();
-            }
-            templates.add(new LocalArchivedTemplate(new URL(url.first.toExternalForm() + '/' + child), url.second));
+    URL url = getCustomTemplatesURL();
+    try {
+      for (String child : UrlUtil.getChildrenRelativePaths(url)) {
+        if (child.endsWith(ZIP)) {
+          if (templates == null) {
+            templates = new SmartList<ProjectTemplate>();
           }
+          templates.add(new LocalArchivedTemplate(new URL(url.toExternalForm() + '/' + child), ClassLoader.getSystemClassLoader()));
         }
       }
-      catch (IOException e) {
-        LOG.error(e);
-      }
+    }
+    catch (IOException e) {
+      LOG.error(e);
     }
     return ContainerUtil.isEmpty(templates) ? ProjectTemplate.EMPTY_ARRAY : templates.toArray(new ProjectTemplate[templates.size()]);
   }

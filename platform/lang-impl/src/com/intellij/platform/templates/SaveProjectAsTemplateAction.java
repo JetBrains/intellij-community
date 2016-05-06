@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,9 @@
 package com.intellij.platform.templates;
 
 import com.intellij.CommonBundle;
-import com.intellij.codeInspection.defaultFileTemplateUsage.FileHeaderChecker;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.util.projectWizard.ProjectTemplateFileProcessor;
 import com.intellij.ide.util.projectWizard.ProjectTemplateParameterFactory;
@@ -160,7 +160,8 @@ public class SaveProjectAsTemplateAction extends AnAction {
                     !fileName.equals(PROJECT_TEMPLATE_XML) &&
                     !fileName.equals("misc.xml") &&
                     !fileName.equals("modules.xml") &&
-                    !fileName.equals("workspace.xml")) {
+                    !fileName.equals("workspace.xml") &&
+                    !fileName.endsWith(".iml")) {
                   return true;
                 }
               }
@@ -241,7 +242,7 @@ public class SaveProjectAsTemplateAction extends AnAction {
     String text = VfsUtilCore.loadText(virtualFile);
     final FileTemplate template = FileTemplateManager.getInstance(project).getDefaultTemplate(FileTemplateManager.FILE_HEADER_TEMPLATE_NAME);
     final String templateText = template.getText();
-    final Pattern pattern = FileHeaderChecker.getTemplatePattern(template, project, new TIntObjectHashMap<String>());
+    final Pattern pattern = FileTemplateUtil.getTemplatePattern(template, project, new TIntObjectHashMap<String>());
     String result = convertTemplates(text, pattern, templateText);
     result = ProjectTemplateFileProcessor.encodeFile(result, virtualFile, project);
     for (Map.Entry<String, String> entry : parameters.entrySet()) {
@@ -282,11 +283,11 @@ public class SaveProjectAsTemplateAction extends AnAction {
   }
 
   private static String getInputFieldsText(Map<String, String> parameters) {
-    Element element = new Element(RemoteTemplatesFactory.TEMPLATE);
+    Element element = new Element(ArchivedProjectTemplate.TEMPLATE);
     for (Map.Entry<String, String> entry : parameters.entrySet()) {
       Element field = new Element(ArchivedProjectTemplate.INPUT_FIELD);
       field.setText(entry.getValue());
-      field.setAttribute(RemoteTemplatesFactory.INPUT_DEFAULT, entry.getKey());
+      field.setAttribute(ArchivedProjectTemplate.INPUT_DEFAULT, entry.getKey());
       element.addContent(field);
     }
     return JDOMUtil.writeElement(element);
