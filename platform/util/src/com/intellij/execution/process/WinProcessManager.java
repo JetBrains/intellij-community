@@ -15,17 +15,17 @@
  */
 package com.intellij.execution.process;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ReflectionUtil;
 import com.sun.jna.Pointer;
 import com.sun.jna.platform.win32.Kernel32;
 import com.sun.jna.platform.win32.WinNT;
 
-import java.io.IOException;
-
 /**
  * @author Alexey.Ushakov
  */
 public class WinProcessManager {
+  private static final Logger LOG = Logger.getInstance(WinProcessManager.class);
 
   private WinProcessManager() {}
 
@@ -57,8 +57,17 @@ public class WinProcessManager {
    * @param process Windows process
    * @param tree true to also kill all subprocesses
    */
-  public static void kill(Process process, boolean tree) throws IOException, InterruptedException {
-    int pid = getProcessPid(process);
-    Runtime.getRuntime().exec("taskkill /PID " + pid + (tree ? " /t" : "") + " /f").waitFor();
+  public static boolean kill(Process process, boolean tree) {
+    try {
+      int pid = getProcessPid(process);
+      String command = "taskkill /PID " + pid + (tree ? " /t" : "") + " /f";
+      LOG.debug(command);
+      Runtime.getRuntime().exec(command).waitFor();
+      return true;
+    }
+    catch (Exception e) {
+      LOG.warn(e);
+    }
+    return false;
   }
 }

@@ -40,12 +40,12 @@ public class OSProcessUtil {
     if (SystemInfo.isWindows) {
       try {
         if (Registry.is("disable.winp")) {
-          WinProcessManager.kill(process, true);
+          return WinProcessManager.kill(process, true);
         }
         else {
           createWinProcess(process).killRecursively();
+          return true;
         }
-        return true;
       }
       catch (Throwable e) {
         LOG.info("Cannot kill process tree", e);
