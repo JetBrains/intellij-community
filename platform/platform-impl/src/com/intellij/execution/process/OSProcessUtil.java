@@ -19,6 +19,7 @@ package com.intellij.execution.process;
 import com.intellij.execution.process.impl.ProcessListUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jvnet.winp.WinProcess;
@@ -27,17 +28,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/******************************************************************************
- * Copyright (C) 2013  Fabio Zadrozny
- *
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- *
- * Contributors:
- *     Fabio Zadrozny <fabiofz@gmail.com> - initial API and implementation
- ******************************************************************************/
 public class OSProcessUtil {
   private static final Logger LOG = Logger.getInstance(OSProcessUtil.class);
 
@@ -49,8 +39,12 @@ public class OSProcessUtil {
   public static boolean killProcessTree(@NotNull Process process) {
     if (SystemInfo.isWindows) {
       try {
-        WinProcess winProcess = createWinProcess(process);
-        winProcess.killRecursively();
+        if (Registry.is("disable.winp")) {
+          WinProcessManager.kill(process, true);
+        }
+        else {
+          createWinProcess(process).killRecursively();
+        }
         return true;
       }
       catch (Throwable e) {
@@ -66,8 +60,12 @@ public class OSProcessUtil {
   public static void killProcess(@NotNull Process process) {
     if (SystemInfo.isWindows) {
       try {
-        WinProcess winProcess = createWinProcess(process);
-        winProcess.kill();
+        if (Registry.is("disable.winp")) {
+          WinProcessManager.kill(process, false);
+        }
+        else {
+          createWinProcess(process).kill();
+        }
       }
       catch (Throwable e) {
         LOG.info("Cannot kill process", e);
@@ -77,11 +75,16 @@ public class OSProcessUtil {
       UnixProcessManager.sendSignal(UnixProcessManager.getProcessPid(process), UnixProcessManager.SIGKILL);
     }
   }
-  
+
   public static int getProcessID(@NotNull Process process) {
     if (SystemInfo.isWindows) {
       try {
-        return createWinProcess(process).getPid();
+        if (Registry.is("disable.winp")) {
+          WinProcessManager.getProcessPid(process);
+        }
+        else {
+          return createWinProcess(process).getPid();
+        }
       }
       catch (Throwable e) {
         LOG.info("Cannot get process id", e);
