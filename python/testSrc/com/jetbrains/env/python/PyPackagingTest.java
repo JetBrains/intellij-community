@@ -18,6 +18,7 @@ import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor;
 import com.jetbrains.python.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -25,6 +26,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+
+import static com.intellij.testFramework.UsefulTestCase.assertInstanceOf;
+import static org.junit.Assert.*;
 
 /**
  * @author vlan
@@ -39,6 +43,7 @@ public class PyPackagingTest extends PyEnvTestCase {
     super.runPythonTest(testTask);
   }
 
+  @Test
   public void testGetPackages() {
     runPythonTest(new PyPackagingTestTask() {
       @Override
@@ -60,6 +65,7 @@ public class PyPackagingTest extends PyEnvTestCase {
     });
   }
 
+  @Test
   public void testCreateVirtualEnv() {
     runPythonTest(new PyPackagingTestTask() {
       @Override
@@ -92,6 +98,7 @@ public class PyPackagingTest extends PyEnvTestCase {
     });
   }
 
+  @Test
   public void testInstallPackage() {
     runPythonTest(new PyPackagingTestTask() {
 

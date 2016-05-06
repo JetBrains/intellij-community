@@ -10,6 +10,8 @@ import com.intellij.testFramework.UsefulTestCase;
 import java.util.List;
 import java.util.Set;
 
+import static com.intellij.testFramework.UsefulTestCase.assertEmpty;
+
 /**
  * @author traff
  */

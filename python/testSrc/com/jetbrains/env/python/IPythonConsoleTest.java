@@ -13,15 +13,19 @@ import com.jetbrains.env.python.console.PyConsoleTask;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
+import org.junit.Test;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 
+import static org.junit.Assert.assertTrue;
+
 /**
  * @author traff
  */
 public class IPythonConsoleTest extends PyEnvTestCase {
+  @Test
   public void testQuestion() throws Exception {
     runPythonTest(new IPythonTask() {
       @Override
@@ -33,6 +37,7 @@ public class IPythonConsoleTest extends PyEnvTestCase {
     });
   }
 
+  @Test
   public void testParsing() throws Exception {
     runPythonTest(new IPythonTask() {
       @Override
@@ -66,6 +71,7 @@ public class IPythonConsoleTest extends PyEnvTestCase {
     });
   }
 
+  @Test
   public void testParsingNoIPython() throws Exception {
     runPythonTest(new IPythonTask() {
       @Override
@@ -81,7 +87,6 @@ public class IPythonConsoleTest extends PyEnvTestCase {
             assertTrue(PsiTreeUtil.hasErrorElements(psi));
           }
         });
-
       }
 
       @NotNull
