@@ -15,11 +15,11 @@ import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,6 +30,9 @@ import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.beans.PropertyChangeListener;
 import java.io.File;
+import java.util.*;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author Alexander Lobas
@@ -91,19 +94,45 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
 
     removeSceneBuilder();
 
+    final String description;
     if (e != null) {
-      String message = e.getMessage();
-      if (message == null) {
-        message = e.getClass().getName();
+      final List<String> messages = new ArrayList<>();
+      for (Throwable t = e; t != null && t != t.getCause(); t = t.getCause()) {
+        final String message = getErrorMessage(t);
+        if (messages.isEmpty() || !messages.get(messages.size() - 1).contains(message)) {
+          messages.add(message);
+        }
+        else {
+          messages.set(messages.size() - 1, message);
+        }
       }
-
-      myErrorLabel.setHyperlinkText("Error: " + message, "", "");
-      myErrorLabel.setIcon(Messages.getErrorIcon());
-
-      myErrorStack.setText(ExceptionUtil.getThrowableText(e));
-      myErrorStack.setVisible(true);
+      Collections.reverse(messages);
+      description = "\n" + messages.stream().collect(Collectors.joining("\n\n"));
     }
+    else {
+      description = "Unknown error occurred";
+    }
+
+    myErrorLabel.setHyperlinkText("Failed to open the file in the Scene Builder", "", "");
+    myErrorLabel.setIcon(Messages.getErrorIcon());
+    myErrorStack.setText(description);
+    myErrorStack.setVisible(true);
     myLayout.show(myPanel, ERROR_CARD);
+  }
+
+  private static String getErrorMessage(Throwable e) {
+    final String message = e.getMessage();
+    final String className = e.getClass().getName();
+    if (StringUtil.isEmpty(message)) {
+      if (e instanceof ClassNotFoundException) {
+        return className + ": Unresolved import";
+      }
+      return className;
+    }
+    if (!message.contains(className)) {
+      return className + ": " + message;
+    }
+    return message;
   }
 
   @Override
