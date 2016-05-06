@@ -69,7 +69,8 @@ public class WinProcessManager {
       Process p = new ProcessBuilder(cmdArray).redirectErrorStream(true).start();
       String output = FileUtil.loadTextAndClose(p.getInputStream());
       int res = p.waitFor();
-      if (res != 0) {
+
+      if (res != 0 && isAlive(process)) {
         LOG.warn(StringUtil.join(cmdArray, " ") + " failed: " + output);
         return false;
       }
@@ -83,5 +84,15 @@ public class WinProcessManager {
       LOG.warn(e);
     }
     return false;
+  }
+
+  // todo replace with Process.isAlive when available (in 1.8)
+  private static boolean isAlive(Process process) {
+    try {
+      process.exitValue();
+      return false;
+    } catch(IllegalThreadStateException e) {
+      return true;
+    }
   }
 }
