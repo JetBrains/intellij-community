@@ -52,7 +52,6 @@ import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.frame.*;
-import com.intellij.xdebugger.impl.ui.tree.actions.SortValuesToggleAction;
 import com.intellij.xdebugger.ui.XDebugTabLayouter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -399,23 +398,6 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     XDebugView view = myViews.remove(contentId);
     if (view != null) {
       Disposer.dispose(view);
-    }
-  }
-
-  private static class ToggleSortValuesAction extends SortValuesToggleAction {
-    private final boolean myShowIcon;
-
-    private ToggleSortValuesAction(boolean showIcon) {
-      copyFrom(ActionManager.getInstance().getAction(XDebuggerActions.TOGGLE_SORT_VALUES));
-      myShowIcon = showIcon;
-    }
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      super.update(e);
-      if (!myShowIcon) {
-        e.getPresentation().setIcon(null);
-      }
     }
   }
 }
