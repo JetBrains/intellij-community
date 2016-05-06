@@ -16,6 +16,8 @@
 package com.intellij.execution.process;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ReflectionUtil;
 import com.sun.jna.Pointer;
 import com.sun.jna.platform.win32.Kernel32;
@@ -60,9 +62,21 @@ public class WinProcessManager {
   public static boolean kill(Process process, boolean tree) {
     try {
       int pid = getProcessPid(process);
-      String command = "taskkill /PID " + pid + (tree ? " /t" : "") + " /f";
-      LOG.debug(command);
-      Runtime.getRuntime().exec(command).waitFor();
+      String[] cmdArray = {"taskkill", "/f", "/pid", String.valueOf(pid), tree ? "/t" : ""};
+      if (LOG.isDebugEnabled()) {
+        LOG.debug(StringUtil.join(cmdArray, " "));
+      }
+      Process p = new ProcessBuilder(cmdArray).redirectErrorStream(true).start();
+      String output = FileUtil.loadTextAndClose(p.getInputStream());
+      int res = p.waitFor();
+      if (res != 0) {
+        LOG.warn(StringUtil.join(cmdArray, " ") + " failed: " + output);
+        return false;
+      }
+      else if (LOG.isDebugEnabled()) {
+        LOG.debug(output);
+      }
+
       return true;
     }
     catch (Exception e) {
