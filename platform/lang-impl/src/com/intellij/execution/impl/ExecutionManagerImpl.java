@@ -31,6 +31,7 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.execution.ui.RunContentManagerImpl;
+import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -389,7 +390,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
             }
             project.getMessageBus().syncPublisher(EXECUTION_TOPIC).processStarted(executor.getId(), environment, processHandler);
             started = true;
-            processHandler.addProcessListener(new ProcessExecutionListener(project, profile, processHandler));
+            processHandler.addProcessListener(new ProcessExecutionListener(project, profile, processHandler, descriptor));
           }
           environment.setContentToReuse(descriptor);
         }
@@ -567,16 +568,30 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
     private final Project myProject;
     private final RunProfile myProfile;
     private final ProcessHandler myProcessHandler;
+    private final RunContentDescriptor myDescriptor;
 
-    public ProcessExecutionListener(Project project, RunProfile profile, ProcessHandler processHandler) {
+    public ProcessExecutionListener(@NotNull Project project,
+                                    @NotNull RunProfile profile,
+                                    @NotNull ProcessHandler processHandler,
+                                    @NotNull RunContentDescriptor descriptor) {
       myProject = project;
       myProfile = profile;
       myProcessHandler = processHandler;
+      myDescriptor = descriptor;
     }
 
     @Override
     public void processTerminated(ProcessEvent event) {
       if (myProject.isDisposed()) return;
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          RunnerLayoutUi ui = myDescriptor.getRunnerLayoutUi();
+          if (ui != null && !ui.isDisposed()) {
+            ui.updateActionsNow();
+          }
+        }
+      }, ModalityState.any());
 
       myProject.getMessageBus().syncPublisher(EXECUTION_TOPIC).processTerminated(myProfile, myProcessHandler);
 
