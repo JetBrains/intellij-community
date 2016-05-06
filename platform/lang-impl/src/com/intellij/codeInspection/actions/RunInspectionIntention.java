@@ -26,6 +26,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -47,6 +48,8 @@ import java.util.LinkedHashSet;
  * Date: 21-Feb-2006
  */
 public class RunInspectionIntention implements IntentionAction, HighPriorityAction {
+  private final static Logger LOG = Logger.getInstance(RunInspectionIntention.class);
+
   private final String myShortName;
 
   public RunInspectionIntention(@NotNull InspectionToolWrapper toolWrapper) {
@@ -98,7 +101,9 @@ public class RunInspectionIntention implements IntentionAction, HighPriorityActi
     }
     final AnalysisUIOptions uiOptions = AnalysisUIOptions.getInstance(project);
     analysisScope = dlg.getScope(uiOptions, analysisScope, project, module);
-    rerunInspection(LocalInspectionToolWrapper.findTool2RunInBatch(project, file, myShortName), managerEx, analysisScope, file);
+    final InspectionToolWrapper wrapper = LocalInspectionToolWrapper.findTool2RunInBatch(project, file, myShortName);
+    LOG.assertTrue(wrapper != null, "Can't find tool with name = \"" + myShortName + "\"");
+    rerunInspection(wrapper, managerEx, analysisScope, file);
   }
 
   public static void rerunInspection(@NotNull InspectionToolWrapper toolWrapper,
