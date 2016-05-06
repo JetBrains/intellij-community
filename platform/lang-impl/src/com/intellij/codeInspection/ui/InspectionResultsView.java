@@ -115,7 +115,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   private boolean myRerun;
   private volatile boolean myDisposed;
   private int myUpdatingRequestors; //accessed only in edt
-  private boolean myApplyingFix = false; //accessed only in edt
+  private boolean myApplyingFix; //accessed only in edt
 
   @NotNull
   private final InspectionRVContentProvider myProvider;
