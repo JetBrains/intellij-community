@@ -5,6 +5,7 @@ import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.psi.impl.DebugUtil
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.util.ui.UIUtil
@@ -188,8 +189,12 @@ class TransactionTest extends LightPlatformTestCase {
         guard.submitTransaction testRootDisposable, id, { log << '5' }
         def nestedId = guard.contextTransaction
         SwingUtilities.invokeLater {
-          guard.submitTransaction testRootDisposable, nestedId, { log << '3' }
-          assert log == ['1', '2']
+          String trace = null
+          guard.submitTransaction testRootDisposable, nestedId, {
+            trace = DebugUtil.currentStackTrace()
+            log << '3'
+          }
+          assert log == ['1', '2'] : log + " " + trace
         }
         UIUtil.dispatchAllInvocationEvents()
       }
