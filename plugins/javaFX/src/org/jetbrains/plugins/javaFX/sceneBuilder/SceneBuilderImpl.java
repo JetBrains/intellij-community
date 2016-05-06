@@ -6,6 +6,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.JdkVersionUtil;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.LibraryScopeCache;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
@@ -15,6 +18,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiModifier;
@@ -51,6 +55,7 @@ import javafx.scene.Scene;
 import javafx.scene.SceneAntialiasing;
 import javafx.scene.control.SplitPane;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 
 import javax.swing.*;
@@ -152,11 +157,15 @@ public class SceneBuilderImpl implements SceneBuilder {
 
     final Collection<PsiClass> psiClasses = CachedValuesManager.getCachedValue(nodeClass, () -> {
       final GlobalSearchScope scopeWithoutJdk = getScopeWithoutJdk(nodeClass.getProject());
+      final String ideJdkVersion = Object.class.getPackage().getSpecificationVersion();
+      final LanguageLevel ideLanguageLevel = LanguageLevel.parse(ideJdkVersion);
       final Query<PsiClass> query = ClassInheritorsSearch.search(nodeClass, scopeWithoutJdk, true);
       final Set<PsiClass> result = new THashSet<PsiClass>();
       query.forEach(psiClass -> {
         if (psiClass.hasModifierProperty(PsiModifier.PUBLIC) && !psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
-          result.add(psiClass);
+          if (isCompatibleLanguageLevel(psiClass, ideLanguageLevel)) {
+            result.add(psiClass);
+          }
         }
       });
       return CachedValueProvider.Result.create(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
@@ -166,6 +175,32 @@ public class SceneBuilderImpl implements SceneBuilder {
     }
 
     return prepareCustomComponents(psiClasses);
+  }
+
+  private static boolean isCompatibleLanguageLevel(@NotNull PsiClass aClass, @Nullable LanguageLevel targetLevel) {
+    if (targetLevel == null) return true;
+    final Project project = aClass.getProject();
+    final VirtualFile vFile = aClass.getContainingFile().getVirtualFile();
+    Module module = ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(vFile);
+    if (module == null) {
+      final OrderEntry entry = LibraryUtil.findLibraryEntry(vFile, project);
+      if (entry != null) {
+        module = entry.getOwnerModule();
+      }
+    }
+    Sdk jdk = module != null ? ModuleRootManager.getInstance(module).getSdk() : null;
+    if (jdk == null) {
+      jdk = ProjectRootManager.getInstance(project).getProjectSdk();
+    }
+    if (jdk == null) return true;
+    final String versionString = jdk.getVersionString();
+    if (versionString != null) {
+      final JavaSdkVersion jdkVersion = JdkVersionUtil.getVersion(versionString);
+      if (jdkVersion != null) {
+        return targetLevel.isAtLeast(jdkVersion.getMaxLanguageLevel());
+      }
+    }
+    return true;
   }
 
   @NotNull
