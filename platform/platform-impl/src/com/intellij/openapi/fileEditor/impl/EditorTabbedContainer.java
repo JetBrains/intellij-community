@@ -57,6 +57,7 @@ import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.util.BitUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.AwtVisitor;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TimedDeadzone;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -206,7 +207,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
 
     String[] ids = mgr.getToolWindowIds();
 
-    Insets border = new Insets(0, 0, 0, 0);
+    Insets border = JBUI.emptyInsets();
 
     UISettings uiSettings = UISettings.getInstance();
 
@@ -787,7 +788,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
 
     @Override
     public Insets getBorderInsets(Component component) {
-      return new Insets(0, 0, 0, 0);
+      return JBUI.emptyInsets();
     }
 
     @Override
