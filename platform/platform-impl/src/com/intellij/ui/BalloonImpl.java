@@ -305,7 +305,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
                      Layer layer,
                      boolean requestFocus) {
     myBorderColor = borderColor;
-    myBorderInsets = borderInsets != null ? borderInsets : new Insets(3, 3, 3, 3);
+    myBorderInsets = borderInsets != null ? borderInsets : JBUI.insets(3);
     myFillColor = fillColor;
     myContent = content;
     myHideOnMouse = hideOnMouse;
