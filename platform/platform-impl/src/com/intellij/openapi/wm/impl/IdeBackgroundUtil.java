@@ -54,9 +54,9 @@ public class IdeBackgroundUtil {
   public static Graphics2D withNamedPainters(@NotNull Graphics g, @NotNull String paintersName, @NotNull final JComponent component) {
     JRootPane rootPane = component.getRootPane();
     Component glassPane = rootPane == null ? null : rootPane.getGlassPane();
-    final PaintersHelper helper = glassPane instanceof IdeGlassPaneImpl? ((IdeGlassPaneImpl)glassPane).getNamedPainters(paintersName) : null;
+    PaintersHelper helper = glassPane instanceof IdeGlassPaneImpl? ((IdeGlassPaneImpl)glassPane).getNamedPainters(paintersName) : null;
     if (helper == null || !helper.needsRepaint()) return (Graphics2D)g;
-    return new MyGraphics(g, helper, component);
+    return MyGraphics.wrap(g, helper, component);
   }
 
   public static void initEditorPainters(@NotNull PaintersHelper painters) {
@@ -97,19 +97,24 @@ public class IdeBackgroundUtil {
   }
 
   private static class MyGraphics extends Graphics2DDelegate {
-    private final PaintersHelper myHelper;
-    private final JComponent myComponent;
+    final PaintersHelper helper;
+    final int[] offsets;
+    
+    static Graphics2D wrap(Graphics g, PaintersHelper helper, JComponent component) {
+      return new MyGraphics(g instanceof MyGraphics ? ((MyGraphics)g).getDelegate() : g,
+                            helper, helper.computeOffsets(g, component));
+    }
 
-    public MyGraphics(Graphics g, PaintersHelper helper, JComponent component) {
+    MyGraphics(Graphics g, PaintersHelper helper, int[] offsets) {
       super((Graphics2D)g);
-      myHelper = helper;
-      myComponent = component;
+      this.helper = helper;
+      this.offsets = offsets;
     }
 
     @NotNull
     @Override
     public Graphics create() {
-      return new MyGraphics(super.create(), myHelper, myComponent);
+      return new MyGraphics(getDelegate().create(), helper, offsets);
     }
 
     @Override
@@ -124,12 +129,19 @@ public class IdeBackgroundUtil {
       processPainters(x, y, width, height);
     }
 
+    @Override
+    public void fill(Shape s) {
+      super.fill(s);
+      Rectangle r = s.getBounds();
+      processPainters(r.x, r.y, r.width, r.height);
+    }
+
     void processPainters(int x, int y, int width, int height) {
       Shape s = getClip();
       Rectangle newClip = s == null ? new Rectangle(x, y, width, height) :
                           SwingUtilities.computeIntersection(x, y, width, height, s.getBounds());
       setClip(newClip);
-      myHelper.paint(getDelegate(), myComponent);
+      helper.paint(getDelegate(), offsets);
       setClip(s);
     }
   }

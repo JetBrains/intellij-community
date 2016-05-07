@@ -24,8 +24,8 @@ import com.intellij.openapi.ui.Painter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ImageLoader;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -34,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.geom.AffineTransform;
 import java.awt.image.VolatileImage;
 import java.io.File;
 import java.net.URL;
@@ -86,16 +87,42 @@ final class PaintersHelper implements Painter.Listener {
   }
 
   public void paint(Graphics g) {
-    paint(g, myRootComponent);
+    paint(g, computeOffsets(g, myRootComponent));
   }
 
-  public void paint(Graphics g, JComponent component) {
+  void paint(Graphics gg, int[] offsets) {
     if (myPainters.isEmpty()) return;
-    Graphics2D g2d = (Graphics2D)g;
-    Rectangle clip = ObjectUtils.notNull(g.getClipBounds(), component.getBounds());
+    Graphics2D g = (Graphics2D)gg;
+    int i = 0;
+    // compensate current graphics transform
+    AffineTransform transform = g.getTransform();
+    int dx = offsets[i++] - (int)transform.getTranslateX();
+    int dy = offsets[i++] - (int)transform.getTranslateY();
 
+    for (Painter painter : myPainters) {
+      if (!painter.needsRepaint()) continue;
+      Component cur = myPainter2Component.get(painter);
+      int x = offsets[i++] + dx;
+      int y = offsets[i++] + dy;
+
+      g.translate(x, y);
+      painter.paint(cur, g);
+      g.translate(-x, -y);
+    }
+  }
+
+  @NotNull
+  int[] computeOffsets(Graphics gg, @NotNull JComponent component) {
+    if (myPainters.isEmpty()) return ArrayUtil.EMPTY_INT_ARRAY;
+    int i = 0;
+    int[] offsets = new int[2 + myPainters.size() * 2];
+    // store current graphics transform
+    Graphics2D g = (Graphics2D)gg;
+    AffineTransform transform = g.getTransform();
+    offsets[i++] = (int)transform.getTranslateX();
+    offsets[i++] = (int)transform.getTranslateY();
+    // calculate relative offsets for painters
     Rectangle r = null;
-    boolean clipMatched = false;
     Component prev = null;
     for (Painter painter : myPainters) {
       if (!painter.needsRepaint()) continue;
@@ -105,17 +132,12 @@ final class PaintersHelper implements Painter.Listener {
         Container curParent = cur.getParent();
         if (curParent == null) continue;
         r = SwingUtilities.convertRectangle(curParent, cur.getBounds(), component);
-        clipMatched = clip.contains(r) || clip.intersects(r);
         prev = cur;
       }
-      if (!clipMatched) continue;
-
-      g2d.setClip(clip.intersection(r));
-      g2d.translate(r.x, r.y);
-      painter.paint(prev, g2d);
-      g2d.translate(-r.x, -r.y);
+      offsets[i++] = r.x;
+      offsets[i++] = r.y;
     }
-
+    return offsets;
   }
 
   @Override
