@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.wm.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.AbstractPainter;
@@ -161,45 +162,63 @@ final class PaintersHelper implements Painter.Listener {
       }
 
       boolean ensureImageLoaded() {
-        boolean prevOk = image != null;
         String value = System.getProperty(propertyName);
-        if (Comparing.equal(value, current)) return prevOk;
-        current = value;
-        clearImages(-1);
-        image = null;
-        insets = JBUI.emptyInsets();
-        loadImage(value);
-        boolean newOk = image != null;
-        if (prevOk || newOk) {
-          for (Window window : Window.getWindows()) {
-            window.repaint();
-          }
+        if (!Comparing.equal(value, current)) {
+          current = value;
+          loadImageAsync(value);
+          // keep the current image for a while
         }
-        return newOk;
+        return image != null;
       }
 
-      void loadImage(@Nullable String propertyValue) {
-        String[] parts = (propertyValue != null ? propertyValue : propertyName + ".png").split(",");
-        try {
-          alpha = StringUtil.parseInt(parts.length > 1 ? parts[1] : "", 10) / 100f;
-          try {
-            fillType =  FillType.valueOf(parts.length > 2 ? parts[2].toUpperCase(Locale.ENGLISH) : "");
-          }
-          catch (IllegalArgumentException e) {
-            fillType = FillType.SCALE;
-          }
-          String filePath = parts[0];
+      private void resetImage(String value, Image newImage, float newAlpha, FillType newFillType) {
+        if (!Comparing.equal(current, value)) return;
+        boolean prevOk = image != null;
+        clearImages(-1);
+        image = newImage;
+        insets = JBUI.emptyInsets();
+        alpha = newAlpha;
+        fillType = newFillType;
+        boolean newOk = newImage != null;
+        if (prevOk || newOk) {
+          repaintAllWindows();
+        }
+      }
 
+      private void loadImageAsync(final String propertyValue) {
+        String[] parts = (propertyValue != null ? propertyValue : propertyName + ".png").split(",");
+        final float newAlpha = Math.abs(Math.min(StringUtil.parseInt(parts.length > 1 ? parts[1] : "", 10) / 100f, 1f));
+        final FillType newFillType = StringUtil.parseEnum(parts.length > 2 ? parts[2].toUpperCase(Locale.ENGLISH) : "", FillType.SCALE, FillType.class);
+        try {
+          String filePath = parts[0];
           URL url = filePath.contains("://") ? new URL(filePath) :
                     (FileUtil.isAbsolutePlatformIndependent(filePath)
                      ? new File(filePath)
                      : new File(PathManager.getConfigPath(), filePath)).toURI().toURL();
-          image = ImageLoader.loadFromUrl(url);
+          ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+            @Override
+            public void run() {
+              final Image m = ImageLoader.loadFromUrl(url);
+              ApplicationManager.getApplication().invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                  resetImage(propertyValue, m, newAlpha, newFillType);
+                }
+              });
+            }
+          });
         }
-        catch (Exception ignored) {
+        catch (Exception e) {
+          resetImage(propertyValue, null, newAlpha, newFillType);
         }
       }
     };
+  }
+
+  private static void repaintAllWindows() {
+    for (Window window : Window.getWindows()) {
+      window.repaint();
+    }
   }
 
   public static AbstractPainter newImagePainter(@NotNull final Image image, final FillType fillType, final float alpha, final Insets insets) {
