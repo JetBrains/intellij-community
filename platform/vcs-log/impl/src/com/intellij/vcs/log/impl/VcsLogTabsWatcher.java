@@ -20,9 +20,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
-import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManagerAdapter;
@@ -44,7 +44,7 @@ public class VcsLogTabsWatcher implements Disposable {
 
   @NotNull private final ToolWindowManagerImpl myToolWindowManager;
   @NotNull private final MyRefreshPostponedEventsListener myPostponedEventsListener;
-  @Nullable private ToolWindowImpl myToolWindow;
+  @Nullable private ToolWindow myToolWindow;
 
   public VcsLogTabsWatcher(@NotNull Project project, @NotNull PostponableLogRefresher refresher, @NotNull Disposable parentDisposable) {
     myRefresher = refresher;
@@ -167,7 +167,7 @@ public class VcsLogTabsWatcher implements Disposable {
   }
 
   private void installContentListener() {
-    ToolWindowImpl window = (ToolWindowImpl)myToolWindowManager.getToolWindow(TOOLWINDOW_ID);
+    ToolWindow window = myToolWindowManager.getToolWindow(TOOLWINDOW_ID);
     if (window != null) {
       myToolWindow = window;
       myToolWindow.getContentManager().addContentManagerListener(myPostponedEventsListener);
