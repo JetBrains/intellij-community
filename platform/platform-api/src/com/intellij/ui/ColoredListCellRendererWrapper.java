@@ -21,6 +21,8 @@ import javax.swing.*;
 
 /**
  * Typed version of {@link ColoredListCellRenderer}.
+ *
+ * @deprecated useless, go for {@link ColoredListCellRenderer} directly
  */
 public abstract class ColoredListCellRendererWrapper<T> extends ColoredListCellRenderer {
   @Override
@@ -32,11 +34,6 @@ public abstract class ColoredListCellRendererWrapper<T> extends ColoredListCellR
   protected abstract void doCustomize(JList list, T value, int index, boolean selected, boolean hasFocus);
 
   public void append(@NotNull SimpleColoredText text) {
-    int length = text.getTexts().size();
-    for (int i = 0; i < length; i++) {
-      String fragment = text.getTexts().get(i);
-      SimpleTextAttributes attributes = text.getAttributes().get(i);
-      append(fragment, attributes);
-    }
+    text.appendToComponent(this);
   }
 }
