@@ -72,6 +72,14 @@ public class VcsLogTabsWatcher implements Disposable {
     return myRefresher.addLogWindow(new VcsLogTab(filterer, contentTabName));
   }
 
+  private void installContentListener() {
+    ToolWindow window = myToolWindowManager.getToolWindow(TOOLWINDOW_ID);
+    if (window != null) {
+      myToolWindow = window;
+      myToolWindow.getContentManager().addContentManagerListener(myPostponedEventsListener);
+    }
+  }
+
   @Override
   public void dispose() {
     myToolWindowManager.removeToolWindowManagerListener(myPostponedEventsListener);
@@ -164,14 +172,6 @@ public class VcsLogTabsWatcher implements Disposable {
       if (evt.getPropertyName().equals(Content.PROP_COMPONENT)) {
         selectionChanged();
       }
-    }
-  }
-
-  private void installContentListener() {
-    ToolWindow window = myToolWindowManager.getToolWindow(TOOLWINDOW_ID);
-    if (window != null) {
-      myToolWindow = window;
-      myToolWindow.getContentManager().addContentManagerListener(myPostponedEventsListener);
     }
   }
 }
