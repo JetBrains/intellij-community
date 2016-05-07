@@ -74,12 +74,15 @@ public class VcsLogTabsWatcher implements Disposable {
 
   @Override
   public void dispose() {
-    if (myToolWindow != null) myToolWindow.getContentManager().removeContentManagerListener(myPostponedEventsListener);
     myToolWindowManager.removeToolWindowManagerListener(myPostponedEventsListener);
 
-    for (Content content : myToolWindow.getContentManager().getContents()) {
-      if (content instanceof TabbedContent) {
-        content.removePropertyChangeListener(myPostponedEventsListener);
+    if (myToolWindow != null) {
+      myToolWindow.getContentManager().removeContentManagerListener(myPostponedEventsListener);
+
+      for (Content content : myToolWindow.getContentManager().getContents()) {
+        if (content instanceof TabbedContent) {
+          content.removePropertyChangeListener(myPostponedEventsListener);
+        }
       }
     }
   }
