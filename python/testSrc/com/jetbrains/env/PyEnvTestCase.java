@@ -159,8 +159,7 @@ public abstract class PyEnvTestCase {
       return;
     }
 
-    Assume.assumeTrue("Test is annotated as Staging and should only run on staging environment",
-                      myStaging == STAGING_ENV);
+    checkStaging();
 
     List<String> roots = getPythonRoots();
 
@@ -189,6 +188,11 @@ public abstract class PyEnvTestCase {
                        " environment variable.",
                        roots.isEmpty());
     doRunTests(testTask, testName, roots);
+  }
+
+  protected void checkStaging() {
+    Assume.assumeTrue("Test is annotated as Staging and should only run on staging environment",
+                      myStaging == STAGING_ENV);
   }
 
   protected void doRunTests(PyTestTask testTask, String testName, List<String> roots) {
