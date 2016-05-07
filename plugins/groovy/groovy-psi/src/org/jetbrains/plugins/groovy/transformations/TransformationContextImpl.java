@@ -39,7 +39,6 @@ import java.util.Set;
 import static com.intellij.psi.util.MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil.expandReflectedMethods;
 
-
 public class TransformationContextImpl implements TransformationContext {
 
   private final @NotNull GrTypeDefinition myCodeClass;
@@ -196,13 +195,15 @@ public class TransformationContextImpl implements TransformationContext {
   }
 
   @Override
+  public void setSuperClass(@NotNull PsiClassType type) {
+    if (!getCodeClass().isInterface()) {
+      myExtendsTypes.add(0, type);
+    }
+  }
+
+  @Override
   public void addInterface(@NotNull PsiClassType type) {
-    if (getCodeClass().isInterface()) {
-      myExtendsTypes.add(type);
-    }
-    else {
-      myImplementsTypes.add(type);
-    }
+    (!getCodeClass().isInterface() || getCodeClass().isTrait() ? myImplementsTypes : myExtendsTypes).add(type);
   }
 
   @NotNull
@@ -227,6 +228,9 @@ public class TransformationContextImpl implements TransformationContext {
 
   @NotNull
   private PsiClassType[] getExtendsListTypesArray() {
+    if (getExtendsTypes().size() > 1 && !getCodeClass().isInterface()) {
+      throw new IllegalStateException("More than one type supertype for non-interface");
+    }
     return getExtendsTypes().toArray(PsiClassType.EMPTY_ARRAY);
   }
 
