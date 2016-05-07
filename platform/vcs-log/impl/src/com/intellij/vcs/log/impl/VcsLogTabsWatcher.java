@@ -21,7 +21,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
 import com.intellij.ui.content.Content;
@@ -42,13 +42,13 @@ public class VcsLogTabsWatcher implements Disposable {
 
   @NotNull private final PostponableLogRefresher myRefresher;
 
-  @NotNull private final ToolWindowManagerImpl myToolWindowManager;
+  @NotNull private final ToolWindowManagerEx myToolWindowManager;
   @NotNull private final MyRefreshPostponedEventsListener myPostponedEventsListener;
   @Nullable private ToolWindow myToolWindow;
 
   public VcsLogTabsWatcher(@NotNull Project project, @NotNull PostponableLogRefresher refresher, @NotNull Disposable parentDisposable) {
     myRefresher = refresher;
-    myToolWindowManager = (ToolWindowManagerImpl)ToolWindowManager.getInstance(project);
+    myToolWindowManager = ToolWindowManagerEx.getInstanceEx(project);
 
     myPostponedEventsListener = new MyRefreshPostponedEventsListener();
     myToolWindowManager.addToolWindowManagerListener(myPostponedEventsListener);
@@ -59,7 +59,10 @@ public class VcsLogTabsWatcher implements Disposable {
 
   @Nullable
   private String getSelectedTabName() {
-    if (myToolWindowManager.isToolWindowRegistered(TOOLWINDOW_ID) && myToolWindow != null && myToolWindow.isVisible()) {
+    if (myToolWindowManager instanceof ToolWindowManagerImpl &&
+        ((ToolWindowManagerImpl)myToolWindowManager).isToolWindowRegistered(TOOLWINDOW_ID) &&
+        myToolWindow != null &&
+        myToolWindow.isVisible()) {
       Content content = myToolWindow.getContentManager().getSelectedContent();
       if (content != null) {
         return content.getTabName();
@@ -163,7 +166,6 @@ public class VcsLogTabsWatcher implements Disposable {
         selectionChanged();
       }
     }
-
   }
 
   private void installContentListener() {
