@@ -20,6 +20,7 @@ import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.sm.runner.ui.MockPrinter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
+import com.jetbrains.TestEnv;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.sdkTools.SdkCreationType;
 import com.jetbrains.python.testing.tox.PyToxConfiguration;
@@ -61,6 +62,7 @@ public final class PyToxTest extends PyEnvTestCase {
    * Check tox nose runner
    */
   @Test
+  @StagingOn(os = TestEnv.WINDOWS)
   public void testToxNose() {
     runPythonTest(new MyPyProcessWithConsoleTestTask(1,
                                                      new MyTestProcessRunner("/testData/toxtest/toxNose/"),
@@ -79,6 +81,7 @@ public final class PyToxTest extends PyEnvTestCase {
    * Check tox pytest runner
    */
   @Test
+  @StagingOn(os = TestEnv.WINDOWS)
   public void testToxPyTest() {
     runPythonTest(new MyPyProcessWithConsoleTestTask(1,
                                                      new MyTestProcessRunner("/testData/toxtest/toxPyTest/"),
@@ -97,6 +100,7 @@ public final class PyToxTest extends PyEnvTestCase {
    * Check tox unit runner
    */
   @Test
+  @StagingOn(os = TestEnv.WINDOWS)
   public void testToxUnitTest() {
     runPythonTest(new MyPyProcessWithConsoleTestTask(1,
                                                      new MyTestProcessRunner("/testData/toxtest/toxUnitTest/"),
@@ -115,6 +119,7 @@ public final class PyToxTest extends PyEnvTestCase {
    * Big test which should run on any interpreter and check its output
    */
   @Test
+  @StagingOn(os = TestEnv.WINDOWS)
   public void testToxSuccessTest() {
     runPythonTest(new MyPyProcessWithConsoleTestTask(1,
                                                      new MyTestProcessRunner("/testData/toxtest/toxSuccess/"),

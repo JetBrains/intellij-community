@@ -5,12 +5,14 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.UIUtil;
+import com.jetbrains.TestEnv;
 import com.jetbrains.python.packaging.PyPackage;
 import com.jetbrains.python.packaging.PyPackageManager;
 import org.hamcrest.Matchers;
@@ -46,7 +48,7 @@ public abstract class PyEnvTestCase {
   public static final boolean RUN_REMOTE = SystemProperties.getBooleanProperty("pycharm.run_remote", false);
 
   public static final boolean RUN_LOCAL = SystemProperties.getBooleanProperty("pycharm.run_local", true);
-  
+
   private static final boolean STAGING_ENV = SystemProperties.getBooleanProperty("pycharm.staging_env", false);
 
   /**
@@ -73,7 +75,19 @@ public abstract class PyEnvTestCase {
 
   protected boolean isStaging(Description description) {
     try {
-      return description.getTestClass().getMethod(description.getMethodName()).isAnnotationPresent(Staging.class);
+      if (description.getTestClass().getMethod(description.getMethodName()).isAnnotationPresent(Staging.class)) {
+        return true;
+      }
+      else {
+        for (StagingOn so : description.getTestClass().getMethod(description.getMethodName()).getAnnotationsByType(StagingOn.class)) {
+          if (so.os() == TestEnv.WINDOWS && SystemInfo.isWindows ||
+              so.os() == TestEnv.LINUX && SystemInfo.isLinux ||
+              so.os() == TestEnv.MAC && SystemInfo.isMac) {
+            return true;
+          }
+        }
+        return false;
+      }
     }
     catch (NoSuchMethodException e) {
       return false;

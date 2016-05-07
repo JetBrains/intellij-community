@@ -9,9 +9,11 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.xdebugger.XDebuggerTestUtil;
+import com.jetbrains.TestEnv;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.PyProcessWithConsoleTestTask;
 import com.jetbrains.env.Staging;
+import com.jetbrains.env.StagingOn;
 import com.jetbrains.env.python.debug.PyDebuggerTask;
 import com.jetbrains.env.ut.PyUnitTestProcessRunner;
 import com.jetbrains.python.PythonHelpersLocator;
@@ -239,6 +241,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
+  @StagingOn(os = TestEnv.WINDOWS)
   public void testStepInto() throws Exception {
     runPythonTest(new PyDebuggerTask("/debug", "test2.py") {
       @Override
@@ -350,6 +353,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
+  @StagingOn(os = TestEnv.WINDOWS)
   public void testRunToLine() throws Exception {
     runPythonTest(new PyDebuggerTask("/debug", "test_runtoline.py") {
       @Override
@@ -535,6 +539,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
+  @StagingOn(os = TestEnv.WINDOWS)
   public void testEggDebug() throws Exception {
     runPythonTest(new PyDebuggerTask("/debug", "test_egg.py") {
       @Override
@@ -607,6 +612,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
+  @StagingOn(os = TestEnv.WINDOWS)
   public void testWinLongName() throws Exception {
     if (UsefulTestCase.IS_UNDER_TEAMCITY && !SystemInfo.isWindows) {
       return; // Only needs to run on windows
