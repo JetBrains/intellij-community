@@ -89,32 +89,31 @@ final class PaintersHelper implements Painter.Listener {
     paint(g, myRootComponent);
   }
 
-  public void paint(Graphics g, JComponent current) {
+  public void paint(Graphics g, JComponent component) {
     if (myPainters.isEmpty()) return;
     Graphics2D g2d = (Graphics2D)g;
-    Rectangle clip = ObjectUtils.notNull(g.getClipBounds(), current.getBounds());
+    Rectangle clip = ObjectUtils.notNull(g.getClipBounds(), component.getBounds());
 
-    Component component = null;
-    Rectangle componentBounds = null;
+    Rectangle r = null;
     boolean clipMatched = false;
+    Component prev = null;
     for (Painter painter : myPainters) {
       if (!painter.needsRepaint()) continue;
 
       Component cur = myPainter2Component.get(painter);
-      if (cur != component || componentBounds == null) {
-        Container parent = (component = cur).getParent();
-        if (parent == null) continue;
-        componentBounds = SwingUtilities.convertRectangle(parent, component.getBounds(), current);
-        clipMatched = clip.contains(componentBounds) || clip.intersects(componentBounds);
+      if (cur != prev || r == null) {
+        Container curParent = cur.getParent();
+        if (curParent == null) continue;
+        r = SwingUtilities.convertRectangle(curParent, cur.getBounds(), component);
+        clipMatched = clip.contains(r) || clip.intersects(r);
+        prev = cur;
       }
       if (!clipMatched) continue;
 
-      Point targetPoint = SwingUtilities.convertPoint(current, 0, 0, component);
-      Rectangle targetRect = new Rectangle(targetPoint, component.getSize());
-      g2d.setClip(clip.intersection(componentBounds));
-      g2d.translate(-targetRect.x, -targetRect.y);
-      painter.paint(component, g2d);
-      g2d.translate(targetRect.x, targetRect.y);
+      g2d.setClip(clip.intersection(r));
+      g2d.translate(r.x, r.y);
+      painter.paint(prev, g2d);
+      g2d.translate(-r.x, -r.y);
     }
 
   }
