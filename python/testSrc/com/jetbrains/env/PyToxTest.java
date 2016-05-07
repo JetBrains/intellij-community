@@ -204,10 +204,13 @@ public final class PyToxTest extends PyEnvTestCase {
                           Matchers.greaterThanOrEqualTo(myMinimumSuccessTestCount));
 
         // Check expected output
+        final String message = String.format("Interpreter %s does not have expected string in output. \n ", interpreterName) +
+                               String.format("All: %s \n", all) +
+                               String.format("Error: %s \n", stderr);
+
+
         Assert
-          .assertThat(String.format("Interpreter %s does not have expected string in output. \n " +
-                                    "All : " + all + "\n" +
-                                    "Error:" + stderr, interpreterName),
+          .assertThat(message,
                       getTestOutput(interpreterSuite), Matchers.containsString(myInterpreters.get(interpreterName).myExpectedOutput));
       }
 
