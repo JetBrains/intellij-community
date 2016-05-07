@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.intellij.refactoring.ui.TypeSelectorManager;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.StateRestoringCheckBox;
 import com.intellij.util.Processor;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -225,7 +226,8 @@ public abstract class IntroduceFieldCentralPanel {
   }
 
   protected JPanel appendCheckboxes(ItemListener itemListener) {
-    GridBagConstraints gbConstraints = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1,1,0,0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0,0,0,0), 0,0);
+    GridBagConstraints gbConstraints = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
+                                                              JBUI.emptyInsets(), 0, 0);
     JPanel panel = new JPanel(new GridBagLayout());
     myCbFinal = new StateRestoringCheckBox();
     myCbFinal.setFocusable(false);
@@ -238,7 +240,7 @@ public abstract class IntroduceFieldCentralPanel {
     if (myLocalVariable != null) {
       gbConstraints.gridy++;
       if (myCbReplaceAll != null) {
-        gbConstraints.insets = new Insets(0, 8, 0, 0);
+        gbConstraints.insets = JBUI.insetsLeft(8);
       }
       myCbDeleteVariable = new StateRestoringCheckBox();
       myCbDeleteVariable.setText(RefactoringBundle.message("delete.variable.declaration"));

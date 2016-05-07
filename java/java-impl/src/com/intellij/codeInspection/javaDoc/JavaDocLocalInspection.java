@@ -68,7 +68,7 @@ public class JavaDocLocalInspection extends JavaDocLocalInspectionBase {
       super(new GridBagLayout());
       GridBagConstraints gc =
         new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
-                               new Insets(0, 0, 0, 0), 0, 0);
+                               JBUI.emptyInsets(), 0, 0);
 
       String title = InspectionsBundle.message("inspection.javadoc.dialog.title");
       FieldPanel additionalTagsPanel = new FieldPanel(InspectionsBundle.message("inspection.javadoc.label.text"), title, null, null);

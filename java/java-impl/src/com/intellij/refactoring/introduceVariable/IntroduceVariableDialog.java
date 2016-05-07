@@ -183,7 +183,7 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
     gbConstraints.gridwidth = 1;
     gbConstraints.gridx = 0;
     gbConstraints.gridy = 0;
-    gbConstraints.insets = new Insets(0, 0, 0, 0);
+    gbConstraints.insets = JBUI.emptyInsets();
 
     if (myOccurrencesCount > 1) {
       myCbReplaceAll = new NonFocusableCheckBox();
@@ -200,7 +200,7 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
       if (myAnyLValueOccurences) {
         myCbReplaceWrite = new StateRestoringCheckBox();
         myCbReplaceWrite.setText(RefactoringBundle.message("replace.write.access.occurrences"));
-        gbConstraints.insets = new Insets(0, 8, 0, 0);
+        gbConstraints.insets = JBUI.insetsLeft(8);
         gbConstraints.gridy++;
         panel.add(myCbReplaceWrite, gbConstraints);
         myCbReplaceWrite.addItemListener(myReplaceAllListener);
@@ -214,7 +214,7 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
                      CodeStyleSettingsManager.getSettings(myProject).GENERATE_FINAL_LOCALS :
                      createFinals.booleanValue();
 
-    gbConstraints.insets = new Insets(0, 0, 0, 0);
+    gbConstraints.insets = JBUI.emptyInsets();
     gbConstraints.gridy++;
     panel.add(myCbFinal, gbConstraints);
     myFinalListener = new ItemListener() {
