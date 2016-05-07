@@ -15,12 +15,17 @@
  */
 package com.intellij.openapi.wm.impl;
 
+import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter;
+import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
 import com.intellij.openapi.ui.AbstractPainter;
 import com.intellij.ui.Graphics2DDelegate;
+import com.intellij.ui.tabs.JBTabs;
 import com.intellij.util.ImageLoader;
+import com.intellij.util.PairFunction;
+import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -35,14 +40,42 @@ import java.net.URL;
  */
 public class IdeBackgroundUtil {
 
+  public static final String BG_PROPERTY_PREFIX = "idea.wallpaper.";
+
+  static {
+    JBSwingUtilities.addGlobalCGTransform(new MyTransform());
+  }
+
   @NotNull
-  public static Graphics2D withEditorBackground(@NotNull Graphics g, @NotNull final JComponent component) {
+  public static Graphics2D withEditorBackground(@NotNull Graphics g, @NotNull JComponent component) {
+    if (suppressBackground(component)) return (Graphics2D)g;
     return withNamedPainters(g, "editor", component);
   }
 
   @NotNull
-  public static Graphics2D withFrameBackground(@NotNull Graphics g, @NotNull final JComponent component) {
+  public static Graphics2D withFrameBackground(@NotNull Graphics g, @NotNull JComponent component) {
+    if (suppressBackground(component)) return (Graphics2D)g;
     return withNamedPainters(g, "ide", component);
+  }
+
+  private static boolean suppressBackground(JComponent component) {
+    String type = getComponentType(component);
+    if (type == null) return false;
+    String spec = System.getProperty(BG_PROPERTY_PREFIX + "target", "");
+    boolean allInclusive = spec.startsWith("*");
+    return allInclusive && spec.contains("-" + type) || !allInclusive && !spec.contains(type);
+  }
+
+  private static String getComponentType(JComponent component) {
+    return component instanceof JTree ? "tree" :
+           component instanceof JList ? "list" :
+           component instanceof JTable ? "table" :
+           component instanceof JViewport ? "viewport" :
+           component instanceof ActionToolbar ? "toolbar" :
+           component instanceof EditorsSplitters ? "frame" :
+           component instanceof JBTabs ? "tabs" :
+           component instanceof JPanel && "navbar".equals(component.getName()) ? "navbar" :
+           null;
   }
 
   @NotNull
@@ -60,11 +93,11 @@ public class IdeBackgroundUtil {
   }
 
   public static void initEditorPainters(@NotNull PaintersHelper painters) {
-    PaintersHelper.initWallpaperPainter("idea.wallpaper.editor", painters);
+    PaintersHelper.initWallpaperPainter(BG_PROPERTY_PREFIX + "editor", painters);
   }
 
   public static void initFramePainters(@NotNull PaintersHelper painters) {
-    PaintersHelper.initWallpaperPainter("idea.wallpaper.ide", painters);
+    PaintersHelper.initWallpaperPainter(BG_PROPERTY_PREFIX + "ide", painters);
 
     ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
     String path = /*UIUtil.isUnderDarcula()? appInfo.getEditorBackgroundImageUrl() : */null;
@@ -143,6 +176,15 @@ public class IdeBackgroundUtil {
       setClip(newClip);
       helper.paint(getDelegate(), offsets);
       setClip(s);
+    }
+  }
+
+  private static class MyTransform implements PairFunction<JComponent, Graphics2D, Graphics2D> {
+    @Override
+    public Graphics2D fun(JComponent t, Graphics2D v) {
+      String type = getComponentType(t);
+      if ("frame".equals(type)) return withFrameBackground(v, t);
+      return type != null ? withEditorBackground(v, t) : v;
     }
   }
 }
