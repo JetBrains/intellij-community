@@ -81,28 +81,10 @@ public class GrClassImplUtil {
   private static final Condition<PsiMethod> CONSTRUCTOR_CONDITION = PsiMethod::isConstructor;
 
   @NotNull
-  public static GrTypeDefinition[] getBodyCodeInnerClasses(@NotNull GrTypeDefinition definition) {
-    GrTypeDefinitionBody body = definition.getBody();
-    return body != null ? body.getInnerClasses() : GrTypeDefinition.EMPTY_ARRAY;
-  }
-
-  @NotNull
   public static GrMethod[] getCodeConstructors(@NotNull GrTypeDefinition definition) {
     GrMethod[] methods = definition.getCodeMethods();
     List<GrMethod> result = ContainerUtil.filter(methods, CONSTRUCTOR_CONDITION);
     return result.toArray(GrMethod.EMPTY_ARRAY);
-  }
-
-  @NotNull
-  public static GrMethod[] getBodyCodeMethods(@NotNull GrTypeDefinition definition) {
-    GrTypeDefinitionBody body = definition.getBody();
-    return body != null ? body.getMethods() : GrMethod.EMPTY_ARRAY;
-  }
-
-  @NotNull
-  public static GrField[] getBodyCodeFields(@NotNull GrTypeDefinition definition) {
-    GrTypeDefinitionBody body = definition.getBody();
-    return body != null ? body.getFields() : GrField.EMPTY_ARRAY;
   }
 
   @NotNull
