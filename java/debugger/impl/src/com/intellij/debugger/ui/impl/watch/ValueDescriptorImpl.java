@@ -323,19 +323,6 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     return ""; // we have overridden getLabel
   }
 
-  private String calcIdLabel() {
-    //translate only strings in quotes
-    if(isShowIdLabel() && myValueReady) {
-      final Value value = getValue();
-      Renderer lastRenderer = getLastRenderer();
-      final EvaluationContextImpl evalContext = myStoredEvaluationContext;
-      return evalContext != null && lastRenderer != null && !evalContext.getSuspendContext().isResumed()?
-                             ((NodeRendererImpl)lastRenderer).getIdLabel(value, evalContext.getDebugProcess()) :
-                             null;
-    }
-    return null;
-  }
-
   @Override
   public String getLabel() {
     return calcValueName() + getDeclaredTypeLabel() + " = " + getValueLabel();
@@ -358,12 +345,24 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   }
 
   @Override
-  public void setValueLabel(String label) {
-    if (!myFullValue) {
-      label = DebuggerUtilsEx.truncateString(label);
+  public void setValueLabel(@NotNull String label) {
+    label = myFullValue ? label : DebuggerUtilsEx.truncateString(label);
+
+    Value value = myValueReady ? getValue() : null;
+    NodeRendererImpl lastRenderer = (NodeRendererImpl)getLastRenderer();
+    EvaluationContextImpl evalContext = myStoredEvaluationContext;
+    String labelId = myValueReady && evalContext != null && lastRenderer != null &&
+                     !evalContext.getSuspendContext().isResumed() ?
+                     lastRenderer.getIdLabel(value, evalContext.getDebugProcess()) : null;
+    String rawLabelId = value instanceof ObjectReference ? value.type().name() : labelId;
+
+    if (rawLabelId != null) {
+      // strip common prefix to avoid class names repetition
+      // esp. if idLabel is explicitly hidden to our likings
+      label = label.substring(StringUtil.commonPrefixLength(rawLabelId, label));
     }
     myValueText = label;
-    myIdLabel = calcIdLabel();
+    myIdLabel = isShowIdLabel() ? labelId : null;
   }
 
   @Override
