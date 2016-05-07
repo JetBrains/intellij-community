@@ -52,6 +52,16 @@ public class UseDPIAwareInsetsInspection extends InternalInspection {
     final PsiType type = expression.getType();
     final PsiExpressionList arguments = expression.getArgumentList();
     if (type != null && arguments != null && type.equalsToText("java.awt.Insets")) {
+      if (expression.getParent() instanceof PsiExpressionList) {
+        PsiElement parent = expression.getParent();
+        PsiElement superParent = parent.getParent();
+        if (superParent instanceof PsiMethodCallExpression) {
+          PsiType methodType = ((PsiMethodCallExpression)superParent).getType();
+          if (methodType != null && methodType.equalsToText(JBInsets.class.getName())) {
+            return null;
+          }
+        }
+      }
       final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
       final PsiClass jbuiClass = facade.findClass(JBUI.class.getName(), GlobalSearchScope.allScope(project));
       if (jbuiClass != null && facade.getResolveHelper().isAccessible(jbuiClass, expression, jbuiClass)) {
