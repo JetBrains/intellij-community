@@ -23,7 +23,6 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
-import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.ContentManagerEvent;
@@ -59,10 +58,7 @@ public class VcsLogTabsWatcher implements Disposable {
 
   @Nullable
   private String getSelectedTabName() {
-    if (myToolWindowManager instanceof ToolWindowManagerImpl &&
-        ((ToolWindowManagerImpl)myToolWindowManager).isToolWindowRegistered(TOOLWINDOW_ID) &&
-        myToolWindow != null &&
-        myToolWindow.isVisible()) {
+    if (myToolWindow != null && myToolWindow.isVisible()) {
       Content content = myToolWindow.getContentManager().getSelectedContent();
       if (content != null) {
         return content.getTabName();
