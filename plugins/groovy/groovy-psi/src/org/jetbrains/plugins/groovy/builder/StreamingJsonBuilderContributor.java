@@ -19,24 +19,27 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.util.Processor;
+import groovy.lang.Closure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierFlags;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter;
 
 import static com.intellij.psi.CommonClassNames.JAVA_UTIL_MAP;
-import static org.jetbrains.plugins.groovy.builder.StreamingJsonBuilderDelegateContributor.addClosureParameter;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrDelegatesToUtil.DELEGATES_TO_KEY;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrDelegatesToUtil.DELEGATES_TO_STRATEGY_KEY;
+import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_CLOSURE;
 
 public class StreamingJsonBuilderContributor extends BuilderMethodsContributor {
 
-  private static final String FQN = "groovy.json.StreamingJsonBuilder";
   static final String ORIGIN_INFO = "via StreamingJsonBuilder";
 
   @Nullable
   @Override
   protected String getParentClassName() {
-    return FQN;
+    return "groovy.json.StreamingJsonBuilder";
   }
 
   @Override
@@ -91,5 +94,11 @@ public class StreamingJsonBuilderContributor extends BuilderMethodsContributor {
     UtilsKt.setContainingClass(method, clazz);
     method.setOriginInfo(ORIGIN_INFO);
     return method;
+  }
+
+  protected void addClosureParameter(GrLightMethodBuilder method) {
+    GrLightParameter closureParam = method.addAndGetParameter("closure", GROOVY_LANG_CLOSURE);
+    closureParam.putUserData(DELEGATES_TO_KEY, getParentClassName());
+    closureParam.putUserData(DELEGATES_TO_STRATEGY_KEY, Closure.DELEGATE_FIRST);
   }
 }
