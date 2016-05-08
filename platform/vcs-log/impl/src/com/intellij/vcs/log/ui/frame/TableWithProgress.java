@@ -38,10 +38,28 @@ public class TableWithProgress extends JBTable {
   @Override
   public Dimension getPreferredSize() {
     Dimension size = super.getPreferredSize();
-    if (myBusyIcon != null && myBusyIcon.isRunning()) {
+    if (isBusy()) {
       return new Dimension(size.width, size.height + myBusyIcon.getPreferredSize().height);
     }
     return size;
+  }
+
+  protected boolean isBusy() {
+    return myBusyIcon != null && myBusyIcon.isRunning();
+  }
+
+  @Override
+  protected void paintComponent(@NotNull Graphics g) {
+    super.paintComponent(g);
+    if (isBusy()) {
+      Dimension size = super.getPreferredSize();
+      paintFooter(g, 0, size.height, size.width, myBusyIcon.getHeight());
+    }
+  }
+
+  protected void paintFooter(@NotNull Graphics g, int x, int y, int width, int height) {
+    g.setColor(getBackground());
+    g.fillRect(x, y, width, height);
   }
 
   private class LastRowLoadingIcon extends AsyncProcessIcon {

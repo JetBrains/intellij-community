@@ -665,6 +665,20 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     return myGraphCommitCellRenderer.getPreferredHeight();
   }
 
+  @Override
+  protected void paintFooter(@NotNull Graphics g, int x, int y, int width, int height) {
+    g.setColor(getStyle(getRowCount() - 1, GraphTableModel.COMMIT_COLUMN, "", hasFocus(), false).getBackground());
+    g.fillRect(x, y, width, height);
+    if (myUi.isMultipleRoots()) {
+      g.setColor(getRootBackgroundColor(getModel().getRoot(getRowCount() - 1), myUi.getColorManager()));
+
+      int rootWidth = getColumnModel().getColumn(GraphTableModel.ROOT_COLUMN).getWidth();
+      if (!myUi.isShowRootNames()) rootWidth -= ROOT_INDICATOR_WHITE_WIDTH;
+
+      g.fillRect(x, y, rootWidth, myUi.getTable().getRowHeight());
+    }
+  }
+
   private static class RootCellRenderer extends JBLabel implements TableCellRenderer {
     @NotNull private final VcsLogUiImpl myUi;
     @NotNull private Color myColor = UIUtil.getTableBackground();
