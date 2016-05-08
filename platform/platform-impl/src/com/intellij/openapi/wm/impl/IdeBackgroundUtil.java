@@ -33,6 +33,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.awt.image.BufferedImageOp;
+import java.awt.image.ImageObserver;
 import java.net.URL;
 
 /**
@@ -74,6 +77,7 @@ public class IdeBackgroundUtil {
            component instanceof ActionToolbar ? "toolbar" :
            component instanceof EditorsSplitters ? "frame" :
            component instanceof JBTabs ? "tabs" :
+           component instanceof ToolWindowHeader ? "title" :
            component instanceof JPanel && "navbar".equals(component.getName()) ? "navbar" :
            null;
   }
@@ -153,28 +157,56 @@ public class IdeBackgroundUtil {
     @Override
     public void clearRect(int x, int y, int width, int height) {
       super.clearRect(x, y, width, height);
-      processPainters(x, y, width, height);
+      runAllPainters(x, y, width, height, getColor());
     }
 
     @Override
     public void fillRect(int x, int y, int width, int height) {
       super.fillRect(x, y, width, height);
-      processPainters(x, y, width, height);
+      runAllPainters(x, y, width, height, getColor());
     }
 
     @Override
     public void fill(Shape s) {
       super.fill(s);
       Rectangle r = s.getBounds();
-      processPainters(r.x, r.y, r.width, r.height);
+      runAllPainters(r.x, r.y, r.width, r.height, getColor());
     }
 
-    void processPainters(int x, int y, int width, int height) {
+    @Override
+    public void drawImage(BufferedImage img, BufferedImageOp op, int x, int y) {
+      super.drawImage(img, op, x, y);
+      runAllPainters(x, y, img.getWidth(), img.getHeight(), img);
+    }
+
+    @Override
+    public boolean drawImage(Image img, int x, int y, int width, int height, ImageObserver observer) {
+      boolean b = super.drawImage(img, x, y, width, height, observer);
+      runAllPainters(x, y, width, height, img);
+      return b;
+    }
+
+    @Override
+    public boolean drawImage(Image img, int x, int y, ImageObserver observer) {
+      boolean b = super.drawImage(img, x, y, observer);
+      runAllPainters(x, y, img.getWidth(null), img.getHeight(null), img);
+      return b;
+    }
+
+    void runAllPainters(int x, int y, int width, int height, Object reason) {
+      if (width <= 1 || height <= 1) return;
+      // skip painters for transparent 'reasons'
+      if (reason instanceof Color && ((Color)reason).getAlpha() < 255) return;
+      if (reason instanceof Image) {
+        if (!(reason instanceof BufferedImage)) return;
+        if (((BufferedImage)reason).getColorModel().hasAlpha()) return;
+      }
+
       Shape s = getClip();
       Rectangle newClip = s == null ? new Rectangle(x, y, width, height) :
                           SwingUtilities.computeIntersection(x, y, width, height, s.getBounds());
       setClip(newClip);
-      helper.paint(getDelegate(), offsets);
+      helper.runAllPainters(getDelegate(), offsets);
       setClip(s);
     }
   }

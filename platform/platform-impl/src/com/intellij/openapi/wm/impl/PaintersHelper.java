@@ -87,28 +87,27 @@ final class PaintersHelper implements Painter.Listener {
   }
 
   public void paint(Graphics g) {
-    paint(g, computeOffsets(g, myRootComponent));
+    runAllPainters(g, computeOffsets(g, myRootComponent));
   }
 
-  void paint(Graphics gg, int[] offsets) {
+  void runAllPainters(Graphics gg, int[] offsets) {
     if (myPainters.isEmpty()) return;
     Graphics2D g = (Graphics2D)gg;
+    AffineTransform orig = g.getTransform();
     int i = 0;
-    // compensate current graphics transform
-    AffineTransform transform = g.getTransform();
-    int dx = offsets[i++] - (int)transform.getTranslateX();
-    int dy = offsets[i++] - (int)transform.getTranslateY();
+    // restore transform at the time of computeOffset()
+    AffineTransform t = new AffineTransform();
+    t.translate(offsets[i++], offsets[i++]);
 
     for (Painter painter : myPainters) {
       if (!painter.needsRepaint()) continue;
       Component cur = myPainter2Component.get(painter);
-      int x = offsets[i++] + dx;
-      int y = offsets[i++] + dy;
 
-      g.translate(x, y);
+      g.setTransform(t);
+      g.translate(offsets[i++], offsets[i++]);
       painter.paint(cur, g);
-      g.translate(-x, -y);
     }
+    g.setTransform(orig);
   }
 
   @NotNull
