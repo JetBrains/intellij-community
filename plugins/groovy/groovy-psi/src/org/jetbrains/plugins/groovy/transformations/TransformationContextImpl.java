@@ -33,6 +33,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
 import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil;
 
 import java.util.Collection;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -43,7 +44,7 @@ public class TransformationContextImpl implements TransformationContext {
 
   private final @NotNull GrTypeDefinition myCodeClass;
   private final Set<MethodSignature> mySignatures = new THashSet<>(METHOD_PARAMETERS_ERASURE_EQUALITY);
-  private final Collection<PsiMethod> myMethods = ContainerUtil.newArrayList();
+  private final LinkedList<PsiMethod> myMethods = ContainerUtil.newLinkedList();
   private final Collection<GrField> myFields = ContainerUtil.newArrayList();
   private final Collection<PsiClass> myInnerClasses = ContainerUtil.newArrayList();
   private final List<PsiClassType> myImplementsTypes = ContainerUtil.newArrayList();
@@ -135,7 +136,7 @@ public class TransformationContextImpl implements TransformationContext {
     return methods;
   }
 
-  private void doAddMethod(@NotNull PsiMethod method) {
+  private void doAddMethod(@NotNull PsiMethod method, boolean prepend) {
     if (method instanceof GrLightMethodBuilder) {
       ((GrLightMethodBuilder)method).setContainingClass(myCodeClass);
     }
@@ -144,14 +145,19 @@ public class TransformationContextImpl implements TransformationContext {
     }
     MethodSignature signature = method.getSignature(PsiSubstitutor.EMPTY);
     if (mySignatures.add(signature)) {
-      myMethods.add(method);
+      if (prepend) {
+        myMethods.addFirst(method);
+      }
+      else {
+        myMethods.addLast(method);
+      }
     }
   }
 
   @Override
-  public void addMethod(@NotNull PsiMethod method) {
+  public void addMethod(@NotNull PsiMethod method, boolean prepend) {
     for (PsiMethod expanded : expandReflectedMethods(method)) {
-      doAddMethod(expanded);
+      doAddMethod(expanded, prepend);
     }
   }
 

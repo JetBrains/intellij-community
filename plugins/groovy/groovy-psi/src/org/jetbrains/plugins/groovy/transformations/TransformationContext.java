@@ -64,7 +64,11 @@ public interface TransformationContext {
   @NotNull
   Collection<PsiMethod> findMethodsByName(@NotNull String name, boolean checkBases);
 
-  void addMethod(@NotNull PsiMethod method);
+  default void addMethod(@NotNull PsiMethod method) {
+    addMethod(method, false);
+  }
+
+  void addMethod(@NotNull PsiMethod method, boolean prepend);
 
   void addMethods(@NotNull PsiMethod[] methods);
 
