@@ -618,14 +618,14 @@ public class GrClassImplUtil {
   }
 
   @NotNull
-  public static PsiMethod[] expandReflectedMethods(@NotNull PsiMethod method) {
+  public static Collection<? extends PsiMethod> expandReflectedMethods(@NotNull PsiMethod method) {
     if (method instanceof GrMethod) {
       GrReflectedMethod[] methods = ((GrMethod)method).getReflectedMethods();
       if (methods.length > 0) {
-        return methods;
+        return ContainerUtil.newSmartList(methods);
       }
     }
-    return new PsiMethod[]{method};
+    return Collections.singletonList(method);
   }
 
   @NotNull
