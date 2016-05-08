@@ -15,7 +15,7 @@
  */
 package com.intellij.util;
 
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import junit.framework.TestCase;
 
 import javax.swing.*;
@@ -53,7 +53,7 @@ public class IJSwingUtilitiesTest extends TestCase {
   }
 
   private List<Component> getChildren() {
-    return ContainerUtil.collect(IJSwingUtilities.getChildren(myPanel));
+    return UIUtil.uiTraverser(myPanel).traverse().skip(1).toList();
   }
 
   private static class MockComponent extends JComponent {
