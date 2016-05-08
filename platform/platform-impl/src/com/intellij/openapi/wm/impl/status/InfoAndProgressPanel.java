@@ -168,12 +168,14 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
   @Override
   public void dispose() {
     setRefreshVisible(false);
-    InlineProgressIndicator[] indicators = getCurrentInlineIndicators().toArray(new InlineProgressIndicator[0]);
-    for (InlineProgressIndicator indicator : indicators) {
-      removeProgress(indicator);
+    synchronized (myOriginals) {
+      restoreEmptyStatus();
+      for (InlineProgressIndicator indicator : myInline2Original.keySet()) {
+        Disposer.dispose(indicator);
+      }
+      myInline2Original.clear();
+      myOriginal2Inlines.clear();
     }
-    myInline2Original.clear();
-    myOriginal2Inlines.clear();
   }
 
   @Override
@@ -619,16 +621,19 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
     }
   }
 
-  private void restoreEmptyStatus() {
+  private void restoreEmptyStatusInner() {
     removeAll();
-    setLayout(new BorderLayout());
-    add(myRefreshAndInfoPanel, BorderLayout.CENTER);
-
     myProgressIcon.suspend();
     Container iconParent = myProgressIcon.getParent();
     if (iconParent != null) {
       iconParent.remove(myProgressIcon); // to prevent leaks to this removed parent via progress icon
     }
+  }
+
+  private void restoreEmptyStatus() {
+    restoreEmptyStatusInner();
+    setLayout(new BorderLayout());
+    add(myRefreshAndInfoPanel, BorderLayout.CENTER);
 
     myRefreshAndInfoPanel.revalidate();
     myRefreshAndInfoPanel.repaint();

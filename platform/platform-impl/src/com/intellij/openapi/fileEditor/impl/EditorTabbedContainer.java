@@ -256,7 +256,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     TabInfo toSelect = indexToSelect >= 0 && indexToSelect < myTabs.getTabCount() ? myTabs.getTabAt(indexToSelect) : null;
     final TabInfo info = myTabs.getTabAt(componentIndex);
     // removing hidden tab happens on end of drag-out, we've already selected the correct tab for this case in dragOutStarted
-    if (info.isHidden()) {
+    if (info.isHidden() || !myProject.isOpen()) {
       toSelect = null;
     }
     final ActionCallback callback = myTabs.removeTab(info, toSelect, transferFocus);
