@@ -359,7 +359,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     if (rawLabelId != null) {
       // strip common prefix to avoid class names repetition
       // esp. if idLabel is explicitly hidden to our likings
-      label = label.substring(StringUtil.commonPrefixLength(rawLabelId, label));
+      label = StringUtil.trimStart(label, rawLabelId);
     }
     myValueText = label;
     myIdLabel = isShowIdLabel() ? labelId : null;
