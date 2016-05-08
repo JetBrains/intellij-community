@@ -125,7 +125,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
     if (!myBackgroundRequested && EventQueue.isDispatchThread() && Registry.is("ide.scroll.background.auto")) {
       if (!isBackgroundSet() || color instanceof UIResource) {
         Component child = getView();
-        if (child != null && child.isOpaque()) {
+        if (child != null) {
           try {
             myBackgroundRequested = true;
             return child.getBackground();
