@@ -201,9 +201,10 @@ public class TransformationContextImpl implements TransformationContext {
   }
 
   @Override
-  public void setSuperClass(@NotNull PsiClassType type) {
+  public void setSuperType(@NotNull PsiClassType type) {
     if (!getCodeClass().isInterface()) {
-      myExtendsTypes.add(0, type);
+      myExtendsTypes.clear();
+      myExtendsTypes.add(type);
     }
   }
 

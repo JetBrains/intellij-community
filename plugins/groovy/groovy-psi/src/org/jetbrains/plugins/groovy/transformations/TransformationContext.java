@@ -80,7 +80,7 @@ public interface TransformationContext {
 
   void addInnerClass(@NotNull PsiClass innerClass);
 
-  void setSuperClass(@NotNull PsiClassType type);
+  void setSuperType(@NotNull PsiClassType type);
 
   void addInterface(@NotNull PsiClassType type);
 }

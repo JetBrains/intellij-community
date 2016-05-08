@@ -58,7 +58,7 @@ public class BaseScriptTransformationSupport implements AstTransformationSupport
     context.addMethod(runMethod, true);
     context.addMethod(mainMethod, true);
 
-    context.setSuperClass(getBaseClassType(scriptClass));
+    context.setSuperType(getBaseClassType(scriptClass));
   }
 
   @NotNull
