@@ -935,14 +935,16 @@ public class ResolveUtil {
     if (isScriptField(variable)) {
       final String name = variable.getName();
 
-      int count = 0;
       final GroovyScriptClass script = (GroovyScriptClass)((GroovyFile)variable.getContainingFile()).getScriptClass();
       assert script != null;
-      for (GrScriptField field : GrScriptField.getScriptFields(script)) {
-        if (name.equals(field.getName())) count++;
-      }
+      List<GrField> duplicates = ContainerUtil.filter(script.getFields(), (GrField f) -> {
+        if (!(f instanceof GrScriptField)) return false;
+        if (!name.equals(f.getName())) return false;
+        if (((GrScriptField)f).getOriginalVariable() == variable) return false;
+        return true;
+      });
 
-      return count > 1 ? GrScriptField.getScriptField(variable) : null;
+      return duplicates.size() > 0 ? duplicates.get(0) : null;
     }
     else {
       PsiNamedElement duplicate = resolveExistingElement(variable, new DuplicateVariablesProcessor(variable), GrVariable.class);
