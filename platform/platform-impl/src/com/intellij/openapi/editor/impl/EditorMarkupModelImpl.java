@@ -1259,8 +1259,10 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
           protected void paintComponent(@NotNull Graphics g) {
             if (myVisualLine ==-1) return;
             Dimension size = getPreferredSize();
-            EditorGutterComponentEx gutterComponentEx = myEditor.getGutterComponentEx();
-            int gutterWidth = gutterComponentEx.getWidth();
+            EditorGutterComponentEx gutter = myEditor.getGutterComponentEx();
+            EditorComponentImpl content = myEditor.getContentComponent();
+
+            int gutterWidth = gutter.getWidth();
             if (myCacheLevel2 == null || myCacheStartLine > myStartVisualLine || myCacheEndLine < myEndVisualLine) {
               myCacheStartLine = fitLineToEditor(myVisualLine - myCachePreviewLines);
               myCacheEndLine = fitLineToEditor(myCacheStartLine + 2 * myCachePreviewLines + 1);
@@ -1272,18 +1274,25 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
               EditorUIUtil.setupAntialiasing(cg);
               int lineShift = -myEditor.getLineHeight() * myCacheStartLine;
 
-              AffineTransform translateInstance = AffineTransform.getTranslateInstance(-3, lineShift);
-              translateInstance.preConcatenate(t);
-              cg.setTransform(translateInstance);
+              AffineTransform gutterAT = AffineTransform.getTranslateInstance(-3, lineShift);
+              AffineTransform contentAT = AffineTransform.getTranslateInstance(gutterWidth  - 3, lineShift);
+              gutterAT.preConcatenate(t);
+              contentAT.preConcatenate(t);
 
-              cg.setClip(0, -lineShift, gutterWidth, myCacheLevel2.getHeight());
-              gutterComponentEx.paint(cg);
-              translateInstance = AffineTransform.getTranslateInstance(gutterWidth  - 3, lineShift);
-              translateInstance.preConcatenate(t);
-              cg.setTransform(translateInstance);
-              EditorComponentImpl contentComponent = myEditor.getContentComponent();
-              cg.setClip(0, -lineShift, contentComponent.getWidth(), myCacheLevel2.getHeight());
-              contentComponent.paint(cg);
+              EditorTextField.SUPPLEMENTARY_KEY.set(myEditor, Boolean.TRUE);
+              try {
+                cg.setTransform(gutterAT);
+                cg.setClip(0, -lineShift, gutterWidth, myCacheLevel2.getHeight());
+                gutter.paint(cg);
+
+                cg.setTransform(contentAT);
+                cg.setClip(0, -lineShift, content.getWidth(), myCacheLevel2.getHeight());
+                content.paint(cg);
+              }
+              finally {
+                EditorTextField.SUPPLEMENTARY_KEY.set(myEditor, null);
+              }
+
             }
             if (myCacheLevel1 == null) {
               myCacheLevel1 = UIUtil.createImage(size.width, myEditor.getLineHeight() * (2 * myPreviewLines + 1), BufferedImage.TYPE_INT_RGB);

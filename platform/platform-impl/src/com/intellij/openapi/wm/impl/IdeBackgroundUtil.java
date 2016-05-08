@@ -16,11 +16,17 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
+import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter;
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
 import com.intellij.openapi.ui.AbstractPainter;
+import com.intellij.ui.EditorTextField;
 import com.intellij.ui.Graphics2DDelegate;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.util.ImageLoader;
@@ -64,7 +70,7 @@ public class IdeBackgroundUtil {
   private static boolean suppressBackground(JComponent component) {
     String type = getComponentType(component);
     if (type == null) return false;
-    String spec = System.getProperty(BG_PROPERTY_PREFIX + "target", "");
+    String spec = System.getProperty(BG_PROPERTY_PREFIX + "target", "*");
     boolean allInclusive = spec.startsWith("*");
     return allInclusive && spec.contains("-" + type) || !allInclusive && !spec.contains(type);
   }
@@ -76,9 +82,12 @@ public class IdeBackgroundUtil {
            component instanceof JViewport ? "viewport" :
            component instanceof ActionToolbar ? "toolbar" :
            component instanceof EditorsSplitters ? "frame" :
+           component instanceof EditorComponentImpl ? "editor" :
+           component instanceof EditorGutterComponentEx ? "editor" :
            component instanceof JBTabs ? "tabs" :
            component instanceof ToolWindowHeader ? "title" :
            component instanceof JPanel && "navbar".equals(component.getName()) ? "navbar" :
+           component instanceof JPanel && "terminal".equals(component.getName()) ? "terminal" :
            null;
   }
 
@@ -213,10 +222,15 @@ public class IdeBackgroundUtil {
 
   private static class MyTransform implements PairFunction<JComponent, Graphics2D, Graphics2D> {
     @Override
-    public Graphics2D fun(JComponent t, Graphics2D v) {
-      String type = getComponentType(t);
-      if ("frame".equals(type)) return withFrameBackground(v, t);
-      return type != null ? withEditorBackground(v, t) : v;
+    public Graphics2D fun(JComponent c, Graphics2D g) {
+      String type = getComponentType(c);
+      if ("editor".equals(type)) {
+        Editor editor = c instanceof EditorComponentImpl ? ((EditorComponentImpl)c).getEditor() :
+                        c instanceof EditorGutterComponentEx ? CommonDataKeys.EDITOR.getData((DataProvider)c) : null;
+        if (Boolean.TRUE.equals(EditorTextField.SUPPLEMENTARY_KEY.get(editor))) return g;
+      }
+      if ("frame".equals(type)) return withFrameBackground(g, c);
+      return type != null ? withEditorBackground(g, c) : g;
     }
   }
 }
