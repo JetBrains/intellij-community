@@ -173,6 +173,12 @@ public class TextComponentCaretModel implements CaretModel {
     return null;
   }
 
+  @Nullable
+  @Override
+  public Caret addCaret(@NotNull VisualPosition pos, boolean makePrimary) {
+    return null;
+  }
+
   @Override
   public boolean removeCaret(@NotNull Caret caret) {
     return false;
