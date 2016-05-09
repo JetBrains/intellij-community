@@ -192,7 +192,7 @@ class TransactionTest extends LightPlatformTestCase {
         SwingUtilities.invokeLater {
           String trace = null
           guard.submitTransaction testRootDisposable, nestedId, {
-            trace = IdeEventQueue.instance.trueCurrentEvent.toString() + "  " + DebugUtil.currentStackTrace()
+            trace = IdeEventQueue.instance.trueCurrentEvent.toString() + "  " + guard.toString() + "  " + DebugUtil.currentStackTrace()
             log << '3'
           }
           assert log == ['1', '2'] : log + " " + trace

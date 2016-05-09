@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.application;
 
+import com.google.common.base.Objects;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -299,6 +300,14 @@ public class TransactionGuardImpl extends TransactionGuard {
     }
 
     return runnable;
+  }
+
+  @Override
+  public String toString() {
+    return Objects.toStringHelper(this)
+      .add("currentTransaction", myCurrentTransaction)
+      .add("writingAllowed", myWritingAllowed)
+      .toString();
   }
 
   private static class Transaction {
