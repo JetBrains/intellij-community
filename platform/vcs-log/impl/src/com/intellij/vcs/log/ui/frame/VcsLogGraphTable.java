@@ -281,12 +281,7 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
       List<VcsFullCommitDetails> details = VcsLogUtil.collectFirstPackOfLoadedSelectedDetails(log);
       if (!details.isEmpty()) {
         CopyPasteManager.getInstance()
-          .setContents(new StringSelection(StringUtil.join(details, new Function<VcsFullCommitDetails, String>() {
-            @Override
-            public String fun(VcsFullCommitDetails details) {
-              return details.getSubject();
-            }
-          }, "\n")));
+          .setContents(new StringSelection(StringUtil.join(details, VcsShortCommitDetails::getSubject, "\n")));
       }
     }
   }
@@ -356,23 +351,17 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
     if (details == null || details instanceof LoadingDetails) return defaultStyle;
 
     List<VcsLogHighlighter.VcsCommitStyle> styles =
-      ContainerUtil.map(myHighlighters, new Function<VcsLogHighlighter, VcsLogHighlighter.VcsCommitStyle>() {
-        @Override
-        public VcsLogHighlighter.VcsCommitStyle fun(VcsLogHighlighter highlighter) {
-          return highlighter.getStyle(details, selected);
-        }
+      ContainerUtil.map(myHighlighters, highlighter -> {
+        return highlighter.getStyle(details, selected);
       });
     return VcsCommitStyleFactory.combine(ContainerUtil.append(styles, defaultStyle));
   }
 
   public void viewportSet(JViewport viewport) {
-    viewport.addChangeListener(new ChangeListener() {
-      @Override
-      public void stateChanged(ChangeEvent e) {
-        AbstractTableModel model = getModel();
-        Couple<Integer> visibleRows = ScrollingUtil.getVisibleRows(VcsLogGraphTable.this);
-        model.fireTableChanged(new TableModelEvent(model, visibleRows.first - 1, visibleRows.second, GraphTableModel.ROOT_COLUMN));
-      }
+    viewport.addChangeListener(e -> {
+      AbstractTableModel model = getModel();
+      Couple<Integer> visibleRows = ScrollingUtil.getVisibleRows(this);
+      model.fireTableChanged(new TableModelEvent(model, visibleRows.first - 1, visibleRows.second, GraphTableModel.ROOT_COLUMN));
     });
   }
 
@@ -531,12 +520,9 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
       Pair<TIntHashSet, Integer> toSelectAndScroll = findRowsToSelectAndScroll(myTable.getModel(), newVisibleGraph);
       if (!toSelectAndScroll.first.isEmpty()) {
         myTable.getSelectionModel().setValueIsAdjusting(true);
-        toSelectAndScroll.first.forEach(new TIntProcedure() {
-          @Override
-          public boolean execute(int row) {
-            myTable.addRowSelectionInterval(row, row);
-            return true;
-          }
+        toSelectAndScroll.first.forEach(row -> {
+          myTable.addRowSelectionInterval(row, row);
+          return true;
         });
         myTable.getSelectionModel().setValueIsAdjusting(false);
       }
