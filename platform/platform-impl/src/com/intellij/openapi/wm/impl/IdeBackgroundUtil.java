@@ -15,12 +15,23 @@
  */
 package com.intellij.openapi.wm.impl;
 
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
+import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter;
+import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
 import com.intellij.openapi.ui.AbstractPainter;
+import com.intellij.ui.EditorTextField;
 import com.intellij.ui.Graphics2DDelegate;
+import com.intellij.ui.tabs.JBTabs;
 import com.intellij.util.ImageLoader;
+import com.intellij.util.PairFunction;
+import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -28,6 +39,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.awt.image.BufferedImageOp;
+import java.awt.image.ImageObserver;
 import java.net.URL;
 
 /**
@@ -35,14 +49,46 @@ import java.net.URL;
  */
 public class IdeBackgroundUtil {
 
+  public static final String BG_PROPERTY_PREFIX = "idea.wallpaper.";
+
+  static {
+    JBSwingUtilities.addGlobalCGTransform(new MyTransform());
+  }
+
   @NotNull
-  public static Graphics2D withEditorBackground(@NotNull Graphics g, @NotNull final JComponent component) {
+  public static Graphics2D withEditorBackground(@NotNull Graphics g, @NotNull JComponent component) {
+    if (suppressBackground(component)) return (Graphics2D)g;
     return withNamedPainters(g, "editor", component);
   }
 
   @NotNull
-  public static Graphics2D withFrameBackground(@NotNull Graphics g, @NotNull final JComponent component) {
+  public static Graphics2D withFrameBackground(@NotNull Graphics g, @NotNull JComponent component) {
+    if (suppressBackground(component)) return (Graphics2D)g;
     return withNamedPainters(g, "ide", component);
+  }
+
+  private static boolean suppressBackground(JComponent component) {
+    String type = getComponentType(component);
+    if (type == null) return false;
+    String spec = System.getProperty(BG_PROPERTY_PREFIX + "target", "*");
+    boolean allInclusive = spec.startsWith("*");
+    return allInclusive && spec.contains("-" + type) || !allInclusive && !spec.contains(type);
+  }
+
+  private static String getComponentType(JComponent component) {
+    return component instanceof JTree ? "tree" :
+           component instanceof JList ? "list" :
+           component instanceof JTable ? "table" :
+           component instanceof JViewport ? "viewport" :
+           component instanceof ActionToolbar ? "toolbar" :
+           component instanceof EditorsSplitters ? "frame" :
+           component instanceof EditorComponentImpl ? "editor" :
+           component instanceof EditorGutterComponentEx ? "editor" :
+           component instanceof JBTabs ? "tabs" :
+           component instanceof ToolWindowHeader ? "title" :
+           component instanceof JPanel && "navbar".equals(component.getName()) ? "navbar" :
+           component instanceof JPanel && "terminal".equals(component.getName()) ? "terminal" :
+           null;
   }
 
   @NotNull
@@ -54,17 +100,17 @@ public class IdeBackgroundUtil {
   public static Graphics2D withNamedPainters(@NotNull Graphics g, @NotNull String paintersName, @NotNull final JComponent component) {
     JRootPane rootPane = component.getRootPane();
     Component glassPane = rootPane == null ? null : rootPane.getGlassPane();
-    final PaintersHelper helper = glassPane instanceof IdeGlassPaneImpl? ((IdeGlassPaneImpl)glassPane).getNamedPainters(paintersName) : null;
+    PaintersHelper helper = glassPane instanceof IdeGlassPaneImpl? ((IdeGlassPaneImpl)glassPane).getNamedPainters(paintersName) : null;
     if (helper == null || !helper.needsRepaint()) return (Graphics2D)g;
-    return new MyGraphics(g, helper, component);
+    return MyGraphics.wrap(g, helper, component);
   }
 
   public static void initEditorPainters(@NotNull PaintersHelper painters) {
-    PaintersHelper.initWallpaperPainter("idea.wallpaper.editor", painters);
+    PaintersHelper.initWallpaperPainter(BG_PROPERTY_PREFIX + "editor", painters);
   }
 
   public static void initFramePainters(@NotNull PaintersHelper painters) {
-    PaintersHelper.initWallpaperPainter("idea.wallpaper.ide", painters);
+    PaintersHelper.initWallpaperPainter(BG_PROPERTY_PREFIX + "ide", painters);
 
     ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
     String path = /*UIUtil.isUnderDarcula()? appInfo.getEditorBackgroundImageUrl() : */null;
@@ -97,40 +143,94 @@ public class IdeBackgroundUtil {
   }
 
   private static class MyGraphics extends Graphics2DDelegate {
-    private final PaintersHelper myHelper;
-    private final JComponent myComponent;
+    final PaintersHelper helper;
+    final int[] offsets;
+    
+    static Graphics2D wrap(Graphics g, PaintersHelper helper, JComponent component) {
+      return new MyGraphics(g instanceof MyGraphics ? ((MyGraphics)g).getDelegate() : g,
+                            helper, helper.computeOffsets(g, component));
+    }
 
-    public MyGraphics(Graphics g, PaintersHelper helper, JComponent component) {
+    MyGraphics(Graphics g, PaintersHelper helper, int[] offsets) {
       super((Graphics2D)g);
-      myHelper = helper;
-      myComponent = component;
+      this.helper = helper;
+      this.offsets = offsets;
     }
 
     @NotNull
     @Override
     public Graphics create() {
-      return new MyGraphics(super.create(), myHelper, myComponent);
+      return new MyGraphics(getDelegate().create(), helper, offsets);
     }
 
     @Override
     public void clearRect(int x, int y, int width, int height) {
       super.clearRect(x, y, width, height);
-      processPainters(x, y, width, height);
+      runAllPainters(x, y, width, height, getColor());
     }
 
     @Override
     public void fillRect(int x, int y, int width, int height) {
       super.fillRect(x, y, width, height);
-      processPainters(x, y, width, height);
+      runAllPainters(x, y, width, height, getColor());
     }
 
-    void processPainters(int x, int y, int width, int height) {
+    @Override
+    public void fill(Shape s) {
+      super.fill(s);
+      Rectangle r = s.getBounds();
+      runAllPainters(r.x, r.y, r.width, r.height, getColor());
+    }
+
+    @Override
+    public void drawImage(BufferedImage img, BufferedImageOp op, int x, int y) {
+      super.drawImage(img, op, x, y);
+      runAllPainters(x, y, img.getWidth(), img.getHeight(), img);
+    }
+
+    @Override
+    public boolean drawImage(Image img, int x, int y, int width, int height, ImageObserver observer) {
+      boolean b = super.drawImage(img, x, y, width, height, observer);
+      runAllPainters(x, y, width, height, img);
+      return b;
+    }
+
+    @Override
+    public boolean drawImage(Image img, int x, int y, ImageObserver observer) {
+      boolean b = super.drawImage(img, x, y, observer);
+      runAllPainters(x, y, img.getWidth(null), img.getHeight(null), img);
+      return b;
+    }
+
+    void runAllPainters(int x, int y, int width, int height, Object reason) {
+      if (width <= 1 || height <= 1) return;
+      // skip painters for transparent 'reasons'
+      if (reason instanceof Color && ((Color)reason).getAlpha() < 255) return;
+      if (reason instanceof Image) {
+        if (!(reason instanceof BufferedImage)) return;
+        if (((BufferedImage)reason).getColorModel().hasAlpha()) return;
+      }
+
       Shape s = getClip();
       Rectangle newClip = s == null ? new Rectangle(x, y, width, height) :
                           SwingUtilities.computeIntersection(x, y, width, height, s.getBounds());
       setClip(newClip);
-      myHelper.paint(getDelegate(), myComponent);
+      helper.runAllPainters(getDelegate(), offsets);
       setClip(s);
+    }
+  }
+
+  private static class MyTransform implements PairFunction<JComponent, Graphics2D, Graphics2D> {
+    @Override
+    public Graphics2D fun(JComponent c, Graphics2D g) {
+      String type = getComponentType(c);
+      if ("editor".equals(type)) {
+        Editor editor = c instanceof EditorComponentImpl ? ((EditorComponentImpl)c).getEditor() :
+                        c instanceof EditorGutterComponentEx ? CommonDataKeys.EDITOR.getData((DataProvider)c) : null;
+        if (Boolean.TRUE.equals(EditorTextField.SUPPLEMENTARY_KEY.get(editor))) return g;
+      }
+      if ("frame".equals(type)) return withFrameBackground(g, c);
+      return type != null ? withEditorBackground(g, c) : g;
     }
   }
 }

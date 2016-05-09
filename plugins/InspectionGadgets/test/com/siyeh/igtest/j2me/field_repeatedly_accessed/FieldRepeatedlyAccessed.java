@@ -4,7 +4,7 @@ public class FieldRepeatedlyAccessed {
 
     String s = "";
 
-    void foo() {
+    void <warning descr="Field 's' accessed repeatedly in method 'foo()'">foo</warning>() {
         while(true) {
             System.out.println(s);
         }

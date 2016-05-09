@@ -255,6 +255,31 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     }
   }
 
+  public <K> void serializeIndexValue(DataOutput out, StubIndexKey<K, ?> stubIndexKey, Map<K, StubIdList> map) throws IOException {
+    MyIndex<K> index = (MyIndex<K>)getAsyncState().myIndices.get(stubIndexKey);
+    KeyDescriptor<K> keyDescriptor = index.getExtension().getKeyDescriptor();
+
+    DataInputOutputUtil.writeINT(out, map.size());
+    for(K key:map.keySet()) {
+      keyDescriptor.save(out, key);
+      StubIdExternalizer.INSTANCE.save(out, map.get(key));
+    }
+  }
+
+  public <K> Map<K, StubIdList> deserializeIndexValue(DataInput in, StubIndexKey<K, ?> stubIndexKey) throws IOException {
+    MyIndex<K> index = (MyIndex<K>)getAsyncState().myIndices.get(stubIndexKey);
+    KeyDescriptor<K> keyDescriptor = index.getExtension().getKeyDescriptor();
+    int mapSize = DataInputOutputUtil.readINT(in);
+
+    Map<K, StubIdList> result = new THashMap<>(mapSize);
+    for(int i = 0; i < mapSize; ++i) {
+      K key = keyDescriptor.read(in);
+      StubIdList read = StubIdExternalizer.INSTANCE.read(in);
+      result.put(key, read);
+    }
+    return result;
+  }
+
   @NotNull
   @Override
   public <Key, Psi extends PsiElement> Collection<Psi> get(@NotNull final StubIndexKey<Key, Psi> indexKey,

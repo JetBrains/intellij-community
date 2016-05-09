@@ -3178,6 +3178,11 @@ public class StringUtil extends StringUtilRt {
     return StringUtilRt.parseBoolean(string, defaultValue);
   }
 
+  @Contract(pure = true)
+  public static <E extends Enum<E>> E parseEnum(String string, E defaultValue, Class<E> clazz) {
+    return StringUtilRt.parseEnum(string, defaultValue, clazz);
+  }
+
   @NotNull
   @Contract(pure = true)
   public static String getShortName(@NotNull Class aClass) {

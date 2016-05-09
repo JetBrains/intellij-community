@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jdom.Element;
@@ -127,6 +128,9 @@ public class UnnecessaryLocalVariableInspectionBase extends BaseInspection {
         return false;
       }
       if (!(referent instanceof PsiLocalVariable || referent instanceof PsiParameter)) {
+        if (referent instanceof PsiField && ExpressionUtils.isConstant((PsiField)referent)) {
+          return true;
+        }
         return false;
       }
       if (!(referent instanceof PsiResourceVariable) && variable instanceof PsiResourceVariable) {

@@ -54,6 +54,7 @@ public class TransactionGuardImpl extends TransactionGuard {
 
   @NotNull
   private AccessToken startTransactionUnchecked() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     final boolean wasWritingAllowed = myWritingAllowed;
 
     myWritingAllowed = true;
@@ -218,6 +219,7 @@ public class TransactionGuardImpl extends TransactionGuard {
       return AccessToken.EMPTY_ACCESS_TOKEN;
     }
 
+    ApplicationManager.getApplication().assertIsDispatchThread();
     final boolean prev = myWritingAllowed;
     myWritingAllowed = allowWriting;
     return new AccessToken() {
@@ -284,6 +286,7 @@ public class TransactionGuardImpl extends TransactionGuard {
       return new Runnable() {
         @Override
         public void run() {
+          ApplicationManager.getApplication().assertIsDispatchThread();
           final boolean prev = myWritingAllowed;
           myWritingAllowed = true;
           try {

@@ -36,7 +36,6 @@ import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.Alarm;
-import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.Html;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -207,7 +206,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
         String text = c.getToolTipText(myCurrentEvent);
         if (text == null || text.trim().isEmpty()) return false;
 
-        JLayeredPane layeredPane = IJSwingUtilities.findParentOfType(c, JLayeredPane.class);
+        JLayeredPane layeredPane = UIUtil.getParentOfType(JLayeredPane.class, c);
 
         final JEditorPane pane = initPane(text, new HintHint(me).setAwtTooltip(true), layeredPane);
         final Wrapper wrapper = new Wrapper(pane);

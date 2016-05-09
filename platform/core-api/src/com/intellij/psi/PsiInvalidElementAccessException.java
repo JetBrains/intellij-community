@@ -73,7 +73,9 @@ public class PsiInvalidElementAccessException extends RuntimeException implement
       element.putUserData(REPORTING_EXCEPTION, Boolean.TRUE);
 
       try {
-        Object trace = recursiveInvocation ? null : findInvalidationTrace(element.getNode());
+        Object trace = recursiveInvocation ? null :
+                       element instanceof PsiFile ? getInvalidationTrace(element) :
+                       findInvalidationTrace(element.getNode());
         myMessage = getMessageWithReason(element, message, recursiveInvocation, trace);
         if (trace == null) {
           myDiagnostic = Attachment.EMPTY_ARRAY;

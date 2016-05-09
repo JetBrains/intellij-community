@@ -187,7 +187,7 @@ public class UiUtils {
       }).createPanel();
     panel.setPreferredSize(JBUI.size(150, 100));
     optionsPanel.setBorder(IdeBorderFactory.createTitledBorder(borderTitle,
-                                                               false, new Insets(10, 0, 0, 0)));
+                                                               false, JBUI.insetsTop(10)));
     optionsPanel.add(panel);
     return optionsPanel;
   }
