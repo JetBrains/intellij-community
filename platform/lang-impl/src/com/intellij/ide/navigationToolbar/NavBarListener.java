@@ -45,6 +45,7 @@ import com.intellij.psi.PsiTreeChangeEvent;
 import com.intellij.psi.PsiTreeChangeListener;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -122,10 +123,16 @@ public class NavBarListener extends WolfTheProblemSolver.ProblemListener
       registerKey(command);
     }
     myPanel.addFocusListener(this);
+    if (myPanel.allowNavItemsFocus()) {
+      myPanel.addNavBarItemFocusListener(this);
+    }
   }
 
   private void registerKey(NavBarKeyboardCommand cmd) {
-    myPanel.registerKeyboardAction(this, cmd.name(), cmd.getKeyStroke(), JComponent.WHEN_FOCUSED);
+    int whenFocused = myPanel.allowNavItemsFocus() ?
+        JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT :
+        JComponent.WHEN_FOCUSED;
+    myPanel.registerKeyboardAction(this, cmd.name(), cmd.getKeyStroke(), whenFocused);
   }
 
   @Override
@@ -148,6 +155,13 @@ public class NavBarListener extends WolfTheProblemSolver.ProblemListener
 
   @Override
   public void focusGained(final FocusEvent e) {
+    if (myPanel.allowNavItemsFocus()) {
+      // If focus comes from anything in the nav bar panel, ignore the event
+      if (UIUtil.isAncestor(myPanel, e.getOppositeComponent())) {
+        return;
+      }
+    }
+
     if (e.getOppositeComponent() == null && shouldFocusEditor) {
       shouldFocusEditor = false;
       ToolWindowManager.getInstance(myPanel.getProject()).activateEditorComponent();
@@ -164,6 +178,13 @@ public class NavBarListener extends WolfTheProblemSolver.ProblemListener
 
   @Override
   public void focusLost(final FocusEvent e) {
+    if (myPanel.allowNavItemsFocus()) {
+      // If focus reaches anything in nav bar panel, ignore the event
+      if (UIUtil.isAncestor(myPanel, e.getOppositeComponent())) {
+        return;
+      }
+    }
+
     if (myPanel.getProject().isDisposed()) {
       myPanel.setContextComponent(null);
       myPanel.hideHint();
@@ -354,7 +375,7 @@ public class NavBarListener extends WolfTheProblemSolver.ProblemListener
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
-        if (myPanel.hasFocus()) {
+        if (myPanel.isFocused()) {
           manager.openFile(file, true);
         }
       }

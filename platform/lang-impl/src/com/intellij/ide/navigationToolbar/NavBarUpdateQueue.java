@@ -153,11 +153,14 @@ public class NavBarUpdateQueue extends MergingUpdateQueue {
         }
 
         if (focus != null && focus.isShowing()) {
-          if (!myPanel.hasFocus() && !myPanel.isNodePopupShowing()) {
+          if (!myPanel.isFocused() && !myPanel.isNodePopupShowing()) {
             requestModelUpdate(DataManager.getInstance().getDataContext(focus), null, false);
           }
         }
         else if (wnd.isActive()) {
+          if (myPanel.allowNavItemsFocus() && (myPanel.isFocused() || myPanel.isNodePopupShowing())) {
+            return;
+          }
           requestModelUpdate(null, myPanel.getContextObject(), false);
         }
       }
