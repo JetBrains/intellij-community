@@ -13,77 +13,59 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.tests;
+package git4idea.tests
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.LocalChangeList;
-import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
-import git4idea.test.GitSingleRepoTest;
-import git4idea.test.GitTestUtil;
-import org.jetbrains.annotations.Nullable;
-import org.testng.annotations.Test;
+import com.intellij.openapi.vcs.Executor.overwrite
+import com.intellij.openapi.vcs.VcsException
+import com.intellij.util.containers.ContainerUtil
+import git4idea.test.GitExecutor.*
+import git4idea.test.GitSingleRepoTest
+import git4idea.test.GitTestUtil.createFileStructure
+import java.io.File
+import java.util.*
 
-import java.io.File;
-import java.io.IOException;
-import java.util.List;
+class GitCommitTest : GitSingleRepoTest() {
 
-import static com.intellij.openapi.vcs.Executor.overwrite;
-import static git4idea.test.GitExecutor.*;
+  // IDEA-50318
+  fun `test merge commit with spaces in path`() {
+    val PATH = "dir with spaces/file with spaces.txt"
+    createFileStructure(myProjectRoot, PATH)
+    addCommit("created some file structure")
 
-public class GitCommitTest extends GitSingleRepoTest {
-  private static final Logger LOG = Logger.getInstance(GitCommitTest.class);
+    git("branch feature")
 
-  /**
-   * Tests that merge commit after resolving a conflict works fine if there is a file with spaces in its path.
-   * IDEA-50318
-   */
-  @Test
-  public void testMergeCommitWithSpacesInPath() throws IOException {
-    final String PATH = "dir with spaces/file with spaces.txt";
-    GitTestUtil.createFileStructure(myProjectRoot, PATH);
-    addCommit("created some file structure");
+    val file = File(myProjectPath, PATH)
+    assertTrue("File doesn't exist!", file.exists())
+    overwrite(file, "my content")
+    addCommit("modified in master")
 
-    git("branch feature");
+    checkout("feature")
+    overwrite(file, "brother content")
+    addCommit("modified in feature")
 
-    File file = new File(myProjectPath, PATH);
-    assertTrue("File doesn't exist!", file.exists());
-    overwrite(file, "my content");
-    addCommit("modified in master");
+    checkout("master")
+    git("merge feature", true) // ignoring non-zero exit-code reporting about conflicts
+    overwrite(file, "merged content") // manually resolving conflict
+    git("add .")
 
-    checkout("feature");
-    overwrite(file, "brother content");
-    addCommit("modified in feature");
+    updateChangeListManager()
+    val changeList = myChangeListManager.defaultChangeList
+    changeList.comment = "Commit message"
+    val changes = ArrayList(myChangeListManager.getChangesIn(myProjectRoot))
+    assertTrue(!changes.isEmpty())
 
-    checkout("master");
-    git("merge feature", true); // ignoring non-zero exit-code reporting about conflicts
-    overwrite(file, "merged content"); // manually resolving conflict
-    git("add .");
+    val exceptions = myVcs.checkinEnvironment!!.commit(changes, "comment")
+    assertNoExceptions(exceptions)
 
-    final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
-    updateChangeListManager();
-    final LocalChangeList changeList = changeListManager.getDefaultChangeList();
-    changeList.setComment("Commit message");
-    List<Change> changes = ContainerUtil.newArrayList(changeListManager.getChangesIn(myProjectRoot));
-    assertTrue(!changes.isEmpty());
-
-    CheckinEnvironment checkingEnv = ObjectUtils.assertNotNull(myVcs.getCheckinEnvironment());
-    List<VcsException> exceptions = checkingEnv.commit(changes, "comment");
-    assertNoExceptions(exceptions);
-
-    updateChangeListManager();
-    assertTrue(changeListManager.getChangesIn(myProjectRoot).isEmpty());
+    updateChangeListManager()
+    assertTrue(myChangeListManager.getChangesIn(myProjectRoot).isEmpty())
   }
 
-  private static void assertNoExceptions(@Nullable List<VcsException> exceptions) {
-    VcsException ex = ContainerUtil.getFirstItem(exceptions);
+  private fun assertNoExceptions(exceptions: List<VcsException>?) {
+    val ex = ContainerUtil.getFirstItem(exceptions)
     if (ex != null) {
-      LOG.error(ex);
-      fail("Exception during executing the commit: " + ex.getMessage());
+      LOG.error(ex)
+      fail("Exception during executing the commit: " + ex.message)
     }
   }
 }
