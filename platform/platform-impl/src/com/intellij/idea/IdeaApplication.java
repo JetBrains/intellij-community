@@ -193,7 +193,7 @@ public class IdeaApplication {
       ApplicationManagerEx.getApplicationEx().load();
       myLoaded = true;
 
-      myStarter.main(myArgs);
+      ((TransactionGuardImpl) TransactionGuard.getInstance()).performUserActivity(() -> myStarter.main(myArgs));
       myStarter = null; //GC it
     }
     catch (Exception e) {
