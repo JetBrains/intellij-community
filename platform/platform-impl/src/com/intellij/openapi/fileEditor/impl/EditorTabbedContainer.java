@@ -554,7 +554,9 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
         final TabInfo info = myTabs.findInfo(e);
         if (info != null && info.getObject() != null) {
           final VirtualFile vFile = (VirtualFile)info.getObject();
-          ShowFilePathAction.show(vFile, e);
+          if (vFile != null) {
+            ShowFilePathAction.show(vFile, e);
+          }
         }
       }
     }
