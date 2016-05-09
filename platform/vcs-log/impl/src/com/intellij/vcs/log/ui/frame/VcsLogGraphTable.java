@@ -664,6 +664,18 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
     return myLogData.isMultiRoot() ? rootColumn.getWidth() : 0;
   }
 
+  @Override
+  public TableCellEditor getCellEditor() {
+    // this fixes selection problems by prohibiting selection when user clicks on graph (CellEditor does that)
+    // what is fun about this code is that if you set cell editor in constructor with setCellEditor method it would not work
+    return myDummyEditor;
+  }
+
+  @Override
+  public int getRowHeight() {
+    return myGraphCommitCellRenderer.getPreferredHeight();
+  }
+
   private static class RootCellRenderer extends JBLabel implements TableCellRenderer {
     @NotNull private final VcsLogUiImpl myUi;
     @NotNull private Color myColor = UIUtil.getTableBackground();
@@ -740,18 +752,6 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
     public void setBackground(Color bg) {
       myBorderColor = bg;
     }
-  }
-
-  @Override
-  public TableCellEditor getCellEditor() {
-    // this fixes selection problems by prohibiting selection when user clicks on graph (CellEditor does that)
-    // what is fun about this code is that if you set cell editor in constructor with setCellEditor method it would not work
-    return myDummyEditor;
-  }
-
-  @Override
-  public int getRowHeight() {
-    return myGraphCommitCellRenderer.getPreferredHeight();
   }
 
   private class StringCellRenderer extends ColoredTableCellRenderer {
