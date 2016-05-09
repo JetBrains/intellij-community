@@ -357,7 +357,13 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
         }
         return;
       }
-      QuickFixAction.this.applyFix(myProject, myContext, new CommonProblemDescriptor[]{descriptor}, myIgnoredElements);
+
+      try {
+        QuickFixAction.this.applyFix(myProject, myContext, new CommonProblemDescriptor[]{descriptor}, myIgnoredElements);
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+      }
     }
 
     @Override
