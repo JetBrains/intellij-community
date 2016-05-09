@@ -49,8 +49,6 @@ class GitCommitTest : GitSingleRepoTest() {
     git("add .")
 
     updateChangeListManager()
-    val changeList = myChangeListManager.defaultChangeList
-    changeList.comment = "Commit message"
     val changes = ArrayList(myChangeListManager.getChangesIn(myProjectRoot))
     assertTrue(!changes.isEmpty())
 
