@@ -2167,7 +2167,9 @@ public class FileBasedIndexImpl extends FileBasedIndex {
                 if (virtualFile instanceof VirtualFileWithId) {
                   int fileId = ((VirtualFileWithId)virtualFile).getId();
                   boolean wasIndexed = false;
+                  List<ID<?, ?>> candidates = getAffectedIndexCandidates(virtualFile);
                   for (ID<?, ?> psiBackedIndex : myPsiDependentIndices) {
+                    if (!candidates.contains(psiBackedIndex)) continue;
                     if(getInputFilter(psiBackedIndex).acceptInput(virtualFile)) {
                       getIndex(psiBackedIndex).resetIndexedStateForFile(fileId);
                       wasIndexed = true;
