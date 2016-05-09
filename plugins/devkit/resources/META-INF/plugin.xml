@@ -119,7 +119,7 @@
                      groupKey="inspections.group.name"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UseJBColorInspection"/>
-    <localInspection language="JAVA" shortName="UseJBUIInsets" displayName="Use DPI-aware insets"
+    <localInspection language="JAVA" shortName="UseDPIAwareInsets" displayName="Use DPI-aware insets"
                      groupKey="inspections.group.name"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UseDPIAwareInsetsInspection"/>
