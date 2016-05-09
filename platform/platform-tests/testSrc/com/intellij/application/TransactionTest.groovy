@@ -1,5 +1,6 @@
 package com.intellij.application
 
+import com.intellij.ide.IdeEventQueue
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.progress.ProgressManager
@@ -191,7 +192,7 @@ class TransactionTest extends LightPlatformTestCase {
         SwingUtilities.invokeLater {
           String trace = null
           guard.submitTransaction testRootDisposable, nestedId, {
-            trace = DebugUtil.currentStackTrace()
+            trace = IdeEventQueue.instance.trueCurrentEvent.toString() + "  " + DebugUtil.currentStackTrace()
             log << '3'
           }
           assert log == ['1', '2'] : log + " " + trace
