@@ -88,7 +88,6 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
   private static final ExecutorService ourPool = AppExecutorUtil.createBoundedApplicationPoolExecutor(4);
 
   private final MyDataIndexer myDataIndexer = new MyDataIndexer();
-  private final EnumeratorStringDescriptor myKeyDescriptor = new EnumeratorStringDescriptor();
 
   public GroovyDslFileIndex() {
     VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileAdapter() {
@@ -116,7 +115,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
   @NotNull
   @Override
   public KeyDescriptor<String> getKeyDescriptor() {
-    return myKeyDescriptor;
+    return EnumeratorStringDescriptor.INSTANCE;
   }
 
   @NotNull
