@@ -1,0 +1,3 @@
+<component name="DependencyValidationManager">
+  <scope name="firebase-code" pattern="src[firebase]:*..*||test[firebase]:*..*" />
+</component>
