@@ -36,7 +36,7 @@ public class CustomizeDesktopEntryStep extends AbstractCustomizeWizardStep {
   }
 
   private final JCheckBox myCreateEntryCheckBox = new JCheckBox(ActionsBundle.message("action.CreateDesktopEntry.description"));
-  private final JCheckBox myGlobalEntryCheckBox = new JCheckBox("For all users");
+  private final JCheckBox myGlobalEntryCheckBox = new JCheckBox("For all users (requires superuser privileges)");
 
   public CustomizeDesktopEntryStep(String iconPath) {
     setLayout(new BorderLayout());
