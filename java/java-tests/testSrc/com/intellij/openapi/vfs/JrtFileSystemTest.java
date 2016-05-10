@@ -57,7 +57,7 @@ public class JrtFileSystemTest extends BareTestFixtureTestCase {
     Files.copy(myTestData.resolve("image1"), lib.resolve("modules"));
 
     String url = VirtualFileManager.constructUrl(JrtFileSystem.PROTOCOL, myTempDir.getRoot() + JrtFileSystem.SEPARATOR);
-    myRoot = VirtualFileManager.getInstance().findFileByUrl(url);
+    myRoot = VirtualFileManager.getInstance().refreshAndFindFileByUrl(url);
     assertThat(myRoot).isNotNull();
     assertThat(JrtFileSystem.isRoot(myRoot)).isTrue();
   }
