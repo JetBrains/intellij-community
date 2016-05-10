@@ -16,14 +16,13 @@
 package com.intellij.diff.tools.simple;
 
 import com.intellij.diff.DiffContext;
+import com.intellij.diff.actions.AllLinesIterator;
 import com.intellij.diff.actions.BufferedLineIterator;
-import com.intellij.diff.actions.NavigationContextChecker;
 import com.intellij.diff.comparison.DiffTooBigException;
 import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.util.*;
-import com.intellij.diff.actions.AllLinesIterator;
 import com.intellij.diff.tools.util.base.HighlightPolicy;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.diff.tools.util.side.TwosideTextDiffViewer;
@@ -353,14 +352,12 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
 
   protected boolean doScrollToContext(@NotNull DiffNavigationContext context) {
     ChangedLinesIterator changedLinesIterator = new ChangedLinesIterator();
-    NavigationContextChecker checker = new NavigationContextChecker(changedLinesIterator, context);
-    int line = checker.contextMatchCheck();
+    int line = context.contextMatchCheck(changedLinesIterator);
     if (line == -1) {
       // this will work for the case, when spaces changes are ignored, and corresponding fragments are not reported as changed
       // just try to find target line  -> +-
       AllLinesIterator allLinesIterator = new AllLinesIterator(getEditor(Side.RIGHT).getDocument());
-      NavigationContextChecker checker2 = new NavigationContextChecker(allLinesIterator, context);
-      line = checker2.contextMatchCheck();
+      line = context.contextMatchCheck(allLinesIterator);
     }
     if (line == -1) return false;
 
