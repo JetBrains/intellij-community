@@ -30,7 +30,7 @@ subprojects {
   repositories {
     ivy {
       ivyPattern      'http://buildserver.labs.intellij.net/guestAuth/repository/download/ijplatform_master_PyCharm_Installers/lastSuccessful/teamcity-ivy.xml'
-      artifactPattern 'http://buildserver.labs.intellij.net/guestAuth/repository/download/ijplatform_master_PyCharm_Installers/lastSuccessful/pycharmPC-'+pycharmVersion+'.zip'
+      artifactPattern 'http://buildserver.labs.intellij.net/guestAuth/repository/download/ijplatform_master_PyCharm_Installers/lastSuccessful/[artifact].[ext]'
     }
   }
 
@@ -40,12 +40,12 @@ subprojects {
 
   dependencies {
     pycharm ('org:ijplatform_master_PyCharm_Installers:lastSuccessful')
-    compileOnly fileTree(dir: configurations.pycharm.singleFile.parent + "/pycharm/lib/", include: ['**/*.jar'])
+    compileOnly fileTree(dir: rootProject.projectDir.toString() + "/gradleBuild/pycharm", include: ['**/*.jar'])
   }
 
   task extractPyCharm(type: Copy) {
-    from zipTree(configurations.pycharm.singleFile)
-    into configurations.pycharm.singleFile.parent + "/pycharm"
+    from zipTree(configurations.pycharm.filter{dep -> dep.name.startsWith("pycharmPC-") && dep.name.endsWith(".zip")}[0])
+    into rootProject.projectDir.toString() + "/gradleBuild/pycharm"
     include "**/*.jar"
   }
 
