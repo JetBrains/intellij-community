@@ -2001,9 +2001,6 @@
                      key="instantiating.object.to.get.class.object.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.performance.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.performance.InstantiatingObjectToGetClassObjectInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="JavaLangReflect" bundle="com.siyeh.InspectionGadgetsBundle" key="java.lang.reflect.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.performance.issues" enabledByDefault="false"
-                     level="WARNING" implementationClass="com.siyeh.ig.performance.JavaLangReflectInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="KeySetIterationMayUseEntrySet" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="key.set.iteration.may.use.entry.set.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.performance.issues" enabledByDefault="false" level="WARNING"
