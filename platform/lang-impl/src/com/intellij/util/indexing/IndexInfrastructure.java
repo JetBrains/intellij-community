@@ -207,6 +207,7 @@ public class IndexInfrastructure {
 
     private void executeNestedInitializationTask(ThrowableRunnable callable, CountDownLatch proceedLatch) {
       try {
+        if (ApplicationManager.getApplication().isDisposed()) return;
         callable.run();
       } catch(Throwable t) {
         onThrowable(t);

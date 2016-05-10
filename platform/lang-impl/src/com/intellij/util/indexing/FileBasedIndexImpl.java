@@ -422,6 +422,9 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   }
 
   private static void saveRegisteredIndicesAndDropUnregisteredOnes(@NotNull Collection<ID<?, ?>> ids) {
+    if (ApplicationManager.getApplication().isDisposed()) {
+      return;
+    }
     final File registeredIndicesFile = new File(PathManager.getIndexRoot(), "registered");
     final Set<String> result = new THashSet<String>();
     try {
