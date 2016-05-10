@@ -33,11 +33,11 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.NotNullProducer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
@@ -78,15 +78,11 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
 
   private static final Logger LOG = Logger.getInstance("Vcs.Log");
 
-  private static final String STANDARD_LAYER = "Standard";
-  private static final String MESSAGE_LAYER = "Message";
-
   @NotNull private final VcsLogData myLogData;
   @NotNull private final VcsLogGraphTable myGraphTable;
 
   @NotNull private final ReferencesPanel myReferencesPanel;
   @NotNull private final DataPanel myCommitDetailsPanel;
-  @NotNull private final MessagePanel myMessagePanel;
   @NotNull private final JScrollPane myScrollPane;
   @NotNull private final JPanel myMainContentPanel;
 
@@ -95,6 +91,8 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
 
   @NotNull private VisiblePack myDataPack;
   @Nullable private VcsFullCommitDetails myCurrentCommitDetails;
+
+  private final StatusText myEmptyText;
 
   DetailsPanel(@NotNull VcsLogData logData,
                @NotNull VcsLogGraphTable graphTable,
@@ -121,10 +119,31 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
         size.width = myScrollPane.getViewport().getWidth() - 5;
         return size;
       }
+
+      @Override
+      public Color getBackground() {
+        return myCommitDetailsPanel.getBackground();
+      }
+
+      @Override
+      protected void paintChildren(Graphics g) {
+        if (StringUtil.isNotEmpty(myEmptyText.getText())) {
+          myEmptyText.paint(this, g);
+        }
+        else {
+          super.paintChildren(g);
+        }
+      }
+
     };
+    myEmptyText = new StatusText(myMainContentPanel) {
+      @Override
+      protected boolean isStatusVisible() {
+        return StringUtil.isNotEmpty(getText());
+      }
+    };
+
     myMainContentPanel.setOpaque(false);
-    myScrollPane.setOpaque(false);
-    myScrollPane.getViewport().setOpaque(false);
     myScrollPane.setViewportView(myMainContentPanel);
     myScrollPane.setBorder(IdeBorderFactory.createEmptyBorder());
     myScrollPane.setViewportBorder(IdeBorderFactory.createEmptyBorder());
@@ -139,11 +158,8 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
     };
     myLoadingPanel.add(myScrollPane);
 
-    myMessagePanel = new MessagePanel();
-
-    setLayout(new CardLayout());
-    add(myLoadingPanel, STANDARD_LAYER);
-    add(myMessagePanel, MESSAGE_LAYER);
+    setLayout(new BorderLayout());
+    add(myLoadingPanel, BorderLayout.CENTER);
 
     showMessage("No commits selected");
   }
@@ -180,7 +196,8 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       showMessage("Several commits selected");
     }
     else {
-      ((CardLayout)getLayout()).show(this, STANDARD_LAYER);
+      myEmptyText.setText("");
+      myMainContentPanel.repaint();
       int row = rows[0];
       GraphTableModel tableModel = myGraphTable.getModel();
       VcsFullCommitDetails commitData = tableModel.getFullDetails(row);
@@ -233,8 +250,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
 
   private void showMessage(String text) {
     myLoadingPanel.stopLoading();
-    ((CardLayout)getLayout()).show(this, MESSAGE_LAYER);
-    myMessagePanel.setText(text);
+    myEmptyText.setText(text);
   }
 
   @NotNull
@@ -563,25 +579,4 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
     }
   }
 
-  private static class MessagePanel extends NonOpaquePanel {
-    @NotNull private final JLabel myLabel;
-
-    MessagePanel() {
-      super(new BorderLayout());
-      myLabel = new JLabel();
-      myLabel.setForeground(UIUtil.getInactiveTextColor());
-      myLabel.setHorizontalAlignment(SwingConstants.CENTER);
-      myLabel.setVerticalAlignment(SwingConstants.CENTER);
-      add(myLabel);
-    }
-
-    void setText(String text) {
-      myLabel.setText(text);
-    }
-
-    @Override
-    public Color getBackground() {
-      return getDetailsBackground();
-    }
-  }
 }
