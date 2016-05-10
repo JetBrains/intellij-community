@@ -32,7 +32,7 @@ import java.awt.*;
  */
 public class CustomizeDesktopEntryStep extends AbstractCustomizeWizardStep {
   public static boolean isAvailable() {
-    return CreateDesktopEntryAction.isAvailable();
+    return System.getenv("__intellij_skip_desktop_entry_step") == null && CreateDesktopEntryAction.isAvailable();
   }
 
   private final JCheckBox myCreateEntryCheckBox = new JCheckBox(ActionsBundle.message("action.CreateDesktopEntry.description"));
