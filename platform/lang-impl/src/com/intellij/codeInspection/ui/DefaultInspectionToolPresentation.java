@@ -54,6 +54,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -173,12 +174,12 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
 
   @Override
   public void exportResults(@NotNull final Element parentNode,
-                            @NotNull final Set<RefEntity> excludedEntities,
-                            @NotNull final Set<CommonProblemDescriptor> excludedDescriptors) {
+                            @NotNull final Predicate<RefEntity> excludedEntities,
+                            @NotNull final Predicate<CommonProblemDescriptor> excludedDescriptors) {
     getRefManager().iterate(new RefVisitor(){
       @Override
       public void visitElement(@NotNull RefEntity elem) {
-        if (!excludedEntities.contains(elem)) {
+        if (!excludedEntities.test(elem)) {
           exportResults(parentNode, elem, excludedDescriptors);
         }
       }
@@ -294,7 +295,7 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
 
   private synchronized void writeOutput(@NotNull final CommonProblemDescriptor[] descriptions, @NotNull RefEntity refElement) {
     final Element parentNode = new Element(InspectionsBundle.message("inspection.problems"));
-    exportResults(descriptions, refElement, parentNode, Collections.emptySet());
+    exportResults(descriptions, refElement, parentNode, d -> false);
     final List list = parentNode.getChildren();
 
     @NonNls final String ext = ".xml";
@@ -474,12 +475,12 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
   @Override
   public void exportResults(@NotNull final Element parentNode,
                             @NotNull RefEntity refEntity,
-                            @NotNull Set<CommonProblemDescriptor> excludedDescriptors) {
+                            @NotNull Predicate<CommonProblemDescriptor> isDescriptorExcluded) {
     synchronized (lock) {
       if (getProblemElements().containsKey(refEntity)) {
         CommonProblemDescriptor[] descriptions = getDescriptions(refEntity);
         if (descriptions != null) {
-          exportResults(descriptions, refEntity, parentNode, excludedDescriptors);
+          exportResults(descriptions, refEntity, parentNode, isDescriptorExcluded);
         }
       }
     }
@@ -488,9 +489,9 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
   private void exportResults(@NotNull final CommonProblemDescriptor[] descriptors,
                              @NotNull RefEntity refEntity,
                              @NotNull Element parentNode,
-                             @NotNull Set<CommonProblemDescriptor> excludedDescriptors) {
+                             @NotNull Predicate<CommonProblemDescriptor> isDescriptorExcluded) {
     for (CommonProblemDescriptor descriptor : descriptors) {
-      if (excludedDescriptors.contains(descriptor)) continue;
+      if (isDescriptorExcluded.test(descriptor)) continue;
       @NonNls final String template = descriptor.getDescriptionTemplate();
       int line = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getLineNumber() : -1;
       final PsiElement psiElement = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getPsiElement() : null;

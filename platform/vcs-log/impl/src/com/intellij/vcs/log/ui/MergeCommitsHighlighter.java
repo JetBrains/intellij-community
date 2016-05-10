@@ -18,7 +18,7 @@ package com.intellij.vcs.log.ui;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.data.VcsLogDataManager;
+import com.intellij.vcs.log.data.VcsLogData;
 import org.jetbrains.annotations.NotNull;
 
 public class MergeCommitsHighlighter implements VcsLogHighlighter {
@@ -46,7 +46,7 @@ public class MergeCommitsHighlighter implements VcsLogHighlighter {
 
     @NotNull
     @Override
-    public VcsLogHighlighter createHighlighter(@NotNull VcsLogDataManager logDataManager, @NotNull VcsLogUi logUi) {
+    public VcsLogHighlighter createHighlighter(@NotNull VcsLogData logData, @NotNull VcsLogUi logUi) {
       return new MergeCommitsHighlighter(logUi);
     }
 

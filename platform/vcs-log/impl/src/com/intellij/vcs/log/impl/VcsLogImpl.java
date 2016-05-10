@@ -22,7 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.data.VcsLogDataManager;
+import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.frame.VcsLogGraphTable;
 import org.jetbrains.annotations.NotNull;
@@ -35,11 +35,11 @@ import java.util.List;
 import java.util.concurrent.Future;
 
 public class VcsLogImpl implements VcsLog {
-  @NotNull private final VcsLogDataManager myDataManager;
+  @NotNull private final VcsLogData myLogData;
   @NotNull private final VcsLogUiImpl myUi;
 
-  public VcsLogImpl(@NotNull VcsLogDataManager manager, @NotNull VcsLogUiImpl ui) {
-    myDataManager = manager;
+  public VcsLogImpl(@NotNull VcsLogData manager, @NotNull VcsLogUiImpl ui) {
+    myLogData = manager;
     myUi = ui;
   }
 
@@ -86,14 +86,14 @@ public class VcsLogImpl implements VcsLog {
   @Override
   public void requestSelectedDetails(@NotNull Consumer<List<VcsFullCommitDetails>> consumer, @Nullable ProgressIndicator indicator) {
     List<Integer> rowsList = Ints.asList(myUi.getTable().getSelectedRows());
-    myDataManager.getCommitDetailsGetter()
+    myLogData.getCommitDetailsGetter()
       .loadCommitsData(getTable().getModel().convertToHashesAndRoots(rowsList), consumer, indicator);
   }
 
   @Nullable
   @Override
   public Collection<String> getContainingBranches(@NotNull Hash commitHash, @NotNull VirtualFile root) {
-    return myDataManager.getContainingBranchesGetter().getContainingBranchesFromCache(root, commitHash);
+    return myLogData.getContainingBranchesGetter().getContainingBranchesFromCache(root, commitHash);
   }
 
   @NotNull
@@ -124,6 +124,6 @@ public class VcsLogImpl implements VcsLog {
   @NotNull
   @Override
   public Collection<VcsLogProvider> getLogProviders() {
-    return myDataManager.getLogProviders();
+    return myLogData.getLogProviders();
   }
 }

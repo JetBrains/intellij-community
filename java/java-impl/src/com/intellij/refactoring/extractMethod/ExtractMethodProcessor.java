@@ -1140,7 +1140,8 @@ public class ExtractMethodProcessor implements MatchProvider {
       }
     }
     PsiDeclarationStatement statement = myElementFactory.createVariableDeclarationStatement(name, type, myMethodCall);
-    statement = (PsiDeclarationStatement)addToMethodCallLocation(statement);
+    statement =
+      (PsiDeclarationStatement)JavaCodeStyleManager.getInstance(myProject).shortenClassReferences(addToMethodCallLocation(statement));
     PsiVariable var = (PsiVariable)statement.getDeclaredElements()[0];
     myMethodCall = (PsiMethodCallExpression)var.getInitializer();
     if (myOutputVariable != null) {
@@ -1228,8 +1229,12 @@ public class ExtractMethodProcessor implements MatchProvider {
     return result;
   }
 
-  public PsiElement processMatch(Match match) throws IncorrectOperationException {
+  @Override
+  public void prepareSignature(Match match) {
     MatchUtil.changeSignature(match, myExtractedMethod);
+  }
+
+  public PsiElement processMatch(Match match) throws IncorrectOperationException {
     if (RefactoringUtil.isInStaticContext(match.getMatchStart(), myExtractedMethod.getContainingClass())) {
       PsiUtil.setModifierProperty(myExtractedMethod, PsiModifier.STATIC, true);
     }

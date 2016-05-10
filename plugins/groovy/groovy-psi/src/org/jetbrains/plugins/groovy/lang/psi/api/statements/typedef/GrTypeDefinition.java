@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef;
 
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.util.ArrayFactory;
@@ -36,6 +37,47 @@ public interface GrTypeDefinition extends PsiClass, GrTopLevelDefinition, GrDocC
 
   GrTypeDefinition[] EMPTY_ARRAY = new GrTypeDefinition[0];
   ArrayFactory<GrTypeDefinition> ARRAY_FACTORY = GrTypeDefinition[]::new;
+
+  @NotNull
+  @Override
+  default PsiClassType[] getImplementsListTypes() {
+    return getImplementsListTypes(true);
+  }
+
+  @NotNull
+  @Override
+  default PsiClassType[] getExtendsListTypes() {
+    return getExtendsListTypes(true);
+  }
+
+  @NotNull
+  @Override
+  default PsiClass[] getSupers() {
+    return getSupers(true);
+  }
+
+  @NotNull
+  @Override
+  default PsiClassType[] getSuperTypes() {
+    return getSuperTypes(true);
+  }
+
+  @NotNull
+  PsiClassType[] getImplementsListTypes(boolean includeSynthetic);
+
+  @NotNull
+  PsiClassType[] getExtendsListTypes(boolean includeSynthetic);
+
+  @NotNull
+  PsiClass[] getSupers(boolean includeSynthetic);
+
+  @NotNull
+  PsiClassType[] getSuperTypes(boolean includeSynthetic);
+
+  @NotNull
+  default GrTypeDefinition[] getCodeInnerClasses() {
+    return EMPTY_ARRAY;
+  }
 
   boolean isTrait();
 
@@ -71,9 +113,6 @@ public interface GrTypeDefinition extends PsiClass, GrTopLevelDefinition, GrDocC
 
   @Nullable
   GrImplementsClause getImplementsClause();
-
-  @NotNull
-  String[] getSuperClassNames();
 
   @NotNull
   GrMethod[] getCodeMethods();

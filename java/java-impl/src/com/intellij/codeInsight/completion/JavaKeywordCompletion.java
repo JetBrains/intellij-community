@@ -242,7 +242,7 @@ public class JavaKeywordCompletion {
 
   }
 
-  static void addKeywords(CompletionParameters parameters, final Consumer<LookupElement> result) {
+  static void addKeywords(CompletionParameters parameters, JavaCompletionSession session, Consumer<LookupElement> result) {
     final PsiElement position = parameters.getPosition();
     if (PsiTreeUtil.getNonStrictParentOfType(position, PsiLiteralExpression.class, PsiComment.class) != null) {
       return;
@@ -274,7 +274,7 @@ public class JavaKeywordCompletion {
 
     addMethodHeaderKeywords(result, position, prevLeaf);
 
-    addPrimitiveTypes(result, position);
+    addPrimitiveTypes(result, position, session);
 
     addClassLiteral(result, position);
 
@@ -586,7 +586,7 @@ public class JavaKeywordCompletion {
            isAfterPrimitiveOrArrayType(position);
   }
 
-  static void addPrimitiveTypes(final Consumer<LookupElement> result, PsiElement position) {
+  static void addPrimitiveTypes(Consumer<LookupElement> result, PsiElement position, JavaCompletionSession session) {
     if (AFTER_DOT.accepts(position) ||
         psiElement().inside(psiAnnotation()).accepts(position) && !expectsClassLiteral(position)) {
       return;
@@ -621,7 +621,9 @@ public class JavaKeywordCompletion {
         expressionPosition ||
         isStatementPosition(position)) {
       for (String primitiveType : PRIMITIVE_TYPES) {
-        result.consume(createKeyword(position, primitiveType));
+        if (!session.isKeywordAlreadyProcessed(primitiveType)) {
+          result.consume(createKeyword(position, primitiveType));
+        }
       }
     }
     if (declaration) {

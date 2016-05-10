@@ -116,7 +116,7 @@ public class RedundantCastInspection extends GenericsInspectionToolBase {
       final PsiElement gParent = parent.getParent();
       if (gParent instanceof PsiMethodCallExpression && IGNORE_SUSPICIOUS_METHOD_CALLS) {
         final String message = SuspiciousMethodCallUtil
-          .getSuspiciousMethodCallMessage((PsiMethodCallExpression)gParent, operand.getType(), true, new ArrayList<PsiMethod>(),
+          .getSuspiciousMethodCallMessage((PsiMethodCallExpression)gParent, operand, operand.getType(), true, new ArrayList<PsiMethod>(),
                                           new IntArrayList());
         if (message != null) {
           return null;

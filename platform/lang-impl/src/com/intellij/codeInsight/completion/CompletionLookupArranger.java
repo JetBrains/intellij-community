@@ -156,7 +156,7 @@ public class CompletionLookupArranger extends LookupArranger {
   }
 
   @Override
-  public void addElement(Lookup lookup, LookupElement element, LookupElementPresentation presentation) {
+  public void addElement(LookupElement element, LookupElementPresentation presentation) {
     StatisticsWeigher.clearBaseStatisticsInfo(element);
 
     final String invariant = presentation.getItemText() + "\0###" + getTailTextOrSpace(presentation) + "###" + presentation.getTypeText();
@@ -166,14 +166,14 @@ public class CompletionLookupArranger extends LookupArranger {
     CompletionSorterImpl sorter = obtainSorter(element);
     Classifier<LookupElement> classifier = myClassifiers.get(sorter);
     if (classifier == null) {
-      myClassifiers.put(sorter, classifier = sorter.buildClassifier(new AlphaClassifier((LookupImpl)lookup)));
+      myClassifiers.put(sorter, classifier = sorter.buildClassifier(new AlphaClassifier()));
     }
     ProcessingContext context = createContext(true);
     classifier.addElement(element, context);
 
-    super.addElement(lookup, element, presentation);
+    super.addElement(element, presentation);
 
-    trimToLimit(lookup, context);
+    trimToLimit(context);
   }
 
   @Override
@@ -181,7 +181,7 @@ public class CompletionLookupArranger extends LookupArranger {
     myProcess.itemSelected(lookupItem, completionChar);
   }
 
-  private void trimToLimit(Lookup lookup, ProcessingContext context) {
+  private void trimToLimit(ProcessingContext context) {
     if (myItems.size() < myLimit) return;
 
     List<LookupElement> items = getMatchingItems();
@@ -197,7 +197,7 @@ public class CompletionLookupArranger extends LookupArranger {
 
     if (!iterator.hasNext()) return;
 
-    List<LookupElement> removed = retainItems(retainedSet, lookup);
+    List<LookupElement> removed = retainItems(retainedSet);
     for (LookupElement element : removed) {
       removeItem(element, context);
     }
@@ -223,11 +223,11 @@ public class CompletionLookupArranger extends LookupArranger {
     return tailText == null || tailText.isEmpty() ? " " : tailText;
   }
 
-  private List<LookupElement> sortByPresentation(Iterable<LookupElement> source, LookupImpl lookup) {
+  private List<LookupElement> sortByPresentation(Iterable<LookupElement> source) {
     ArrayList<LookupElement> startMatches = ContainerUtil.newArrayList();
     ArrayList<LookupElement> middleMatches = ContainerUtil.newArrayList();
     for (LookupElement element : source) {
-      (CompletionServiceImpl.isStartMatch(element, lookup) ? startMatches : middleMatches).add(element);
+      (itemMatcher(element).isStartMatch(element) ? startMatches : middleMatches).add(element);
     }
     ContainerUtil.sort(startMatches, BY_PRESENTATION_COMPARATOR);
     ContainerUtil.sort(middleMatches, BY_PRESENTATION_COMPARATOR);
@@ -247,7 +247,7 @@ public class CompletionLookupArranger extends LookupArranger {
     LookupElement relevantSelection = findMostRelevantItem(itemsBySorter);
     LookupImpl lookupImpl = (LookupImpl)lookup;
     List<LookupElement> listModel = isAlphaSorted() ?
-                                    sortByPresentation(items, lookupImpl) :
+                                    sortByPresentation(items) :
                                     fillModelByRelevance(lookupImpl, ContainerUtil.newIdentityTroveSet(items), itemsBySorter, relevantSelection);
 
     int toSelect = getItemToSelect(lookupImpl, listModel, onExplicitAction, relevantSelection);
@@ -371,7 +371,7 @@ public class CompletionLookupArranger extends LookupArranger {
   private ProcessingContext createContext(boolean pureRelevance) {
     ProcessingContext context = new ProcessingContext();
     context.put(PREFIX_CHANGES, myPrefixChanges);
-    context.put(WEIGHING_CONTEXT, myProcess.getLookup());
+    context.put(WEIGHING_CONTEXT, this);
     if (pureRelevance) {
       context.put(PURE_RELEVANCE, Boolean.TRUE);
     }
@@ -417,7 +417,7 @@ public class CompletionLookupArranger extends LookupArranger {
     for (int i = 0; i < items.size(); i++) {
       LookupElement item = items.get(i);
       boolean isSuddenLiveTemplate = isSuddenLiveTemplate(item);
-      if (isPrefixItem(lookup, item, true) && !isSuddenLiveTemplate || item.getLookupString().equals(selectedText)) {
+      if (isPrefixItem(item, true) && !isSuddenLiveTemplate || item.getLookupString().equals(selectedText)) {
         if (item instanceof LiveTemplateLookupElement) {
           // prefer most recent live template lookup item
           exactMatchIndex = i;
@@ -428,7 +428,7 @@ public class CompletionLookupArranger extends LookupArranger {
           exactMatchIndex = i;
         }
       }
-      else if (i == 0 && isSuddenLiveTemplate && items.size() > 1 && !CompletionServiceImpl.isStartMatch(items.get(1), lookup)) {
+      else if (i == 0 && isSuddenLiveTemplate && items.size() > 1 && !CompletionServiceImpl.isStartMatch(items.get(1), this)) {
         return 0;
       }
     }
@@ -593,11 +593,9 @@ public class CompletionLookupArranger extends LookupArranger {
   }
 
   private class AlphaClassifier extends Classifier<LookupElement> {
-    private final LookupImpl myLookup;
 
-    private AlphaClassifier(LookupImpl lookup) {
+    private AlphaClassifier() {
       super(null, "alpha");
-      myLookup = lookup;
     }
 
     @NotNull
@@ -609,7 +607,7 @@ public class CompletionLookupArranger extends LookupArranger {
     @NotNull
     @Override
     public Iterable<LookupElement> classify(@NotNull Iterable<LookupElement> source, @NotNull ProcessingContext context) {
-      return sortByPresentation(source, myLookup);
+      return sortByPresentation(source);
     }
 
   }

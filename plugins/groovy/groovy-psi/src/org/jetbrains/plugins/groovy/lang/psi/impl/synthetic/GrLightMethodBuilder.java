@@ -26,7 +26,8 @@ import com.intellij.psi.impl.light.*;
 import com.intellij.psi.presentation.java.JavaPresentationUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
@@ -168,13 +169,7 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod, Orig
   @NotNull
   @Override
   public GrReflectedMethod[] getReflectedMethods() {
-    return CachedValuesManager.getCachedValue(this, new CachedValueProvider<GrReflectedMethod[]>() {
-      @Override
-      public Result<GrReflectedMethod[]> compute() {
-        return Result.create(GrReflectedMethodImpl.createReflectedMethods(GrLightMethodBuilder.this),
-                             PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
-      }
-    });
+    return GrReflectedMethodImpl.createReflectedMethods(this);
   }
 
   public GrLightMethodBuilder addModifier(String modifier) {

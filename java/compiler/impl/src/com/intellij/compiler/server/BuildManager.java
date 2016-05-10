@@ -388,14 +388,14 @@ public class BuildManager implements Disposable {
           return;
         }
         synchronized (myProjectDataMap) {
-          if (IS_UNIT_TEST_MODE) {
-            if (notifyDeletion) {
-              LOG.info("Registering deleted paths: " + filtered);
-            }
-            else {
-              LOG.info("Registering changed paths: " + filtered);
-            }
-          }
+          //if (IS_UNIT_TEST_MODE) {
+          //  if (notifyDeletion) {
+          //    LOG.info("Registering deleted paths: " + filtered);
+          //  }
+          //  else {
+          //    LOG.info("Registering changed paths: " + filtered);
+          //  }
+          //}
           for (Map.Entry<String, ProjectData> entry : myProjectDataMap.entrySet()) {
             final ProjectData data = entry.getValue();
             if (notifyDeletion) {

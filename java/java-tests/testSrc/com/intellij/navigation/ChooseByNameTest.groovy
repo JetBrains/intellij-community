@@ -15,6 +15,7 @@
  */
 package com.intellij.navigation
 
+import com.intellij.ide.actions.GotoFileItemProvider
 import com.intellij.ide.util.gotoByName.*
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.Disposable
@@ -29,6 +30,8 @@ import com.intellij.util.Consumer
 import com.intellij.util.concurrency.Semaphore
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
+
+import javax.swing.SwingUtilities
 
 /**
  * @author peter
@@ -164,6 +167,13 @@ class Intf {
     popup = createPopup(new GotoFileModel(project), barContext)
     assert calcPopupElements(popup, "index") == [barIndex, fooIndex]
 
+  }
+
+  public void "test accept file paths starting with a dot"() {
+    def file = myFixture.addFileToProject("foo/index.html", "foo")
+    def model = new GotoFileModel(project)
+    def popup = ChooseByNamePopup.createPopup(project, model, new GotoFileItemProvider(project, null, model))
+    assert calcPopupElements(popup, "./foo/in") == [file]
   }
 
   public void "test goto file can go to dir"() {
@@ -315,7 +325,7 @@ class Intf {
     List<Object> elements = ['empty']
     def semaphore = new Semaphore()
     semaphore.down()
-    edt {
+    SwingUtilities.invokeLater {
       popup.scheduleCalcElements(text, checkboxState, ModalityState.NON_MODAL, { set ->
         elements = set as List
         semaphore.up()

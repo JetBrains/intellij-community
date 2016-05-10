@@ -54,7 +54,7 @@ public class InspectionResultsViewUtil {
 
   @NotNull
   static JLabel getNothingToShowTextLabel() {
-    return createLabelForText(InspectionViewNavigationPanel.getTitleText(false, false));
+    return createLabelForText(InspectionViewNavigationPanel.getTitleText(false));
   }
 
   @NotNull

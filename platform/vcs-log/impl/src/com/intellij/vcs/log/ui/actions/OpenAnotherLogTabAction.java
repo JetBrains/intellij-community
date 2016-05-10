@@ -17,11 +17,14 @@ package com.intellij.vcs.log.ui.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.vcs.log.impl.VcsLogContentProvider;
 import com.intellij.vcs.log.impl.VcsLogManager;
-import com.intellij.vcs.log.ui.VcsLogUiImpl;
+import com.intellij.vcs.log.impl.VcsProjectLog;
+import com.intellij.vcs.log.ui.VcsLogDataKeys;
 
 public class OpenAnotherLogTabAction extends DumbAwareAction {
   protected OpenAnotherLogTabAction() {
@@ -30,21 +33,19 @@ public class OpenAnotherLogTabAction extends DumbAwareAction {
 
   @Override
   public void update(AnActionEvent e) {
-    if (e.getProject() == null || !Registry.is("vcs.log.open.another.log.visible")) {
+    Project project = e.getProject();
+    if (project == null || !Registry.is("vcs.log.open.another.log.visible")) {
       e.getPresentation().setEnabledAndVisible(false);
       return;
     }
-    VcsLogUiImpl mainLogUi = VcsLogManager.getInstance(e.getProject()).getMainLogUi();
-    if (mainLogUi == null) {
-      e.getPresentation().setEnabledAndVisible(false);
-      return;
-    }
-
-    e.getPresentation().setEnabledAndVisible(true);
+    VcsProjectLog projectLog = VcsProjectLog.getInstance(project);
+    VcsLogManager logManager = e.getData(VcsLogDataKeys.LOG_MANAGER);
+    e.getPresentation()
+      .setEnabledAndVisible(logManager != null && projectLog.getLogManager() == logManager); // only for main log (it is a question, how and where we want to open tabs for external logs)
   }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    VcsLogContentProvider.openAnotherLogTab(e.getProject());
+    VcsLogContentProvider.openAnotherLogTab(e.getRequiredData(VcsLogDataKeys.LOG_MANAGER), e.getRequiredData(CommonDataKeys.PROJECT));
   }
 }

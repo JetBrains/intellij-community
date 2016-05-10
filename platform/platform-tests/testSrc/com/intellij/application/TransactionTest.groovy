@@ -1,13 +1,16 @@
 package com.intellij.application
 
+import com.intellij.ide.IdeEventQueue
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.psi.impl.DebugUtil
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.NotNull
 
 import javax.swing.*
 /**
@@ -22,6 +25,12 @@ class TransactionTest extends LightPlatformTestCase {
 
   static Application getApp() {
     return ApplicationManager.getApplication()
+  }
+
+  @Override
+  protected void invokeTestRunnable(@NotNull Runnable runnable) throws Exception {
+    SwingUtilities.invokeLater(runnable)
+    UIUtil.dispatchAllInvocationEvents()
   }
 
   @Override
@@ -80,7 +89,7 @@ class TransactionTest extends LightPlatformTestCase {
       Disposer.dispose(disposable)
     }
     if (!writeActionFailed) {
-      fail('write action should fail')
+      fail('write action should fail ' + guard.toString())
     }
   }
 
@@ -97,16 +106,19 @@ class TransactionTest extends LightPlatformTestCase {
     assert log == ['1']
   }
 
-  public void "test no current id inside invokeLater"() {
-    SwingUtilities.invokeLater {
-      log << '2'
-      assert !guard.contextTransaction
-    }
+  public void "test no context transaction inside invokeLater"() {
     TransactionGuard.submitTransaction testRootDisposable, {
+      SwingUtilities.invokeLater {
+        log << '2'
+        assert !guard.contextTransaction
+      }
       log << '1'
       UIUtil.dispatchAllInvocationEvents()
+      log << '3'
     }
-    assert log == ['1', '2']
+    assert log == [] // the test is also run inside an invokeLater, so transaction is asynchronous
+    UIUtil.dispatchAllInvocationEvents()
+    assert log == ['1', '2', '3']
   }
 
 
@@ -122,6 +134,7 @@ class TransactionTest extends LightPlatformTestCase {
       }
       assert log == ['1', '2']
     }
+    UIUtil.dispatchAllInvocationEvents()
     assert log == ['1', '2']
   }
 
@@ -136,6 +149,7 @@ class TransactionTest extends LightPlatformTestCase {
                                                                      log << '2'
                                                                    }, 'title', true, project)
     }
+    UIUtil.dispatchAllInvocationEvents()
     assert log == ['1', '2']
   }
   public void "test no id on pooled thread"() {
@@ -147,6 +161,7 @@ class TransactionTest extends LightPlatformTestCase {
         log << '2'
       }).get()
     }
+    UIUtil.dispatchAllInvocationEvents()
     assert log == ['1', '2']
   }
 
@@ -157,7 +172,6 @@ class TransactionTest extends LightPlatformTestCase {
       UIUtil.dispatchAllInvocationEvents()
       assert log == ['1']
     }
-    assert log == ['1']
     UIUtil.dispatchAllInvocationEvents()
     assert log == ['1', '2']
   }
@@ -176,8 +190,12 @@ class TransactionTest extends LightPlatformTestCase {
         guard.submitTransaction testRootDisposable, id, { log << '5' }
         def nestedId = guard.contextTransaction
         SwingUtilities.invokeLater {
-          guard.submitTransaction testRootDisposable, nestedId, { log << '3' }
-          assert log == ['1', '2']
+          String trace = null
+          guard.submitTransaction testRootDisposable, nestedId, {
+            trace = IdeEventQueue.instance.trueCurrentEvent.toString() + "  " + guard.toString() + "  " + DebugUtil.currentStackTrace()
+            log << '3'
+          }
+          assert log == ['1', '2'] : log + " " + trace
         }
         UIUtil.dispatchAllInvocationEvents()
       }
@@ -265,6 +283,35 @@ class TransactionTest extends LightPlatformTestCase {
     }
     UIUtil.dispatchAllInvocationEvents()
     assert log == ['1', '2', '3']
+  }
+
+  public void "test no synchronous transactions inside invokeLater"() {
+    LoggedErrorProcessor.instance.disableStderrDumping(testRootDisposable)
+    SwingUtilities.invokeLater {
+      log << '1'
+      try {
+        guard.submitTransactionAndWait { log << 'not run' }
+      }
+      catch (AssertionError ignore) {
+        log << 'assert'
+      }
+    }
+    UIUtil.dispatchAllInvocationEvents()
+    assert log == ['1', 'assert']
+  }
+
+  public void "test write-unsafe modality ends inside a transaction"() {
+    LaterInvocator.enterModal(new Object())
+    guard.performUserActivity { assertWritingProhibited() }
+    TransactionGuard.submitTransaction testRootDisposable, {
+      LaterInvocator.leaveAllModals()
+      log << '1'
+    }
+    UIUtil.dispatchAllInvocationEvents()
+    assert log == ['1']
+    assert ModalityState.current() == ModalityState.NON_MODAL
+    guard.performUserActivity { app.runWriteAction { log << '2' } }
+    assert log == ['1', '2']
   }
 
 }

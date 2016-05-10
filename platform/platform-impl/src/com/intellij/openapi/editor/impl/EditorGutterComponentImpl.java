@@ -54,7 +54,6 @@ import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.JBColor;
@@ -62,12 +61,10 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.TIntArrayList;
-import gnu.trove.TIntFunction;
-import gnu.trove.TIntObjectHashMap;
-import gnu.trove.TIntObjectProcedure;
+import gnu.trove.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -114,6 +111,7 @@ import java.util.List;
  */
 class EditorGutterComponentImpl extends EditorGutterComponentEx implements MouseListener, MouseMotionListener, DataProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorGutterComponentImpl");
+  private static final int START_ICON_AREA_WIDTH = JBUI.scale(17);
   private static final int FREE_PAINTERS_LEFT_AREA_WIDTH = JBUI.scale(8);
   private static final int FREE_PAINTERS_RIGHT_AREA_WIDTH = JBUI.scale(5);
   private static final int GAP_BETWEEN_ICONS = JBUI.scale(3);
@@ -279,13 +277,18 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   @Override
+  protected Graphics getComponentGraphics(Graphics graphics) {
+    return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
+  }
+
+  @Override
   public void paint(Graphics g_) {
     ((ApplicationImpl)ApplicationManager.getApplication()).editorPaintStart();
     try {
       Rectangle clip = g_.getClipBounds();
       if (clip.height < 0) return;
 
-      Graphics2D g = IdeBackgroundUtil.withEditorBackground(g_, this);
+      Graphics2D g = (Graphics2D)getComponentGraphics(g_);
       AffineTransform old = setMirrorTransformIfNeeded(g, 0, getWidth());
 
       EditorUIUtil.setupAntialiasing(g);
@@ -775,9 +778,23 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
           myLineToGutterRenderers.put(line, renderers);
         }
 
-        if (renderers.size() < 5) { // Don't allow more than 5 icons per line
-          renderers.add(renderer);
+        renderers.add(renderer);
+      }
+    });
+
+    myLineToGutterRenderers.transformValues(new TObjectFunction<List<GutterMark>, List<GutterMark>>() {
+      @Override
+      public List<GutterMark> execute(List<GutterMark> value) {
+        List<GutterMark> newValue = value;
+        for (GutterMarkPreprocessor preprocessor : GutterMarkPreprocessor.EP_NAME.getExtensions()) {
+          newValue = preprocessor.processMarkers(value);
         }
+
+        if (newValue.size() >= 5) { // Don't allow more than 5 icons per line
+          newValue = newValue.subList(0, 4);
+        }
+
+        return newValue;
       }
     });
   }
@@ -804,10 +821,11 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       return;
     }
 
+    int minWidth = (int)(START_ICON_AREA_WIDTH * myEditor.getScale());
     if (canShrink) {
-      myIconsAreaWidth = myEditor.getLineHeight();
+      myIconsAreaWidth = minWidth;
     } else {
-      myIconsAreaWidth = Math.max(myIconsAreaWidth, myEditor.getLineHeight());
+      myIconsAreaWidth = Math.max(myIconsAreaWidth, minWidth);
     }
 
     processGutterRenderers((line, renderers) -> {

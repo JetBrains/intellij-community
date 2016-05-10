@@ -203,7 +203,7 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
       myMap.close();
       if (myKeyHashToVirtualFileMapping != null) myKeyHashToVirtualFileMapping.close();
     }
-    catch (IOException e) {
+    catch (IOException|RuntimeException e) {
       LOG.error(e);
     }
     try {

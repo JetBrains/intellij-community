@@ -41,7 +41,7 @@ class SmartPsiFileRangePointerImpl extends SmartPsiElementPointerImpl<PsiFile> i
         return new InjectedSelfElementInfo(project, containingFile, range, containingFile, hostPointer);
       }
     }
-    if (range.equals(containingFile.getTextRange())) return new FileElementInfo(containingFile);
+    if (!forInjected && range.equals(containingFile.getTextRange())) return new FileElementInfo(containingFile);
     return new SelfElementInfo(project, range, AnchorTypeInfo.obtainInfo(PsiElement.class, null, LanguageUtil.getRootLanguage(containingFile)), containingFile, forInjected);
   }
 

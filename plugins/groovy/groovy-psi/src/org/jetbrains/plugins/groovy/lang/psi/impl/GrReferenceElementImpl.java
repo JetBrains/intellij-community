@@ -32,7 +32,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
  * @author ven
  */
 public abstract class GrReferenceElementImpl<Q extends PsiElement> extends GroovyPsiElementImpl implements GrReferenceElement<Q> {
-  private volatile String myCachedQName = null;
+  private volatile String myCachedQName;
   private volatile String myCachedTextSkipWhiteSpaceAndComments;
 
   public GrReferenceElementImpl(@NotNull ASTNode node) {

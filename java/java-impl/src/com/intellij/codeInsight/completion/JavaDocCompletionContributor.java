@@ -114,7 +114,7 @@ public class JavaDocCompletionContributor extends CompletionContributor {
             result.addElement(item);
           }
 
-          JavaCompletionContributor.addAllClasses(parameters, result, new InheritorsHolder(result));
+          JavaCompletionContributor.addAllClasses(parameters, result, new JavaCompletionSession(result));
         }
 
         if (tag != null && "author".equals(tag.getName())) {

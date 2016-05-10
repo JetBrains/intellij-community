@@ -254,7 +254,16 @@ public class UIUtil {
       return color;
     }
   });
-  public static final Color SIDE_PANEL_BACKGROUND = new JBColor(new Color(0xE6EBF0), new Color(0x3E434C));
+
+  public static final Color SIDE_PANEL_BACKGROUND = new JBColor(new NotNullProducer<Color>() {
+    final JBColor myDefaultValue = new JBColor(new Color(0xE6EBF0), new Color(0x3E434C));
+    @NotNull
+    @Override
+    public Color produce() {
+      Color color = UIManager.getColor("SidePanel.background");
+      return color == null ? myDefaultValue : color;
+    }
+  });
 
   public static final Color AQUA_SEPARATOR_FOREGROUND_COLOR = new JBColor(Gray._190, Gray.x51);
   public static final Color AQUA_SEPARATOR_BACKGROUND_COLOR = new JBColor(Gray._240, Gray.x51);
@@ -292,7 +301,7 @@ public class UIUtil {
     }
   };
 
-  private static volatile Pair<String, Integer> ourSystemFontData = null;
+  private static volatile Pair<String, Integer> ourSystemFontData;
 
   public static final float DEF_SYSTEM_FONT_SIZE = 12f; // TODO: consider 12 * 1.33 to compensate JDK's 72dpi font scale
 
@@ -1071,6 +1080,10 @@ public class UIUtil {
 
   public static Color getPanelBackground() {
     return UIManager.getColor("Panel.background");
+  }
+
+  public static Color getEditorPaneBackground() {
+    return UIManager.getColor("EditorPane.background");
   }
 
   public static Color getTreeBackground() {
@@ -3272,7 +3285,7 @@ public class UIUtil {
     // Evaluate the value depending on our current theme
     if (lcdContrastValue == 0) {
       if (SystemInfo.isMacIntel64) {
-        lcdContrastValue = isUnderDarcula() ? 140 : 200;
+        lcdContrastValue = isUnderDarcula() ? 140 : 230;
       } else {
         Map map = (Map)Toolkit.getDefaultToolkit().getDesktopProperty("awt.font.desktophints");
 
@@ -3503,7 +3516,7 @@ public class UIUtil {
     return null;
   }
 
-  private static Map<String, String> ourRealFontFamilies = null;
+  private static Map<String, String> ourRealFontFamilies;
 
   //Experimental, seems to be reliable under MacOS X only
 

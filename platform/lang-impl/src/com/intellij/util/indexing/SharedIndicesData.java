@@ -25,10 +25,7 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.io.*;
 import com.intellij.util.io.DataOutputStream;
-import gnu.trove.TIntLongHashMap;
-import gnu.trove.TIntLongProcedure;
-import gnu.trove.TIntObjectHashMap;
-import gnu.trove.TIntObjectProcedure;
+import gnu.trove.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,38 +33,16 @@ import java.io.*;
 import java.util.Arrays;
 
 public class SharedIndicesData {
-  private static PersistentHashMap<Integer, byte[]> ourSharedFileInputsIndex;
-  private static PersistentHashMap<Integer, byte[]> ourSharedContentInputsIndex;
+  private static final TIntIntHashMap ourRegisteredIndices = new TIntIntHashMap();
+  private static PersistentHashMap<Integer, byte[]> ourSharedFileInputs;
+  private static PersistentHashMap<Integer, byte[]> ourSharedFileContentIndependentInputs;
+  private static PersistentHashMap<Integer, byte[]> ourSharedContentInputs;
   static final boolean ourFileSharedIndicesEnabled = SystemProperties.getBooleanProperty("idea.shared.input.index.enabled", true);
   static final boolean DO_CHECKS = ourFileSharedIndicesEnabled && SystemProperties.getBooleanProperty("idea.shared.input.index.checked", true);
 
   //private static ScheduledFuture<?> ourFlushingFuture;
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.MapReduceIndex");
   @SuppressWarnings({"FieldCanBeLocal", "unused"}) private static LowMemoryWatcher myLowMemoryCallback;
-
-  private static final FileAccessorCache<Integer, IndexedState> ourFileIndexedStates = new FileAccessorCache<Integer, IndexedState>(200, 100) {
-    @Override
-    protected IndexedState createAccessor(Integer key) throws IOException {
-      return new IndexedState(key, ourSharedFileInputsIndex);
-    }
-
-    @Override
-    protected void disposeAccessor(IndexedState fileAccessor) throws IOException {
-      fileAccessor.flush();
-    }
-  };
-
-  private static final FileAccessorCache<Integer, IndexedState> ourContentIndexedStates = new FileAccessorCache<Integer, IndexedState>(200, 100) {
-    @Override
-    protected IndexedState createAccessor(Integer key) throws IOException {
-      return new IndexedState(key, ourSharedContentInputsIndex);
-    }
-
-    @Override
-    protected void disposeAccessor(IndexedState fileAccessor) throws IOException {
-      fileAccessor.flush();
-    }
-  };
 
   static {
     if (ourFileSharedIndicesEnabled) {
@@ -76,22 +51,25 @@ public class SharedIndicesData {
           @Override
           public void run() {
             ourFileIndexedStates.clear();
+            ourFileIndexedStates2.clear();
             ourContentIndexedStates.clear();
           }
         });
-        ourSharedFileInputsIndex = createSharedMap(new File(PathManager.getIndexRoot(), "file_inputs.data"));
-        ourSharedContentInputsIndex = createSharedMap(new File(IndexInfrastructure.getPersistentIndexRoot(), "content_inputs.data"));
+        ourSharedFileInputs = createSharedMap(new File(PathManager.getIndexRoot(), "file_inputs.data"));
+        ourSharedFileContentIndependentInputs = createSharedMap(new File(PathManager.getIndexRoot(), "file_inputs_content_independent.data"));
+        ourSharedContentInputs = createSharedMap(new File(IndexInfrastructure.getPersistentIndexRoot(), "content_inputs.data"));
 
         ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
           @Override
           public void run() {
+            close(ourSharedFileInputs);
+            close(ourSharedFileContentIndependentInputs);
+            close(ourSharedContentInputs);
+          }
+
+          private void close(PersistentHashMap<Integer, byte[]> index) {
             try {
-              ourSharedFileInputsIndex.close();
-            } catch (IOException ex) {
-              LOG.error(ex);
-            }
-            try {
-              ourSharedContentInputsIndex.close();
+              index.close();
             } catch (IOException ex) {
               LOG.error(ex);
             }
@@ -102,6 +80,10 @@ public class SharedIndicesData {
       }
     }
   }
+
+  private static final IndexedStateCache ourFileIndexedStates = new IndexedStateCache(200, 100, ourSharedFileInputs);
+  private static final IndexedStateCache ourFileIndexedStates2 = new IndexedStateCache(200, 100, ourSharedFileContentIndependentInputs);
+  private static final IndexedStateCache ourContentIndexedStates = new IndexedStateCache(200, 100, ourSharedContentInputs);
 
   private static PersistentHashMap<Integer, byte[]> createSharedMap(final File indexFile) throws IOException {
     return IOUtil.openCleanOrResetBroken(
@@ -128,15 +110,28 @@ public class SharedIndicesData {
   }
 
   public static void init() {
+  }
 
+  private static final int CONTENTLESS = 1;
+  private static final int CONTENTFUL = 2;
+
+  public static <Key, Value, Input> void registerIndex(ID<Key, Value> indexId, IndexExtension<Key, Value, Input> extension) {
+    if (extension instanceof FileBasedIndexExtension) {
+      boolean dependsOnFileContent = ((FileBasedIndexExtension)extension).dependsOnFileContent();
+      ourRegisteredIndices.put(indexId.getUniqueId(), dependsOnFileContent ? CONTENTFUL : CONTENTLESS);
+    }
   }
 
   public static void flushData() {
     if (!ourFileSharedIndicesEnabled) return;
-    ourFileIndexedStates.clear();
-    if (ourSharedFileInputsIndex != null && ourSharedFileInputsIndex.isDirty()) ourSharedFileInputsIndex.force();
-    ourContentIndexedStates.clear();
-    if (ourSharedContentInputsIndex != null && ourSharedContentInputsIndex.isDirty()) ourSharedContentInputsIndex.force();
+    doForce(ourFileIndexedStates);
+    doForce(ourFileIndexedStates2);
+    doForce(ourContentIndexedStates);
+  }
+
+  protected static void doForce(IndexedStateCache indexedStates) {
+    indexedStates.clear();
+    if (indexedStates.myStorage != null && indexedStates.myStorage.isDirty()) indexedStates.myStorage.force();
   }
 
   public static void beforeSomeIndexVersionInvalidation() {
@@ -313,7 +308,10 @@ public class SharedIndicesData {
 
   public static @Nullable <Key, Value> Value recallFileData(int id, ID<Key, ?> indexId, DataExternalizer<Value> externalizer)
     throws IOException {
-    return doRecallData(id, indexId, externalizer, ourFileIndexedStates);
+    int type = ourRegisteredIndices.get(indexId.getUniqueId());
+    if (type == 0) return null;
+
+    return doRecallData(id, indexId, externalizer, type == CONTENTLESS ? ourFileIndexedStates2 : ourFileIndexedStates);
   }
 
   public static @Nullable <Key, Value> Value recallContentData(int id, ID<Key, ?> indexId, DataExternalizer<Value> externalizer)
@@ -341,34 +339,40 @@ public class SharedIndicesData {
 
   public static <Key, Value> void associateFileData(int id, ID<Key, ?> indexId, Value keys, DataExternalizer<Value> externalizer)
     throws IOException {
-    doAssociateData(id, indexId, keys, externalizer, ourFileIndexedStates, ourSharedFileInputsIndex);
+    int type = ourRegisteredIndices.get(indexId.getUniqueId());
+    if (type == 0) return;
+    boolean contentlessIndex = type == CONTENTLESS;
+    doAssociateData(id, indexId, keys, externalizer,
+                    contentlessIndex ? ourFileIndexedStates2 : ourFileIndexedStates,
+                    contentlessIndex ? ourSharedFileContentIndependentInputs : ourSharedFileInputs);
   }
 
   public static <Key, Value> void associateContentData(int id, ID<Key, ?> indexId, Value keys, DataExternalizer<Value> externalizer)
     throws IOException {
-    doAssociateData(id, indexId, keys, externalizer, ourContentIndexedStates, ourSharedContentInputsIndex);
+    doAssociateData(id, indexId, keys, externalizer, ourContentIndexedStates, ourSharedContentInputs);
   }
 
   private static <Key, Value> void doAssociateData(int id,
                                                    final ID<Key, ?> indexId,
-                                                   final Value keys,
-                                                   final DataExternalizer<Value> externalizer,
+                                                   Value keys,
+                                                   DataExternalizer<Value> externalizer,
                                                    FileAccessorCache<Integer, IndexedState> states,
                                                    PersistentHashMap<Integer, byte[]> index)
     throws IOException {
+    final BufferExposingByteArrayOutputStream savedKeysData;
+    if (keys != null) {
+      //noinspection IOResourceOpenedButNotSafelyClosed
+      externalizer.save(new DataOutputStream(savedKeysData = new BufferExposingByteArrayOutputStream()), keys);
+    } else {
+      savedKeysData = null;
+    }
+
     FileAccessorCache.Handle<IndexedState> stateHandle = states.getIfCached(id);
 
     try {
-
       index.appendData(id, new PersistentHashMap.ValueDataAppender() {
         @Override
         public void append(DataOutput out) throws IOException {
-          BufferExposingByteArrayOutputStream savedKeysData = null;
-          if (keys != null) {
-            //noinspection IOResourceOpenedButNotSafelyClosed
-            externalizer.save(new DataOutputStream(savedKeysData = new BufferExposingByteArrayOutputStream()), keys);
-          }
-
           byte[] internalBuffer = null;
           int size = 0;
           if (savedKeysData != null) {
@@ -394,6 +398,26 @@ public class SharedIndicesData {
       });
     } finally {
       if (stateHandle != null) stateHandle.release();
+    }
+  }
+
+  private static class IndexedStateCache extends FileAccessorCache<Integer, IndexedState> {
+    private final PersistentHashMap<Integer, byte[]> myStorage;
+    public IndexedStateCache(int protectedQueueSize,
+                             int probationalQueueSize,
+                             PersistentHashMap<Integer, byte[]> storage) {
+      super(protectedQueueSize, probationalQueueSize);
+      myStorage = storage;
+    }
+
+    @Override
+    protected IndexedState createAccessor(Integer key) throws IOException {
+      return new IndexedState(key, myStorage);
+    }
+
+    @Override
+    protected void disposeAccessor(IndexedState fileAccessor) throws IOException {
+      fileAccessor.flush();
     }
   }
 }

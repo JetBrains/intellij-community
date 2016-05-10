@@ -20,6 +20,7 @@ import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.sm.runner.ui.MockPrinter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
+import com.jetbrains.TestEnv;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.sdkTools.SdkCreationType;
 import com.jetbrains.python.testing.tox.PyToxConfiguration;
@@ -27,6 +28,7 @@ import com.jetbrains.python.testing.tox.PyToxConfigurationFactory;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
+import org.junit.Test;
 
 import java.util.*;
 
@@ -43,6 +45,7 @@ public final class PyToxTest extends PyEnvTestCase {
   /**
    * Simply ensure tox runner works
    */
+  @Test
   public void testToxSimpleRun() {
     runPythonTest(new MyPyProcessWithConsoleTestTask(2,
                                                      new MyTestProcessRunner("/testData/toxtest/toxSimpleRun/"),
@@ -58,6 +61,8 @@ public final class PyToxTest extends PyEnvTestCase {
   /**
    * Check tox nose runner
    */
+  @Test
+  @StagingOn(os = TestEnv.WINDOWS)
   public void testToxNose() {
     runPythonTest(new MyPyProcessWithConsoleTestTask(1,
                                                      new MyTestProcessRunner("/testData/toxtest/toxNose/"),
@@ -75,6 +80,8 @@ public final class PyToxTest extends PyEnvTestCase {
   /**
    * Check tox pytest runner
    */
+  @Test
+  @StagingOn(os = TestEnv.WINDOWS)
   public void testToxPyTest() {
     runPythonTest(new MyPyProcessWithConsoleTestTask(1,
                                                      new MyTestProcessRunner("/testData/toxtest/toxPyTest/"),
@@ -92,6 +99,8 @@ public final class PyToxTest extends PyEnvTestCase {
   /**
    * Check tox unit runner
    */
+  @Test
+  @StagingOn(os = TestEnv.WINDOWS)
   public void testToxUnitTest() {
     runPythonTest(new MyPyProcessWithConsoleTestTask(1,
                                                      new MyTestProcessRunner("/testData/toxtest/toxUnitTest/"),
@@ -109,6 +118,8 @@ public final class PyToxTest extends PyEnvTestCase {
   /**
    * Big test which should run on any interpreter and check its output
    */
+  @Test
+  @StagingOn(os = TestEnv.WINDOWS)
   public void testToxSuccessTest() {
     runPythonTest(new MyPyProcessWithConsoleTestTask(1,
                                                      new MyTestProcessRunner("/testData/toxtest/toxSuccess/"),
@@ -193,10 +204,13 @@ public final class PyToxTest extends PyEnvTestCase {
                           Matchers.greaterThanOrEqualTo(myMinimumSuccessTestCount));
 
         // Check expected output
+        final String message = String.format("Interpreter %s does not have expected string in output. \n ", interpreterName) +
+                               String.format("All: %s \n", all) +
+                               String.format("Error: %s \n", stderr);
+
+
         Assert
-          .assertThat(String.format("Interpreter %s does not have expected string in output. \n " +
-                                    "All : " + all + "\n" +
-                                    "Error:" + stderr, interpreterName),
+          .assertThat(message,
                       getTestOutput(interpreterSuite), Matchers.containsString(myInterpreters.get(interpreterName).myExpectedOutput));
       }
 

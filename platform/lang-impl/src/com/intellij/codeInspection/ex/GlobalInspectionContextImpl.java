@@ -255,7 +255,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
             try {
               InspectionToolWrapper toolWrapper = state.getTool();
               InspectionToolPresentation presentation = getPresentation(toolWrapper);
-              presentation.exportResults(element, refEntity, Collections.emptySet());
+              presentation.exportResults(element, refEntity, d -> false);
             }
             catch (Throwable e) {
               LOG.error("Problem when exporting: " + refEntity.getExternalName(), e);
@@ -369,8 +369,8 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
           }
         }
         else if (view != null) {
-          view.update();
           addView(view);
+          view.update();
         }
         if (myView != null) {
           myView.setUpdating(false);

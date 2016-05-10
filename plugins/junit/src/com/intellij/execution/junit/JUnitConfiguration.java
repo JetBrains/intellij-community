@@ -189,11 +189,6 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
   }
 
   @Override
-  protected ModuleBasedConfiguration createInstance() {
-    return new JUnitConfiguration(getName(), getProject(), myData.clone(), JUnitConfigurationType.getInstance().getConfigurationFactories()[0]);// throw new RuntimeException("Should not call");
-  }
-
-  @Override
   public String suggestedName() {
     return myData.getGeneratedName(getConfigurationModule());
   }

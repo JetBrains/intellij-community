@@ -684,8 +684,9 @@ def setPluginVersionAndSince(String moduleName, String version) {
     def text = file.text
     if (!text.contains("<version>")) {
       def dotIndex = version.indexOf('.')
-      def untilBuild = dotIndex > 0 ? (Integer.parseInt(version.substring(0, dotIndex)) + 1).toString() + ".0" : version
-      file.text = text.replace("</id>", "</id>\n  <version>${version}</version>\n  <idea-version since-build=\"${version}\" until-build=\"${untilBuild}\"/>\n")
+      def untilBuild = dotIndex > 0 ? Integer.parseInt(version.substring(0, dotIndex)) + ".*" : version
+      def anchor = text.contains("</id>") ? "</id>" : "</name>"
+      file.text = text.replace(anchor, "${anchor}\n  <version>${version}</version>\n  <idea-version since-build=\"${version}\" until-build=\"${untilBuild}\"/>\n")
     }
   }
 }
@@ -843,6 +844,9 @@ def layoutAndroid(String androidHome, String androidToolsBaseHome) {
       jar("manifest-merger.jar") {
         module("manifest-merger")
       }
+      jar("repository.jar") {
+        module("repository")
+      }
       jar("sdk-tools.jar") {
         module("assetstudio")
         module("ddmlib")
@@ -856,6 +860,9 @@ def layoutAndroid(String androidHome, String androidToolsBaseHome) {
         module("chartlib")
         module("builder-model")
         module("builder-test-api")
+        module("instant-run-common")
+        module("instant-run-client")
+        module("instant-run-runtime")
       }
       jar("androidAnnotations.jar") {
         fileset(dir: "$androidHome/android/annotations")

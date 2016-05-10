@@ -17,6 +17,7 @@ package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.QueryExecutorBase;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
@@ -260,10 +261,11 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
           }
           currentlyProcessingClasses.down(); // tell other threads we are going to process this candidate
         }
-        PsiClass candidate = next == null ? myBaseClass : (PsiClass)next.retrieve();
 
         boolean added;
         try {
+          PsiClass candidate = next == null ? myBaseClass : ReadAction.compute(() -> (PsiClass)next.retrieve());
+
           if (candidate == null || candidate instanceof PsiAnonymousClass || isFinal(candidate)) {
             added = false;
           }

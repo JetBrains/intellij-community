@@ -210,6 +210,10 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
       return;
     }
 
+    if (myActionListener != null && !ApplicationManager.getApplication().isUnitTestMode()) {
+      myActionListener.onClose();
+    }
+
     if (isOk) {
       myModel.saveInitialCheckBoxState(myCheckBox.isSelected());
 
@@ -261,10 +265,6 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     }
 
     cleanupUI(isOk);
-    if (ApplicationManager.getApplication().isUnitTestMode()) return;
-    if (myActionListener != null) {
-      myActionListener.onClose();
-    }
   }
 
   private void cleanupUI(boolean ok) {

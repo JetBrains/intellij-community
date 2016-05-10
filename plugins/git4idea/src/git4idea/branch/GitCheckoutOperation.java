@@ -26,7 +26,6 @@ import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
-import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
 import git4idea.commands.*;
 import git4idea.config.GitVcsSettings;
@@ -61,7 +60,6 @@ class GitCheckoutOperation extends GitBranchOperation {
   @Nullable private final String myNewBranch;
 
   GitCheckoutOperation(@NotNull Project project,
-                       GitPlatformFacade facade,
                        @NotNull Git git,
                        @NotNull GitBranchUiHandler uiHandler,
                        @NotNull Collection<GitRepository> repositories,
@@ -69,7 +67,7 @@ class GitCheckoutOperation extends GitBranchOperation {
                        boolean detach,
                        boolean refShouldBeValid,
                        @Nullable String newBranch) {
-    super(project, facade, git, uiHandler, repositories);
+    super(project, git, uiHandler, repositories);
     myStartPointReference = startPointReference;
     myDetach = detach;
     myRefShouldBeValid = refShouldBeValid;
@@ -253,7 +251,7 @@ class GitCheckoutOperation extends GitBranchOperation {
   private boolean smartCheckout(@NotNull final List<GitRepository> repositories, @NotNull final String reference,
                                 @Nullable final String newBranch, @NotNull ProgressIndicator indicator) {
     final AtomicBoolean result = new AtomicBoolean();
-    GitPreservingProcess preservingProcess = new GitPreservingProcess(myProject, myFacade, myGit,
+    GitPreservingProcess preservingProcess = new GitPreservingProcess(myProject, myGit,
                                                                       GitUtil.getRootsFromRepositories(repositories), "checkout", reference,
                                                                       GitVcsSettings.UpdateChangesPolicy.STASH, indicator,
                                                                       new Runnable() {

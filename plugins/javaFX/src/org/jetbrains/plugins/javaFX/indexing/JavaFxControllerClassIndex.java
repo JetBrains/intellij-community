@@ -42,7 +42,6 @@ import java.util.*;
 
 public class JavaFxControllerClassIndex extends ScalarIndexExtension<String> {
   @NonNls public static final ID<String, Void> NAME = ID.create("JavaFxControllerClassIndex");
-  private final EnumeratorStringDescriptor myKeyDescriptor = new EnumeratorStringDescriptor();
   private final MyInputFilter myInputFilter = new MyInputFilter();
   private final MyDataIndexer myDataIndexer = new MyDataIndexer();
 
@@ -61,7 +60,7 @@ public class JavaFxControllerClassIndex extends ScalarIndexExtension<String> {
   @NotNull
   @Override
   public KeyDescriptor<String> getKeyDescriptor() {
-    return myKeyDescriptor;
+    return EnumeratorStringDescriptor.INSTANCE;
   }
 
   @NotNull

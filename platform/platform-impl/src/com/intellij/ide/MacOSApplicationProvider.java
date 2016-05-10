@@ -26,6 +26,7 @@ import com.intellij.idea.IdeaApplication;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -136,8 +137,11 @@ public class MacOSApplicationProvider implements ApplicationComponent {
             project = ProjectManager.getInstance().getDefaultProject();
           }
 
+          Project finalProject = project;
           if (!((ShowSettingsUtilImpl)ShowSettingsUtil.getInstance()).isAlreadyShown()) {
-            ShowSettingsUtil.getInstance().showSettingsDialog(project, ShowSettingsUtilImpl.getConfigurableGroups(project, true));
+            TransactionGuard.submitTransaction(project, () -> {
+              ShowSettingsUtil.getInstance().showSettingsDialog(finalProject, ShowSettingsUtilImpl.getConfigurableGroups(finalProject, true));
+            });
           }
           applicationEvent.setHandled(true);
         }

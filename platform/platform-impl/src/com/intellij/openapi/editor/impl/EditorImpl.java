@@ -1174,16 +1174,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     document.addDocumentListener(highlighter);
     myHighlighter = highlighter;
-    myHighlighterDisposable = new Disposable() {
-      @Override
-      public void dispose() {
-        document.removeDocumentListener(highlighter);
-      }
-    };
+    myHighlighterDisposable = () -> document.removeDocumentListener(highlighter);
     Disposer.register(myDisposable, myHighlighterDisposable);
     highlighter.setEditor(this);
     highlighter.setText(document.getImmutableCharSequence());
-    EditorHighlighterCache.rememberEditorHighlighterForCachesOptimization(document, highlighter);
+    if (!(highlighter instanceof EmptyEditorHighlighter)) {
+      EditorHighlighterCache.rememberEditorHighlighterForCachesOptimization(document, highlighter);
+    }
 
     if (myPanel != null) {
       reinitSettings();

@@ -192,6 +192,12 @@ public class CaretModelWindow implements CaretModel {
   @Nullable
   @Override
   public Caret addCaret(@NotNull VisualPosition pos) {
+    return addCaret(pos, true);
+  }
+
+  @Nullable
+  @Override
+  public Caret addCaret(@NotNull VisualPosition pos, boolean makePrimary) {
     LogicalPosition hostPos = myEditorWindow.injectedToHost(myEditorWindow.visualToLogicalPosition(pos));
     Caret caret = myDelegate.addCaret(myHostEditor.logicalToVisualPosition(hostPos));
     return createInjectedCaret(caret);

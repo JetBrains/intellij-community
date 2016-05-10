@@ -447,7 +447,7 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
       if (editor.getProject() != null && editor.getProject() != myProject) return;
       final Document doc = editor.getDocument();
       final Editor[] editors = event.getFactory().getEditors(doc, myProject);
-      if (editors.length == 0) {
+      if (editors.length == 0 || (editors.length == 1 && editor == editors[0])) {
         releaseTracker(doc);
       }
     }

@@ -304,7 +304,9 @@ public class TypeMigrationLabeler {
       myRemainConversions = conversions;
     }
 
-    public void change(final TypeMigrationUsageInfo usageInfo, @NotNull  Consumer<PsiNewExpression> consumer) {
+    public void change(@NotNull final TypeMigrationUsageInfo usageInfo,
+                       @NotNull Consumer<PsiNewExpression> consumer,
+                       @NotNull TypeMigrationLabeler labeler) {
       final PsiElement element = usageInfo.getElement();
       if (element == null) return;
       final Project project = element.getProject();
@@ -341,7 +343,7 @@ public class TypeMigrationLabeler {
         }
       }
       else {
-        TypeMigrationReplacementUtil.migratePsiMemberType(element, project, getTypeEvaluator().getType(usageInfo));
+        TypeMigrationReplacementUtil.migrateMemberOrVariableType(element, project, getTypeEvaluator().getType(usageInfo));
         if (usageInfo instanceof OverridenUsageInfo) {
           final String migrationName = ((OverridenUsageInfo)usageInfo).getMigrateMethodName();
           if (migrationName != null) {

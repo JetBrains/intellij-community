@@ -330,6 +330,12 @@ public class WindowWrapperBuilder {
       }
 
       @Override
+      public void dispose() {
+        super.dispose();
+        myPreferredFocusedComponent = null;
+      }
+
+      @Override
       public JComponent getPreferredFocusedComponent() {
         if (myPreferredFocusedComponent != null) return myPreferredFocusedComponent.compute();
         return super.getPreferredFocusedComponent();

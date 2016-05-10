@@ -28,7 +28,6 @@ import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.impl.ShadowBorderPainter;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -45,7 +44,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
-import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.*;
 import org.intellij.lang.annotations.JdkConstants;
@@ -114,7 +113,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
         final boolean insideBalloon = isInsideBalloon(me);
 
         if (myHideOnMouse && id == MouseEvent.MOUSE_PRESSED) {
-          if (!insideBalloon && !hasModalDialog(me) && !isWithinChildWindow(me)) {
+          if (!insideBalloon && !isWithinChildWindow(me)) {
             if (myHideListener == null) {
               hide();
             }
@@ -191,12 +190,6 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
       }
     }
     return false;
-  }
-
-  private static boolean hasModalDialog(MouseEvent e) {
-    final Component c = e.getComponent();
-    final DialogWrapper dialog = DialogWrapper.findInstance(c);
-    return dialog != null && dialog.isModal();
   }
 
   private final long myFadeoutTime;
@@ -312,7 +305,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
                      Layer layer,
                      boolean requestFocus) {
     myBorderColor = borderColor;
-    myBorderInsets = borderInsets != null ? borderInsets : new Insets(3, 3, 3, 3);
+    myBorderInsets = borderInsets != null ? borderInsets : JBUI.insets(3);
     myFillColor = fillColor;
     myContent = content;
     myHideOnMouse = hideOnMouse;
@@ -432,26 +425,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     myTracker = tracker;
     myTracker.init(this);
 
-    JRootPane root = null;
-    JDialog dialog = IJSwingUtilities.findParentOfType(comp, JDialog.class);
-    if (dialog != null) {
-      root = dialog.getRootPane();
-    }
-    else {
-      JWindow jwindow = IJSwingUtilities.findParentOfType(comp, JWindow.class);
-      if (jwindow != null) {
-        root = jwindow.getRootPane();
-      }
-      else {
-        JFrame frame = IJSwingUtilities.findParentOfType(comp, JFrame.class);
-        if (frame != null) {
-          root = frame.getRootPane();
-        }
-        else {
-          assert false;
-        }
-      }
-    }
+    JRootPane root = ObjectUtils.notNull(UIUtil.getRootPane(comp));
 
     myVisible = true;
 

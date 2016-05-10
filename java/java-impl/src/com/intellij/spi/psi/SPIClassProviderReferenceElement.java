@@ -17,6 +17,7 @@ package com.intellij.spi.psi;
 
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.ClassUtil;
@@ -33,6 +34,11 @@ import java.util.List;
 public class SPIClassProviderReferenceElement extends SPIPackageOrClassReferenceElement {
   public SPIClassProviderReferenceElement(ASTNode node) {
     super(node);
+  }
+
+  @Override
+  public TextRange getRangeInElement() {
+    return TextRange.from(0, getTextLength());
   }
 
   @NotNull

@@ -28,7 +28,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.DialogManager;
-import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
@@ -146,7 +145,7 @@ class GitAbortRebaseProcess {
   }
 
   private void doAbort(final boolean rollback) {
-    new GitFreezingProcess(myProject, ServiceManager.getService(GitPlatformFacade.class), "rebase", new Runnable() {
+    new GitFreezingProcess(myProject, "rebase", new Runnable() {
       public void run() {
         AccessToken token = DvcsUtil.workingTreeChangeStarted(myProject);
         List<GitRepository> repositoriesToRefresh = ContainerUtil.newArrayList();

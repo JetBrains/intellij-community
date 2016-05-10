@@ -436,10 +436,10 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
     // It's better don't to remove non-existent projects. Sometimes projects stored
     // on USB-sticks or flash-cards, and it will be nice to have them in the list
     // when USB device or SD-card is mounted
-    if (new File(path).exists()) {
+    //if (new File(path).exists()) {
       return new ReopenProjectAction(path, projectName, displayName);
-    }
-    return null;
+    //}
+    //return null;
   }
 
   private void markPathRecent(String path) {

@@ -240,6 +240,16 @@ public class StringUtilRt {
     }
   }
 
+  @Contract(pure = true)
+  public static <E extends Enum<E>> E parseEnum(String string, E defaultValue, Class<E> clazz) {
+    try {
+      return Enum.valueOf(clazz, string);
+    }
+    catch (Exception e) {
+      return defaultValue;
+    }
+  }
+
   @NotNull
   @Contract(pure = true)
   public static String getShortName(@NotNull Class aClass) {

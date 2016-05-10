@@ -881,13 +881,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
           PsiExpression initializer = RefactoringUtil.unparenthesizeExpression(expr1);
           final SmartTypePointer selectedType = SmartTypePointerManager.getInstance(project).createSmartTypePointer(
             settings.getSelectedType());
-          if (expr1 instanceof PsiNewExpression) {
-            final PsiNewExpression newExpression = (PsiNewExpression)expr1;
-            if (newExpression.getArrayInitializer() != null) {
-              initializer = newExpression.getArrayInitializer();
-            }
-            initializer = replaceExplicitWithDiamondWhenApplicable(initializer, selectedType.getType());
-          }
+          initializer = simplifyVariableInitializer(initializer, selectedType.getType());
 
           PsiDeclarationStatement declaration = JavaPsiFacade.getInstance(project).getElementFactory()
             .createVariableDeclarationStatement(settings.getEnteredName(), selectedType.getType(), initializer, container);
@@ -991,20 +985,35 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     return false;
   }
 
-  public static PsiExpression replaceExplicitWithDiamondWhenApplicable(final PsiExpression initializer,
-                                                                       final PsiType expectedType) {
-    if (initializer instanceof PsiNewExpression) {
+  public static PsiExpression simplifyVariableInitializer(final PsiExpression initializer,
+                                                          final PsiType expectedType) {
+
+    if (initializer instanceof PsiTypeCastExpression) {
+      PsiExpression operand = ((PsiTypeCastExpression)initializer).getOperand();
+      if (operand != null) {
+        PsiType operandType = operand.getType();
+        if (operandType != null && TypeConversionUtil.isAssignable(expectedType, operandType)) {
+          return operand;
+        }
+      }
+    }
+    else if (initializer instanceof PsiNewExpression) {
       final PsiNewExpression newExpression = (PsiNewExpression)initializer;
-      final PsiExpression tryToDetectDiamondNewExpr = ((PsiVariable)JavaPsiFacade.getElementFactory(initializer.getProject())
-        .createVariableDeclarationStatement("x", expectedType, initializer, initializer).getDeclaredElements()[0])
-        .getInitializer();
-      if (tryToDetectDiamondNewExpr instanceof PsiNewExpression &&
-          PsiDiamondTypeUtil.canCollapseToDiamond((PsiNewExpression)tryToDetectDiamondNewExpr,
-                                                  (PsiNewExpression)tryToDetectDiamondNewExpr,
-                                                  expectedType)) {
-        final PsiElement paramList = PsiDiamondTypeUtil
-          .replaceExplicitWithDiamond(newExpression.getClassOrAnonymousClassReference().getParameterList());
-        return PsiTreeUtil.getParentOfType(paramList, PsiNewExpression.class);
+      if (newExpression.getArrayInitializer() != null) {
+        return newExpression.getArrayInitializer();
+      }
+      else {
+        final PsiExpression tryToDetectDiamondNewExpr = ((PsiVariable)JavaPsiFacade.getElementFactory(initializer.getProject())
+          .createVariableDeclarationStatement("x", expectedType, initializer, initializer).getDeclaredElements()[0])
+          .getInitializer();
+        if (tryToDetectDiamondNewExpr instanceof PsiNewExpression &&
+            PsiDiamondTypeUtil.canCollapseToDiamond((PsiNewExpression)tryToDetectDiamondNewExpr,
+                                                    (PsiNewExpression)tryToDetectDiamondNewExpr,
+                                                    expectedType)) {
+          final PsiElement paramList = PsiDiamondTypeUtil
+            .replaceExplicitWithDiamond(newExpression.getClassOrAnonymousClassReference().getParameterList());
+          return PsiTreeUtil.getParentOfType(paramList, PsiNewExpression.class);
+        }
       }
     }
     return initializer;

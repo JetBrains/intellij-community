@@ -234,10 +234,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     Collection<HighlightInfo> infos = highlightErrors();
     assertEquals(0, infos.size());
     final PsiClass psiClass = ((PsiJavaFile)getFile()).getClasses()[0];
-    WriteCommandAction.runWriteCommandAction(null, () -> {
-      new RenameProcessor(myProject, psiClass, "Class2", false, false).run();
-      PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    });
+    new RenameProcessor(myProject, psiClass, "Class2", false, false).run();
 
     TextRange dirty = myDaemonCodeAnalyzer.getFileStatusMap().getFileDirtyScope(document, Pass.UPDATE_ALL);
     assertEquals(getFile().getTextRange(), dirty);

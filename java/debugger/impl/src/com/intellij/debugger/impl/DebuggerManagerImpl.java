@@ -21,6 +21,7 @@ import com.intellij.debugger.engine.*;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.GetJPDADialog;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
+import com.intellij.debugger.ui.tree.render.BatchEvaluator;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.configurations.JavaParameters;
@@ -295,6 +296,17 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
       });
     }
     myDispatcher.getMulticaster().sessionCreated(session);
+
+    if (debugProcess.isDetached() || debugProcess.isDetaching()) {
+      session.dispose();
+      return null;
+    }
+    if (environment.isRemote()) {
+      // optimization: that way BatchEvaluator will not try to lookup the class file in remote VM
+      // which is an expensive operation when executed first time
+      debugProcess.putUserData(BatchEvaluator.REMOTE_SESSION_KEY, Boolean.TRUE);
+    }
+
     return session;
   }
 

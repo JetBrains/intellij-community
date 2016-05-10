@@ -71,29 +71,30 @@ public class RedundantCastUtil {
     return arg;
   }
 
-  public static void removeCast(PsiTypeCastExpression castExpression) {
-    if (castExpression == null) return;
+  public static PsiExpression removeCast(PsiTypeCastExpression castExpression) {
+    if (castExpression == null) return null;
     PsiExpression operand = castExpression.getOperand();
     if (operand instanceof PsiParenthesizedExpression) {
       final PsiParenthesizedExpression parExpr = (PsiParenthesizedExpression)operand;
       operand = parExpr.getExpression();
     }
-    if (operand == null) return;
+    if (operand == null) return null;
 
-    PsiElement toBeReplaced = castExpression;
+    PsiExpression toBeReplaced = castExpression;
 
     PsiElement parent = castExpression.getParent();
     while (parent instanceof PsiParenthesizedExpression) {
-      toBeReplaced = parent;
+      toBeReplaced = (PsiExpression)parent;
       parent = parent.getParent();
     }
 
     try {
-      toBeReplaced.replace(operand);
+      return (PsiExpression)toBeReplaced.replace(operand);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
     }
+    return toBeReplaced;
   }
 
   private static class MyCollectingVisitor extends MyIsRedundantVisitor {

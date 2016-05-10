@@ -104,7 +104,7 @@ public class PagedFileStorage implements Forceable {
   private final Object myLastAccessedBufferCacheLock = new Object();
 
   private final byte[] myTypedIOBuffer;
-  private volatile boolean isDirty = false;
+  private volatile boolean isDirty;
   private final File myFile;
   protected volatile long mySize = -1;
   protected final int myPageSize;

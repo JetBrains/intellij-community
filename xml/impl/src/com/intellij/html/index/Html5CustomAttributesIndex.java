@@ -89,7 +89,7 @@ public class Html5CustomAttributesIndex extends ScalarIndexExtension<String> {
   @NotNull
   @Override
   public KeyDescriptor<String> getKeyDescriptor() {
-    return new EnumeratorStringDescriptor();
+    return EnumeratorStringDescriptor.INSTANCE;
   }
 
   @NotNull

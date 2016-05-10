@@ -39,24 +39,18 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.PanelWithActionsAndCloseButton;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.util.Clock;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Getter;
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.AnnotateRevisionActionBase;
-import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.CreatePatchFromChangesAction;
 import com.intellij.openapi.vcs.changes.committed.AbstractCalledLater;
-import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
 import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
 import com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl;
-import com.intellij.openapi.vcs.ui.*;
-import com.intellij.openapi.vcs.ui.FontUtil;
+import com.intellij.openapi.vcs.ui.ReplaceFileConfirmationDialog;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.vfs.VcsFileSystem;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
@@ -96,6 +90,9 @@ import java.io.IOException;
 import java.util.*;
 import java.util.List;
 
+import static com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer.formatTextWithLinks;
+import static com.intellij.openapi.vcs.ui.FontUtil.getHtmlWithFonts;
+
 /**
  * author: lesya
  */
@@ -104,6 +101,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
 
   @NotNull private final Project myProject;
   private final JEditorPane myComments;
+  private final StatusText myCommentsStatus;
   private JComponent myAdditionalDetails;
   private Consumer<VcsFileRevision> myListener;
   private String myOriginalComment = "";
@@ -127,15 +125,14 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
   private final AsynchConsumer<VcsHistorySession> myHistoryPanelRefresh;
 
   private static final String COMMIT_MESSAGE_TITLE = VcsBundle.message("label.selected.revision.commit.message");
-  @NonNls private static final String VCS_HISTORY_ACTIONS_GROUP = "VcsHistoryActionsGroup";
+  private static final String VCS_HISTORY_ACTIONS_GROUP = "VcsHistoryActionsGroup";
 
   private final Map<VcsRevisionNumber, Integer> myRevisionsOrder;
   private final Map<VcsFileRevision, VirtualFile> myRevisionToVirtualFile = new HashMap<VcsFileRevision, VirtualFile>();
 
   private boolean myIsStaticAndEmbedded;
-  private boolean myColumnSizesSet;
 
-  private final Splitter myDetailsSplitter = new Splitter(false, 0.5f);
+  private Splitter myDetailsSplitter;
   private Splitter mySplitter;
 
   private final Comparator<VcsFileRevision> myRevisionsInOrderComparator = new Comparator<VcsFileRevision>() {
@@ -171,7 +168,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
 
     @Override
     public String getPreferredStringValue() {
-      return "123.4567";
+      return StringUtil.repeatSymbol('m', 10);
     }
   }
 
@@ -192,7 +189,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
 
     @Override
     public String getPreferredStringValue() {
-      return DateFormatUtil.formatPrettyDateTime(Clock.getTime());
+      return DateFormatUtil.formatPrettyDateTime(Clock.getTime() + 1000);
     }
   }
 
@@ -284,7 +281,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     @Override
     @NonNls
     public String getPreferredStringValue() {
-      return "author_author";
+      return StringUtil.repeatSymbol('m', 14);
     }
   }
 
@@ -317,7 +314,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
 
     @Override
     public String getPreferredStringValue() {
-      return StringUtil.repeatSymbol('a', 125);
+      return StringUtil.repeatSymbol('m', 80);
     }
 
     public TableCellRenderer getRenderer(VcsFileRevision p0) {
@@ -364,11 +361,25 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     myDiffHandler = customDiffHandler == null ? new StandardDiffFromHistoryHandler() : customDiffHandler;
 
     final DualViewColumnInfo[] columns = createColumnList(myVcs.getProject(), provider, session);
-
-    myComments = new JEditorPane(UIUtil.HTML_MIME, "");
+    myCommentsStatus = new StatusText() {
+      @Override
+      protected boolean isStatusVisible() {
+        return StringUtil.isEmpty(myOriginalComment);
+      }
+    };
+    myCommentsStatus.setText("Commit message");
+    myComments = new JEditorPane(UIUtil.HTML_MIME, "") {
+      @Override
+      protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        myCommentsStatus.paint(this, g);
+      }
+    };
+    myCommentsStatus.attachTo(myComments);
     myComments.setPreferredSize(new Dimension(150, 100));
     myComments.setEditable(false);
-    myComments.setBackground(UIUtil.getComboBoxDisabledBackground());
+    myComments.setOpaque(false);
+    myComments.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, Boolean.TRUE);
     myComments.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
 
     myRevisionsOrder = new HashMap<VcsRevisionNumber, Integer>();
@@ -559,16 +570,8 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
         wrapWithTreeElements(myHistorySession.getRevisionList())), myTargetSelection);
     }
 
-    columnSizesOnce();
     myDualView.expandAll();
     myDualView.repaint();
-  }
-
-  private void columnSizesOnce() {
-    if (! myColumnSizesSet) {
-      myDualView.getFlatView().updateColumnSizes();
-      myColumnSizesSet = true;
-    }
   }
 
   private void adjustEmptyText() {
@@ -649,38 +652,40 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
   }
 
   private void updateMessage() {
-    List selection = getSelection();
-    final VcsFileRevision revision;
-    if (selection.size() != 1) {
-      revision = null;
+    List<TreeNodeOnVcsRevision> selection = getSelection();
+    if (selection.isEmpty()) {
       myComments.setText("");
       myOriginalComment = "";
+      return;
+    }
+    StringBuilder sb = new StringBuilder();
+    for (TreeNodeOnVcsRevision revision : selection) {
+      String message = revision.getCommitMessage();
+      if (StringUtil.isEmpty(message)) continue;
+      if (sb.length() > 0) sb.append("\n\n");
+      sb.append(message);
+    }
+    myOriginalComment = sb.toString();
+    if (StringUtil.isEmpty(myOriginalComment)) {
+      myComments.setText("");
     }
     else {
-      revision = getFirstSelectedRevision();
-      if (revision != null) {
-        final String message = revision.getCommitMessage();
-        myOriginalComment = message;
-        @NonNls final String text = message == null ? "" : "<html><head>" +
-                                                           UIUtil.getCssFontDeclaration(UIUtil.getLabelFont()) +
-                                                           "</head><body>" +
-                                                           FontUtil.getHtmlWithFonts(IssueLinkHtmlRenderer
-                                                             .formatTextWithLinks(myVcs.getProject(), message)) +
-                                                           "</body></html>";
-        myComments.setText(text);
-        myComments.setCaretPosition(0);
-      }
+      myComments.setText("<html><head>" +
+                         UIUtil.getCssFontDeclaration(UIUtil.getLabelFont()) +
+                         "</head><body>" +
+                         getHtmlWithFonts(formatTextWithLinks(myVcs.getProject(), myOriginalComment)) +
+                         "</body></html>");
+      myComments.setCaretPosition(0);
     }
     if (myListener != null) {
-      myListener.consume(revision);
+      myListener.consume(selection.get(0).getRevision());
     }
   }
 
 
   protected JComponent createCenterPanel() {
-    mySplitter = new Splitter(true, getSplitterProportion());
-    mySplitter.setDividerWidth(4);
-    //splitter.getDivider().setBackground(UIUtil.getBgFillColor(splitter.getDivider()).brighter());
+    mySplitter = new OnePixelSplitter(true, getSplitterProportion());
+    mySplitter.setFirstComponent(myDualView);
 
     mySplitter.addPropertyChangeListener(new PropertyChangeListener() {
       public void propertyChange(PropertyChangeEvent evt) {
@@ -690,30 +695,20 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
       }
     });
 
-    JPanel commentGroup = new JPanel(new BorderLayout());
-    final JLabel commentLabel = new JLabel(COMMIT_MESSAGE_TITLE + ":");
-    commentGroup.add(commentLabel, BorderLayout.NORTH);
-    JScrollPane pane = ScrollPaneFactory.createScrollPane(myComments);
-    pane.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP | SideBorder.LEFT | (myAdditionalDetails == null ? 0 : SideBorder.RIGHT)));
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myComments);
+    scrollPane.setBorder(IdeBorderFactory.createBorder(myAdditionalDetails == null ? SideBorder.LEFT : SideBorder.LEFT | SideBorder.RIGHT));
 
-    commentGroup.add(pane, BorderLayout.CENTER);
-    myDetailsSplitter.setFirstComponent(commentGroup);
+    myDetailsSplitter = new OnePixelSplitter(false, 0.5f);
+    myDetailsSplitter.setFirstComponent(scrollPane);
     myDetailsSplitter.setSecondComponent(myAdditionalDetails);
 
-    mySplitter.setFirstComponent(myDualView);
     setupDetails();
     return mySplitter;
   }
 
   private void setupDetails() {
-    boolean showDetails = ! myIsStaticAndEmbedded && getConfiguration().SHOW_FILE_HISTORY_DETAILS;
-    if (showDetails) {
-      myDualView.setViewBorder(IdeBorderFactory.createBorder(SideBorder.LEFT | SideBorder.BOTTOM));
-    }
-    else {
-      myDualView.setViewBorder(IdeBorderFactory.createBorder(SideBorder.LEFT));
-    }
-
+    boolean showDetails = !myIsStaticAndEmbedded && getConfiguration().SHOW_FILE_HISTORY_DETAILS;
+    myDualView.setViewBorder(IdeBorderFactory.createBorder(SideBorder.LEFT));
     mySplitter.setSecondComponent(showDetails ? myDetailsSplitter : null);
   }
 
@@ -798,7 +793,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
         mySplitter.repaint();
 
         myRefresherI.run(true, useLastRevision);
-        columnSizesOnce();
       }
     }.callMe();
   }
@@ -1262,9 +1256,9 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
 
   @Nullable
   private VcsFileRevision getFirstSelectedRevision() {
-    List selection = getSelection();
+    List<TreeNodeOnVcsRevision> selection = getSelection();
     if (selection.isEmpty()) return null;
-    return ((TreeNodeOnVcsRevision)selection.get(0)).myRevision;
+    return selection.get(0).myRevision;
   }
 
   public VcsFileRevision[] getSelectedRevisions() {
@@ -1353,10 +1347,10 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
   public void dispose() {
     super.dispose();
     myDualView.dispose();
-    myUpdateAlarm.dispose();
+    Disposer.dispose(myUpdateAlarm);
   }
 
-  abstract class AbstractActionForSomeSelection extends AnAction implements DumbAware {
+  abstract static class AbstractActionForSomeSelection extends AnAction implements DumbAware {
     private final int mySuitableSelectedElements;
     private final FileHistoryPanelImpl mySelectionProvider;
 

@@ -1137,6 +1137,20 @@ public class StringUtil extends StringUtilRt {
 
   @NotNull
   @Contract(pure = true)
+  public static String trimExtension(@NotNull String name) {
+    int index = name.lastIndexOf('.');
+    return index < 0 ? name : name.substring(0, index);
+  }
+
+  @NotNull
+  @Contract(pure = true)
+  public static String trimExtensions(@NotNull String name) {
+    int index = name.indexOf('.');
+    return index < 0 ? name : name.substring(0, index);
+  }
+
+  @NotNull
+  @Contract(pure = true)
   public static String pluralize(@NotNull String base, int n) {
     if (n == 1) return base;
     return pluralize(base);
@@ -2101,7 +2115,7 @@ public class StringUtil extends StringUtilRt {
   @Contract(pure = true)
   public static String firstLast(@NotNull String text, int length) {
     return text.length() > length
-           ? text.subSequence(0, length / 2) + "..." + text.subSequence(text.length() - length / 2, text.length())
+           ? text.subSequence(0, length / 2) + "…" + text.subSequence(text.length() - length / 2 - 1, text.length())
            : text;
   }
 
@@ -3176,6 +3190,11 @@ public class StringUtil extends StringUtilRt {
   @Contract(pure = true)
   public static boolean parseBoolean(String string, final boolean defaultValue) {
     return StringUtilRt.parseBoolean(string, defaultValue);
+  }
+
+  @Contract(pure = true)
+  public static <E extends Enum<E>> E parseEnum(String string, E defaultValue, Class<E> clazz) {
+    return StringUtilRt.parseEnum(string, defaultValue, clazz);
   }
 
   @NotNull

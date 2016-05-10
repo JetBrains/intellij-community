@@ -15,7 +15,6 @@
  */
 package git4idea.repo;
 
-import git4idea.GitPlatformFacade;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,7 +37,7 @@ import java.util.List;
  *   There are also some rules about url substitution, like {@code url.<base>.insteadOf}.
  * </p>
  * <p>
- *   GitRemote instance constructed by {@link GitConfig#read(GitPlatformFacade, File)}} has all these rules applied.
+ *   GitRemote instance constructed by {@link #read(File)}} has all these rules applied.
  *   Thus, for example, if only one {@code url} and no {@code pushUrls} are defined for the remote,
  *   both {@link #getUrls()} and {@link #getPushUrls()} will return this url. <br/>
  *   This is made to avoid urls transformation logic from the code using GitRemote, leaving it all in GitConfig parsing.

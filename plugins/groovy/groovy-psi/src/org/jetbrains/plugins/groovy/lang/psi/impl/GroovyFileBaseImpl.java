@@ -57,7 +57,7 @@ import java.util.List;
  */
 public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFileBase, GrControlFlowOwner {
 
-  private GrMethod[] myMethods = null;
+  private GrMethod[] myMethods;
 
   @Override
   public void subtreeChanged() {
@@ -220,7 +220,7 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
     myControlFlow = null;
   }
 
-  private volatile SoftReference<Instruction[]> myControlFlow = null;
+  private volatile SoftReference<Instruction[]> myControlFlow;
 
   @Override
   public Instruction[] getControlFlow() {

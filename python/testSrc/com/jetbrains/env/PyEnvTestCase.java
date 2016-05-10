@@ -5,18 +5,26 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.UIUtil;
+import com.jetbrains.TestEnv;
 import com.jetbrains.python.packaging.PyPackage;
 import com.jetbrains.python.packaging.PyPackageManager;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.Assert;
 import org.junit.Assume;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.rules.TestName;
+import org.junit.rules.TestWatcher;
+import org.junit.runner.Description;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,7 +35,7 @@ import java.util.List;
 /**
  * @author traff
  */
-public abstract class PyEnvTestCase extends UsefulTestCase {
+public abstract class PyEnvTestCase {
   private static final Logger LOG = Logger.getInstance(PyEnvTestCase.class.getName());
 
   private static final String TAGS_FILE = "tags.txt";
@@ -41,6 +49,8 @@ public abstract class PyEnvTestCase extends UsefulTestCase {
 
   public static final boolean RUN_LOCAL = SystemProperties.getBooleanProperty("pycharm.run_local", true);
 
+  private static final boolean STAGING_ENV = SystemProperties.getBooleanProperty("pycharm.staging_env", false);
+
   /**
    * Tags that should exist between all tags, available on all interpreters for test to run.
    * See {@link #PyEnvTestCase(String...)}
@@ -48,9 +58,41 @@ public abstract class PyEnvTestCase extends UsefulTestCase {
   @Nullable
   private final String[] myRequiredTags;
 
+
+  private boolean myStaging = false;
   /**
    * TODO: Move to {@link EnvTestTagsRequired} as well?
    */
+
+  @Rule public TestName myTestName = new TestName();
+
+  @Rule public final TestWatcher myWatcher = new TestWatcher() {
+    @Override
+    protected void starting(Description description) {
+      myStaging = isStaging(description);
+    }
+  };
+
+  protected boolean isStaging(Description description) {
+    try {
+      if (description.getTestClass().getMethod(description.getMethodName()).isAnnotationPresent(Staging.class)) {
+        return true;
+      }
+      else {
+        for (StagingOn so : description.getTestClass().getMethod(description.getMethodName()).getAnnotationsByType(StagingOn.class)) {
+          if (so.os() == TestEnv.WINDOWS && SystemInfo.isWindows ||
+              so.os() == TestEnv.LINUX && SystemInfo.isLinux ||
+              so.os() == TestEnv.MAC && SystemInfo.isMac) {
+            return true;
+          }
+        }
+        return false;
+      }
+    }
+    catch (NoSuchMethodException e) {
+      return false;
+    }
+  }
 
   /**
    * @param requiredTags tags that should exist on some interpreter for this test to run.
@@ -73,9 +115,8 @@ public abstract class PyEnvTestCase extends UsefulTestCase {
     return FileUtil.toSystemIndependentName(testDataPath);
   }
 
-  @Override
+  @Before
   public void setUp() throws Exception {
-    super.setUp();
     if (myRequiredTags != null) { // Ensure all tags exist between available interpreters
       Assume.assumeThat(
         "Can't find some tags between all available interpreter, test (all methods) will be skipped",
@@ -97,7 +138,6 @@ public abstract class PyEnvTestCase extends UsefulTestCase {
     return allAvailableTags;
   }
 
-  @Override
   protected void invokeTestRunnable(@NotNull final Runnable runnable) throws Exception {
     if (runInWriteAction()) {
       UIUtil.invokeAndWaitIfNeeded(new Runnable() {
@@ -111,7 +151,6 @@ public abstract class PyEnvTestCase extends UsefulTestCase {
     }
   }
 
-  @Override
   protected boolean runInDispatchThread() {
     return false;
   }
@@ -124,11 +163,17 @@ public abstract class PyEnvTestCase extends UsefulTestCase {
     runTest(testTask, getTestName(false));
   }
 
+  protected String getTestName(boolean lowercaseFirstLetter) {
+    return UsefulTestCase.getTestName(myTestName.getMethodName(), lowercaseFirstLetter);
+  }
+
   public void runTest(@NotNull PyTestTask testTask, @NotNull String testName) {
     if (notEnvConfiguration()) {
-      fail("Running under teamcity but not by Env configuration. Skipping.");
+      Assert.fail("Running under teamcity but not by Env configuration. Skipping.");
       return;
     }
+
+    checkStaging();
 
     List<String> roots = getPythonRoots();
 
@@ -157,6 +202,11 @@ public abstract class PyEnvTestCase extends UsefulTestCase {
                        " environment variable.",
                        roots.isEmpty());
     doRunTests(testTask, testName, roots);
+  }
+
+  protected void checkStaging() {
+    Assume.assumeTrue("Test is annotated as Staging and should only run on staging environment",
+                      myStaging == STAGING_ENV);
   }
 
   protected void doRunTests(PyTestTask testTask, String testName, List<String> roots) {

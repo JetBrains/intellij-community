@@ -48,6 +48,7 @@ public class JBPopupMenu extends JPopupMenu {
     enableEvents(AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_WHEEL_EVENT_MASK);
     myLayout = new MyLayout(this);
     setLayout(myLayout);
+    setLightWeightPopupEnabled(false);
   }
 
   @Override

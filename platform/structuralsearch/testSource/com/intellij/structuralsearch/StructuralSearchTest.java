@@ -1398,6 +1398,15 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     final String pattern2 = "'_:[write && regex( i )]";
     assertEquals("Find writes of symbol", 3, findMatchesCount(in, pattern2));
+
+    final String source = "class A {" +
+                          "  static A a() {};" +
+                          "  void m() {" +
+                          "    A a = A.a();" +
+                          "  }" +
+                          "}";
+    final String pattern3 = "A";
+    assertEquals("No duplicate results", 4, findMatchesCount(source, pattern3));
   }
 
   public void testSearchGenerics() {
