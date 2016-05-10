@@ -232,18 +232,14 @@ class ShowDiffFromAnnotation extends DumbAwareAction implements UpToDateLineNumb
 
     @Override
     public String next() {
-      int nextLine;
       while (lineNumberInBounds()) {
         final VcsRevisionNumber vcsRevisionNumber = myAnnotation.originalRevision(myCurrentLine);
-        if (myRevisionNumber.equals(vcsRevisionNumber)) {
-          nextLine = myCurrentLine;
-          final String text = myContentsLines[nextLine];
-          if (!StringUtil.isEmptyOrSpaces(text)) {
-            ++myCurrentLine;
-            return text;
-          }
-        }
+        final String text = myContentsLines[myCurrentLine];
         ++myCurrentLine;
+
+        if (myRevisionNumber.equals(vcsRevisionNumber) && !StringUtil.isEmptyOrSpaces(text)) {
+          return text;
+        }
       }
       return null;
     }
