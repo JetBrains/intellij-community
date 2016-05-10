@@ -16,9 +16,8 @@
 package org.jetbrains.plugins.javaFX.fxml.refs;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.DelegatingGlobalSearchScope;
@@ -58,17 +57,35 @@ public class JavaFxScopeEnlarger extends UseScopeEnlarger {
       if (element instanceof PsiField && needToEnlargeScope((PsiField)element) ||
           element instanceof PsiMethod && needToEnlargeScope((PsiMethod)element) ||
           element instanceof PsiParameter) {
-        final Project project = element.getProject();
-        final String qualifiedName = containingClass.getQualifiedName();
-        if (qualifiedName != null && !JavaFxControllerClassIndex.findFxmlWithController(project, qualifiedName).isEmpty() ||
-            InheritanceUtil.isInheritor(containingClass, JavaFxCommonNames.JAVAFX_SCENE_NODE)) {
-          final GlobalSearchScope projectScope = GlobalSearchScope.projectScope(project);
+        if (InheritanceUtil.isInheritor(containingClass, JavaFxCommonNames.JAVAFX_SCENE_NODE) ||
+            isControllerClass(containingClass)) {
+          final GlobalSearchScope projectScope = GlobalSearchScope.projectScope(element.getProject());
           return new GlobalFxmlSearchScope(projectScope);
         }
       }
     }
 
     return null;
+  }
+
+  public boolean isControllerClass(PsiClass psiClass) {
+    final Project project = psiClass.getProject();
+    final String qualifiedName = psiClass.getQualifiedName();
+    if (qualifiedName != null && !JavaFxControllerClassIndex.findFxmlWithController(project, qualifiedName).isEmpty()) {
+      return true;
+    }
+    final Ref<Boolean> refFound = new Ref<>(false);
+    final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+    final GlobalSearchScope projectScope = GlobalSearchScope.allScope(project);
+    JavaFxControllerClassIndex.processControllerClassNames(project, className -> {
+      final PsiClass aClass = psiFacade.findClass(className, projectScope);
+      if (InheritanceUtil.isInheritorOrSelf(aClass, psiClass, true)) {
+        refFound.set(true);
+        return false;
+      }
+      return true;
+    });
+    return refFound.get();
   }
 
   private static boolean needToEnlargeScope(PsiField field) {

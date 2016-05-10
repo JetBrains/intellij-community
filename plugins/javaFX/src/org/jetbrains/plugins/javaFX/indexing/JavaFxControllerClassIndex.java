@@ -26,6 +26,8 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.util.Function;
+import com.intellij.util.Functions;
+import com.intellij.util.Processor;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
@@ -148,8 +150,13 @@ public class JavaFxControllerClassIndex extends ScalarIndexExtension<String> {
     }, ProjectScope.getAllScope(project));
   }
 
+  public static void processControllerClassNames(Project project, Processor<String> processor) {
+    ApplicationManager.getApplication().runReadAction((Runnable)() ->
+      FileBasedIndex.getInstance().processAllKeys(NAME, processor, project));
+  }
+
   public static List<VirtualFile> findFxmlsWithController(final Project project, @NotNull String className) {
-    return findFxmlWithController(project, className, Function.ID, ProjectScope.getAllScope(project));
+    return findFxmlWithController(project, className, Functions.id(), ProjectScope.getAllScope(project));
   }
 
   public static <T> List<T> findFxmlWithController(final Project project,
