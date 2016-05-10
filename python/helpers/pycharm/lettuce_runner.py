@@ -118,8 +118,13 @@ class _LettuceRunner(_bdd_utils.BddRunner):
         lettuce.after.each_feature(
             lambda f: self._feature_or_scenario(False, f.name, f.described_at))
 
-        lettuce.before.each_outline(lambda s, o: self.__outline(True, s, o))
-        lettuce.after.each_outline(lambda s, o: self.__outline(False, s, o))
+        try:
+            lettuce.before.each_outline(lambda s, o: self.__outline(True, s, o))
+            lettuce.after.each_outline(lambda s, o: self.__outline(False, s, o))
+        except AttributeError:
+            import sys
+            sys.stderr.write("WARNING: your lettuce version is outdated and does not support outline hooks. "
+                             "Outline scenarios may not work. Consider upgrade to latest lettuce (0.22 at least)")
 
         lettuce.before.each_scenario(
             lambda s: self.__scenario(True, s))
