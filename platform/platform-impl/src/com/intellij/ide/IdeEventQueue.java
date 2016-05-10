@@ -357,7 +357,6 @@ public class IdeEventQueue extends EventQueue {
     boolean loaded = IdeaApplication.isLoaded();
     if (loaded) {
       ourAppIsLoaded = true;
-      ourTransactionGuard = (TransactionGuardImpl)TransactionGuard.getInstance();
     }
     return loaded;
   }
@@ -389,7 +388,7 @@ public class IdeEventQueue extends EventQueue {
     myCurrentEvent = e;
 
     boolean userActivity = myIsInInputEvent || e instanceof ItemEvent;
-    try (AccessToken ignored = ourTransactionGuard == null ? null : ourTransactionGuard.startActivity(userActivity)) {
+    try (AccessToken ignored = startActivity(userActivity)) {
       _dispatchEvent(e, false);
     }
     catch (Throwable t) {
@@ -407,6 +406,14 @@ public class IdeEventQueue extends EventQueue {
         maybeReady();
       }
     }
+  }
+
+  @Nullable
+  private static AccessToken startActivity(boolean userActivity) {
+    if (ourTransactionGuard == null && appIsLoaded()) {
+      ourTransactionGuard = (TransactionGuardImpl)TransactionGuard.getInstance();
+    }
+    return ourTransactionGuard == null ? null : ourTransactionGuard.startActivity(userActivity);
   }
 
   private void processException(Throwable t) {
