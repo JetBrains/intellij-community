@@ -72,6 +72,7 @@ public class DualView extends JPanel {
   private final PropertyChangeListener myPropertyChangeListener;
 
   private boolean myZipByHeight;
+  private boolean mySuppressStore;
 
   public DualView(Object root, DualViewColumnInfo[] columns, @NonNls String columnServiceKey, Project project) {
     super(new CardLayout());
@@ -87,7 +88,7 @@ public class DualView extends JPanel {
 
     add(createFlatComponent(columns), FLAT);
 
-    (myTreeView.getTreeViewModel()).addTreeModelListener(new TreeModelListener() {
+    myTreeView.getTreeViewModel().addTreeModelListener(new TreeModelListener() {
       public void treeNodesInserted(TreeModelEvent e) {
         refreshFlatModel();
       }
@@ -113,6 +114,7 @@ public class DualView extends JPanel {
 
     myPropertyChangeListener = new PropertyChangeListener() {
       public void propertyChange(PropertyChangeEvent evt) {
+        if (mySuppressStore) return;
         saveState();
       }
     };
@@ -202,6 +204,17 @@ public class DualView extends JPanel {
       public TableCellRenderer getCellRenderer(int row, int column) {
         return createWrappedRenderer(super.getCellRenderer(row, column));
       }
+
+      @Override
+      public void doLayout() {
+        try {
+          mySuppressStore = true;
+          super.doLayout();
+        }
+        finally {
+          mySuppressStore = false;
+        }
+      }
     };
     myTreeView.getTree().getSelectionModel().setSelectionMode(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
     JPanel result = new JPanel(new BorderLayout());
@@ -234,6 +247,22 @@ public class DualView extends JPanel {
           ((JComponent)c).setBorder(null);
         }
         return c;
+      }
+
+      @Override
+      public void doLayout() {
+        try {
+          mySuppressStore = true;
+          super.doLayout();
+        }
+        finally {
+          mySuppressStore = false;
+        }
+      }
+
+      @Override
+      public void updateColumnSizes() {
+        // suppress automatic layout, use stored values instead
       }
     };
     myFlatView.setCellSelectionEnabled(false);

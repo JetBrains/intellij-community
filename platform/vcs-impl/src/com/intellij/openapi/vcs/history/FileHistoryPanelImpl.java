@@ -168,7 +168,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
 
     @Override
     public String getPreferredStringValue() {
-      return "123.4567";
+      return StringUtil.repeatSymbol('m', 10);
     }
   }
 
@@ -189,7 +189,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
 
     @Override
     public String getPreferredStringValue() {
-      return DateFormatUtil.formatPrettyDateTime(Clock.getTime());
+      return DateFormatUtil.formatPrettyDateTime(Clock.getTime() + 1000);
     }
   }
 
@@ -281,7 +281,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     @Override
     @NonNls
     public String getPreferredStringValue() {
-      return "author_author";
+      return StringUtil.repeatSymbol('m', 14);
     }
   }
 
@@ -314,7 +314,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
 
     @Override
     public String getPreferredStringValue() {
-      return StringUtil.repeatSymbol('a', 125);
+      return StringUtil.repeatSymbol('m', 80);
     }
 
     public TableCellRenderer getRenderer(VcsFileRevision p0) {
@@ -558,16 +558,8 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
         wrapWithTreeElements(myHistorySession.getRevisionList())), myTargetSelection);
     }
 
-    columnSizesOnce();
     myDualView.expandAll();
     myDualView.repaint();
-  }
-
-  private void columnSizesOnce() {
-    if (! myColumnSizesSet) {
-      myDualView.getFlatView().updateColumnSizes();
-      myColumnSizesSet = true;
-    }
   }
 
   private void adjustEmptyText() {
@@ -800,7 +792,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
         mySplitter.repaint();
 
         myRefresherI.run(true, useLastRevision);
-        columnSizesOnce();
       }
     }.callMe();
   }
