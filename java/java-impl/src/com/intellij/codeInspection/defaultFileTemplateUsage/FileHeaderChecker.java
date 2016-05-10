@@ -57,7 +57,7 @@ public class FileHeaderChecker {
       return null;
     }
 
-    LocalQuickFix[] fixes = createQuickFix(matcher, offsetToProperty, file.getProject());
+    LocalQuickFix[] fixes = createQuickFix(matcher, offsetToProperty, file.getProject(), onTheFly);
     String description = InspectionsBundle.message("default.file.template.description");
     return manager.createProblemDescriptor(element, description, onTheFly, fixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
   }
@@ -79,7 +79,10 @@ public class FileHeaderChecker {
     return properties;
   }
 
-  private static LocalQuickFix[] createQuickFix(final Matcher matcher, final TIntObjectHashMap<String> offsetToProperty, Project project) {
+  private static LocalQuickFix[] createQuickFix(final Matcher matcher,
+                                                final TIntObjectHashMap<String> offsetToProperty,
+                                                Project project,
+                                                boolean onTheFly) {
     final FileTemplate template = FileTemplateManager.getInstance(project).getPattern(FileTemplateManager.FILE_HEADER_TEMPLATE_NAME);
 
     ReplaceWithFileTemplateFix replaceTemplateFix = new ReplaceWithFileTemplateFix() {
@@ -112,7 +115,10 @@ public class FileHeaderChecker {
       }
     };
 
-    LocalQuickFix editFileTemplateFix = DefaultFileTemplateUsageInspection.createEditFileTemplateFix(template, replaceTemplateFix);
-    return template.isDefault() ? new LocalQuickFix[]{editFileTemplateFix} : new LocalQuickFix[]{replaceTemplateFix, editFileTemplateFix};
+    if (onTheFly) {
+      LocalQuickFix editFileTemplateFix = DefaultFileTemplateUsageInspection.createEditFileTemplateFix(template, replaceTemplateFix);
+      return template.isDefault() ? new LocalQuickFix[]{editFileTemplateFix} : new LocalQuickFix[]{replaceTemplateFix, editFileTemplateFix};
+    }
+    return template.isDefault() ? null : new LocalQuickFix[] {replaceTemplateFix};
   }
 }
