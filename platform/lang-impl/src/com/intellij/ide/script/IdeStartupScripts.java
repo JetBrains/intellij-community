@@ -28,7 +28,6 @@ import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
@@ -41,6 +40,7 @@ import org.jetbrains.ide.script.IdeScriptEngineManager;
 import org.jetbrains.ide.script.IdeScriptException;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -140,18 +140,16 @@ class IdeStartupScripts extends ApplicationComponent.Adapter {
 
   @NotNull
   private static List<VirtualFile> getScripts() {
-    VirtualFile root = null;
+    List<VirtualFile> scripts;
     try {
-      root = getScriptsRootDirectory();
+      VirtualFile scriptDir = getScriptsRootDirectory();
+      VirtualFile[] scriptDirChildren = scriptDir != null ? scriptDir.getChildren() : VirtualFile.EMPTY_ARRAY;
+      scripts = ContainerUtil.filter(scriptDirChildren, ExtensionsRootType.regularFileFilter());
     }
-    catch (IOException e) {
-      LOG.warn(e);
+    catch (IOException ignore) {
+      return Collections.emptyList();
     }
-    if (root == null) return ContainerUtil.emptyList();
 
-    VfsUtil.markDirtyAndRefresh(false, true, true, root);
-    List<VirtualFile> scripts = VfsUtil.collectChildrenRecursively(root);
-    scripts = ContainerUtil.filter(scripts, ExtensionsRootType.regularFileFilter());
     ContainerUtil.sort(scripts, (f1, f2) -> {
       String f1Name = f1 != null ? f1.getName() : null;
       String f2Name = f2 != null ? f2.getName() : null;
