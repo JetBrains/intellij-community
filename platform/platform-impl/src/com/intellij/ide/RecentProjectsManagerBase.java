@@ -99,6 +99,8 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
   private State myState = new State();
 
   private final Map<String, String> myNameCache = Collections.synchronizedMap(new THashMap<String, String>());
+  private Set<String> myDuplicatesCache = null;
+  private boolean isDuplicatesCacheUpdating = false;
 
   protected RecentProjectsManagerBase(@NotNull MessageBus messageBus) {
     MessageBusConnection connection = messageBus.connect();
@@ -328,14 +330,28 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
   }
 
   private Set<String> getDuplicateProjectNames(Set<String> openedPaths, Set<String> recentPaths) {
-    Set<String> names = ContainerUtil.newHashSet();
-    Set<String> duplicates = ContainerUtil.newHashSet();
-    for (String path : ContainerUtil.concat(openedPaths, recentPaths)) {
-      if (!names.add(getProjectName(path))) {
-        duplicates.add(path);
-      }
+    if (myDuplicatesCache != null) {
+      return myDuplicatesCache;
     }
-    return duplicates;
+
+    if (!isDuplicatesCacheUpdating) {
+      isDuplicatesCacheUpdating = true; //assuming that this check happens only on EDT. So, no synchronised block or double-checked locking needed
+      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+        @Override
+        public void run() {
+          Set<String> names = ContainerUtil.newHashSet();
+          final HashSet<String> duplicates = ContainerUtil.newHashSet();
+          for (String path : ContainerUtil.concat(openedPaths, recentPaths)) {
+            if (!names.add(getProjectName(path))) {
+              duplicates.add(path);
+            }
+          }
+          myDuplicatesCache = duplicates;
+          isDuplicatesCacheUpdating = false;
+        }
+      });
+    }
+    return ContainerUtil.newHashSet();
   }
 
   @Override
