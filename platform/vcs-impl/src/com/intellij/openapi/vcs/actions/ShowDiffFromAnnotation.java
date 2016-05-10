@@ -159,47 +159,44 @@ class ShowDiffFromAnnotation extends DumbAwareAction implements UpToDateLineNumb
   }
 
   // for current line number
-  private DiffNavigationContext createDiffNavigationContext(final int actualLine) {
+  private DiffNavigationContext createDiffNavigationContext(int actualLine) {
     String annotatedContent = myFileAnnotation.getAnnotatedContent();
     if (StringUtil.isEmptyOrSpaces(annotatedContent)) return null;
 
     String[] contentsLines = LineTokenizer.tokenize(annotatedContent, false, false);
     if (contentsLines.length <= actualLine) return null;
 
-    final Pair<Integer, String> pair = correctActualLineIfTextEmpty(contentsLines, actualLine);
+    final int correctedLine = correctActualLineIfTextEmpty(contentsLines, actualLine);
     return new DiffNavigationContext(new Iterable<String>() {
       @Override
       public Iterator<String> iterator() {
-        return new CacheOneStepIterator<String>(new ContextLineIterator(contentsLines, myFileAnnotation, pair.getFirst()));
+        return new CacheOneStepIterator<String>(new ContextLineIterator(contentsLines, myFileAnnotation, correctedLine));
       }
-    }, pair.getSecond());
+    }, contentsLines[correctedLine]);
   }
 
   private final static int ourVicinity = 5;
 
-  private Pair<Integer, String> correctActualLineIfTextEmpty(final String[] contentsLines, final int actualLine) {
+  private int correctActualLineIfTextEmpty(final String[] contentsLines, final int actualLine) {
     final VcsRevisionNumber revision = myFileAnnotation.getLineRevisionNumber(actualLine);
-    if (revision != null) {
-      int upperBound = Math.min(actualLine + ourVicinity, contentsLines.length);
-      for (int i = actualLine; i < upperBound; i++) {
-        if (!revision.equals(myFileAnnotation.getLineRevisionNumber(i))) continue;
-        final String lineContents = contentsLines[i];
-        if (!StringUtil.isEmptyOrSpaces(lineContents)) {
-          return new Pair<Integer, String>(i, lineContents);
-        }
-      }
+    if (revision == null) return actualLine;
+    if (!StringUtil.isEmptyOrSpaces(contentsLines[actualLine])) return actualLine;
 
-      int lowerBound = Math.max(actualLine - ourVicinity, 0);
-      for (int i = actualLine - 1; i >= lowerBound; --i) {
-        if (!revision.equals(myFileAnnotation.getLineRevisionNumber(i))) continue;
-        final String lineContents = contentsLines[i];
-        if (!StringUtil.isEmptyOrSpaces(lineContents)) {
-          return new Pair<Integer, String>(i, lineContents);
-        }
+    int upperBound = Math.min(actualLine + ourVicinity, contentsLines.length);
+    for (int i = actualLine + 1; i < upperBound; i++) {
+      if (revision.equals(myFileAnnotation.getLineRevisionNumber(i)) && !StringUtil.isEmptyOrSpaces(contentsLines[i])) {
+        return i;
       }
     }
 
-    return new Pair<Integer, String>(actualLine, contentsLines[actualLine]);
+    int lowerBound = Math.max(actualLine - ourVicinity, 0);
+    for (int i = actualLine - 1; i >= lowerBound; --i) {
+      if (revision.equals(myFileAnnotation.getLineRevisionNumber(i)) && !StringUtil.isEmptyOrSpaces(contentsLines[i])) {
+        return i;
+      }
+    }
+
+    return actualLine;
   }
 
   /**
