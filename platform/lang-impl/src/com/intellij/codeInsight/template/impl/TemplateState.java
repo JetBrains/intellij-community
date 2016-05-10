@@ -817,10 +817,18 @@ public class TemplateState implements Disposable {
     if (currentSegment >= 0) {
       int currentSegmentStart = mySegments.getSegmentStart(currentSegment);
       int currentSegmentEnd = mySegments.getSegmentEnd(currentSegment);
-      for (int i = currentSegment + 1; i < mySegments.getSegmentsCount(); i++) {
-        final int startOffset = mySegments.getSegmentStart(i);
-        if (currentSegmentStart <= startOffset && startOffset < currentSegmentEnd) {
-          mySegments.replaceSegmentAt(i, currentSegmentEnd, Math.max(mySegments.getSegmentEnd(i), currentSegmentEnd), true);
+      for (int i = 0; i < mySegments.getSegmentsCount(); i++) {
+        if (i > currentSegment) {
+          final int startOffset = mySegments.getSegmentStart(i);
+          if (currentSegmentStart <= startOffset && startOffset < currentSegmentEnd) {
+            mySegments.replaceSegmentAt(i, currentSegmentEnd, Math.max(mySegments.getSegmentEnd(i), currentSegmentEnd), true);
+          }
+        }
+        else if (i < currentSegment) {
+          final int endOffset = mySegments.getSegmentEnd(i);
+          if (currentSegmentStart < endOffset && endOffset <= currentSegmentEnd) {
+            mySegments.replaceSegmentAt(i, Math.min(mySegments.getSegmentStart(i), currentSegmentStart), currentSegmentStart, true);
+          }
         }
       }
     }
