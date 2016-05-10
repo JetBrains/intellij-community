@@ -39,24 +39,18 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.PanelWithActionsAndCloseButton;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.util.Clock;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Getter;
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.AnnotateRevisionActionBase;
-import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.CreatePatchFromChangesAction;
 import com.intellij.openapi.vcs.changes.committed.AbstractCalledLater;
-import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
 import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
 import com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl;
-import com.intellij.openapi.vcs.ui.*;
-import com.intellij.openapi.vcs.ui.FontUtil;
+import com.intellij.openapi.vcs.ui.ReplaceFileConfirmationDialog;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.vfs.VcsFileSystem;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
@@ -95,6 +89,9 @@ import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.util.*;
 import java.util.List;
+
+import static com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer.formatTextWithLinks;
+import static com.intellij.openapi.vcs.ui.FontUtil.getHtmlWithFonts;
 
 /**
  * author: lesya
@@ -368,6 +365,8 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     myComments = new JEditorPane(UIUtil.HTML_MIME, "");
     myComments.setPreferredSize(new Dimension(150, 100));
     myComments.setEditable(false);
+    myComments.setOpaque(false);
+    myComments.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, Boolean.TRUE);
     myComments.setBackground(UIUtil.getComboBoxDisabledBackground());
     myComments.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
 
@@ -659,16 +658,19 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     else {
       revision = getFirstSelectedRevision();
       if (revision != null) {
-        final String message = revision.getCommitMessage();
+        String message = revision.getCommitMessage();
         myOriginalComment = message;
-        @NonNls final String text = message == null ? "" : "<html><head>" +
-                                                           UIUtil.getCssFontDeclaration(UIUtil.getLabelFont()) +
-                                                           "</head><body>" +
-                                                           FontUtil.getHtmlWithFonts(IssueLinkHtmlRenderer
-                                                             .formatTextWithLinks(myVcs.getProject(), message)) +
-                                                           "</body></html>";
-        myComments.setText(text);
-        myComments.setCaretPosition(0);
+        if (StringUtil.isEmpty(message)) {
+          myComments.setText("");
+        }
+        else {
+          myComments.setText("<html><head>" +
+                 UIUtil.getCssFontDeclaration(UIUtil.getLabelFont()) +
+                 "</head><body>" +
+                 getHtmlWithFonts(formatTextWithLinks(myVcs.getProject(), message)) +
+                 "</body></html>");
+          myComments.setCaretPosition(0);
+        }
       }
     }
     if (myListener != null) {
@@ -1353,10 +1355,10 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
   public void dispose() {
     super.dispose();
     myDualView.dispose();
-    myUpdateAlarm.dispose();
+    Disposer.dispose(myUpdateAlarm);
   }
 
-  abstract class AbstractActionForSomeSelection extends AnAction implements DumbAware {
+  abstract static class AbstractActionForSomeSelection extends AnAction implements DumbAware {
     private final int mySuitableSelectedElements;
     private final FileHistoryPanelImpl mySelectionProvider;
 
