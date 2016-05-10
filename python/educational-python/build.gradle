@@ -56,12 +56,6 @@ subprojects {
     sandboxDirectory = new File(rootProject.projectDir, "gradleBuild/idea-sandbox")
   }
 
-  afterEvaluate {
-    tasks.getByName('buildPlugin') {
-      archiveName = "$intellij.pluginName-$version-${pycharmVersion}.zip"
-    }
-  }
-
   buildDir = new File(rootProject.projectDir, "gradleBuild/" + project.name)
 }
 
@@ -80,6 +74,13 @@ project(':student-python') {
   intellij {
     pluginName 'student-python'
   }
+
+  afterEvaluate {
+    tasks.getByName('buildPlugin') {
+      archiveName = "$intellij.pluginName-$version-${pycharmVersion}.zip"
+    }
+  }
+
 }
 
 
@@ -97,6 +98,12 @@ project(':course-creator-python') {
 
   intellij {
     pluginName 'course-creator-python'
+  }
+
+  afterEvaluate {
+    tasks.getByName('buildPlugin') {
+      archiveName = "$intellij.pluginName-$version-${pycharmVersion}.zip"
+    }
   }
 
 }
