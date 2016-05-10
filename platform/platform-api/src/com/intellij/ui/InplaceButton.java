@@ -22,6 +22,7 @@ import com.intellij.util.ui.BaseButtonBehavior;
 import com.intellij.util.ui.CenteredIcon;
 import com.intellij.util.ui.TimedDeadzone;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 
 import javax.accessibility.*;
 import javax.swing.*;
@@ -237,6 +238,11 @@ public class InplaceButton extends JComponent implements ActiveComponent, Access
         name = super.getAccessibleName();
       }
       return name;
+    }
+
+    @Override
+    public String getAccessibleDescription() {
+      return AccessibleContextUtil.getUniqueDescription(this, super.getAccessibleDescription());
     }
 
     @Override
