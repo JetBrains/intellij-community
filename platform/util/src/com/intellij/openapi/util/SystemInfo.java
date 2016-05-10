@@ -51,6 +51,7 @@ public class SystemInfo extends SystemInfoRt {
   public static final boolean isSunJvm = isSunJvm();
   public static final boolean isIbmJvm = isIbmJvm();
   public static final boolean isJetbrainsJvm = isJetbrainsJvm();
+  public static final boolean isStudioJvm = isStudioJvm();
 
   public static boolean isOsVersionAtLeast(@NotNull String version) {
     return StringUtil.compareVersionNumbers(OS_VERSION, version) >= 0;
@@ -232,6 +233,12 @@ public class SystemInfo extends SystemInfoRt {
   private static boolean isJetbrainsJvm() {
     final String vendor = SystemProperties.getJavaVendor();
     return vendor != null && StringUtil.containsIgnoreCase(vendor, "jetbrains");
+  }
+
+  private static boolean isStudioJvm() {
+    final String vendor = SystemProperties.getJavaVendor();
+    final String url = System.getProperty("java.vendor.url");
+    return "Google Inc.".equals(vendor) && "http://developer.android.com/sdk/index.html".equals(url);
   }
 
   /** @deprecated use {@link #isWinXpOrNewer} (to be removed in IDEA 17) */
