@@ -32,7 +32,6 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import git4idea.GitLocalBranch;
-import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitMessageWithFilesDetector;
