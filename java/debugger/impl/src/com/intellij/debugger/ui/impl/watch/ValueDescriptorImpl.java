@@ -35,6 +35,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.util.StringBuilderSpinAllocator;
@@ -356,7 +357,12 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
                      lastRenderer.getIdLabel(value, evalContext.getDebugProcess()) : null;
     String rawLabelId = value instanceof ObjectReference ? value.type().name() : labelId;
 
-    if (rawLabelId != null) {
+    if (rawLabelId != null &&
+        label.length() > rawLabelId.length() && label.startsWith(rawLabelId) &&
+        "@[".indexOf(label.charAt(rawLabelId.length())) > -1 &&
+        !CommonClassNames.JAVA_LANG_STRING.equals(rawLabelId) &&
+        !CommonClassNames.JAVA_LANG_STRING_BUILDER.equals(rawLabelId) &&
+        !CommonClassNames.JAVA_LANG_STRING_BUFFER.equals(rawLabelId)) {
       // strip common prefix to avoid class names repetition
       // esp. if idLabel is explicitly hidden to our likings
       label = StringUtil.trimStart(label, rawLabelId);
