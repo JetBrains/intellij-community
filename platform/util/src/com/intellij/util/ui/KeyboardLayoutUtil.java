@@ -55,7 +55,8 @@ public class KeyboardLayoutUtil {
     if ((mods & ~InputEvent.SHIFT_MASK & ~InputEvent.SHIFT_DOWN_MASK) != 0) return;
 
     if (code < KeyEvent.VK_A || code > KeyEvent.VK_Z) return;
-    if (aChar == KeyEvent.CHAR_UNDEFINED || aChar >= 'A' && aChar <= 'z') return;
+    if (aChar == KeyEvent.CHAR_UNDEFINED) return;
+    if ('a' <= aChar && aChar <= 'z' || 'A' <= aChar && aChar <= 'Z') return;
     if (ourLLtoASCII.containsKey(aChar)) return;
     ourLLtoASCII.put(aChar, (char)((int)'a' + (code - KeyEvent.VK_A)));
   }
