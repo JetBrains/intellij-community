@@ -48,7 +48,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 class IdeStartupScripts extends ApplicationComponent.Adapter {
   private static final Logger LOG = Logger.getInstance(IdeStartupScripts.class);
-  private static final String SCRIPT_DIR_NAME = "startup";
+
+  private static final String SCRIPT_DIR = "startup";
 
   @Override
   public void initComponent() {
@@ -161,6 +162,6 @@ class IdeStartupScripts extends ApplicationComponent.Adapter {
   @Nullable
   private static VirtualFile getScriptsRootDirectory() throws IOException {
     PluginId corePlugin = ObjectUtils.assertNotNull(PluginId.findId(PluginManagerCore.CORE_PLUGIN_ID));
-    return ExtensionsRootType.getInstance().findResourceDirectory(corePlugin, SCRIPT_DIR_NAME, false);
+    return ExtensionsRootType.getInstance().findResourceDirectory(corePlugin, SCRIPT_DIR, false);
   }
 }
