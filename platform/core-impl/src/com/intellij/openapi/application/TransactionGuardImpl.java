@@ -23,6 +23,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.psi.impl.DebugUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -48,6 +49,7 @@ public class TransactionGuardImpl extends TransactionGuard {
   private final Map<ModalityState, Boolean> myWriteSafeModalities = ContainerUtil.createConcurrentWeakMap();
   private TransactionIdImpl myCurrentTransaction;
   private boolean myWritingAllowed;
+  private String myWritingAllowedTrace;
 
   public TransactionGuardImpl() {
     myWriteSafeModalities.put(ModalityState.NON_MODAL, true);
@@ -58,7 +60,7 @@ public class TransactionGuardImpl extends TransactionGuard {
     ApplicationManager.getApplication().assertIsDispatchThread();
     final boolean wasWritingAllowed = myWritingAllowed;
 
-    myWritingAllowed = true;
+    setWritingAllowed(true);
     myCurrentTransaction = new TransactionIdImpl(myCurrentTransaction);
 
     return new AccessToken() {
@@ -70,11 +72,18 @@ public class TransactionGuardImpl extends TransactionGuard {
           pollQueueLater();
         }
 
-        myWritingAllowed = wasWritingAllowed;
+        setWritingAllowed(wasWritingAllowed);
         myCurrentTransaction.myFinished = true;
         myCurrentTransaction = myCurrentTransaction.myParent;
       }
     };
+  }
+
+  private void setWritingAllowed(boolean value) {
+    myWritingAllowed = value;
+    if (value && ApplicationManager.getApplication().isUnitTestMode()) {
+      myWritingAllowedTrace = DebugUtil.currentStackTrace();
+    }
   }
 
   @NotNull
@@ -222,11 +231,11 @@ public class TransactionGuardImpl extends TransactionGuard {
 
     ApplicationManager.getApplication().assertIsDispatchThread();
     final boolean prev = myWritingAllowed;
-    myWritingAllowed = allowWriting;
+    setWritingAllowed(allowWriting);
     return new AccessToken() {
       @Override
       public void finish() {
-        myWritingAllowed = prev;
+        setWritingAllowed(prev);
       }
     };
   }
@@ -289,11 +298,11 @@ public class TransactionGuardImpl extends TransactionGuard {
         public void run() {
           ApplicationManager.getApplication().assertIsDispatchThread();
           final boolean prev = myWritingAllowed;
-          myWritingAllowed = true;
+          setWritingAllowed(true);
           try {
             runnable.run();
           } finally {
-            myWritingAllowed = prev;
+            setWritingAllowed(prev);
           }
         }
       };
@@ -307,6 +316,7 @@ public class TransactionGuardImpl extends TransactionGuard {
     return Objects.toStringHelper(this)
       .add("currentTransaction", myCurrentTransaction)
       .add("writingAllowed", myWritingAllowed)
+      .add("writingAllowedTrace", myWritingAllowedTrace)
       .toString();
   }
 
@@ -335,7 +345,7 @@ public class TransactionGuardImpl extends TransactionGuard {
 
     @Override
     public String toString() {
-      return "Transaction " + myStartCounter;
+      return "Transaction " + myStartCounter + (myFinished ? "(finished)" : "");
     }
   }
 }

@@ -89,7 +89,7 @@ class TransactionTest extends LightPlatformTestCase {
       Disposer.dispose(disposable)
     }
     if (!writeActionFailed) {
-      fail('write action should fail')
+      fail('write action should fail ' + guard.toString())
     }
   }
 
