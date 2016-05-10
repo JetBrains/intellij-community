@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.Accessible;
+import javax.accessibility.AccessibleContext;
 import java.awt.*;
 
 public class AccessibleContextUtil {
@@ -102,6 +103,24 @@ public class AccessibleContextUtil {
                                               @NotNull Component j2, @NotNull String separator2, @NotNull Component j3) {
     return combineAccessibleStrings(getAccessibleDescription(j1), separator1,
                                     getAccessibleDescription(j2), separator2, getAccessibleDescription(j3));
+  }
+
+  /**
+   * Returns {@code description} if it is different than the accessible
+   * name, {@code null} otherwise.
+   *
+   * Calling this method is useful from custom implementations of
+   * {@link AccessibleContext@getAccessibleDescription} to ensure screen
+   * readers don't announce the same text twice (name and description) when
+   * a component receives the focus.
+   */
+  @Nullable
+  public static String getUniqueDescription(@NotNull AccessibleContext context, @Nullable String description) {
+    String name = context.getAccessibleName();
+    if (StringUtil.equals(description, name)) {
+      return null;
+    }
+    return description;
   }
 
   public static void setParent(@NotNull Component component, @Nullable Component newParent) {
