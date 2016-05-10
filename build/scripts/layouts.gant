@@ -860,6 +860,7 @@ def layoutAndroid(String androidHome, String androidToolsBaseHome) {
       }
       jar("sdk-tools.jar") {
         module("assetstudio")
+        module("binary-resources")
         module("ddmlib")
         module("dvlib")
         module("draw9patch")
