@@ -27,6 +27,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
@@ -162,7 +163,8 @@ class ShowDiffFromAnnotation extends DumbAwareAction implements UpToDateLineNumb
     String annotatedContent = myFileAnnotation.getAnnotatedContent();
     if (StringUtil.isEmptyOrSpaces(annotatedContent)) return null;
 
-    final ContentsLines contentsLines = new ContentsLines(annotatedContent);
+    String[] contentsLines = LineTokenizer.tokenize(annotatedContent, false, false);
+    if (contentsLines.length <= actualLine) return null;
 
     final Pair<Integer, String> pair = correctActualLineIfTextEmpty(contentsLines, actualLine);
     return new DiffNavigationContext(new Iterable<String>() {
@@ -175,34 +177,36 @@ class ShowDiffFromAnnotation extends DumbAwareAction implements UpToDateLineNumb
 
   private final static int ourVicinity = 5;
 
-  private Pair<Integer, String> correctActualLineIfTextEmpty(final ContentsLines contentsLines, final int actualLine) {
+  private Pair<Integer, String> correctActualLineIfTextEmpty(final String[] contentsLines, final int actualLine) {
     final VcsRevisionNumber revision = myFileAnnotation.getLineRevisionNumber(actualLine);
     if (revision != null) {
-      for (int i = actualLine; (i < (actualLine + ourVicinity)) && (!contentsLines.isLineEndsFinished()); i++) {
+      int upperBound = Math.min(actualLine + ourVicinity, contentsLines.length);
+      for (int i = actualLine; i < upperBound; i++) {
         if (!revision.equals(myFileAnnotation.getLineRevisionNumber(i))) continue;
-        final String lineContents = contentsLines.getLineContents(i);
+        final String lineContents = contentsLines[i];
         if (!StringUtil.isEmptyOrSpaces(lineContents)) {
           return new Pair<Integer, String>(i, lineContents);
         }
       }
 
-      int bound = Math.max(actualLine - ourVicinity, 0);
-      for (int i = actualLine - 1; (i >= bound); --i) {
+      int lowerBound = Math.max(actualLine - ourVicinity, 0);
+      for (int i = actualLine - 1; i >= lowerBound; --i) {
         if (!revision.equals(myFileAnnotation.getLineRevisionNumber(i))) continue;
-        final String lineContents = contentsLines.getLineContents(i);
+        final String lineContents = contentsLines[i];
         if (!StringUtil.isEmptyOrSpaces(lineContents)) {
           return new Pair<Integer, String>(i, lineContents);
         }
       }
     }
-    return new Pair<Integer, String>(actualLine, contentsLines.getLineContents(actualLine));
+
+    return new Pair<Integer, String>(actualLine, contentsLines[actualLine]);
   }
 
   /**
    * Slightly break the contract: can return null from next() while had claimed hasNext()
    */
   private static class ContextLineIterator implements Iterator<String> {
-    private final ContentsLines myContentsLines;
+    private final String[] myContentsLines;
 
     private final VcsRevisionNumber myRevisionNumber;
     private final FileAnnotation myAnnotation;
@@ -210,7 +214,7 @@ class ShowDiffFromAnnotation extends DumbAwareAction implements UpToDateLineNumb
     // we assume file has at least one line ;)
     private int myCurrentLine;  // to start looking for next line with revision from
 
-    private ContextLineIterator(final ContentsLines contentLines, final FileAnnotation annotation, final int stopAtLine) {
+    private ContextLineIterator(final String[] contentLines, final FileAnnotation annotation, final int stopAtLine) {
       myAnnotation = annotation;
       myRevisionNumber = myAnnotation.originalRevision(stopAtLine);
       myStopAtLine = stopAtLine;
@@ -223,8 +227,7 @@ class ShowDiffFromAnnotation extends DumbAwareAction implements UpToDateLineNumb
     }
 
     private boolean lineNumberInBounds() {
-      final int knownLinesNumber = myContentsLines.getKnownLinesNumber();
-      return ((knownLinesNumber == -1) || (myCurrentLine < knownLinesNumber)) && (myCurrentLine < myStopAtLine);
+      return (myCurrentLine < myContentsLines.length) && (myCurrentLine < myStopAtLine);
     }
 
     @Override
@@ -234,7 +237,7 @@ class ShowDiffFromAnnotation extends DumbAwareAction implements UpToDateLineNumb
         final VcsRevisionNumber vcsRevisionNumber = myAnnotation.originalRevision(myCurrentLine);
         if (myRevisionNumber.equals(vcsRevisionNumber)) {
           nextLine = myCurrentLine;
-          final String text = myContentsLines.getLineContents(nextLine);
+          final String text = myContentsLines[nextLine];
           if (!StringUtil.isEmptyOrSpaces(text)) {
             ++myCurrentLine;
             return text;
