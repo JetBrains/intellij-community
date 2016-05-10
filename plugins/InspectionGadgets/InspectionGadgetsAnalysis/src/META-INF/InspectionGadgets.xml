@@ -1214,10 +1214,6 @@
                      bundle="com.siyeh.InspectionGadgetsBundle" key="connection.opened.not.safely.closed.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.j2me.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.j2me.ConnectionResourceInspection"/>
-    <localInspection groupPath="Java" language="JAVA" suppressId="FieldRepeatedlyAccessedInMethod" shortName="FieldRepeatedlyAccessed"
-                     bundle="com.siyeh.InspectionGadgetsBundle" key="field.repeatedly.accessed.in.method.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.j2me.issues" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.j2me.FieldRepeatedlyAccessedInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="InterfaceWithOnlyOneDirectInheritor" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="interface.one.inheritor.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.j2me.issues"
                      enabledByDefault="false" level="WARNING"
