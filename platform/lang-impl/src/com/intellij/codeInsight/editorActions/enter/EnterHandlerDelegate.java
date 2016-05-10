@@ -35,6 +35,23 @@ public interface EnterHandlerDelegate {
     Default, Continue, DefaultForceIndent, DefaultSkipIndent, Stop
   }
 
+  /**
+   * Called before the actual Enter processing is done.
+   * <b>Important Note: A document associated with the editor may have modifications which are not reflected yet in the PSI file. If any
+   * operations with PSI are needed including a search for PSI elements, the document must be committed first to update the PSI.
+   * For example:</b>
+   * <code><pre>
+   *   PsiDocumentManager.getInstance(file.getProject()).commitDocument(editor.getDocument);
+   * </pre></code>
+   *
+   * @param file            The PSI file associated with the document.
+   * @param editor          The editor.
+   * @param caretOffset     A reference to the current caret offset in the document.
+   * @param caretAdvance    A reference to the number of columns by which the caret must be moved forward.
+   * @param dataContext     The data context passed to the enter handler.
+   * @param originalHandler The original handler.
+   * @return One of <code>{@link Result} values.</code>
+   */
   Result preprocessEnter(@NotNull final PsiFile file, @NotNull final Editor editor, @NotNull final Ref<Integer> caretOffset,
                          @NotNull final Ref<Integer> caretAdvance, @NotNull final DataContext dataContext,
                          @Nullable final EditorActionHandler originalHandler);
@@ -50,7 +67,7 @@ public interface EnterHandlerDelegate {
    * </pre></code>
    *
    * @param file        The PSI file associated with the document.
-   * @param editor      The document.
+   * @param editor      The editor.
    * @param dataContext The data context passed to the Enter handler.
    * @return One of <code>{@link Result} values.</code>
    * @see DataContext
