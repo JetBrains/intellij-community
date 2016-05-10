@@ -23,7 +23,9 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -156,7 +158,10 @@ public class CreateLauncherScriptAction extends DumbAwareAction {
 
     ClassLoader loader = CreateLauncherScriptAction.class.getClassLoader();
     assert loader != null;
-    Map<String, String> variables = newHashMap(pair("$CONFIG_PATH$", PathManager.getConfigPath()), pair("$RUN_PATH$", runPath));
+    Map<String, String> variables = newHashMap(
+      pair("$CONFIG_PATH$", PathManager.getConfigPath()),
+      pair("$SYSTEM_PATH$", PathManager.getSystemPath()),
+      pair("$RUN_PATH$", runPath));
     String launcherContents = StringUtil.convertLineSeparators(ExecUtil.loadTemplate(loader, "launcher.py", variables));
 
     return ExecUtil.createTempExecutableScript("launcher", "", launcherContents);

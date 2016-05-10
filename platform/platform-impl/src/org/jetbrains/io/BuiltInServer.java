@@ -21,7 +21,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.NotNullProducer;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.net.NetUtils;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -140,7 +139,7 @@ public class BuiltInServer implements Disposable {
                           boolean tryAnyPort,
                           @NotNull ServerBootstrap bootstrap,
                           @NotNull ChannelRegistrar channelRegistrar) throws Exception {
-    InetAddress address = NetUtils.getLoopbackAddress();
+    InetAddress address = InetAddress.getLoopbackAddress();
 
     for (int i = 0; i < portsCount; i++) {
       int port = firstPort + i;

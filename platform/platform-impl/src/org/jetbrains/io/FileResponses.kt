@@ -35,17 +35,17 @@ object FileResponses {
     return FILE_MIMETYPE_MAP.getContentType(path)
   }
 
-  private fun checkCache(request: HttpRequest, channel: Channel, lastModified: Long): Boolean {
+  private fun checkCache(request: HttpRequest, channel: Channel, lastModified: Long, extraHeaders: HttpHeaders): Boolean {
     val ifModified = request.headers().getTimeMillis(HttpHeaderNames.IF_MODIFIED_SINCE)
     if (ifModified != null && ifModified >= lastModified) {
-      HttpResponseStatus.NOT_MODIFIED.send(channel, request)
+      HttpResponseStatus.NOT_MODIFIED.send(channel, request, extraHeaders = extraHeaders)
       return true
     }
     return false
   }
 
-  fun prepareSend(request: HttpRequest, channel: Channel, lastModified: Long, filename: String): HttpResponse? {
-    if (checkCache(request, channel, lastModified)) {
+  fun prepareSend(request: HttpRequest, channel: Channel, lastModified: Long, filename: String, extraHeaders: HttpHeaders): HttpResponse? {
+    if (checkCache(request, channel, lastModified, extraHeaders)) {
       return null
     }
 
@@ -54,11 +54,12 @@ object FileResponses {
     response.addCommonHeaders()
     response.headers().set(HttpHeaderNames.CACHE_CONTROL, "private, must-revalidate")
     response.headers().set(HttpHeaderNames.LAST_MODIFIED, Date(lastModified))
+    response.headers().add(extraHeaders)
     return response
   }
 
-  fun sendFile(request: HttpRequest, channel: Channel, file: Path) {
-    val response = prepareSend(request, channel, Files.getLastModifiedTime(file).toMillis(), file.fileName.toString()) ?: return
+  fun sendFile(request: HttpRequest, channel: Channel, file: Path, extraHeaders: HttpHeaders = EmptyHttpHeaders.INSTANCE) {
+    val response = prepareSend(request, channel, Files.getLastModifiedTime(file).toMillis(), file.fileName.toString(), extraHeaders) ?: return
 
     val keepAlive = response.addKeepAliveIfNeed(request)
 

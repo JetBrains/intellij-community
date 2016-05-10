@@ -207,14 +207,19 @@ public class ProjectUtil {
     return project;
   }
 
-  public static boolean confirmLoadingFromRemotePath(@NotNull String msg, @NotNull String title) {
+  public static boolean confirmLoadingFromRemotePath(@NotNull String msg,
+                                                     @NotNull String title) {
+    return showYesNoDialog(msg, title);
+  }
+
+  public static boolean showYesNoDialog(@NotNull String msg, String title) {
     final Window window = getActiveFrameOrWelcomeScreen();
     final Icon icon = Messages.getWarningIcon();
     final int answer = window == null ? Messages.showYesNoDialog(msg, title, icon) : Messages.showYesNoDialog(window, msg, title, icon);
     return answer == Messages.YES;
   }
 
-  private static Window getActiveFrameOrWelcomeScreen() {
+  public static Window getActiveFrameOrWelcomeScreen() {
     Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
     if (window != null)  return window;
 

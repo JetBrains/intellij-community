@@ -18,6 +18,7 @@ package org.jetbrains.io
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationInfoEx
+import com.intellij.openapi.util.registry.Registry
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.ByteBufAllocator
 import io.netty.buffer.ByteBufUtil
@@ -31,8 +32,6 @@ import java.nio.charset.Charset
 import java.util.*
 
 private var SERVER_HEADER_VALUE: String? = null
-
-fun HttpResponseStatus.response(): FullHttpResponse = DefaultFullHttpResponse(HttpVersion.HTTP_1_1, this, Unpooled.EMPTY_BUFFER)
 
 fun response(contentType: String?, content: ByteBuf?): FullHttpResponse {
   val response = if (content == null)
@@ -78,13 +77,17 @@ fun HttpResponse.addServer() {
   }
 }
 
-fun HttpResponse.send(channel: Channel, request: HttpRequest?) {
+@JvmOverloads
+fun HttpResponse.send(channel: Channel, request: HttpRequest?, extraHeaders: HttpHeaders? = null) {
   if (status() !== HttpResponseStatus.NOT_MODIFIED && !HttpUtil.isContentLengthSet(this)) {
     HttpUtil.setContentLength(this,
       (if (this is FullHttpResponse) content().readableBytes() else 0).toLong())
   }
 
   addCommonHeaders()
+  extraHeaders?.let {
+    headers().add(it)
+  }
   send(channel, request != null && !addKeepAliveIfNeed(request))
 }
 
@@ -99,6 +102,11 @@ fun HttpResponse.addKeepAliveIfNeed(request: HttpRequest): Boolean {
 fun HttpResponse.addCommonHeaders() {
   addServer()
   setDate()
+  if (!headers().contains("X-Frame-Options")) {
+    headers().set("X-Frame-Options", "SameOrigin")
+  }
+  headers().set("X-Content-Type-Options", "nosniff")
+  headers().set("x-xss-protection", "1; mode=block")
 }
 
 fun HttpResponse.send(channel: Channel, close: Boolean) {
@@ -116,14 +124,25 @@ fun HttpResponse.send(channel: Channel, close: Boolean) {
   }
 }
 
+fun HttpResponseStatus.response(request: HttpRequest? = null, description: String? = null): HttpResponse = createStatusResponse(this, request, description)
+
 @JvmOverloads
-fun HttpResponseStatus.send(channel: Channel, request: HttpRequest? = null, description: String? = null) {
-  createStatusResponse(this, request, description).send(channel, request)
+fun HttpResponseStatus.send(channel: Channel, request: HttpRequest? = null, description: String? = null, extraHeaders: HttpHeaders? = null) {
+  createStatusResponse(this, request, description).send(channel, request, extraHeaders)
+}
+
+fun HttpResponseStatus.orInSafeMode(safeStatus: HttpResponseStatus): HttpResponseStatus {
+  if (Registry.`is`("ide.http.server.response.actual.status", true) || (ApplicationManager.getApplication()?.isUnitTestMode ?: false)) {
+    return this
+  }
+  else {
+    return safeStatus
+  }
 }
 
 private fun createStatusResponse(responseStatus: HttpResponseStatus, request: HttpRequest?, description: String?): HttpResponse {
   if (request != null && request.method() === HttpMethod.HEAD) {
-    return responseStatus.response()
+    return DefaultFullHttpResponse(HttpVersion.HTTP_1_1, responseStatus, Unpooled.EMPTY_BUFFER)
   }
 
   val builder = StringBuilder()

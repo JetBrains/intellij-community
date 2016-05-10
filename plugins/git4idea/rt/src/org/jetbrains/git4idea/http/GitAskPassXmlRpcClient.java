@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,9 +38,9 @@ class GitAskPassXmlRpcClient {
 
   // Obsolete collection usage because of the XmlRpcClientLite API
   @SuppressWarnings({"UseOfObsoleteCollectionType", "unchecked"})
-  String askUsername(int handler, @NotNull String url) {
+  String askUsername(String token, @NotNull String url) {
     Vector parameters = new Vector();
-    parameters.add(handler);
+    parameters.add(token);
     parameters.add(url);
 
     try {
@@ -56,9 +56,9 @@ class GitAskPassXmlRpcClient {
 
   // Obsolete collection usage because of the XmlRpcClientLite API
   @SuppressWarnings({"UseOfObsoleteCollectionType", "unchecked"})
-  String askPassword(int handler, @NotNull String url) {
+  String askPassword(String token, @NotNull String url) {
     Vector parameters = new Vector();
-    parameters.add(handler);
+    parameters.add(token);
     parameters.add(url);
 
     try {

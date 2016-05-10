@@ -22,8 +22,6 @@
 
     <applicationService serviceInterface="com.intellij.ide.XmlRpcServer" serviceImplementation="org.jetbrains.ide.XmlRpcServerImpl"/>
 
-    <xmlRpcHandler name="fileOpener" implementation="org.jetbrains.ide.OpenFileXmlRpcHandler"/>
-
     <httpRequestHandler implementation="org.jetbrains.ide.XmlRpcServerImpl$XmlRpcRequestHandler"/>
     <httpRequestHandler implementation="org.jetbrains.ide.ProjectSetRequestHandler"/>
     <httpRequestHandler implementation="org.jetbrains.ide.DiffHttpService"/>
