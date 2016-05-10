@@ -51,6 +51,7 @@ import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -420,7 +421,8 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     final BlockingQueue<PsiFile> filesToInspect = new ArrayBlockingQueue<PsiFile>(1000);
     final Queue<PsiFile> filesFailedToInspect = new LinkedBlockingQueue<PsiFile>();
     // use original progress indicator here since we don't want it to cancel on write action start
-    Future<?> future = startIterateScopeInBackground(scope, localScopeFiles, headlessEnvironment, filesToInspect, progressIndicator);
+    ProgressIndicator iteratingIndicator = new SensitiveProgressWrapper(progressIndicator);
+    Future<?> future = startIterateScopeInBackground(scope, localScopeFiles, headlessEnvironment, filesToInspect, iteratingIndicator);
 
     Processor<PsiFile> processor = new Processor<PsiFile>() {
       @Override
@@ -469,7 +471,8 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
       }
     }
     finally {
-      filesToInspect.clear(); // let background thread a chance to put TOMBSTONE and complete
+      iteratingIndicator.cancel(); // tell file scanning thread to stop
+      filesToInspect.clear(); // let file scanning thread a chance to put TOMBSTONE and complete
       try {
         future.get(30, TimeUnit.SECONDS);
       }
@@ -549,40 +552,40 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
                                                   final boolean headlessEnvironment,
                                                   @NotNull final BlockingQueue<PsiFile> outFilesToInspect,
                                                   @NotNull final ProgressIndicator progressIndicator) {
-    return ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+    Task.Backgroundable task = new Task.Backgroundable(getProject(), "Scanning files to inspect") {
       @Override
-      public void run() {
+      public void run(@NotNull ProgressIndicator indicator) {
         try {
           final FileIndex fileIndex = ProjectRootManager.getInstance(getProject()).getFileIndex();
           scope.accept(new Processor<VirtualFile>() {
             @Override
             public boolean process(final VirtualFile file) {
-              progressIndicator.checkCanceled();
+              indicator.checkCanceled();
               if (ProjectCoreUtil.isProjectOrWorkspaceFile(file) || !fileIndex.isInContent(file)) return true;
-              final PsiFile[] psiFile = new PsiFile[1];
 
-              Document document = ApplicationManager.getApplication().runReadAction(new Computable<Document>() {
+              PsiFile psiFile = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
                 @Override
-                public Document compute() {
+                public PsiFile compute() {
                   if (getProject().isDisposed()) throw new ProcessCanceledException();
                   PsiFile psi = PsiManager.getInstance(getProject()).findFile(file);
                   Document document = psi == null ? null : shouldProcess(psi, headlessEnvironment, localScopeFiles);
                   if (document != null) {
-                    psiFile[0] = psi;
+                    return psi;
                   }
-                  return document;
+                  return null;
                 }
               });
               //do not inspect binary files
-              if (document != null && psiFile[0] != null) {
+              if (psiFile != null) {
                 try {
                   LOG.assertTrue(!ApplicationManager.getApplication().isReadAccessAllowed());
-                  outFilesToInspect.put(psiFile[0]);
+                  outFilesToInspect.put(psiFile);
                 }
                 catch (InterruptedException e) {
                   LOG.error(e);
                 }
               }
+              indicator.checkCanceled();
               return true;
             }
           });
@@ -599,7 +602,8 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
           }
         }
       }
-    });
+    };
+    return ((CoreProgressManager)ProgressManager.getInstance()).runProcessWithProgressAsynchronously(task, progressIndicator, null);
   }
 
   private Document shouldProcess(@NotNull PsiFile file, boolean headlessEnvironment, @Nullable Collection<VirtualFile> localScopeFiles) {
