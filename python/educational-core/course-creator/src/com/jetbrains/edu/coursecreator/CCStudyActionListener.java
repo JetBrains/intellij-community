@@ -16,6 +16,9 @@ public class CCStudyActionListener implements StudyActionListener {
     if (project == null) {
       return;
     }
+    if (!CCUtils.isCourseCreator(project)) {
+      return;
+    }
     VirtualFile virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(event.getDataContext());
     if (virtualFile == null) {
       return;
