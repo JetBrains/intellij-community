@@ -109,7 +109,8 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
   }
 
   private void checkJvm() {
-    if (StringUtil.containsIgnoreCase(System.getProperty("java.vm.name", ""), "OpenJDK") && !SystemInfo.isJetbrainsJvm) {
+    if (StringUtil.containsIgnoreCase(System.getProperty("java.vm.name", ""), "OpenJDK") &&
+        !SystemInfo.isJetbrainsJvm && !SystemInfo.isStudioJvm) {
       showNotification("unsupported.jvm.openjdk.message");
     }
     else if (StringUtil.endsWithIgnoreCase(System.getProperty("java.version", ""), "-ea")) {
@@ -118,6 +119,7 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
 
     if (SystemInfoRt.isMac &&
         !SystemInfo.isJetbrainsJvm &&
+        !SystemInfo.isStudioJvm &&
         SystemInfo.isJavaVersionAtLeast("1.8.0_60") &&
         !SystemInfo.isJavaVersionAtLeast("1.8.0_76")) {
       // Upstream JDK8 bug tracked by https://bugs.openjdk.java.net/browse/JDK-8134917, affecting 1.8.0_60 up to 1.8.0_76.
