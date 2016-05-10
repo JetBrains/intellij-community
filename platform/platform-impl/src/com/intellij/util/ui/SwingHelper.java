@@ -113,11 +113,6 @@ public class SwingHelper {
     return newGenericBoxPanel(false, childAlignmentY, children);
   }
 
-  @NotNull
-  public static JPanel newHorizontalPanel(float childAlignmentY, @NotNull Collection<Component> children) {
-    return newHorizontalPanel(childAlignmentY, children.toArray(new Component[children.size()]));
-  }
-
   private static JPanel newGenericBoxPanel(boolean verticalOrientation,
                                            float childAlignment,
                                            Component... children) {
@@ -525,7 +520,7 @@ public class SwingHelper {
   }
 
   private static void getAllElements(Element root, List<Element> list, List<String> toCheck) {
-    if (toCheck.contains(root.getName().toLowerCase())) {
+    if (toCheck.contains(root.getName().toLowerCase(Locale.US))) {
       list.add(root);
     }
     for (int i = 0; i < root.getElementCount(); i++) {
@@ -622,12 +617,12 @@ public class SwingHelper {
   }
 
   @NotNull
-  public static JEditorPane createHtmlViewer(boolean carryTextOver,
+  public static JEditorPane createHtmlViewer(boolean lineWrap,
                                              @Nullable Font font,
                                              @Nullable Color background,
                                              @Nullable Color foreground) {
     final JEditorPane textPane;
-    if (carryTextOver) {
+    if (lineWrap) {
       textPane = new JEditorPane() {
         @Override
         public Dimension getPreferredSize() {
