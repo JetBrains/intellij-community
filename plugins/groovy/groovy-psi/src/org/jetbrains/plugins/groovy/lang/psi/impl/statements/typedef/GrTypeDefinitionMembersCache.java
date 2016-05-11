@@ -25,6 +25,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.code.BodyCodeMembersProvider;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.code.GrCodeMembersProvider;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil;
 import org.jetbrains.plugins.groovy.transformations.TransformationResult;
 import org.jetbrains.plugins.groovy.transformations.TransformationUtilKt;
@@ -34,14 +36,20 @@ import java.util.Collection;
 
 import static com.intellij.psi.util.PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT;
 
-public class GrTypeDefinitionMembersCache {
+public class GrTypeDefinitionMembersCache<T extends GrTypeDefinition> {
 
   private final SimpleModificationTracker myTreeChangeTracker = new SimpleModificationTracker();
-  private final GrTypeDefinition myDefinition;
+  private final T myDefinition;
+  private final GrCodeMembersProvider<? super T> myCodeMembersProvider;
   private final Collection<?> myDependencies = Arrays.asList(myTreeChangeTracker, OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
 
-  public GrTypeDefinitionMembersCache(GrTypeDefinition definition) {
+  public GrTypeDefinitionMembersCache(@NotNull T definition) {
+    this(definition, BodyCodeMembersProvider.INSTANCE);
+  }
+
+  public GrTypeDefinitionMembersCache(@NotNull T definition, @NotNull GrCodeMembersProvider<? super T> provider) {
     myDefinition = definition;
+    myCodeMembersProvider = provider;
   }
 
   public void dropCaches() {
@@ -50,13 +58,13 @@ public class GrTypeDefinitionMembersCache {
 
   public GrTypeDefinition[] getCodeInnerClasses() {
     return CachedValuesManager.getCachedValue(myDefinition, () -> CachedValueProvider.Result.create(
-      GrClassImplUtil.getBodyCodeInnerClasses(myDefinition), myDependencies
+      myCodeMembersProvider.getCodeInnerClasses(myDefinition), myDependencies
     ));
   }
 
   public GrMethod[] getCodeMethods() {
     return CachedValuesManager.getCachedValue(myDefinition, () -> CachedValueProvider.Result.create(
-      GrClassImplUtil.getBodyCodeMethods(myDefinition), myDependencies
+      myCodeMembersProvider.getCodeMethods(myDefinition), myDependencies
     ));
   }
 
@@ -68,7 +76,7 @@ public class GrTypeDefinitionMembersCache {
 
   public GrField[] getCodeFields() {
     return CachedValuesManager.getCachedValue(myDefinition, () -> CachedValueProvider.Result.create(
-      GrClassImplUtil.getBodyCodeFields(myDefinition), myDependencies
+      myCodeMembersProvider.getCodeFields(myDefinition), myDependencies
     ));
   }
 

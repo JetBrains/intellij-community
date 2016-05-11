@@ -128,8 +128,11 @@
 
     <astTransformationSupport implementation="org.jetbrains.plugins.groovy.lang.resolve.ast.LoggingContributor"/>
     <astTransformationSupport implementation="org.jetbrains.plugins.groovy.transformations.impl.CategoryTransformationSupport"/>
+    <astTransformationSupport implementation="org.jetbrains.plugins.groovy.transformations.impl.BaseScriptTransformationSupport"/>
     <astTransformationSupport id="defaultSupport"
                               implementation="org.jetbrains.plugins.groovy.transformations.impl.DefaultTransformationSupport"/>
+    <astTransformationSupport order="after defaultSupport"
+                              implementation="org.jetbrains.plugins.groovy.transformations.impl.FieldScriptTransformationSupport"/>
     <astTransformationSupport id="delegateSupport" order="after defaultSupport"
                               implementation="org.jetbrains.plugins.groovy.transformations.impl.DelegateTransformationSupport"/>
     <astTransformationSupport id="traitSupport" order="last"
