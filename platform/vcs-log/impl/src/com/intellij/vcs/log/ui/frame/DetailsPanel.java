@@ -210,7 +210,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       if (!reuseExisting) {
         commitPanel = new CommitPanel();
         if (i > 0) {
-          myMainContentPanel.add(new SeparatorComponent(8, OnePixelDivider.BACKGROUND, null));
+          myMainContentPanel.add(new SeparatorComponent(0, OnePixelDivider.BACKGROUND, null));
           count++;
         }
         commitPanel.setAlignmentX(LEFT_ALIGNMENT);
@@ -235,7 +235,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
     }
 
     if (rows.length > MAX_ROWS) {
-      myMainContentPanel.add(new SeparatorComponent(8, OnePixelDivider.BACKGROUND, null));
+      myMainContentPanel.add(new SeparatorComponent(0, OnePixelDivider.BACKGROUND, null));
       JBLabel label = new JBLabel("(showing " + MAX_ROWS + " of " + rows.length + " selected commits)");
       label.setFont(getDataPanelFont());
       label.setAlignmentX(LEFT_ALIGNMENT);
@@ -246,26 +246,6 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       myScrollPane.getVerticalScrollBar().setValue(0);
     }
     myCurrentCommitDetails = newCommitDetails;
-  }
-
-  private void updateDetailsBorder(@Nullable VcsFullCommitDetails data) {
-    if (data == null || !myColorManager.isMultipleRoots()) {
-      myMainContentPanel.setBorder(JBUI.Borders.empty(VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH / 2,
-                                                      VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH / 2, 0, 0));
-    }
-    else {
-      Color color = VcsLogGraphTable.getRootBackgroundColor(data.getRoot(), myColorManager);
-      myMainContentPanel.setBorder(new CompoundBorder(new MatteBorder(0, VcsLogGraphTable.ROOT_INDICATOR_COLORED_WIDTH, 0, 0, color),
-                                                      new MatteBorder(VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH / 2,
-                                                                      VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH, 0, 0,
-                                                                      new JBColor(new NotNullProducer<Color>() {
-                                                                        @NotNull
-                                                                        @Override
-                                                                        public Color produce() {
-                                                                          return getDetailsBackground();
-                                                                        }
-                                                                      }))));
-    }
   }
 
   @NotNull
@@ -280,6 +260,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
   }
 
   private class CommitPanel extends JBPanel {
+    private static final int BOTTOM_BORDER = 2;
     @NotNull private final ReferencesPanel myReferencesPanel;
     @NotNull private final DataPanel myDataPanel;
 
@@ -301,12 +282,12 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
         myLoadingPanel.startLoading();
         myDataPanel.setData(null);
         myReferencesPanel.setReferences(Collections.emptyList());
-        updateDetailsBorder(null);
+        updateBorder(null);
       }
       else {
         myDataPanel.setData(commitData);
         myReferencesPanel.setReferences(sortRefs(commitData.getId(), commitData.getRoot()));
-        updateDetailsBorder(commitData);
+        updateBorder(commitData);
       }
       List<String> branches = null;
       if (!(commitData instanceof LoadingDetails)) {
@@ -315,6 +296,20 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       myDataPanel.setBranches(branches);
       myDataPanel.update();
       revalidate();
+    }
+
+    private void updateBorder(@Nullable VcsFullCommitDetails data) {
+      if (data == null || !myColorManager.isMultipleRoots()) {
+        setBorder(JBUI.Borders.empty(VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH / 2,
+                                     VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH / 2, BOTTOM_BORDER, 0));
+      }
+      else {
+        Color color = VcsLogGraphTable.getRootBackgroundColor(data.getRoot(), myColorManager);
+        setBorder(new CompoundBorder(new MatteBorder(0, VcsLogGraphTable.ROOT_INDICATOR_COLORED_WIDTH, 0, 0, color),
+                                     new MatteBorder(VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH / 2,
+                                                     VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH, BOTTOM_BORDER, 0,
+                                                     new JBColor(DetailsPanel::getDetailsBackground))));
+      }
     }
 
     @Override
