@@ -103,6 +103,13 @@ export PATH=$JDK_18_x64/bin:$PATH
 export JAVA_HOME=$JAVA8_HOME
 $ANT "-Dout=$OUT" "-Dbuild=$BNUM" "-Denable.ui.tests=$UI_TESTS"
 
+# Temp: figure out how to preserve symlinks
+cd "$OUT/artifacts"
+unzip -q "android-studio-$BNUM.mac.zip"
+cd "Android Studio.app/Contents/jre/jdk/Contents/MacOS" && rm libjli.dylib && ln -s ../Home/jre/lib/jli/libjli.dylib && cd ../../../../../../
+zip --symlinks -r "android-studio-$BNUM.mac.zip" "Android Studio.app/Contents/jre/jdk/Contents/MacOS"
+cd ../../
+
 echo "## Copying android-studio distribution files"
 mkdir -p "$DIST"
 cp -Rfv "$OUT"/artifacts/android-studio* "$DIST"/
