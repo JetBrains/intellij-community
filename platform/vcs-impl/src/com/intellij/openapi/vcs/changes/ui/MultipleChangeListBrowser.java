@@ -73,8 +73,8 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
                                    @Nullable Runnable rebuildListListener,
                                    @Nullable Runnable inclusionListener,
                                    boolean unversionedFilesEnabled) {
-    super(project, changeLists, changes, initialListSelection, capableOfExcludingChanges, highlightProblems, inclusionListener,
-          ChangesBrowser.MyUseCase.LOCAL_CHANGES, null, Object.class);
+    super(project, changes, capableOfExcludingChanges, highlightProblems, inclusionListener, ChangesBrowser.MyUseCase.LOCAL_CHANGES, null,
+          Object.class);
     myRebuildListListener = rebuildListListener;
     myVcsConfiguration = ObjectUtils.assertNotNull(VcsConfiguration.getInstance(myProject));
     myUnversionedFilesEnabled = unversionedFilesEnabled;

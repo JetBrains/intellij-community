@@ -86,9 +86,7 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
   }
 
   protected ChangesBrowserBase(final Project project,
-                               List<? extends ChangeList> changeLists,
                                @NotNull List<T> changes,
-                               ChangeList initialListSelection,
                                final boolean capableOfExcludingChanges,
                                final boolean highlightProblems,
                                @Nullable final Runnable inclusionListener,

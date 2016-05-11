@@ -36,8 +36,7 @@ public class ChangesBrowser extends ChangesBrowserBase<Change> {
                         boolean highlightProblems,
                         @Nullable Runnable inclusionListener,
                         MyUseCase useCase, @Nullable VirtualFile toSelect) {
-    super(project, changeLists, changes, initialListSelection, capableOfExcludingChanges, highlightProblems, inclusionListener, useCase,
-          toSelect, Change.class);
+    super(project, changes, capableOfExcludingChanges, highlightProblems, inclusionListener, useCase, toSelect, Change.class);
 
     init();
     setInitialSelection(changeLists, changes, initialListSelection);
