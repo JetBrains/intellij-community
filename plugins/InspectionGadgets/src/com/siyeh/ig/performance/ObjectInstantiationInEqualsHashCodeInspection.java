@@ -73,9 +73,6 @@ public class ObjectInstantiationInEqualsHashCodeInspection extends BaseInspectio
       if (!isInsideEqualsOrHashCode(expression)) {
         return;
       }
-      if (ControlFlowUtils.isInThrowStatementArgument(expression)) {
-        return;
-      }
       registerNewExpressionError(expression, expression);
     }
 
