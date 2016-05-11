@@ -17,7 +17,8 @@ package com.jetbrains.python.debugger.dataframe;
 
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
-import com.jetbrains.python.debugger.array.NumpyArrayTable;
+import com.jetbrains.python.debugger.containerview.ColoredCellRenderer;
+import com.jetbrains.python.debugger.containerview.PyNumericViewUtil;
 
 import javax.swing.*;
 import javax.swing.border.LineBorder;
@@ -25,7 +26,7 @@ import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
 
 
-class DataFrameTableCellRenderer extends DefaultTableCellRenderer {
+class DataFrameTableCellRenderer extends DefaultTableCellRenderer implements ColoredCellRenderer {
 
 
   private boolean myColored = true;
@@ -34,7 +35,6 @@ class DataFrameTableCellRenderer extends DefaultTableCellRenderer {
     setHorizontalAlignment(CENTER);
     setHorizontalTextPosition(LEFT);
     setVerticalAlignment(BOTTOM);
-
   }
 
   public void setColored(boolean colored) {
@@ -48,9 +48,8 @@ class DataFrameTableCellRenderer extends DefaultTableCellRenderer {
       setText(value.toString());
     }
 
-    if (! (value instanceof TableValueDescriptor))
-    {
-       return this;
+    if (!(value instanceof TableValueDescriptor)) {
+      return this;
     }
 
     TableValueDescriptor descriptor = (TableValueDescriptor)value;
@@ -59,26 +58,22 @@ class DataFrameTableCellRenderer extends DefaultTableCellRenderer {
       this.setBorder(new LineBorder(JBColor.BLUE, 2));
     }
 
-      if (myColored) {
-        try {
-          double rangedValue = descriptor.getRangedValue();
-          if (!Double.isNaN(rangedValue)) {
-            this.setBackground(
-              new JBColor(new Color((int)Math.round(255 * rangedValue), 0, (int)Math.round(255 * (1 - rangedValue)), 130),
-                          new Color((int)Math.round(255 * rangedValue), 0, (int)Math.round(255 * (1 - rangedValue)), 130)));
-          }
+    if (myColored) {
+      try {
+        double rangedValue = descriptor.getRangedValue();
+        if (!Double.isNaN(rangedValue)) {
+          this.setBackground(PyNumericViewUtil.rangedValueToColor(rangedValue));
         }
-        catch (NumberFormatException ignored)
-        {
+      }
+      catch (NumberFormatException ignored) {
 
-        }
       }
-      else {
-        this.setBackground(new JBColor(UIUtil.getBgFillColor(table), UIUtil.getBgFillColor(table)));
-      }
+    }
+    else {
+      this.setBackground(new JBColor(UIUtil.getBgFillColor(table), UIUtil.getBgFillColor(table)));
+    }
 
 
     return this;
   }
-
 }

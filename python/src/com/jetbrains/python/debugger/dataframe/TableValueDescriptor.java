@@ -17,10 +17,10 @@ package com.jetbrains.python.debugger.dataframe;
 
 import com.google.common.base.Objects;
 import com.jetbrains.python.debugger.ArrayChunk;
-import com.jetbrains.python.debugger.array.NumpyArrayTable;
+import com.jetbrains.python.debugger.containerview.PyNumericViewUtil;
 
 /**
- * Created by Yuli Fiterma on 4/26/2016.
+ * Created by Yuli Fiterman on 4/26/2016.
  */
 public class TableValueDescriptor {
   private final String myValue;
@@ -64,7 +64,7 @@ public class TableValueDescriptor {
       max = Double.parseDouble(maxValue);
     }
 
-    return (min == max)? 0 : NumpyArrayTable.getRangedValue(myValue, dataType, min, max, minValue, maxValue);
+    return (min == max)? 0 : PyNumericViewUtil.getRangedValue(myValue, dataType, min, max, minValue, maxValue);
   }
 
   @Override

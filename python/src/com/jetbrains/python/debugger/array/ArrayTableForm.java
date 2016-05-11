@@ -15,22 +15,12 @@
  */
 package com.jetbrains.python.debugger.array;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
-import com.intellij.ui.EditorTextField;
-import com.intellij.ui.components.JBScrollPane;
-import com.intellij.ui.table.JBTable;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
-import com.jetbrains.python.PythonFileType;
-import com.jetbrains.python.debugger.PyDebugValue;
+import com.jetbrains.python.debugger.containerview.NumericContainerRendererForm;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 import java.awt.*;
 import java.awt.event.KeyListener;
@@ -38,86 +28,21 @@ import java.awt.event.KeyListener;
 /**
  * @author amarch
  */
-public class ArrayTableForm {
-  private EditorTextField mySliceTextField;
-  private JCheckBox myColoredCheckbox;
-  private EditorTextField myFormatTextField;
-  private JBScrollPane myScrollPane;
-  private JLabel myFormatLabel;
-  private JPanel myFormatPanel;
-  private JPanel myMainPanel;
-  private JTable myTable;
-  private final Project myProject;
-  private KeyListener myResliceCallback;
-  private KeyListener myReformatCallback;
+public class ArrayTableForm extends NumericContainerRendererForm {
 
-
-  private static final String DATA_LOADING_IN_PROCESS = "Please wait, load array data.";
-  private static final String NOT_APPLICABLE = "View not applicable for ";
 
   public ArrayTableForm(@NotNull Project project, KeyListener resliceCallback, KeyListener reformatCallback) {
-    myProject = project;
-    myResliceCallback = resliceCallback;
-    myReformatCallback = reformatCallback;
+    super(project, resliceCallback, reformatCallback);
   }
 
-  private void createUIComponents() {
-    mySliceTextField = new EditorTextField("", myProject, PythonFileType.INSTANCE) {
-      @Override
-      protected EditorEx createEditor() {
-        EditorEx editor = super.createEditor();
-        editor.getContentComponent().addKeyListener(myResliceCallback);
-        return editor;
-      }
-    };
+  protected void createUIComponents() {
 
+    super.createUIComponents();
     myTable = new JBTableWithRowHeaders();
 
     myScrollPane = ((JBTableWithRowHeaders)myTable).getScrollPane();
-
-    myFormatTextField = new EditorTextField("", myProject, PythonFileType.INSTANCE) {
-      @Override
-      protected EditorEx createEditor() {
-        EditorEx editor = super.createEditor();
-        editor.getContentComponent().addKeyListener(myReformatCallback);
-        return editor;
-      }
-    };
   }
 
-  public EditorTextField getSliceTextField() {
-    return mySliceTextField;
-  }
-
-  public EditorTextField getFormatTextField() {
-    return myFormatTextField;
-  }
-
-  public JTable getTable() {
-    return myTable;
-  }
-
-  public JCheckBox getColoredCheckbox() {
-    return myColoredCheckbox;
-  }
-
-  //public void setDefaultStatus() {
-  //  if (myTable != null) {
-      //myTable.getEmptyText().setText(DATA_LOADING_IN_PROCESS);
-    //}
-  //}
-
-  //public void setNotApplicableStatus(PyDebugValue node) {
-  //  myTable.getEmptyText().setText(NOT_APPLICABLE + node.getName());
-  //}
-
-  public JComponent getMainPanel() {
-    return myMainPanel;
-  }
-
-  public JBScrollPane getScrollPane() {
-    return myScrollPane;
-  }
 
   public static class ColumnHeaderRenderer extends DefaultTableHeaderCellRenderer {
     @Override

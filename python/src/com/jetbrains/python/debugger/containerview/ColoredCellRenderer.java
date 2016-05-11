@@ -13,22 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.python.debugger.array;
-
-import com.jetbrains.python.debugger.ArrayChunk;
-import com.jetbrains.python.debugger.PyDebuggerException;
-import org.jetbrains.annotations.NotNull;
+package com.jetbrains.python.debugger.containerview;
 
 /**
- * Created by Alla on 4/23/2016.
+ * Created by Yuli Fiterman on 5/10/2016.
  */
-public interface TableChunkDatasource {
-
-  String correctStringValue(@NotNull Object value);
-
-  void showError(String message);
-
-
-  ArrayChunk getChunk(int rowOffset, int colOffset, int rows, int cols) throws PyDebuggerException;
+public interface ColoredCellRenderer {
+  void setColored(boolean colored);
 
 }

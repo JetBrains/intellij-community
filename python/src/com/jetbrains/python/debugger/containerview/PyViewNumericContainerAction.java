@@ -13,34 +13,53 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.python.debugger.dataframe;
+package com.jetbrains.python.debugger.containerview;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.jetbrains.python.debugger.PyDebugValue;
-import com.jetbrains.python.debugger.array.ArrayTableForm;
+import com.jetbrains.python.debugger.array.NumpyArrayTable;
+import com.jetbrains.python.debugger.dataframe.DataFrameTable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import javax.swing.tree.TreePath;
 
 /**
  * @author amarch
  */
 
-public class PyViewDataFrameAction extends XDebuggerTreeActionBase {
+public class PyViewNumericContainerAction extends XDebuggerTreeActionBase {
 
   @Override
   protected void perform(XValueNodeImpl node, @NotNull String nodeName, AnActionEvent e) {
     Project p = e.getProject();
     if (p != null && node != null && node.getValueContainer() instanceof PyDebugValue && node.isComputed()) {
-      final ViewDataFrameDialog dialog = new ViewDataFrameDialog(p, (PyDebugValue)(node.getValueContainer()));
+      PyDebugValue debugValue = (PyDebugValue)node.getValueContainer();
+      String nodeType = debugValue.getType();
+      final ViewNumericContainerDialog dialog;
+      if ("ndarray".equals(nodeType)) {
+        dialog = new ViewNumericContainerDialog(p, (dialogWrapper) -> {
+          NumpyArrayTable arrayTable = new NumpyArrayTable(p, dialogWrapper, debugValue);
+          arrayTable.init();
+          return arrayTable.getComponent().getMainPanel();
+        });
+      }
+      else if (("DataFrame".equals(nodeType))) {
+        dialog = new ViewNumericContainerDialog(p, (dialogWrapper) -> {
+          DataFrameTable dataFrameTable = new DataFrameTable(p, dialogWrapper, debugValue);
+          dataFrameTable.init();
+          return dataFrameTable.getComponent().getMainPanel();
+        });
+      }
+      else {
+        throw new IllegalStateException("Cannot render node type: " + nodeType);
+      }
+
       dialog.show();
     }
   }
@@ -65,52 +84,22 @@ public class PyViewDataFrameAction extends XDebuggerTreeActionBase {
         PyDebugValue debugValue = (PyDebugValue)node.getValueContainer();
 
         String nodeType = debugValue.getType();
-        if ("DataFrame".equals(nodeType)) {
+        if ("ndarray".equals(nodeType)) {
+          e.getPresentation().setText("View as Array");
           e.getPresentation().setVisible(true);
-          return;
+        }
+        else if (("DataFrame".equals(nodeType))) {
+          e.getPresentation().setText("View as DataFrame");
+          e.getPresentation().setVisible(true);
+        }
+        else {
+          e.getPresentation().setVisible(false);
         }
       }
+      else
+      {
+        e.getPresentation().setVisible(false);
+      }
     }
-    e.getPresentation().setVisible(false);
-  }
-
-  protected static class ViewDataFrameDialog extends DialogWrapper {
-    private Project myProject;
-    private DataFrameTable myDataFrameTable;
-
-    private ViewDataFrameDialog(@NotNull Project project, PyDebugValue debugValue) {
-      super(project, false);
-      setModal(false);
-      setCancelButtonText("Close");
-      setCrossClosesWindow(true);
-
-      myProject = project;
-      myDataFrameTable = new DataFrameTable(myProject, this, debugValue);
-
-      myDataFrameTable.init();
-      init();
-    }
-
-    public void setError(String text) {
-      //todo: think about this usage
-      setErrorText(text);
-    }
-
-    @Override
-    @NotNull
-    protected Action[] createActions() {
-      return new Action[]{getCancelAction()};
-    }
-
-    @Override
-    protected String getDimensionServiceKey() {
-      return "#com.jetbrains.python.actions.view.array.PyViewArrayAction";
-    }
-
-    @Override
-    protected JComponent createCenterPanel() {
-      return myDataFrameTable.getComponent().getMainPanel();
-    }
-
   }
 }

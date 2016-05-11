@@ -15,14 +15,10 @@
  */
 package com.jetbrains.python.debugger.dataframe;
 
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
-import com.intellij.ui.EditorTextField;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.JBTable;
-import com.jetbrains.python.PythonFileType;
-import com.jetbrains.python.debugger.array.ArrayTableForm;
-import com.jetbrains.python.debugger.array.JBTableWithRowHeaders;
+import com.jetbrains.python.debugger.containerview.NumericContainerRendererForm;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -31,36 +27,16 @@ import java.awt.event.KeyListener;
 /**
  * Created by Yuli Fiterman on 4/26/2016.
  */
-public class DataFrameTableForm {
-  private final Project myProject;
-  private final KeyListener myReformatCallback;
-  private final KeyListener myResliceCallback;
-  private JBScrollPane myScrollPane;
-  private JCheckBox myColoredCheckbox;
-  private JPanel myFormatPanel;
-  private EditorTextField mySliceTextField;
-  private JPanel myMainPanel;
-  private JBTable myTable;
-  private JLabel myFormatLabel;
-  private EditorTextField myFormatTextField;
+public class DataFrameTableForm extends NumericContainerRendererForm {
 
 
   public DataFrameTableForm(@NotNull Project project, KeyListener resliceCallback, KeyListener reformatCallback) {
-    myProject = project;
-    myResliceCallback = resliceCallback;
-    myReformatCallback = reformatCallback;
-
+    super(project, resliceCallback, reformatCallback);
   }
-  private void createUIComponents() {
-    mySliceTextField = new EditorTextField("", myProject, PythonFileType.INSTANCE) {
-      @Override
-      protected EditorEx createEditor() {
-        EditorEx editor = super.createEditor();
-        editor.getContentComponent().addKeyListener(myResliceCallback);
-        return editor;
-      }
-    };
 
+  protected void createUIComponents() {
+
+    super.createUIComponents();
     myTable = new JBTable();
     myTable.setAutoResizeMode(JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS);
     myTable.setRowSelectionAllowed(false);
@@ -68,38 +44,5 @@ public class DataFrameTableForm {
 
     myTable.getTableHeader().setReorderingAllowed(false);
     myScrollPane = new JBScrollPane();
-
-    myFormatTextField = new EditorTextField("", myProject, PythonFileType.INSTANCE) {
-      @Override
-      protected EditorEx createEditor() {
-        EditorEx editor = super.createEditor();
-        editor.getContentComponent().addKeyListener(myReformatCallback);
-        return editor;
-      }
-    };
-  }
-
-  public JBTable getTable() {
-    return myTable;
-  }
-
-  public JPanel getMainPanel() {
-    return myMainPanel;
-  }
-
-  public EditorTextField getSliceTextField() {
-    return mySliceTextField;
-  }
-
-  public JCheckBox getColoredCheckbox() {
-    return myColoredCheckbox;
-  }
-
-  public JBScrollPane getScrollPane() {
-    return myScrollPane;
-  }
-
-  public EditorTextField getFormatTextField() {
-    return myFormatTextField;
   }
 }

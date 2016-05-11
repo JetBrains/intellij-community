@@ -28,8 +28,8 @@ import java.util.Map;
  * Created by Yuli Fiterma on 4/26/2016.
  */
 public class DataFrameTableModel extends AsyncArrayTableModel {
-  private Map<Integer, String> rowLabels = Maps.newConcurrentMap();
-  private Map<Integer, ArrayChunk.ColHeader> colHeaders = Maps.newConcurrentMap();
+  private final Map<Integer, String> rowLabels = Maps.newConcurrentMap();
+  private final Map<Integer, ArrayChunk.ColHeader> colHeaders = Maps.newConcurrentMap();
   public DataFrameTableModel(int rows, int columns, TableChunkDatasource provider) {
     super(rows, columns, provider);
   }
@@ -117,9 +117,7 @@ public class DataFrameTableModel extends AsyncArrayTableModel {
         {
           final int updatedRow = i + rowOffset;
           UIUtil.invokeLaterIfNeeded(()->
-                                     {
-                                        super.fireTableCellUpdated(updatedRow, 0);
-                                     });
+                                       super.fireTableCellUpdated(updatedRow, 0));
         }
       }
     }
