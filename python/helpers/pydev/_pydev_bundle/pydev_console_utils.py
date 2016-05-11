@@ -482,7 +482,7 @@ class BaseInterpreterInterface:
         else:
             return self.orig_find_frame(thread_id, frame_id)
 
-    def connectToDebugger(self, debuggerPort, debugger_options = None):
+    def connectToDebugger(self, debuggerPort, debugger_options=None):
         '''
         Used to show console with variables connection.
         Mainly, monkey-patches things in the debugger structure so that the debugger protocol works.
@@ -490,7 +490,7 @@ class BaseInterpreterInterface:
 
         if debugger_options is None:
             debugger_options = {}
-        env_key = '__extra__envs__'
+        env_key = "PYDEVD_EXTRA_ENVS"
         if env_key in debugger_options:
             for (env_name, value) in debugger_options[env_key].items():
                 os.environ[env_name] = value

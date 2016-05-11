@@ -1363,8 +1363,7 @@ def apply_debugger_options(setup_options):
 
     :type setup_options: dict[str, bool]
     """
-
-    default_options = {'save-signatures': False, 'save-threading': False, 'save-asyncio': False, 'qt-support': False}
+    default_options = {'save-signatures': False, 'qt-support': False}
     default_options.update(setup_options)
     setup_options = default_options
 
@@ -1376,13 +1375,9 @@ def apply_debugger_options(setup_options):
             # Only import it if we're going to use it!
             from _pydevd_bundle.pydevd_signature import SignatureFactory
             debugger.signature_factory = SignatureFactory()
+
     if setup_options['qt-support']:
         enable_qt_support()
-    if setup_options['save-threading']:
-        debugger.thread_analyser = ThreadingLogger()
-    if setup_options['save-asyncio']:
-        if IS_PY34_OLDER:
-            debugger.asyncio_analyser = AsyncioLogger()
 
 
 #=======================================================================================================================
@@ -1531,6 +1526,12 @@ if __name__ == '__main__':
         # Run the dev_appserver
         debugger.run(setup['file'], None, None, is_module, set_trace=False)
     else:
+        if setup['save-threading']:
+            debugger.thread_analyser = ThreadingLogger()
+        if setup['save-asyncio']:
+            if IS_PY34_OLDER:
+                debugger.asyncio_analyser = AsyncioLogger()
+
         apply_debugger_options(setup)
 
         try:

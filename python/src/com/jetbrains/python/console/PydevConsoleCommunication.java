@@ -66,6 +66,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   private static final String CLOSE = "close";
   private static final String EVALUATE = "evaluate";
   private static final String GET_ARRAY = "getArray";
+  private static final String PYDEVD_EXTRA_ENVS = "PYDEVD_EXTRA_ENVS";
 
   /**
    * XML-RPC client for sending messages to the server.
@@ -598,7 +599,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
     }
     /* argument needs to be hashtable type for compatability with the RPC library */
     Hashtable<String, Object> opts = new Hashtable<>(dbgOpts);
-    opts.put("__extra__envs__", new Hashtable<>(extraEnvs));
+    opts.put(PYDEVD_EXTRA_ENVS, new Hashtable<>(extraEnvs));
     Object result = myClient.execute(CONNECT_TO_DEBUGGER, new Object[]{localPort, opts});
     Exception exception = null;
     if (result instanceof Vector) {
