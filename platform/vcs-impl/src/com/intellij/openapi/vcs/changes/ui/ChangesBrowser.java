@@ -38,6 +38,10 @@ public class ChangesBrowser extends ChangesBrowserBase<Change> {
                         MyUseCase useCase, @Nullable VirtualFile toSelect) {
     super(project, changeLists, changes, initialListSelection, capableOfExcludingChanges, highlightProblems, inclusionListener, useCase,
           toSelect, Change.class);
+
+    init();
+    setInitialSelection(changeLists, changes, initialListSelection);
+    rebuildList();
   }
 
   @NotNull

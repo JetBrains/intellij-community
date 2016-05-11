@@ -58,9 +58,6 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
 
   // for backgroundable rollback to mark
   private boolean myDataIsDirty;
-  // this field is used to workaround issues connected to virtual method calls (like rebuildList()) in ChangesBrowserBase constructor
-  // so inheritors are not fully initialized yet when such methods are called from constructor
-  protected final boolean myIsInitialized;
   protected final Class<T> myClass;
   protected final ChangesTreeList<T> myViewer;
   protected ChangeList mySelectedChangeList;
@@ -124,15 +121,12 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
         return ChangesBrowserBase.this.getLeadSelectedObject(node);
       }
     };
+    myHeaderPanel = new JPanel(new BorderLayout());
+  }
 
-    myViewer.setDoubleClickHandler(getDoubleClickHandler());
-
-    setInitialSelection(changeLists, changes, initialListSelection);
-    rebuildList();
-
+  protected void init() {
     add(myViewer, BorderLayout.CENTER);
 
-    myHeaderPanel = new JPanel(new BorderLayout());
     myHeaderPanel.add(createToolbar(), BorderLayout.CENTER);
     add(myHeaderPanel, BorderLayout.NORTH);
 
@@ -140,7 +134,7 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
     add(myBottomPanel, BorderLayout.SOUTH);
 
     myViewer.installPopupHandler(myToolBarGroup);
-    myIsInitialized = true;
+    myViewer.setDoubleClickHandler(getDoubleClickHandler());
   }
 
   @NotNull

@@ -79,11 +79,11 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
     myVcsConfiguration = ObjectUtils.assertNotNull(VcsConfiguration.getInstance(myProject));
     myUnversionedFilesEnabled = unversionedFilesEnabled;
 
+    init();
+    setInitialSelection(changeLists, changes, initialListSelection);
+
     myChangeListChooser = new ChangeListChooser();
     myChangeListChooser.updateLists(changeLists);
-    // rebuild toolbar to ensure "myUnversionedFilesEnabled" is considered
-    myHeaderPanel.removeAll();
-    myHeaderPanel.add(createToolbar(), BorderLayout.CENTER);
     myHeaderPanel.add(myChangeListChooser, BorderLayout.EAST);
     ChangeListManager.getInstance(myProject).addChangeListListener(myChangeListListener);
 
@@ -151,7 +151,7 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
 
   @Override
   public void rebuildList() {
-    if (!myIsInitialized || myInRebuildList) return;
+    if (myInRebuildList) return;
     try {
       myInRebuildList = true;
 
