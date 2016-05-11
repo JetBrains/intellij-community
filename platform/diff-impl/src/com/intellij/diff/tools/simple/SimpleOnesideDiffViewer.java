@@ -16,12 +16,11 @@
 package com.intellij.diff.tools.simple;
 
 import com.intellij.diff.DiffContext;
-import com.intellij.diff.actions.NavigationContextChecker;
+import com.intellij.diff.actions.AllLinesIterator;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.util.DiffDataKeys;
-import com.intellij.diff.actions.AllLinesIterator;
 import com.intellij.diff.tools.util.base.HighlightPolicy;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.diff.tools.util.side.OnesideTextDiffViewer;
@@ -168,8 +167,7 @@ public class SimpleOnesideDiffViewer extends OnesideTextDiffViewer {
     if (getSide().isLeft()) return false;
 
     AllLinesIterator allLinesIterator = new AllLinesIterator(getEditor().getDocument());
-    NavigationContextChecker checker2 = new NavigationContextChecker(allLinesIterator, context);
-    int line = checker2.contextMatchCheck();
+    int line = context.contextMatchCheck(allLinesIterator);
     if (line == -1) return false;
 
     scrollToLine(line);

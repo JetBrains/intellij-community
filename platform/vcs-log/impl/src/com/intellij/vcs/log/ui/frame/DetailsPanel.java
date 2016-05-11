@@ -125,7 +125,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
 
       @Override
       public Color getBackground() {
-        return UIUtil.getEditorPaneBackground();
+        return getDetailsBackground();
       }
 
       @Override
@@ -205,7 +205,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
     int count = 0;
     for (int i = 0; i < Math.min(rows.length, MAX_ROWS); i++) {
       int row = rows[i];
-      boolean reuseExisting = count < myMainContentPanel.getComponentCount();
+      boolean reuseExisting = count + 1 < myMainContentPanel.getComponentCount();
       ReferencesPanel referencesPanel;
       DataPanel dataPanel;
       if (!reuseExisting) {
@@ -215,8 +215,10 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
           myMainContentPanel.add(new SeparatorComponent(8, OnePixelDivider.BACKGROUND, null));
           count ++;
         }
+        referencesPanel.setAlignmentX(LEFT_ALIGNMENT);
         myMainContentPanel.add(referencesPanel);
         count++;
+        dataPanel.setAlignmentX(LEFT_ALIGNMENT);
         myMainContentPanel.add(dataPanel);
         count++;
       }
@@ -254,8 +256,9 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
 
     if (rows.length > MAX_ROWS) {
       myMainContentPanel.add(new SeparatorComponent(8, OnePixelDivider.BACKGROUND, null));
-      JBLabel label = new JBLabel(rows.length + " commits selected, showing just " + MAX_ROWS + "…", SwingConstants.LEFT);
+      JBLabel label = new JBLabel("(showing " + MAX_ROWS + " of " + rows.length + " selected commits)");
       label.setFont(getDataPanelFont());
+      label.setAlignmentX(LEFT_ALIGNMENT);
       myMainContentPanel.add(label);
     }
 
@@ -439,7 +442,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
           builder.endRow();
         }
 
-        return "<i>In " + myBranches.size() + " branches</i> " +
+        return "<i>In " + myBranches.size() + " branches:</i> " +
                "<a href=\"" + SHOW_OR_HIDE_BRANCHES + "\"><i>(click to hide)</i></a><br>" +
                builder.build();
       }
@@ -450,7 +453,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
         }
         else {
           branchText = StringUtil.join(ContainerUtil.getFirstItems(myBranches, BRANCHES_LIMIT), ", ") +
-                       ", ... <a href=\"" +
+                       "… <a href=\"" +
                        SHOW_OR_HIDE_BRANCHES +
                        "\"><i>(click to show all)</i></a>";
         }

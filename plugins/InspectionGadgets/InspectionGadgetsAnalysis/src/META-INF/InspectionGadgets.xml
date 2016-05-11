@@ -1214,10 +1214,6 @@
                      bundle="com.siyeh.InspectionGadgetsBundle" key="connection.opened.not.safely.closed.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.j2me.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.j2me.ConnectionResourceInspection"/>
-    <localInspection groupPath="Java" language="JAVA" suppressId="FieldRepeatedlyAccessedInMethod" shortName="FieldRepeatedlyAccessed"
-                     bundle="com.siyeh.InspectionGadgetsBundle" key="field.repeatedly.accessed.in.method.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.j2me.issues" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.j2me.FieldRepeatedlyAccessedInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="InterfaceWithOnlyOneDirectInheritor" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="interface.one.inheritor.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.j2me.issues"
                      enabledByDefault="false" level="WARNING"
@@ -2001,9 +1997,6 @@
                      key="instantiating.object.to.get.class.object.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.performance.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.performance.InstantiatingObjectToGetClassObjectInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="JavaLangReflect" bundle="com.siyeh.InspectionGadgetsBundle" key="java.lang.reflect.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.performance.issues" enabledByDefault="false"
-                     level="WARNING" implementationClass="com.siyeh.ig.performance.JavaLangReflectInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="KeySetIterationMayUseEntrySet" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="key.set.iteration.may.use.entry.set.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.performance.issues" enabledByDefault="false" level="WARNING"

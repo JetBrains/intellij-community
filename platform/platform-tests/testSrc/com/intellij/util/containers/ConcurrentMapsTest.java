@@ -431,4 +431,20 @@ public class ConcurrentMapsTest {
     while (!map.processQueues());
     assertTrue(map.isEmpty());
   }
+
+  @Test
+  public void testConcurrentWeakValueSize() {
+    Map<String, Object> map = ContainerUtil.createConcurrentWeakValueMap();
+    Object o = new Object();
+    map.put("a", o);
+    map.put("b", new Object());
+
+    tryGcSoftlyReachableObjects();
+    assertEquals(1, map.size());
+
+    o = null;
+    tryGcSoftlyReachableObjects();
+    assertTrue(map.isEmpty());
+  }
+
 }

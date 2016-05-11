@@ -81,7 +81,7 @@ binding.setVariable("common_vmoptions", "-XX:+UseConcMarkSweepGC -XX:SoftRefLRUP
                                         "-Dsun.io.useCanonCaches=false -Djava.net.preferIPv4Stack=true " +
                                         "-XX:+HeapDumpOnOutOfMemoryError -XX:-OmitStackTraceInFastThrow")
 
-binding.setVariable("vmOptions", { "$common_vmoptions".trim() })
+binding.setVariable("vmOptions", { "$common_vmoptions ${isEap() ? '-XX:MaxJavaStackTraceDepth=-1' : ''}".trim() })
 binding.setVariable("vmOptions32", { "$mem32 ${vmOptions()}".trim() })
 binding.setVariable("vmOptions64", { "$mem64 ${vmOptions()}".trim() })
 

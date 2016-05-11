@@ -91,5 +91,31 @@ trait T {
 '''
   }
 
+  void 'test concrete trait property'() {
+    testHighlighting '''\
+trait A {
+  def foo
+}
+class B implements A {}
+'''
+  }
+
+  void 'test abstract trait property'() {
+    testHighlighting '''\
+trait A {
+  abstract foo
+}
+<error descr="Method 'getFoo' is not implemented">class B implements A</error> {}
+'''
+    testHighlighting '''\
+trait A {
+  abstract foo
+}
+class B implements A {
+  def foo
+}
+'''
+  }
+
   final InspectionProfileEntry[] customInspections = [new GroovyAssignabilityCheckInspection(), new GrUnresolvedAccessInspection()]
 }

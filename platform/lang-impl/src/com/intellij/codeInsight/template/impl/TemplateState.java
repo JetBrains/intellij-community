@@ -48,7 +48,6 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
@@ -798,29 +797,35 @@ public class TemplateState implements Disposable {
         }
       });
     }
-    Ref<Integer> minimumSegmentNumber = Ref.create(null);
     DocumentUtil.executeInBulk(myDocument, true, new Runnable() {
       @Override
       public void run() {
         for (TemplateDocumentChange change : changes) {
-          minimumSegmentNumber.set(minimumSegmentNumber.isNull() ? change.segmentNumber : Math.min(change.segmentNumber, minimumSegmentNumber.get()));
           replaceString(change.newValue, change.startOffset, change.endOffset, change.segmentNumber);
         }
       }
     });
-    if (!minimumSegmentNumber.isNull()) {
-      fixOverlappedSegments(minimumSegmentNumber.get());
-    }
   }
 
+  /**
+   * Must be invoked on every segment change in order to avoid ovelapping editing segment with its neibours
+   */
   private void fixOverlappedSegments(int currentSegment) {
     if (currentSegment >= 0) {
       int currentSegmentStart = mySegments.getSegmentStart(currentSegment);
       int currentSegmentEnd = mySegments.getSegmentEnd(currentSegment);
-      for (int i = currentSegment + 1; i < mySegments.getSegmentsCount(); i++) {
-        final int startOffset = mySegments.getSegmentStart(i);
-        if (currentSegmentStart <= startOffset && startOffset < currentSegmentEnd) {
-          mySegments.replaceSegmentAt(i, currentSegmentEnd, Math.max(mySegments.getSegmentEnd(i), currentSegmentEnd), true);
+      for (int i = 0; i < mySegments.getSegmentsCount(); i++) {
+        if (i > currentSegment) {
+          final int startOffset = mySegments.getSegmentStart(i);
+          if (currentSegmentStart <= startOffset && startOffset < currentSegmentEnd) {
+            mySegments.replaceSegmentAt(i, currentSegmentEnd, Math.max(mySegments.getSegmentEnd(i), currentSegmentEnd), true);
+          }
+        }
+        else if (i < currentSegment) {
+          final int endOffset = mySegments.getSegmentEnd(i);
+          if (currentSegmentStart < endOffset && endOffset <= currentSegmentEnd) {
+            mySegments.replaceSegmentAt(i, Math.min(mySegments.getSegmentStart(i), currentSegmentStart), currentSegmentStart, true);
+          }
         }
       }
     }
@@ -869,7 +874,6 @@ public class TemplateState implements Disposable {
     if (result == null || result.equalsToText(oldValue, element)) return;
 
     replaceString(StringUtil.notNullize(result.toString()), start, end, segmentNumber);
-    fixOverlappedSegments(segmentNumber);
 
     if (result instanceof RecalculatableResult) {
       IntArrayList indices = initEmptyVariables();
@@ -890,6 +894,7 @@ public class TemplateState implements Disposable {
       int newEnd = start + newValue.length();
       mySegments.replaceSegmentAt(segmentNumber, start, newEnd);
       mySegments.setNeighboursGreedy(segmentNumber, true);
+      fixOverlappedSegments(segmentNumber);
     }
   }
 

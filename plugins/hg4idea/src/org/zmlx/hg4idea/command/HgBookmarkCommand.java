@@ -29,6 +29,7 @@ public class HgBookmarkCommand {
     final Project project = ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(repositories)).getProject();
     if (StringUtil.isEmptyOrSpaces(name)) {
       VcsNotifier.getInstance(project).notifyError("Hg Error", "Bookmark name is empty");
+      return;
     }
     new Task.Backgroundable(project, HgVcsMessages.message("hg4idea.progress.bookmark", name)) {
       @Override
@@ -51,7 +52,6 @@ public class HgBookmarkCommand {
     ArrayList<String> arguments = ContainerUtil.newArrayList(args);
     arguments.add(name);
     HgCommandResult result = new HgCommandExecutor(project).executeInCurrentThread(repositoryRoot, "bookmark", arguments);
-    if (project.isDisposed()) return;
     getRepositoryManager(project).updateRepository(repositoryRoot);
     if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
       new HgCommandResultNotifier(project)

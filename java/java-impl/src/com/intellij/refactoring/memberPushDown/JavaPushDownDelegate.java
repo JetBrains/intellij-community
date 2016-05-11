@@ -24,6 +24,7 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -111,8 +112,11 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
   @Override
   public NewSubClassData preprocessNoInheritorsFound(PsiElement sourceClass, String conflictDialogTitle) {
     final PsiClass aClass = (PsiClass)sourceClass;
-    if (aClass.isEnum() || aClass.hasModifierProperty(PsiModifier.FINAL)) {
-      if (Messages.showOkCancelDialog((aClass.isEnum() ? "Enum " + aClass.getQualifiedName() + " doesn't have constants to inline to. " : "Final class " + aClass.getQualifiedName() + "does not have inheritors. ") +
+    final PsiFile containingFile = aClass.getContainingFile();
+    final boolean defaultPackage = StringUtil.isEmptyOrSpaces(containingFile instanceof PsiClassOwner ? ((PsiClassOwner)containingFile).getPackageName() : "");
+    if (aClass.isEnum() || aClass.hasModifierProperty(PsiModifier.FINAL) || defaultPackage) {
+      if (Messages.showOkCancelDialog((aClass.isEnum() ? "Enum " + aClass.getQualifiedName() + " doesn't have constants to inline to. "
+                                                       : (defaultPackage ? "Class " : "Final class ") + aClass.getQualifiedName() + "does not have inheritors. ") +
                                       "Pushing members down will result in them being deleted. " +
                                       "Would you like to proceed?", conflictDialogTitle, Messages.getWarningIcon()) != Messages.OK) {
         return NewSubClassData.ABORT_REFACTORING;

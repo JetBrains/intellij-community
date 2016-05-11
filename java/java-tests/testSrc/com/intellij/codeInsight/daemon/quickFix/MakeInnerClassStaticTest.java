@@ -13,24 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.j2me;
+package com.intellij.codeInsight.daemon.quickFix;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
-import org.jetbrains.annotations.Nullable;
+public class MakeInnerClassStaticTest extends LightQuickFixParameterizedTestCase {
 
-/**
- * @author Bas Leijdekkers
- */
-public class FieldRepeatedlyAccessedInspectionTest extends LightInspectionTestCase {
-
-  public void testFieldRepeatedlyAccessed(){
-    doTest();
-  }
-
-  @Nullable
   @Override
-  protected InspectionProfileEntry getInspection() {
-    return new FieldRepeatedlyAccessedInspection();
+  protected String getBasePath() {
+    return "/codeInsight/daemonCodeAnalyzer/quickFix/makeInnerStatic";
   }
 }

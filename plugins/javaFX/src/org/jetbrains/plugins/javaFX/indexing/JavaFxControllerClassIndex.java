@@ -26,6 +26,8 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.util.Function;
+import com.intellij.util.Functions;
+import com.intellij.util.Processor;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
@@ -140,16 +142,30 @@ public class JavaFxControllerClassIndex extends ScalarIndexExtension<String> {
   }
 
   public static List<PsiFile> findFxmlWithController(final Project project, @NotNull String className) {
-    return findFxmlWithController(project, className, new Function<VirtualFile, PsiFile>() {
-      @Override
-      public PsiFile fun(VirtualFile file) {
-        return PsiManager.getInstance(project).findFile(file);
+    return findFxmlWithController(project, className, ProjectScope.getAllScope(project));
+  }
+
+  public static List<PsiFile> findFxmlWithController(final Project project, @NotNull String className, @NotNull GlobalSearchScope scope) {
+    final PsiManager psiManager = PsiManager.getInstance(project);
+    return findFxmlWithController(project, className, psiManager::findFile, scope);
+  }
+
+  public static void processControllerClassNames(Project project, GlobalSearchScope scope, Processor<String> processor) {
+    ApplicationManager.getApplication().runReadAction(() -> {
+      final GlobalSearchScope filterScope = GlobalSearchScope.projectScope(project).intersectWith(scope);
+      try {
+        FileBasedIndex.getInstance().processAllKeys(NAME, className -> {
+          final boolean isInScope = !FileBasedIndex.getInstance().getContainingFiles(NAME, className, filterScope).isEmpty();
+          return !isInScope || processor.process(className);
+        }, project);
       }
-    }, ProjectScope.getAllScope(project));
+      catch (IndexNotReadyException ignore) {
+      }
+    });
   }
 
   public static List<VirtualFile> findFxmlsWithController(final Project project, @NotNull String className) {
-    return findFxmlWithController(project, className, Function.ID, ProjectScope.getAllScope(project));
+    return findFxmlWithController(project, className, Functions.id(), ProjectScope.getAllScope(project));
   }
 
   public static <T> List<T> findFxmlWithController(final Project project,

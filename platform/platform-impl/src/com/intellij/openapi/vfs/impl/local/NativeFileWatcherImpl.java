@@ -347,7 +347,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
           watcherOp = WatcherOp.valueOf(line);
         }
         catch (IllegalArgumentException e) {
-          LOG.error("Illegal watcher command: " + line);
+          LOG.error("Illegal watcher command: '" + line + "'");
           return;
         }
 

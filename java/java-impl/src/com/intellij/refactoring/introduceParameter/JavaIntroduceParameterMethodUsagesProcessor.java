@@ -31,6 +31,7 @@ import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.FieldConflictsResolver;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
@@ -216,7 +217,11 @@ public class JavaIntroduceParameterMethodUsagesProcessor implements IntroducePar
     final MethodJavaDocHelper javaDocHelper = new MethodJavaDocHelper(method);
     PsiElementFactory factory = JavaPsiFacade.getInstance(data.getProject()).getElementFactory();
 
-    PsiParameter parameter = factory.createParameter(data.getParameterName(), data.getForcedType());
+    final PsiClass superClass = data.getMethodToSearchFor().getContainingClass();
+    final PsiClass containingClass = method.getContainingClass();
+    final PsiSubstitutor substitutor = superClass != null && containingClass != null ? TypeConversionUtil.getSuperClassSubstitutor(superClass, containingClass, PsiSubstitutor.EMPTY)
+                                                                                     : PsiSubstitutor.EMPTY;
+    PsiParameter parameter = factory.createParameter(data.getParameterName(), substitutor.substitute(data.getForcedType()));
     PsiUtil.setModifierProperty(parameter, PsiModifier.FINAL, data.isDeclareFinal());
 
     final PsiParameterList parameterList = method.getParameterList();

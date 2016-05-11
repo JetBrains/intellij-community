@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,15 +29,17 @@ import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
 import javax.swing.Action
 
-fun updateSyncButtonState(url: String?, syncActions: Array<Action>) {
-  val enabled: Boolean
+internal fun checkUrl(url: String?): Boolean {
   try {
-    enabled = url != null && url.length > 1 && icsManager.repositoryService.checkUrl(url, null);
+    return url != null && url.length > 1 && icsManager.repositoryService.checkUrl(url, false)
   }
   catch (e: Throwable) {
-    enabled = false;
+    return false
   }
+}
 
+fun updateSyncButtonState(url: String?, syncActions: Array<Action>) {
+  val enabled = checkUrl(url)
   for (syncAction in syncActions) {
     syncAction.isEnabled = enabled;
   }
@@ -56,7 +58,7 @@ fun createMergeActions(project: Project?, urlTextField: TextFieldWithBrowseButto
     object : AbstractAction(icsMessage("action.${if (syncType == SyncType.MERGE) "Merge" else (if (syncType == SyncType.OVERWRITE_LOCAL) "ResetToTheirs" else "ResetToMy")}Settings.text")) {
       private fun saveRemoteRepositoryUrl(): Boolean {
         val url = StringUtil.nullize(urlTextField.text)
-        if (url != null && !icsManager.repositoryService.checkUrl(url, dialogParent)) {
+        if (url != null && !icsManager.repositoryService.checkUrl(url, true, project)) {
           return false
         }
 

@@ -95,12 +95,9 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
           profile.readExternal(element);
         }
         catch (Exception ignored) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              Messages.showErrorDialog(InspectionsBundle.message("inspection.error.loading.message", 0, profile.getName()),
-                                       InspectionsBundle.message("inspection.errors.occurred.dialog.title"));
-            }
+          ApplicationManager.getApplication().invokeLater(() -> {
+            Messages.showErrorDialog(InspectionsBundle.message("inspection.error.loading.message", 0, profile.getName()),
+                                     InspectionsBundle.message("inspection.errors.occurred.dialog.title"));
           }, ModalityState.NON_MODAL);
         }
         return profile;
@@ -109,7 +106,7 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
       @NotNull
       @Override
       public State getState(@NotNull InspectionProfileImpl scheme) {
-        return scheme.isProjectLevel() ? State.NON_PERSISTENT : (scheme.wasInitialized() ? State.POSSIBLY_CHANGED : State.UNCHANGED);
+        return scheme.isProjectLevel() ? State.NON_PERSISTENT : scheme.wasInitialized() ? State.POSSIBLY_CHANGED : State.UNCHANGED;
       }
 
       @Override
@@ -149,7 +146,7 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
     return new InspectionProfileImpl(name, InspectionToolRegistrar.getInstance(), this, baseProfile);
   }
 
-  public static void registerProvidedSeverities() {
+  private static void registerProvidedSeverities() {
     for (SeveritiesProvider provider : Extensions.getExtensions(SeveritiesProvider.EP_NAME)) {
       for (HighlightInfoType t : provider.getSeveritiesHighlightInfoTypes()) {
         HighlightSeverity highlightSeverity = t.getSeverity(null);
@@ -204,19 +201,13 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
       try {
         return InspectionProfileLoadUtil.load(file, myRegistrar, this);
       }
-      catch (IOException e) {
-        throw e;
-      }
-      catch (JDOMException e) {
+      catch (IOException | JDOMException e) {
         throw e;
       }
       catch (Exception ignored) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            Messages.showErrorDialog(InspectionsBundle.message("inspection.error.loading.message", 0, file),
-                                     InspectionsBundle.message("inspection.errors.occurred.dialog.title"));
-          }
+        ApplicationManager.getApplication().invokeLater(() -> {
+          Messages.showErrorDialog(InspectionsBundle.message("inspection.error.loading.message", 0, file),
+                                   InspectionsBundle.message("inspection.errors.occurred.dialog.title"));
         }, ModalityState.NON_MODAL);
       }
     }
@@ -332,12 +323,9 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
       synchronized (HighlightingSettingsPerFile.getInstance(project)) {
       }
 
-      UIUtil.invokeLaterIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          if (!project.isDisposed()) {
-            DaemonListeners.getInstance(project).updateStatusBar();
-          }
+      UIUtil.invokeLaterIfNeeded(() -> {
+        if (!project.isDisposed()) {
+          DaemonListeners.getInstance(project).updateStatusBar();
         }
       });
     }
