@@ -28,7 +28,6 @@ import com.jetbrains.edu.learning.ui.StudyToolWindow;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
-import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -42,6 +41,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
@@ -54,7 +54,7 @@ import static com.jetbrains.edu.learning.stepic.EduStepicConnector.setHeaders;
 public class EduAdaptiveStepicConnector {
   public static final String PYTHON27 = "python27";
   public static final String PYTHON3 = "python3";
-  
+
   private static final Logger LOG = Logger.getInstance(EduAdaptiveStepicConnector.class);
   private static final String STEPIC_URL = "https://stepic.org/";
   private static final String STEPIC_API_URL = STEPIC_URL + "api/";
@@ -228,7 +228,7 @@ public class EduAdaptiveStepicConnector {
                        "<br><br>";
       task.setText(task.getText() + builder);
     }
-    
+
     if (step.options.test != null) {
       for (StepicWrappers.TestFileWrapper wrapper : step.options.test) {
         task.addTestsTexts(wrapper.name, wrapper.text);
@@ -255,7 +255,7 @@ public class EduAdaptiveStepicConnector {
     }
     return task;
   }
-  
+
   private static String getCodeTemplateForTask(@Nullable StepicWrappers.CodeTemplatesWrapper codeTemplates,
                                                @NotNull final Task task, @NotNull final Project project) {
 
@@ -265,52 +265,95 @@ public class EduAdaptiveStepicConnector {
         return codeTemplates.getTemplateForLanguage(languageString);
       }
     }
-    
+
     return null;
   }
 
   @Nullable
   public static Pair<Boolean, String> checkTask(@NotNull final Project project, @NotNull final Task task) {
+    int attemptId = 0;
     try {
-      final int attemptId = getAttemptId(project, task, ATTEMPTS_URL);
-      if (attemptId != -1) {
-        final Editor editor = StudyUtils.getSelectedEditor(project);
-        String language = getLanguageString(task, project);
-        if (editor != null && language != null) {
-          final StepicWrappers.SubmissionToPostWrapper submissionToPostWrapper =
-            new StepicWrappers.SubmissionToPostWrapper(String.valueOf(attemptId), language, editor.getDocument().getText());
-          final HttpPost httpPost = new HttpPost(STEPIC_API_URL + SUBMISSION_URL);
-          httpPost.setEntity(new StringEntity(new Gson().toJson(submissionToPostWrapper)));
-          final CloseableHttpClient client = getHttpClient(project);
-          setHeaders(httpPost, CONTENT_TYPE_APPL_JSON);
-          final CloseableHttpResponse execute = client.execute(httpPost);
-          StepicWrappers.ResultSubmissionWrapper wrapper =
-            new Gson().fromJson(EntityUtils.toString(execute.getEntity()), StepicWrappers.ResultSubmissionWrapper.class);
-
-          final StepicUser user = StudyTaskManager.getInstance(project).getUser();
-          if (user != null) {
-            final int id = user.getId();
-            while (wrapper.submissions.length == 1 && wrapper.submissions[0].status.equals("evaluation")) {
-              TimeUnit.MILLISECONDS.sleep(500);
-              final URI submissionURI = new URIBuilder(STEPIC_API_URL + SUBMISSION_URL)
-                .addParameter("attempt", String.valueOf(attemptId))
-                .addParameter("order", "desc")
-                .addParameter("user", String.valueOf(id))
-                .build();
-              final HttpGet httpGet = new HttpGet(submissionURI);
-              setHeaders(httpGet, CONTENT_TYPE_APPL_JSON);
-              final CloseableHttpResponse httpResponse = client.execute(httpGet);
-              wrapper = new Gson().fromJson(EntityUtils.toString(httpResponse.getEntity()), StepicWrappers.ResultSubmissionWrapper.class);
-            }
-            if (wrapper.submissions.length == 1) {
-              final boolean isSolved = !wrapper.submissions[0].status.equals("wrong");
-              return Pair.create(isSolved, wrapper.submissions[0].hint);
-            }
+      attemptId = getAttemptId(project, task, ATTEMPTS_URL);
+    }
+    catch (IOException e) {
+      LOG.warn(e.getMessage());
+    }
+    if (attemptId != -1) {
+      final Editor editor = StudyUtils.getSelectedEditor(project);
+      String language = getLanguageString(task, project);
+      if (editor != null && language != null) {
+        final CloseableHttpClient client = getHttpClient(project);
+        StepicWrappers.ResultSubmissionWrapper wrapper = postResultsForCheck(client, attemptId, language, editor.getDocument().getText());
+        
+        final StepicUser user = StudyTaskManager.getInstance(project).getUser();
+        if (user != null) {
+          final int id = user.getId();
+          wrapper = getCheckResults(attemptId, id, client, wrapper);
+          if (wrapper.submissions.length == 1) {
+            final boolean isSolved = !wrapper.submissions[0].status.equals("wrong");
+            return Pair.create(isSolved, wrapper.submissions[0].hint);
           }
+          else {
+            LOG.warn("Got a submission wrapper with incorrect submissions numer: " + wrapper.submissions.length);
+          }
+        }
+        else {
+          LOG.warn("User is null");
         }
       }
     }
-    catch (ClientProtocolException e) {
+    else {
+      LOG.warn("Got an incorrect attempt id: " + attemptId);
+    }
+    return Pair.create(false, "");
+  }
+
+  @Nullable
+  private static StepicWrappers.ResultSubmissionWrapper postResultsForCheck(@NotNull final CloseableHttpClient client,
+                                                                            final int attemptId,
+                                                                            @NotNull final String language,
+                                                                            @NotNull final String text) {
+    final CloseableHttpResponse response;
+    try {
+      final StepicWrappers.SubmissionToPostWrapper submissionToPostWrapper =
+        new StepicWrappers.SubmissionToPostWrapper(String.valueOf(attemptId), language, text);
+      final HttpPost httpPost = new HttpPost(STEPIC_API_URL + SUBMISSION_URL);
+      setHeaders(httpPost, CONTENT_TYPE_APPL_JSON);
+      try {
+        httpPost.setEntity(new StringEntity(new Gson().toJson(submissionToPostWrapper)));
+      }
+      catch (UnsupportedEncodingException e) {
+        LOG.warn(e.getMessage());
+      }
+      response = client.execute(httpPost);
+      return new Gson().fromJson(EntityUtils.toString(response.getEntity()), StepicWrappers.ResultSubmissionWrapper.class);
+    }
+    catch (IOException e) {
+      LOG.warn(e.getMessage());
+    }
+    return null;
+  }
+
+  @NotNull
+  private static StepicWrappers.ResultSubmissionWrapper getCheckResults(int attemptId,
+                                                                        int id,
+                                                                        CloseableHttpClient client,
+                                                                        StepicWrappers.ResultSubmissionWrapper wrapper) {
+    try {
+      while (wrapper.submissions.length == 1 && wrapper.submissions[0].status.equals("evaluation")) {
+        TimeUnit.MILLISECONDS.sleep(500);
+        final URI submissionURI = new URIBuilder(STEPIC_API_URL + SUBMISSION_URL)
+          .addParameter("attempt", String.valueOf(attemptId))
+          .addParameter("order", "desc")
+          .addParameter("user", String.valueOf(id))
+          .build();
+        final HttpGet httpGet = new HttpGet(submissionURI);
+        setHeaders(httpGet, CONTENT_TYPE_APPL_JSON);
+        final CloseableHttpResponse httpResponse = client.execute(httpGet);
+        wrapper = new Gson().fromJson(EntityUtils.toString(httpResponse.getEntity()), StepicWrappers.ResultSubmissionWrapper.class);
+      }
+    }
+    catch (InterruptedException e) {
       LOG.warn(e.getMessage());
     }
     catch (IOException e) {
@@ -319,10 +362,7 @@ public class EduAdaptiveStepicConnector {
     catch (URISyntaxException e) {
       LOG.warn(e.getMessage());
     }
-    catch (InterruptedException e) {
-      LOG.warn(e.getMessage());
-    }
-    return Pair.create(false, "");
+    return wrapper;
   }
 
   @Nullable
@@ -332,7 +372,7 @@ public class EduAdaptiveStepicConnector {
       final Sdk language = StudyExecutor.INSTANCE.forLanguage(pythonLanguage).findSdk(project);
       if (language != null) {
         final String versionString = language.getVersionString();
-        if (versionString != null ) {
+        if (versionString != null) {
           final List<String> versionStringParts = StringUtil.split(versionString, " ");
           if (versionStringParts.size() == 2) {
             return versionStringParts.get(1).startsWith("2") ? PYTHON27 : PYTHON3;
