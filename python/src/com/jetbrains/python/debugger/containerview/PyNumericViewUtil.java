@@ -45,10 +45,10 @@ public class PyNumericViewUtil {
     return 0;
   }
 
-  public static JBColor rangedValueToColor(double rangedValue)
+  public static Color rangedValueToColor(double rangedValue)
   {
-    return new JBColor(new Color((int)Math.round(255 * rangedValue), 0, (int)Math.round(255 * (1 - rangedValue)), 130),
-                new Color((int)Math.round(255 * rangedValue), 0, (int)Math.round(255 * (1 - rangedValue)), 130));
+    //noinspection UseJBColor
+    return  new Color((int)Math.round(255 * rangedValue), 0, (int)Math.round(255 * (1 - rangedValue)), 130);
   }
 
   /**
