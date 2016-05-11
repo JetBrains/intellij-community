@@ -53,7 +53,6 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -306,12 +305,9 @@ class PostHighlightingVisitor {
           QuickFixAction.registerQuickFixAction(info, HighlightMethodUtil.getFixRange(field), 
                                                 quickFixFactory.createCreateConstructorParameterFromFieldFix(field));
         }
-        SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes(field, new Processor<String>() {
-          @Override
-          public boolean process(final String annoName) {
-            QuickFixAction.registerQuickFixAction(info, quickFixFactory.createAddToDependencyInjectionAnnotationsFix(project, annoName, "fields"));
-            return true;
-          }
+        SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes(field, annoName -> {
+          QuickFixAction.registerQuickFixAction(info, quickFixFactory.createAddToDependencyInjectionAnnotationsFix(project, annoName, "fields"));
+          return true;
         });
         return info;
       }
@@ -334,6 +330,7 @@ class PostHighlightingVisitor {
     return highlightInfo;
   }
 
+  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
   private final Map<PsiMethod, Boolean> isOverriddenOrOverrides = new ConcurrentFactoryMap<PsiMethod, Boolean>() {
     @Nullable
     @Override
@@ -421,13 +418,10 @@ class PostHighlightingVisitor {
     String message = JavaErrorMessages.message(key, symbolName);
     final HighlightInfo highlightInfo = UnusedSymbolUtil.createUnusedSymbolInfo(identifier, message, highlightInfoType);
     QuickFixAction.registerQuickFixAction(highlightInfo, QuickFixFactory.getInstance().createSafeDeleteFix(method), highlightDisplayKey);
-    SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes(method, new Processor<String>() {
-      @Override
-      public boolean process(final String annoName) {
-        IntentionAction fix = QuickFixFactory.getInstance().createAddToDependencyInjectionAnnotationsFix(project, annoName, "methods");
-        QuickFixAction.registerQuickFixAction(highlightInfo, fix);
-        return true;
-      }
+    SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes(method, annoName -> {
+      IntentionAction fix = QuickFixFactory.getInstance().createAddToDependencyInjectionAnnotationsFix(project, annoName, "methods");
+      QuickFixAction.registerQuickFixAction(highlightInfo, fix);
+      return true;
     });
     return highlightInfo;
   }
@@ -472,14 +466,11 @@ class PostHighlightingVisitor {
     String message = JavaErrorMessages.message(pattern, symbolName);
     final HighlightInfo highlightInfo = UnusedSymbolUtil.createUnusedSymbolInfo(identifier, message, highlightInfoType);
     QuickFixAction.registerQuickFixAction(highlightInfo, QuickFixFactory.getInstance().createSafeDeleteFix(aClass), highlightDisplayKey);
-    SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes((PsiModifierListOwner)aClass, new Processor<String>() {
-      @Override
-      public boolean process(final String annoName) {
-        QuickFixAction
-          .registerQuickFixAction(highlightInfo,
-                                  QuickFixFactory.getInstance().createAddToDependencyInjectionAnnotationsFix(project, annoName, element));
-        return true;
-      }
+    SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes((PsiModifierListOwner)aClass, annoName -> {
+      QuickFixAction
+        .registerQuickFixAction(highlightInfo,
+                                QuickFixFactory.getInstance().createAddToDependencyInjectionAnnotationsFix(project, annoName, element));
+      return true;
     });
     return highlightInfo;
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,66 +22,108 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.hash.EqualityPolicy;
+import com.intellij.util.containers.hash.LinkedHashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
 /**
  * @author peter
  */
-public abstract class LookupArranger {
-  protected final List<LookupElement> myItems = new ArrayList<LookupElement>();
-  private final List<LookupElement> myMatchingItems = new ArrayList<LookupElement>();
-  private final List<LookupElement> myExactPrefixItems = new ArrayList<LookupElement>();
-  private final List<LookupElement> myInexactPrefixItems = new ArrayList<LookupElement>();
+public abstract class LookupArranger implements WeighingContext {
+  protected final List<LookupElement> myItems = new ArrayList<>();
+  private final List<LookupElement> myMatchingItems = new ArrayList<>();
+  private final List<LookupElement> myExactPrefixItems = new ArrayList<>();
+  private final List<LookupElement> myInexactPrefixItems = new ArrayList<>();
+  private final Map<LookupElement, PrefixMatcher> myMatchers = ContainerUtil.createConcurrentWeakMap(ContainerUtil.identityStrategy());
   private String myAdditionalPrefix = "";
 
-  public void addElement(Lookup lookup, LookupElement item, LookupElementPresentation presentation) {
+  public void addElement(LookupElement item, LookupElementPresentation presentation) {
     myItems.add(item);
-    updateCache(lookup, item);
+    updateCache(item);
   }
 
-  private void updateCache(Lookup lookup, LookupElement item) {
-    if (!prefixMatches((LookupImpl)lookup, item)) {
+  private void updateCache(LookupElement item) {
+    if (!prefixMatches(item)) {
       return;
     }
     myMatchingItems.add(item);
 
-    if (isPrefixItem(lookup, item, true)) {
+    if (isPrefixItem(item, true)) {
       myExactPrefixItems.add(item);
-    } else if (isPrefixItem(lookup, item, false)) {
+    } else if (isPrefixItem(item, false)) {
       myInexactPrefixItems.add(item);
     }
   }
 
-  private boolean prefixMatches(LookupImpl lookup, LookupElement item) {
-    PrefixMatcher matcher = lookup.itemMatcherNullable(item);
-    if (matcher == null) {
-      return false;
-    }
+  public void registerMatcher(@NotNull LookupElement item, @NotNull PrefixMatcher matcher) {
+    myMatchers.put(item, matcher);
+  }
 
+  @NotNull
+  public String itemPattern(@NotNull LookupElement element) {
+    String prefix = itemMatcher(element).getPrefix();
+    String additionalPrefix = myAdditionalPrefix;
+    return additionalPrefix.isEmpty() ? prefix : prefix + additionalPrefix;
+  }
+
+  @NotNull
+  public PrefixMatcher itemMatcher(@NotNull LookupElement item) {
+    PrefixMatcher matcher = myMatchers.get(item);
+    if (matcher == null) {
+      throw new AssertionError("Item not in lookup: item=" + item + "; lookup items=" + myItems);
+    }
+    return matcher;
+  }
+
+  private boolean prefixMatches(LookupElement item) {
+    PrefixMatcher matcher = itemMatcher(item);
     if (!myAdditionalPrefix.isEmpty()) {
       matcher = matcher.cloneWithPrefix(matcher.getPrefix() + myAdditionalPrefix);
     }
     return matcher.prefixMatches(item);
   }
 
-  public void prefixChanged(Lookup lookup) {
-    myAdditionalPrefix = ((LookupImpl)lookup).getAdditionalPrefix();
-    rebuildItemCache(lookup);
+  public void itemSelected(@Nullable LookupElement lookupItem, char completionChar) {
   }
 
-  private void rebuildItemCache(Lookup lookup) {
+  public final void prefixReplaced(Lookup lookup, String newPrefix) {
+    //noinspection unchecked
+    Map<LookupElement, PrefixMatcher> newMatchers = new LinkedHashMap(EqualityPolicy.IDENTITY);
+    for (LookupElement item : myItems) {
+      if (item.isValid()) {
+        PrefixMatcher matcher = itemMatcher(item).cloneWithPrefix(newPrefix);
+        if (matcher.prefixMatches(item)) {
+          newMatchers.put(item, matcher);
+        }
+      }
+    }
+    myMatchers.clear();
+    myMatchers.putAll(newMatchers);
+    myItems.clear();
+    myItems.addAll(newMatchers.keySet());
+
+    prefixChanged(lookup);
+  }
+
+  public void prefixChanged(Lookup lookup) {
+    myAdditionalPrefix = ((LookupImpl)lookup).getAdditionalPrefix();
+    rebuildItemCache();
+  }
+
+  private void rebuildItemCache() {
     myMatchingItems.clear();
     myExactPrefixItems.clear();
     myInexactPrefixItems.clear();
 
     for (LookupElement item : myItems) {
-      updateCache(lookup, item);
+      updateCache(item);
     }
   }
 
-  protected List<LookupElement> retainItems(final Set<LookupElement> retained, Lookup lookup) {
+  protected List<LookupElement> retainItems(final Set<LookupElement> retained) {
     List<LookupElement> filtered = ContainerUtil.newArrayList();
     List<LookupElement> removed = ContainerUtil.newArrayList();
     for (LookupElement item : myItems) {
@@ -90,7 +132,7 @@ public abstract class LookupArranger {
     myItems.clear();
     myItems.addAll(filtered);
 
-    rebuildItemCache(lookup);
+    rebuildItemCache();
     return removed;
   }
 
@@ -102,8 +144,8 @@ public abstract class LookupArranger {
     return Collections.unmodifiableList(exactly ? myExactPrefixItems : myInexactPrefixItems);
   }
 
-  protected static boolean isPrefixItem(Lookup lookup, LookupElement item, final boolean exactly) {
-    final String pattern = lookup.itemPattern(item);
+  protected boolean isPrefixItem(LookupElement item, final boolean exactly) {
+    final String pattern = itemPattern(item);
     if (Comparing.strEqual(pattern, item.getLookupString(), item.isCaseSensitive())) {
       return true;
     }
@@ -143,7 +185,7 @@ public abstract class LookupArranger {
 
       List<LookupElement> items = getMatchingItems();
       for (LookupElement item : items) {
-        if (CompletionServiceImpl.isStartMatch(item, (LookupImpl)lookup)) {
+        if (CompletionServiceImpl.isStartMatch(item, this)) {
           result.add(item);
         }
       }

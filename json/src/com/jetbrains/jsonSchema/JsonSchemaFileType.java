@@ -22,6 +22,7 @@ import com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,6 +65,6 @@ public class JsonSchemaFileType extends LanguageFileType implements FileTypeIden
   @Override
   public boolean isMyFileType(@NotNull VirtualFile file) {
     final Project project = ProjectUtil.guessProjectForFile(file);
-    return project != null && JsonSchemaMappingsProjectConfiguration.getInstance(project).isRegisteredSchemaFile(file);
+    return project != null && JsonSchemaService.Impl.get(project).isRegisteredSchemaFile(project, file);
   }
 }

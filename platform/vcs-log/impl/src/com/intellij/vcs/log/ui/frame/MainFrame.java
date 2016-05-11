@@ -14,7 +14,6 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.TextRevisionNumber;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vcs.changes.committed.RepositoryChangesBrowser;
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
@@ -24,11 +23,13 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
 import com.intellij.vcs.CommittedChangeListForRevision;
 import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.data.VcsLogDataManager;
+import com.intellij.vcs.log.data.VcsLogData;
+import com.intellij.vcs.log.data.VcsLogProgress;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.data.VisiblePack;
 import com.intellij.vcs.log.impl.VcsLogUtil;
@@ -55,7 +56,7 @@ import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
 public class MainFrame extends JPanel implements DataProvider, Disposable {
 
-  @NotNull private final VcsLogDataManager myLogDataManager;
+  @NotNull private final VcsLogData myLogData;
   @NotNull private final VcsLogUiImpl myUi;
   @NotNull private final VcsLog myLog;
   @NotNull private final VcsLogClassicFilterUi myFilterUi;
@@ -74,23 +75,23 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   @NotNull private Runnable myFullDetailsLoadedListener;
   @NotNull private Runnable myMiniDetailsLoadedListener;
 
-  public MainFrame(@NotNull VcsLogDataManager logDataManager,
+  public MainFrame(@NotNull VcsLogData logData,
                    @NotNull VcsLogUiImpl ui,
                    @NotNull Project project,
                    @NotNull VcsLogUiProperties uiProperties,
                    @NotNull VcsLog log,
                    @NotNull VisiblePack initialDataPack) {
     // collect info
-    myLogDataManager = logDataManager;
+    myLogData = logData;
     myUi = ui;
     myLog = log;
-    myFilterUi = new VcsLogClassicFilterUi(myUi, logDataManager, uiProperties, initialDataPack);
+    myFilterUi = new VcsLogClassicFilterUi(myUi, logData, uiProperties, initialDataPack);
 
     // initialize components
-    myGraphTable = new VcsLogGraphTable(ui, logDataManager, initialDataPack);
-    myBranchesPanel = new BranchesPanel(logDataManager, ui, initialDataPack.getRefs());
+    myGraphTable = new VcsLogGraphTable(ui, logData, initialDataPack);
+    myBranchesPanel = new BranchesPanel(logData, ui, initialDataPack.getRefs());
     setBranchesPanelVisible(uiProperties.isShowBranchesPanel());
-    myDetailsPanel = new DetailsPanel(logDataManager, myGraphTable, ui.getColorManager(), initialDataPack, this);
+    myDetailsPanel = new DetailsPanel(logData, myGraphTable, ui.getColorManager(), initialDataPack, this);
 
     myChangesBrowser = new RepositoryChangesBrowser(project, null, Collections.<Change>emptyList(), null);
     myChangesBrowser.getViewer().setScrollPaneBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
@@ -166,9 +167,9 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
         myGraphTable.repaint(); // we may need to repaint highlighters
       }
     };
-    myLogDataManager.getMiniDetailsGetter().addDetailsLoadedListener(myMiniDetailsLoadedListener);
-    myLogDataManager.getCommitDetailsGetter().addDetailsLoadedListener(myFullDetailsLoadedListener);
-    myLogDataManager.getContainingBranchesGetter().addTaskCompletedListener(myTaskCompletedListener);
+    myLogData.getMiniDetailsGetter().addDetailsLoadedListener(myMiniDetailsLoadedListener);
+    myLogData.getCommitDetailsGetter().addDetailsLoadedListener(myFullDetailsLoadedListener);
+    myLogData.getContainingBranchesGetter().addTaskCompletedListener(myTaskCompletedListener);
   }
 
   public void setupDetailsSplitter(boolean state) {
@@ -221,9 +222,10 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     settings.setReservePlaceAutoPopupIcon(false);
     settings.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
 
-    JPanel panel = new JPanel(new MigLayout("ins 0, fill", "[left]0[left, fill]push[right]"));
+    JPanel panel = new JPanel(new MigLayout("ins 0, fill", "[left]0[left, fill]push[center]0[right]", "center"));
     panel.add(textFilter);
     panel.add(toolbar.getComponent());
+    panel.add(new ToolbarProgressIcon());
     panel.add(settings.getComponent());
     return panel;
   }
@@ -254,7 +256,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       return myUi;
     }
     else if (VcsLogDataKeys.VCS_LOG_DATA_PROVIDER.is(dataId)) {
-      return myLogDataManager;
+      return myLogData;
     }
     else if (VcsDataKeys.CHANGES.is(dataId) || VcsDataKeys.SELECTED_CHANGES.is(dataId)) {
       return ArrayUtil.toObjectArray(myChangesBrowser.getCurrentDisplayedChanges(), Change.class);
@@ -293,7 +295,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
         }
       });
       if (roots.size() == 1) {
-        return myLogDataManager.getLogProvider(assertNotNull(getFirstItem(roots))).getSupportedVcs();
+        return myLogData.getLogProvider(assertNotNull(getFirstItem(roots))).getSupportedVcs();
       }
     }
     return null;
@@ -328,12 +330,51 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
   @Override
   public void dispose() {
-    myLogDataManager.getMiniDetailsGetter().removeDetailsLoadedListener(myMiniDetailsLoadedListener);
-    myLogDataManager.getCommitDetailsGetter().removeDetailsLoadedListener(myFullDetailsLoadedListener);
-    myLogDataManager.getContainingBranchesGetter().removeTaskCompletedListener(myTaskCompletedListener);
+    myLogData.getMiniDetailsGetter().removeDetailsLoadedListener(myMiniDetailsLoadedListener);
+    myLogData.getCommitDetailsGetter().removeDetailsLoadedListener(myFullDetailsLoadedListener);
+    myLogData.getContainingBranchesGetter().removeTaskCompletedListener(myTaskCompletedListener);
 
     myDetailsSplitter.dispose();
     myChangesBrowserSplitter.dispose();
+  }
+
+  private class ToolbarProgressIcon extends AsyncProcessIcon implements VcsLogProgress.ProgressListener {
+    public ToolbarProgressIcon() {
+      super("Updating Log");
+      suspend();
+      myLogData.getProgress().addProgressIndicatorListener(this, this);
+      Disposer.register(MainFrame.this, this);
+    }
+
+    @Override
+    public void progressStarted() {
+      if (!myLogData.getProgress().showProgressInLog()) return;
+      resume();
+      myToolbar.revalidate();
+    }
+
+    @Override
+    public void progressStopped() {
+      suspend();
+      myToolbar.revalidate();
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+      if (!isRunning() || !myLogData.getProgress().showProgressInLog()) return new Dimension(0, 0);
+      return super.getPreferredSize();
+    }
+
+    @Override
+    public void paint(Graphics g) {
+      g.translate(-1, -1);
+      try {
+        super.paint(g);
+      }
+      finally {
+        g.translate(1, 1);
+      }
+    }
   }
 
   private class CommitSelectionListener implements ListSelectionListener {

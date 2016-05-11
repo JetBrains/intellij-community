@@ -34,6 +34,7 @@ import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
+import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -56,11 +57,13 @@ import static java.awt.event.MouseEvent.*;
  */
 public final class IdeMouseEventDispatcher {
   private final PresentationFactory myPresentationFactory = new PresentationFactory();
-  private final ArrayList<AnAction> myActions = new ArrayList<AnAction>(1);
-  private final Map<Container, BlockState> myRootPane2BlockedId = new HashMap<Container, BlockState>();
-  private int myLastHorScrolledComponentHash = 0;
+  private final ArrayList<AnAction> myActions = new ArrayList<>(1);
+  private final Map<Container, BlockState> myRootPane2BlockedId = new HashMap<>();
+  private int myLastHorScrolledComponentHash;
   private boolean myPressedModifiersStored;
+  @JdkConstants.InputEventMask
   private int myModifiers;
+  @JdkConstants.InputEventMask
   private int myModifiersEx;
 
   // Don't compare MouseEvent ids. Swing has wrong sequence of events: first is mouse_clicked(500)
@@ -170,7 +173,9 @@ public final class IdeMouseEventDispatcher {
       ignore = true;
     }
 
+    @JdkConstants.InputEventMask
     int modifiers = e.getModifiers();
+    @JdkConstants.InputEventMask
     int modifiersEx = e.getModifiersEx();
     if (e.getID() == MOUSE_PRESSED) {
       myPressedModifiersStored = true;

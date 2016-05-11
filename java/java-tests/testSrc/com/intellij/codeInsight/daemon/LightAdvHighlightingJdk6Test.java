@@ -69,4 +69,7 @@ public class LightAdvHighlightingJdk6Test extends LightDaemonAnalyzerTestCase {
   public void testUnhandledErrorsFromEnumConstructors() {
     doTest(true, false);
   }
+  public void testSkipAbstractMethodsIfTheyMustBeDeclaredInNonAbstractSuperclass() {
+    doTest(false, false);
+  }
 }

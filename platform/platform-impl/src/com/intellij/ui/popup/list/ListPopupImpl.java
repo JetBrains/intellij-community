@@ -20,6 +20,8 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.text.StringUtil;
@@ -32,6 +34,7 @@ import com.intellij.ui.SeparatorWithText;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.ClosableByLeftArrow;
 import com.intellij.ui.popup.WizardPopup;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,8 +45,10 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ListPopupImpl extends WizardPopup implements ListPopup {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.popup.list.ListPopupImpl");
 
   private MyList myList;
 
@@ -375,15 +380,27 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
 
     valuesSelected(selectedValues);
 
+    AtomicBoolean insideOnChosen = new AtomicBoolean(true);
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (insideOnChosen.get()) {
+        LOG.error("Showing dialogs from popup onChosen can result in focus issues. Please put the handler into BaseStep.doFinalStep or PopupStep.getFinalRunnable.");
+      }
+    }, ModalityState.any());
+
     final PopupStep nextStep;
-    if (listStep instanceof MultiSelectionListPopupStep<?>) {
-      nextStep = ((MultiSelectionListPopupStep<Object>)listStep).onChosen(Arrays.asList(selectedValues), handleFinalChoices);
+    try {
+      if (listStep instanceof MultiSelectionListPopupStep<?>) {
+        nextStep = ((MultiSelectionListPopupStep<Object>)listStep).onChosen(Arrays.asList(selectedValues), handleFinalChoices);
+      }
+      else if (e != null && listStep instanceof ListPopupStepEx<?>) {
+        nextStep = ((ListPopupStepEx<Object>)listStep).onChosen(selectedValues[0], handleFinalChoices, e.getModifiers());
+      }
+      else {
+        nextStep = listStep.onChosen(selectedValues[0], handleFinalChoices);
+      }
     }
-    else if (e != null && listStep instanceof ListPopupStepEx<?>) {
-      nextStep = ((ListPopupStepEx<Object>)listStep).onChosen(selectedValues[0], handleFinalChoices, e.getModifiers());
-    }
-    else {
-      nextStep = listStep.onChosen(selectedValues[0], handleFinalChoices);
+    finally {
+      insideOnChosen.set(false);
     }
     return handleNextStep(nextStep, selectedValues.length == 1 ? selectedValues[0] : null, e);
   }
@@ -525,13 +542,16 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
 
     @Override
     public Dimension getPreferredScrollableViewportSize() {
+      Dimension result = super.getPreferredScrollableViewportSize();
+      result.width += JBUI.scale(14); // support possible scroll bar
       int rowCount = getVisibleRowCount();
       int size = getModel().getSize();
       if (rowCount < size) {
         // Note: labeled separators are not counted in this branch
-        return super.getPreferredScrollableViewportSize();
+        return result;
       }
-      return new Dimension(super.getPreferredScrollableViewportSize().width, getPreferredSize().height);
+      result.height = getPreferredSize().height;
+      return result;
     }
 
     @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -211,10 +211,10 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
   }
 
   private void addRoot(PsiElement resolveResult, boolean isModuleSource) {
-    if (isModuleSource) {
+    if (isModuleSource && (mySourceResults.isEmpty() || myQualifiedName.getComponentCount() == 0)) {
       mySourceResults.add(resolveResult);
     }
-    else {
+    else if (myLibResults.isEmpty() || myQualifiedName.getComponentCount() == 0) {
       myLibResults.add(resolveResult);
     }
   }
@@ -262,13 +262,13 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
     }
 
     if (!myWithoutForeign) {
-      for (PyImportResolver resolver : Extensions.getExtensions(PyImportResolver.EP_NAME)) {
-        PsiElement foreign = resolver.resolveImportReference(myQualifiedName, myContext, !myWithoutRoots);
-        if (foreign != null) {
-          myForeignResults.add(foreign);
-        }
-      }
       if (mySourceResults.isEmpty() || myQualifiedName.getComponentCount() == 0) {
+        for (PyImportResolver resolver : Extensions.getExtensions(PyImportResolver.EP_NAME)) {
+          PsiElement foreign = resolver.resolveImportReference(myQualifiedName, myContext, !myWithoutRoots);
+          if (foreign != null) {
+            myForeignResults.add(foreign);
+          }
+        }
         mySourceResults.addAll(myForeignResults);
         myForeignResults.clear();
       }
@@ -285,8 +285,10 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
    * Resolve relative imports from sdk root to the skeleton dir
    */
   private void addRelativeImportResultsFromSkeletons(@NotNull final PsiFile foothold) {
-    final boolean inSource = FileIndexFacade.getInstance(foothold.getProject()).isInContent(foothold.getVirtualFile());
-    if (inSource) return;
+    final VirtualFile vFile = foothold.getVirtualFile();
+    if (vFile == null || FileIndexFacade.getInstance(foothold.getProject()).isInContent(vFile)) {
+      return;
+    }
     PsiDirectory containingDirectory = foothold.getContainingDirectory();
     if (myRelativeLevel > 0) {
       containingDirectory = ResolveImportUtil.stepBackFrom(foothold, myRelativeLevel);
@@ -304,8 +306,9 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
         if (skeletonsDir == null) return;
         final PsiDirectory directory = myContext.getPsiManager().findDirectory(skeletonsDir);
         final PsiElement psiElement = absoluteVisitor.resolveModuleAt(directory);
-        if (psiElement != null)
-          myLibResults.add(psiElement);
+        if (psiElement != null) {
+          addRoot(psiElement, false);
+        }
       }
     }
   }

@@ -447,7 +447,11 @@ public class ImplementationViewComponent extends JPanel {
     final ImplementationTextSelectioner implementationTextSelectioner =
       LanguageImplementationTextSelectioner.INSTANCE.forLanguage(elt.getLanguage());
     int start = implementationTextSelectioner.getTextStartOffset(elt);
-    final int end = implementationTextSelectioner.getTextEndOffset(elt);
+    int end = implementationTextSelectioner.getTextEndOffset(elt);
+    CharSequence rawDefinition = doc.getCharsSequence().subSequence(start, end);
+    while (end > start && StringUtil.isLineBreak(rawDefinition.charAt(end - start - 1))) { // removing trailing EOLs from definition
+      end--;
+    }
 
     final int lineStart = doc.getLineStartOffset(doc.getLineNumber(start));
     final int lineEnd = end < doc.getTextLength() ? doc.getLineEndOffset(doc.getLineNumber(end)) : doc.getTextLength();

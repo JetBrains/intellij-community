@@ -137,6 +137,7 @@ public class JavadocHelper {
   @NotNull
   public Pair<JavadocParameterInfo, List<JavadocParameterInfo>> parse(@NotNull PsiFile psiFile, @NotNull Editor editor, int offset) {
     List<JavadocParameterInfo> result = new ArrayList<JavadocParameterInfo>();
+    PsiDocumentManager.getInstance(psiFile.getProject()).commitDocument(editor.getDocument());
     final PsiElement elementAtCaret = psiFile.findElementAt(offset);
     if (elementAtCaret == null) {
       return EMPTY;

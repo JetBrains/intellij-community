@@ -17,6 +17,7 @@ package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.QueryExecutorBase;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
@@ -38,10 +39,11 @@ import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.HashSetQueue;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.AbstractCollection;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Collectors;
 
 public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, ClassInheritorsSearch.SearchParameters> {
   @Override
@@ -86,7 +88,7 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
       return processLocalScope(project, parameters, (LocalSearchScope)searchScope, baseClass, consumer);
     }
 
-    Collection<PsiClass> cached = getOrComputeSubClasses(project, parameters.getClassToProcess());
+    Iterable<PsiClass> cached = getOrComputeSubClasses(project, baseClass);
 
     for (final PsiClass subClass : cached) {
       ProgressManager.checkCanceled();
@@ -102,20 +104,23 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
   }
 
   @NotNull
-  private static Collection<PsiClass> getOrComputeSubClasses(@NotNull Project project, @NotNull PsiClass baseClass) {
-    ConcurrentMap<PsiClass, Collection<PsiClass>> CACHE = HighlightingCaches.getInstance(project).ALL_SUB_CLASSES;
-    Collection<PsiClass> cached = CACHE.get(baseClass);
+  private static Iterable<PsiClass> getOrComputeSubClasses(@NotNull Project project, @NotNull PsiClass baseClass) {
+    ConcurrentMap<PsiClass, Iterable<PsiClass>> CACHE = HighlightingCaches.getInstance(project).ALL_SUB_CLASSES;
+    Iterable<PsiClass> cached = CACHE.get(baseClass);
     if (cached == null) {
       cached = computeAllSubClasses(project, baseClass); // it's almost empty now, no big deal
-      // make sure concurrent calls of this method always return the same collection to avoid expensive duplicate work
-      cached = ConcurrencyUtil.cacheOrGet(CACHE, baseClass, cached);
+      // for non-physical elements ignore the cache completely because non-physical elements created so often/unpredictably so I can't figure out when to clear caches in this case
+      if (ApplicationManager.getApplication().runReadAction((Computable<Boolean>)baseClass::isPhysical)) {
+        // make sure concurrent calls of this method always return the same collection to avoid expensive duplicate work
+        cached = ConcurrencyUtil.cacheOrGet(CACHE, baseClass, cached);
+      }
     }
     return cached;
   }
 
   @NotNull
   // returns lazy collection of subclasses. Each call to next() leads to calculation of next batch of subclasses.
-  private static Collection<PsiClass> computeAllSubClasses(@NotNull Project project, @NotNull PsiClass baseClass) {
+  private static Iterable<PsiClass> computeAllSubClasses(@NotNull Project project, @NotNull PsiClass baseClass) {
     return new AllSubClassesLazyCollection(project, baseClass);
   }
 
@@ -188,13 +193,13 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
     return ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> baseClass.hasModifierProperty(PsiModifier.FINAL));
   }
 
-  private static class AllSubClassesLazyCollection extends AbstractCollection<PsiClass> {
+  private static class AllSubClassesLazyCollection implements Iterable<PsiClass> {
     // Computes all sub classes of the 'baseClass' transitively by calling DirectClassInheritorsSearch repeatedly.
-    // Already computed subclasses in this collection.
+    // Already computed subclasses are stored in this collection.
     // There are two iterators maintained for this collection:
     // - 'candidatesToFindSubclassesIterator' points to the next element for which direct inheritors haven't been searched yet.
     // - 'subClassIterator' created in AllSubClassesLazyCollection.iterator() maintains state of the AllSubClassesLazyCollection iterator in a lazy fashion. If more elements requested for this iterator, the findNextSubclasses() is called which tries to populate 'subClasses' with more inheritors.
-    private final HashSetQueue<PsiClass> subClasses = new HashSetQueue<>();
+    private final HashSetQueue<PsiAnchor> subClasses = new HashSetQueue<>();
     private final Object lock = new Object();
     private final GlobalSearchScope projectScope;
     private final Semaphore currentlyProcessingClasses = new Semaphore();
@@ -211,7 +216,7 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
     @Override
     public Iterator<PsiClass> iterator() {
       return new Iterator<PsiClass>() {
-        private final Iterator<PsiClass> subClassIterator = subClasses.iterator();
+        private final Iterator<PsiAnchor> subClassIterator = subClasses.iterator();
 
         @Override
         public boolean hasNext() {
@@ -228,29 +233,26 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
 
         @Override
         public PsiClass next() {
+          PsiAnchor next;
           synchronized (lock) {
-            return subClassIterator.next();
+            next = subClassIterator.next();
           }
+          return ApplicationManager.getApplication().runReadAction((Computable<PsiClass>)() -> (PsiClass)next.retrieve());
         }
       };
     }
 
-    @Override
-    public int size() {
-      throw new UnsupportedOperationException();
-    }
-
-    private Iterator<PsiClass> candidatesToFindSubclassesIterator; // guarded by lock
+    private Iterator<PsiAnchor> candidatesToFindSubclassesIterator; // guarded by lock
 
     private void findNextSubclasses() {
       while (true) {
         ProgressManager.checkCanceled();
 
-        PsiClass candidate;
+        PsiAnchor next;
         synchronized (lock) {
           if (candidatesToFindSubclassesIterator == null) {
             candidatesToFindSubclassesIterator = subClasses.iterator();
-            candidate = myBaseClass;
+            next = null;
           }
           else {
             if (!candidatesToFindSubclassesIterator.hasNext()) {
@@ -258,21 +260,26 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
               // but first, wait for other threads to process their candidates
               break;
             }
-            candidate = candidatesToFindSubclassesIterator.next();
+            next = candidatesToFindSubclassesIterator.next();
           }
           currentlyProcessingClasses.down(); // tell other threads we are going to process this candidate
         }
 
         boolean added;
         try {
-          if (candidate instanceof PsiAnonymousClass || isFinal(candidate)) {
+          PsiClass candidate = next == null ? myBaseClass : ReadAction.compute(() -> (PsiClass)next.retrieve());
+
+          if (candidate == null || candidate instanceof PsiAnonymousClass || isFinal(candidate)) {
             added = false;
           }
           else {
             Collection<PsiClass> foundSubClasses = DirectClassInheritorsSearch.search(candidate, projectScope).findAll();
-            synchronized (lock) {
-              added = subClasses.addAll(foundSubClasses);
-            }
+            added = ApplicationManager.getApplication().runReadAction((Computable<Boolean>)()-> {
+              List<PsiAnchor> pointers = foundSubClasses.stream().map(PsiAnchor::create).collect(Collectors.toList());
+              synchronized (lock) {
+                return subClasses.addAll(pointers);
+              }
+            });
           }
         }
         finally {

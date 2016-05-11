@@ -77,10 +77,12 @@
 
     <fileBasedIndex implementation="com.jetbrains.jsonSchema.extension.schema.JsonSchemaFileIndex"/>
     <psi.referenceContributor language="JSON" implementation="com.jetbrains.jsonSchema.extension.schema.JsonSchemaReferenceContributor"/>
+    <indexedRootsProvider implementation="com.jetbrains.jsonSchema.impl.JsonSchemaResourcesRootsProvider"/>
+    <psi.referenceContributor language="JSON" implementation="com.jetbrains.jsonSchema.impl.JsonBySchemaObjectReferenceContributor"/>
   </extensions>
   <extensions defaultExtensionNs="JavaScript">
     <JsonSchema.ProviderFactory implementation="com.jetbrains.jsonSchema.extension.JsonSchemaImportedProviderFactory"/>
-    <JsonSchema.ProviderFactory implementation="com.jetbrains.jsonSchema.extension.JsonSchemaSelfProviderFactory"/>
+    <JsonSchema.ProviderFactory implementation="com.jetbrains.jsonSchema.extension.JsonSchemaProjectSelfProviderFactory"/>
   </extensions>
 
   <extensionPoints>

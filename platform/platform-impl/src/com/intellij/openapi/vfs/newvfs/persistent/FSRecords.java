@@ -64,6 +64,7 @@ public class FSRecords implements Forceable {
 
   public static final boolean weHaveContentHashes = SystemProperties.getBooleanProperty("idea.share.contents", true);
   public static final boolean lazyVfsDataCleaning = SystemProperties.getBooleanProperty("idea.lazy.vfs.data.cleaning", true);
+  public static final boolean backgroundVfsFlush = SystemProperties.getBooleanProperty("idea.background.vfs.flush", true);
   public static final boolean persistentAttributesList = SystemProperties.getBooleanProperty("idea.persistent.attr.list", true);
   private static final boolean inlineAttributes = SystemProperties.getBooleanProperty("idea.inline.vfs.attributes", true);
   public static final boolean bulkAttrReadSupport = SystemProperties.getBooleanProperty("idea.bulk.attr.read", false);
@@ -160,7 +161,7 @@ public class FSRecords implements Forceable {
     return new File(DbConnection.getCachesDir());
   }
 
-  static class DbConnection {
+  public static class DbConnection {
     private static boolean ourInitialized;
     private static final ConcurrentMap<String, Integer> myAttributeIds = ContainerUtil.newConcurrentMap();
 
@@ -386,6 +387,9 @@ public class FSRecords implements Forceable {
     }
 
     private static void setupFlushing() {
+      if (!backgroundVfsFlush)
+        return;
+
       myFlushingFuture = FlushingDaemon.everyFiveSeconds(new Runnable() {
         private int lastModCount;
 

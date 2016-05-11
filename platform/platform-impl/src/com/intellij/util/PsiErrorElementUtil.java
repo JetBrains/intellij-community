@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
@@ -39,16 +38,13 @@ public class PsiErrorElementUtil {
   private PsiErrorElementUtil() {}
 
   public static boolean hasErrors(@NotNull final Project project, @NotNull final VirtualFile virtualFile) {
-    if (project.isDisposed() || !virtualFile.isValid()) {
-      return false;
-    }
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       @Override
       public Boolean compute() {
-        if (project.isDisposed()) {
+        if (project.isDisposed() || !virtualFile.isValid()) {
           return false;
         }
-        PsiManagerEx psiManager = (PsiManagerEx)PsiManager.getInstance(project);
+        PsiManagerEx psiManager = PsiManagerEx.getInstanceEx(project);
         PsiFile psiFile = psiManager.getFileManager().findFile(virtualFile);
         return psiFile != null && hasErrors(psiFile);
       }

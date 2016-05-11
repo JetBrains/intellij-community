@@ -92,3 +92,7 @@ li input:checked + ol > li {
 li input:checked + ol > li:last-child {
     margin: 0 0 1px;
 }
+
+div.location {
+    margin-left: 40px;
+}

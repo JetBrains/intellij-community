@@ -182,6 +182,6 @@ public class ProgramRunnerUtil {
     }
 
     final int symbols = Math.max(10, 20 - toBeAdded);
-    return name.length() < symbols ? name : name.substring(0, symbols) + "...";
+    return name.length() < symbols + 3 ? name : name.substring(0, symbols) + "...";
   }
 }

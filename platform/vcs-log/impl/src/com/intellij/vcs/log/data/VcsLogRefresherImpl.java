@@ -19,7 +19,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
@@ -50,18 +49,20 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
   @NotNull private final VcsUserRegistryImpl myUserRegistry;
   @NotNull private final Map<Integer, VcsCommitMetadata> myTopCommitsDetailsCache;
   @NotNull private final Consumer<Exception> myExceptionHandler;
+  @NotNull private final VcsLogProgress myProgress;
+
   private final int myRecentCommitCount;
 
   @NotNull private final SingleTaskController<RefreshRequest, DataPack> mySingleTaskController;
 
   @NotNull private volatile DataPack myDataPack = DataPack.EMPTY;
 
-  public VcsLogRefresherImpl(@NotNull final Project project,
+  public VcsLogRefresherImpl(@NotNull Project project,
                              @NotNull VcsLogHashMap hashMap,
                              @NotNull Map<VirtualFile, VcsLogProvider> providers,
-                             @NotNull final VcsUserRegistryImpl userRegistry,
+                             @NotNull VcsUserRegistryImpl userRegistry,
                              @NotNull Map<Integer, VcsCommitMetadata> topCommitsDetailsCache,
-                             @NotNull final Consumer<DataPack> dataPackUpdateHandler,
+                             @NotNull Consumer<DataPack> dataPackUpdateHandler,
                              @NotNull Consumer<Exception> exceptionHandler,
                              int recentCommitsCount) {
     myProject = project;
@@ -71,6 +72,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
     myTopCommitsDetailsCache = topCommitsDetailsCache;
     myExceptionHandler = exceptionHandler;
     myRecentCommitCount = recentCommitsCount;
+    myProgress = new VcsLogProgress();
 
     mySingleTaskController = new SingleTaskController<RefreshRequest, DataPack>(new Consumer<DataPack>() {
       @Override
@@ -91,7 +93,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
       @Override
       public void run() {
         LOG.debug("Starting a background task...");
-        ((ProgressManagerImpl)ProgressManager.getInstance()).runProcessWithProgressAsynchronously(refreshTask);
+        ProgressManager.getInstance().runProcessWithProgressAsynchronously(refreshTask, myProgress.createProgressIndicator(refreshTask));
       }
     });
   }
@@ -198,6 +200,11 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
       myUserRegistry.addUser(detail.getCommitter());
       myTopCommitsDetailsCache.put(myHashMap.getCommitIndex(detail.getId(), detail.getRoot()), detail);
     }
+  }
+
+  @NotNull
+  public VcsLogProgress getProgress() {
+    return myProgress;
   }
 
   private class MyRefreshTask extends Task.Backgroundable {

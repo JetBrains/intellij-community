@@ -29,7 +29,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.FileStatus;
@@ -71,11 +70,10 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.net.URL;
 import java.util.*;
+import java.util.function.Predicate;
 
 public class UnusedDeclarationPresentation extends DefaultInspectionToolPresentation {
   private final Map<String, Set<RefEntity>> myPackageContents = Collections.synchronizedMap(new HashMap<String, Set<RefEntity>>());
-
-  private Map<String, Set<RefEntity>> myOldPackageContents = null;
 
   private final Set<RefEntity> myIgnoreElements = new HashSet<RefEntity>();
   private WeakUnreferencedFilter myFilter;
@@ -128,7 +126,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
   @Override
   public void exportResults(@NotNull final Element parentNode,
                             @NotNull RefEntity refEntity,
-                            @NotNull Set<CommonProblemDescriptor> excludedDescriptions) {
+                            @NotNull Predicate<CommonProblemDescriptor> excludedDescriptions) {
     if (!(refEntity instanceof RefJavaElement)) return;
     final RefFilter filter = getFilter();
     if (!getIgnoredRefElements().contains(refEntity) && filter.accepts((RefJavaElement)refEntity)) {
@@ -376,38 +374,13 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
 
   @Override
   public boolean hasReportedProblems() {
-    final GlobalInspectionContextImpl context = getContext();
-    if (!isDisposed() && context.getUIOptions().SHOW_ONLY_DIFF){
-      return containsOnlyDiff(myPackageContents) ||
-             myOldPackageContents != null && containsOnlyDiff(myOldPackageContents);
-    }
-    if (!myPackageContents.isEmpty()) return true;
-    return isOldProblemsIncluded() && !myOldPackageContents.isEmpty();
-  }
-
-  private boolean containsOnlyDiff(@NotNull Map<String, Set<RefEntity>> packageContents) {
-    for (String packageName : packageContents.keySet()) {
-      final Set<RefEntity> refElements = packageContents.get(packageName);
-      if (refElements != null){
-        for (RefEntity refElement : refElements) {
-          if (getElementStatus(refElement) != FileStatus.NOT_CHANGED){
-            return true;
-          }
-        }
-      }
-    }
-    return false;
+    return !myPackageContents.isEmpty();
   }
 
   @NotNull
   @Override
   public Map<String, Set<RefEntity>> getContent() {
     return myPackageContents;
-  }
-
-  @Override
-  public Map<String, Set<RefEntity>> getOldContent() {
-    return myOldPackageContents;
   }
 
   @Override
@@ -424,7 +397,6 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
   @Override
   public void cleanup() {
     super.cleanup();
-    myOldPackageContents = null;
     myPackageContents.clear();
     myIgnoreElements.clear();
   }
@@ -433,7 +405,6 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
   @Override
   public void finalCleanup() {
     super.finalCleanup();
-    myOldPackageContents = null;
   }
 
   @Override
@@ -443,27 +414,13 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
 
   @Override
   public boolean isElementIgnored(final RefEntity element) {
-    for (RefEntity entity : myIgnoreElements) {
-      if (Comparing.equal(entity, element)) {
-        return true;
-      }
-    }
-    return false;
+    return myIgnoreElements.contains(element);
   }
 
 
   @NotNull
   @Override
   public FileStatus getElementStatus(final RefEntity element) {
-    final GlobalInspectionContextImpl context = getContext();
-    if (!isDisposed() && context.getUIOptions().SHOW_DIFF_WITH_PREVIOUS_RUN){
-      if (myOldPackageContents != null){
-        final boolean old = RefUtil.contains(element, collectRefElements(myOldPackageContents));
-        final boolean current = RefUtil.contains(element, collectRefElements(myPackageContents));
-        return calcStatus(old, current);
-      }
-      return FileStatus.ADDED;
-    }
     return FileStatus.NOT_CHANGED;
   }
 
@@ -471,14 +428,6 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
   @NotNull
   public Set<RefEntity> getIgnoredRefElements() {
     return myIgnoreElements;
-  }
-
-  private static Set<RefEntity> collectRefElements(Map<String, Set<RefEntity>> packageContents) {
-    Set<RefEntity> allAvailable = new HashSet<RefEntity>();
-    for (Set<RefEntity> elements : packageContents.values()) {
-      allAvailable.addAll(elements);
-    }
-    return allAvailable;
   }
 
   @Override

@@ -18,6 +18,7 @@ package com.intellij.openapi.wm.impl;
 import com.intellij.ide.UiActivity;
 import com.intellij.ide.UiActivityMonitor;
 import com.intellij.ide.impl.ContentManagerWatcher;
+import com.intellij.notification.EventLog;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
@@ -37,6 +38,7 @@ import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.impl.ContentImpl;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -46,9 +48,12 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Set;
 
 /**
  * @author Anton Katilin
@@ -72,6 +77,18 @@ public final class ToolWindowImpl implements ToolWindowEx {
   private boolean myHideOnEmptyContent = false;
   private boolean myPlaceholderMode;
   private ToolWindowFactory myContentFactory;
+
+  private static Set<KeyStroke> FORWARD_TRAVERSAL_KEYSTROKES = new HashSet<KeyStroke>(Arrays.asList(
+    new KeyStroke[] {
+      KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0)
+    }
+  ));
+
+  private static Set<KeyStroke> BACKWARD_TRAVERSAL_KEYSTROKES = new HashSet<KeyStroke>(Arrays.asList(
+    new KeyStroke[] {
+      KeyStroke.getKeyStroke(KeyEvent.VK_TAB, InputEvent.SHIFT_DOWN_MASK)
+    }
+  ));
 
   @NotNull
   private ActionCallback myActivation = ActionCallback.DONE;
@@ -104,6 +121,8 @@ public final class ToolWindowImpl implements ToolWindowEx {
 
     myComponent = myContentManager.getComponent();
 
+    installToolwindowFocusPolicy();
+
     UiNotifyConnector notifyConnector = new UiNotifyConnector(myComponent, new Activatable.Adapter() {
       @Override
       public void showNotify() {
@@ -111,6 +130,50 @@ public final class ToolWindowImpl implements ToolWindowEx {
       }
     });
     Disposer.register(myContentManager, notifyConnector);
+  }
+
+  /**
+   * Installs a focus traversal policy for the tool window.
+   * If the policy cannot handle a keystroke, it delegates the handling to
+   * the nearest ancestors focus traversal policy. For instance,
+   * this policy does not handle KeyEvent.VK_ESCAPE, so it can delegate the handling
+   * to a ThreeComponentSplitter instance.
+   */
+  private void installToolwindowFocusPolicy() {
+
+    myComponent.setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, FORWARD_TRAVERSAL_KEYSTROKES);
+    myComponent.setFocusTraversalKeys(KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS, BACKWARD_TRAVERSAL_KEYSTROKES);
+
+    FocusTraversalPolicy layoutFocusTraversalPolicy = new LayoutFocusTraversalPolicy();
+
+    myComponent.setFocusCycleRoot(true);
+    myComponent.setFocusTraversalPolicyProvider(true);
+    myComponent.setFocusTraversalPolicy(new FocusTraversalPolicy() {
+      @Override
+      public Component getComponentAfter(Container container, Component component) {
+        return layoutFocusTraversalPolicy.getComponentAfter(container, component);
+      }
+
+      @Override
+      public Component getComponentBefore(Container container, Component component) {
+        return layoutFocusTraversalPolicy.getComponentBefore(container, component);
+      }
+
+      @Override
+      public Component getFirstComponent(Container container) {
+        return layoutFocusTraversalPolicy.getFirstComponent(container);
+      }
+
+      @Override
+      public Component getLastComponent(Container container) {
+        return layoutFocusTraversalPolicy.getLastComponent(container);
+      }
+
+      @Override
+      public Component getDefaultComponent(Container container) {
+        return layoutFocusTraversalPolicy.getDefaultComponent(container);
+      }
+    });
   }
 
   public final void addPropertyChangeListener(final PropertyChangeListener l) {
@@ -393,8 +456,10 @@ public final class ToolWindowImpl implements ToolWindowEx {
   public final void setIcon(final Icon icon) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     final Icon oldIcon = getIcon();
-    if (oldIcon != icon && icon != null && !(icon instanceof LayeredIcon) && (icon.getIconHeight() != JBUI.scale(13) || icon.getIconWidth() != JBUI.scale(13))) {
-      LOG.warn("ToolWindow icons should be 13x13. Please fix ToolWindow (ID:  " + getId() + ") or icon " + icon);
+    if (!EventLog.LOG_TOOL_WINDOW_ID.equals(getId())) {
+      if (oldIcon != icon && icon != null && !(icon instanceof LayeredIcon) && (icon.getIconHeight() != JBUI.scale(13) || icon.getIconWidth() != JBUI.scale(13))) {
+        LOG.warn("ToolWindow icons should be 13x13. Please fix ToolWindow (ID:  " + getId() + ") or icon " + icon);
+      }
     }
     //getSelectedContent().setIcon(icon);
     myIcon = icon;

@@ -17,7 +17,6 @@ package com.intellij.refactoring.util.duplicates;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -26,6 +25,12 @@ import java.util.List;
  * @author dsl
  */
 public interface MatchProvider {
+  /**
+   * Call change signature here to avoid refactoring under write action
+   * @param match match which requires signature to be changed e.g. due to stronger expected type, etc
+   */
+  void prepareSignature(Match match);
+
   PsiElement processMatch(Match match) throws IncorrectOperationException;
 
   List<Match> getDuplicates();

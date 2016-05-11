@@ -23,6 +23,7 @@ import com.intellij.notification.EventLog;
 import com.intellij.notification.LogModel;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
+import com.intellij.notification.impl.ui.NotificationsUtil;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -32,7 +33,10 @@ import com.intellij.openapi.wm.IconLikeCustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.ClickListener;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.LayeredIcon;
+import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -125,15 +129,17 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
   }
 
   private LayeredIcon createIconWithNotificationCount(ArrayList<Notification> notifications) {
+    return createIconWithNotificationCount(this, getMaximumType(notifications), notifications.size());
+  }
+
+  @NotNull
+  public static LayeredIcon createIconWithNotificationCount(JComponent component, NotificationType type, int size) {
     LayeredIcon icon = new LayeredIcon(2);
-    NotificationType type = getMaximumType(notifications);
-    Icon statusIcon = getPendingNotificationsIcon(AllIcons.Ide.Notification.NoEvents, type);
-    icon.setIcon(statusIcon, 0);
-    int size = notifications.size();
+    icon.setIcon(getPendingNotificationsIcon(AllIcons.Ide.Notification.NoEvents, type), 0);
     if (size > 0) {
       //noinspection UseJBColor
-      Color textColor = type == NotificationType.ERROR ? Color.white : Color.black;
-      icon.setIcon(new TextIcon(this, size < 10 ? String.valueOf(size) : "9+", textColor), 1);
+      Color textColor = type == NotificationType.ERROR ? new JBColor(Color.white, new Color(0xF2F2F2)) : new Color(0x333333);
+      icon.setIcon(new TextIcon(component, size < 10 ? String.valueOf(size) : "9+", textColor), 1);
     }
     return icon;
   }
@@ -181,12 +187,14 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
     private final JComponent myComponent;
     private final Color myTextColor;
     private final int myWidth;
+    private final Font myFont;
 
     public TextIcon(JComponent component, @NotNull String str, @NotNull Color textColor) {
       myStr = str;
       myComponent = component;
       myTextColor = textColor;
-      myWidth = myComponent.getFontMetrics(calcFont()).stringWidth(myStr);
+      myFont = new Font(NotificationsUtil.getFontName(), Font.BOLD, JBUI.scale(9));
+      myWidth = myComponent.getFontMetrics(myFont).stringWidth(myStr);
     }
 
     @Override
@@ -217,11 +225,17 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
 
       Font originalFont = g.getFont();
       Color originalColor = g.getColor();
-      g.setFont(calcFont());
+      g.setFont(myFont);
 
       x += (getIconWidth() - myWidth) / 2;
-      y += getIconHeight() / 2 + g.getFontMetrics().getDescent();
-      if (!SystemInfo.isLinux && myStr.length() > 1) {
+      y += SimpleColoredComponent.getTextBaseLine(g.getFontMetrics(), getIconHeight());
+
+      if (SystemInfo.isLinux) {
+        if (myStr.length() == 1) {
+          x--;
+        }
+      }
+      else if (myStr.length() == 2) {
         x++;
       }
 
@@ -230,14 +244,6 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
 
       g.setFont(originalFont);
       g.setColor(originalColor);
-    }
-
-    private Font calcFont() {
-      float size = (float)getIconHeight() * 3 / 5;
-      if (myStr.length() > 1) {
-        size--;
-      }
-      return myComponent.getFont().deriveFont(size);
     }
 
     @Override

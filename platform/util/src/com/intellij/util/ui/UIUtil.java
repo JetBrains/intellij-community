@@ -67,7 +67,10 @@ import java.awt.image.BufferedImageOp;
 import java.awt.image.ImageObserver;
 import java.awt.image.PixelGrabber;
 import java.beans.PropertyChangeListener;
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -251,7 +254,16 @@ public class UIUtil {
       return color;
     }
   });
-  public static final Color SIDE_PANEL_BACKGROUND = new JBColor(new Color(0xE6EBF0), new Color(0x3E434C));
+
+  public static final Color SIDE_PANEL_BACKGROUND = new JBColor(new NotNullProducer<Color>() {
+    final JBColor myDefaultValue = new JBColor(new Color(0xE6EBF0), new Color(0x3E434C));
+    @NotNull
+    @Override
+    public Color produce() {
+      Color color = UIManager.getColor("SidePanel.background");
+      return color == null ? myDefaultValue : color;
+    }
+  });
 
   public static final Color AQUA_SEPARATOR_FOREGROUND_COLOR = new JBColor(Gray._190, Gray.x51);
   public static final Color AQUA_SEPARATOR_BACKGROUND_COLOR = new JBColor(Gray._240, Gray.x51);
@@ -289,7 +301,7 @@ public class UIUtil {
     }
   };
 
-  private static volatile Pair<String, Integer> ourSystemFontData = null;
+  private static volatile Pair<String, Integer> ourSystemFontData;
 
   public static final float DEF_SYSTEM_FONT_SIZE = 12f; // TODO: consider 12 * 1.33 to compensate JDK's 72dpi font scale
 
@@ -351,9 +363,9 @@ public class UIUtil {
       return isRetina;
     }
 
-    /**
-     * Could be quite easily implemented with [NSScreen backingScaleFactor]
-     * and JNA
+    /*
+      Could be quite easily implemented with [NSScreen backingScaleFactor]
+      and JNA
      */
     //private static boolean isAppleRetina (Graphics2D g2d) {
     //  return false;
@@ -620,28 +632,19 @@ public class UIUtil {
     setEnabled(component, enabled, recursively, false);
   }
 
-  public static void setEnabled(Component component, boolean enabled, boolean recursively, boolean visibleOnly) {
-    component.setEnabled(enabled);
-    if (component instanceof JComboBox && isUnderAquaLookAndFeel()) {
-      // On Mac JComboBox instances have children: com.apple.laf.AquaComboBoxButton and javax.swing.CellRendererPane.
-      // Disabling these children results in ugly UI: WEB-10733
-      return;
-    }
-    if (component instanceof JLabel) {
-      Color color = enabled ? getLabelForeground() : getLabelDisabledForeground();
-      if (color != null) {
-        component.setForeground(color);
-      }
-    }
-    if (recursively && enabled == component.isEnabled()) {
-      if (component instanceof Container) {
-        final Container container = (Container)component;
-        final int subComponentCount = container.getComponentCount();
-        for (int i = 0; i < subComponentCount; i++) {
-          Component child = container.getComponent(i);
-          if (visibleOnly && !child.isVisible()) continue;
-          setEnabled(child, enabled, recursively, visibleOnly);
+  public static void setEnabled(Component component, boolean enabled, boolean recursively, final boolean visibleOnly) {
+    JBIterable<Component> all = recursively ? uiTraverser(component).expandAndFilter(
+      visibleOnly ? Conditions.<Component>alwaysTrue() : new Condition<Component>() {
+        @Override
+        public boolean value(Component c) {
+          return c.isVisible();
         }
+      }).traverse() : JBIterable.of(component);
+    Color fg = enabled ? getLabelForeground() : getLabelDisabledForeground();
+    for (Component c : all) {
+      c.setEnabled(enabled);
+      if (fg != null && c instanceof JLabel) {
+        c.setForeground(fg);
       }
     }
   }
@@ -1077,6 +1080,10 @@ public class UIUtil {
 
   public static Color getPanelBackground() {
     return UIManager.getColor("Panel.background");
+  }
+
+  public static Color getEditorPaneBackground() {
+    return UIManager.getColor("EditorPane.background");
   }
 
   public static Color getTreeBackground() {
@@ -2059,14 +2066,9 @@ public class UIUtil {
     return null;
   }
 
+  @Deprecated
   public static <T extends Component> T findParentByClass(@NotNull Component c, Class<T> cls) {
-    for (Component component = c; component != null; component = component.getParent()) {
-      if (cls.isAssignableFrom(component.getClass())) {
-        @SuppressWarnings({"unchecked"}) final T t = (T)component;
-        return t;
-      }
-    }
-    return null;
+    return getParentOfType(cls, c);
   }
 
   @Language("HTML")
@@ -2768,18 +2770,24 @@ public class UIUtil {
     return child == parent;
   }
 
+  /**
+   * Searches above in the component hierarchy starting from the specified component.
+   * Note that the initial component is also checked.
+   *
+   * @param type      expected class
+   * @param component initial component
+   * @return a component of the specified type, or {@code null} if the search is failed
+   * @see SwingUtilities#getAncestorOfClass
+   */
   @Nullable
-  public static <T> T getParentOfType(Class<? extends T> cls, Component c) {
-    Component eachParent = c;
-    while (eachParent != null) {
-      if (cls.isAssignableFrom(eachParent.getClass())) {
-        @SuppressWarnings({"unchecked"}) final T t = (T)eachParent;
-        return t;
+  public static <T> T getParentOfType(@NotNull Class<? extends T> type, Component component) {
+    while (component != null) {
+      if (type.isInstance(component)) {
+        //noinspection unchecked
+        return (T)component;
       }
-
-      eachParent = eachParent.getParent();
+      component = component.getParent();
     }
-
     return null;
   }
 
@@ -2812,6 +2820,11 @@ public class UIUtil {
       JBIterable<Component> result;
       if (c instanceof JMenu) {
         result = JBIterable.of(((JMenu)c).getMenuComponents());
+      }
+      else if (c instanceof JComboBox && isUnderAquaLookAndFeel()) {
+        // On Mac JComboBox instances have children: com.apple.laf.AquaComboBoxButton and javax.swing.CellRendererPane.
+        // Disabling these children results in ugly UI: WEB-10733
+        result = JBIterable.empty();
       }
       else if (c instanceof Container) {
         result = JBIterable.of(((Container)c).getComponents());
@@ -2969,6 +2982,7 @@ public class UIUtil {
       final int[] maxWidth = {0};
       final int[] height = {0};
       final int[] maxBulletWidth = {0};
+      GraphicsUtil.setupAntialiasing(g, true, true);
       ContainerUtil.process(myLines, new Processor<Pair<String, LineInfo>>() {
         @Override
         public boolean process(final Pair<String, LineInfo> pair) {
@@ -3271,7 +3285,7 @@ public class UIUtil {
     // Evaluate the value depending on our current theme
     if (lcdContrastValue == 0) {
       if (SystemInfo.isMacIntel64) {
-        lcdContrastValue = isUnderDarcula() ? 140 : 200;
+        lcdContrastValue = isUnderDarcula() ? 140 : 230;
       } else {
         Map map = (Map)Toolkit.getDefaultToolkit().getDesktopProperty("awt.font.desktophints");
 
@@ -3502,7 +3516,7 @@ public class UIUtil {
     return null;
   }
 
-  private static Map<String, String> ourRealFontFamilies = null;
+  private static Map<String, String> ourRealFontFamilies;
 
   //Experimental, seems to be reliable under MacOS X only
 

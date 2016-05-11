@@ -95,7 +95,7 @@ public class TaskFile {
     for (AnswerPlaceholder placeholder : myAnswerPlaceholders) {
       if (placeholder.getLine() <= line) {
         int realStartOffset = placeholder.getRealStartOffset(document);
-        int placeholderLength = useAnswerLength ? placeholder.getPossibleAnswerLength() : placeholder.getLength();
+        int placeholderLength = placeholder.getRealLength();
         final int length = placeholderLength > 0 ? placeholderLength : 0;
         int endOffset = realStartOffset + length;
         if (realStartOffset <= offset && offset <= endOffset) {
@@ -118,6 +118,7 @@ public class TaskFile {
       answerPlaceholderCopy.setLength(answerPlaceholder.getLength());
       answerPlaceholderCopy.setPossibleAnswer(answerPlaceholder.getPossibleAnswer());
       answerPlaceholderCopy.setIndex(answerPlaceholder.getIndex());
+      answerPlaceholderCopy.setHint(answerPlaceholder.getHint());
       answerPlaceholdersCopy.add(answerPlaceholderCopy);
     }
     target.name = source.name;

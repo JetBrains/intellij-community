@@ -205,7 +205,7 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
     private LinearGraphAction convert(@NotNull GraphAction graphAction) {
       PrintElementWithGraphElement printElement = null;
       if (graphAction.getAffectedElement() != null) {
-        printElement = myPrintElementGenerator.toPrintElementWithGraphElement(graphAction.getAffectedElement());
+        printElement = myPrintElementGenerator.withGraphElement(graphAction.getAffectedElement());
       }
       return new LinearGraphActionImpl(printElement, graphAction.getType());
     }

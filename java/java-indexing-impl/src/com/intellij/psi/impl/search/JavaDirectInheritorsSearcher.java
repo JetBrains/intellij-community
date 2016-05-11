@@ -26,7 +26,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.index.JavaAnonymousClassBaseRefOccurenceIndex;
 import com.intellij.psi.impl.java.stubs.index.JavaSuperClassNameOccurenceIndex;
-import com.intellij.psi.search.EverythingGlobalScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.search.SearchScope;
@@ -65,7 +64,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
       });
     }
 
-    final GlobalSearchScope scope = useScope instanceof GlobalSearchScope ? (GlobalSearchScope)useScope : new EverythingGlobalScope(project);
+    SearchScope scope = parameters.getScope();
     Pair<List<PsiClass>, AtomicIntegerArray> pair = getOrCalculateDirectSubClasses(project, baseClass);
     List<PsiClass> result = pair.getFirst();
     AtomicIntegerArray isInheritorFlag = pair.getSecond();
@@ -128,7 +127,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
   }
 
   @NotNull
-  private static CheckResult checkAndProcessCandidate(@NotNull GlobalSearchScope scope,
+  private static CheckResult checkAndProcessCandidate(@NotNull SearchScope scope,
                                                       @NotNull PsiClass candidate,
                                                       @NotNull DirectClassInheritorsSearch.SearchParameters parameters,
                                                       @NotNull PsiClass baseClass,
@@ -140,7 +139,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
     return consumer.process(candidate) ? CheckResult.PROCESSED_OK : CheckResult.PROCESSED_ABORT;
   }
 
-  private static boolean isInScope(@NotNull GlobalSearchScope scope, @NotNull PsiClass subClass) {
+  private static boolean isInScope(@NotNull SearchScope scope, @NotNull PsiClass subClass) {
     return ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> PsiSearchScopeUtil.isInScope(scope, subClass));
   }
 
@@ -160,23 +159,25 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
       return cached;
     }
 
-    final String className = ApplicationManager.getApplication().runReadAction((Computable<String>)baseClass::getName);
-    if (StringUtil.isEmpty(className)) {
+    final String baseClassName = ApplicationManager.getApplication().runReadAction((Computable<String>)baseClass::getName);
+    if (StringUtil.isEmpty(baseClassName)) {
       return Pair.create(Collections.emptyList(), new AtomicIntegerArray(0));
     }
-    Pair<List<PsiClass>, AtomicIntegerArray> pair = calculateDirectSubClasses(project, baseClass, className);
-    HighlightingCaches.getInstance(project).DIRECT_SUB_CLASSES.put(baseClass, pair);
+    Pair<List<PsiClass>, AtomicIntegerArray> pair = calculateDirectSubClasses(project, baseClass, baseClassName);
+    // for non-physical elements ignore the cache completely because non-physical elements created so often/unpredictably so I can't figure out when to clear caches in this case
+    if (ApplicationManager.getApplication().runReadAction((Computable<Boolean>)baseClass::isPhysical)) {
+      HighlightingCaches.getInstance(project).DIRECT_SUB_CLASSES.put(baseClass, pair);
+    }
     return pair;
   }
 
   @NotNull
   private static Pair<List<PsiClass>, AtomicIntegerArray> calculateDirectSubClasses(@NotNull Project project,
                                                                                     @NotNull PsiClass baseClass,
-                                                                                    @NotNull String className) {
+                                                                                    @NotNull String baseClassName) {
     GlobalSearchScope allScope = GlobalSearchScope.allScope(project);
     Collection<PsiReferenceList> candidates =
-      MethodUsagesSearcher
-        .resolveInReadAction(project, () -> JavaSuperClassNameOccurenceIndex.getInstance().get(className, project, allScope));
+      MethodUsagesSearcher.resolveInReadAction(project, () -> JavaSuperClassNameOccurenceIndex.getInstance().get(baseClassName, project, allScope));
 
     Map<String, List<PsiClass>> classes = new HashMap<>();
     int count = 0;
@@ -196,7 +197,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
     }
 
     Collection<PsiAnonymousClass> anonymousCandidates =
-      MethodUsagesSearcher.resolveInReadAction(project, () -> JavaAnonymousClassBaseRefOccurenceIndex.getInstance().get(className, project, allScope));
+      MethodUsagesSearcher.resolveInReadAction(project, () -> JavaAnonymousClassBaseRefOccurenceIndex.getInstance().get(baseClassName, project, allScope));
 
     List<PsiClass> result = new ArrayList<>(count + classes.size() + anonymousCandidates.size() + 1);
     for (Map.Entry<String, List<PsiClass>> entry : classes.entrySet()) {

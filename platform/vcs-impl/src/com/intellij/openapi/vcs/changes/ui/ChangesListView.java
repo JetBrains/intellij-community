@@ -56,6 +56,8 @@ import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.util.*;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author max
@@ -254,17 +256,18 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
 
   @NotNull
   private List<VirtualFile> getSelectedVirtualFiles(@Nullable Object tag) {
-    Set<VirtualFile> files = new HashSet<VirtualFile>();
-    final TreePath[] paths = getSelectionPaths();
-    if (paths != null) {
-      for (TreePath path : paths) {
-        if (isUnderTag(path, tag)) {
-          ChangesBrowserNode<?> node = (ChangesBrowserNode)path.getLastPathComponent();
-          files.addAll(node.getAllFilesUnder());
-        }
-      }
-    }
-    return ContainerUtil.newArrayList(files);
+    return getVirtualFiles(getSelectionPaths(), tag);
+  }
+
+  @NotNull
+  static List<VirtualFile> getVirtualFiles(@Nullable TreePath[] paths, @Nullable Object tag) {
+    return paths == null
+           ? Collections.emptyList()
+           : Stream.of(paths)
+             .filter(path -> isUnderTag(path, tag))
+             .flatMap(path -> ((ChangesBrowserNode<?>)path.getLastPathComponent()).getAllFilesUnder().stream())
+             .distinct()
+             .collect(Collectors.toList());
   }
 
   static boolean isUnderTag(@NotNull TreePath path, @Nullable Object tag) {

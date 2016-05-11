@@ -19,22 +19,17 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.StringInterner;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceReader;
 import com.intellij.util.text.StringFactory;
 import org.jdom.*;
-import org.jdom.filter.ElementFilter;
 import org.jdom.filter.Filter;
-import org.jdom.input.DOMBuilder;
 import org.jdom.input.SAXBuilder;
-import org.jdom.output.DOMOutputter;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
 import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.xml.sax.EntityResolver;
@@ -96,17 +91,7 @@ public class JDOMUtil {
   private static final EmptyTextFilter CONTENT_FILTER = new EmptyTextFilter();
 
   public static int getTreeHash(@NotNull Element root) {
-    return getTreeHash(root, false);
-  }
-
-  public static int getTreeHash(@NotNull Element root, boolean skipEmptyText) {
-    return addToHash(0, root, skipEmptyText);
-  }
-
-  @SuppressWarnings("unused")
-  @Deprecated
-  public static int getTreeHash(@NotNull Document document) {
-    return getTreeHash(document.getRootElement());
+    return addToHash(0, root, true);
   }
 
   private static int addToHash(int i, @NotNull Element element, boolean skipEmptyText) {
@@ -145,17 +130,6 @@ public class JDOMUtil {
   public static Element[] getElements(@NotNull Element m) {
     List<Element> list = m.getChildren();
     return list.toArray(new Element[list.size()]);
-  }
-
-  @Deprecated
-  @SuppressWarnings("unused")
-  @NotNull
-  public static String concatTextNodesValues(@NotNull final Object[] nodes) {
-    StringBuilder result = new StringBuilder();
-    for (Object node : nodes) {
-      result.append(((Content)node).getValue());
-    }
-    return result.toString();
   }
 
   public static void addContent(@NotNull final Element targetElement, final Object node) {
@@ -258,33 +232,9 @@ public class JDOMUtil {
     return a1.getName().equals(a2.getName()) && a1.getValue().equals(a2.getValue());
   }
 
-  public static boolean areDocumentsEqual(@NotNull Document d1, @NotNull Document d2) {
-    if(d1.hasRootElement() != d2.hasRootElement()) return false;
-
-    if(!d1.hasRootElement()) return true;
-
-    CharArrayWriter w1 = new CharArrayWriter();
-    CharArrayWriter w2 = new CharArrayWriter();
-
-    try {
-      writeDocument(d1, w1, "\n");
-      writeDocument(d2, w2, "\n");
-    }
-    catch (IOException e) {
-      getLogger().error(e);
-    }
-
-    return w1.size() == w2.size() && w1.toString().equals(w2.toString());
-  }
-
   @NotNull
   public static Document loadDocument(char[] chars, int length) throws IOException, JDOMException {
     return getSaxBuilder().build(new CharArrayReader(chars, 0, length));
-  }
-
-  @NotNull
-  public static Document loadDocument(byte[] bytes) throws IOException, JDOMException {
-    return loadDocument(new ByteArrayInputStream(bytes));
   }
 
   private static SAXBuilder getSaxBuilder() {
@@ -335,9 +285,6 @@ public class JDOMUtil {
   }
 
   @Contract("null -> null; !null -> !null")
-  /**
-   * @deprecated Use com.intellij.util.loadElement
-   */
   public static Element load(Reader reader) throws JDOMException, IOException {
     return reader == null ? null : loadDocument(reader).detachRootElement();
   }
@@ -479,18 +426,13 @@ public class JDOMUtil {
   }
 
   @NotNull
-  public static String writeChildren(@Nullable final Element element, @NotNull final String lineSeparator) {
-    try {
-      final StringWriter writer = new StringWriter();
-      for (Element child : getChildren(element)) {
-        writeElement(child, writer, lineSeparator);
-        writer.append(lineSeparator);
-      }
-      return writer.toString();
+  public static String writeChildren(@NotNull final Element element, @NotNull final String lineSeparator) throws IOException {
+    final StringWriter writer = new StringWriter();
+    for (Element child : element.getChildren()) {
+      writeElement(child, writer, lineSeparator);
+      writer.append(lineSeparator);
     }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    return writer.toString();
   }
 
   public static void writeDocument(@NotNull Document document, @NotNull Writer writer, String lineSeparator) throws IOException {
@@ -577,19 +519,6 @@ public class JDOMUtil {
     return buffer == null ? text : buffer.toString();
   }
 
-  @SuppressWarnings("unused")
-  @Deprecated
-  @NotNull
-  public static List<Element> getChildrenFromAllNamespaces(@NotNull final Element element, @NotNull @NonNls final String name) {
-    List<Element> result = new SmartList<Element>();
-    for (Element child : element.getChildren()) {
-      if (name.equals(child.getName())) {
-        result.add(child);
-      }
-    }
-    return result;
-  }
-
   public static class MyXMLOutputter extends XMLOutputter {
     @Override
     @NotNull
@@ -612,8 +541,7 @@ public class JDOMUtil {
       System.err.println(prefix);
     }
 
-    List<Element> children = getChildren(element);
-    for (final Element child : children) {
+    for (final Element child : element.getChildren()) {
       printDiagnostics(child, prefix);
     }
   }
@@ -694,35 +622,6 @@ public class JDOMUtil {
     public boolean hasNullAttributes = false;
   }
 
-  @SuppressWarnings("unused")
-  @Deprecated
-  public static org.w3c.dom.Element convertToDOM(@NotNull Element e) {
-    try {
-      final Document d = new Document();
-      final Element newRoot = new Element(e.getName());
-      final List attributes = e.getAttributes();
-
-      for (Object o : attributes) {
-        Attribute attr = (Attribute)o;
-        newRoot.setAttribute(attr.getName(), attr.getValue(), attr.getNamespace());
-      }
-
-      d.addContent(newRoot);
-      newRoot.addContent(e.cloneContent());
-
-      return new DOMOutputter().output(d).getDocumentElement();
-    }
-    catch (JDOMException e1) {
-      throw new RuntimeException(e1);
-    }
-  }
-
-  @SuppressWarnings("unused")
-  @Deprecated
-  public static Element convertFromDOM(org.w3c.dom.Element e) {
-    return new DOMBuilder().build(e);
-  }
-
   public static String getValue(Object node) {
     if (node instanceof Content) {
       Content content = (Content)node;
@@ -735,39 +634,6 @@ public class JDOMUtil {
     else {
       throw new IllegalArgumentException("Wrong node: " + node);
     }
-  }
-
-  @SuppressWarnings("unused")
-  @Nullable
-  @Deprecated
-  public static Element cloneElement(@NotNull Element element, @NotNull ElementFilter elementFilter) {
-    Element result = new Element(element.getName(), element.getNamespace());
-    List<Attribute> attributes = element.getAttributes();
-    if (!attributes.isEmpty()) {
-      ArrayList<Attribute> list = new ArrayList<Attribute>(attributes.size());
-      for (Attribute attribute : attributes) {
-        list.add(attribute.clone());
-      }
-      result.setAttributes(list);
-    }
-
-    for (Namespace namespace : element.getAdditionalNamespaces()) {
-      result.addNamespaceDeclaration(namespace);
-    }
-
-    boolean hasContent = false;
-    for (Content content : element.getContent()) {
-      if (content instanceof Element) {
-        if (elementFilter.matches(content)) {
-          hasContent = true;
-        }
-        else {
-          continue;
-        }
-      }
-      result.addContent(content.clone());
-    }
-    return hasContent ? result : null;
   }
 
   public static boolean isEmpty(@Nullable Element element) {

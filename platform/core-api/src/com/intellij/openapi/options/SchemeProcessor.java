@@ -47,11 +47,11 @@ public abstract class SchemeProcessor<T extends ExternalizableScheme> {
     throw new AbstractMethodError();
   }
 
-  @Nullable
   /**
    * @param duringLoad If occurred during {@link SchemesManager#loadSchemes()} call
    * Returns null if element is not valid.
    */
+  @Nullable
   public T readScheme(@NotNull Element element, boolean duringLoad) throws Exception {
     return readScheme(element);
   }

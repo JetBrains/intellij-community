@@ -81,8 +81,11 @@ public class JavaCompletionSorting {
       }
     }
     ContainerUtil.addIfNotNull(afterPrefix, recursion(parameters, expectedTypes));
-    Collections.addAll(afterPrefix, new PreferSimilarlyEnding(expectedTypes),
-                       new PreferNonGeneric(), new PreferAccessible(position), new PreferSimple());
+    afterPrefix.add(new PreferSimilarlyEnding(expectedTypes));
+    if (ContainerUtil.or(expectedTypes, info -> !info.getType().equals(PsiType.VOID))) {
+      afterPrefix.add(new PreferNonGeneric());
+    }
+    Collections.addAll(afterPrefix, new PreferAccessible(position), new PreferSimple());
 
     sorter = sorter.weighAfter("prefix", afterPrefix.toArray(new LookupElementWeigher[afterPrefix.size()]));
     sorter = sorter.weighAfter("proximity", afterProximity.toArray(new LookupElementWeigher[afterProximity.size()]));

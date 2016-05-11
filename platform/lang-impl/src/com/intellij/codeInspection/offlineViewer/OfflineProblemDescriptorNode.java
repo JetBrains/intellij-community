@@ -51,7 +51,7 @@ public class OfflineProblemDescriptorNode extends ProblemDescriptionNode {
                                CommonProblemDescriptor descriptor,
                                @NotNull LocalInspectionToolWrapper toolWrapper,
                                @NotNull InspectionToolPresentation presentation,
-                               OfflineProblemDescriptor offlineDescriptor) {
+                               @NotNull OfflineProblemDescriptor offlineDescriptor) {
     super(refEntity, descriptor, toolWrapper, presentation);
     if (descriptor == null) {
       setUserObject(offlineDescriptor);
@@ -67,7 +67,7 @@ public class OfflineProblemDescriptorNode extends ProblemDescriptionNode {
   }
 
   @Override
-  public boolean isValid() {
+  public boolean calculateIsValid() {
     return true;
   }
 

@@ -41,7 +41,6 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -88,8 +87,6 @@ public class LaterInvocator {
   private static final Stack<AWTEvent> ourEventStack = new Stack<AWTEvent>(); // guarded by RUN_LOCK
 
   private static final EventDispatcher<ModalityStateListener> ourModalityStateMulticaster = EventDispatcher.create(ModalityStateListener.class);
-
-  private static final List<RunnableInfo> ourForcedFlushQueue = new ArrayList<RunnableInfo>();
 
   public static void addModalityStateListener(@NotNull ModalityStateListener listener, @NotNull Disposable parentDisposable) {
     if (!ourModalityStateMulticaster.getListeners().contains(listener)) {
@@ -175,7 +172,9 @@ public class LaterInvocator {
     invokeLater(runnable1, modalityState);
     semaphore.waitFor();
     if (!exception.isNull()) {
-      throw new RuntimeException(exception.get());
+      Throwable throwable = exception.get();
+      if (throwable instanceof RuntimeException) throw (RuntimeException)throwable;
+      throw new RuntimeException(throwable);
     }
   }
 
@@ -204,42 +203,24 @@ public class LaterInvocator {
       LOG.debug("leaveModal:" + modalEntity);
     }
 
-    //noinspection StatementWithEmptyBody
-    while (ourFlushQueueRunnable.runNextEvent());
-
     ourModalityStateMulticaster.getMulticaster().beforeModalityStateChanged(false);
 
-    boolean removed = ourModalEntities.remove(modalEntity);
-    if (ourModalityStack.size() > 1) {
-      ourModalityStack.pop();
+    int index = ourModalEntities.indexOf(modalEntity);
+    LOG.assertTrue(index >= 0);
+    ourModalEntities.remove(index);
+    ourModalityStack.remove(index + 1);
+    for (int i = 1; i < ourModalityStack.size(); i++) {
+      ((ModalityStateEx)ourModalityStack.get(i)).removeModality(modalEntity);
     }
-    LOG.assertTrue(removed, modalEntity);
-    LOG.assertTrue(!ourModalityStack.isEmpty());
-    cleanupQueueForModal(modalEntity);
+
     ourQueueSkipCount = 0;
     requestFlush();
   }
 
-  private static void cleanupQueueForModal(@NotNull final Object modalEntity) {
-    synchronized (LOCK) {
-      for (Iterator<RunnableInfo> iterator = ourQueue.iterator(); iterator.hasNext(); ) {
-        RunnableInfo runnableInfo = iterator.next();
-        if (runnableInfo.modalityState instanceof ModalityStateEx) {
-          ModalityStateEx stateEx = (ModalityStateEx)runnableInfo.modalityState;
-          if (stateEx.contains(modalEntity)) {
-            ourForcedFlushQueue.add(runnableInfo);
-            iterator.remove();
-          }
-        }
-      }
-    }
-  }
-
   @TestOnly
   public static void leaveAllModals() {
-    ourModalEntities.clear();
-    while (ourModalityStack.size() > 1) {
-      ourModalityStack.pop();
+    while (!ourModalEntities.isEmpty()) {
+      leaveModal(ourModalEntities.get(ourModalEntities.size() - 1));
     }
     LOG.assertTrue(getCurrentModalityState() == ModalityState.NON_MODAL, getCurrentModalityState());
     ourQueueSkipCount = 0;
@@ -293,17 +274,6 @@ public class LaterInvocator {
   @Nullable
   private static RunnableInfo getNextEvent(boolean remove) {
     synchronized (LOCK) {
-      if (!ourForcedFlushQueue.isEmpty()) {
-        final RunnableInfo toRun = remove ? ourForcedFlushQueue.remove(0) : ourForcedFlushQueue.get(0);
-        if (!toRun.expired.value(null)) {
-          return toRun;
-        }
-        else {
-          toRun.callback.setDone();
-        }
-      }
-
-
       ModalityState currentModality = getCurrentModalityState();
 
       while (ourQueueSkipCount < ourQueue.size()) {

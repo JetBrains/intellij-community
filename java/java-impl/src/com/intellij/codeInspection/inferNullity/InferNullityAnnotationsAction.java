@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -197,7 +197,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
       @Override
       public void run() {
         scope.accept(new PsiElementVisitor() {
-          int myFileCount = 0;
+          int myFileCount;
 
           @Override
           public void visitFile(final PsiFile file) {
@@ -277,7 +277,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
     TransactionGuard guard = TransactionGuard.getInstance();
     TransactionId id = guard.getContextTransaction();
     DumbService.getInstance(project).smartInvokeLater(
-      () -> TransactionGuard.getInstance().submitMergeableTransaction(project, id, () -> {
+      () -> TransactionGuard.getInstance().submitTransaction(project, id, () -> {
         if (DumbService.isDumb(project)) {
           restartAnalysis(project, scope);
         } else {

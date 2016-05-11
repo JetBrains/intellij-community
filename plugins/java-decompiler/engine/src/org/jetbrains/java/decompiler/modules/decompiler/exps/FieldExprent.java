@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
+import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTableAttribute;
 import org.jetbrains.java.decompiler.struct.consts.LinkConstant;
 import org.jetbrains.java.decompiler.struct.gen.FieldDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
@@ -30,7 +31,6 @@ import org.jetbrains.java.decompiler.struct.match.MatchEngine;
 import org.jetbrains.java.decompiler.struct.match.MatchNode;
 import org.jetbrains.java.decompiler.struct.match.MatchNode.RuleValue;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
-import org.jetbrains.java.decompiler.util.StructUtils;
 import org.jetbrains.java.decompiler.util.TextUtil;
 
 import java.util.ArrayList;
@@ -38,7 +38,6 @@ import java.util.List;
 import java.util.Set;
 
 public class FieldExprent extends Exprent {
-
   private final String name;
   private final String classname;
   private final boolean isStatic;
@@ -85,7 +84,15 @@ public class FieldExprent extends Exprent {
   }
 
   private boolean isAmbiguous() {
-    return StructUtils.getCurrentMethodLocalVariableNames().contains(name);
+    MethodWrapper method = (MethodWrapper)DecompilerContext.getProperty(DecompilerContext.CURRENT_METHOD_WRAPPER);
+    if (method != null) {
+      StructLocalVariableTableAttribute attr = method.methodStruct.getLocalVariableAttr();
+      if (attr != null) {
+        return attr.getMapVarNames().containsValue(name);
+      }
+    }
+
+    return false;
   }
 
   @Override
@@ -215,5 +222,4 @@ public class FieldExprent extends Exprent {
     
     return true;
   }
-  
 }

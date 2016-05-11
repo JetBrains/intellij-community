@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,13 +21,14 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlComment;
 import com.intellij.psi.xml.XmlElementDecl;
 import com.intellij.psi.xml.XmlTag;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
 public class XmlReadWriteAccessDetector extends ReadWriteAccessDetector {
   @Override
-  public boolean isReadWriteAccessible(final PsiElement element) {
+  public boolean isReadWriteAccessible(@NotNull final PsiElement element) {
     return element instanceof XmlAttributeValue ||
         element instanceof XmlTag ||
         element instanceof XmlElementDecl ||
@@ -35,12 +36,13 @@ public class XmlReadWriteAccessDetector extends ReadWriteAccessDetector {
   }
 
   @Override
-  public boolean isDeclarationWriteAccess(final PsiElement element) {
+  public boolean isDeclarationWriteAccess(@NotNull final PsiElement element) {
     return false;
   }
 
+  @NotNull
   @Override
-  public Access getReferenceAccess(final PsiElement referencedElement, final PsiReference reference) {
+  public Access getReferenceAccess(@NotNull final PsiElement referencedElement, @NotNull final PsiReference reference) {
     PsiElement refElement = reference.getElement();
     return refElement instanceof XmlAttributeValue &&
            (!(referencedElement instanceof XmlTag) || refElement.getParent().getParent() == referencedElement) ||
@@ -50,8 +52,9 @@ public class XmlReadWriteAccessDetector extends ReadWriteAccessDetector {
 
   }
 
+  @NotNull
   @Override
-  public Access getExpressionAccess(final PsiElement expression) {
+  public Access getExpressionAccess(@NotNull final PsiElement expression) {
     return expression instanceof XmlAttributeValue ? Access.Write : Access.Read;
   }
 }

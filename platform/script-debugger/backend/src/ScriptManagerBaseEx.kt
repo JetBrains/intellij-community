@@ -39,7 +39,7 @@ abstract class ScriptManagerBaseEx<SCRIPT : ScriptBase> : ScriptManagerBase<SCRI
 
   override final fun findScriptByUrl(rawUrl: String) = findScriptByUrl(rawUrlToOurUrl(rawUrl))
 
-  override final fun findScriptByUrl(url: Url): Script? {
+  override final fun findScriptByUrl(url: Url): SCRIPT? {
     for (script in idToScript.values) {
       if (url.equalsIgnoreParameters(script.url)) {
         return script

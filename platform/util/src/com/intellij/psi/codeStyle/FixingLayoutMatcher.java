@@ -17,41 +17,24 @@ package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.containers.FList;
+import com.intellij.util.ui.KeyboardLayoutUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.Map;
-
 /**
  * @author Dmitry Avdeev
+ *
+ * @see NameUtil#buildMatcher(String)
  */
 public class FixingLayoutMatcher extends MinusculeMatcher {
-
-  private static final Map<Character, Character> ourRussianQwertyMap = new HashMap<Character, Character>();
-
-  static {
-    char[][] chars = new char[][]
-      {
-        {'й', 'q'}, {'ц', 'w'}, {'у', 'e'}, {'к', 'r'}, {'е', 't'}, {'н', 'y'}, {'г', 'u'}, {'ш', 'i'}, {'щ', 'o'}, {'з', 'p'}, {'х', '['},  {'ъ', ']'}
-        , {'ф', 'a'}, {'ы', 's'}, {'в', 'd'}, {'а', 'f'}, {'п', 'g'}, {'р', 'h'}, {'о', 'j'}, {'л', 'k'}, {'д', 'l'}, {'ж', ';'}, {'э', '\''}
-        , {'я', 'z'}, {'ч', 'x'}, {'с', 'c'}, {'м', 'v'}, {'и', 'b'}, {'т', 'n'}, {'ь', 'm'}, {'б', ','}, {'ю', '.'}, {'.', '/'}
-      };
-    for (char[] aChar : chars) {
-      ourRussianQwertyMap.put(aChar[0], aChar[1]);
-      if (Character.isLetter(aChar[0])) {
-        ourRussianQwertyMap.put(Character.toUpperCase(aChar[0]), Character.toUpperCase(aChar[1]));
-      }
-    }
-  }
 
   @Nullable
   private final MinusculeMatcher myFixedMatcher;
 
-  public FixingLayoutMatcher(@NotNull String pattern, @NotNull NameUtil.MatchingCaseSensitivity options) {
-    super(pattern, options);
+  FixingLayoutMatcher(@NotNull String pattern, @NotNull NameUtil.MatchingCaseSensitivity options, String hardSeparators) {
+    super(pattern, options, hardSeparators);
     String s = fixPattern(pattern);
-    myFixedMatcher = s == null ? null : new MinusculeMatcher(s, options);
+    myFixedMatcher = s == null ? null : new MinusculeMatcher(s, options, hardSeparators);
   }
 
   @Nullable
@@ -74,7 +57,7 @@ public class FixingLayoutMatcher extends MinusculeMatcher {
       char[] alternatePattern = new char[pattern.length()];
       for (int i = 0; i < pattern.length(); i++) {
         char c = pattern.charAt(i);
-        Character newC = ourRussianQwertyMap.get(c);
+        Character newC = KeyboardLayoutUtil.getAsciiForChar(c);
         alternatePattern[i] = newC == null ? c : newC;
       }
 

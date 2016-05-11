@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -289,12 +289,23 @@ public class MultiMap<K, V> implements Serializable {
     };
   }
 
-  @Deprecated
-  @SuppressWarnings("unused")
   @NotNull
+  public static <K, V> MultiMap<K, V> createOrderedSet() {
+    return new LinkedMultiMap<K, V>() {
+      @NotNull
+      @Override
+      protected Collection<V> createCollection() {
+        return new OrderedSet<V>();
+      }
+    };
+  }
+
   /**
    * @deprecated Use {@link #createSmart()}
    */
+  @Deprecated
+  @SuppressWarnings("unused")
+  @NotNull
   public static <K, V> MultiMap<K, V> createSmartList() {
     return createSmart();
   }
@@ -335,6 +346,11 @@ public class MultiMap<K, V> implements Serializable {
 
   @NotNull
   public static <K, V> MultiMap<K, V> createSet() {
+    return createSet(TObjectHashingStrategy.CANONICAL);
+  }
+
+  @NotNull
+  public static <K, V> MultiMap<K, V> createSet(final TObjectHashingStrategy strategy) {
     return new MultiMap<K, V>() {
       @NotNull
       @Override
@@ -351,7 +367,7 @@ public class MultiMap<K, V> implements Serializable {
       @NotNull
       @Override
       protected Map<K, Collection<V>> createMap() {
-        return new THashMap<K, Collection<V>>();
+        return new THashMap<K, Collection<V>>(strategy);
       }
     };
   }

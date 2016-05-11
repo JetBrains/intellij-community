@@ -113,7 +113,7 @@ public class Translator {
       }
     }
 
-    ClassAnchor.StubClassAnchor anchor = new ClassAnchor.StubClassAnchor(fileId, def.myStubId);
+    ClassAnchor.StubClassAnchor anchor = new ClassAnchor.StubClassAnchor(fileId, def.myStubId, def.getStubElementType());
     QualifiedName[] supers = superList.isEmpty() ? QualifiedName.EMPTY_ARRAY : superList.toArray(new QualifiedName[superList.size()]);
     Declaration[] innerDefs = innerDefList.isEmpty() ? Declaration.EMPTY_ARRAY : innerDefList.toArray(new Declaration[innerDefList.size()]);
     return new ClassDeclaration(anchor, def.myMods, name, supers, innerDefs);

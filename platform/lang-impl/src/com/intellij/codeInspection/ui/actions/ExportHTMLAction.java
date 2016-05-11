@@ -17,15 +17,14 @@
 package com.intellij.codeInspection.ui.actions;
 
 import com.intellij.codeEditor.printing.ExportToHTMLSettings;
-import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.InspectionApplication;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.ScopeToolState;
 import com.intellij.codeInspection.ex.Tools;
-import com.intellij.codeInspection.export.*;
-import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.codeInspection.export.ExportToHTMLDialog;
+import com.intellij.codeInspection.export.InspectionTreeHtmlWriter;
 import com.intellij.codeInspection.ui.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
@@ -53,7 +52,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * User: anna
@@ -76,8 +76,7 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
       new BaseListPopupStep<String>(InspectionsBundle.message("inspection.action.export.popup.title"), HTML, XML) {
         @Override
         public PopupStep onChosen(final String selectedValue, final boolean finalChoice) {
-          exportHTML(Comparing.strEqual(selectedValue, HTML));
-          return PopupStep.FINAL_CHOICE;
+          return doFinalStep(() -> exportHTML(Comparing.strEqual(selectedValue, HTML)));
         }
       });
     InspectionResultsView.showPopup(e, popup);
@@ -96,42 +95,31 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
     exportToHTMLDialog.apply();
 
     final String outputDirectoryName = exportToHTMLSettings.OUTPUT_DIRECTORY;
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        final Runnable exportRunnable = new Runnable() {
-          @Override
-          public void run() {
-            ApplicationManager.getApplication().runReadAction(new Runnable() {
-              @Override
-              public void run() {
-                if (!exportToHTML) {
-                  dump2xml(outputDirectoryName);
-                }
-                else {
-                  try {
-                    new InspectionTreeHtmlWriter(myView.getTree(), outputDirectoryName);
-                  }
-                  catch (ProcessCanceledException e) {
-                    // Do nothing here.
-                  }
-                }
-              }
-            });
+    ApplicationManager.getApplication().invokeLater(() -> {
+      final Runnable exportRunnable = () -> ApplicationManager.getApplication().runReadAction(() -> {
+        if (!exportToHTML) {
+          dump2xml(outputDirectoryName);
+        }
+        else {
+          try {
+            new InspectionTreeHtmlWriter(myView, outputDirectoryName);
           }
-        };
-
-        if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(exportRunnable,
-                                                                               InspectionsBundle.message(exportToHTML
-                                                                                                         ? "inspection.generating.html.progress.title"
-                                                                                                         : "inspection.generating.xml.progress.title"), true,
-                                                                               myView.getProject())) {
-          return;
+          catch (ProcessCanceledException e) {
+            // Do nothing here.
+          }
         }
+      });
 
-        if (exportToHTML && exportToHTMLSettings.OPEN_IN_BROWSER) {
-          BrowserUtil.browse(new File(exportToHTMLSettings.OUTPUT_DIRECTORY, "index.html"));
-        }
+      if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(exportRunnable,
+                                                                             InspectionsBundle.message(exportToHTML
+                                                                                                       ? "inspection.generating.html.progress.title"
+                                                                                                       : "inspection.generating.xml.progress.title"), true,
+                                                                             myView.getProject())) {
+        return;
+      }
+
+      if (exportToHTML && exportToHTMLSettings.OPEN_IN_BROWSER) {
+        BrowserUtil.browse(new File(exportToHTMLSettings.OUTPUT_DIRECTORY, "index.html"));
       }
     });
   }
@@ -144,49 +132,33 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
       }
       final InspectionTreeNode root = myView.getTree().getRoot();
       final IOException[] ex = new IOException[1];
-      TreeUtil.traverse(root, new TreeUtil.Traverse() {
-        @Override
-        public boolean accept(final Object node) {
-          if (node instanceof InspectionNode) {
-            InspectionNode toolNode = (InspectionNode)node;
-            Element problems = new Element(PROBLEMS);
-            InspectionToolWrapper toolWrapper = toolNode.getToolWrapper();
+      TreeUtil.traverse(root, node -> {
+        if (node instanceof InspectionNode) {
+          InspectionNode toolNode = (InspectionNode)node;
+          Element problems = new Element(PROBLEMS);
+          InspectionToolWrapper toolWrapper = toolNode.getToolWrapper();
 
-            final Set<InspectionToolWrapper> toolWrappers = getWorkedTools(toolNode);
-            for (InspectionToolWrapper wrapper : toolWrappers) {
-              InspectionToolPresentation presentation = myView.getGlobalInspectionContext().getPresentation(wrapper);
-              if (!toolNode.isResolved(myView.getExcludedManager())) {
-                final Set<RefEntity> excludedEntities = new HashSet<>();
-                final Set<CommonProblemDescriptor> excludedDescriptors = new HashSet<>();
-                TreeUtil.traverse(toolNode, o -> {
-                  InspectionTreeNode n = (InspectionTreeNode)o;
-                  if (n.isResolved(myView.getExcludedManager())) {
-                    if (n instanceof RefElementNode) {
-                      excludedEntities.add(((RefElementNode)n).getElement());
-                    }
-                    if (n instanceof ProblemDescriptionNode) {
-                      excludedDescriptors.add(((ProblemDescriptionNode)n).getDescriptor());
-                    }
-                  }
-                  return true;
-                });
-                presentation.exportResults(problems, excludedEntities, excludedDescriptors);
-              }
-            }
-            PathMacroManager.getInstance(myView.getProject()).collapsePaths(problems);
-            try {
-              if (problems.getContentSize() != 0) {
-                JDOMUtil.writeDocument(new Document(problems),
-                                       outputDirectoryName + File.separator + toolWrapper.getShortName() + InspectionApplication.XML_EXTENSION,
-                                       CodeStyleSettingsManager.getSettings(null).getLineSeparator());
-              }
-            }
-            catch (IOException e) {
-              ex[0] = e;
+          final Set<InspectionToolWrapper> toolWrappers = getWorkedTools(toolNode);
+          for (InspectionToolWrapper wrapper : toolWrappers) {
+            InspectionToolPresentation presentation = myView.getGlobalInspectionContext().getPresentation(wrapper);
+            final ExcludedInspectionTreeNodesManager excludedManager = myView.getExcludedManager();
+            if (!toolNode.isExcluded(excludedManager)) {
+              presentation.exportResults(problems, excludedManager::containsRefEntity, excludedManager::containsProblemDescriptor);
             }
           }
-          return true;
+          PathMacroManager.getInstance(myView.getProject()).collapsePaths(problems);
+          try {
+            if (problems.getContentSize() != 0) {
+              JDOMUtil.writeDocument(new Document(problems),
+                                     outputDirectoryName + File.separator + toolWrapper.getShortName() + InspectionApplication.XML_EXTENSION,
+                                     CodeStyleSettingsManager.getSettings(null).getLineSeparator());
+            }
+          }
+          catch (IOException e) {
+            ex[0] = e;
+          }
         }
+        return true;
       });
       if (ex[0] != null) {
         throw ex[0];
@@ -201,12 +173,7 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
                              CodeStyleSettingsManager.getSettings(null).getLineSeparator());
     }
     catch (final IOException e) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          Messages.showErrorDialog(myView, e.getMessage());
-        }
-      });
+      ApplicationManager.getApplication().invokeLater(() -> Messages.showErrorDialog(myView, e.getMessage()));
     }
   }
 

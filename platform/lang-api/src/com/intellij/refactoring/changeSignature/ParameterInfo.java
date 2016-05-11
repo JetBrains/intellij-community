@@ -55,7 +55,7 @@ public interface ParameterInfo {
    * Could be overridden to provide values which depend on the call site
    */
   @Nullable
-  default PsiElement getActualValue(PsiElement callExpression) {
+  default PsiElement getActualValue(PsiElement callExpression, Object substitutor) {
     return null;
   }
 

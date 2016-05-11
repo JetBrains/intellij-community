@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -104,7 +104,7 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
       @Override
       public Void compute() {
         PsiShortNamesCache.getInstance(project).processAllClassNames(new Processor<String>() {
-          int i = 0;
+          int i;
 
           @Override
           public boolean process(String s) {

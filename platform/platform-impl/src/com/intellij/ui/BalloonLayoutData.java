@@ -15,9 +15,12 @@
  */
 package com.intellij.ui;
 
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import org.jetbrains.annotations.NotNull;
+
+import java.awt.*;
 
 /**
  * @author Alexander Lobas
@@ -28,6 +31,9 @@ public class BalloonLayoutData {
   public MergeInfo mergeData;
 
   public boolean showFullContent;
+
+  public boolean welcomeScreen;
+  public NotificationType type;
 
   public int height;
   public int twoLineHeight;
@@ -47,6 +53,11 @@ public class BalloonLayoutData {
   public BalloonLayoutConfiguration configuration;
 
   public Runnable lafHandler;
+
+  public long fadeoutTime;
+
+  public Color fillColor;
+  public Color borderColor;
 
   @NotNull
   public MergeInfo merge() {

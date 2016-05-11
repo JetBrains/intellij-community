@@ -66,32 +66,10 @@ public class DfaPsiUtil {
 
   @NotNull
   public static Nullness getElementNullability(@Nullable PsiType resultType, @Nullable PsiModifierListOwner owner) {
-    if (owner == null || resultType instanceof PsiPrimitiveType) {
-      return Nullness.UNKNOWN;
-    }
-
-    if (owner instanceof PsiEnumConstant || PsiUtil.isAnnotationMethod(owner)) {
-      return Nullness.NOT_NULL;
-    }
-    if (owner instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)owner;
-      if ("valueOf".equals(method.getName()) && method.hasModifierProperty(PsiModifier.STATIC)) {
-        PsiClass containingClass = method.getContainingClass();
-        if (containingClass != null && containingClass.isEnum()) {
-          return Nullness.NOT_NULL;
-        }
-      }
-    }
-
     if (resultType != null) {
-      NullableNotNullManager nnn = NullableNotNullManager.getInstance(owner.getProject());
       for (PsiAnnotation annotation : resultType.getAnnotations()) {
-        if (!annotation.isValid()) {
-          PsiUtilCore.ensureValid(owner);
-          PsiUtil.ensureValidType(resultType, owner + " of " + owner.getClass());
-          PsiUtilCore.ensureValid(annotation); //should fail
-        }
         String qualifiedName = annotation.getQualifiedName();
+        NullableNotNullManager nnn = NullableNotNullManager.getInstance(annotation.getProject());
         if (nnn.getNullables().contains(qualifiedName)) {
           return Nullness.NULLABLE;
         }
@@ -99,6 +77,17 @@ public class DfaPsiUtil {
           return Nullness.NOT_NULL;
         }
       }
+    }
+
+    if (owner == null || resultType instanceof PsiPrimitiveType) {
+      return Nullness.UNKNOWN;
+    }
+
+    if (owner instanceof PsiEnumConstant || PsiUtil.isAnnotationMethod(owner)) {
+      return Nullness.NOT_NULL;
+    }
+    if (owner instanceof PsiMethod && isEnumValueOf((PsiMethod)owner)) {
+      return Nullness.NOT_NULL;
     }
 
     if (NullableNotNullManager.isNullable(owner)) {
@@ -109,6 +98,19 @@ public class DfaPsiUtil {
     }
 
     return Nullness.UNKNOWN;
+  }
+
+  private static boolean isEnumValueOf(PsiMethod method) {
+    if ("valueOf".equals(method.getName()) && method.hasModifierProperty(PsiModifier.STATIC)) {
+      PsiClass containingClass = method.getContainingClass();
+      if (containingClass != null && containingClass.isEnum()) {
+        PsiParameter[] parameters = method.getParameterList().getParameters();
+        if (parameters.length == 1 && parameters[0].getType().equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   public static boolean isInitializedNotNull(PsiField field) {

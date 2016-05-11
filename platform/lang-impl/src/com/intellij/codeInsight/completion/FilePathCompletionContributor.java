@@ -241,14 +241,18 @@ public class FilePathCompletionContributor extends CompletionContributor {
       final PsiMultiReference multiReference = (PsiMultiReference)original;
       for (PsiReference reference : multiReference.getReferences()) {
         if (reference instanceof FileReference) {
-          return Pair.create((FileReference) reference, false);
+          if (((FileReference)reference).getFileReferenceSet().supportsExtendedCompletion()) {
+            return Pair.create((FileReference)reference, false);
+          }
         }
       }
     }
     else if (original instanceof FileReferenceOwner) {
       final PsiFileReference fileReference = ((FileReferenceOwner)original).getLastFileReference();
       if (fileReference instanceof FileReference) {
-        return Pair.create((FileReference) fileReference, true);
+        if (((FileReference)fileReference).getFileReferenceSet().supportsExtendedCompletion()) {
+          return Pair.create((FileReference) fileReference, true);
+        }
       }
     }
 

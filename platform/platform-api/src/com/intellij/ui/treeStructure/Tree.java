@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.ui.treeStructure;
 
-import com.intellij.Patches;
 import com.intellij.ide.util.treeView.*;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.Queryable;
@@ -77,13 +76,12 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     myExpandableItemsHandler = ExpandableItemsHandlerFactory.install(this);
 
     addMouseListener(new MyMouseListener());
-    if (Patches.SUN_BUG_ID_4893787) {
-      addFocusListener(new MyFocusListener());
-    }
+    addFocusListener(new MyFocusListener());
 
     setCellRenderer(new NodeRenderer());
 
     setSelectionModel(mySelectionModel);
+    setOpaque(false);
   }
 
   @Override
@@ -95,6 +93,11 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
       }
     }
     super.setUI(actualUI);
+  }
+
+  @Override
+  protected Graphics getComponentGraphics(Graphics graphics) {
+    return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
   }
 
   public boolean isEmpty() {
@@ -682,10 +685,10 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
         e.consume();
       }
     }
-    /**
-     * Returns true if <code>mouseX</code> falls
-     * in the area of row that is used to expand/collapse the node and
-     * the node at <code>row</code> does not represent a leaf.
+    /*
+      Returns true if <code>mouseX</code> falls
+      in the area of row that is used to expand/collapse the node and
+      the node at <code>row</code> does not represent a leaf.
      */
   }
 

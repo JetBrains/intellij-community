@@ -24,7 +24,7 @@ import com.intellij.util.indexing.FileContent;
  * @author yole
  */
 public class TodoIndexers extends FileTypeExtension<DataIndexer<TodoIndexEntry, Integer, FileContent>> {
-  public static TodoIndexers INSTANCE = new TodoIndexers();
+  public static final TodoIndexers INSTANCE = new TodoIndexers();
 
   private TodoIndexers() {
     super("com.intellij.todoIndexer");

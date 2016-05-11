@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -116,13 +116,6 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
     CLASS_OR_PACKAGE_FQ,
     STATIC_MEMBER_FQ,
     CLASS_IN_QUALIFIED_NEW
-  }
-
-  @Override
-  @Nullable
-  public PsiElement resolve() {
-    ResolveResult[] results = TypeInferenceHelper.getCurrentContext().multiResolve(this, false, RESOLVER);
-    return results.length == 1 ? results[0].getElement() : null;
   }
 
   public ReferenceKind getKind(boolean forCompletion) {
@@ -518,12 +511,6 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
   }
 
   private static final OurResolver RESOLVER = new OurResolver();
-
-  @Override
-  public GroovyResolveResult advancedResolve() {
-    ResolveResult[] results = TypeInferenceHelper.getCurrentContext().multiResolve(this, false, RESOLVER);
-    return results.length == 1 ? (GroovyResolveResult)results[0] : GroovyResolveResult.EMPTY_RESULT;
-  }
 
   @Override
   @NotNull

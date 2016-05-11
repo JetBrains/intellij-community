@@ -339,7 +339,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
           LOG.error(t);
         }
         finally {
-          //ReflectionUtil.resetThreadLocals();
           Thread.interrupted(); // reset interrupted status
           assert !isReadAccessAllowed(): describe(Thread.currentThread());
         }
@@ -364,7 +363,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
           LOG.error(t);
         }
         finally {
-          //ReflectionUtil.resetThreadLocals();
           Thread.interrupted(); // reset interrupted status
           assert !isReadAccessAllowed() : describe(Thread.currentThread());
         }
@@ -454,10 +452,9 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   @Override
-  protected void createComponents(@Nullable final ProgressIndicator indicator) {
+  protected void createComponents(@Nullable ProgressIndicator indicator) {
     // we cannot wrap "init()" call because ProgressManager instance could be created only after component registration (our "componentsRegistered" callback)
     Runnable task = () -> ApplicationImpl.super.createComponents(indicator);
-
 
     if (indicator == null) {
       // no splash, no need to to use progress manager
@@ -557,7 +554,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
                                                      final JComponent parentComponent,
                                                      final String cancelText) {
     assertIsDispatchThread();
-    boolean writeAccessAllowed = isInsideWriteActionEDTOnly();
+    boolean writeAccessAllowed = isWriteAccessAllowed();
     if (writeAccessAllowed // Disallow running process in separate thread from under write action.
                            // The thread will deadlock trying to get read action otherwise.
         || isHeadlessEnvironment() && !isUnitTestMode()
@@ -614,7 +611,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
                                                                  final String cancelText, final JComponent parentComponent,
                                                                  @NotNull final Runnable process) {
     assertIsDispatchThread();
-    boolean writeAccessAllowed = isInsideWriteActionEDTOnly();
+    boolean writeAccessAllowed = isWriteAccessAllowed();
     if (writeAccessAllowed // Disallow running process in separate thread from under write action.
                            // The thread will deadlock trying to get read action otherwise.
       ) {
@@ -965,12 +962,12 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   @Override
-  public boolean hasWriteAction(@Nullable Class<?> actionClass) {
+  public boolean hasWriteAction(@NotNull Class<?> actionClass) {
     assertIsDispatchThread();
 
     for (int i = myWriteActionsStack.size() - 1; i >= 0; i--) {
       Class action = myWriteActionsStack.get(i);
-      if (actionClass == action || action != null && actionClass != null && ReflectionUtil.isAssignable(actionClass, action)) return true;
+      if (actionClass == action || ReflectionUtil.isAssignable(actionClass, action)) return true;
     }
     return false;
   }
@@ -1102,12 +1099,11 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private final boolean gatherWriteActionStatistics;
   private final PausesStat writePauses;
 
-  private void startWrite(/*@NotNull*/ Class clazz) {
+  private void startWrite(@NotNull Class clazz) {
     assertIsDispatchThread("Write access is allowed from event dispatch thread only");
     HeavyProcessLatch.INSTANCE.stopThreadPrioritizing(); // let non-cancellable read actions complete faster, if present
-    if (!isDisposed() && !isDisposeInProgress() && !((TransactionGuardImpl)TransactionGuard.getInstance()).isWriteActionAllowed()) {
-      // please assign exceptions here to Peter
-      LOG.error("Write access is allowed from model transactions only, see TransactionGuard documentation for details");
+    if (!isDisposed() && !isDisposeInProgress()) {
+      ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
     }
     boolean writeActionPending = myWriteActionPending;
     if (gatherWriteActionStatistics && myWriteActionsStack.isEmpty() && !writeActionPending) {
@@ -1122,8 +1118,10 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
         assertNoPsiLock();
         if (!myLock.tryWriteLock()) {
           Future<?> reportSlowWrite = ourDumpThreadsOnLongWriteActionWaiting > 0 ?
-            JobScheduler.getScheduler().scheduleWithFixedDelay(() -> PerformanceWatcher.getInstance().dumpThreads("waiting", true),
-            ourDumpThreadsOnLongWriteActionWaiting, ourDumpThreadsOnLongWriteActionWaiting, TimeUnit.MILLISECONDS) : null;
+                                      JobScheduler.getScheduler()
+                                        .scheduleWithFixedDelay(() -> PerformanceWatcher.getInstance().dumpThreads("waiting", true),
+                                                                ourDumpThreadsOnLongWriteActionWaiting,
+                                                                ourDumpThreadsOnLongWriteActionWaiting, TimeUnit.MILLISECONDS) : null;
           myLock.writeLock();
           if (reportSlowWrite != null) {
             reportSlowWrite.cancel(false);
@@ -1139,16 +1137,17 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     fireWriteActionStarted(clazz);
   }
 
-  private void endWrite(/*@NotNull*/ Class clazz) {
+  private void endWrite(@NotNull Class clazz) {
     try {
       fireWriteActionFinished(clazz);
-      // after fireWriteActionFinished() in case somebody starts write action there
+      // fire listeners before popping stack because if somebody starts write action in a listener,
+      // there is a danger of unlocking the write lock before other listeners have been run (since write lock became non-reentrant).
+    }
+    finally {
       myWriteActionsStack.pop();
       if (gatherWriteActionStatistics && myWriteActionsStack.isEmpty() && !myWriteActionPending) {
         writePauses.finished("write action ("+clazz+")");
       }
-    }
-    finally {
       if (myWriteActionsStack.isEmpty()) {
         myLock.writeUnlock();
       }
@@ -1157,17 +1156,14 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @NotNull
   @Override
-  public AccessToken acquireWriteActionLock(/*@NotNull */Class clazz) {
-    if (clazz == null) {
-      LOG.warn("Parameter must be not null", new Throwable());
-    }
+  public AccessToken acquireWriteActionLock(@NotNull Class clazz) {
     return new WriteAccessToken(clazz);
   }
 
   private class WriteAccessToken extends AccessToken {
-    private final Class clazz;
+    @NotNull private final Class clazz;
 
-    public WriteAccessToken(/*@NotNull*/ Class clazz) {
+    public WriteAccessToken(@NotNull Class clazz) {
       this.clazz = clazz;
       startWrite(clazz);
       markThreadNameInStackTrace();
@@ -1250,11 +1246,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     return isDispatchThread() && myLock.isWriteLocked();
   }
 
-  // cheaper version of isWriteAccessAllowed(). must be called from EDT
-  private boolean isInsideWriteActionEDTOnly() {
-    return !myWriteActionsStack.isEmpty();
-  }
-
   @Override
   public boolean isWriteActionInProgress() {
     return myLock.isWriteLocked();
@@ -1288,15 +1279,15 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     myDispatcher.getMulticaster().applicationExiting();
   }
 
-  private void fireBeforeWriteActionStart(Class action) {
+  private void fireBeforeWriteActionStart(@NotNull Class action) {
     myDispatcher.getMulticaster().beforeWriteActionStart(action);
   }
 
-  private void fireWriteActionStarted(Class action) {
+  private void fireWriteActionStarted(@NotNull Class action) {
     myDispatcher.getMulticaster().writeActionStarted(action);
   }
 
-  private void fireWriteActionFinished(Class action) {
+  private void fireWriteActionFinished(@NotNull Class action) {
     myDispatcher.getMulticaster().writeActionFinished(action);
   }
 

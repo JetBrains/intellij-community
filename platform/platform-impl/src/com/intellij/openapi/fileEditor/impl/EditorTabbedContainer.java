@@ -57,6 +57,7 @@ import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.util.BitUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.AwtVisitor;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TimedDeadzone;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -206,7 +207,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
 
     String[] ids = mgr.getToolWindowIds();
 
-    Insets border = new Insets(0, 0, 0, 0);
+    Insets border = JBUI.emptyInsets();
 
     UISettings uiSettings = UISettings.getInstance();
 
@@ -255,7 +256,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     TabInfo toSelect = indexToSelect >= 0 && indexToSelect < myTabs.getTabCount() ? myTabs.getTabAt(indexToSelect) : null;
     final TabInfo info = myTabs.getTabAt(componentIndex);
     // removing hidden tab happens on end of drag-out, we've already selected the correct tab for this case in dragOutStarted
-    if (info.isHidden()) {
+    if (info.isHidden() || !myProject.isOpen()) {
       toSelect = null;
     }
     final ActionCallback callback = myTabs.removeTab(info, toSelect, transferFocus);
@@ -553,7 +554,9 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
         final TabInfo info = myTabs.findInfo(e);
         if (info != null && info.getObject() != null) {
           final VirtualFile vFile = (VirtualFile)info.getObject();
-          ShowFilePathAction.show(vFile, e);
+          if (vFile != null) {
+            ShowFilePathAction.show(vFile, e);
+          }
         }
       }
     }
@@ -787,7 +790,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
 
     @Override
     public Insets getBorderInsets(Component component) {
-      return new Insets(0, 0, 0, 0);
+      return JBUI.emptyInsets();
     }
 
     @Override

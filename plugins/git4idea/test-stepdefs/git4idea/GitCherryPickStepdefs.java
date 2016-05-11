@@ -46,16 +46,12 @@ import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
 
-/**
- * @author Kirill Likhodedov
- */
-
 public class GitCherryPickStepdefs {
 
   @Given("^(enabled|disabled) auto-commit in the settings$")
   public void auto_commit_in_the_settings(String state) {
     boolean enabled = state.equals("enabled");
-    myPlatformFacade.getSettings(myProject).setAutoCommitOnCherryPick(enabled);
+    mySettings.setAutoCommitOnCherryPick(enabled);
   }
 
   @When("^I cherry-pick the commit (\\w+)$")
@@ -240,7 +236,7 @@ public class GitCherryPickStepdefs {
         return virtualCommits.getRealCommit(virtualHash).getHash();
       }
     }), myProjectDir);
-    new GitCherryPicker(myProject, myGit, myPlatformFacade).cherryPick(commits);
+    new GitCherryPicker(myProject, myGit).cherryPick(commits);
   }
 
   private static List<VcsFullCommitDetails> loadDetails(List<String> hashes, @NotNull VirtualFile root) throws VcsException {

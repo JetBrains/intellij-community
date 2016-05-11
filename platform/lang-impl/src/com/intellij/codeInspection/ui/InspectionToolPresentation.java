@@ -19,10 +19,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.ProblemDescriptionsProcessor;
 import com.intellij.codeInspection.QuickFix;
-import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
-import com.intellij.codeInspection.ex.HTMLComposerImpl;
-import com.intellij.codeInspection.ex.InspectionRVContentProvider;
-import com.intellij.codeInspection.ex.QuickFixAction;
+import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefModule;
 import com.intellij.openapi.vcs.FileStatus;
@@ -34,8 +31,13 @@ import javax.swing.*;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
 
 public interface InspectionToolPresentation extends ProblemDescriptionsProcessor {
+
+  @NotNull
+  InspectionToolWrapper getToolWrapper();
+
   @NotNull
   InspectionNode createToolNode(@NotNull GlobalInspectionContextImpl globalInspectionContext,
                                 @NotNull InspectionNode node,
@@ -49,7 +51,6 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
   @NotNull
   Map<String, Set<RefEntity>> getContent();
 
-  Map<String, Set<RefEntity>> getOldContent();
   void ignoreCurrentElement(RefEntity refEntity);
   void amnesty(RefEntity refEntity);
   void cleanup();
@@ -64,7 +65,7 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
   IntentionAction findQuickFixes(@NotNull CommonProblemDescriptor descriptor, final String hint);
   @NotNull
   HTMLComposerImpl getComposer();
-  void exportResults(@NotNull final Element parentNode, @NotNull RefEntity refEntity, Set<CommonProblemDescriptor> excludedDescriptions);
+  void exportResults(@NotNull final Element parentNode, @NotNull RefEntity refEntity, Predicate<CommonProblemDescriptor> isDescriptorExcluded);
   @NotNull
   Set<RefModule> getModuleProblems();
   @Nullable
@@ -75,9 +76,6 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
   Collection<CommonProblemDescriptor> getProblemDescriptors();
   @NotNull
   FileStatus getProblemStatus(@NotNull CommonProblemDescriptor descriptor);
-  boolean isOldProblemsIncluded();
-  @Nullable
-  Map<RefEntity, CommonProblemDescriptor[]> getOldProblemElements();
   boolean isProblemResolved(RefEntity refEntity, CommonProblemDescriptor descriptor);
   void ignoreCurrentElementProblem(RefEntity refEntity, CommonProblemDescriptor descriptor);
   void addProblemElement(RefEntity refElement, boolean filterSuppressed, @NotNull CommonProblemDescriptor... descriptions);
@@ -91,10 +89,18 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
                                       @NotNull Map<RefEntity, CommonProblemDescriptor[]> descriptorMap,
                                       @Nullable CommonProblemDescriptor[] allowedDescriptors);
   void exportResults(@NotNull final Element parentNode,
-                     @NotNull final Set<RefEntity> excludedEntities,
-                     @NotNull final Set<CommonProblemDescriptor> excludedDescriptors);
+                     @NotNull final Predicate<RefEntity> isEntityExcluded,
+                     @NotNull final Predicate<CommonProblemDescriptor> isProblemExcluded);
 
   default JComponent getCustomPreviewPanel(RefEntity entity) {
     return null;
   };
+
+  /**
+   * see {@link com.intellij.codeInspection.deadCode.DummyEntryPointsPresentation}
+   * @return false only if contained problem elements contain real highlighted problem in code.
+   */
+  default boolean isDummy() {
+    return false;
+  }
 }

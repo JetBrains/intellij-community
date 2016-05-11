@@ -1,33 +1,40 @@
 package com.jetbrains.edu.coursecreator;
 
-import com.intellij.openapi.components.ProjectComponent;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.event.EditorFactoryEvent;
-import com.intellij.openapi.editor.impl.EditorFactoryImpl;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorImpl;
+import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.jetbrains.edu.learning.StudyProjectComponent;
+import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import org.jetbrains.annotations.NotNull;
 
-public class CCProjectComponent implements ProjectComponent {
-  private final Project myProject;
-  private CCFileDeletedListener myListener;
+import java.io.File;
 
-  public CCProjectComponent(Project project) {
+public class CCProjectComponent extends AbstractProjectComponent {
+  private final CCVirtualFileListener myTaskFileLifeListener = new CCVirtualFileListener();
+  private final Project myProject;
+
+  protected CCProjectComponent(Project project) {
+    super(project);
     myProject = project;
   }
 
   public void initComponent() {
+    VirtualFileManager.getInstance().addVirtualFileListener(myTaskFileLifeListener);
   }
 
-  public void disposeComponent() {
+  public void migrateIfNeeded() {
+    Course studyCourse = StudyTaskManager.getInstance(myProject).getCourse();
+    Course course = CCProjectService.getInstance(myProject).getCourse();
+    if (studyCourse == null && course != null) {
+      course.setCourseMode(CCUtils.COURSE_MODE);
+      File coursesDir = new File(PathManager.getConfigPath(), "courses");
+      File courseDir = new File(coursesDir, course.getName() + "-" + myProject.getName());
+      course.setCourseDirectory(courseDir.getPath());
+      StudyTaskManager.getInstance(myProject).setCourse(course);
+      StudyProjectComponent.getInstance(myProject).registerStudyToolWindow(course);
+    }
   }
 
   @NotNull
@@ -36,36 +43,11 @@ public class CCProjectComponent implements ProjectComponent {
   }
 
   public void projectOpened() {
-    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new Runnable() {
-      @Override
-      public void run() {
-        final Course course = CCProjectService.getInstance(myProject).getCourse();
-        if (course != null) {
-          course.initCourse(true);
-          myListener = new CCFileDeletedListener(myProject);
-          VirtualFileManager.getInstance().addVirtualFileListener(myListener);
-          final CCEditorFactoryListener editorFactoryListener = new CCEditorFactoryListener();
-          EditorFactory.getInstance().addEditorFactoryListener(editorFactoryListener, myProject);
-          VirtualFile[] files = FileEditorManager.getInstance(myProject).getOpenFiles();
-          for (VirtualFile file : files) {
-            if (CCProjectService.getInstance(myProject).isTaskFile(file)) {
-              FileEditorManager.getInstance(myProject).closeFile(file);
-              continue;
-            }
-            FileEditor fileEditor = FileEditorManager.getInstance(myProject).getSelectedEditor(file);
-            if (fileEditor instanceof PsiAwareTextEditorImpl) {
-              Editor editor = ((PsiAwareTextEditorImpl)fileEditor).getEditor();
-              editorFactoryListener.editorCreated(new EditorFactoryEvent(new EditorFactoryImpl(ProjectManager.getInstance()), editor));
-            }
-          }
-        }
-      }
-    });
+    migrateIfNeeded();
+    VirtualFileManager.getInstance().addVirtualFileListener(myTaskFileLifeListener);
   }
 
   public void projectClosed() {
-    if (myListener != null) {
-      VirtualFileManager.getInstance().removeVirtualFileListener(myListener);
-    }
+    VirtualFileManager.getInstance().removeVirtualFileListener(myTaskFileLifeListener);
   }
 }

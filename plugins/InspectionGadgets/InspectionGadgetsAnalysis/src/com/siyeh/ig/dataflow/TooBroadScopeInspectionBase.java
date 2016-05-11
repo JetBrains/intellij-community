@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.dataflow;
 
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -28,6 +29,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.intellij.psi.util.FileTypeUtils;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -75,6 +77,7 @@ public class TooBroadScopeInspectionBase extends BaseInspection {
   }
 
   protected boolean isMoveable(PsiExpression expression) {
+    expression = ParenthesesUtils.stripParentheses(expression);
     if (expression == null) {
       return true;
     }
@@ -100,9 +103,13 @@ public class TooBroadScopeInspectionBase extends BaseInspection {
           result &= isMoveable(initializerExpression);
         }
       }
+      final PsiType type = newExpression.getType();
+      if (type == null) {
+        return false;
+      }
       else if (!m_allowConstructorAsInitializer) {
-        final PsiType type = newExpression.getType();
-        if (!ClassUtils.isImmutable(type)) {
+        // constructors located in java.* packages probably have no non-local side effects
+        if (!ClassUtils.isImmutable(type) && !type.getCanonicalText().startsWith("java.")) {
           return false;
         }
       }
@@ -119,13 +126,25 @@ public class TooBroadScopeInspectionBase extends BaseInspection {
     if (expression instanceof PsiReferenceExpression) {
       final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;
       final PsiElement target = referenceExpression.resolve();
-      if (!(target instanceof PsiField)) {
+      if (!(target instanceof PsiVariable)) {
         return false;
       }
-      final PsiField field = (PsiField)target;
-      if (ExpressionUtils.isConstant(field)) {
+      final PsiVariable variable = (PsiVariable)target;
+      if (variable.hasModifierProperty(PsiModifier.FINAL)) {
         return true;
       }
+      final PsiElement context = PsiUtil.getVariableCodeBlock(variable, referenceExpression);
+      return context != null && !(variable instanceof PsiField) &&
+             HighlightControlFlowUtil.isEffectivelyFinal(variable, context, referenceExpression);
+    }
+    if (expression instanceof PsiPolyadicExpression) {
+      final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
+      for (PsiExpression operand : polyadicExpression.getOperands()) {
+        if (!isMoveable(operand)) {
+          return false;
+        }
+      }
+      return true;
     }
     return false;
   }

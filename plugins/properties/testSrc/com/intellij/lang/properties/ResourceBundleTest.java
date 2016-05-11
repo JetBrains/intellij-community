@@ -76,4 +76,9 @@ public class ResourceBundleTest extends LightPlatformCodeInsightFixtureTestCase 
 
     assertEquals(fileNameToCheckAfter, toCheck.getName());
   }
+
+  @Override
+  protected boolean isWriteActionRequired() {
+    return false;
+  }
 }

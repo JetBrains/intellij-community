@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -173,12 +173,6 @@ public class GrAnonymousClassDefinitionImpl extends GrTypeDefinitionImpl impleme
     return TypesUtil.createTypeByFQClassName(className, this);
   }
 
-  @NotNull
-  @Override
-  public String[] getSuperClassNames() {
-    return new String[]{getBaseClassReferenceGroovy().getClassNameText()};
-  }
-
   @Override
   public PsiClass getContainingClass() {
     return null;
@@ -186,7 +180,7 @@ public class GrAnonymousClassDefinitionImpl extends GrTypeDefinitionImpl impleme
 
   @NotNull
   @Override
-  public PsiClassType[] getExtendsListTypes() {
+  public PsiClassType[] getExtendsListTypes(boolean includeSynthetic) {
     final PsiClass baseClass = getBaseClass();
 
     if (baseClass != null) {
@@ -202,7 +196,7 @@ public class GrAnonymousClassDefinitionImpl extends GrTypeDefinitionImpl impleme
         }
       }
     }
-    return super.getExtendsListTypes();
+    return super.getExtendsListTypes(includeSynthetic);
   }
 
   @Override
@@ -217,7 +211,7 @@ public class GrAnonymousClassDefinitionImpl extends GrTypeDefinitionImpl impleme
 
   @NotNull
   @Override
-  public PsiClassType[] getImplementsListTypes() {
+  public PsiClassType[] getImplementsListTypes(boolean includeSynthetic) {
     final PsiClass baseClass = getBaseClass();
     if (baseClass != null && baseClass.isInterface()) {
       return new PsiClassType[]{getBaseClassType(), createTypeByName(GroovyCommonClassNames.DEFAULT_BASE_CLASS_NAME)};

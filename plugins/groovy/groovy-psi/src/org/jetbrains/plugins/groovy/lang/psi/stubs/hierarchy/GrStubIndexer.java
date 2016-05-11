@@ -91,8 +91,9 @@ public class GrStubIndexer {
     ArrayList<String> superList = new ArrayList<String>();
     ArrayList<Decl> innerList = new ArrayList<Decl>();
     if (classStub.isAnonymous()) {
-      for (String s : classStub.getSuperClassNames()) {
-        superList.add(id(s, true, namesCache));
+      String name = classStub.getBaseClassName();
+      if (name != null) {
+        superList.add(id(name, true, namesCache));
       }
     }
 

@@ -568,9 +568,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     @NotNull private final PsiSearchRequest request;
     @NotNull private Processor<PsiReference> refProcessor;
 
-    private RequestWithProcessor(@NotNull PsiSearchRequest first, @NotNull Processor<PsiReference> second) {
-      request = first;
-      refProcessor = second;
+    private RequestWithProcessor(@NotNull PsiSearchRequest request, @NotNull Processor<PsiReference> processor) {
+      this.request = request;
+      refProcessor = processor;
     }
 
     private boolean uniteWith(@NotNull final RequestWithProcessor another) {

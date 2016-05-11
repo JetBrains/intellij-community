@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -212,8 +212,8 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
     });
     myRunnerPanel = new JPanel(new GridBagLayout());
     myRunnerPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
-    myRunnerPanel.add(new JLabel("Choose coverage runner:"), new GridBagConstraints(0, 0, 1, 1, 0, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0,0,0,10), 0, 0));
-    myRunnerPanel.add(myCoverageRunnerCb, new GridBagConstraints(1, 0, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0,0,0,0), 0, 0));
+    myRunnerPanel.add(new JLabel("Choose coverage runner:"), new GridBagConstraints(0, 0, 1, 1, 0, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.insetsRight(10), 0, 0));
+    myRunnerPanel.add(myCoverageRunnerCb, new GridBagConstraints(1, 0, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.emptyInsets(), 0, 0));
     final JPanel cPanel = new JPanel(new VerticalFlowLayout());
 
     mySamplingRb = new JRadioButton("Sampling");
@@ -242,7 +242,7 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
 
     final GridBagConstraints gc = new GridBagConstraints(0, GridBagConstraints.RELATIVE,
                                                          1, 1, 1, 0,
-                                                         GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
+                                                         GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
                                                          JBUI.emptyInsets(), 0, 0);
     result.add(myRunnerPanel, gc);
 
@@ -258,6 +258,8 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
     myTrackTestSourcesCb = new JCheckBox("Enable coverage in test folders");
     panel.add(myTrackTestSourcesCb, bagConstraints);
 
+    gc.weighty = 1;
+    gc.fill = GridBagConstraints.BOTH;
     result.add(panel, gc);
 
     myCoverageNotSupportedLabel = new JLabel(CodeInsightBundle.message("code.coverage.is.not.supported"));

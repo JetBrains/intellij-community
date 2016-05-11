@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,14 @@
 package com.intellij.refactoring.introduceField;
 
 import com.intellij.codeInsight.TestFrameworks;
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduce.inplace.KeyboardComboSwitcher;
 import com.intellij.refactoring.ui.TypeSelectorManager;
+import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -127,7 +128,7 @@ public class IntroduceFieldPopupPanel extends IntroduceFieldCentralPanel {
    JPanel groupPanel = new JPanel(new GridBagLayout());
     final GridBagConstraints gridBagConstraints =
       new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
-                             new Insets(0, 0, 0, 0), 0, 0);
+                             JBUI.emptyInsets(), 0, 0);
 
     myInitialisersPlaceModel = new DefaultComboBoxModel();
     myInitialisersPlaceModel.addElement(BaseExpressionToFieldHandler.InitializationPlace.IN_CURRENT_METHOD);
@@ -249,7 +250,8 @@ public class IntroduceFieldPopupPanel extends IntroduceFieldCentralPanel {
   @Override
   protected JPanel appendCheckboxes(ItemListener itemListener) {
     final JPanel panel = new JPanel(new GridBagLayout());
-    appendOccurrences(itemListener, new GridBagConstraints(0,0,1,1,0,0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0,0,0,0), 0,0), panel);
+    appendOccurrences(itemListener, new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
+                                                           JBUI.emptyInsets(), 0, 0), panel);
     return panel;
   }
 
@@ -257,7 +259,7 @@ public class IntroduceFieldPopupPanel extends IntroduceFieldCentralPanel {
     final JPanel panel = new JPanel(new GridBagLayout());
     final GridBagConstraints constraints =
       new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
-                             new Insets(0, 0, 0, 0), 0, 0);
+                             JBUI.emptyInsets(), 0, 0);
     panel.add(initializerPlacePanel, constraints);
     constraints.gridy++;
     panel.add(checkboxPanel, constraints);

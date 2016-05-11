@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ class GroovyLightProjectDescriptor extends DefaultLightProjectDescriptor {
   public static final GroovyLightProjectDescriptor GROOVY_2_1 = new GroovyLightProjectDescriptor(mockGroovy2_1LibraryName)
   public static final GroovyLightProjectDescriptor GROOVY_2_2 = new GroovyLightProjectDescriptor(mockGroovy2_2LibraryName)
   public static final GroovyLightProjectDescriptor GROOVY_2_3 = new GroovyLightProjectDescriptor(mockGroovy2_3LibraryName)
-  public static final GroovyLightProjectDescriptor GROOVY_2_3_9 = new GroovyLightProjectDescriptor(getBundledGroovyJar() as String)
+  public static final GroovyLightProjectDescriptor GROOVY_LATEST = new GroovyLightProjectDescriptor(bundledGroovyJar as String)
 
   private final String myLibPath
 

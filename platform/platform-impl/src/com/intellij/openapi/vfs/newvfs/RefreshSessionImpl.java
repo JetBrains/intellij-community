@@ -52,11 +52,11 @@ public class RefreshSessionImpl extends RefreshSession {
   private final Throwable myStartTrace;
   private final Semaphore mySemaphore = new Semaphore();
 
-  private List<VirtualFile> myWorkQueue = new ArrayList<VirtualFile>();
-  private List<VFileEvent> myEvents = new ArrayList<VFileEvent>();
+  private List<VirtualFile> myWorkQueue = new ArrayList<>();
+  private List<VFileEvent> myEvents = new ArrayList<>();
   private volatile boolean iHaveEventsToFire;
-  private volatile RefreshWorker myWorker = null;
-  private volatile boolean myCancelled = false;
+  private volatile RefreshWorker myWorker;
+  private volatile boolean myCancelled;
   private final TransactionId myTransaction;
 
   public RefreshSessionImpl(boolean async, boolean recursive, @Nullable Runnable finishRunnable, @NotNull ModalityState modalityState) {
@@ -117,7 +117,7 @@ public class RefreshSessionImpl extends RefreshSession {
 
   public void scan() {
     List<VirtualFile> workQueue = myWorkQueue;
-    myWorkQueue = new ArrayList<VirtualFile>();
+    myWorkQueue = new ArrayList<>();
     boolean haveEventsToFire = myFinishRunnable != null || !myEvents.isEmpty();
 
     if (!workQueue.isEmpty()) {
@@ -221,9 +221,9 @@ public class RefreshSessionImpl extends RefreshSession {
   }
 
   private List<VFileEvent> mergeEventsAndReset() {
-    Set<VFileEvent> mergedEvents = new LinkedHashSet<VFileEvent>(myEvents);
-    List<VFileEvent> events = new ArrayList<VFileEvent>(mergedEvents);
-    myEvents = new ArrayList<VFileEvent>();
+    Set<VFileEvent> mergedEvents = new LinkedHashSet<>(myEvents);
+    List<VFileEvent> events = new ArrayList<>(mergedEvents);
+    myEvents = new ArrayList<>();
     return events;
   }
 

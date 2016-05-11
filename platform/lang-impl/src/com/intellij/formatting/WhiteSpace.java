@@ -16,6 +16,7 @@
 
 package com.intellij.formatting;
 
+import com.intellij.formatting.engine.BlockRangesMap;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -45,7 +46,7 @@ import java.util.ArrayList;
  * <p/>
  * Not thread-safe.
  */
-class WhiteSpace {
+public class WhiteSpace {
 
   private static final char LINE_FEED = '\n';
 
@@ -392,16 +393,13 @@ class WhiteSpace {
   /**
    * Tries to ensure that number of line feeds managed by the current {@link WhiteSpace} is consistent to the settings
    * defined at the given spacing property.
-   *
-   * @param spaceProperty       space settings holder
-   * @param formatProcessor    format processor to use for space settings state refreshing
    */
-  public void arrangeLineFeeds(final SpacingImpl spaceProperty, final FormatProcessor formatProcessor) {
+  public void arrangeLineFeeds(final SpacingImpl spaceProperty, final BlockRangesMap helper) {
     performModification(new Runnable() {
       @Override
       public void run() {
         if (spaceProperty != null) {
-          spaceProperty.refresh(formatProcessor);
+          spaceProperty.refresh(helper);
 
           if (spaceProperty.getMinLineFeeds() >= 0 && getLineFeeds() < spaceProperty.getMinLineFeeds()) {
             setLineFeeds(spaceProperty.getMinLineFeeds());
@@ -541,11 +539,8 @@ class WhiteSpace {
    * <p/>
    * This method may be considered a shortcut for calling {@link #arrangeLineFeeds(SpacingImpl, FormatProcessor)} and
    * {@link #arrangeSpaces(SpacingImpl)}.
-   *
-   * @param spacing             spacing settings holder
-   * @param formatProcessor     format processor to use to refresh state of the given <code>'spacing'</code> object
    */
-  public void removeLineFeeds(final SpacingImpl spacing, final FormatProcessor formatProcessor) {
+  public void removeLineFeeds(final SpacingImpl spacing, final BlockRangesMap helper) {
     performModification(new Runnable() {
       @Override
       public void run() {
@@ -554,7 +549,7 @@ class WhiteSpace {
         myIndentSpaces = 0;
       }
     });
-    arrangeLineFeeds(spacing, formatProcessor);
+    arrangeLineFeeds(spacing, helper);
     arrangeSpaces(spacing);
   }
 

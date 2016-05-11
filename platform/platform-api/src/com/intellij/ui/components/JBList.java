@@ -103,6 +103,11 @@ public class JBList extends JList implements ComponentWithEmptyText, ComponentWi
   }
 
   @Override
+  protected Graphics getComponentGraphics(Graphics graphics) {
+    return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
+  }
+
+  @Override
   public void paint(Graphics g) {
     super.paint(g);
     if (myBusyIcon != null) {

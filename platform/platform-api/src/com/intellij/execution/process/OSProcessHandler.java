@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,22 +20,33 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.PtyCommandLine;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.nio.charset.Charset;
+import java.util.Set;
 import java.util.concurrent.Future;
 
 public class OSProcessHandler extends BaseOSProcessHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.process.OSProcessHandler");
 
+  public static Key<Set<File>> DELETE_FILES_ON_TERMINATION = Key.create("OSProcessHandler.FileToDelete");
+
+  private boolean myHasErrorStream = true;
   private boolean myHasPty;
   private boolean myDestroyRecursively = true;
+  private Set<File> myFilesToDelete = null;
 
   public OSProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
     this(commandLine.createProcess(), commandLine.getCommandLineString(), commandLine.getCharset());
+    myHasErrorStream = !commandLine.isRedirectErrorStream();
     setHasPty(commandLine instanceof PtyCommandLine);
+    myFilesToDelete = commandLine.getUserData(DELETE_FILES_ON_TERMINATION);
   }
 
   /** @deprecated use {@link #OSProcessHandler(Process, String)} or any other ctor (to be removed in IDEA 17) */
@@ -62,6 +73,21 @@ public class OSProcessHandler extends BaseOSProcessHandler {
   @Override
   protected Future<?> executeOnPooledThread(@NotNull Runnable task) {
     return super.executeOnPooledThread(task);  // to maintain binary compatibility?
+  }
+
+  @Override
+  protected void onOSProcessTerminated(int exitCode) {
+    super.onOSProcessTerminated(exitCode);
+    if (myFilesToDelete != null) {
+      for (File file : myFilesToDelete) {
+        FileUtil.delete(file);
+      }
+    }
+  }
+
+  @Override
+  protected boolean processHasSeparateErrorStream() {
+    return myHasErrorStream;
   }
 
   protected boolean shouldDestroyProcessRecursively() {
@@ -145,14 +171,9 @@ public class OSProcessHandler extends BaseOSProcessHandler {
     myHasPty = hasPty;
   }
 
+  @NotNull
   @Override
-  protected boolean useNonBlockingRead() {
-    if (myHasPty) {
-      // blocking read in case of pty based process
-      return false;
-    }
-    else {
-      return super.useNonBlockingRead();
-    }
+  protected BaseOutputReader.Options readerOptions() {
+    return myHasPty ? BaseOutputReader.Options.BLOCKING : super.readerOptions();  // blocking read in case of PTY-based process
   }
 }

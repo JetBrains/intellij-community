@@ -747,16 +747,16 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
       }.installOn(this);
 
       setFont(SystemInfo.isMac ? JBUI.Fonts.label(11) : JBUI.Fonts.label());
+      setIconOnTheRight(true);
     }
 
     @Override
     public void beforeUpdate() {
       clear();
-      setIcon(AllIcons.Ide.Statusbar_arrows);
-      setIconOnTheRight(true);
       String value = myPresentation.getSelectedValue();
       if (value != null) {
         append(value);
+        setIcon(AllIcons.Ide.Statusbar_arrows);
       }
     }
 

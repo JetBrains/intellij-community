@@ -21,9 +21,10 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 
-public class ToggleShowIndentLinesGloballyAction extends ToggleAction {
+public class ToggleShowIndentLinesGloballyAction extends ToggleAction implements DumbAware {
   @Override
   public boolean isSelected(AnActionEvent e) {
     return EditorSettingsExternalizable.getInstance().isIndentGuidesShown();

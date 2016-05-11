@@ -25,11 +25,16 @@ import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPsiElementPointer;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.io.File;
 
 /**
  * User: anna
@@ -59,19 +64,18 @@ public class FavoritesTreeNodeDescriptor extends PresentableNodeDescriptor<Abstr
     return getLocation(myElement, myProject);
   }
 
-  public static String getLocation(final AbstractTreeNode element, final Project project) {
+  public static String getLocation(final AbstractTreeNode element, @NotNull final Project project) {
     Object nodeElement = element.getValue();
     if (nodeElement instanceof SmartPsiElementPointer) {
       nodeElement = ((SmartPsiElementPointer)nodeElement).getElement();
     }
     if (nodeElement instanceof PsiElement) {
       if (nodeElement instanceof PsiDirectory) {
-        return ((PsiDirectory)nodeElement).getVirtualFile().getPresentableUrl();
+        return VfsUtilCore.getRelativeLocation(((PsiDirectory)nodeElement).getVirtualFile(), project.getBaseDir());
       }
       if (nodeElement instanceof PsiFile) {
         final PsiFile containingFile = (PsiFile)nodeElement;
-        final VirtualFile virtualFile = containingFile.getVirtualFile();
-        return virtualFile != null ? virtualFile.getPresentableUrl() : "";
+        return VfsUtilCore.getRelativeLocation(containingFile.getVirtualFile(), project.getBaseDir());
       }
     }
 
@@ -82,6 +86,9 @@ public class FavoritesTreeNodeDescriptor extends PresentableNodeDescriptor<Abstr
       final NamedLibraryElement namedLibraryElement = ((NamedLibraryElement)nodeElement);
       final Module module = namedLibraryElement.getModule();
       return (module != null ? module.getName() : "") + ":" + namedLibraryElement.getOrderEntry().getPresentableName();
+    }
+    if (nodeElement instanceof File) {
+      return VfsUtilCore.getRelativeLocation(VfsUtil.findFileByIoFile((File)nodeElement, false), project.getBaseDir());
     }
 
     final FavoriteNodeProvider[] nodeProviders = Extensions.getExtensions(FavoriteNodeProvider.EP_NAME, project);
@@ -106,9 +113,10 @@ public class FavoritesTreeNodeDescriptor extends PresentableNodeDescriptor<Abstr
     return myElement.hashCode();
   }
 
+  @Nullable
   public FavoritesTreeNodeDescriptor getFavoritesRoot() {
     FavoritesTreeNodeDescriptor descriptor = this;
-    while (descriptor.getParentDescriptor() instanceof FavoritesTreeNodeDescriptor) {
+    while (descriptor != null && descriptor.getParentDescriptor() instanceof FavoritesTreeNodeDescriptor) {
       FavoritesTreeNodeDescriptor parent = (FavoritesTreeNodeDescriptor)descriptor.getParentDescriptor();
       if (parent != null && parent.getParentDescriptor() == null) {
         return descriptor;

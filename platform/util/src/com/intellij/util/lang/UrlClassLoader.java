@@ -29,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -45,20 +46,31 @@ import java.util.List;
 public class UrlClassLoader extends ClassLoader {
   public static final String CLASS_EXTENSION = ".class";
 
-  public static final boolean PARALLEL_CAPABLE;
+  private static final boolean HAS_PARALLEL_LOADERS = SystemInfo.isJavaVersionAtLeast("1.7") && !SystemInfo.isIbmJvm;
+
   static {
-    boolean parallelCapable = false;
-    if (SystemInfo.isJavaVersionAtLeast("1.7") && !SystemInfo.isIbmJvm) {
+    if (HAS_PARALLEL_LOADERS) {
       try {
-        // todo Patches.USE_REFLECTION_TO_ACCESS_JDK7
+        //todo Patches.USE_REFLECTION_TO_ACCESS_JDK7
         Method registerAsParallelCapable = ClassLoader.class.getDeclaredMethod("registerAsParallelCapable");
         registerAsParallelCapable.setAccessible(true);
         registerAsParallelCapable.invoke(null);
-        parallelCapable = true;
       }
       catch (Exception ignored) { }
     }
-    PARALLEL_CAPABLE = parallelCapable;
+  }
+
+  public static boolean isRegisteredAsParallelCapable(@NotNull ClassLoader loader) {
+    if (!HAS_PARALLEL_LOADERS) return false;
+    try {
+      //todo Patches.USE_REFLECTION_TO_ACCESS_JDK7
+      Field parallelLockMap = ClassLoader.class.getDeclaredField("parallelLockMap");
+      parallelLockMap.setAccessible(true);
+      return parallelLockMap.get(loader) != null;
+    }
+    catch (Exception e) {
+      throw new AssertionError("Internal error: ClassLoader implementation has been altered");
+    }
   }
 
   private static final boolean ourClassPathIndexEnabled = Boolean.parseBoolean(System.getProperty("idea.classpath.index.enabled", "true"));
@@ -69,7 +81,7 @@ public class UrlClassLoader extends ClassLoader {
   }
 
   /**
-   * @see com.intellij.TestAll#getClassRoots()
+   * See com.intellij.TestAll#getClassRoots()
    */
   @SuppressWarnings("unused")
   public List<URL> getBaseUrls() {
@@ -127,9 +139,9 @@ public class UrlClassLoader extends ClassLoader {
       return this; 
     }
     
-    public Builder allowUnescaped() { myAcceptUnescaped = true; return this; }
+    public Builder allowUnescaped() { return allowUnescaped(true); }
     public Builder allowUnescaped(boolean acceptUnescaped) { myAcceptUnescaped = acceptUnescaped; return this; }
-    public Builder noPreload() { myPreload = false; return this; }
+    public Builder noPreload() { return preload(false); }
     public Builder preload(boolean preload) { myPreload = preload; return this; }
     public Builder allowBootstrapResources() { myAllowBootstrapResources = true; return this; }
 
@@ -161,7 +173,7 @@ public class UrlClassLoader extends ClassLoader {
     });
     myClassPath = createClassPath(builder);
     myAllowBootstrapResources = builder.myAllowBootstrapResources;
-    myClassNameInterner = PARALLEL_CAPABLE ? new WeakStringInterner() : null;
+    myClassNameInterner = isRegisteredAsParallelCapable(this) ? new WeakStringInterner() : null;
   }
 
   @NotNull
@@ -332,20 +344,22 @@ public class UrlClassLoader extends ClassLoader {
     else return "";
   }
 
+  // called by a parent class on Java 7+
+  @SuppressWarnings("unused")
   protected Object getClassLoadingLock(String className) {
     return myClassNameInterner != null ? myClassNameInterner.intern(new String(className)) : this;
   }
 
   /**
    * An interface for a pool to store internal class loader caches, that can be shared between several different class loaders,
-   * if they contain the same URLs in their classpaths.<p/>
+   * if they contain the same URLs in their class paths.<p/>
    * 
    * The implementation is subject to change so one shouldn't rely on it.
    * 
    * @see #createCachePool()
    * @see Builder#useCache(CachePool, CachingCondition) 
    */
-  public interface CachePool {}
+  public interface CachePool { }
 
   /**
    * A condition to customize the caching policy when using {@link CachePool}. This might be needed when a class loader is used on a directory
@@ -354,7 +368,6 @@ public class UrlClassLoader extends ClassLoader {
    * with several module outputs.
    */
   public interface CachingCondition {
-
     /**
      * @return whether the internal information should be cached for files in a specific classpath component URL: inside the directory or
      * a jar.
@@ -364,7 +377,7 @@ public class UrlClassLoader extends ClassLoader {
 
   /**
    * @return a new pool to be able to share internal class loader caches between several different class loaders, if they contain the same URLs
-   * in their classpaths.
+   * in their class paths.
    */
   @NotNull 
   public static CachePool createCachePool() {

@@ -151,7 +151,10 @@ public class LambdaRefactoringUtil {
             }
           }
           else if (qualifier != null &&
-                   !(qualifier instanceof PsiReferenceExpression && ((PsiReferenceExpression)qualifier).getQualifier() == null && PsiTreeUtil.isAncestor(containingClass, referenceExpression, false) ||
+
+                   !(qualifier instanceof PsiReferenceExpression && ((PsiReferenceExpression)qualifier).resolve() instanceof PsiClass &&
+                     ((PsiReferenceExpression)qualifier).getQualifier() == null && PsiTreeUtil.isAncestor(containingClass, referenceExpression, false) ||
+
                      qualifier instanceof PsiThisExpression && ((PsiThisExpression)qualifier).getQualifier() == null)) {
             buf.append(qualifier.getText()).append(".");
           }

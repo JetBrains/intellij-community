@@ -23,9 +23,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -36,7 +34,10 @@ import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.*;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.impl.PyReferenceExpressionImpl;
+import com.jetbrains.python.psi.impl.PyResolveResultRater;
+import com.jetbrains.python.psi.impl.ResolveResultList;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.NotNull;
@@ -191,6 +192,17 @@ public class ResolveImportUtil {
     if (qualifiedName == null || sourceFile == null) {
       return Collections.emptyList();
     }
+    final ResolveModuleParams params = new ResolveModuleParams(qualifiedName, sourceFile, importIsAbsolute, relativeLevel);
+    return PyUtil.getParameterizedCachedValue(sourceFile, params, ResolveImportUtil::calculateResolveModule);
+  }
+
+  @NotNull
+  private static List<PsiElement> calculateResolveModule(@NotNull ResolveModuleParams params) {
+    final QualifiedName qualifiedName = params.getName();
+    final int relativeLevel = params.getLevel();
+    final PsiFile sourceFile = params.getFile();
+    final boolean importIsAbsolute = params.isAbsolute();
+
     final String marker = qualifiedName + "#" + Integer.toString(relativeLevel);
     final Set<String> beingImported = ourBeingImported.get();
     if (beingImported.contains(marker)) {
@@ -209,43 +221,11 @@ public class ResolveImportUtil {
           visitor.withRelative(0);
         }
       }
-      List<PsiElement> results = visitor.resultsAsList();
-      if (results.isEmpty() && relativeLevel == 0 && !importIsAbsolute) {
-        results = resolveRelativeImportAsAbsolute(sourceFile, qualifiedName);
-      }
-      return results;
+      return visitor.resultsAsList();
     }
     finally {
       beingImported.remove(marker);
     }
-  }
-
-  /**
-   * Try to resolve relative import as absolute in roots, not in its parent directory.
-   *
-   * This may be useful for resolving to child skeleton modules located in other directories.
-   *
-   * @param foothold        foothold file.
-   * @param qualifiedName   relative import name.
-   * @return                list of resolved elements.
-   */
-  @NotNull
-  private static List<PsiElement> resolveRelativeImportAsAbsolute(@NotNull PsiFile foothold,
-                                                                  @NotNull QualifiedName qualifiedName) {
-    final VirtualFile virtualFile = foothold.getVirtualFile();
-    if (virtualFile == null) return Collections.emptyList();
-    final boolean inSource = FileIndexFacade.getInstance(foothold.getProject()).isInContent(virtualFile);
-    if (inSource) return Collections.emptyList();
-    final PsiDirectory containingDirectory = foothold.getContainingDirectory();
-    if (containingDirectory != null) {
-      final QualifiedName containingPath = QualifiedNameFinder.findCanonicalImportPath(containingDirectory, null);
-      if (containingPath != null && containingPath.getComponentCount() > 0) {
-        final QualifiedName absolutePath = containingPath.append(qualifiedName.toString());
-        final QualifiedNameResolver absoluteVisitor = new QualifiedNameResolverImpl(absolutePath).fromElement(foothold);
-        return absoluteVisitor.resultsAsList();
-      }
-    }
-    return Collections.emptyList();
   }
 
   @Nullable
@@ -366,11 +346,22 @@ public class ResolveImportUtil {
       final List<RatedResolveResult> resolved = resolveInDirectory(referencedName, containingFile, (PsiDirectory)parentDir, fileOnly,
                                                                    checkForPackage);
       if (!resolved.isEmpty()) {
-        return resolved;
+        for (RatedResolveResult result : resolved) {
+          if (result.getRate() > RatedResolveResult.RATE_LOW) {
+            return resolved;
+          }
+        }
       }
       if (parent instanceof PsiFile) {
-        return ResolveResultList.to(resolveForeignImports((PsiFile)parent, referencedName));
+        final PsiElement foreign = resolveForeignImports((PsiFile)parent, referencedName);
+        if (foreign != null) {
+          final ResolveResultList results = new ResolveResultList();
+          results.addAll(resolved);
+          results.poke(foreign, RatedResolveResult.RATE_NORMAL);
+          return results;
+        }
       }
+      return resolved;
     }
     return Collections.emptyList();
   }
@@ -485,5 +476,61 @@ public class ResolveImportUtil {
       }
     }
     return PointInImport.NONE;
+  }
+
+  private static final class ResolveModuleParams {
+    @NotNull private final QualifiedName myName;
+    @NotNull private final PsiFile myFile;
+    private final boolean myAbsolute;
+    private final int myLevel;
+
+    public ResolveModuleParams(@NotNull QualifiedName qualifiedName, @NotNull PsiFile file , boolean importIsAbsolute, int relativeLevel) {
+      myName = qualifiedName;
+      myFile = file;
+      myAbsolute = importIsAbsolute;
+      myLevel = relativeLevel;
+    }
+
+    @NotNull
+    public QualifiedName getName() {
+      return myName;
+    }
+
+    public boolean isAbsolute() {
+      return myAbsolute;
+    }
+
+    public int getLevel() {
+      return myLevel;
+    }
+
+    @NotNull
+    public PsiFile getFile() {
+      return myFile;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      ResolveModuleParams params = (ResolveModuleParams)o;
+
+      if (myAbsolute != params.myAbsolute) return false;
+      if (myLevel != params.myLevel) return false;
+      if (!myName.equals(params.myName)) return false;
+      if (!myFile.equals(params.myFile)) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = myName.hashCode();
+      result = 31 * result + myFile.hashCode();
+      result = 31 * result + (myAbsolute ? 1 : 0);
+      result = 31 * result + myLevel;
+      return result;
+    }
   }
 }

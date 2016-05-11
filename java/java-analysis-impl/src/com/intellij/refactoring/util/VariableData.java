@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,26 +15,33 @@
  */
 package com.intellij.refactoring.util;
 
-import com.intellij.psi.*;
+import com.intellij.psi.LambdaUtil;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.SmartTypePointerManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class VariableData {
+public class VariableData extends AbstractVariableData {
   public final PsiVariable variable;
   public PsiType type;
-  public String name;
-  public boolean passAsParameter;
 
   public VariableData(@NotNull PsiVariable var) {
     variable = var;
     type = var.getType();
   }
 
-  public VariableData(@NotNull PsiVariable var, @NotNull PsiType type) {
+  public VariableData(@Nullable PsiVariable var, PsiType type) {
     variable = var;
-    if (type instanceof PsiLambdaParameterType || type instanceof PsiLambdaExpressionType || type instanceof PsiMethodReferenceType) {
-      type = PsiType.getJavaLangObject(var.getManager(), GlobalSearchScope.allScope(var.getProject()));
+    if (var != null) {
+      if (LambdaUtil.notInferredType(type)) {
+        type = PsiType.getJavaLangObject(var.getManager(), GlobalSearchScope.allScope(var.getProject()));
+      }
+      this.type = SmartTypePointerManager.getInstance(var.getProject()).createSmartTypePointer(type).getType();
     }
-    this.type = SmartTypePointerManager.getInstance(var.getProject()).createSmartTypePointer(type).getType();
+    else {
+      this.type = type;
+    }
   }
 }

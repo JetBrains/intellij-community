@@ -500,6 +500,11 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
           }
         }
       }
+      // unary numeric promotion if applicable
+      else if (operation == JavaTokenType.GTGT || operation == JavaTokenType.LTLT || operation == JavaTokenType.GTGTGT) {
+        lResult = handleUnaryNumericPromotion(lType, lResult);
+        rResult = handleUnaryNumericPromotion(rType, rResult);
+      }
 
       return new BinaryExpressionEvaluator(lResult, rResult, operation, expressionExpectedType.getCanonicalText());
     }
@@ -800,7 +805,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
           }
         }
         else {
-          myResult = new LocalVariableEvaluator(name, false);
+          myResult = new ReferenceEvaluator(name);
         }
       }
     }

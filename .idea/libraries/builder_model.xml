@@ -1,7 +1,7 @@
 <component name="libraryTable">
   <library name="builder-model">
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/android/android/lib/builder-model-1.4.0-beta2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/android/android/lib/builder-model-2.0.0-alpha7.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

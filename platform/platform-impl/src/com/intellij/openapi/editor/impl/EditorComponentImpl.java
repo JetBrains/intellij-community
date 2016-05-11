@@ -47,10 +47,9 @@ import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.TypingTarget;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
-import com.intellij.ui.EditorTextField;
 import com.intellij.ui.Grayer;
 import com.intellij.ui.components.Magnificator;
+import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NonNls;
@@ -207,12 +206,16 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
   }
 
   @Override
+  protected Graphics getComponentGraphics(Graphics graphics) {
+    return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
+  }
+
+  @Override
   public void paintComponent(Graphics g) {
     myApplication.editorPaintStart();
 
     try {
-      Graphics2D gg = !Boolean.TRUE.equals(EditorTextField.SUPPLEMENTARY_KEY.get(myEditor)) ?
-                      IdeBackgroundUtil.withEditorBackground(g, this) : (Graphics2D)g;
+      Graphics2D gg = (Graphics2D)g;
       UIUtil.setupComposite(gg);
       EditorUIUtil.setupAntialiasing(gg);
       myEditor.paint(gg);

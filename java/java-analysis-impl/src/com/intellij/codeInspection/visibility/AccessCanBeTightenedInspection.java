@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
+import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -145,34 +146,23 @@ class AccessCanBeTightenedInspection extends BaseJavaBatchLocalInspectionTool {
       PsiDirectory memberDirectory = memberFile.getContainingDirectory();
       final PsiPackage memberPackage = memberDirectory == null ? null : JavaDirectoryService.getInstance().getPackage(memberDirectory);
       log(member.getName()+ ": checking effective level for "+member);
-      boolean result =
-        UnusedSymbolUtil.processUsages(project, memberFile, member, new EmptyProgressIndicator(), null, info -> {
-          foundUsage.set(true);
-          PsiFile psiFile = info.getFile();
-          if (psiFile == null) return true;
-          if (!(psiFile instanceof PsiJavaFile)) {
-            log("     refd from " + psiFile.getName() + "; set to public");
-            maxLevel.set(PsiUtil.ACCESS_LEVEL_PUBLIC);
-            if (memberClass != null) {
-              childMembersAreUsedOutsideMyPackage.add(memberClass);
-            }
-            return false; // referenced from XML, has to be public
-          }
-          //int offset = info.getNavigationOffset();
-          //if (offset == -1) return true;
-          PsiElement element = info.getElement();
-          if (element == null) return true;
-          @PsiUtil.AccessLevel
-          int level = getEffectiveLevel(element, psiFile, member, memberFile, memberClass, memberPackage);
-          log("    ref in file " + psiFile.getName() + "; level = " + PsiUtil.getAccessModifier(level) + "; (" + element + ")");
-          maxLevel.getAndAccumulate(level, Math::max);
-          if (level == PsiUtil.ACCESS_LEVEL_PUBLIC && memberClass != null) {
-            childMembersAreUsedOutsideMyPackage.add(memberClass);
-          }
 
-          return level != PsiUtil.ACCESS_LEVEL_PUBLIC;
+      boolean proceed = UnusedSymbolUtil.processUsages(project, memberFile, member, new EmptyProgressIndicator(), null, info -> {
+        PsiElement element = info.getElement();
+        if (element == null) return true;
+        PsiFile psiFile = info.getFile();
+        if (psiFile == null) return true;
+
+        return handleUsage(member, memberClass, memberFile, maxLevel, memberPackage, element, psiFile, foundUsage);
+      });
+
+      if (proceed && member instanceof PsiClass && LambdaUtil.isFunctionalClass((PsiClass)member)) {
+        // there can be lambda implementing this interface implicitly
+        FunctionalExpressionSearch.search((PsiClass)member).forEach(functionalExpression -> {
+          PsiFile psiFile = functionalExpression.getContainingFile();
+          return handleUsage(member, memberClass, memberFile, maxLevel, memberPackage, functionalExpression, psiFile, foundUsage);
         });
-
+      }
       if (!foundUsage.get()) {
         log(member.getName() + " unused; ignore");
         return; // do not propose private for unused method
@@ -197,6 +187,36 @@ class AccessCanBeTightenedInspection extends BaseJavaBatchLocalInspectionTool {
         assert toHighlight != null : member +" ; " + ((PsiNameIdentifierOwner)member).getNameIdentifier() + "; "+ memberModifierList.getText();
         myHolder.registerProblem(toHighlight, "Access can be " + VisibilityUtil.toPresentableText(maxModifier), new ChangeModifierFix(maxModifier));
       }
+    }
+
+    private boolean handleUsage(@NotNull PsiMember member,
+                                @Nullable PsiClass memberClass,
+                                @NotNull PsiFile memberFile,
+                                @NotNull AtomicInteger maxLevel,
+                                @Nullable PsiPackage memberPackage,
+                                @NotNull PsiElement element,
+                                @NotNull PsiFile psiFile,
+                                @NotNull AtomicBoolean foundUsage) {
+      foundUsage.set(true);
+      if (!(psiFile instanceof PsiJavaFile)) {
+        log("     refd from " + psiFile.getName() + "; set to public");
+        maxLevel.set(PsiUtil.ACCESS_LEVEL_PUBLIC);
+        if (memberClass != null) {
+          childMembersAreUsedOutsideMyPackage.add(memberClass);
+        }
+        return false; // referenced from XML, has to be public
+      }
+      //int offset = info.getNavigationOffset();
+      //if (offset == -1) return true;
+      @PsiUtil.AccessLevel
+      int level = getEffectiveLevel(element, psiFile, member, memberFile, memberClass, memberPackage);
+      log("    ref in file " + psiFile.getName() + "; level = " + PsiUtil.getAccessModifier(level) + "; (" + element + ")");
+      maxLevel.getAndAccumulate(level, Math::max);
+      if (level == PsiUtil.ACCESS_LEVEL_PUBLIC && memberClass != null) {
+        childMembersAreUsedOutsideMyPackage.add(memberClass);
+      }
+
+      return level != PsiUtil.ACCESS_LEVEL_PUBLIC;
     }
 
     @PsiUtil.AccessLevel

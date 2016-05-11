@@ -353,7 +353,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
     final Map<File, Set<File>> outs = buildOutputDirectoriesMap(context, chunk);
     try {
-      final int targetLanguageLevel = convertToNumber(getLanguageLevel(chunk.getModules().iterator().next()));
+      final int targetLanguageLevel = JpsJavaSdkType.parseVersion(getLanguageLevel(chunk.getModules().iterator().next()));
       final boolean shouldForkJavac = shouldForkCompilerProcess(context, targetLanguageLevel);
 
       // when forking external javac, compilers from SDK 1.6 and higher are supported
@@ -480,8 +480,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
     // -release option makes sense for javac only and is supported in java9+ and higher
     if (compilerVersion >= 9 && chunkSdkVersion > 0 && targetLanguageLevel > 0 && isJavac(COMPILING_TOOL.get(context))) {
       if (chunkSdkVersion < 9) {
-        // todo: this 'if' should be removed, if javac9+ drops support for '-source' and '-target' options
-        return targetLanguageLevel == chunkSdkVersion;
+        // target sdk is set explicitly and differs from compiler SDK, so for consistency we should link against it
+        return false;
       }
       // chunkSdkVersion >= 9, so we have no rt.jar anymore and '-release' is the only cross-compilation option available
       return true;
@@ -584,39 +584,6 @@ public class JavaBuilder extends ModuleLevelBuilder {
     server.start(listenPort);
     ExternalJavacManager.KEY.set(context, server);
     return server;
-  }
-
-  private static int convertToNumber(String ver) {
-    if (ver == null) {
-      return 0;
-    }
-    final int quoteBegin = ver.indexOf('\"');
-    if (quoteBegin >= 0) {
-      final int quoteEnd = ver.indexOf('\"', quoteBegin + 1);
-      if (quoteEnd > quoteBegin) {
-        ver = ver.substring(quoteBegin + 1, quoteEnd);
-      }
-    }
-    if (ver.isEmpty()) {
-      return 0;
-    }
-
-    final String prefix = "1.";
-    final int parseBegin = ver.startsWith(prefix)? prefix.length() : 0;
-
-    int parseEnd = parseBegin;
-    while (parseEnd < ver.length()) {
-      if (!Character.isDigit(ver.charAt(parseEnd))) {
-        break;
-      }
-      parseEnd++;
-    }
-    try {
-      return Integer.parseInt(ver.substring(parseBegin, parseEnd));
-    }
-    catch (NumberFormatException ignored) {
-    }
-    return 0;
   }
 
   private static int findFreePort() {
@@ -750,7 +717,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     final String langLevel = getLanguageLevel(chunk.getModules().iterator().next());
     final int chunkSdkVersion = getChunkSdkVersion(chunk);
 
-    final int targetLanguageLevel = convertToNumber(langLevel);
+    final int targetLanguageLevel = JpsJavaSdkType.parseVersion(langLevel);
     if (shouldUseReleaseOption(context, compilerSdkVersion, chunkSdkVersion, targetLanguageLevel)) {
       options.add("-release");
       options.add(String.valueOf(targetLanguageLevel));
@@ -794,7 +761,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
       options.add("-target");
       if (chunkSdkVersion > 0 && compilerSdkVersion > chunkSdkVersion) { 
         // if compiler is newer than module JDK
-        final int userSpecifiedTargetVersion = convertToNumber(bytecodeTarget);
+        final int userSpecifiedTargetVersion = JpsJavaSdkType.parseVersion(bytecodeTarget);
         if (userSpecifiedTargetVersion > 0 && userSpecifiedTargetVersion <= compilerSdkVersion) {
           // if user-specified bytecode version can be determined and is supported by compiler
           if (userSpecifiedTargetVersion > chunkSdkVersion) {
@@ -835,7 +802,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     if (cached != null) {
       return cached;
     }
-    int javaVersion = convertToNumber(SystemProperties.getJavaVersion());
+    int javaVersion = JpsJavaSdkType.parseVersion(SystemProperties.getJavaVersion());
     JAVA_COMPILER_VERSION_KEY.set(context, javaVersion);
     return javaVersion;
   }
@@ -845,7 +812,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     for (JpsModule module : chunk.getModules()) {
       final JpsSdk<JpsDummyElement> sdk = module.getSdk(JpsJavaSdkType.INSTANCE);
       if (sdk != null) {
-        final int moduleSdkVersion = convertToNumber(sdk.getVersionString());
+        final int moduleSdkVersion = JpsJavaSdkType.parseVersion(sdk.getVersionString());
         if (moduleSdkVersion != 0 /*could determine the version*/&& (chunkSdkVersion < 0 || chunkSdkVersion > moduleSdkVersion)) {
           chunkSdkVersion = moduleSdkVersion;
         }
@@ -859,7 +826,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     for (JpsModule module : chunk.getModules()) {
       final JpsSdk<JpsDummyElement> sdk = module.getSdk(JpsJavaSdkType.INSTANCE);
       if (sdk != null) {
-        final int version = convertToNumber(sdk.getVersionString());
+        final int version = JpsJavaSdkType.parseVersion(sdk.getVersionString());
         if (version >= 6) {
           if (version >= 9 && Math.abs(version - targetLanguageLevel) > 3) {
             continue; // current javac compiler does not support required language level
@@ -878,7 +845,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
       LOG.info("Fallback JDK version is not specified. (See " + GlobalOptions.FALLBACK_JDK_VERSION + " option)");
       return null;
     }
-    final int fallbackVersion = convertToNumber(fallbackJdkVersion);
+    final int fallbackVersion = JpsJavaSdkType.parseVersion(fallbackJdkVersion);
     if (fallbackVersion < 6) {
       LOG.info("Version string for fallback JDK is '" + fallbackJdkVersion + "' (recognized as version '" + fallbackJdkVersion + "'). At least version 6 is required.");
       return null;
@@ -1068,11 +1035,15 @@ public class JavaBuilder extends ModuleLevelBuilder {
       if (Utils.IS_TEST_MODE) {
         LOG.info(message);
       }
-      myContext.processMessage(new CompilerMessage(
+      final CompilerMessage compilerMsg = new CompilerMessage(
         BUILDER_NAME, kind, message, srcPath, diagnostic.getStartPosition(),
         diagnostic.getEndPosition(), diagnostic.getPosition(), diagnostic.getLineNumber(),
         diagnostic.getColumnNumber()
-      ));
+      );
+      if (LOG.isDebugEnabled()) {
+        LOG.debug(compilerMsg.toString());
+      }
+      myContext.processMessage(compilerMsg);
     }
 
     public int getErrorCount() {

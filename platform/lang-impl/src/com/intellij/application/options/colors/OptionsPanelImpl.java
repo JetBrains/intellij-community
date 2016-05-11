@@ -18,12 +18,14 @@ package com.intellij.application.options.colors;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -33,6 +35,7 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.Element;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.util.EventListener;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -40,7 +43,7 @@ public class OptionsPanelImpl extends JPanel implements OptionsPanel {
   public static final String SELECTED_COLOR_OPTION_PROPERTY = "selected.color.option.type";
 
   private final ColorOptionsTree myOptionsTree;
-  private final ColorAndFontDescriptionPanel myOptionsPanel;
+  private final ColorDescriptionPanel myOptionsPanel;
 
   private final ColorAndFontOptions myOptions;
   private final SchemesPanel mySchemesProvider;
@@ -53,21 +56,28 @@ public class OptionsPanelImpl extends JPanel implements OptionsPanel {
   public OptionsPanelImpl(ColorAndFontOptions options,
                           SchemesPanel schemesProvider,
                           String categoryName) {
+    this(options, schemesProvider, categoryName, new ColorAndFontDescriptionPanel());
+  }
+
+  public OptionsPanelImpl(ColorAndFontOptions options,
+                          SchemesPanel schemesProvider,
+                          String categoryName,
+                          ColorDescriptionPanel optionsPanel) {
     super(new BorderLayout());
     myOptions = options;
     mySchemesProvider = schemesProvider;
     myCategoryName = categoryName;
     myProperties = PropertiesComponent.getInstance();
 
-    myOptionsPanel = new ColorAndFontDescriptionPanel() {
+    myOptionsPanel = optionsPanel;
+    myOptionsPanel.addListener(new ColorDescriptionPanel.Listener() {
       @Override
-      protected void onSettingsChanged(ActionEvent e) {
-        super.onSettingsChanged(e);
+      public void onSettingsChanged(ActionEvent e) {
         myDispatcher.getMulticaster().settingsChanged();
       }
 
       @Override
-      protected void onHyperLinkClicked(HyperlinkEvent e) {
+      public void onHyperLinkClicked(HyperlinkEvent e) {
         if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
           Settings settings = Settings.KEY.getData(DataManager.getInstance().getDataContext(OptionsPanelImpl.this));
           String attrName = e.getDescription();
@@ -87,7 +97,7 @@ public class OptionsPanelImpl extends JPanel implements OptionsPanel {
           }
         }
       }
-    };
+    });
 
     myOptionsTree = new ColorOptionsTree(myCategoryName);
 
@@ -101,7 +111,7 @@ public class OptionsPanelImpl extends JPanel implements OptionsPanel {
 
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myOptionsTree);
     add(scrollPane, BorderLayout.CENTER);
-    add(myOptionsPanel, BorderLayout.EAST);
+    add(myOptionsPanel.getPanel(), BorderLayout.EAST);
 
   }
 
@@ -180,5 +190,24 @@ public class OptionsPanelImpl extends JPanel implements OptionsPanel {
       }
     }
     return result;
+  }
+
+  public interface ColorDescriptionPanel {
+    @NotNull
+    JComponent getPanel();
+
+    void resetDefault();
+
+    void reset(@NotNull ColorAndFontDescription description);
+
+    void apply(@NotNull ColorAndFontDescription descriptor, EditorColorsScheme scheme);
+
+    void addListener(@NotNull Listener listener);
+
+    interface Listener extends EventListener {
+      void onSettingsChanged(ActionEvent e);
+
+      void onHyperLinkClicked(HyperlinkEvent e);
+    }
   }
 }

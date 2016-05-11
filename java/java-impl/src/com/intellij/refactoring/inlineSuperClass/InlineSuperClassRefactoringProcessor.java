@@ -43,7 +43,6 @@ import com.intellij.refactoring.util.classMembers.MemberInfoStorage;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -52,6 +51,7 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -306,13 +306,8 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
 
   protected void performRefactoring(@NotNull final UsageInfo[] usages) {
     try {
-      final UsageInfo[] infos = ContainerUtil.map2Array(myTargetClasses, UsageInfo.class, new Function<PsiClass, UsageInfo>() {
-        @Override
-        public UsageInfo fun(PsiClass psiClass) {
-          return new UsageInfo(psiClass);
-        }
-      });
-      new PushDownProcessor(mySuperClass, myMemberInfos, new DocCommentPolicy(myPolicy)).pushDownToClasses(infos);
+      final UsageInfo[] infos = ContainerUtil.map2Array(myTargetClasses, UsageInfo.class, UsageInfo::new);
+      new PushDownProcessor<MemberInfo, PsiMember, PsiClass>(mySuperClass, Arrays.asList(myMemberInfos), new DocCommentPolicy(myPolicy)).pushDownToClasses(infos);
 
       CommonRefactoringUtil.sortDepthFirstRightLeftOrder(usages);
       for (UsageInfo usageInfo : usages) {

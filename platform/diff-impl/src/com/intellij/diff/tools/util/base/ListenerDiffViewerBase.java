@@ -81,7 +81,7 @@ public abstract class ListenerDiffViewerBase extends DiffViewerBase {
 
   @Nullable
   protected VirtualFileListener createFileListener(@NotNull ContentDiffRequest request) {
-    final List<VirtualFile> files = new ArrayList<VirtualFile>(0);
+    final List<VirtualFile> files = new ArrayList<>(0);
     for (DiffContent content : request.getContents()) {
       if (content instanceof FileContent && !(content instanceof DocumentContent)) {
         files.add(((FileContent)content).getFile());
@@ -131,7 +131,7 @@ public abstract class ListenerDiffViewerBase extends DiffViewerBase {
 
   @NotNull
   private Set<Document> getDocuments() {
-    Set<Document> documents = new HashSet<Document>();
+    Set<Document> documents = new HashSet<>();
     for (DiffContent content : myRequest.getContents()) {
       if (content instanceof DocumentContent) {
         documents.add(((DocumentContent)content).getDocument());

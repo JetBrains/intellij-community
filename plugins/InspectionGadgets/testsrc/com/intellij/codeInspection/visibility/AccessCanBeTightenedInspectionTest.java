@@ -128,6 +128,53 @@ public class AccessCanBeTightenedInspectionTest extends LightInspectionTestCase 
            "}");
   }
 
+  public void testStupidTwoPublicClassesInTheSamePackage() {
+    myFixture.allowTreeAccessForAllFiles();
+    myFixture.addFileToProject("x/Sub.java",
+      "package x; " +
+      "public class Sub {\n" +
+      "  Object o = new C();\n" +
+      "}\n" +
+      "");
+    myFixture.addFileToProject("x/C.java",
+      "package x; \n" +
+      "<warning descr=\"Access can be package-private\">public</warning> class C {\n" +
+      "}");
+    myFixture.configureByFiles("x/C.java", "x/Sub.java");
+    myFixture.checkHighlighting();
+  }
+
+  public void testInterfaceIsImplementedByLambda() {
+    myFixture.allowTreeAccessForAllFiles();
+    myFixture.addFileToProject("x/MyInterface.java",
+      "package x;\n" +
+      "public interface MyInterface {\n" +
+      "  void doStuff();\n" +
+      "}\n" +
+      "");
+    myFixture.addFileToProject("x/MyConsumer.java",
+      "package x;\n" +
+      "public class MyConsumer {\n" +
+      "    public void doIt(MyInterface i) {\n" +
+      "        i.doStuff();\n" +
+      "    }\n" +
+      "}" +
+      "");
+    myFixture.addFileToProject("y/Test.java",
+      "package y;\n" +
+      "\n" +
+      "import x.MyConsumer;\n" +
+      "\n" +
+      "public class Test {\n" +
+      "    void ddd(MyConsumer consumer) {\n" +
+      "        consumer.doIt(() -> {});\n" +
+      "    }\n" +
+      "}" +
+      "");
+    myFixture.configureByFiles("x/MyInterface.java", "y/Test.java", "x/MyConsumer.java");
+    myFixture.checkHighlighting();
+  }
+
   @Override
   protected LocalInspectionTool getInspection() {
     VisibilityInspection inspection = new VisibilityInspection();

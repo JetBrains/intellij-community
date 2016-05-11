@@ -31,6 +31,7 @@ import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 import org.jetbrains.plugins.javaFX.packaging.AbstractJavaFxPackager;
+import org.jetbrains.plugins.javaFX.packaging.JavaFxApplicationIcons;
 import org.jetbrains.plugins.javaFX.packaging.JavaFxManifestAttribute;
 import org.jetbrains.plugins.javaFX.packaging.JavaFxPackagerConstants;
 import org.jetbrains.plugins.javaFX.preloader.JpsJavaFxPreloaderArtifactProperties;
@@ -150,6 +151,16 @@ public class JpsJavaFxArtifactBuildTaskProvider extends ArtifactBuildTaskProvide
     }
 
     @Override
+    protected String getVersion() {
+      return myProperties.myState.getVersion();
+    }
+
+    @Override
+    protected JavaFxApplicationIcons getIcons() {
+      return myProperties.myState.getIcons();
+    }
+
+    @Override
     protected String getWidth() {
       return myProperties.myState.getWidth();
     }
@@ -162,6 +173,16 @@ public class JpsJavaFxArtifactBuildTaskProvider extends ArtifactBuildTaskProvide
     @Override
     protected void registerJavaFxPackagerError(String message) {
       myCompileContext.processMessage(new CompilerMessage(COMPILER_NAME, BuildMessage.Kind.ERROR, message));
+    }
+
+    @Override
+    protected String getHtmlTemplateFile() {
+      return myProperties.myState.getHtmlTemplateFile();
+    }
+
+    @Override
+    protected String getHtmlPlaceholderId() {
+      return myProperties.myState.getHtmlPlaceholderId();
     }
 
     @Override

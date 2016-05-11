@@ -147,11 +147,11 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
                                              psiClass -> ApplicationManager.getApplication().runReadAction((Computable<SmartPsiElementPointer<PsiClass>>)() -> SmartPointerManager.getInstance(psiClass.getProject()).createSmartPsiElementPointer(psiClass)));
   }
 
-  @NotNull
-  @Deprecated //todo to be removed in IDEA 17
   /**
    * @deprecated use {@link #search(PsiClass, SearchScope, boolean)} instead
    */
+  @NotNull
+  @Deprecated //todo to be removed in IDEA 17
   public static Query<PsiClass> search(@NotNull final PsiClass aClass, @NotNull SearchScope scope, final boolean checkDeep, final boolean checkInheritance) {
     return search(aClass, scope, checkDeep, checkInheritance, true);
   }

@@ -35,6 +35,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.util.StringBuilderSpinAllocator;
@@ -323,19 +324,6 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     return ""; // we have overridden getLabel
   }
 
-  private String calcIdLabel() {
-    //translate only strings in quotes
-    if(isShowIdLabel() && myValueReady) {
-      final Value value = getValue();
-      Renderer lastRenderer = getLastRenderer();
-      final EvaluationContextImpl evalContext = myStoredEvaluationContext;
-      return evalContext != null && lastRenderer != null && !evalContext.getSuspendContext().isResumed()?
-                             ((NodeRendererImpl)lastRenderer).getIdLabel(value, evalContext.getDebugProcess()) :
-                             null;
-    }
-    return null;
-  }
-
   @Override
   public String getLabel() {
     return calcValueName() + getDeclaredTypeLabel() + " = " + getValueLabel();
@@ -358,12 +346,29 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   }
 
   @Override
-  public void setValueLabel(String label) {
-    if (!myFullValue) {
-      label = DebuggerUtilsEx.truncateString(label);
+  public void setValueLabel(@NotNull String label) {
+    label = myFullValue ? label : DebuggerUtilsEx.truncateString(label);
+
+    Value value = myValueReady ? getValue() : null;
+    NodeRendererImpl lastRenderer = (NodeRendererImpl)getLastRenderer();
+    EvaluationContextImpl evalContext = myStoredEvaluationContext;
+    String labelId = myValueReady && evalContext != null && lastRenderer != null &&
+                     !evalContext.getSuspendContext().isResumed() ?
+                     lastRenderer.getIdLabel(value, evalContext.getDebugProcess()) : null;
+    String rawLabelId = value instanceof ObjectReference ? value.type().name() : labelId;
+
+    if (rawLabelId != null &&
+        label.length() > rawLabelId.length() && label.startsWith(rawLabelId) &&
+        "@[".indexOf(label.charAt(rawLabelId.length())) > -1 &&
+        !CommonClassNames.JAVA_LANG_STRING.equals(rawLabelId) &&
+        !CommonClassNames.JAVA_LANG_STRING_BUILDER.equals(rawLabelId) &&
+        !CommonClassNames.JAVA_LANG_STRING_BUFFER.equals(rawLabelId)) {
+      // strip common prefix to avoid class names repetition
+      // esp. if idLabel is explicitly hidden to our likings
+      label = StringUtil.trimStart(label, rawLabelId);
     }
     myValueText = label;
-    myIdLabel = calcIdLabel();
+    myIdLabel = isShowIdLabel() ? labelId : null;
   }
 
   @Override

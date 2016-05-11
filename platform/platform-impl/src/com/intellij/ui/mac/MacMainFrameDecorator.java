@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.ui.mac;
 
 import com.apple.eawt.*;
-import com.intellij.Patches;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.application.ApplicationManager;
@@ -40,9 +39,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.EventListener;
 import java.util.LinkedList;
@@ -55,7 +51,6 @@ import static com.intellij.ui.mac.foundation.Foundation.invoke;
  */
 public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettingsListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.mac.MacMainFrameDecorator");
-  private final static boolean ORACLE_BUG_ID_8003173 = SystemInfo.isJavaVersionAtLeast("1.7");
 
   private final FullscreenQueue<Runnable> myFullscreenQueue = new FullscreenQueue<Runnable>();
 
@@ -65,7 +60,6 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
   private static class FSAdapter extends FullScreenAdapter implements FSListener {}
 
   private static class FullscreenQueue <T extends Runnable> {
-
     private boolean waitingForAppKit = false;
     private LinkedList<Runnable> queueModel = new LinkedList<Runnable>();
 
@@ -180,6 +174,7 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
     }
   };
 
+  @SuppressWarnings("Convert2Lambda")
   public static final Function<Object, Boolean> NAVBAR_GETTER = new Function<Object, Boolean>() {
     @Override
     public Boolean fun(Object o) {
@@ -187,6 +182,7 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
     }
   };
 
+  @SuppressWarnings("Convert2Lambda")
   public static final Function<Object, Boolean> TOOLBAR_GETTER = new Function<Object, Boolean>() {
     @Override
     public Boolean fun(Object o) {
@@ -213,21 +209,7 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
 
     final ID pool = invoke("NSAutoreleasePool", "new");
 
-    //if (ORACLE_BUG_ID_8003173) {
-    //  replaceNativeFullscreenListenerCallback();
-    //}
-
     int v = UNIQUE_COUNTER.incrementAndGet();
-    if (Patches.APPLE_BUG_ID_10514018) {
-      frame.addWindowListener(new WindowAdapter() {
-        @Override
-        public void windowDeiconified(WindowEvent e) {
-          if (e.getWindow() == frame && frame.getState() == Frame.ICONIFIED) {
-            frame.setState(Frame.NORMAL);
-          }
-        }
-      });
-    }
 
     try {
       if (SystemInfo.isMacOSLion) {
@@ -375,48 +357,21 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
       }
     });
 
-    myFullscreenQueue.runOrEnqueue( new Runnable() {
+    myFullscreenQueue.runOrEnqueue(new Runnable() {
       @Override
       public void run() {
-        try {
-          requestToggleFullScreenMethod.invoke(Application.getApplication(),myFrame);
-        }
-        catch (IllegalAccessException e) {
-          LOG.error(e);
-        }
-        catch (InvocationTargetException e) {
-          LOG.error(e);
-        }
+        toggleFullScreenNow();
       }
     });
     return callback;
   }
 
-  @Override
-  public void dispose() {
-    UISettings.getInstance().removeUISettingsListener(this);
-    super.dispose();
-  }
-
-  public void exitFullScreenAndDispose() {
-
-    LOG.assertTrue(isInFullScreen());
+  public void toggleFullScreenNow() {
     try {
       requestToggleFullScreenMethod.invoke(Application.getApplication(), myFrame);
     }
-    catch (IllegalAccessException e) {
+    catch (Exception e) {
       LOG.error(e);
     }
-    catch (InvocationTargetException e) {
-      LOG.error(e);
-    }
-
-    myDispatcher.addListener(new FSAdapter() {
-      @Override
-      public void windowExitedFullScreen(AppEvent.FullScreenEvent event) {
-        myFrame.disposeImpl();
-        myDispatcher.removeListener(this);
-      }
-    });
   }
 }

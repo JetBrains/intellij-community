@@ -15,15 +15,17 @@
  */
 package com.intellij.openapi.wm.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.AbstractPainter;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.Painter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ImageLoader;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -32,14 +34,18 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.geom.AffineTransform;
 import java.awt.image.VolatileImage;
 import java.io.File;
 import java.net.URL;
+import java.util.Iterator;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
 final class PaintersHelper implements Painter.Listener {
+  private static final Logger LOG = Logger.getInstance(PaintersHelper.class);
+
   private final Set<Painter> myPainters = ContainerUtil.newLinkedHashSet();
   private final Map<Painter, Component> myPainter2Component = ContainerUtil.newLinkedHashMap();
 
@@ -81,37 +87,56 @@ final class PaintersHelper implements Painter.Listener {
   }
 
   public void paint(Graphics g) {
-    paint(g, myRootComponent);
+    runAllPainters(g, computeOffsets(g, myRootComponent));
   }
 
-  public void paint(Graphics g, JComponent current) {
+  void runAllPainters(Graphics gg, int[] offsets) {
     if (myPainters.isEmpty()) return;
-    Graphics2D g2d = (Graphics2D)g;
-    Rectangle clip = ObjectUtils.notNull(g.getClipBounds(), current.getBounds());
+    Graphics2D g = (Graphics2D)gg;
+    AffineTransform orig = g.getTransform();
+    int i = 0;
+    // restore transform at the time of computeOffset()
+    AffineTransform t = new AffineTransform();
+    t.translate(offsets[i++], offsets[i++]);
 
-    Component component = null;
-    Rectangle componentBounds = null;
-    boolean clipMatched = false;
+    for (Painter painter : myPainters) {
+      if (!painter.needsRepaint()) continue;
+      Component cur = myPainter2Component.get(painter);
+
+      g.setTransform(t);
+      g.translate(offsets[i++], offsets[i++]);
+      painter.paint(cur, g);
+    }
+    g.setTransform(orig);
+  }
+
+  @NotNull
+  int[] computeOffsets(Graphics gg, @NotNull JComponent component) {
+    if (myPainters.isEmpty()) return ArrayUtil.EMPTY_INT_ARRAY;
+    int i = 0;
+    int[] offsets = new int[2 + myPainters.size() * 2];
+    // store current graphics transform
+    Graphics2D g = (Graphics2D)gg;
+    AffineTransform transform = g.getTransform();
+    offsets[i++] = (int)transform.getTranslateX();
+    offsets[i++] = (int)transform.getTranslateY();
+    // calculate relative offsets for painters
+    Rectangle r = null;
+    Component prev = null;
     for (Painter painter : myPainters) {
       if (!painter.needsRepaint()) continue;
 
       Component cur = myPainter2Component.get(painter);
-      if (cur != component || componentBounds == null) {
-        Container parent = (component = cur).getParent();
-        if (parent == null) continue;
-        componentBounds = SwingUtilities.convertRectangle(parent, component.getBounds(), current);
-        clipMatched = clip.contains(componentBounds) || clip.intersects(componentBounds);
+      if (cur != prev || r == null) {
+        Container curParent = cur.getParent();
+        if (curParent == null) continue;
+        r = SwingUtilities.convertRectangle(curParent, cur.getBounds(), component);
+        prev = cur;
       }
-      if (!clipMatched) continue;
-
-      Point targetPoint = SwingUtilities.convertPoint(current, 0, 0, component);
-      Rectangle targetRect = new Rectangle(targetPoint, component.getSize());
-      g2d.setClip(clip.intersection(componentBounds));
-      g2d.translate(-targetRect.x, -targetRect.y);
-      painter.paint(component, g2d);
-      g2d.translate(targetRect.x, targetRect.y);
+      offsets[i++] = r.x;
+      offsets[i++] = r.y;
     }
-
+    return offsets;
   }
 
   @Override
@@ -152,7 +177,7 @@ final class PaintersHelper implements Painter.Listener {
 
       @Override
       public void executePaint(Component component, Graphics2D g) {
-        if (!ensureImageLoaded()) return;
+        if (image == null) return; // covered by needsRepaint()
         executePaint(g, component, image, fillType, alpha, insets);
       }
 
@@ -160,35 +185,60 @@ final class PaintersHelper implements Painter.Listener {
         String value = System.getProperty(propertyName);
         if (!Comparing.equal(value, current)) {
           current = value;
-          image = scaled = null;
-          insets = JBUI.emptyInsets();
-          loadImage(value);
+          loadImageAsync(value);
+          // keep the current image for a while
         }
         return image != null;
       }
 
-      void loadImage(@Nullable String propertyValue) {
-        String[] parts = (propertyValue != null ? propertyValue : propertyName + ".png").split(",");
-        try {
-          alpha = StringUtil.parseInt(parts.length > 1 ? parts[1] : "", 10) / 100f;
-          try {
-            fillType =  FillType.valueOf(parts.length > 2 ? parts[2].toUpperCase(Locale.ENGLISH) : "");
-          }
-          catch (IllegalArgumentException e) {
-            fillType = FillType.SCALE;
-          }
-          String filePath = parts[0];
+      private void resetImage(String value, Image newImage, float newAlpha, FillType newFillType) {
+        if (!Comparing.equal(current, value)) return;
+        boolean prevOk = image != null;
+        clearImages(-1);
+        image = newImage;
+        insets = JBUI.emptyInsets();
+        alpha = newAlpha;
+        fillType = newFillType;
+        boolean newOk = newImage != null;
+        if (prevOk || newOk) {
+          repaintAllWindows();
+        }
+      }
 
+      private void loadImageAsync(final String propertyValue) {
+        String[] parts = (propertyValue != null ? propertyValue : propertyName + ".png").split(",");
+        final float newAlpha = Math.abs(Math.min(StringUtil.parseInt(parts.length > 1 ? parts[1] : "", 10) / 100f, 1f));
+        final FillType newFillType = StringUtil.parseEnum(parts.length > 2 ? parts[2].toUpperCase(Locale.ENGLISH) : "", FillType.SCALE, FillType.class);
+        try {
+          String filePath = parts[0];
           URL url = filePath.contains("://") ? new URL(filePath) :
                     (FileUtil.isAbsolutePlatformIndependent(filePath)
                      ? new File(filePath)
                      : new File(PathManager.getConfigPath(), filePath)).toURI().toURL();
-          image = ImageLoader.loadFromUrl(url);
+          ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+            @Override
+            public void run() {
+              final Image m = ImageLoader.loadFromUrl(url);
+              ApplicationManager.getApplication().invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                  resetImage(propertyValue, m, newAlpha, newFillType);
+                }
+              });
+            }
+          });
         }
-        catch (Exception ignored) {
+        catch (Exception e) {
+          resetImage(propertyValue, null, newAlpha, newFillType);
         }
       }
     };
+  }
+
+  private static void repaintAllWindows() {
+    for (Window window : Window.getWindows()) {
+      window.repaint();
+    }
   }
 
   public static AbstractPainter newImagePainter(@NotNull final Image image, final FillType fillType, final float alpha, final Insets insets) {
@@ -205,9 +255,20 @@ final class PaintersHelper implements Painter.Listener {
     };
   }
 
+  private static class Cached {
+    final VolatileImage image;
+    final Dimension used;
+    long touched;
+
+    Cached(VolatileImage image, Dimension dim) {
+      this.image = image;
+      used = dim;
+    }
+  }
+  
   private abstract static class ImagePainter extends AbstractPainter {
 
-    VolatileImage scaled;
+    final Map<GraphicsConfiguration, Cached> cachedMap = ContainerUtil.newHashMap();
 
     public void executePaint(Graphics2D g, Component component, Image image, FillType fillType, float alpha, Insets insets) {
       int cw0 = component.getWidth();
@@ -219,9 +280,11 @@ final class PaintersHelper implements Painter.Listener {
       int h = image.getHeight(null);
       if (w <= 0 || h <= 0) return;
       // performance: pre-compute scaled image or tiles
+      @Nullable
+      GraphicsConfiguration cfg = g.getDeviceConfiguration();
+      Cached cached = cachedMap.get(cfg);
+      VolatileImage scaled = cached == null ? null : cached.image;
       if (fillType == FillType.SCALE || fillType == FillType.TILE) {
-        int sw0 = scaled == null ? -1 : scaled.getWidth(null);
-        int sh0 = scaled == null ? -1 : scaled.getHeight(null);
         int sw, sh;
         if (fillType == FillType.SCALE) {
           boolean useWidth = cw * h > ch * w;
@@ -232,9 +295,16 @@ final class PaintersHelper implements Painter.Listener {
           sw = cw < w ? w : (cw + w) / w * w;
           sh = ch < h ? h : (ch + h) / h * h;
         }
-        if (sw0 != sw || sh0 != sh || scaled != null && scaled.contentsLost()) {
-          if (sw0 != sw || sh0 != sh || scaled == null) {
-            scaled = createImage(g, sw, sh);
+        int sw0 = scaled == null ? -1 : scaled.getWidth(null);
+        int sh0 = scaled == null ? -1 : scaled.getHeight(null);
+        boolean rescale = cached == null || cached.used.width != sw || cached.used.height != sh;
+        while ((scaled = validateImage(cfg, scaled)) == null || rescale) {
+          if (scaled == null || sw0 < sw || sh0 < sh) {
+            scaled = createImage(cfg, sw + sw / 10, sh + sh / 10); // + 10 percent
+            cachedMap.put(cfg, cached = new Cached(scaled, new Dimension(sw, sh)));
+          }
+          else {
+            cached.used.setSize(sw, sh);
           }
           Graphics2D gg = scaled.createGraphics();
           gg.setComposite(AlphaComposite.Src);
@@ -251,18 +321,25 @@ final class PaintersHelper implements Painter.Listener {
             }
           }
           gg.dispose();
+          rescale = false;
         }
         w = sw;
         h = sh;
       }
-      else if (scaled == null || scaled.contentsLost()) {
-        if (scaled == null) {
-          scaled = createImage(g, w, h);
+      else {
+        while ((scaled = validateImage(cfg, scaled)) == null) {
+          scaled = createImage(cfg, w, h);
+          cachedMap.put(cfg, cached = new Cached(scaled, new Dimension(w, h)));
+          Graphics2D gg = scaled.createGraphics();
+          gg.setComposite(AlphaComposite.Src);
+          gg.drawImage(image, 0, 0, null);
+          gg.dispose();
         }
-        Graphics2D gg = scaled.createGraphics();
-        gg.setComposite(AlphaComposite.Src);
-        gg.drawImage(image, 0, 0, null);
-        gg.dispose();
+      }
+      long currentTime = System.currentTimeMillis();
+      cached.touched = currentTime;
+      if (cachedMap.size() > 2) {
+        clearImages(currentTime);
       }
 
       int x, y;
@@ -283,9 +360,8 @@ final class PaintersHelper implements Painter.Listener {
         return;
       }
 
-      GraphicsConfig cfg = new GraphicsConfig(g).setAlpha(alpha);
-
-      UIUtil.drawImage(g, scaled, x, y, null);
+      GraphicsConfig gc = new GraphicsConfig(g).setAlpha(alpha);
+      UIUtil.drawImage(g, scaled, x, y, w, h, null);
       if (fillType == FillType.BG_CENTER) {
         g.setColor(component.getBackground());
         g.fillRect(0, 0, x, ch0);
@@ -294,18 +370,65 @@ final class PaintersHelper implements Painter.Listener {
         g.fillRect(x, y + h, w, y);
       }
 
-      cfg.restore();
+      gc.restore();
+    }
+
+    void clearImages(long currentTime) {
+      boolean all = currentTime <= 0;
+      for (Iterator<GraphicsConfiguration> it = cachedMap.keySet().iterator(); it.hasNext(); ) {
+        GraphicsConfiguration cfg = it.next();
+        Cached c = cachedMap.get(cfg);
+        if (all || currentTime - c.touched > 2 * 60 * 1000L) {
+          it.remove();
+          LOG.info(logPrefix(cfg, c.image) + "image flushed" +
+                   (all ? "" : "; untouched for " + StringUtil.formatDuration(currentTime - c.touched)));
+          c.image.flush();
+        }
+      }
+    }
+
+    @Nullable
+    private static VolatileImage validateImage(@Nullable GraphicsConfiguration cfg, @Nullable VolatileImage image) {
+      if (image == null) return null;
+      boolean lost1 = image.contentsLost();
+      int validated = image.validate(cfg);
+      boolean lost2 = image.contentsLost();
+      if (lost1 || lost2 || validated != VolatileImage.IMAGE_OK) {
+        LOG.info(logPrefix(cfg, image) + "image flushed" +
+                 ": contentsLost=" + lost1 + "||" + lost2 + "; validate=" + validated);
+        image.flush();
+        return null;
+      }
+      return image;
     }
 
     @NotNull
-    private static VolatileImage createImage(Graphics2D g, int w, int h) {
-      GraphicsConfiguration configuration = g.getDeviceConfiguration();
+    private static VolatileImage createImage(@Nullable GraphicsConfiguration cfg, int w, int h) {
+      GraphicsConfiguration safe;
+      safe = cfg != null ? cfg : GraphicsEnvironment.getLocalGraphicsEnvironment()
+        .getDefaultScreenDevice().getDefaultConfiguration();
+      VolatileImage image;
       try {
-        return configuration.createCompatibleVolatileImage(w, h, new ImageCapabilities(true), Transparency.TRANSLUCENT);
+        image = safe.createCompatibleVolatileImage(w, h, new ImageCapabilities(true), Transparency.TRANSLUCENT);
       }
       catch (Exception e) {
-        return configuration.createCompatibleVolatileImage(w, h, Transparency.TRANSLUCENT);
+        image = safe.createCompatibleVolatileImage(w, h, Transparency.TRANSLUCENT);
       }
+      // validate first time (it's always RESTORED & cleared)
+      image.validate(cfg);
+      image.setAccelerationPriority(1f);
+      ImageCapabilities caps = image.getCapabilities();
+      LOG.info(logPrefix(cfg, image) +
+               (caps.isAccelerated() ? "" : "non-") + "accelerated " +
+               (caps.isTrueVolatile() ? "" : "non-") + "volatile " +
+               "image created");
+      return image;
+    }
+
+    @NotNull
+    private static String logPrefix(@Nullable GraphicsConfiguration cfg, @NotNull VolatileImage image) {
+      return "(" + (cfg == null ? "null" : cfg.getClass().getSimpleName()) + ") "
+             + image.getWidth() + "x" + image.getHeight() + " ";
     }
   }
 }

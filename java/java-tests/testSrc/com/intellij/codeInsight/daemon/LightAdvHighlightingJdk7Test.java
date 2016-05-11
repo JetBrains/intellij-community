@@ -83,6 +83,7 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
   public void testDiamondNeg13() { doTest(false, false); }
   public void testDiamondNeg14() { doTest(false, false); }
   public void testDiamondMisc() { doTest(false, false); }
+  public void testNestedDiamond() { doTest(false, false); }
   public void testMultipleConstructors() { doTest(false, false); }
   public void testHighlightInaccessibleFromClassModifierList() { doTest(false, false); }
   public void testInnerInTypeArguments() { doTest(false, false); }
@@ -168,4 +169,5 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
   public void testAccessToStaticMethodsFromInterfaces() { doTest(true, false); }
   public void testUncheckedExtendedWarnings() { doTest(true, false); }
   public void testInaccessibleInferredTypeForVarargsArgument() { doTest(false, false);}
+  public void testRuntimeClassCast() { doTest(true, false);}
 }

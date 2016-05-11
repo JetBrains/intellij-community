@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,10 +63,10 @@ import java.util.*;
 public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.DataFlowInspection");
   @NonNls private static final String SHORT_NAME = "ConstantConditions";
-  public boolean SUGGEST_NULLABLE_ANNOTATIONS = false;
-  public boolean DONT_REPORT_TRUE_ASSERT_STATEMENTS = false;
-  public boolean TREAT_UNKNOWN_MEMBERS_AS_NULLABLE = false;
-  public boolean IGNORE_ASSERT_STATEMENTS = false;
+  public boolean SUGGEST_NULLABLE_ANNOTATIONS;
+  public boolean DONT_REPORT_TRUE_ASSERT_STATEMENTS;
+  public boolean TREAT_UNKNOWN_MEMBERS_AS_NULLABLE;
+  public boolean IGNORE_ASSERT_STATEMENTS;
   public boolean REPORT_CONSTANT_REFERENCE_VALUES = true;
 
   @Override

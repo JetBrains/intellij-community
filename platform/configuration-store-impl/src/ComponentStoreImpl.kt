@@ -45,6 +45,7 @@ import com.intellij.util.lang.CompoundRuntimeException
 import com.intellij.util.messages.MessageBus
 import com.intellij.util.xmlb.JDOMXIncluder
 import gnu.trove.THashMap
+import io.netty.util.internal.SystemPropertyUtil
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
@@ -122,7 +123,7 @@ abstract class ComponentStoreImpl : IComponentStore {
       val names = ArrayUtilRt.toStringArray(components.keys)
       Arrays.sort(names)
       val timeLogPrefix = "Saving"
-      var timeLog = if (LOG.isDebugEnabled) StringBuilder(timeLogPrefix) else null
+      val timeLog = if (LOG.isDebugEnabled) StringBuilder(timeLogPrefix) else null
       for (name in names) {
         val start = if (timeLog == null) 0 else System.currentTimeMillis()
         commitComponent(externalizationSession, components.get(name)!!, name)
@@ -268,7 +269,11 @@ abstract class ComponentStoreImpl : IComponentStore {
 
         val storage = storageManager.getStateStorage(storageSpec)
         // todo "ProjectModuleManager" investigate why after loadState we get empty state on getState, test CMakeWorkspaceContentRootsTest
-        var stateGetter = if (isUseLoadedStateAsExisting(storage) && name != "ProjectModuleManager") {
+        // use.loaded.state.as.existing used in upsource
+        val stateGetter = if (isUseLoadedStateAsExisting(storage) &&
+          name != "ProjectModuleManager" &&
+          name != "DeprecatedModuleOptionManager" /* doesn't make sense to check it */ &&
+          SystemPropertyUtil.getBoolean("use.loaded.state.as.existing", true)) {
           (storage as? StorageBaseEx<*>)?.createGetSession(component, name, stateClass)
         }
         else {

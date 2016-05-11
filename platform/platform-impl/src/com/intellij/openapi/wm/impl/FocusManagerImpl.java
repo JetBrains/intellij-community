@@ -22,10 +22,7 @@ import com.intellij.internal.focus.FocusTracesAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationActivationListener;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.impl.ServiceManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -598,11 +595,12 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
                                            each.getKeyLocation());
 
 
-          if (owner != null && SwingUtilities.getWindowAncestor(owner) != null) {
+          if (SwingUtilities.getWindowAncestor(owner) != null) {
             IdeEventQueue.getInstance().dispatchEvent(keyEvent);
           }
           else {
-            myQueue._dispatchEvent(keyEvent, true);
+            ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(
+              () -> myQueue._dispatchEvent(keyEvent, true));
           }
         }
 

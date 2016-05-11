@@ -47,6 +47,9 @@ public class PatchReader {
 
   @NonNls private static final String CONTEXT_HUNK_PREFIX = "***************";
   @NonNls private static final String CONTEXT_FILE_PREFIX = "*** ";
+  @NonNls private static final String UNIFIED_BEFORE_HUNK_PREFIX = "--- ";
+  @NonNls private static final String UNIFIED_AFTER_HUNK_PREFIX = "+++ ";
+
   @NonNls private static final Pattern ourUnifiedHunkStartPattern = Pattern.compile("@@ -(\\d+)(,(\\d+))? \\+(\\d+)(,(\\d+))? @@.*");
   @NonNls private static final Pattern ourContextBeforeHunkStartPattern = Pattern.compile("\\*\\*\\* (\\d+),(\\d+) \\*\\*\\*\\*");
   @NonNls private static final Pattern ourContextAfterHunkStartPattern = Pattern.compile("--- (\\d+),(\\d+) ----");
@@ -628,5 +631,37 @@ public class PatchReader {
     public boolean isDeletedFile() {
       return myHunkCount == 1 && myDeleted;
     }
+  }
+
+  public static boolean isPatchContent(@Nullable String content) {
+    if (content == null) return false;
+    List<String> lines = LineTokenizer.tokenizeIntoList(content, false);
+    final ListIterator<String> iterator = lines.listIterator();
+    DiffFormat currentFormat = null;
+    while (iterator.hasNext()) {
+      String line = iterator.next();
+      if (line.startsWith(CONTEXT_HUNK_PREFIX)) {
+        currentFormat = DiffFormat.CONTEXT;
+      }
+      else if (currentFormat == DiffFormat.CONTEXT && ourContextBeforeHunkStartPattern.matcher(line).matches()) {
+        break;
+      }
+      else if (line.startsWith(UNIFIED_BEFORE_HUNK_PREFIX) && currentFormat == null) {
+        currentFormat = DiffFormat.UNIFIED;
+      }
+      else if (currentFormat == DiffFormat.UNIFIED && line.startsWith(UNIFIED_AFTER_HUNK_PREFIX)) break;
+    }
+    if (currentFormat == null) return false; // can't detect format
+    // check that contains at least one chunk
+    while (iterator.hasNext()) {
+      String line = iterator.next();
+      if (currentFormat == DiffFormat.CONTEXT) {
+        if (ourContextAfterHunkStartPattern.matcher(line).matches()) return true;
+      }
+      else {
+        if (ourUnifiedHunkStartPattern.matcher(line).matches()) return true;
+      }
+    }
+    return false;
   }
 }

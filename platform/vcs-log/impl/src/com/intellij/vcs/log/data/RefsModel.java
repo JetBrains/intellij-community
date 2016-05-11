@@ -51,11 +51,14 @@ public class RefsModel implements VcsLogRefs {
     myRootsToHeadIndices = prepareRootsMap(heads, hashMap);
   }
 
+  @NotNull
   private static TIntObjectHashMap<VirtualFile> prepareRootsMap(@NotNull Set<Integer> heads, @NotNull VcsLogHashMap hashMap) {
     TIntObjectHashMap<VirtualFile> map = new TIntObjectHashMap<VirtualFile>();
     for (Integer head : heads) {
       CommitId commitId = hashMap.getCommitId(head);
-      map.put(head, commitId.getRoot());
+      if (commitId != null) {
+        map.put(head, commitId.getRoot());
+      }
     }
     return map;
   }

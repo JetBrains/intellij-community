@@ -248,7 +248,7 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
     final TypeMigrationLabeler.MigrationProducer producer = labeler.createMigratorFor(usages);
 
     final SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(project);
-    List<UsageInfo> nonCodeUsages = new ArrayList<UsageInfo>();
+    List<UsageInfo> nonCodeUsages = new ArrayList<>();
     for (UsageInfo usage : usages) {
       if (((TypeMigrationUsageInfo)usage).isExcluded()) continue;
       final PsiElement element = usage.getElement();
@@ -256,12 +256,9 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
           element instanceof PsiMember ||
           element instanceof PsiExpression ||
           element instanceof PsiReferenceParameterList) {
-        producer.change((TypeMigrationUsageInfo)usage, new Consumer<PsiNewExpression>() {
-          @Override
-          public void consume(@NotNull PsiNewExpression expression) {
-            newExpressionsToCheckDiamonds.add(smartPointerManager.createSmartPsiElementPointer(expression));
-          }
-        });
+        producer.change((TypeMigrationUsageInfo)usage,
+                        expression -> newExpressionsToCheckDiamonds.add(smartPointerManager.createSmartPsiElementPointer(expression)),
+                        labeler);
       }
       else {
         nonCodeUsages.add(usage);

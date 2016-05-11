@@ -21,7 +21,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.Consumer;
@@ -40,7 +39,7 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
 
   @NotNull private final SingleTaskController<Request, VisiblePack> myTaskController;
   @NotNull private final VisiblePackBuilder myVisiblePackBuilder;
-  @NotNull private final VcsLogDataManager myDataManager;
+  @NotNull private final VcsLogData myLogData;
 
   @NotNull private VcsLogFilterCollection myFilters;
   @NotNull private PermanentGraph.SortType mySortType;
@@ -48,13 +47,13 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
   @NotNull private List<MoreCommitsRequest> myRequestsToRun = ContainerUtil.newArrayList();
   @NotNull private List<VisiblePackChangeListener> myVisiblePackChangeListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   @NotNull private volatile VisiblePack myVisiblePack = VisiblePack.EMPTY;
-  private boolean myIsValid = true;
+  private volatile boolean myIsValid = true;
 
   public VcsLogFiltererImpl(@NotNull final Project project,
-                            @NotNull VcsLogDataManager dataManager,
+                            @NotNull VcsLogData logData,
                             @NotNull PermanentGraph.SortType initialSortType) {
-    myDataManager = dataManager;
-    myVisiblePackBuilder = myDataManager.createVisiblePackBuilder();
+    myLogData = logData;
+    myVisiblePackBuilder = myLogData.createVisiblePackBuilder();
     myFilters = new VcsLogFilterCollectionImpl(null, null, null, null, null, null, null);
     mySortType = initialSortType;
 
@@ -72,8 +71,9 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
         UIUtil.invokeLaterIfNeeded(new Runnable() {
           @Override
           public void run() {
-            ((ProgressManagerImpl)ProgressManager.getInstance())
-              .runProcessWithProgressAsynchronously(new MyTask(project, "Applying filters..."));
+            MyTask task = new MyTask(project, "Applying filters...");
+            ProgressManager.getInstance().runProcessWithProgressAsynchronously(task,
+                                                                               myLogData.getProgress().createProgressIndicator(task));
           }
         });
       }
@@ -198,7 +198,7 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
           if (filterRequest != null) {
             frozenVisiblePack = refresh(visiblePack, filterRequest, moreCommitsRequests);
           }
-          return new FakeVisiblePackBuilder(myDataManager.getHashMap()).build(frozenVisiblePack);
+          return new FakeVisiblePackBuilder(myLogData.getHashMap()).build(frozenVisiblePack);
         }
       }
     }
@@ -206,7 +206,7 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
     private VisiblePack refresh(@Nullable VisiblePack visiblePack,
                                 @Nullable FilterRequest filterRequest,
                                 @NotNull List<MoreCommitsRequest> moreCommitsRequests) {
-      DataPack dataPack = myDataManager.getDataPack();
+      DataPack dataPack = myLogData.getDataPack();
 
       if (dataPack == DataPack.EMPTY) { // when filter is set during initialization, just remember filters
         return visiblePack;

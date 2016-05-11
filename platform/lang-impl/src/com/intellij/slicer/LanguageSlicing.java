@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.slicer;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class LanguageSlicing extends LanguageExtension<SliceLanguageSupportProvider> {
   public static final LanguageSlicing INSTANCE = new LanguageSlicing();
@@ -27,7 +26,6 @@ public class LanguageSlicing extends LanguageExtension<SliceLanguageSupportProvi
     super("com.intellij.lang.sliceProvider");
   }
 
-  @Nullable
   public static SliceLanguageSupportProvider getProvider(@NotNull PsiElement element){
     return INSTANCE.forLanguage(element.getLanguage());
   }

@@ -18,12 +18,13 @@ package git4idea.branch;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitCommit;
-import git4idea.GitPlatformFacade;
 import git4idea.commands.*;
+import git4idea.history.GitHistoryUtils;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,12 +33,12 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
+
 /**
  * Deletes a branch.
  * If branch is not fully merged to the current branch, shows a dialog with the list of unmerged commits and with a list of branches
  * current branch are merged to, and makes force delete, if wanted.
- *
- * @author Kirill Likhodedov
  */
 class GitDeleteBranchOperation extends GitBranchOperation {
   
@@ -45,9 +46,9 @@ class GitDeleteBranchOperation extends GitBranchOperation {
 
   private final String myBranchName;
 
-  GitDeleteBranchOperation(@NotNull Project project, GitPlatformFacade facade, @NotNull Git git, @NotNull GitBranchUiHandler uiHandler,
+  GitDeleteBranchOperation(@NotNull Project project, @NotNull Git git, @NotNull GitBranchUiHandler uiHandler,
                            @NotNull Collection<GitRepository> repositories, @NotNull String branchName) {
-    super(project, facade, git, uiHandler, repositories);
+    super(project, git, uiHandler, repositories);
     myBranchName = branchName;
   }
 
@@ -185,8 +186,17 @@ class GitDeleteBranchOperation extends GitBranchOperation {
   }
 
   @NotNull
-  private List<GitCommit> getUnmergedCommits(@NotNull GitRepository repository, @NotNull String branchName, @NotNull String baseBranch) {
-    return myGit.history(repository, baseBranch + ".." + branchName);
+  private static List<GitCommit> getUnmergedCommits(@NotNull GitRepository repository,
+                                                    @NotNull String branchName,
+                                                    @NotNull String baseBranch) {
+    String range = baseBranch + ".." + branchName;
+    try {
+      return GitHistoryUtils.history(repository.getProject(), repository.getRoot(), range);
+    }
+    catch (VcsException e) {
+      LOG.warn("Couldn't get `git log " + range + "` in " + getShortRepositoryName(repository), e);
+    }
+    return Collections.emptyList();
   }
 
   @NotNull

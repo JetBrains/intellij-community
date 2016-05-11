@@ -56,7 +56,7 @@ public class SaveAndSyncHandlerImpl extends SaveAndSyncHandler implements Dispos
   private final SingleAlarm myRefreshDelayAlarm = new SingleAlarm(this::doScheduledRefresh, 300, this);
   private final AtomicInteger myBlockSaveOnFrameDeactivationCount = new AtomicInteger();
   private final AtomicInteger myBlockSyncOnFrameActivationCount = new AtomicInteger();
-  private volatile long myRefreshSessionId = 0;
+  private volatile long myRefreshSessionId;
 
   public SaveAndSyncHandlerImpl(@NotNull GeneralSettings generalSettings,
                                 @NotNull ProgressManager progressManager,
@@ -67,7 +67,7 @@ public class SaveAndSyncHandlerImpl extends SaveAndSyncHandler implements Dispos
 
     myIdleListener = () -> {
       if (mySettings.isAutoSaveIfInactive() && canSyncOrSave()) {
-        TransactionGuard.submitTransaction(() -> ((FileDocumentManagerImpl)fileDocumentManager).saveAllDocuments(false));
+        TransactionGuard.submitTransaction(ApplicationManager.getApplication(), () -> ((FileDocumentManagerImpl)fileDocumentManager).saveAllDocuments(false));
       }
     };
     IdeEventQueue.getInstance().addIdleListener(myIdleListener, mySettings.getInactiveTimeout() * 1000);
@@ -89,7 +89,7 @@ public class SaveAndSyncHandlerImpl extends SaveAndSyncHandler implements Dispos
       @Override
       public void onFrameDeactivated() {
         LOG.debug("save(): enter");
-        TransactionGuard.submitTransaction(() -> {
+        TransactionGuard.submitTransaction(ApplicationManager.getApplication(), () -> {
           if (canSyncOrSave()) {
             saveProjectsAndDocuments();
           }

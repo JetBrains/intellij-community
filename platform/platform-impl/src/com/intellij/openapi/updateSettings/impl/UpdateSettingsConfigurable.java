@@ -30,7 +30,6 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.updateSettings.UpdateStrategyCustomization;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.JBColor;
@@ -42,9 +41,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -97,9 +93,7 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
   @Override
   public void apply() throws ConfigurationException {
     if (myPanel.myUseSecureConnection.isSelected() && !NetUtils.isSniEnabled()) {
-      boolean tooOld = !SystemInfo.isJavaVersionAtLeast("1.7");
-      String message = IdeBundle.message(tooOld ? "update.sni.not.available.error" : "update.sni.disabled.error");
-      throw new ConfigurationException(message);
+      throw new ConfigurationException(IdeBundle.message("update.sni.disabled.error"));
     }
 
     boolean wasEnabled = mySettings.isCheckNeeded();
@@ -125,7 +119,7 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
     myPanel.myCheckForUpdates.setSelected(mySettings.isCheckNeeded());
     myPanel.myUseSecureConnection.setSelected(mySettings.isSecureConnection());
     myPanel.updateLastCheckedLabel();
-    myPanel.setSelectedChannelType(mySettings.getSelectedChannelStatus());
+    myPanel.setSelectedChannelType(mySettings.getSelectedActiveChannel());
   }
 
   @Override
@@ -140,7 +134,7 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
     }
 
     Object channel = myPanel.myUpdateChannels.getSelectedItem();
-    return channel != null && !channel.equals(mySettings.getSelectedChannelStatus());
+    return channel != null && !channel.equals(mySettings.getSelectedActiveChannel());
   }
 
   @Override
@@ -182,34 +176,27 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
       LabelTextReplacingUtil.replaceText(myPanel);
 
       if (checkNowEnabled) {
-        myCheckNow.addActionListener(new ActionListener() {
-          @Override
-          public void actionPerformed(ActionEvent e) {
-            Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myCheckNow));
-            UpdateSettings settings = new UpdateSettings();
-            settings.loadState(mySettings.getState());
-            settings.setSelectedChannelStatus(getSelectedChannelType());
-            settings.setSecureConnection(myUseSecureConnection.isSelected());
-            UpdateChecker.updateAndShowResult(project, settings);
-            updateLastCheckedLabel();
-          }
+        myCheckNow.addActionListener(e -> {
+          Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myCheckNow));
+          UpdateSettings settings = new UpdateSettings();
+          settings.loadState(mySettings.getState());
+          settings.setSelectedChannelStatus(getSelectedChannelType());
+          settings.setSecureConnection(myUseSecureConnection.isSelected());
+          UpdateChecker.updateAndShowResult(project, settings);
+          updateLastCheckedLabel();
         });
       }
       else {
         myCheckNow.setVisible(false);
       }
 
-      final ChannelStatus current = mySettings.getSelectedChannelStatus();
-      //noinspection unchecked
-      myUpdateChannels.setModel(new CollectionComboBoxModel<ChannelStatus>(Arrays.asList(ChannelStatus.values()), current));
-      myUpdateChannels.setEnabled(
-        !ApplicationInfoEx.getInstanceEx().isEAP() || !UpdateStrategyCustomization.getInstance().forceEapUpdateChannelForEapBuilds());
-      myUpdateChannels.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          boolean lessStable = current.compareTo(getSelectedChannelType()) > 0;
-          myChannelWarning.setVisible(lessStable);
-        }
+      UpdateStrategyCustomization tweaker = UpdateStrategyCustomization.getInstance();
+      ChannelStatus current = mySettings.getSelectedActiveChannel();
+      myUpdateChannels.setModel(new CollectionComboBoxModel<ChannelStatus>(mySettings.getActiveChannels(), current));
+      myUpdateChannels.setEnabled(!ApplicationInfoEx.getInstanceEx().isEAP() || !tweaker.forceEapUpdateChannelForEapBuilds());
+      myUpdateChannels.addActionListener(e -> {
+        boolean lessStable = current.compareTo(getSelectedChannelType()) > 0;
+        myChannelWarning.setVisible(lessStable);
       });
       myChannelWarning.setForeground(JBColor.RED);
     }

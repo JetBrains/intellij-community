@@ -40,6 +40,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -242,9 +243,25 @@ public class IdeaGateway {
       else {
         contentAndStamps = getActualContentNoAcquire(file);
       }
+
+      if (file instanceof VirtualFileSystemEntry) {
+        return new FileEntry(((VirtualFileSystemEntry)file).getNameId(), contentAndStamps.first, contentAndStamps.second, !file.isWritable());
+      }
       return new FileEntry(file.getName(), contentAndStamps.first, contentAndStamps.second, !file.isWritable());
     }
-    DirectoryEntry newDir = new DirectoryEntry(file.getName());
+
+    DirectoryEntry newDir = null;
+    if (file instanceof VirtualFileSystemEntry) {
+      int nameId = ((VirtualFileSystemEntry)file).getNameId();
+      if (nameId > 0) {
+        newDir = new DirectoryEntry(nameId);
+      }
+    }
+
+    if (newDir == null) {
+      newDir = new DirectoryEntry(file.getName());
+    }
+
     doCreateChildren(newDir, iterateDBChildren(file), forDeletion);
     if (!isVersioned(file) && newDir.getChildren().isEmpty()) return null;
     return newDir;

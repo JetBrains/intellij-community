@@ -8,7 +8,7 @@ import com.intellij.vcs.log.RefGroup;
 import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.VcsLogRefs;
 import com.intellij.vcs.log.VcsRef;
-import com.intellij.vcs.log.data.VcsLogDataManager;
+import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VisiblePack;
 import com.intellij.vcs.log.impl.SingletonRefGroup;
 import com.intellij.vcs.log.impl.VcsLogUtil;
@@ -34,7 +34,7 @@ public class BranchesPanel extends JPanel {
   private static final int BIG_ROOTS_GAP = 7;
   private static final int TOP = 2;
   private static final int BOTTOM = 3;
-  @NotNull private final VcsLogDataManager myDataManager;
+  @NotNull private final VcsLogData myLogData;
   @NotNull private final VcsLogUiImpl myUi;
   @NotNull private final VcsRefPainter myReferencePainter;
   @NotNull private final JBScrollPane myScrollPane;
@@ -42,11 +42,11 @@ public class BranchesPanel extends JPanel {
   @NotNull private LinkedHashMap<VirtualFile, List<RefGroup>> myRefGroups;
   @Nullable private Collection<VirtualFile> myRoots = null;
 
-  public BranchesPanel(@NotNull VcsLogDataManager dataManager, @NotNull VcsLogUiImpl ui, @NotNull VcsLogRefs initialRefsModel) {
+  public BranchesPanel(@NotNull VcsLogData logData, @NotNull VcsLogUiImpl ui, @NotNull VcsLogRefs initialRefsModel) {
     super(new FlowLayout(FlowLayout.LEADING, BIG_ROOTS_GAP - 2 * SMALL_ROOTS_GAP, 0));
     setBorder(new EmptyBorder(TOP, SMALL_ROOTS_GAP, BOTTOM, SMALL_ROOTS_GAP));
 
-    myDataManager = dataManager;
+    myLogData = logData;
     myUi = ui;
     myRefGroups = getRefsToDisplayOnPanel(initialRefsModel);
     myReferencePainter = new VcsRefPainter(myUi.getColorManager(), true);
@@ -86,7 +86,7 @@ public class BranchesPanel extends JPanel {
     LinkedHashMap<VirtualFile, List<RefGroup>> groups = ContainerUtil.newLinkedHashMap();
     for (Map.Entry<VirtualFile, Set<VcsRef>> entry : VcsLogUtil.groupRefsByRoot(allRefs).entrySet()) {
       groups.put(entry.getKey(),
-                 expandExpandableGroups(myDataManager.getLogProvider(entry.getKey()).getReferenceManager().group(entry.getValue())));
+                 expandExpandableGroups(myLogData.getLogProvider(entry.getKey()).getReferenceManager().group(entry.getValue())));
     }
 
     return groups;
@@ -112,7 +112,7 @@ public class BranchesPanel extends JPanel {
   }
 
   public void onFiltersChange(@NotNull VcsLogFilterCollection filters) {
-    myRoots = VcsLogUtil.getAllVisibleRoots(myDataManager.getRoots(), filters.getRootFilter(), filters.getStructureFilter());
+    myRoots = VcsLogUtil.getAllVisibleRoots(myLogData.getRoots(), filters.getRootFilter(), filters.getStructureFilter());
     removeAll();
     recreateComponents();
     getParent().validate();

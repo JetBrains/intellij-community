@@ -35,6 +35,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
@@ -51,10 +52,12 @@ import com.intellij.util.ui.update.Update;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
+import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.impl.XSourcePositionImpl;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.concurrency.Promise;
 
 import java.awt.event.MouseEvent;
 import java.util.Collection;
@@ -120,7 +123,7 @@ public class XLineBreakpointManager {
   public void updateBreakpointsUI() {
     if (myProject.isDefault()) return;
 
-    Runnable runnable = () -> {
+    DumbAwareRunnable runnable = () -> {
       for (XLineBreakpointImpl breakpoint : myBreakpoints.keySet()) {
         breakpoint.updateUI();
       }
@@ -279,8 +282,8 @@ public class XLineBreakpointManager {
       if (line >= 0 && line < document.getLineCount() && file != null) {
         ActionManagerEx.getInstanceEx().fireBeforeActionPerformed(IdeActions.ACTION_TOGGLE_LINE_BREAKPOINT, e.getMouseEvent());
 
-        XBreakpointUtil
-          .toggleLineBreakpoint(myProject, XSourcePositionImpl.create(file, line), editor, mouseEvent.isAltDown(), false)
+        final Promise<XLineBreakpoint> lineBreakpoint = XBreakpointUtil.toggleLineBreakpoint(myProject, XSourcePositionImpl.create(file, line), editor, mouseEvent.isAltDown(), false);
+        lineBreakpoint
           .done(breakpoint -> {
             if (!mouseEvent.isAltDown() && mouseEvent.isShiftDown() && breakpoint != null) {
               breakpoint.setSuspendPolicy(SuspendPolicy.NONE);

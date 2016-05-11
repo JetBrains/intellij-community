@@ -2,9 +2,9 @@ package org.jetbrains.plugins.terminal;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.JBScrollBar;
+import com.intellij.util.ui.JBSwingUtilities;
 import com.jediterm.terminal.TerminalStarter;
 import com.jediterm.terminal.TtyConnector;
 import com.jediterm.terminal.model.JediTerminal;
@@ -23,7 +23,7 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable{
 
   public JBTerminalWidget(JBTerminalSystemSettingsProvider settingsProvider, Disposable parent) {
     super(settingsProvider);
-
+    setName("terminal");
     JBTabbedTerminalWidget.convertActions(this, getActions());
 
     Disposer.register(parent, this);
@@ -39,8 +39,8 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable{
   }
 
   @Override
-  public void paint(Graphics g) {
-    super.paint(IdeBackgroundUtil.withEditorBackground(g, this));
+  protected Graphics getComponentGraphics(Graphics graphics) {
+    return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
   }
 
   @Override

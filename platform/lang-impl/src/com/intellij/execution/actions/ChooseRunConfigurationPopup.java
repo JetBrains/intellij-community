@@ -207,12 +207,7 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
     final DataContext dataContext = DataManager.getInstance().getDataContext();
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project != null) {
-      SwingUtilities.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          itemWrapper.perform(project, executor, dataContext);
-        }
-      });
+      itemWrapper.perform(project, executor, dataContext);
     }
   }
 

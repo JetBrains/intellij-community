@@ -52,7 +52,7 @@ microba.jar
 miglayout-swing.jar
 nanoxml-2.2.3.jar
 nekohtml-1.9.14.jar
-netty-all-4.1.0.CR3.jar
+netty-all-4.1.0.CR7.jar
 oromatcher.jar
 picocontainer.jar
 protobuf-2.5.0.jar
@@ -65,6 +65,7 @@ sanselan-0.98-snapshot.jar
 SceneBuilderKit-8.1.1.jar
 serviceMessages.jar
 snappy-in-java-0.3.1.jar
+sqlite-jdbc-3.6.20.1.jar
 swingx-core-1.6.2.jar
 slf4j-api-1.7.10.jar
 slf4j-log4j12-1.7.10.jar

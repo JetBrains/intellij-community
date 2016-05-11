@@ -16,59 +16,55 @@
 package com.jetbrains.jsonSchema;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.*;
-import com.jetbrains.jsonSchema.extension.SchemaType;
+import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
 import com.jetbrains.jsonSchema.impl.JsonSchemaServiceImpl;
 import org.jetbrains.annotations.NotNull;
-
-import java.io.File;
 
 /**
  * @author Irina.Chernushina on 3/30/2016.
  */
-public class JsonSchemaVfsListener extends VirtualFileAdapter {
-  @NotNull private final JsonSchemaServiceImpl myService;
-  private JsonSchemaMappingsProjectConfiguration myMappingsProjectConfiguration;
-
+public class JsonSchemaVfsListener extends BulkVirtualFileListenerAdapter {
   public JsonSchemaVfsListener(Project project, @NotNull final JsonSchemaServiceImpl service) {
-    myService = service;
-    myMappingsProjectConfiguration = JsonSchemaMappingsProjectConfiguration.getInstance(project);
-  }
+    super(new VirtualFileAdapter() {
+      @NotNull private final JsonSchemaServiceImpl myService = service;
+      private JsonSchemaMappingsProjectConfiguration myMappingsProjectConfiguration = JsonSchemaMappingsProjectConfiguration.getInstance(project);
 
-  @Override
-  public void contentsChanged(@NotNull VirtualFileEvent event) {
-    onFileChange(event.getFile());
-  }
+      @Override
+      public void contentsChanged(@NotNull VirtualFileEvent event) {
+        onFileChange(event.getFile());
+      }
 
-  @Override
-  public void fileCreated(@NotNull VirtualFileEvent event) {
-    onFileChange(event.getFile());
-  }
+      @Override
+      public void fileCreated(@NotNull VirtualFileEvent event) {
+        onFileChange(event.getFile());
+      }
 
-  @Override
-  public void beforeFileDeletion(@NotNull VirtualFileEvent event) {
-    onFileChange(event.getFile());
-  }
+      @Override
+      public void beforeFileDeletion(@NotNull VirtualFileEvent event) {
+        onFileChange(event.getFile());
+      }
 
-  @Override
-  public void beforeFileMovement(@NotNull VirtualFileMoveEvent event) {
-    onFileChange(event.getFile());
-  }
+      @Override
+      public void beforeFileMovement(@NotNull VirtualFileMoveEvent event) {
+        onFileChange(event.getFile());
+      }
 
-  @Override
-  public void fileMoved(@NotNull VirtualFileMoveEvent event) {
-    onFileChange(event.getFile());
-  }
+      @Override
+      public void fileMoved(@NotNull VirtualFileMoveEvent event) {
+        onFileChange(event.getFile());
+      }
 
-  @Override
-  public void fileCopied(@NotNull VirtualFileCopyEvent event) {
-    onFileChange(event.getFile());
-  }
+      @Override
+      public void fileCopied(@NotNull VirtualFileCopyEvent event) {
+        onFileChange(event.getFile());
+      }
 
-  private void onFileChange(@NotNull final VirtualFile file) {
-    if (myMappingsProjectConfiguration.isRegisteredSchemaFile(file)) {
-      myService.dropProviderFromCache(Pair.create(SchemaType.userSchema, new File(file.getPath())));
-    }
+      private void onFileChange(@NotNull final VirtualFile file) {
+        if (myMappingsProjectConfiguration.isRegisteredSchemaFile(file)) {
+          myService.dropProviderFromCache(file);
+        }
+      }
+    });
   }
 }

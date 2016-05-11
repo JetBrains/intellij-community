@@ -150,6 +150,7 @@ public class DeleteHandler {
         }
       };
       if (needConfirmation) {
+        dialog.setTitle(RefactoringBundle.message("delete.title"));
         if (!dialog.showAndGet() || exit.get()) {
           return;
         }

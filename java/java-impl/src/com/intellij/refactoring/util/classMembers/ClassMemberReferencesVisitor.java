@@ -59,7 +59,7 @@ public abstract class ClassMemberReferencesVisitor extends JavaRecursiveElementW
     if (elementClass.equals(containingClass) || elementClass.isInheritor(containingClass, true)) {
       return true;
     } else {
-      return false;
+      return PsiTreeUtil.isAncestor(containingClass, elementClass, true);
     }
   }
 

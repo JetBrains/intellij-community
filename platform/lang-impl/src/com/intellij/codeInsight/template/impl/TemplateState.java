@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,6 +46,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -56,6 +57,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerImpl;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
+import com.intellij.util.DocumentUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PairProcessor;
@@ -66,6 +68,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.*;
 
 public class TemplateState implements Disposable {
@@ -89,6 +93,7 @@ public class TemplateState implements Disposable {
 
   @Nullable private CommandAdapter myCommandListener;
   @Nullable private CaretListener myCaretListener;
+  @Nullable private LookupListener myLookupListener;
 
   private final List<TemplateEditingListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private DocumentAdapter myEditorDocumentListener;
@@ -113,7 +118,25 @@ public class TemplateState implements Disposable {
         myDocumentChanged = true;
       }
     };
-
+    myLookupListener = new LookupAdapter() {
+      @Override
+      public void itemSelected(LookupEvent event) {
+        if (isCaretOutsideCurrentSegment()) {
+          gotoEnd(true); 
+        }
+      }
+    };
+    LookupManager.getInstance(myProject).addPropertyChangeListener(new PropertyChangeListener() {
+      @Override
+      public void propertyChange(PropertyChangeEvent evt) {
+        if (LookupManager.PROP_ACTIVE_LOOKUP.equals(evt.getPropertyName())) {
+          Lookup lookup = (Lookup)evt.getNewValue();
+          if (lookup != null) {
+            lookup.addLookupListener(myLookupListener);
+          }
+        }
+      }
+    }, this);
     myCommandListener = new CommandAdapter() {
       boolean started = false;
 
@@ -180,6 +203,14 @@ public class TemplateState implements Disposable {
 
   @Override
   public synchronized void dispose() {
+    if (myLookupListener != null) {
+      final LookupImpl lookup = myEditor != null ? (LookupImpl)LookupManager.getActiveLookup(myEditor) : null;
+      if (lookup != null) {
+        lookup.removeLookupListener(myLookupListener);
+      }
+      myLookupListener = null;
+    }
+    
     myEditorDocumentListener = null;
     myCommandListener = null;
     myCaretListener = null;
@@ -285,6 +316,7 @@ public class TemplateState implements Disposable {
     }
     myPrevTemplate = myTemplate;
     myTemplate = null;
+    myProject = null;
     releaseEditor();
   }
 
@@ -680,6 +712,9 @@ public class TemplateState implements Disposable {
     WriteCommandAction.runWriteCommandAction(myProject, new Runnable() {
       @Override
       public void run() {
+        if (isDisposed()) {
+          return;
+        }
         BitSet calcedSegments = new BitSet();
         int maxAttempts = (myTemplate.getVariableCount() + 1) * 3;
 
@@ -707,6 +742,7 @@ public class TemplateState implements Disposable {
             }
           }
 
+          List<TemplateDocumentChange> changes = ContainerUtil.newArrayList();
           boolean selectionCalculated = false;
           for (int i = 0; i < myTemplate.getSegmentsCount(); i++) {
             if (!calcedSegments.get(i)) {
@@ -721,9 +757,10 @@ public class TemplateState implements Disposable {
               String newValue = getVariableValueText(variableName);
               int start = mySegments.getSegmentStart(i);
               int end = mySegments.getSegmentEnd(i);
-              replaceString(newValue, start, end, i);
+              changes.add(new TemplateDocumentChange(newValue, start, end, i));
             }
           }
+          executeChanges(changes);
           if (selectionCalculated) {
             mySelectionCalculated = true;
           }
@@ -733,14 +770,62 @@ public class TemplateState implements Disposable {
     });
   }
 
+  private static class TemplateDocumentChange {
+    public final String newValue;
+    public final int startOffset;
+    public final int endOffset;
+    public final int segmentNumber;
+
+    private TemplateDocumentChange(String newValue, int startOffset, int endOffset, int segmentNumber) {
+      this.newValue = newValue;
+      this.startOffset = startOffset;
+      this.endOffset = endOffset;
+      this.segmentNumber = segmentNumber;
+    }
+  }
+
+  private void executeChanges(@NotNull List<TemplateDocumentChange> changes) {
+    if (isDisposed() || changes.isEmpty()) {
+      return;
+    }
+    if (changes.size() > 1) {
+      ContainerUtil.sort(changes, new Comparator<TemplateDocumentChange>() {
+        @Override
+        public int compare(TemplateDocumentChange o1, TemplateDocumentChange o2) {
+          int startDiff = o2.startOffset - o1.startOffset;
+          return startDiff != 0 ? startDiff : o2.endOffset - o1.endOffset;
+        }
+      });
+    }
+    DocumentUtil.executeInBulk(myDocument, true, new Runnable() {
+      @Override
+      public void run() {
+        for (TemplateDocumentChange change : changes) {
+          replaceString(change.newValue, change.startOffset, change.endOffset, change.segmentNumber);
+        }
+      }
+    });
+  }
+
+  /**
+   * Must be invoked on every segment change in order to avoid ovelapping editing segment with its neibours
+   */
   private void fixOverlappedSegments(int currentSegment) {
     if (currentSegment >= 0) {
       int currentSegmentStart = mySegments.getSegmentStart(currentSegment);
       int currentSegmentEnd = mySegments.getSegmentEnd(currentSegment);
-      for (int i = currentSegment + 1; i < mySegments.getSegmentsCount(); i++) {
-        final int startOffset = mySegments.getSegmentStart(i);
-        if (currentSegmentStart <= startOffset && startOffset < currentSegmentEnd) {
-          mySegments.replaceSegmentAt(i, currentSegmentEnd, Math.max(mySegments.getSegmentEnd(i), currentSegmentEnd), true);
+      for (int i = 0; i < mySegments.getSegmentsCount(); i++) {
+        if (i > currentSegment) {
+          final int startOffset = mySegments.getSegmentStart(i);
+          if (currentSegmentStart <= startOffset && startOffset < currentSegmentEnd) {
+            mySegments.replaceSegmentAt(i, currentSegmentEnd, Math.max(mySegments.getSegmentEnd(i), currentSegmentEnd), true);
+          }
+        }
+        else if (i < currentSegment) {
+          final int endOffset = mySegments.getSegmentEnd(i);
+          if (currentSegmentStart < endOffset && endOffset <= currentSegmentEnd) {
+            mySegments.replaceSegmentAt(i, Math.min(mySegments.getSegmentStart(i), currentSegmentStart), currentSegmentStart, true);
+          }
         }
       }
     }
@@ -809,7 +894,6 @@ public class TemplateState implements Disposable {
       int newEnd = start + newValue.length();
       mySegments.replaceSegmentAt(segmentNumber, start, newEnd);
       mySegments.setNeighboursGreedy(segmentNumber, true);
-
       fixOverlappedSegments(segmentNumber);
     }
   }
@@ -931,7 +1015,7 @@ public class TemplateState implements Disposable {
   }
 
   public void gotoEnd(boolean brokenOff) {
-    if (myTemplate == null) return;
+    if (isDisposed()) return;
     LookupManager.getInstance(myProject).hideActiveLookup();
     calcResults(false);
     if (!brokenOff) {
@@ -949,13 +1033,13 @@ public class TemplateState implements Disposable {
    * @deprecated use this#gotoEnd(true)
    */
   public void cancelTemplate() {
-    if (myTemplate == null) return;
+    if (isDisposed()) return;
     LookupManager.getInstance(myProject).hideActiveLookup();
     cleanupTemplateState(true);
   }
 
   private void finishTemplateEditing() {
-    if (myTemplate == null) return;
+    if (isDisposed()) return;
     LookupManager.getInstance(myProject).hideActiveLookup();
     setFinalEditorState(false);
     cleanupTemplateState(false);
@@ -1008,7 +1092,7 @@ public class TemplateState implements Disposable {
       fireTemplateFinished(brokenOff);
     }
     myListeners.clear();
-    myProject = null;
+    Disposer.dispose(this);
   }
 
   private int getNextVariableNumber(int currentVariableNumber) {
@@ -1060,6 +1144,7 @@ public class TemplateState implements Disposable {
     int selStart = myTemplate.getSelectionStartSegmentNumber();
     int selEnd = myTemplate.getSelectionEndSegmentNumber();
     IntArrayList indices = new IntArrayList();
+    List<TemplateDocumentChange> changes = ContainerUtil.newArrayList();
     for (int i = 0; i < myTemplate.getSegmentsCount(); i++) {
       int length = mySegments.getSegmentEnd(i) - mySegments.getSegmentStart(i);
       if (length != 0) continue;
@@ -1073,20 +1158,37 @@ public class TemplateState implements Disposable {
           if (e instanceof MacroCallNode) {
             marker = ((MacroCallNode)e).getMacro().getDefaultValue();
           }
-          replaceString(marker, mySegments.getSegmentStart(i), mySegments.getSegmentEnd(i), i);
+          changes.add(new TemplateDocumentChange(marker, mySegments.getSegmentStart(i), mySegments.getSegmentEnd(i), i));
           indices.add(i);
           break;
         }
       }
     }
+    executeChanges(changes);
     return indices;
   }
 
   private void restoreEmptyVariables(IntArrayList indices) {
+    List<TextRange> rangesToRemove = ContainerUtil.newArrayList();
     for (int i = 0; i < indices.size(); i++) {
       int index = indices.get(i);
-      myDocument.deleteString(mySegments.getSegmentStart(index), mySegments.getSegmentEnd(index));
+      rangesToRemove.add(TextRange.create(mySegments.getSegmentStart(index), mySegments.getSegmentEnd(index)));
     }
+    Collections.sort(rangesToRemove, new Comparator<TextRange>() {
+      @Override
+      public int compare(TextRange o1, TextRange o2) {
+        int startDiff = o2.getStartOffset() - o1.getStartOffset();
+        return startDiff != 0 ? startDiff : o2.getEndOffset() - o1.getEndOffset();
+      }
+    });
+    DocumentUtil.executeInBulk(myDocument, true, () -> {
+      if (isDisposed()) {
+        return;
+      }
+      for (TextRange range : rangesToRemove) {
+        myDocument.deleteString(range.getStartOffset(), range.getEndOffset());
+      }
+    });
   }
 
   private void initTabStopHighlighters() {
@@ -1264,18 +1366,23 @@ public class TemplateState implements Disposable {
       }
       buffer.append(ch);
     }
-    if (buffer.length() == 0 && selectionIndent <= 0) {
+    if (buffer.length() == 0 && selectionIndent <= 0 || startLineNum >= endLineNum) {
       return;
     }
     String stringToInsert = buffer.toString();
-    for (int i = startLineNum + 1; i <= endLineNum; i++) {
-      if (i > selectionStartLine && i <= selectionEndLine) {
-        myDocument.insertString(myDocument.getLineStartOffset(i), StringUtil.repeatSymbol(' ', selectionIndent));
+    int finalSelectionStartLine = selectionStartLine;
+    int finalSelectionEndLine = selectionEndLine;
+    int finalSelectionIndent = selectionIndent;
+    DocumentUtil.executeInBulk(myDocument, true, () -> {
+      for (int i = startLineNum + 1; i <= endLineNum; i++) {
+        if (i > finalSelectionStartLine && i <= finalSelectionEndLine) {
+          myDocument.insertString(myDocument.getLineStartOffset(i), StringUtil.repeatSymbol(' ', finalSelectionIndent));
+        }
+        else {
+          myDocument.insertString(myDocument.getLineStartOffset(i), stringToInsert);
+        }
       }
-      else {
-        myDocument.insertString(myDocument.getLineStartOffset(i), stringToInsert);
-      }
-    }
+    });
   }
 
   public void addTemplateStateListener(TemplateEditingListener listener) {
@@ -1310,7 +1417,7 @@ public class TemplateState implements Disposable {
       if (myCurrentVariableNumber >= 0) {
         LOG.error("A variable with no segment: " + myCurrentVariableNumber + "; " + presentTemplate(myTemplate));
       }
-      releaseAll();
+      Disposer.dispose(this);
     }
   }
 

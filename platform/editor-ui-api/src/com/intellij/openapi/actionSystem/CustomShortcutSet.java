@@ -26,6 +26,9 @@ import javax.swing.*;
  */
 
 public final class CustomShortcutSet implements ShortcutSet {
+
+  public static final CustomShortcutSet EMPTY = new CustomShortcutSet(Shortcut.EMPTY_ARRAY);
+
   private final Shortcut[] myShortcuts;
 
   /**
@@ -34,10 +37,6 @@ public final class CustomShortcutSet implements ShortcutSet {
    */
   public CustomShortcutSet(@NotNull KeyStroke keyStroke){
     this(new KeyboardShortcut(keyStroke, null));
-  }
-
-  public CustomShortcutSet() {
-    myShortcuts = Shortcut.EMPTY_ARRAY;
   }
 
   /**
