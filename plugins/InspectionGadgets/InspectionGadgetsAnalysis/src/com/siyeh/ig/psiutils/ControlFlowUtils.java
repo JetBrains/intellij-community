@@ -362,7 +362,7 @@ public class ControlFlowUtils {
     return PsiTreeUtil.getParentOfType(expression, PsiReturnStatement.class) != null;
   }
 
-  private static boolean isInThrowStatementArgument(@NotNull PsiExpression expression) {
+  public static boolean isInThrowStatementArgument(@NotNull PsiExpression expression) {
     return PsiTreeUtil.getParentOfType(expression, PsiThrowStatement.class) != null;
   }
 

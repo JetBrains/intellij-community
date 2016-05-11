@@ -2031,6 +2031,10 @@
                      key="object.allocation.in.loop.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.performance.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.performance.ObjectAllocationInLoopInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="ObjectInstantiationInEqualsHashCode" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="object.instantiation.inside.equals.or.hashcode.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.performance.issues" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.siyeh.ig.performance.ObjectInstantiationInEqualsHashCodeInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="UsingRandomNextDoubleForRandomInteger" shortName="RandomDoubleForRandomInteger"
                      bundle="com.siyeh.InspectionGadgetsBundle" key="random.double.for.random.integer.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.performance.issues" enabledByDefault="false"

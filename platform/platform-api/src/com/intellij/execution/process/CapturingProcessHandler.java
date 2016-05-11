@@ -63,6 +63,7 @@ public class CapturingProcessHandler extends OSProcessHandler {
     return new CapturingProcessAdapter(processOutput);
   }
 
+  @NotNull
   public ProcessOutput runProcess() {
     startNotify();
     if (waitFor()) {
