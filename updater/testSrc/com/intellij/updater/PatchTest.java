@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.updater;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -28,7 +43,7 @@ public class PatchTest extends PatchTestCase {
 
   @Test
   public void testDigestFiles() throws Exception {
-    Map<String, Long> checkSums = myPatch.digestFiles(getDataDir(), Collections.<String>emptyList(), false, TEST_UI);
+    Map<String, Long> checkSums = myPatch.digestFiles(getDataDir(), Collections.emptyList(), false, TEST_UI);
     assertEquals(9, checkSums.size());
   }
 
@@ -38,14 +53,14 @@ public class PatchTest extends PatchTestCase {
       new CreateAction(myPatch, "newDir/newFile.txt"),
       new UpdateAction(myPatch, "Readme.txt", CHECKSUMS.README_TXT),
       new UpdateZipAction(myPatch, "lib/annotations.jar",
-                          Arrays.asList("org/jetbrains/annotations/NewClass.class"),
-                          Arrays.asList("org/jetbrains/annotations/Nullable.class"),
-                          Arrays.asList("org/jetbrains/annotations/TestOnly.class"),
+                          Collections.singletonList("org/jetbrains/annotations/NewClass.class"),
+                          Collections.singletonList("org/jetbrains/annotations/Nullable.class"),
+                          Collections.singletonList("org/jetbrains/annotations/TestOnly.class"),
                           CHECKSUMS.ANNOTATIONS_JAR),
       new UpdateZipAction(myPatch, "lib/bootstrap.jar",
-                          Collections.<String>emptyList(),
-                          Collections.<String>emptyList(),
-                          Arrays.asList("com/intellij/ide/ClassloaderUtil.class"),
+                          Collections.emptyList(),
+                          Collections.emptyList(),
+                          Collections.singletonList("com/intellij/ide/ClassloaderUtil.class"),
                           CHECKSUMS.BOOTSTRAP_JAR),
       new DeleteAction(myPatch, "bin/idea.bat", CHECKSUMS.IDEA_BAT));
     List<PatchAction> actualActions = new ArrayList<PatchAction>(myPatch.getActions());
@@ -60,20 +75,19 @@ public class PatchTest extends PatchTestCase {
       .setOldFolder(myOlderDir.getAbsolutePath())
       .setNewFolder(myNewerDir.getAbsolutePath())
       .setIgnoredFiles(Arrays.asList("Readme.txt", "bin/idea.bat"));
-    myPatch = new Patch(spec,
-                        TEST_UI);
+    myPatch = new Patch(spec, TEST_UI);
 
     List<PatchAction> expectedActions = Arrays.asList(
       new CreateAction(myPatch, "newDir/newFile.txt"),
       new UpdateZipAction(myPatch, "lib/annotations.jar",
-                          Arrays.asList("org/jetbrains/annotations/NewClass.class"),
-                          Arrays.asList("org/jetbrains/annotations/Nullable.class"),
-                          Arrays.asList("org/jetbrains/annotations/TestOnly.class"),
+                          Collections.singletonList("org/jetbrains/annotations/NewClass.class"),
+                          Collections.singletonList("org/jetbrains/annotations/Nullable.class"),
+                          Collections.singletonList("org/jetbrains/annotations/TestOnly.class"),
                           CHECKSUMS.ANNOTATIONS_JAR),
       new UpdateZipAction(myPatch, "lib/bootstrap.jar",
-                          Collections.<String>emptyList(),
-                          Collections.<String>emptyList(),
-                          Arrays.asList("com/intellij/ide/ClassloaderUtil.class"),
+                          Collections.emptyList(),
+                          Collections.emptyList(),
+                          Collections.singletonList("com/intellij/ide/ClassloaderUtil.class"),
                           CHECKSUMS.BOOTSTRAP_JAR));
     List<PatchAction> actualActions = new ArrayList<PatchAction>(myPatch.getActions());
     Collections.sort(expectedActions, COMPARATOR);
@@ -83,13 +97,13 @@ public class PatchTest extends PatchTestCase {
 
   @Test
   public void testValidation() throws Exception {
-    FileUtil.writeToFile(new File(myOlderDir, "bin/idea.bat"), "changed".getBytes());
+    FileUtil.writeToFile(new File(myOlderDir, "bin/idea.bat"), "changed");
     new File(myOlderDir, "extraDir").mkdirs();
     new File(myOlderDir, "extraDir/extraFile.txt").createNewFile();
     new File(myOlderDir, "newDir").mkdirs();
     new File(myOlderDir, "newDir/newFile.txt").createNewFile();
-    FileUtil.writeToFile(new File(myOlderDir, "Readme.txt"), "changed".getBytes());
-    FileUtil.writeToFile(new File(myOlderDir, "lib/annotations.jar"), "changed".getBytes());
+    FileUtil.writeToFile(new File(myOlderDir, "Readme.txt"), "changed");
+    FileUtil.writeToFile(new File(myOlderDir, "lib/annotations.jar"), "changed");
     FileUtil.delete(new File(myOlderDir, "lib/bootstrap.jar"));
 
     assertEquals(
@@ -124,8 +138,8 @@ public class PatchTest extends PatchTestCase {
 
   @Test
   public void testValidationWithOptionalFiles() throws Exception {
-    FileUtil.writeToFile(new File(myOlderDir, "lib/annotations.jar"), "changed".getBytes());
-    assertEquals(new HashSet<ValidationResult>(Arrays.asList(
+    FileUtil.writeToFile(new File(myOlderDir, "lib/annotations.jar"), "changed");
+    assertEquals(new HashSet<ValidationResult>(Collections.singletonList(
       new ValidationResult(ValidationResult.Kind.ERROR,
                            "lib/annotations.jar",
                            ValidationResult.Action.UPDATE,
@@ -136,7 +150,7 @@ public class PatchTest extends PatchTestCase {
     PatchSpec spec = new PatchSpec()
       .setOldFolder(myOlderDir.getAbsolutePath())
       .setNewFolder(myNewerDir.getAbsolutePath())
-      .setOptionalFiles(Arrays.asList("lib/annotations.jar"));
+      .setOptionalFiles(Collections.singletonList("lib/annotations.jar"));
     myPatch = new Patch(spec, TEST_UI);
     FileUtil.delete(new File(myOlderDir, "lib/annotations.jar"));
     assertEquals(Collections.<ValidationResult>emptyList(),
@@ -154,7 +168,7 @@ public class PatchTest extends PatchTestCase {
         ValidationResult.Option option = UtilsTest.mIsWindows ? ValidationResult.Option.KILL_PROCESS : ValidationResult.Option.IGNORE;
         List<ValidationResult> result = myPatch.validate(myOlderDir, TEST_UI);
         assertEquals(
-          new HashSet<ValidationResult>(Arrays.asList(
+          new HashSet<ValidationResult>(Collections.singletonList(
             new ValidationResult(ValidationResult.Kind.ERROR,
                                  "Readme.txt",
                                  ValidationResult.Action.UPDATE,
