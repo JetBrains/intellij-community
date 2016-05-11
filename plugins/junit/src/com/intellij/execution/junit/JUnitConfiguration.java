@@ -140,7 +140,7 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
   }
 
   @Override
-  public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
+  public TestObject getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
     return TestObject.fromString(myData.TEST_OBJECT, this, env);
   }
 
@@ -160,13 +160,13 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
 
   @Override
   public RefactoringElementListener getRefactoringElementListener(final PsiElement element) {
-    final RefactoringElementListener listener = myData.getTestObject(this).getListener(element, this);
+    final RefactoringElementListener listener = getTestObject().getListener(element, this);
     return RunConfigurationExtension.wrapRefactoringElementListener(element, this, listener);
   }
 
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
-    myData.getTestObject(this).checkConfiguration();
+    getTestObject().checkConfiguration();
     JavaRunConfigurationExtensionManager.checkConfigurationIsValid(this);
   }
 
@@ -176,7 +176,7 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
       return Arrays.asList(ModuleManager.getInstance(getProject()).getModules());
     }
     try {
-      myData.getTestObject(this).checkConfiguration();
+      getTestObject().checkConfiguration();
     }
     catch (RuntimeConfigurationError e) {
       return Arrays.asList(ModuleManager.getInstance(getProject()).getModules());
