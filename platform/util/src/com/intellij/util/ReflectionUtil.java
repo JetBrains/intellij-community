@@ -421,6 +421,7 @@ public class ReflectionUtil {
   private static final Method getConstructorAccessorMethod = getDeclaredMethod(Constructor.class, "getConstructorAccessor");
 
   /** @deprecated private API (to be removed in IDEA 17) */
+  @SuppressWarnings("unused")
   public static ConstructorAccessor getConstructorAccessor(@NotNull Constructor constructor) {
     if (acquireConstructorAccessorMethod == null || getConstructorAccessorMethod == null) {
       throw new IllegalStateException();
@@ -437,6 +438,7 @@ public class ReflectionUtil {
   }
 
   /** @deprecated private API, use {@link #createInstance(Constructor, Object...)} instead (to be removed in IDEA 17) */
+  @SuppressWarnings("unused")
   public static <T> T createInstanceViaConstructorAccessor(@NotNull ConstructorAccessor constructorAccessor, @NotNull Object... arguments) {
     try {
       @SuppressWarnings("unchecked") T t = (T)constructorAccessor.newInstance(arguments);
@@ -448,6 +450,7 @@ public class ReflectionUtil {
   }
 
   /** @deprecated private API, use {@link #newInstance(Class)} instead (to be removed in IDEA 17) */
+  @SuppressWarnings("unused")
   public static <T> T createInstanceViaConstructorAccessor(@NotNull ConstructorAccessor constructorAccessor) {
     try {
       @SuppressWarnings("unchecked") T t = (T)constructorAccessor.newInstance(ArrayUtil.EMPTY_OBJECT_ARRAY);
