@@ -42,7 +42,7 @@ public class AsyncArrayTableModel extends AbstractTableModel {
   private final NumpyArrayTable myProvider;
 
 
-  private final ExecutorService myExecutorService = Executors.newSingleThreadExecutor(ConcurrencyUtil.newNamedThreadFactory("Python async table"));
+  private final ExecutorService myExecutorService = ConcurrencyUtil.newSingleThreadExecutor("Python async table");
 
 
   private LoadingCache<Pair<Integer, Integer>, ListenableFuture<ArrayChunk>> myChunkCache = CacheBuilder.newBuilder().build(
