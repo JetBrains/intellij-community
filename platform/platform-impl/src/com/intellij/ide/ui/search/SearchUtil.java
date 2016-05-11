@@ -263,6 +263,16 @@ public class SearchUtil {
         }
       }
     }
+    else if (rootComponent instanceof TabbedPaneWrapper.TabbedPaneHolder) {
+      final TabbedPaneWrapper tabbedPaneWrapper = ((TabbedPaneWrapper.TabbedPaneHolder)rootComponent).getTabbedPaneWrapper();
+      final String path = SearchableOptionsRegistrar.getInstance().getInnerPath(configurable, option);
+      if (path != null) {
+        final int index = getSelection(path, tabbedPaneWrapper);
+        if (index > -1 && index < tabbedPaneWrapper.getTabCount()) {
+          glassPanel.addSpotlight((JComponent)tabbedPaneWrapper.getTabComponentAt(index));
+        }
+      }
+    }
 
 
     final Component[] components = rootComponent.getComponents();

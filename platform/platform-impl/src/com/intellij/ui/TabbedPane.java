@@ -53,6 +53,8 @@ public interface TabbedPane {
 
   Component getComponentAt(int i);
 
+  Component getTabComponentAt(int index);
+
   void setTitleAt(int index, String title);
 
   void setToolTipTextAt(int index, String toolTipText);

@@ -797,6 +797,10 @@ public class JBTabsImpl extends JComponent
     return new TabLabel(this, info);
   }
 
+  public TabLabel getTabLabel(TabInfo info) {
+    return myInfo2Label.get(info);
+  }
+
   @Override
   @NotNull
   public TabInfo addTab(TabInfo info) {
