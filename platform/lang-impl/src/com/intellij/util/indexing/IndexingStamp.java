@@ -291,6 +291,9 @@ public class IndexingStamp {
     private void set(ID<?, ?> id, long tmst) {
       if (myIndexStamps == null) myIndexStamps = new TObjectLongHashMap<ID<?, ?>>(5, 0.98f);
 
+      if (tmst == INDEX_DATA_OUTDATED_STAMP && !myIndexStamps.contains(id)) {
+        return;
+      }
       long previous = myIndexStamps.put(id, tmst);
       if (previous != tmst) myIsDirty = true;
     }

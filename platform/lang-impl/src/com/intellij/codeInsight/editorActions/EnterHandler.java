@@ -121,9 +121,6 @@ public class EnterHandler extends BaseEnterHandler {
       }
     }
 
-    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-    documentManager.commitDocument(document);
-
     boolean forceIndent = false;
     boolean forceSkipIndent = false;
     Ref<Integer> caretOffsetRef = new Ref<Integer>(caretOffset);

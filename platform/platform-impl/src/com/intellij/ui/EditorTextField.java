@@ -26,7 +26,10 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.colors.*;
+import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -86,6 +89,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
   private Color myRendererBg;
   private Color myRendererFg;
   private int myPreferredWidth = -1;
+  private int myCaretPosition = -1;
   private final List<EditorSettingsProvider> mySettingsProviders = new ArrayList<EditorSettingsProvider>();
 
   public EditorTextField() {
@@ -296,6 +300,23 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     }
   }
 
+  /**
+   * @see javax.swing.text.JTextComponent#setCaretPosition(int)
+   */
+  public void setCaretPosition(int position) {
+    Document document = getDocument();
+    if (document != null) {
+      if (position > document.getTextLength() || position < 0) {
+        throw new IllegalArgumentException("bad position: " + position);
+      }
+      if (myEditor != null) {
+        myEditor.getCaretModel().moveToOffset(myCaretPosition);
+      }
+      else {
+        myCaretPosition = position;
+      }
+    }
+  }
   public CaretModel getCaretModel() {
     return myEditor.getCaretModel();
   }
@@ -361,6 +382,10 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
   private void initEditor() {
     myEditor = createEditor();
     myEditor.getContentComponent().setEnabled(isEnabled());
+    if (myCaretPosition >= 0) {
+      myEditor.getCaretModel().moveToOffset(myCaretPosition);
+      myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+    }
     add(myEditor.getComponent(), BorderLayout.CENTER);
   }
 

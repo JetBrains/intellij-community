@@ -280,8 +280,9 @@ final class PaintersHelper implements Painter.Listener {
       int h = image.getHeight(null);
       if (w <= 0 || h <= 0) return;
       // performance: pre-compute scaled image or tiles
-      GraphicsConfiguration deviceCfg = g.getDeviceConfiguration();
-      Cached cached = cachedMap.get(deviceCfg);
+      @Nullable
+      GraphicsConfiguration cfg = g.getDeviceConfiguration();
+      Cached cached = cachedMap.get(cfg);
       VolatileImage scaled = cached == null ? null : cached.image;
       if (fillType == FillType.SCALE || fillType == FillType.TILE) {
         int sw, sh;
@@ -297,10 +298,10 @@ final class PaintersHelper implements Painter.Listener {
         int sw0 = scaled == null ? -1 : scaled.getWidth(null);
         int sh0 = scaled == null ? -1 : scaled.getHeight(null);
         boolean rescale = cached == null || cached.used.width != sw || cached.used.height != sh;
-        while ((scaled = validateImage(deviceCfg, scaled)) == null || rescale) {
+        while ((scaled = validateImage(cfg, scaled)) == null || rescale) {
           if (scaled == null || sw0 < sw || sh0 < sh) {
-            scaled = createImage(deviceCfg, sw + sw / 10, sh + sh / 10); // + 10 percent
-            cachedMap.put(deviceCfg, cached = new Cached(scaled, new Dimension(sw, sh)));
+            scaled = createImage(cfg, sw + sw / 10, sh + sh / 10); // + 10 percent
+            cachedMap.put(cfg, cached = new Cached(scaled, new Dimension(sw, sh)));
           }
           else {
             cached.used.setSize(sw, sh);
@@ -326,9 +327,9 @@ final class PaintersHelper implements Painter.Listener {
         h = sh;
       }
       else {
-        while ((scaled = validateImage(deviceCfg, scaled)) == null) {
-          scaled = createImage(deviceCfg, w, h);
-          cachedMap.put(deviceCfg, cached = new Cached(scaled, new Dimension(w, h)));
+        while ((scaled = validateImage(cfg, scaled)) == null) {
+          scaled = createImage(cfg, w, h);
+          cachedMap.put(cfg, cached = new Cached(scaled, new Dimension(w, h)));
           Graphics2D gg = scaled.createGraphics();
           gg.setComposite(AlphaComposite.Src);
           gg.drawImage(image, 0, 0, null);
@@ -359,7 +360,7 @@ final class PaintersHelper implements Painter.Listener {
         return;
       }
 
-      GraphicsConfig cfg = new GraphicsConfig(g).setAlpha(alpha);
+      GraphicsConfig gc = new GraphicsConfig(g).setAlpha(alpha);
       UIUtil.drawImage(g, scaled, x, y, w, h, null);
       if (fillType == FillType.BG_CENTER) {
         g.setColor(component.getBackground());
@@ -369,7 +370,7 @@ final class PaintersHelper implements Painter.Listener {
         g.fillRect(x, y + h, w, y);
       }
 
-      cfg.restore();
+      gc.restore();
     }
 
     void clearImages(long currentTime) {
@@ -379,9 +380,7 @@ final class PaintersHelper implements Painter.Listener {
         Cached c = cachedMap.get(cfg);
         if (all || currentTime - c.touched > 2 * 60 * 1000L) {
           it.remove();
-          int w = c.image.getWidth();
-          int h = c.image.getHeight();
-          LOG.info("(" + cfg.getClass().getSimpleName() + ") " + w + "x" + h + " image flushed" +
+          LOG.info(logPrefix(cfg, c.image) + "image flushed" +
                    (all ? "" : "; untouched for " + StringUtil.formatDuration(currentTime - c.touched)));
           c.image.flush();
         }
@@ -389,15 +388,13 @@ final class PaintersHelper implements Painter.Listener {
     }
 
     @Nullable
-    private static VolatileImage validateImage(@NotNull GraphicsConfiguration cfg, @Nullable VolatileImage image) {
+    private static VolatileImage validateImage(@Nullable GraphicsConfiguration cfg, @Nullable VolatileImage image) {
       if (image == null) return null;
       boolean lost1 = image.contentsLost();
       int validated = image.validate(cfg);
       boolean lost2 = image.contentsLost();
       if (lost1 || lost2 || validated != VolatileImage.IMAGE_OK) {
-        int w = image.getWidth();
-        int h = image.getHeight();
-        LOG.info("(" + cfg.getClass().getSimpleName() + ") " + w + "x" + h + " image flushed" +
+        LOG.info(logPrefix(cfg, image) + "image flushed" +
                  ": contentsLost=" + lost1 + "||" + lost2 + "; validate=" + validated);
         image.flush();
         return null;
@@ -406,23 +403,32 @@ final class PaintersHelper implements Painter.Listener {
     }
 
     @NotNull
-    private static VolatileImage createImage(@NotNull GraphicsConfiguration cfg, int w, int h) {
+    private static VolatileImage createImage(@Nullable GraphicsConfiguration cfg, int w, int h) {
+      GraphicsConfiguration safe;
+      safe = cfg != null ? cfg : GraphicsEnvironment.getLocalGraphicsEnvironment()
+        .getDefaultScreenDevice().getDefaultConfiguration();
       VolatileImage image;
       try {
-        image = cfg.createCompatibleVolatileImage(w, h, new ImageCapabilities(true), Transparency.TRANSLUCENT);
+        image = safe.createCompatibleVolatileImage(w, h, new ImageCapabilities(true), Transparency.TRANSLUCENT);
       }
       catch (Exception e) {
-        image = cfg.createCompatibleVolatileImage(w, h, Transparency.TRANSLUCENT);
+        image = safe.createCompatibleVolatileImage(w, h, Transparency.TRANSLUCENT);
       }
       // validate first time (it's always RESTORED & cleared)
       image.validate(cfg);
       image.setAccelerationPriority(1f);
       ImageCapabilities caps = image.getCapabilities();
-      LOG.info("(" + cfg.getClass().getSimpleName() + ") " + w + "x" + h + " " +
+      LOG.info(logPrefix(cfg, image) +
                (caps.isAccelerated() ? "" : "non-") + "accelerated " +
                (caps.isTrueVolatile() ? "" : "non-") + "volatile " +
                "image created");
       return image;
+    }
+
+    @NotNull
+    private static String logPrefix(@Nullable GraphicsConfiguration cfg, @NotNull VolatileImage image) {
+      return "(" + (cfg == null ? "null" : cfg.getClass().getSimpleName()) + ") "
+             + image.getWidth() + "x" + image.getHeight() + " ";
     }
   }
 }

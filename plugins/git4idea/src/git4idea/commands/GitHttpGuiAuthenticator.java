@@ -153,13 +153,10 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
   @Nullable
   private AuthDialog showAuthDialog(final String url, final String login) {
     final Ref<AuthDialog> dialog = Ref.create();
-    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-      @Override
-      public void run() {
-        dialog.set(new AuthDialog(myProject, myTitle, "Enter credentials for " + url, login, null, true));
-        dialog.get().show();
-      }
-    }, ModalityState.any());
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      dialog.set(new AuthDialog(myProject, myTitle, "Enter credentials for " + url, login, null, true));
+      dialog.get().show();
+    }, ModalityState.defaultModalityState());
     return dialog.get();
   }
 

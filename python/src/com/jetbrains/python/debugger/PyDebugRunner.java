@@ -54,6 +54,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.net.ServerSocket;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author yole
@@ -289,20 +290,8 @@ public class PyDebugRunner extends GenericProgramRunner {
 
     configureDebugParameters(project, debugParams, pyState, cmd);
 
-    if (PyDebuggerOptionsProvider.getInstance(project).isSupportGeventDebugging()) {
-      cmd.getEnvironment().put(GEVENT_SUPPORT, "True");
-    }
 
-    PyDebuggerSettings debuggerSettings = PyDebuggerSettings.getInstance();
-    if (debuggerSettings.isSteppingFiltersEnabled()) {
-      cmd.getEnvironment().put(PYDEVD_FILTERS, debuggerSettings.getSteppingFiltersForProject(project));
-    }
-    if (debuggerSettings.isLibrariesFilterEnabled()) {
-      cmd.getEnvironment().put(PYDEVD_FILTER_LIBRARIES, "True");
-    }
-
-    addProjectRootsToEnv(project, cmd);
-    addSdkRootsToEnv(project, cmd);
+    configureDebugEnvironment(project, cmd.getEnvironment());
 
     final String[] debuggerArgs = new String[]{
       CLIENT_PARAM, "127.0.0.1",
@@ -312,6 +301,23 @@ public class PyDebugRunner extends GenericProgramRunner {
     for (String s : debuggerArgs) {
       debugParams.addParameter(s);
     }
+  }
+
+  public static void configureDebugEnvironment(@NotNull Project project, Map<String, String> environment) {
+    if (PyDebuggerOptionsProvider.getInstance(project).isSupportGeventDebugging()) {
+      environment.put(GEVENT_SUPPORT, "True");
+    }
+
+    PyDebuggerSettings debuggerSettings = PyDebuggerSettings.getInstance();
+    if (debuggerSettings.isSteppingFiltersEnabled()) {
+      environment.put(PYDEVD_FILTERS, debuggerSettings.getSteppingFiltersForProject(project));
+    }
+    if (debuggerSettings.isLibrariesFilterEnabled()) {
+      environment.put(PYDEVD_FILTER_LIBRARIES, "True");
+    }
+
+    addProjectRootsToEnv(project, environment);
+    addSdkRootsToEnv(project, environment);
   }
 
   protected void configureDebugParameters(@NotNull Project project,
@@ -340,17 +346,17 @@ public class PyDebugRunner extends GenericProgramRunner {
     }
   }
 
-  private static void addProjectRootsToEnv(@NotNull Project project, @NotNull GeneralCommandLine commandLine) {
+  private static void addProjectRootsToEnv(@NotNull Project project, @NotNull Map<String, String> environment) {
 
     List<String> roots = Lists.newArrayList();
     for (VirtualFile contentRoot : ProjectRootManager.getInstance(project).getContentRoots()) {
       roots.add(contentRoot.getPath());
     }
 
-    commandLine.getEnvironment().put(IDE_PROJECT_ROOTS, StringUtil.join(roots, File.pathSeparator));
+    environment.put(IDE_PROJECT_ROOTS, StringUtil.join(roots, File.pathSeparator));
   }
 
-  private static void addSdkRootsToEnv(@NotNull Project project, @NotNull GeneralCommandLine commandLine) {
+  private static void addSdkRootsToEnv(@NotNull Project project, @NotNull Map<String, String> environment) {
     final RunManager runManager = RunManager.getInstance(project);
     final RunnerAndConfigurationSettings selectedConfiguration = runManager.getSelectedConfiguration();
     if (selectedConfiguration != null) {
@@ -363,7 +369,7 @@ public class PyDebugRunner extends GenericProgramRunner {
           for (VirtualFile contentRoot : sdk.getSdkModificator().getRoots(OrderRootType.CLASSES)) {
             roots.add(contentRoot.getPath());
           }
-          commandLine.getEnvironment().put(LIBRARY_ROOTS, StringUtil.join(roots, File.pathSeparator));
+          environment.put(LIBRARY_ROOTS, StringUtil.join(roots, File.pathSeparator));
         }
       }
     }

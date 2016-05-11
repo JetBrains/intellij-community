@@ -89,9 +89,10 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
         if (((IStubFileElementType)elementType).shouldBuildStubFor(file)) {
           return true;
         }
-        FileBasedIndexImpl fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
+        FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
         if (file instanceof NewVirtualFile &&
-            fileBasedIndex.getIndex(INDEX_ID).isIndexedStateForFile(((NewVirtualFile)file).getId(), file)) {
+            fileBasedIndex instanceof FileBasedIndexImpl &&
+            ((FileBasedIndexImpl)fileBasedIndex).getIndex(INDEX_ID).isIndexedStateForFile(((NewVirtualFile)file).getId(), file)) {
           return true;
         }
       }

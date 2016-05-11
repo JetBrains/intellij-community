@@ -32,11 +32,11 @@ import java.awt.*;
  */
 public class CustomizeDesktopEntryStep extends AbstractCustomizeWizardStep {
   public static boolean isAvailable() {
-    return CreateDesktopEntryAction.isAvailable();
+    return System.getProperty("idea.skip.desktop.entry.step") == null && CreateDesktopEntryAction.isAvailable();
   }
 
   private final JCheckBox myCreateEntryCheckBox = new JCheckBox(ActionsBundle.message("action.CreateDesktopEntry.description"));
-  private final JCheckBox myGlobalEntryCheckBox = new JCheckBox("For all users");
+  private final JCheckBox myGlobalEntryCheckBox = new JCheckBox("For all users (requires superuser privileges)");
 
   public CustomizeDesktopEntryStep(String iconPath) {
     setLayout(new BorderLayout());

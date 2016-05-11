@@ -60,7 +60,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   private Integer myMinRowHeight;
   private boolean myStriped;
 
-  private AsyncProcessIcon myBusyIcon;
+  protected AsyncProcessIcon myBusyIcon;
   private boolean myBusy;
 
   private int myMaxItemsForSizeCalculation = Integer.MAX_VALUE;
@@ -367,7 +367,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   private void updateBusy() {
     if (myBusy) {
       if (myBusyIcon == null) {
-        myBusyIcon = new AsyncProcessIcon(toString()).setUseMask(false);
+        myBusyIcon = createBusyIcon();
         myBusyIcon.setOpaque(false);
         myBusyIcon.setPaintPassiveIcon(false);
         add(myBusyIcon);
@@ -394,6 +394,11 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
         myBusyIcon.updateLocation(this);
       }
     }
+  }
+
+  @NotNull
+  protected AsyncProcessIcon createBusyIcon() {
+    return new AsyncProcessIcon(toString()).setUseMask(false);
   }
 
   public boolean isStriped() {

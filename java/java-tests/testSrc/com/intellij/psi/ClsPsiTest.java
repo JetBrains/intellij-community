@@ -51,7 +51,7 @@ public class ClsPsiTest extends LightIdeaTestCase {
     File testFile = IoTestUtil.createTestFile("TestClass.class");
     File file1 = new File(PathManagerEx.getTestDataPath() + TEST_DATA_PATH + "/1_TestClass.class");
     FileUtil.copy(file1, testFile);
-    VirtualFile vFile = LocalFileSystem.getInstance().findFileByIoFile(testFile);
+    VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(testFile);
     assertNotNull(testFile.getPath(), vFile);
     FileBasedIndex.getInstance().requestReindex(vFile);
     PsiFile file = PsiManager.getInstance(getProject()).findFile(vFile);

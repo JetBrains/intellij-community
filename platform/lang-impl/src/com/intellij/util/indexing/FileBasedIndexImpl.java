@@ -422,6 +422,9 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   }
 
   private static void saveRegisteredIndicesAndDropUnregisteredOnes(@NotNull Collection<ID<?, ?>> ids) {
+    if (ApplicationManager.getApplication().isDisposed()) {
+      return;
+    }
     final File registeredIndicesFile = new File(PathManager.getIndexRoot(), "registered");
     final Set<String> result = new THashSet<String>();
     try {
@@ -1557,13 +1560,16 @@ public class FileBasedIndexImpl extends FileBasedIndex {
               }
               fc = new FileContentImpl(file, currentBytes);
 
-              if (!fileType.isBinary() && IdIndex.ourSnapshotMappingsEnabled) {
+              if (IdIndex.ourSnapshotMappingsEnabled) {
                 try {
-                  byte[] hash = ContentHashesSupport.calcContentHashWithFileType(
-                    currentBytes,
-                    fc.getCharset(),
-                    SubstitutedFileType.substituteFileType(file, fileType, finalProject)
-                  );
+                  FileType substituteFileType = SubstitutedFileType.substituteFileType(file, fileType, finalProject);
+                  byte[] hash = fileType.isBinary() ?
+                                ContentHashesSupport.calcContentHash(currentBytes, substituteFileType) :
+                                ContentHashesSupport.calcContentHashWithFileType(
+                                  currentBytes,
+                                  fc.getCharset(),
+                                  substituteFileType
+                                );
                   fc.setHash(hash);
                 } catch (IOException e) {
                   LOG.error(e);
@@ -2167,7 +2173,9 @@ public class FileBasedIndexImpl extends FileBasedIndex {
                 if (virtualFile instanceof VirtualFileWithId) {
                   int fileId = ((VirtualFileWithId)virtualFile).getId();
                   boolean wasIndexed = false;
+                  List<ID<?, ?>> candidates = getAffectedIndexCandidates(virtualFile);
                   for (ID<?, ?> psiBackedIndex : myPsiDependentIndices) {
+                    if (!candidates.contains(psiBackedIndex)) continue;
                     if(getInputFilter(psiBackedIndex).acceptInput(virtualFile)) {
                       getIndex(psiBackedIndex).resetIndexedStateForFile(fileId);
                       wasIndexed = true;

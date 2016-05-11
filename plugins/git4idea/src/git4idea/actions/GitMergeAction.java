@@ -36,8 +36,8 @@ import git4idea.merge.GitMergeUtil;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.util.GitUIUtil;
-import git4idea.util.LocalChangesWouldBeOverwrittenHelper;
 import git4idea.util.GitUntrackedFilesHelper;
+import git4idea.util.LocalChangesWouldBeOverwrittenHelper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

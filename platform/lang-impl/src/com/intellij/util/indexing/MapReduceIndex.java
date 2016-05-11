@@ -19,6 +19,7 @@ package com.intellij.util.indexing;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.*;
@@ -809,6 +810,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
   }
 
   private Integer getHashOfContent(FileContent content) throws IOException {
+    FileType fileType = content.getFileType();
     if (myIsPsiBackedIndex && myHasSnapshotMapping && content instanceof FileContentImpl) {
       // psi backed index should use existing psi to build index value (FileContentImpl.getPsiFileForPsiDependentIndex())
       // so we should use different bytes to calculate hash(Id)
@@ -827,7 +829,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
             if (file != null) {
               previouslyCalculatedUncommittedHashId = ContentHashesSupport
                 .calcContentHashIdWithFileType(file.getText().getBytes(charset), charset,
-                                               content.getFileType());
+                                               fileType);
               content.putUserData(ourSavedUncommittedHashIdKey, previouslyCalculatedUncommittedHashId);
             }
           }
@@ -840,9 +842,13 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     if (previouslyCalculatedContentHashId == null) {
       byte[] hash = content instanceof FileContentImpl ? ((FileContentImpl)content).getHash():null;
       if (hash == null) {
-        Charset charset = content instanceof FileContentImpl ? ((FileContentImpl)content).getCharset() : null;
-        previouslyCalculatedContentHashId = ContentHashesSupport
-          .calcContentHashIdWithFileType(content.getContent(), charset, content.getFileType());
+        if (fileType.isBinary()) {
+          previouslyCalculatedContentHashId = ContentHashesSupport.calcContentHashId(content.getContent(), fileType);
+        } else {
+          Charset charset = content instanceof FileContentImpl ? ((FileContentImpl)content).getCharset() : null;
+          previouslyCalculatedContentHashId = ContentHashesSupport
+            .calcContentHashIdWithFileType(content.getContent(), charset, fileType);
+        }
       } else {
         previouslyCalculatedContentHashId =  ContentHashesSupport.enumerateHash(hash);
       }

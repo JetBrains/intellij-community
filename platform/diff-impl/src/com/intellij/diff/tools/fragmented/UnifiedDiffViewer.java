@@ -18,7 +18,6 @@ package com.intellij.diff.tools.fragmented;
 import com.intellij.diff.DiffContext;
 import com.intellij.diff.actions.AllLinesIterator;
 import com.intellij.diff.actions.BufferedLineIterator;
-import com.intellij.diff.actions.NavigationContextChecker;
 import com.intellij.diff.actions.impl.OpenInEditorWithMouseAction;
 import com.intellij.diff.actions.impl.SetEditorSettingsAction;
 import com.intellij.diff.comparison.DiffTooBigException;
@@ -1377,14 +1376,12 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
       if (myChangedBlockData == null) return false;
 
       ChangedLinesIterator changedLinesIterator = new ChangedLinesIterator(myChangedBlockData.getDiffChanges());
-      NavigationContextChecker checker = new NavigationContextChecker(changedLinesIterator, myNavigationContext);
-      int line = checker.contextMatchCheck();
+      int line = myNavigationContext.contextMatchCheck(changedLinesIterator);
       if (line == -1) {
         // this will work for the case, when spaces changes are ignored, and corresponding fragments are not reported as changed
         // just try to find target line  -> +-
         AllLinesIterator allLinesIterator = new AllLinesIterator(getContent2().getDocument());
-        NavigationContextChecker checker2 = new NavigationContextChecker(allLinesIterator, myNavigationContext);
-        line = checker2.contextMatchCheck();
+        line = myNavigationContext.contextMatchCheck(allLinesIterator);
       }
       if (line == -1) return false;
 
