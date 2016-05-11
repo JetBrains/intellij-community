@@ -91,6 +91,11 @@ public class PyArgumentListInspectionTest extends PyTestCase {
     doTest();
   }
 
+  // PY-19412
+  public void testReassignedViaClassMethod() {
+    doTest();
+  }
+
   public void testTuples() {  // PY-2294
     doTest();
   }
