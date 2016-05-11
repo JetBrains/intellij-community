@@ -34,7 +34,6 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.util.NotNullProducer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
@@ -249,12 +248,6 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
   }
 
   @NotNull
-  private List<VcsRef> sortRefs(@NotNull Hash hash, @NotNull VirtualFile root) {
-    Collection<VcsRef> refs = myDataPack.getRefs().refsToCommit(hash, root);
-    return ContainerUtil.sorted(refs, myLogData.getLogProvider(root).getReferenceManager().getLabelsOrderComparator());
-  }
-
-  @NotNull
   private static Font getDataPanelFont() {
     return EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN);
   }
@@ -296,6 +289,12 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       myDataPanel.setBranches(branches);
       myDataPanel.update();
       revalidate();
+    }
+
+    @NotNull
+    private List<VcsRef> sortRefs(@NotNull Hash hash, @NotNull VirtualFile root) {
+      Collection<VcsRef> refs = myDataPack.getRefs().refsToCommit(hash, root);
+      return ContainerUtil.sorted(refs, myLogData.getLogProvider(root).getReferenceManager().getLabelsOrderComparator());
     }
 
     private void updateBorder(@Nullable VcsFullCommitDetails data) {
