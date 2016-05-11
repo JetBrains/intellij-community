@@ -274,7 +274,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       LOG.error("State is invalid " + myState.get());
     }
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    myPositionManager = createPositionManager();
+    if (myPositionManager == null) { // no need to reset on reattach
+      myPositionManager = createPositionManager();
+    }
     if (LOG.isDebugEnabled()) {
       LOG.debug("*******************VM attached******************");
     }
