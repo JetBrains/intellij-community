@@ -461,9 +461,8 @@ public class ReflectionUtil {
     }
   }
 
-  /**
-   * @deprecated use {@link #newInstance(Class)} instead (this method will fail anyway if non-empty {@code parameterTypes} is passed)
-   */
+  /** @deprecated use {@link #newInstance(Class)} instead (this method will fail anyway if non-empty {@code parameterTypes} is passed) */
+  @SuppressWarnings("unused")
   public static <T> T newInstance(@NotNull Class<T> aClass, @NotNull Class... parameterTypes) {
     return newInstance(aClass);
   }
