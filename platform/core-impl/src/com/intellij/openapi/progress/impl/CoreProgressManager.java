@@ -114,7 +114,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     }
   }
 
-  public boolean sleepIfNeeded() {
+  public static boolean sleepIfNeeded() {
     if (ourMaySleepInCheckCanceled && HeavyProcessLatch.INSTANCE.isInsideLowPriorityThread()) {
       TimeoutUtil.sleep(1);
       return true;
