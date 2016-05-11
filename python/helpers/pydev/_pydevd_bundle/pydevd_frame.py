@@ -588,7 +588,7 @@ class PyDBFrame: # No longer cdef because object was dying when only a reference
                 if stop and step_cmd != -1 and IS_PY3K:
                     # in Py3k we start script via our custom `execfile` function, and we shouldn't stop there
                     # while stepping when execution is finished
-                    if event == 'return' and hasattr(frame, "f_back"):
+                    if event == 'return' and hasattr(frame, "f_back") and hasattr(frame.f_back, "f_code"):
                         back_filename = os.path.basename(frame.f_back.f_code.co_filename)
                         file_type = get_file_type(back_filename)
                         if file_type == PYDEV_FILE:
