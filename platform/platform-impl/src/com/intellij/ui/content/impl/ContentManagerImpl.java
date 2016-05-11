@@ -37,6 +37,7 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -105,7 +106,8 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
 
       MyContentComponent contentComponent = new MyContentComponent();
       contentComponent.setContent(myUI.getComponent());
-      contentComponent.setFocusCycleRoot(true);
+      // If screen reader is active, allow TAB/Shift-TAB navigate outside the contents panel.
+      contentComponent.setFocusCycleRoot(!ScreenReader.isActive());
 
       myComponent.add(myFocusProxy, BorderLayout.NORTH);
       myComponent.add(contentComponent, BorderLayout.CENTER);
