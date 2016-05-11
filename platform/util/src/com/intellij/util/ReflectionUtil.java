@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,8 +31,7 @@ import java.util.*;
 public class ReflectionUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.ReflectionUtil");
 
-  private ReflectionUtil() {
-  }
+  private ReflectionUtil() { }
 
   @Nullable
   public static Type resolveVariable(@NotNull TypeVariable variable, @NotNull Class classType) {
@@ -85,12 +83,9 @@ public class ReflectionUtil {
     return null;
   }
 
-  @SuppressWarnings("HardCodedStringLiteral")
   @NotNull
   public static String declarationToString(@NotNull GenericDeclaration anInterface) {
-    return anInterface.toString()
-           + Arrays.asList(anInterface.getTypeParameters())
-           + " loaded by " + ((Class)anInterface).getClassLoader();
+    return anInterface.toString() + Arrays.asList(anInterface.getTypeParameters()) + " loaded by " + ((Class)anInterface).getClassLoader();
   }
 
   @NotNull
@@ -171,8 +166,8 @@ public class ReflectionUtil {
   }
 
   private static void collectFields(@NotNull Class clazz, @NotNull List<Field> result) {
-    final Field[] fields = clazz.getDeclaredFields();
-    result.addAll(Arrays.asList(fields));
+    final List<Field> fields = getClassDeclaredFields(clazz);
+    result.addAll(fields);
     final Class superClass = clazz.getSuperclass();
     if (superClass != null) {
       collectFields(superClass, result);
@@ -340,7 +335,8 @@ public class ReflectionUtil {
   public static <T> T getField(@NotNull Class objectClass, @Nullable Object object, @Nullable("null means any type") Class<T> fieldType, @NotNull @NonNls String fieldName) {
     try {
       final Field field = findAssignableField(objectClass, fieldType, fieldName);
-      return (T)field.get(object);
+      @SuppressWarnings("unchecked") T t = (T)field.get(object);
+      return t;
     }
     catch (NoSuchFieldException e) {
       LOG.debug(e);
@@ -358,7 +354,8 @@ public class ReflectionUtil {
       if (!Modifier.isStatic(field.getModifiers())) {
         throw new IllegalArgumentException("Field " + objectClass + "." + fieldName + " is not static");
       }
-      return (T)field.get(null);
+      @SuppressWarnings("unchecked") T t = (T)field.get(null);
+      return t;
     }
     catch (NoSuchFieldException e) {
       LOG.debug(e);
@@ -495,8 +492,7 @@ public class ReflectionUtil {
               try {
                 constructor1.setAccessible(true);
               }
-              catch (Throwable ignored) {
-              }
+              catch (Throwable ignored) { }
 
               Class<?>[] parameterTypes = constructor1.getParameterTypes();
               for (Class<?> type : parameterTypes) {
@@ -505,8 +501,8 @@ public class ReflectionUtil {
                 }
               }
 
-              //noinspection unchecked
-              return (T)constructor1.newInstance(new Object[parameterTypes.length]);
+              @SuppressWarnings("unchecked") T t = (T)constructor1.newInstance(new Object[parameterTypes.length]);
+              return t;
             }
             catch (Exception e1) {
               exception = e1;
@@ -530,10 +526,6 @@ public class ReflectionUtil {
     }
   }
 
-  public static void resetThreadLocals() {
-    resetField(Thread.currentThread(), null, "threadLocals");
-  }
-
   @Nullable
   public static Class getGrandCallerClass() {
     int stackFrameCount = 3;
@@ -552,7 +544,7 @@ public class ReflectionUtil {
   }
 
   public static boolean copyFields(@NotNull Field[] fields, @NotNull Object from, @NotNull Object to, @Nullable DifferenceFilter diffFilter) {
-    Set<Field> sourceFields = new com.intellij.util.containers.HashSet<Field>(Arrays.asList(from.getClass().getFields()));
+    Set<Field> sourceFields = ContainerUtil.newHashSet(from.getClass().getFields());
     boolean valuesChanged = false;
     for (Field field : fields) {
       if (sourceFields.contains(field)) {
