@@ -127,7 +127,7 @@ public abstract class RemoteDebugConfiguration extends LocatableConfigurationBas
 
   @NotNull
   @Override
-  public InetSocketAddress computeDebugAddress() {
+  public InetSocketAddress computeDebugAddress(RunProfileState state) {
     if (host == null) {
       return new InetSocketAddress(InetAddress.getLoopbackAddress(), port);
     }

@@ -39,6 +39,7 @@ import javax.swing.JList
 
 abstract class RemoteVmConnection : VmConnection<Vm>() {
   var port = -1
+  var isLocalAddress = true
 
   private val connectCancelHandler = AtomicReference<() -> Unit>()
 
@@ -47,6 +48,7 @@ abstract class RemoteVmConnection : VmConnection<Vm>() {
   @JvmOverloads
   fun open(address: InetSocketAddress, stopCondition: Condition<Void>? = null): Promise<Vm> {
     port = address.port
+    isLocalAddress = address.getAddress().isAnyLocalAddress() || address.getAddress().isLoopbackAddress()
     setState(ConnectionStatus.WAITING_FOR_CONNECTION, "Connecting to ${address.hostName}:${port}")
     val result = AsyncPromise<Vm>()
     val future = ApplicationManager.getApplication().executeOnPooledThread {
