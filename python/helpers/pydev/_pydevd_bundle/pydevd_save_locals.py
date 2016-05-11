@@ -5,7 +5,6 @@ import sys
 
 try:
     import types
-
     frame_type = types.FrameType
 except:
     frame_type = type(sys._getframe())
@@ -42,13 +41,13 @@ def make_save_locals_impl():
     try:
         if '__pypy__' in sys.builtin_module_names:
             import __pypy__  # @UnresolvedImport
-            save_locals = __pypy__.locals_to_fast
+            pypy_locals_to_fast = __pypy__.locals_to_fast
     except:
         pass
     else:
         if '__pypy__' in sys.builtin_module_names:
             def save_locals_pypy_impl(frame):
-                save_locals(frame)
+                pypy_locals_to_fast(frame)
 
             return save_locals_pypy_impl
 
