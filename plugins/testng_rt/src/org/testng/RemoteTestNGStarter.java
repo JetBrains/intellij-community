@@ -21,6 +21,7 @@
 package org.testng;
 
 import com.beust.jcommander.JCommander;
+import com.intellij.rt.execution.testFrameworks.ForkedDebuggerHelper;
 import org.testng.remote.RemoteArgs;
 import org.testng.remote.RemoteTestNG;
 
@@ -50,7 +51,10 @@ public class RemoteTestNGStarter {
       } else if (arg.startsWith("@@@")) {
         commandFileName = arg.substring(3);
         continue;
-      }  else if (arg.startsWith(SOCKET)) {
+      } else if (arg.startsWith(ForkedDebuggerHelper.DEBUG_SOCKET)) {
+        continue;
+      }
+      else if (arg.startsWith(SOCKET)) {
         final int port = Integer.parseInt(arg.substring(SOCKET.length()));
         try {
           final Socket socket = new Socket(InetAddress.getByName("127.0.0.1"), port);  //start collecting tests

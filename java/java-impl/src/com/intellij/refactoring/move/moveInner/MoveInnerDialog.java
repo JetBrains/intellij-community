@@ -212,13 +212,15 @@ public class MoveInnerDialog extends MoveDialogBase {
         final PackageWrapper newPackage = new PackageWrapper(PsiManager.getInstance(myProject), targetName);
         final VirtualFile targetSourceRoot;
         if (contentSourceRoots.size() > 1) {
+          PsiPackage targetPackage = JavaPsiFacade.getInstance(myProject).findPackage(targetName);
           PsiDirectory initialDir = null;
-          if (oldPackage != null) {
-            final PsiDirectory[] directories = oldPackage.getDirectories();
-            final VirtualFile root = projectRootManager.getFileIndex().getContentRootForFile(psiDirectory.getVirtualFile());
+          if (targetPackage != null) {
+            final PsiDirectory[] directories = targetPackage.getDirectories();
+            final VirtualFile root = projectRootManager.getFileIndex().getSourceRootForFile(psiDirectory.getVirtualFile());
             for(PsiDirectory dir: directories) {
-              if (Comparing.equal(projectRootManager.getFileIndex().getContentRootForFile(dir.getVirtualFile()), root)) {
+              if (Comparing.equal(projectRootManager.getFileIndex().getSourceRootForFile(dir.getVirtualFile()), root)) {
                 initialDir = dir;
+                break;
               }
             }
           }
