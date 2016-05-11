@@ -71,14 +71,14 @@ public class JavaFxScopeEnlarger extends UseScopeEnlarger {
   public boolean isControllerClass(PsiClass psiClass) {
     final Project project = psiClass.getProject();
     final String qualifiedName = psiClass.getQualifiedName();
-    if (qualifiedName != null && !JavaFxControllerClassIndex.findFxmlWithController(project, qualifiedName).isEmpty()) {
+    final GlobalSearchScope resolveScope = psiClass.getResolveScope();
+    if (qualifiedName != null && !JavaFxControllerClassIndex.findFxmlWithController(project, qualifiedName, resolveScope).isEmpty()) {
       return true;
     }
     final Ref<Boolean> refFound = new Ref<>(false);
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-    final GlobalSearchScope projectScope = GlobalSearchScope.allScope(project);
-    JavaFxControllerClassIndex.processControllerClassNames(project, className -> {
-      final PsiClass aClass = psiFacade.findClass(className, projectScope);
+    JavaFxControllerClassIndex.processControllerClassNames(project, resolveScope, className -> {
+      final PsiClass aClass = psiFacade.findClass(className, resolveScope);
       if (InheritanceUtil.isInheritorOrSelf(aClass, psiClass, true)) {
         refFound.set(true);
         return false;
