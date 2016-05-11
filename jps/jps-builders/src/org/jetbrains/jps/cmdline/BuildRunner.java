@@ -208,8 +208,8 @@ public class BuildRunner {
             fileSet = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
             files.put(descriptor.getTarget(), fileSet);
           }
-          fileSet.add(file);
-          if (targetTypesToForceBuild.contains(descriptor.getTarget().getTargetType())) {
+          final boolean added = fileSet.add(file);
+          if (added) {
             pd.fsState.markDirty(null, file, descriptor, timestamps, false);
           }
         }
