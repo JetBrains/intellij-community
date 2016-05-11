@@ -436,6 +436,13 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
     }
 
     @Override
+    public void update(@NotNull AnActionEvent e) {
+      super.update(e);
+
+      e.getPresentation().setEnabledAndVisible(ActionPlaces.isToolbarPlace(e.getPlace()));
+    }
+
+    @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
       return myVcsConfiguration.SHOW_UNVERSIONED_FILES_WHILE_COMMIT;
     }

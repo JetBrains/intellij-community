@@ -348,7 +348,7 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
       treeActionsGroup.add(action);
     }
 
-    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarGroups, true);
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.TOOLBAR, toolbarGroups, true);
     toolbar.setTargetComponent(this);
     return toolbar.getComponent();
   }
