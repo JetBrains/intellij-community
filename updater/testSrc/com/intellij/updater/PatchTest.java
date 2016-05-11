@@ -144,7 +144,9 @@ public class PatchTest extends PatchTestCase {
     Patch patch = createPatch();
     File f = new File(myOlderDir, "Readme.txt");
     try (FileOutputStream s = new FileOutputStream(f, true); FileLock ignored = s.getChannel().lock()) {
-      String message = UtilsTest.mIsWindows ? "Locked by: Java(TM) Platform SE binary" : ValidationResult.ACCESS_DENIED_MESSAGE;
+      String message = UtilsTest.mIsWindows ? System.getProperty("java.vm.name").contains("OpenJDK")
+                                              ? "Locked by: OpenJDK Platform binary" : "Locked by: Java(TM) Platform SE binary"
+                                            : ValidationResult.ACCESS_DENIED_MESSAGE;
       ValidationResult.Option option = UtilsTest.mIsWindows ? ValidationResult.Option.KILL_PROCESS : ValidationResult.Option.IGNORE;
       assertThat(patch.validate(myOlderDir, TEST_UI)).containsOnly(
         new ValidationResult(ValidationResult.Kind.ERROR,
