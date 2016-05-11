@@ -70,6 +70,7 @@ import java.io.StringWriter;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Kirill Likhodedov
@@ -88,7 +89,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
   @NotNull private final VcsLogColorManager myColorManager;
 
   @NotNull private VisiblePack myDataPack;
-  @Nullable private VcsFullCommitDetails myCurrentCommitDetails;
+  @NotNull private Set<VcsFullCommitDetails> myCurrentCommitDetails = Collections.emptySet();
 
   private final StatusText myEmptyText;
 
@@ -188,7 +189,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
   public void valueChanged(@Nullable ListSelectionEvent event) {
     if (event != null && event.getValueIsAdjusting()) return;
 
-    VcsFullCommitDetails newCommitDetails = null;
+    Set<VcsFullCommitDetails> newCommitDetails = ContainerUtil.newHashSet();
 
     int[] rows = myGraphTable.getSelectedRows();
 
@@ -239,7 +240,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
         dataPanel.setData(commitData);
         referencesPanel.setReferences(sortRefs(commitData.getId(), commitData.getRoot()));
         updateDetailsBorder(commitData);
-        newCommitDetails = commitData;
+        newCommitDetails.add(commitData);
       }
       List<String> branches = null;
       if (!(commitData instanceof LoadingDetails)) {
@@ -262,10 +263,10 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       myMainContentPanel.add(label);
     }
 
-    if (!Comparing.equal(myCurrentCommitDetails, newCommitDetails)) {
-      myCurrentCommitDetails = newCommitDetails;
+    if (!ContainerUtil.intersects(myCurrentCommitDetails, newCommitDetails)) {
       myScrollPane.getVerticalScrollBar().setValue(0);
     }
+    myCurrentCommitDetails = newCommitDetails;
   }
 
   private void updateDetailsBorder(@Nullable VcsFullCommitDetails data) {
