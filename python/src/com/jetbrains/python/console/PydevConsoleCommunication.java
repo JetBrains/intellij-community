@@ -44,9 +44,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.util.Collections;
-import java.util.List;
-import java.util.Vector;
+import java.util.*;
 
 /**
  * Communication with Xml-rpc with the client.
@@ -115,7 +113,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
 
     //start the server that'll handle input requests
     myWebServer = new MyWebServer(clientPort);
-    
+
     myWebServer.addHandler("$default", this);
     this.myWebServer.start();
 
@@ -589,13 +587,19 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
    * Request that pydevconsole connect (with pydevd) to the specified port
    *
    * @param localPort port for pydevd to connect to.
+   * @param dbgOpts   additional debugger options (that are normally passed via command line) to apply
+   * @param extraEnvs
    * @throws Exception if connection fails
    */
-  public void connectToDebugger(int localPort) throws Exception {
+  public void connectToDebugger(int localPort, @NotNull Map<String, Boolean> dbgOpts, @NotNull Map<String, String> extraEnvs)
+    throws Exception {
     if (waitingForInput) {
       throw new Exception("Can't connect debugger now, waiting for input");
     }
-    Object result = myClient.execute(CONNECT_TO_DEBUGGER, new Object[]{localPort});
+    /* argument needs to be hashtable type for compatability with the RPC library */
+    Hashtable<String, Object> opts = new Hashtable<>(dbgOpts);
+    opts.put("__extra__envs__", new Hashtable<>(extraEnvs));
+    Object result = myClient.execute(CONNECT_TO_DEBUGGER, new Object[]{localPort, opts});
     Exception exception = null;
     if (result instanceof Vector) {
       Vector resultarray = (Vector)result;
@@ -627,21 +631,21 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   public PythonDebugConsoleCommunication getDebugCommunication() {
     return myDebugCommunication;
   }
-  
-  
+
+
   public boolean waitForTerminate() {
     if (myWebServer != null) {
       return myWebServer.waitForTerminate();
     }
-    
+
     return true;
   }
-  
+
   private static final class MyWebServer extends WebServer {
     public MyWebServer(int port) {
       super(port);
     }
-    
+
     @Override
     public synchronized void shutdown() {
       try {
@@ -654,10 +658,10 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
       }
       super.shutdown();
     }
-    
+
     public boolean waitForTerminate() {
       if (listener != null) {
-        return new WaitFor(10000){
+        return new WaitFor(10000) {
           @Override
           protected boolean condition() {
             return !listener.isAlive();
