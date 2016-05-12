@@ -325,16 +325,16 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
 
   @NotNull
   public Future<?> runProcessWithProgressAsynchronously(@NotNull final Task.Backgroundable task,
-                                                               @NotNull final ProgressIndicator progressIndicator,
-                                                               @Nullable final Runnable continuation) {
+                                                        @NotNull final ProgressIndicator progressIndicator,
+                                                        @Nullable final Runnable continuation) {
     return runProcessWithProgressAsynchronously(task, progressIndicator, continuation, ModalityState.NON_MODAL);
   }
 
   @NotNull
   public Future<?> runProcessWithProgressAsynchronously(@NotNull final Task.Backgroundable task,
-                                                               @NotNull final ProgressIndicator progressIndicator,
-                                                               @Nullable final Runnable continuation,
-                                                               @NotNull final ModalityState modalityState) {
+                                                        @NotNull final ProgressIndicator progressIndicator,
+                                                        @Nullable final Runnable continuation,
+                                                        @NotNull final ModalityState modalityState) {
     if (progressIndicator instanceof Disposable) {
       Disposer.register(ApplicationManager.getApplication(), (Disposable)progressIndicator);
     }
@@ -371,7 +371,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     return ApplicationManager.getApplication().executeOnPooledThread(action);
   }
 
-  protected boolean runProcessWithProgressSynchronously(@NotNull final Task task, @Nullable final JComponent parentComponent) {
+  public boolean runProcessWithProgressSynchronously(@NotNull final Task task, @Nullable final JComponent parentComponent) {
     final Ref<Exception> exceptionRef = new Ref<Exception>();
     TaskContainer taskContainer = new TaskContainer(task) {
       @Override
