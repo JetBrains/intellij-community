@@ -305,6 +305,16 @@ public class SafeDeleteTest extends MultiFileTestCase {
     doSingleFileTest();
   }
 
+  public void testShowConflictsButRemoveAnnotationsIfAnnotationTypeIsDeleted() throws Exception {
+    try {
+      BaseRefactoringProcessor.ConflictsInTestsException.setTestIgnore(true);
+      doSingleFileTest();
+    }
+    finally {
+      BaseRefactoringProcessor.ConflictsInTestsException.setTestIgnore(false);
+    }
+  }
+
   private void doTest(@NonNls final String qClassName) throws Exception {
     doTest((rootDir, rootAfter) -> {
       SafeDeleteTest.this.performAction(qClassName);

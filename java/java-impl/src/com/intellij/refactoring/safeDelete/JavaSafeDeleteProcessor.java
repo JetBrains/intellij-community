@@ -330,6 +330,9 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
       else if (usage instanceof SafeDeleteParameterCallHierarchyUsageInfo) {
         delegatingParams.add((SafeDeleteParameterCallHierarchyUsageInfo)usage);
       }
+      else if (usage instanceof SafeDeleteAnnotation) {
+        result.add(new SafeDeleteAnnotation((PsiAnnotation)usage.getElement(), ((SafeDeleteAnnotation)usage).getReferencedElement(), true));
+      }
       else {
         result.add(usage);
       }
@@ -518,6 +521,8 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
 
   private static void findClassUsages(final PsiClass psiClass, final PsiElement[] allElementsToDelete, final List<UsageInfo> usages) {
     final boolean justPrivates = containsOnlyPrivates(psiClass);
+    final String qualifiedName = psiClass.getQualifiedName();
+    final boolean annotationType = psiClass.isAnnotationType() && qualifiedName != null;
 
     ReferencesSearch.search(psiClass).forEach(new Processor<PsiReference>() {
       public boolean process(final PsiReference reference) {
@@ -547,7 +552,14 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
                                       classes[0] == psiClass && 
                                       element.getContainingFile() == containingFile;
           }
-          usages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(element, psiClass, sameFileWithSingleClass || isInNonStaticImport(element)));
+
+          final boolean safeDelete = sameFileWithSingleClass || isInNonStaticImport(element);
+          if (annotationType && parent instanceof PsiAnnotation) {
+            usages.add(new SafeDeleteAnnotation((PsiAnnotation)parent, psiClass, safeDelete));
+          }
+          else {
+            usages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(element, psiClass, safeDelete));
+          }
         }
         return true;
       }
