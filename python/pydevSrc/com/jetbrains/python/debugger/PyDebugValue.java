@@ -24,6 +24,7 @@ public class PyDebugValue extends XNamedValue {
   private final String myTypeQualifier;
   private final String myValue;
   private final boolean myContainer;
+  private final boolean myIsReturnedVal;
   private final PyDebugValue myParent;
   private String myId = null;
 
@@ -34,17 +35,18 @@ public class PyDebugValue extends XNamedValue {
   private final boolean myErrorOnEval;
 
   public PyDebugValue(@NotNull final String name, final String type, String typeQualifier, final String value, final boolean container,
-                      boolean errorOnEval, final PyFrameAccessor frameAccessor) {
-    this(name, type, typeQualifier, value, container, errorOnEval, null, frameAccessor);
+                      boolean isReturnedVal, boolean errorOnEval, final PyFrameAccessor frameAccessor) {
+    this(name, type, typeQualifier, value, container, isReturnedVal, errorOnEval, null, frameAccessor);
   }
 
   public PyDebugValue(@NotNull final String name, final String type, String typeQualifier, final String value, final boolean container,
-                      boolean errorOnEval, final PyDebugValue parent, final PyFrameAccessor frameAccessor) {
+                      boolean isReturnedVal, boolean errorOnEval, final PyDebugValue parent, final PyFrameAccessor frameAccessor) {
     super(name);
     myType = type;
     myTypeQualifier = Strings.isNullOrEmpty(typeQualifier) ? null : typeQualifier;
     myValue = value;
     myContainer = container;
+    myIsReturnedVal = isReturnedVal;
     myErrorOnEval = errorOnEval;
     myParent = parent;
     myFrameAccessor = frameAccessor;
@@ -70,12 +72,16 @@ public class PyDebugValue extends XNamedValue {
     return myContainer;
   }
 
+  public boolean isReturnedVal() {
+    return myIsReturnedVal;
+  }
+
   public boolean isErrorOnEval() {
     return myErrorOnEval;
   }
   
   public PyDebugValue setParent(@Nullable PyDebugValue parent) {
-    return new PyDebugValue(myName, myType, myTypeQualifier, myValue, myContainer, myErrorOnEval, parent, myFrameAccessor);
+    return new PyDebugValue(myName, myType, myTypeQualifier, myValue, myContainer, myIsReturnedVal, myErrorOnEval, parent, myFrameAccessor);
   }
 
   public PyDebugValue getParent() {
@@ -203,7 +209,10 @@ public class PyDebugValue extends XNamedValue {
   }
 
   private Icon getValueIcon() {
-    if (!myContainer) {
+    if (myIsReturnedVal) {
+      return AllIcons.Debugger.WatchLastReturnValue;
+    }
+    else if (!myContainer) {
       return AllIcons.Debugger.Db_primitive;
     }
     else if ("list".equals(myType) || "tuple".equals(myType)) {
@@ -215,7 +224,8 @@ public class PyDebugValue extends XNamedValue {
   }
   
   public PyDebugValue setName(String newName) {
-    return new PyDebugValue(newName, myType, myTypeQualifier, myValue, myContainer, myErrorOnEval, myParent, myFrameAccessor);
+    return new PyDebugValue(newName, myType, myTypeQualifier, myValue, myContainer, myIsReturnedVal, myErrorOnEval, myParent,
+                            myFrameAccessor);
   }
 
   @Nullable

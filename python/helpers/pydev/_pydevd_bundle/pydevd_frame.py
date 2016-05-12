@@ -409,6 +409,11 @@ class PyDBFrame: # No longer cdef because object was dying when only a reference
                         exist_result = True
                         (flag, breakpoint, new_frame, bp_type) = result
 
+                if event == "return":
+                    print(filename, line, frame.f_locals, frame.f_back.f_locals)
+                    name = frame.f_code.co_name
+                    frame.f_back.f_locals["__pydevd_ret_val" + name] = arg
+
                 if breakpoint:
                     #ok, hit breakpoint, now, we have to discover if it is a conditional breakpoint
                     # lets do the conditional stuff here
