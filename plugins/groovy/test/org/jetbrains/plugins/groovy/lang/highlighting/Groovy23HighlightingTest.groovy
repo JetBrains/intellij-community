@@ -120,7 +120,7 @@ class B implements A {
 '''
   }
 
-  void 'test traits have only abstract methods'() {
+  void 'test traits have only abstract and non-final methods'() {
     def file = myFixture.addFileToProject('T.groovy', '''\
 trait T {
   def foo
@@ -132,6 +132,7 @@ trait T {
     def definition = file.classes[0] as GrTypeDefinition
     for (method in definition.methods) {
       assert method.hasModifierProperty(GrModifier.ABSTRACT)
+      assert !method.hasModifierProperty(GrModifier.FINAL)
     }
   }
 

@@ -139,6 +139,10 @@ public class GrAccessorMethodImpl extends LightMethodBuilder implements GrAccess
 
   @Override
   public boolean hasModifierProperty(@NotNull String name) {
-    return PsiModifier.ABSTRACT.equals(name) && GrTraitUtil.isTrait(getContainingClass()) || super.hasModifierProperty(name);
+    if (GrTraitUtil.isTrait(getContainingClass())) {
+      if (PsiModifier.ABSTRACT.equals(name)) return true;
+      if (PsiModifier.FINAL.equals(name)) return false;
+    }
+    return super.hasModifierProperty(name);
   }
 }
