@@ -172,10 +172,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
     myDoNotSave = isUnitTestMode || isHeadless;
 
-    if (myTestModeFlag) {
-      registerShutdownHook();
-    }
-
     if (!isUnitTestMode && !isHeadless) {
       Disposer.register(this, Disposer.newDisposable(), "ui");
 
@@ -220,26 +216,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       return Thread.currentThread();
     });
     myLock = new ReadMostlyRWLock(edt);
-  }
-
-  private void registerShutdownHook() {
-    ShutDownTracker.getInstance().registerShutdownTask(() -> {
-      if (isDisposed() || myDisposeInProgress) {
-        return;
-      }
-      ShutDownTracker.invokeAndWait(isUnitTestMode(), true, () -> {
-        if (ApplicationManager.getApplication() != this) return;
-        try {
-          myDisposeInProgress = true;
-          saveAll();
-        }
-        finally {
-          if (!disposeSelf(true)) {
-            myDisposeInProgress = false;
-          }
-        }
-      });
-    });
   }
 
   private boolean disposeSelf(final boolean checkCanCloseProject) {
