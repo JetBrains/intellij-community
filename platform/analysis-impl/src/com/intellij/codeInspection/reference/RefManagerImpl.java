@@ -357,14 +357,11 @@ public class RefManagerImpl extends RefManager {
     synchronized (myRefTable) {
       answer = new ArrayList<RefElement>(myRefTable.values());
     }
-    ContainerUtil.quickSort(answer, new Comparator<RefElement>() {
-      @Override
-      public int compare(RefElement o1, RefElement o2) {
-        VirtualFile v1 = ((RefElementImpl)o1).getVirtualFile();
-        VirtualFile v2 = ((RefElementImpl)o2).getVirtualFile();
+    ContainerUtil.quickSort(answer, (o1, o2) -> {
+      VirtualFile v1 = ((RefElementImpl)o1).getVirtualFile();
+      VirtualFile v2 = ((RefElementImpl)o2).getVirtualFile();
 
-        return (v1 != null ? v1.hashCode() : 0) - (v2 != null ? v2.hashCode() : 0);
-      }
+      return (v1 != null ? v1.hashCode() : 0) - (v2 != null ? v2.hashCode() : 0);
     });
 
     return answer;
@@ -495,15 +492,12 @@ public class RefManagerImpl extends RefManager {
           });
         }
       },
-      new Consumer<RefElementImpl>() {
-        @Override
-        public void consume(RefElementImpl element) {
-          element.initialize();
-          for (RefManagerExtension each : myExtensions.values()) {
-            each.onEntityInitialized(element, elem);
-          }
-          fireNodeInitialized(element);
+      element -> {
+        element.initialize();
+        for (RefManagerExtension each : myExtensions.values()) {
+          each.onEntityInitialized(element, elem);
         }
+        fireNodeInitialized(element);
       });
   }
 
@@ -565,9 +559,10 @@ public class RefManagerImpl extends RefManager {
       if (result == null) return null;
 
       myRefTable.put(psiAnchor, result);
-    }
-    if (whenCached != null) {
-      whenCached.consume(result);
+
+      if (whenCached != null) {
+        whenCached.consume(result);
+      }
     }
 
     return result;

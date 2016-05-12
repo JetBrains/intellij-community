@@ -713,7 +713,7 @@ public class PyTypeParser {
 
   private static List<Token<PyElementType>> tokenize(@NotNull String s) {
     final List<Token<PyElementType>> tokens = new ArrayList<Token<PyElementType>>();
-    final PyTypeLexer lexer = new PyTypeLexer(new StringReader(s));
+    final _PyTypeLexer lexer = new _PyTypeLexer(new StringReader(s));
     lexer.reset(s, 0, s.length(), lexer.yystate());
     try {
       PyElementType type;

@@ -3,7 +3,7 @@
   <id>com.jetbrains.edu.interactivelearning</id>
   <name>Educational plugin core</name>
   <version>2.0.4</version>
-  <idea-version since-build="143.403"/>
+  <idea-version since-build="162.75"/>
   <description><![CDATA[
       Educational plugin core for students. 
       ]]></description>

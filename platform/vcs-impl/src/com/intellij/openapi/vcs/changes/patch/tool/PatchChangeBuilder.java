@@ -21,12 +21,14 @@ import com.intellij.diff.util.LineRange;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch;
 import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch.AppliedSplitPatchHunk;
+import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch.HunkStatus;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 class PatchChangeBuilder {
@@ -34,18 +36,30 @@ class PatchChangeBuilder {
   @NotNull private final List<Hunk> myHunks = new ArrayList<>();
   @NotNull private final LineNumberConvertor.Builder myConvertor = new LineNumberConvertor.Builder();
   @NotNull private final TIntArrayList myChangedLines = new TIntArrayList();
-  private CharSequence myPatchedContent;
 
   private int totalLines = 0;
 
   @NotNull
   public static CharSequence getPatchedContent(@NotNull AppliedTextPatch patch, @NotNull String localContent) {
     PatchChangeBuilder builder = new PatchChangeBuilder();
-    builder.exec(patch.getHunks(), localContent);
-    return builder.getPatchApplyResult();
+    builder.exec(patch.getHunks());
+
+    DocumentImpl document = new DocumentImpl(localContent, true);
+    List<Hunk> appliedHunks = ContainerUtil.filter(builder.getHunks(), (h) -> h.getStatus() == HunkStatus.EXACTLY_APPLIED);
+    ContainerUtil.sort(appliedHunks, Comparator.comparingInt(h -> h.getAppliedToLines().start));
+
+    for (int i = appliedHunks.size() - 1; i >= 0; i--) {
+      Hunk hunk = appliedHunks.get(i);
+      LineRange appliedTo = hunk.getAppliedToLines();
+      List<String> inserted = hunk.getInsertedLines();
+
+      DiffUtil.applyModification(document, appliedTo.start, appliedTo.end, inserted);
+    }
+
+    return document.getText();
   }
 
-  public void exec(@NotNull List<AppliedSplitPatchHunk> splitHunks, @NotNull CharSequence localContent) {
+  public void exec(@NotNull List<AppliedSplitPatchHunk> splitHunks) {
     int lastBeforeLine = -1;
     for (AppliedSplitPatchHunk hunk : splitHunks) {
       List<String> contextBefore = hunk.getContextBefore();
@@ -87,30 +101,6 @@ class PatchChangeBuilder {
 
       myHunks.add(new Hunk(hunk.getInsertedLines(), deletionRange, insertionRange, hunk.getAppliedTo(), hunk.getStatus()));
     }
-
-
-    DocumentImpl document = new DocumentImpl(localContent, true);
-    List<Hunk> appliedHunks = ContainerUtil.filter(myHunks, (h) -> h.getOriginalAppliedToLines() != null);
-    ContainerUtil.sort(appliedHunks, (h1, h2) -> Integer.compare(h1.getOriginalAppliedToLines().start,
-                                                                 h2.getOriginalAppliedToLines().start));
-
-    int shift = 0;
-    for (Hunk hunk : appliedHunks) {
-      LineRange appliedTo = hunk.getOriginalAppliedToLines();
-      List<String> inserted = hunk.getInsertedLines();
-
-      int insertedLines = inserted.size();
-      int deletedLines = appliedTo.end - appliedTo.start;
-
-      hunk.setAppliedToLines(new LineRange(appliedTo.start + shift, appliedTo.start + shift + insertedLines));
-
-      if (hunk.getStatus() == AppliedTextPatch.HunkStatus.EXACTLY_APPLIED) {
-        DiffUtil.applyModification(document, appliedTo.start + shift, appliedTo.end + shift, inserted);
-        shift += insertedLines - deletedLines;
-      }
-    }
-
-    myPatchedContent = document.getText();
   }
 
   private void addContext(@NotNull List<String> context, int beforeLineNumber, int afterLineNumber) {
@@ -156,11 +146,6 @@ class PatchChangeBuilder {
     return myChangedLines;
   }
 
-  @NotNull
-  public CharSequence getPatchApplyResult() {
-    return myPatchedContent;
-  }
-
 
   static class Hunk {
     @NotNull private final List<String> myInsertedLines;
@@ -168,15 +153,13 @@ class PatchChangeBuilder {
     @NotNull private final LineRange myPatchInsertionRange;
 
     @Nullable private final LineRange myAppliedToLines;
-    @NotNull private final AppliedTextPatch.HunkStatus myStatus;
-
-    @Nullable private LineRange myUpdatedAppliedToLines;
+    @NotNull private final HunkStatus myStatus;
 
     public Hunk(@NotNull List<String> insertedLines,
                 @NotNull LineRange patchDeletionRange,
                 @NotNull LineRange patchInsertionRange,
                 @Nullable LineRange appliedToLines,
-                @NotNull AppliedTextPatch.HunkStatus status) {
+                @NotNull HunkStatus status) {
       myInsertedLines = insertedLines;
       myPatchDeletionRange = patchDeletionRange;
       myPatchInsertionRange = patchInsertionRange;
@@ -195,26 +178,17 @@ class PatchChangeBuilder {
     }
 
     @NotNull
-    public AppliedTextPatch.HunkStatus getStatus() {
+    public HunkStatus getStatus() {
       return myStatus;
     }
 
-    @Nullable
     public LineRange getAppliedToLines() {
-      return myUpdatedAppliedToLines;
-    }
-
-    private void setAppliedToLines(@Nullable LineRange value) {
-      myUpdatedAppliedToLines = value;
+      return myAppliedToLines;
     }
 
     @NotNull
     private List<String> getInsertedLines() {
       return myInsertedLines;
-    }
-
-    private LineRange getOriginalAppliedToLines() {
-      return myAppliedToLines;
     }
   }
 }

@@ -3,7 +3,7 @@
   <id>com.jetbrains.python.edu.interactivelearning.python</id>
   <name>Educational plugin for PyCharm</name>
   <version>2.0.4</version>
-  <idea-version since-build="143.403"/>
+  <idea-version since-build="162.75"/>
   <description><![CDATA[
       Educational plugin for students. This plugin allows to learn Python
        using intelligent PyCharm IDE.

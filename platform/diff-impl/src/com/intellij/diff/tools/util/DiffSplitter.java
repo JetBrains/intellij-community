@@ -41,12 +41,6 @@ public class DiffSplitter extends Splitter {
   @Nullable private AnAction myBottomAction;
 
   public DiffSplitter() {
-     this(.5f);
-  }
-
-  public DiffSplitter(float proportion) {
-    super(false, proportion);
-    setDefaultProportion(proportion);
     setDividerWidth(JBUI.scale(30));
   }
 

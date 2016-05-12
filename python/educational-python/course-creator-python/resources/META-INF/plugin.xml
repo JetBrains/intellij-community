@@ -2,7 +2,7 @@
   <id>com.jetbrains.edu.coursecreator.python</id>
   <name>Course Creator for PyCharm Edu</name>
   <version>2.0.3</version>
-  <idea-version since-build="143.403"/>
+  <idea-version since-build="162.75"/>
   <description><![CDATA[
       Plugin allows you to create new course for PyCharm <Edu></Edu>.
     ]]></description>

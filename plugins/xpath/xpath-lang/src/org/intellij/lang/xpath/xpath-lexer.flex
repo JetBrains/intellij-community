@@ -13,8 +13,6 @@ import com.intellij.psi.tree.IElementType;
 %unicode
 %function advance
 %type IElementType
-%eof{  return;
-%eof}
 
 %{
   private boolean allowXPath2Syntax = false;

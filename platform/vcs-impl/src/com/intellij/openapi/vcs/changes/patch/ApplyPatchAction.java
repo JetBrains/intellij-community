@@ -228,7 +228,7 @@ public class ApplyPatchAction extends DumbAwareAction {
         final GenericPatchApplier applier = new GenericPatchApplier(localContent, textPatch.getHunks());
         applier.execute();
 
-        final AppliedTextPatch appliedTextPatch = new AppliedTextPatch(applier.getAppliedInfo());
+        final AppliedTextPatch appliedTextPatch = AppliedTextPatch.create(applier.getAppliedInfo());
         request = PatchDiffRequestFactory.createBadMergeRequest(project, document, file, localContent, appliedTextPatch, callback);
       }
       request.putUserData(DiffUserDataKeysEx.MERGE_ACTION_CAPTIONS, new Function<MergeResult, String>() {

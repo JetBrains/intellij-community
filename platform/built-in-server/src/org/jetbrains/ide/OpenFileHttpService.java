@@ -15,6 +15,7 @@
  */
 package org.jetbrains.ide;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -186,14 +187,17 @@ class OpenFileHttpService extends RestService {
               if (System.currentTimeMillis() - lastTimeRejected < waitUntilNextRequestTimeout) {
                 return;
               }
-              boolean value = com.intellij.ide.impl.ProjectUtil
-                .confirmLoadingFromRemotePath(systemIndependentName, "warning.load.file.from.share", "title.load.file.from.share");
 
-              if (value != Boolean.TRUE) {
+              String msg = IdeBundle.message("warning.load.file.from.share", systemIndependentName);
+              String title = IdeBundle.message("title.load.file.from.share");
+              boolean confirmed = com.intellij.ide.impl.ProjectUtil.confirmLoadingFromRemotePath(msg, title);
+
+              if (!confirmed) {
                 lastTimeRejected = System.currentTimeMillis();
                 waitUntilNextRequestTimeout = Math.min(2 * Math.max(waitUntilNextRequestTimeout, 2000), 60 * 60 * 1000); //to avoid negative values
                 result.set(Promise.reject(NOT_FOUND));
-              } else {
+              }
+              else {
                 waitUntilNextRequestTimeout = 0;
               }
             }

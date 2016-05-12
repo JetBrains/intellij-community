@@ -15,6 +15,7 @@
  */
 package com.intellij.diff.util;
 
+import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -242,7 +243,9 @@ public class DiffDrawUtil {
   public static List<RangeHighlighter> createUnifiedChunkHighlighters(@NotNull Editor editor,
                                                                       @NotNull LineRange deleted,
                                                                       @NotNull LineRange inserted,
-                                                                      boolean ignored) {
+                                                                      @Nullable List<DiffFragment> innerFragments) {
+    boolean ignored = innerFragments != null;
+
     List<RangeHighlighter> list = new ArrayList<>();
     if (!inserted.isEmpty() && !deleted.isEmpty()) {
       list.addAll(createLineMarker(editor, deleted.start, TextDiffType.DELETED, SeparatorPlacement.TOP));
@@ -260,6 +263,22 @@ public class DiffDrawUtil {
       list.addAll(createHighlighter(editor, deleted.start, deleted.end, TextDiffType.DELETED, ignored));
       list.addAll(createLineMarker(editor, deleted.end - 1, TextDiffType.DELETED, SeparatorPlacement.BOTTOM));
     }
+
+    if (innerFragments != null) {
+      int deletedStartOffset = editor.getDocument().getLineStartOffset(deleted.start);
+      int insertedStartOffset = editor.getDocument().getLineStartOffset(inserted.start);
+
+      for (DiffFragment fragment : innerFragments) {
+        int deletedWordStart = deletedStartOffset + fragment.getStartOffset1();
+        int deletedWordEnd = deletedStartOffset + fragment.getEndOffset1();
+        list.addAll(createInlineHighlighter(editor, deletedWordStart, deletedWordEnd, TextDiffType.DELETED));
+
+        int insertedWordStart = insertedStartOffset + fragment.getStartOffset2();
+        int insertedWordEnd = insertedStartOffset + fragment.getEndOffset2();
+        list.addAll(createInlineHighlighter(editor, insertedWordStart, insertedWordEnd, TextDiffType.INSERTED));
+      }
+    }
+
     return list;
   }
 

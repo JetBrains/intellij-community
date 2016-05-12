@@ -23,16 +23,18 @@ subprojects {
 
   intellij {
     version ideaVersion
-    updateSinceUntilBuild true
+    updateSinceUntilBuild Boolean.valueOf(updateBuildNumber)
     downloadSources Boolean.valueOf(downloadIdeaSources)
     sandboxDirectory = new File(rootProject.projectDir, "gradleBuild/idea-sandbox")
   }
 
   processResources {
-    filter ReplaceTokens, tokens: [
-      'VERSION': version.toString(),
-      'BUILD-NUMBER': buildNumber,
-    ]
+    filesNotMatching("**/*.png") {
+      it.filter(ReplaceTokens, tokens: [
+        'VERSION'     : version.toString(),
+        'BUILD-NUMBER': buildNumber,
+      ])
+    }
   }
 
   afterEvaluate {

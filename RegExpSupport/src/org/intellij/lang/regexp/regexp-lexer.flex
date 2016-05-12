@@ -16,8 +16,6 @@ import java.util.EnumSet;
 %unicode
 %function advance
 %type IElementType
-%eof{  return;
-%eof}
 
 %{
     // This adds support for nested states. I'm no JFlex pro, so maybe this is overkill, but it works quite well.
@@ -100,7 +98,7 @@ RBRACKET="]"
 
 ESCAPE="\\"
 NAME=[:letter:]([:letter:]|_|[:digit:])*
-ANY=.|\n
+ANY=[^]
 
 META={ESCAPE} | {DOT} |
   "^" | "$" | "?" | "*" | "+" | "|" |
@@ -304,7 +302,7 @@ HEX_CHAR=[0-9a-fA-F]
 }
 
 <OPTIONS> {
-  [:letter:]*         { handleOptions(); return RegExpTT.OPTIONS_ON; }
+  [:letter:]+         { handleOptions(); return RegExpTT.OPTIONS_ON; }
   ("-" [:letter:]*)   { handleOptions(); return RegExpTT.OPTIONS_OFF; }
 
   ":"               { yybegin(YYINITIAL); return RegExpTT.COLON;  }

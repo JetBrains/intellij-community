@@ -40,13 +40,19 @@ public class ApplyPatchDiffTool implements FrameDiffTool {
 
   private static class MyApplyPatchViewer extends ApplyPatchViewer implements DiffViewer {
     public MyApplyPatchViewer(@NotNull DiffContext context, @NotNull ApplyPatchDiffRequest request) {
-      super(context, request, null);
+      super(context, request);
     }
 
     @NotNull
     @Override
     public ToolbarComponents init() {
-      return super.doInit();
+      initPatchViewer();
+
+      ToolbarComponents components = new ToolbarComponents();
+      components.statusPanel = getStatusPanel();
+      components.toolbarActions = createToolbarActions();
+
+      return components;
     }
   }
 }
