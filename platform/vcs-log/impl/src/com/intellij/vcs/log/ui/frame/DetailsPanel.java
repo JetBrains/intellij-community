@@ -233,7 +233,9 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
 
       VcsFullCommitDetails commitData = tableModel.getFullDetails(row);
       commitPanel.setCommit(commitData);
-      if (!(commitData instanceof LoadingDetails)) {
+      if (commitData instanceof LoadingDetails) {
+        myLoadingPanel.startLoading();
+      } else {
         newCommitDetails.add(commitData);
       }
     }
@@ -288,7 +290,6 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
     public void setCommit(@NotNull VcsFullCommitDetails commitData) {
       if (!Comparing.equal(myCommit, commitData)) {
         if (commitData instanceof LoadingDetails) {
-          myLoadingPanel.startLoading();
           myDataPanel.setData(null);
           myReferencesPanel.setReferences(Collections.emptyList());
           updateBorder(null);
