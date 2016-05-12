@@ -71,7 +71,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   @NotNull private final Splitter myChangesBrowserSplitter;
   @NotNull private final SearchTextField myTextFilter;
 
-  @NotNull private Runnable myTaskCompletedListener;
+  @NotNull private Runnable myContainingBranchesListener;
   @NotNull private Runnable myFullDetailsLoadedListener;
   @NotNull private Runnable myMiniDetailsLoadedListener;
 
@@ -147,29 +147,18 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   }
 
   private void updateWhenDetailsAreLoaded() {
-    myMiniDetailsLoadedListener = new Runnable() {
-      @Override
-      public void run() {
-        myGraphTable.initColumnSize();
-        myGraphTable.repaint();
-      }
+    myMiniDetailsLoadedListener = () -> {
+      myGraphTable.initColumnSize();
+      myGraphTable.repaint();
     };
-    myFullDetailsLoadedListener = new Runnable() {
-      @Override
-      public void run() {
-        myDetailsPanel.valueChanged(null);
-      }
-    };
-    myTaskCompletedListener = new Runnable() {
-      @Override
-      public void run() {
-        myDetailsPanel.valueChanged(null);
-        myGraphTable.repaint(); // we may need to repaint highlighters
-      }
+    myFullDetailsLoadedListener = () -> myDetailsPanel.valueChanged(null);
+    myContainingBranchesListener = () -> {
+      myDetailsPanel.valueChanged(null);
+      myGraphTable.repaint(); // we may need to repaint highlighters
     };
     myLogData.getMiniDetailsGetter().addDetailsLoadedListener(myMiniDetailsLoadedListener);
     myLogData.getCommitDetailsGetter().addDetailsLoadedListener(myFullDetailsLoadedListener);
-    myLogData.getContainingBranchesGetter().addTaskCompletedListener(myTaskCompletedListener);
+    myLogData.getContainingBranchesGetter().addTaskCompletedListener(myContainingBranchesListener);
   }
 
   public void setupDetailsSplitter(boolean state) {
@@ -332,7 +321,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   public void dispose() {
     myLogData.getMiniDetailsGetter().removeDetailsLoadedListener(myMiniDetailsLoadedListener);
     myLogData.getCommitDetailsGetter().removeDetailsLoadedListener(myFullDetailsLoadedListener);
-    myLogData.getContainingBranchesGetter().removeTaskCompletedListener(myTaskCompletedListener);
+    myLogData.getContainingBranchesGetter().removeTaskCompletedListener(myContainingBranchesListener);
 
     myDetailsSplitter.dispose();
     myChangesBrowserSplitter.dispose();
