@@ -345,6 +345,7 @@ public class PathMappingSettings extends AbstractPathMapper implements Cloneable
   private static boolean canReplaceRemote(@NotNull String path, @NotNull String remotePrefix) {
     path = norm(path);
     remotePrefix = norm(remotePrefix);
-    return path.startsWith(remotePrefix) && (remotePrefix.endsWith("/") || path.substring(remotePrefix.length()).startsWith("/"));
+    return path.equals(remotePrefix) ||
+           path.startsWith(remotePrefix) && (remotePrefix.endsWith("/") || path.substring(remotePrefix.length()).startsWith("/"));
   }
 }
