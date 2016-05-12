@@ -175,7 +175,8 @@ public abstract class RestService extends HttpRequestHandler {
     return true;
   }
 
-  private boolean isHostTrusted(@NotNull FullHttpRequest request) throws InterruptedException, InvocationTargetException {
+  // e.g. upsource trust to configured host
+  protected boolean isHostTrusted(@NotNull FullHttpRequest request) throws InterruptedException, InvocationTargetException {
     String referrer = NettyKt.getOrigin(request);
     if (referrer == null) {
       referrer = NettyKt.getReferrer(request);
