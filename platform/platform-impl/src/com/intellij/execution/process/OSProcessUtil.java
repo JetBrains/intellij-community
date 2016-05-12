@@ -91,7 +91,7 @@ public class OSProcessUtil {
     if (SystemInfo.isWindows) {
       try {
         if (Registry.is("disable.winp")) {
-          WinProcessManager.getProcessPid(process);
+          return WinProcessManager.getProcessPid(process);
         }
         else {
           return createWinProcess(process).getPid();
