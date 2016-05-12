@@ -24,7 +24,7 @@ import java.util.Map;
 
 public class StepicWrappers {
   private static final Logger LOG = Logger.getInstance(StepOptions.class);
-  
+
   static class StepContainer {
     List<StepSource> steps;
   }
@@ -52,7 +52,7 @@ public class StepicWrappers {
     @Expose Integer executionMemoryLimit;
     @Expose Integer executionTimeLimit;
     @Expose CodeTemplatesWrapper codeTemplates;
-    
+
     public static StepOptions fromTask(final Project project, @NotNull final Task task) {
       final StepOptions source = new StepOptions();
       setTests(task, source, project);
@@ -113,21 +113,21 @@ public class StepicWrappers {
       }
     }
   }
-  
+
   static class CodeTemplatesWrapper {
     String python3;
     String python27;
-    
+
     @Nullable
     public String getTemplateForLanguage(@NotNull final String langauge) {
       if (langauge.equals(EduAdaptiveStepicConnector.PYTHON27)) {
         return python27;
       }
-      
+
       if (langauge.equals(EduAdaptiveStepicConnector.PYTHON3)) {
         return python3;
       }
-      
+
       return null;
     }
   }
@@ -218,6 +218,7 @@ public class StepicWrappers {
     int section;
     int lesson;
     int position;
+    List<Integer> assignments;
   }
 
   static class UnitContainer {
@@ -225,7 +226,7 @@ public class StepicWrappers {
     List<Unit> units;
   }
 
-  static class UnitWrapper{
+  static class UnitWrapper {
     Unit unit;
   }
 
@@ -238,6 +239,7 @@ public class StepicWrappers {
       int step;
       int id;
     }
+
     public AttemptWrapper(int step) {
       attempt = new Attempt(step);
     }
@@ -254,11 +256,12 @@ public class StepicWrappers {
       String time_left;
       String user;
       String user_id;
-      
+
       public Attempt(int step) {
         this.step = step;
       }
     }
+
     public AttemptToPostWrapper(int step) {
       attempt = new Attempt(step);
     }
@@ -294,7 +297,6 @@ public class StepicWrappers {
 
     static class Submission {
       int attempt;
-
       private final Reply reply;
 
       public Submission(String score, int attempt, ArrayList<SolutionFile> files) {
@@ -312,7 +314,6 @@ public class StepicWrappers {
         }
       }
     }
-
   }
 
   static class UserWrapper {
@@ -351,18 +352,15 @@ public class StepicWrappers {
     String id;
     String lesson;
   }
-  
 
 
   static class SubmissionToPostWrapper {
     Submission submission;
 
-
-
     public SubmissionToPostWrapper(@NotNull String attemptId, @NotNull String language, @NotNull String code) {
       submission = new Submission(attemptId, new Submission.Reply(language, code));
     }
-    
+
     static class Submission {
       String attempt;
       Reply reply;
@@ -382,10 +380,9 @@ public class StepicWrappers {
         }
       }
     }
-
   }
-  
-  static  class ResultSubmissionWrapper {
+
+  static class ResultSubmissionWrapper {
     ResultSubmission[] submissions;
 
     static class ResultSubmission {
@@ -394,5 +391,31 @@ public class StepicWrappers {
       String hint;
     }
   }
+
+  static class AssignmentsWrapper {
+    List<Assignment> assignments;
+  }
   
+  static class Assignment {
+    int id;
+    int step;
+  }
+  
+  static class ViewsWrapper {
+    View view;
+
+    public ViewsWrapper(final int assignment, final int step) {
+      this.view = new View(assignment, step);
+    }
+  }
+  
+  static class View {
+    int assignment;
+    int step;
+
+    public View(int assignment, int step) {
+      this.assignment = assignment;
+      this.step = step;
+    }
+  }
 }

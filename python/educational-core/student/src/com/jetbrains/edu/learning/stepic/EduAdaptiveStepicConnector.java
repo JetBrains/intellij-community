@@ -48,8 +48,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static com.jetbrains.edu.learning.stepic.EduStepicConnector.getHttpClient;
-import static com.jetbrains.edu.learning.stepic.EduStepicConnector.setHeaders;
+import static com.jetbrains.edu.learning.stepic.EduStepicConnector.*;
 
 public class EduAdaptiveStepicConnector {
   public static final String PYTHON27 = "python27";
@@ -64,6 +63,9 @@ public class EduAdaptiveStepicConnector {
   private static final String RECOMMENDATION_REACTIONS_URL = "recommendation-reactions";
   private static final String ATTEMPTS_URL = "attempts";
   private static final String SUBMISSION_URL = "submissions";
+  private static final String ASSIGNMENT_URL = "/assignments";
+  private static final String VIEWS_URL = "/views";
+  private static final String UNITS_URL = "/units";
 
   @Nullable
   public static Task getNextRecommendation(@NotNull final Project project, @NotNull Course course) {
@@ -81,25 +83,33 @@ public class EduAdaptiveStepicConnector {
       final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
 
       if (statusLine.getStatusCode() == HttpStatus.SC_OK) {
-        Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
+        final Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
         final StepicWrappers.RecommendationWrapper recomWrapper = gson.fromJson(responseString, StepicWrappers.RecommendationWrapper.class);
 
         if (recomWrapper.recommendations.length != 0) {
           final StepicWrappers.Recommendation recommendation = recomWrapper.recommendations[0];
           final String lessonId = recommendation.lesson;
           final StepicWrappers.LessonContainer
-            lessonContainer = EduStepicConnector.getFromStepic(LESSON_URL + lessonId, StepicWrappers.LessonContainer.class);
-          final Lesson realLesson = lessonContainer.lessons.get(0);
-          course.getLessons().get(0).id = Integer.parseInt(lessonId);
+            lessonContainer = getFromStepic(LESSON_URL + lessonId, StepicWrappers.LessonContainer.class);
+          if (lessonContainer.lessons.size() == 1) {
+            final Lesson realLesson = lessonContainer.lessons.get(0);
+            course.getLessons().get(0).id = Integer.parseInt(lessonId);
 
-          for (int stepId : realLesson.steps) {
-            final StepicWrappers.Step step = EduStepicConnector.getStep(stepId);
-            if (step.name.equals("code")) {
-              return getTaskFromStep(project, stepId, step, realLesson.getName());
+            viewAllSteps(client, realLesson.id);
+
+            for (int stepId : realLesson.steps) {
+              final StepicWrappers.Step step = getStep(stepId);
+              if (step.name.equals("code")) {
+                return getTaskFromStep(project, stepId, step, realLesson.getName());
+              }
             }
-          }
 
-          LOG.warn("Got a lesson without code part as a recommendation");
+            LOG.warn("Got a lesson without code part as a recommendation");
+          }
+          else {
+            LOG.warn("Got unexpected number of lessons: " + lessonContainer.lessons.size());
+          }
+          VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
         }
       }
       else {
@@ -113,6 +123,37 @@ public class EduAdaptiveStepicConnector {
       LOG.warn(e.getMessage());
     }
     return null;
+  }
+
+  private static void viewAllSteps(CloseableHttpClient client, int lessonId) throws URISyntaxException, IOException {
+    final URI unitsUrl = new URIBuilder(UNITS_URL).addParameter("lesson", String.valueOf(lessonId)).build();
+    final StepicWrappers.UnitContainer unitContainer = getFromStepic(unitsUrl.toString(), StepicWrappers.UnitContainer.class);
+    if (unitContainer.units.size() != 1) {
+      LOG.warn("Got unexpected numbers of units: " + unitContainer.units.size());
+      return;
+    }
+    
+    final URIBuilder builder = new URIBuilder(ASSIGNMENT_URL);
+    for (Integer step : unitContainer.units.get(0).assignments) {
+      builder.addParameter("ids[]", String.valueOf(step));
+    }
+    final URI assignmentUrl = builder.build();
+    final StepicWrappers.AssignmentsWrapper assignments = getFromStepic(assignmentUrl.toString(), StepicWrappers.AssignmentsWrapper.class);
+    if (assignments.assignments.size() > 0) {
+      for (StepicWrappers.Assignment assignment : assignments.assignments) {
+        final HttpPost post = new HttpPost(STEPIC_API_URL + VIEWS_URL);
+        final StepicWrappers.ViewsWrapper viewsWrapper = new StepicWrappers.ViewsWrapper(assignment.id, assignment.step);
+        post.setEntity(new StringEntity(new Gson().toJson(viewsWrapper)));
+        setHeaders(post, CONTENT_TYPE_APPL_JSON);
+        final CloseableHttpResponse viewPostResult = client.execute(post);
+        if (viewPostResult.getStatusLine().getStatusCode() != HttpStatus.SC_CREATED) {
+          LOG.warn("Error while Views post, code: " + viewPostResult.getStatusLine().getStatusCode());
+        }
+      }
+    }
+    else {
+      LOG.warn("Got assignments of incorrect length: " + assignments.assignments.size());
+    }
   }
 
   public static boolean postRecommendationReaction(@NotNull final Project project, @NotNull final String lessonId,
@@ -138,7 +179,6 @@ public class EduAdaptiveStepicConnector {
     final StudyEditor editor = StudyUtils.getSelectedStudyEditor(project);
     final Course course = StudyTaskManager.getInstance(project).getCourse();
     if (course != null && editor != null && editor.getTaskFile() != null) {
-      // TODO: get user from settings
       final StepicUser user = StudyTaskManager.getInstance(project).getUser();
       if (user != null &&
           postRecommendationReaction(project, String.valueOf(editor.getTaskFile().getTask().getLesson().id),
@@ -148,11 +188,12 @@ public class EduAdaptiveStepicConnector {
         if (task != null) {
           final Lesson adaptive = course.getLessons().get(0);
           if (reaction == 0 || reaction == -1) {
-            final Task unsolvedTask = adaptive.getTaskList().get(0);
+            final Task unsolvedTask = adaptive.getTaskList().get(adaptive.getTaskList().size() - 1);
             unsolvedTask.setName(task.getName());
             unsolvedTask.setStepicId(task.getStepicId());
             unsolvedTask.setText(task.getText());
             unsolvedTask.getTaskFiles().clear();
+            unsolvedTask.getTestsText().clear();
             unsolvedTask.getTaskFiles().putAll(task.getTaskFiles());
 
             final File lessonDirectory = new File(course.getCourseDirectory(), EduNames.LESSON + String.valueOf(adaptive.getIndex()));
@@ -164,7 +205,6 @@ public class EduAdaptiveStepicConnector {
             }
 
             adaptive.initLesson(course, false);
-            VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
           }
           else {
             adaptive.addTask(task);
@@ -172,23 +212,23 @@ public class EduAdaptiveStepicConnector {
             final VirtualFile lessonDir = project.getBaseDir().findChild(EduNames.LESSON + String.valueOf(adaptive.getIndex()));
 
             if (lessonDir != null) {
-              ApplicationManager.getApplication().runWriteAction(() -> {
+              ApplicationManager.getApplication().invokeLater(() -> ApplicationManager.getApplication().runWriteAction(() -> {
                 try {
                   StudyGenerator.createTask(task, lessonDir, new File(course.getCourseDirectory(), lessonDir.getName()), project);
                 }
                 catch (IOException e) {
                   LOG.warn(e.getMessage());
                 }
-              });
+              }));
             }
 
             final File lessonDirectory = new File(course.getCourseDirectory(), EduNames.LESSON + String.valueOf(adaptive.getIndex()));
             final File taskDirectory = new File(lessonDirectory, EduNames.TASK + String.valueOf(adaptive.getTaskList().size()));
             StudyProjectGenerator.flushTask(task, taskDirectory);
             adaptive.initLesson(course, false);
-            VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
           }
         }
+        VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
       }
       else {
         LOG.warn("Recommendation reactions weren't posted");
@@ -271,7 +311,7 @@ public class EduAdaptiveStepicConnector {
 
   @Nullable
   public static Pair<Boolean, String> checkTask(@NotNull final Project project, @NotNull final Task task) {
-    int attemptId = 0;
+    int attemptId = -1;
     try {
       attemptId = getAttemptId(project, task, ATTEMPTS_URL);
     }
@@ -284,7 +324,7 @@ public class EduAdaptiveStepicConnector {
       if (editor != null && language != null) {
         final CloseableHttpClient client = getHttpClient(project);
         StepicWrappers.ResultSubmissionWrapper wrapper = postResultsForCheck(client, attemptId, language, editor.getDocument().getText());
-        
+
         final StepicUser user = StudyTaskManager.getInstance(project).getUser();
         if (user != null) {
           final int id = user.getId();
@@ -350,7 +390,8 @@ public class EduAdaptiveStepicConnector {
         final HttpGet httpGet = new HttpGet(submissionURI);
         setHeaders(httpGet, CONTENT_TYPE_APPL_JSON);
         final CloseableHttpResponse httpResponse = client.execute(httpGet);
-        wrapper = new Gson().fromJson(EntityUtils.toString(httpResponse.getEntity()), StepicWrappers.ResultSubmissionWrapper.class);
+        final String entity = EntityUtils.toString(httpResponse.getEntity());
+        wrapper = new Gson().fromJson(entity, StepicWrappers.ResultSubmissionWrapper.class);
       }
     }
     catch (InterruptedException e) {
@@ -395,8 +436,9 @@ public class EduAdaptiveStepicConnector {
     final CloseableHttpClient client = getHttpClient(project);
     setHeaders(post, CONTENT_TYPE_APPL_JSON);
     final CloseableHttpResponse httpResponse = client.execute(post);
+    final String entity = EntityUtils.toString(httpResponse.getEntity());
     final StepicWrappers.AttemptContainer container =
-      new Gson().fromJson(EntityUtils.toString(httpResponse.getEntity()), StepicWrappers.AttemptContainer.class);
+      new Gson().fromJson(entity, StepicWrappers.AttemptContainer.class);
     return (container.attempts != null && !container.attempts.isEmpty()) ? container.attempts.get(0).id : -1;
   }
 
