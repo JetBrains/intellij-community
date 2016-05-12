@@ -100,7 +100,7 @@ public class JavaFxScopeEnlarger extends UseScopeEnlarger {
            AnnotationUtil.isAnnotated(method, JavaFxCommonNames.JAVAFX_FXML_ANNOTATION, false);
   }
 
-  static class GlobalFxmlSearchScope extends DelegatingGlobalSearchScope {
+  public static class GlobalFxmlSearchScope extends DelegatingGlobalSearchScope {
     public GlobalFxmlSearchScope(GlobalSearchScope baseScope) {
       super(baseScope);
     }

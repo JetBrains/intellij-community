@@ -96,8 +96,8 @@ public class JavaFxIdsIndex extends FileBasedIndexExtension<String, Set<String>>
   }
 
   @NotNull
-  public static Collection<String> getFilePaths(Project project, String id) {
+  public static Set<String> getFilePaths(Project project, String id) {
     final List<Set<String>> values = FileBasedIndex.getInstance().getValues(KEY, id, GlobalSearchScope.projectScope(project));
-    return (Collection<String>)(values.isEmpty() ? Collections.emptySet() : values.get(0));
+    return values.isEmpty() ? Collections.emptySet() : values.get(0);
   }
 }
