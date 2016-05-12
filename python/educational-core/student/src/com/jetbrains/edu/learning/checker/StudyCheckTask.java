@@ -127,12 +127,15 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
     if (testOutput != null) {
       if (testOutput.isSuccess()) {
         final Pair<Boolean, String> pair = EduAdaptiveStepicConnector.checkTask(myProject, myTask);
-        if (pair != null && !pair.getSecond().isEmpty()) {
-          final String checkMessage = pair.getSecond();
+        if (pair != null && !(!pair.getFirst() && pair.getSecond().isEmpty())) {
           if (pair.getFirst()) {
-            onTaskSolved(checkMessage);
+            onTaskSolved("Congratulations! Remote tests passed.");
+            if (myStatusBeforeCheck != StudyStatus.Solved) {
+              EduAdaptiveStepicConnector.addNextRecommendedTask(myProject, 2);
+            }
           }
           else {
+            final String checkMessage = pair.getSecond();
             onTaskFailed(checkMessage);
           }
           runAfterTaskCheckedActions();
