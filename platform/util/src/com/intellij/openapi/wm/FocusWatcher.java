@@ -89,6 +89,7 @@ public class FocusWatcher implements ContainerListener,FocusListener{
     if(getFocusedComponent() ==component){
       setFocusedComponentImpl(null, cause);
     }
+    myTopComponent = null;
   }
 
   @Override
