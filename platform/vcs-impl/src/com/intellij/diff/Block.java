@@ -15,6 +15,9 @@
  */
 package com.intellij.diff;
 
+import com.intellij.diff.comparison.ByLine;
+import com.intellij.diff.comparison.ComparisonPolicy;
+import com.intellij.diff.comparison.DiffTooBigException;
 import com.intellij.diff.comparison.iterables.DiffIterableUtil;
 import com.intellij.diff.comparison.iterables.FairDiffIterable;
 import com.intellij.diff.util.Range;
@@ -64,39 +67,46 @@ public class Block {
     int end = -1;
     int shift = 0;
 
-    FairDiffIterable iterable = DiffIterableUtil.diffSomehow(prevContent, mySource, DumbProgressIndicator.INSTANCE);
-    for (Pair<Range, Boolean> pair : DiffIterableUtil.iterateAll(iterable)) {
-      Boolean equals = pair.second;
-      Range range = pair.first;
-      if (!equals) {
-        if (Math.max(myStart, range.start2) < Math.min(myEnd, range.end2)) {
-          // ranges intersect
-          if (range.start2 <= myStart) start = range.start1;
-          if (range.end2 > myEnd) end = range.end1;
-        }
-        if (range.start2 > myStart) {
-          if (start == -1) start = myStart - shift;
-          if (end == -1 && range.start2 >= myEnd) end = myEnd - shift;
-        }
+    try {
+      FairDiffIterable iterable = ByLine.compare(Arrays.asList(prevContent), Arrays.asList(mySource),
+                                                 ComparisonPolicy.DEFAULT, DumbProgressIndicator.INSTANCE);
 
-        shift += (range.end2 - range.start2) - (range.end1 - range.start1);
+      for (Pair<Range, Boolean> pair : DiffIterableUtil.iterateAll(iterable)) {
+        Boolean equals = pair.second;
+        Range range = pair.first;
+        if (!equals) {
+          if (Math.max(myStart, range.start2) < Math.min(myEnd, range.end2)) {
+            // ranges intersect
+            if (range.start2 <= myStart) start = range.start1;
+            if (range.end2 > myEnd) end = range.end1;
+          }
+          if (range.start2 > myStart) {
+            if (start == -1) start = myStart - shift;
+            if (end == -1 && range.start2 >= myEnd) end = myEnd - shift;
+          }
+
+          shift += (range.end2 - range.start2) - (range.end1 - range.start1);
+        }
+        else {
+          // intern strings, reducing memory usage
+          int count = range.end1 - range.start1;
+          for (int i = 0; i < count; i++) {
+            prevContent[range.start1 + i] = mySource[range.start2 + i];
+          }
+        }
       }
-      else {
-        // intern strings, reducing memory usage
-        int count = range.end1 - range.start1;
-        for (int i = 0; i < count; i++) {
-          prevContent[range.start1 + i] = mySource[range.start2 + i];
-        }
+      if (start == -1) start = myStart - shift;
+      if (end == -1) end = myEnd - shift;
+
+      if (start < 0 || end > prevContent.length || end < start) {
+        LOG.error("Invalid block range: [" + start + ", " + end + "); length - " + prevContent.length);
       }
-    }
-    if (start == -1) start = myStart - shift;
-    if (end == -1) end = myEnd - shift;
 
-    if (start < 0 || end > prevContent.length || end < start) {
-      LOG.error("Invalid block range: [" + start + ", " + end + "); length - " + prevContent.length);
+      return new Block(prevContent, start, end);
     }
-
-    return new Block(prevContent, start, end);
+    catch (DiffTooBigException e) {
+      return new Block(prevContent, 0, 0);
+    }
   }
 
   @NotNull
