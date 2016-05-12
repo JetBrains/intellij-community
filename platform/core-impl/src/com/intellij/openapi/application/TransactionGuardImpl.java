@@ -146,7 +146,7 @@ public class TransactionGuardImpl extends TransactionGuard {
       if (!canRunTransactionNow(transaction, true)) {
         LOG.error("Cannot run synchronous submitTransactionAndWait from invokeLater. " +
                   "Please use asynchronous submit*Transaction. " +
-                  "See TransactionGuard FAQ for details.");
+                  "See TransactionGuard FAQ for details. Transaction: " + runnable);
       }
       runSyncTransaction(transaction);
       return;
