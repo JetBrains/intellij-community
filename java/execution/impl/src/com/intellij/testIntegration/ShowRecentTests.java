@@ -17,18 +17,14 @@ package com.intellij.testIntegration;
 
 import com.intellij.execution.Location;
 import com.intellij.execution.TestStateStorage;
-import com.intellij.execution.testframework.TestIconMapper;
-import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.MacKeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ListPopupStep;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.popup.list.ListPopupImpl;
-import com.intellij.util.Function;
 import com.intellij.util.PsiNavigateUtil;
 import com.intellij.util.Time;
 import com.intellij.util.containers.ContainerUtil;
@@ -64,30 +60,24 @@ public class ShowRecentTests extends AnAction {
     
     final Map<String, TestStateStorage.Record> records = testStorage.getRecentTests(TEST_LIMIT, getSinceDate());
     RecentTestsListProvider listProvider = new RecentTestsListProvider(records);
-    List<String> urls = listProvider.getUrlsToShowFromHistory();
-    Map<String, Icon> icons = ContainerUtil.map2Map(urls, url -> {
-      return Pair.create(url, getIconFor(url, records));
-    });
-    SelectTestStep selectStepTest = new SelectTestStep(urls, icons, testRunner, testLocator);
+    List<TestInfo> urls = listProvider.getTestsToShow();
+    
+    SelectTestStep selectStepTest = new SelectTestStep(urls, testRunner, testLocator);
 
     RecentTestsListPopup popup = new RecentTestsListPopup(selectStepTest, testRunner, testLocator);
     popup.showCenteredInCurrentWindow(project);
-    
-    ApplicationManager.getApplication().executeOnPooledThread(new DeadTestsCleaner(testStorage, urls, testLocator));
+
+    List<String> testUrls = ContainerUtil.map(urls, TestInfo::getUrl);
+    ApplicationManager.getApplication().executeOnPooledThread(new DeadTestsCleaner(testStorage, testUrls, testLocator));
   }
   
-  private static Icon getIconFor(String value, Map<String, TestStateStorage.Record> records) {
-    TestStateStorage.Record record = records.get(value);
-    TestStateInfo.Magnitude magnitude = TestIconMapper.getMagnitude(record.magnitude);
-    return TestIconMapper.getIcon(magnitude);
-  }
 }
 
 class RecentTestsListPopup extends ListPopupImpl {
   private final RecentTestRunner myTestRunner;
   private final TestLocator myLocator;
 
-  public RecentTestsListPopup(ListPopupStep<String> popupStep, RecentTestRunner testRunner, TestLocator locator) {
+  public RecentTestsListPopup(ListPopupStep<TestInfo> popupStep, RecentTestRunner testRunner, TestLocator locator) {
     super(popupStep);
     myTestRunner = testRunner;
     myLocator = locator;

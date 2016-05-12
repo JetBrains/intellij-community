@@ -131,7 +131,7 @@ class RecentTestsStepTest: LightIdeaTestCase() {
 
   private fun getSortedList(map: MutableMap<String, TestStateStorage.Record>): List<String> {
     val provider = RecentTestsListProvider(map)
-    return provider.urlsToShowFromHistory
+    return provider.testsToShow.map { it.url }
   }
 
   
@@ -239,13 +239,18 @@ class RecentTestsStepTest: LightIdeaTestCase() {
   }
   
   fun `test shown value without protocol`() {
-    val step = SelectTestStep(emptyList(), emptyMap(), runner, mock(TestLocator::class.java))
-    var shownValue = step.getTextFor("java:suite://JavaFormatterSuperDuperTest")
+    val step = SelectTestStep(emptyList(), runner, mock(TestLocator::class.java))
+    
+    val info = dumbInfo("java:suite://JavaFormatterSuperDuperTest")
+    var shownValue = step.getTextFor(info)
+    
     assertThat(shownValue).isEqualTo("JavaFormatterSuperDuperTest")
     
-    shownValue = step.getTextFor("java:test://JavaFormatterSuperDuperTest.testItMakesMeSadToFixIt")
+    shownValue = step.getTextFor(dumbInfo("java:test://JavaFormatterSuperDuperTest.testItMakesMeSadToFixIt"))
     assertThat(shownValue).isEqualTo("JavaFormatterSuperDuperTest.testItMakesMeSadToFixIt")
   }
+
+  private fun dumbInfo(info: String) = TestInfo(info, TestStateInfo.Magnitude.COMPLETE_INDEX, Date())
 
   fun `test do not show urls which we can locate without location`() {
     val storage = TestStorage()

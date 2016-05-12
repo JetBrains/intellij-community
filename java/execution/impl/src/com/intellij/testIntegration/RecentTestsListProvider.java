@@ -17,9 +17,7 @@ package com.intellij.testIntegration;
 
 import com.intellij.execution.TestStateStorage;
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,7 +34,7 @@ public class RecentTestsListProvider {
     myRecords = records;  
   }
   
-  public List<String> getUrlsToShowFromHistory() {
+  public List<TestInfo> getTestsToShow() {
     if (myRecords == null) return ContainerUtil.emptyList();
     
     RecentTestsData data = new RecentTestsData();
@@ -62,16 +60,28 @@ public class RecentTestsListProvider {
 }
 
 class RecentTestsData {
-  private static Comparator<TestInfo> BY_PATH_COMPARATOR = (o1, o2) -> {
-    String path1 = VirtualFileManager.extractPath(o1.getUrl());
-    String path2 = VirtualFileManager.extractPath(o2.getUrl());
-    return path1.compareTo(path2);
+  private static Comparator<TestInfo> BY_PATH_COMPARATOR = new Comparator<TestInfo>() {
+    @Override
+    public int compare(TestInfo o1, TestInfo o2) {
+      String path1 = VirtualFileManager.extractPath(o1.getUrl());
+      String path2 = VirtualFileManager.extractPath(o2.getUrl());
+      return path1.compareTo(path2);
+    }
   };
   
-  private static Comparator<SuiteInfo> SUITE_BY_RECENT_COMPARATOR =
-    (o1, o2) -> -o1.getMostRecentRunDate().compareTo(o2.getMostRecentRunDate());
+  private static Comparator<SuiteInfo> SUITE_BY_RECENT_COMPARATOR = new Comparator<SuiteInfo>() {
+    @Override
+    public int compare(SuiteInfo o1, SuiteInfo o2) {
+      return -o1.getMostRecentRunDate().compareTo(o2.getMostRecentRunDate());
+    }
+  };
 
-  private static Comparator<TestInfo> TEST_BY_RECENT_COMPARATOR = (o1, o2) -> -o1.getRunDate().compareTo(o2.getRunDate());
+  private static Comparator<TestInfo> TEST_BY_RECENT_COMPARATOR = new Comparator<TestInfo>() {
+    @Override
+    public int compare(TestInfo o1, TestInfo o2) {
+      return -o1.getRunDate().compareTo(o2.getRunDate());
+    }
+  };
   
   private final Map<String, SuiteInfo> mySuites = ContainerUtil.newHashMap();
 
@@ -108,15 +118,15 @@ class RecentTestsData {
     return null;
   }
 
-  public List<String> getSortedTestsList() {
+  public List<TestInfo> getSortedTestsList() {
     distributeUnmatchedTests();
-    List<String> result = ContainerUtil.newArrayList();
+    List<TestInfo> result = ContainerUtil.newArrayList();
     fillWithTests(result, ERROR_INDEX, FAILED_INDEX);
     fillWithTests(result, COMPLETE_INDEX, PASSED_INDEX, IGNORED_INDEX);
     return result;
   }
   
-  private void fillWithTests(List<String> result, TestStateInfo.Magnitude... magnitudes) {
+  private void fillWithTests(List<TestInfo> result, TestStateInfo.Magnitude... magnitudes) {
     List<SuiteInfo> suites = ContainerUtil.newArrayList(mySuites.values());
     
     List<SuiteInfo> failedSuites = select(suites, magnitudes);
@@ -129,7 +139,7 @@ class RecentTestsData {
     sortTestsByRecent(failedTests);
 
     fillWithSuites(result, failedSuites);
-    fillWithTests(result, failedTests);
+    result.addAll(failedTests);
   }
 
   private static void sortSuitesByRecent(List<SuiteInfo> suites) {
@@ -144,23 +154,17 @@ class RecentTestsData {
     Collections.sort(list, BY_PATH_COMPARATOR);
   }
 
-  private static void fillWithTests(List<String> result, List<TestInfo> tests) {
-    for (TestInfo info : tests) {
-      result.add(info.getUrl());
-    }
-  }
-
-  private static void fillWithSuites(List<String> result, List<SuiteInfo> suites) {
+  private static void fillWithSuites(List<TestInfo> result, List<SuiteInfo> suites) {
     for (SuiteInfo suite : suites) {
       result.addAll(suiteToTestList(suite));
     }
   }
 
-  private static List<String> suiteToTestList(SuiteInfo suite) {
-    List<String> result = ContainerUtil.newArrayList();
+  private static List<TestInfo> suiteToTestList(SuiteInfo suite) {
+    List<TestInfo> result = ContainerUtil.newArrayList();
     
     if (suite.canTrustSuiteMagnitude() && suite.isPassed()) {
-      result.add(suite.getUrl());
+      result.add(suite);
       return result;
     }
 
@@ -168,19 +172,15 @@ class RecentTestsData {
     sortTestsByRecent(failedTests);
     
     if (failedTests.size() == suite.getTotalTestsCount()) {
-      result.add(suite.getUrl());  
+      result.add(suite);  
     }
     else if (failedTests.size() < 3) {
-      result.addAll(ContainerUtil.map(failedTests, testInfo -> {
-        return testInfo.getUrl();
-      }));
-      result.add(suite.getUrl());
+      result.addAll(failedTests);
+      result.add(suite);
     }
     else {
-      result.add(suite.getUrl());
-      result.addAll(ContainerUtil.map(failedTests, testInfo -> {
-        return testInfo.getUrl();
-      }));
+      result.add(suite);
+      result.addAll(failedTests);
     }
 
     return result;
@@ -260,43 +260,5 @@ class SuiteInfo extends TestInfo {
   
   public int getTotalTestsCount() {
     return tests.size();
-  }
-}
-
-class TestInfo {
-  private final Date runDate;
-  private final String url;
-  private final TestStateInfo.Magnitude magnitude;
-
-  public TestInfo(String url, TestStateInfo.Magnitude magnitude, Date runDate) {
-    this.url = url;
-    this.magnitude = magnitude;
-    this.runDate = runDate;
-  }
-  
-  public Date getRunDate() {
-    return runDate;
-  }
-
-  public String getUrl() {
-    return url;
-  }
-
-  public TestStateInfo.Magnitude getMagnitude() {
-    return magnitude;
-  }
-
-  public static <T extends TestInfo> List<T> select(Collection<T> infos, final TestStateInfo.Magnitude... magnitudes) {
-    return ContainerUtil.filter(infos, new Condition<T>() {
-      @Override
-      public boolean value(T t) {
-        for (TestStateInfo.Magnitude magnitude : magnitudes) {
-          if (t.getMagnitude() == magnitude) {
-            return true;
-          }
-        }
-        return false;
-      }
-    });
   }
 }

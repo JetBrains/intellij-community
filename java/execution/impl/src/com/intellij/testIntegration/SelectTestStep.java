@@ -16,6 +16,7 @@
 package com.intellij.testIntegration;
 
 import com.intellij.execution.Location;
+import com.intellij.execution.testframework.TestIconMapper;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -23,29 +24,27 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.List;
-import java.util.Map;
 
-public class SelectTestStep extends BaseListPopupStep<String> {
+public class SelectTestStep extends BaseListPopupStep<TestInfo> {
   private final RecentTestRunner myRunner;
   private final TestLocator myTestLocator;
-  private final Map<String, Icon> myIcons;
 
-  public SelectTestStep(List<String> urls, Map<String, Icon> icons, RecentTestRunner runner, TestLocator locator) {
-    super("Debug Recent Tests", urls);
+  public SelectTestStep(List<TestInfo> tests, RecentTestRunner runner, TestLocator locator) {
+    super("Debug Recent Tests", tests);
     myRunner = runner;
-    myIcons = icons;
     myTestLocator = locator;
   }
 
   @Override
-  public Icon getIconFor(String value) {
-    return myIcons.get(value);
+  public Icon getIconFor(TestInfo value) {
+    return TestIconMapper.getIcon(value.getMagnitude());
   }
 
   @NotNull
   @Override
-  public String getTextFor(String value) {
-    return VirtualFileManager.extractPath(value);
+  public String getTextFor(TestInfo value) {
+    String url = value.getUrl();
+    return VirtualFileManager.extractPath(url);
   }
   
   @Override
@@ -54,8 +53,8 @@ public class SelectTestStep extends BaseListPopupStep<String> {
   }
   
   @Override
-  public PopupStep onChosen(String url, boolean finalChoice) {
-    Location location = myTestLocator.getLocation(url);
+  public PopupStep onChosen(TestInfo info, boolean finalChoice) {
+    Location location = myTestLocator.getLocation(info.getUrl());
     myRunner.run(location);
     return null;
   }
