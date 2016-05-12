@@ -59,6 +59,7 @@ public class TransactionGuardImpl extends TransactionGuard {
   private AccessToken startTransactionUnchecked() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     final boolean wasWritingAllowed = myWritingAllowed;
+    final String prevTrace = myWritingAllowedTrace;
 
     setWritingAllowed(true);
     myCurrentTransaction = new TransactionIdImpl(myCurrentTransaction);
@@ -72,7 +73,8 @@ public class TransactionGuardImpl extends TransactionGuard {
           pollQueueLater();
         }
 
-        setWritingAllowed(wasWritingAllowed);
+        myWritingAllowed = wasWritingAllowed;
+        myWritingAllowedTrace = prevTrace;
         myCurrentTransaction.myFinished = true;
         myCurrentTransaction = myCurrentTransaction.myParent;
       }
@@ -231,11 +233,13 @@ public class TransactionGuardImpl extends TransactionGuard {
 
     ApplicationManager.getApplication().assertIsDispatchThread();
     final boolean prev = myWritingAllowed;
+    final String prevTrace = myWritingAllowedTrace;
     setWritingAllowed(allowWriting);
     return new AccessToken() {
       @Override
       public void finish() {
-        setWritingAllowed(prev);
+        myWritingAllowed = prev;
+        myWritingAllowedTrace = prevTrace;
       }
     };
   }
@@ -298,11 +302,13 @@ public class TransactionGuardImpl extends TransactionGuard {
         public void run() {
           ApplicationManager.getApplication().assertIsDispatchThread();
           final boolean prev = myWritingAllowed;
+          String prevTrace = myWritingAllowedTrace;
           setWritingAllowed(true);
           try {
             runnable.run();
           } finally {
-            setWritingAllowed(prev);
+            myWritingAllowed = prev;
+            myWritingAllowedTrace = prevTrace;
           }
         }
       };

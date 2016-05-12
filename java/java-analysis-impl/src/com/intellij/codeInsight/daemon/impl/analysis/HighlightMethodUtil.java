@@ -1552,7 +1552,11 @@ public class HighlightMethodUtil {
           
           HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(infoElement).description(description).escapedToolTip(toolTip).navigationShift(+1).create();
           if (info != null) {
-            registerFixesOnInvalidConstructorCall(constructorCall, classReference, list, aClass, constructors, results, infoElement, info);
+            JavaResolveResult[] methodCandidates = results;
+            if (constructorCall instanceof PsiNewExpression) {
+              methodCandidates = resolveHelper.getReferencedMethodCandidates((PsiCallExpression)constructorCall, true);
+            }
+            registerFixesOnInvalidConstructorCall(constructorCall, classReference, list, aClass, constructors, methodCandidates, infoElement, info);
             registerMethodReturnFixAction(info, result, constructorCall);
             holder.add(info);
           }

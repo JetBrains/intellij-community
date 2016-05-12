@@ -339,7 +339,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
           LOG.error(t);
         }
         finally {
-          //ReflectionUtil.resetThreadLocals();
           Thread.interrupted(); // reset interrupted status
           assert !isReadAccessAllowed(): describe(Thread.currentThread());
         }
@@ -364,7 +363,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
           LOG.error(t);
         }
         finally {
-          //ReflectionUtil.resetThreadLocals();
           Thread.interrupted(); // reset interrupted status
           assert !isReadAccessAllowed() : describe(Thread.currentThread());
         }

@@ -22,7 +22,6 @@ import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.OnePixelDivider;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.openapi.vcs.ui.FontUtil;
@@ -33,8 +32,8 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.SeparatorComponent;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBLoadingPanel;
+import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.util.NotNullProducer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
@@ -70,6 +69,7 @@ import java.io.StringWriter;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Kirill Likhodedov
@@ -88,7 +88,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
   @NotNull private final VcsLogColorManager myColorManager;
 
   @NotNull private VisiblePack myDataPack;
-  @Nullable private VcsFullCommitDetails myCurrentCommitDetails;
+  @NotNull private Set<VcsFullCommitDetails> myCurrentCommitDetails = Collections.emptySet();
 
   private final StatusText myEmptyText;
 
@@ -111,7 +111,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
         Dimension size = super.getPreferredSize();
         boolean expanded = false;
         for (Component c : getComponents()) {
-          if (c instanceof DataPanel && ((DataPanel)c).isExpanded()) {
+          if (c instanceof CommitPanel && ((CommitPanel)c).isExpanded()) {
             expanded = true;
             break;
           }
@@ -125,7 +125,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
 
       @Override
       public Color getBackground() {
-        return UIUtil.getEditorPaneBackground();
+        return getDetailsBackground();
       }
 
       @Override
@@ -137,7 +137,6 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
           super.paintChildren(g);
         }
       }
-
     };
     myMainContentPanel.setLayout(new BoxLayout(myMainContentPanel, BoxLayout.Y_AXIS));
     myEmptyText = new StatusText(myMainContentPanel) {
@@ -188,7 +187,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
   public void valueChanged(@Nullable ListSelectionEvent event) {
     if (event != null && event.getValueIsAdjusting()) return;
 
-    VcsFullCommitDetails newCommitDetails = null;
+    Set<VcsFullCommitDetails> newCommitDetails = ContainerUtil.newHashSet();
 
     int[] rows = myGraphTable.getSelectedRows();
 
@@ -206,45 +205,27 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
     for (int i = 0; i < Math.min(rows.length, MAX_ROWS); i++) {
       int row = rows[i];
       boolean reuseExisting = count < myMainContentPanel.getComponentCount();
-      ReferencesPanel referencesPanel;
-      DataPanel dataPanel;
+      CommitPanel commitPanel;
       if (!reuseExisting) {
-        referencesPanel = new ReferencesPanel(myColorManager);
-        dataPanel = new DataPanel(myLogData.getProject(), myLogData.isMultiRoot());
+        commitPanel = new CommitPanel();
         if (i > 0) {
-          myMainContentPanel.add(new SeparatorComponent(8, OnePixelDivider.BACKGROUND, null));
-          count ++;
+          myMainContentPanel.add(new SeparatorComponent(0, OnePixelDivider.BACKGROUND, null));
+          count++;
         }
-        myMainContentPanel.add(referencesPanel);
-        count++;
-        myMainContentPanel.add(dataPanel);
+        commitPanel.setAlignmentX(LEFT_ALIGNMENT);
+        myMainContentPanel.add(commitPanel);
         count++;
       }
       else {
-        if (i > 0) count ++; // separator
-        referencesPanel = (ReferencesPanel)myMainContentPanel.getComponent(count++);
-        dataPanel = (DataPanel)myMainContentPanel.getComponent(count++);
+        if (i > 0) count++; // separator
+        commitPanel = (CommitPanel)myMainContentPanel.getComponent(count++);
       }
 
       VcsFullCommitDetails commitData = tableModel.getFullDetails(row);
-      if (commitData instanceof LoadingDetails) {
-        myLoadingPanel.startLoading();
-        dataPanel.setData(null);
-        referencesPanel.setReferences(Collections.emptyList());
-        updateDetailsBorder(null);
-      }
-      else {
-        dataPanel.setData(commitData);
-        referencesPanel.setReferences(sortRefs(commitData.getId(), commitData.getRoot()));
-        updateDetailsBorder(commitData);
-        newCommitDetails = commitData;
-      }
-      List<String> branches = null;
+      commitPanel.setCommit(commitData);
       if (!(commitData instanceof LoadingDetails)) {
-        branches = myLogData.getContainingBranchesGetter().requestContainingBranches(commitData.getRoot(), commitData.getId());
+        newCommitDetails.add(commitData);
       }
-      dataPanel.setBranches(branches);
-      dataPanel.update();
     }
 
     // clear superfluous items
@@ -253,47 +234,91 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
     }
 
     if (rows.length > MAX_ROWS) {
-      myMainContentPanel.add(new SeparatorComponent(8, OnePixelDivider.BACKGROUND, null));
-      JBLabel label = new JBLabel(rows.length + " commits selected, showing just " + MAX_ROWS + "…", SwingConstants.LEFT);
+      myMainContentPanel.add(new SeparatorComponent(0, OnePixelDivider.BACKGROUND, null));
+      JBLabel label = new JBLabel("(showing " + MAX_ROWS + " of " + rows.length + " selected commits)");
       label.setFont(getDataPanelFont());
+      label.setAlignmentX(LEFT_ALIGNMENT);
       myMainContentPanel.add(label);
     }
 
-    if (!Comparing.equal(myCurrentCommitDetails, newCommitDetails)) {
-      myCurrentCommitDetails = newCommitDetails;
+    if (!ContainerUtil.intersects(myCurrentCommitDetails, newCommitDetails)) {
       myScrollPane.getVerticalScrollBar().setValue(0);
     }
-  }
-
-  private void updateDetailsBorder(@Nullable VcsFullCommitDetails data) {
-    if (data == null || !myColorManager.isMultipleRoots()) {
-      myMainContentPanel.setBorder(JBUI.Borders.empty(VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH / 2,
-                                                                   VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH / 2, 0, 0));
-    }
-    else {
-      Color color = VcsLogGraphTable.getRootBackgroundColor(data.getRoot(), myColorManager);
-      myMainContentPanel.setBorder(new CompoundBorder(new MatteBorder(0, VcsLogGraphTable.ROOT_INDICATOR_COLORED_WIDTH, 0, 0, color),
-                                                      new MatteBorder(VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH / 2,
-                                                                      VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH, 0, 0,
-                                                                      new JBColor(new NotNullProducer<Color>() {
-                                                                        @NotNull
-                                                                        @Override
-                                                                        public Color produce() {
-                                                                          return getDetailsBackground();
-                                                                        }
-                                                                      }))));
-    }
-  }
-
-  @NotNull
-  private List<VcsRef> sortRefs(@NotNull Hash hash, @NotNull VirtualFile root) {
-    Collection<VcsRef> refs = myDataPack.getRefs().refsToCommit(hash, root);
-    return ContainerUtil.sorted(refs, myLogData.getLogProvider(root).getReferenceManager().getLabelsOrderComparator());
+    myCurrentCommitDetails = newCommitDetails;
   }
 
   @NotNull
   private static Font getDataPanelFont() {
     return EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN);
+  }
+
+  private class CommitPanel extends JBPanel {
+    private static final int BOTTOM_BORDER = 2;
+    @NotNull private final ReferencesPanel myReferencesPanel;
+    @NotNull private final DataPanel myDataPanel;
+
+    public CommitPanel() {
+      setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+
+      myReferencesPanel = new ReferencesPanel(myColorManager);
+      myDataPanel = new DataPanel(myLogData.getProject(), myLogData.isMultiRoot());
+
+      myReferencesPanel.setAlignmentX(LEFT_ALIGNMENT);
+      myDataPanel.setAlignmentX(LEFT_ALIGNMENT);
+
+      add(myReferencesPanel);
+      add(myDataPanel);
+    }
+
+    public void setCommit(@NotNull VcsFullCommitDetails commitData) {
+      if (commitData instanceof LoadingDetails) {
+        myLoadingPanel.startLoading();
+        myDataPanel.setData(null);
+        myReferencesPanel.setReferences(Collections.emptyList());
+        updateBorder(null);
+      }
+      else {
+        myDataPanel.setData(commitData);
+        myReferencesPanel.setReferences(sortRefs(commitData.getId(), commitData.getRoot()));
+        updateBorder(commitData);
+      }
+      List<String> branches = null;
+      if (!(commitData instanceof LoadingDetails)) {
+        branches = myLogData.getContainingBranchesGetter().requestContainingBranches(commitData.getRoot(), commitData.getId());
+      }
+      myDataPanel.setBranches(branches);
+      myDataPanel.update();
+      revalidate();
+    }
+
+    @NotNull
+    private List<VcsRef> sortRefs(@NotNull Hash hash, @NotNull VirtualFile root) {
+      Collection<VcsRef> refs = myDataPack.getRefs().refsToCommit(hash, root);
+      return ContainerUtil.sorted(refs, myLogData.getLogProvider(root).getReferenceManager().getLabelsOrderComparator());
+    }
+
+    private void updateBorder(@Nullable VcsFullCommitDetails data) {
+      if (data == null || !myColorManager.isMultipleRoots()) {
+        setBorder(JBUI.Borders.empty(VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH / 2,
+                                     VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH / 2, BOTTOM_BORDER, 0));
+      }
+      else {
+        Color color = VcsLogGraphTable.getRootBackgroundColor(data.getRoot(), myColorManager);
+        setBorder(new CompoundBorder(new MatteBorder(0, VcsLogGraphTable.ROOT_INDICATOR_COLORED_WIDTH, 0, 0, color),
+                                     new MatteBorder(VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH / 2,
+                                                     VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH, BOTTOM_BORDER, 0,
+                                                     new JBColor(DetailsPanel::getDetailsBackground))));
+      }
+    }
+
+    @Override
+    public Color getBackground() {
+      return getDetailsBackground();
+    }
+
+    public boolean isExpanded() {
+      return myDataPanel.isExpanded();
+    }
   }
 
   private static class DataPanel extends JEditorPane {
@@ -439,7 +464,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
           builder.endRow();
         }
 
-        return "<i>In " + myBranches.size() + " branches</i> " +
+        return "<i>In " + myBranches.size() + " branches:</i> " +
                "<a href=\"" + SHOW_OR_HIDE_BRANCHES + "\"><i>(click to hide)</i></a><br>" +
                builder.build();
       }
@@ -450,7 +475,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
         }
         else {
           branchText = StringUtil.join(ContainerUtil.getFirstItems(myBranches, BRANCHES_LIMIT), ", ") +
-                       ", ... <a href=\"" +
+                       "… <a href=\"" +
                        SHOW_OR_HIDE_BRANCHES +
                        "\"><i>(click to show all)</i></a>";
         }
@@ -471,7 +496,9 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       int separator = fullMessage.indexOf("\n\n");
       String subject = separator > 0 ? fullMessage.substring(0, separator) : fullMessage;
       String description = fullMessage.substring(subject.length());
-      return "<b>" + getHtmlWithFonts(escapeMultipleSpaces(IssueLinkHtmlRenderer.formatTextWithLinks(myProject, subject)), Font.BOLD) + "</b>" +
+      return "<b>" +
+             getHtmlWithFonts(escapeMultipleSpaces(IssueLinkHtmlRenderer.formatTextWithLinks(myProject, subject)), Font.BOLD) +
+             "</b>" +
              getHtmlWithFonts(escapeMultipleSpaces(IssueLinkHtmlRenderer.formatTextWithLinks(myProject, description)));
     }
 
@@ -602,5 +629,4 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       return myRefPainter.getSize(myReference, this);
     }
   }
-
 }

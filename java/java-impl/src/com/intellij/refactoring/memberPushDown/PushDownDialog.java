@@ -17,14 +17,16 @@ package com.intellij.refactoring.memberPushDown;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.classMembers.MemberInfoModel;
-import com.intellij.refactoring.classMembers.UsedByDependencyMemberInfoModel;
+import com.intellij.refactoring.classMembers.*;
 import com.intellij.refactoring.ui.MemberSelectionPanel;
-import com.intellij.refactoring.util.classMembers.MemberInfo;
+import com.intellij.refactoring.util.classMembers.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PushDownDialog extends AbstractPushDownDialog<MemberInfo, PsiMember, PsiClass> {
@@ -62,9 +64,12 @@ public class PushDownDialog extends AbstractPushDownDialog<MemberInfo, PsiMember
     return HelpID.MEMBERS_PUSH_DOWN;
   }
 
-  private class MyMemberInfoModel extends UsedByDependencyMemberInfoModel<PsiMember, PsiClass, MemberInfo> {
+  private class MyMemberInfoModel extends DelegatingMemberInfoModel<PsiMember,MemberInfo> {
     public MyMemberInfoModel() {
-      super(getSourceClass());
+      super(new ANDCombinedMemberInfoModel<PsiMember, MemberInfo>(
+              new UsesDependencyMemberInfoModel<PsiMember, PsiClass, MemberInfo>(getSourceClass(), null, false),
+              new UsedByDependencyMemberInfoModel<PsiMember, PsiClass, MemberInfo>(getSourceClass()))
+      );
     }
   }
 }

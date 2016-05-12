@@ -289,6 +289,7 @@
     <extensionPoint name="preFormatProcessor" interface="com.intellij.psi.impl.source.codeStyle.PreFormatProcessor"/>
     <extensionPoint name="postFormatProcessor" interface="com.intellij.psi.impl.source.codeStyle.PostFormatProcessor"/>
     <extensionPoint name="disabledIndentRangesProvider" interface="com.intellij.psi.impl.source.DisabledIndentRangesProvider"/>
+    <extensionPoint name="lineIndentProvider" interface="com.intellij.psi.impl.source.codeStyle.LineIndentProvider"/>
 
     <extensionPoint name="declarationRangeHandler" beanClass="com.intellij.util.MixinEP">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.hint.DeclarationRangeHandler"/>

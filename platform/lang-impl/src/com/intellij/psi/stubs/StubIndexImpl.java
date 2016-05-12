@@ -529,6 +529,10 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
   }
 
   private void dropUnregisteredIndices(AsyncState state) {
+    if (ApplicationManager.getApplication().isDisposed()) {
+      return;
+    }
+
     final Set<String> indicesToDrop = new HashSet<String>(myPreviouslyRegistered != null? myPreviouslyRegistered.registeredIndices : Collections.<String>emptyList());
     for (ID<?, ?> key : state.myIndices.keySet()) {
       indicesToDrop.remove(key.toString());

@@ -109,8 +109,11 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
     Iterable<PsiClass> cached = CACHE.get(baseClass);
     if (cached == null) {
       cached = computeAllSubClasses(project, baseClass); // it's almost empty now, no big deal
-      // make sure concurrent calls of this method always return the same collection to avoid expensive duplicate work
-      cached = ConcurrencyUtil.cacheOrGet(CACHE, baseClass, cached);
+      // for non-physical elements ignore the cache completely because non-physical elements created so often/unpredictably so I can't figure out when to clear caches in this case
+      if (ApplicationManager.getApplication().runReadAction((Computable<Boolean>)baseClass::isPhysical)) {
+        // make sure concurrent calls of this method always return the same collection to avoid expensive duplicate work
+        cached = ConcurrencyUtil.cacheOrGet(CACHE, baseClass, cached);
+      }
     }
     return cached;
   }

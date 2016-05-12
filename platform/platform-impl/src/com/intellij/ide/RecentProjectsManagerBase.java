@@ -33,6 +33,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.wm.impl.SystemDock;
+import com.intellij.util.Alarm;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.SmartList;
@@ -65,6 +66,8 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
   private static final int MAX_PROJECTS_IN_MAIN_MENU = 6;
   private static final Map<String, MyIcon> ourProjectIcons = new HashMap<String, MyIcon>();
   private static Icon ourSmallAppIcon;
+  private final Alarm myNamesResolver = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, ApplicationManager.getApplication());
+  private final Set<String> myNamesToResolve = new HashSet<>(MAX_PROJECTS_IN_MAIN_MENU);
 
   public static RecentProjectsManagerBase getInstanceEx() {
     return (RecentProjectsManagerBase)RecentProjectsManager.getInstance();
@@ -99,6 +102,8 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
   private State myState = new State();
 
   private final Map<String, String> myNameCache = Collections.synchronizedMap(new THashMap<String, String>());
+  private Set<String> myDuplicatesCache = null;
+  private boolean isDuplicatesCacheUpdating = false;
 
   protected RecentProjectsManagerBase(@NotNull MessageBus messageBus) {
     MessageBusConnection connection = messageBus.connect();
@@ -328,14 +333,28 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
   }
 
   private Set<String> getDuplicateProjectNames(Set<String> openedPaths, Set<String> recentPaths) {
-    Set<String> names = ContainerUtil.newHashSet();
-    Set<String> duplicates = ContainerUtil.newHashSet();
-    for (String path : ContainerUtil.concat(openedPaths, recentPaths)) {
-      if (!names.add(getProjectName(path))) {
-        duplicates.add(path);
-      }
+    if (myDuplicatesCache != null) {
+      return myDuplicatesCache;
     }
-    return duplicates;
+
+    if (!isDuplicatesCacheUpdating) {
+      isDuplicatesCacheUpdating = true; //assuming that this check happens only on EDT. So, no synchronised block or double-checked locking needed
+      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+        @Override
+        public void run() {
+          Set<String> names = ContainerUtil.newHashSet();
+          final HashSet<String> duplicates = ContainerUtil.newHashSet();
+          for (String path : ContainerUtil.concat(openedPaths, recentPaths)) {
+            if (!names.add(getProjectName(path))) {
+              duplicates.add(path);
+            }
+          }
+          myDuplicatesCache = duplicates;
+          isDuplicatesCacheUpdating = false;
+        }
+      });
+    }
+    return ContainerUtil.newHashSet();
   }
 
   @Override
@@ -518,14 +537,27 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
     if (cached != null) {
       return cached;
     }
-    String result = readProjectName(path);
-    myNameCache.put(path, result);
-    return result;
+    myNamesResolver.cancelAllRequests();
+    synchronized (myNamesToResolve) {
+      myNamesToResolve.add(path);
+    }
+    myNamesResolver.addRequest(new Runnable() {
+      @Override
+      public void run() {
+        final Set<String> paths = Collections.synchronizedSet(myNamesToResolve);
+        synchronized (myNamesToResolve) {myNamesToResolve.clear();}
+        for (String p : paths) {
+          myNameCache.put(p, readProjectName(p));
+        }
+      }
+    }, 50);
+    return FileUtilRt.getNameWithoutExtension(new File(path).getName());
   }
 
   @Override
   public void clearNameCache() {
     myNameCache.clear();
+    myDuplicatesCache = null;
   }
 
   private static String readProjectName(@NotNull String path) {

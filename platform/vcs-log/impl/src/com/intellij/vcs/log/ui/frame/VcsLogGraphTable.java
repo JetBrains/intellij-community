@@ -41,6 +41,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogData;
+import com.intellij.vcs.log.data.VcsLogProgress;
 import com.intellij.vcs.log.data.VisiblePack;
 import com.intellij.vcs.log.graph.*;
 import com.intellij.vcs.log.graph.actions.GraphAction;
@@ -75,7 +76,7 @@ import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
 
-public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvider {
+public class VcsLogGraphTable extends TableWithProgress implements DataProvider, CopyProvider {
   private static final Logger LOG = Logger.getInstance(VcsLogGraphTable.class);
 
   public static final int ROOT_INDICATOR_COLORED_WIDTH = 8;
@@ -110,6 +111,8 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
     myUi = ui;
     myLogData = logData;
     myGraphCommitCellRenderer = new GraphCommitCellRenderer(logData, myGraphCellPainter, this);
+
+    myLogData.getProgress().addProgressIndicatorListener(new MyProgressListener(), ui);
 
     setDefaultRenderer(VirtualFile.class, new RootCellRenderer(myUi));
     setDefaultRenderer(GraphCommitCell.class, myGraphCommitCellRenderer);
@@ -662,6 +665,20 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
     return myGraphCommitCellRenderer.getPreferredHeight();
   }
 
+  @Override
+  protected void paintFooter(@NotNull Graphics g, int x, int y, int width, int height) {
+    g.setColor(getStyle(getRowCount() - 1, GraphTableModel.COMMIT_COLUMN, "", hasFocus(), false).getBackground());
+    g.fillRect(x, y, width, height);
+    if (myUi.isMultipleRoots()) {
+      g.setColor(getRootBackgroundColor(getModel().getRoot(getRowCount() - 1), myUi.getColorManager()));
+
+      int rootWidth = getColumnModel().getColumn(GraphTableModel.ROOT_COLUMN).getWidth();
+      if (!myUi.isShowRootNames()) rootWidth -= ROOT_INDICATOR_WHITE_WIDTH;
+
+      g.fillRect(x, y, rootWidth, myUi.getTable().getRowHeight());
+    }
+  }
+
   private static class RootCellRenderer extends JBLabel implements TableCellRenderer {
     @NotNull private final VcsLogUiImpl myUi;
     @NotNull private Color myColor = UIUtil.getTableBackground();
@@ -926,6 +943,21 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
     @Override
     public void valueChanged(ListSelectionEvent e) {
       mySelection = null;
+    }
+  }
+
+  private class MyProgressListener implements VcsLogProgress.ProgressListener {
+    @NotNull private String myText = "";
+
+    @Override
+    public void progressStarted() {
+      myText = getEmptyText().getText();
+      getEmptyText().setText("Loading History...");
+    }
+
+    @Override
+    public void progressStopped() {
+      getEmptyText().setText(myText);
     }
   }
 }

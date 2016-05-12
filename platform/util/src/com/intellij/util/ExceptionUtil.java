@@ -27,7 +27,8 @@ import java.util.Arrays;
 public class ExceptionUtil {
   private ExceptionUtil() { }
 
-  public static Throwable getRootCause(Throwable e) {
+  @NotNull
+  public static Throwable getRootCause(@NotNull Throwable e) {
     while (true) {
       if (e.getCause() == null) return e;
       e = e.getCause();

@@ -27,12 +27,6 @@ import com.intellij.lexer.FlexLexer;
   public _SPILexer() {
     this((java.io.Reader)null);
   }
-
-  public void goTo(int offset) {
-    zzCurrentPos = zzMarkedPos = zzStartRead = offset;
-    zzPushbackPos = 0;
-    zzAtEOF = offset < zzEndRead;
-  }
 %}
 
 %unicode

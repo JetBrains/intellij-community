@@ -43,7 +43,6 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.EventDispatcher;
@@ -677,11 +676,10 @@ public class XDebugSessionImpl implements XDebugSession {
                                    @NotNull XSuspendContext suspendContext, boolean doProcessing) {
     if (doProcessing) {
       if (breakpoint.isLogMessage()) {
-        String text = StringUtil.decapitalize(XBreakpointUtil.getDisplayText(breakpoint));
-        final XSourcePosition position = breakpoint.getSourcePosition();
-        final OpenFileHyperlinkInfo hyperlinkInfo =
+        XSourcePosition position = breakpoint.getSourcePosition();
+        OpenFileHyperlinkInfo hyperlinkInfo =
           position != null ? new OpenFileHyperlinkInfo(myProject, position.getFile(), position.getLine()) : null;
-        printMessage(XDebuggerBundle.message("xbreakpoint.reached.text") + " ", text, hyperlinkInfo);
+        printMessage(XDebuggerBundle.message("xbreakpoint.reached.text") + " ", XBreakpointUtil.getShortText(breakpoint), hyperlinkInfo);
       }
 
       if (evaluatedLogExpression != null) {

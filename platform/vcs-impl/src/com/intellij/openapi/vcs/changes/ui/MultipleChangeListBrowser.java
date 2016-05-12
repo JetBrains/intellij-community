@@ -73,17 +73,17 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
                                    @Nullable Runnable rebuildListListener,
                                    @Nullable Runnable inclusionListener,
                                    boolean unversionedFilesEnabled) {
-    super(project, changeLists, changes, initialListSelection, capableOfExcludingChanges, highlightProblems, inclusionListener,
-          ChangesBrowser.MyUseCase.LOCAL_CHANGES, null, Object.class);
+    super(project, changes, capableOfExcludingChanges, highlightProblems, inclusionListener, ChangesBrowser.MyUseCase.LOCAL_CHANGES, null,
+          Object.class);
     myRebuildListListener = rebuildListListener;
     myVcsConfiguration = ObjectUtils.assertNotNull(VcsConfiguration.getInstance(myProject));
     myUnversionedFilesEnabled = unversionedFilesEnabled;
 
+    init();
+    setInitialSelection(changeLists, changes, initialListSelection);
+
     myChangeListChooser = new ChangeListChooser();
     myChangeListChooser.updateLists(changeLists);
-    // rebuild toolbar to ensure "myUnversionedFilesEnabled" is considered
-    myHeaderPanel.removeAll();
-    myHeaderPanel.add(createToolbar(), BorderLayout.CENTER);
     myHeaderPanel.add(myChangeListChooser, BorderLayout.EAST);
     ChangeListManager.getInstance(myProject).addChangeListListener(myChangeListListener);
 
@@ -151,7 +151,7 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
 
   @Override
   public void rebuildList() {
-    if (!myIsInitialized || myInRebuildList) return;
+    if (myInRebuildList) return;
     try {
       myInRebuildList = true;
 
@@ -433,6 +433,13 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
 
     private ShowHideUnversionedFilesAction() {
       super("Show Unversioned Files", null, AllIcons.Debugger.Disable_value_calculation);
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      super.update(e);
+
+      e.getPresentation().setEnabledAndVisible(ActionPlaces.isToolbarPlace(e.getPlace()));
     }
 
     @Override

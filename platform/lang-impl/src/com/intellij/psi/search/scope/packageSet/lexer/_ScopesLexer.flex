@@ -6,12 +6,6 @@ import com.intellij.lexer.FlexLexer;
 %%
 
 %{
-  public void goTo(int offset) {
-    zzCurrentPos = zzMarkedPos = zzStartRead = offset;
-    zzPushbackPos = 0;
-    zzAtEOF = offset < zzEndRead;
-  }
-
   public _ScopesLexer() {
     this((java.io.Reader)null);
   }

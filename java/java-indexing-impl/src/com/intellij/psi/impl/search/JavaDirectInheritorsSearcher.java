@@ -164,7 +164,10 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
       return Pair.create(Collections.emptyList(), new AtomicIntegerArray(0));
     }
     Pair<List<PsiClass>, AtomicIntegerArray> pair = calculateDirectSubClasses(project, baseClass, baseClassName);
-    HighlightingCaches.getInstance(project).DIRECT_SUB_CLASSES.put(baseClass, pair);
+    // for non-physical elements ignore the cache completely because non-physical elements created so often/unpredictably so I can't figure out when to clear caches in this case
+    if (ApplicationManager.getApplication().runReadAction((Computable<Boolean>)baseClass::isPhysical)) {
+      HighlightingCaches.getInstance(project).DIRECT_SUB_CLASSES.put(baseClass, pair);
+    }
     return pair;
   }
 

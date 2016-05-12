@@ -52,8 +52,11 @@ public class HighlightNamesUtil {
     return highlightMethodName(method, elementToHighlight, elementToHighlight.getTextRange(), colorsScheme, isDeclaration);
   }
 
+  /**
+   * @param methodOrClass method to highlight; class is passed instead of implicit constructor
+   */
   @Nullable
-  static HighlightInfo highlightMethodName(@NotNull PsiMethod method,
+  static HighlightInfo highlightMethodName(@NotNull PsiMember methodOrClass,
                                            @NotNull PsiElement elementToHighlight,
                                            @NotNull TextRange range,
                                            @NotNull TextAttributesScheme colorsScheme,
@@ -62,7 +65,7 @@ public class HighlightNamesUtil {
 
     if (!isDeclaration) {
       if (isCalledOnThis(elementToHighlight)) {
-        final PsiClass containingClass = method.getContainingClass();
+        final PsiClass containingClass = methodOrClass instanceof PsiMethod ? methodOrClass.getContainingClass() : null;
         PsiClass enclosingClass = containingClass == null ? null : PsiTreeUtil.getParentOfType(elementToHighlight, PsiClass.class);
         while (enclosingClass != null) {
           isInherited = enclosingClass.isInheritor(containingClass, true);
@@ -72,9 +75,11 @@ public class HighlightNamesUtil {
       }
     }
 
-    HighlightInfoType type = getMethodNameHighlightType(method, isDeclaration, isInherited);
+    LOG.assertTrue(methodOrClass instanceof PsiMethod || !isDeclaration);
+    HighlightInfoType type = methodOrClass instanceof PsiMethod ? getMethodNameHighlightType((PsiMethod)methodOrClass, isDeclaration, isInherited)
+                                                                : JavaHighlightInfoTypes.CONSTRUCTOR_CALL;
     if (type != null) {
-      TextAttributes attributes = mergeWithScopeAttributes(method, type, colorsScheme);
+      TextAttributes attributes = mergeWithScopeAttributes(methodOrClass, type, colorsScheme);
       HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(type).range(range);
       if (attributes != null) {
         builder.textAttributes(attributes);

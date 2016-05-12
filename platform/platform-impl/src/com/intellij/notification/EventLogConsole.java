@@ -23,10 +23,14 @@ import com.intellij.icons.AllIcons;
 import com.intellij.notification.impl.NotificationSettings;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.notification.impl.NotificationsManagerImpl;
+import com.intellij.notification.impl.ui.NotificationsUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
@@ -80,6 +84,8 @@ class EventLogConsole {
   };
   private final LogModel myProjectModel;
 
+  private String myLastDate;
+
   EventLogConsole(LogModel model) {
     myProjectModel = model;
   }
@@ -87,6 +93,7 @@ class EventLogConsole {
   private Editor createLogEditor() {
     Project project = myProjectModel.getProject();
     final EditorEx editor = ConsoleViewUtil.setupConsoleEditor(project, false, false);
+    installNotificationsFont(editor);
     myProjectModel.getProject().getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerAdapter() {
       @Override
       public void projectClosed(Project project) {
@@ -112,6 +119,36 @@ class EventLogConsole {
       }
     });
     return editor;
+  }
+
+  private void installNotificationsFont(@NotNull final EditorEx editor) {
+    final DelegateColorScheme globalScheme = new DelegateColorScheme(EditorColorsManager.getInstance().getGlobalScheme()) {
+      @Override
+      public String getEditorFontName() {
+        return getConsoleFontName();
+      }
+
+      @Override
+      public String getConsoleFontName() {
+        return NotificationsUtil.getFontName();
+      }
+
+      @Override
+      public void setEditorFontName(String fontName) {
+      }
+
+      @Override
+      public void setConsoleFontName(String fontName) {
+      }
+    };
+    EditorColorsManager.getInstance().addEditorColorsListener(new EditorColorsListener() {
+      @Override
+      public void globalSchemeChange(EditorColorsScheme scheme) {
+        globalScheme.setDelegate(EditorColorsManager.getInstance().getGlobalScheme());
+        editor.reinitSettings();
+      }
+    }, myProjectModel);
+    editor.setColorsScheme(ConsoleViewUtil.updateConsoleColorScheme(editor.createBoundColorSchemeDelegate(globalScheme)));
   }
 
   private static DefaultActionGroup createPopupActions(ActionManager actionManager,
@@ -200,6 +237,18 @@ class EventLogConsole {
     Document document = editor.getDocument();
     boolean scroll = document.getTextLength() == editor.getCaretModel().getOffset() || !editor.getContentComponent().hasFocus();
 
+    if (document.getTextLength() > 0) {
+      append(document, "\n");
+    }
+
+    String lastDate = DateFormatUtil.formatDate(notification.getTimestamp());
+    if (document.getTextLength() == 0 || !lastDate.equals(myLastDate)) {
+      myLastDate = lastDate;
+      append(document, lastDate + "\n");
+      myLogEditor.getValue().getMarkupModel().addLineHighlighter(document.getLineCount() - 2, HighlighterLayer.CARET_ROW + 1,
+                                                                 new TextAttributes(null, null, null, null, Font.BOLD));
+    }
+
     String date = DateFormatUtil.formatTimeWithSeconds(notification.getTimestamp()) + " ";
     append(document, date);
 
@@ -241,7 +290,7 @@ class EventLogConsole {
     }
 
     if (notification.isImportant()) {
-      highlightNotification(notification, pair.status, startLine, document.getLineCount() - 1);
+      highlightNotification(notification, pair.status, startLine, startLine + 1);
     }
   }
 

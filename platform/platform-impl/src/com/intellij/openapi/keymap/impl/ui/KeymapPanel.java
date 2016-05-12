@@ -53,6 +53,7 @@ import com.intellij.ui.FilterComponent;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.ComboBoxModelEditor;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ListItemEditor;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -388,7 +389,9 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
     panel.add(toolbar, new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(8, 0, 0, 0), 0, 0));
     group = new DefaultActionGroup();
-    final JComponent searchToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent();
+    ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
+    actionToolbar.setReservePlaceAutoPopupIcon(false);
+    final JComponent searchToolbar = actionToolbar.getComponent();
     final Alarm alarm = new Alarm();
     myFilterComponent = new FilterComponent("KEYMAP", 5) {
       @Override
@@ -399,6 +402,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
           public void run() {
             if (!myFilterComponent.isShowing()) return;
             myTreeExpansionMonitor.freeze();
+            myFilteringPanel.setShortcut(null);
             final String filter = getFilter();
             myActionsTree.filter(filter, myQuickLists);
             final JTree tree = myActionsTree.getTree();
@@ -432,8 +436,17 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     group.add(new DumbAwareAction(KeyMapBundle.message("filter.clear.action.text"),
                                   KeyMapBundle.message("filter.clear.action.text"), AllIcons.Actions.GC) {
       @Override
+      public void update(AnActionEvent event) {
+        boolean enabled = null != myFilteringPanel.getShortcut();
+        Presentation presentation = event.getPresentation();
+        presentation.setEnabled(enabled);
+        presentation.setIcon(enabled ? AllIcons.Actions.Cancel : EmptyIcon.ICON_16);
+      }
+
+      @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         myTreeExpansionMonitor.freeze();
+        myFilteringPanel.setShortcut(null);
         myActionsTree.filter(null, myQuickLists); //clear filtering
         TreeUtil.collapseAll(myActionsTree.getTree(), 0);
         myTreeExpansionMonitor.restore();
@@ -464,6 +477,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     //noinspection ConstantConditions
     myActionsTree.reset(myEditor.getModel().getSelected(), myQuickLists);
     myFilterComponent.setFilter(option);
+    myFilteringPanel.setShortcut(null);
     myActionsTree.filter(option, myQuickLists);
   }
 

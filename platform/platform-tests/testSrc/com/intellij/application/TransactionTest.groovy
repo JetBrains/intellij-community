@@ -190,9 +190,9 @@ class TransactionTest extends LightPlatformTestCase {
         guard.submitTransaction testRootDisposable, id, { log << '5' }
         def nestedId = guard.contextTransaction
         SwingUtilities.invokeLater {
-          String trace = null
+          String trace = guard.toString()
           guard.submitTransaction testRootDisposable, nestedId, {
-            trace = IdeEventQueue.instance.trueCurrentEvent.toString() + "  " + guard.toString() + "  " + DebugUtil.currentStackTrace()
+            trace += "  " + IdeEventQueue.instance.trueCurrentEvent.toString() + "  " + DebugUtil.currentStackTrace()
             log << '3'
           }
           assert log == ['1', '2'] : log + " " + trace

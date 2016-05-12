@@ -46,9 +46,11 @@ public abstract class DebuggerManager implements ProjectComponent {
   public abstract String getVMClassQualifiedName(PsiClass aClass);
 
   /**
-   * @deprecated use PositionManagerFactory extension point instead
+   * @deprecated use {@link PositionManagerFactory} extension point instead
    */
+  @Deprecated
   public abstract void registerPositionManagerFactory(Function<DebugProcess, PositionManager> factory);
 
+  @Deprecated
   public abstract void unregisterPositionManagerFactory(Function<DebugProcess, PositionManager> factory);
 }

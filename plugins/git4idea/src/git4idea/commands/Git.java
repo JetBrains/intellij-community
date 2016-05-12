@@ -19,7 +19,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.GitCommit;
 import git4idea.branch.GitRebaseParams;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;

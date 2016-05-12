@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+  <item name="com.intellij.util.AsyncProducer">
+    <annotation name="java.lang.FunctionalInterface" />
+  </item>
+  <item name="com.intellij.util.BooleanFunction">
+    <annotation name="java.lang.FunctionalInterface" />
+  </item>
+  <item name="com.intellij.util.Consumer">
+    <annotation name="java.lang.FunctionalInterface" />
+  </item>
+  <item name="com.intellij.util.Function">
+    <annotation name="java.lang.FunctionalInterface" />
+  </item>
+  <item name="com.intellij.util.NotNullFunction">
+    <annotation name="java.lang.FunctionalInterface" />
+  </item>
+  <item name="com.intellij.util.NullableConsumer">
+    <annotation name="java.lang.FunctionalInterface" />
+  </item>
+  <item name="com.intellij.util.NullableFunction">
+    <annotation name="java.lang.FunctionalInterface" />
+  </item>
+</root>
+

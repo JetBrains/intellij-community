@@ -10,11 +10,9 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JdkVersionUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.impl.LibraryScopeCache;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -27,6 +25,7 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Query;
 import com.intellij.util.containers.FixedHashMap;
 import com.intellij.util.containers.IntArrayList;
@@ -156,16 +155,17 @@ public class SceneBuilderImpl implements SceneBuilder {
     }
 
     final Collection<PsiClass> psiClasses = CachedValuesManager.getCachedValue(nodeClass, () -> {
-      final GlobalSearchScope scopeWithoutJdk = getScopeWithoutJdk(nodeClass.getProject());
+      final GlobalSearchScope scope = GlobalSearchScope.allScope(nodeClass.getProject());
       final String ideJdkVersion = Object.class.getPackage().getSpecificationVersion();
       final LanguageLevel ideLanguageLevel = LanguageLevel.parse(ideJdkVersion);
-      final Query<PsiClass> query = ClassInheritorsSearch.search(nodeClass, scopeWithoutJdk, true);
+      final Query<PsiClass> query = ClassInheritorsSearch.search(nodeClass, scope, true, true, false);
       final Set<PsiClass> result = new THashSet<PsiClass>();
       query.forEach(psiClass -> {
-        if (psiClass.hasModifierProperty(PsiModifier.PUBLIC) && !psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
-          if (isCompatibleLanguageLevel(psiClass, ideLanguageLevel)) {
-            result.add(psiClass);
-          }
+        if (psiClass.hasModifierProperty(PsiModifier.PUBLIC) &&
+            !psiClass.hasModifierProperty(PsiModifier.ABSTRACT) &&
+            !isBuiltInComponent(psiClass) &&
+            isCompatibleLanguageLevel(psiClass, ideLanguageLevel)) {
+          result.add(psiClass);
         }
       });
       return CachedValueProvider.Result.create(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
@@ -177,10 +177,18 @@ public class SceneBuilderImpl implements SceneBuilder {
     return prepareCustomComponents(psiClasses);
   }
 
+  private static boolean isBuiltInComponent(PsiClass psiClass) {
+    final VirtualFile file = PsiUtilCore.getVirtualFile(psiClass);
+    if (file == null) return false;
+    final List<OrderEntry> entries = ProjectRootManager.getInstance(psiClass.getProject()).getFileIndex().getOrderEntriesForFile(file);
+    return entries.stream().anyMatch(entry -> entry instanceof JdkOrderEntry);
+  }
+
   private static boolean isCompatibleLanguageLevel(@NotNull PsiClass aClass, @Nullable LanguageLevel targetLevel) {
     if (targetLevel == null) return true;
     final Project project = aClass.getProject();
-    final VirtualFile vFile = aClass.getContainingFile().getVirtualFile();
+    final VirtualFile vFile = PsiUtilCore.getVirtualFile(aClass);
+    if (vFile == null) return true;
     Module module = ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(vFile);
     if (module == null) {
       final OrderEntry entry = LibraryUtil.findLibraryEntry(vFile, project);
@@ -231,9 +239,10 @@ public class SceneBuilderImpl implements SceneBuilder {
     return customComponents;
   }
 
-  @NotNull
+  @Nullable
   private String getComponentModuleName(@NotNull PsiClass psiClass) {
-    final VirtualFile vFile = psiClass.getContainingFile().getVirtualFile();
+    final VirtualFile vFile = PsiUtilCore.getVirtualFile(psiClass);
+    if (vFile == null) return null;
     final Module module = ProjectRootManager.getInstance(myProject).getFileIndex().getModuleForFile(vFile);
     if (module != null) {
       return module.getName();
@@ -247,21 +256,7 @@ public class SceneBuilderImpl implements SceneBuilder {
         }
       }
     }
-    return "";
-  }
-
-  @NotNull
-  private static GlobalSearchScope getScopeWithoutJdk(Project project) {
-    final Ref<GlobalSearchScope> scopeWithoutJdk = new Ref<>(GlobalSearchScope.allScope(project));
-    final OrderEnumerator sdkEnumerator = OrderEnumerator.orderEntries(project).sdkOnly();
-    sdkEnumerator.forEach(entry -> {
-      if (entry instanceof JdkOrderEntry) {
-        final GlobalSearchScope jdkScope = LibraryScopeCache.getInstance(project).getScopeForSdk((JdkOrderEntry)entry);
-        scopeWithoutJdk.set(scopeWithoutJdk.get().intersectWith(GlobalSearchScope.notScope(jdkScope)));
-      }
-      return true;
-    });
-    return scopeWithoutJdk.get();
+    return null;
   }
 
   @NotNull
@@ -272,7 +267,7 @@ public class SceneBuilderImpl implements SceneBuilder {
     final List<URL> classpathUrls = new ArrayList<>();
     for (String path : pathList) {
       try {
-        URL url = new File(FileUtil.toSystemIndependentName(path)).toURI().toURL();
+        URL url = new File(path).toURI().toURL();
         classpathUrls.add(url);
       }
       catch (MalformedURLException e) {
@@ -499,7 +494,7 @@ public class SceneBuilderImpl implements SceneBuilder {
 
     public CustomComponent(@NotNull String name,
                            @NotNull String qualifiedName,
-                           @NotNull String module,
+                           @Nullable String module,
                            @NotNull Map<String, String> attributes) {
       myName = name;
       myQualifiedName = qualifiedName;
