@@ -248,6 +248,10 @@ private fun doProcess(urlDecoder: QueryStringDecoder, request: FullHttpRequest, 
 }
 
 internal fun HttpRequest.isSignedRequest(): Boolean {
+  if (BuiltInServerOptions.getInstance().allowUnsignedRequests) {
+    return true
+  }
+
   // we must check referrer - if html cached, browser will send request without query
   val token = headers().get(TOKEN_HEADER_NAME)
       ?: QueryStringDecoder(uri()).parameters().get(TOKEN_PARAM_NAME)?.firstOrNull()
@@ -259,6 +263,10 @@ internal fun HttpRequest.isSignedRequest(): Boolean {
 
 @JvmOverloads
 internal fun validateToken(request: HttpRequest, channel: Channel, isSignedRequest: Boolean = request.isSignedRequest()): HttpHeaders? {
+  if (BuiltInServerOptions.getInstance().allowUnsignedRequests) {
+    return EmptyHttpHeaders.INSTANCE
+  }
+
   request.headers().get(HttpHeaderNames.COOKIE)?.let {
     for (cookie in ServerCookieDecoder.STRICT.decode(it)) {
       if (cookie.name() == STANDARD_COOKIE.name()) {
