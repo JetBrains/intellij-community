@@ -13,6 +13,7 @@ subprojects {
   sourceSets {
     main {
       java.srcDirs 'src', '../src', '../gen'
+      resources.srcDirs 'resources'
       resources.srcDirs 'resources', '../resources'
     }
     test {
@@ -62,6 +63,11 @@ subprojects {
 }
 
 project(':student-python') {
+  sourceSets {
+    main {
+      resources.srcDirs '../resources'
+    }
+  }
 
   dependencies {
     compile project(':educational-core:student') {
