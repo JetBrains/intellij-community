@@ -13,7 +13,7 @@ subprojects {
   sourceSets {
     main {
       java.srcDirs 'src', '../src', '../gen'
-      resources.srcDir 'resources'
+      resources.srcDirs 'resources', '../resources'
     }
     test {
       java.srcDir 'test'
