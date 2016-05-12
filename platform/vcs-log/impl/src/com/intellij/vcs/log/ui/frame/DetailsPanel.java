@@ -48,7 +48,6 @@ import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VisiblePack;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.render.VcsRefPainter;
-import com.intellij.vcs.log.ui.tables.GraphTableModel;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -76,10 +75,10 @@ import java.util.Set;
  * @author Kirill Likhodedov
  */
 class DetailsPanel extends JPanel implements ListSelectionListener {
-
   private static final Logger LOG = Logger.getInstance("Vcs.Log");
 
-  private static String LINK_HREF = "show-hide-branches";
+  private static final String LINK_HREF = "show-hide-branches";
+  private static final int MAX_ROWS = 50;
 
   @NotNull private final VcsLogData myLogData;
   @NotNull private final VcsLogGraphTable myGraphTable;
@@ -190,8 +189,6 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
   public void valueChanged(@Nullable ListSelectionEvent event) {
     if (event != null && event.getValueIsAdjusting()) return;
 
-    Set<VcsFullCommitDetails> newCommitDetails = ContainerUtil.newHashSet();
-
     int[] rows = myGraphTable.getSelectedRows();
 
     myLoadingPanel.stopLoading();
@@ -201,21 +198,42 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       return;
     }
 
-    int MAX_ROWS = 50;
-    myEmptyText.setText("");
-    GraphTableModel tableModel = myGraphTable.getModel();
-    int count = 0;
-    for (int i = 0, prevCount = myMainContentPanel.getComponentCount(); i < Math.min(rows.length, MAX_ROWS); i++) {
+    rebuildCommitPanels();
+
+    Set<VcsFullCommitDetails> newCommitDetails = ContainerUtil.newHashSet();
+    for (int i = 0; i < rows.length; i++) {
       int row = rows[i];
+      VcsFullCommitDetails commitData = myGraphTable.getModel().getFullDetails(row);
+      CommitPanel commitPanel = getCommitPanel(i);
+      commitPanel.setCommit(commitData);
+      if (commitData instanceof LoadingDetails) {
+        myLoadingPanel.startLoading();
+      }
+      else {
+        newCommitDetails.add(commitData);
+      }
+    }
+
+    if (!ContainerUtil.intersects(myCurrentCommitDetails, newCommitDetails)) {
+      myScrollPane.getVerticalScrollBar().setValue(0);
+    }
+    myCurrentCommitDetails = newCommitDetails;
+  }
+
+  private void rebuildCommitPanels() {
+    myEmptyText.setText("");
+
+    int selectionLength = myGraphTable.getSelectedRows().length;
+    int count = 0;
+    for (int i = 0, prevCount = myMainContentPanel.getComponentCount(); i < Math.min(selectionLength, MAX_ROWS); i++) {
       Component c = count < prevCount ? myMainContentPanel.getComponent(count) : null;
       if (c instanceof SeparatorComponent) {
-        count ++;
+        count++;
         c = count < prevCount ? myMainContentPanel.getComponent(count) : null;
       }
       CommitPanel commitPanel;
       if (c instanceof CommitPanel) {
-        commitPanel = (CommitPanel)c;
-        count ++;
+        count++;
       }
       else {
         while (count < myMainContentPanel.getComponentCount()) {
@@ -230,14 +248,6 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
         myMainContentPanel.add(commitPanel);
         count++;
       }
-
-      VcsFullCommitDetails commitData = tableModel.getFullDetails(row);
-      commitPanel.setCommit(commitData);
-      if (commitData instanceof LoadingDetails) {
-        myLoadingPanel.startLoading();
-      } else {
-        newCommitDetails.add(commitData);
-      }
     }
 
     // clear superfluous items
@@ -245,20 +255,21 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       myMainContentPanel.remove(count);
     }
 
-    if (rows.length > MAX_ROWS) {
+    if (selectionLength > MAX_ROWS) {
       myMainContentPanel.add(new SeparatorComponent(0, OnePixelDivider.BACKGROUND, null));
-      JBLabel label = new JBLabel("  (showing " + MAX_ROWS + " of " + rows.length + " selected commits)");
+      JBLabel label = new JBLabel("  (showing " + MAX_ROWS + " of " + selectionLength + " selected commits)");
       label.setFont(getDataPanelFont());
       myMainContentPanel.add(label);
     }
+
     for (int i = myMainContentPanel.getComponentCount() - 1; i >= 0; i--) {
       ((JComponent)myMainContentPanel.getComponent(i)).setAlignmentX(LEFT_ALIGNMENT);
     }
+  }
 
-    if (!ContainerUtil.intersects(myCurrentCommitDetails, newCommitDetails)) {
-      myScrollPane.getVerticalScrollBar().setValue(0);
-    }
-    myCurrentCommitDetails = newCommitDetails;
+  @NotNull
+  public CommitPanel getCommitPanel(int index) {
+    return (CommitPanel)myMainContentPanel.getComponent(2 * index);
   }
 
   @NotNull
@@ -444,7 +455,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       int TOTAL_MAX = 0;
       int charCount = 0;
       for (String b : myBranches) {
-        TOTAL_MAX ++;
+        TOTAL_MAX++;
         charCount += b.length();
         if (charCount >= 50) break;
       }
