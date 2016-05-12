@@ -146,7 +146,8 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
     return new InspectionProfileImpl(name, InspectionToolRegistrar.getInstance(), this, baseProfile);
   }
 
-  private static void registerProvidedSeverities() {
+  // It should be public to be available from Upsource
+  public static void registerProvidedSeverities() {
     for (SeveritiesProvider provider : Extensions.getExtensions(SeveritiesProvider.EP_NAME)) {
       for (HighlightInfoType t : provider.getSeveritiesHighlightInfoTypes()) {
         HighlightSeverity highlightSeverity = t.getSeverity(null);
