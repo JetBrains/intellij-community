@@ -97,10 +97,11 @@ public class BaseOutputReaderTest {
     assertThat(StringUtil.join(lines, "")).isEqualTo(StringUtil.join(Arrays.asList(TEST_DATA), ""));
   }
 
-  @Test(timeout = 30000)
-  public void testBlockingStop() throws Exception {
-    doStopTest(BaseDataReader.SleepingPolicy.BLOCKING);
-  }
+  // Stopping is not supported for an open stream in blocking mode
+  //@Test(timeout = 30000)
+  //public void testBlockingStop() throws Exception {
+  //  doStopTest(BaseDataReader.SleepingPolicy.BLOCKING);
+  //}
 
   @Test(timeout = 30000)
   public void testNonBlockingStop() throws Exception {
