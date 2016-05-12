@@ -157,16 +157,6 @@ public abstract class BaseOutputReader extends BaseDataReader {
     myReader.close();
   }
 
-  @Override
-  public void stop() {
-    super.stop();
-    if (mySleepingPolicy == SleepingPolicy.BLOCKING) {
-      // we can't count on super.stop() since it only sets 'isRunning = false', and blocked Reader.read won't wake up.
-      try { close(); }
-      catch (IOException ignore) { }
-    }
-  }
-
   protected void onBufferExhaustion() { }
 
   protected abstract void onTextAvailable(@NotNull String text);
