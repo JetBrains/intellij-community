@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.BaseNavigateToSourceAction;
 import com.intellij.ide.actions.ExternalJavaDocAction;
-import com.intellij.lang.documentation.CompositeDocumentationProvider;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.documentation.ExternalDocumentationProvider;
 import com.intellij.openapi.Disposable;
@@ -43,7 +42,6 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
@@ -56,6 +54,8 @@ import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Consumer;
+import com.intellij.util.Url;
+import com.intellij.util.Urls;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBDimension;
@@ -64,6 +64,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.ide.BuiltInServerManager;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -75,6 +76,7 @@ import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLDocument;
 import java.awt.*;
 import java.awt.event.*;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
 import java.util.List;
@@ -113,7 +115,21 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       if (element == null) return null;
       URL url = (URL)key;
       Image inMemory = myManager.getElementImage(element, url.toExternalForm());
-      return inMemory != null ? inMemory : Toolkit.getDefaultToolkit().createImage(url);
+      if (inMemory != null) {
+        return inMemory;
+      }
+
+      Url parsedUrl = Urls.parseEncoded(url.toExternalForm());
+      BuiltInServerManager builtInServerManager = BuiltInServerManager.getInstance();
+      if (parsedUrl != null && builtInServerManager.isOnBuiltInWebServer(parsedUrl)) {
+        try {
+          url = new URL(builtInServerManager.addAuthToken(parsedUrl).toExternalForm());
+        }
+        catch (MalformedURLException e) {
+          LOGGER.warn(e);
+        }
+      }
+      return Toolkit.getDefaultToolkit().createImage(url);
     }
   };
 
