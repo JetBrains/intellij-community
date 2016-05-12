@@ -118,7 +118,13 @@ public class ReferenceParser {
       parseJavaCodeReference(builder, isSet(flags, EAT_LAST_DOT), true, false, false, false, isSet(flags, DIAMONDS), typeInfo);
     }
     else if (isSet(flags, DIAMONDS) && tokenType == JavaTokenType.GT) {
-      emptyElement(builder, JavaElementType.DIAMOND_TYPE);
+      if (anno == null) {
+        emptyElement(builder, JavaElementType.DIAMOND_TYPE);
+      }
+      else {
+        error(builder, JavaErrorMessages.message("expected.identifier"));
+        typeInfo.hasErrors = true;
+      }
       type.done(JavaElementType.TYPE);
       typeInfo.marker = type;
       return typeInfo;
