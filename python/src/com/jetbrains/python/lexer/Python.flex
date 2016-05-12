@@ -205,7 +205,7 @@ return PyTokenTypes.DOCSTRING; }
 "="                   { return PyTokenTypes.EQ; }
 ";"                   { return PyTokenTypes.SEMICOLON; }
 
-.                     { return PyTokenTypes.BAD_CHARACTER; }
+[^]                   { return PyTokenTypes.BAD_CHARACTER; }
 }
 
 <IN_DOCSTRING_OWNER> {

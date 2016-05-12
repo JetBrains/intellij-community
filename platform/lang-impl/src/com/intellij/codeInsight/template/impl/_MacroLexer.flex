@@ -18,8 +18,6 @@ import com.intellij.lexer.FlexLexer;
 %implements FlexLexer
 %function advance
 %type IElementType
-%eof{  return;
-%eof}
 
 IDENTIFIER=[:jletter:] [:jletterdigit:]*
 WHITE_SPACE_CHAR=[\ \n\r\t\f]
@@ -35,4 +33,4 @@ ESCAPE_SEQUENCE=\\[^\r\n]
 ")" { return MacroTokenType.RPAREN; }
 "," { return MacroTokenType.COMMA; }
 "=" { return MacroTokenType.EQ; }
-. { return TokenType.BAD_CHARACTER; }
+[^] { return TokenType.BAD_CHARACTER; }

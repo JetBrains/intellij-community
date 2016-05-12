@@ -187,4 +187,4 @@ WS={WHITE_SPACE_CHAR}+
 "{"                         { return XPathTokenTypes.LBRACE; }
 "}"                         { return XPathTokenTypes.RBRACE; }
 
-.                           { yybegin(YYINITIAL);   return XPathTokenTypes.BAD_CHARACTER; }
+[^]                         { yybegin(YYINITIAL);   return XPathTokenTypes.BAD_CHARACTER; }

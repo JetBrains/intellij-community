@@ -16,8 +16,6 @@ import com.intellij.lexer.FlexLexer;
 %implements FlexLexer
 %function advance
 %type IElementType
-%eof{  return;
-%eof}
 
 IDENTIFIER=[:jletter:] [:jletterdigit:]*
 WHITE_SPACE_CHAR=[\ \n\r\t\f]
@@ -45,5 +43,5 @@ DIGIT=[0-9]+
 <YYINITIAL> "/" { return ScopeTokenTypes.DIV; }
 
 <YYINITIAL> "#" { return ScopeTokenTypes.SHARP; }
-<YYINITIAL> . { return ScopeTokenTypes.BAD_CHARACTER; }
+<YYINITIAL> [^] { return ScopeTokenTypes.BAD_CHARACTER; }
 
