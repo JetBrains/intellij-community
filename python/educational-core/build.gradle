@@ -29,10 +29,12 @@ subprojects {
   }
 
   processResources {
-    filter ReplaceTokens, tokens: [
-      'VERSION': version.toString(),
-      'BUILD-NUMBER': buildNumber,
-    ]
+    filesNotMatching("**/*.png") {
+      it.filter(ReplaceTokens, tokens: [
+        'VERSION'     : version.toString(),
+        'BUILD-NUMBER': buildNumber,
+      ])
+    }
   }
 
   afterEvaluate {
