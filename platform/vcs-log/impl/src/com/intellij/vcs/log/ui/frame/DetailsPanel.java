@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.OnePixelDivider;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.openapi.vcs.ui.FontUtil;
@@ -267,6 +268,8 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
     private static final int BOTTOM_BORDER = 2;
     @NotNull private final ReferencesPanel myReferencesPanel;
     @NotNull private final DataPanel myDataPanel;
+    @Nullable private VcsFullCommitDetails myCommit;
+    @Nullable private List<String> myBranches;
 
     public CommitPanel() {
       setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
@@ -283,22 +286,31 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
     }
 
     public void setCommit(@NotNull VcsFullCommitDetails commitData) {
-      if (commitData instanceof LoadingDetails) {
-        myLoadingPanel.startLoading();
-        myDataPanel.setData(null);
-        myReferencesPanel.setReferences(Collections.emptyList());
-        updateBorder(null);
+      if (!Comparing.equal(myCommit, commitData)) {
+        if (commitData instanceof LoadingDetails) {
+          myLoadingPanel.startLoading();
+          myDataPanel.setData(null);
+          myReferencesPanel.setReferences(Collections.emptyList());
+          updateBorder(null);
+        }
+        else {
+          myDataPanel.setData(commitData);
+          myReferencesPanel.setReferences(sortRefs(commitData.getId(), commitData.getRoot()));
+          updateBorder(commitData);
+        }
+        myCommit = commitData;
       }
-      else {
-        myDataPanel.setData(commitData);
-        myReferencesPanel.setReferences(sortRefs(commitData.getId(), commitData.getRoot()));
-        updateBorder(commitData);
-      }
+
       List<String> branches = null;
       if (!(commitData instanceof LoadingDetails)) {
         branches = myLogData.getContainingBranchesGetter().requestContainingBranches(commitData.getRoot(), commitData.getId());
       }
-      myDataPanel.setBranches(branches);
+
+      if (!Comparing.equal(myCommit, commitData) || myBranches != branches) {
+        myDataPanel.setBranches(branches);
+        myBranches = branches;
+      }
+
       myDataPanel.update();
       revalidate();
     }
