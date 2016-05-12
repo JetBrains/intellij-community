@@ -56,28 +56,36 @@ public class ShowRecentTests extends AnAction {
 
     final TestStateStorage testStorage = TestStateStorage.getInstance(project);
     final TestLocator testLocator = new TestLocator(project);
-    final RecentTestRunnerImpl testRunner = new RecentTestRunnerImpl();
+    final RecentTestRunnerImpl testRunner = new RecentTestRunnerImpl(project, testLocator);
     
     final Map<String, TestStateStorage.Record> records = testStorage.getRecentTests(TEST_LIMIT, getSinceDate());
-    RecentTestsListProvider listProvider = new RecentTestsListProvider(records);
-    List<TestInfo> urls = listProvider.getTestsToShow();
+
+    RunConfigurationByRecordProvider configurationProvider = new RunConfigurationByRecordProvider(project);
+    RecentTestsListProvider listProvider = new RecentTestsListProvider(configurationProvider, records);
     
-    SelectTestStep selectStepTest = new SelectTestStep(urls, testRunner, testLocator);
+    List<RecentTestsPopupEntry> entries = listProvider.getTestsToShow();
+    
+    SelectTestStep selectStepTest = new SelectTestStep(entries, testRunner, testLocator);
 
     RecentTestsListPopup popup = new RecentTestsListPopup(selectStepTest, testRunner, testLocator);
     popup.showCenteredInCurrentWindow(project);
 
-    List<String> testUrls = ContainerUtil.map(urls, TestInfo::getUrl);
-    ApplicationManager.getApplication().executeOnPooledThread(new DeadTestsCleaner(testStorage, testUrls, testLocator));
+
+    cleanDeadTests(entries, testLocator, testStorage);
   }
-  
+
+  private static void cleanDeadTests(List<RecentTestsPopupEntry> entries, TestLocator testLocator, TestStateStorage testStorage) {
+    List<String> urls = ContainerUtil.newArrayList();
+    entries.forEach((entry) -> urls.addAll(entry.getTestsUrls()));
+    ApplicationManager.getApplication().executeOnPooledThread(new DeadTestsCleaner(testStorage, urls, testLocator));
+  }
 }
 
 class RecentTestsListPopup extends ListPopupImpl {
   private final RecentTestRunner myTestRunner;
   private final TestLocator myLocator;
 
-  public RecentTestsListPopup(ListPopupStep<TestInfo> popupStep, RecentTestRunner testRunner, TestLocator locator) {
+  public RecentTestsListPopup(ListPopupStep<RecentTestsPopupEntry> popupStep, RecentTestRunner testRunner, TestLocator locator) {
     super(popupStep);
     myTestRunner = testRunner;
     myLocator = locator;

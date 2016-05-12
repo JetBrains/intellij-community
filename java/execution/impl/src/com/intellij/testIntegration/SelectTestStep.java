@@ -15,36 +15,33 @@
  */
 package com.intellij.testIntegration;
 
-import com.intellij.execution.Location;
 import com.intellij.execution.testframework.TestIconMapper;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.List;
 
-public class SelectTestStep extends BaseListPopupStep<TestInfo> {
+public class SelectTestStep extends BaseListPopupStep<RecentTestsPopupEntry> {
   private final RecentTestRunner myRunner;
   private final TestLocator myTestLocator;
 
-  public SelectTestStep(List<TestInfo> tests, RecentTestRunner runner, TestLocator locator) {
+  public SelectTestStep(List<RecentTestsPopupEntry> tests, RecentTestRunner runner, TestLocator locator) {
     super("Debug Recent Tests", tests);
     myRunner = runner;
     myTestLocator = locator;
   }
 
   @Override
-  public Icon getIconFor(TestInfo value) {
+  public Icon getIconFor(RecentTestsPopupEntry value) {
     return TestIconMapper.getIcon(value.getMagnitude());
   }
 
   @NotNull
   @Override
-  public String getTextFor(TestInfo value) {
-    String url = value.getUrl();
-    return VirtualFileManager.extractPath(url);
+  public String getTextFor(RecentTestsPopupEntry value) {
+    return value.getPresentation();
   }
   
   @Override
@@ -53,9 +50,9 @@ public class SelectTestStep extends BaseListPopupStep<TestInfo> {
   }
   
   @Override
-  public PopupStep onChosen(TestInfo info, boolean finalChoice) {
-    Location location = myTestLocator.getLocation(info.getUrl());
-    myRunner.run(location);
+  public PopupStep onChosen(RecentTestsPopupEntry entry, boolean finalChoice) {
+    entry.run(myRunner);
     return null;
   }
+  
 }

@@ -20,6 +20,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.newvfs.persistent.FlushingDaemon;
@@ -44,6 +45,8 @@ import java.util.concurrent.ScheduledFuture;
  */
 public class TestStateStorage implements Disposable {
 
+  public static Key<String> STRING_KEY = Key.create("run.configuration.name");
+  
   private static final File TEST_HISTORY_PATH = new File(PathManager.getSystemPath(), "testHistory");
   private final File myFile;
 
@@ -53,11 +56,13 @@ public class TestStateStorage implements Disposable {
 
   public static class Record {
     public final int magnitude;
+    public final long configurationHash;
     public final Date date;
 
-    public Record(int magnitude, Date date) {
+    public Record(int magnitude, Date date, long configurationHash) {
       this.magnitude = magnitude;
       this.date = date;
+      this.configurationHash = configurationHash;
     }
   }
 
@@ -97,16 +102,17 @@ public class TestStateStorage implements Disposable {
     return new ThrowableComputable<PersistentHashMap<String, Record>, IOException>() {
       @Override
       public PersistentHashMap<String, Record> compute() throws IOException {
-        return new PersistentHashMap<String, Record>(file, EnumeratorStringDescriptor.INSTANCE, new DataExternalizer<Record>() {
+        return new PersistentHashMap<>(file, EnumeratorStringDescriptor.INSTANCE, new DataExternalizer<Record>() {
           @Override
           public void save(@NotNull DataOutput out, Record value) throws IOException {
             out.writeInt(value.magnitude);
             out.writeLong(value.date.getTime());
+            out.writeLong(value.configurationHash);
           }
 
           @Override
           public Record read(@NotNull DataInput in) throws IOException {
-            return new Record(in.readInt(), new Date(in.readLong()));
+            return new Record(in.readInt(), new Date(in.readLong()), in.readLong());
           }
         });
       }

@@ -27,8 +27,8 @@ import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
 import java.util.*
 
-fun passed(date: Date) = TestStateStorage.Record(TestStateInfo.Magnitude.PASSED_INDEX.value, date)
-fun failed(date: Date) = TestStateStorage.Record(TestStateInfo.Magnitude.FAILED_INDEX.value, date)
+fun passed(date: Date) = TestStateStorage.Record(TestStateInfo.Magnitude.PASSED_INDEX.value, date, 0)
+fun failed(date: Date) = TestStateStorage.Record(TestStateInfo.Magnitude.FAILED_INDEX.value, date, 0)
 
 class RecentTestsStepTest: LightIdeaTestCase() {
   val runner = mock(RecentTestRunner::class.java)
@@ -45,12 +45,12 @@ class RecentTestsStepTest: LightIdeaTestCase() {
     }
     
     fun addSuite(name: String, magnitude: TestStateInfo.Magnitude, date: Date = Date(0), language: String = "java") {
-      val record = TestStateStorage.Record(magnitude.value, date)
+      val record = TestStateStorage.Record(magnitude.value, date, 0)
       map.put("$language:suite://$name", record)
     }
     
     fun addTest(name: String, magnitude: TestStateInfo.Magnitude, date: Date = Date(0)) {
-      val record = TestStateStorage.Record(magnitude.value, date)
+      val record = TestStateStorage.Record(magnitude.value, date, 0)
       map.put("java:test://$name", record)
     }
 
@@ -130,8 +130,8 @@ class RecentTestsStepTest: LightIdeaTestCase() {
   }
 
   private fun getSortedList(map: MutableMap<String, TestStateStorage.Record>): List<String> {
-    val provider = RecentTestsListProvider(map)
-    return provider.testsToShow.map { it.url }
+    val provider = RecentTestsListProvider(getProject(), map)
+    return provider.testsToShow.map { it.presentation }
   }
 
   
@@ -250,7 +250,7 @@ class RecentTestsStepTest: LightIdeaTestCase() {
     assertThat(shownValue).isEqualTo("JavaFormatterSuperDuperTest.testItMakesMeSadToFixIt")
   }
 
-  private fun dumbInfo(info: String) = TestInfo(info, TestStateInfo.Magnitude.COMPLETE_INDEX, Date())
+  private fun dumbInfo(info: String): RecentTestsPopupEntry = TestInfo(info, TestStateInfo.Magnitude.COMPLETE_INDEX, Date())
 
   fun `test do not show urls which we can locate without location`() {
     val storage = TestStorage()
