@@ -32,7 +32,7 @@ public class StreamingJsonBuilderDelegateContributor extends StreamingJsonBuilde
   @Nullable
   @Override
   protected String getParentClassName() {
-    return "groovy.json.StreamingJsonBuilder.StreamingJsonDelegate";
+    return getDelegateClassName();
   }
 
   @Override
