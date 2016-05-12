@@ -382,6 +382,11 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
         super.paintComponent(g);
         myCommentsStatus.paint(this, g);
       }
+
+      @Override
+      public Color getBackground() {
+        return UIUtil.getEditorPaneBackground();
+      }
     };
     myCommentsStatus.attachTo(myComments);
     myComments.setPreferredSize(new Dimension(150, 100));
@@ -710,7 +715,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     });
 
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myComments);
-    scrollPane.setBorder(IdeBorderFactory.createBorder(myAdditionalDetails == null ? SideBorder.LEFT : SideBorder.LEFT | SideBorder.RIGHT));
+    scrollPane.setBorder(IdeBorderFactory.createBorder(SideBorder.LEFT));
 
     myDetailsSplitter = new OnePixelSplitter(false, 0.5f);
     myDetailsSplitter.setFirstComponent(scrollPane);
