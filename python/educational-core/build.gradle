@@ -23,7 +23,7 @@ subprojects {
 
   intellij {
     version ideaVersion
-    updateSinceUntilBuild true
+    updateSinceUntilBuild Boolean.valueOf(updateBuildNumber)
     downloadSources Boolean.valueOf(downloadIdeaSources)
     sandboxDirectory = new File(rootProject.projectDir, "gradleBuild/idea-sandbox")
   }
