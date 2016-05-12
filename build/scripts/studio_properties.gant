@@ -248,12 +248,12 @@ def getProperties(String home, String buildNumber) {
             }
           }
 
-          dir("google-cloud-testing") {
+          dir("firebase-testing") {
             dir("lib") {
-              jar("google-cloud-testing.jar") {
-                module("google-cloud-testing")
+              jar("firebase-testing.jar") {
+                module("firebase-testing")
               }
-              fileset(dir: "${home}/../studio/google/cloud/testing/lib") {
+              fileset(dir: "${home}/../studio/google/cloud/testing/firebase-testing/lib") {
                 include(name: "**/*.jar")
                 include(name: "**/*.jar-NOTICE")
               }
@@ -298,7 +298,7 @@ def getProperties(String home, String buildNumber) {
         }
       }
       ant.copy(file: "${home}/../../prebuilts/tools/common/m2/repository/tightvnc/NOTICE",
-               tofile: "$targetDirectory/plugins/google-cloud-testing/lib/licenses/tightvnc.jar-NOTICE")
+               tofile: "$targetDirectory/plugins/firebase-testing/lib/licenses/tightvnc.jar-NOTICE")
       ant.unzip(src: "${home}/../external/gradle/gradle-$gradleVersion-bin.zip", dest: "${targetDirectory}/gradle")
       ant.touch(file: "$targetDirectory/license/dev01_license.txt", mkdirs: true)
     }
