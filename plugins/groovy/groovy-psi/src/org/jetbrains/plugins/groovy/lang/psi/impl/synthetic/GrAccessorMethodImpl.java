@@ -31,6 +31,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
 
 /**
  * @author ven
@@ -134,5 +135,10 @@ public class GrAccessorMethodImpl extends LightMethodBuilder implements GrAccess
   @Override
   public PsiElement getPrototype() {
     return getProperty();
+  }
+
+  @Override
+  public boolean hasModifierProperty(@NotNull String name) {
+    return PsiModifier.ABSTRACT.equals(name) && GrTraitUtil.isTrait(getContainingClass()) || super.hasModifierProperty(name);
   }
 }

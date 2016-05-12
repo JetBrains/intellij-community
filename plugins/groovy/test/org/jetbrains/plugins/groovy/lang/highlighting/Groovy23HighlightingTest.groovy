@@ -21,6 +21,9 @@ import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 
 /**
  * Created by Max Medvedev on 17/02/14
@@ -115,6 +118,21 @@ class B implements A {
   def foo
 }
 '''
+  }
+
+  void 'test traits have only abstract methods'() {
+    def file = myFixture.addFileToProject('T.groovy', '''\
+trait T {
+  def foo
+  abstract bar
+  def baz() {}
+  abstract doo()
+}
+''') as GroovyFile
+    def definition = file.classes[0] as GrTypeDefinition
+    for (method in definition.methods) {
+      assert method.hasModifierProperty(GrModifier.ABSTRACT)
+    }
   }
 
   final InspectionProfileEntry[] customInspections = [new GroovyAssignabilityCheckInspection(), new GrUnresolvedAccessInspection()]
