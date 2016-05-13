@@ -301,12 +301,8 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   @Override
   public void run(@NotNull final Task task) {
     if (task.isHeadless()) {
-      if (ApplicationManager.getApplication().isDispatchThread()) {
-        runProcessWithProgressSynchronously(task, null);
-      }
-      else {
-        new TaskRunnable(task, new EmptyProgressIndicator()).run();
-      }
+      ApplicationManager.getApplication().assertIsDispatchThread();
+      runProcessWithProgressSynchronously(task, null);
     }
     else if (task.isModal()) {
       runProcessWithProgressSynchronously(task.asModal(), null);
