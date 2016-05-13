@@ -58,7 +58,7 @@ public class ProgressManagerQueue {
    * !!! done under lock! (to allow single failures when putting into the execution queue)
    * Should run {@link #myQueueWorker}
    */
-  protected void runMe() {
+  private void runMe() {
     if (!myIsStarted) return;
     if (ApplicationManager.getApplication().isDispatchThread()) {
       if (!myQueuePollTask.myProject.isDisposed()) {
@@ -77,7 +77,7 @@ public class ProgressManagerQueue {
     }
   }
 
-  protected void runStuff(final Runnable stuff) {
+  private static void runStuff(final Runnable stuff) {
     try {
       stuff.run();
     }
@@ -108,16 +108,6 @@ public class ProgressManagerQueue {
     }
   }
 
-  public boolean isEmpty() {
-    synchronized (myLock) {
-      if (myQueue.isEmpty()) {
-        myActive = false;
-        return true;
-      }
-    }
-    return false;
-  }
-
   private class MyWorker implements Runnable {
     @Override
     public void run() {
@@ -136,7 +126,12 @@ public class ProgressManagerQueue {
           LOG.info(t);
         }
         finally {
-          if (isEmpty()) return;
+          synchronized (myLock) {
+            if (myQueue.isEmpty()) {
+              myActive = false;
+              return;
+            }
+          }
         }
       }
     }
