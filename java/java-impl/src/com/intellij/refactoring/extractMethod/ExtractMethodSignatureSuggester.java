@@ -348,7 +348,10 @@ public class ExtractMethodSignatureSuggester {
       if (name == null) {
 
         final PsiType type = GenericsUtil.getVariableTypeByExpressionType(expr.getType());
-        if (type == null || type == PsiType.NULL || PsiUtil.resolveClassInType(type) instanceof PsiAnonymousClass) return null;
+        if (type == null ||
+            type == PsiType.NULL ||
+            PsiUtil.resolveClassInType(type) instanceof PsiAnonymousClass ||
+            LambdaUtil.notInferredType(type)) return null;
 
         copies.add(myElementFactory.createExpressionFromText(expr.getText(), body));
 
