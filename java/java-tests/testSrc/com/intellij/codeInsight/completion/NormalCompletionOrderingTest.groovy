@@ -758,4 +758,19 @@ interface TxANotAnno {}
     checkPreferredItems 0, 'false', 'factory'
   }
 
+  public void testPreferExplicitlyImportedStaticMembers() {
+    myFixture.addClass("""
+class ContainerUtilRt {
+  static void newHashSet();
+  static void newHashSet2();
+}
+class ContainerUtil extends ContainerUtilRt {
+  static void newHashSet();
+  static void newHashSet3();
+}
+""")
+    checkPreferredItems 0, 'newHashSet', 'newHashSet', 'newHashSet3', 'newHashSet2'
+    assert (myFixture.lookupElements[0].psiElement as PsiMethod).containingClass.name == 'ContainerUtil'
+  }
+
 }
