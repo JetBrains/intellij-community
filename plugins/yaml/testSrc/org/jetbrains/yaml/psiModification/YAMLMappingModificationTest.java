@@ -94,7 +94,9 @@ public class YAMLMappingModificationTest extends LightPlatformCodeInsightFixture
     final YAMLMapping mapping = PsiTreeUtil.getParentOfType(elementAtCaret, YAMLMapping.class, false);
     
     if (mapping == null) {
-      YAMLUtil.createI18nRecord((YAMLFile)myFixture.getFile(), new String[]{key}, content);
+      WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+        YAMLUtil.createI18nRecord((YAMLFile)myFixture.getFile(), new String[]{key}, content);
+      });
     }
     else {
       assertNotNull(mapping);
