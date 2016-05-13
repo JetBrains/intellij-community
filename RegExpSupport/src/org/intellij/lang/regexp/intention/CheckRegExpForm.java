@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,11 +20,13 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDocumentManager;
@@ -101,7 +103,7 @@ public class CheckRegExpForm {
           }
         }.registerCustomShortcutSet(CustomShortcutSet.fromString("shift TAB"), mySampleText);
 
-        final Alarm updater = new Alarm(Alarm.ThreadToUse.SWING_THREAD, disposable);
+        final Alarm updater = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, disposable);
         DocumentAdapter documentListener = new DocumentAdapter() {
           @Override
           public void documentChanged(DocumentEvent e) {
@@ -155,19 +157,27 @@ public class CheckRegExpForm {
     return isMatchingText(regexpFile, sampleText);
   }
 
-  private static boolean isMatchingText(@NotNull PsiFile regexpFile, @NotNull String sampleText) {
+  private static boolean isMatchingText(@NotNull final PsiFile regexpFile, @NotNull String sampleText) {
     final String regExp = regexpFile.getText();
 
-    PsiLanguageInjectionHost host = InjectedLanguageUtil.findInjectionHost(regexpFile);
-    int flags = 0;
-    if (host != null) {
-      for (RegExpModifierProvider provider : RegExpModifierProvider.EP.allForLanguage(host.getLanguage())) {
-        flags = provider.getFlags(host, regexpFile);
-        if (flags > 0) break;
+
+    Integer patternFlags = ApplicationManager.getApplication().runReadAction(new Computable<Integer>() {
+      @Override
+      public Integer compute() {
+        PsiLanguageInjectionHost host = InjectedLanguageUtil.findInjectionHost(regexpFile);
+        int flags = 0;
+        if (host != null) {
+          for (RegExpModifierProvider provider : RegExpModifierProvider.EP.allForLanguage(host.getLanguage())) {
+            flags = provider.getFlags(host, regexpFile);
+            if (flags > 0) break;
+          }
+        }
+        return flags;
       }
-    }
+    });
+    //todo[kb] need somehow to kill the calculation thread if matches() is slow
     try {
-      return Pattern.compile(regExp, flags).matcher(sampleText).matches();
+      return Pattern.compile(regExp, patternFlags).matcher(sampleText).matches();
     } catch (Exception ignore) {}
 
     return false;
