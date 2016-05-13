@@ -19,7 +19,8 @@ import java.util.regex.Pattern
 target('default': 'Downloads custom JRE build from Teamcity server') {
   def buildId = new URL("$jreTeamcityUrl/buildTypes/id:$jreBuildTypeId/builds/tags:$jreBuildTag/id").text
   def buildNumber = new URL("$jreTeamcityUrl/builds/id:$buildId/number").text
-  java(jvm: "$workIdeaHome/jre/jre/bin/java", fork: "true", classname: "dummy", outputproperty: "jvmVersionOutput") {
+  java(jvm: jreArtifactPlatform == "mac" ? "$workIdeaHome/jre/jdk/Contents/Home/jre/bin/java" : "$workIdeaHome/jre/jre/bin/java",
+       fork: "true", classname: "dummy", outputproperty: "jvmVersionOutput") {
     jvmarg(value: "-version")
   }
   try {
