@@ -91,8 +91,8 @@ public class EventLog {
     }
   }
 
-  public static void showNotification(@NotNull Project project, @NotNull String groupId, @NotNull String id) {
-    getProjectComponent(project).showNotification(groupId, id);
+  public static void showNotification(@NotNull Project project, @NotNull String groupId, @NotNull List<String> ids) {
+    getProjectComponent(project).showNotification(groupId, ids);
   }
 
   private static EventLog getApplicationComponent() {
@@ -102,6 +102,24 @@ public class EventLog {
   @NotNull
   public static LogModel getLogModel(@Nullable Project project) {
     return project != null ? getProjectComponent(project).myProjectModel : getApplicationComponent().myModel;
+  }
+
+  public static void markAllAsRead(@Nullable Project project) {
+    LogModel model = getLogModel(project);
+    Set<String> groups = new HashSet<>();
+    for (Notification notification : model.getNotifications()) {
+      groups.add(notification.getGroupId());
+      model.removeNotification(notification);
+      notification.expire();
+    }
+
+    if (project != null && !groups.isEmpty()) {
+      clearNMore(project, groups);
+    }
+  }
+
+  public static void clearNMore(@NotNull Project project, @NotNull Collection<String> groups) {
+    getProjectComponent(project).clearNMore(groups);
   }
 
   @Nullable
@@ -498,7 +516,7 @@ public class EventLog {
       });
     }
 
-    private void showNotification(@NotNull final String groupId, @NotNull final String id) {
+    private void showNotification(@NotNull final String groupId, @NotNull final List<String> ids) {
       ToolWindow eventLog = getEventLog(myProject);
       if (eventLog != null) {
         activate(eventLog, groupId, new Runnable() {
@@ -506,10 +524,19 @@ public class EventLog {
           public void run() {
             EventLogConsole console = getConsole(groupId);
             if (console != null) {
-              console.showNotification(id);
+              console.showNotification(ids);
             }
           }
         });
+      }
+    }
+
+    private void clearNMore(@NotNull Collection<String> groups) {
+      for (String group : groups) {
+        EventLogConsole console = myCategoryMap.get(getContentName(group));
+        if (console != null) {
+          console.clearNMore();
+        }
       }
     }
 
