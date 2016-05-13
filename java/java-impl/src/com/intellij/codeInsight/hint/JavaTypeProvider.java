@@ -45,13 +45,17 @@ public class JavaTypeProvider extends ExpressionTypeProvider<PsiExpression> {
   public List<PsiExpression> getExpressionsAt(@NotNull PsiElement elementAt) {
     return SyntaxTraverser.psiApi().parents(elementAt)
       .filter(PsiExpression.class)
-      .filter(JavaTypeProvider::notAMethodReferenceInCall)
+      .filter(JavaTypeProvider::isLargestNonTrivialExpression)
       .toList();
   }
 
-  private static boolean notAMethodReferenceInCall(PsiExpression expression) {
-    boolean b = expression instanceof PsiReferenceExpression;
-    PsiElement p = b ? expression.getParent() : null;
-    return !(p instanceof PsiMethodCallExpression && ((PsiMethodCallExpression)p).getMethodExpression() == expression);
+  private static boolean isLargestNonTrivialExpression(@NotNull PsiExpression e) {
+    PsiElement p = e.getParent();
+    if (p instanceof PsiPostfixExpression) return false;
+    if (p instanceof PsiPrefixExpression) return false;
+    if (p instanceof PsiMethodCallExpression && ((PsiMethodCallExpression)p).getMethodExpression() == e) {
+      return false;
+    }
+    return true;
   }
 }
