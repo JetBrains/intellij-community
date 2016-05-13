@@ -969,8 +969,11 @@ public class GitUtil {
           String message = "Change is not found for " + file.getPath();
           if (changeListManager.isInUpdate()) {
             message += " because ChangeListManager is being updated.";
+            LOG.debug(message);
           }
-          LOG.warn(message);
+          else {
+            LOG.info(message);
+          }
         }
       }
     }
