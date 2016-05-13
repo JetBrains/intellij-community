@@ -15,14 +15,17 @@
  */
 package com.intellij.navigation;
 
-import com.intellij.codeInsight.navigation.GotoImplementationHandler;
 import com.intellij.codeInsight.navigation.GotoTargetHandler;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+
+import java.util.Arrays;
 
 public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCase {
   public void testMultipleImplsFromAbstractCall() {
@@ -211,6 +214,12 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
 
     final PsiElement[] impls = getTargets(file);
     assertEquals(2, impls.length);
+    // target are non-deterministic now
+    Arrays.sort(impls, (o1, o2) -> {
+      String name1 = ((PsiMethod)o1).getContainingClass().getName();
+      String name2 = ((PsiMethod)o2).getContainingClass().getName();
+      return StringUtil.compare(name1, name2, false);
+    });
     final PsiElement method = impls[0];
     assertTrue(method instanceof PsiMethod);
     final PsiClass aClass = ((PsiMethod)method).getContainingClass();
@@ -219,7 +228,7 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
   }
 
   private PsiElement[] getTargets(PsiFile file) {
-    GotoTargetHandler.GotoData gotoData = new GotoImplementationHandler().getSourceAndTargetElements(myFixture.getEditor(), file);
+    GotoTargetHandler.GotoData gotoData = CodeInsightTestUtil.gotoImplementation(myFixture.getEditor(), file);
     assertNotNull(gotoData);
     return gotoData.targets;
   }
