@@ -16,16 +16,30 @@
 package com.intellij.openapi.progress;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayDeque;
+import java.util.Queue;
+
 @SomeQueue
-public class ProgressManagerQueue extends AbstractTaskQueue<Runnable> {
+public class ProgressManagerQueue {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.progress.AbstractTaskQueue");
+
   private final ProgressManager myProgressManager;
   private final Task.Backgroundable myQueuePollTask;
+  private final Object myLock;
+  private final Queue<Runnable> myQueue;
+  private final Runnable myQueueWorker;
   private volatile boolean myIsStarted;
+  private boolean myActive;
 
   public ProgressManagerQueue(@NotNull Project project, @NotNull String title) {
+    myLock = new Object();
+    myQueue = new ArrayDeque<Runnable>();
+    myActive = false;
+    myQueueWorker = new MyWorker();
     myProgressManager = ProgressManager.getInstance();
     myQueuePollTask = new Task.Backgroundable(project, title) {
       @Override
@@ -40,7 +54,10 @@ public class ProgressManagerQueue extends AbstractTaskQueue<Runnable> {
     runMe();
   }
 
-  @Override
+  /**
+   * !!! done under lock! (to allow single failures when putting into the execution queue)
+   * Should run {@link #myQueueWorker}
+   */
   protected void runMe() {
     if (!myIsStarted) return;
     if (ApplicationManager.getApplication().isDispatchThread()) {
@@ -60,13 +77,68 @@ public class ProgressManagerQueue extends AbstractTaskQueue<Runnable> {
     }
   }
 
-  @Override
   protected void runStuff(final Runnable stuff) {
     try {
       stuff.run();
     }
     catch (ProcessCanceledException e) {
       //
+    }
+  }
+
+  public void run(@NotNull final Runnable stuff) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      runStuff(stuff);
+      return;
+    }
+    synchronized (myLock) {
+      try {
+        myQueue.add(stuff);
+        if (!myActive) {
+          runMe();
+        }
+      }
+      catch (Throwable t) {
+        LOG.info(t);
+        throw t instanceof RuntimeException ? ((RuntimeException)t) : new RuntimeException(t);
+      }
+      finally {
+        myActive = true;
+      }
+    }
+  }
+
+  public boolean isEmpty() {
+    synchronized (myLock) {
+      if (myQueue.isEmpty()) {
+        myActive = false;
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private class MyWorker implements Runnable {
+    @Override
+    public void run() {
+      while (true) {
+        try {
+          final Runnable stuff;
+          synchronized (myLock) {
+            stuff = myQueue.poll();
+          }
+          if (stuff != null) {
+            // each task is executed only once, once it has been taken from the queue..
+            runStuff(stuff);
+          }
+        }
+        catch (Throwable t) {
+          LOG.info(t);
+        }
+        finally {
+          if (isEmpty()) return;
+        }
+      }
     }
   }
 }
