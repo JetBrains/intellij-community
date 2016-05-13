@@ -754,4 +754,8 @@ interface TxANotAnno {}
     checkPreferredItems 0, 'class'
   }
 
+  public void testPreferBooleanKeywordsWhenExpectedBoolean() {
+    checkPreferredItems 0, 'false', 'factory'
+  }
+
 }
