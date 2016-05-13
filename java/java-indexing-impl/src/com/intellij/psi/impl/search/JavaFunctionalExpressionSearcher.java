@@ -55,7 +55,6 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
    * and more advanced ways of searching become necessary: e.g. first searching for methods where the functional interface class is used
    * and then for their usages,
     */
-  @VisibleForTesting
   public static final int SMART_SEARCH_THRESHOLD = 5;
 
   @Override
