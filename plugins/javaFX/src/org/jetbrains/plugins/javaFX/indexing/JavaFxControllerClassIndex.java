@@ -165,10 +165,16 @@ public class JavaFxControllerClassIndex extends ScalarIndexExtension<String> {
   }
 
   public static List<VirtualFile> findFxmlsWithController(final Project project, @NotNull String className) {
-    return findFxmlWithController(project, className, Functions.id(), ProjectScope.getAllScope(project));
+    return findFxmlsWithController(project, className, ProjectScope.getAllScope(project));
   }
 
-  public static <T> List<T> findFxmlWithController(final Project project,
+  public static List<VirtualFile> findFxmlsWithController(final Project project,
+                                                          @NotNull String className,
+                                                          @NotNull GlobalSearchScope scope) {
+    return findFxmlWithController(project, className, Functions.id(), scope);
+  }
+
+  private static <T> List<T> findFxmlWithController(final Project project,
                                                      @NotNull final String className,
                                                      final Function<VirtualFile, T> f,
                                                      final GlobalSearchScope scope) {

@@ -42,6 +42,11 @@ public class StreamingJsonBuilderContributor extends BuilderMethodsContributor {
     return "groovy.json.StreamingJsonBuilder";
   }
 
+  @NotNull
+  protected String getDelegateClassName() {
+    return "groovy.json.StreamingJsonBuilder.StreamingJsonDelegate";
+  }
+
   @Override
   boolean processDynamicMethods(@NotNull PsiType qualifierType,
                                 @NotNull PsiClass clazz,
@@ -98,7 +103,7 @@ public class StreamingJsonBuilderContributor extends BuilderMethodsContributor {
 
   protected void addClosureParameter(GrLightMethodBuilder method) {
     GrLightParameter closureParam = method.addAndGetParameter("closure", GROOVY_LANG_CLOSURE);
-    closureParam.putUserData(DELEGATES_TO_KEY, getParentClassName());
+    closureParam.putUserData(DELEGATES_TO_KEY, getDelegateClassName());
     closureParam.putUserData(DELEGATES_TO_STRATEGY_KEY, Closure.DELEGATE_FIRST);
   }
 }

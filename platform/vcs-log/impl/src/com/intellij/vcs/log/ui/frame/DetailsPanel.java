@@ -78,6 +78,8 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
 
   private static final Logger LOG = Logger.getInstance("Vcs.Log");
 
+  private static String LINK_HREF = "show-hide-branches";
+
   @NotNull private final VcsLogData myLogData;
   @NotNull private final VcsLogGraphTable myGraphTable;
 
@@ -202,23 +204,30 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
     myEmptyText.setText("");
     GraphTableModel tableModel = myGraphTable.getModel();
     int count = 0;
-    for (int i = 0; i < Math.min(rows.length, MAX_ROWS); i++) {
+    for (int i = 0, prevCount = myMainContentPanel.getComponentCount(); i < Math.min(rows.length, MAX_ROWS); i++) {
       int row = rows[i];
-      boolean reuseExisting = count < myMainContentPanel.getComponentCount();
+      Component c = count < prevCount ? myMainContentPanel.getComponent(count) : null;
+      if (c instanceof SeparatorComponent) {
+        count ++;
+        c = count < prevCount ? myMainContentPanel.getComponent(count) : null;
+      }
       CommitPanel commitPanel;
-      if (!reuseExisting) {
-        commitPanel = new CommitPanel();
-        if (i > 0) {
-          myMainContentPanel.add(new SeparatorComponent(0, OnePixelDivider.BACKGROUND, null));
-          count++;
-        }
-        commitPanel.setAlignmentX(LEFT_ALIGNMENT);
-        myMainContentPanel.add(commitPanel);
-        count++;
+      if (c instanceof CommitPanel) {
+        commitPanel = (CommitPanel)c;
+        count ++;
       }
       else {
-        if (i > 0) count++; // separator
-        commitPanel = (CommitPanel)myMainContentPanel.getComponent(count++);
+        while (count < myMainContentPanel.getComponentCount()) {
+          myMainContentPanel.remove(count);
+        }
+
+        commitPanel = new CommitPanel();
+        if (i > 0) {
+          myMainContentPanel.add(new SeparatorComponent(1, OnePixelDivider.BACKGROUND, null));
+          count++;
+        }
+        myMainContentPanel.add(commitPanel);
+        count++;
       }
 
       VcsFullCommitDetails commitData = tableModel.getFullDetails(row);
@@ -235,10 +244,12 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
 
     if (rows.length > MAX_ROWS) {
       myMainContentPanel.add(new SeparatorComponent(0, OnePixelDivider.BACKGROUND, null));
-      JBLabel label = new JBLabel("(showing " + MAX_ROWS + " of " + rows.length + " selected commits)");
+      JBLabel label = new JBLabel("  (showing " + MAX_ROWS + " of " + rows.length + " selected commits)");
       label.setFont(getDataPanelFont());
-      label.setAlignmentX(LEFT_ALIGNMENT);
       myMainContentPanel.add(label);
+    }
+    for (int i = myMainContentPanel.getComponentCount() - 1; i >= 0; i--) {
+      ((JComponent)myMainContentPanel.getComponent(i)).setAlignmentX(LEFT_ALIGNMENT);
     }
 
     if (!ContainerUtil.intersects(myCurrentCommitDetails, newCommitDetails)) {
@@ -259,6 +270,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
 
     public CommitPanel() {
       setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+      setOpaque(false);
 
       myReferencesPanel = new ReferencesPanel(myColorManager);
       myDataPanel = new DataPanel(myLogData.getProject(), myLogData.isMultiRoot());
@@ -322,15 +334,12 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
   }
 
   private static class DataPanel extends JEditorPane {
-    public static final int BRANCHES_LIMIT = 6;
-    public static final int BRANCHES_TABLE_COLUMN_COUNT = 3;
-    @NotNull public static final String LEFT_ALIGN = "left";
-    @NotNull private static String SHOW_OR_HIDE_BRANCHES = "Show or Hide Branches";
 
-    @NotNull private final Project myProject;
+    private final Project myProject;
     private final boolean myMultiRoot;
     private String myMainText;
-    @Nullable private List<String> myBranches;
+    @Nullable
+    private List<String> myBranches;
     private boolean myExpanded = false;
 
     DataPanel(@NotNull Project project, boolean multiRoot) {
@@ -346,7 +355,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
 
       addHyperlinkListener(new HyperlinkListener() {
         public void hyperlinkUpdate(HyperlinkEvent e) {
-          if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED && SHOW_OR_HIDE_BRANCHES.equals(e.getDescription())) {
+          if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED && LINK_HREF.equals(e.getDescription())) {
             myExpanded = !myExpanded;
             update();
           }
@@ -419,14 +428,23 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
         return "<i>In branches: loading...</i>";
       }
       if (myBranches.isEmpty()) return "<i>Not in any branch</i>";
-      if (myExpanded) {
-        int rowCount = (int)Math.ceil((double)myBranches.size() / BRANCHES_TABLE_COLUMN_COUNT);
+      int TOTAL_MAX = 0;
+      int charCount = 0;
+      for (String b : myBranches) {
+        TOTAL_MAX ++;
+        charCount += b.length();
+        if (charCount >= 50) break;
+      }
+      int PER_ROW = 3;
 
-        int[] means = new int[BRANCHES_TABLE_COLUMN_COUNT - 1];
-        int[] max = new int[BRANCHES_TABLE_COLUMN_COUNT - 1];
+      if (myExpanded) {
+        int rowCount = (int)Math.ceil((double)myBranches.size() / PER_ROW);
+
+        int[] means = new int[PER_ROW - 1];
+        int[] max = new int[PER_ROW - 1];
 
         for (int i = 0; i < rowCount; i++) {
-          for (int j = 0; j < BRANCHES_TABLE_COLUMN_COUNT - 1; j++) {
+          for (int j = 0; j < PER_ROW - 1; j++) {
             int index = rowCount * j + i;
             if (index < myBranches.size()) {
               means[j] += myBranches.get(index).length();
@@ -434,14 +452,14 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
             }
           }
         }
-        for (int j = 0; j < BRANCHES_TABLE_COLUMN_COUNT - 1; j++) {
+        for (int j = 0; j < PER_ROW - 1; j++) {
           means[j] /= rowCount;
         }
 
         HtmlTableBuilder builder = new HtmlTableBuilder();
         for (int i = 0; i < rowCount; i++) {
           builder.startRow();
-          for (int j = 0; j < BRANCHES_TABLE_COLUMN_COUNT; j++) {
+          for (int j = 0; j < PER_ROW; j++) {
             int index = rowCount * j + i;
             if (index >= myBranches.size()) {
               builder.append("");
@@ -450,13 +468,13 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
               String branch = myBranches.get(index);
               if (index != myBranches.size() - 1) {
                 int space = 0;
-                if (j < BRANCHES_TABLE_COLUMN_COUNT - 1 && branch.length() == max[j]) {
+                if (j < PER_ROW - 1 && branch.length() == max[j]) {
                   space = Math.max(means[j] + 20 - max[j], 5);
                 }
-                builder.append(branch + StringUtil.repeat("&nbsp;", space), LEFT_ALIGN);
+                builder.append(branch + StringUtil.repeat("&nbsp;", space), "left");
               }
               else {
-                builder.append(branch, LEFT_ALIGN);
+                builder.append(branch, "left");
               }
             }
           }
@@ -465,18 +483,18 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
         }
 
         return "<i>In " + myBranches.size() + " branches:</i> " +
-               "<a href=\"" + SHOW_OR_HIDE_BRANCHES + "\"><i>(click to hide)</i></a><br>" +
+               "<a href=\"" + LINK_HREF + "\"><i>(click to hide)</i></a><br>" +
                builder.build();
       }
       else {
         String branchText;
-        if (myBranches.size() <= BRANCHES_LIMIT) {
+        if (myBranches.size() <= TOTAL_MAX) {
           branchText = StringUtil.join(myBranches, ", ");
         }
         else {
-          branchText = StringUtil.join(ContainerUtil.getFirstItems(myBranches, BRANCHES_LIMIT), ", ") +
+          branchText = StringUtil.join(ContainerUtil.getFirstItems(myBranches, TOTAL_MAX), ", ") +
                        "… <a href=\"" +
-                       SHOW_OR_HIDE_BRANCHES +
+                       LINK_HREF +
                        "\"><i>(click to show all)</i></a>";
         }
         return "<i>In " + myBranches.size() + StringUtil.pluralize(" branch", myBranches.size()) + ":</i> " + branchText;
@@ -487,7 +505,15 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
     public Dimension getPreferredSize() {
       Dimension size = super.getPreferredSize();
       size.height = Math.max(size.height, 4 * getFontMetrics(getFont()).getHeight());
+      if (!myExpanded) {
+        size.width = 10;
+      }
       return size;
+    }
+
+    @Override
+    public Dimension getMaximumSize() {
+      return super.getPreferredSize();
     }
 
     @NotNull
@@ -596,6 +622,11 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       setVisible(!myReferences.isEmpty());
       revalidate();
       repaint();
+    }
+
+    @Override
+    public Dimension getMaximumSize() {
+      return super.getPreferredSize();
     }
 
     @Override

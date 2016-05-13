@@ -45,6 +45,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
@@ -246,7 +247,12 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
         PsiElement psiElement = refElement instanceof RefElement ? ((RefElement)refElement).getElement() : null;
         if (psiElement == null) continue;
         if (getFilter().getElementProblemCount((RefJavaElement)refElement) == 0) continue;
-        commentOutDead(psiElement);
+
+        final RefEntity owner = refElement.getOwner();
+        if (!(owner instanceof RefElement && ArrayUtil.find(refElements, owner) > -1)) {
+          commentOutDead(psiElement);
+        }
+
         refElement.getRefManager().removeRefElement((RefElement)refElement, deletedRefs);
       }
 

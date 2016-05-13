@@ -208,8 +208,7 @@ public class IdeaGateway {
     if (!file.isDirectory()) {
       if (!isVersioned(file)) return null;
 
-      Pair<StoredContent, Long> contentAndStamps = getActualContentNoAcquire(file);
-      return new FileEntry(file.getName(), contentAndStamps.first, contentAndStamps.second, !file.isWritable());
+      return doCreateFileEntry(file, getActualContentNoAcquire(file));
     }
     DirectoryEntry newDir = new DirectoryEntry(file.getName());
     doCreateChildrenForPathOnly(newDir, path, iterateDBChildren(file));
@@ -244,10 +243,7 @@ public class IdeaGateway {
         contentAndStamps = getActualContentNoAcquire(file);
       }
 
-      if (file instanceof VirtualFileSystemEntry) {
-        return new FileEntry(((VirtualFileSystemEntry)file).getNameId(), contentAndStamps.first, contentAndStamps.second, !file.isWritable());
-      }
-      return new FileEntry(file.getName(), contentAndStamps.first, contentAndStamps.second, !file.isWritable());
+      return doCreateFileEntry(file, contentAndStamps);
     }
 
     DirectoryEntry newDir = null;
@@ -265,6 +261,14 @@ public class IdeaGateway {
     doCreateChildren(newDir, iterateDBChildren(file), forDeletion);
     if (!isVersioned(file) && newDir.getChildren().isEmpty()) return null;
     return newDir;
+  }
+
+  @NotNull
+  private Entry doCreateFileEntry(@NotNull VirtualFile file, Pair<StoredContent, Long> contentAndStamps) {
+    if (file instanceof VirtualFileSystemEntry) {
+      return new FileEntry(((VirtualFileSystemEntry)file).getNameId(), contentAndStamps.first, contentAndStamps.second, !file.isWritable());
+    }
+    return new FileEntry(file.getName(), contentAndStamps.first, contentAndStamps.second, !file.isWritable());
   }
 
   private void doCreateChildren(@NotNull DirectoryEntry parent, Iterable<VirtualFile> children, final boolean forDeletion) {

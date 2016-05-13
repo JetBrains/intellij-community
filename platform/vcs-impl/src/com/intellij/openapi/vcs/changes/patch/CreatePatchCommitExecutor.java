@@ -47,7 +47,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -190,12 +189,12 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
         return;
       }
       myPanel.onOk();
-      myCommitContext.putUserData(BaseRevisionTextPatchEP.ourPutBaseRevisionTextKey, myPanel.isStoreTexts());
-      final List<FilePath> list = new ArrayList<FilePath>();
-      for (Change change : myPanel.getIncludedChanges()) {
-        list.add(ChangesUtil.getFilePath(change));
+      boolean storeTexts = myPanel.isStoreTexts();
+      myCommitContext.putUserData(BaseRevisionTextPatchEP.ourPutBaseRevisionTextKey, storeTexts);
+      if (storeTexts) {
+        final List<FilePath> list = ContainerUtil.map(myPanel.getIncludedChanges(), ChangesUtil::getFilePath);
+        myCommitContext.putUserData(BaseRevisionTextPatchEP.ourBaseRevisionPaths, list);
       }
-      myCommitContext.putUserData(BaseRevisionTextPatchEP.ourBaseRevisionPaths, list);
 
       int binaryCount = 0;
       for(Change change: changes) {

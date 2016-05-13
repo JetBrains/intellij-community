@@ -99,6 +99,9 @@ public class DefaultJDOMExternalizer {
         else if (type.equals(String.class)) {
           value = filterXMLCharacters((String)field.get(data));
         }
+        else if (type.isEnum()) {
+          value = field.get(data).toString();
+        }
         else if (type.equals(Color.class)) {
           Color color = (Color)field.get(data);
           if (color != null) {
@@ -253,6 +256,14 @@ public class DefaultJDOMExternalizer {
             }
             else {
               throw new InvalidDataException();
+            }
+          }
+        }
+        else if (type.isEnum()) {
+          for (Object enumValue : type.getEnumConstants()) {
+            if (enumValue.toString().equals(value)) {
+              field.set(data, enumValue);
+              break;
             }
           }
         }

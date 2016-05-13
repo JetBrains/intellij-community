@@ -36,7 +36,6 @@ import java.io.IOException;
 import java.io.Reader;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 /**
@@ -233,7 +232,7 @@ public final class RequestProcessor implements IRequestProcessor {
 
     @Override
     protected void callRunnable(Runnable runnable) {
-      myFuture = Executors.newSingleThreadExecutor(ConcurrencyUtil.newNamedThreadFactory("CVS request")).submit(runnable);
+      myFuture = ConcurrencyUtil.newSingleThreadExecutor("CVS request").submit(runnable);
 
       final long tOut = (myTimeout < 20000) ? 20000 : myTimeout;
       while (true) {

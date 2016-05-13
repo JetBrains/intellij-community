@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,23 +16,24 @@
 package com.intellij.psi.filters;
 
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
  */
-public abstract class ElementFilterBase<T> implements ElementFilter{
+public abstract class ElementFilterBase<T> implements ElementFilter {
   private final Class<T> myClass;
 
-  public ElementFilterBase(final Class<T> aClass) {
+  public ElementFilterBase(@NotNull Class<T> aClass) {
     myClass = aClass;
   }
 
   @Override
-  public boolean isAcceptable(Object element, PsiElement context) {
+  public final boolean isAcceptable(Object element, PsiElement context) {
     return isClassAcceptable(element.getClass()) && isElementAcceptable((T)element, context);
   }
 
-  protected abstract boolean isElementAcceptable(T element, PsiElement context);
+  protected abstract boolean isElementAcceptable(@NotNull T element, PsiElement context);
 
   @Override
   public boolean isClassAcceptable(Class hintClass) {

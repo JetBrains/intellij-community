@@ -139,8 +139,8 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
             public void consume(Integer exitCode) {
               try {
                 // tell readers that no more attempts to read process' output should be made
-                stop(stdErrReader);
-                stop(stdOutReader);
+                if (stdErrReader != null) stdErrReader.stop();
+                stdOutReader.stop();
 
                 try {
                   if (stdErrReader != null) stdErrReader.waitFor();
@@ -161,17 +161,6 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
     });
 
     super.startNotify();
-  }
-
-  private static void stop(@Nullable BaseDataReader reader) {
-    if (reader != null) {
-      if (reader instanceof BaseOutputReader) {
-        ((BaseOutputReader)reader).stop(false);
-      }
-      else {
-        reader.stop();
-      }
-    }
   }
 
   /** @deprecated override {@link #createOutputDataReader()} (to be removed in IDEA 18) */

@@ -46,10 +46,6 @@ import com.intellij.lexer.FlexLexer;
 %function advance
 %type IElementType
 
-%eof{
-  return;
-%eof}
-
 WHITE_SPACE_CHAR = [\ \n\r\t\f]
 
 IDENTIFIER = [:jletter:] [:jletterdigit:]*
@@ -205,4 +201,4 @@ STRING_LITERAL = \" ([^\\\"\r\n] | {ESCAPE_SEQUENCE})* (\"|\\)?
 <YYINITIAL> "::" { return JavaTokenType.DOUBLE_COLON; }
 <YYINITIAL> "->" { return JavaTokenType.ARROW; }
 
-<YYINITIAL> . { return JavaTokenType.BAD_CHARACTER; }
+<YYINITIAL> [^]  { return JavaTokenType.BAD_CHARACTER; }

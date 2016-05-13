@@ -190,14 +190,28 @@ public class ActionUtil {
   }
 
   public static void performActionDumbAware(AnAction action, AnActionEvent e) {
-    TransactionGuard.getInstance().submitTransactionAndWait(() -> {
-      try {
-        action.actionPerformed(e);
+    Runnable runnable = new Runnable() {
+      @Override
+      public void run() {
+        try {
+          action.actionPerformed(e);
+        }
+        catch (IndexNotReadyException e1) {
+          showDumbModeWarning(e);
+        }
       }
-      catch (IndexNotReadyException e1) {
-        showDumbModeWarning(e);
+
+      @Override
+      public String toString() {
+        return action + " of " + action.getClass();
       }
-    });
+    };
+
+    if (action.startInTransaction()) {
+      TransactionGuard.getInstance().submitTransactionAndWait(runnable);
+    } else {
+      runnable.run();
+    }
   }
 
   @NotNull

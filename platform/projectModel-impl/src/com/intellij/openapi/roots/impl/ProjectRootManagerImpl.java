@@ -349,8 +349,8 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   public void makeRootsChange(@NotNull Runnable runnable, boolean fileTypes, boolean fireEvents) {
     if (myProject.isDisposed()) return;
     BatchSession session = getBatchSession(fileTypes);
-    if (fireEvents) session.beforeRootsChanged();
     try {
+      if (fireEvents) session.beforeRootsChanged();
       runnable.run();
     }
     finally {

@@ -25,6 +25,7 @@ import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.extensions.Extensions;
@@ -59,6 +60,7 @@ import java.util.*;
 import java.util.List;
 
 public abstract class GotoTargetHandler implements CodeInsightActionHandler {
+  private static final Logger LOG = Logger.getInstance("#" + GotoTargetHandler.class.getName());
   private static final PsiElementListCellRenderer ourDefaultTargetElementRenderer = new DefaultPsiElementListCellRenderer();
   private final DefaultListCellRenderer myActionElementRenderer = new ActionCellRenderer();
 
@@ -73,7 +75,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
 
     try {
       GotoData gotoData = getSourceAndTargetElements(editor, file);
-      if (gotoData != null && gotoData.source != null) {
+      if (gotoData != null) {
         show(project, editor, file, gotoData);
       }
     }
@@ -113,7 +115,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     }
 
     final String name = ((PsiNamedElement)gotoData.source).getName();
-    final String title = getChooserTitle(gotoData.source, name, targets.length);
+    final String title = getChooserTitle(gotoData.source, name, targets.length, gotoData.listUpdaterTask.isFinished());
 
     if (shouldSortTargets()) {
       Arrays.sort(targets, createComparator(gotoData.renderers, gotoData));
@@ -265,10 +267,20 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
   }
 
   @NotNull
-  protected abstract String getChooserTitle(PsiElement sourceElement, String name, int length);
+  @Deprecated // use getChooserTitle(PsiElement, String, int, boolean) instead
+  protected String getChooserTitle(PsiElement sourceElement, String name, int length) {
+    LOG.warn("Please override getChooserTitle(PsiElement, String, int, boolean) instead");
+    return "";
+  }
+
+  @NotNull
+  protected String getChooserTitle(PsiElement sourceElement, String name, int length, boolean finished) {
+    return getChooserTitle(sourceElement, name, length);
+  }
+
   @NotNull
   protected String getFindUsagesTitle(PsiElement sourceElement, String name, int length) {
-    return getChooserTitle(sourceElement, name, length);
+    return getChooserTitle(sourceElement, name, length, true);
   }
 
   @NotNull

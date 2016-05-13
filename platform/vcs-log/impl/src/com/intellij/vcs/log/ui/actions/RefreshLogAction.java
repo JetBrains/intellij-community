@@ -18,10 +18,16 @@ package com.intellij.vcs.log.ui.actions;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.RefreshAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.vcs.log.VcsLogUi;
+import com.intellij.vcs.log.data.VcsLogFilterer;
 import com.intellij.vcs.log.impl.VcsLogManager;
 import com.intellij.vcs.log.ui.VcsLogDataKeys;
+import com.intellij.vcs.log.ui.VcsLogUiImpl;
 
 public class RefreshLogAction extends RefreshAction {
+  private static final Logger LOG = Logger.getInstance(RefreshLogAction.class);
+
   public RefreshLogAction() {
     super("Refresh", "Re-read Commits From Disk for All VCS Roots and Rebuild Log", AllIcons.Actions.Refresh);
   }
@@ -29,12 +35,28 @@ public class RefreshLogAction extends RefreshAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     VcsLogManager logManager = e.getRequiredData(VcsLogDataKeys.LOG_MANAGER);
+
+    // diagnostic for possible refresh problems
+    VcsLogUi ui = e.getRequiredData(com.intellij.vcs.log.VcsLogDataKeys.VCS_LOG_UI);
+    if (ui instanceof VcsLogUiImpl) {
+      VcsLogFilterer filterer = ((VcsLogUiImpl)ui).getFilterer();
+      if (!filterer.isValid()) {
+        String message = "Trying to refresh invalid log tab.";
+        if (!logManager.getDataManager().getProgress().isRunning()) {
+          LOG.error(message);
+        } else {
+          LOG.warn(message);
+        }
+        filterer.setValid(true);
+      }
+    }
+
     logManager.getDataManager().refreshCompletely();
   }
 
   @Override
   public void update(AnActionEvent e) {
     VcsLogManager logManager = e.getData(VcsLogDataKeys.LOG_MANAGER);
-    e.getPresentation().setEnabledAndVisible(logManager != null);
+    e.getPresentation().setEnabledAndVisible(logManager != null && e.getData(com.intellij.vcs.log.VcsLogDataKeys.VCS_LOG_UI) != null);
   }
 }
