@@ -105,4 +105,4 @@ internal fun checkAccess(file: Path, root: Path = file.root): Boolean {
 }
 
 // deny access to any dot prefixed file
-private fun hasAccess(result: Path) = Files.isReadable(result) && !(Files.isHidden(result) || result.fileName.toString().startsWith('.'))
+internal fun hasAccess(result: Path) = Files.isReadable(result) && !(Files.isHidden(result) || result.fileName.toString().startsWith('.'))
