@@ -105,7 +105,7 @@ public class ResourceBundleReference extends PsiReferenceBase<PsiElement>
       throw new IncorrectOperationException();
     }
     final String name = ResourceBundleManager.getInstance(element.getProject()).getFullName((PropertiesFile)element);
-    return super.handleElementRename(name);
+    return name != null ? super.handleElementRename(name) : element;
   }
 
 
