@@ -1175,7 +1175,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       @Override
       protected Value invokeMethod(int invokePolicy, Method method, final List args) throws InvocationException, ClassNotLoadedException, IncompatibleThreadStateException, InvalidTypeException {
         if (LOG.isDebugEnabled()) {
-          LOG.debug("Invoke " + method.name());
+          LOG.debug("Invoking " + objRef.type().name() + "." + method.name());
         }
         return objRef.invokeMethod(thread, method, args, invokePolicy | invocationOptions);
       }
@@ -1210,7 +1210,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                                                                              IncompatibleThreadStateException,
                                                                              InvalidTypeException {
         if (LOG.isDebugEnabled()) {
-          LOG.debug("Invoke " + method.name());
+          LOG.debug("Invoking " + classType.name() + "." + method.name());
         }
         return classType.invokeMethod(thread, method, args, invokePolicy);
       }
@@ -1234,7 +1234,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                                                                                       IncompatibleThreadStateException,
                                                                                       InvalidTypeException {
         if (LOG.isDebugEnabled()) {
-          LOG.debug("Invoke " + method.name());
+          LOG.debug("Invoking " + interfaceType.name() + "." + method.name());
         }
         //TODO: remove reflection after move to java 8 or 9, this API was introduced in 1.8.0_45
         java.lang.reflect.Method invokeMethod =
@@ -1281,7 +1281,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                                                                                        IncompatibleThreadStateException,
                                                                                        InvalidTypeException {
         if (LOG.isDebugEnabled()) {
-          LOG.debug("New instance " + method.name());
+          LOG.debug("New instance " + classType.name() + "." + method.name());
         }
         return classType.newInstance(thread, method, args, invokePolicy);
       }
