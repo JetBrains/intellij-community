@@ -43,7 +43,7 @@ public class _PyTypeLexer implements FlexLexer {
     "\1\27\1\31\2\0\23\14\7\32\1\20\1\0\1\20\1\0\1\33"+
     "\1\12\1\10\1\33\1\6\2\33\1\23\5\33\1\7\1\24\1\33"+
     "\1\21\1\4\1\33\1\22\1\11\1\25\4\33\1\5\1\33\1\15"+
-    "\1\20\1\16\1\13\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uff91\0";
+    "\1\20\1\16\1\13\uff81\0";
 
   /** 
    * Translates characters to character classes
@@ -249,10 +249,10 @@ public class _PyTypeLexer implements FlexLexer {
    * @return         the unpacked character translation table
    */
   private static char [] zzUnpackCMap(String packed) {
-    char [] map = new char[0x110000];
+    char [] map = new char[0x10000];
     int i = 0;  /* index in packed string  */
     int j = 0;  /* index in unpacked array */
-    while (i < 140) {
+    while (i < 108) {
       int  count = packed.charAt(i++);
       char value = packed.charAt(i++);
       do map[j++] = value; while (--count > 0);

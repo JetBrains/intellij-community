@@ -44,7 +44,7 @@ public class _BuildoutCfgFlexLexer implements FlexLexer, BuildoutCfgTokenTypes {
   private static final String ZZ_CMAP_PACKED = 
     "\11\0\1\3\1\1\1\13\1\4\1\2\22\0\1\12\2\0\1\7"+
     "\26\0\1\11\1\10\1\0\1\11\35\0\1\5\1\0\1\6\47\0"+
-    "\1\13\u1fa2\0\1\13\1\13\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\udfe6\0";
+    "\1\13\u1fa2\0\1\13\1\13\udfd6\0";
 
   /** 
    * Translates characters to character classes
@@ -243,10 +243,10 @@ public class _BuildoutCfgFlexLexer implements FlexLexer, BuildoutCfgTokenTypes {
    * @return         the unpacked character translation table
    */
   private static char [] zzUnpackCMap(String packed) {
-    char [] map = new char[0x110000];
+    char [] map = new char[0x10000];
     int i = 0;  /* index in packed string  */
     int j = 0;  /* index in unpacked array */
-    while (i < 82) {
+    while (i < 50) {
       int  count = packed.charAt(i++);
       char value = packed.charAt(i++);
       do map[j++] = value; while (--count > 0);
@@ -377,18 +377,6 @@ public class _BuildoutCfgFlexLexer implements FlexLexer, BuildoutCfgTokenTypes {
 
 
   /**
-   * Contains user EOF-code, which will be executed exactly once,
-   * when the end of file is reached
-   */
-  private void zzDoEOF() {
-    if (!zzEOFDone) {
-      zzEOFDone = true;
-    
-    }
-  }
-
-
-  /**
    * Resumes scanning until the next regular expression is matched,
    * the end of input is encountered or an I/O-Error occurs.
    *
@@ -475,7 +463,6 @@ public class _BuildoutCfgFlexLexer implements FlexLexer, BuildoutCfgTokenTypes {
 
       if (zzInput == YYEOF && zzStartRead == zzCurrentPos) {
         zzAtEOF = true;
-        zzDoEOF();
         return null;
       }
       else {

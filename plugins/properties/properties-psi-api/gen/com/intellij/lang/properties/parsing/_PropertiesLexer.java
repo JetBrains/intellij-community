@@ -41,7 +41,7 @@ class _PropertiesLexer implements FlexLexer {
   private static final String ZZ_CMAP_PACKED = 
     "\11\0\1\3\1\1\1\6\1\5\1\2\22\0\1\11\1\7\1\0"+
     "\1\7\26\0\1\10\2\0\1\10\36\0\1\4\50\0\1\6\u1fa2\0"+
-    "\1\6\1\6\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\udfe6\0";
+    "\1\6\1\6\udfd6\0";
 
   /** 
    * Translates characters to character classes
@@ -245,10 +245,10 @@ class _PropertiesLexer implements FlexLexer {
    * @return         the unpacked character translation table
    */
   private static char [] zzUnpackCMap(String packed) {
-    char [] map = new char[0x110000];
+    char [] map = new char[0x10000];
     int i = 0;  /* index in packed string  */
     int j = 0;  /* index in unpacked array */
-    while (i < 78) {
+    while (i < 46) {
       int  count = packed.charAt(i++);
       char value = packed.charAt(i++);
       do map[j++] = value; while (--count > 0);

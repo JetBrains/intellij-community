@@ -44,7 +44,7 @@ class _JqlLexer implements FlexLexer {
     "\1\0\1\16\1\4\1\17\1\10\2\0\1\20\1\3\1\14\1\23"+
     "\1\30\1\15\1\40\1\37\1\41\2\0\1\34\1\31\1\22\1\24"+
     "\1\32\1\0\1\26\1\36\1\5\1\7\1\0\1\35\1\0\1\33"+
-    "\1\0\1\10\1\52\1\10\1\46\261\0\2\41\115\0\1\36\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\ufe90\0";
+    "\1\0\1\10\1\52\1\10\1\46\261\0\2\41\115\0\1\36\ufe80\0";
 
   /** 
    * Translates characters to character classes
@@ -359,10 +359,10 @@ class _JqlLexer implements FlexLexer {
    * @return         the unpacked character translation table
    */
   private static char [] zzUnpackCMap(String packed) {
-    char [] map = new char[0x110000];
+    char [] map = new char[0x10000];
     int i = 0;  /* index in packed string  */
     int j = 0;  /* index in unpacked array */
-    while (i < 212) {
+    while (i < 180) {
       int  count = packed.charAt(i++);
       char value = packed.charAt(i++);
       do map[j++] = value; while (--count > 0);
@@ -493,18 +493,6 @@ class _JqlLexer implements FlexLexer {
 
 
   /**
-   * Contains user EOF-code, which will be executed exactly once,
-   * when the end of file is reached
-   */
-  private void zzDoEOF() {
-    if (!zzEOFDone) {
-      zzEOFDone = true;
-    
-    }
-  }
-
-
-  /**
    * Resumes scanning until the next regular expression is matched,
    * the end of input is encountered or an I/O-Error occurs.
    *
@@ -591,7 +579,6 @@ class _JqlLexer implements FlexLexer {
 
       if (zzInput == YYEOF && zzStartRead == zzCurrentPos) {
         zzAtEOF = true;
-        zzDoEOF();
         return null;
       }
       else {

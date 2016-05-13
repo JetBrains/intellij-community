@@ -48,16 +48,9 @@ public class _YAMLLexer implements FlexLexer, YAMLTokenTypes {
     "\1\26\1\26\12\24\1\7\1\26\1\31\1\26\1\15\1\5\1\27"+
     "\6\24\24\25\1\32\1\21\1\12\1\0\1\26\1\3\6\24\24\25"+
     "\1\16\1\34\1\17\1\26\6\0\1\11\u05da\0\12\24\206\0\12\24"+
-    "\306\0\12\24\u019c\0\12\24\166\0\12\24\166\0\12\24\166\0\12\24"+
-    "\166\0\12\24\166\0\12\24\166\0\12\24\166\0\12\24\166\0\12\24"+
-    "\166\0\12\24\140\0\12\24\166\0\12\24\106\0\12\24\u0116\0\12\24"+
-    "\106\0\12\24\u0746\0\12\24\46\0\12\24\u012c\0\12\24\200\0\12\24"+
-    "\246\0\12\24\6\0\12\24\266\0\12\24\126\0\12\24\206\0\12\24"+
-    "\6\0\12\24\u03ce\0\1\11\1\11\u85f6\0\12\24\u02a6\0\12\24\46\0"+
-    "\12\24\306\0\12\24\26\0\12\24\126\0\12\24\u0196\0\12\24\u5316\0"+
-    "\12\24\u0586\0\12\24\u0bbc\0\12\24\200\0\12\24\74\0\12\24\220\0"+
-    "\12\24\u0116\0\12\24\u01d6\0\12\24\u0176\0\12\24\146\0\12\24\146\0"+
-    "\12\24\u01a6\0\12\24\u5176\0\12\24\346\0\12\24\u6c74\0\62\24\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\u280f\0";
+    "\u026c\0\12\24\166\0\12\24\166\0\12\24\166\0\12\24\166\0\12\24"+
+    "\167\0\11\24\166\0\12\24\166\0\12\24\166\0\12\24\340\0\12\24"+
+    "\166\0\12\24\106\0\12\24\u10fe\0\1\11\1\11\udee6\0\12\24\346\0";
 
   /** 
    * Translates characters to character classes
@@ -552,10 +545,10 @@ public class _YAMLLexer implements FlexLexer, YAMLTokenTypes {
    * @return         the unpacked character translation table
    */
   private static char [] zzUnpackCMap(String packed) {
-    char [] map = new char[0x110000];
+    char [] map = new char[0x10000];
     int i = 0;  /* index in packed string  */
     int j = 0;  /* index in unpacked array */
-    while (i < 330) {
+    while (i < 160) {
       int  count = packed.charAt(i++);
       char value = packed.charAt(i++);
       do map[j++] = value; while (--count > 0);
@@ -686,18 +679,6 @@ public class _YAMLLexer implements FlexLexer, YAMLTokenTypes {
 
 
   /**
-   * Contains user EOF-code, which will be executed exactly once,
-   * when the end of file is reached
-   */
-  private void zzDoEOF() {
-    if (!zzEOFDone) {
-      zzEOFDone = true;
-    
-    }
-  }
-
-
-  /**
    * Resumes scanning until the next regular expression is matched,
    * the end of input is encountered or an I/O-Error occurs.
    *
@@ -784,7 +765,6 @@ public class _YAMLLexer implements FlexLexer, YAMLTokenTypes {
 
       if (zzInput == YYEOF && zzStartRead == zzCurrentPos) {
         zzAtEOF = true;
-        zzDoEOF();
         return null;
       }
       else {
