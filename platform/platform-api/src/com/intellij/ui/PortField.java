@@ -15,11 +15,10 @@
  */
 package com.intellij.ui;
 
+import org.jetbrains.annotations.NotNull;
+
 import javax.swing.*;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 
 public class PortField extends JSpinner {
   public PortField() {
@@ -39,6 +38,7 @@ public class PortField extends JSpinner {
     final NumberEditor editor = new NumberEditor(this, "#");
     setEditor(editor);
     final MyListener listener = new MyListener();
+    addMouseWheelListener(listener);
     final JFormattedTextField field = editor.getTextField();
     field.addFocusListener(listener);
     field.addMouseListener(listener);
@@ -89,5 +89,54 @@ public class PortField extends JSpinner {
     @Override
     public void focusLost(FocusEvent e) {}
 
+    @Override
+    public void mouseWheelMoved(MouseWheelEvent e) {
+      final Object source = e.getSource();
+      if (source instanceof JSpinner) {
+        final JSpinner spinner = (JSpinner)source;
+        final SpinnerModel model = spinner.getModel();
+        if (model instanceof SpinnerNumberModel) {
+          final SpinnerNumberModel numberModel = (SpinnerNumberModel)model;
+          final Number value = (Number)numberModel.getValue();
+          final Number stepSize = numberModel.getStepSize();
+          final Comparable minimum = numberModel.getMinimum();
+          final Comparable maximum = numberModel.getMaximum();
+          final Number newValue = calculateNewValue(value, stepSize, minimum, maximum, e.getUnitsToScroll());
+          if (newValue != null) {
+            numberModel.setValue(newValue);
+          }
+        }
+      }
+    }
+
+    private static Number calculateNewValue(@NotNull Number value, @NotNull Number stepSize,
+                                            Comparable minimum, Comparable maximum, int steps) {
+      final Number newValue;
+      if ((value instanceof Float) || (value instanceof Double)) {
+        final double v = value.doubleValue() + (stepSize.doubleValue() * (double)steps);
+        newValue = value instanceof Double ? new Double(v) : new Float(v);
+      }
+      else {
+        final long v = value.longValue() + (stepSize.longValue() * (long)steps);
+
+        if (value instanceof Long) {
+          newValue = Long.valueOf(v);
+        }
+        else if (value instanceof Integer) {
+          newValue = Integer.valueOf((int)v);
+        }
+        else if (value instanceof Short) {
+          newValue = Short.valueOf((short)v);
+        }
+        else {
+          newValue = Byte.valueOf((byte)v);
+        }
+      }
+
+      if ((maximum != null) && (maximum.compareTo(newValue) < 0) || (minimum != null) && (minimum.compareTo(newValue) > 0)) {
+        return null;
+      }
+      return newValue;
+    }
   }
 }
