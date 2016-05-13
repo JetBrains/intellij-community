@@ -250,7 +250,7 @@ class DetailsPanel extends JPanel {
 
     if (selectionLength > MAX_ROWS) {
       myMainContentPanel.add(new SeparatorComponent(0, OnePixelDivider.BACKGROUND, null));
-      JBLabel label = new JBLabel("  (showing " + MAX_ROWS + " of " + selectionLength + " selected commits)");
+      JBLabel label = new JBLabel("(showing " + MAX_ROWS + " of " + selectionLength + " selected commits)");
       label.setFont(getDataPanelFont());
       label.setBorder(JBUI.Borders.empty(VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH / 2,
                                          myColorManager.isMultipleRoots()
