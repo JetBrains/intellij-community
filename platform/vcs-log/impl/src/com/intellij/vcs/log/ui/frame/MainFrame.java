@@ -102,7 +102,10 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     myChangesLoadingPane.add(myChangesBrowser);
 
     myGraphTable.getSelectionModel().addListSelectionListener(new CommitSelectionListener());
-    myGraphTable.getSelectionModel().addListSelectionListener(myDetailsPanel);
+    myGraphTable.getSelectionModel().addListSelectionListener(event -> {
+      if (event != null && event.getValueIsAdjusting()) return;
+      myDetailsPanel.selectionChanged();
+    });
     updateWhenDetailsAreLoaded();
 
     myTextFilter = myFilterUi.createTextFilter();

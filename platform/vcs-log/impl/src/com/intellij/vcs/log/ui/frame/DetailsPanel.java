@@ -57,8 +57,6 @@ import javax.swing.border.CompoundBorder;
 import javax.swing.border.MatteBorder;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DefaultCaret;
 import javax.swing.text.Document;
@@ -74,7 +72,7 @@ import java.util.Set;
 /**
  * @author Kirill Likhodedov
  */
-class DetailsPanel extends JPanel implements ListSelectionListener {
+class DetailsPanel extends JPanel {
   private static final Logger LOG = Logger.getInstance("Vcs.Log");
 
   private static final String LINK_HREF = "show-hide-branches";
@@ -185,10 +183,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
     myDataPack = dataPack;
   }
 
-  @Override
-  public void valueChanged(@Nullable ListSelectionEvent event) {
-    if (event != null && event.getValueIsAdjusting()) return;
-
+  public void selectionChanged() {
     int[] rows = myGraphTable.getSelectedRows();
 
     myLoadingPanel.stopLoading();
