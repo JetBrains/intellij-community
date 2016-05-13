@@ -103,7 +103,22 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
                "  \n" +
                "}");
   }
-  
+
+  public void testToCodeBlockLambda() throws Exception {
+    doTextTest("java", "class Issue {\n" +
+                       "public static void main(String[] args) {\n" +
+                       "Arrays.asList().stream().collect(() -> {<caret> new ArrayList<>(), ArrayList::add, ArrayList::addAll);\n" +
+                       "}\n" +
+                       "}",
+                        "class Issue {\n" +
+                        "public static void main(String[] args) {\n" +
+                        "Arrays.asList().stream().collect(() -> {\n" +
+                        "    new ArrayList<>()\n" +
+                        "}, ArrayList::add, ArrayList::addAll);\n" +
+                        "}\n" +
+                        "}");
+  }
+
   public void testEnter_BetweenChainedMethodCalls() throws IOException {
     doTextTest("java",
                "class T {\n" +
