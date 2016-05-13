@@ -88,6 +88,26 @@ public class JavaFXQuickfixTest extends LightCodeInsightFixtureTestCase {
     doTestWithDefaultVisibility("Create field 'btn'", "CreateField", VisibilityUtil.ESCALATE_VISIBILITY, ".java");
   }
 
+  public void testCreateMethodPublicVisibility() throws Exception {
+    doTestWithDefaultVisibility("Create method 'void onAction(ActionEvent)'", "CreateMethod", PsiModifier.PUBLIC, ".java");
+  }
+
+  public void testCreateMethodProtectedVisibility() throws Exception {
+    doTestWithDefaultVisibility("Create method 'void onAction(ActionEvent)'", "CreateMethod", PsiModifier.PROTECTED, ".java");
+  }
+
+  public void testCreateMethodPrivateVisibility() throws Exception {
+    doTestWithDefaultVisibility("Create method 'void onAction(ActionEvent)'", "CreateMethod", PsiModifier.PRIVATE, ".java");
+  }
+
+  public void testCreateMethodPackageLocalVisibility() throws Exception {
+    doTestWithDefaultVisibility("Create method 'void onAction(ActionEvent)'", "CreateMethod", PsiModifier.PACKAGE_LOCAL, ".java");
+  }
+
+  public void testCreateMethodEscalateVisibility() throws Exception {
+    doTestWithDefaultVisibility("Create method 'void onAction(ActionEvent)'", "CreateMethod", VisibilityUtil.ESCALATE_VISIBILITY, ".java");
+  }
+
   public void testCreateFieldEmptyName() throws Exception {
     String path = getTestName(true) + ".fxml";
     final IntentionAction intention =
@@ -117,8 +137,7 @@ public class JavaFXQuickfixTest extends LightCodeInsightFixtureTestCase {
   private void doTestWithDefaultVisibility(final String actionName,
                                            final String inputName,
                                            final String defaultVisibility,
-                                           final String extension)
-    throws Exception {
+                                           final String extension) throws Exception {
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
     String savedVisibility = settings.VISIBILITY;
     try {
