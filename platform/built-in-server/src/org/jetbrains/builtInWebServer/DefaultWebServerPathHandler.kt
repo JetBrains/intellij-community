@@ -139,7 +139,8 @@ private fun checkAccess(pathInfo: PathInfo, channel: Channel, request: HttpReque
       HttpResponseStatus.FORBIDDEN.orInSafeMode(HttpResponseStatus.NOT_FOUND).send(channel, request)
       return false
     }
-    else if (!checkAccess(file, Paths.get(pathInfo.root.path))) {
+    else if (!hasAccess(file)) {
+      // we check only file, but all directories in the path because of https://youtrack.jetbrains.com/issue/WEB-21594
       HttpResponseStatus.FORBIDDEN.orInSafeMode(HttpResponseStatus.NOT_FOUND).send(channel, request)
       return false
     }

@@ -93,7 +93,7 @@ internal class HeavyBuiltInWebServerTest {
   }
 
   @Test
-  fun `hidden dir`() {
+  fun `file in hidden folder`() {
     val projectDir = tempDirManager.newPath().resolve("foo/bar")
     val projectDirPath = projectDir.systemIndependentPath
     createHeavyProject("$projectDirPath/test.ipr").use { project ->
@@ -101,15 +101,15 @@ internal class HeavyBuiltInWebServerTest {
       LocalFileSystem.getInstance().refreshAndFindFileByPath(projectDirPath)
       createModule(projectDirPath, project)
 
-      val dir = projectDir.resolve(".doNotExposeMe")
+      val dir = projectDir.resolve(".coverage")
       if (SystemInfo.isWindows) {
         Files.setAttribute(dir, "dos:hidden", true)
       }
 
-      val path = dir.resolve("foo").write("doNotExposeMe").systemIndependentPath
+      val path = dir.resolve("foo").write("exposeMe").systemIndependentPath
       val relativePath = FileUtil.getRelativePath(project.basePath!!, path, '/')
       val webPath = StringUtil.replace(UrlEscapers.urlPathSegmentEscaper().escape("${project.name}/$relativePath"), "%2F", "/")
-      testUrl("http://localhost:${BuiltInServerManager.getInstance().port}/$webPath", HttpResponseStatus.FORBIDDEN)
+      testUrl("http://localhost:${BuiltInServerManager.getInstance().port}/$webPath", HttpResponseStatus.OK)
     }
   }
 }
