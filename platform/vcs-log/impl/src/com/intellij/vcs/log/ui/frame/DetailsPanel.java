@@ -243,7 +243,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
     int requiredCount = Math.min(selectionLength, MAX_ROWS);
     for (int i = existingCount; i < requiredCount; i++) {
       if (i > 0) {
-        myMainContentPanel.add(new SeparatorComponent(1, OnePixelDivider.BACKGROUND, null));
+        myMainContentPanel.add(new SeparatorComponent(0, OnePixelDivider.BACKGROUND, null));
       }
       myMainContentPanel.add(new CommitPanel());
     }
@@ -460,16 +460,9 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
         return "<i>In branches: loading...</i>";
       }
       if (myBranches.isEmpty()) return "<i>Not in any branch</i>";
-      int TOTAL_MAX = 0;
-      int charCount = 0;
-      for (String b : myBranches) {
-        TOTAL_MAX++;
-        charCount += b.length();
-        if (charCount >= 50) break;
-      }
-      int PER_ROW = 3;
 
       if (myExpanded) {
+        int PER_ROW = 3;
         int rowCount = (int)Math.ceil((double)myBranches.size() / PER_ROW);
 
         int[] means = new int[PER_ROW - 1];
@@ -519,6 +512,14 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
                builder.build();
       }
       else {
+        int TOTAL_MAX = 0;
+        int charCount = 0;
+        for (String b : myBranches) {
+          TOTAL_MAX++;
+          charCount += b.length();
+          if (charCount >= 50) break;
+        }
+
         String branchText;
         if (myBranches.size() <= TOTAL_MAX) {
           branchText = StringUtil.join(myBranches, ", ");
