@@ -583,6 +583,11 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     public Task getTask() {
       return myTask;
     }
+
+    @Override
+    public String toString() {
+      return myTask.toString();
+    }
   }
   protected static class TaskRunnable extends TaskContainer {
     private final ProgressIndicator myIndicator;
