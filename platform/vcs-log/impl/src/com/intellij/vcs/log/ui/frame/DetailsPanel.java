@@ -268,6 +268,8 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
     for (int i = myMainContentPanel.getComponentCount() - 1; i >= 0; i--) {
       ((JComponent)myMainContentPanel.getComponent(i)).setAlignmentX(LEFT_ALIGNMENT);
     }
+
+    repaint();
   }
 
   @NotNull
