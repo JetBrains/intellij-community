@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,10 @@
 package com.intellij.ui;
 
 import javax.swing.*;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 public class PortField extends JSpinner {
   public PortField() {
@@ -32,7 +36,12 @@ public class PortField extends JSpinner {
 
   public PortField(int value, int min) {
     setModel(new SpinnerNumberModel(value, min, 65535, 1));
-    setEditor(new NumberEditor(this, "#"));
+    final NumberEditor editor = new NumberEditor(this, "#");
+    setEditor(editor);
+    final MyListener listener = new MyListener();
+    final JFormattedTextField field = editor.getTextField();
+    field.addFocusListener(listener);
+    field.addMouseListener(listener);
   }
 
   public void setEditable(boolean value) {
@@ -49,5 +58,36 @@ public class PortField extends JSpinner {
 
   public boolean isSpecified() {
     return getNumber() != 0;
+  }
+
+  private static class MyListener extends MouseAdapter implements FocusListener {
+
+    private boolean select = true;
+
+    @Override
+    public void mousePressed(MouseEvent e) {
+      select = false;
+    }
+
+    @Override
+    public void focusGained(FocusEvent e) {
+      if (!select) {
+        select = true;
+        return;
+      }
+      //noinspection SSBasedInspection
+      SwingUtilities.invokeLater(() -> {
+        final Object source = e.getSource();
+        if (source instanceof JFormattedTextField) {
+          final JFormattedTextField textField = (JFormattedTextField)source;
+          textField.selectAll();
+        }
+      });
+    }
+
+
+    @Override
+    public void focusLost(FocusEvent e) {}
+
   }
 }
