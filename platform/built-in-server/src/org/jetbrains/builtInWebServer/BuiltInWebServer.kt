@@ -31,7 +31,6 @@ import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.endsWithName
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
@@ -394,15 +393,4 @@ internal fun isOwnHostName(host: String): Boolean {
   catch (ignored: IOException) {
     return false
   }
-}
-
-internal fun canBeAccessedDirectly(path: String): Boolean {
-  for (fileHandler in WebServerFileHandler.EP_NAME.extensions) {
-    for (ext in fileHandler.pageFileExtensions) {
-      if (FileUtilRt.extensionEquals(path, ext)) {
-        return true
-      }
-    }
-  }
-  return false
 }

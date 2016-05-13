@@ -17,9 +17,11 @@ package org.jetbrains.builtInWebServer
 
 import com.intellij.openapi.diagnostic.catchAndLog
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.endsWithName
 import com.intellij.openapi.util.io.endsWithSlash
 import com.intellij.openapi.util.io.getParentPath
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VFileProperty
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtilRt
@@ -32,6 +34,9 @@ import io.netty.handler.codec.http.HttpResponseStatus
 import org.jetbrains.io.*
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.util.regex.Pattern
+
+private val chromeVersionFromUserAgent = Pattern.compile(" Chrome/([\\d.]+) ")
 
 private class DefaultWebServerPathHandler : WebServerPathHandler() {
   override fun process(path: String,
@@ -85,10 +90,13 @@ private class DefaultWebServerPathHandler : WebServerPathHandler() {
       pathToFileManager.pathToInfoCache.put(path, pathInfo)
     }
 
-    // if extraHttpHeaders is not empty, it means that we get request wih token in the query
-    if (!isSignedRequest && request.origin == null && request.referrer == null && request.isRegularBrowser() && !canBeAccessedDirectly(pathInfo.name)) {
-      HttpResponseStatus.FORBIDDEN.orInSafeMode(HttpResponseStatus.NOT_FOUND).send(channel, request)
-      return true
+    val userAgent = request.userAgent
+    if (!isSignedRequest && userAgent != null && request.isRegularBrowser() && request.origin == null && request.referrer == null) {
+      val matcher = chromeVersionFromUserAgent.matcher(userAgent)
+      if (matcher.find() && StringUtil.compareVersionNumbers(matcher.group(1), "51") < 0 && !canBeAccessedDirectly(pathInfo.name)) {
+        HttpResponseStatus.FORBIDDEN.orInSafeMode(HttpResponseStatus.NOT_FOUND).send(channel, request)
+        return true
+      }
     }
 
     if (!indexUsed && !endsWithName(path, pathInfo.name)) {
@@ -142,4 +150,15 @@ private fun checkAccess(pathInfo: PathInfo, channel: Channel, request: HttpReque
   }
 
   return true
+}
+
+private fun canBeAccessedDirectly(path: String): Boolean {
+  for (fileHandler in WebServerFileHandler.EP_NAME.extensions) {
+    for (ext in fileHandler.pageFileExtensions) {
+      if (FileUtilRt.extensionEquals(path, ext)) {
+        return true
+      }
+    }
+  }
+  return false
 }
