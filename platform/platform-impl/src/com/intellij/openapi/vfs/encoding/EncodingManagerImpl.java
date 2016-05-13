@@ -35,6 +35,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.EditorFactoryAdapter;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
@@ -105,7 +106,9 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
     editorFactory.getEventMulticaster().addDocumentListener(new DocumentAdapter() {
       @Override
       public void documentChanged(DocumentEvent e) {
-        queueUpdateEncodingFromContent(e.getDocument());
+        Document document = e.getDocument();
+        if (!isEditorOpenedFor(document)) return;
+        queueUpdateEncodingFromContent(document);
       }
     }, this);
     editorFactory.addEditorFactoryListener(new EditorFactoryAdapter() {
@@ -114,6 +117,13 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
         queueUpdateEncodingFromContent(event.getEditor().getDocument());
       }
     }, this);
+  }
+
+  private static boolean isEditorOpenedFor(Document document) {
+    VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
+    if (virtualFile == null) return false;
+    Project project = guessProject(virtualFile);
+    return project != null && !project.isDisposed() && FileEditorManager.getInstance(project).getEditors(virtualFile).length != 0;
   }
 
   @NonNls public static final String PROP_CACHED_ENCODING_CHANGED = "cachedEncoding";
@@ -169,7 +179,7 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
     clearDocumentQueue();
   }
 
-  void queueUpdateEncodingFromContent(@NotNull Document document) {
+  private void queueUpdateEncodingFromContent(@NotNull Document document) {
     document.putUserData(DETECTING_ENCODING_KEY, "");
     changedDocumentExecutor.execute(new DocumentEncodingDetectRequest(document));
   }
