@@ -154,15 +154,12 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
     }
 
     final Project project = ProjectLocator.getInstance().guessProjectForFile(virtualFile);
-    return ApplicationManager.getApplication().runReadAction(new Computable<Charset>() {
-      @Override
-      public Charset compute() {
+    return ApplicationManager.getApplication().runReadAction((Computable<Charset>)() -> {
         Charset charsetFromContent = LoadTextUtil.charsetFromContentOrNull(project, virtualFile, document.getImmutableCharSequence());
         if (charsetFromContent != null) {
           setCachedCharsetFromContent(charsetFromContent, null, document);
         }
         return charsetFromContent;
-      }
     });
   }
 
@@ -181,7 +178,7 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
     private final Reference<Document> ref;
 
     private DocumentEncodingDetectRequest(@NotNull Document document) {
-      ref = new WeakReference<Document>(document);
+      ref = new WeakReference<>(document);
     }
 
     @Override
@@ -211,7 +208,7 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
   @Override
   @NotNull
   public Collection<Charset> getFavorites() {
-    Collection<Charset> result = new THashSet<Charset>();
+    Collection<Charset> result = new THashSet<>();
     Project[] projects = ProjectManager.getInstance().getOpenProjects();
     for (Project project : projects) {
       result.addAll(EncodingProjectManager.getInstance(project).getFavorites());
@@ -304,12 +301,7 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
   @Override
   public void addPropertyChangeListener(@NotNull final PropertyChangeListener listener, @NotNull Disposable parentDisposable) {
     myPropertyChangeSupport.addPropertyChangeListener(listener);
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        removePropertyChangeListener(listener);
-      }
-    });
+    Disposer.register(parentDisposable, () -> removePropertyChangeListener(listener));
   }
 
   private void removePropertyChangeListener(@NotNull PropertyChangeListener listener){
