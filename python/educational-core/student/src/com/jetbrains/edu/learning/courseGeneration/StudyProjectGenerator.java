@@ -48,7 +48,7 @@ public class StudyProjectGenerator {
   public static final String AUTHOR_ATTRIBUTE = "authors";
   public static final String LANGUAGE_ATTRIBUTE = "language";
   public static final String ADAPTIVE_COURSE_PREFIX = "__AdaptivePyCharmPython__";
-  public static final File ourCoursesDir = new File(PathManager.getConfigPath(), "courses");
+  public static final File OUR_COURSES_DIR = new File(PathManager.getConfigPath(), "courses");
   private static final Logger LOG = Logger.getInstance(StudyProjectGenerator.class.getName());
   private static final String COURSE_NAME_ATTRIBUTE = "name";
   private static final String COURSE_DESCRIPTION = "description";
@@ -69,6 +69,7 @@ public class StudyProjectGenerator {
   public void generateProject(@NotNull final Project project, @NotNull final VirtualFile baseDir) {
     StudyTaskManager.getInstance(project).setUser(myUser);
     final Course course = getCourse(project);
+    final File courseDirectory = StudyUtils.getCourseDirectory(project, course);
     if (course == null) {
       LOG.warn("Course is null");
       return;
@@ -78,9 +79,8 @@ public class StudyProjectGenerator {
       () -> DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND,
                                                     () -> ApplicationManager.getApplication().runWriteAction(() -> {
                                                       course.initCourse(false);
-                                                      StudyGenerator.createCourse(course, baseDir, StudyUtils
-                                                        .getCourseDirectory(project, course), project);
-                                                      course.setCourseDirectory(new File(ourCoursesDir, mySelectedCourseInfo.getName()).getAbsolutePath());
+                                                      StudyGenerator.createCourse(course, baseDir, courseDirectory, project);
+                                                      course.setCourseDirectory(courseDirectory.getAbsolutePath());
                                                       VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
                                                       StudyProjectComponent.getInstance(project).registerStudyToolWindow(course);
                                                       openFirstTask(course, project);
@@ -90,7 +90,7 @@ public class StudyProjectGenerator {
   protected Course getCourse(@NotNull final Project project) {
     Reader reader = null;
     try {
-      final File courseFile = new File(new File(ourCoursesDir, mySelectedCourseInfo.getName()), EduNames.COURSE_META_FILE);
+      final File courseFile = new File(new File(OUR_COURSES_DIR, mySelectedCourseInfo.getName()), EduNames.COURSE_META_FILE);
       if (courseFile.exists()) {
         reader = new InputStreamReader(new FileInputStream(courseFile), "UTF-8");
         Gson gson = new GsonBuilder().create();
@@ -221,6 +221,9 @@ public class StudyProjectGenerator {
     final Map<String, String> testsText = task.getTestsText();
     for (Map.Entry<String, String> entry : testsText.entrySet()) {
       final File testsFile = new File(taskDirectory, entry.getKey());
+      if (testsFile.exists()) {
+        FileUtil.delete(testsFile);
+      }
       FileUtil.createIfDoesntExist(testsFile);
       try {
           FileUtil.writeToFile(testsFile, entry.getValue());
@@ -273,7 +276,7 @@ public class StudyProjectGenerator {
    */
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   public static void flushCache(List<CourseInfo> courses) {
-    File cacheFile = new File(ourCoursesDir, CACHE_NAME);
+    File cacheFile = new File(OUR_COURSES_DIR, CACHE_NAME);
     PrintWriter writer = null;
     try {
       if (!createCacheFile(cacheFile)) return;
@@ -294,8 +297,8 @@ public class StudyProjectGenerator {
   }
 
   private static boolean createCacheFile(File cacheFile) throws IOException {
-    if (!ourCoursesDir.exists()) {
-      final boolean created = ourCoursesDir.mkdirs();
+    if (!OUR_COURSES_DIR.exists()) {
+      final boolean created = OUR_COURSES_DIR.mkdirs();
       if (!created) {
         LOG.error("Cannot flush courses cache. Can't create courses directory");
         return false;
@@ -312,7 +315,7 @@ public class StudyProjectGenerator {
   }
 
   public List<CourseInfo> getCourses(boolean force) {
-    if (ourCoursesDir.exists()) {
+    if (OUR_COURSES_DIR.exists()) {
       myCourses = getCoursesFromCache();
     }
     if (force || myCourses.isEmpty()) {
@@ -340,7 +343,7 @@ public class StudyProjectGenerator {
   }
 
   public static List<CourseInfo> getBundledIntro() {
-    final File introCourse = new File(ourCoursesDir, "Introduction to Python");
+    final File introCourse = new File(OUR_COURSES_DIR, "Introduction to Python");
     if (introCourse.exists()) {
       final CourseInfo courseInfo = getCourseInfo(introCourse);
 
@@ -351,7 +354,7 @@ public class StudyProjectGenerator {
 
   public static List<CourseInfo> getCoursesFromCache() {
     List<CourseInfo> courses = new ArrayList<>();
-    final File cacheFile = new File(ourCoursesDir, CACHE_NAME);
+    final File cacheFile = new File(OUR_COURSES_DIR, CACHE_NAME);
     if (!cacheFile.exists()) {
       return courses;
     }
@@ -395,13 +398,13 @@ public class StudyProjectGenerator {
     try {
       String fileName = file.getName();
       String unzippedName = fileName.substring(0, fileName.indexOf("."));
-      File courseDir = new File(ourCoursesDir, unzippedName);
+      File courseDir = new File(OUR_COURSES_DIR, unzippedName);
       ZipUtil.unzip(null, courseDir, file, null, null, true);
       CourseInfo courseName = addCourse(myCourses, courseDir);
       flushCache(myCourses);
       if (courseName != null && !courseName.getName().equals(unzippedName)) {
         //noinspection ResultOfMethodCallIgnored
-        courseDir.renameTo(new File(ourCoursesDir, courseName.getName()));
+        courseDir.renameTo(new File(OUR_COURSES_DIR, courseName.getName()));
         //noinspection ResultOfMethodCallIgnored
         courseDir.delete();
       }

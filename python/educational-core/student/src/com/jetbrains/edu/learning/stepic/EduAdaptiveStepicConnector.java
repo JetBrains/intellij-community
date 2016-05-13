@@ -10,7 +10,9 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.jetbrains.edu.learning.StudyTaskManager;
@@ -46,6 +48,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static com.jetbrains.edu.learning.stepic.EduStepicConnector.*;
@@ -66,6 +69,7 @@ public class EduAdaptiveStepicConnector {
   private static final String ASSIGNMENT_URL = "/assignments";
   private static final String VIEWS_URL = "/views";
   private static final String UNITS_URL = "/units";
+  private static final String DEFAULT_TASKFILE_NAME = "code.py";
 
   @Nullable
   public static Task getNextRecommendation(@NotNull final Project project, @NotNull Course course) {
@@ -180,9 +184,11 @@ public class EduAdaptiveStepicConnector {
     final Course course = StudyTaskManager.getInstance(project).getCourse();
     if (course != null && editor != null && editor.getTaskFile() != null) {
       final StepicUser user = StudyTaskManager.getInstance(project).getUser();
-      if (user != null &&
-          postRecommendationReaction(project, String.valueOf(editor.getTaskFile().getTask().getLesson().id),
-                                     String.valueOf(user.id), reaction)) {
+      
+      final boolean recommendationReaction =
+        user != null && postRecommendationReaction(project, String.valueOf(editor.getTaskFile().getTask().getLesson().id),
+                                                   String.valueOf(user.id), reaction);
+      if (recommendationReaction) {
         final Task task = getNextRecommendation(project, course);
 
         if (task != null) {
@@ -192,19 +198,39 @@ public class EduAdaptiveStepicConnector {
             unsolvedTask.setName(task.getName());
             unsolvedTask.setStepicId(task.getStepicId());
             unsolvedTask.setText(task.getText());
-            unsolvedTask.getTaskFiles().clear();
             unsolvedTask.getTestsText().clear();
-            unsolvedTask.getTaskFiles().putAll(task.getTaskFiles());
+            final Map<String, String> testsText = task.getTestsText();
+            for (String testName: testsText.keySet()) {
+              unsolvedTask.addTestsTexts(testName, testsText.get(testName));
+            }
+            final Map<String, TaskFile> taskFiles = task.getTaskFiles();
+            if (taskFiles.size() == 1) {
+              final TaskFile taskFile = editor.getTaskFile();
+              taskFile.text = ((TaskFile)taskFiles.values().toArray()[0]).text;
+              ApplicationManager.getApplication().invokeLater(() ->
+                                                                ApplicationManager.getApplication().runWriteAction(() ->
+                                                                                                                     editor.getEditor()
+                                                                                                                       .getDocument()
+                                                                                                                       .setText(
+                                                                                                                         taskFiles.get(
+                                                                                                                           DEFAULT_TASKFILE_NAME).text)));
+            }
+            else {
+              LOG.warn("Got task without unexpected number of task files: " + taskFiles.size());
+            }
 
             final File lessonDirectory = new File(course.getCourseDirectory(), EduNames.LESSON + String.valueOf(adaptive.getIndex()));
             final File taskDirectory = new File(lessonDirectory, EduNames.TASK + String.valueOf(adaptive.getTaskList().size()));
             StudyProjectGenerator.flushTask(task, taskDirectory);
+            final VirtualFile lessonDir = project.getBaseDir().findChild(EduNames.LESSON + String.valueOf(adaptive.getIndex()));
+
+            if (lessonDir != null) {
+              createTestFiles(course, task, unsolvedTask, lessonDir);
+            }
             final StudyToolWindow window = StudyUtils.getStudyToolWindow(project);
             if (window != null) {
               window.setTaskText(unsolvedTask.getText());
             }
-
-            adaptive.initLesson(course, false);
           }
           else {
             adaptive.addTask(task);
@@ -234,6 +260,37 @@ public class EduAdaptiveStepicConnector {
         LOG.warn("Recommendation reactions weren't posted");
       }
     }
+  }
+
+  private static void createTestFiles(Course course, Task task, Task unsolvedTask, VirtualFile lessonDir) {
+    ApplicationManager.getApplication().invokeLater(() -> ApplicationManager.getApplication().runWriteAction(() -> {
+      try {
+        final VirtualFile taskDir = VfsUtil
+          .findFileByIoFile(new File(lessonDir.getCanonicalPath(), EduNames.TASK + unsolvedTask.getIndex()), true);
+        final File resourceRoot = new File(course.getCourseDirectory(), lessonDir.getName());
+        File newResourceRoot = null;
+        if (taskDir != null) {
+          newResourceRoot = new File(resourceRoot, taskDir.getName());
+          File[] filesInTask = newResourceRoot.listFiles();
+          if (filesInTask != null) {
+            for (File file : filesInTask) {
+              String fileName = file.getName();
+              if (!task.isTaskFile(fileName)) {
+                File resourceFile = new File(newResourceRoot, fileName);
+                File fileInProject = new File(taskDir.getCanonicalPath(), fileName);
+                FileUtil.copy(resourceFile, fileInProject);
+              }
+            }
+          }
+        }
+        else {
+          LOG.warn("Task directory is null");
+        }
+      }
+      catch (IOException e) {
+        LOG.warn(e.getMessage());
+      }
+    }));
   }
 
   @NotNull
@@ -444,6 +501,7 @@ public class EduAdaptiveStepicConnector {
 
   private static void createTestFileFromSamples(@NotNull final Task task,
                                                 @NotNull final List<List<String>> samples) {
+    
     String testText = "from test_helper import check_samples\n\n" +
                       "if __name__ == '__main__':\n" +
                       "    check_samples(samples=" + new GsonBuilder().create().toJson(samples) + ")";

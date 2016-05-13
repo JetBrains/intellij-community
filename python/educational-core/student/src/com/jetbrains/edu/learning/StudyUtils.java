@@ -513,7 +513,12 @@ public class StudyUtils {
     final StudyToolWindow studyToolWindow = getStudyToolWindow(project);
     if (studyToolWindow != null) {
       String taskText = getTaskText(project);
-      studyToolWindow.setTaskText(taskText);
+      if (taskText != null) {
+        studyToolWindow.setTaskText(taskText);
+      }
+      else {
+        LOG.warn("Task text is null");
+      }
     }
   }
 
@@ -537,12 +542,12 @@ public class StudyUtils {
   public static File getCourseDirectory(@NotNull Project project, Course course) {
     final File courseDirectory;
     if (course.isAdaptive()) {
-      courseDirectory = new File(StudyProjectGenerator.ourCoursesDir,
+      courseDirectory = new File(StudyProjectGenerator.OUR_COURSES_DIR,
                                  StudyProjectGenerator.ADAPTIVE_COURSE_PREFIX + course.getName()
                                  + "_" + StudyTaskManager.getInstance(project).getUser().getEmail());
     }
     else {
-      courseDirectory = new File(StudyProjectGenerator.ourCoursesDir, course.getName());
+      courseDirectory = new File(StudyProjectGenerator.OUR_COURSES_DIR, course.getName());
     }
     return courseDirectory;
   }
