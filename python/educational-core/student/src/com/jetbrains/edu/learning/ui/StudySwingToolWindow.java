@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -59,7 +60,7 @@ public class StudySwingToolWindow extends StudyToolWindow {
     return myTaskTextPane;
   }
 
-  public void setTaskText(String text) {
+  public void setTaskText(@NotNull String text) {
     myTaskTextPane.setText(text);
   }
 }
