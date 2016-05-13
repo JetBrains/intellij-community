@@ -151,9 +151,9 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       myGraphTable.initColumnSize();
       myGraphTable.repaint();
     };
-    myFullDetailsLoadedListener = () -> myDetailsPanel.valueChanged(null);
+    myFullDetailsLoadedListener = myDetailsPanel::detailsChanged;
     myContainingBranchesListener = () -> {
-      myDetailsPanel.valueChanged(null);
+      myDetailsPanel.branchesChanged();
       myGraphTable.repaint(); // we may need to repaint highlighters
     };
     myLogData.getMiniDetailsGetter().addDetailsLoadedListener(myMiniDetailsLoadedListener);

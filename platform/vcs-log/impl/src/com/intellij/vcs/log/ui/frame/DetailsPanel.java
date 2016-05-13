@@ -199,13 +199,26 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
     }
 
     rebuildCommitPanels();
+    updateCommitDetails(true);
+  }
 
+  public void detailsChanged() {
+    myLoadingPanel.stopLoading();
+    updateCommitDetails(true);
+  }
+
+  public void branchesChanged() {
+    updateCommitDetails(false);
+  }
+
+  private void updateCommitDetails(boolean requestBranches) {
+    int[] rows = myGraphTable.getSelectedRows();
     Set<VcsFullCommitDetails> newCommitDetails = ContainerUtil.newHashSet();
-    for (int i = 0; i < rows.length; i++) {
+    for (int i = 0; i < Math.min(rows.length, MAX_ROWS); i++) {
       int row = rows[i];
       VcsFullCommitDetails commitData = myGraphTable.getModel().getFullDetails(row);
       CommitPanel commitPanel = getCommitPanel(i);
-      commitPanel.setCommit(commitData);
+      commitPanel.setCommit(commitData, requestBranches);
       if (commitData instanceof LoadingDetails) {
         myLoadingPanel.startLoading();
       }
@@ -283,7 +296,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       add(myDataPanel);
     }
 
-    public void setCommit(@NotNull VcsFullCommitDetails commitData) {
+    public void setCommit(@NotNull VcsFullCommitDetails commitData, boolean requestBranches) {
       if (!Comparing.equal(myCommit, commitData)) {
         if (commitData instanceof LoadingDetails) {
           myDataPanel.setData(null);
@@ -298,9 +311,12 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
         myCommit = commitData;
       }
 
-      List<String> branches = null;
-      if (!(commitData instanceof LoadingDetails)) {
+      List<String> branches;
+      if (!(commitData instanceof LoadingDetails) && requestBranches) {
         branches = myLogData.getContainingBranchesGetter().requestContainingBranches(commitData.getRoot(), commitData.getId());
+      }
+      else {
+        branches = myLogData.getContainingBranchesGetter().getContainingBranchesFromCache(commitData.getRoot(), commitData.getId());
       }
 
       if (!Comparing.equal(myCommit, commitData) || myBranches != branches) {
