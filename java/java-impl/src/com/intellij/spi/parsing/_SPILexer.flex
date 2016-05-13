@@ -29,7 +29,7 @@ import com.intellij.lexer.FlexLexer;
   }
 %}
 
-%unicode
+%unicode 2.0
 %class _SPILexer
 %implements FlexLexer
 %function advance

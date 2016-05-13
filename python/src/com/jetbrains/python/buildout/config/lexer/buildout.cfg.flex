@@ -9,16 +9,11 @@ import com.jetbrains.python.buildout.config.BuildoutCfgTokenTypes;
 
 %class _BuildoutCfgFlexLexer
 %implements FlexLexer, BuildoutCfgTokenTypes
-%unicode
+%unicode 2.0
 %public
 
 %function advance
 %type IElementType
-
-%eof{ return;
-%eof}
-
-
 
 CRLF= \n|\r|\r\n
 SPACE=[\ \t]

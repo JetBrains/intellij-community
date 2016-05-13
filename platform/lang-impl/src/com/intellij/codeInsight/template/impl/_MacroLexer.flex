@@ -13,7 +13,7 @@ import com.intellij.lexer.FlexLexer;
    }
 %}
 
-%unicode
+%unicode 2.0
 %class _MacroLexer
 %implements FlexLexer
 %function advance

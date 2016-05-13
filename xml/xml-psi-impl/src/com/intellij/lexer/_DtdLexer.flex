@@ -16,14 +16,12 @@ import com.intellij.psi.xml.*;
    }
 %}
 
-%unicode
+%unicode 2.0
 %class _DtdLexer
 %public
 %implements FlexLexer
 %function advance
 %type IElementType
-%eof{  return;
-%eof}
 
 %state DECL
 %state DECL_ATTR

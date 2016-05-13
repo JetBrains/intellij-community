@@ -12,13 +12,11 @@ import com.intellij.psi.tree.IElementType;
    }
 %}
 
-%unicode
+%unicode 2.0
 %class _TemplateTextLexer
 %implements FlexLexer
 %function advance
 %type IElementType
-%eof{  return;
-%eof}
 
 ALPHA=[A-Za-z_]
 DIGIT=[0-9]

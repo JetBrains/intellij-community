@@ -7,12 +7,10 @@ import com.intellij.psi.tree.IElementType;
 
 %class _JqlLexer
 %implements FlexLexer
-%unicode
+%unicode 2.0
 %function advance
 %type IElementType
 %ignorecase
-%eof{  return;
-%eof}
 
 WHITESPACE_CHAR = [\ \t]
 DIGIT = [0-9]

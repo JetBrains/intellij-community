@@ -16,7 +16,7 @@ import static com.jetbrains.commandInterface.commandLine.CommandLineElementTypes
 %implements FlexLexer
 %function advance
 %type IElementType
-%unicode
+%unicode 2.0
 
 EOL="\r"|"\n"|"\r\n"
 LINE_WS=[\ \t\f]

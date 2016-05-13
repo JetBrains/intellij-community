@@ -10,11 +10,9 @@ import com.intellij.openapi.util.text.StringUtil;
 
 %class _PythonLexer
 %implements FlexLexer
-%unicode
+%unicode 2.0
 %function advance
 %type IElementType
-%eof{  return;
-%eof}
 
 DIGIT = [0-9]
 NONZERODIGIT = [1-9]

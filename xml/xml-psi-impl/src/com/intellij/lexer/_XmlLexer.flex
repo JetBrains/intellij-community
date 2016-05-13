@@ -43,7 +43,7 @@ import com.intellij.psi.xml.*;
   }
 %}
 
-%unicode
+%unicode 2.0
 %class __XmlLexer
 %public
 %implements FlexLexer

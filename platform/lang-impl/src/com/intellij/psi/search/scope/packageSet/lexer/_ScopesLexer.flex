@@ -11,7 +11,7 @@ import com.intellij.lexer.FlexLexer;
   }
 %}
 
-%unicode
+%unicode 2.0
 %class _ScopesLexer
 %implements FlexLexer
 %function advance

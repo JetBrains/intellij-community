@@ -31,11 +31,9 @@ import com.intellij.psi.tree.IElementType;
 
 %class _JavaDocLexer
 %implements FlexLexer
-%unicode
+%unicode 2.0
 %function advance
 %type IElementType
-%eof{ return;
-%eof}
 
 %state COMMENT_DATA_START
 %state COMMENT_DATA

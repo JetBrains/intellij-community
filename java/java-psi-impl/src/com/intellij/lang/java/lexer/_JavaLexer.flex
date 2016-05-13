@@ -40,7 +40,7 @@ import com.intellij.lexer.FlexLexer;
   }
 %}
 
-%unicode
+%unicode 2.0
 %class _JavaLexer
 %implements FlexLexer
 %function advance
