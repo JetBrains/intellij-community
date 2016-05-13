@@ -22,7 +22,10 @@ import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.SettingsSavingComponent
 import com.intellij.openapi.components.impl.stores.StateStorageManager
 import com.intellij.openapi.components.stateStore
-import com.intellij.openapi.options.*
+import com.intellij.openapi.options.Scheme
+import com.intellij.openapi.options.SchemeManager
+import com.intellij.openapi.options.SchemeProcessor
+import com.intellij.openapi.options.SchemesManagerFactory
 import com.intellij.openapi.project.Project
 import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
@@ -33,17 +36,16 @@ import java.nio.file.Paths
 const val ROOT_CONFIG = "\$ROOT_CONFIG$"
 
 sealed class SchemeManagerFactoryBase : SchemesManagerFactory(), SettingsSavingComponent {
-  private val managers = ContainerUtil.createLockFreeCopyOnWriteList<SchemeManagerImpl<Scheme, ExternalizableScheme>>()
+  private val managers = ContainerUtil.createLockFreeCopyOnWriteList<SchemeManagerImpl<out Scheme>>()
 
   abstract val componentManager: ComponentManager
 
-  override final fun <T : Scheme, E : ExternalizableScheme> create(directoryName: String, processor: SchemeProcessor<E>, roamingType: RoamingType, presentableName: String?): SchemesManager<T, E> {
+  override final fun <T : Scheme> create(directoryName: String, processor: SchemeProcessor<T>, presentableName: String?, roamingType: RoamingType): SchemeManager<T> {
     val storageManager = (componentManager.stateStore).stateStorageManager
 
     val path = checkPath(directoryName)
-    val manager = SchemeManagerImpl<T, E>(path, processor, (storageManager as? StateStorageManagerImpl)?.streamProvider, pathToFile(path, storageManager), roamingType, componentManager, presentableName)
-    @Suppress("CAST_NEVER_SUCCEEDS")
-    managers.add(manager as SchemeManagerImpl<Scheme, ExternalizableScheme>)
+    val manager = SchemeManagerImpl(path, processor, (storageManager as? StateStorageManagerImpl)?.streamProvider, pathToFile(path, storageManager), roamingType, componentManager, presentableName)
+    managers.add(manager)
     return manager
   }
 
@@ -62,7 +64,7 @@ sealed class SchemeManagerFactoryBase : SchemesManagerFactory(), SettingsSavingC
 
   abstract fun pathToFile(path: String, storageManager: StateStorageManager): Path
 
-  fun process(processor: (SchemeManagerImpl<Scheme, ExternalizableScheme>) -> Unit) {
+  fun process(processor: (SchemeManagerImpl<out Scheme>) -> Unit) {
     for (manager in managers) {
       try {
         processor(manager)

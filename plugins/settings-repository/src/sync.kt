@@ -21,7 +21,6 @@ import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.runBatchUpdate
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.stateStore
-import com.intellij.openapi.options.ExternalizableScheme
 import com.intellij.openapi.options.Scheme
 import com.intellij.openapi.options.SchemesManagerFactory
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -157,7 +156,7 @@ internal fun updateStoragesFromStreamProvider(store: ComponentStoreImpl, updateR
   val changedComponentNames = LinkedHashSet<String>()
   val (changed, deleted) = (store.storageManager as StateStorageManagerImpl).getCachedFileStorages(updateResult.changed, updateResult.deleted, { toIdeaPath(it) })
 
-  val schemeManagersToReload = SmartList<SchemeManagerImpl<Scheme, ExternalizableScheme>>()
+  val schemeManagersToReload = SmartList<SchemeManagerImpl<out Scheme>>()
   (SchemesManagerFactory.getInstance() as SchemeManagerFactoryBase).process {
     if (reloadAllSchemes) {
       schemeManagersToReload.add(it)

@@ -32,7 +32,7 @@ import java.io.File;
 import java.io.IOException;
 
 public class InspectionProfileLoadUtil {
-  @NonNls private static final String PROFILE_NAME_TAG = "profile_name";
+  @NonNls public static final String PROFILE_NAME_TAG = "profile_name";
   @NonNls public static final String PROFILE_TAG = "profile";
 
   private static String getProfileName(@NotNull File file, @NotNull Element element) {
@@ -40,20 +40,9 @@ public class InspectionProfileLoadUtil {
     return name != null ? name : FileUtil.getNameWithoutExtension(file);
   }
 
-  private static String getRootElementAttribute(@NotNull Element element, @NonNls String name) {
-    return element.getAttributeValue(name);
-  }
-
   @Nullable
   private static String getRootElementAttribute(@NonNls String name, @NotNull Element element) {
-    return getRootElementAttribute(element, name);
-  }
-
-  @NotNull
-  public static String getProfileName(@NotNull Element element) {
-    String name = getRootElementAttribute(element, PROFILE_NAME_TAG);
-    if (name != null) return name;
-    return "unnamed";
+    return element.getAttributeValue(name);
   }
 
   @NotNull

@@ -33,7 +33,7 @@ import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.BaseSchemeProcessor;
 import com.intellij.openapi.options.Scheme;
-import com.intellij.openapi.options.SchemesManager;
+import com.intellij.openapi.options.SchemeManager;
 import com.intellij.openapi.options.SchemesManagerFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -71,7 +71,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
   private final ComponentTreeEventDispatcher<EditorColorsListener> myTreeDispatcher = ComponentTreeEventDispatcher.create(EditorColorsListener.class);
 
   private final DefaultColorSchemesManager myDefaultColorSchemeManager;
-  private final SchemesManager<EditorColorsScheme, EditorColorsSchemeImpl> mySchemeManager;
+  private final SchemeManager<EditorColorsScheme> mySchemeManager;
   static final String FILE_SPEC = "colors";
 
   private State myState = new State();
@@ -79,10 +79,10 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
   public EditorColorsManagerImpl(@NotNull DefaultColorSchemesManager defaultColorSchemeManager, @NotNull SchemesManagerFactory schemeManagerFactory) {
     myDefaultColorSchemeManager = defaultColorSchemeManager;
 
-    mySchemeManager = schemeManagerFactory.create(FILE_SPEC, new BaseSchemeProcessor<EditorColorsSchemeImpl>() {
+    mySchemeManager = schemeManagerFactory.<EditorColorsScheme>create(FILE_SPEC, new BaseSchemeProcessor<EditorColorsSchemeImpl>() {
       @NotNull
       @Override
-      public EditorColorsSchemeImpl readScheme(@NotNull Element element) {
+      public EditorColorsSchemeImpl readScheme(@NotNull Element element, boolean duringLoad) {
         EditorColorsSchemeImpl scheme = new EditorColorsSchemeImpl(null);
         scheme.readExternal(element);
         return scheme;
@@ -332,7 +332,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
   }
 
   @NotNull
-  public SchemesManager<EditorColorsScheme, EditorColorsSchemeImpl> getSchemeManager() {
+  public SchemeManager<EditorColorsScheme> getSchemeManager() {
     return mySchemeManager;
   }
 }

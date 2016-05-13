@@ -17,7 +17,7 @@ package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.openapi.options.LazySchemeProcessor;
 import com.intellij.openapi.options.SchemeDataHolder;
-import com.intellij.openapi.options.SchemesManager;
+import com.intellij.openapi.options.SchemeManager;
 import com.intellij.openapi.options.SchemesManagerFactory;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
@@ -35,10 +35,10 @@ public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes {
   @NonNls
   static final String CODE_STYLES_DIR_PATH = "codestyles";
 
-  protected final SchemesManager<CodeStyleScheme, CodeStyleSchemeImpl> mySchemeManager;
+  protected final SchemeManager<CodeStyleScheme> mySchemeManager;
 
   public CodeStyleSchemesImpl(@NotNull SchemesManagerFactory schemesManagerFactory) {
-    mySchemeManager = schemesManagerFactory.create(CODE_STYLES_DIR_PATH, new LazySchemeProcessor<CodeStyleSchemeImpl>() {
+    mySchemeManager = schemesManagerFactory.<CodeStyleScheme>create(CODE_STYLES_DIR_PATH, new LazySchemeProcessor<CodeStyleSchemeImpl>() {
       @NotNull
       @Override
       public CodeStyleSchemeImpl createScheme(@NotNull SchemeDataHolder dataHolder, @NotNull Function<String, String> attributeProvider, boolean duringLoad) {
@@ -137,7 +137,7 @@ public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes {
   }
 
   @NotNull
-  public static SchemesManager<CodeStyleScheme, CodeStyleSchemeImpl> getSchemeManager() {
+  public static SchemeManager<CodeStyleScheme> getSchemeManager() {
     return ((CodeStyleSchemesImpl)CodeStyleSchemes.getInstance()).mySchemeManager;
   }
 }

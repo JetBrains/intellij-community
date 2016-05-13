@@ -33,10 +33,7 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.options.Scheme;
-import com.intellij.openapi.options.SchemeProcessor;
-import com.intellij.openapi.options.SchemesManager;
-import com.intellij.openapi.options.SchemesManagerFactory;
+import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
@@ -60,6 +57,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
+
+import static com.intellij.codeInspection.ex.InspectionProfileImpl.getDefaultProfile;
 
 @State(
   name = "InspectionProfileManager",
@@ -72,7 +72,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class InspectionProfileManagerImpl extends InspectionProfileManager implements SeverityProvider, PersistentStateComponent<Element> {
 
   private final InspectionToolRegistrar myRegistrar;
-  private final SchemesManager<Profile, InspectionProfileImpl> mySchemeManager;
+  private final SchemeManager<Profile> mySchemeManager;
   private final AtomicBoolean myProfilesAreInitialized = new AtomicBoolean(false);
   private final SeverityRegistrar mySeverityRegistrar;
 
@@ -86,19 +86,13 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
     myRegistrar = registrar;
     registerProvidedSeverities();
 
-    mySchemeManager = schemesManagerFactory.create(INSPECTION_DIR, new SchemeProcessor<InspectionProfileImpl>() {
+    mySchemeManager = schemesManagerFactory.<Profile>create(INSPECTION_DIR, new LazySchemeProcessor<InspectionProfileImpl>() {
       @NotNull
-      @Override
-      public InspectionProfileImpl readScheme(@NotNull Element element) {
-        final InspectionProfileImpl profile = new InspectionProfileImpl(InspectionProfileLoadUtil.getProfileName(element), myRegistrar, InspectionProfileManagerImpl.this);
-        try {
-          profile.readExternal(element);
-        }
-        catch (Exception ignored) {
-          ApplicationManager.getApplication().invokeLater(() -> Messages.showErrorDialog(InspectionsBundle.message("inspection.error.loading.message", 0, profile.getName()),
-                                                                                       InspectionsBundle.message("inspection.errors.occurred.dialog.title")), ModalityState.NON_MODAL);
-        }
-        return profile;
+      public InspectionProfileImpl createScheme(@NotNull SchemeDataHolder dataHolder,
+                                                @NotNull Function<String, String> attributeProvider,
+                                                boolean duringLoad) {
+        String profileName = ObjectUtils.chooseNotNull(attributeProvider.apply(InspectionProfileLoadUtil.PROFILE_NAME_TAG), "unnamed");
+        return new InspectionProfileImpl(profileName, myRegistrar, InspectionProfileManagerImpl.this, getDefaultProfile(), dataHolder);
       }
 
       @NotNull
@@ -141,7 +135,7 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
 
   @NotNull
   private InspectionProfileImpl createSampleProfile(@NotNull String name, InspectionProfileImpl baseProfile) {
-    return new InspectionProfileImpl(name, InspectionToolRegistrar.getInstance(), this, baseProfile);
+    return new InspectionProfileImpl(name, InspectionToolRegistrar.getInstance(), this, baseProfile, null);
   }
 
   // It should be public to be available from Upsource
@@ -188,7 +182,7 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
   }
 
   private void createDefaultProfile() {
-    final InspectionProfileImpl defaultProfile = createSampleProfile(InspectionProfileImpl.DEFAULT_PROFILE_NAME, InspectionProfileImpl.getDefaultProfile());
+    final InspectionProfileImpl defaultProfile = createSampleProfile(InspectionProfileImpl.DEFAULT_PROFILE_NAME, getDefaultProfile());
     addProfile(defaultProfile);
   }
 
@@ -254,7 +248,7 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
 
   @Override
   public InspectionProfileImpl createProfile() {
-    return createSampleProfile(InspectionProfileImpl.DEFAULT_PROFILE_NAME, InspectionProfileImpl.getDefaultProfile());
+    return createSampleProfile(InspectionProfileImpl.DEFAULT_PROFILE_NAME, getDefaultProfile());
   }
 
   @Override

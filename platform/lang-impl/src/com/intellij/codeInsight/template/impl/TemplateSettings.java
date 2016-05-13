@@ -23,8 +23,8 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.options.SchemeProcessor;
-import com.intellij.openapi.options.SchemesManager;
+import com.intellij.openapi.options.BaseSchemeProcessor;
+import com.intellij.openapi.options.SchemeManager;
 import com.intellij.openapi.options.SchemesManagerFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
@@ -101,7 +101,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
   private final Map<TemplateKey, TemplateImpl> myDefaultTemplates = new LinkedHashMap<TemplateKey, TemplateImpl>();
 
   private int myMaxKeyLength = 0;
-  private final SchemesManager<TemplateGroup, TemplateGroup> mySchemeManager;
+  private final SchemeManager<TemplateGroup> mySchemeManager;
 
   private State myState = new State();
 
@@ -187,11 +187,11 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
 
   private TemplateKey myLastSelectedTemplate;
 
-  public TemplateSettings(SchemesManagerFactory schemesManagerFactory) {
-    mySchemeManager = schemesManagerFactory.create(TEMPLATES_DIR_PATH, new SchemeProcessor<TemplateGroup>() {
+  public TemplateSettings(@NotNull  SchemesManagerFactory schemeManagerFactory) {
+    mySchemeManager = schemeManagerFactory.create(TEMPLATES_DIR_PATH, new BaseSchemeProcessor<TemplateGroup>() {
       @Nullable
       @Override
-      public TemplateGroup readScheme(@NotNull Element element) {
+      public TemplateGroup readScheme(@NotNull Element element, boolean duringLoad) {
         return readTemplateFile(element, element.getAttributeValue("group"), false, false, getClass().getClassLoader());
       }
 

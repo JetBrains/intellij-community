@@ -37,7 +37,7 @@ class LoadTest : IcsTestCase() {
 
   private val dirPath = "\$ROOT_CONFIG$/keymaps"
 
-  private fun createSchemeManager(dirPath: String) = SchemeManagerImpl<TestScheme, TestScheme>(dirPath, TestSchemesProcessor(), provider, tempDirManager.newPath("schemes"))
+  private fun createSchemeManager(dirPath: String) = SchemeManagerImpl(dirPath, TestSchemesProcessor(), provider, tempDirManager.newPath("schemes"))
 
   @Test fun `load scheme`() {
     val localScheme = TestScheme("local")

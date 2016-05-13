@@ -21,10 +21,7 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManagerListener;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
-import com.intellij.openapi.options.Scheme;
-import com.intellij.openapi.options.SchemeProcessor;
-import com.intellij.openapi.options.SchemesManager;
-import com.intellij.openapi.options.SchemesManagerFactory;
+import com.intellij.openapi.options.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -48,15 +45,15 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
 
   @NonNls private static final String ACTIVE_KEYMAP = "active_keymap";
   @NonNls private static final String NAME_ATTRIBUTE = "name";
-  private final SchemesManager<Keymap, KeymapImpl> mySchemesManager;
+  private final SchemeManager<Keymap> mySchemeManager;
 
   public static boolean ourKeymapManagerInitialized = false;
 
   KeymapManagerImpl(@NotNull DefaultKeymap defaultKeymap, @NotNull SchemesManagerFactory factory) {
-    SchemeProcessor<KeymapImpl> schemeProcessor = new SchemeProcessor<KeymapImpl>() {
+    SchemeProcessor<KeymapImpl> schemeProcessor = new NonLazySchemeProcessor<KeymapImpl>() {
       @NotNull
       @Override
-      public KeymapImpl readScheme(@NotNull Element element) throws InvalidDataException {
+      public KeymapImpl readScheme(@NotNull Element element, boolean duringLoad) throws InvalidDataException {
         KeymapImpl keymap = new KeymapImpl();
         keymap.readExternal(element, getAllIncludingDefaultsKeymaps());
         return keymap;
@@ -75,24 +72,24 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
 
       @Override
       public void onCurrentSchemeChanged(@Nullable Scheme oldScheme) {
-        Keymap keymap = mySchemesManager.getCurrentScheme();
+        Keymap keymap = mySchemeManager.getCurrentScheme();
         for (KeymapManagerListener listener : myListeners) {
           listener.activeKeymapChanged(keymap);
         }
       }
     };
-    mySchemesManager = factory.create(KEYMAPS_DIR_PATH, schemeProcessor);
+    mySchemeManager = factory.<Keymap>create(KEYMAPS_DIR_PATH, schemeProcessor);
 
     String systemDefaultKeymap = WelcomeWizardUtil.getWizardMacKeymap() != null
                                  ? WelcomeWizardUtil.getWizardMacKeymap()
                                  : defaultKeymap.getDefaultKeymapName();
     for (Keymap keymap : defaultKeymap.getKeymaps()) {
-      mySchemesManager.addScheme(keymap);
+      mySchemeManager.addScheme(keymap);
       if (keymap.getName().equals(systemDefaultKeymap)) {
         setActiveKeymap(keymap);
       }
     }
-    mySchemesManager.loadSchemes();
+    mySchemeManager.loadSchemes();
 
     //noinspection AssignmentToStaticFieldFromInstanceMethod
     ourKeymapManagerInitialized = true;
@@ -100,14 +97,14 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
 
   @Override
   public Keymap[] getAllKeymaps() {
-    List<Keymap> keymaps = getKeymaps(Conditions.<Keymap>alwaysTrue());
+    List<Keymap> keymaps = getKeymaps(Conditions.alwaysTrue());
     return keymaps.toArray(new Keymap[keymaps.size()]);
   }
 
   @NotNull
   public List<Keymap> getKeymaps(@NotNull Condition<Keymap> additionalFilter) {
     List<Keymap> result = new ArrayList<Keymap>();
-    for (Keymap keymap : mySchemesManager.getAllSchemes()) {
+    for (Keymap keymap : mySchemeManager.getAllSchemes()) {
       if (!keymap.getPresentableName().startsWith("$") && additionalFilter.value(keymap)) {
         result.add(keymap);
       }
@@ -116,24 +113,24 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
   }
 
   public Keymap[] getAllIncludingDefaultsKeymaps() {
-    Collection<Keymap> keymaps = mySchemesManager.getAllSchemes();
+    Collection<Keymap> keymaps = mySchemeManager.getAllSchemes();
     return keymaps.toArray(new Keymap[keymaps.size()]);
   }
 
   @Override
   @Nullable
   public Keymap getKeymap(@NotNull String name) {
-    return mySchemesManager.findSchemeByName(name);
+    return mySchemeManager.findSchemeByName(name);
   }
 
   @Override
   public Keymap getActiveKeymap() {
-    return mySchemesManager.getCurrentScheme();
+    return mySchemeManager.getCurrentScheme();
   }
 
   @Override
   public void setActiveKeymap(@Nullable Keymap keymap) {
-    mySchemesManager.setCurrent(keymap);
+    mySchemeManager.setCurrent(keymap);
   }
 
   @Override
@@ -162,21 +159,20 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
     return Comparing.equal(id, actionId) ? null : id;
   }
 
-  @Override
-  public SchemesManager<Keymap, KeymapImpl> getSchemesManager() {
-    return mySchemesManager;
+  public SchemeManager<Keymap> getSchemeManager() {
+    return mySchemeManager;
   }
 
   public void setKeymaps(@NotNull List<Keymap> keymaps, @Nullable Keymap active, @Nullable Condition<Keymap> removeCondition) {
-    mySchemesManager.setSchemes(keymaps, active, removeCondition);
+    mySchemeManager.setSchemes(keymaps, active, removeCondition);
   }
 
   @Override
   public Element getState() {
     Element result = new Element("component");
-    if (mySchemesManager.getCurrentScheme() != null) {
+    if (mySchemeManager.getCurrentScheme() != null) {
       Element e = new Element(ACTIVE_KEYMAP);
-      Keymap currentScheme = mySchemesManager.getCurrentScheme();
+      Keymap currentScheme = mySchemeManager.getCurrentScheme();
       if (currentScheme != null) {
         e.setAttribute(NAME_ATTRIBUTE, currentScheme.getName());
       }
@@ -190,7 +186,7 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
     Element child = state.getChild(ACTIVE_KEYMAP);
     String activeKeymapName = child == null ? null : child.getAttributeValue(NAME_ATTRIBUTE);
     if (!StringUtil.isEmptyOrSpaces(activeKeymapName)) {
-      mySchemesManager.setCurrentSchemeName(activeKeymapName);
+      mySchemeManager.setCurrentSchemeName(activeKeymapName);
     }
   }
 

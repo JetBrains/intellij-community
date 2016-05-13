@@ -17,18 +17,12 @@ package com.intellij.openapi.options
 
 import org.jdom.Element
 import java.util.function.Function
+import kotlin.properties.Delegates
 
 abstract class ExternalizableSchemeAdapter : ExternalizableScheme {
-  @JvmField
-  protected var myName: String? = null
+  override var name: String by Delegates.notNull()
 
-  override fun getName() = myName!!
-
-  override fun setName(value: String) {
-    myName = value
-  }
-
-  override fun toString() = myName!!
+  override fun toString() = name
 }
 
 interface SchemeDataHolder {
@@ -37,4 +31,19 @@ interface SchemeDataHolder {
 
 abstract class LazySchemeProcessor<T : ExternalizableScheme> : SchemeProcessor<T>() {
   abstract fun createScheme(dataHolder: SchemeDataHolder, attributeProvider: Function<String, String?>, duringLoad: Boolean): T
+}
+
+abstract class BaseSchemeProcessor<T : ExternalizableScheme> : NonLazySchemeProcessor<T>(), SchemeExtensionProvider {
+  override val isUpgradeNeeded = false
+
+  override val schemeExtension = ".xml"
+}
+
+abstract class NonLazySchemeProcessor<T : ExternalizableScheme> : SchemeProcessor<T>() {
+  /**
+   * @param duringLoad If occurred during [SchemeManager.loadSchemes] call
+   * * Returns null if element is not valid.
+   */
+  @Throws(Exception::class)
+  abstract fun readScheme(element: Element, duringLoad: Boolean): T?
 }

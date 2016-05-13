@@ -16,12 +16,11 @@
 package com.intellij.openapi.options;
 
 import com.intellij.openapi.util.WriteExternalException;
-import org.jdom.Element;
 import org.jdom.Parent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class SchemeProcessor<T extends ExternalizableScheme> {
+public abstract class SchemeProcessor<T extends Scheme> {
   /**
    * Element will not be modified, it is safe to return non-cloned instance.
    */
@@ -40,20 +39,6 @@ public abstract class SchemeProcessor<T extends ExternalizableScheme> {
    * Scheme switched.
    */
   public void onCurrentSchemeChanged(@Nullable Scheme oldScheme) {
-  }
-
-  @Nullable
-  protected T readScheme(@NotNull Element element) throws Exception {
-    throw new AbstractMethodError();
-  }
-
-  /**
-   * @param duringLoad If occurred during {@link SchemesManager#loadSchemes()} call
-   * Returns null if element is not valid.
-   */
-  @Nullable
-  public T readScheme(@NotNull Element element, boolean duringLoad) throws Exception {
-    return readScheme(element);
   }
 
   public enum State {

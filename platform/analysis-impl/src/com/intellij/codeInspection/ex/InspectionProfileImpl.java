@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.ExternalizableScheme;
+import com.intellij.openapi.options.SchemeDataHolder;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -74,7 +75,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   private static Map<String, InspectionElementsMerger> ourMergers;
   private final InspectionToolRegistrar myRegistrar;
   @NotNull
-  private final Map<String, Element> myUninstalledInspectionsSettings;
+  private final Map<String, Element> myUninstalledInspectionsSettings = new TreeMap<String, Element>();
   protected InspectionProfileImpl mySource;
   private Map<String, ToolsImpl> myTools = new THashMap<String, ToolsImpl>();
   private volatile Map<String, Boolean> myDisplayLevelMap;
@@ -89,8 +90,10 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
   private final Object myLock = new Object();
 
+  private SchemeDataHolder myDataHolder;
+
   InspectionProfileImpl(@NotNull InspectionProfileImpl inspectionProfile) {
-    this(inspectionProfile.getName(), inspectionProfile.myRegistrar, inspectionProfile.getProfileManager(), inspectionProfile.myBaseProfile);
+    this(inspectionProfile.getName(), inspectionProfile.myRegistrar, inspectionProfile.getProfileManager(), inspectionProfile.myBaseProfile, null);
     myUninstalledInspectionsSettings.putAll(inspectionProfile.myUninstalledInspectionsSettings);
 
     setProjectLevel(inspectionProfile.isProjectLevel());
@@ -102,22 +105,23 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   public InspectionProfileImpl(@NotNull final String profileName,
                                @NotNull InspectionToolRegistrar registrar,
                                @NotNull final ProfileManager profileManager) {
-    this(profileName, registrar, profileManager, getDefaultProfile());
+    this(profileName, registrar, profileManager, getDefaultProfile(), null);
   }
 
   public InspectionProfileImpl(@NotNull @NonNls String profileName) {
-    this(profileName, InspectionToolRegistrar.getInstance(), InspectionProfileManager.getInstance(), null);
+    this(profileName, InspectionToolRegistrar.getInstance(), InspectionProfileManager.getInstance(), null, null);
   }
 
   InspectionProfileImpl(@NotNull final String profileName,
                         @NotNull InspectionToolRegistrar registrar,
                         @NotNull final ProfileManager profileManager,
-                        InspectionProfileImpl baseProfile) {
+                        InspectionProfileImpl baseProfile,
+                        @Nullable SchemeDataHolder dataHolder) {
     super(profileName);
     myRegistrar = registrar;
     myBaseProfile = baseProfile;
+    myDataHolder = dataHolder;
     setProfileManager(profileManager);
-    myUninstalledInspectionsSettings = new TreeMap<String, Element>();
   }
 
   @NotNull
@@ -538,15 +542,25 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   public void initInspectionTools(@Nullable Project project) {
-    if (ApplicationManager.getApplication().isUnitTestMode() && !INIT_INSPECTIONS) return;
-    if (myInitialized) return;
+    //noinspection TestOnlyProblems
+    if (myInitialized || (ApplicationManager.getApplication().isUnitTestMode() && !INIT_INSPECTIONS)) {
+      return;
+    }
+
     synchronized (myLock) {
-      if (myInitialized) return;
-      myInitialized = initialize(project);
+      if (!myInitialized) {
+        myInitialized = initialize(project);
+      }
     }
   }
 
   private boolean initialize(@Nullable Project project) {
+    SchemeDataHolder dataHolder = myDataHolder;
+    if (dataHolder != null) {
+      myDataHolder = null;
+      readExternal(dataHolder.read());
+    }
+
     if (myBaseProfile != null) {
       myBaseProfile.initInspectionTools(project);
     }
@@ -558,6 +572,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     catch (ProcessCanceledException ignored) {
       return false;
     }
+
     final Map<String, List<String>> dependencies = new HashMap<String, List<String>>();
     for (InspectionToolWrapper toolWrapper : tools) {
       addTool(project, toolWrapper, dependencies);
@@ -584,10 +599,6 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       copyToolsConfigurations(mySource, project);
     }
     return true;
-  }
-
-  public void removeTool(@NotNull InspectionToolWrapper toolWrapper) {
-    myTools.remove(toolWrapper.getShortName());
   }
 
   public void addTool(@Nullable Project project, @NotNull InspectionToolWrapper toolWrapper, @NotNull Map<String, List<String>> dependencies) {
@@ -899,11 +910,6 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     return getTools(key.toString(), project).isEnabled(namedScope,project);
   }
 
-  @Deprecated
-  public void removeScope(@NotNull String toolId, int scopeIdx, Project project) {
-    getTools(toolId, project).removeScope(scopeIdx);
-  }
-
   public void removeScope(@NotNull String toolId, @NotNull String scopeName, Project project) {
     getTools(toolId, project).removeScope(scopeName);
   }
@@ -941,7 +947,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   public void profileChanged() {
     myDisplayLevelMap = null;
   }
-  
+
   @NotNull
   @Transient
   public HighlightDisplayLevel getErrorLevel(@NotNull HighlightDisplayKey key, NamedScope scope, Project project) {
@@ -999,6 +1005,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     private static final InspectionProfileImpl DEFAULT_PROFILE = new InspectionProfileImpl(DEFAULT_PROFILE_NAME);
   }
 
+  @SuppressWarnings("TestOnlyProblems")
   public static <T> T initAndDo(@NotNull Computable<T> runnable) {
     boolean old = INIT_INSPECTIONS;
     try {

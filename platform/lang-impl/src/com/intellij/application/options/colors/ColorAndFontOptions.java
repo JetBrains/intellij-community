@@ -25,7 +25,6 @@ import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -36,7 +35,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.SchemesManager;
+import com.intellij.openapi.options.SchemeManager;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.colors.*;
 import com.intellij.openapi.project.Project;
@@ -70,8 +69,6 @@ import java.util.*;
 import java.util.List;
 
 public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract implements EditorOptionsProvider {
-  private static final Logger LOG = Logger.getInstance(ColorAndFontOptions.class);
-
   public static final String ID = "reference.settingsdialog.IDE.editor.colors";
 
   private Map<String, MyColorScheme> mySchemes;
@@ -132,7 +129,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
   private MyColorScheme getScheme(String name) {
     return mySchemes.get(name);
   }
-  
+
   @NotNull
   public String getUniqueName(@NotNull String preferredName) {
     String name;
@@ -240,7 +237,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
     try {
       EditorColorsManager myColorsManager = EditorColorsManager.getInstance();
-      SchemesManager<EditorColorsScheme, EditorColorsSchemeImpl> schemeManager = ((EditorColorsManagerImpl)myColorsManager).getSchemeManager();
+      SchemeManager<EditorColorsScheme> schemeManager = ((EditorColorsManagerImpl)myColorsManager).getSchemeManager();
 
       List<EditorColorsScheme> result = new ArrayList<EditorColorsScheme>(mySchemes.values().size());
       boolean activeSchemeModified = false;
@@ -689,15 +686,6 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     }
   }
 
-  public boolean currentSchemeIsReadOnly() {
-    return isReadOnly(mySelectedScheme);
-  }
-
-  public boolean currentSchemeIsShared() {
-    return ColorSettingsUtil.isSharedScheme(mySelectedScheme);
-  }
-
-
   private static class SchemeTextAttributesDescription extends TextAttributesDescription {
     @NotNull private final TextAttributes myInitialAttributes;
     @NotNull private final TextAttributesKey key;
@@ -1033,7 +1021,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
       for (EditorSchemeAttributeDescriptor descriptor : myDescriptors) {
         descriptor.apply(scheme);
       }
-      
+
       if (scheme instanceof AbstractColorsScheme) {
         ((AbstractColorsScheme)scheme).setSaveNeeded(true);
       }

@@ -26,9 +26,7 @@ import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.util.*
 import com.intellij.util.lang.CompoundRuntimeException
 import com.intellij.util.xmlb.XmlSerializer
-import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Tag
-import com.intellij.util.xmlb.annotations.Transient
 import com.intellij.util.xmlb.serialize
 import com.intellij.util.xmlb.toByteArray
 import gnu.trove.THashMap
@@ -153,10 +151,10 @@ internal class SchemeManagerTest {
     scheme.save(dir.resolve("1.icls"))
     TestScheme("local", "false").save(dir.resolve("1.xml"))
 
-    val schemesManager = SchemeManagerImpl<TestScheme, TestScheme>(FILE_SPEC, object: TestSchemesProcessor() {
-      override fun isUpgradeNeeded() = true
+    val schemesManager = SchemeManagerImpl(FILE_SPEC, object: TestSchemesProcessor() {
+      override val isUpgradeNeeded = true
 
-      override fun getSchemeExtension() = ".icls"
+      override val schemeExtension = ".icls"
     }, null, dir)
     schemesManager.loadSchemes()
     assertThat(schemesManager.allSchemes).containsOnly(scheme)
@@ -297,16 +295,16 @@ internal class SchemeManagerTest {
   }
 
   @Test fun `path must not contains ROOT_CONFIG macro`() {
-    assertThatThrownBy({ SchemesManagerFactory.getInstance().create<TestScheme, TestScheme>("\$ROOT_CONFIG$/foo", TestSchemesProcessor()) }).hasMessage("Path must not contains ROOT_CONFIG macro, corrected: foo")
+    assertThatThrownBy({ SchemesManagerFactory.getInstance().create("\$ROOT_CONFIG$/foo", TestSchemesProcessor()) }).hasMessage("Path must not contains ROOT_CONFIG macro, corrected: foo")
   }
 
   @Test fun `path must be system-independent`() {
-    assertThatThrownBy({SchemesManagerFactory.getInstance().create<TestScheme, TestScheme>("foo\\bar", TestSchemesProcessor())}).hasMessage("Path must be system-independent, use forward slash instead of backslash")
+    assertThatThrownBy({SchemesManagerFactory.getInstance().create("foo\\bar", TestSchemesProcessor())}).hasMessage("Path must be system-independent, use forward slash instead of backslash")
   }
 
-  private fun createSchemeManager(dir: Path) = SchemeManagerImpl<TestScheme, TestScheme>(FILE_SPEC, TestSchemesProcessor(), null, dir)
+  private fun createSchemeManager(dir: Path) = SchemeManagerImpl(FILE_SPEC, TestSchemesProcessor(), null, dir)
 
-  private fun createAndLoad(testData: String): SchemeManagerImpl<TestScheme, TestScheme> {
+  private fun createAndLoad(testData: String): SchemeManagerImpl<TestScheme> {
     createTempFiles(testData)
     return createAndLoad()
   }
@@ -323,8 +321,8 @@ internal class SchemeManagerTest {
     checkSchemes(localBaseDir!!, "", false)
   }
 
-  private fun createAndLoad(): SchemeManagerImpl<TestScheme, TestScheme> {
-    val schemesManager = SchemeManagerImpl<TestScheme, TestScheme>(FILE_SPEC, TestSchemesProcessor(), MockStreamProvider(remoteBaseDir!!.toFile()), localBaseDir!!)
+  private fun createAndLoad(): SchemeManagerImpl<TestScheme> {
+    val schemesManager = SchemeManagerImpl(FILE_SPEC, TestSchemesProcessor(), MockStreamProvider(remoteBaseDir!!.toFile()), localBaseDir!!)
     schemesManager.loadSchemes()
     return schemesManager
   }
@@ -368,21 +366,16 @@ private fun checkSchemes(baseDir: Path, expected: String, ignoreDeleted: Boolean
 }
 
 @Tag("scheme")
-data class TestScheme(@field:Attribute private var name: String = "", @field:Attribute var data: String? = null) : ExternalizableScheme {
-  override fun getName() = name
-
-  override @Transient fun setName(newName: String) {
-    name = newName
-  }
+data class TestScheme(override @field:com.intellij.util.xmlb.annotations.Attribute var name: String = "", @field:com.intellij.util.xmlb.annotations.Attribute var data: String? = null) : ExternalizableScheme {
 }
 
 open class TestSchemesProcessor : BaseSchemeProcessor<TestScheme>() {
-  override fun readScheme(element: Element) = XmlSerializer.deserialize(element, TestScheme::class.java)
+  override fun readScheme(element: Element, duringLoad: Boolean) = XmlSerializer.deserialize(element, TestScheme::class.java)
 
   override fun writeScheme(scheme: TestScheme) = scheme.serialize()
 }
 
-fun SchemeManagerImpl<*, *>.save() {
+fun SchemeManagerImpl<*>.save() {
   val errors = SmartList<Throwable>()
   save(errors)
   CompoundRuntimeException.throwIfNotEmpty(errors)

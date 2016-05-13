@@ -35,14 +35,14 @@ public class CodeStyleSchemeImpl extends ExternalizableSchemeAdapter implements 
   private volatile CodeStyleSettings myCodeStyleSettings;
 
   CodeStyleSchemeImpl(@NotNull String name, String parentSchemeName, @NotNull SchemeDataHolder dataHolder) {
-    myName = name;
+    setName(name);
     myDataHolder = dataHolder;
     myIsDefault = false;
     myParentSchemeName = parentSchemeName;
   }
 
-  public CodeStyleSchemeImpl(@NotNull String name, boolean isDefault, CodeStyleScheme parentScheme){
-    myName = name;
+  public CodeStyleSchemeImpl(@NotNull String name, boolean isDefault, CodeStyleScheme parentScheme) {
+    setName(name);
     myIsDefault = isDefault;
     init(parentScheme, null);
   }
