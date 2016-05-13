@@ -115,7 +115,8 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     }
 
     final String name = ((PsiNamedElement)gotoData.source).getName();
-    final String title = getChooserTitle(gotoData.source, name, targets.length, gotoData.listUpdaterTask.isFinished());
+    boolean finished = gotoData.listUpdaterTask == null || gotoData.listUpdaterTask.isFinished();
+    final String title = getChooserTitle(gotoData.source, name, targets.length, finished);
 
     if (shouldSortTargets()) {
       Arrays.sort(targets, createComparator(gotoData.renderers, gotoData));
