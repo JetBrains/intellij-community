@@ -47,14 +47,14 @@ private class DefaultWebServerPathHandler : WebServerPathHandler() {
     val channel = context.channel()
 
     val isSignedRequest = request.isSignedRequest()
-    val extraHttpHeaders = validateToken(request, channel, isSignedRequest) ?: return true
+    val extraHeaders = validateToken(request, channel, isSignedRequest) ?: return true
 
     val pathToFileManager = WebServerPathToFileManager.getInstance(project)
     var pathInfo = pathToFileManager.pathToInfoCache.getIfPresent(path)
     if (pathInfo == null || !pathInfo.isValid) {
       pathInfo = pathToFileManager.doFindByRelativePath(path)
       if (pathInfo == null) {
-        Responses.sendStatus(HttpResponseStatus.NOT_FOUND, channel, if (path.isEmpty()) "Index file doesn't exist." else null, request, extraHttpHeaders)
+        Responses.sendStatus(HttpResponseStatus.NOT_FOUND, channel, null, request, extraHeaders)
         return true
       }
 
@@ -73,13 +73,13 @@ private class DefaultWebServerPathHandler : WebServerPathHandler() {
       }
 
       if (indexFile == null && indexVirtualFile == null) {
-        Responses.sendStatus(HttpResponseStatus.NOT_FOUND, channel, null, request, extraHttpHeaders)
+        Responses.sendStatus(HttpResponseStatus.NOT_FOUND, channel, null, request, extraHeaders)
         return true
       }
 
       // we must redirect only after index file check to not expose directory status
       if (!endsWithSlash(decodedRawPath)) {
-        redirectToDirectory(request, channel, if (isCustomHost) path else "$projectName/$path", extraHttpHeaders)
+        redirectToDirectory(request, channel, if (isCustomHost) path else "$projectName/$path", extraHeaders)
         return true
       }
 
@@ -102,7 +102,7 @@ private class DefaultWebServerPathHandler : WebServerPathHandler() {
         // FallbackResource feature in action, /login requested, /index.php retrieved, we must not redirect /login to /login/
         val parentPath = getParentPath(pathInfo.path)
         if (parentPath != null && endsWithName(path, PathUtilRt.getFileName(parentPath))) {
-          redirectToDirectory(request, channel, if (isCustomHost) path else "$projectName/$path", extraHttpHeaders)
+          redirectToDirectory(request, channel, if (isCustomHost) path else "$projectName/$path", extraHeaders)
           return true
         }
       }
@@ -115,14 +115,14 @@ private class DefaultWebServerPathHandler : WebServerPathHandler() {
     val canonicalPath = if (indexUsed) "$path/${pathInfo.name}" else path
     for (fileHandler in WebServerFileHandler.EP_NAME.extensions) {
       LOG.catchAndLog {
-        if (fileHandler.process(pathInfo!!, canonicalPath, project, request, channel, if (isCustomHost) null else projectName, extraHttpHeaders)) {
+        if (fileHandler.process(pathInfo!!, canonicalPath, project, request, channel, if (isCustomHost) null else projectName, extraHeaders)) {
           return true
         }
       }
     }
 
     // we registered as a last handler, so, we should just return 404 and send extra headers
-    Responses.sendStatus(HttpResponseStatus.NOT_FOUND, channel, null, request, extraHttpHeaders)
+    Responses.sendStatus(HttpResponseStatus.NOT_FOUND, channel, null, request, extraHeaders)
     return true
   }
 }
