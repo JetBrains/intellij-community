@@ -43,3 +43,12 @@ interface FromJava8 {
     System.out.println();
   }
 }
+class B {
+  public void accept(String t) {
+    System.out.println(t);
+  }
+}
+class V extends B implements Consumer<String> {}
+interface Consumer<T> {
+  void accept(T t);
+}
