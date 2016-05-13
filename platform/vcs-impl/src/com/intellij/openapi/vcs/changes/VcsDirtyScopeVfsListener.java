@@ -71,9 +71,7 @@ public class VcsDirtyScopeVfsListener implements BulkFileListener, Disposable {
         }
       }
     };
-    myZipperUpdater = new ConstantZipperUpdater(300, Alarm.ThreadToUse.POOLED_THREAD, ApplicationManager.getApplication(),
-                                                myDirtReporter);
-
+    myZipperUpdater = new ConstantZipperUpdater(300, Alarm.ThreadToUse.POOLED_THREAD, this, myDirtReporter);
     Disposer.register(project, this);
     project.getMessageBus().connect().subscribe(VirtualFileManager.VFS_CHANGES, this);
   }
