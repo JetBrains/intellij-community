@@ -224,35 +224,20 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
     myEmptyText.setText("");
 
     int selectionLength = myGraphTable.getSelectedRows().length;
-    int count = 0;
-    for (int i = 0, prevCount = myMainContentPanel.getComponentCount(); i < Math.min(selectionLength, MAX_ROWS); i++) {
-      Component c = count < prevCount ? myMainContentPanel.getComponent(count) : null;
-      if (c instanceof SeparatorComponent) {
-        count++;
-        c = count < prevCount ? myMainContentPanel.getComponent(count) : null;
-      }
-      CommitPanel commitPanel;
-      if (c instanceof CommitPanel) {
-        count++;
-      }
-      else {
-        while (count < myMainContentPanel.getComponentCount()) {
-          myMainContentPanel.remove(count);
-        }
 
-        commitPanel = new CommitPanel();
-        if (i > 0) {
-          myMainContentPanel.add(new SeparatorComponent(1, OnePixelDivider.BACKGROUND, null));
-          count++;
-        }
-        myMainContentPanel.add(commitPanel);
-        count++;
+    // for each commit besides the first there are two components: Separator and CommitPanel
+    int existingCount = (myMainContentPanel.getComponentCount() + 1) / 2;
+    int requiredCount = Math.min(selectionLength, MAX_ROWS);
+    for (int i = existingCount; i < requiredCount; i++) {
+      if (i > 0) {
+        myMainContentPanel.add(new SeparatorComponent(1, OnePixelDivider.BACKGROUND, null));
       }
+      myMainContentPanel.add(new CommitPanel());
     }
 
     // clear superfluous items
-    while (count < myMainContentPanel.getComponentCount()) {
-      myMainContentPanel.remove(count);
+    while (myMainContentPanel.getComponentCount() > 2 * requiredCount - 1) {
+      myMainContentPanel.remove(myMainContentPanel.getComponentCount() - 1);
     }
 
     if (selectionLength > MAX_ROWS) {
