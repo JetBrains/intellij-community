@@ -139,7 +139,7 @@ private fun checkAccess(pathInfo: PathInfo, channel: Channel, request: HttpReque
       Responses.sendStatus(HttpResponseStatus.NOT_FOUND, channel, request)
       return false
     }
-    else if (!checkAccess(channel, file, request, Paths.get(pathInfo.root.path))) {
+    else if (!hasAccess(file)) {
       return false
     }
   }

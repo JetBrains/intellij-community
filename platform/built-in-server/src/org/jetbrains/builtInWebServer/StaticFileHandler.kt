@@ -107,4 +107,4 @@ internal fun checkAccess(channel: Channel, file: Path, request: HttpRequest, roo
 }
 
 // deny access to any dot prefixed file
-private fun hasAccess(result: Path) = Files.isReadable(result) && !(Files.isHidden(result) || result.fileName.toString().startsWith('.'))
+internal fun hasAccess(result: Path) = Files.isReadable(result) && !(Files.isHidden(result) || result.fileName.toString().startsWith('.'))
