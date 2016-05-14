@@ -100,10 +100,6 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
       if (superMethod == null) {
         return;
       }
-      final PsiCodeBlock superBody = superMethod.getBody();
-      if (superBody == null) {
-        return;
-      }
       if (!modifierListsAreEquivalent(method.getModifierList(), superMethod.getModifierList())) {
         return;
       }
@@ -111,13 +107,14 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
       if (superReturnType == null || !superReturnType.equals(method.getReturnType())) {
         return;
       }
-      if (!EquivalenceChecker.codeBlocksAreEquivalent(body, superBody) && !isSuperCall(body, method)) {
+      final PsiCodeBlock superBody = superMethod.getBody();
+      if (!EquivalenceChecker.codeBlocksAreEquivalent(body, superBody) && !isSuperCall(body, method, superMethod)) {
         return;
       }
       registerMethodError(method);
     }
 
-    private static boolean isSuperCall(PsiCodeBlock body, PsiMethod method) {
+    private static boolean isSuperCall(PsiCodeBlock body, PsiMethod method, PsiMethod superMethod) {
       final PsiStatement[] statements = body.getStatements();
       if (statements.length != 1) {
         return false;
@@ -146,7 +143,16 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
         return false;
       }
       final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
-      return MethodCallUtils.isSuperMethodCall(methodCallExpression, method);
+      if (!MethodCallUtils.isSuperMethodCall(methodCallExpression, method)) {
+        return false;
+      }
+      if (superMethod.hasModifierProperty(PsiModifier.PROTECTED)) {
+        final PsiJavaFile superFile = (PsiJavaFile)superMethod.getContainingFile();
+        final PsiJavaFile file = (PsiJavaFile)method.getContainingFile();
+        // implementing a protected method in another package makes it available to that package.
+        return superFile.getPackageName().equals(file.getPackageName());
+      }
+      return true;
     }
 
     private static boolean modifierListsAreEquivalent(@Nullable PsiModifierList list1, @Nullable PsiModifierList list2) {
