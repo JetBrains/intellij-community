@@ -166,63 +166,65 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     Map<VirtualFile, Collection<Change>> sortedChanges = sortChangesByGitRoot(changes, exceptions);
     log.assertTrue(!sortedChanges.isEmpty(), "Trying to commit an empty list of changes: " + changes);
     for (Map.Entry<VirtualFile, Collection<Change>> entry : sortedChanges.entrySet()) {
-      final VirtualFile root = entry.getKey();
+      VirtualFile root = entry.getKey();
+      File messageFile;
       try {
-        File messageFile = createMessageFile(root, message);
-        try {
-          final Set<FilePath> added = new HashSet<FilePath>();
-          final Set<FilePath> removed = new HashSet<FilePath>();
-          for (Change change : entry.getValue()) {
-            switch (change.getType()) {
-              case NEW:
-              case MODIFICATION:
-                added.add(change.getAfterRevision().getFile());
-                break;
-              case DELETED:
-                removed.add(change.getBeforeRevision().getFile());
-                break;
-              case MOVED:
-                FilePath afterPath = change.getAfterRevision().getFile();
-                FilePath beforePath = change.getBeforeRevision().getFile();
-                added.add(afterPath);
-                if (!GitFileUtils.shouldIgnoreCaseChange(afterPath.getPath(), beforePath.getPath())) {
-                  removed.add(beforePath);
-                }
-                break;
-              default:
-                throw new IllegalStateException("Unknown change type: " + change.getType());
-            }
-          }
-          try {
-            try {
-              Set<FilePath> files = new HashSet<FilePath>();
-              files.addAll(added);
-              files.addAll(removed);
-              commit(myProject, root, files, messageFile, myNextCommitAuthor, myNextCommitAmend, myNextCommitAuthorDate);
-            }
-            catch (VcsException ex) {
-              PartialOperation partialOperation = isMergeCommit(ex);
-              if (partialOperation == PartialOperation.NONE) {
-                throw ex;
-              }
-              if (!mergeCommit(myProject, root, added, removed, messageFile, myNextCommitAuthor, exceptions, partialOperation)) {
-                throw ex;
-              }
-            }
-          }
-          finally {
-            if (!messageFile.delete()) {
-              log.warn("Failed to remove temporary file: " + messageFile);
-            }
-          }
-        }
-        catch (VcsException e) {
-          exceptions.add(cleanupExceptionText(e));
-        }
+        messageFile = createMessageFile(root, message);
       }
       catch (IOException ex) {
         //noinspection ThrowableInstanceNeverThrown
         exceptions.add(new VcsException("Creation of commit message file failed", ex));
+        continue;
+      }
+
+      Set<FilePath> added = new HashSet<>();
+      Set<FilePath> removed = new HashSet<>();
+      for (Change change : entry.getValue()) {
+        switch (change.getType()) {
+          case NEW:
+          case MODIFICATION:
+            added.add(change.getAfterRevision().getFile());
+            break;
+          case DELETED:
+            removed.add(change.getBeforeRevision().getFile());
+            break;
+          case MOVED:
+            FilePath afterPath = change.getAfterRevision().getFile();
+            FilePath beforePath = change.getBeforeRevision().getFile();
+            added.add(afterPath);
+            if (!GitFileUtils.shouldIgnoreCaseChange(afterPath.getPath(), beforePath.getPath())) {
+              removed.add(beforePath);
+            }
+            break;
+          default:
+            throw new IllegalStateException("Unknown change type: " + change.getType());
+        }
+      }
+
+      try {
+        try {
+          Set<FilePath> files = new HashSet<FilePath>();
+          files.addAll(added);
+          files.addAll(removed);
+          commit(myProject, root, files, messageFile, myNextCommitAuthor, myNextCommitAmend, myNextCommitAuthorDate);
+        }
+        catch (VcsException ex) {
+          PartialOperation partialOperation = isMergeCommit(ex);
+          if (partialOperation == PartialOperation.NONE) {
+            throw ex;
+          }
+          if (!mergeCommit(myProject, root, added, removed, messageFile, myNextCommitAuthor, exceptions, partialOperation)) {
+            throw ex;
+          }
+        }
+      }
+      catch (VcsException e) {
+        exceptions.add(cleanupExceptionText(e));
+      }
+      finally {
+        if (!messageFile.delete()) {
+          log.warn("Failed to remove temporary file: " + messageFile);
+        }
       }
     }
     if (myNextCommitIsPushed != null && myNextCommitIsPushed.booleanValue() && exceptions.isEmpty()) {
