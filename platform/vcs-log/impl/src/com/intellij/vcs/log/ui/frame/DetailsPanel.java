@@ -50,7 +50,6 @@ import com.intellij.vcs.log.data.VisiblePack;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.render.VcsRefPainter;
 import com.intellij.vcs.log.util.VcsUserUtil;
-import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -79,10 +78,10 @@ class DetailsPanel extends JPanel {
   private static final int MAX_ROWS = 50;
 
   @NotNull private final VcsLogData myLogData;
-  @NotNull private final VcsLogGraphTable myGraphTable;
 
   @NotNull private final JScrollPane myScrollPane;
   @NotNull private final JPanel myMainContentPanel;
+  @NotNull private final StatusText myEmptyText;
 
   @NotNull private final JBLoadingPanel myLoadingPanel;
   @NotNull private final VcsLogColorManager myColorManager;
@@ -91,15 +90,11 @@ class DetailsPanel extends JPanel {
   @NotNull private List<Integer> mySelection = ContainerUtil.emptyList();
   @NotNull private Set<VcsFullCommitDetails> myCommitDetails = Collections.emptySet();
 
-  private final StatusText myEmptyText;
-
   DetailsPanel(@NotNull VcsLogData logData,
-               @NotNull VcsLogGraphTable graphTable,
                @NotNull VcsLogColorManager colorManager,
                @NotNull VisiblePack initialDataPack,
                @NotNull Disposable parent) {
     myLogData = logData;
-    myGraphTable = graphTable;
     myColorManager = colorManager;
     myDataPack = initialDataPack;
 
@@ -184,47 +179,15 @@ class DetailsPanel extends JPanel {
     myDataPack = dataPack;
   }
 
-  public void selectionChanged(int[] selection) {
-    myLoadingPanel.stopLoading();
-    if (selection.length < 1) {
-      myEmptyText.setText("No commits selected");
-      myMainContentPanel.removeAll();
-      mySelection = ContainerUtil.emptyList();
-      return;
-    }
-
-    rebuildCommitPanels(selection);
-    updateCommitDetails(true);
-  }
-
-  public void detailsChanged() {
-    myLoadingPanel.stopLoading();
-    updateCommitDetails(true);
+  public void installCommitSelectionListener(@NotNull VcsLogGraphTable graphTable) {
+    graphTable.getSelectionModel().addListSelectionListener(new CommitSelectionListenerForDetails(graphTable));
   }
 
   public void branchesChanged() {
-    updateCommitDetails(false);
-  }
-
-  private void updateCommitDetails(boolean requestBranches) {
-    Set<VcsFullCommitDetails> newCommitDetails = ContainerUtil.newHashSet();
     for (int i = 0; i < mySelection.size(); i++) {
-      int row = mySelection.get(i);
-      VcsFullCommitDetails commitData = myGraphTable.getModel().getFullDetails(row);
       CommitPanel commitPanel = getCommitPanel(i);
-      commitPanel.setCommit(commitData, requestBranches);
-      if (commitData instanceof LoadingDetails) {
-        myLoadingPanel.startLoading();
-      }
-      else {
-        newCommitDetails.add(commitData);
-      }
+      commitPanel.updateBranches();
     }
-
-    if (!ContainerUtil.intersects(myCommitDetails, newCommitDetails)) {
-      myScrollPane.getVerticalScrollBar().setValue(0);
-    }
-    myCommitDetails = newCommitDetails;
   }
 
   private void rebuildCommitPanels(int[] selection) {
@@ -282,7 +245,6 @@ class DetailsPanel extends JPanel {
     @NotNull private final ReferencesPanel myReferencesPanel;
     @NotNull private final DataPanel myDataPanel;
     @Nullable private VcsFullCommitDetails myCommit;
-    @Nullable private List<String> myBranches;
 
     public CommitPanel() {
       setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
@@ -298,7 +260,7 @@ class DetailsPanel extends JPanel {
       add(myDataPanel);
     }
 
-    public void setCommit(@NotNull VcsFullCommitDetails commitData, boolean requestBranches) {
+    public void setCommit(@NotNull VcsFullCommitDetails commitData) {
       if (!Comparing.equal(myCommit, commitData)) {
         if (commitData instanceof LoadingDetails) {
           myDataPanel.setData(null);
@@ -313,21 +275,25 @@ class DetailsPanel extends JPanel {
         myCommit = commitData;
       }
 
-      List<String> branches;
-      if (!(commitData instanceof LoadingDetails) && requestBranches) {
+      List<String> branches = null;
+      if (!(commitData instanceof LoadingDetails)) {
         branches = myLogData.getContainingBranchesGetter().requestContainingBranches(commitData.getRoot(), commitData.getId());
       }
-      else {
-        branches = myLogData.getContainingBranchesGetter().getContainingBranchesFromCache(commitData.getRoot(), commitData.getId());
-      }
-
-      if (!Comparing.equal(myCommit, commitData) || myBranches != branches) {
-        myDataPanel.setBranches(branches);
-        myBranches = branches;
-      }
+      myDataPanel.setBranches(branches);
 
       myDataPanel.update();
       revalidate();
+    }
+
+    public void updateBranches() {
+      if (myCommit != null) {
+        myDataPanel
+          .setBranches(myLogData.getContainingBranchesGetter().getContainingBranchesFromCache(myCommit.getRoot(), myCommit.getId()));
+      }
+      else {
+        myDataPanel.setBranches(null);
+      }
+      myDataPanel.update();
     }
 
     @NotNull
@@ -686,6 +652,45 @@ class DetailsPanel extends JPanel {
     @Override
     public Dimension getPreferredSize() {
       return myRefPainter.getSize(myReference, this);
+    }
+  }
+
+  private class CommitSelectionListenerForDetails extends CommitSelectionListener {
+    public CommitSelectionListenerForDetails(VcsLogGraphTable graphTable) {
+      super(DetailsPanel.this.myLogData, graphTable, DetailsPanel.this.myLoadingPanel);
+    }
+
+    @Override
+    protected void onDetailsLoaded(@NotNull List<VcsFullCommitDetails> detailsList) {
+      Set<VcsFullCommitDetails> newCommitDetails = ContainerUtil.newHashSet(detailsList);
+      for (int i = 0; i < mySelection.size(); i++) {
+        CommitPanel commitPanel = getCommitPanel(i);
+        commitPanel.setCommit(detailsList.get(i));
+      }
+
+      if (!ContainerUtil.intersects(myCommitDetails, newCommitDetails)) {
+        myScrollPane.getVerticalScrollBar().setValue(0);
+      }
+      myCommitDetails = newCommitDetails;
+    }
+
+    @Override
+    protected void onSelection(int[] selection) {
+      rebuildCommitPanels(selection);
+    }
+
+    @Override
+    protected void onEmptySelection() {
+      myEmptyText.setText("No commits selected");
+      myMainContentPanel.removeAll();
+      mySelection = ContainerUtil.emptyList();
+      myCommitDetails = Collections.emptySet();
+    }
+
+    @NotNull
+    @Override
+    protected List<Integer> getSelectionToLoad() {
+      return mySelection;
     }
   }
 }

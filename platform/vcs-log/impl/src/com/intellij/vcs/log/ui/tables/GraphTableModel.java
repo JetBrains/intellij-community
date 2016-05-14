@@ -217,7 +217,7 @@ public class GraphTableModel extends AbstractTableModel {
   }
 
   @NotNull
-  public List<Integer> convertToHashesAndRoots(@NotNull List<Integer> rows) {
+  public List<Integer> convertToCommitIds(@NotNull List<Integer> rows) {
     return ContainerUtil.map(rows, new NotNullFunction<Integer, Integer>() {
       @NotNull
       @Override

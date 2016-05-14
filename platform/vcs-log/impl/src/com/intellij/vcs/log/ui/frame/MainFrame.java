@@ -3,8 +3,6 @@ package com.intellij.vcs.log.ui.frame;
 import com.google.common.primitives.Ints;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
@@ -20,7 +18,6 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AsyncProcessIcon;
@@ -45,8 +42,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
@@ -72,7 +67,6 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   @NotNull private final SearchTextField myTextFilter;
 
   @NotNull private Runnable myContainingBranchesListener;
-  @NotNull private Runnable myFullDetailsLoadedListener;
   @NotNull private Runnable myMiniDetailsLoadedListener;
 
   public MainFrame(@NotNull VcsLogData logData,
@@ -91,7 +85,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     myGraphTable = new VcsLogGraphTable(ui, logData, initialDataPack);
     myBranchesPanel = new BranchesPanel(logData, ui, initialDataPack.getRefs());
     setBranchesPanelVisible(uiProperties.isShowBranchesPanel());
-    myDetailsPanel = new DetailsPanel(logData, myGraphTable, ui.getColorManager(), initialDataPack, this);
+    myDetailsPanel = new DetailsPanel(logData, ui.getColorManager(), initialDataPack, this);
 
     myChangesBrowser = new RepositoryChangesBrowser(project, null, Collections.<Change>emptyList(), null);
     myChangesBrowser.getViewer().setScrollPaneBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
@@ -101,11 +95,8 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     myChangesLoadingPane = new JBLoadingPanel(new BorderLayout(), this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
     myChangesLoadingPane.add(myChangesBrowser);
 
-    myGraphTable.getSelectionModel().addListSelectionListener(new CommitSelectionListener());
-    myGraphTable.getSelectionModel().addListSelectionListener(event -> {
-      if (event != null && event.getValueIsAdjusting()) return;
-      myDetailsPanel.selectionChanged(myGraphTable.getSelectedRows());
-    });
+    myGraphTable.getSelectionModel().addListSelectionListener(new CommitSelectionListenerForDiff());
+    myDetailsPanel.installCommitSelectionListener(myGraphTable);
     updateWhenDetailsAreLoaded();
 
     myTextFilter = myFilterUi.createTextFilter();
@@ -154,13 +145,11 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       myGraphTable.initColumnSize();
       myGraphTable.repaint();
     };
-    myFullDetailsLoadedListener = myDetailsPanel::detailsChanged;
     myContainingBranchesListener = () -> {
       myDetailsPanel.branchesChanged();
       myGraphTable.repaint(); // we may need to repaint highlighters
     };
     myLogData.getMiniDetailsGetter().addDetailsLoadedListener(myMiniDetailsLoadedListener);
-    myLogData.getCommitDetailsGetter().addDetailsLoadedListener(myFullDetailsLoadedListener);
     myLogData.getContainingBranchesGetter().addTaskCompletedListener(myContainingBranchesListener);
   }
 
@@ -323,7 +312,6 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   @Override
   public void dispose() {
     myLogData.getMiniDetailsGetter().removeDetailsLoadedListener(myMiniDetailsLoadedListener);
-    myLogData.getCommitDetailsGetter().removeDetailsLoadedListener(myFullDetailsLoadedListener);
     myLogData.getContainingBranchesGetter().removeTaskCompletedListener(myContainingBranchesListener);
 
     myDetailsSplitter.dispose();
@@ -369,46 +357,33 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     }
   }
 
-  private class CommitSelectionListener implements ListSelectionListener {
-    @Nullable private ProgressIndicator myLastRequest;
+  private class CommitSelectionListenerForDiff extends CommitSelectionListener {
+    protected CommitSelectionListenerForDiff() {
+      super(myLogData, myGraphTable, myChangesLoadingPane);
+    }
 
     @Override
-    public void valueChanged(@Nullable ListSelectionEvent event) {
-      if (event != null && event.getValueIsAdjusting()) return;
-
-      if (myLastRequest != null) myLastRequest.cancel();
-      myLastRequest = null;
-
-      int rows = getGraphTable().getSelectedRowCount();
-      if (rows < 1) {
-        myChangesLoadingPane.stopLoading();
-        myChangesBrowser.getViewer().setEmptyText("No commits selected");
-        myChangesBrowser.setChangesToDisplay(Collections.<Change>emptyList());
+    protected void onDetailsLoaded(@NotNull List<VcsFullCommitDetails> detailsList) {
+      List<Change> changes = ContainerUtil.newArrayList();
+      List<VcsFullCommitDetails> detailsListReversed = ContainerUtil.reverse(detailsList);
+      for (VcsFullCommitDetails details : detailsListReversed) {
+        changes.addAll(details.getChanges());
       }
-      else {
-        myChangesBrowser.setChangesToDisplay(Collections.<Change>emptyList());
-        myChangesBrowser.getViewer().setEmptyText("");
-        myChangesLoadingPane.startLoading();
+      changes = CommittedChangesTreeBrowser.zipChanges(changes);
+      myChangesBrowser.setChangesToDisplay(changes);
+    }
 
-        final EmptyProgressIndicator indicator = new EmptyProgressIndicator();
-        myLastRequest = indicator;
-        myLog.requestSelectedDetails(new Consumer<List<VcsFullCommitDetails>>() {
-          @Override
-          public void consume(List<VcsFullCommitDetails> detailsList) {
-            if (myLastRequest == indicator && !(indicator.isCanceled())) {
-              myLastRequest = null;
-              List<Change> changes = ContainerUtil.newArrayList();
-              List<VcsFullCommitDetails> detailsListReversed = ContainerUtil.reverse(detailsList);
-              for (VcsFullCommitDetails details : detailsListReversed) {
-                changes.addAll(details.getChanges());
-              }
-              changes = CommittedChangesTreeBrowser.zipChanges(changes);
-              myChangesLoadingPane.stopLoading();
-              myChangesBrowser.setChangesToDisplay(changes);
-            }
-          }
-        }, indicator);
-      }
+    @Override
+    protected void onSelection(int[] selection) {
+      // just reset and wait for details to be loaded
+      myChangesBrowser.setChangesToDisplay(Collections.<Change>emptyList());
+      myChangesBrowser.getViewer().setEmptyText("");
+    }
+
+    @Override
+    protected void onEmptySelection() {
+      myChangesBrowser.getViewer().setEmptyText("No commits selected");
+      myChangesBrowser.setChangesToDisplay(Collections.<Change>emptyList());
     }
   }
 
