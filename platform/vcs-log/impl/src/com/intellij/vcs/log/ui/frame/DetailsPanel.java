@@ -49,6 +49,7 @@ import com.intellij.vcs.log.data.VisiblePack;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.render.VcsRefPainter;
 import com.intellij.vcs.log.util.VcsUserUtil;
+import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -88,7 +89,8 @@ class DetailsPanel extends JPanel {
   @NotNull private final VcsLogColorManager myColorManager;
 
   @NotNull private VisiblePack myDataPack;
-  @NotNull private Set<VcsFullCommitDetails> myCurrentCommitDetails = Collections.emptySet();
+  @NotNull private TIntArrayList mySelection = new TIntArrayList();
+  @NotNull private Set<VcsFullCommitDetails> myCommitDetails = Collections.emptySet();
 
   private final StatusText myEmptyText;
 
@@ -190,6 +192,7 @@ class DetailsPanel extends JPanel {
     if (rows.length < 1) {
       myEmptyText.setText("No commits selected");
       myMainContentPanel.removeAll();
+      mySelection = new TIntArrayList();
       return;
     }
 
@@ -207,10 +210,9 @@ class DetailsPanel extends JPanel {
   }
 
   private void updateCommitDetails(boolean requestBranches) {
-    int[] rows = myGraphTable.getSelectedRows();
     Set<VcsFullCommitDetails> newCommitDetails = ContainerUtil.newHashSet();
-    for (int i = 0; i < Math.min(rows.length, MAX_ROWS); i++) {
-      int row = rows[i];
+    for (int i = 0; i < mySelection.size(); i++) {
+      int row = mySelection.get(i);
       VcsFullCommitDetails commitData = myGraphTable.getModel().getFullDetails(row);
       CommitPanel commitPanel = getCommitPanel(i);
       commitPanel.setCommit(commitData, requestBranches);
@@ -222,10 +224,10 @@ class DetailsPanel extends JPanel {
       }
     }
 
-    if (!ContainerUtil.intersects(myCurrentCommitDetails, newCommitDetails)) {
+    if (!ContainerUtil.intersects(myCommitDetails, newCommitDetails)) {
       myScrollPane.getVerticalScrollBar().setValue(0);
     }
-    myCurrentCommitDetails = newCommitDetails;
+    myCommitDetails = newCommitDetails;
   }
 
   private void rebuildCommitPanels() {
@@ -263,6 +265,9 @@ class DetailsPanel extends JPanel {
     for (int i = myMainContentPanel.getComponentCount() - 1; i >= 0; i--) {
       ((JComponent)myMainContentPanel.getComponent(i)).setAlignmentX(LEFT_ALIGNMENT);
     }
+
+    mySelection = new TIntArrayList();
+    mySelection.add(myGraphTable.getSelectedRows(), 0, requiredCount);
 
     repaint();
   }
