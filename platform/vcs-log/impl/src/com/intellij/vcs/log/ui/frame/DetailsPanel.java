@@ -15,6 +15,7 @@
  */
 package com.intellij.vcs.log.ui.frame;
 
+import com.google.common.primitives.Ints;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -65,10 +66,8 @@ import javax.swing.text.Position;
 import java.awt.*;
 import java.io.IOException;
 import java.io.StringWriter;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author Kirill Likhodedov
@@ -89,7 +88,7 @@ class DetailsPanel extends JPanel {
   @NotNull private final VcsLogColorManager myColorManager;
 
   @NotNull private VisiblePack myDataPack;
-  @NotNull private TIntArrayList mySelection = new TIntArrayList();
+  @NotNull private List<Integer> mySelection = ContainerUtil.emptyList();
   @NotNull private Set<VcsFullCommitDetails> myCommitDetails = Collections.emptySet();
 
   private final StatusText myEmptyText;
@@ -185,18 +184,16 @@ class DetailsPanel extends JPanel {
     myDataPack = dataPack;
   }
 
-  public void selectionChanged() {
-    int[] rows = myGraphTable.getSelectedRows();
-
+  public void selectionChanged(int[] selection) {
     myLoadingPanel.stopLoading();
-    if (rows.length < 1) {
+    if (selection.length < 1) {
       myEmptyText.setText("No commits selected");
       myMainContentPanel.removeAll();
-      mySelection = new TIntArrayList();
+      mySelection = ContainerUtil.emptyList();
       return;
     }
 
-    rebuildCommitPanels();
+    rebuildCommitPanels(selection);
     updateCommitDetails(true);
   }
 
@@ -230,10 +227,10 @@ class DetailsPanel extends JPanel {
     myCommitDetails = newCommitDetails;
   }
 
-  private void rebuildCommitPanels() {
+  private void rebuildCommitPanels(int[] selection) {
     myEmptyText.setText("");
 
-    int selectionLength = myGraphTable.getSelectedRows().length;
+    int selectionLength = selection.length;
 
     // for each commit besides the first there are two components: Separator and CommitPanel
     int existingCount = (myMainContentPanel.getComponentCount() + 1) / 2;
@@ -266,9 +263,7 @@ class DetailsPanel extends JPanel {
       ((JComponent)myMainContentPanel.getComponent(i)).setAlignmentX(LEFT_ALIGNMENT);
     }
 
-    mySelection = new TIntArrayList();
-    mySelection.add(myGraphTable.getSelectedRows(), 0, requiredCount);
-
+    mySelection = Ints.asList(Arrays.copyOf(selection, requiredCount));
     repaint();
   }
 
