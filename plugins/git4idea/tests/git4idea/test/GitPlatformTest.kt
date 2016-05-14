@@ -76,7 +76,7 @@ abstract class GitPlatformTest : VcsPlatformTest() {
   override fun getDebugLogCategories(): Collection<String> {
     return super.getDebugLogCategories().plus(listOf("#" + Executor::class.java.name,
                                                      "#" + GitHandler::class.java.name,
-                                                     GitHandler::class.java.name))
+                                                     "#output." + GitHandler::class.java.name))
   }
 
   protected open fun createRepository(rootDir: String): GitRepository {
