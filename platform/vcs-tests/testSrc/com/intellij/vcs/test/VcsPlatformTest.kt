@@ -39,7 +39,7 @@ abstract class VcsPlatformTest : PlatformTestCase() {
 
   private lateinit var myTestStartedIndicator: String
 
-  protected lateinit var myChangeListManager: ChangeListManager
+  protected lateinit var changeListManager: ChangeListManager
 
   @Throws(Exception::class)
   override fun setUp() {
@@ -56,7 +56,7 @@ abstract class VcsPlatformTest : PlatformTestCase() {
     myProjectRoot = myProject.baseDir
     myProjectPath = myProjectRoot.path
 
-    myChangeListManager = ChangeListManager.getInstance(myProject)
+    changeListManager = ChangeListManager.getInstance(myProject)
   }
 
   @Throws(Exception::class)
