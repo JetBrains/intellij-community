@@ -7,7 +7,7 @@ import com.intellij.psi.tree.IElementType;
 
 %class _PropertiesLexer
 %implements FlexLexer
-%unicode 2.0
+%unicode
 %function advance
 %type IElementType
 

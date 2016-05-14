@@ -13,7 +13,7 @@ import java.util.EnumSet;
 
 %class _RegExLexer
 %implements FlexLexer
-%unicode 2.0
+%unicode
 %function advance
 %type IElementType
 

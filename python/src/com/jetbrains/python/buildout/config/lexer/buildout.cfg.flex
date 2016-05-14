@@ -9,7 +9,7 @@ import com.jetbrains.python.buildout.config.BuildoutCfgTokenTypes;
 
 %class _BuildoutCfgFlexLexer
 %implements FlexLexer, BuildoutCfgTokenTypes
-%unicode 2.0
+%unicode
 %public
 
 %function advance

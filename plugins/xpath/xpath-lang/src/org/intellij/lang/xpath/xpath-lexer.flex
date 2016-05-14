@@ -10,7 +10,7 @@ import com.intellij.psi.tree.IElementType;
 %class _XPathLexer
 %abstract
 %implements FlexLexer
-%unicode 2.0
+%unicode
 %function advance
 %type IElementType
 

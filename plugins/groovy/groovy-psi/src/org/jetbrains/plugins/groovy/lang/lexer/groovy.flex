@@ -25,7 +25,7 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes;
 
 %class _GroovyLexer
 %implements FlexLexer
-%unicode 2.0
+%unicode
 %public
 
 %function advance

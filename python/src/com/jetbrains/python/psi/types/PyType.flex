@@ -10,7 +10,7 @@ import static com.jetbrains.python.psi.types.PyTypeTokenTypes.*;
 
 %class _PyTypeLexer
 %implements FlexLexer
-%unicode 2.0
+%unicode
 %public
 
 %function advance

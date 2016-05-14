@@ -10,7 +10,7 @@ import com.intellij.openapi.util.text.StringUtil;
 
 %class _PythonLexer
 %implements FlexLexer
-%unicode 2.0
+%unicode
 %function advance
 %type IElementType
 

@@ -9,7 +9,7 @@ import com.jetbrains.rest.RestTokenTypes;
 
 %class _RestFlexLexer
 %implements FlexLexer, RestTokenTypes
-%unicode 2.0
+%unicode
 %public
 %ignorecase
 %function advance

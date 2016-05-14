@@ -9,7 +9,7 @@ import org.jetbrains.yaml.YAMLTokenTypes;
 
 %class _YAMLLexer
 %implements FlexLexer, YAMLTokenTypes
-%unicode 2.0
+%unicode
 %public
 
 %function advance

@@ -12,7 +12,7 @@ import com.intellij.psi.tree.IElementType;
    }
 %}
 
-%unicode 2.0
+%unicode
 %class _TemplateTextLexer
 %implements FlexLexer
 %function advance

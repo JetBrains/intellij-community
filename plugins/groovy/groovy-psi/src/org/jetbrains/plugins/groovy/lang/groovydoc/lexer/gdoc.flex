@@ -23,7 +23,7 @@ import com.intellij.psi.tree.IElementType;
 
 %class _GroovyDocLexer
 %implements FlexLexer
-%unicode 2.0
+%unicode
 %public
 
 %function advance

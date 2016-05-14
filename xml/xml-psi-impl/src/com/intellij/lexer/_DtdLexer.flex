@@ -16,7 +16,7 @@ import com.intellij.psi.xml.*;
    }
 %}
 
-%unicode 2.0
+%unicode
 %class _DtdLexer
 %public
 %implements FlexLexer

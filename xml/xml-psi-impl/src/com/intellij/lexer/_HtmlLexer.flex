@@ -7,7 +7,7 @@ import com.intellij.psi.xml.*;
 
 %%
 
-%unicode 2.0
+%unicode
 
 %{
   public _HtmlLexer() {
