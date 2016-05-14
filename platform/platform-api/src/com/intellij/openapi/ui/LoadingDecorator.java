@@ -23,6 +23,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ui.Animator;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -45,8 +46,12 @@ public class LoadingDecorator {
   }
 
   public LoadingDecorator(JComponent content, Disposable parent, int startDelayMs, boolean useMinimumSize) {
+    this(content, parent, startDelayMs, useMinimumSize, new AsyncProcessIcon.Big("Loading"));
+  }
+
+  public LoadingDecorator(JComponent content, Disposable parent, int startDelayMs, boolean useMinimumSize, @NotNull AsyncProcessIcon icon) {
     myPane = new MyLayeredPane(useMinimumSize ? content : null);
-    myLoadingLayer = new LoadingLayer();
+    myLoadingLayer = new LoadingLayer(icon);
     myDelay = startDelayMs;
     myStartAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, parent);
 
@@ -140,16 +145,17 @@ public class LoadingDecorator {
     private BufferedImage mySnapshot;
     private Color mySnapshotBg;
 
-    private final AsyncProcessIcon myProgress = new AsyncProcessIcon.Big("Loading");
+    private final AsyncProcessIcon myProgress;
 
     private boolean myVisible;
 
     private float myCurrentAlpha;
     private final NonOpaquePanel myTextComponent;
 
-    private LoadingLayer() {
+    private LoadingLayer(@NotNull AsyncProcessIcon processIcon) {
       setOpaque(false);
       setVisible(false);
+      myProgress = processIcon;
       myProgress.setOpaque(false);
       myTextComponent = customizeLoadingLayer(this, myText, myProgress);
       myProgress.suspend();

@@ -19,6 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.LoadingDecorator;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.UIUtil;
@@ -42,17 +43,21 @@ public class JBLoadingPanel extends JPanel {
   }
 
   public JBLoadingPanel(@Nullable LayoutManager manager, @NotNull Disposable parent, int startDelayMs) {
-    super(new BorderLayout());
-    myPanel = manager == null ? new JPanel() : new JPanel(manager);
-    myPanel.setOpaque(false);
-    myDecorator = new LoadingDecorator(myPanel, parent, startDelayMs) {
+    this(manager, panel -> new LoadingDecorator(panel, parent, startDelayMs) {
       @Override
       protected NonOpaquePanel customizeLoadingLayer(JPanel parent, JLabel text, AsyncProcessIcon icon) {
         final NonOpaquePanel panel = super.customizeLoadingLayer(parent, text, icon);
         customizeStatusText(text);
         return panel;
       }
-    };
+    });
+  }
+
+  public JBLoadingPanel(@Nullable LayoutManager manager, @NotNull NotNullFunction<JPanel, LoadingDecorator> createLoadingDecorator) {
+    super(new BorderLayout());
+    myPanel = manager == null ? new JPanel() : new JPanel(manager);
+    myPanel.setOpaque(false);
+    myDecorator = createLoadingDecorator.fun(myPanel);
     super.add(myDecorator.getComponent(), BorderLayout.CENTER);
   }
 
@@ -83,7 +88,7 @@ public class JBLoadingPanel extends JPanel {
       listener.onLoadingStart();
     }
   }
-  
+
   public void addListener(@NotNull JBLoadingPanelListener listener) {
     myListeners.add(listener);
   }

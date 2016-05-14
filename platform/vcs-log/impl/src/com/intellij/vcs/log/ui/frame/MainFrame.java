@@ -113,8 +113,22 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     toolbarsAndTable.add(toolbars, BorderLayout.NORTH);
     toolbarsAndTable.add(myDetailsSplitter, BorderLayout.CENTER);
 
+    ProgressStripe progressStripe =
+      new ProgressStripe(toolbarsAndTable, toolbars, this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
+    myLogData.getProgress().addProgressIndicatorListener(new VcsLogProgress.ProgressListener() {
+      @Override
+      public void progressStarted() {
+        progressStripe.startLoading();
+      }
+
+      @Override
+      public void progressStopped() {
+        progressStripe.stopLoading();
+      }
+    }, this);
+
     myChangesBrowserSplitter = new OnePixelSplitter(false, 0.7f);
-    myChangesBrowserSplitter.setFirstComponent(toolbarsAndTable);
+    myChangesBrowserSplitter.setFirstComponent(progressStripe);
     myChangesBrowserSplitter.setSecondComponent(myChangesLoadingPane);
 
     setLayout(new BorderLayout());
