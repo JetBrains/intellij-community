@@ -17,8 +17,6 @@ package com.intellij.vcs.log.ui.frame;
 
 import com.google.common.primitives.Ints;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.ui.OnePixelDivider;
 import com.intellij.openapi.util.text.StringUtil;
@@ -28,10 +26,8 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VisiblePack;
@@ -95,7 +91,7 @@ class DetailsPanel extends JPanel {
 
       @Override
       public Color getBackground() {
-        return getDetailsBackground();
+        return CommitPanel.getCommitDetailsBackground();
       }
 
       @Override
@@ -124,7 +120,7 @@ class DetailsPanel extends JPanel {
     myLoadingPanel = new JBLoadingPanel(new BorderLayout(), parent, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS) {
       @Override
       public Color getBackground() {
-        return getDetailsBackground();
+        return CommitPanel.getCommitDetailsBackground();
       }
     };
     myLoadingPanel.add(myScrollPane);
@@ -135,18 +131,13 @@ class DetailsPanel extends JPanel {
     myEmptyText.setText("Commit details");
   }
 
-  @NotNull
-  public static String formatDateTime(long time) {
-    return " on " + DateFormatUtil.formatDate(time) + " at " + DateFormatUtil.formatTime(time);
-  }
-
   @Override
   public Color getBackground() {
-    return getDetailsBackground();
+    return CommitPanel.getCommitDetailsBackground();
   }
 
-  public static Color getDetailsBackground() {
-    return UIUtil.getTableBackground();
+  public void installCommitSelectionListener(@NotNull VcsLogGraphTable graphTable) {
+    graphTable.getSelectionModel().addListSelectionListener(new CommitSelectionListenerForDetails(graphTable));
   }
 
   void updateDataPack(@NotNull VisiblePack dataPack) {
@@ -156,10 +147,6 @@ class DetailsPanel extends JPanel {
       CommitPanel commitPanel = getCommitPanel(i);
       commitPanel.setDataPack(dataPack);
     }
-  }
-
-  public void installCommitSelectionListener(@NotNull VcsLogGraphTable graphTable) {
-    graphTable.getSelectionModel().addListSelectionListener(new CommitSelectionListenerForDetails(graphTable));
   }
 
   public void branchesChanged() {
@@ -192,7 +179,7 @@ class DetailsPanel extends JPanel {
     if (selectionLength > MAX_ROWS) {
       myMainContentPanel.add(new SeparatorComponent(0, OnePixelDivider.BACKGROUND, null));
       JBLabel label = new JBLabel("(showing " + MAX_ROWS + " of " + selectionLength + " selected commits)");
-      label.setFont(getDataPanelFont());
+      label.setFont(CommitPanel.getCommitDetailsFont());
       label.setBorder(JBUI.Borders.empty(VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH / 2,
                                          myColorManager.isMultipleRoots()
                                          ? VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH +
@@ -210,13 +197,8 @@ class DetailsPanel extends JPanel {
   }
 
   @NotNull
-  public CommitPanel getCommitPanel(int index) {
+  private CommitPanel getCommitPanel(int index) {
     return (CommitPanel)myMainContentPanel.getComponent(2 * index);
-  }
-
-  @NotNull
-  public static Font getDataPanelFont() {
-    return EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN);
   }
 
   private class CommitSelectionListenerForDetails extends CommitSelectionListener {
@@ -239,7 +221,7 @@ class DetailsPanel extends JPanel {
     }
 
     @Override
-    protected void onSelection(int[] selection) {
+    protected void onSelection(@NotNull int[] selection) {
       rebuildCommitPanels(selection);
     }
 

@@ -16,6 +16,8 @@
 package com.intellij.vcs.log.ui.frame;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
@@ -26,6 +28,7 @@ import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.Hash;
@@ -58,7 +61,6 @@ import java.util.List;
 class CommitPanel extends JBPanel {
   private static final Logger LOG = Logger.getInstance("Vcs.Log");
 
-  private static final String LINK_HREF = "show-hide-branches";
   public static final int BOTTOM_BORDER = 2;
 
   @NotNull private final VcsLogData myLogData;
@@ -144,25 +146,43 @@ class CommitPanel extends JBPanel {
       setBorder(new CompoundBorder(new MatteBorder(0, VcsLogGraphTable.ROOT_INDICATOR_COLORED_WIDTH, 0, 0, color),
                                    new MatteBorder(VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH / 2,
                                                    VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH, BOTTOM_BORDER, 0,
-                                                   new JBColor(DetailsPanel::getDetailsBackground))));
+                                                   new JBColor(CommitPanel::getCommitDetailsBackground))));
     }
   }
 
   @Override
   public Color getBackground() {
-    return DetailsPanel.getDetailsBackground();
+    return getCommitDetailsBackground();
   }
 
   public boolean isExpanded() {
     return myDataPanel.isExpanded();
   }
 
+  @NotNull
+  public static Font getCommitDetailsFont() {
+    return EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN);
+  }
+
+  @NotNull
+  public static Color getCommitDetailsBackground() {
+    return UIUtil.getTableBackground();
+  }
+
+  @NotNull
+  public static String formatDateTime(long time) {
+    return " on " + DateFormatUtil.formatDate(time) + " at " + DateFormatUtil.formatTime(time);
+  }
+
   private static class DataPanel extends JEditorPane {
-    private final Project myProject;
+    private static final int PER_ROW = 3;
+    private static final String LINK_HREF = "show-hide-branches";
+
+    @NotNull private final Project myProject;
     private final boolean myMultiRoot;
-    private String myMainText;
-    @Nullable
-    private List<String> myBranches;
+
+    @Nullable private String myMainText;
+    @Nullable private List<String> myBranches;
     private boolean myExpanded = false;
 
     DataPanel(@NotNull Project project, boolean multiRoot) {
@@ -207,12 +227,12 @@ class CommitPanel extends JBPanel {
 
     @NotNull
     private static String getHtmlWithFonts(@NotNull String input) {
-      return getHtmlWithFonts(input, DetailsPanel.getDataPanelFont().getStyle());
+      return getHtmlWithFonts(input, getCommitDetailsFont().getStyle());
     }
 
     @NotNull
     private static String getHtmlWithFonts(@NotNull String input, int style) {
-      return FontUtil.getHtmlWithFonts(input, style, DetailsPanel.getDataPanelFont());
+      return FontUtil.getHtmlWithFonts(input, style, getCommitDetailsFont());
     }
 
     void setBranches(@Nullable List<String> branches) {
@@ -231,7 +251,7 @@ class CommitPanel extends JBPanel {
       }
       else {
         setText("<html><head>" +
-                UIUtil.getCssFontDeclaration(DetailsPanel.getDataPanelFont()) +
+                UIUtil.getCssFontDeclaration(getCommitDetailsFont()) +
                 "</head><body>" +
                 myMainText +
                 "<br/>" +
@@ -251,7 +271,6 @@ class CommitPanel extends JBPanel {
       if (myBranches.isEmpty()) return "<i>Not in any branch</i>";
 
       if (myExpanded) {
-        int PER_ROW = 3;
         int rowCount = (int)Math.ceil((double)myBranches.size() / PER_ROW);
 
         int[] means = new int[PER_ROW - 1];
@@ -301,20 +320,20 @@ class CommitPanel extends JBPanel {
                builder.build();
       }
       else {
-        int TOTAL_MAX = 0;
+        int totalMax = 0;
         int charCount = 0;
         for (String b : myBranches) {
-          TOTAL_MAX++;
+          totalMax++;
           charCount += b.length();
           if (charCount >= 50) break;
         }
 
         String branchText;
-        if (myBranches.size() <= TOTAL_MAX) {
+        if (myBranches.size() <= totalMax) {
           branchText = StringUtil.join(myBranches, ", ");
         }
         else {
-          branchText = StringUtil.join(ContainerUtil.getFirstItems(myBranches, TOTAL_MAX), ", ") +
+          branchText = StringUtil.join(ContainerUtil.getFirstItems(myBranches, totalMax), ", ") +
                        "… <a href=\"" +
                        LINK_HREF +
                        "\"><i>(click to show all)</i></a>";
@@ -374,11 +393,11 @@ class CommitPanel extends JBPanel {
       long authorTime = commit.getAuthorTime();
       long commitTime = commit.getCommitTime();
 
-      String authorText = VcsUserUtil.getShortPresentation(commit.getAuthor()) + DetailsPanel.formatDateTime(authorTime);
+      String authorText = VcsUserUtil.getShortPresentation(commit.getAuthor()) + formatDateTime(authorTime);
       if (!VcsUserUtil.isSamePerson(commit.getAuthor(), commit.getCommitter())) {
         String commitTimeText;
         if (authorTime != commitTime) {
-          commitTimeText = DetailsPanel.formatDateTime(commitTime);
+          commitTimeText = formatDateTime(commitTime);
         }
         else {
           commitTimeText = "";
@@ -386,7 +405,7 @@ class CommitPanel extends JBPanel {
         authorText += " (committed by " + VcsUserUtil.getShortPresentation(commit.getCommitter()) + commitTimeText + ")";
       }
       else if (authorTime != commitTime) {
-        authorText += " (committed " + DetailsPanel.formatDateTime(commitTime) + ")";
+        authorText += " (committed " + formatDateTime(commitTime) + ")";
       }
       return authorText;
     }
@@ -413,7 +432,7 @@ class CommitPanel extends JBPanel {
 
     @Override
     public Color getBackground() {
-      return DetailsPanel.getDetailsBackground();
+      return getCommitDetailsBackground();
     }
 
     public boolean isExpanded() {
@@ -450,7 +469,7 @@ class CommitPanel extends JBPanel {
 
     @Override
     public Color getBackground() {
-      return DetailsPanel.getDetailsBackground();
+      return getCommitDetailsBackground();
     }
   }
 
@@ -471,7 +490,7 @@ class CommitPanel extends JBPanel {
 
     @Override
     public Color getBackground() {
-      return DetailsPanel.getDetailsBackground();
+      return getCommitDetailsBackground();
     }
 
     @Override

@@ -374,7 +374,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     }
 
     @Override
-    protected void onSelection(int[] selection) {
+    protected void onSelection(@NotNull int[] selection) {
       // just reset and wait for details to be loaded
       myChangesBrowser.setChangesToDisplay(Collections.<Change>emptyList());
       myChangesBrowser.getViewer().setEmptyText("");

@@ -81,7 +81,7 @@ public abstract class CommitSelectionListener implements ListSelectionListener {
   protected abstract void onDetailsLoaded(@NotNull List<VcsFullCommitDetails> detailsList);
 
   @CalledInAwt
-  protected abstract void onSelection(int[] selection);
+  protected abstract void onSelection(@NotNull int[] selection);
 
   @CalledInAwt
   protected abstract void onEmptySelection();
