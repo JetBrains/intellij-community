@@ -221,7 +221,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     boolean isFocused = isFocusOwner();
     Editor editor = myEditor;
     myEditor = createEditor();
-    releaseEditor(editor);
+    releaseEditor(editor, false);
     add(myEditor.getComponent(), BorderLayout.CENTER);
 
     validate();
@@ -313,7 +313,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     return super.isFocusOwner();
   }
 
-  void releaseEditor(@NotNull final Editor editor) {
+  void releaseEditor(@NotNull final Editor editor, boolean duringRemoveNotify) {
     if (myProject != null && myIsViewer) {
       final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
       if (psiFile != null) {
@@ -321,7 +321,18 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
       }
     }
 
-    remove(editor.getComponent());
+    if (duringRemoveNotify) {
+      // releasing an editor implies removing it from a component hierarchy
+      // invokeLater in required because releaseEditor() may be called from
+      // removeNotify(), so we need to let swing complete its removeNotify() chain
+      // and only then execute another removal from the hierarchy. Otherwise
+      // swing goes nuts because of nested removals and indices get corrupted
+      SwingUtilities.invokeLater(() -> remove(editor.getComponent()));
+      editor.getComponent().setVisible(false);
+    }
+    else {
+      remove(editor.getComponent());
+    }
 
     editor.getContentComponent().removeFocusListener(this);
 
@@ -345,7 +356,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
 
   @Override
   public void addNotify() {
-    releaseEditor();
+    releaseEditor(false);
 
     boolean isFocused = isFocusOwner();
 
@@ -372,26 +383,16 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
   @Override
   public void removeNotify() {
     super.removeNotify();
-    releaseEditor();
+    releaseEditor(true);
   }
 
-  private void releaseEditor() {
+  private void releaseEditor(boolean duringRemoveNotify) {
     if (myEditor == null) return;
-    
+
     final Editor editor = myEditor;
     myEditor = null;
-    
-    // releasing an editor implies removing it from a component hierarchy
-    // invokeLater in required because releaseEditor() may be called from
-    // removeNotify(), so we need to let swing complete its removeNotify() chain
-    // and only then execute another removal from the hierarchy. Otherwise
-    // swing goes nuts because of nested removals and indices get corrupted
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        releaseEditor(editor);
-      }
-    });
+
+    releaseEditor(editor, duringRemoveNotify);
   }
 
   @Override
@@ -569,7 +570,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
       if (editor == null) {
         return;
       }
-      releaseEditor(editor);
+      releaseEditor(editor, false);
       initEditor();
       revalidate();
     }
@@ -636,7 +637,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     }
 
     if (toReleaseEditor) {
-      releaseEditor();
+      releaseEditor(false);
       myPassivePreferredSize = size;
     }
 
