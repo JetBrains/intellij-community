@@ -24,6 +24,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
+import com.intellij.openapi.roots.JdkOrderEntry
 import com.intellij.openapi.roots.ModuleRootAdapter
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ProjectRootManager
@@ -35,6 +36,7 @@ import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotifications
 import com.intellij.ui.LightColors
 import java.awt.Color
+import java.util.*
 
 class LibrarySourceNotificationProvider(private val project: Project, notifications: EditorNotifications) :
     EditorNotifications.Provider<EditorNotificationPanel>() {
@@ -55,6 +57,11 @@ class LibrarySourceNotificationProvider(private val project: Project, notificati
     if (file.fileType is LanguageFileType && ProjectRootManager.getInstance(project).fileIndex.isInLibrarySource(file)) {
       val psiFile = PsiManager.getInstance(project).findFile(file)
       if (psiFile is PsiJavaFile) {
+        // Android Studio: don't warn if file is inside the Android SDK
+        if (isInAndroidSdk(psiFile)) {
+          return null
+        }
+
         val offender = psiFile.classes.find { differs(it) }
         if (offender != null) {
           val panel = ColoredNotificationPanel(LightColors.RED)
@@ -78,6 +85,26 @@ class LibrarySourceNotificationProvider(private val project: Project, notificati
     }
 
     return null
+  }
+
+  // This is a copy of AndroidFacet.isInAndroidSdk, but modified so we don't depend on the android plugin
+  // Instead we assume that anything inside a JDK that has "Android" in its name is inside the android sdk.
+  private fun isInAndroidSdk(file: PsiJavaFile): Boolean {
+    val virtualFile = file.virtualFile ?: return false
+
+    val projectFileIndex = ProjectRootManager.getInstance(file.project).fileIndex
+    val entries = projectFileIndex.getOrderEntriesForFile(virtualFile)
+
+    for (entry in entries) {
+      if (entry is JdkOrderEntry) {
+        val sdk = entry.jdk
+
+        if (sdk != null && sdk.sdkType.name.toLowerCase(Locale.US).contains("android")) {
+          return true
+        }
+      }
+    }
+    return false
   }
 
   private fun differs(clazz: PsiClass): Boolean {
