@@ -133,12 +133,41 @@ class _JavaDocLexer implements FlexLexer {
     "\66\4\50\0\15\4\66\0\2\4\30\0\3\4\31\0\1\4\6\0"+
     "\5\4\1\0\207\4\7\0\1\4\34\0\32\4\4\0\1\4\1\0"+
     "\32\4\13\0\131\4\3\0\6\4\2\0\6\4\2\0\6\4\2\0"+
-    "\3\4\3\0\2\4\3\0\2\4\31\0";
+    "\3\4\3\0\2\4\3\0\2\4\31\0\14\4\1\0\32\4\1\0"+
+    "\23\4\1\0\2\4\1\0\17\4\2\0\16\4\42\0\173\4\105\0"+
+    "\65\4\u010b\0\35\4\3\0\61\4\57\0\37\4\21\0\33\4\65\0"+
+    "\36\4\2\0\44\4\4\0\10\4\1\0\5\4\52\0\236\4\u0362\0"+
+    "\6\4\2\0\1\4\1\0\54\4\1\0\2\4\3\0\1\4\2\0"+
+    "\27\4\252\0\26\4\12\0\32\4\106\0\70\4\6\0\2\4\100\0"+
+    "\1\4\17\0\4\4\1\0\3\4\1\0\33\4\54\0\35\4\203\0"+
+    "\66\4\12\0\26\4\12\0\23\4\215\0\111\4\u03ba\0\65\4\113\0"+
+    "\55\4\40\0\31\4\32\0\44\4\134\0\60\4\16\0\4\4\u04bb\0"+
+    "\53\4\u0955\0\u036f\4\221\0\143\4\u0b9d\0\u042f\4\u33d1\0\u0239\4\u04c7\0"+
+    "\105\4\13\0\1\4\102\0\15\4\u4060\0\2\4\u23fe\0\125\4\1\0"+
+    "\107\4\1\0\2\4\2\0\1\4\2\0\2\4\2\0\4\4\1\0"+
+    "\14\4\1\0\1\4\1\0\7\4\1\0\101\4\1\0\4\4\2\0"+
+    "\10\4\1\0\7\4\1\0\34\4\1\0\4\4\1\0\5\4\1\0"+
+    "\1\4\3\0\7\4\1\0\u0154\4\2\0\31\4\1\0\31\4\1\0"+
+    "\37\4\1\0\31\4\1\0\37\4\1\0\31\4\1\0\37\4\1\0"+
+    "\31\4\1\0\37\4\1\0\31\4\1\0\10\4\u1634\0\4\4\1\0"+
+    "\33\4\1\0\2\4\1\0\1\4\2\0\1\4\1\0\12\4\1\0"+
+    "\4\4\1\0\1\4\1\0\1\4\6\0\1\4\4\0\1\4\1\0"+
+    "\1\4\1\0\1\4\1\0\3\4\1\0\2\4\1\0\1\4\2\0"+
+    "\1\4\1\0\1\4\1\0\1\4\1\0\1\4\1\0\1\4\1\0"+
+    "\2\4\1\0\1\4\2\0\4\4\1\0\7\4\1\0\4\4\1\0"+
+    "\4\4\1\0\1\4\1\0\12\4\1\0\21\4\5\0\3\4\1\0"+
+    "\5\4\1\0\21\4\u1144\0\ua6d7\4\51\0\u1035\4\13\0\336\4\u3fe2\0"+
+    "\u021e\4\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\u05f0\0";
 
   /** 
    * Translates characters to character classes
    */
-  private static final char [] ZZ_CMAP = zzUnpackCMap(ZZ_CMAP_PACKED);
+  private static final int ZZ_SX = 0x0700;
+  private static final int ZZ_MX = 0x10000;
+  private static final int ZZ_LX = 0x110000;
+  private static char [] ZZ_CMAP = zzUnpackCMap(ZZ_CMAP_PACKED, ZZ_SX);
+  private static class M { static final char [] MAP = zzUnpackCMap(ZZ_CMAP_PACKED, ZZ_MX); }
+  private static class L { static final char [] MAP = zzUnpackCMap(ZZ_CMAP_PACKED, ZZ_LX); }
 
   /** 
    * Translates DFA states to action switch labels.
@@ -388,14 +417,14 @@ class _JavaDocLexer implements FlexLexer {
    * @param packed   the packed character translation table
    * @return         the unpacked character translation table
    */
-  private static char [] zzUnpackCMap(String packed) {
-    char [] map = new char[0x10000];
+  private static char [] zzUnpackCMap(String packed, int limit) {
+    char [] map = new char[limit];
     int i = 0;  /* index in packed string  */
     int j = 0;  /* index in unpacked array */
-    while (i < 1672) {
+    while (i < 2172 && j < limit) {
       int  count = packed.charAt(i++);
       char value = packed.charAt(i++);
-      do map[j++] = value; while (--count > 0);
+      do map[j++] = value; while (--count > 0 && j < limit);
     }
     return map;
   }
@@ -590,6 +619,7 @@ class _JavaDocLexer implements FlexLexer {
               zzCurrentPosL += Character.charCount(zzInput);
             }
           }
+          if (zzInput >= zzCMapL.length) ZZ_CMAP = zzCMapL = zzInput >= ZZ_MX ? L.MAP : M.MAP;
           int zzNext = zzTransL[ zzRowMapL[zzState] + zzCMapL[zzInput] ];
           if (zzNext == -1) break zzForAction;
           zzState = zzNext;

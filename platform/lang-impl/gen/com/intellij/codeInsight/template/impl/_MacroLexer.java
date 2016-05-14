@@ -146,12 +146,46 @@ class _MacroLexer implements FlexLexer {
     "\30\0\3\1\31\0\1\1\6\0\5\1\1\0\207\1\2\0\1\2"+
     "\4\0\1\1\13\0\12\2\7\0\32\1\4\0\1\1\1\0\32\1"+
     "\13\0\131\1\3\0\6\1\2\0\6\1\2\0\6\1\2\0\3\1"+
-    "\3\0\2\1\3\0\2\1\22\0\3\2\4\0";
+    "\3\0\2\1\3\0\2\1\22\0\3\2\4\0\14\1\1\0\32\1"+
+    "\1\0\23\1\1\0\2\1\1\0\17\1\2\0\16\1\42\0\173\1"+
+    "\105\0\65\1\210\0\1\2\202\0\35\1\3\0\61\1\57\0\37\1"+
+    "\21\0\33\1\65\0\36\1\2\0\44\1\4\0\10\1\1\0\5\1"+
+    "\52\0\236\1\2\0\12\2\u0356\0\6\1\2\0\1\1\1\0\54\1"+
+    "\1\0\2\1\3\0\1\1\2\0\27\1\252\0\26\1\12\0\32\1"+
+    "\106\0\70\1\6\0\2\1\100\0\1\1\3\2\1\0\2\2\5\0"+
+    "\4\2\4\1\1\0\3\1\1\0\33\1\4\0\3\2\4\0\1\2"+
+    "\40\0\35\1\203\0\66\1\12\0\26\1\12\0\23\1\215\0\111\1"+
+    "\u03b7\0\3\2\65\1\17\2\37\0\12\2\20\0\3\2\55\1\13\2"+
+    "\2\0\1\2\22\0\31\1\7\0\12\2\6\0\3\2\44\1\16\2"+
+    "\1\0\12\2\100\0\3\2\60\1\16\2\4\1\13\0\12\2\u04a6\0"+
+    "\53\1\15\2\10\0\12\2\u0936\0\u036f\1\221\0\143\1\u0b9d\0\u042f\1"+
+    "\u33d1\0\u0239\1\u04c7\0\105\1\13\0\1\1\56\2\20\0\4\2\15\1"+
+    "\u4060\0\2\1\u2163\0\5\2\3\0\26\2\2\0\7\2\36\0\4\2"+
+    "\224\0\3\2\u01bb\0\125\1\1\0\107\1\1\0\2\1\2\0\1\1"+
+    "\2\0\2\1\2\0\4\1\1\0\14\1\1\0\1\1\1\0\7\1"+
+    "\1\0\101\1\1\0\4\1\2\0\10\1\1\0\7\1\1\0\34\1"+
+    "\1\0\4\1\1\0\5\1\1\0\1\1\3\0\7\1\1\0\u0154\1"+
+    "\2\0\31\1\1\0\31\1\1\0\37\1\1\0\31\1\1\0\37\1"+
+    "\1\0\31\1\1\0\37\1\1\0\31\1\1\0\37\1\1\0\31\1"+
+    "\1\0\10\1\2\0\62\2\u1600\0\4\1\1\0\33\1\1\0\2\1"+
+    "\1\0\1\1\2\0\1\1\1\0\12\1\1\0\4\1\1\0\1\1"+
+    "\1\0\1\1\6\0\1\1\4\0\1\1\1\0\1\1\1\0\1\1"+
+    "\1\0\3\1\1\0\2\1\1\0\1\1\2\0\1\1\1\0\1\1"+
+    "\1\0\1\1\1\0\1\1\1\0\1\1\1\0\2\1\1\0\1\1"+
+    "\2\0\4\1\1\0\7\1\1\0\4\1\1\0\4\1\1\0\1\1"+
+    "\1\0\12\1\1\0\21\1\5\0\3\1\1\0\5\1\1\0\21\1"+
+    "\u1144\0\ua6d7\1\51\0\u1035\1\13\0\336\1\u3fe2\0\u021e\1\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\u05ee\0"+
+    "\1\2\36\0\140\2\200\0\360\2\uffff\0\uffff\0\ufe12\0";
 
   /** 
    * Translates characters to character classes
    */
-  private static final char [] ZZ_CMAP = zzUnpackCMap(ZZ_CMAP_PACKED);
+  private static final int ZZ_SX = 0x0700;
+  private static final int ZZ_MX = 0x10000;
+  private static final int ZZ_LX = 0x110000;
+  private static char [] ZZ_CMAP = zzUnpackCMap(ZZ_CMAP_PACKED, ZZ_SX);
+  private static class M { static final char [] MAP = zzUnpackCMap(ZZ_CMAP_PACKED, ZZ_MX); }
+  private static class L { static final char [] MAP = zzUnpackCMap(ZZ_CMAP_PACKED, ZZ_LX); }
 
   /** 
    * Translates DFA states to action switch labels.
@@ -339,14 +373,14 @@ class _MacroLexer implements FlexLexer {
    * @param packed   the packed character translation table
    * @return         the unpacked character translation table
    */
-  private static char [] zzUnpackCMap(String packed) {
-    char [] map = new char[0x10000];
+  private static char [] zzUnpackCMap(String packed, int limit) {
+    char [] map = new char[limit];
     int i = 0;  /* index in packed string  */
     int j = 0;  /* index in unpacked array */
-    while (i < 2174) {
+    while (i < 2776 && j < limit) {
       int  count = packed.charAt(i++);
       char value = packed.charAt(i++);
-      do map[j++] = value; while (--count > 0);
+      do map[j++] = value; while (--count > 0 && j < limit);
     }
     return map;
   }
@@ -541,6 +575,7 @@ class _MacroLexer implements FlexLexer {
               zzCurrentPosL += Character.charCount(zzInput);
             }
           }
+          if (zzInput >= zzCMapL.length) ZZ_CMAP = zzCMapL = zzInput >= ZZ_MX ? L.MAP : M.MAP;
           int zzNext = zzTransL[ zzRowMapL[zzState] + zzCMapL[zzInput] ];
           if (zzNext == -1) break zzForAction;
           zzState = zzNext;

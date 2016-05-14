@@ -168,12 +168,46 @@ class _JavaLexer implements FlexLexer {
     "\2\2\30\0\3\2\31\0\1\2\6\0\5\2\1\0\207\2\2\0"+
     "\1\3\4\0\1\2\13\0\12\3\7\0\32\2\4\0\1\2\1\0"+
     "\32\2\13\0\131\2\3\0\6\2\2\0\6\2\2\0\6\2\2\0"+
-    "\3\2\3\0\2\2\3\0\2\2\22\0\3\3\4\0";
+    "\3\2\3\0\2\2\3\0\2\2\22\0\3\3\4\0\14\2\1\0"+
+    "\32\2\1\0\23\2\1\0\2\2\1\0\17\2\2\0\16\2\42\0"+
+    "\173\2\105\0\65\2\210\0\1\3\202\0\35\2\3\0\61\2\57\0"+
+    "\37\2\21\0\33\2\65\0\36\2\2\0\44\2\4\0\10\2\1\0"+
+    "\5\2\52\0\236\2\2\0\12\3\u0356\0\6\2\2\0\1\2\1\0"+
+    "\54\2\1\0\2\2\3\0\1\2\2\0\27\2\252\0\26\2\12\0"+
+    "\32\2\106\0\70\2\6\0\2\2\100\0\1\2\3\3\1\0\2\3"+
+    "\5\0\4\3\4\2\1\0\3\2\1\0\33\2\4\0\3\3\4\0"+
+    "\1\3\40\0\35\2\203\0\66\2\12\0\26\2\12\0\23\2\215\0"+
+    "\111\2\u03b7\0\3\3\65\2\17\3\37\0\12\3\20\0\3\3\55\2"+
+    "\13\3\2\0\1\3\22\0\31\2\7\0\12\3\6\0\3\3\44\2"+
+    "\16\3\1\0\12\3\100\0\3\3\60\2\16\3\4\2\13\0\12\3"+
+    "\u04a6\0\53\2\15\3\10\0\12\3\u0936\0\u036f\2\221\0\143\2\u0b9d\0"+
+    "\u042f\2\u33d1\0\u0239\2\u04c7\0\105\2\13\0\1\2\56\3\20\0\4\3"+
+    "\15\2\u4060\0\2\2\u2163\0\5\3\3\0\26\3\2\0\7\3\36\0"+
+    "\4\3\224\0\3\3\u01bb\0\125\2\1\0\107\2\1\0\2\2\2\0"+
+    "\1\2\2\0\2\2\2\0\4\2\1\0\14\2\1\0\1\2\1\0"+
+    "\7\2\1\0\101\2\1\0\4\2\2\0\10\2\1\0\7\2\1\0"+
+    "\34\2\1\0\4\2\1\0\5\2\1\0\1\2\3\0\7\2\1\0"+
+    "\u0154\2\2\0\31\2\1\0\31\2\1\0\37\2\1\0\31\2\1\0"+
+    "\37\2\1\0\31\2\1\0\37\2\1\0\31\2\1\0\37\2\1\0"+
+    "\31\2\1\0\10\2\2\0\62\3\u1600\0\4\2\1\0\33\2\1\0"+
+    "\2\2\1\0\1\2\2\0\1\2\1\0\12\2\1\0\4\2\1\0"+
+    "\1\2\1\0\1\2\6\0\1\2\4\0\1\2\1\0\1\2\1\0"+
+    "\1\2\1\0\3\2\1\0\2\2\1\0\1\2\2\0\1\2\1\0"+
+    "\1\2\1\0\1\2\1\0\1\2\1\0\1\2\1\0\2\2\1\0"+
+    "\1\2\2\0\4\2\1\0\7\2\1\0\4\2\1\0\4\2\1\0"+
+    "\1\2\1\0\12\2\1\0\21\2\5\0\3\2\1\0\5\2\1\0"+
+    "\21\2\u1144\0\ua6d7\2\51\0\u1035\2\13\0\336\2\u3fe2\0\u021e\2\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\u05ee\0"+
+    "\1\3\36\0\140\3\200\0\360\3\uffff\0\uffff\0\ufe12\0";
 
   /** 
    * Translates characters to character classes
    */
-  private static final char [] ZZ_CMAP = zzUnpackCMap(ZZ_CMAP_PACKED);
+  private static final int ZZ_SX = 0x0700;
+  private static final int ZZ_MX = 0x10000;
+  private static final int ZZ_LX = 0x110000;
+  private static char [] ZZ_CMAP = zzUnpackCMap(ZZ_CMAP_PACKED, ZZ_SX);
+  private static class M { static final char [] MAP = zzUnpackCMap(ZZ_CMAP_PACKED, ZZ_MX); }
+  private static class L { static final char [] MAP = zzUnpackCMap(ZZ_CMAP_PACKED, ZZ_LX); }
 
   /** 
    * Translates DFA states to action switch labels.
@@ -764,14 +798,14 @@ class _JavaLexer implements FlexLexer {
    * @param packed   the packed character translation table
    * @return         the unpacked character translation table
    */
-  private static char [] zzUnpackCMap(String packed) {
-    char [] map = new char[0x10000];
+  private static char [] zzUnpackCMap(String packed, int limit) {
+    char [] map = new char[limit];
     int i = 0;  /* index in packed string  */
     int j = 0;  /* index in unpacked array */
-    while (i < 2276) {
+    while (i < 2878 && j < limit) {
       int  count = packed.charAt(i++);
       char value = packed.charAt(i++);
-      do map[j++] = value; while (--count > 0);
+      do map[j++] = value; while (--count > 0 && j < limit);
     }
     return map;
   }
@@ -966,6 +1000,7 @@ class _JavaLexer implements FlexLexer {
               zzCurrentPosL += Character.charCount(zzInput);
             }
           }
+          if (zzInput >= zzCMapL.length) ZZ_CMAP = zzCMapL = zzInput >= ZZ_MX ? L.MAP : M.MAP;
           int zzNext = zzTransL[ zzRowMapL[zzState] + zzCMapL[zzInput] ];
           if (zzNext == -1) break zzForAction;
           zzState = zzNext;

@@ -48,14 +48,26 @@ public class _YAMLLexer implements FlexLexer, YAMLTokenTypes {
     "\1\26\1\26\12\24\1\7\1\26\1\31\1\26\1\15\1\5\1\27"+
     "\6\24\24\25\1\32\1\21\1\12\1\0\1\26\1\3\6\24\24\25"+
     "\1\16\1\34\1\17\1\26\6\0\1\11\u05da\0\12\24\206\0\12\24"+
-    "\u026c\0\12\24\166\0\12\24\166\0\12\24\166\0\12\24\166\0\12\24"+
-    "\167\0\11\24\166\0\12\24\166\0\12\24\166\0\12\24\340\0\12\24"+
-    "\166\0\12\24\106\0\12\24\u10fe\0\1\11\1\11\udee6\0\12\24\346\0";
+    "\306\0\12\24\u019c\0\12\24\166\0\12\24\166\0\12\24\166\0\12\24"+
+    "\166\0\12\24\166\0\12\24\166\0\12\24\166\0\12\24\166\0\12\24"+
+    "\166\0\12\24\140\0\12\24\166\0\12\24\106\0\12\24\u0116\0\12\24"+
+    "\106\0\12\24\u0746\0\12\24\46\0\12\24\u012c\0\12\24\200\0\12\24"+
+    "\246\0\12\24\6\0\12\24\266\0\12\24\126\0\12\24\206\0\12\24"+
+    "\6\0\12\24\u03ce\0\1\11\1\11\u85f6\0\12\24\u02a6\0\12\24\46\0"+
+    "\12\24\306\0\12\24\26\0\12\24\126\0\12\24\u0196\0\12\24\u5316\0"+
+    "\12\24\u0586\0\12\24\u0bbc\0\12\24\200\0\12\24\74\0\12\24\220\0"+
+    "\12\24\u0116\0\12\24\u01d6\0\12\24\u0176\0\12\24\146\0\12\24\146\0"+
+    "\12\24\u01a6\0\12\24\u5176\0\12\24\346\0\12\24\u6c74\0\62\24\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\u280f\0";
 
   /** 
    * Translates characters to character classes
    */
-  private static final char [] ZZ_CMAP = zzUnpackCMap(ZZ_CMAP_PACKED);
+  private static final int ZZ_SX = 0x0700;
+  private static final int ZZ_MX = 0x10000;
+  private static final int ZZ_LX = 0x110000;
+  private static char [] ZZ_CMAP = zzUnpackCMap(ZZ_CMAP_PACKED, ZZ_SX);
+  private static class M { static final char [] MAP = zzUnpackCMap(ZZ_CMAP_PACKED, ZZ_MX); }
+  private static class L { static final char [] MAP = zzUnpackCMap(ZZ_CMAP_PACKED, ZZ_LX); }
 
   /** 
    * Translates DFA states to action switch labels.
@@ -544,14 +556,14 @@ public class _YAMLLexer implements FlexLexer, YAMLTokenTypes {
    * @param packed   the packed character translation table
    * @return         the unpacked character translation table
    */
-  private static char [] zzUnpackCMap(String packed) {
-    char [] map = new char[0x10000];
+  private static char [] zzUnpackCMap(String packed, int limit) {
+    char [] map = new char[limit];
     int i = 0;  /* index in packed string  */
     int j = 0;  /* index in unpacked array */
-    while (i < 160) {
+    while (i < 330 && j < limit) {
       int  count = packed.charAt(i++);
       char value = packed.charAt(i++);
-      do map[j++] = value; while (--count > 0);
+      do map[j++] = value; while (--count > 0 && j < limit);
     }
     return map;
   }
@@ -746,6 +758,7 @@ public class _YAMLLexer implements FlexLexer, YAMLTokenTypes {
               zzCurrentPosL += Character.charCount(zzInput);
             }
           }
+          if (zzInput >= zzCMapL.length) ZZ_CMAP = zzCMapL = zzInput >= ZZ_MX ? L.MAP : M.MAP;
           int zzNext = zzTransL[ zzRowMapL[zzState] + zzCMapL[zzInput] ];
           if (zzNext == -1) break zzForAction;
           zzState = zzNext;
@@ -906,6 +919,7 @@ public class _YAMLLexer implements FlexLexer, YAMLTokenTypes {
                 zzFinL[zzFPos] = ((zzAttrL[zzFState] & 1) == 1);
                 zzInput = Character.codePointAt(zzBufferL, zzFPos/*, zzMarkedPos*/);
                 zzFPos += Character.charCount(zzInput);
+                if (zzInput >= zzCMapL.length) ZZ_CMAP = zzCMapL = zzInput >= ZZ_MX ? L.MAP : M.MAP;
                 zzFState = zzTransL[ zzRowMapL[zzFState] + zzCMapL[zzInput] ];
               }
               if (zzFState != -1) { zzFinL[zzFPos++] = ((zzAttrL[zzFState] & 1) == 1); } 
@@ -918,6 +932,7 @@ public class _YAMLLexer implements FlexLexer, YAMLTokenTypes {
               while (!zzFinL[zzFPos] || (zzAttrL[zzFState] & 1) != 1) {
                 zzInput = Character.codePointBefore(zzBufferL, zzFPos/*, zzStartRead*/);
                 zzFPos -= Character.charCount(zzInput);
+                if (zzInput >= zzCMapL.length) ZZ_CMAP = zzCMapL = zzInput >= ZZ_MX ? L.MAP : M.MAP;
                 zzFState = zzTransL[ zzRowMapL[zzFState] + zzCMapL[zzInput] ];
               };
               zzMarkedPos = zzFPos;
@@ -946,6 +961,7 @@ public class _YAMLLexer implements FlexLexer, YAMLTokenTypes {
                 zzFinL[zzFPos] = ((zzAttrL[zzFState] & 1) == 1);
                 zzInput = Character.codePointAt(zzBufferL, zzFPos/*, zzMarkedPos*/);
                 zzFPos += Character.charCount(zzInput);
+                if (zzInput >= zzCMapL.length) ZZ_CMAP = zzCMapL = zzInput >= ZZ_MX ? L.MAP : M.MAP;
                 zzFState = zzTransL[ zzRowMapL[zzFState] + zzCMapL[zzInput] ];
               }
               if (zzFState != -1) { zzFinL[zzFPos++] = ((zzAttrL[zzFState] & 1) == 1); } 
@@ -958,6 +974,7 @@ public class _YAMLLexer implements FlexLexer, YAMLTokenTypes {
               while (!zzFinL[zzFPos] || (zzAttrL[zzFState] & 1) != 1) {
                 zzInput = Character.codePointBefore(zzBufferL, zzFPos/*, zzStartRead*/);
                 zzFPos -= Character.charCount(zzInput);
+                if (zzInput >= zzCMapL.length) ZZ_CMAP = zzCMapL = zzInput >= ZZ_MX ? L.MAP : M.MAP;
                 zzFState = zzTransL[ zzRowMapL[zzFState] + zzCMapL[zzInput] ];
               };
               zzMarkedPos = zzFPos;
@@ -975,6 +992,7 @@ public class _YAMLLexer implements FlexLexer, YAMLTokenTypes {
                 zzFinL[zzFPos] = ((zzAttrL[zzFState] & 1) == 1);
                 zzInput = Character.codePointAt(zzBufferL, zzFPos/*, zzMarkedPos*/);
                 zzFPos += Character.charCount(zzInput);
+                if (zzInput >= zzCMapL.length) ZZ_CMAP = zzCMapL = zzInput >= ZZ_MX ? L.MAP : M.MAP;
                 zzFState = zzTransL[ zzRowMapL[zzFState] + zzCMapL[zzInput] ];
               }
               if (zzFState != -1) { zzFinL[zzFPos++] = ((zzAttrL[zzFState] & 1) == 1); } 
@@ -987,6 +1005,7 @@ public class _YAMLLexer implements FlexLexer, YAMLTokenTypes {
               while (!zzFinL[zzFPos] || (zzAttrL[zzFState] & 1) != 1) {
                 zzInput = Character.codePointBefore(zzBufferL, zzFPos/*, zzStartRead*/);
                 zzFPos -= Character.charCount(zzInput);
+                if (zzInput >= zzCMapL.length) ZZ_CMAP = zzCMapL = zzInput >= ZZ_MX ? L.MAP : M.MAP;
                 zzFState = zzTransL[ zzRowMapL[zzFState] + zzCMapL[zzInput] ];
               };
               zzMarkedPos = zzFPos;
@@ -1014,6 +1033,7 @@ public class _YAMLLexer implements FlexLexer, YAMLTokenTypes {
                 zzFinL[zzFPos] = ((zzAttrL[zzFState] & 1) == 1);
                 zzInput = Character.codePointAt(zzBufferL, zzFPos/*, zzMarkedPos*/);
                 zzFPos += Character.charCount(zzInput);
+                if (zzInput >= zzCMapL.length) ZZ_CMAP = zzCMapL = zzInput >= ZZ_MX ? L.MAP : M.MAP;
                 zzFState = zzTransL[ zzRowMapL[zzFState] + zzCMapL[zzInput] ];
               }
               if (zzFState != -1) { zzFinL[zzFPos++] = ((zzAttrL[zzFState] & 1) == 1); } 
@@ -1026,6 +1046,7 @@ public class _YAMLLexer implements FlexLexer, YAMLTokenTypes {
               while (!zzFinL[zzFPos] || (zzAttrL[zzFState] & 1) != 1) {
                 zzInput = Character.codePointBefore(zzBufferL, zzFPos/*, zzStartRead*/);
                 zzFPos -= Character.charCount(zzInput);
+                if (zzInput >= zzCMapL.length) ZZ_CMAP = zzCMapL = zzInput >= ZZ_MX ? L.MAP : M.MAP;
                 zzFState = zzTransL[ zzRowMapL[zzFState] + zzCMapL[zzInput] ];
               };
               zzMarkedPos = zzFPos;
@@ -1048,6 +1069,7 @@ public class _YAMLLexer implements FlexLexer, YAMLTokenTypes {
                 zzFinL[zzFPos] = ((zzAttrL[zzFState] & 1) == 1);
                 zzInput = Character.codePointAt(zzBufferL, zzFPos/*, zzMarkedPos*/);
                 zzFPos += Character.charCount(zzInput);
+                if (zzInput >= zzCMapL.length) ZZ_CMAP = zzCMapL = zzInput >= ZZ_MX ? L.MAP : M.MAP;
                 zzFState = zzTransL[ zzRowMapL[zzFState] + zzCMapL[zzInput] ];
               }
               if (zzFState != -1) { zzFinL[zzFPos++] = ((zzAttrL[zzFState] & 1) == 1); } 
@@ -1060,6 +1082,7 @@ public class _YAMLLexer implements FlexLexer, YAMLTokenTypes {
               while (!zzFinL[zzFPos] || (zzAttrL[zzFState] & 1) != 1) {
                 zzInput = Character.codePointBefore(zzBufferL, zzFPos/*, zzStartRead*/);
                 zzFPos -= Character.charCount(zzInput);
+                if (zzInput >= zzCMapL.length) ZZ_CMAP = zzCMapL = zzInput >= ZZ_MX ? L.MAP : M.MAP;
                 zzFState = zzTransL[ zzRowMapL[zzFState] + zzCMapL[zzInput] ];
               };
               zzMarkedPos = zzFPos;
