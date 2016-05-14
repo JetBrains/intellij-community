@@ -346,15 +346,7 @@ class CommitPanel extends JBPanel {
     public Dimension getPreferredSize() {
       Dimension size = super.getPreferredSize();
       size.height = Math.max(size.height, 4 * getFontMetrics(getFont()).getHeight());
-      if (!myExpanded) {
-        size.width = 10;
-      }
       return size;
-    }
-
-    @Override
-    public Dimension getMaximumSize() {
-      return super.getPreferredSize();
     }
 
     @NotNull

@@ -168,7 +168,19 @@ class DetailsPanel extends JPanel {
       if (i > 0) {
         myMainContentPanel.add(new SeparatorComponent(0, OnePixelDivider.BACKGROUND, null));
       }
-      myMainContentPanel.add(new CommitPanel(myLogData, myColorManager, myDataPack));
+      int index = i;
+      myMainContentPanel.add(new CommitPanel(myLogData, myColorManager, myDataPack) {
+        @Override
+        public Dimension getMaximumSize() {
+          Dimension preferredSize = super.getPreferredSize();
+          if (index == mySelection.size() - 1) {
+            // last component can grow
+            Dimension maximumSize = super.getMaximumSize();
+            return new Dimension(preferredSize.width, maximumSize.height);
+          }
+          return preferredSize;
+        }
+      });
     }
 
     // clear superfluous items
