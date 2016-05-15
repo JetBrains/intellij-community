@@ -10,7 +10,6 @@ import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.problem.ProblemEmptyBuilder;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.processor.clazz.constructor.AllArgsConstructorProcessor;
-import de.plushnikov.intellij.plugin.quickfix.PsiQuickFixFactory;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
@@ -54,14 +53,10 @@ public class ValueProcessor extends AbstractClassProcessor {
     return validateAnnotationOnRightType(psiClass, builder);
   }
 
-  protected void validateCallSuperParam(PsiAnnotation psiAnnotation, PsiClass psiClass, ProblemBuilder builder, String generatedMethodName) {
-    if (PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, EqualsAndHashCode.class)) {
-      if (PsiClassUtil.hasSuperClass(psiClass)) {
-        builder.addWarning("Generating " + generatedMethodName + " implementation but without a call to superclass, " +
-                "even though this class does not extend java.lang.Object." +
-                "If this is intentional, add '@EqualsAndHashCode(callSuper=false)' to your type.",
-            PsiQuickFixFactory.createAddAnnotationQuickFix(psiClass, "lombok.EqualsAndHashCode", "callSuper=false"));
-      }
+  private void validateCallSuperParam(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder, String generatedMethodName) {
+    final PsiAnnotation equalsAndHashCodeAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiClass, EqualsAndHashCode.class);
+    if (null == equalsAndHashCodeAnnotation) {
+      equalsAndHashCodeProcessor.validateCallSuperParam(psiAnnotation, psiClass, builder, generatedMethodName);
     }
   }
 

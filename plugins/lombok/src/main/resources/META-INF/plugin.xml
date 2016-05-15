@@ -260,6 +260,7 @@
 				     <li>Fixed #147: @FieldDefaults(makeFinal = true) and bitwise operators produce an error message</li>
 				     <li>Fixed #158: val causes intellij to show an invalid error when used alongside an anonymous class</li>
 				     <li>Fixed #202: @Builder supports setter for final field (@Value)</li>
+				     <li>Fixed #230: @Value / @EqualsAndHashCode callSuper false warning: lombok.config ignored</li>
 				</ol>
 			</li>
 		<li>0.11

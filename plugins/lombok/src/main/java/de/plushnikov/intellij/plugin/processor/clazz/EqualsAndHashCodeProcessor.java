@@ -74,6 +74,19 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
     return result;
   }
 
+  void validateCallSuperParam(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder, String generatedMethodName) {
+    final Boolean declaredBooleanAnnotationValue = PsiAnnotationUtil.getDeclaredBooleanAnnotationValue(psiAnnotation, "callSuper");
+    if (null == declaredBooleanAnnotationValue) {
+      final String configProperty = ConfigDiscovery.getInstance().getStringLombokConfigProperty(ConfigKey.EQUALSANDHASHCODE_CALL_SUPER, psiClass);
+      if (!"SKIP".equalsIgnoreCase(configProperty) && PsiClassUtil.hasSuperClass(psiClass) && !hasOneOfMethodsDefined(psiClass)) {
+        builder.addWarning("Generating " + generatedMethodName + " implementation but without a call to superclass, " +
+                "even though this class does not extend java.lang.Object. If this is intentional, add '(callSuper=false)' to your type.",
+            PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "callSuper", "true"),
+            PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "callSuper", "false"));
+      }
+    }
+  }
+
   private void validateCallSuperParamForObject(PsiAnnotation psiAnnotation, PsiClass psiClass, ProblemBuilder builder) {
     boolean callSuperProperty = PsiAnnotationUtil.getBooleanAnnotationValue(psiAnnotation, "callSuper", false);
     if (callSuperProperty && !PsiClassUtil.hasSuperClass(psiClass)) {
@@ -100,7 +113,7 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
     return true;
   }
 
-  public boolean hasOneOfMethodsDefined(@NotNull PsiClass psiClass) {
+  private boolean hasOneOfMethodsDefined(@NotNull PsiClass psiClass) {
     final Collection<PsiMethod> classMethodsIntern = PsiClassUtil.collectClassMethodsIntern(psiClass);
     return PsiMethodUtil.hasMethodByName(classMethodsIntern, EQUALS_METHOD_NAME, HASH_CODE_METHOD_NAME);
   }

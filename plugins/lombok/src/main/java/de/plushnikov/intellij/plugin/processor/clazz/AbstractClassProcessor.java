@@ -85,17 +85,6 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
 
   protected abstract void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target);
 
-  protected void validateCallSuperParam(PsiAnnotation psiAnnotation, PsiClass psiClass, ProblemBuilder builder, String generatedMethodName) {
-    Boolean callSuperProperty = PsiAnnotationUtil.getDeclaredBooleanAnnotationValue(psiAnnotation, "callSuper");
-    if (null == callSuperProperty && PsiClassUtil.hasSuperClass(psiClass)) {
-      builder.addWarning("Generating " + generatedMethodName + " implementation but without a call to superclass, " +
-              "even though this class does not extend java.lang.Object." +
-              "If this is intentional, add '(callSuper=false)' to your type.",
-          PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "callSuper", "true"),
-          PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "callSuper", "false"));
-    }
-  }
-
   protected void validateOfParam(PsiClass psiClass, ProblemBuilder builder, PsiAnnotation psiAnnotation, Collection<String> ofProperty) {
     for (String fieldName : ofProperty) {
       if (!StringUtil.isEmptyOrSpaces(fieldName)) {
@@ -156,11 +145,11 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
     final Collection<PsiField> result = new ArrayList<PsiField>(psiFields.size());
 
     for (PsiField classField : psiFields) {
-      final String fieldName = classField.getName();
       if (classField.hasModifierProperty(PsiModifier.STATIC) || (filterTransient && classField.hasModifierProperty(PsiModifier.TRANSIENT))) {
         continue;
       }
-      if (excludeProperty.contains(fieldName)) {
+      final String fieldName = classField.getName();
+      if (null == fieldName || excludeProperty.contains(fieldName)) {
         continue;
       }
       if (!ofProperty.isEmpty() && !ofProperty.contains(fieldName)) {
