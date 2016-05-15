@@ -198,6 +198,8 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Pers
     Date date = myTestDate == null ? calendar.getTime() : myTestDate;
     SimpleDateFormat sdfMonthNameShort = new SimpleDateFormat("MMM");
     SimpleDateFormat sdfMonthNameFull = new SimpleDateFormat("MMMM");
+    SimpleDateFormat sdfDayNameShort = new SimpleDateFormat("EEE");
+    SimpleDateFormat sdfDayNameFull = new SimpleDateFormat("EEEE");
     SimpleDateFormat sdfYearFull = new SimpleDateFormat("yyyy");
 
     props.setProperty("DATE", DateFormatUtil.formatDate(date));
@@ -207,8 +209,11 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Pers
     props.setProperty("MONTH_NAME_SHORT", sdfMonthNameShort.format(date));
     props.setProperty("MONTH_NAME_FULL", sdfMonthNameFull.format(date));
     props.setProperty("DAY", getCalendarValue(calendar, Calendar.DAY_OF_MONTH));
+    props.setProperty("DAY_NAME_SHORT", sdfDayNameShort.format(date));
+    props.setProperty("DAY_NAME_FULL", sdfDayNameFull.format(date));
     props.setProperty("HOUR", getCalendarValue(calendar, Calendar.HOUR_OF_DAY));
     props.setProperty("MINUTE", getCalendarValue(calendar, Calendar.MINUTE));
+    props.setProperty("SECOND", getCalendarValue(calendar, Calendar.SECOND));
 
     props.setProperty("USER", SystemProperties.getUserName());
     props.setProperty("PRODUCT_NAME", ApplicationNamesInfo.getInstance().getFullProductName());
@@ -245,7 +250,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Pers
 
   private void validateRecentNames() {
     final Collection<FileTemplateBase> allTemplates = myDefaultTemplatesManager.getAllTemplates(false);
-    final List<String> allNames = new ArrayList<String>(allTemplates.size());
+    final List<String> allNames = new ArrayList<>(allTemplates.size());
     for (FileTemplate fileTemplate : allTemplates) {
       allNames.add(fileTemplate.getName());
     }
@@ -462,7 +467,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Pers
   }
 
   public static class State {
-    public List<String> RECENT_TEMPLATES = new ArrayList<String>();
+    public List<String> RECENT_TEMPLATES = new ArrayList<>();
     public String SCHEME = FileTemplatesScheme.DEFAULT.getName();
 
     public void addName(@NotNull @NonNls String name) {
