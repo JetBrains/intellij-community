@@ -118,15 +118,15 @@ public class PyTestConfigurationProducer extends PythonTestConfigurationProducer
         final PyPackageManager packageManager = PyPackageManager.getInstance(sdk);
         try {
           final PyPackage pytestPackage = packageManager.findPackage("pytest", false);
-          if (pytestPackage != null && PackageVersionComparator.VERSION_COMPARATOR.compare(pytestPackage.getVersion(), "2.3.3") >= 0) {
-            keywords = pyClass.getName() + " and " + keywords;
+          if (pytestPackage != null && PackageVersionComparator.VERSION_COMPARATOR.compare(pytestPackage.getVersion(), "2.3.3") < 0) {
+            keywords = pyClass.getName() + "." + keywords;
           }
           else {
-            keywords = pyClass.getName() + "." + keywords;
+            keywords = pyClass.getName() + " and " + keywords;
           }
         }
         catch (ExecutionException e) {
-          keywords = pyClass.getName() + "." + keywords;
+          keywords = pyClass.getName() + " and " + keywords;
         }
       }
     }
