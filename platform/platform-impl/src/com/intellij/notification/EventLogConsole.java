@@ -248,7 +248,7 @@ class EventLogConsole {
                                                  new TextAttributes(null, null, null, null, Font.BOLD));
     }
 
-    String date = DateFormatUtil.formatTimeWithSeconds(notification.getTimestamp()) + " ";
+    String date = DateFormatUtil.formatTime(notification.getTimestamp()) + "  ";
     append(document, date);
 
     int startLine = document.getLineCount() - 1;
@@ -263,8 +263,7 @@ class EventLogConsole {
                               : ConsoleViewContentType.LOG_WARNING_OUTPUT_KEY;
 
     int msgStart = document.getTextLength();
-    String message = pair.message;
-    append(document, message);
+    append(document, pair.message);
 
     TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(key);
     int layer = HighlighterLayer.CARET_ROW + 1;

@@ -142,14 +142,14 @@ public class EventLog {
     String content = truncateLongString(showMore, notification.getContent());
 
     RangeMarker afterTitle = null;
-    boolean hasHtml = parseHtmlContent(title, notification, logDoc, showMore, links, lineSeparators);
+    boolean hasHtml = parseHtmlContent(addIndents(title, indent), notification, logDoc, showMore, links, lineSeparators);
     if (StringUtil.isNotEmpty(title)) {
       if (StringUtil.isNotEmpty(content)) {
         appendText(logDoc, ": ");
         afterTitle = logDoc.createRangeMarker(logDoc.getTextLength() - 2, logDoc.getTextLength());
       }
     }
-    hasHtml |= parseHtmlContent(content, notification, logDoc, showMore, links, lineSeparators);
+    hasHtml |= parseHtmlContent(addIndents(content, indent), notification, logDoc, showMore, links, lineSeparators);
 
     List<AnAction> actions = notification.getActions();
     if (NotificationsManagerImpl.newEnabled() && !actions.isEmpty()) {
@@ -197,6 +197,11 @@ public class EventLog {
     }
 
     return new LogEntry(logDoc.getText(), status, list);
+  }
+
+  @NotNull
+  private static String addIndents(@NotNull String text, @NotNull String indent) {
+    return StringUtil.replace(text, "\n", "\n" + indent);
   }
 
   private static boolean isLongLine(@NotNull List<AnAction> actions) {
