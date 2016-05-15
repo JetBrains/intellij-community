@@ -168,7 +168,7 @@ copy {
 task downloadJFlexJar(type: Download) {
     description 'Downloads JFlex.'
 
-    src 'https://github.com/JetBrains/intellij-community/raw/master/tools/lexer/jflex-1.4/lib/JFlex.jar'
+    src 'https://github.com/JetBrains/intellij-community/blob/145/tools/lexer/jflex-1.4/lib/JFlex.jar?raw=true'
     dest "$buildDir/tools/JFlex.jar"
     onlyIf { !file("$buildDir/tools/JFlex.jar").exists() }
 }
@@ -176,7 +176,7 @@ task downloadJFlexJar(type: Download) {
 task downloadJFlexSkeleton(type: Download) {
     description 'Downloads JFlex skeleton.'
 
-    src 'https://raw.github.com/JetBrains/intellij-community/master/tools/lexer/idea-flex.skeleton'
+    src 'https://raw.githubusercontent.com/JetBrains/intellij-community/145/tools/lexer/idea-flex.skeleton'
     dest "$buildDir/tools/idea-flex.skeleton"
     onlyIf { !file("$buildDir/tools/idea-flex.skeleton").exists() }
 }
