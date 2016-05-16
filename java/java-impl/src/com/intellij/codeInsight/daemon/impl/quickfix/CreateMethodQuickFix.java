@@ -22,6 +22,7 @@ import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Pass;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -72,6 +73,21 @@ public class CreateMethodQuickFix extends LocalQuickFixAndIntentionActionOnPsiEl
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
     PsiClass myTargetClass = (PsiClass)startElement;
+    JVMElementMutableViewProvider mutableViewProvider = JVMElementMutableViewProvider.EXTENSION_POINT.forLanguage(myTargetClass.getLanguage());
+    if (mutableViewProvider != null) {
+      mutableViewProvider.runWithMutableView(myTargetClass, new Pass<JVMElementMutableView>() {
+        @Override
+        public void pass(JVMElementMutableView mutableView) {
+          doInvoke(project, (PsiClass)mutableView.getMutableRoot(), mutableView);
+        }
+      });
+    }
+    else {
+      doInvoke(project, myTargetClass, null);
+    }
+  }
+
+  private void doInvoke(@NotNull Project project, @NotNull PsiClass myTargetClass, @Nullable JVMElementMutableView mutableView) {
     if (!FileModificationService.getInstance().preparePsiElementForWrite(myTargetClass.getContainingFile())) return;
 
     PsiMethod method = createMethod(myTargetClass);
@@ -84,7 +100,7 @@ public class CreateMethodQuickFix extends LocalQuickFixAndIntentionActionOnPsiEl
       });
 
     method = (PsiMethod)JavaCodeStyleManager.getInstance(project).shortenClassReferences(myTargetClass.add(method));
-    CreateMethodFromUsageFix.doCreate(myTargetClass, method, arguments, PsiSubstitutor.EMPTY, ExpectedTypeInfo.EMPTY_ARRAY, method);
+    CreateMethodFromUsageFix.doCreate(myTargetClass, method, arguments, PsiSubstitutor.EMPTY, ExpectedTypeInfo.EMPTY_ARRAY, method, mutableView);
   }
 
   private PsiMethod createMethod(@NotNull PsiClass myTargetClass) {

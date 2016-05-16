@@ -31,6 +31,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
@@ -47,7 +48,7 @@ public class CreateEnumConstantFromUsageFix extends CreateVarFromUsageFix implem
   }
 
   @Override
-  protected void invokeImpl(final PsiClass targetClass) {
+  protected void invokeImpl(final PsiClass targetClass, @Nullable JVMElementMutableView mutableView) {
     LOG.assertTrue(targetClass.isEnum());
     final String name = myReferenceExpression.getReferenceName();
     LOG.assertTrue(name != null);
@@ -79,7 +80,7 @@ public class CreateEnumConstantFromUsageFix extends CreateVarFromUsageFix implem
         final Template template = builder.buildTemplate();
 
         final Project project = targetClass.getProject();
-        final Editor newEditor = positionCursor(project, targetClass.getContainingFile(), enumConstant);
+        final Editor newEditor = positionCursor(project, targetClass.getContainingFile(), enumConstant, mutableView);
         if (newEditor != null) {
           final TextRange range = enumConstant.getTextRange();
           newEditor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());

@@ -6,12 +6,14 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Pass;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -47,6 +49,25 @@ public class CreateStaticMethodQuickFix implements LocalQuickFix {
 
   @Override
   public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
+    JVMElementMutableViewProvider mutableViewProvider = JVMElementMutableViewProvider.EXTENSION_POINT.forLanguage(targetClass.getLanguage());
+    if (mutableViewProvider != null) {
+      mutableViewProvider.runWithMutableView(targetClass, new Pass<JVMElementMutableView>() {
+        @Override
+        public void pass(JVMElementMutableView mutableView) {
+          doApply(project, (PsiClass)mutableView.getMutableRoot(), mutableView);
+        }
+      });
+    }
+    else {
+      doApply(project, targetClass, null);
+    }
+  }
+
+  private void doApply(
+    @NotNull final Project project,
+    @NotNull PsiClass targetClass,
+    @Nullable JVMElementMutableView mutableView
+  ) {
     boolean java8Interface = false;
     if (targetClass.isInterface()) {
       if (PsiUtil.isLanguageLevel8OrHigher(targetClass)) {
@@ -56,7 +77,7 @@ public class CreateStaticMethodQuickFix implements LocalQuickFix {
       }
     }
 
-    PsiMethod method = CreateMethodFromUsageFix.createMethod(targetClass, null, null, methodName);
+    PsiMethod method = CreateMethodFromUsageFix.createMethod(targetClass, null, null, methodName, mutableView);
     if (method == null) {
       return;
     }
@@ -76,6 +97,7 @@ public class CreateStaticMethodQuickFix implements LocalQuickFix {
                                       args,
                                       PsiSubstitutor.UNKNOWN,
                                       ExpectedTypeInfo.EMPTY_ARRAY,
-                                      null);
+                                      null,
+                                      mutableView);
   }
 }

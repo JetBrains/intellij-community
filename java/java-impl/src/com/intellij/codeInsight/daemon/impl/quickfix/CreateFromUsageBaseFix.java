@@ -26,12 +26,15 @@ import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -42,6 +45,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
+import kotlin.collections.ArraysKt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -73,7 +77,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
 
   protected abstract boolean isAvailableImpl(int offset);
 
-  protected abstract void invokeImpl(PsiClass targetClass);
+  protected abstract void invokeImpl(PsiClass targetClass, @Nullable JVMElementMutableView mutableView);
 
   protected abstract boolean isValidElement(PsiElement result);
 
@@ -110,7 +114,18 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
-        invokeImpl(targetClass);
+        JVMElementMutableViewProvider mutableViewProvider = JVMElementMutableViewProvider.EXTENSION_POINT.forLanguage(targetClass.getLanguage());
+        if (mutableViewProvider != null) {
+          mutableViewProvider.runWithMutableView(targetClass, new Pass<JVMElementMutableView>() {
+            @Override
+            public void pass(JVMElementMutableView mutableView) {
+              invokeImpl((PsiClass)mutableView.getMutableRoot(), mutableView);
+            }
+          });
+        }
+        else {
+          invokeImpl(targetClass, null);
+        }
       }
     });
   }
@@ -158,7 +173,16 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
   }
 
   @Nullable("null means unable to open the editor")
-  protected static Editor positionCursor(@NotNull Project project, @NotNull PsiFile targetFile, @NotNull PsiElement element) {
+  protected static Editor positionCursor(@NotNull Project project,
+                                         @NotNull PsiFile targetFile,
+                                         @NotNull PsiElement element,
+                                         @Nullable JVMElementMutableView mutator) {
+    if (mutator != null) {
+      mutator.navigateToElement(element);
+      Document document = PsiDocumentManager.getInstance(project).getDocument(element.getContainingFile());
+      return document != null ? ArraysKt.firstOrNull(EditorFactory.getInstance().getEditors(document)) : null;
+    }
+
     TextRange range = element.getTextRange();
     LOG.assertTrue(range != null, element.getClass());
     int textOffset = range.getStartOffset();

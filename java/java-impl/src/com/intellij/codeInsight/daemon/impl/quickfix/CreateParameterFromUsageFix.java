@@ -33,6 +33,7 @@ import com.intellij.refactoring.changeSignature.JavaChangeSignatureDialog;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.introduceParameter.IntroduceParameterHandler;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -69,7 +70,7 @@ public class CreateParameterFromUsageFix extends CreateVarFromUsageFix {
   }
 
   @Override
-  protected void invokeImpl(PsiClass targetClass) {
+  protected void invokeImpl(PsiClass targetClass, @Nullable JVMElementMutableView mutableView) {
     if (CreateFromUsageUtils.isValidReference(myReferenceExpression, false)) return;
 
     final Project project = myReferenceExpression.getProject();

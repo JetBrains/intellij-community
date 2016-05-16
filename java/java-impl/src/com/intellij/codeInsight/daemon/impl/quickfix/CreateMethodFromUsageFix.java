@@ -132,7 +132,7 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
   }
 
   @Override
-  protected void invokeImpl(final PsiClass targetClass) {
+  protected void invokeImpl(final PsiClass targetClass, @Nullable JVMElementMutableView mutableView) {
     if (targetClass == null) return;
     PsiMethodCallExpression expression = getMethodCall();
     if (expression == null) return;
@@ -146,7 +146,7 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
     String methodName = ref.getReferenceName();
     LOG.assertTrue(methodName != null);
 
-    PsiMethod method = createMethod(targetClass, parentClass, enclosingContext, methodName);
+    PsiMethod method = createMethod(targetClass, parentClass, enclosingContext, methodName, mutableView);
     if (method == null) {
       return;
     }
@@ -182,14 +182,18 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
              ContainerUtil.map2List(arguments, Pair.<PsiExpression, PsiType>createFunction(null)),
              getTargetSubstitutor(expression),
              CreateFromUsageUtils.guessExpectedTypes(expression, true),
-             context);
+             context, mutableView);
   }
 
   public static PsiMethod createMethod(PsiClass targetClass,
-                                          PsiClass parentClass,
-                                          PsiMember enclosingContext,
-                                          String methodName) {
-    JVMElementFactory factory = JVMElementFactories.getFactory(targetClass.getLanguage(), targetClass.getProject());
+                                       PsiClass parentClass,
+                                       PsiMember enclosingContext,
+                                       String methodName,
+                                       @Nullable JVMElementMutableView mutableView) {
+    Project project = targetClass.getProject();
+    JVMElementFactory factory = mutableView != null
+                                ? JavaPsiFacade.getElementFactory(project)
+                                : JVMElementFactories.getFactory(targetClass.getLanguage(), project);
     if (factory == null) {
       return null;
     }
@@ -216,17 +220,18 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
   }
 
   public static void doCreate(PsiClass targetClass, PsiMethod method, List<Pair<PsiExpression, PsiType>> arguments, PsiSubstitutor substitutor,
-                              ExpectedTypeInfo[] expectedTypes, @Nullable PsiElement context) {
-    doCreate(targetClass, method, shouldBeAbstractImpl(null, targetClass), arguments, substitutor, expectedTypes, context);
+                              ExpectedTypeInfo[] expectedTypes, @Nullable PsiElement context, @Nullable JVMElementMutableView mutator) {
+    doCreate(targetClass, method, shouldBeAbstractImpl(null, targetClass), arguments, substitutor, expectedTypes, context, mutator);
   }
 
   public static void doCreate(PsiClass targetClass,
-                               PsiMethod method,
-                               boolean shouldBeAbstract,
-                               List<Pair<PsiExpression, PsiType>> arguments,
-                               PsiSubstitutor substitutor,
-                               ExpectedTypeInfo[] expectedTypes,
-                               @Nullable final PsiElement context) {
+                              PsiMethod method,
+                              boolean shouldBeAbstract,
+                              List<Pair<PsiExpression, PsiType>> arguments,
+                              PsiSubstitutor substitutor,
+                              ExpectedTypeInfo[] expectedTypes,
+                              @Nullable final PsiElement context,
+                              @Nullable JVMElementMutableView mutableView) {
 
     method = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(method);
 
@@ -252,7 +257,7 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
     if (method == null) return;
 
     RangeMarker rangeMarker = document.createRangeMarker(method.getTextRange());
-    final Editor newEditor = positionCursor(project, targetFile, method);
+    final Editor newEditor = positionCursor(project, targetFile, method, mutableView);
     if (newEditor == null) return;
     Template template = builder.buildTemplate();
     newEditor.getCaretModel().moveToOffset(rangeMarker.getStartOffset());
