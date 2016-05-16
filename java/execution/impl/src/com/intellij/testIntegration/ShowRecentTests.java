@@ -120,8 +120,12 @@ class RecentTestsListPopup extends ListPopupImpl {
       @Override
       public void actionPerformed(ActionEvent e) {
         Object[] values = getSelectedValues();
-        if (values.length == 1) {
-          Location location = myLocator.getLocation(values[0].toString());
+        if (values.length != 1) return;
+
+        List<String> urls = ((RecentTestsPopupEntry)values[0]).getTestsUrls();
+        if (urls.size() == 1) {
+          String url = urls.get(0);
+          Location location = myLocator.getLocation(url);
           if (location != null) {
             cancel();
             PsiNavigateUtil.navigate(location.getPsiElement());
