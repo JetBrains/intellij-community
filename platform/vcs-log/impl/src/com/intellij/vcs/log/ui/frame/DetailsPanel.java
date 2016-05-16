@@ -181,11 +181,7 @@ class DetailsPanel extends JPanel implements EditorColorsListener {
       myMainContentPanel.add(new SeparatorComponent(0, OnePixelDivider.BACKGROUND, null));
       JBLabel label = new JBLabel("(showing " + MAX_ROWS + " of " + selectionLength + " selected commits)");
       label.setFont(VcsHistoryUtil.getCommitDetailsFont());
-      label.setBorder(JBUI.Borders.empty(VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH / 2,
-                                         myColorManager.isMultipleRoots()
-                                         ? VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH +
-                                           VcsLogGraphTable.ROOT_INDICATOR_COLORED_WIDTH
-                                         : VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH / 2, CommitPanel.BOTTOM_BORDER, 0));
+      label.setBorder(CommitPanel.getDetailsBorder());
       myMainContentPanel.add(label);
     }
 

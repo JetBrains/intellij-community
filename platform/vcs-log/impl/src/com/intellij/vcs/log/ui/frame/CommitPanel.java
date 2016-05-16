@@ -21,12 +21,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.openapi.vcs.ui.FontUtil;
 import com.intellij.ui.ColorUtil;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.UI;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.HtmlPanel;
+import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsFullCommitDetails;
@@ -41,8 +41,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.CompoundBorder;
-import javax.swing.border.MatteBorder;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.text.DefaultCaret;
 import javax.swing.text.Document;
@@ -59,7 +57,6 @@ class CommitPanel extends JBPanel {
   public static final int BOTTOM_BORDER = 2;
 
   @NotNull private final VcsLogData myLogData;
-  @NotNull private final VcsLogColorManager myColorManager;
 
   @NotNull private final ReferencesPanel myReferencesPanel;
   @NotNull private final DataPanel myDataPanel;
@@ -68,27 +65,26 @@ class CommitPanel extends JBPanel {
 
   public CommitPanel(@NotNull VcsLogData logData, @NotNull VcsLogColorManager colorManager) {
     myLogData = logData;
-    myColorManager = colorManager;
 
     setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
     setOpaque(false);
 
-    myReferencesPanel = new ReferencesPanel(myColorManager);
+    myReferencesPanel = new ReferencesPanel(colorManager);
     myDataPanel = new DataPanel(myLogData.getProject(), myLogData.isMultiRoot());
 
     add(myReferencesPanel);
     add(myDataPanel);
+
+    setBorder(getDetailsBorder());
   }
 
   public void setCommit(@NotNull VcsFullCommitDetails commitData) {
     if (!Comparing.equal(myCommit, commitData)) {
       if (commitData instanceof LoadingDetails) {
         myDataPanel.setData(null);
-        updateBorder(null);
       }
       else {
         myDataPanel.setData(commitData);
-        updateBorder(commitData);
       }
       myCommit = commitData;
     }
@@ -129,18 +125,11 @@ class CommitPanel extends JBPanel {
     return ContainerUtil.sorted(refs, myLogData.getLogProvider(ref.getRoot()).getReferenceManager().getLabelsOrderComparator());
   }
 
-  private void updateBorder(@Nullable VcsFullCommitDetails data) {
-    if (data == null || !myColorManager.isMultipleRoots()) {
-      setBorder(JBUI.Borders.empty(VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH / 2,
-                                   VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH / 2, BOTTOM_BORDER, 0));
-    }
-    else {
-      Color color = VcsLogGraphTable.getRootBackgroundColor(data.getRoot(), myColorManager);
-      setBorder(new CompoundBorder(new MatteBorder(0, VcsLogGraphTable.ROOT_INDICATOR_COLORED_WIDTH, 0, 0, color),
-                                   new MatteBorder(VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH / 2,
-                                                   VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH - ReferencesPanel.H_GAP, BOTTOM_BORDER, 0,
-                                                   new JBColor(CommitPanel::getCommitDetailsBackground))));
-    }
+  @NotNull
+  public static JBEmptyBorder getDetailsBorder() {
+    return JBUI.Borders.empty(VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH / 2,
+                              VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH / 2,
+                              VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH / 2, 0);
   }
 
   @Override
