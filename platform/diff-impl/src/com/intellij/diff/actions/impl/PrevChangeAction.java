@@ -21,7 +21,6 @@ import com.intellij.openapi.project.DumbAware;
 
 public abstract class PrevChangeAction extends AnAction implements DumbAware {
   public PrevChangeAction() {
-    setEnabledInModalContext(true);
     ActionUtil.copyFrom(this, "Diff.PrevChange");
   }
 }
