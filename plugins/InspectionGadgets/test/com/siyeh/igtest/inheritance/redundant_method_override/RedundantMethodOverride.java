@@ -77,3 +77,18 @@ class MyList extends ArrayList {
     super.removeRange(fromIndex, toIndex);
   }
 }
+////////////////
+class Sup {
+  void overload1(int i) {}
+  void overload1(int i, boolean b) {}
+
+  protected void foox() {
+    overload1(0);
+  }
+}
+class Sub extends Sup {
+  @Override
+  protected void foox() { // not redundant
+    overload1(0, true);
+  }
+}
