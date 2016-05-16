@@ -236,12 +236,12 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
               final PyType returnType = StringUtil.isNotEmpty(memberTypeName) ? parseNumpyDocType(function, memberTypeName) : null;
               final boolean isOptional = StringUtil.isNotEmpty(memberTypeName) && memberTypeName.contains("optional");
 
-              if (isOptional) {
-                if (i != 0) {
-                  if(members.size() > 1)
-                    unionMembers.add(facade.createTupleType(members, function));
-                   else
-                    unionMembers.add(returnType);
+              if (isOptional && i != 0) {
+                if (members.size() > 1) {
+                  unionMembers.add(facade.createTupleType(members, function));
+                }
+                else if (members.size() == 1) {
+                  unionMembers.add(members.get(0));
                 }
               }
               members.add(returnType);
