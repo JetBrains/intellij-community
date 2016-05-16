@@ -90,14 +90,14 @@ public class StudyProjectGenerator {
   protected Course getCourse(@NotNull final Project project) {
       final File courseFile = new File(new File(OUR_COURSES_DIR, mySelectedCourseInfo.getName()), EduNames.COURSE_META_FILE);
       if (courseFile.exists()) {
-        return readCourseFromCache(courseFile);
+        return readCourseFromCache(courseFile, false);
       }
       else {
         final File adaptiveCourseFile = new File(new File(OUR_COURSES_DIR, ADAPTIVE_COURSE_PREFIX +
                                                                    mySelectedCourseInfo.getName() + "_" +
                                                                    myUser.getEmail()), EduNames.COURSE_META_FILE);
         if (adaptiveCourseFile.exists()) {
-          return readCourseFromCache(adaptiveCourseFile);
+          return readCourseFromCache(adaptiveCourseFile, true);
         }
         
       }
@@ -110,13 +110,13 @@ public class StudyProjectGenerator {
   }
 
   @Nullable
-  private static Course readCourseFromCache(File courseFile) {
+  private static Course readCourseFromCache(@NotNull File courseFile, boolean isAdaptive) {
     Reader reader = null;
     try {
       reader = new InputStreamReader(new FileInputStream(courseFile), "UTF-8");
       Gson gson = new GsonBuilder().create();
       final Course course = gson.fromJson(reader, Course.class);
-      course.initCourse(true);
+      course.initCourse(isAdaptive);
       return course;
     }
     catch (UnsupportedEncodingException e) {
