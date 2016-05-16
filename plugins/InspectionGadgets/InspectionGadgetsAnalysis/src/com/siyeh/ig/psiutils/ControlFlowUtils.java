@@ -523,6 +523,18 @@ public class ControlFlowUtils {
     return !containsReturn(body) && !codeBlockMayCompleteNormally(body);
   }
 
+  public static boolean lambdaExpressionAlwaysThrowsException(PsiLambdaExpression expression) {
+    final PsiElement body = expression.getBody();
+    if (body instanceof PsiExpression) {
+      return false;
+    }
+    if (!(body instanceof PsiCodeBlock)) {
+      return true;
+    }
+    final PsiCodeBlock codeBlock = (PsiCodeBlock)body;
+    return !containsReturn(codeBlock) && !codeBlockMayCompleteNormally(codeBlock);
+  }
+
   public static boolean statementContainsNakedBreak(PsiStatement statement) {
     if (statement == null) {
       return false;
