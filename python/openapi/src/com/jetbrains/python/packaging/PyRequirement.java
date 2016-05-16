@@ -47,6 +47,12 @@ public class PyRequirement {
   private static final String EDITABLE_REGEXP = "((-e|--editable)" + LINE_WS_REGEXP + "+)?";
 
   @NotNull
+  private static final String SRC_BEFORE_REGEXP = "(--src" + LINE_WS_REGEXP + "+\\S+" + LINE_WS_REGEXP + "+)?";
+
+  @NotNull
+  private static final String SRC_AFTER_REGEXP = "(" + LINE_WS_REGEXP + "+--src" + LINE_WS_REGEXP + "+\\S+)?";
+
+  @NotNull
   private static final String USER_AT_REGEXP = "[\\w-]+@";
 
   @NotNull
@@ -82,21 +88,27 @@ public class PyRequirement {
 
   // supports: git+user@...
   @NotNull
-  private static final Pattern GIT_PROJECT_URL = Pattern.compile(EDITABLE_REGEXP +
+  private static final Pattern GIT_PROJECT_URL = Pattern.compile(SRC_BEFORE_REGEXP +
+                                                                 EDITABLE_REGEXP +
                                                                  "git\\+" + USER_AT_REGEXP + "[^:\\s]+:" +
-                                                                 PATH_REGEXP + REVISION_REGEXP + EGG_REGEXP + COMMENT_REGEXP);
+                                                                 PATH_REGEXP + REVISION_REGEXP + EGG_REGEXP +
+                                                                 SRC_AFTER_REGEXP + COMMENT_REGEXP);
 
   // supports: bzr+lp:...
   @NotNull
-  private static final Pattern BZR_PROJECT_URL = Pattern.compile(EDITABLE_REGEXP +
+  private static final Pattern BZR_PROJECT_URL = Pattern.compile(SRC_BEFORE_REGEXP +
+                                                                 EDITABLE_REGEXP +
                                                                  "bzr\\+lp:" +
-                                                                 PATH_REGEXP + REVISION_REGEXP + EGG_REGEXP + COMMENT_REGEXP);
+                                                                 PATH_REGEXP + REVISION_REGEXP + EGG_REGEXP +
+                                                                 SRC_AFTER_REGEXP + COMMENT_REGEXP);
 
   // supports: (bzr|git|hg|svn)(+smth)?://...
   @NotNull
-  private static final Pattern VCS_PROJECT_URL = Pattern.compile(EDITABLE_REGEXP +
+  private static final Pattern VCS_PROJECT_URL = Pattern.compile(SRC_BEFORE_REGEXP +
+                                                                 EDITABLE_REGEXP +
                                                                  "(bzr|git|hg|svn)(\\+[A-Za-z]+)?://?[^/]+/" +
-                                                                 PATH_REGEXP + REVISION_REGEXP + EGG_REGEXP + COMMENT_REGEXP);
+                                                                 PATH_REGEXP + REVISION_REGEXP + EGG_REGEXP +
+                                                                 SRC_AFTER_REGEXP + COMMENT_REGEXP);
 
   // PEP-508 + PEP-440
   // https://www.python.org/dev/peps/pep-0508/
@@ -374,7 +386,7 @@ public class PyRequirement {
     return new PyRequirement(name, Collections.singletonList(calculateVersionSpec(version, PyRequirementRelation.EQ)), line);
   }
 
-  @NotNull
+  @Nullable
   private static PyRequirement createVcsRequirement(@NotNull String line, @NotNull Matcher matcher) {
     final String path = matcher.group(PATH_GROUP);
     final String egg = matcher.group(EGG_GROUP);

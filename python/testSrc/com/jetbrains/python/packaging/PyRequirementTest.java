@@ -90,7 +90,6 @@ public class PyRequirementTest extends PyTestCase {
 
   // VCS
   // TODO: subdirectory
-  // TODO: editable with --src
   // PY-6328
   public void testGit() {
     doTest("git://git.myproject.org/MyProject#egg=MyProject1");
@@ -256,6 +255,224 @@ public class PyRequirementTest extends PyTestCase {
     doTest("--editable git+user@git.myproject.org:/path/MyProject/#egg=MyProject1");
     doTest("--editable git+user@git.myproject.org:/path/MyProject.git#egg=MyProject1");
     doTest("--editable git+user@git.myproject.org:/path/MyProject.git/#egg=MyProject1");
+  }
+
+  public void testEditableWithSrcGit() {
+    doTest("--src ./mysrc/src -e git://git.myproject.org/MyProject#egg=MyProject1");
+    doTest("--src ./mysrc/src -e git://git.myproject.org/MyProject/#egg=MyProject1");
+    doTest("--src ./mysrc/src -e git://git.myproject.org/MyProject.git#egg=MyProject1");
+    doTest("--src ./mysrc/src -e git://git.myproject.org/MyProject.git/#egg=MyProject1");
+    doTest("--src ./mysrc/src -e git://git.myproject.org/path/MyProject#egg=MyProject1");
+    doTest("--src ./mysrc/src -e git://git.myproject.org/path/MyProject/#egg=MyProject1");
+    doTest("--src ./mysrc/src -e git://git.myproject.org/path/MyProject.git#egg=MyProject1");
+    doTest("--src ./mysrc/src -e git://git.myproject.org/path/MyProject.git/#egg=MyProject1");
+
+    doTest("--src ./mysrc/src -e git+git://git.myproject.org/MyProject#egg=MyProject1");
+    doTest("--src ./mysrc/src -e git+git://git.myproject.org/MyProject/#egg=MyProject1");
+    doTest("--src ./mysrc/src -e git+git://git.myproject.org/MyProject.git#egg=MyProject1");
+    doTest("--src ./mysrc/src -e git+git://git.myproject.org/MyProject.git/#egg=MyProject1");
+    doTest("--src ./mysrc/src -e git+git://git.myproject.org/path/MyProject#egg=MyProject1");
+    doTest("--src ./mysrc/src -e git+git://git.myproject.org/path/MyProject/#egg=MyProject1");
+    doTest("--src ./mysrc/src -e git+git://git.myproject.org/path/MyProject.git#egg=MyProject1");
+    doTest("--src ./mysrc/src -e git+git://git.myproject.org/path/MyProject.git/#egg=MyProject1");
+
+    doTest("--src ./mysrc/src -e git+https://git.myproject.org/MyProject#egg=MyProject1");
+    doTest("--src ./mysrc/src -e git+https://git.myproject.org/MyProject/#egg=MyProject1");
+    doTest("--src ./mysrc/src -e git+https://git.myproject.org/MyProject.git#egg=MyProject1");
+    doTest("--src ./mysrc/src -e git+https://git.myproject.org/MyProject.git/#egg=MyProject1");
+    doTest("--src ./mysrc/src -e git+https://git.myproject.org/path/MyProject#egg=MyProject1");
+    doTest("--src ./mysrc/src -e git+https://git.myproject.org/path/MyProject/#egg=MyProject1");
+    doTest("--src ./mysrc/src -e git+https://git.myproject.org/path/MyProject.git#egg=MyProject1");
+    doTest("--src ./mysrc/src -e git+https://git.myproject.org/path/MyProject.git/#egg=MyProject1");
+
+    doTest("--src ./mysrc/src -e git+ssh://git.myproject.org/MyProject#egg=MyProject1");
+    doTest("--src ./mysrc/src -e git+ssh://git.myproject.org/MyProject/#egg=MyProject1");
+    doTest("--src ./mysrc/src -e git+ssh://git.myproject.org/MyProject.git#egg=MyProject1");
+    doTest("--src ./mysrc/src -e git+ssh://git.myproject.org/MyProject.git/#egg=MyProject1");
+    doTest("--src ./mysrc/src -e git+ssh://git.myproject.org/path/MyProject#egg=MyProject1");
+    doTest("--src ./mysrc/src -e git+ssh://git.myproject.org/path/MyProject/#egg=MyProject1");
+    doTest("--src ./mysrc/src -e git+ssh://git.myproject.org/path/MyProject.git#egg=MyProject1");
+    doTest("--src ./mysrc/src -e git+ssh://git.myproject.org/path/MyProject.git/#egg=MyProject1");
+
+    doTest("--src ./mysrc/src -e git+ssh://user@git.myproject.org/MyProject#egg=MyProject1");
+    doTest("--src ./mysrc/src -e git+ssh://user@git.myproject.org/MyProject/#egg=MyProject1");
+    doTest("--src ./mysrc/src -e git+ssh://user@git.myproject.org/MyProject.git#egg=MyProject1");
+    doTest("--src ./mysrc/src -e git+ssh://user@git.myproject.org/MyProject.git/#egg=MyProject1");
+    doTest("--src ./mysrc/src -e git+ssh://user@git.myproject.org/path/MyProject#egg=MyProject1");
+    doTest("--src ./mysrc/src -e git+ssh://user@git.myproject.org/path/MyProject/#egg=MyProject1");
+    doTest("--src ./mysrc/src -e git+ssh://user@git.myproject.org/path/MyProject.git#egg=MyProject1");
+    doTest("--src ./mysrc/src -e git+ssh://user@git.myproject.org/path/MyProject.git/#egg=MyProject1");
+
+    doTest("--src ./mysrc/src -e git+user@git.myproject.org:MyProject#egg=MyProject1");
+    doTest("--src ./mysrc/src -e git+user@git.myproject.org:MyProject/#egg=MyProject1");
+    doTest("--src ./mysrc/src -e git+user@git.myproject.org:MyProject.git#egg=MyProject1");
+    doTest("--src ./mysrc/src -e git+user@git.myproject.org:MyProject.git/#egg=MyProject1");
+    doTest("--src ./mysrc/src -e git+user@git.myproject.org:/path/MyProject#egg=MyProject1");
+    doTest("--src ./mysrc/src -e git+user@git.myproject.org:/path/MyProject/#egg=MyProject1");
+    doTest("--src ./mysrc/src -e git+user@git.myproject.org:/path/MyProject.git#egg=MyProject1");
+    doTest("--src ./mysrc/src -e git+user@git.myproject.org:/path/MyProject.git/#egg=MyProject1");
+
+    doTest("--src ./mysrc/src --editable git://git.myproject.org/MyProject#egg=MyProject1");
+    doTest("--src ./mysrc/src --editable git://git.myproject.org/MyProject/#egg=MyProject1");
+    doTest("--src ./mysrc/src --editable git://git.myproject.org/MyProject.git#egg=MyProject1");
+    doTest("--src ./mysrc/src --editable git://git.myproject.org/MyProject.git/#egg=MyProject1");
+    doTest("--src ./mysrc/src --editable git://git.myproject.org/path/MyProject#egg=MyProject1");
+    doTest("--src ./mysrc/src --editable git://git.myproject.org/path/MyProject/#egg=MyProject1");
+    doTest("--src ./mysrc/src --editable git://git.myproject.org/path/MyProject.git#egg=MyProject1");
+    doTest("--src ./mysrc/src --editable git://git.myproject.org/path/MyProject.git/#egg=MyProject1");
+
+    doTest("--src ./mysrc/src --editable git+git://git.myproject.org/MyProject#egg=MyProject1");
+    doTest("--src ./mysrc/src --editable git+git://git.myproject.org/MyProject/#egg=MyProject1");
+    doTest("--src ./mysrc/src --editable git+git://git.myproject.org/MyProject.git#egg=MyProject1");
+    doTest("--src ./mysrc/src --editable git+git://git.myproject.org/MyProject.git/#egg=MyProject1");
+    doTest("--src ./mysrc/src --editable git+git://git.myproject.org/path/MyProject#egg=MyProject1");
+    doTest("--src ./mysrc/src --editable git+git://git.myproject.org/path/MyProject/#egg=MyProject1");
+    doTest("--src ./mysrc/src --editable git+git://git.myproject.org/path/MyProject.git#egg=MyProject1");
+    doTest("--src ./mysrc/src --editable git+git://git.myproject.org/path/MyProject.git/#egg=MyProject1");
+
+    doTest("--src ./mysrc/src --editable git+https://git.myproject.org/MyProject#egg=MyProject1");
+    doTest("--src ./mysrc/src --editable git+https://git.myproject.org/MyProject/#egg=MyProject1");
+    doTest("--src ./mysrc/src --editable git+https://git.myproject.org/MyProject.git#egg=MyProject1");
+    doTest("--src ./mysrc/src --editable git+https://git.myproject.org/MyProject.git/#egg=MyProject1");
+    doTest("--src ./mysrc/src --editable git+https://git.myproject.org/path/MyProject#egg=MyProject1");
+    doTest("--src ./mysrc/src --editable git+https://git.myproject.org/path/MyProject/#egg=MyProject1");
+    doTest("--src ./mysrc/src --editable git+https://git.myproject.org/path/MyProject.git#egg=MyProject1");
+    doTest("--src ./mysrc/src --editable git+https://git.myproject.org/path/MyProject.git/#egg=MyProject1");
+
+    doTest("--src ./mysrc/src --editable git+ssh://git.myproject.org/MyProject#egg=MyProject1");
+    doTest("--src ./mysrc/src --editable git+ssh://git.myproject.org/MyProject/#egg=MyProject1");
+    doTest("--src ./mysrc/src --editable git+ssh://git.myproject.org/MyProject.git#egg=MyProject1");
+    doTest("--src ./mysrc/src --editable git+ssh://git.myproject.org/MyProject.git/#egg=MyProject1");
+    doTest("--src ./mysrc/src --editable git+ssh://git.myproject.org/path/MyProject#egg=MyProject1");
+    doTest("--src ./mysrc/src --editable git+ssh://git.myproject.org/path/MyProject/#egg=MyProject1");
+    doTest("--src ./mysrc/src --editable git+ssh://git.myproject.org/path/MyProject.git#egg=MyProject1");
+    doTest("--src ./mysrc/src --editable git+ssh://git.myproject.org/path/MyProject.git/#egg=MyProject1");
+
+    doTest("--src ./mysrc/src --editable git+ssh://user@git.myproject.org/MyProject#egg=MyProject1");
+    doTest("--src ./mysrc/src --editable git+ssh://user@git.myproject.org/MyProject/#egg=MyProject1");
+    doTest("--src ./mysrc/src --editable git+ssh://user@git.myproject.org/MyProject.git#egg=MyProject1");
+    doTest("--src ./mysrc/src --editable git+ssh://user@git.myproject.org/MyProject.git/#egg=MyProject1");
+    doTest("--src ./mysrc/src --editable git+ssh://user@git.myproject.org/path/MyProject#egg=MyProject1");
+    doTest("--src ./mysrc/src --editable git+ssh://user@git.myproject.org/path/MyProject/#egg=MyProject1");
+    doTest("--src ./mysrc/src --editable git+ssh://user@git.myproject.org/path/MyProject.git#egg=MyProject1");
+    doTest("--src ./mysrc/src --editable git+ssh://user@git.myproject.org/path/MyProject.git/#egg=MyProject1");
+
+    doTest("--src ./mysrc/src --editable git+user@git.myproject.org:MyProject#egg=MyProject1");
+    doTest("--src ./mysrc/src --editable git+user@git.myproject.org:MyProject/#egg=MyProject1");
+    doTest("--src ./mysrc/src --editable git+user@git.myproject.org:MyProject.git#egg=MyProject1");
+    doTest("--src ./mysrc/src --editable git+user@git.myproject.org:MyProject.git/#egg=MyProject1");
+    doTest("--src ./mysrc/src --editable git+user@git.myproject.org:/path/MyProject#egg=MyProject1");
+    doTest("--src ./mysrc/src --editable git+user@git.myproject.org:/path/MyProject/#egg=MyProject1");
+    doTest("--src ./mysrc/src --editable git+user@git.myproject.org:/path/MyProject.git#egg=MyProject1");
+    doTest("--src ./mysrc/src --editable git+user@git.myproject.org:/path/MyProject.git/#egg=MyProject1");
+
+    doTest("-e git://git.myproject.org/MyProject#egg=MyProject1 --src mysrc");
+    doTest("-e git://git.myproject.org/MyProject/#egg=MyProject1 --src mysrc");
+    doTest("-e git://git.myproject.org/MyProject.git#egg=MyProject1 --src mysrc");
+    doTest("-e git://git.myproject.org/MyProject.git/#egg=MyProject1 --src mysrc");
+    doTest("-e git://git.myproject.org/path/MyProject#egg=MyProject1 --src mysrc");
+    doTest("-e git://git.myproject.org/path/MyProject/#egg=MyProject1 --src mysrc");
+    doTest("-e git://git.myproject.org/path/MyProject.git#egg=MyProject1 --src mysrc");
+    doTest("-e git://git.myproject.org/path/MyProject.git/#egg=MyProject1 --src mysrc");
+
+    doTest("-e git+git://git.myproject.org/MyProject#egg=MyProject1 --src mysrc");
+    doTest("-e git+git://git.myproject.org/MyProject/#egg=MyProject1 --src mysrc");
+    doTest("-e git+git://git.myproject.org/MyProject.git#egg=MyProject1 --src mysrc");
+    doTest("-e git+git://git.myproject.org/MyProject.git/#egg=MyProject1 --src mysrc");
+    doTest("-e git+git://git.myproject.org/path/MyProject#egg=MyProject1 --src mysrc");
+    doTest("-e git+git://git.myproject.org/path/MyProject/#egg=MyProject1 --src mysrc");
+    doTest("-e git+git://git.myproject.org/path/MyProject.git#egg=MyProject1 --src mysrc");
+    doTest("-e git+git://git.myproject.org/path/MyProject.git/#egg=MyProject1 --src mysrc");
+
+    doTest("-e git+https://git.myproject.org/MyProject#egg=MyProject1 --src mysrc");
+    doTest("-e git+https://git.myproject.org/MyProject/#egg=MyProject1 --src mysrc");
+    doTest("-e git+https://git.myproject.org/MyProject.git#egg=MyProject1 --src mysrc");
+    doTest("-e git+https://git.myproject.org/MyProject.git/#egg=MyProject1 --src mysrc");
+    doTest("-e git+https://git.myproject.org/path/MyProject#egg=MyProject1 --src mysrc");
+    doTest("-e git+https://git.myproject.org/path/MyProject/#egg=MyProject1 --src mysrc");
+    doTest("-e git+https://git.myproject.org/path/MyProject.git#egg=MyProject1 --src mysrc");
+    doTest("-e git+https://git.myproject.org/path/MyProject.git/#egg=MyProject1 --src mysrc");
+
+    doTest("-e git+ssh://git.myproject.org/MyProject#egg=MyProject1 --src mysrc");
+    doTest("-e git+ssh://git.myproject.org/MyProject/#egg=MyProject1 --src mysrc");
+    doTest("-e git+ssh://git.myproject.org/MyProject.git#egg=MyProject1 --src mysrc");
+    doTest("-e git+ssh://git.myproject.org/MyProject.git/#egg=MyProject1 --src mysrc");
+    doTest("-e git+ssh://git.myproject.org/path/MyProject#egg=MyProject1 --src mysrc");
+    doTest("-e git+ssh://git.myproject.org/path/MyProject/#egg=MyProject1 --src mysrc");
+    doTest("-e git+ssh://git.myproject.org/path/MyProject.git#egg=MyProject1 --src mysrc");
+    doTest("-e git+ssh://git.myproject.org/path/MyProject.git/#egg=MyProject1 --src mysrc");
+
+    doTest("-e git+ssh://user@git.myproject.org/MyProject#egg=MyProject1 --src mysrc");
+    doTest("-e git+ssh://user@git.myproject.org/MyProject/#egg=MyProject1 --src mysrc");
+    doTest("-e git+ssh://user@git.myproject.org/MyProject.git#egg=MyProject1 --src mysrc");
+    doTest("-e git+ssh://user@git.myproject.org/MyProject.git/#egg=MyProject1 --src mysrc");
+    doTest("-e git+ssh://user@git.myproject.org/path/MyProject#egg=MyProject1 --src mysrc");
+    doTest("-e git+ssh://user@git.myproject.org/path/MyProject/#egg=MyProject1 --src mysrc");
+    doTest("-e git+ssh://user@git.myproject.org/path/MyProject.git#egg=MyProject1 --src mysrc");
+    doTest("-e git+ssh://user@git.myproject.org/path/MyProject.git/#egg=MyProject1 --src mysrc");
+
+    doTest("-e git+user@git.myproject.org:MyProject#egg=MyProject1 --src mysrc");
+    doTest("-e git+user@git.myproject.org:MyProject/#egg=MyProject1 --src mysrc");
+    doTest("-e git+user@git.myproject.org:MyProject.git#egg=MyProject1 --src mysrc");
+    doTest("-e git+user@git.myproject.org:MyProject.git/#egg=MyProject1 --src mysrc");
+    doTest("-e git+user@git.myproject.org:/path/MyProject#egg=MyProject1 --src mysrc");
+    doTest("-e git+user@git.myproject.org:/path/MyProject/#egg=MyProject1 --src mysrc");
+    doTest("-e git+user@git.myproject.org:/path/MyProject.git#egg=MyProject1 --src mysrc");
+    doTest("-e git+user@git.myproject.org:/path/MyProject.git/#egg=MyProject1 --src mysrc");
+
+    doTest("--editable git://git.myproject.org/MyProject#egg=MyProject1 --src mysrc");
+    doTest("--editable git://git.myproject.org/MyProject/#egg=MyProject1 --src mysrc");
+    doTest("--editable git://git.myproject.org/MyProject.git#egg=MyProject1 --src mysrc");
+    doTest("--editable git://git.myproject.org/MyProject.git/#egg=MyProject1 --src mysrc");
+    doTest("--editable git://git.myproject.org/path/MyProject#egg=MyProject1 --src mysrc");
+    doTest("--editable git://git.myproject.org/path/MyProject/#egg=MyProject1 --src mysrc");
+    doTest("--editable git://git.myproject.org/path/MyProject.git#egg=MyProject1 --src mysrc");
+    doTest("--editable git://git.myproject.org/path/MyProject.git/#egg=MyProject1 --src mysrc");
+
+    doTest("--editable git+git://git.myproject.org/MyProject#egg=MyProject1 --src mysrc");
+    doTest("--editable git+git://git.myproject.org/MyProject/#egg=MyProject1 --src mysrc");
+    doTest("--editable git+git://git.myproject.org/MyProject.git#egg=MyProject1 --src mysrc");
+    doTest("--editable git+git://git.myproject.org/MyProject.git/#egg=MyProject1 --src mysrc");
+    doTest("--editable git+git://git.myproject.org/path/MyProject#egg=MyProject1 --src mysrc");
+    doTest("--editable git+git://git.myproject.org/path/MyProject/#egg=MyProject1 --src mysrc");
+    doTest("--editable git+git://git.myproject.org/path/MyProject.git#egg=MyProject1 --src mysrc");
+    doTest("--editable git+git://git.myproject.org/path/MyProject.git/#egg=MyProject1 --src mysrc");
+
+    doTest("--editable git+https://git.myproject.org/MyProject#egg=MyProject1 --src mysrc");
+    doTest("--editable git+https://git.myproject.org/MyProject/#egg=MyProject1 --src mysrc");
+    doTest("--editable git+https://git.myproject.org/MyProject.git#egg=MyProject1 --src mysrc");
+    doTest("--editable git+https://git.myproject.org/MyProject.git/#egg=MyProject1 --src mysrc");
+    doTest("--editable git+https://git.myproject.org/path/MyProject#egg=MyProject1 --src mysrc");
+    doTest("--editable git+https://git.myproject.org/path/MyProject/#egg=MyProject1 --src mysrc");
+    doTest("--editable git+https://git.myproject.org/path/MyProject.git#egg=MyProject1 --src mysrc");
+    doTest("--editable git+https://git.myproject.org/path/MyProject.git/#egg=MyProject1 --src mysrc");
+
+    doTest("--editable git+ssh://git.myproject.org/MyProject#egg=MyProject1 --src mysrc");
+    doTest("--editable git+ssh://git.myproject.org/MyProject/#egg=MyProject1 --src mysrc");
+    doTest("--editable git+ssh://git.myproject.org/MyProject.git#egg=MyProject1 --src mysrc");
+    doTest("--editable git+ssh://git.myproject.org/MyProject.git/#egg=MyProject1 --src mysrc");
+    doTest("--editable git+ssh://git.myproject.org/path/MyProject#egg=MyProject1 --src mysrc");
+    doTest("--editable git+ssh://git.myproject.org/path/MyProject/#egg=MyProject1 --src mysrc");
+    doTest("--editable git+ssh://git.myproject.org/path/MyProject.git#egg=MyProject1 --src mysrc");
+    doTest("--editable git+ssh://git.myproject.org/path/MyProject.git/#egg=MyProject1 --src mysrc");
+
+    doTest("--editable git+ssh://user@git.myproject.org/MyProject#egg=MyProject1 --src mysrc");
+    doTest("--editable git+ssh://user@git.myproject.org/MyProject/#egg=MyProject1 --src mysrc");
+    doTest("--editable git+ssh://user@git.myproject.org/MyProject.git#egg=MyProject1 --src mysrc");
+    doTest("--editable git+ssh://user@git.myproject.org/MyProject.git/#egg=MyProject1 --src mysrc");
+    doTest("--editable git+ssh://user@git.myproject.org/path/MyProject#egg=MyProject1 --src mysrc");
+    doTest("--editable git+ssh://user@git.myproject.org/path/MyProject/#egg=MyProject1 --src mysrc");
+    doTest("--editable git+ssh://user@git.myproject.org/path/MyProject.git#egg=MyProject1 --src mysrc");
+    doTest("--editable git+ssh://user@git.myproject.org/path/MyProject.git/#egg=MyProject1 --src mysrc");
+
+    doTest("--editable git+user@git.myproject.org:MyProject#egg=MyProject1 --src mysrc");
+    doTest("--editable git+user@git.myproject.org:MyProject/#egg=MyProject1 --src mysrc");
+    doTest("--editable git+user@git.myproject.org:MyProject.git#egg=MyProject1 --src mysrc");
+    doTest("--editable git+user@git.myproject.org:MyProject.git/#egg=MyProject1 --src mysrc");
+    doTest("--editable git+user@git.myproject.org:/path/MyProject#egg=MyProject1 --src mysrc");
+    doTest("--editable git+user@git.myproject.org:/path/MyProject/#egg=MyProject1 --src mysrc");
+    doTest("--editable git+user@git.myproject.org:/path/MyProject.git#egg=MyProject1 --src mysrc");
+    doTest("--editable git+user@git.myproject.org:/path/MyProject.git/#egg=MyProject1 --src mysrc");
   }
 
   // PY-8623
@@ -494,6 +711,88 @@ public class PyRequirementTest extends PyTestCase {
     doTest("--editable hg+ssh://user@hg.myproject.org/path/MyProject/#egg=MyProject1");
   }
 
+  public void testEditableWithSrcMercurial() {
+    doTest("--src mysrc -e hg+http://hg.myproject.org/MyProject#egg=MyProject1");
+    doTest("--src mysrc -e hg+http://hg.myproject.org/MyProject/#egg=MyProject1");
+    doTest("--src mysrc -e hg+http://hg.myproject.org/path/MyProject#egg=MyProject1");
+    doTest("--src mysrc -e hg+http://hg.myproject.org/path/MyProject/#egg=MyProject1");
+
+    doTest("--src mysrc -e hg+https://hg.myproject.org/MyProject#egg=MyProject1");
+    doTest("--src mysrc -e hg+https://hg.myproject.org/MyProject/#egg=MyProject1");
+    doTest("--src mysrc -e hg+https://hg.myproject.org/path/MyProject#egg=MyProject1");
+    doTest("--src mysrc -e hg+https://hg.myproject.org/path/MyProject/#egg=MyProject1");
+
+    doTest("--src mysrc -e hg+ssh://hg.myproject.org/MyProject#egg=MyProject1");
+    doTest("--src mysrc -e hg+ssh://hg.myproject.org/MyProject/#egg=MyProject1");
+    doTest("--src mysrc -e hg+ssh://hg.myproject.org/path/MyProject#egg=MyProject1");
+    doTest("--src mysrc -e hg+ssh://hg.myproject.org/path/MyProject/#egg=MyProject1");
+
+    doTest("--src mysrc -e hg+ssh://user@hg.myproject.org/MyProject#egg=MyProject1");
+    doTest("--src mysrc -e hg+ssh://user@hg.myproject.org/MyProject/#egg=MyProject1");
+    doTest("--src mysrc -e hg+ssh://user@hg.myproject.org/path/MyProject#egg=MyProject1");
+    doTest("--src mysrc -e hg+ssh://user@hg.myproject.org/path/MyProject/#egg=MyProject1");
+
+    doTest("--src mysrc --editable hg+http://hg.myproject.org/MyProject#egg=MyProject1");
+    doTest("--src mysrc --editable hg+http://hg.myproject.org/MyProject/#egg=MyProject1");
+    doTest("--src mysrc --editable hg+http://hg.myproject.org/path/MyProject#egg=MyProject1");
+    doTest("--src mysrc --editable hg+http://hg.myproject.org/path/MyProject/#egg=MyProject1");
+
+    doTest("--src mysrc --editable hg+https://hg.myproject.org/MyProject#egg=MyProject1");
+    doTest("--src mysrc --editable hg+https://hg.myproject.org/MyProject/#egg=MyProject1");
+    doTest("--src mysrc --editable hg+https://hg.myproject.org/path/MyProject#egg=MyProject1");
+    doTest("--src mysrc --editable hg+https://hg.myproject.org/path/MyProject/#egg=MyProject1");
+
+    doTest("--src mysrc --editable hg+ssh://hg.myproject.org/MyProject#egg=MyProject1");
+    doTest("--src mysrc --editable hg+ssh://hg.myproject.org/MyProject/#egg=MyProject1");
+    doTest("--src mysrc --editable hg+ssh://hg.myproject.org/path/MyProject#egg=MyProject1");
+    doTest("--src mysrc --editable hg+ssh://hg.myproject.org/path/MyProject/#egg=MyProject1");
+
+    doTest("--src mysrc --editable hg+ssh://user@hg.myproject.org/MyProject#egg=MyProject1");
+    doTest("--src mysrc --editable hg+ssh://user@hg.myproject.org/MyProject/#egg=MyProject1");
+    doTest("--src mysrc --editable hg+ssh://user@hg.myproject.org/path/MyProject#egg=MyProject1");
+    doTest("--src mysrc --editable hg+ssh://user@hg.myproject.org/path/MyProject/#egg=MyProject1");
+    
+    doTest("-e hg+http://hg.myproject.org/MyProject#egg=MyProject1 --src ./mysrc");
+    doTest("-e hg+http://hg.myproject.org/MyProject/#egg=MyProject1 --src ./mysrc");
+    doTest("-e hg+http://hg.myproject.org/path/MyProject#egg=MyProject1 --src ./mysrc");
+    doTest("-e hg+http://hg.myproject.org/path/MyProject/#egg=MyProject1 --src ./mysrc");
+
+    doTest("-e hg+https://hg.myproject.org/MyProject#egg=MyProject1 --src ./mysrc");
+    doTest("-e hg+https://hg.myproject.org/MyProject/#egg=MyProject1 --src ./mysrc");
+    doTest("-e hg+https://hg.myproject.org/path/MyProject#egg=MyProject1 --src ./mysrc");
+    doTest("-e hg+https://hg.myproject.org/path/MyProject/#egg=MyProject1 --src ./mysrc");
+
+    doTest("-e hg+ssh://hg.myproject.org/MyProject#egg=MyProject1 --src ./mysrc");
+    doTest("-e hg+ssh://hg.myproject.org/MyProject/#egg=MyProject1 --src ./mysrc");
+    doTest("-e hg+ssh://hg.myproject.org/path/MyProject#egg=MyProject1 --src ./mysrc");
+    doTest("-e hg+ssh://hg.myproject.org/path/MyProject/#egg=MyProject1 --src ./mysrc");
+
+    doTest("-e hg+ssh://user@hg.myproject.org/MyProject#egg=MyProject1 --src ./mysrc");
+    doTest("-e hg+ssh://user@hg.myproject.org/MyProject/#egg=MyProject1 --src ./mysrc");
+    doTest("-e hg+ssh://user@hg.myproject.org/path/MyProject#egg=MyProject1 --src ./mysrc");
+    doTest("-e hg+ssh://user@hg.myproject.org/path/MyProject/#egg=MyProject1 --src ./mysrc");
+
+    doTest("--editable hg+http://hg.myproject.org/MyProject#egg=MyProject1 --src ./mysrc");
+    doTest("--editable hg+http://hg.myproject.org/MyProject/#egg=MyProject1 --src ./mysrc");
+    doTest("--editable hg+http://hg.myproject.org/path/MyProject#egg=MyProject1 --src ./mysrc");
+    doTest("--editable hg+http://hg.myproject.org/path/MyProject/#egg=MyProject1 --src ./mysrc");
+
+    doTest("--editable hg+https://hg.myproject.org/MyProject#egg=MyProject1 --src ./mysrc");
+    doTest("--editable hg+https://hg.myproject.org/MyProject/#egg=MyProject1 --src ./mysrc");
+    doTest("--editable hg+https://hg.myproject.org/path/MyProject#egg=MyProject1 --src ./mysrc");
+    doTest("--editable hg+https://hg.myproject.org/path/MyProject/#egg=MyProject1 --src ./mysrc");
+
+    doTest("--editable hg+ssh://hg.myproject.org/MyProject#egg=MyProject1 --src ./mysrc");
+    doTest("--editable hg+ssh://hg.myproject.org/MyProject/#egg=MyProject1 --src ./mysrc");
+    doTest("--editable hg+ssh://hg.myproject.org/path/MyProject#egg=MyProject1 --src ./mysrc");
+    doTest("--editable hg+ssh://hg.myproject.org/path/MyProject/#egg=MyProject1 --src ./mysrc");
+
+    doTest("--editable hg+ssh://user@hg.myproject.org/MyProject#egg=MyProject1 --src ./mysrc");
+    doTest("--editable hg+ssh://user@hg.myproject.org/MyProject/#egg=MyProject1 --src ./mysrc");
+    doTest("--editable hg+ssh://user@hg.myproject.org/path/MyProject#egg=MyProject1 --src ./mysrc");
+    doTest("--editable hg+ssh://user@hg.myproject.org/path/MyProject/#egg=MyProject1 --src ./mysrc");
+  }
+
   public void testMercurialWithRevision() {
     doTest("hg+http://hg.myproject.org/MyProject@special-feature#egg=MyProject1");
     doTest("hg+http://hg.myproject.org/MyProject/@master#egg=MyProject1");
@@ -654,6 +953,128 @@ public class PyRequirementTest extends PyTestCase {
     doTest("--editable svn+svn://user@svn.myproject.org/MyProject/#egg=MyProject1");
     doTest("--editable svn+svn://user@svn.myproject.org/svn/MyProject#egg=MyProject1");
     doTest("--editable svn+svn://user@svn.myproject.org/svn/MyProject/#egg=MyProject1");
+  }
+
+  public void testEditableWithSrcSubversion() {
+    doTest("--src mysrc/src -e svn+http://svn.myproject.org/MyProject/trunk#egg=MyProject1");
+    doTest("--src mysrc/src -e svn+http://svn.myproject.org/MyProject/trunk/#egg=MyProject1");
+    doTest("--src mysrc/src -e svn+http://svn.myproject.org/svn/MyProject/trunk#egg=MyProject1");
+    doTest("--src mysrc/src -e svn+http://svn.myproject.org/svn/MyProject/trunk/#egg=MyProject1");
+
+    doTest("--src mysrc/src -e svn+https://svn.myproject.org/MyProject/trunk#egg=MyProject1");
+    doTest("--src mysrc/src -e svn+https://svn.myproject.org/MyProject/trunk/#egg=MyProject1");
+    doTest("--src mysrc/src -e svn+https://svn.myproject.org/svn/MyProject/trunk#egg=MyProject1");
+    doTest("--src mysrc/src -e svn+https://svn.myproject.org/svn/MyProject/trunk/#egg=MyProject1");
+
+    doTest("--src mysrc/src -e svn+ssh://svn.myproject.org/MyProject#egg=MyProject1");
+    doTest("--src mysrc/src -e svn+ssh://svn.myproject.org/MyProject/#egg=MyProject1");
+    doTest("--src mysrc/src -e svn+ssh://svn.myproject.org/svn/MyProject#egg=MyProject1");
+    doTest("--src mysrc/src -e svn+ssh://svn.myproject.org/svn/MyProject/#egg=MyProject1");
+
+    doTest("--src mysrc/src -e svn+ssh://user@svn.myproject.org/MyProject#egg=MyProject1");
+    doTest("--src mysrc/src -e svn+ssh://user@svn.myproject.org/MyProject/#egg=MyProject1");
+    doTest("--src mysrc/src -e svn+ssh://user@svn.myproject.org/svn/MyProject#egg=MyProject1");
+    doTest("--src mysrc/src -e svn+ssh://user@svn.myproject.org/svn/MyProject/#egg=MyProject1");
+
+    doTest("--src mysrc/src -e svn+svn://svn.myproject.org/MyProject#egg=MyProject1");
+    doTest("--src mysrc/src -e svn+svn://svn.myproject.org/MyProject/#egg=MyProject1");
+    doTest("--src mysrc/src -e svn+svn://svn.myproject.org/svn/MyProject#egg=MyProject1");
+    doTest("--src mysrc/src -e svn+svn://svn.myproject.org/svn/MyProject/#egg=MyProject1");
+
+    doTest("--src mysrc/src -e svn+svn://user@svn.myproject.org/MyProject#egg=MyProject1");
+    doTest("--src mysrc/src -e svn+svn://user@svn.myproject.org/MyProject/#egg=MyProject1");
+    doTest("--src mysrc/src -e svn+svn://user@svn.myproject.org/svn/MyProject#egg=MyProject1");
+    doTest("--src mysrc/src -e svn+svn://user@svn.myproject.org/svn/MyProject/#egg=MyProject1");
+
+    doTest("--src mysrc/src --editable svn+http://svn.myproject.org/MyProject/trunk#egg=MyProject1");
+    doTest("--src mysrc/src --editable svn+http://svn.myproject.org/MyProject/trunk/#egg=MyProject1");
+    doTest("--src mysrc/src --editable svn+http://svn.myproject.org/svn/MyProject/trunk#egg=MyProject1");
+    doTest("--src mysrc/src --editable svn+http://svn.myproject.org/svn/MyProject/trunk/#egg=MyProject1");
+
+    doTest("--src mysrc/src --editable svn+https://svn.myproject.org/MyProject/trunk#egg=MyProject1");
+    doTest("--src mysrc/src --editable svn+https://svn.myproject.org/MyProject/trunk/#egg=MyProject1");
+    doTest("--src mysrc/src --editable svn+https://svn.myproject.org/svn/MyProject/trunk#egg=MyProject1");
+    doTest("--src mysrc/src --editable svn+https://svn.myproject.org/svn/MyProject/trunk/#egg=MyProject1");
+
+    doTest("--src mysrc/src --editable svn+ssh://svn.myproject.org/MyProject#egg=MyProject1");
+    doTest("--src mysrc/src --editable svn+ssh://svn.myproject.org/MyProject/#egg=MyProject1");
+    doTest("--src mysrc/src --editable svn+ssh://svn.myproject.org/svn/MyProject#egg=MyProject1");
+    doTest("--src mysrc/src --editable svn+ssh://svn.myproject.org/svn/MyProject/#egg=MyProject1");
+
+    doTest("--src mysrc/src --editable svn+ssh://user@svn.myproject.org/MyProject#egg=MyProject1");
+    doTest("--src mysrc/src --editable svn+ssh://user@svn.myproject.org/MyProject/#egg=MyProject1");
+    doTest("--src mysrc/src --editable svn+ssh://user@svn.myproject.org/svn/MyProject#egg=MyProject1");
+    doTest("--src mysrc/src --editable svn+ssh://user@svn.myproject.org/svn/MyProject/#egg=MyProject1");
+
+    doTest("--src mysrc/src --editable svn+svn://svn.myproject.org/MyProject#egg=MyProject1");
+    doTest("--src mysrc/src --editable svn+svn://svn.myproject.org/MyProject/#egg=MyProject1");
+    doTest("--src mysrc/src --editable svn+svn://svn.myproject.org/svn/MyProject#egg=MyProject1");
+    doTest("--src mysrc/src --editable svn+svn://svn.myproject.org/svn/MyProject/#egg=MyProject1");
+
+    doTest("--src mysrc/src --editable svn+svn://user@svn.myproject.org/MyProject#egg=MyProject1");
+    doTest("--src mysrc/src --editable svn+svn://user@svn.myproject.org/MyProject/#egg=MyProject1");
+    doTest("--src mysrc/src --editable svn+svn://user@svn.myproject.org/svn/MyProject#egg=MyProject1");
+    doTest("--src mysrc/src --editable svn+svn://user@svn.myproject.org/svn/MyProject/#egg=MyProject1");
+
+    doTest("-e svn+http://svn.myproject.org/MyProject/trunk#egg=MyProject1 --src mysrc/src");
+    doTest("-e svn+http://svn.myproject.org/MyProject/trunk/#egg=MyProject1 --src mysrc/src");
+    doTest("-e svn+http://svn.myproject.org/svn/MyProject/trunk#egg=MyProject1 --src mysrc/src");
+    doTest("-e svn+http://svn.myproject.org/svn/MyProject/trunk/#egg=MyProject1 --src mysrc/src");
+
+    doTest("-e svn+https://svn.myproject.org/MyProject/trunk#egg=MyProject1 --src mysrc/src");
+    doTest("-e svn+https://svn.myproject.org/MyProject/trunk/#egg=MyProject1 --src mysrc/src");
+    doTest("-e svn+https://svn.myproject.org/svn/MyProject/trunk#egg=MyProject1 --src mysrc/src");
+    doTest("-e svn+https://svn.myproject.org/svn/MyProject/trunk/#egg=MyProject1 --src mysrc/src");
+
+    doTest("-e svn+ssh://svn.myproject.org/MyProject#egg=MyProject1 --src mysrc/src");
+    doTest("-e svn+ssh://svn.myproject.org/MyProject/#egg=MyProject1 --src mysrc/src");
+    doTest("-e svn+ssh://svn.myproject.org/svn/MyProject#egg=MyProject1 --src mysrc/src");
+    doTest("-e svn+ssh://svn.myproject.org/svn/MyProject/#egg=MyProject1 --src mysrc/src");
+
+    doTest("-e svn+ssh://user@svn.myproject.org/MyProject#egg=MyProject1 --src mysrc/src");
+    doTest("-e svn+ssh://user@svn.myproject.org/MyProject/#egg=MyProject1 --src mysrc/src");
+    doTest("-e svn+ssh://user@svn.myproject.org/svn/MyProject#egg=MyProject1 --src mysrc/src");
+    doTest("-e svn+ssh://user@svn.myproject.org/svn/MyProject/#egg=MyProject1 --src mysrc/src");
+
+    doTest("-e svn+svn://svn.myproject.org/MyProject#egg=MyProject1 --src mysrc/src");
+    doTest("-e svn+svn://svn.myproject.org/MyProject/#egg=MyProject1 --src mysrc/src");
+    doTest("-e svn+svn://svn.myproject.org/svn/MyProject#egg=MyProject1 --src mysrc/src");
+    doTest("-e svn+svn://svn.myproject.org/svn/MyProject/#egg=MyProject1 --src mysrc/src");
+
+    doTest("-e svn+svn://user@svn.myproject.org/MyProject#egg=MyProject1 --src mysrc/src");
+    doTest("-e svn+svn://user@svn.myproject.org/MyProject/#egg=MyProject1 --src mysrc/src");
+    doTest("-e svn+svn://user@svn.myproject.org/svn/MyProject#egg=MyProject1 --src mysrc/src");
+    doTest("-e svn+svn://user@svn.myproject.org/svn/MyProject/#egg=MyProject1 --src mysrc/src");
+
+    doTest("--editable svn+http://svn.myproject.org/MyProject/trunk#egg=MyProject1 --src mysrc/src");
+    doTest("--editable svn+http://svn.myproject.org/MyProject/trunk/#egg=MyProject1 --src mysrc/src");
+    doTest("--editable svn+http://svn.myproject.org/svn/MyProject/trunk#egg=MyProject1 --src mysrc/src");
+    doTest("--editable svn+http://svn.myproject.org/svn/MyProject/trunk/#egg=MyProject1 --src mysrc/src");
+
+    doTest("--editable svn+https://svn.myproject.org/MyProject/trunk#egg=MyProject1 --src mysrc/src");
+    doTest("--editable svn+https://svn.myproject.org/MyProject/trunk/#egg=MyProject1 --src mysrc/src");
+    doTest("--editable svn+https://svn.myproject.org/svn/MyProject/trunk#egg=MyProject1 --src mysrc/src");
+    doTest("--editable svn+https://svn.myproject.org/svn/MyProject/trunk/#egg=MyProject1 --src mysrc/src");
+
+    doTest("--editable svn+ssh://svn.myproject.org/MyProject#egg=MyProject1 --src mysrc/src");
+    doTest("--editable svn+ssh://svn.myproject.org/MyProject/#egg=MyProject1 --src mysrc/src");
+    doTest("--editable svn+ssh://svn.myproject.org/svn/MyProject#egg=MyProject1 --src mysrc/src");
+    doTest("--editable svn+ssh://svn.myproject.org/svn/MyProject/#egg=MyProject1 --src mysrc/src");
+
+    doTest("--editable svn+ssh://user@svn.myproject.org/MyProject#egg=MyProject1 --src mysrc/src");
+    doTest("--editable svn+ssh://user@svn.myproject.org/MyProject/#egg=MyProject1 --src mysrc/src");
+    doTest("--editable svn+ssh://user@svn.myproject.org/svn/MyProject#egg=MyProject1 --src mysrc/src");
+    doTest("--editable svn+ssh://user@svn.myproject.org/svn/MyProject/#egg=MyProject1 --src mysrc/src");
+
+    doTest("--editable svn+svn://svn.myproject.org/MyProject#egg=MyProject1 --src mysrc/src");
+    doTest("--editable svn+svn://svn.myproject.org/MyProject/#egg=MyProject1 --src mysrc/src");
+    doTest("--editable svn+svn://svn.myproject.org/svn/MyProject#egg=MyProject1 --src mysrc/src");
+    doTest("--editable svn+svn://svn.myproject.org/svn/MyProject/#egg=MyProject1 --src mysrc/src");
+
+    doTest("--editable svn+svn://user@svn.myproject.org/MyProject#egg=MyProject1 --src mysrc/src");
+    doTest("--editable svn+svn://user@svn.myproject.org/MyProject/#egg=MyProject1 --src mysrc/src");
+    doTest("--editable svn+svn://user@svn.myproject.org/svn/MyProject#egg=MyProject1 --src mysrc/src");
+    doTest("--editable svn+svn://user@svn.myproject.org/svn/MyProject/#egg=MyProject1 --src mysrc/src");
   }
 
   public void testSubversionWithRevision() {
@@ -882,6 +1303,176 @@ public class PyRequirementTest extends PyTestCase {
     doTest("--editable bzr+ftp://user@myproject.org/path/MyProject/trunk/#egg=MyProject1");
 
     doTest("--editable bzr+lp:MyProject#egg=MyProject1");
+  }
+
+  public void testEditableWithSrcBazaar() {
+    doTest("--src . -e bzr+http://bzr.myproject.org/MyProject/trunk#egg=MyProject1");
+    doTest("--src . -e bzr+http://bzr.myproject.org/MyProject/trunk/#egg=MyProject1");
+    doTest("--src . -e bzr+http://bzr.myproject.org/path/MyProject/trunk#egg=MyProject1");
+    doTest("--src . -e bzr+http://bzr.myproject.org/path/MyProject/trunk/#egg=MyProject1");
+
+    doTest("--src . -e bzr+https://bzr.myproject.org/MyProject/trunk#egg=MyProject1");
+    doTest("--src . -e bzr+https://bzr.myproject.org/MyProject/trunk/#egg=MyProject1");
+    doTest("--src . -e bzr+https://bzr.myproject.org/path/MyProject/trunk#egg=MyProject1");
+    doTest("--src . -e bzr+https://bzr.myproject.org/path/MyProject/trunk/#egg=MyProject1");
+
+    doTest("--src . -e bzr+sftp://myproject.org/MyProject/trunk#egg=MyProject1");
+    doTest("--src . -e bzr+sftp://myproject.org/MyProject/trunk/#egg=MyProject1");
+    doTest("--src . -e bzr+sftp://myproject.org/path/MyProject/trunk#egg=MyProject1");
+    doTest("--src . -e bzr+sftp://myproject.org/path/MyProject/trunk/#egg=MyProject1");
+
+    doTest("--src . -e bzr+sftp://user@myproject.org/MyProject/trunk#egg=MyProject1");
+    doTest("--src . -e bzr+sftp://user@myproject.org/MyProject/trunk/#egg=MyProject1");
+    doTest("--src . -e bzr+sftp://user@myproject.org/path/MyProject/trunk#egg=MyProject1");
+    doTest("--src . -e bzr+sftp://user@myproject.org/path/MyProject/trunk/#egg=MyProject1");
+
+    doTest("--src . -e bzr+ssh://myproject.org/MyProject/trunk#egg=MyProject1");
+    doTest("--src . -e bzr+ssh://myproject.org/MyProject/trunk/#egg=MyProject1");
+    doTest("--src . -e bzr+ssh://myproject.org/path/MyProject/trunk#egg=MyProject1");
+    doTest("--src . -e bzr+ssh://myproject.org/path/MyProject/trunk/#egg=MyProject1");
+
+    doTest("--src . -e bzr+ssh://user@myproject.org/MyProject/trunk#egg=MyProject1");
+    doTest("--src . -e bzr+ssh://user@myproject.org/MyProject/trunk/#egg=MyProject1");
+    doTest("--src . -e bzr+ssh://user@myproject.org/path/MyProject/trunk#egg=MyProject1");
+    doTest("--src . -e bzr+ssh://user@myproject.org/path/MyProject/trunk/#egg=MyProject1");
+
+    doTest("--src . -e bzr+ftp://myproject.org/MyProject/trunk#egg=MyProject1");
+    doTest("--src . -e bzr+ftp://myproject.org/MyProject/trunk/#egg=MyProject1");
+    doTest("--src . -e bzr+ftp://myproject.org/path/MyProject/trunk#egg=MyProject1");
+    doTest("--src . -e bzr+ftp://myproject.org/path/MyProject/trunk/#egg=MyProject1");
+
+    doTest("--src . -e bzr+ftp://user@myproject.org/MyProject/trunk#egg=MyProject1");
+    doTest("--src . -e bzr+ftp://user@myproject.org/MyProject/trunk/#egg=MyProject1");
+    doTest("--src . -e bzr+ftp://user@myproject.org/path/MyProject/trunk#egg=MyProject1");
+    doTest("--src . -e bzr+ftp://user@myproject.org/path/MyProject/trunk/#egg=MyProject1");
+
+    doTest("--src . -e bzr+lp:MyProject#egg=MyProject1");
+
+    doTest("--src . --editable bzr+http://bzr.myproject.org/MyProject/trunk#egg=MyProject1");
+    doTest("--src . --editable bzr+http://bzr.myproject.org/MyProject/trunk/#egg=MyProject1");
+    doTest("--src . --editable bzr+http://bzr.myproject.org/path/MyProject/trunk#egg=MyProject1");
+    doTest("--src . --editable bzr+http://bzr.myproject.org/path/MyProject/trunk/#egg=MyProject1");
+
+    doTest("--src . --editable bzr+https://bzr.myproject.org/MyProject/trunk#egg=MyProject1");
+    doTest("--src . --editable bzr+https://bzr.myproject.org/MyProject/trunk/#egg=MyProject1");
+    doTest("--src . --editable bzr+https://bzr.myproject.org/path/MyProject/trunk#egg=MyProject1");
+    doTest("--src . --editable bzr+https://bzr.myproject.org/path/MyProject/trunk/#egg=MyProject1");
+
+    doTest("--src . --editable bzr+sftp://myproject.org/MyProject/trunk#egg=MyProject1");
+    doTest("--src . --editable bzr+sftp://myproject.org/MyProject/trunk/#egg=MyProject1");
+    doTest("--src . --editable bzr+sftp://myproject.org/path/MyProject/trunk#egg=MyProject1");
+    doTest("--src . --editable bzr+sftp://myproject.org/path/MyProject/trunk/#egg=MyProject1");
+
+    doTest("--src . --editable bzr+sftp://user@myproject.org/MyProject/trunk#egg=MyProject1");
+    doTest("--src . --editable bzr+sftp://user@myproject.org/MyProject/trunk/#egg=MyProject1");
+    doTest("--src . --editable bzr+sftp://user@myproject.org/path/MyProject/trunk#egg=MyProject1");
+    doTest("--src . --editable bzr+sftp://user@myproject.org/path/MyProject/trunk/#egg=MyProject1");
+
+    doTest("--src . --editable bzr+ssh://myproject.org/MyProject/trunk#egg=MyProject1");
+    doTest("--src . --editable bzr+ssh://myproject.org/MyProject/trunk/#egg=MyProject1");
+    doTest("--src . --editable bzr+ssh://myproject.org/path/MyProject/trunk#egg=MyProject1");
+    doTest("--src . --editable bzr+ssh://myproject.org/path/MyProject/trunk/#egg=MyProject1");
+
+    doTest("--src . --editable bzr+ssh://user@myproject.org/MyProject/trunk#egg=MyProject1");
+    doTest("--src . --editable bzr+ssh://user@myproject.org/MyProject/trunk/#egg=MyProject1");
+    doTest("--src . --editable bzr+ssh://user@myproject.org/path/MyProject/trunk#egg=MyProject1");
+    doTest("--src . --editable bzr+ssh://user@myproject.org/path/MyProject/trunk/#egg=MyProject1");
+
+    doTest("--src . --editable bzr+ftp://myproject.org/MyProject/trunk#egg=MyProject1");
+    doTest("--src . --editable bzr+ftp://myproject.org/MyProject/trunk/#egg=MyProject1");
+    doTest("--src . --editable bzr+ftp://myproject.org/path/MyProject/trunk#egg=MyProject1");
+    doTest("--src . --editable bzr+ftp://myproject.org/path/MyProject/trunk/#egg=MyProject1");
+
+    doTest("--src . --editable bzr+ftp://user@myproject.org/MyProject/trunk#egg=MyProject1");
+    doTest("--src . --editable bzr+ftp://user@myproject.org/MyProject/trunk/#egg=MyProject1");
+    doTest("--src . --editable bzr+ftp://user@myproject.org/path/MyProject/trunk#egg=MyProject1");
+    doTest("--src . --editable bzr+ftp://user@myproject.org/path/MyProject/trunk/#egg=MyProject1");
+
+    doTest("--src . --editable bzr+lp:MyProject#egg=MyProject1");
+
+    doTest("-e bzr+http://bzr.myproject.org/MyProject/trunk#egg=MyProject1 --src .");
+    doTest("-e bzr+http://bzr.myproject.org/MyProject/trunk/#egg=MyProject1 --src .");
+    doTest("-e bzr+http://bzr.myproject.org/path/MyProject/trunk#egg=MyProject1 --src .");
+    doTest("-e bzr+http://bzr.myproject.org/path/MyProject/trunk/#egg=MyProject1 --src .");
+
+    doTest("-e bzr+https://bzr.myproject.org/MyProject/trunk#egg=MyProject1 --src .");
+    doTest("-e bzr+https://bzr.myproject.org/MyProject/trunk/#egg=MyProject1 --src .");
+    doTest("-e bzr+https://bzr.myproject.org/path/MyProject/trunk#egg=MyProject1 --src .");
+    doTest("-e bzr+https://bzr.myproject.org/path/MyProject/trunk/#egg=MyProject1 --src .");
+
+    doTest("-e bzr+sftp://myproject.org/MyProject/trunk#egg=MyProject1 --src .");
+    doTest("-e bzr+sftp://myproject.org/MyProject/trunk/#egg=MyProject1 --src .");
+    doTest("-e bzr+sftp://myproject.org/path/MyProject/trunk#egg=MyProject1 --src .");
+    doTest("-e bzr+sftp://myproject.org/path/MyProject/trunk/#egg=MyProject1 --src .");
+
+    doTest("-e bzr+sftp://user@myproject.org/MyProject/trunk#egg=MyProject1 --src .");
+    doTest("-e bzr+sftp://user@myproject.org/MyProject/trunk/#egg=MyProject1 --src .");
+    doTest("-e bzr+sftp://user@myproject.org/path/MyProject/trunk#egg=MyProject1 --src .");
+    doTest("-e bzr+sftp://user@myproject.org/path/MyProject/trunk/#egg=MyProject1 --src .");
+
+    doTest("-e bzr+ssh://myproject.org/MyProject/trunk#egg=MyProject1 --src .");
+    doTest("-e bzr+ssh://myproject.org/MyProject/trunk/#egg=MyProject1 --src .");
+    doTest("-e bzr+ssh://myproject.org/path/MyProject/trunk#egg=MyProject1 --src .");
+    doTest("-e bzr+ssh://myproject.org/path/MyProject/trunk/#egg=MyProject1 --src .");
+
+    doTest("-e bzr+ssh://user@myproject.org/MyProject/trunk#egg=MyProject1 --src .");
+    doTest("-e bzr+ssh://user@myproject.org/MyProject/trunk/#egg=MyProject1 --src .");
+    doTest("-e bzr+ssh://user@myproject.org/path/MyProject/trunk#egg=MyProject1 --src .");
+    doTest("-e bzr+ssh://user@myproject.org/path/MyProject/trunk/#egg=MyProject1 --src .");
+
+    doTest("-e bzr+ftp://myproject.org/MyProject/trunk#egg=MyProject1 --src .");
+    doTest("-e bzr+ftp://myproject.org/MyProject/trunk/#egg=MyProject1 --src .");
+    doTest("-e bzr+ftp://myproject.org/path/MyProject/trunk#egg=MyProject1 --src .");
+    doTest("-e bzr+ftp://myproject.org/path/MyProject/trunk/#egg=MyProject1 --src .");
+
+    doTest("-e bzr+ftp://user@myproject.org/MyProject/trunk#egg=MyProject1 --src .");
+    doTest("-e bzr+ftp://user@myproject.org/MyProject/trunk/#egg=MyProject1 --src .");
+    doTest("-e bzr+ftp://user@myproject.org/path/MyProject/trunk#egg=MyProject1 --src .");
+    doTest("-e bzr+ftp://user@myproject.org/path/MyProject/trunk/#egg=MyProject1 --src .");
+
+    doTest("-e bzr+lp:MyProject#egg=MyProject1 --src .");
+
+    doTest("--editable bzr+http://bzr.myproject.org/MyProject/trunk#egg=MyProject1 --src .");
+    doTest("--editable bzr+http://bzr.myproject.org/MyProject/trunk/#egg=MyProject1 --src .");
+    doTest("--editable bzr+http://bzr.myproject.org/path/MyProject/trunk#egg=MyProject1 --src .");
+    doTest("--editable bzr+http://bzr.myproject.org/path/MyProject/trunk/#egg=MyProject1 --src .");
+
+    doTest("--editable bzr+https://bzr.myproject.org/MyProject/trunk#egg=MyProject1 --src .");
+    doTest("--editable bzr+https://bzr.myproject.org/MyProject/trunk/#egg=MyProject1 --src .");
+    doTest("--editable bzr+https://bzr.myproject.org/path/MyProject/trunk#egg=MyProject1 --src .");
+    doTest("--editable bzr+https://bzr.myproject.org/path/MyProject/trunk/#egg=MyProject1 --src .");
+
+    doTest("--editable bzr+sftp://myproject.org/MyProject/trunk#egg=MyProject1 --src .");
+    doTest("--editable bzr+sftp://myproject.org/MyProject/trunk/#egg=MyProject1 --src .");
+    doTest("--editable bzr+sftp://myproject.org/path/MyProject/trunk#egg=MyProject1 --src .");
+    doTest("--editable bzr+sftp://myproject.org/path/MyProject/trunk/#egg=MyProject1 --src .");
+
+    doTest("--editable bzr+sftp://user@myproject.org/MyProject/trunk#egg=MyProject1 --src .");
+    doTest("--editable bzr+sftp://user@myproject.org/MyProject/trunk/#egg=MyProject1 --src .");
+    doTest("--editable bzr+sftp://user@myproject.org/path/MyProject/trunk#egg=MyProject1 --src .");
+    doTest("--editable bzr+sftp://user@myproject.org/path/MyProject/trunk/#egg=MyProject1 --src .");
+
+    doTest("--editable bzr+ssh://myproject.org/MyProject/trunk#egg=MyProject1 --src .");
+    doTest("--editable bzr+ssh://myproject.org/MyProject/trunk/#egg=MyProject1 --src .");
+    doTest("--editable bzr+ssh://myproject.org/path/MyProject/trunk#egg=MyProject1 --src .");
+    doTest("--editable bzr+ssh://myproject.org/path/MyProject/trunk/#egg=MyProject1 --src .");
+
+    doTest("--editable bzr+ssh://user@myproject.org/MyProject/trunk#egg=MyProject1 --src .");
+    doTest("--editable bzr+ssh://user@myproject.org/MyProject/trunk/#egg=MyProject1 --src .");
+    doTest("--editable bzr+ssh://user@myproject.org/path/MyProject/trunk#egg=MyProject1 --src .");
+    doTest("--editable bzr+ssh://user@myproject.org/path/MyProject/trunk/#egg=MyProject1 --src .");
+
+    doTest("--editable bzr+ftp://myproject.org/MyProject/trunk#egg=MyProject1 --src .");
+    doTest("--editable bzr+ftp://myproject.org/MyProject/trunk/#egg=MyProject1 --src .");
+    doTest("--editable bzr+ftp://myproject.org/path/MyProject/trunk#egg=MyProject1 --src .");
+    doTest("--editable bzr+ftp://myproject.org/path/MyProject/trunk/#egg=MyProject1 --src .");
+
+    doTest("--editable bzr+ftp://user@myproject.org/MyProject/trunk#egg=MyProject1 --src .");
+    doTest("--editable bzr+ftp://user@myproject.org/MyProject/trunk/#egg=MyProject1 --src .");
+    doTest("--editable bzr+ftp://user@myproject.org/path/MyProject/trunk#egg=MyProject1 --src .");
+    doTest("--editable bzr+ftp://user@myproject.org/path/MyProject/trunk/#egg=MyProject1 --src .");
+
+    doTest("--editable bzr+lp:MyProject#egg=MyProject1 --src .");
   }
 
   public void testBazaarWithRevision() {
