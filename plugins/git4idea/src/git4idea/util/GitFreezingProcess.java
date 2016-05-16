@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.openapi.application.ModalityState.defaultModalityState;
@@ -68,7 +69,7 @@ public class GitFreezingProcess {
       }
       finally {
         LOG.debug("unfreezing the ChangeListManager");
-        unfreezeInAwt();
+        unfreeze();
       }
     }
     finally {
@@ -78,6 +79,7 @@ public class GitFreezingProcess {
     LOG.debug("finished.");
   }
 
+  @CalledInAwt
   public void saveAndBlock() {
     myProjectManager.blockReloadingProjectOnExternalChanges();
     FileDocumentManager.getInstance().saveAllDocuments();
@@ -105,6 +107,7 @@ public class GitFreezingProcess {
     rethrowingRunnable.rethrowIfHappened();
   }
 
+  @CalledInAwt
   public void unblock() {
     myProjectManager.unblockReloadingProjectOnExternalChanges();
     mySaveAndSyncHandler.unblockSaveOnFrameDeactivation();
@@ -117,16 +120,6 @@ public class GitFreezingProcess {
 
   private void unfreeze() {
     myChangeListManager.letGo();
-  }
-
-  private void unfreezeInAwt() {
-    RethrowingRunnable rethrowingRunnable = new RethrowingRunnable(new Runnable() {
-      @Override public void run() {
-        unfreeze();
-      }
-    });
-    myApplication.invokeAndWait(rethrowingRunnable, defaultModalityState());
-    rethrowingRunnable.rethrowIfHappened();
   }
 
   // if an error happens, let it be thrown in the calling thread (in awt actually)
