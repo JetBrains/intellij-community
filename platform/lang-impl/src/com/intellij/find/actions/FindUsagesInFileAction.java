@@ -35,7 +35,6 @@ import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageView;
 
 public class FindUsagesInFileAction extends AnAction {
-
   public FindUsagesInFileAction() {
     setInjectedContext(true);
   }

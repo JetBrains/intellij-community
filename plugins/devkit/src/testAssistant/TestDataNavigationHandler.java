@@ -121,7 +121,7 @@ public class TestDataNavigationHandler implements GutterIconNavigationHandler<Ps
     final JList list = new JBList(ArrayUtil.toStringArray(listPaths));
     list.setCellRenderer(new ColoredListCellRenderer() {
       @Override
-      protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+      protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
         String path = (String)value;
         String fileName = PathUtil.getFileName(path);
         if (!fileName.equals(CREATE_MISSING_OPTION)) {

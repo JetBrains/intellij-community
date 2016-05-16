@@ -79,7 +79,7 @@ public class DetectionExcludesConfigurable implements Configurable {
       }
 
       @Override
-      protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+      protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
         setIconTextGap(4);
         if (value instanceof ExcludeListItem) {
           ((ExcludeListItem)value).renderItem(this);

@@ -197,7 +197,7 @@ public abstract class BaseOpenInBrowserAction extends DumbAwareAction {
     final JBList list = new JBList(urls);
     list.setCellRenderer(new ColoredListCellRenderer() {
       @Override
-      protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+      protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
         // todo icons looks good, but is it really suitable for all URLs providers?
         setIcon(AllIcons.Nodes.Servlet);
         append(((Url)value).toDecodedForm());

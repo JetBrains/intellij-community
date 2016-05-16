@@ -18,6 +18,7 @@ package com.intellij.uiDesigner.wizard;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.uiDesigner.UIDesignerBundle;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -35,7 +36,7 @@ final class BeanPropertyListCellRenderer extends ColoredListCellRenderer{
   }
 
   protected void customizeCellRenderer(
-    final JList list,
+    @NotNull final JList list,
     final Object value,
     final int index,
     final boolean selected,

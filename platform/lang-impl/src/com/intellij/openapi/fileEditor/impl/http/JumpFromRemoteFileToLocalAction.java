@@ -72,7 +72,7 @@ class JumpFromRemoteFileToLocalAction extends AnAction {
       //noinspection unchecked
       list.setCellRenderer(new ColoredListCellRenderer() {
         @Override
-        protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+        protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
           FileAppearanceService.getInstance().forVirtualFile((VirtualFile)value).customize(this);
         }
       });

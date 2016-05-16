@@ -55,7 +55,7 @@ public class OutputFiltersDialog extends DialogWrapper {
     myFiltersList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myFiltersList.setCellRenderer(new ColoredListCellRenderer() {
       @Override
-      protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+      protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
         FilterInfo info = (FilterInfo)value;
         append(info.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
       }
