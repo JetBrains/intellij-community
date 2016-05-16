@@ -1239,8 +1239,8 @@ public class Switcher extends AnAction implements DumbAware {
 
     String getNameForRendering() {
       if (myNameForRendering == null) {
-        // calc name the same way editor tabs do this, i.e. including EPs
-        myNameForRendering = EditorTabbedContainer.calcTabTitle(myProject, first);
+        // Recently changed files would also be taken into account (not only open 'visible' files)
+        myNameForRendering = EditorTabbedContainer.calcFileName(myProject, first);
       }
       return myNameForRendering;
     }
