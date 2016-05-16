@@ -85,7 +85,13 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     setBranchesPanelVisible(uiProperties.isShowBranchesPanel());
     myDetailsPanel = new DetailsPanel(logData, ui.getColorManager(), this);
 
-    myChangesBrowser = new RepositoryChangesBrowser(project, null, Collections.<Change>emptyList(), null);
+    myChangesBrowser = new RepositoryChangesBrowser(project, null, Collections.emptyList(), null) {
+      @Override
+      protected void buildToolBar(DefaultActionGroup toolBarGroup) {
+        super.buildToolBar(toolBarGroup);
+        toolBarGroup.add(ActionManager.getInstance().getAction(VcsLogActionPlaces.VCS_LOG_SHOW_DETAILS_ACTION));
+      }
+    };
     myChangesBrowser.getViewerScrollPane().setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
     myChangesBrowser.getDiffAction().registerCustomShortcutSet(myChangesBrowser.getDiffAction().getShortcutSet(), getGraphTable());
     myChangesBrowser.getEditSourceAction().registerCustomShortcutSet(CommonShortcuts.getEditSource(), getGraphTable());

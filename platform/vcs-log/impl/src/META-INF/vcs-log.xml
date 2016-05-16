@@ -64,7 +64,6 @@
     <group id="Vcs.Log.Toolbar.Internal">
       <reference id="Vcs.Log.ShowLongEdges"/>
       <reference id="Vcs.Log.Refresh"/>
-      <reference id="Vcs.Log.ShowDetailsAction"/>
       <reference id="Vcs.Log.GoToRef"/>
       <group id="Vcs.Log.Toolbar"/>
       <separator/>
