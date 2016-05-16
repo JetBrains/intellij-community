@@ -76,6 +76,12 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     unittests("tests_pydevd_python/test_debugger.py");
   }
 
+  @Test
+  @Staging
+  public void testPydevMonkey() {
+    unittests("tests_pydevd_python/test_pydev_monkey.py");
+  }
+
   private void unittests(final String script) {
     runPythonTest(new PyProcessWithConsoleTestTask<PyUnitTestProcessRunner>(SdkCreationType.SDK_PACKAGES_ONLY) {
 
