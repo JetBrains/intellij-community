@@ -452,9 +452,9 @@ public final class EditorUtil {
       }
     }
 
-    if (editor == null || useOptimization) {
-      Document document = editor == null ? null : editor.getDocument();
-      if (document != null && start < offset-1 && document.getLineNumber(start) != document.getLineNumber(offset-1)) {
+    if (editor != null && useOptimization) {
+      Document document = editor.getDocument();
+      if (start < offset - 1 && document.getLineNumber(start) != document.getLineNumber(offset - 1)) {
         String editorInfo = editor instanceof EditorImpl ? ". Editor info: " + ((EditorImpl)editor).dumpState() : "";
         String documentInfo;
         if (text instanceof Dumpable) {
@@ -467,20 +467,18 @@ public final class EditorUtil {
           LOG, "detected incorrect offset -> column number calculation",
           "start: " + start + ", given offset: " + offset+", given tab size: " + tabSize + ". "+documentInfo+ editorInfo);
       }
-      int shift = 0;
-      if (hasTabs) {
-        for (int i = start; i < offset; i++) {
-          char c = text.charAt(i);
-          if (c == '\t') {
-            shift += getTabLength(i + shift - start, tabSize) - 1;
-          }
-        }
-      }
-      return offset - start + shift;
     }
 
-    EditorEx editorImpl = (EditorEx) editor;
-    return editorImpl.calcColumnNumber(text, start, offset, tabSize);
+    int shift = 0;
+    if (hasTabs) {
+      for (int i = start; i < offset; i++) {
+        char c = text.charAt(i);
+        if (c == '\t') {
+          shift += getTabLength(i + shift - start, tabSize) - 1;
+        }
+      }
+    }
+    return offset - start + shift;
   }
 
   public static void setHandCursor(@NotNull Editor view) {
