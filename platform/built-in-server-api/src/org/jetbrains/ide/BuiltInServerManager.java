@@ -18,6 +18,7 @@ package org.jetbrains.ide;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.util.Url;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class BuiltInServerManager extends ApplicationComponent.Adapter {
@@ -31,4 +32,6 @@ public abstract class BuiltInServerManager extends ApplicationComponent.Adapter 
 
   @Nullable
   public abstract Disposable getServerDisposable();
+
+  public abstract boolean isOnBuiltInWebServer(@Nullable Url url);
 }

@@ -41,4 +41,8 @@ public abstract class RecentProjectsManager {
    * @param addClearListItem whether the "Clear List" action should be added to the end of the list.
    */
   public abstract AnAction[] getRecentProjectsActions(boolean addClearListItem);
+
+  public boolean hasPath(String path) {
+    return false;
+  }
 }

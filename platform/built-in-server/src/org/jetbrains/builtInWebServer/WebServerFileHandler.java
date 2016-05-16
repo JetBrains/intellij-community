@@ -23,9 +23,17 @@ import io.netty.handler.codec.http.FullHttpRequest;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 
 public abstract class WebServerFileHandler {
   static final ExtensionPointName<WebServerFileHandler> EP_NAME = ExtensionPointName.create("org.jetbrains.webServerFileHandler");
+
+  //   open val pageFileExtensions: Array<String>
+  // get() = emptyArray()
+  protected List<String> pageFileExtensions() {
+    return Collections.emptyList();
+  }
 
   public abstract boolean process(@NotNull VirtualFile file,
                                   @NotNull CharSequence canonicalRequestPath,

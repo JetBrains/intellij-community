@@ -23,6 +23,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectUtil;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
@@ -43,7 +44,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.builtInWebServer.WebServerPathToFileManager;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
+import org.jetbrains.io.Responses;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -92,7 +95,7 @@ class OpenFileHttpService extends RestService {
 
   @Nullable
   @Override
-  public String execute(@NotNull QueryStringDecoder urlDecoder, @NotNull FullHttpRequest request, @NotNull ChannelHandlerContext context) throws IOException {
+  public String execute(@NotNull QueryStringDecoder urlDecoder, final @NotNull FullHttpRequest request, @NotNull ChannelHandlerContext context) throws IOException {
     final boolean keepAlive = HttpHeaders.isKeepAlive(request);
     final Channel channel = context.channel();
 
@@ -140,7 +143,8 @@ class OpenFileHttpService extends RestService {
         @Override
         public void consume(Throwable throwable) {
           if (throwable == NOT_FOUND) {
-            sendStatus(HttpResponseStatus.NOT_FOUND, keepAlive, channel);
+            // don't expose file status
+            sendStatus(Responses.okInSafeMode(HttpResponseStatus.NOT_FOUND), keepAlive, channel);
           }
           else {
             // todo send error
@@ -168,16 +172,40 @@ class OpenFileHttpService extends RestService {
 
   @NotNull
   Promise<Void> openFile(@NotNull OpenFileRequest request) {
-    String path = FileUtil.expandUserHome(request.file);
-    final File file = new File(FileUtil.toSystemDependentName(path));
+    final String systemIndependentName = FileUtil.toSystemIndependentName(FileUtil.expandUserHome(request.file));
+    final File file = new File(systemIndependentName);
+
     if (file.isAbsolute()) {
+      final Ref<Promise<Void>> result = Ref.create();
+      try {
+        SwingUtilities.invokeAndWait(new Runnable() {
+          @Override
+          public void run() {
+            boolean remotePath = com.intellij.ide.impl.ProjectUtil.isRemotePath(systemIndependentName);
+            boolean userReallyWantsToOpen = com.intellij.ide.impl.ProjectUtil.confirmLoadingFromRemotePath(
+              systemIndependentName,
+              remotePath ? "warning.load.file.from.share" : "warning.load.local.file",
+              remotePath ? "title.load.file.from.share" : "title.load.local.file"
+            );
+
+            if (!userReallyWantsToOpen) {
+              result.set(Promise.<Void>reject(NOT_FOUND));
+            }
+          }
+        });
+      }
+      catch (Throwable ignored) {
+      }
+      if (result.get() != null) {
+        return result.get();
+      }
       return openAbsolutePath(file, request);
     }
 
     // we don't want to call refresh for each attempt on findFileByRelativePath call, so, we do what ourSaveAndSyncHandlerImpl does on frame activation
     RefreshQueue queue = RefreshQueue.getInstance();
     queue.cancelSession(refreshSessionId);
-    OpenFileTask task = new OpenFileTask(FileUtil.toCanonicalPath(FileUtil.toSystemIndependentName(path), '/'), request);
+    OpenFileTask task = new OpenFileTask(FileUtil.toCanonicalPath(systemIndependentName, '/'), request);
     requests.offer(task);
     RefreshSession session = queue.createSession(true, true, new Runnable() {
       @Override
@@ -310,5 +338,10 @@ class OpenFileHttpService extends RestService {
     public int column;
 
     public boolean focused = true;
+  }
+
+  @Override
+  public boolean isAccessible(@NotNull HttpRequest request) {
+    return false;
   }
 }

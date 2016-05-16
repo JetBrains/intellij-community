@@ -15,17 +15,22 @@
  */
 package org.jetbrains.builtInWebServer;
 
+import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.UriUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.net.NetUtils;
 import io.netty.buffer.ByteBuf;
@@ -40,14 +45,17 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.builtInWebServer.ssi.SsiExternalResolver;
 import org.jetbrains.builtInWebServer.ssi.SsiProcessor;
+import org.jetbrains.ide.BuiltInServerManagerImpl;
 import org.jetbrains.ide.HttpRequestHandler;
 import org.jetbrains.io.FileResponses;
+import org.jetbrains.io.NettyUtil;
 import org.jetbrains.io.Responses;
+import org.jetbrains.notification.SingletonNotificationManager;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
-import java.net.UnknownHostException;
+import java.util.List;
 
 import static org.jetbrains.io.Responses.addKeepAliveIfNeed;
 
@@ -82,6 +90,8 @@ public final class BuiltInWebServer extends HttpRequestHandler {
     }
     return null;
   }
+
+  public boolean isAccessible(@NotNull HttpRequest request) { return NettyUtil.isLocalOrigin(request, false, true); }
 
   @Override
   public boolean isSupported(@NotNull FullHttpRequest request) {
@@ -135,10 +145,18 @@ public final class BuiltInWebServer extends HttpRequestHandler {
       return localHostName.equalsIgnoreCase(host) ||
              (host.endsWith(".local") && localHostName.regionMatches(true, 0, host, 0, host.length() - ".local".length()));
     }
-    catch (UnknownHostException ignored) {
+    catch (IOException ignored) {
       return false;
     }
   }
+
+  // private val notificationManager by lazy {
+  // SingletonNotificationManager(BuiltInServerManagerImpl.NOTIFICATION_GROUP.getValue(), NotificationType.INFORMATION, null)
+  // }
+  private static final SingletonNotificationManager
+    notificationManager = new SingletonNotificationManager(BuiltInServerManagerImpl.NOTIFICATION_GROUP.getValue(), NotificationType.INFORMATION, null);
+  // internal fun isActivatable() = Registry.`is`("ide.built.in.web.server.activatable", false)
+  static boolean isActivatable() { return Registry.is("ide.built.in.web.server.activatable", true); }
 
   private static boolean doProcess(@NotNull FullHttpRequest request, @NotNull ChannelHandlerContext context, @Nullable String projectName) {
     final String decodedPath = URLUtil.unescapePercentSequences(UriUtil.trimParameters(request.uri()));
@@ -161,6 +179,11 @@ public final class BuiltInWebServer extends HttpRequestHandler {
       return false;
     }
 
+    if (isActivatable() && !PropertiesComponent.getInstance().getBoolean("ide.built.in.web.server.active", false)) {
+      notificationManager.notify("Built-in web server is deactivated, to activate, please use Open in Browser", (Project)null);
+      return false;
+    }
+
     if (emptyPath) {
       if (!SystemInfoRt.isFileSystemCaseSensitive) {
         // may be passed path is not correct
@@ -172,8 +195,13 @@ public final class BuiltInWebServer extends HttpRequestHandler {
       return true;
     }
 
-    // must be absolute path (relative to DOCUMENT_ROOT, i.e. scheme://authority/) to properly canonicalize
-    final String path = FileUtil.toCanonicalPath(decodedPath.substring(offset), '/').substring(1);
+    final String path = toIdeaPath(decodedPath, offset);
+    if (path == null) {
+      LOG.warn(decodedPath + " is not valid");
+      Responses.sendStatus(HttpResponseStatus.NOT_FOUND, context.channel(), request);
+      return true;
+    }
+
     for (WebServerPathHandler pathHandler : WebServerPathHandler.EP_NAME.getExtensions()) {
       try {
         if (pathHandler.process(path, project, request, context, projectName, decodedPath, isCustomHost)) {
@@ -187,8 +215,37 @@ public final class BuiltInWebServer extends HttpRequestHandler {
     return false;
   }
 
+  static boolean canBeAccessedDirectly(String path) {
+    for (WebServerFileHandler fileHandler : WebServerFileHandler.EP_NAME.getExtensions()) {
+      for (String ext: fileHandler.pageFileExtensions()) {
+        if (FileUtilRt.extensionEquals(path, ext)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  private static String toIdeaPath(String decodedPath, int offset) {
+    // must be absolute path (relative to DOCUMENT_ROOT, i.e. scheme://authority/) to properly canonicalize
+    String path = decodedPath.substring(offset);
+    if (!path.startsWith("/")) {
+      return null;
+    }
+    return FileUtil.toCanonicalPath(path, '/').substring(1);
+  }
+
+
   static final class StaticFileHandler extends WebServerFileHandler {
     private SsiProcessor ssiProcessor;
+
+    // override val pageFileExtensions = arrayOf("html", "htm", "shtml")
+    private static List<String> ourPageFileExtensions = ContainerUtil.list("html", "htm", "shtml", "stm", "shtm");
+
+    @Override
+    protected List<String> pageFileExtensions() {
+      return ourPageFileExtensions;
+    }
 
     @Override
     public boolean process(@NotNull VirtualFile file,
@@ -205,13 +262,7 @@ public final class BuiltInWebServer extends HttpRequestHandler {
           return true;
         }
 
-        File ioFile = VfsUtilCore.virtualToIoFile(file);
-        if (hasAccess(ioFile)) {
-          FileResponses.sendFile(request, channel, ioFile);
-        }
-        else {
-          Responses.sendStatus(HttpResponseStatus.FORBIDDEN, channel, request);
-        }
+        FileResponses.sendFile(request, channel, VfsUtilCore.virtualToIoFile(file));
       }
       else {
         HttpResponse response = FileResponses.prepareSend(request, channel, file.getTimeStamp(), file.getPath());
@@ -288,9 +339,23 @@ public final class BuiltInWebServer extends HttpRequestHandler {
       }
     }
 
+    static boolean checkAccess(Channel channel, File file, HttpRequest request, File root) {
+      File parent = file;
+      do {
+        if (!hasAccess(parent)) {
+          Responses.sendStatus(HttpResponseStatus.NOT_FOUND, channel, request);
+          return false;
+        }
+        parent = parent.getParentFile();
+        if (parent == null) break;
+      }
+      while (!FileUtil.filesEqual(parent, root));
+      return true;
+    }
+
     private static boolean hasAccess(File result) {
-      // deny access to .htaccess files
-      return !result.isDirectory() && result.canRead() && !(result.isHidden() || result.getName().startsWith(".ht"));
+      // deny access to any dot prefixed file
+      return result.canRead() && !(result.isHidden() || result.getName().startsWith("."));
     }
   }
 

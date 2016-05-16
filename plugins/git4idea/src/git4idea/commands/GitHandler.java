@@ -81,7 +81,7 @@ public abstract class GitHandler {
   private final File myWorkingDirectory;
 
   private boolean myEnvironmentCleanedUp = true; // the flag indicating that environment has been cleaned up, by default is true because there is nothing to clean
-  private int myHandlerNo;
+  private UUID myHandlerNo;
   private Processor<OutputStream> myInputProcessor; // The processor for stdin
 
   // if true process might be cancelled
@@ -441,7 +441,7 @@ public abstract class GitHandler {
         myEnv.put(GitSSHHandler.GIT_SSH_ENV, ssh.getScriptPath().getPath());
         myHandlerNo = ssh.registerHandler(new GitSSHGUIHandler(myProject));
         myEnvironmentCleanedUp = false;
-        myEnv.put(GitSSHHandler.SSH_HANDLER_ENV, Integer.toString(myHandlerNo));
+        myEnv.put(GitSSHHandler.SSH_HANDLER_ENV, myHandlerNo.toString());
         int port = ssh.getXmlRcpPort();
         myEnv.put(GitSSHHandler.SSH_PORT_ENV, Integer.toString(port));
         LOG.debug(String.format("handler=%s, port=%s", myHandlerNo, port));
@@ -469,7 +469,7 @@ public abstract class GitHandler {
         GitHttpAuthenticator httpAuthenticator = service.createAuthenticator(myProject, myCommand, myUrl);
         myHandlerNo = service.registerHandler(httpAuthenticator);
         myEnvironmentCleanedUp = false;
-        myEnv.put(GitAskPassXmlRpcHandler.GIT_ASK_PASS_HANDLER_ENV, Integer.toString(myHandlerNo));
+        myEnv.put(GitAskPassXmlRpcHandler.GIT_ASK_PASS_HANDLER_ENV, myHandlerNo.toString());
         int port = service.getXmlRcpPort();
         myEnv.put(GitAskPassXmlRpcHandler.GIT_ASK_PASS_PORT_ENV, Integer.toString(port));
         LOG.debug(String.format("handler=%s, port=%s", myHandlerNo, port));

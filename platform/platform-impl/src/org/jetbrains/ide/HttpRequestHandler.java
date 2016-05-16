@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,10 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpMethod;
+import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.QueryStringDecoder;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.io.NettyUtil;
 
 import java.io.IOException;
 
@@ -39,6 +41,17 @@ public abstract class HttpRequestHandler {
       }
     }
     return false;
+  }
+
+  @SuppressWarnings("SpellCheckingInspection")
+  /**
+   * Write request from browser without Origin will be always blocked regardles of your implementation.
+   */
+  public boolean isAccessible(@NotNull HttpRequest request) {
+    String host = NettyUtil.host(request);
+    // If attacker.com DNS rebound to 127.0.0.1 and user open site directly — no Origin or Referer headers.
+    // So we should check Host header.
+    return host != null && NettyUtil.isLocalOrigin(request) && NettyUtil.parseAndCheckIsLocalHost("http://" + host);
   }
 
   public boolean isSupported(@NotNull FullHttpRequest request) {

@@ -129,6 +129,12 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
     }
   }
 
+  @Override
+  public boolean hasPath(String path) {
+    final State state = getState();
+    return state != null && state.recentPaths.contains(path);
+  }
+
   /**
    * @return a path pointing to a directory where the last project was created or null if not available
    */
