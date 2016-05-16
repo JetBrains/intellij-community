@@ -73,7 +73,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   @Test
   @Staging
   public void testPydevTests_Debugger() {
-    unittests("tests_python/test_debugger.py");
+    unittests("tests_pydevd_python/test_debugger.py");
   }
 
   private void unittests(final String script) {
@@ -102,8 +102,9 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
+  @Staging
   public void testDebug() { //TODO: merge it into pydev tests
-    unittests("test_debug.py");
+    unittests("tests_pydevd/test_egg_zip_exist.py");
   }
 
   @Test
