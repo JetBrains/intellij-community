@@ -213,9 +213,9 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       group.add(new TextShowPartialDiffAction(PartialDiffMode.LEFT_RIGHT));
 
       group.add(Separator.getInstance());
-      group.add(new ApplyNonConflictsAction());
-      group.add(new ApplySideNonConflictsAction(Side.LEFT));
-      group.add(new ApplySideNonConflictsAction(Side.RIGHT));
+      group.add(new ApplyNonConflictsAction(ThreeSide.BASE));
+      group.add(new ApplyNonConflictsAction(ThreeSide.LEFT));
+      group.add(new ApplyNonConflictsAction(ThreeSide.RIGHT));
 
       return group;
     }
@@ -402,7 +402,9 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
         myInitialRediffFinished = true;
 
         if (myViewer.getTextSettings().isAutoApplyNonConflictedChanges()) {
-          DiffUtil.performAction(new ApplyNonConflictsAction(), null);
+          if (getFirstUnresolvedChange(false, ThreeSide.BASE) != null) {
+            applyNonConflictedChanges(ThreeSide.BASE);
+          }
         }
       };
     }
@@ -626,17 +628,6 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       return getEditor(ThreeSide.BASE);
     }
 
-    @Nullable
-    private TextMergeChange getFirstUnresolvedChange(boolean acceptConflicts, @Nullable Side side) {
-      for (TextMergeChange change : getAllChanges()) {
-        if (change.isResolved()) continue;
-        if (!acceptConflicts && change.isConflict()) continue;
-        if (side != null && !change.isChange(side)) continue;
-        return change;
-      }
-      return null;
-    }
-
     //
     // Modification operations
     //
@@ -782,6 +773,35 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     //
     // Actions
     //
+
+    @Nullable
+    private TextMergeChange getFirstUnresolvedChange(boolean acceptConflicts, @NotNull ThreeSide side) {
+      for (TextMergeChange change : getAllChanges()) {
+        if (change.isResolved()) continue;
+        if (!acceptConflicts && change.isConflict()) continue;
+        if (!change.isChange(side)) continue;
+        return change;
+      }
+      return null;
+    }
+
+    private void applyNonConflictedChanges(@NotNull ThreeSide side) {
+      executeMergeCommand("Apply Non Conflicted Changes", true, null, () -> {
+        List<TextMergeChange> allChanges = ContainerUtil.newArrayList(getAllChanges());
+        for (TextMergeChange change : allChanges) {
+          if (change.isConflict()) continue;
+          if (change.isResolved(side)) continue;
+          if (!change.isChange(side)) continue;
+          Side masterSide = side.select(Side.LEFT,
+                                        change.isChange(Side.LEFT) ? Side.LEFT : Side.RIGHT,
+                                        Side.RIGHT);
+          replaceChange(change, masterSide, false);
+        }
+      });
+
+      TextMergeChange firstConflict = getFirstUnresolvedChange(true, ThreeSide.BASE);
+      if (firstConflict != null) doScrollToChange(firstConflict, true);
+    }
 
     private class MyHighlightPolicySettingAction extends TextDiffViewerUtil.HighlightPolicySettingAction {
       public MyHighlightPolicySettingAction() {
@@ -1031,65 +1051,23 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       }
     }
 
-    public abstract class ApplyNonConflictsActionBase extends DumbAwareAction {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        executeMergeCommand("Apply Non Conflicted Changes", true, null, () -> {
-          doPerform();
-        });
+    public class ApplyNonConflictsAction extends DumbAwareAction {
+      @NotNull private final ThreeSide mySide;
 
-        TextMergeChange firstConflict = getFirstUnresolvedChange(true, null);
-        if (firstConflict != null) doScrollToChange(firstConflict, true);
-      }
-
-      @CalledWithWriteLock
-      protected abstract void doPerform();
-    }
-
-    public class ApplyNonConflictsAction extends ApplyNonConflictsActionBase {
-      public ApplyNonConflictsAction() {
-        ActionUtil.copyFrom(this, "Diff.ApplyNonConflicts");
-      }
-
-      @Override
-      protected void doPerform() {
-        List<TextMergeChange> allChanges = ContainerUtil.newArrayList(getAllChanges());
-        for (TextMergeChange change : allChanges) {
-          if (change.isConflict()) continue;
-          if (change.isResolved()) continue;
-          Side masterSide = change.isChange(Side.LEFT) ? Side.LEFT : Side.RIGHT;
-          replaceChange(change, masterSide, false);
-        }
-      }
-
-      @Override
-      public void update(AnActionEvent e) {
-        e.getPresentation().setEnabled(getFirstUnresolvedChange(false, null) != null);
-      }
-    }
-
-    public class ApplySideNonConflictsAction extends ApplyNonConflictsActionBase {
-      @NotNull private final Side mySide;
-
-      public ApplySideNonConflictsAction(@NotNull Side side) {
-        ActionUtil.copyFrom(this, side.select("Diff.ApplyNonConflicts.Left", "Diff.ApplyNonConflicts.Right"));
+      public ApplyNonConflictsAction(@NotNull ThreeSide side) {
+        String id = side.select("Diff.ApplyNonConflicts.Left", "Diff.ApplyNonConflicts", "Diff.ApplyNonConflicts.Right");
+        ActionUtil.copyFrom(this, id);
         mySide = side;
-      }
-
-      @Override
-      protected void doPerform() {
-        List<TextMergeChange> allChanges = ContainerUtil.newArrayList(getAllChanges());
-        for (TextMergeChange change : allChanges) {
-          if (change.isConflict()) continue;
-          if (change.isResolved(mySide)) continue;
-          if (!change.isChange(mySide)) continue;
-          replaceChange(change, mySide, false);
-        }
       }
 
       @Override
       public void update(AnActionEvent e) {
         e.getPresentation().setEnabled(getFirstUnresolvedChange(false, mySide) != null);
+      }
+
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        applyNonConflictedChanges(mySide);
       }
     }
 
