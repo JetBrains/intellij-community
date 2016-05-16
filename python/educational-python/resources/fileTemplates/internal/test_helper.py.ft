@@ -218,7 +218,7 @@ def check_samples(samples=()):
     passed()
 
 
-def run_common_tests():
+def run_common_tests(error_text="Please, reload file and try again"):
     test_is_initial_text()
     test_is_not_empty()
     test_answer_placeholders_text_deleted()
