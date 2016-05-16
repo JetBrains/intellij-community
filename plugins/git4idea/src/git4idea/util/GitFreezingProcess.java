@@ -16,7 +16,6 @@
 package git4idea.util;
 
 import com.intellij.ide.SaveAndSyncHandler;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -24,7 +23,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.openapi.application.ModalityState.defaultModalityState;
@@ -40,7 +38,6 @@ public class GitFreezingProcess {
   @NotNull private final String myOperationTitle;
   @NotNull private final Runnable myRunnable;
 
-  @NotNull private final Application myApplication;
   @NotNull private final ChangeListManagerEx myChangeListManager;
   @NotNull private final ProjectManagerEx myProjectManager;
   @NotNull private final SaveAndSyncHandler mySaveAndSyncHandler;
@@ -49,7 +46,6 @@ public class GitFreezingProcess {
     myOperationTitle = operationTitle;
     myRunnable = runnable;
 
-    myApplication = ApplicationManager.getApplication();
     myChangeListManager = (ChangeListManagerEx)ChangeListManager.getInstance(project);
     myProjectManager = ProjectManagerEx.getInstanceEx();
     mySaveAndSyncHandler = SaveAndSyncHandler.getInstance();
@@ -79,39 +75,21 @@ public class GitFreezingProcess {
     LOG.debug("finished.");
   }
 
-  @CalledInAwt
-  public void saveAndBlock() {
-    myProjectManager.blockReloadingProjectOnExternalChanges();
-    FileDocumentManager.getInstance().saveAllDocuments();
-    mySaveAndSyncHandler.blockSaveOnFrameDeactivation();
-    mySaveAndSyncHandler.blockSyncOnFrameActivation();
-  }
-
   private void saveAndBlockInAwt() {
-    RethrowingRunnable rethrowingRunnable = new RethrowingRunnable(new Runnable() {
-      @Override public void run() {
-        saveAndBlock();
-      }
-    });
-    myApplication.invokeAndWait(rethrowingRunnable, defaultModalityState());
-    rethrowingRunnable.rethrowIfHappened();
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      myProjectManager.blockReloadingProjectOnExternalChanges();
+      FileDocumentManager.getInstance().saveAllDocuments();
+      mySaveAndSyncHandler.blockSaveOnFrameDeactivation();
+      mySaveAndSyncHandler.blockSyncOnFrameActivation();
+    }, defaultModalityState());
   }
 
   private void unblockInAwt() {
-    RethrowingRunnable rethrowingRunnable = new RethrowingRunnable(new Runnable() {
-      @Override public void run() {
-        unblock();
-      }
-    });
-    myApplication.invokeAndWait(rethrowingRunnable, defaultModalityState());
-    rethrowingRunnable.rethrowIfHappened();
-  }
-
-  @CalledInAwt
-  public void unblock() {
-    myProjectManager.unblockReloadingProjectOnExternalChanges();
-    mySaveAndSyncHandler.unblockSaveOnFrameDeactivation();
-    mySaveAndSyncHandler.unblockSyncOnFrameActivation();
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      myProjectManager.unblockReloadingProjectOnExternalChanges();
+      mySaveAndSyncHandler.unblockSaveOnFrameDeactivation();
+      mySaveAndSyncHandler.unblockSyncOnFrameActivation();
+    }, defaultModalityState());
   }
 
   private void freeze() {
@@ -121,35 +99,4 @@ public class GitFreezingProcess {
   private void unfreeze() {
     myChangeListManager.letGo();
   }
-
-  // if an error happens, let it be thrown in the calling thread (in awt actually)
-  // + throw it in this thread afterwards, to be able to execute the finally block.
-  private static class RethrowingRunnable implements Runnable {
-
-    private final Runnable myRunnable;
-    private RuntimeException myException;
-
-    RethrowingRunnable(@NotNull Runnable runnable) {
-      myRunnable = runnable;
-    }
-
-    @Override
-    public void run() {
-      try {
-        myRunnable.run();
-      }
-      catch (Throwable t) {
-        RuntimeException re = new RuntimeException(t);
-        myException = re;
-        throw re;
-      }
-    }
-
-    void rethrowIfHappened() {
-      if (myException != null) {
-        throw myException;
-      }
-    }
-  }
-
 }
