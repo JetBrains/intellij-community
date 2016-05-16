@@ -409,8 +409,7 @@ class PyDBFrame: # No longer cdef because object was dying when only a reference
                         exist_result = True
                         (flag, breakpoint, new_frame, bp_type) = result
 
-                if event == "return":
-                    print(filename, line, frame.f_locals, frame.f_back.f_locals)
+                if main_debugger.show_return_values and event == "return":
                     name = frame.f_code.co_name
                     frame.f_back.f_locals["__pydevd_ret_val" + name] = arg
 

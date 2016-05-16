@@ -250,6 +250,7 @@ class PyDB:
         self.first_breakpoint_reached = False
         self.is_filter_enabled = pydevd_utils.is_filter_enabled()
         self.is_filter_libraries = pydevd_utils.is_filter_libraries()
+        self.show_return_values = False
 
     def get_plugin_lazy_init(self):
         if self.plugin is None and SUPPORT_PLUGINS:

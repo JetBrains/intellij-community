@@ -38,6 +38,7 @@ public class PyDebuggerSettings extends XDebuggerSettings<PyDebuggerSettings> im
   private boolean mySteppingFiltersEnabled;
   private @NotNull List<PySteppingFilter> mySteppingFilters;
   public static final String FILTERS_DIVIDER = ";";
+  public static boolean WATCH_RETURN_VALUES = false;
 
   public PyDebuggerSettings() {
     super("python");

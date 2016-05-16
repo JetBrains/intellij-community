@@ -399,6 +399,13 @@ public class MultiProcessDebugger implements ProcessDebugger {
     }
   }
 
+  @Override
+  public void setShowReturnValues(boolean isShowReturnValues) {
+    for (ProcessDebugger d : allDebuggers()) {
+      d.setShowReturnValues(isShowReturnValues);
+    }
+  }
+
   private static class DebuggerProcessAcceptor implements Runnable {
     private volatile boolean myShouldAccept = true;
     private final MultiProcessDebugger myMultiProcessDebugger;
