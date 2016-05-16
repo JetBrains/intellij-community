@@ -333,9 +333,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   @Test
   public void testInput() throws Exception {
     runPythonTest(new PyDebuggerTask("/debug", "test_input.py") {
-      @Override
-      public void before() throws Exception {
-      }
 
       @Override
       public void testing() throws Exception {

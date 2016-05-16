@@ -48,10 +48,6 @@ public class PyDynamicTypesTest extends PyEnvTestCase {
 
   private void doTest(final String scriptName) {
     runPythonTest(new PyDebuggerTask("/" + "dynamicTypes", scriptName) {
-      @Override
-      public void setUp(String testName) throws Exception {
-        super.setUp(testName);
-      }
 
       @Override
       public void before() throws Exception {

@@ -17,11 +17,6 @@ package com.intellij.codeInsight.daemon.quickFix;
 
 public class CastMethodParameters15Test extends LightQuickFixParameterizedTestCase {
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-  }
-
   public void testPrimitiveWrappers() throws Exception {
     doSingleTest(getTestName(false) + ".java");
   }

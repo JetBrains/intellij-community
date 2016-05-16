@@ -48,9 +48,4 @@ public class LongLineInspectionTest extends LightPlatformCodeInsightFixtureTestC
   protected String getTestDataPath() {
     return PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/platform/lang-impl/testData/codeInspection/longLine/";
   }
-
-  @Override
-  protected boolean isWriteActionRequired() {
-    return false;
-  }
 }

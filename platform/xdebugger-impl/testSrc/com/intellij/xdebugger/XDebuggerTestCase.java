@@ -18,7 +18,6 @@ package com.intellij.xdebugger;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestCase;
@@ -89,11 +88,6 @@ public abstract class XDebuggerTestCase extends PlatformTestCase {
   public static class MyLineBreakpointType extends XLineBreakpointType<MyBreakpointProperties> {
     public MyLineBreakpointType() {
       super("testLine", "239");
-    }
-
-    @Override
-    public boolean canPutAt(@NotNull final VirtualFile file, final int line, @NotNull Project project) {
-      return false;
     }
 
     @Override

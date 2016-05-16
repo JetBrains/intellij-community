@@ -17,13 +17,7 @@ public class YAMLMappingModificationTest extends LightPlatformCodeInsightFixture
     return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testSrc/org/jetbrains/yaml/psiModification/data/";
   }
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    
-  }
-  
-  // TODO make 
+  // TODO make
 
   public void testCreateKeyInEmptyFile() {
     doMappingTest("key", "value");

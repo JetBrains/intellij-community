@@ -117,9 +117,4 @@ public class XmlPropertiesTest extends LightPlatformCodeInsightFixtureTestCase {
   protected String getTestDataPath() {
     return PluginPathManager.getPluginHomePath("properties") + "/testData/xml/";
   }
-
-  @Override
-  protected boolean isWriteActionRequired() {
-    return false;
-  }
 }

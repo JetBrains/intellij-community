@@ -25,11 +25,6 @@ public abstract class SpellcheckerInspectionTestCase extends LightPlatformCodeIn
     return true;
   }
 
-  @Override
-  protected boolean isWriteActionRequired() {
-    return false;
-  }
-
   public static String getSpellcheckerTestDataPath() {
     return "/spellchecker/testData/";
   }
