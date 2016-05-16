@@ -136,7 +136,7 @@ public class LoadingDecorator {
   }
 
   public boolean isLoading() {
-    return myLoadingLayer.isVisible();
+    return myLoadingLayer.isLoading();
   }
 
   private class LoadingLayer extends JPanel {
@@ -169,6 +169,8 @@ public class LoadingDecorator {
       if (myVisible) {
         setVisible(myVisible);
         myCurrentAlpha = -1;
+        myFadeOutAnimator.reset();
+        myFadeOutAnimator.suspend();
       }
 
       if (myVisible) {
@@ -188,6 +190,10 @@ public class LoadingDecorator {
         myFadeOutAnimator.reset();
         myFadeOutAnimator.resume();
       }
+    }
+
+    public boolean isLoading() {
+      return myVisible;
     }
 
     private void disposeSnapshot() {
