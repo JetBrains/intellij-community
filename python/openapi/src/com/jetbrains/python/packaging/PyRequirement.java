@@ -136,12 +136,16 @@ public class PyRequirement {
     "(" + LINE_WS_REGEXP + "*," + LINE_WS_REGEXP + "*" + REQUIREMENT_VERSION_SPEC_REGEXP + ")*)?";
 
   @NotNull
+  private static final String REQUIREMENT_OPTIONS_REGEXP = "((" + LINE_WS_REGEXP + "+(--global-option|--install-option)=\"[^\"]*\")+)?";
+
+  @NotNull
   private static final Pattern REQUIREMENT = Pattern.compile(
     REQUIREMENT_NAME_REGEXP +
     LINE_WS_REGEXP + "*" +
     REQUIREMENT_EXTRAS_REGEXP +
     LINE_WS_REGEXP + "*" +
     REQUIREMENT_VERSIONS_SPECS_REGEXP +
+    REQUIREMENT_OPTIONS_REGEXP +
     COMMENT_REGEXP);
 
   @NotNull
