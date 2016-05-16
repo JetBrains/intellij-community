@@ -25,7 +25,7 @@ public abstract class SpellcheckerInspectionTestCase extends LightPlatformCodeIn
     return true;
   }
 
-  public static String getSpellcheckerTestDataPath() {
+  static String getSpellcheckerTestDataPath() {
     return "/spellchecker/testData/";
   }
 
@@ -34,7 +34,7 @@ public abstract class SpellcheckerInspectionTestCase extends LightPlatformCodeIn
     myFixture.testHighlighting(false, false, true, file);
   }
 
-  public static LocalInspectionTool[] getInspectionTools() {
+  static LocalInspectionTool[] getInspectionTools() {
     return new LocalInspectionTool[]{new SpellCheckingInspection()};
   }
 }
