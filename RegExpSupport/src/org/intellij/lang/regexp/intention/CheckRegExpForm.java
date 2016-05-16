@@ -25,9 +25,12 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -145,21 +148,30 @@ public class CheckRegExpForm {
   }
 
   private void updateBalloon() {
-    boolean correct = isMatchingText(myRegexpFile, mySampleText.getText());
+    final Boolean correct = isMatchingText(myRegexpFile, mySampleText.getText());
 
-    mySampleText.setBackground(correct ? BACKGROUND_COLOR_MATCH : BACKGROUND_COLOR_NOMATCH);
-    myMessage.setText(correct ? "Matches!" : "no match");
-    myRootPanel.revalidate();
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      public void run() {
+        mySampleText.setBackground(correct != null && correct ? BACKGROUND_COLOR_MATCH : BACKGROUND_COLOR_NOMATCH);
+        myMessage.setText(correct == null ? "Pattern is too complex" : correct ? "Matches!" : "No match");
+        myRootPanel.revalidate();
+      }
+    }, new Condition() {
+      @Override
+      public boolean value(Object o) {
+        return false;
+      }
+    });
   }
 
   @TestOnly
   public static boolean isMatchingTextTest(@NotNull PsiFile regexpFile, @NotNull String sampleText) {
-    return isMatchingText(regexpFile, sampleText);
+    Boolean result = isMatchingText(regexpFile, sampleText);
+    return result != null && result;
   }
 
-  private static boolean isMatchingText(@NotNull final PsiFile regexpFile, @NotNull String sampleText) {
+  private static Boolean isMatchingText(@NotNull final PsiFile regexpFile, @NotNull String sampleText) {
     final String regExp = regexpFile.getText();
-
 
     Integer patternFlags = ApplicationManager.getApplication().runReadAction(new Computable<Integer>() {
       @Override
@@ -175,10 +187,14 @@ public class CheckRegExpForm {
         return flags;
       }
     });
-    //todo[kb] need somehow to kill the calculation thread if matches() is slow
+
     try {
-      return Pattern.compile(regExp, patternFlags).matcher(sampleText).matches();
-    } catch (Exception ignore) {}
+      //noinspection MagicConstant
+      return Pattern.compile(regExp, patternFlags).matcher(StringUtil.newBombedCharSequence(sampleText, 1000)).matches();
+    } catch (ProcessCanceledException pc) {
+      return null;
+    }
+    catch (Exception ignore) {}
 
     return false;
   }
