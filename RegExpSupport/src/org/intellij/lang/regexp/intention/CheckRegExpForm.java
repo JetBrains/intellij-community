@@ -41,6 +41,7 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Alarm;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.regexp.RegExpLanguage;
 import org.intellij.lang.regexp.RegExpModifierProvider;
@@ -49,7 +50,6 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
-import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.util.regex.Pattern;
@@ -60,8 +60,8 @@ import java.util.regex.Pattern;
 public class CheckRegExpForm {
   private static final String LAST_EDITED_REGEXP = "last.edited.regexp";
 
-  private static final JBColor BACKGROUND_COLOR_MATCH = new JBColor(new Color(231, 250, 219), new Color(68, 85, 66));
-  private static final JBColor BACKGROUND_COLOR_NOMATCH = new JBColor(new Color(255, 177, 160), new Color(110, 43, 40));
+  private static final JBColor BACKGROUND_COLOR_MATCH = new JBColor(0xe7fadb, 0x445542);
+  private static final JBColor BACKGROUND_COLOR_NOMATCH = new JBColor(0xffb1a0, 0x6e2b28);
 
   private final PsiFile myRegexpFile;
 
@@ -82,11 +82,11 @@ public class CheckRegExpForm {
     Document document = PsiDocumentManager.getInstance(myProject).getDocument(myRegexpFile);
 
     myRegExp = new EditorTextField(document, myProject, RegExpLanguage.INSTANCE.getAssociatedFileType());
-    myRegExp.setPreferredWidth(Math.max(300, myRegExp.getPreferredSize().width));
+    myRegExp.setPreferredWidth(Math.max(JBUI.scale(300), myRegExp.getPreferredSize().width));
     final String sampleText = PropertiesComponent.getInstance(myProject).getValue(LAST_EDITED_REGEXP, "Sample Text");
     mySampleText = new EditorTextField(sampleText, myProject, PlainTextFileType.INSTANCE);
     mySampleText.setBorder(
-      new CompoundBorder(new EmptyBorder(2, 2, 2, 4), new LineBorder(UIUtil.isUnderDarcula() ? Gray._100 : JBColor.border())));
+      new CompoundBorder(JBUI.Borders.empty(2, 2, 2, 4), new LineBorder(UIUtil.isUnderDarcula() ? Gray._100 : JBColor.border())));
     mySampleText.setOneLineMode(false);
 
     myRootPanel = new JPanel(new BorderLayout()) {
