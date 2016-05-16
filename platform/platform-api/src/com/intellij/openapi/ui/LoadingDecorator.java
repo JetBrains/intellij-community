@@ -108,7 +108,8 @@ public class LoadingDecorator {
           });
         }
       }, myDelay);
-    } else {
+    }
+    else {
       _startLoading(takeSnapshot);
     }
   }
@@ -166,14 +167,11 @@ public class LoadingDecorator {
       if (myVisible && !visible && myCurrentAlpha != -1) return;
 
       myVisible = visible;
+      myFadeOutAnimator.reset();
       if (myVisible) {
         setVisible(myVisible);
         myCurrentAlpha = -1;
-        myFadeOutAnimator.reset();
-        myFadeOutAnimator.suspend();
-      }
 
-      if (myVisible) {
         if (takeSnapshot && getWidth() > 0 && getHeight() > 0) {
           mySnapshot = UIUtil.createImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_RGB);
           final Graphics2D g = mySnapshot.createGraphics();
@@ -183,11 +181,13 @@ public class LoadingDecorator {
           g.dispose();
         }
         myProgress.resume();
-      } else {
+
+        myFadeOutAnimator.suspend();
+      }
+      else {
         disposeSnapshot();
         myProgress.suspend();
 
-        myFadeOutAnimator.reset();
         myFadeOutAnimator.resume();
       }
     }
@@ -211,7 +211,8 @@ public class LoadingDecorator {
           g.setColor(new Color(200, 200, 200, 240));
           g.fillRect(0, 0, getWidth(), getHeight());
           return;
-        } else {
+        }
+        else {
           disposeSnapshot();
         }
       }
@@ -264,7 +265,8 @@ public class LoadingDecorator {
         final Component each = getComponent(i);
         if (each instanceof Icon) {
           each.setBounds(0, 0, each.getWidth(), each.getHeight());
-        } else {
+        }
+        else {
           each.setBounds(0, 0, getWidth(), getHeight());
         }
       }
