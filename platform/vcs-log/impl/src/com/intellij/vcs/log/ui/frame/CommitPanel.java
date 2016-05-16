@@ -195,10 +195,10 @@ class CommitPanel extends JBPanel {
       }
       else {
         String hash = commit.getId().toShortString();
-        String header = getHtmlWithFonts(hash + " " + getAuthorText(commit, hash.length() + 1) +
+        String hashAndAuthor = getHtmlWithFonts(hash + " " + getAuthorText(commit, hash.length() + 1) +
                                          (myMultiRoot ? " [" + commit.getRoot().getName() + "]" : ""));
-        String body = getMessageText(commit);
-        myMainText = header + "<br/>" + body;
+        String messageText = getMessageText(commit);
+        myMainText = messageText + "<br/><br/>" + hashAndAuthor;
       }
     }
 
