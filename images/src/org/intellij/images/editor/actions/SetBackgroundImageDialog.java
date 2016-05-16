@@ -83,7 +83,7 @@ public class SetBackgroundImageDialog extends DialogWrapper {
     UiNotifyConnector.doWhenFirstShown(myRoot, new Runnable() {
       @Override
       public void run() {
-        IdeBackgroundUtil.createTemporaryBackgroundTransform(myRoot, myPropertyTmp, getDisposable());
+        IdeBackgroundUtil.createTemporaryBackgroundTransform(myPreviewPanel, myPropertyTmp, getDisposable());
       }
     });
     setupComponents();
@@ -189,12 +189,12 @@ public class SetBackgroundImageDialog extends DialogWrapper {
     for (Enumeration<AbstractButton> e = getTargetRbGroup().getElements(); e.hasMoreElements();) {
       AbstractButton button = e.nextElement();
       button.setActionCommand(button.getText());
-      button.addActionListener(this::targetChanged);
+      button.addChangeListener(this::targetChanged);
     }
     for (Enumeration<AbstractButton> e = getTypeRbGroup().getElements(); e.hasMoreElements();) {
       AbstractButton button = e.nextElement();
       button.setActionCommand(button.getText());
-      button.addActionListener(this::fillTypeChanged);
+      button.addChangeListener(this::fillTypeChanged);
     }
     ChangeListener opacitySync = new ChangeListener() {
 
@@ -232,11 +232,11 @@ public class SetBackgroundImageDialog extends DialogWrapper {
     updatePreview();
   }
 
-  private void fillTypeChanged(ActionEvent event) {
+  private void fillTypeChanged(ChangeEvent event) {
     updatePreview();
   }
 
-  private void targetChanged(ActionEvent event) {
+  private void targetChanged(ChangeEvent event) {
     if (StringUtil.isEmptyOrSpaces(mySelectedPath)) {
       retrieveExistingValue();
     }
@@ -272,7 +272,7 @@ public class SetBackgroundImageDialog extends DialogWrapper {
     String type = split.length > 2 ? split[2] : "scale";
     for (Enumeration<AbstractButton> e = getTypeRbGroup().getElements(); e.hasMoreElements(); ) {
       AbstractButton button = e.nextElement();
-      String s = button.getActionCommand().replace(' ', '_');
+      String s = button.getActionCommand().replace('-', '_');
       if (s.equalsIgnoreCase(type)) {
         button.setSelected(true);
         break;
@@ -347,7 +347,7 @@ public class SetBackgroundImageDialog extends DialogWrapper {
   private String calcNewValue() {
     String path = (String)myPathField.getComboBox().getEditor().getItem();
     String type = getTypeRbGroup().getSelection().getActionCommand()
-      .replace(' ', '_').toLowerCase(Locale.ENGLISH);
+      .replace('-', '_').toLowerCase(Locale.ENGLISH);
 
     return path.trim() + "," + myOpacitySpinner.getValue() + "," + type;
   }

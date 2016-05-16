@@ -40,9 +40,11 @@ public class SetBackgroundImageAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
+    Project project = e.getProject();
+    if (project == null) return;
     VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
     boolean image = file != null && ImageFileTypeManager.getInstance().isImage(file);
-    SetBackgroundImageDialog dialog = new SetBackgroundImageDialog(e.getProject(), image ? file.getPath() : null);
+    SetBackgroundImageDialog dialog = new SetBackgroundImageDialog(project, image ? file.getPath() : null);
     dialog.showAndGet();
   }
 }

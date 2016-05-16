@@ -61,12 +61,12 @@
         <properties/>
         <border type="none"/>
         <children>
-          <component id="77b44" class="com.intellij.ui.components.JBRadioButton" default-binding="true">
+          <component id="ac573" class="com.intellij.ui.components.JBLabel">
             <constraints>
-              <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Top Left"/>
+              <text value="Placement:"/>
             </properties>
           </component>
           <component id="a8fd9" class="com.intellij.ui.components.JBRadioButton" binding="myScaleRb">
@@ -77,14 +77,6 @@
               <text value="Scale"/>
             </properties>
           </component>
-          <component id="1eb66" class="com.intellij.ui.components.JBRadioButton" default-binding="true">
-            <constraints>
-              <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <text value="Center"/>
-            </properties>
-          </component>
           <component id="fc37b" class="com.intellij.ui.components.JBRadioButton" default-binding="true">
             <constraints>
               <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
@@ -93,17 +85,20 @@
               <text value="Tile"/>
             </properties>
           </component>
-          <vspacer id="f690c">
+          <component id="1eb66" class="com.intellij.ui.components.JBRadioButton" default-binding="true">
             <constraints>
-              <grid row="10" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
-            </constraints>
-          </vspacer>
-          <component id="961d9" class="com.intellij.ui.components.JBRadioButton" default-binding="true">
-            <constraints>
-              <grid row="7" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+              <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Bottom Left"/>
+              <text value="Center"/>
+            </properties>
+          </component>
+          <component id="77b44" class="com.intellij.ui.components.JBRadioButton" default-binding="true">
+            <constraints>
+              <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text value="Top-left"/>
             </properties>
           </component>
           <component id="2830" class="com.intellij.ui.components.JBRadioButton" default-binding="true">
@@ -111,7 +106,7 @@
               <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Top Center"/>
+              <text value="Top-center"/>
             </properties>
           </component>
           <component id="683fb" class="com.intellij.ui.components.JBRadioButton" default-binding="true">
@@ -119,7 +114,15 @@
               <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Top Right"/>
+              <text value="Top-right"/>
+            </properties>
+          </component>
+          <component id="961d9" class="com.intellij.ui.components.JBRadioButton" default-binding="true">
+            <constraints>
+              <grid row="7" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text value="Bottom-left"/>
             </properties>
           </component>
           <component id="b2175" class="com.intellij.ui.components.JBRadioButton" default-binding="true">
@@ -127,7 +130,7 @@
               <grid row="8" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Bottom Center"/>
+              <text value="Bottom-center"/>
             </properties>
           </component>
           <component id="f09c6" class="com.intellij.ui.components.JBRadioButton" default-binding="true">
@@ -135,17 +138,14 @@
               <grid row="9" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Bottom Right"/>
+              <text value="Bottom-right"/>
             </properties>
           </component>
-          <component id="ac573" class="com.intellij.ui.components.JBLabel">
+          <vspacer id="f690c">
             <constraints>
-              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+              <grid row="10" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
             </constraints>
-            <properties>
-              <text value="Placement:"/>
-            </properties>
-          </component>
+          </vspacer>
         </children>
       </grid>
       <component id="fe56c" class="javax.swing.JSlider" binding="myOpacitySlider">
@@ -196,14 +196,14 @@
     <group name="myType">
       <member id="a8fd9"/>
       <member id="a8fd9"/>
-      <member id="b2175"/>
       <member id="fc37b"/>
-      <member id="77b44"/>
-      <member id="f09c6"/>
       <member id="1eb66"/>
-      <member id="961d9"/>
-      <member id="683fb"/>
+      <member id="77b44"/>
       <member id="2830"/>
+      <member id="683fb"/>
+      <member id="961d9"/>
+      <member id="b2175"/>
+      <member id="f09c6"/>
     </group>
   </buttonGroups>
 </form>
