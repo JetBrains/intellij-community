@@ -297,7 +297,7 @@ public class AddImportHelper {
     for (PyImportElement element : existingImports) {
       final QualifiedName qName = element.getImportedQName();
       if (qName != null && name.equals(qName.toString())) {
-        if ((asName != null && asName.equals(element.getAsName())) || asName == null) {
+        if ((asName != null && asName.equals(element.getAsName())) || (asName == null && element.getAsName() == null)) {
           return false;
         }
       }
