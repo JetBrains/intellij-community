@@ -150,20 +150,6 @@ public class JavaFxControllerClassIndex extends ScalarIndexExtension<String> {
     return findFxmlWithController(project, className, psiManager::findFile, scope);
   }
 
-  public static void processControllerClassNames(Project project, GlobalSearchScope scope, Processor<String> processor) {
-    ApplicationManager.getApplication().runReadAction(() -> {
-      final GlobalSearchScope filterScope = GlobalSearchScope.projectScope(project).intersectWith(scope);
-      try {
-        FileBasedIndex.getInstance().processAllKeys(NAME, className -> {
-          final boolean isInScope = !FileBasedIndex.getInstance().getContainingFiles(NAME, className, filterScope).isEmpty();
-          return !isInScope || processor.process(className);
-        }, project);
-      }
-      catch (IndexNotReadyException ignore) {
-      }
-    });
-  }
-
   public static List<VirtualFile> findFxmlsWithController(final Project project, @NotNull String className) {
     return findFxmlsWithController(project, className, ProjectScope.getAllScope(project));
   }

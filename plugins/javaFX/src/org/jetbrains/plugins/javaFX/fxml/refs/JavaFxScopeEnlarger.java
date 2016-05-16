@@ -24,6 +24,7 @@ import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.UseScopeEnlarger;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyUtil;
 import org.jetbrains.annotations.NotNull;
@@ -54,8 +55,8 @@ public class JavaFxScopeEnlarger extends UseScopeEnlarger {
     }
 
     if (containingClass != null) {
-      if (element instanceof PsiField && needToEnlargeScope((PsiField)element) ||
-          element instanceof PsiMethod && needToEnlargeScope((PsiMethod)element) ||
+      if (element instanceof PsiField && needToEnlargeFieldScope((PsiField)element) ||
+          element instanceof PsiMethod && needToEnlargeMethodScope((PsiMethod)element) ||
           element instanceof PsiParameter) {
         if (InheritanceUtil.isInheritor(containingClass, JavaFxCommonNames.JAVAFX_SCENE_NODE) ||
             isControllerClass(containingClass)) {
@@ -70,16 +71,13 @@ public class JavaFxScopeEnlarger extends UseScopeEnlarger {
 
   public boolean isControllerClass(PsiClass psiClass) {
     final Project project = psiClass.getProject();
-    final String qualifiedName = psiClass.getQualifiedName();
     final GlobalSearchScope resolveScope = psiClass.getResolveScope();
-    if (qualifiedName != null && !JavaFxControllerClassIndex.findFxmlWithController(project, qualifiedName, resolveScope).isEmpty()) {
+    if (isControllerClassName(project, psiClass.getQualifiedName(), resolveScope)) {
       return true;
     }
     final Ref<Boolean> refFound = new Ref<>(false);
-    final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-    JavaFxControllerClassIndex.processControllerClassNames(project, resolveScope, className -> {
-      final PsiClass aClass = psiFacade.findClass(className, resolveScope);
-      if (InheritanceUtil.isInheritorOrSelf(aClass, psiClass, true)) {
+    ClassInheritorsSearch.search(psiClass, resolveScope, true, true, false).forEach((aClass) -> {
+      if (isControllerClassName(project, aClass.getQualifiedName(), resolveScope)) {
         refFound.set(true);
         return false;
       }
@@ -88,14 +86,21 @@ public class JavaFxScopeEnlarger extends UseScopeEnlarger {
     return refFound.get();
   }
 
-  private static boolean needToEnlargeScope(PsiField field) {
+  private static boolean isControllerClassName(@NotNull Project project,
+                                               @Nullable String qualifiedName,
+                                               @NotNull GlobalSearchScope resolveScope) {
+    return qualifiedName != null && !JavaFxControllerClassIndex.findFxmlWithController(project, qualifiedName, resolveScope).isEmpty();
+  }
+
+  private static boolean needToEnlargeFieldScope(PsiField field) {
     return !field.hasModifierProperty(PsiModifier.PUBLIC) &&
            AnnotationUtil.isAnnotated(field, JavaFxCommonNames.JAVAFX_FXML_ANNOTATION, false);
   }
 
-  private static boolean needToEnlargeScope(PsiMethod method) {
+  private static boolean needToEnlargeMethodScope(PsiMethod method) {
     final boolean isStatic = method.hasModifierProperty(PsiModifier.STATIC);
-    return isStatic && method.getParameterList().getParametersCount() == 2 ||
+    return isStatic && method.getParameterList().getParametersCount() == 2 &&
+           InheritanceUtil.isInheritor(method.getParameterList().getParameters()[0].getType(), JavaFxCommonNames.JAVAFX_SCENE_NODE) ||
            !isStatic && !method.hasModifierProperty(PsiModifier.PUBLIC) &&
            AnnotationUtil.isAnnotated(method, JavaFxCommonNames.JAVAFX_FXML_ANNOTATION, false);
   }

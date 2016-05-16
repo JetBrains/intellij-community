@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.javaFX.indexing;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.indexing.*;
@@ -96,8 +97,7 @@ public class JavaFxIdsIndex extends FileBasedIndexExtension<String, Set<String>>
   }
 
   @NotNull
-  public static Set<String> getFilePaths(Project project, String id) {
-    final List<Set<String>> values = FileBasedIndex.getInstance().getValues(KEY, id, GlobalSearchScope.projectScope(project));
-    return values.isEmpty() ? Collections.emptySet() : values.get(0);
+  public static Collection<VirtualFile> getContainingFiles(Project project, String id) {
+    return FileBasedIndex.getInstance().getContainingFiles(KEY, id, GlobalSearchScope.projectScope(project));
   }
 }
