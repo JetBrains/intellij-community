@@ -398,7 +398,7 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
       }
       if (paramType != null) {
         if (isUfuncType(function, paramType)) {
-          return getPsiFacade(function).parseTypeAnnotation("T <= numbers.Number or numpy.core.multiarray.ndarray or collections.Iterable", function);
+          return getPsiFacade(function).parseTypeAnnotation("numbers.Number or T <= numpy.core.multiarray.ndarray or collections.Iterable", function);
         }
         final PyType numpyDocType = parseNumpyDocType(function, paramType);
         if ("size".equals(parameterName)) {
