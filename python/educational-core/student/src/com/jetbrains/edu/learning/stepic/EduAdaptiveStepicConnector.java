@@ -17,12 +17,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
+import com.jetbrains.edu.learning.actions.StudyNextStudyTaskAction;
 import com.jetbrains.edu.learning.checker.StudyExecutor;
 import com.jetbrains.edu.learning.core.EduNames;
-import com.jetbrains.edu.learning.courseFormat.Course;
-import com.jetbrains.edu.learning.courseFormat.Lesson;
-import com.jetbrains.edu.learning.courseFormat.Task;
-import com.jetbrains.edu.learning.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.courseFormat.*;
 import com.jetbrains.edu.learning.courseGeneration.StudyGenerator;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import com.jetbrains.edu.learning.editor.StudyEditor;
@@ -193,8 +191,8 @@ public class EduAdaptiveStepicConnector {
 
         if (task != null) {
           final Lesson adaptive = course.getLessons().get(0);
+          final Task unsolvedTask = adaptive.getTaskList().get(adaptive.getTaskList().size() - 1);
           if (reaction == 0 || reaction == -1) {
-            final Task unsolvedTask = adaptive.getTaskList().get(adaptive.getTaskList().size() - 1);
             unsolvedTask.setName(task.getName());
             unsolvedTask.setStepicId(task.getStepicId());
             unsolvedTask.setText(task.getText());
@@ -222,6 +220,7 @@ public class EduAdaptiveStepicConnector {
             final File lessonDirectory = new File(course.getCourseDirectory(), EduNames.LESSON + String.valueOf(adaptive.getIndex()));
             final File taskDirectory = new File(lessonDirectory, EduNames.TASK + String.valueOf(adaptive.getTaskList().size()));
             StudyProjectGenerator.flushTask(task, taskDirectory);
+            flushAdaptiveCourse(course, adaptive, unsolvedTask);
             final VirtualFile lessonDir = project.getBaseDir().findChild(EduNames.LESSON + String.valueOf(adaptive.getIndex()));
 
             if (lessonDir != null) {
@@ -249,17 +248,29 @@ public class EduAdaptiveStepicConnector {
             }
 
             final File lessonDirectory = new File(course.getCourseDirectory(), EduNames.LESSON + String.valueOf(adaptive.getIndex()));
-            final File taskDirectory = new File(lessonDirectory, EduNames.TASK + String.valueOf(adaptive.getTaskList().size()));
-            StudyProjectGenerator.flushTask(task, taskDirectory);
-            adaptive.initLesson(course, false);
+            StudyProjectGenerator.flushLesson(lessonDirectory, adaptive);
+            flushAdaptiveCourse(course, adaptive, unsolvedTask);
+            adaptive.initLesson(course, true);
+            ApplicationManager.getApplication().invokeLater(()->new StudyNextStudyTaskAction().navigateTask(project));
           }
         }
-        VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
+        ApplicationManager.getApplication().invokeLater(() -> VirtualFileManager.getInstance().refreshWithoutFileWatcher(false));
       }
       else {
         LOG.warn("Recommendation reactions weren't posted");
       }
     }
+  }
+
+  private static void flushAdaptiveCourse(Course course, Lesson adaptive, Task unsolvedTask) {
+    unsolvedTask.setLesson(null);
+    final TaskFile file = unsolvedTask.getTaskFile(DEFAULT_TASKFILE_NAME);
+    if (file != null) {
+      file.setTask(null);
+    }
+    adaptive.setCourse(null);
+    StudyProjectGenerator.flushCourseJson(course, new File(course.getCourseDirectory()));
+    course.initCourse(true);
   }
 
   private static void createTestFiles(Course course, Task task, Task unsolvedTask, VirtualFile lessonDir) {
@@ -301,6 +312,7 @@ public class EduAdaptiveStepicConnector {
     task.setName(name);
     task.setStepicId(lessonID);
     task.setText(step.text);
+    task.setStatus(StudyStatus.Unchecked);
     if (step.options.samples != null) {
       final StringBuilder builder = new StringBuilder();
       for (List<String> sample : step.options.samples) {

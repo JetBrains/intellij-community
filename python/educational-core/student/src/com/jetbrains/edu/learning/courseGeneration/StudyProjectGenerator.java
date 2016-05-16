@@ -69,16 +69,15 @@ public class StudyProjectGenerator {
   public void generateProject(@NotNull final Project project, @NotNull final VirtualFile baseDir) {
     StudyTaskManager.getInstance(project).setUser(myUser);
     final Course course = getCourse(project);
-    final File courseDirectory = StudyUtils.getCourseDirectory(project, course);
     if (course == null) {
       LOG.warn("Course is null");
       return;
     }
+    final File courseDirectory = StudyUtils.getCourseDirectory(project, course);
     StudyTaskManager.getInstance(project).setCourse(course);
     ApplicationManager.getApplication().invokeLater(
       () -> DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND,
                                                     () -> ApplicationManager.getApplication().runWriteAction(() -> {
-                                                      course.initCourse(false);
                                                       StudyGenerator.createCourse(course, baseDir, courseDirectory, project);
                                                       course.setCourseDirectory(courseDirectory.getAbsolutePath());
                                                       VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
@@ -87,29 +86,49 @@ public class StudyProjectGenerator {
                                                     })));
   }
 
+  @Nullable
   protected Course getCourse(@NotNull final Project project) {
-    Reader reader = null;
-    try {
       final File courseFile = new File(new File(OUR_COURSES_DIR, mySelectedCourseInfo.getName()), EduNames.COURSE_META_FILE);
       if (courseFile.exists()) {
-        reader = new InputStreamReader(new FileInputStream(courseFile), "UTF-8");
-        Gson gson = new GsonBuilder().create();
-        final Course course = gson.fromJson(reader, Course.class);
-        course.initCourse(false);
-        return course;
+        return readCourseFromCache(courseFile);
       }
+      else {
+        final File adaptiveCourseFile = new File(new File(OUR_COURSES_DIR, ADAPTIVE_COURSE_PREFIX +
+                                                                   mySelectedCourseInfo.getName() + "_" +
+                                                                   myUser.getEmail()), EduNames.COURSE_META_FILE);
+        if (adaptiveCourseFile.exists()) {
+          return readCourseFromCache(adaptiveCourseFile);
+        }
+        
+      }
+    final Course course = EduStepicConnector.getCourse(project, mySelectedCourseInfo);
+    if (course != null) {
+      flushCourse(project, course);
+      course.initCourse(false);
     }
-    catch (FileNotFoundException | UnsupportedEncodingException e) {
-      LOG.error(e);
+    return course;
+  }
+
+  @Nullable
+  private static Course readCourseFromCache(File courseFile) {
+    Reader reader = null;
+    try {
+      reader = new InputStreamReader(new FileInputStream(courseFile), "UTF-8");
+      Gson gson = new GsonBuilder().create();
+      final Course course = gson.fromJson(reader, Course.class);
+      course.initCourse(true);
+      return course;
+    }
+    catch (UnsupportedEncodingException e) {
+      LOG.warn(e.getMessage());
+    }
+    catch (FileNotFoundException e) {
+      LOG.warn(e.getMessage());
     }
     finally {
       StudyUtils.closeSilently(reader);
     }
-    final Course course = EduStepicConnector.getCourse(project, mySelectedCourseInfo);
-    if (course != null) {
-      flushCourse(project, course);
-    }
-    return course;
+    return null;
   }
 
   public static void openFirstTask(@NotNull final Course course, @NotNull final Project project) {
@@ -146,7 +165,7 @@ public class StudyProjectGenerator {
     }
   }
 
-  public void flushCourse(@NotNull final Project project, @NotNull final Course course) {
+  public static void flushCourse(@NotNull final Project project, @NotNull final Course course) {
     final File courseDirectory = StudyUtils.getCourseDirectory(project, course);
     FileUtil.createDirectory(courseDirectory);
     flushCourseJson(course, courseDirectory);
@@ -242,7 +261,7 @@ public class StudyProjectGenerator {
     }
   }
 
-  private static void flushCourseJson(@NotNull final Course course, @NotNull final File courseDirectory) {
+  public static void flushCourseJson(@NotNull final Course course, @NotNull final File courseDirectory) {
     final Gson gson = new GsonBuilder().setPrettyPrinting().create();
     final String json = gson.toJson(course);
     final File courseJson = new File(courseDirectory, EduNames.COURSE_META_FILE);
