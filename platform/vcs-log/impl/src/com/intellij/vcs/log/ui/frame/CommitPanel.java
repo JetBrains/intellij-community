@@ -16,6 +16,7 @@
 package com.intellij.vcs.log.ui.frame;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
@@ -33,8 +34,8 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsRef;
-import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.VcsRefType;
+import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
@@ -60,11 +61,13 @@ import static com.intellij.openapi.vcs.history.VcsHistoryUtil.getCommitDetailsFo
 
 class CommitPanel extends JBPanel {
   public static final int BOTTOM_BORDER = 2;
+  private static final int REFERENCES_BORDER = 12;
 
   @NotNull private final VcsLogData myLogData;
 
   @NotNull private final ReferencesPanel myReferencesPanel;
   @NotNull private final DataPanel myDataPanel;
+  @NotNull private final BranchesPanel myBranchesPanel;
   @NotNull private final RootPanel myRootPanel;
   @NotNull private final VcsLogColorManager myColorManager;
 
@@ -74,12 +77,14 @@ class CommitPanel extends JBPanel {
     myLogData = logData;
     myColorManager = colorManager;
 
-    setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+    setLayout(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, false));
     setOpaque(false);
 
     myRootPanel = new RootPanel();
     myReferencesPanel = new ReferencesPanel();
+    myReferencesPanel.setBorder(JBUI.Borders.empty(REFERENCES_BORDER, 0, 0, 0));
     myDataPanel = new DataPanel(myLogData.getProject());
+    myBranchesPanel = new BranchesPanel();
 
     JBPanel rootPanel = new JBPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0)) {
       @Override
@@ -92,15 +97,9 @@ class CommitPanel extends JBPanel {
     rootPanel.add(myRootPanel);
 
     add(rootPanel);
-    add(myReferencesPanel);
-    Dimension d = new Dimension(0, JBUI.scale(5));
-    add(new Box.Filler(d, d, d) {
-      @Override
-      public boolean isVisible() {
-        return myReferencesPanel.isVisible();
-      }
-    });
     add(myDataPanel);
+    add(myReferencesPanel);
+    add(myBranchesPanel);
 
     setBorder(getDetailsBorder());
   }
@@ -128,9 +127,10 @@ class CommitPanel extends JBPanel {
     if (!(commitData instanceof LoadingDetails)) {
       branches = myLogData.getContainingBranchesGetter().requestContainingBranches(commitData.getRoot(), commitData.getId());
     }
-    myDataPanel.setBranches(branches);
+    myBranchesPanel.setBranches(branches);
 
     myDataPanel.update();
+    myBranchesPanel.update();
     revalidate();
   }
 
@@ -142,17 +142,18 @@ class CommitPanel extends JBPanel {
     myDataPanel.update();
     myRootPanel.update();
     myReferencesPanel.update();
+    myBranchesPanel.update();
   }
 
   public void updateBranches() {
     if (myCommit != null) {
-      myDataPanel
+      myBranchesPanel
         .setBranches(myLogData.getContainingBranchesGetter().getContainingBranchesFromCache(myCommit.getRoot(), myCommit.getId()));
     }
     else {
-      myDataPanel.setBranches(null);
+      myBranchesPanel.setBranches(null);
     }
-    myDataPanel.update();
+    myBranchesPanel.update();
   }
 
   @NotNull
@@ -173,7 +174,7 @@ class CommitPanel extends JBPanel {
   }
 
   public boolean isExpanded() {
-    return myDataPanel.isExpanded();
+    return myBranchesPanel.isExpanded();
   }
 
   @NotNull
@@ -187,14 +188,8 @@ class CommitPanel extends JBPanel {
   }
 
   private static class DataPanel extends HtmlPanel {
-    private static final int PER_ROW = 2;
-    private static final String LINK_HREF = "show-hide-branches";
-
     @NotNull private final Project myProject;
-
     @Nullable private String myMainText;
-    @Nullable private List<String> myBranches;
-    private boolean myExpanded = false;
 
     DataPanel(@NotNull Project project) {
       myProject = project;
@@ -203,17 +198,6 @@ class CommitPanel extends JBPanel {
       caret.setUpdatePolicy(DefaultCaret.NEVER_UPDATE);
 
       setBorder(JBUI.Borders.empty(0, ReferencesPanel.H_GAP, BOTTOM_BORDER, 0));
-    }
-
-    @Override
-    public void hyperlinkUpdate(HyperlinkEvent e) {
-      if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED && LINK_HREF.equals(e.getDescription())) {
-        myExpanded = !myExpanded;
-        update();
-      }
-      else {
-        super.hyperlinkUpdate(e);
-      }
     }
 
     @Override
@@ -253,16 +237,6 @@ class CommitPanel extends JBPanel {
       return FontUtil.getHtmlWithFonts(input, style, getCommitDetailsFont());
     }
 
-    void setBranches(@Nullable List<String> branches) {
-      if (branches == null) {
-        myBranches = null;
-      }
-      else {
-        myBranches = branches;
-      }
-      myExpanded = false;
-    }
-
     void update() {
       if (myMainText == null) {
         setText("");
@@ -272,93 +246,11 @@ class CommitPanel extends JBPanel {
                 UIUtil.getCssFontDeclaration(getCommitDetailsFont()) +
                 "</head><body>" +
                 myMainText +
-                "<br/>" +
-                "<br/>" +
-                getBranchesText() +
                 "</body></html>");
       }
       customizeLinksStyle();
       revalidate();
       repaint();
-    }
-
-    @NotNull
-    private String getBranchesText() {
-      if (myBranches == null) {
-        return "<i>In branches: loading...</i>";
-      }
-      if (myBranches.isEmpty()) return "<i>Not in any branch</i>";
-
-      if (myExpanded) {
-        int rowCount = (int)Math.ceil((double)myBranches.size() / PER_ROW);
-
-        int[] means = new int[PER_ROW - 1];
-        int[] max = new int[PER_ROW - 1];
-
-        for (int i = 0; i < rowCount; i++) {
-          for (int j = 0; j < PER_ROW - 1; j++) {
-            int index = rowCount * j + i;
-            if (index < myBranches.size()) {
-              means[j] += myBranches.get(index).length();
-              max[j] = Math.max(myBranches.get(index).length(), max[j]);
-            }
-          }
-        }
-        for (int j = 0; j < PER_ROW - 1; j++) {
-          means[j] /= rowCount;
-        }
-
-        HtmlTableBuilder builder = new HtmlTableBuilder();
-        for (int i = 0; i < rowCount; i++) {
-          builder.startRow();
-          for (int j = 0; j < PER_ROW; j++) {
-            int index = rowCount * j + i;
-            if (index >= myBranches.size()) {
-              builder.append("");
-            }
-            else {
-              String branch = myBranches.get(index);
-              if (index != myBranches.size() - 1) {
-                int space = 0;
-                if (j < PER_ROW - 1 && branch.length() == max[j]) {
-                  space = Math.max(means[j] + 20 - max[j], 5);
-                }
-                builder.append(branch + StringUtil.repeat("&nbsp;", space), "left");
-              }
-              else {
-                builder.append(branch, "left");
-              }
-            }
-          }
-
-          builder.endRow();
-        }
-
-        return "<i>In " + myBranches.size() + " branches:</i> " +
-               "<a href=\"" + LINK_HREF + "\"><i>(click to hide)</i></a><br>" +
-               builder.build();
-      }
-      else {
-        int totalMax = 0;
-        int charCount = 0;
-        for (String b : myBranches) {
-          totalMax++;
-          charCount += b.length();
-          if (charCount >= 50) break;
-        }
-
-        String branchText;
-        if (myBranches.size() <= totalMax) {
-          branchText = StringUtil.join(myBranches, ", ");
-        }
-        else {
-          branchText = StringUtil.join(ContainerUtil.getFirstItems(myBranches, totalMax), ", ") +
-                       "… <a href=\"" +
-                       LINK_HREF +
-                       "\"><i>(click to show all)</i></a>";
-        }
-        return "<i>In " + myBranches.size() + StringUtil.pluralize(" branch", myBranches.size()) + ":</i> " + branchText;
-      }
     }
 
     @NotNull
@@ -447,6 +339,139 @@ class CommitPanel extends JBPanel {
     public Color getBackground() {
       return getCommitDetailsBackground();
     }
+  }
+
+  private static class BranchesPanel extends HtmlPanel {
+    private static final int PER_ROW = 2;
+    private static final String LINK_HREF = "show-hide-branches";
+
+    @Nullable private List<String> myBranches;
+    private boolean myExpanded = false;
+
+    BranchesPanel() {
+      DefaultCaret caret = (DefaultCaret)getCaret();
+      caret.setUpdatePolicy(DefaultCaret.NEVER_UPDATE);
+
+      setBorder(JBUI.Borders.empty(REFERENCES_BORDER, ReferencesPanel.H_GAP, BOTTOM_BORDER, 0));
+    }
+
+    @Override
+    public void hyperlinkUpdate(HyperlinkEvent e) {
+      if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED && LINK_HREF.equals(e.getDescription())) {
+        myExpanded = !myExpanded;
+        update();
+      }
+    }
+
+    @Override
+    public void updateUI() {
+      super.updateUI();
+      update();
+    }
+
+    void setBranches(@Nullable List<String> branches) {
+      if (branches == null) {
+        myBranches = null;
+      }
+      else {
+        myBranches = branches;
+      }
+      myExpanded = false;
+    }
+
+    void update() {
+      setText("<html><head>" +
+              UIUtil.getCssFontDeclaration(getCommitDetailsFont()) +
+              "</head><body>" +
+              getBranchesText() +
+              "</body></html>");
+      revalidate();
+      repaint();
+    }
+
+    @NotNull
+    private String getBranchesText() {
+      if (myBranches == null) {
+        return "<i>In branches: loading...</i>";
+      }
+      if (myBranches.isEmpty()) return "<i>Not in any branch</i>";
+
+      if (myExpanded) {
+        int rowCount = (int)Math.ceil((double)myBranches.size() / PER_ROW);
+
+        int[] means = new int[PER_ROW - 1];
+        int[] max = new int[PER_ROW - 1];
+
+        for (int i = 0; i < rowCount; i++) {
+          for (int j = 0; j < PER_ROW - 1; j++) {
+            int index = rowCount * j + i;
+            if (index < myBranches.size()) {
+              means[j] += myBranches.get(index).length();
+              max[j] = Math.max(myBranches.get(index).length(), max[j]);
+            }
+          }
+        }
+        for (int j = 0; j < PER_ROW - 1; j++) {
+          means[j] /= rowCount;
+        }
+
+        HtmlTableBuilder builder = new HtmlTableBuilder();
+        for (int i = 0; i < rowCount; i++) {
+          builder.startRow();
+          for (int j = 0; j < PER_ROW; j++) {
+            int index = rowCount * j + i;
+            if (index >= myBranches.size()) {
+              builder.append("");
+            }
+            else {
+              String branch = myBranches.get(index);
+              if (index != myBranches.size() - 1) {
+                int space = 0;
+                if (j < PER_ROW - 1 && branch.length() == max[j]) {
+                  space = Math.max(means[j] + 20 - max[j], 5);
+                }
+                builder.append(branch + StringUtil.repeat("&nbsp;", space), "left");
+              }
+              else {
+                builder.append(branch, "left");
+              }
+            }
+          }
+
+          builder.endRow();
+        }
+
+        return "<i>In " + myBranches.size() + " branches:</i> " +
+               "<a href=\"" + LINK_HREF + "\"><i>(click to hide)</i></a><br>" +
+               builder.build();
+      }
+      else {
+        int totalMax = 0;
+        int charCount = 0;
+        for (String b : myBranches) {
+          totalMax++;
+          charCount += b.length();
+          if (charCount >= 50) break;
+        }
+
+        String branchText;
+        if (myBranches.size() <= totalMax) {
+          branchText = StringUtil.join(myBranches, ", ");
+        }
+        else {
+          branchText = StringUtil.join(ContainerUtil.getFirstItems(myBranches, totalMax), ", ") +
+                       "… <a href=\"" +
+                       LINK_HREF +
+                       "\"><i>(click to show all)</i></a>";
+        }
+        return "<i>In " + myBranches.size() + StringUtil.pluralize(" branch", myBranches.size()) + ":</i> " + branchText;
+      }
+    }
+
+    @Override
+    public Color getBackground() {
+      return getCommitDetailsBackground();
+    }
 
     public boolean isExpanded() {
       return myExpanded;
@@ -483,6 +508,7 @@ class CommitPanel extends JBPanel {
                         index == 0 ? new TagIcon(height, type.getBackgroundColor()) : null, SwingConstants.LEFT);
           label.setFont(getCommitDetailsFont());
           label.setIconTextGap(0);
+          label.setHorizontalAlignment(SwingConstants.LEFT);
           add(label);
           index++;
         }
