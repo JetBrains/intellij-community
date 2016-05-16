@@ -283,7 +283,7 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
       final VirtualFile virtualFile = file.getVirtualFile();
       if (virtualFile != null) {
         final String name = facade.findShortestImportableName(virtualFile, element);
-        return name != null && (name.startsWith("numpy.") || name.startsWith("matplotlib."));
+        return name != null && (name.startsWith("numpy.") || name.startsWith("matplotlib.") || name.startsWith("scipy."));
       }
     }
     return false;
