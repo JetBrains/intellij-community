@@ -335,6 +335,12 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
           }
 
           @Override
+          public void onError(@NotNull Exception error) {
+            LOG.error(error);
+            myMergeContext.finishMerge(MergeResult.CANCEL);
+          }
+
+          @Override
           public void onSuccess() {
             if (isDisposed()) return;
             myCallback.run();

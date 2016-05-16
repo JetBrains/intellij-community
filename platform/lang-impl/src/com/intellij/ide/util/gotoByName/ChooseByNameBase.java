@@ -1745,6 +1745,12 @@ public abstract class ChooseByNameBase {
           public void onCancel() {
             myCalcUsagesThread.cancel();
           }
+
+          @Override
+          public void onError(@NotNull Exception error) {
+            super.onError(error);
+            myCalcUsagesThread.cancel();
+          }
         });
       }
       else {

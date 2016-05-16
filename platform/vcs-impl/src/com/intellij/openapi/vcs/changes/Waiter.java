@@ -60,12 +60,7 @@ public class Waiter extends Task.Modal {
   }
 
   @Override
-  public void onCancel() {
-    onSuccess();
-  }
-
-  @Override
-  public void onSuccess() {
+  public void onFinished() {
     // allow do not wait for done
     /*synchronized (myLock) {
       if (! myDone) {

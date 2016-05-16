@@ -472,6 +472,12 @@ public class ConvertParameterToMapEntryIntention extends Intention {
       }
 
       @Override
+      public void onError(@NotNull Exception error) {
+        super.onError(error);
+        result.set(false);
+      }
+
+      @Override
       public void onSuccess() {
         result.set(true);
       }
