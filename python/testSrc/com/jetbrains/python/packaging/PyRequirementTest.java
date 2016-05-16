@@ -1633,7 +1633,6 @@ public class PyRequirementTest extends PyTestCase {
   // REQUIREMENT
   // TODO: name normalization
   // TODO: hashes
-  // TODO: multiline
   // https://www.python.org/dev/peps/pep-0508/#names
   public void testRequirement() {
     assertEquals(new PyRequirement("Orange-Bioinformatics"), PyRequirement.fromLine("Orange-Bioinformatics"));
@@ -1882,6 +1881,27 @@ public class PyRequirementTest extends PyTestCase {
 
     final String options2 = optionsPrefix + " --install-option=\"--install-scripts=/usr/local/bin\"";
     assertEquals(new PyRequirement(name, versionSpecs, options2), PyRequirement.fromLine(options2));
+  }
+
+  public void testMultilineRequirement() {
+    final String name = "MyProject1";
+    final String version = "1.2";
+    final String optionsPrefix = name + " >= " + version;
+
+    final List<PyRequirementVersionSpec> versionSpecs =
+      Collections.singletonList(new PyRequirementVersionSpec(PyRequirementRelation.GTE, version));
+
+    final String options = optionsPrefix + " " +
+                           "--global-option=\"--no-user-cfg\" \\\n" +
+                           "--install-option=\"--prefix='/usr/local'\" \\\n" +
+                           "--install-option=\"--no-compile\"";
+
+    final String processedOptions = optionsPrefix + " " +
+                                    "--global-option=\"--no-user-cfg\" " +
+                                    "--install-option=\"--prefix='/usr/local'\" " +
+                                    "--install-option=\"--no-compile\"";
+
+    assertEquals(Collections.singletonList(new PyRequirement(name, versionSpecs, processedOptions)), PyRequirement.fromText(options));
   }
 
   // PY-6355

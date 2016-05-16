@@ -335,10 +335,8 @@ public class PyRequirement {
       visitedFiles.add(containingFile);
     }
 
-    return Arrays
-      .stream(StringUtil.splitByLines(text))
-      .map(String::trim)
-      .filter(line -> !line.isEmpty())
+    return splitByLinesAndCollapse(text)
+      .stream()
       .map(line -> parseLine(line, containingFile, visitedFiles))
       .flatMap(Collection::stream)
       .filter(req -> req != null)
@@ -412,6 +410,30 @@ public class PyRequirement {
       .map(PyRequirement::parseVersionSpec)
       .filter(req -> req != null)
       .collect(Collectors.toList());
+  }
+
+  @NotNull
+  private static List<String> splitByLinesAndCollapse(@NotNull String text) {
+    final List<String> result = new ArrayList<>();
+    final StringBuilder sb = new StringBuilder();
+
+    for (String line : StringUtil.splitByLines(text)) {
+      if (line.endsWith("\\") && !line.endsWith("\\\\")) {
+        sb.append(line.substring(0, line.length() - 1));
+      } else {
+        if (sb.length() == 0) {
+          result.add(line);
+        } else {
+          sb.append(line);
+
+          result.add(sb.toString());
+
+          sb.setLength(0);
+        }
+      }
+    }
+
+    return result;
   }
 
   @NotNull
