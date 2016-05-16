@@ -110,7 +110,7 @@ class SuitePackInfo(val runSettings: RunnerAndConfigurationSettings, initial: Su
 
   fun addSuite(s: SuiteInfo) = suites.add(s)
 
-  override val runDate = suites[0].runDate
+  override val runDate = suites.map { it.runDate }.min()!!
 
   override val magnitude = COMPLETE_INDEX
 
@@ -118,9 +118,6 @@ class SuitePackInfo(val runSettings: RunnerAndConfigurationSettings, initial: Su
 
   override val testsUrls: List<String>
     get() = suites.fold(listOf<String>(), { list, suite -> list + suite.testsUrls })
-
-  
-  fun getFailedSuites() = suites.filter { it.failedTests.size > 0 }
   
   override fun run(runner: RecentTestRunner) {
     runner.run(runSettings)
