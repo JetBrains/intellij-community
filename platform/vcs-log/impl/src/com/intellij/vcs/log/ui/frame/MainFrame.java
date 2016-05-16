@@ -93,6 +93,10 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     myChangesLoadingPane = new JBLoadingPanel(new BorderLayout(), this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
     myChangesLoadingPane.add(myChangesBrowser);
 
+    myDetailsSplitter = new OnePixelSplitter(true, "vcs.log.details.splitter.proportion", 0.7f);
+    myDetailsSplitter.setFirstComponent(myChangesLoadingPane);
+    setupDetailsSplitter(uiProperties.isShowDetails());
+
     myGraphTable.getSelectionModel().addListSelectionListener(new CommitSelectionListenerForDiff());
     myDetailsPanel.installCommitSelectionListener(myGraphTable);
     updateWhenDetailsAreLoaded();
@@ -100,12 +104,8 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     myTextFilter = myFilterUi.createTextFilter();
     myToolbar = createActionsToolbar();
 
-    myDetailsSplitter = new OnePixelSplitter(true, "vcs.log.details.splitter.proportion", 0.7f);
-    myDetailsSplitter.setFirstComponent(setupScrolledGraph());
-    setupDetailsSplitter(uiProperties.isShowDetails());
-
     ProgressStripe progressStripe =
-      new ProgressStripe(myDetailsSplitter, this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS) {
+      new ProgressStripe(setupScrolledGraph(), this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS) {
         @Override
         public void updateUI() {
           super.updateUI();
@@ -134,7 +134,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
     myChangesBrowserSplitter = new OnePixelSplitter(false, "vcs.log.changes.splitter.proportion", 0.7f);
     myChangesBrowserSplitter.setFirstComponent(toolbarsAndTable);
-    myChangesBrowserSplitter.setSecondComponent(myChangesLoadingPane);
+    myChangesBrowserSplitter.setSecondComponent(myDetailsSplitter);
 
     setLayout(new BorderLayout());
     add(myChangesBrowserSplitter);
