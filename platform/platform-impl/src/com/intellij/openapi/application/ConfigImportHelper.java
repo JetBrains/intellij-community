@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ public class ConfigImportHelper {
    * imported on the current startup
    */
   @NonNls public static final String CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY = "intellij.config.imported.in.current.session";
-  
+
   @NonNls private static final String BUILD_NUMBER_FILE = SystemInfo.isMac ? "/Resources/build.txt" : "build.txt";
   @NonNls private static final String PLUGINS_PATH = "plugins";
   @NonNls private static final String BIN_FOLDER = "bin";
@@ -185,7 +185,7 @@ public class ConfigImportHelper {
       @Override
       public boolean accept(@NotNull File dir, @NotNull String name) {
         // Don't copy plugins just imported. They're most probably incompatible with newer idea version.
-        return !StringUtil.startsWithChar(name, '.') && !name.equals(PLUGINS_PATH);
+        return !StringUtil.startsWithChar(name, '.') && !name.equals(PLUGINS_PATH) && !"user.web.token".equals(name);
       }
     });
 
@@ -317,7 +317,7 @@ public class ConfigImportHelper {
     // idea.properties
     files.add(new File(bin, PathManager.PROPERTIES_FILE_NAME));
 
-    
+
     // other binary scripts
     final String executableName = StringUtil.toLowerCase(settings.getExecutableName());
     // * defaults:
@@ -356,14 +356,14 @@ public class ConfigImportHelper {
         }
         if (bundle.containsKey(propertyName)) {
           return bundle.getString(propertyName);
-        } 
+        }
         return null;
       }
       catch (IOException e) {
         return null;
       }
     }
-    
+
     final String fileContent = getContent(file);
 
     // try to find custom config path
@@ -376,7 +376,7 @@ public class ConfigImportHelper {
   }
 
   @Nullable
-  private static String findProperty(final String propertyName, 
+  private static String findProperty(final String propertyName,
                                      final String fileContent) {
     String param = propertyName + "=";
     int idx = fileContent.indexOf(param);

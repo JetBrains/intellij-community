@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs;
 
+import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -47,6 +48,7 @@ public class OpenProjectSetProcessor extends ProjectSetProcessor {
           @Override
           public Project compute() {
             String path = root == null ? entry.getSecond() : (root + "/" + entry.getSecond());
+            if (!warnAboutOpening(path)) return null;
             return ProjectUtil.openProject(path, null, true);
           }
         });
@@ -57,10 +59,25 @@ public class OpenProjectSetProcessor extends ProjectSetProcessor {
       }
     }
     // no "project" entry
+    if (!warnAboutOpening(root)) return;
     final VirtualFile dir = LocalFileSystem.getInstance().refreshAndFindFileByPath(root);
     if (dir != null) {
       Project project = PlatformProjectOpenProcessor.getInstance().doOpenProject(dir, null, false);
       if (project != null) runNext.run();
     }
+  }
+
+  private static boolean warnAboutOpening(String path) {
+    if (!RecentProjectsManager.getInstance().hasPath(path)) {
+      boolean remotePath = ProjectUtil.isRemotePath(path);
+      if (!ProjectUtil.confirmLoadingFromRemotePath(
+        path,
+        remotePath ? "warning.load.project.from.share" : "warning.load.local.project",
+        remotePath ? "title.load.project.from.share" : "title.load.local.project"
+      )) {
+        return false;
+      }
+    }
+    return true;
   }
 }

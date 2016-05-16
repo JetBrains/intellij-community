@@ -49,13 +49,14 @@ public class BuiltInWebBrowserUrlProvider extends WebBrowserUrlProvider implemen
       return Collections.emptyList();
     }
 
+    String query = BuiltInWebServerKt.isCookieValidated() ? "?" + BuiltInWebServerKt.TOKEN_PARAM_NAME + "=" + BuiltInWebServerKt.acquireToken() : "";
     int effectiveBuiltInServerPort = BuiltInServerOptions.getInstance().getEffectiveBuiltInServerPort();
-    Url url = Urls.newHttpUrl(currentAuthority == null ? "localhost:" + effectiveBuiltInServerPort : currentAuthority, '/' + project.getName() + '/' + path);
+    Url url = Urls.newHttpUrl(currentAuthority == null ? "localhost:" + effectiveBuiltInServerPort : currentAuthority, '/' + project.getName() + '/' + path, query);
     int defaultPort = BuiltInServerManager.getInstance().getPort();
     if (currentAuthority != null || defaultPort == effectiveBuiltInServerPort) {
       return Collections.singletonList(url);
     }
-    return Arrays.asList(url, Urls.newHttpUrl("localhost:" + defaultPort, '/' + project.getName() + '/' + path));
+    return Arrays.asList(url, Urls.newHttpUrl("localhost:" + defaultPort, '/' + project.getName() + '/' + path, query));
   }
 
   public static boolean compareAuthority(@Nullable String currentAuthority) {

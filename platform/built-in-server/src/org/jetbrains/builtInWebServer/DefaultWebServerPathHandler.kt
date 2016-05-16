@@ -20,12 +20,19 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.endsWithName
 import com.intellij.openapi.util.io.endsWithSlash
 import com.intellij.openapi.util.io.getParentPath
+import com.intellij.openapi.vfs.VFileProperty
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtilRt
+import io.netty.channel.Channel
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.FullHttpRequest
+import io.netty.handler.codec.http.HttpRequest
 import io.netty.handler.codec.http.HttpResponseStatus
 import org.jetbrains.io.Responses
+import org.jetbrains.io.isRegularBrowser
+import org.jetbrains.io.origin
+import org.jetbrains.io.referrer
 import java.io.File
 
 private class DefaultWebServerPathHandler : WebServerPathHandler() {
@@ -56,11 +63,6 @@ private class DefaultWebServerPathHandler : WebServerPathHandler() {
 
     var indexUsed = false
     if (pathInfo.isDirectory()) {
-      if (!endsWithSlash(decodedRawPath)) {
-        redirectToDirectory(request, channel, if (isCustomHost) path else "$projectName/$path")
-        return true
-      }
-
       var indexVirtualFile: VirtualFile? = null
       var indexFile: File? = null
       if (pathInfo.file == null) {
@@ -71,13 +73,24 @@ private class DefaultWebServerPathHandler : WebServerPathHandler() {
       }
 
       if (indexFile == null && indexVirtualFile == null) {
-        Responses.sendStatus(HttpResponseStatus.NOT_FOUND, channel, "Index file doesn't exist.", request)
+        Responses.sendStatus(HttpResponseStatus.NOT_FOUND, channel, request)
+        return true
+      }
+
+      // we must redirect only after index file check to not expose directory status
+      if (!endsWithSlash(decodedRawPath)) {
+        redirectToDirectory(request, channel, if (isCustomHost) path else "$projectName/$path")
         return true
       }
 
       indexUsed = true
       pathInfo = PathInfo(indexFile, indexVirtualFile, pathInfo.root, pathInfo.moduleName, pathInfo.isLibrary)
       pathToFileManager.pathToInfoCache.put(path, pathInfo)
+    }
+
+    if (request.origin == null && request.referrer == null && request.isRegularBrowser() && !canBeAccessedDirectly(pathInfo.name)) {
+      Responses.sendStatus(HttpResponseStatus.NOT_FOUND, context.channel(), request)
+      return true
     }
 
     if (!indexUsed && !endsWithName(path, pathInfo.name)) {
@@ -94,6 +107,10 @@ private class DefaultWebServerPathHandler : WebServerPathHandler() {
       }
     }
 
+    if (!checkAccess(pathInfo, channel, request)) {
+      return true
+    }
+
     val canonicalPath = if (indexUsed) "$path/${pathInfo.name}" else path
     for (fileHandler in WebServerFileHandler.EP_NAME.extensions) {
       LOG.catchAndLog {
@@ -104,4 +121,24 @@ private class DefaultWebServerPathHandler : WebServerPathHandler() {
     }
     return false
   }
+}
+
+private fun checkAccess(pathInfo: PathInfo, channel: Channel, request: HttpRequest): Boolean {
+  if (pathInfo.ioFile != null || pathInfo.file!!.isInLocalFileSystem) {
+    val file:File = pathInfo.ioFile ?: VfsUtilCore.virtualToIoFile(pathInfo.file!!)
+
+    if (file.isDirectory) {
+      Responses.sendStatus(HttpResponseStatus.NOT_FOUND, channel, request)
+      return false
+    }
+    else if (!checkAccess(channel, file, request, VfsUtilCore.virtualToIoFile(pathInfo.root))) {
+      return false
+    }
+  }
+  else if (pathInfo.file!!.`is`(VFileProperty.HIDDEN)) {
+    Responses.sendStatus(HttpResponseStatus.NOT_FOUND, channel, request)
+    return false
+  }
+
+  return true
 }
