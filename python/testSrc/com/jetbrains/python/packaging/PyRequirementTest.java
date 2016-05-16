@@ -1949,9 +1949,52 @@ public class PyRequirementTest extends PyTestCase {
   }
 
   // COMMENTS
-  // TODO: comment at the end
   public void testComment() {
     assertNull(PyRequirement.fromLine("# comment"));
+  }
+
+  public void testCommentAtTheEnd() {
+    // ARCHIVE
+    final String url1 = "https://pypi.python.org/packages/source/g/geoip2/geoip2-2.2.0.tar.gz # comment";
+    assertEquals(new PyRequirement("geoip2", "2.2.0", url1), PyRequirement.fromLine(url1));
+
+    final String url2 =
+      "https://pypi.python.org/packages/source/g/geoip2/geoip2-2.2.0.tar.gz#md5=26259d212447bc840400c25a48275fbc # comment";
+    assertEquals(new PyRequirement("geoip2", "2.2.0", url2), PyRequirement.fromLine(url2));
+
+    doTest("https://github.com/divio/MyProject1/archive/master.zip?1450634746.0107164 # comment");
+
+    // VCS
+    doTest("git://git.myproject.org/MyProject#egg=MyProject1 # comment");
+    doTest("-e git://git.myproject.org/MyProject1 # comment");
+
+    doTest("hg+http://hg.myproject.org/MyProject#egg=MyProject1 # comment");
+    doTest("hg+http://hg.myproject.org/MyProject1 # comment");
+
+    doTest("svn+http://svn.myproject.org/MyProject/trunk#egg=MyProject1 # comment");
+    doTest("svn+http://svn.myproject.org/MyProject1/trunk # comment");
+
+    doTest("bzr+http://bzr.myproject.org/MyProject/trunk#egg=MyProject1 # comment");
+    doTest("bzr+http://bzr.myproject.org/MyProject1/trunk # comment");
+
+    // REQUIREMENT
+    final String name = "Orange-Bioinformatics";
+    final String version = "2.5a20";
+
+    final String options1 = name + " # comment";
+    assertEquals(new PyRequirement(name, Collections.emptyList(), options1), PyRequirement.fromLine(options1));
+
+    final String options2 = name + "==" + version + " # comment";
+    assertEquals(new PyRequirement(name, version, options2), PyRequirement.fromLine(options2));
+
+    final String options3 = name + "[PDF] # comment";
+    assertEquals(new PyRequirement(name, Collections.emptyList(), options3), PyRequirement.fromLine(options3));
+
+    final String options4 = name + " --install-option=\"option\" # comment";
+    assertEquals(new PyRequirement(name, Collections.emptyList(), options4), PyRequirement.fromLine(options4));
+
+    assertEquals(Collections.singletonList(new PyRequirement(name, Collections.emptyList(), options4)),
+                 PyRequirement.fromText(name + " \\\n--install-option=\"option\" # comment"));
   }
 
   // ENV MARKERS
