@@ -40,6 +40,11 @@ import java.util.List;
 public class BuiltInWebBrowserUrlProvider extends WebBrowserUrlProvider implements DumbAware {
   @NotNull
   public static List<Url> getUrls(@NotNull VirtualFile file, @NotNull Project project, @Nullable String currentAuthority) {
+    return getUrls(file, project, currentAuthority, true);
+  }
+  
+  @NotNull
+  public static List<Url> getUrls(@NotNull VirtualFile file, @NotNull Project project, @Nullable String currentAuthority, boolean appendAccessToken) {
     if (currentAuthority != null && !compareAuthority(currentAuthority)) {
       return Collections.emptyList();
     }
@@ -49,13 +54,14 @@ public class BuiltInWebBrowserUrlProvider extends WebBrowserUrlProvider implemen
       return Collections.emptyList();
     }
 
+    String query = appendAccessToken ? "?" + BuiltInWebServerKt.TOKEN_PARAM_NAME + "=" + BuiltInWebServerKt.acquireToken() : "";
     int effectiveBuiltInServerPort = BuiltInServerOptions.getInstance().getEffectiveBuiltInServerPort();
-    Url url = Urls.newHttpUrl(currentAuthority == null ? "localhost:" + effectiveBuiltInServerPort : currentAuthority, '/' + project.getName() + '/' + path);
+    Url url = Urls.newHttpUrl(currentAuthority == null ? "localhost:" + effectiveBuiltInServerPort : currentAuthority, '/' + project.getName() + '/' + path, query);
     int defaultPort = BuiltInServerManager.getInstance().getPort();
     if (currentAuthority != null || defaultPort == effectiveBuiltInServerPort) {
       return Collections.singletonList(url);
     }
-    return Arrays.asList(url, Urls.newHttpUrl("localhost:" + defaultPort, '/' + project.getName() + '/' + path));
+    return Arrays.asList(url, Urls.newHttpUrl("localhost:" + defaultPort, '/' + project.getName() + '/' + path, query));
   }
 
   public static boolean compareAuthority(@Nullable String currentAuthority) {
@@ -103,7 +109,7 @@ public class BuiltInWebBrowserUrlProvider extends WebBrowserUrlProvider implemen
       return Urls.newFromVirtualFile(file);
     }
     else {
-      return ContainerUtil.getFirstItem(getUrls(file, request.getProject(), null));
+      return ContainerUtil.getFirstItem(getUrls(file, request.getProject(), null, request.isAppendAccessToken()));
     }
   }
 }

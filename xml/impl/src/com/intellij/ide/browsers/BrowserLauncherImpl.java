@@ -20,22 +20,42 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Url;
+import com.intellij.util.Urls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.ide.BuiltInServerManager;
 
 import java.net.URI;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-final class BrowserLauncherImpl extends BrowserLauncherAppless {
+public final class BrowserLauncherImpl extends BrowserLauncherAppless {
+  @Override
+  public void browse(@NotNull String url, @Nullable WebBrowser browser, @Nullable Project project) {
+    BuiltInServerManager serverManager = BuiltInServerManager.getInstance();
+    Url parsedUrl = Urls.parse(url, false);
+    if (parsedUrl != null && serverManager.isOnBuiltInWebServer(parsedUrl)) {
+      if (Registry.is("ide.built.in.web.server.activatable", false)) {
+        PropertiesComponent.getInstance().setValue("ide.built.in.web.server.active", true);
+      }
+
+      url = serverManager.addAuthToken(parsedUrl).toExternalForm();
+    }
+
+    super.browse(url, browser, project);
+  }
+
   @Override
   protected void browseUsingNotSystemDefaultBrowserPolicy(@NotNull URI uri, @NotNull GeneralSettings settings, @Nullable Project project) {
     WebBrowserManager browserManager = WebBrowserManager.getInstance();

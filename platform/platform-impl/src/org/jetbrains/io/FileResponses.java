@@ -41,18 +41,18 @@ public class FileResponses {
     return FILE_MIMETYPE_MAP.getContentType(path);
   }
 
-  private static boolean checkCache(@NotNull HttpRequest request, @NotNull Channel channel, long lastModified) {
+  private static boolean checkCache(@NotNull HttpRequest request, @NotNull Channel channel, long lastModified, @Nullable HttpHeaders extraHeaders) {
     Long ifModified = request.headers().getTimeMillis(HttpHeaderNames.IF_MODIFIED_SINCE);
     if (ifModified != null && ifModified >= lastModified) {
-      send(response(HttpResponseStatus.NOT_MODIFIED), channel, request);
+      send(response(HttpResponseStatus.NOT_MODIFIED), channel, request, extraHeaders);
       return true;
     }
     return false;
   }
 
   @Nullable
-  public static HttpResponse prepareSend(@NotNull HttpRequest request, @NotNull Channel channel, long lastModified, @NotNull String path) {
-    if (checkCache(request, channel, lastModified)) {
+  public static HttpResponse prepareSend(@NotNull HttpRequest request, @NotNull Channel channel, long lastModified, @NotNull String path, @Nullable HttpHeaders extraHeaders) {
+    if (checkCache(request, channel, lastModified, extraHeaders)) {
       return null;
     }
 
@@ -61,11 +61,14 @@ public class FileResponses {
     addCommonHeaders(response);
     response.headers().set(HttpHeaderNames.CACHE_CONTROL, "private, must-revalidate");
     response.headers().set(HttpHeaderNames.LAST_MODIFIED, new Date(lastModified));
+    if (extraHeaders != null) {
+      response.headers().add(extraHeaders);
+    }
     return response;
   }
 
-  public static void sendFile(@NotNull HttpRequest request, @NotNull Channel channel, @NotNull File file) throws IOException {
-    HttpResponse response = prepareSend(request, channel, file.lastModified(), file.getPath());
+  public static void sendFile(@NotNull HttpRequest request, @NotNull Channel channel, @NotNull File file, @Nullable HttpHeaders extraHeaders) throws IOException {
+    HttpResponse response = prepareSend(request, channel, file.lastModified(), file.getPath(), extraHeaders);
     if (response == null) {
       return;
     }
@@ -78,7 +81,7 @@ public class FileResponses {
       raf = new RandomAccessFile(file, "r");
     }
     catch (FileNotFoundException ignored) {
-      send(response(HttpResponseStatus.NOT_FOUND), channel, request);
+      send(response(HttpResponseStatus.NOT_FOUND), channel, request, extraHeaders);
       return;
     }
 

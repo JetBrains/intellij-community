@@ -82,12 +82,19 @@ public final class Responses {
   }
 
   public static void send(@NotNull HttpResponse response, Channel channel, @Nullable HttpRequest request) {
+    send(response, channel, request, null);
+  }
+
+  public static void send(@NotNull HttpResponse response, Channel channel, @Nullable HttpRequest request, @Nullable HttpHeaders extraHeaders) {
     if (response.status() != HttpResponseStatus.NOT_MODIFIED && !HttpUtil.isContentLengthSet(response)) {
       HttpUtil.setContentLength(response,
                                    response instanceof FullHttpResponse ? ((FullHttpResponse)response).content().readableBytes() : 0);
     }
 
     addCommonHeaders(response);
+    if (extraHeaders != null) {
+      response.headers().add(extraHeaders);
+    }
     send(response, channel, request != null && !addKeepAliveIfNeed(response, request));
   }
 
@@ -102,6 +109,11 @@ public final class Responses {
   public static void addCommonHeaders(@NotNull HttpResponse response) {
     addServer(response);
     setDate(response);
+    if (!response.headers().contains("X-Frame-Options")) {
+      response.headers().set("X-Frame-Options", "SameOrigin");
+    }
+    response.headers().set("X-Content-Type-Options", "nosniff");
+    response.headers().set("x-xss-protection", "1; mode=block");
   }
 
   public static void send(CharSequence content, Channel channel, @Nullable HttpRequest request) {
@@ -109,7 +121,7 @@ public final class Responses {
   }
 
   public static void send(CharSequence content, Charset charset, Channel channel, @Nullable HttpRequest request) {
-    send(new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, Unpooled.copiedBuffer(content, charset)), channel, request);
+    send(new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, Unpooled.copiedBuffer(content, charset)), channel, request, null);
   }
 
   public static void send(@NotNull HttpResponse response, @NotNull Channel channel, boolean close) {
@@ -135,8 +147,17 @@ public final class Responses {
     sendStatus(responseStatus, channel, null, request);
   }
 
+  public static HttpResponseStatus okInSafeMode(@NotNull HttpResponseStatus status) {
+    Application app = ApplicationManager.getApplication();
+    return app != null && app.isUnitTestMode() ? status : HttpResponseStatus.OK;
+  }
+
   public static void sendStatus(@NotNull HttpResponseStatus responseStatus, Channel channel, @Nullable String description, @Nullable HttpRequest request) {
-    send(createStatusResponse(responseStatus, request, description), channel, request);
+    sendStatus(responseStatus, channel, description, request, null);
+  }
+
+  public static void sendStatus(@NotNull HttpResponseStatus responseStatus, Channel channel, @Nullable String description, @Nullable HttpRequest request, @Nullable HttpHeaders extraHeaders) {
+    send(createStatusResponse(responseStatus, request, description), channel, request, extraHeaders);
   }
 
   private static HttpResponse createStatusResponse(HttpResponseStatus responseStatus, @Nullable HttpRequest request, @Nullable String description) {

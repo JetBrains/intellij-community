@@ -44,6 +44,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.builtInWebServer.WebServerPathToFileManager;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
+import org.jetbrains.io.Responses;
 
 import javax.swing.*;
 import java.io.File;
@@ -142,7 +143,8 @@ class OpenFileHttpService extends RestService {
         @Override
         public void consume(Throwable throwable) {
           if (throwable == NOT_FOUND) {
-            sendStatus(HttpResponseStatus.NOT_FOUND, keepAlive, channel);
+            // don't expose file status
+            sendStatus(Responses.okInSafeMode(HttpResponseStatus.NOT_FOUND), keepAlive, channel);
           }
           else {
             // todo send error
@@ -175,21 +177,27 @@ class OpenFileHttpService extends RestService {
     final File file = new File(systemIndependentName);
 
     if (file.isAbsolute()) {
-      if (com.intellij.ide.impl.ProjectUtil.isRemotePath(systemIndependentName)) {
-        Ref<Boolean> confirmLoadingRemoteFile = new Ref<>();
-        try {
-          SwingUtilities.invokeAndWait(new Runnable() {
-            @Override
-            public void run() {
-              boolean value = com.intellij.ide.impl.ProjectUtil
-                .confirmLoadingFromRemotePath(systemIndependentName, "warning.load.file.from.share", "title.load.file.from.share");
-              confirmLoadingRemoteFile.set(value);
+      Ref<Promise<Void>> result = Ref.create();
+      try {
+        SwingUtilities.invokeAndWait(new Runnable() {
+          @Override
+          public void run() {
+            boolean remotePath = com.intellij.ide.impl.ProjectUtil.isRemotePath(systemIndependentName);
+            boolean userReallyWantsToOpen = com.intellij.ide.impl.ProjectUtil.confirmLoadingFromRemotePath(
+              systemIndependentName,
+              remotePath ? "warning.load.file.from.share" : "warning.load.local.file",
+              remotePath ? "title.load.file.from.share" : "title.load.local.file"
+            );
+
+            if (!userReallyWantsToOpen) {
+              result.set(Promise.reject(NOT_FOUND));
             }
-          });
-        } catch (Throwable ignored) {}
-        if (confirmLoadingRemoteFile.get() != Boolean.TRUE) {
-          return Promise.reject(NOT_FOUND);
-        }
+          }
+        });
+      } catch (Throwable ignored) {
+      }
+      if (result.get() != null) {
+        return result.get();
       }
       return openAbsolutePath(file, request);
     }
@@ -332,5 +340,10 @@ class OpenFileHttpService extends RestService {
     public int column;
 
     public boolean focused = true;
+  }
+
+  @Override
+  public boolean isAccessible(@NotNull HttpRequest request) {
+    return false;
   }
 }

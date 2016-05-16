@@ -24,7 +24,6 @@ import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.net.HTTPMethod;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.net.NetUtils;
@@ -74,6 +73,10 @@ public final class HttpRequests {
     byte[] readBytes(@Nullable ProgressIndicator indicator) throws IOException;
   }
 
+  public interface ConnectionTuner {
+    void tune(@NotNull URLConnection connection) throws IOException;
+  }
+
   public interface RequestProcessor<T> {
     T process(@NotNull Request request) throws IOException;
   }
@@ -106,19 +109,14 @@ public final class HttpRequests {
   }
 
   static <T> T wrapAndProcess(RequestBuilder builder, RequestProcessor<T> processor) throws IOException {
-    ClassLoader contextLoader = Thread.currentThread().getContextClassLoader();
-    if (!UrlClassLoader.isRegisteredAsParallelCapable(contextLoader)) {
-      // hack-around for class loader lock in sun.net.www.protocol.http.NegotiateAuthentication (IDEA-131621)
-      try (URLClassLoader cl = new URLClassLoader(new URL[0], contextLoader)) {
-        Thread.currentThread().setContextClassLoader(cl);
-        return process(builder, processor);
-      }
-      finally {
-        Thread.currentThread().setContextClassLoader(contextLoader);
-      }
-    }
-    else {
+    // hack-around for class loader lock in sun.net.www.protocol.http.NegotiateAuthentication (IDEA-131621)
+    ClassLoader oldClassLoader = Thread.currentThread().getContextClassLoader();
+    Thread.currentThread().setContextClassLoader(new URLClassLoader(new URL[0], oldClassLoader));
+    try {
       return process(builder, processor);
+    }
+    finally {
+      Thread.currentThread().setContextClassLoader(oldClassLoader);
     }
   }
 
@@ -291,6 +289,10 @@ public final class HttpRequests {
       }
 
       connection.setUseCaches(false);
+      
+      if (builder.myTuner != null) {
+        builder.myTuner.tune(connection);
+      }
 
       if (connection instanceof HttpURLConnection) {
         int responseCode = ((HttpURLConnection)connection).getResponseCode();
