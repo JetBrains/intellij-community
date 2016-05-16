@@ -98,6 +98,7 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
     NUMPY_ALIAS_TO_REAL_TYPE.put("tuple", "collections.Iterable");
 
     NUMPY_ALIAS_TO_REAL_TYPE.put("ints", "int");
+    NUMPY_ALIAS_TO_REAL_TYPE.put("non-zero int", "int");
   }
 
   @Nullable
