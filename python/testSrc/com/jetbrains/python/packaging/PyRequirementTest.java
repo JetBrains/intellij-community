@@ -36,51 +36,41 @@ public class PyRequirementTest extends PyTestCase {
 
   // ARCHIVE URL
   public void testArchiveUrl() {
-    final String url = "https://pypi.python.org/packages/source/g/geoip2/geoip2-2.2.0.tar.gz";
-
-    assertEquals(new PyRequirement("geoip2", "2.2.0", url), PyRequirement.fromLine(url));
+    doTest("geoip2", "2.2.0", "https://pypi.python.org/packages/source/g/geoip2/geoip2-2.2.0.tar.gz");
   }
 
   // PY-14230
   public void testArchiveUrlWithMd5() {
-    final String url = "https://pypi.python.org/packages/source/g/geoip2/geoip2-2.2.0.tar.gz#md5=26259d212447bc840400c25a48275fbc";
-
-    assertEquals(new PyRequirement("geoip2", "2.2.0", url), PyRequirement.fromLine(url));
+    doTest("geoip2", "2.2.0", "https://pypi.python.org/packages/source/g/geoip2/geoip2-2.2.0.tar.gz#md5=26259d212447bc840400c25a48275fbc");
   }
 
   // PY-14230
   public void testArchiveUrlWithSha1() {
-    final String url = "https://pypi.python.org/packages/source/g/geoip2/geoip2-2.2.0.tar.gz#sha1=26259d212447bc840400c25a48275fbc";
-
-    assertEquals(new PyRequirement("geoip2", "2.2.0", url), PyRequirement.fromLine(url));
+    doTest("geoip2", "2.2.0", "https://pypi.python.org/packages/source/g/geoip2/geoip2-2.2.0.tar.gz#sha1=26259d212447bc840400c25a48275fbc");
   }
 
   // PY-14230
   public void testArchiveUrlWithSha224() {
-    final String url = "https://pypi.python.org/packages/source/g/geoip2/geoip2-2.2.0.tar.gz#sha224=26259d212447bc840400c25a48275fbc";
-
-    assertEquals(new PyRequirement("geoip2", "2.2.0", url), PyRequirement.fromLine(url));
+    doTest("geoip2", "2.2.0",
+           "https://pypi.python.org/packages/source/g/geoip2/geoip2-2.2.0.tar.gz#sha224=26259d212447bc840400c25a48275fbc");
   }
 
   // PY-14230
   public void testArchiveUrlWithSha256() {
-    final String url = "https://pypi.python.org/packages/source/g/geoip2/geoip2-2.2.0.tar.gz#sha256=26259d212447bc840400c25a48275fbc";
-
-    assertEquals(new PyRequirement("geoip2", "2.2.0", url), PyRequirement.fromLine(url));
+    doTest("geoip2", "2.2.0",
+           "https://pypi.python.org/packages/source/g/geoip2/geoip2-2.2.0.tar.gz#sha256=26259d212447bc840400c25a48275fbc");
   }
 
   // PY-14230
   public void testArchiveUrlWithSha384() {
-    final String url = "https://pypi.python.org/packages/source/g/geoip2/geoip2-2.2.0.tar.gz#sha384=26259d212447bc840400c25a48275fbc";
-
-    assertEquals(new PyRequirement("geoip2", "2.2.0", url), PyRequirement.fromLine(url));
+    doTest("geoip2", "2.2.0",
+           "https://pypi.python.org/packages/source/g/geoip2/geoip2-2.2.0.tar.gz#sha384=26259d212447bc840400c25a48275fbc");
   }
 
   // PY-14230
   public void testArchiveUrlWithSha512() {
-    final String url = "https://pypi.python.org/packages/source/g/geoip2/geoip2-2.2.0.tar.gz#sha512=26259d212447bc840400c25a48275fbc";
-
-    assertEquals(new PyRequirement("geoip2", "2.2.0", url), PyRequirement.fromLine(url));
+    doTest("geoip2", "2.2.0",
+           "https://pypi.python.org/packages/source/g/geoip2/geoip2-2.2.0.tar.gz#sha512=26259d212447bc840400c25a48275fbc");
   }
 
   // PY-18054
@@ -751,7 +741,7 @@ public class PyRequirementTest extends PyTestCase {
     doTest("--src mysrc --editable hg+ssh://user@hg.myproject.org/MyProject/#egg=MyProject1");
     doTest("--src mysrc --editable hg+ssh://user@hg.myproject.org/path/MyProject#egg=MyProject1");
     doTest("--src mysrc --editable hg+ssh://user@hg.myproject.org/path/MyProject/#egg=MyProject1");
-    
+
     doTest("-e hg+http://hg.myproject.org/MyProject#egg=MyProject1 --src ./mysrc");
     doTest("-e hg+http://hg.myproject.org/MyProject/#egg=MyProject1 --src ./mysrc");
     doTest("-e hg+http://hg.myproject.org/path/MyProject#egg=MyProject1 --src ./mysrc");
@@ -1617,11 +1607,8 @@ public class PyRequirementTest extends PyTestCase {
   }
 
   public void testDevInRequirementEggName() {
-    final String options1 = "git://github.com/toastdriven/django-haystack.git#egg=django_haystack-dev";
-    assertEquals(new PyRequirement("django-haystack", "dev", options1), PyRequirement.fromLine(options1));
-
-    final String options2 = "git://github.com/toastdriven/django-haystack.git#egg=django-haystack-dev";
-    assertEquals(new PyRequirement("django-haystack", "dev", options2), PyRequirement.fromLine(options2));
+    doTest("django-haystack", "dev", "git://github.com/toastdriven/django-haystack.git#egg=django_haystack-dev");
+    doTest("django-haystack", "dev", "git://github.com/toastdriven/django-haystack.git#egg=django-haystack-dev");
   }
 
   // LOCAL DIR
@@ -1955,12 +1942,10 @@ public class PyRequirementTest extends PyTestCase {
 
   public void testCommentAtTheEnd() {
     // ARCHIVE
-    final String url1 = "https://pypi.python.org/packages/source/g/geoip2/geoip2-2.2.0.tar.gz # comment";
-    assertEquals(new PyRequirement("geoip2", "2.2.0", url1), PyRequirement.fromLine(url1));
+    doTest("geoip2", "2.2.0", "https://pypi.python.org/packages/source/g/geoip2/geoip2-2.2.0.tar.gz # comment");
 
-    final String url2 =
-      "https://pypi.python.org/packages/source/g/geoip2/geoip2-2.2.0.tar.gz#md5=26259d212447bc840400c25a48275fbc # comment";
-    assertEquals(new PyRequirement("geoip2", "2.2.0", url2), PyRequirement.fromLine(url2));
+    doTest("geoip2", "2.2.0",
+           "https://pypi.python.org/packages/source/g/geoip2/geoip2-2.2.0.tar.gz#md5=26259d212447bc840400c25a48275fbc # comment");
 
     doTest("https://github.com/divio/MyProject1/archive/master.zip?1450634746.0107164 # comment");
 
@@ -1978,22 +1963,17 @@ public class PyRequirementTest extends PyTestCase {
     doTest("bzr+http://bzr.myproject.org/MyProject1/trunk # comment");
 
     // REQUIREMENT
-    final String name = "Orange-Bioinformatics";
+    final String name = "MyProject1";
     final String version = "2.5a20";
 
-    final String options1 = name + " # comment";
-    assertEquals(new PyRequirement(name, Collections.emptyList(), options1), PyRequirement.fromLine(options1));
+    doTest(name + " # comment");
+    doTest(name, version, name + "==" + version + " # comment");
+    doTest(name + "[PDF] # comment");
 
-    final String options2 = name + "==" + version + " # comment";
-    assertEquals(new PyRequirement(name, version, options2), PyRequirement.fromLine(options2));
+    final String options = name + " --install-option=\"option\" # comment";
+    doTest(options);
 
-    final String options3 = name + "[PDF] # comment";
-    assertEquals(new PyRequirement(name, Collections.emptyList(), options3), PyRequirement.fromLine(options3));
-
-    final String options4 = name + " --install-option=\"option\" # comment";
-    assertEquals(new PyRequirement(name, Collections.emptyList(), options4), PyRequirement.fromLine(options4));
-
-    assertEquals(Collections.singletonList(new PyRequirement(name, Collections.emptyList(), options4)),
+    assertEquals(Collections.singletonList(new PyRequirement(name, Collections.emptyList(), options)),
                  PyRequirement.fromText(name + " \\\n--install-option=\"option\" # comment"));
   }
 
@@ -2004,12 +1984,16 @@ public class PyRequirementTest extends PyTestCase {
     assertEquals(new PyRequirement("MyProject1", Collections.emptyList(), options), PyRequirement.fromLine(options));
   }
 
+  private static void doTest(@NotNull String name, @NotNull String version, @NotNull String options) {
+    assertEquals(new PyRequirement(name, version, options), PyRequirement.fromLine(options));
+  }
+
   private static void doRequirementVersionNormalizationTest(@NotNull String expectedVersion,
                                                             @NotNull String actualVersion) {
     final String name = "name";
     final String installOptions = name + "==" + actualVersion;
 
-    assertEquals(new PyRequirement(name, expectedVersion, installOptions), PyRequirement.fromLine(installOptions));
+    doTest(name, expectedVersion, installOptions);
   }
 
   private static void doRequirementRelationTest(@NotNull PyRequirementRelation relation, @NotNull String version) {
