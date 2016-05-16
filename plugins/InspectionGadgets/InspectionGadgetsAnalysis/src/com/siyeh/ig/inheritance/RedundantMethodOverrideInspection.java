@@ -18,6 +18,7 @@ package com.siyeh.ig.inheritance;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -107,14 +108,17 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
       if (superReturnType == null || !superReturnType.equals(method.getReturnType())) {
         return;
       }
+      if (method.hasModifierProperty(PsiModifier.FINAL)) {
+        return;  // method overridden and made final - not redundant
+      }
       final PsiCodeBlock superBody = superMethod.getBody();
-      if (!EquivalenceChecker.codeBlocksAreEquivalent(body, superBody) && !isSuperCall(body, method, superMethod)) {
+      if (!EquivalenceChecker.codeBlocksAreEquivalent(body, superBody) && !isSuperCallWithSameArguments(body, method, superMethod)) {
         return;
       }
       registerMethodError(method);
     }
 
-    private static boolean isSuperCall(PsiCodeBlock body, PsiMethod method, PsiMethod superMethod) {
+    private static boolean isSuperCallWithSameArguments(PsiCodeBlock body, PsiMethod method, PsiMethod superMethod) {
       final PsiStatement[] statements = body.getStatements();
       if (statements.length != 1) {
         return false;
@@ -142,15 +146,31 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
       if (!(expression instanceof PsiMethodCallExpression)) {
         return false;
       }
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
-      if (!MethodCallUtils.isSuperMethodCall(methodCallExpression, method)) {
-        return false;
-      }
       if (superMethod.hasModifierProperty(PsiModifier.PROTECTED)) {
         final PsiJavaFile superFile = (PsiJavaFile)superMethod.getContainingFile();
         final PsiJavaFile file = (PsiJavaFile)method.getContainingFile();
         // implementing a protected method in another package makes it available to that package.
         return superFile.getPackageName().equals(file.getPackageName());
+      }
+
+      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
+      if (!MethodCallUtils.isSuperMethodCall(methodCallExpression, method)) return false;
+      return areSameArguments(methodCallExpression, method);
+    }
+
+    private static boolean areSameArguments(PsiMethodCallExpression methodCallExpression, PsiMethod method) {
+      // void foo(int param) { super.foo(42); } is not redundant
+      PsiExpression[] arguments = methodCallExpression.getArgumentList().getExpressions();
+      PsiParameter[] parameters = method.getParameterList().getParameters();
+      if (arguments.length != parameters.length) return false;
+      for (int i = 0; i < arguments.length; i++) {
+        PsiExpression argument = arguments[i];
+        PsiExpression exp = PsiUtil.deparenthesizeExpression(argument);
+        if (!(exp instanceof PsiReferenceExpression)) return false;
+        PsiElement resolved = ((PsiReferenceExpression)exp).resolve();
+        if (!method.getManager().areElementsEquivalent(parameters[i], resolved)) {
+          return false;
+        }
       }
       return true;
     }
