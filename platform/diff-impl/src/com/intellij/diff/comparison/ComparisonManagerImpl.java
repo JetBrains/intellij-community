@@ -69,7 +69,7 @@ public class ComparisonManagerImpl extends ComparisonManager {
       CharSequence subSequence2 = text2.subSequence(fragment.getStartOffset2(), fragment.getEndOffset2());
 
       if (fragment.getStartLine1() == fragment.getEndLine1() ||
-          fragment.getStartLine2() == fragment.getEndLine2()) { // Do not try to build fine blocks after few fails)
+          fragment.getStartLine2() == fragment.getEndLine2()) { // Insertion / Deletion
         if (isEquals(subSequence1, subSequence2, policy)) {
           fineFragments.add(new LineFragmentImpl(fragment, Collections.<DiffFragment>emptyList()));
         }
