@@ -15,11 +15,13 @@
  */
 package com.intellij.codeInspection.ui;
 
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.deadCode.DummyEntryPointsEP;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.icons.AllIcons;
+import com.intellij.util.containers.FactoryMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,5 +50,10 @@ public class EntryPointsNode extends InspectionNode {
   @Override
   public String getCustomizedTailText() {
     return "";
+  }
+
+  @Override
+  public void visitProblemSeverities(FactoryMap<HighlightDisplayLevel, Integer> counter) {
+    //do nothing here
   }
 }
