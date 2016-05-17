@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Vladislav.Soroka
  * @since 5/16/2016
  */
-public class AbstractExternalSystemRunConfigurationProducer extends RunConfigurationProducer<ExternalSystemRunConfiguration> {
+public abstract class AbstractExternalSystemRunConfigurationProducer extends RunConfigurationProducer<ExternalSystemRunConfiguration> {
 
   public AbstractExternalSystemRunConfigurationProducer(@NotNull AbstractExternalSystemTaskConfigurationType type) {
     super(type);
