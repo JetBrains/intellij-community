@@ -108,17 +108,12 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
     ConcurrentMap<PsiClass, Iterable<PsiClass>> CACHE = HighlightingCaches.getInstance(project).ALL_SUB_CLASSES;
     Iterable<PsiClass> cached = CACHE.get(baseClass);
     if (cached == null) {
-      Iterable<PsiClass> computed = computeAllSubClasses(project, baseClass);// it's almost empty now, no big deal
+      cached = computeAllSubClasses(project, baseClass); // it's almost empty now, no big deal
       // for non-physical elements ignore the cache completely because non-physical elements created so often/unpredictably so I can't figure out when to clear caches in this case
-      boolean isPhysical = ApplicationManager.getApplication().runReadAction((Computable<Boolean>)baseClass::isPhysical);
-      if (isPhysical) {
+      if (ApplicationManager.getApplication().runReadAction((Computable<Boolean>)baseClass::isPhysical)) {
         // make sure concurrent calls of this method always return the same collection to avoid expensive duplicate work
-        cached = ConcurrencyUtil.cacheOrGet(CACHE, baseClass, computed);
+        cached = ConcurrencyUtil.cacheOrGet(CACHE, baseClass, cached);
       }
-      else {
-        cached = computed;
-      }
-      int i = 0;
     }
     return cached;
   }
@@ -214,7 +209,7 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
       myBaseClass = baseClass;
       projectScope = GlobalSearchScope.allScope(project);
       // populate with at least one subclass
-      //findNextSubclasses();
+      findNextSubclasses();
     }
 
     @NotNull
