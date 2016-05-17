@@ -539,7 +539,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
         final TabInfo info = myTabs.findInfo(e);
         if (info != null) {
           IdeEventQueue.getInstance().blockNextEvents(e);
-          if (e.isAltDown()) {//close others
+          if (e.isAltDown() && e.getButton() == MouseEvent.BUTTON1) {//close others
             List<TabInfo> allTabInfos = myTabs.getTabs();
             for (TabInfo tabInfo : allTabInfos) {
               if (tabInfo == info) continue;
