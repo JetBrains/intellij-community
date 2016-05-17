@@ -17,7 +17,6 @@ package git4idea.branch;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsNotifier;
-import git4idea.GitPlatformFacade;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitCompoundResult;

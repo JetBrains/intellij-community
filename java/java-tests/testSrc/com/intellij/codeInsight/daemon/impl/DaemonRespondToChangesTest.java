@@ -1615,11 +1615,11 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     long s = System.currentTimeMillis();
     highlightErrors();
     long e = System.currentTimeMillis();
-    System.out.println("Hi elapsed: "+(e-s));
+    //System.out.println("Hi elapsed: "+(e-s));
 
     final DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
     int N = Math.max(5, Timings.adjustAccordingToMySpeed(80, true));
-    System.out.println("N = " + N);
+    //System.out.println("N = " + N);
     final long[] interruptTimes = new long[N];
     for (int i = 0; i < N; i++) {
       codeAnalyzer.restart();
@@ -1636,7 +1636,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         long interruptTime = end - now;
         interruptTimes[finalI] = interruptTime;
         assertNull(codeAnalyzer.getUpdateProgress());
-        System.out.println(interruptTime);
+        //System.out.println(interruptTime);
         throw new ProcessCanceledException();
       };
       try {
@@ -1656,9 +1656,12 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       //highlightErrors();
     }
 
-    long ave = ArrayUtil.averageAmongMedians(interruptTimes, 3);
-    System.out.println("Average among the N/3 median times: " + ave + "ms");
-    assertTrue(ave < 10);
+    long mean = ArrayUtil.averageAmongMedians(interruptTimes, 3);
+    long avg = Arrays.stream(interruptTimes).sum() / interruptTimes.length;
+    long max = Arrays.stream(interruptTimes).max().getAsLong();
+    long min = Arrays.stream(interruptTimes).min().getAsLong();
+    System.out.println("Average among the N/3 median times: " + mean + "ms; max: "+max+"; min:"+min+"; avg: "+avg);
+    assertTrue(mean < 10);
   }
 
   private static void startCPUProfiling() {

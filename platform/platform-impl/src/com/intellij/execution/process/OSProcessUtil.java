@@ -19,6 +19,7 @@ package com.intellij.execution.process;
 import com.intellij.execution.process.impl.ProcessListUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jvnet.winp.WinProcess;
@@ -49,9 +50,13 @@ public class OSProcessUtil {
   public static boolean killProcessTree(@NotNull Process process) {
     if (SystemInfo.isWindows) {
       try {
-        WinProcess winProcess = createWinProcess(process);
-        winProcess.killRecursively();
-        return true;
+        if (Registry.is("disable.winp")) {
+          return WinProcessManager.kill(process, true);
+        }
+        else {
+          createWinProcess(process).killRecursively();
+          return true;
+        }
       }
       catch (Throwable e) {
         LOG.info("Cannot kill process tree", e);
@@ -66,8 +71,12 @@ public class OSProcessUtil {
   public static void killProcess(@NotNull Process process) {
     if (SystemInfo.isWindows) {
       try {
-        WinProcess winProcess = createWinProcess(process);
-        winProcess.kill();
+        if (Registry.is("disable.winp")) {
+          WinProcessManager.kill(process, false);
+        }
+        else {
+          createWinProcess(process).kill();
+        }
       }
       catch (Throwable e) {
         LOG.info("Cannot kill process", e);
@@ -77,11 +86,16 @@ public class OSProcessUtil {
       UnixProcessManager.sendSignal(UnixProcessManager.getProcessPid(process), UnixProcessManager.SIGKILL);
     }
   }
-  
+
   public static int getProcessID(@NotNull Process process) {
     if (SystemInfo.isWindows) {
       try {
-        return createWinProcess(process).getPid();
+        if (Registry.is("disable.winp")) {
+          return WinProcessManager.getProcessPid(process);
+        }
+        else {
+          return createWinProcess(process).getPid();
+        }
       }
       catch (Throwable e) {
         LOG.info("Cannot get process id", e);

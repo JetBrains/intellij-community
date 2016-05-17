@@ -67,6 +67,7 @@ public interface PsiMethod extends PsiMember, PsiNameIdentifierOwner, PsiModifie
    *
    * @return the parameter list instance.
    */
+  @Override
   @NotNull
   PsiParameterList getParameterList();
 
@@ -83,6 +84,7 @@ public interface PsiMethod extends PsiMember, PsiNameIdentifierOwner, PsiModifie
    *
    * @return the method body, or null if the method belongs to a compiled class.
    */
+  @Override
   @Nullable
   PsiCodeBlock getBody();
 

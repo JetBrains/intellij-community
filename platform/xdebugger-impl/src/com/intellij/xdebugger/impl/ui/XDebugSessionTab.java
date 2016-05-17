@@ -16,6 +16,7 @@
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.debugger.ui.DebuggerContentInfo;
+import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.Executor;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -29,12 +30,15 @@ import com.intellij.execution.ui.layout.impl.ViewImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.ContextHelpAction;
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.ui.AppIcon;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManagerAdapter;
@@ -48,7 +52,6 @@ import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.frame.*;
-import com.intellij.xdebugger.impl.ui.tree.actions.SortValuesToggleAction;
 import com.intellij.xdebugger.ui.XDebugTabLayouter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -347,6 +350,39 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     }
   }
 
+  public void toFront(boolean focus, @Nullable final Runnable onShowCallback) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (myRunContentDescriptor != null) {
+        ToolWindow toolWindow = ExecutionManager.getInstance(myProject).getContentManager()
+          .getToolWindowByDescriptor(myRunContentDescriptor);
+        if (toolWindow != null) {
+          if (!toolWindow.isVisible()) {
+            toolWindow.show(() -> {
+              if (onShowCallback != null) {
+                onShowCallback.run();
+              }
+              myRebuildWatchesRunnable.run();
+            });
+          }
+          //noinspection ConstantConditions
+          toolWindow.getContentManager().setSelectedContent(myRunContentDescriptor.getAttachedContent());
+        }
+      }
+    });
+
+    if (focus) {
+      ApplicationManager.getApplication().invokeLater(() -> {
+        boolean focusWnd = Registry.is("debugger.mayBringFrameToFrontOnBreakpoint");
+        ProjectUtil.focusProjectWindow(myProject, focusWnd);
+        if (!focusWnd) {
+          AppIcon.getInstance().requestAttention(myProject, true);
+        }
+      });
+    }
+  }
+
   @NotNull
   private String getWatchesContentId() {
     return myWatchesInVariables ? DebuggerContentInfo.VARIABLES_CONTENT : DebuggerContentInfo.WATCHES_CONTENT;
@@ -362,23 +398,6 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     XDebugView view = myViews.remove(contentId);
     if (view != null) {
       Disposer.dispose(view);
-    }
-  }
-
-  private static class ToggleSortValuesAction extends SortValuesToggleAction {
-    private final boolean myShowIcon;
-
-    private ToggleSortValuesAction(boolean showIcon) {
-      copyFrom(ActionManager.getInstance().getAction(XDebuggerActions.TOGGLE_SORT_VALUES));
-      myShowIcon = showIcon;
-    }
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      super.update(e);
-      if (!myShowIcon) {
-        e.getPresentation().setIcon(null);
-      }
     }
   }
 }

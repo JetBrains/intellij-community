@@ -220,16 +220,5 @@ public abstract class TypeMigrationTestBase extends MultiFileTestCase {
     public TestTypeMigrationProcessor(final Project project, final PsiElement root, final PsiType migrationType, final TypeMigrationRules rules) {
       super(project, new PsiElement[] {root}, Functions.<PsiElement, PsiType>constant(migrationType), rules);
     }
-
-    @NotNull
-    @Override
-    public UsageInfo[] findUsages() {
-      return super.findUsages();
-    }
-
-    @Override
-    public void performRefactoring(@NotNull final UsageInfo[] usages) {
-      super.performRefactoring(usages);
-    }
   }
 }

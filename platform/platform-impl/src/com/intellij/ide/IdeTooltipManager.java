@@ -17,6 +17,7 @@ package com.intellij.ide;
 
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -28,6 +29,7 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
@@ -36,7 +38,6 @@ import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.Alarm;
-import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.Html;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -67,6 +68,8 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
   private BalloonImpl myCurrentTipUi;
   private MouseEvent  myCurrentEvent;
   private boolean     myCurrentTipIsCentered;
+
+  private Disposable myLastDisposable;
 
   private Runnable myHideRunnable;
 
@@ -207,7 +210,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
         String text = c.getToolTipText(myCurrentEvent);
         if (text == null || text.trim().isEmpty()) return false;
 
-        JLayeredPane layeredPane = IJSwingUtilities.findParentOfType(c, JLayeredPane.class);
+        JLayeredPane layeredPane = UIUtil.getParentOfType(JLayeredPane.class, c);
 
         final JEditorPane pane = initPane(text, new HintHint(me).setAwtTooltip(true), layeredPane);
         final Wrapper wrapper = new Wrapper(pane);
@@ -334,6 +337,14 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     myQueuedComponent = null;
     myQueuedTooltip = null;
 
+    myLastDisposable = myCurrentTipUi;
+    Disposer.register(myLastDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        myLastDisposable = null;
+      }
+    });
+
     myCurrentTipUi.show(new RelativePoint(tooltip.getComponent(), effectivePoint), tooltip.getPreferredPosition());
     myAlarm.addRequest(new Runnable() {
       @Override
@@ -406,7 +417,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
   }
 
   private boolean hideCurrent(@Nullable MouseEvent me, @Nullable IdeTooltip tooltipToShow, @Nullable AnAction action, @Nullable AnActionEvent event, final boolean animationEnabled) {
-    if (myCurrentTooltip != null && me != null && myCurrentTooltip.isInside(RelativePoint.fromScreen(me.getLocationOnScreen()))) {
+    if (myCurrentTooltip != null && me != null && myCurrentTooltip.isInside(new RelativePoint(me))) {
       if (me.getButton() == MouseEvent.NOBUTTON || myCurrentTipUi == null || myCurrentTipUi.isBlockClicks()) {
         return false;
       }
@@ -495,6 +506,10 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
 
   @Override
   public void disposeComponent() {
+    hideCurrentNow(false);
+    if (myLastDisposable != null) {
+      Disposer.dispose(myLastDisposable);
+    }
   }
 
   public static IdeTooltipManager getInstance() {

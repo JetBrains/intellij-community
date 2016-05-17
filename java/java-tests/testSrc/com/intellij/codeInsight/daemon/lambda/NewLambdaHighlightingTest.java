@@ -316,6 +316,10 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testUncheckedPartial() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }

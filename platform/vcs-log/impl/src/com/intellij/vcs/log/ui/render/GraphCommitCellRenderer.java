@@ -8,7 +8,7 @@ import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsRef;
-import com.intellij.vcs.log.data.VcsLogDataManager;
+import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.graph.PrintElement;
 import com.intellij.vcs.log.paint.GraphCellPainter;
 import com.intellij.vcs.log.paint.PaintParameters;
@@ -28,7 +28,7 @@ public class GraphCommitCellRenderer extends ColoredTableCellRenderer {
 
   private static final Logger LOG = Logger.getInstance(GraphCommitCellRenderer.class);
 
-  @NotNull private final VcsLogDataManager myDataManager;
+  @NotNull private final VcsLogData myLogData;
   @NotNull private final GraphCellPainter myPainter;
   @NotNull private final VcsLogGraphTable myGraphTable;
   @NotNull private final TextLabelPainter myTextLabelPainter;
@@ -39,14 +39,14 @@ public class GraphCommitCellRenderer extends ColoredTableCellRenderer {
   @NotNull private Font myFont;
   private int myHeight;
 
-  public GraphCommitCellRenderer(@NotNull VcsLogDataManager dataManager,
+  public GraphCommitCellRenderer(@NotNull VcsLogData logData,
                                  @NotNull GraphCellPainter painter,
                                  @NotNull VcsLogGraphTable table) {
-    myDataManager = dataManager;
+    myLogData = logData;
     myPainter = painter;
     myGraphTable = table;
     myTextLabelPainter = TextLabelPainter.createPainter(false);
-    myIssueLinkRenderer = new IssueLinkRenderer(dataManager.getProject(), this);
+    myIssueLinkRenderer = new IssueLinkRenderer(logData.getProject(), this);
     myFont = TextLabelPainter.getFont();
     myHeight = calculateHeight();
   }
@@ -151,7 +151,7 @@ public class GraphCommitCellRenderer extends ColoredTableCellRenderer {
       return Collections.emptyMap();
     }
     VirtualFile root = refs.iterator().next().getRoot(); // all refs are from the same commit => they have the same root
-    refs = ContainerUtil.sorted(refs, myDataManager.getLogProvider(root).getReferenceManager().getLabelsOrderComparator());
+    refs = ContainerUtil.sorted(refs, myLogData.getLogProvider(root).getReferenceManager().getLabelsOrderComparator());
     List<VcsRef> branches = getBranches(refs);
     Collection<VcsRef> tags = ContainerUtil.subtract(refs, branches);
     return getLabelsForRefs(branches, tags);

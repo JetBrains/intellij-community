@@ -18,6 +18,7 @@ package com.intellij.diff;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Key;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,11 +27,18 @@ import javax.swing.*;
 public interface DiffRequestPanel extends Disposable {
   void setRequest(@Nullable DiffRequest request);
 
+  /*
+   * Sets request to show.
+   * Will not override current request, if their keys are not null and equal.
+   */
+  void setRequest(@Nullable DiffRequest request, @Nullable Object identity);
+
   @NotNull
   JComponent getComponent();
 
   @Nullable
   JComponent getPreferredFocusedComponent();
 
+  @CalledInAwt
   <T> void putContextHints(@NotNull Key<T> key, @Nullable T value);
 }

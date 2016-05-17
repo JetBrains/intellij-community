@@ -38,13 +38,19 @@ import com.intellij.diff.tools.util.base.HighlightPolicy;
 import com.intellij.diff.tools.util.base.IgnorePolicy;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.DataManager;
 import com.intellij.lang.Language;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
+import com.intellij.openapi.command.undo.DocumentReference;
+import com.intellij.openapi.command.undo.DocumentReferenceManager;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.impl.GenericDataProvider;
@@ -60,13 +66,17 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapperDialog;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.WindowWrapper;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -75,11 +85,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.ui.ColorUtil;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.*;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.containers.ContainerUtil;
@@ -90,11 +99,11 @@ import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.BitSet;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
 
 public class DiffUtil {
@@ -129,7 +138,7 @@ public class DiffUtil {
   }
 
   @Nullable
-  public static EditorHighlighter createEditorHighlighter(@Nullable Project project, @NotNull DocumentContent content) {
+  private static EditorHighlighter createEditorHighlighter(@Nullable Project project, @NotNull DocumentContent content) {
     FileType type = content.getContentType();
     VirtualFile file = content.getHighlightFile();
     Language language = content.getUserData(DiffUserDataKeys.LANGUAGE);
@@ -139,18 +148,19 @@ public class DiffUtil {
       SyntaxHighlighter syntaxHighlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(language, project, file);
       return highlighterFactory.createEditorHighlighter(syntaxHighlighter, EditorColorsManager.getInstance().getGlobalScheme());
     }
-    else if ((file != null && file.getFileType() == type) || file instanceof LightVirtualFile) {
-      return highlighterFactory.createEditorHighlighter(project, file);
+    if (file != null) {
+      if ((type == null || type == PlainTextFileType.INSTANCE) || file.getFileType() == type || file instanceof LightVirtualFile) {
+        return highlighterFactory.createEditorHighlighter(project, file);
+      }
     }
     if (type != null) {
       return highlighterFactory.createEditorHighlighter(project, type);
     }
-
     return null;
   }
 
   @NotNull
-  public static EditorHighlighter createEmptyEditorHighlighter() {
+  private static EditorHighlighter createEmptyEditorHighlighter() {
     return new EmptyEditorHighlighter(EditorColorsManager.getInstance().getGlobalScheme().getAttributes(HighlighterColors.TEXT));
   }
 
@@ -357,13 +367,28 @@ public class DiffUtil {
     return result.toString();
   }
 
-  public static void performAction(@NotNull AnAction action, @Nullable JComponent contextComponent) {
-    DataContext context = DataManager.getInstance().getDataContext(contextComponent);
-    AnActionEvent actionEvent = AnActionEvent.createFromAnAction(action, null, ActionPlaces.UNKNOWN, context);
-    action.update(actionEvent);
-    if (actionEvent.getPresentation().isEnabledAndVisible()) {
-      action.actionPerformed(actionEvent);
+  public static void showSuccessPopup(@NotNull String message,
+                                      @NotNull RelativePoint point,
+                                      @NotNull Disposable disposable,
+                                      @Nullable Runnable hyperlinkHandler) {
+    HyperlinkListener listener = null;
+    if (hyperlinkHandler != null) {
+      listener = new HyperlinkAdapter() {
+        @Override
+        protected void hyperlinkActivated(HyperlinkEvent e) {
+          hyperlinkHandler.run();
+        }
+      };
     }
+
+    Color bgColor = MessageType.INFO.getPopupBackground();
+
+    Balloon balloon = JBPopupFactory.getInstance()
+      .createHtmlTextBalloonBuilder(message, null, bgColor, listener)
+      .setAnimationCycle(200)
+      .createBalloon();
+    balloon.show(point, Balloon.Position.below);
+    Disposer.register(disposable, balloon);
   }
 
   //
@@ -441,7 +466,7 @@ public class DiffUtil {
 
   @NotNull
   public static JComponent createTitle(@NotNull String title) {
-    return createTitle(title, null, null, true);
+    return createTitle(title, null, null, false);
   }
 
   @NotNull
@@ -620,6 +645,31 @@ public class DiffUtil {
     if (chunk1 == null) chunk1 = "";
     if (chunk2 == null) chunk2 = "";
     return ComparisonManager.getInstance().isEquals(chunk1, chunk2, comparisonPolicy);
+  }
+
+  @NotNull
+  public static <T> int[] getSortedIndexes(@NotNull List<T> values, @NotNull Comparator<T> comparator) {
+    final List<Integer> indexes = new ArrayList<>(values.size());
+    for (int i = 0; i < values.size(); i++) {
+      indexes.add(i);
+    }
+
+    ContainerUtil.sort(indexes, (i1, i2) -> {
+      T val1 = values.get(indexes.get(i1));
+      T val2 = values.get(indexes.get(i2));
+      return comparator.compare(val1, val2);
+    });
+
+    return ArrayUtil.toIntArray(indexes);
+  }
+
+  @NotNull
+  public static int[] invertIndexes(@NotNull int[] indexes) {
+    int[] inverted = new int[indexes.length];
+    for (int i = 0; i < indexes.length; i++) {
+      inverted[indexes[i]] = i;
+    }
+    return inverted;
   }
 
   //
@@ -814,12 +864,11 @@ public class DiffUtil {
 
   @NotNull
   public static UpdatedLineRange updateRangeOnModification(int start, int end, int changeStart, int changeEnd, int shift) {
-    return updateRangeOnModification(start, end, changeStart, changeEnd, shift, false, false);
+    return updateRangeOnModification(start, end, changeStart, changeEnd, shift, false);
   }
 
   @NotNull
-  public static UpdatedLineRange updateRangeOnModification(int start, int end, int changeStart, int changeEnd, int shift,
-                                                           boolean greedy, boolean strict) {
+  public static UpdatedLineRange updateRangeOnModification(int start, int end, int changeStart, int changeEnd, int shift, boolean greedy) {
     if (end <= changeStart) { // change before
       return new UpdatedLineRange(start, end, false);
     }
@@ -828,7 +877,7 @@ public class DiffUtil {
     }
 
     if (start <= changeStart && end >= changeEnd) { // change inside
-      return new UpdatedLineRange(start, end + shift, strict);
+      return new UpdatedLineRange(start, end + shift, false);
     }
 
     // range is damaged. We don't know new boundaries.
@@ -869,28 +918,29 @@ public class DiffUtil {
   public static TextDiffType getLineDiffType(@NotNull LineFragment fragment) {
     boolean left = fragment.getStartLine1() != fragment.getEndLine1();
     boolean right = fragment.getStartLine2() != fragment.getEndLine2();
-    return getType(left, right);
+    return getDiffType(left, right);
   }
 
   @NotNull
   public static TextDiffType getDiffType(@NotNull DiffFragment fragment) {
     boolean left = fragment.getEndOffset1() != fragment.getStartOffset1();
     boolean right = fragment.getEndOffset2() != fragment.getStartOffset2();
-    return getType(left, right);
+    return getDiffType(left, right);
   }
 
-  private static TextDiffType getType(boolean left, boolean right) {
-    if (left && right) {
+  @NotNull
+  public static TextDiffType getDiffType(boolean hasDeleted, boolean hasInserted) {
+    if (hasDeleted && hasInserted) {
       return TextDiffType.MODIFIED;
     }
-    else if (left) {
+    else if (hasDeleted) {
       return TextDiffType.DELETED;
     }
-    else if (right) {
+    else if (hasInserted) {
       return TextDiffType.INSERTED;
     }
     else {
-      LOG.error("DiffFragment should not be empty");
+      LOG.error("Diff fragment should not be empty");
       return TextDiffType.MODIFIED;
     }
   }
@@ -906,20 +956,6 @@ public class DiffUtil {
     @Nullable private final String myCommandGroupId;
     @NotNull private final UndoConfirmationPolicy myConfirmationPolicy;
     private final boolean myUnderBulkUpdate;
-
-    public DiffCommandAction(@Nullable Project project,
-                             @NotNull Document document,
-                             @Nullable String commandName) {
-      this(project, document, commandName, null, UndoConfirmationPolicy.DEFAULT);
-    }
-
-    public DiffCommandAction(@Nullable Project project,
-                             @NotNull Document document,
-                             @Nullable String commandName,
-                             @Nullable String commandGroupId,
-                             @NotNull UndoConfirmationPolicy confirmationPolicy) {
-      this(project, document, commandName, commandGroupId, confirmationPolicy, false);
-    }
 
     public DiffCommandAction(@Nullable Project project,
                              @NotNull Document document,
@@ -965,7 +1001,7 @@ public class DiffUtil {
                                          @Nullable final Project project,
                                          @Nullable final String name,
                                          @NotNull final Runnable task) {
-    new DiffCommandAction(project, document, name) {
+    new DiffCommandAction(project, document, name, null, UndoConfirmationPolicy.DEFAULT, false) {
       @Override
       protected void execute() {
         task.run();
@@ -1002,6 +1038,14 @@ public class DiffUtil {
     if (file.isWritable()) return true;
     if (project == null) project = ProjectManager.getInstance().getDefaultProject();
     return !ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(file).hasReadonlyFiles();
+  }
+
+  public static void putNonundoableOperation(@Nullable Project project, @NotNull Document document) {
+    UndoManager undoManager = project != null ? UndoManager.getInstance(project) : UndoManager.getGlobalInstance();
+    if (undoManager != null) {
+      DocumentReference ref = DocumentReferenceManager.getInstance().create(document);
+      undoManager.nonundoableActionPerformed(ref, false);
+    }
   }
 
   //
@@ -1086,14 +1130,10 @@ public class DiffUtil {
     return null;
   }
 
-  public static void addNotification(@NotNull JComponent component, @NotNull UserDataHolder holder) {
-    List<JComponent> components = holder.getUserData(DiffUserDataKeys.NOTIFICATIONS);
-    if (components == null) {
-      holder.putUserData(DiffUserDataKeys.NOTIFICATIONS, Collections.singletonList(component));
-    }
-    else {
-      holder.putUserData(DiffUserDataKeys.NOTIFICATIONS, ContainerUtil.append(components, component));
-    }
+  public static void addNotification(@Nullable JComponent component, @NotNull UserDataHolder holder) {
+    if (component == null) return;
+    List<JComponent> oldComponents = ContainerUtil.notNullize(holder.getUserData(DiffUserDataKeys.NOTIFICATIONS));
+    holder.putUserData(DiffUserDataKeys.NOTIFICATIONS, ContainerUtil.append(oldComponents, component));
   }
 
   @NotNull

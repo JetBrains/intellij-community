@@ -21,26 +21,18 @@ import com.intellij.psi.PsiEllipsisType;
 import com.intellij.psi.PsiType;
 import com.intellij.util.Processor;
 import com.siyeh.ig.psiutils.TypeUtils;
-import groovy.lang.Closure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierFlags;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter;
 
-import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrDelegatesToUtil.DELEGATES_TO_KEY;
-import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrDelegatesToUtil.DELEGATES_TO_STRATEGY_KEY;
-import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_CLOSURE;
-
-public class StreamingJsonBuilderDelegateContributor extends BuilderMethodsContributor {
-
-  private static final String DELEGATE_FQN = "groovy.json.StreamingJsonBuilder.StreamingJsonDelegate";
+public class StreamingJsonBuilderDelegateContributor extends StreamingJsonBuilderContributor {
 
   @Nullable
   @Override
   protected String getParentClassName() {
-    return DELEGATE_FQN;
+    return getDelegateClassName();
   }
 
   @Override
@@ -90,11 +82,5 @@ public class StreamingJsonBuilderDelegateContributor extends BuilderMethodsContr
     UtilsKt.setContainingClass(method, clazz);
     method.setOriginInfo(StreamingJsonBuilderContributor.ORIGIN_INFO);
     return method;
-  }
-
-  static void addClosureParameter(GrLightMethodBuilder method) {
-    GrLightParameter closureParam = method.addAndGetParameter("closure", GROOVY_LANG_CLOSURE);
-    closureParam.putUserData(DELEGATES_TO_KEY, DELEGATE_FQN);
-    closureParam.putUserData(DELEGATES_TO_STRATEGY_KEY, Closure.DELEGATE_FIRST);
   }
 }

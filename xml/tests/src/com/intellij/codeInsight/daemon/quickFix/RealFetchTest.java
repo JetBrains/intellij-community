@@ -64,9 +64,4 @@ public class RealFetchTest extends LightPlatformCodeInsightFixtureTestCase {
       ExternalResourceManager.getInstance().removeResource(url);
     });
   }
-
-  @Override
-  protected boolean isWriteActionRequired() {
-    return false;
-  }
 }

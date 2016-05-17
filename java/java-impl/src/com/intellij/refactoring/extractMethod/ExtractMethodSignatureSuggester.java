@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,7 @@ import com.intellij.refactoring.util.duplicates.Match;
 import com.intellij.refactoring.util.duplicates.MethodDuplicatesHandler;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.text.UniqueNameGenerator;
+import com.intellij.util.ui.JBUI;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
@@ -347,7 +348,10 @@ public class ExtractMethodSignatureSuggester {
       if (name == null) {
 
         final PsiType type = GenericsUtil.getVariableTypeByExpressionType(expr.getType());
-        if (type == null || type == PsiType.NULL || PsiUtil.resolveClassInType(type) instanceof PsiAnonymousClass) return null;
+        if (type == null ||
+            type == PsiType.NULL ||
+            PsiUtil.resolveClassInType(type) instanceof PsiAnonymousClass ||
+            LambdaUtil.notInferredType(type)) return null;
 
         copies.add(myElementFactory.createExpressionFromText(expr.getText(), body));
 
@@ -418,7 +422,7 @@ public class ExtractMethodSignatureSuggester {
       
       final JPanel panel = new JPanel(new BorderLayout());
       panel.add(diffPanel.getComponent(), BorderLayout.CENTER);
-      panel.setBorder(IdeBorderFactory.createEmptyBorder(new Insets(5, 0, 0, 0)));
+      panel.setBorder(IdeBorderFactory.createEmptyBorder(JBUI.insetsTop(5)));
       return panel;
     }
   }

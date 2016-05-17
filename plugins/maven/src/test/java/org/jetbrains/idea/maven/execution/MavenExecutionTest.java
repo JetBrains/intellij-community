@@ -36,10 +36,6 @@ import java.util.Collections;
 
 @SuppressWarnings({"ConstantConditions"})
 public class MavenExecutionTest extends MavenImportingTestCase {
-  @Override
-  protected boolean runInWriteAction() {
-    return false;
-  }
 
   @Override
   protected boolean runInDispatchThread() {

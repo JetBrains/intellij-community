@@ -160,12 +160,8 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
         if (((PsiMethod)element).isConstructor()) return true;
         
         final PsiClass containingClass = ((PsiMethod)element).getContainingClass();
-        return !InheritanceUtil.processSupers(containingClass, true, new Processor<PsiClass>() {
-          @Override
-          public boolean process(PsiClass psiClass) {
-            return !canCallMethodsInConstructors(psiClass, psiClass != containingClass);
-          }
-        });
+        return !InheritanceUtil.processSupers(containingClass, true,
+                                              psiClass -> !canCallMethodsInConstructors(psiClass, psiClass != containingClass));
         
       }
     }
@@ -181,7 +177,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
 
       for (PsiMethodCallExpression call : SyntaxTraverser.psiTraverser().withRoot(body).filter(PsiMethodCallExpression.class)) {
         PsiReferenceExpression methodExpression = call.getMethodExpression();
-        if (methodExpression instanceof PsiThisExpression || methodExpression instanceof PsiSuperExpression) continue;
+        if (methodExpression.textMatches(PsiKeyword.THIS) || methodExpression.textMatches(PsiKeyword.SUPER)) continue;
         if (!virtual) return true;
         
         PsiMethod target = call.resolveMethod();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -150,17 +150,17 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
       wrapper.add(namePanel);
       wrapper.setAlignmentX(0);
       myPanel.add(wrapper, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0,
-                                                        GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
-                                                        new Insets(4, 0, 10, 0), 0, 0));
+                                                  GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
+                                                  JBUI.insets(4, 0, 10, 0), 0, 0));
     }
 
     myProjectJdkConfigurable = new ProjectJdkConfigurable(myProject, model);
     myPanel.add(myProjectJdkConfigurable.createComponent(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0,
                                                                                    GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
-                                                                                   new Insets(4, 0, 0, 0), 0, 0));
+                                                                                   JBUI.insetsTop(4), 0, 0));
 
     myPanel.add(myWholePanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST,
-                                                     GridBagConstraints.NONE, new Insets(4, 0, 0, 0), 0, 0));
+                                                     GridBagConstraints.NONE, JBUI.insetsTop(4), 0, 0));
 
     myPanel.setBorder(new EmptyBorder(0, 10, 0, 10));
     myProjectCompilerOutput.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {

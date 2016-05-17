@@ -17,6 +17,7 @@ package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.QueryExecutorBase;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
@@ -108,8 +109,11 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
     Iterable<PsiClass> cached = CACHE.get(baseClass);
     if (cached == null) {
       cached = computeAllSubClasses(project, baseClass); // it's almost empty now, no big deal
-      // make sure concurrent calls of this method always return the same collection to avoid expensive duplicate work
-      cached = ConcurrencyUtil.cacheOrGet(CACHE, baseClass, cached);
+      // for non-physical elements ignore the cache completely because non-physical elements created so often/unpredictably so I can't figure out when to clear caches in this case
+      if (ApplicationManager.getApplication().runReadAction((Computable<Boolean>)baseClass::isPhysical)) {
+        // make sure concurrent calls of this method always return the same collection to avoid expensive duplicate work
+        cached = ConcurrencyUtil.cacheOrGet(CACHE, baseClass, cached);
+      }
     }
     return cached;
   }
@@ -260,10 +264,11 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
           }
           currentlyProcessingClasses.down(); // tell other threads we are going to process this candidate
         }
-        PsiClass candidate = next == null ? myBaseClass : ApplicationManager.getApplication().runReadAction((Computable<PsiClass>)() -> (PsiClass)next.retrieve());
 
         boolean added;
         try {
+          PsiClass candidate = next == null ? myBaseClass : ReadAction.compute(() -> (PsiClass)next.retrieve());
+
           if (candidate == null || candidate instanceof PsiAnonymousClass || isFinal(candidate)) {
             added = false;
           }

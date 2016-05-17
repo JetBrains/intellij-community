@@ -33,7 +33,11 @@ public class DirectoryEntry extends Entry {
   private final ArrayList<Entry> myChildren;
 
   public DirectoryEntry(String name) {
-    super(name);
+    this(toNameId(name));
+  }
+
+  public DirectoryEntry(int nameId) {
+    super(nameId);
     myChildren = new ArrayList<Entry>(3);
   }
 
@@ -124,7 +128,7 @@ public class DirectoryEntry extends Entry {
   }
 
   protected DirectoryEntry copyEntry() {
-    return new DirectoryEntry(myName);
+    return new DirectoryEntry(getNameId());
   }
 
   @Override

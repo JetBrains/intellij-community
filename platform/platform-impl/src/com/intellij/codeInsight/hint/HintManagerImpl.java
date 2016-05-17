@@ -649,7 +649,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
   }
 
   @NotNull
-  private static JComponent getExternalComponent(@NotNull Editor editor) {
+  public static JComponent getExternalComponent(@NotNull Editor editor) {
     JComponent externalComponent = editor.getComponent();
     JRootPane rootPane = externalComponent.getRootPane();
     if (rootPane == null) return externalComponent;

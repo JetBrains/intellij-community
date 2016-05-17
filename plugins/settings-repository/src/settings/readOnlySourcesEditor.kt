@@ -66,16 +66,7 @@ internal fun createReadOnlySourcesEditor(): ConfigurableUi<IcsSettings> {
       urlField.addBrowseFolderListener(TextBrowseFolderListener(FileChooserDescriptorFactory.createSingleFolderDescriptor()))
       urlField.textField.document.addDocumentListener(object : DocumentAdapter() {
         override fun textChanged(event: DocumentEvent) {
-          val url = StringUtil.nullize(urlField.text)
-          val enabled: Boolean
-          try {
-            enabled = url != null && url.length > 1 && icsManager.repositoryService.checkUrl(url, null)
-          }
-          catch (e: Exception) {
-            enabled = false
-          }
-
-          dialogBuilder.setOkActionEnabled(enabled)
+          dialogBuilder.setOkActionEnabled(checkUrl(urlField.text.nullize()))
         }
       })
 

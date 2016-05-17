@@ -261,6 +261,7 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
       if (hideCheckbox) {
         JBLabel label = new JBLabel(XDebuggerBundle.message("xbreakpoints.condition.checkbox"));
         label.setBorder(JBUI.Borders.empty(0, 4));
+        label.setLabelFor(myConditionComboBox.getComboBox());
         myConditionEnabledPanel.add(label);
       }
       else {

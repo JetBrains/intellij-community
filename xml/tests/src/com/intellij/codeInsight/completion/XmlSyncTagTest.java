@@ -32,11 +32,6 @@ public abstract class XmlSyncTagTest extends LightPlatformCodeInsightFixtureTest
     myFixture.setCaresAboutInjection(false);
   }
 
-  @Override
-  protected void tearDown() throws Exception {
-    super.tearDown();
-  }
-
   protected void doTest(final String text, final String toType, final String result) {
     doTest(XmlFileType.INSTANCE, text, toType, result);
   }
@@ -86,10 +81,5 @@ public abstract class XmlSyncTagTest extends LightPlatformCodeInsightFixtureTest
       }
     }, "Typing", DocCommandGroupId.noneGroupId(myFixture.getEditor().getDocument()), myFixture.getEditor().getDocument());
     myFixture.checkResult(result);
-  }
-
-  @Override
-  protected boolean isWriteActionRequired() {
-    return false;
   }
 }

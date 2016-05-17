@@ -21,7 +21,6 @@ import com.intellij.openapi.project.DumbAware;
 
 public abstract class GoToChangePopupAction extends AnAction implements DumbAware {
   public GoToChangePopupAction() {
-    setEnabledInModalContext(true);
     ActionUtil.copyFrom(this, "GotoChangedFile");
   }
 }

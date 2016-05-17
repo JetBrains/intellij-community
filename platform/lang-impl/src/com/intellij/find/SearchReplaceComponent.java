@@ -624,7 +624,6 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
     toolbar.setTargetComponent(this);
     toolbar.setLayoutPolicy(ActionToolbar.AUTO_LAYOUT_POLICY);
     toolbar.setBorder(null);
-    toolbar.setOpaque(false);
     Utils.setSmallerFontForChildren(toolbar);
     return toolbar;
   }

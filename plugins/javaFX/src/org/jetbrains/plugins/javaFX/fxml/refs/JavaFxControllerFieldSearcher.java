@@ -67,6 +67,7 @@ public class JavaFxControllerFieldSearcher implements QueryExecutor<PsiReference
               @Override
               public void run() {
                 final String fieldName = field.getName();
+                if (fieldName == null) return;
                 final VirtualFile virtualFile = file.getViewProvider().getVirtualFile();
                 final SearchScope searchScope = queryParameters.getEffectiveSearchScope();
                 boolean contains = searchScope instanceof LocalSearchScope ? ((LocalSearchScope)searchScope).isInScope(virtualFile) :

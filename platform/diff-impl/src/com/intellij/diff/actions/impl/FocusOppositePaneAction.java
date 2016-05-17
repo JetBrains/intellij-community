@@ -32,8 +32,6 @@ public class FocusOppositePaneAction extends AnAction implements DumbAware {
 
   public FocusOppositePaneAction(boolean scrollToPosition) {
     myScrollToPosition = scrollToPosition;
-    setEnabledInModalContext(true);
-
     ActionUtil.copyFrom(this, getActionId());
   }
 

@@ -249,7 +249,7 @@ public class RootIndex {
             final Module depModule = moduleOrderEntry.getModule();
             if (depModule != null) {
               Node node = graph.myNodes.get(depModule);
-              OrderEnumerator en = OrderEnumerator.orderEntries(depModule).exportedOnly().recursively();
+              OrderEnumerator en = OrderEnumerator.orderEntries(depModule).exportedOnly();
               if (node == null) {
                 node = new Node();
                 node.myKey = depModule;
@@ -265,7 +265,7 @@ public class RootIndex {
                   roots.putValue(sourceRoot, node);
                 }
               }
-              boolean shouldRecurse = en.shouldRecurse(moduleOrderEntry, handlers);
+              boolean shouldRecurse = en.recursively().shouldRecurse(moduleOrderEntry, handlers);
               node.myEdges.add(new Edge(module, moduleOrderEntry, shouldRecurse));
             }
           }

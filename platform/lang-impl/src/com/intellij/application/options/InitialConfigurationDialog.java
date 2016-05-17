@@ -23,6 +23,8 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.CreateDesktopEntryAction;
 import com.intellij.ide.actions.CreateLauncherScriptAction;
+import com.intellij.ide.customize.CustomizeDesktopEntryStep;
+import com.intellij.ide.customize.CustomizeLauncherScriptStep;
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.ide.ui.LafComboBoxRenderer;
 import com.intellij.ide.ui.LafManager;
@@ -212,11 +214,11 @@ public class InitialConfigurationDialog extends DialogWrapper {
   }
 
   protected boolean canCreateDesktopEntry() {
-    return CreateDesktopEntryAction.isAvailable();
+    return CustomizeDesktopEntryStep.isAvailable();
   }
 
   protected boolean canCreateLauncherScript() {
-    return CreateLauncherScriptAction.isAvailable();
+    return CustomizeLauncherScriptStep.isAvailable();
   }
 
   public JComboBox getKeymapComboBox() {

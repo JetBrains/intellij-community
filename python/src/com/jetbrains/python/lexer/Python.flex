@@ -13,8 +13,6 @@ import com.intellij.openapi.util.text.StringUtil;
 %unicode
 %function advance
 %type IElementType
-%eof{  return;
-%eof}
 
 DIGIT = [0-9]
 NONZERODIGIT = [1-9]
@@ -31,9 +29,9 @@ LONGINTEGER = {INTEGER}[Ll]
 
 END_OF_LINE_COMMENT="#"[^\r\n]*
 
-IDENT_START = [a-zA-Z_]|[:unicode_uppercase_letter:]|[:unicode_lowercase_letter:]|[:unicode_titlecase_letter:]|[:unicode_modifier_letter:]|[:unicode_other_letter:]|[:unicode_letter_number:]
-IDENT_CONTINUE = [a-zA-Z0-9_]|[:unicode_uppercase_letter:]|[:unicode_lowercase_letter:]|[:unicode_titlecase_letter:]|[:unicode_modifier_letter:]|[:unicode_other_letter:]|[:unicode_letter_number:]|[:unicode_non_spacing_mark:]|[:unicode_combining_spacing_mark:]|[:unicode_decimal_digit_number:]|[:unicode_connector_punctuation:]
-IDENTIFIER = {IDENT_START}{IDENT_CONTINUE}**
+IDENT_START = [\w_--\d]
+IDENT_CONTINUE = [\w_]
+IDENTIFIER = {IDENT_START}{IDENT_CONTINUE}*
 
 FLOATNUMBER=({POINTFLOAT})|({EXPONENTFLOAT})
 POINTFLOAT=(({INTPART})?{FRACTION})|({INTPART}\.)
@@ -205,7 +203,7 @@ return PyTokenTypes.DOCSTRING; }
 "="                   { return PyTokenTypes.EQ; }
 ";"                   { return PyTokenTypes.SEMICOLON; }
 
-.                     { return PyTokenTypes.BAD_CHARACTER; }
+[^]                   { return PyTokenTypes.BAD_CHARACTER; }
 }
 
 <IN_DOCSTRING_OWNER> {

@@ -471,7 +471,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       final int problemCount = myTree.getSelectedProblemCount();
       JComponent previewPanel = null;
       final InspectionToolWrapper tool = myTree.getSelectedToolWrapper();
-      if (tool != null && refEntity != null && problemCount == 1) {
+      if (tool != null && refEntity != null && problemCount == 1 && refEntity.isValid()) {
         final InspectionToolPresentation presentation = myGlobalInspectionContext.getPresentation(tool);
         previewPanel = presentation.getCustomPreviewPanel(refEntity);
       }
@@ -638,6 +638,9 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       }
       //TODO Dmitrii Batkovich it's a hack (preview panel should be created during selection update)
       if (!hasUpdatingRequestors && mySplitter.getSecondComponent() == null) {
+        if (myTree.getSelectionModel().getSelectionPath() == null) {
+          TreeUtil.selectFirstNode(myTree);
+        }
         syncRightPanel();
       }
     };

@@ -1358,6 +1358,28 @@ class SetupHolder:
     setup = None
 
 
+def apply_debugger_options(setup_options):
+    """
+
+    :type setup_options: dict[str, bool]
+    """
+    default_options = {'save-signatures': False, 'qt-support': False}
+    default_options.update(setup_options)
+    setup_options = default_options
+
+    debugger = GetGlobalDebugger()
+    if setup_options['save-signatures']:
+        if pydevd_vm_type.get_vm_type() == pydevd_vm_type.PydevdVmType.JYTHON:
+            sys.stderr.write("Collecting run-time type information is not supported for Jython\n")
+        else:
+            # Only import it if we're going to use it!
+            from _pydevd_bundle.pydevd_signature import SignatureFactory
+            debugger.signature_factory = SignatureFactory()
+
+    if setup_options['qt-support']:
+        enable_qt_support()
+
+
 #=======================================================================================================================
 # main
 #=======================================================================================================================
@@ -1504,20 +1526,13 @@ if __name__ == '__main__':
         # Run the dev_appserver
         debugger.run(setup['file'], None, None, is_module, set_trace=False)
     else:
-        if setup['save-signatures']:
-            if pydevd_vm_type.get_vm_type() == pydevd_vm_type.PydevdVmType.JYTHON:
-                sys.stderr.write("Collecting run-time type information is not supported for Jython\n")
-            else:
-                # Only import it if we're going to use it!
-                from _pydevd_bundle.pydevd_signature import SignatureFactory
-                debugger.signature_factory = SignatureFactory()
-        if setup['qt-support']:
-            enable_qt_support()
         if setup['save-threading']:
             debugger.thread_analyser = ThreadingLogger()
         if setup['save-asyncio']:
             if IS_PY34_OLDER:
                 debugger.asyncio_analyser = AsyncioLogger()
+
+        apply_debugger_options(setup)
 
         try:
             debugger.connect(host, port)

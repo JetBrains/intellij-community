@@ -22,7 +22,6 @@ import com.intellij.openapi.project.DumbAware;
 
 public abstract class NextDifferenceAction extends AnAction implements DumbAware {
   public NextDifferenceAction() {
-    setEnabledInModalContext(true);
     ActionUtil.copyFrom(this, IdeActions.ACTION_NEXT_DIFF);
   }
 }

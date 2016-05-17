@@ -70,7 +70,7 @@ class StateGetter<S : Any, T : Any>(private val component: PersistentStateCompon
     if (ApplicationManager.getApplication().isUnitTestMode &&
       serializedState != serializedStateAfterLoad &&
       (serializedStateAfterLoad == null || !JDOMUtil.areElementsEqual(serializedState, serializedStateAfterLoad))) {
-      LOG.warn("$componentName state changed after load. \nOld: ${JDOMUtil.writeElement(serializedState!!)}\n\nNew: ${serializedStateAfterLoad?.let { JDOMUtil.writeElement(it) } ?: "null"}\n")
+      LOG.warn("$componentName (from ${component.javaClass.name}) state changed after load. \nOld: ${JDOMUtil.writeElement(serializedState!!)}\n\nNew: ${serializedStateAfterLoad?.let { JDOMUtil.writeElement(it) } ?: "null"}\n")
     }
 
     storage.archiveState(storageData, componentName, serializedStateAfterLoad)

@@ -43,6 +43,7 @@ import com.intellij.ui.switcher.SwitchTarget;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Activatable;
@@ -241,6 +242,11 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
       throw new IllegalArgumentException("wrong layoutPolicy: " + layoutPolicy);
     }
     myLayoutPolicy = layoutPolicy;
+  }
+
+  @Override
+  protected Graphics getComponentGraphics(Graphics graphics) {
+    return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
   }
 
   @Override

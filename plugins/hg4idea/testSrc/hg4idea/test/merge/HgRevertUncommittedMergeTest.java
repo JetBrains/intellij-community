@@ -30,10 +30,6 @@ import static hg4idea.test.HgExecutor.hg;
 import static hg4idea.test.HgExecutor.hgMergeWith;
 
 public class HgRevertUncommittedMergeTest extends HgPlatformTest {
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-  }
 
   public void testRevertAfterMerge() throws VcsException {
     cd(myRepository);

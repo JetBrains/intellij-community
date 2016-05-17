@@ -121,9 +121,6 @@ public class EnterHandler extends BaseEnterHandler {
       }
     }
 
-    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-    documentManager.commitDocument(document);
-
     boolean forceIndent = false;
     boolean forceSkipIndent = false;
     Ref<Integer> caretOffsetRef = new Ref<Integer>(caretOffset);
@@ -487,7 +484,7 @@ public class EnterHandler extends BaseEnterHandler {
     private int adjustLineIndent(CharSequence docChars) {
       int indentStart = CharArrayUtil.shiftBackwardUntil(docChars, myOffset - 1, "\n") + 1;
       int indentEnd = CharArrayUtil.shiftForward(docChars, indentStart, " \t");
-      String newIndent = CodeStyleFacade.getInstance(getProject()).getLineIndent(myDocument, myOffset);
+      String newIndent = CodeStyleFacade.getInstance(getProject()).getLineIndent(myEditor, myDocument, myOffset);
       if (newIndent == null) return myOffset;
       int delta = newIndent.length() - (indentEnd - indentStart);
       myDocument.replaceString(indentStart, indentEnd, newIndent);

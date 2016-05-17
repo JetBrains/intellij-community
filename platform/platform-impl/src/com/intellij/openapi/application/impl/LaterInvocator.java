@@ -172,7 +172,9 @@ public class LaterInvocator {
     invokeLater(runnable1, modalityState);
     semaphore.waitFor();
     if (!exception.isNull()) {
-      throw new RuntimeException(exception.get());
+      Throwable throwable = exception.get();
+      if (throwable instanceof RuntimeException) throw (RuntimeException)throwable;
+      throw new RuntimeException(throwable);
     }
   }
 

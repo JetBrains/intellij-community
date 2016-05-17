@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.application;
 
+import com.google.common.base.Objects;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -53,29 +54,6 @@ public class TransactionGuardImpl extends TransactionGuard {
   }
 
   @NotNull
-  private AccessToken startTransactionUnchecked() {
-    final boolean wasWritingAllowed = myWritingAllowed;
-
-    myWritingAllowed = true;
-    myCurrentTransaction = new TransactionIdImpl(myCurrentTransaction);
-
-    return new AccessToken() {
-      @Override
-      public void finish() {
-        Queue<Transaction> queue = getQueue(myCurrentTransaction.myParent);
-        queue.addAll(myCurrentTransaction.myQueue);
-        if (!queue.isEmpty()) {
-          pollQueueLater();
-        }
-
-        myWritingAllowed = wasWritingAllowed;
-        myCurrentTransaction.myFinished = true;
-        myCurrentTransaction = myCurrentTransaction.myParent;
-      }
-    };
-  }
-
-  @NotNull
   private Queue<Transaction> getQueue(@Nullable TransactionIdImpl transaction) {
     while (transaction != null && transaction.myFinished) {
       transaction = transaction.myParent;
@@ -98,14 +76,26 @@ public class TransactionGuardImpl extends TransactionGuard {
   }
 
   private void runSyncTransaction(@NotNull Transaction transaction) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     if (Disposer.isDisposed(transaction.parentDisposable)) return;
 
-    AccessToken token = startTransactionUnchecked();
+    boolean wasWritingAllowed = myWritingAllowed;
+    myWritingAllowed = true;
+    myCurrentTransaction = new TransactionIdImpl(myCurrentTransaction);
+
     try {
       transaction.runnable.run();
     }
     finally {
-      token.finish();
+      Queue<Transaction> queue = getQueue(myCurrentTransaction.myParent);
+      queue.addAll(myCurrentTransaction.myQueue);
+      if (!queue.isEmpty()) {
+        pollQueueLater();
+      }
+
+      myWritingAllowed = wasWritingAllowed;
+      myCurrentTransaction.myFinished = true;
+      myCurrentTransaction = myCurrentTransaction.myParent;
     }
   }
 
@@ -156,7 +146,7 @@ public class TransactionGuardImpl extends TransactionGuard {
       if (!canRunTransactionNow(transaction, true)) {
         LOG.error("Cannot run synchronous submitTransactionAndWait from invokeLater. " +
                   "Please use asynchronous submit*Transaction. " +
-                  "See TransactionGuard FAQ for details.");
+                  "See TransactionGuard FAQ for details. Transaction: " + runnable);
       }
       runSyncTransaction(transaction);
       return;
@@ -218,6 +208,7 @@ public class TransactionGuardImpl extends TransactionGuard {
       return AccessToken.EMPTY_ACCESS_TOKEN;
     }
 
+    ApplicationManager.getApplication().assertIsDispatchThread();
     final boolean prev = myWritingAllowed;
     myWritingAllowed = allowWriting;
     return new AccessToken() {
@@ -284,6 +275,7 @@ public class TransactionGuardImpl extends TransactionGuard {
       return new Runnable() {
         @Override
         public void run() {
+          ApplicationManager.getApplication().assertIsDispatchThread();
           final boolean prev = myWritingAllowed;
           myWritingAllowed = true;
           try {
@@ -296,6 +288,14 @@ public class TransactionGuardImpl extends TransactionGuard {
     }
 
     return runnable;
+  }
+
+  @Override
+  public String toString() {
+    return Objects.toStringHelper(this)
+      .add("currentTransaction", myCurrentTransaction)
+      .add("writingAllowed", myWritingAllowed)
+      .toString();
   }
 
   private static class Transaction {
@@ -323,7 +323,7 @@ public class TransactionGuardImpl extends TransactionGuard {
 
     @Override
     public String toString() {
-      return "Transaction " + myStartCounter;
+      return "Transaction " + myStartCounter + (myFinished ? "(finished)" : "");
     }
   }
 }

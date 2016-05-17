@@ -38,11 +38,6 @@ import java.util.Collection;
 import java.util.List;
 
 public class SvnCommittedViewTest extends Svn17TestCase {
-  @Override
-  @Before
-  public void setUp() throws Exception {
-    super.setUp();
-  }
 
   @Test
   public void testAdd() throws Exception {

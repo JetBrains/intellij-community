@@ -39,6 +39,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.*;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.ui.JBUI;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 
@@ -145,7 +146,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
     gbConstraints.fill = GridBagConstraints.NONE;
     gbConstraints.gridx = 0;
 
-    gbConstraints.insets = new Insets(4, 4, 4, 0);
+    gbConstraints.insets = JBUI.insets(4, 4, 4, 0);
     gbConstraints.gridwidth = 1;
     gbConstraints.weightx = 0;
     gbConstraints.weighty = 0;
@@ -153,7 +154,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
     JLabel type = new JLabel(RefactoringBundle.message("parameter.of.type"));
     panel.add(type, gbConstraints);
 
-    gbConstraints.insets = new Insets(4, 4, 4, 8);
+    gbConstraints.insets = JBUI.insets(4, 4, 4, 8);
     gbConstraints.gridx++;
     gbConstraints.weightx = 1;
     gbConstraints.fill = GridBagConstraints.BOTH;
@@ -161,7 +162,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
     panel.add(myTypeSelector.getComponent(), gbConstraints);
 
 
-    gbConstraints.insets = new Insets(4, 4, 4, 8);
+    gbConstraints.insets = JBUI.insets(4, 4, 4, 8);
     gbConstraints.gridwidth = 1;
     gbConstraints.weightx = 0;
     gbConstraints.gridx = 0;
@@ -182,7 +183,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
     }
 */
     gbConstraints.gridx++;
-    gbConstraints.insets = new Insets(4, 4, 4, 8);
+    gbConstraints.insets = JBUI.insets(4, 4, 4, 8);
     gbConstraints.weightx = 1;
     gbConstraints.fill = GridBagConstraints.BOTH;
     panel.add(myParameterNameField.getComponent(), gbConstraints);
@@ -198,20 +199,20 @@ public class IntroduceParameterDialog extends RefactoringDialog {
     myNameSuggestionsManager.setLabelsFor(type, nameLabel);
 
     gbConstraints.gridx = 0;
-    gbConstraints.insets = new Insets(4, 0, 4, 8);
+    gbConstraints.insets = JBUI.insets(4, 0, 4, 8);
     gbConstraints.gridwidth = 2;
     if (myOccurenceNumber > 1 && !myPanel.myIsInvokedOnDeclaration) {
       gbConstraints.gridy++;
       myPanel.createOccurrencesCb(gbConstraints, panel, myOccurenceNumber);
     }
     if(myPanel.myCbReplaceAllOccurences != null) {
-      gbConstraints.insets = new Insets(0, 16, 4, 8);
+      gbConstraints.insets = JBUI.insets(0, 16, 4, 8);
     }
     JavaRefactoringSettings settings = JavaRefactoringSettings.getInstance();
     myPanel.createLocalVariablePanel(gbConstraints, panel, settings);
 
     myPanel.createRemoveParamsPanel(gbConstraints, panel);
-    gbConstraints.insets =  new Insets(4, 0, 4, 8);
+    gbConstraints.insets = JBUI.insets(4, 0, 4, 8);
 
     gbConstraints.gridy++;
     myCbDeclareFinal = new NonFocusableCheckBox(RefactoringBundle.message("declare.final"));

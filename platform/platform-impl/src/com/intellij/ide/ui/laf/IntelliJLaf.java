@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.ide.ui.laf;
 
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.MacUtil;
 import org.jetbrains.annotations.NotNull;
@@ -110,5 +111,9 @@ public class IntelliJLaf extends DarculaLaf {
   public static Color getSelectedControlColor() {
     // https://developer.apple.com/library/mac/e/Cocoa/Reference/ApplicationKit/Classes/NSColor_Class/#//apple_ref/occ/clm/NSColor/alternateSelectedControlColor
     return MacUtil.colorFromNative(Foundation.invoke("NSColor", "alternateSelectedControlColor"));
+  }
+
+  public static boolean isWindowsNativeLook() {
+    return Registry.is("ide.intellij.laf.win10.ui");
   }
 }

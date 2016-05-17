@@ -176,11 +176,13 @@ abstract class ConcurrentRefValueIntObjectHashMap<V> implements ConcurrentIntObj
 
   @Override
   public int size() {
+    processQueue();
     return myMap.size();
   }
 
   @Override
   public boolean isEmpty() {
+    processQueue();
     return myMap.isEmpty();
   }
 

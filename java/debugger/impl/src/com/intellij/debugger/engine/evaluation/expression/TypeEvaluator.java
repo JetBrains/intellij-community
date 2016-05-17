@@ -52,4 +52,9 @@ public class TypeEvaluator implements Evaluator {
     }
     return type;
   }
+
+  @Override
+  public String toString() {
+    return "Type " + myTypeName;
+  }
 }

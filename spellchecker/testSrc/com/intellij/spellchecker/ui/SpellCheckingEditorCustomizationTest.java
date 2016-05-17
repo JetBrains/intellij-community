@@ -38,11 +38,6 @@ public class SpellCheckingEditorCustomizationTest extends LightPlatformCodeInsig
     testEnabled();
   }
 
-  @Override
-  protected boolean isWriteActionRequired() {
-    return false;
-  }
-
   private void doTest(boolean enabled, String document) {
     InspectionProfileImpl.INIT_INSPECTIONS = true;
     try {

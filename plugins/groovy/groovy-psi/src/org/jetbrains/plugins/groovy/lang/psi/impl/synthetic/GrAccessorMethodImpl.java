@@ -76,7 +76,7 @@ public class GrAccessorMethodImpl extends LightMethodBuilder implements GrAccess
       addModifier(PsiModifier.FINAL);
     }
 
-    if (GrTraitUtil.isTrait(property.getContainingClass())) {
+    if (myProperty.hasModifierProperty(PsiModifier.ABSTRACT)) {
       addModifier(PsiModifier.ABSTRACT);
     }
 
@@ -135,5 +135,14 @@ public class GrAccessorMethodImpl extends LightMethodBuilder implements GrAccess
   @Override
   public PsiElement getPrototype() {
     return getProperty();
+  }
+
+  @Override
+  public boolean hasModifierProperty(@NotNull String name) {
+    if (GrTraitUtil.isTrait(getContainingClass())) {
+      if (PsiModifier.ABSTRACT.equals(name)) return true;
+      if (PsiModifier.FINAL.equals(name)) return false;
+    }
+    return super.hasModifierProperty(name);
   }
 }

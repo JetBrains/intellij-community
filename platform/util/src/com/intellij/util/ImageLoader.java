@@ -22,6 +22,7 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -41,10 +42,12 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentMap;
 
-@Deprecated
 public class ImageLoader implements Serializable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.ImageLoader");
+
+  private static final ConcurrentMap<String, Image> ourCache = ContainerUtil.createConcurrentSoftValueMap();
 
   private static class ImageDesc {
     public enum Type {
@@ -68,19 +71,27 @@ public class ImageLoader implements Serializable {
     public final @Nullable Class cls; // resource class if present
     public final float scale; // initial scale factor
     public final Type type;
+    public final boolean original; // path is not altered
 
     public ImageDesc(String path, Class cls, float scale, Type type) {
+      this(path, cls, scale, type, false);
+    }
+
+    public ImageDesc(String path, Class cls, float scale, Type type, boolean original) {
       this.path = path;
       this.cls = cls;
       this.scale = scale;
       this.type = type;
+      this.original = original;
     }
 
     @Nullable
     public Image load() throws IOException {
+      String cacheKey = null;
       InputStream stream = null;
       URL url = null;
       if (cls != null) {
+        //noinspection IOResourceOpenedButNotSafelyClosed
         stream = cls.getResourceAsStream(path);
         if (stream == null) return null;
       }
@@ -88,11 +99,20 @@ public class ImageLoader implements Serializable {
         url = new URL(path);
         URLConnection connection = url.openConnection();
         if (connection instanceof HttpURLConnection) {
+          if (!original) return null;
           connection.addRequestProperty("User-Agent", "IntelliJ");
+
+          cacheKey = path;
+          Image image = ourCache.get(cacheKey);
+          if (image != null) return image;
         }
         stream = connection.getInputStream();
       }
-      return type.load(url, stream, scale);
+      Image image = type.load(url, stream, scale);
+      if (image != null && cacheKey != null) {
+        ourCache.put(cacheKey, image);
+      }
+      return image;
     }
 
     @Override
@@ -159,7 +179,7 @@ public class ImageLoader implements Serializable {
           vars.add(new ImageDesc(name + "@2x." + ext, cls, 2f, ImageDesc.Type.PNG));
         }
       }
-      vars.add(new ImageDesc(file, cls, 1f, ImageDesc.Type.PNG));
+      vars.add(new ImageDesc(file, cls, 1f, ImageDesc.Type.PNG, true));
       return vars;
     }
   }

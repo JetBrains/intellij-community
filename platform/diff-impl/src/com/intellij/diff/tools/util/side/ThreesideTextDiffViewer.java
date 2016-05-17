@@ -32,7 +32,6 @@ import com.intellij.diff.tools.util.base.TextDiffSettingsHolder;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.diff.util.*;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -52,8 +51,6 @@ import javax.swing.*;
 import java.util.List;
 
 public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEditorHolder> {
-  public static final Logger LOG = Logger.getInstance(ThreesideTextDiffViewer.class);
-
   @Nullable private List<? extends EditorEx> myEditors;
   @NotNull private final List<? extends EditorEx> myEditableEditors;
 

@@ -1480,7 +1480,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   public void visitFile(GroovyFileBase file) {
     final PsiClass scriptClass = file.getScriptClass();
     if (scriptClass != null) {
-      checkSameNameMethodsWithDifferentAccessModifiers(myHolder, file.getCodeMethods());
+      checkSameNameMethodsWithDifferentAccessModifiers(myHolder, file.getMethods());
     }
   }
 

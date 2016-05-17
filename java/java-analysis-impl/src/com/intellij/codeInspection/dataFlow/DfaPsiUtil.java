@@ -22,6 +22,7 @@ import com.intellij.codeInspection.dataFlow.instructions.ReturnInstruction;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.Ref;
+import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -95,6 +96,15 @@ public class DfaPsiUtil {
     }
     if (NullableNotNullManager.isNotNull(owner)) {
       return Nullness.NOT_NULL;
+    }
+
+    if (PsiJavaPatterns.psiParameter().withParents(PsiParameterList.class, PsiLambdaExpression.class).accepts(owner)) {
+      PsiLambdaExpression lambda = (PsiLambdaExpression)owner.getParent().getParent();
+      int index = lambda.getParameterList().getParameterIndex((PsiParameter)owner);
+      PsiMethod sam = LambdaUtil.getFunctionalInterfaceMethod(lambda.getFunctionalInterfaceType());
+      if (sam != null && index < sam.getParameterList().getParametersCount()) {
+        return getElementNullability(null, sam.getParameterList().getParameters()[index]);
+      }
     }
 
     return Nullness.UNKNOWN;

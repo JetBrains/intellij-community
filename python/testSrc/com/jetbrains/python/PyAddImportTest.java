@@ -100,6 +100,11 @@ public class PyAddImportTest extends PyTestCase {
     testLocalImport();
   }
 
+  // PY-18098
+  public void testIgnoreImportedAsModule() {
+    doAddImport("numpy", THIRD_PARTY);
+  }
+
   // PY-16373
   public void testLocalImportQuickFixAvailable() {
     myFixture.configureByFile(getTestName(true) + ".py");

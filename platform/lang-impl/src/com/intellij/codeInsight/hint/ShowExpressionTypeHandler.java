@@ -31,6 +31,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
@@ -52,23 +53,24 @@ public class ShowExpressionTypeHandler implements CodeInsightActionHandler {
     ApplicationManager.getApplication().assertIsDispatchThread();
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-    PsiElement elementAt = file.findElementAt(
-      TargetElementUtil.adjustOffset(file, editor.getDocument(), editor.getCaretModel().getOffset()));
-    if (elementAt == null) return;
-
-    Language language = elementAt.getLanguage();
+    Language language = PsiUtilCore.getLanguageAtOffset(file, editor.getCaretModel().getOffset());
     final Set<ExpressionTypeProvider> handlers = getHandlers(project, language, file.getViewProvider().getBaseLanguage());
     if (handlers.isEmpty()) return;
 
     boolean exactRange = false;
     TextRange range = EditorUtil.getSelectionInAnyMode(editor);
     final Map<PsiElement, ExpressionTypeProvider> map = ContainerUtil.newLinkedHashMap();
-    for (ExpressionTypeProvider handler : handlers) {
-      for (PsiElement element : ((ExpressionTypeProvider<? extends PsiElement>)handler).getExpressionsAt(elementAt)) {
-        TextRange r = element.getTextRange();
-        if (exactRange && !r.equals(range) || !r.contains(range)) continue;
-        if (!exactRange) exactRange = r.equals(range);
-        map.put(element, handler);
+    int offset = TargetElementUtil.adjustOffset(file, editor.getDocument(), editor.getCaretModel().getOffset());
+    for (int i = 0; i < 3 && map.isEmpty() && offset > i; i++) {
+      PsiElement elementAt = file.findElementAt(offset - i);
+      if (elementAt == null) continue;
+      for (ExpressionTypeProvider handler : handlers) {
+        for (PsiElement element : ((ExpressionTypeProvider<? extends PsiElement>)handler).getExpressionsAt(elementAt)) {
+          TextRange r = element.getTextRange();
+          if (exactRange && !r.equals(range) || !r.contains(range)) continue;
+          if (!exactRange) exactRange = r.equals(range);
+          map.put(element, handler);
+        }
       }
     }
     Pass<PsiElement> callback = new Pass<PsiElement>() {

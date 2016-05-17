@@ -27,10 +27,6 @@ public class TestRepository extends BaseRepository {
   }
 
   @Override
-  public void testConnection() throws Exception {
-  }
-
-  @Override
   public Task[] getIssues(@Nullable String query, int max, long since) throws Exception {
     return myTasks;
   }

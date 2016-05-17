@@ -122,7 +122,7 @@ public abstract class LightPlatformCodeInsightFixtureTestCase extends UsefulTest
   }
 
   protected boolean isWriteActionRequired() {
-    return true;
+    return false;
   }
 
   protected void doRunTests() throws Throwable {

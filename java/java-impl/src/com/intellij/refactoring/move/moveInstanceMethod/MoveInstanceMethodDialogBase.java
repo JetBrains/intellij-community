@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.intellij.refactoring.move.MoveDialogBase;
 import com.intellij.refactoring.ui.JavaVisibilityPanel;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -71,7 +72,7 @@ public abstract class MoveInstanceMethodDialogBase extends MoveDialogBase {
     gbConstraints.gridheight = 1;
     gbConstraints.gridx = 0;
     gbConstraints.gridy = 0;
-    gbConstraints.insets = new Insets(0, 0, 0, 0);
+    gbConstraints.insets = JBUI.emptyInsets();
     hBox.add(scrollPane, gbConstraints);
     hBox.add(Box.createHorizontalStrut(4));
     gbConstraints.weightx = 0;

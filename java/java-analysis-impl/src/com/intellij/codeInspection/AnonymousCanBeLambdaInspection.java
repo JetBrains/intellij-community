@@ -207,8 +207,8 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
       final PsiClassType baseClassType = aClass.getBaseClassType();
       final PsiClassType.ClassResolveResult resolveResult = baseClassType.resolveGenerics();
       final PsiClass baseClass = resolveResult.getElement();
-      if (baseClass == null || 
-          !reportNotAnnotatedInterfaces && !AnnotationUtil.isAnnotated(baseClass, CommonClassNames.JAVA_LANG_FUNCTIONAL_INTERFACE, false)) {
+      if (baseClass == null ||
+          !reportNotAnnotatedInterfaces && !AnnotationUtil.isAnnotated(baseClass, CommonClassNames.JAVA_LANG_FUNCTIONAL_INTERFACE, false, false)) {
         return false;
       }
       final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);

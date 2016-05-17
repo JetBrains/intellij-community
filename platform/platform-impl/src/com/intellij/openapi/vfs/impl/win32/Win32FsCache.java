@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.THashMap;
 import gnu.trove.TIntObjectHashMap;
+import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -86,17 +87,26 @@ class Win32FsCache {
     FileAttributes attributes = nestedMap != null ? nestedMap.get(name) : null;
 
     if (attributes == null) {
+      if (nestedMap != null && !(nestedMap instanceof IncompleteChildrenMap)) {
+        return null; // our info from parent doesn't mention the child in this refresh session
+      }
       FileInfo info = myKernel.getInfo(file.getPath());
       if (info == null) {
         return null;
       }
       attributes = info.toFileAttributes();
       if (nestedMap == null) {
-        nestedMap = new THashMap<String, FileAttributes>(FileUtil.PATH_HASHING_STRATEGY);
+        nestedMap = new IncompleteChildrenMap<>(FileUtil.PATH_HASHING_STRATEGY);
         map.put(parentId, nestedMap);
       }
       nestedMap.put(name, attributes);
     }
     return attributes;
+  }
+
+  private static class IncompleteChildrenMap<K, V> extends THashMap<K,V> {
+    IncompleteChildrenMap(TObjectHashingStrategy<K> strategy) {
+      super(strategy);
+    }
   }
 }

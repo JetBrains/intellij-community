@@ -29,7 +29,10 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.indexing.*;
-import com.intellij.util.io.*;
+import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.EnumDataDescriptor;
+import com.intellij.util.io.EnumeratorStringDescriptor;
+import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.xml.NanoXmlUtil;
 import org.intellij.lang.xpath.xslt.XsltSupport;
@@ -125,7 +128,7 @@ public class XsltSymbolIndex extends FileBasedIndexExtension<String, XsltSymbolI
     @NotNull
     @Override
     public KeyDescriptor<String> getKeyDescriptor() {
-        return new EnumeratorStringDescriptor();
+        return EnumeratorStringDescriptor.INSTANCE;
     }
 
     @NotNull

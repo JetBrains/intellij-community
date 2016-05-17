@@ -81,6 +81,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     setCellRenderer(new NodeRenderer());
 
     setSelectionModel(mySelectionModel);
+    setOpaque(false);
   }
 
   @Override
@@ -92,6 +93,11 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
       }
     }
     super.setUI(actualUI);
+  }
+
+  @Override
+  protected Graphics getComponentGraphics(Graphics graphics) {
+    return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
   }
 
   public boolean isEmpty() {

@@ -242,22 +242,11 @@ public class AddSingleMemberStaticImportAction extends BaseElementAtCaretIntenti
                   aClass = PsiUtil.resolveClassInClassTypeOnly(((PsiVariable)aClass).getType());
                 }
                 if (aClass instanceof PsiClass && InheritanceUtil.isInheritorOrSelf((PsiClass)aClass, resolvedClass, true)) {
-                  boolean foundMemberByName = false;
-                  if (referent instanceof PsiMember) {
-                    final String memberName = ((PsiMember)referent).getName();
-                    final PsiClass containingClass = PsiTreeUtil.getParentOfType(reference, PsiClass.class);
-                    if (containingClass != null) {
-                      foundMemberByName |= containingClass.findFieldByName(memberName, true) != null;
-                      foundMemberByName |= containingClass.findMethodsByName(memberName, true).length > 0;
-                    }
+                  try {
+                    qualifierExpression.delete();
                   }
-                  if (!foundMemberByName) {
-                    try {
-                      qualifierExpression.delete();
-                    }
-                    catch (IncorrectOperationException e) {
-                      LOG.error(e);
-                    }
+                  catch (IncorrectOperationException e) {
+                    LOG.error(e);
                   }
                 }
               }

@@ -17,27 +17,34 @@ package com.intellij.openapi.vcs.changes.patch.tool;
 
 import com.intellij.diff.comparison.ByWord;
 import com.intellij.diff.comparison.ComparisonPolicy;
+import com.intellij.diff.comparison.DiffTooBigException;
 import com.intellij.diff.fragments.DiffFragment;
-import com.intellij.diff.tools.util.SyncScrollSupport;
+import com.intellij.diff.merge.MergeModelBase;
 import com.intellij.diff.util.*;
+import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.progress.DumbProgressIndicator;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch;
+import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch.HunkStatus;
 import com.intellij.openapi.vcs.ex.LineStatusMarkerRenderer;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.PairConsumer;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -45,42 +52,109 @@ import java.util.List;
 
 class ApplyPatchChange {
   @NotNull private final ApplyPatchViewer myViewer;
+  private final int myIndex; // index in myModelChanges
 
   @NotNull private final LineRange myPatchDeletionRange;
   @NotNull private final LineRange myPatchInsertionRange;
-  @NotNull private final AppliedTextPatch.HunkStatus myStatus;
+  @NotNull private final HunkStatus myStatus;
+
+  @Nullable private final List<DiffFragment> myPatchInnerDifferences;
+  @NotNull private final List<MyGutterOperation> myOperations = new ArrayList<>();
 
   @NotNull private final List<RangeHighlighter> myHighlighters = new ArrayList<>();
 
-  @Nullable private LineRange myAppliedTo;
-  private boolean myIsValid = true;
+  private boolean myResolved;
 
-  public ApplyPatchChange(@NotNull ApplyPatchViewer viewer, @NotNull PatchChangeBuilder.Hunk hunk) {
+  public ApplyPatchChange(@NotNull PatchChangeBuilder.Hunk hunk, int index, @NotNull ApplyPatchViewer viewer) {
+    myIndex = index;
     myViewer = viewer;
     myPatchDeletionRange = hunk.getPatchDeletionRange();
     myPatchInsertionRange = hunk.getPatchInsertionRange();
     myStatus = hunk.getStatus();
-    myAppliedTo = hunk.getAppliedToLines();
 
-    installHighlighters();
-    installPersistentHighlighters();
+    myPatchInnerDifferences = calcPatchInnerDifferences(hunk, viewer);
+  }
+
+  @Nullable
+  private static List<DiffFragment> calcPatchInnerDifferences(@NotNull PatchChangeBuilder.Hunk hunk,
+                                                              @NotNull ApplyPatchViewer viewer) {
+    LineRange deletionRange = hunk.getPatchDeletionRange();
+    LineRange insertionRange = hunk.getPatchInsertionRange();
+
+    if (deletionRange.isEmpty() || insertionRange.isEmpty()) return null;
+
+    try {
+      DocumentEx patchDocument = viewer.getPatchEditor().getDocument();
+      CharSequence deleted = DiffUtil.getLinesContent(patchDocument, deletionRange.start, deletionRange.end);
+      CharSequence inserted = DiffUtil.getLinesContent(patchDocument, insertionRange.start, insertionRange.end);
+
+      return ByWord.compare(deleted, inserted, ComparisonPolicy.DEFAULT, DumbProgressIndicator.INSTANCE);
+    }
+    catch (DiffTooBigException ignore) {
+      return null;
+    }
   }
 
   public void reinstallHighlighters() {
     destroyHighlighters();
     installHighlighters();
+
+    myViewer.repaintDivider();
   }
 
   private void installHighlighters() {
-    createStatusHighlighter(myViewer.getPatchEditor(), myPatchDeletionRange.start, myPatchInsertionRange.end);
+    createResultHighlighters();
+    createPatchHighlighters();
+    createStatusHighlighter();
+    createOperations();
+  }
 
-    if (myAppliedTo != null) {
-      EditorEx resultEditor = myViewer.getResultEditor();
-      createStatusHighlighter(resultEditor, myAppliedTo.start, myAppliedTo.end);
+  private void createPatchHighlighters() {
+    EditorEx patchEditor = myViewer.getPatchEditor();
+    myHighlighters.addAll(DiffDrawUtil.createUnifiedChunkHighlighters(patchEditor, myPatchDeletionRange, myPatchInsertionRange,
+                                                                      myPatchInnerDifferences));
+  }
 
-      myHighlighters.addAll(DiffDrawUtil.createLineMarker(resultEditor, myAppliedTo.start, myAppliedTo.end,
-                                                          TextDiffType.MODIFIED, true));
+  private void createResultHighlighters() {
+    LineRange resultRange = getResultRange();
+    if (resultRange == null) return;
+    EditorEx editor = myViewer.getResultEditor();
+
+    int startLine = resultRange.start;
+    int endLine = resultRange.end;
+
+    TextDiffType type = getDiffType();
+    boolean resolved = isRangeApplied();
+
+    myHighlighters.addAll(DiffDrawUtil.createHighlighter(editor, startLine, endLine, type, false, resolved, false));
+    myHighlighters.addAll(DiffDrawUtil.createLineMarker(editor, startLine, endLine, type, resolved));
+  }
+
+  private void createStatusHighlighter() {
+    int line1 = myPatchDeletionRange.start;
+    int line2 = myPatchInsertionRange.end;
+
+    Color color = getStatusColor();
+    if (isResolved()) {
+      color = ColorUtil.mix(color, myViewer.getPatchEditor().getGutterComponentEx().getBackground(), 0.6f);
     }
+
+    String tooltip = getStatusText();
+
+    EditorEx patchEditor = myViewer.getPatchEditor();
+    Document document = patchEditor.getDocument();
+    MarkupModelEx markupModel = patchEditor.getMarkupModel();
+    TextRange textRange = DiffUtil.getLinesRange(document, line1, line2);
+
+    RangeHighlighter highlighter = markupModel.addRangeHighlighter(textRange.getStartOffset(), textRange.getEndOffset(),
+                                                                   HighlighterLayer.LAST, null, HighlighterTargetArea.LINES_IN_RANGE);
+
+    PairConsumer<Editor, MouseEvent> clickHandler = getResultRange() != null ?
+                                                    (e, event) -> myViewer.scrollToChange(this, Side.RIGHT, false) :
+                                                    null;
+    highlighter.setLineMarkerRenderer(LineStatusMarkerRenderer.createRenderer(line1, line2, color, tooltip, clickHandler));
+
+    myHighlighters.add(highlighter);
   }
 
   private void destroyHighlighters() {
@@ -88,42 +162,71 @@ class ApplyPatchChange {
       highlighter.dispose();
     }
     myHighlighters.clear();
+
+    for (MyGutterOperation operation : myOperations) {
+      operation.dispose();
+    }
+    myOperations.clear();
   }
 
-  private void createStatusHighlighter(@NotNull EditorEx editor, int line1, int line2) {
-    Color color = getStatusColor();
-    String tooltip = getStatusText();
+  //
+  // Getters
+  //
 
-    Document document = editor.getDocument();
-    MarkupModelEx markupModel = editor.getMarkupModel();
-    TextRange textRange = DiffUtil.getLinesRange(document, line1, line2);
-
-    RangeHighlighter highlighter = markupModel.addRangeHighlighter(textRange.getStartOffset(), textRange.getEndOffset(),
-                                                                   HighlighterLayer.LAST, null, HighlighterTargetArea.LINES_IN_RANGE);
-
-    PairConsumer<Editor, MouseEvent> clickHandler = myAppliedTo != null ? (e, event) -> handleStatusClick(editor, event) : null;
-    highlighter.setLineMarkerRenderer(LineStatusMarkerRenderer.createRenderer(line1, line2, color, tooltip, clickHandler));
-
-    myHighlighters.add(highlighter);
+  public int getIndex() {
+    return myIndex;
   }
 
-  private void handleStatusClick(@NotNull EditorEx editor, @NotNull MouseEvent event) {
-    assert myAppliedTo != null;
-    EditorEx resultEditor = myViewer.getResultEditor();
-    EditorEx patchEditor = myViewer.getPatchEditor();
+  @NotNull
+  public HunkStatus getStatus() {
+    return myStatus;
+  }
 
-    Side clickSide = Side.fromLeft(editor == resultEditor);
-    int clickLine = clickSide.select(myAppliedTo.start, myPatchInsertionRange.start);
-    EditorEx clickEditor = clickSide.select(resultEditor, patchEditor);
-    int targetY = clickEditor.logicalPositionToXY(new LogicalPosition(clickLine, 0)).y;
-    int topShift = targetY - clickEditor.getScrollingModel().getVerticalScrollOffset();
+  @NotNull
+  public LineRange getPatchRange() {
+    return new LineRange(myPatchDeletionRange.start, myPatchInsertionRange.end);
+  }
 
-    int[] offsets = SyncScrollSupport.getTargetOffsets(resultEditor, patchEditor,
-                                                       myAppliedTo.start, myAppliedTo.end,
-                                                       myPatchInsertionRange.start, myPatchInsertionRange.end,
-                                                       topShift);
-    DiffUtil.scrollToPoint(resultEditor, new Point(0, offsets[0]), false);
-    DiffUtil.scrollToPoint(patchEditor, new Point(0, offsets[1]), false);
+  @NotNull
+  public LineRange getPatchAffectedRange() {
+    return isRangeApplied() ? myPatchInsertionRange : myPatchDeletionRange;
+  }
+
+  @NotNull
+  public LineRange getPatchDeletionRange() {
+    return myPatchDeletionRange;
+  }
+
+  @NotNull
+  public LineRange getPatchInsertionRange() {
+    return myPatchInsertionRange;
+  }
+
+  @Nullable
+  public LineRange getResultRange() {
+    ApplyPatchViewer.MyModel model = myViewer.getModel();
+    int lineStart = model.getLineStart(myIndex);
+    int lineEnd = model.getLineEnd(myIndex);
+
+    if (lineStart != -1 || lineEnd != -1) return new LineRange(lineStart, lineEnd);
+    return null;
+  }
+
+  public boolean isResolved() {
+    return myResolved;
+  }
+
+  public void setResolved(boolean resolved) {
+    myResolved = resolved;
+  }
+
+  @NotNull
+  public TextDiffType getDiffType() {
+    return DiffUtil.getDiffType(!myPatchDeletionRange.isEmpty(), !myPatchInsertionRange.isEmpty());
+  }
+
+  public boolean isRangeApplied() {
+    return myResolved || getStatus() == HunkStatus.ALREADY_APPLIED;
   }
 
   @NotNull
@@ -154,76 +257,127 @@ class ApplyPatchChange {
     }
   }
 
-  private void installPersistentHighlighters() {
-    EditorEx patchEditor = myViewer.getPatchEditor();
-    DocumentEx patchDocument = patchEditor.getDocument();
+  //
+  // Operations
+  //
 
-    if (myPatchDeletionRange.isEmpty() || myPatchInsertionRange.isEmpty()) {
-      DiffDrawUtil.createUnifiedChunkHighlighters(patchEditor, myPatchDeletionRange, myPatchInsertionRange, false);
+  private void createOperations() {
+    if (myViewer.isReadOnly()) return;
+    if (isResolved()) return;
+
+    if (myStatus == HunkStatus.EXACTLY_APPLIED) {
+      ContainerUtil.addIfNotNull(myOperations, createOperation(OperationType.APPLY));
     }
-    else {
-      DiffDrawUtil.createUnifiedChunkHighlighters(patchEditor, myPatchDeletionRange, myPatchInsertionRange, true);
+    ContainerUtil.addIfNotNull(myOperations, createOperation(OperationType.IGNORE));
+  }
 
-      CharSequence deleted = DiffUtil.getLinesContent(patchDocument, myPatchDeletionRange.start, myPatchDeletionRange.end);
-      CharSequence inserted = DiffUtil.getLinesContent(patchDocument, myPatchInsertionRange.start, myPatchInsertionRange.end);
-      List<DiffFragment> wordDiff = ByWord.compare(deleted, inserted, ComparisonPolicy.DEFAULT, DumbProgressIndicator.INSTANCE);
+  @Nullable
+  private MyGutterOperation createOperation(@NotNull OperationType type) {
+    if (isResolved()) return null;
 
-      int deletionStartShift = patchDocument.getLineStartOffset(myPatchDeletionRange.start);
-      int insertionStartShift = patchDocument.getLineStartOffset(myPatchInsertionRange.start);
-      for (DiffFragment fragment : wordDiff) {
-        int deletedWordStart = deletionStartShift + fragment.getStartOffset1();
-        int deletedWordEnd = deletionStartShift + fragment.getEndOffset1();
-        DiffDrawUtil.createInlineHighlighter(patchEditor, deletedWordStart, deletedWordEnd, TextDiffType.DELETED);
+    EditorEx editor = myViewer.getPatchEditor();
+    Document document = editor.getDocument();
 
-        int insertedWordStart = insertionStartShift + fragment.getStartOffset2();
-        int insertedWordEndEnd = insertionStartShift + fragment.getEndOffset2();
-        DiffDrawUtil.createInlineHighlighter(patchEditor, insertedWordStart, insertedWordEndEnd, TextDiffType.INSERTED);
+    int line = getPatchRange().start;
+    int offset = line == DiffUtil.getLineCount(document) ? document.getTextLength() : document.getLineStartOffset(line);
+
+    RangeHighlighter highlighter = editor.getMarkupModel().addRangeHighlighter(offset, offset,
+                                                                               HighlighterLayer.ADDITIONAL_SYNTAX,
+                                                                               null,
+                                                                               HighlighterTargetArea.LINES_IN_RANGE);
+    return new MyGutterOperation(highlighter, type);
+  }
+
+  private class MyGutterOperation {
+    @NotNull private final RangeHighlighter myHighlighter;
+    @NotNull private final OperationType myType;
+
+    private MyGutterOperation(@NotNull RangeHighlighter highlighter, @NotNull OperationType type) {
+      myHighlighter = highlighter;
+      myType = type;
+
+      myHighlighter.setGutterIconRenderer(createRenderer());
+    }
+
+    public void dispose() {
+      myHighlighter.dispose();
+    }
+
+    @Nullable
+    public GutterIconRenderer createRenderer() {
+      switch (myType) {
+        case APPLY:
+          return createApplyRenderer();
+        case IGNORE:
+          return createIgnoreRenderer();
+        default:
+          throw new IllegalArgumentException(myType.name());
       }
     }
   }
 
-  //
-  // Getters
-  //
-
-  @NotNull
-  public LineRange getPatchDeletionRange() {
-    return myPatchDeletionRange;
-  }
-
-  @NotNull
-  public LineRange getPatchInsertionRange() {
-    return myPatchInsertionRange;
-  }
-
-  @NotNull
-  public AppliedTextPatch.HunkStatus getStatus() {
-    return myStatus;
+  @Nullable
+  private GutterIconRenderer createApplyRenderer() {
+    return createIconRenderer(DiffBundle.message("merge.dialog.apply.change.action.name"), DiffUtil.getArrowIcon(Side.RIGHT), () -> {
+      myViewer.executeCommand("Accept change", () -> {
+        myViewer.replaceChange(this);
+      });
+    });
   }
 
   @Nullable
-  public LineRange getAppliedTo() {
-    return myAppliedTo;
+  private GutterIconRenderer createIgnoreRenderer() {
+    return createIconRenderer(DiffBundle.message("merge.dialog.ignore.change.action.name"), AllIcons.Diff.Remove, () -> {
+      myViewer.executeCommand("Ignore change", () -> {
+        myViewer.markChangeResolved(this);
+      });
+    });
   }
 
-  public boolean isValid() {
-    return myIsValid;
+  @Nullable
+  private static GutterIconRenderer createIconRenderer(@NotNull final String text,
+                                                       @NotNull final Icon icon,
+                                                       @NotNull final Runnable perform) {
+    final String tooltipText = DiffUtil.createTooltipText(text, null);
+    return new DiffGutterRenderer(icon, tooltipText) {
+      @Override
+      protected void performAction(AnActionEvent e) {
+        perform.run();
+      }
+    };
+  }
+
+  private enum OperationType {
+    APPLY, IGNORE
   }
 
   //
-  // Shift
+  // State
   //
 
-  public boolean processChange(int oldLine1, int oldLine2, int shift) {
-    if (myAppliedTo == null) return false;
-    int line1 = myAppliedTo.start;
-    int line2 = myAppliedTo.end;
+  @NotNull
+  public State storeState() {
+    LineRange resultRange = getResultRange();
+    return new State(
+      myIndex,
+      resultRange != null ? resultRange.start : -1,
+      resultRange != null ? resultRange.end : -1,
+      myResolved);
+  }
 
-    DiffUtil.UpdatedLineRange newRange = DiffUtil.updateRangeOnModification(line1, line2, oldLine1, oldLine2, shift, true, true);
+  public void restoreState(@NotNull State state) {
+    myResolved = state.myResolved;
+  }
 
-    myAppliedTo = new LineRange(newRange.startLine, newRange.endLine);
-    if (newRange.damaged) myIsValid = false;
+  public static class State extends MergeModelBase.State {
+    private final boolean myResolved;
 
-    return newRange.damaged || myAppliedTo.start != line1 || myAppliedTo.end != line2;
+    public State(int index,
+                 int startLine,
+                 int endLine,
+                 boolean resolved) {
+      super(index, startLine, endLine);
+      myResolved = resolved;
+    }
   }
 }

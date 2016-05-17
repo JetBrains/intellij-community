@@ -1,12 +1,23 @@
 import org.apache.tools.ant.filters.ReplaceTokens
 
+buildscript {
+  ext.kotlin_version = '1.0.1-2'
+  repositories {
+    mavenCentral()
+  }
+  dependencies {
+    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+  }
+}
+
 plugins {
-  id "org.jetbrains.intellij" version "0.0.39"
+  id "org.jetbrains.intellij" version "0.0.43"
 }
 
 subprojects {
 
   apply plugin: 'java'
+  apply plugin: 'kotlin'
   apply plugin: "org.jetbrains.intellij"
 
   tasks.withType(JavaCompile) { options.encoding = 'UTF-8' }
@@ -23,15 +34,18 @@ subprojects {
 
   intellij {
     version ideaVersion
-    updateSinceUntilBuild true
+    updateSinceUntilBuild Boolean.valueOf(updateBuildNumber)
     downloadSources Boolean.valueOf(downloadIdeaSources)
+    sandboxDirectory = new File(rootProject.projectDir, "gradleBuild/idea-sandbox")
   }
 
   processResources {
-    filter ReplaceTokens, tokens: [
-      'VERSION': version.toString(),
-      'BUILD-NUMBER': buildNumber,
-    ]
+    filesNotMatching("**/*.png") {
+      it.filter(ReplaceTokens, tokens: [
+        'VERSION'     : version.toString(),
+        'BUILD-NUMBER': buildNumber,
+      ])
+    }
   }
 
   afterEvaluate {
@@ -39,6 +53,8 @@ subprojects {
       archiveName = "$intellij.pluginName-$version-${buildNumber}.zip"
     }
   }
+
+  buildDir = new File(rootProject.projectDir, "gradleBuild/" + project.name)
 }
 
 project(':student') {

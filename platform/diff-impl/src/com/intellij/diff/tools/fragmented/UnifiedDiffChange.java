@@ -15,7 +15,6 @@
  */
 package com.intellij.diff.tools.fragmented;
 
-import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.util.*;
 import com.intellij.diff.util.DiffUtil.UpdatedLineRange;
@@ -77,12 +76,7 @@ public class UnifiedDiffChange {
   private void installHighlighter(@NotNull LineRange deleted, @NotNull LineRange inserted) {
     assert myHighlighters.isEmpty();
 
-    if (myLineFragment.getInnerFragments() != null) {
-      doInstallHighlighterWithInner(deleted, inserted);
-    }
-    else {
-      doInstallHighlighterSimple(deleted, inserted);
-    }
+    doInstallHighlighters(deleted, inserted);
     doInstallActionHighlighters();
   }
 
@@ -99,35 +93,8 @@ public class UnifiedDiffChange {
     }
   }
 
-  private void doInstallHighlighterSimple(@NotNull LineRange deleted, @NotNull LineRange inserted) {
-    createLineHighlighters(deleted, inserted, false);
-  }
-
-  private void doInstallHighlighterWithInner(@NotNull LineRange deleted, @NotNull LineRange inserted) {
-    List<DiffFragment> innerFragments = myLineFragment.getInnerFragments();
-    assert innerFragments != null;
-
-    int deletedStartOffset = myEditor.getDocument().getLineStartOffset(deleted.start);
-    int insertedStartOffset = myEditor.getDocument().getLineStartOffset(inserted.start);
-
-    createLineHighlighters(deleted, inserted, true);
-
-    for (DiffFragment fragment : innerFragments) {
-      createInlineHighlighter(TextDiffType.DELETED,
-                              deletedStartOffset + fragment.getStartOffset1(),
-                              deletedStartOffset + fragment.getEndOffset1());
-      createInlineHighlighter(TextDiffType.INSERTED,
-                              insertedStartOffset + fragment.getStartOffset2(),
-                              insertedStartOffset + fragment.getEndOffset2());
-    }
-  }
-
-  private void createLineHighlighters(@NotNull LineRange deleted, @NotNull LineRange inserted, boolean ignored) {
-    myHighlighters.addAll(DiffDrawUtil.createUnifiedChunkHighlighters(myEditor, deleted, inserted, ignored));
-  }
-
-  private void createInlineHighlighter(@NotNull TextDiffType type, int start, int end) {
-    myHighlighters.addAll(DiffDrawUtil.createInlineHighlighter(myEditor, start, end, type));
+  private void doInstallHighlighters(@NotNull LineRange deleted, @NotNull LineRange inserted) {
+    myHighlighters.addAll(DiffDrawUtil.createUnifiedChunkHighlighters(myEditor, deleted, inserted, myLineFragment.getInnerFragments()));
   }
 
   public int getLine1() {

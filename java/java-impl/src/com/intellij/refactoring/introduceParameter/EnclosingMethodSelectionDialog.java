@@ -31,6 +31,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.MethodCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -77,7 +78,7 @@ public class EnclosingMethodSelectionDialog extends DialogWrapper {
     panel.setLayout(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
 
-    gbConstraints.insets = new Insets(4, 8, 4, 8);
+    gbConstraints.insets = JBUI.insets(4, 8);
     gbConstraints.weighty = 0;
     gbConstraints.weightx = 1;
     gbConstraints.gridy = 0;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -321,7 +321,7 @@ public class PathManager {
     String resultPath = null;
     String protocol = resourceURL.getProtocol();
     if (URLUtil.FILE_PROTOCOL.equals(protocol)) {
-      String path = resourceURL.getFile();
+      String path = URLUtil.urlToFile(resourceURL).getPath();
       String testPath = path.replace('\\', '/');
       String testResourcePath = resourcePath.replace('\\', '/');
       if (StringUtil.endsWithIgnoreCase(testPath, testResourcePath)) {
@@ -340,13 +340,7 @@ public class PathManager {
       return null;
     }
 
-    if (SystemInfo.isWindows && resultPath.startsWith("/")) {
-      resultPath = resultPath.substring(1);
-    }
-    resultPath = StringUtil.trimEnd(resultPath, File.separator);
-    resultPath = URLUtil.unescapePercentSequences(resultPath);
-
-    return resultPath;
+    return StringUtil.trimEnd(resultPath, File.separator);
   }
 
   public static void loadProperties() {

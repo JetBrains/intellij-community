@@ -731,6 +731,7 @@ public class ScopeEditorPanel {
     private final boolean myRequestFocus;
 
     public MyPanelProgressIndicator(final boolean requestFocus) {
+      //noinspection Convert2Lambda
       super(new Consumer<JComponent>() {
         @Override
         public void consume(final JComponent component) {

@@ -1137,6 +1137,20 @@ public class StringUtil extends StringUtilRt {
 
   @NotNull
   @Contract(pure = true)
+  public static String trimExtension(@NotNull String name) {
+    int index = name.lastIndexOf('.');
+    return index < 0 ? name : name.substring(0, index);
+  }
+
+  @NotNull
+  @Contract(pure = true)
+  public static String trimExtensions(@NotNull String name) {
+    int index = name.indexOf('.');
+    return index < 0 ? name : name.substring(0, index);
+  }
+
+  @NotNull
+  @Contract(pure = true)
   public static String pluralize(@NotNull String base, int n) {
     if (n == 1) return base;
     return pluralize(base);
@@ -2101,7 +2115,7 @@ public class StringUtil extends StringUtilRt {
   @Contract(pure = true)
   public static String firstLast(@NotNull String text, int length) {
     return text.length() > length
-           ? text.subSequence(0, length / 2) + "..." + text.subSequence(text.length() - length / 2, text.length())
+           ? text.subSequence(0, length / 2) + "…" + text.subSequence(text.length() - length / 2 - 1, text.length())
            : text;
   }
 
@@ -3178,6 +3192,11 @@ public class StringUtil extends StringUtilRt {
     return StringUtilRt.parseBoolean(string, defaultValue);
   }
 
+  @Contract(pure = true)
+  public static <E extends Enum<E>> E parseEnum(String string, E defaultValue, Class<E> clazz) {
+    return StringUtilRt.parseEnum(string, defaultValue, clazz);
+  }
+
   @NotNull
   @Contract(pure = true)
   public static String getShortName(@NotNull Class aClass) {
@@ -3194,6 +3213,24 @@ public class StringUtil extends StringUtilRt {
   @Contract(pure = true)
   public static String getShortName(@NotNull String fqName, char separator) {
     return StringUtilRt.getShortName(fqName, separator);
+  }
+
+  /**
+   * Strips class name from Object#toString if present.
+   * To be used as custom data type renderer for java.lang.Object.
+   * To activate just add <code>StringUtil.toShortString(this)</code>
+   * expression in <em>Settings | Debugger | Data Views</em>.
+   */
+  @Contract("null->null;!null->!null")
+  @SuppressWarnings("UnusedDeclaration")
+  static String toShortString(@Nullable Object o) {
+    if (o == null) return null;
+    if (o instanceof CharSequence) return o.toString();
+    String className = o.getClass().getName();
+    String s = o.toString();
+    if (!s.startsWith(className)) return s;
+    return s.length() > className.length() && !Character.isLetter(s.charAt(className.length())) ?
+           trimStart(s, className) : s;
   }
 
   @NotNull

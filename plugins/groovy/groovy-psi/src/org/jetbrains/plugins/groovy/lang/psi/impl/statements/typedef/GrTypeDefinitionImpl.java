@@ -28,7 +28,6 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.ui.RowIcon;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityIcons;
@@ -56,7 +55,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
@@ -68,7 +66,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyRunnerPsiUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import javax.swing.*;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -78,7 +75,7 @@ import java.util.List;
 public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefinitionStub>
   implements GrTypeDefinition, StubBasedPsiElement<GrTypeDefinitionStub> {
 
-  private final GrTypeDefinitionMembersCache myCache = new GrTypeDefinitionMembersCache(this);
+  private final GrTypeDefinitionMembersCache<GrTypeDefinition> myCache = new GrTypeDefinitionMembersCache<GrTypeDefinition>(this);
 
   public GrTypeDefinitionImpl(@NotNull ASTNode node) {
     super(node);
@@ -154,41 +151,6 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
   @Override
   public GrImplementsClause getImplementsClause() {
     return getStubOrPsiChild(GroovyElementTypes.IMPLEMENTS_CLAUSE);
-  }
-
-  @NotNull
-  @Override
-  public String[] getSuperClassNames() {
-    final GrTypeDefinitionStub stub = getStub();
-    if (stub != null) {
-      return stub.getSuperClassNames();
-    }
-    return ArrayUtil.mergeArrays(getExtendsNames(), getImplementsNames());
-  }
-
-  protected String[] getImplementsNames() {
-    GrImplementsClause implementsClause = getImplementsClause();
-    GrCodeReferenceElement[] implementsRefs =
-      implementsClause != null ? implementsClause.getReferenceElementsGroovy() : GrCodeReferenceElement.EMPTY_ARRAY;
-    ArrayList<String> implementsNames = new ArrayList<String>(implementsRefs.length);
-    for (GrCodeReferenceElement ref : implementsRefs) {
-      String name = ref.getReferenceName();
-      if (name != null) implementsNames.add(name);
-    }
-
-    return ArrayUtil.toStringArray(implementsNames);
-  }
-
-  protected String[] getExtendsNames() {
-    GrExtendsClause extendsClause = getExtendsClause();
-    GrCodeReferenceElement[] extendsRefs =
-      extendsClause != null ? extendsClause.getReferenceElementsGroovy() : GrCodeReferenceElement.EMPTY_ARRAY;
-    ArrayList<String> extendsNames = new ArrayList<String>(extendsRefs.length);
-    for (GrCodeReferenceElement ref : extendsRefs) {
-      String name = ref.getReferenceName();
-      if (name != null) extendsNames.add(name);
-    }
-    return ArrayUtil.toStringArray(extendsNames);
   }
 
   @Override
