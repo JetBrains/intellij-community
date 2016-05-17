@@ -209,6 +209,9 @@ def process_net_command(py_db, cmd_id, seq, text):
                     if int(show_return_values) == 1:
                         py_db.show_return_values = True
                     else:
+                        if py_db.show_return_values:
+                            # We should remove saved return values
+                            py_db.remove_return_values_flag = True
                         py_db.show_return_values = False
                     pydev_log.debug("Show return values: %s\n" % py_db.show_return_values)
                 except:
