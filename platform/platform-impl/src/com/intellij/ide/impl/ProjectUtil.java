@@ -178,6 +178,12 @@ public class ProjectUtil {
       }
     }
 
+    if (isRemotePath(path) && !RecentProjectsManager.getInstance().hasPath(path)) {
+      if (!confirmLoadingFromRemotePath(path, "warning.load.project.from.share", "title.load.project.from.share")) {
+        return null;
+      }
+    }
+
     ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
     Project project = null;
     try {
@@ -228,7 +234,7 @@ public class ProjectUtil {
   }
 
   public static boolean isRemotePath(@NotNull String path) {
-    return path.contains("//") || path.contains("\\\\");
+    return path.contains("://") || path.contains("\\\\");
   }
 
   @Nullable
