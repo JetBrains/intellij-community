@@ -910,6 +910,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
+  @Staging
   public void testReturnValues() throws Exception {
     runPythonTest(new PyDebuggerTask("/debug", "test_return_values.py") {
       @Override
