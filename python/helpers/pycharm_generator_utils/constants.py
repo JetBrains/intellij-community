@@ -6,7 +6,7 @@ import string
 import time
 
 # !!! Don't forget to update VERSION and required_gen_version if necessary !!!
-VERSION = "1.142"
+VERSION = "1.143"
 
 OUT_ENCODING = 'utf-8'
 
@@ -532,6 +532,7 @@ PREDEFINED_MOD_CLASS_SIGS = {                                       #TODO: user-
     ("numpy.random.mtrand", None, "rand"): ("(*dn)", None),
     ("numpy.random.mtrand", None, "randn"): ("(*dn)", None),
     ("numpy.core.multiarray", "ndarray", "reshape"): ("(self, shape, *shapes, order='C')", None),
+    ("numpy.core.multiarray", "ndarray", "resize"): ("(self, *new_shape, refcheck=True)", None),
 }
 
 bin_collections_names = ['collections', '_collections']

@@ -47,4 +47,4 @@ h5py.h5i 1.127
 h5py.h5g 1.127
 
 numpy.random.mtrand 1.140
-numpy.core.multiarray 1.142
+numpy.core.multiarray 1.143
