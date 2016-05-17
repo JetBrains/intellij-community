@@ -65,7 +65,7 @@ public class ShowRecentTests extends AnAction {
     
     List<RecentTestsPopupEntry> entries = listProvider.getTestsToShow();
     
-    SelectTestStep selectStepTest = new SelectTestStep(entries, testRunner, testLocator);
+    SelectTestStep selectStepTest = new SelectTestStep(entries, testRunner);
 
     RecentTestsListPopup popup = new RecentTestsListPopup(selectStepTest, testRunner, testLocator);
     popup.showCenteredInCurrentWindow(project);
