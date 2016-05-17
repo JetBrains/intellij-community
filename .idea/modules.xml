@@ -42,6 +42,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/built-in-server/built-in-server.iml" filepath="$PROJECT_DIR$/platform/built-in-server/built-in-server.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/built-in-server-api/built-in-server-api.iml" filepath="$PROJECT_DIR$/platform/built-in-server-api/built-in-server-api.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/built-in-server/built-in-server-tests.iml" filepath="$PROJECT_DIR$/platform/built-in-server/built-in-server-tests.iml" group="platform" />
+      <module fileurl="file://$PROJECT_DIR$/../base/chunkio/chunkio.iml" filepath="$PROJECT_DIR$/../base/chunkio/chunkio.iml" group="android/sdktools" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-common/cidr-common.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-common/cidr-common.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-debugger/cidr-debugger.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-debugger/cidr-debugger.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-lang/cidr-lang.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-lang/cidr-lang.iml" group="java" />
@@ -201,6 +202,7 @@
       <module fileurl="file://$PROJECT_DIR$/../base/ninepatch/ninepatch.iml" filepath="$PROJECT_DIR$/../base/ninepatch/ninepatch.iml" group="android/sdktools" />
       <module fileurl="file://$PROJECT_DIR$/java/openapi/openapi.iml" filepath="$PROJECT_DIR$/java/openapi/openapi.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/../base/perflib/perflib.iml" filepath="$PROJECT_DIR$/../base/perflib/perflib.iml" group="android/sdktools" />
+      <module fileurl="file://$PROJECT_DIR$/../base/pixelprobe/pixelprobe.iml" filepath="$PROJECT_DIR$/../base/pixelprobe/pixelprobe.iml" group="android/sdktools" />
       <module fileurl="file://$PROJECT_DIR$/platform/platform-api/platform-api.iml" filepath="$PROJECT_DIR$/platform/platform-api/platform-api.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/platform-impl/platform-impl.iml" filepath="$PROJECT_DIR$/platform/platform-impl/platform-impl.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/platform-main/platform-main.iml" filepath="$PROJECT_DIR$/platform/platform-main/platform-main.iml" group="platform" />
