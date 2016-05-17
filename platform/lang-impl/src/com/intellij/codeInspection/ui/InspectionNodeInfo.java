@@ -59,9 +59,12 @@ public class InspectionNodeInfo extends JPanel {
     label.setText(toolWrapper.getDisplayName() + " inspection");
     titlePanel.add(label);
     titlePanel.add(Box.createHorizontalStrut(JBUI.scale(16)));
-    JBLabel enabledLabel = new JBLabel();
-    enabledLabel.setForeground(JBColor.GRAY);
-    titlePanel.add(enabledLabel);
+    if (!enabled) {
+      JBLabel enabledLabel = new JBLabel();
+      enabledLabel.setForeground(JBColor.GRAY);
+      enabledLabel.setText("Disabled");
+      titlePanel.add(enabledLabel);
+    }
 
     add(titlePanel,
         new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new JBInsets(0, 12, 5, 16),
@@ -83,7 +86,6 @@ public class InspectionNodeInfo extends JPanel {
         new GridBagConstraints(0, 2, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
                                new JBInsets(15, 9, 9, 0), 0, 0));
     button.setText((enabled ? "Disable" : "Enable") + " inspection");
-    enabledLabel.setText(enabled ? "Enabled" : "Disabled");
 
     new ClickListener() {
       @Override
