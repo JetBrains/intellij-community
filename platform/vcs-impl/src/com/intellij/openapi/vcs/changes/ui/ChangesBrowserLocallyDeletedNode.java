@@ -46,11 +46,6 @@ public class ChangesBrowserLocallyDeletedNode extends ChangesBrowserNode<Locally
   }
 
   @Override
-  protected FilePath getMyPath() {
-    return getUserObject().getPath();
-  }
-
-  @Override
   protected boolean isDirectory() {
     return getUserObject().getPath().isDirectory();
   }

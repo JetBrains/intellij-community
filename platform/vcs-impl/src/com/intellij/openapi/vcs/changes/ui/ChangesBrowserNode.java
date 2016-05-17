@@ -26,7 +26,6 @@ import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.MutableTreeNode;
@@ -53,7 +52,7 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
     }
   };
   public static final Object LOGICALLY_LOCKED_TAG = VcsBundle.message("changes.nodetitle.logicallt.locked.folders");
-  
+
   public static final Object UNVERSIONED_FILES_TAG = new Object() {
     public String toString() {
       return VcsBundle.message("changes.nodetitle.unversioned.files");
@@ -176,8 +175,10 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
   @NotNull
   public Stream<FilePath> getFilePathsUnderStream() {
     return toStream(breadthFirstEnumeration())
-      .map(node -> node.isLeaf() && node.getUserObject() instanceof FilePath ? (FilePath)node.getUserObject() : getMyPath())
-      .filter(Objects::nonNull);
+      .filter(ChangesBrowserNode::isLeaf)
+      .map(ChangesBrowserNode::getUserObject)
+      .filter(userObject -> userObject instanceof FilePath)
+      .map(FilePath.class::cast);
   }
 
   @NotNull
@@ -187,11 +188,6 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
     Spliterator<ChangesBrowserNode> spliterator = Spliterators.spliteratorUnknownSize(iterator, Spliterator.ORDERED | Spliterator.NONNULL);
 
     return StreamSupport.stream(spliterator, false);
-  }
-
-  @Nullable
-  protected FilePath getMyPath() {
-    return null;
   }
 
   public void render(@NotNull ChangesBrowserNodeRenderer renderer, boolean selected, boolean expanded, boolean hasFocus) {

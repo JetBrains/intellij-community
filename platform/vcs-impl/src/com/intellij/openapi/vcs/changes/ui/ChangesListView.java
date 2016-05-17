@@ -37,7 +37,6 @@ import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -269,21 +268,6 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
     return result;
   }
 
-  @NotNull
-  private List<FilePath> getSelectedFilePaths(@Nullable Object tag) {
-    Set<FilePath> files = new HashSet<FilePath>();
-    final TreePath[] paths = getSelectionPaths();
-    if (paths != null) {
-      for (TreePath path : paths) {
-        if (isUnderTag(path, tag)) {
-          ChangesBrowserNode<?> node = (ChangesBrowserNode)path.getLastPathComponent();
-          files.addAll(node.getAllFilePathsUnder());
-        }
-      }
-    }
-    return ContainerUtil.newArrayList(files);
-  }
-
   private List<LocallyDeletedChange> getSelectedLocallyDeletedChanges() {
     Set<LocallyDeletedChange> files = new HashSet<LocallyDeletedChange>();
     final TreePath[] paths = getSelectionPaths();
@@ -300,7 +284,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
 
   @NotNull
   private List<FilePath> getSelectedMissingFiles() {
-    return getSelectedFilePaths(TreeModelBuilder.LOCALLY_DELETED_NODE);
+    return getSelectedLocallyDeletedChanges().stream().map(LocallyDeletedChange::getPath).collect(Collectors.toList());
   }
 
   protected VirtualFile[] getSelectedFiles() {
