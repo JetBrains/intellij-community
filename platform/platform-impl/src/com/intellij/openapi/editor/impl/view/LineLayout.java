@@ -532,10 +532,24 @@ abstract class LineLayout {
       IterationState it = new IterationState(view.getEditor(), start, end, false, false, true, false, false);
       FontPreferences fontPreferences = view.getEditor().getColorsScheme().getFontPreferences();
       char[] chars = CharArrayUtil.fromSequence(view.getEditor().getDocument().getImmutableCharSequence(), start, end);
+      int currentFontType = 0;
+      int currentStart = start;
       while (!it.atEnd()) {
-        addFragments(run, this, chars, it.getStartOffset() - start, it.getEndOffset() - start,
-                     it.getMergedAttributes().getFontType(), fontPreferences, view.getFontRenderContext(), view.getTabFragment());
+        int fontType = it.getMergedAttributes().getFontType();
+        if (fontType != currentFontType) {
+          int tokenStart = it.getStartOffset();
+          if (tokenStart > currentStart) {
+            addFragments(run, this, chars, currentStart - start, tokenStart - start,
+                         currentFontType, fontPreferences, view.getFontRenderContext(), view.getTabFragment());
+          }
+          currentStart = tokenStart;
+          currentFontType = fontType;
+        }
         it.advance();
+      }
+      if (end > currentStart) {
+        addFragments(run, this, chars, currentStart - start, end - start,
+                     currentFontType, fontPreferences, view.getFontRenderContext(), view.getTabFragment());
       }
       view.getSizeManager().textLayoutPerformed(start, end);
       assert !fragments.isEmpty();
