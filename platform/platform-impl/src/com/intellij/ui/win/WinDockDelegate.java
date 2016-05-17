@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,26 +17,27 @@ package com.intellij.ui.win;
 
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.ReopenProjectAction;
-import com.intellij.idea.StartupUtil;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.impl.SystemDock;
 
 import java.io.File;
+import java.util.Locale;
 
 /**
  * @author Denis Fokin
  */
 public class WinDockDelegate implements SystemDock.Delegate {
-  private static final String javaExe = System.getProperty("java.home") + File.separatorChar + "bin" + File.separatorChar + "javaw.exe";
-  private static final String argsToExecute = " -classpath \"" +
-                                              PathManager.getJarPathForClass(SocketControlHelper.class) +
-                                              "\" com.intellij.ui.win.SocketControlHelper " +
-                                              StartupUtil.getAcquiredPort() +
-                                              " ";
+  private static SystemDock.Delegate instance;
 
-  private static boolean initialized = false;
-  private static final SystemDock.Delegate instance = new WinDockDelegate();
+  public static synchronized SystemDock.Delegate getInstance() {
+    if (instance == null) {
+      instance = new WinDockDelegate();
+    }
+    return instance;
+  }
 
   private WinDockDelegate() {}
 
@@ -44,17 +45,13 @@ public class WinDockDelegate implements SystemDock.Delegate {
   public void updateRecentProjectsMenu () {
     final AnAction[] recentProjectActions = RecentProjectsManager.getInstance().getRecentProjectsActions(false);
     RecentTasks.clear();
+    String name = ApplicationNamesInfo.getInstance().getProductName().toLowerCase(Locale.US);
+    String launcher = RecentTasks.getShortenPath(PathManager.getBinPath() + File.separator + name + (SystemInfo.is64Bit ? "64" : "") + ".exe");
     Task[] tasks = new Task[recentProjectActions.length];
     for (int i = 0; i < recentProjectActions.length; i ++) {
       ReopenProjectAction rpa = (ReopenProjectAction)recentProjectActions[i];
-      tasks[i] = new Task(RecentTasks.getShortenPath(javaExe), argsToExecute + RecentTasks.getShortenPath(rpa.getProjectPath()), rpa.getTemplatePresentation().getText());
+      tasks[i] = new Task(launcher, RecentTasks.getShortenPath(rpa.getProjectPath()), rpa.getTemplatePresentation().getText());
     }
     RecentTasks.addTasks(tasks);
-  }
-  synchronized public static SystemDock.Delegate getInstance() {
-    if (!initialized) {
-      initialized = true;
-    }
-    return instance;
   }
 }
