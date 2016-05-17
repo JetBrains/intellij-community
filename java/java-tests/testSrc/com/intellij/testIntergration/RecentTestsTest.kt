@@ -130,7 +130,9 @@ class RecentTestsStepTest: LightIdeaTestCase() {
   }
 
   private fun getSortedList(map: MutableMap<String, TestStateStorage.Record>): List<String> {
-    val provider = RecentTestsListProvider(getProject(), map)
+    val provider = RecentTestsListProvider({
+      null
+    }, map)
     return provider.testsToShow.map { it.presentation }
   }
 
@@ -239,7 +241,7 @@ class RecentTestsStepTest: LightIdeaTestCase() {
   }
   
   fun `test shown value without protocol`() {
-    val step = SelectTestStep(emptyList(), runner, mock(TestLocator::class.java))
+    val step = SelectTestStep(emptyList(), runner)
     
     val info = dumbInfo("java:suite://JavaFormatterSuperDuperTest")
     var shownValue = step.getTextFor(info)

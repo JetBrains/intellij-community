@@ -19,6 +19,7 @@ import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo.Magnitude.*
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.psi.PsiElement
 import com.intellij.util.containers.ContainerUtil
 import java.util.*
 
@@ -30,6 +31,8 @@ interface RecentTestsPopupEntry {
   val testsUrls: List<String>
 
   fun run(runner: RecentTestRunner)
+
+  open fun navigatableElement(locator: TestLocator): PsiElement? = null
 }
 
 open class TestInfo(val url: String, override val magnitude: TestStateInfo.Magnitude, override val runDate: Date) : RecentTestsPopupEntry {
@@ -37,8 +40,11 @@ open class TestInfo(val url: String, override val magnitude: TestStateInfo.Magni
   override val testsUrls = listOf(url)
 
   override fun run(runner: RecentTestRunner) { 
-    runner.run(url) 
+    runner.run(url)
   }
+
+  override fun navigatableElement(locator: TestLocator) = locator.getLocation(url)?.psiElement
+  
 }
 
 class SuiteInfo(url: String, magnitude: TestStateInfo.Magnitude, runDate: Date) : TestInfo(url, magnitude, runDate) {
@@ -55,7 +61,7 @@ class SuiteInfo(url: String, magnitude: TestStateInfo.Magnitude, runDate: Date) 
   
   fun addTest(info: TestInfo) = tests.add(info)
 
-  override val presentation = VirtualFileManager.extractPath(url)
+  override val presentation = suiteName
 
 }
 

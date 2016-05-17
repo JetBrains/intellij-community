@@ -16,9 +16,69 @@
 package com.intellij.testIntegration
 
 import com.intellij.execution.testframework.TestIconMapper
+import com.intellij.openapi.keymap.MacKeymapUtil
+import com.intellij.openapi.ui.popup.ListPopupStep
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
+import com.intellij.openapi.util.SystemInfo
+import com.intellij.ui.popup.list.ListPopupImpl
+import com.intellij.util.PsiNavigateUtil
+import java.awt.event.ActionEvent
+import java.awt.event.KeyEvent
+import javax.swing.AbstractAction
 import javax.swing.Icon
+import javax.swing.KeyStroke
+
+class RecentTestsListPopup(popupStep: ListPopupStep<RecentTestsPopupEntry>,
+                           private val testRunner: RecentTestRunner,
+                           private val locator: TestLocator) 
+    : ListPopupImpl(popupStep) 
+{
+
+  init {
+    shiftReleased()
+    registerActions(this)
+
+    val shift = if (SystemInfo.isMac) MacKeymapUtil.SHIFT else "Shift"
+    setAdText("Debug with $shift, navigate with F4")
+  }
+
+  private fun registerActions(popup: ListPopupImpl) {
+    popup.registerAction("alternate", KeyStroke.getKeyStroke("shift pressed SHIFT"), object : AbstractAction() {
+      override fun actionPerformed(e: ActionEvent) = shiftPressed()
+    })
+    popup.registerAction("restoreDefault", KeyStroke.getKeyStroke("released SHIFT"), object : AbstractAction() {
+      override fun actionPerformed(e: ActionEvent) = shiftReleased()
+    })
+    popup.registerAction("invokeAction", KeyStroke.getKeyStroke("shift ENTER"), object : AbstractAction() {
+      override fun actionPerformed(e: ActionEvent) = handleSelect(true)
+    })
+    
+    popup.registerAction("navigate", KeyStroke.getKeyStroke(KeyEvent.VK_F4, 0), object : AbstractAction() {
+      override fun actionPerformed(e: ActionEvent) {
+        val values = selectedValues
+        if (values.size == 1) {
+          val element = (values[0] as RecentTestsPopupEntry).navigatableElement(locator)
+          if (element != null) {
+            cancel()
+            PsiNavigateUtil.navigate(element)
+          }
+        }
+      }
+    })
+  }
+
+  private fun shiftPressed() {
+    setCaption("Debug Recent Tests")
+    testRunner.setMode(RecentTestRunner.Mode.DEBUG)
+  }
+
+  private fun shiftReleased() {
+    setCaption("Run Recent Tests")
+    testRunner.setMode(RecentTestRunner.Mode.RUN)
+  }
+}
+
 
 class SelectTestStep(tests: List<RecentTestsPopupEntry>, 
                      private val runner: RecentTestRunner) 
