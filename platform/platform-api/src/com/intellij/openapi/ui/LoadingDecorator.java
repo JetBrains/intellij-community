@@ -237,7 +237,10 @@ public class LoadingDecorator {
     }
   }
 
-  private static class MyLayeredPane extends JBLayeredPane {
+  public interface CursorAware {
+  }
+
+  private static class MyLayeredPane extends JBLayeredPane implements CursorAware {
     private final JComponent myContent;
 
     private MyLayeredPane(JComponent content) {
