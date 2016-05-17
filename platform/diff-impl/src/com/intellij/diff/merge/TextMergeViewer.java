@@ -566,7 +566,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
         onChangeAdded(change);
       }
       if (getChangesCount() == 0 && getConflictsCount() == 0) {
-        LOG.assertTrue(getFirstUnresolvedChange(true, null) == null);
+        LOG.assertTrue(getFirstUnresolvedChange(true, ThreeSide.BASE) == null);
         ApplicationManager.getApplication().invokeLater(() -> {
           if (isDisposed()) return;
 
