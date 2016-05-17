@@ -44,6 +44,7 @@ import com.intellij.util.SystemProperties;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
 import javax.swing.*;
 import java.awt.*;
@@ -178,9 +179,7 @@ public class ProjectUtil {
     }
 
     if (isRemotePath(path) && !RecentProjectsManager.getInstance().hasPath(path)) {
-      String msg = IdeBundle.message("warning.load.project.from.share", path);
-      String title = IdeBundle.message("title.load.project.from.share");
-      if (!confirmLoadingFromRemotePath(msg, title)) {
+      if (!confirmLoadingFromRemotePath(path, "warning.load.project.from.share", "title.load.project.from.share")) {
         return null;
       }
     }
