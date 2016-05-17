@@ -84,9 +84,7 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
 
   private void checkForEduCourse(@NotNull ProgressIndicator indicator) {
     final StudyTestsOutputParser.TestsOutput testsOutput = getTestOutput(indicator);
-
-    postAttemptToStepic(testsOutput);
-
+    
     if (testsOutput != null) {
       if (testsOutput.isSuccess()) {
         onTaskSolved(testsOutput.getMessage());
@@ -95,6 +93,7 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
         onTaskFailed(testsOutput.getMessage());
       }
       runAfterTaskCheckedActions();
+      postAttemptToStepic(testsOutput);
     }
   }
 
@@ -181,7 +180,7 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
     }
   }
 
-  protected void postAttemptToStepic(StudyTestsOutputParser.TestsOutput testsOutput) {
+  protected void postAttemptToStepic(@NotNull StudyTestsOutputParser.TestsOutput testsOutput) {
     final StudyTaskManager studySettings = StudyTaskManager.getInstance(myProject);
     final String login = studySettings.getLogin();
     final String password = StringUtil.isEmptyOrSpaces(login) ? "" : studySettings.getPassword();

@@ -3,6 +3,7 @@ package com.jetbrains.edu.learning.stepic;
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.intellij.ide.projectView.ProjectView;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -112,6 +113,7 @@ public class EduAdaptiveStepicConnector {
             LOG.warn("Got unexpected number of lessons: " + lessonContainer.lessons.size());
           }
           VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
+          ProjectView.getInstance(project).refresh();
         }
       }
       else {
