@@ -192,13 +192,11 @@ public class ClassPath {
       }
     }
 
-    Loader loader = null;
     if (path != null && URLUtil.FILE_PROTOCOL.equals(url.getProtocol())) {
-      loader = createLoader(url, index, new File(path), true);
-    }
-
-    if (loader != null) {
-      initLoader(url, lastOne, loader);
+      Loader loader = createLoader(url, index, new File(path), true);
+      if (loader != null) {
+        initLoader(url, lastOne, loader);
+      }
     }
   }
 
@@ -244,7 +242,7 @@ public class ClassPath {
         }
       }
       myCache.applyLoaderData(data, loader);
-    
+
       if (lastOne) {
         myCache.nameSymbolsLoaded();
         myAllUrlsWereProcessed = true;
