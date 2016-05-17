@@ -347,9 +347,6 @@ public interface Application extends ComponentManager {
    */
   boolean isCommandLine();
 
-  @Override
-  boolean isDisposed();
-
   /**
    * Requests pooled thread to execute the action.
    * This pool is<ul>
