@@ -105,9 +105,9 @@ $ANT "-Dout=$OUT" "-Dbuild=$BNUM" "-Denable.ui.tests=$UI_TESTS"
 
 # Temp: figure out how to preserve symlinks
 cd "$OUT/artifacts"
-unzip -q "android-studio-$BNUM.mac.zip"
+tar xzf "android-studio-$BNUM.mac.tar.gz" && rm "android-studio-$BNUM.mac.tar.gz"
 cd "Android Studio.app/Contents/jre/jdk/Contents/MacOS" && rm libjli.dylib && ln -s ../Home/jre/lib/jli/libjli.dylib && cd ../../../../../../
-zip --symlinks -r "android-studio-$BNUM.mac.zip" "Android Studio.app/Contents/jre/jdk/Contents/MacOS"
+tar czf "android-studio-$BNUM.mac.tar.gz" "Android Studio.app/"
 cd ../../
 
 echo "## Copying android-studio distribution files"

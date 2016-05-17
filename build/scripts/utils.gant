@@ -1048,12 +1048,12 @@ binding.setVariable("buildCrossPlatformZip", { String zipPath, String sandbox, L
 })
 
 binding.setVariable("buildMacZip", { String zipRoot, String zipPath, List paths, String macPath, List extraBins = [] ->
-  projectBuilder.stage(".mac.zip")
+  projectBuilder.stage(".mac.tar")
 
   allPaths = paths + [macPath]
-  ant.zip(zipfile: zipPath) {
+  ant.tar(tarfile: zipPath, longfile: "gnu") {
     allPaths.each {
-      zipfileset(dir: it, prefix: zipRoot) {
+      tarfileset(dir: it, prefix: zipRoot) {
         exclude(name: "bin/*.sh")
         exclude(name: "bin/*.py")
         exclude(name: "bin/fsnotifier")
@@ -1070,7 +1070,7 @@ binding.setVariable("buildMacZip", { String zipRoot, String zipPath, List paths,
     }
 
     allPaths.each {
-      zipfileset(dir: it, filemode: "755", prefix: zipRoot) {
+      tarfileset(dir: it, filemode: "755", prefix: zipRoot) {
         include(name: "bin/*.sh")
         include(name: "bin/*.py")
         include(name: "bin/fsnotifier")
@@ -1083,15 +1083,19 @@ binding.setVariable("buildMacZip", { String zipRoot, String zipPath, List paths,
     }
 
     allPaths.each {
-      zipfileset(dir: it, prefix: "$zipRoot/Resources") {
+      tarfileset(dir: it, prefix: "$zipRoot/Resources") {
         include(name: "build.txt")
         include(name: "NOTICE.txt")
         exclude(name: "LICENSE.txt")
       }
     }
 
-    zipfileset(file: "$macPath/bin/idea.properties", prefix: "$zipRoot/bin")
+    tarfileset(file: "$macPath/bin/idea.properties", prefix: "$zipRoot/bin")
   }
+
+  String gzPath = "${zipPath}.gz"
+  ant.gzip(src: zipPath, zipfile: gzPath)
+  ant.delete(file: zipPath)
 })
 
 binding.setVariable("buildTarGz", { String tarRoot, String tarPath, List paths, List extraBins = [] ->
