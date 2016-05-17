@@ -239,6 +239,29 @@ public class UpdateStrategyTest {
     assertEquals("162.211", build.getNumber().toString());
   }
 
+  @Test
+  public void testUpdateTargeting() {
+    BuildNumber currentBuild = BuildNumber.fromString("IU-145.597");
+    TestUpdateSettings settings = new TestUpdateSettings(ChannelStatus.RELEASE);
+    UpdateStrategyCustomization customization = new UpdateStrategyCustomization();
+    UpdateStrategy strategy = new UpdateStrategy(2016, currentBuild, InfoReader.read("idea-update-targeting.xml"), settings, customization);
+
+    CheckForUpdateResult result = strategy.checkForUpdates();
+    assertEquals(UpdateStrategy.State.LOADED, result.getState());
+    BuildInfo build = result.getNewBuildInSelectedChannel();
+    assertNotNull(build);
+    assertEquals("for-everyone", build.getMessage());
+
+    currentBuild = BuildNumber.fromString("IU-145.972");
+    strategy = new UpdateStrategy(2016, currentBuild, InfoReader.read("idea-update-targeting.xml"), settings, customization);
+
+    result = strategy.checkForUpdates();
+    assertEquals(UpdateStrategy.State.LOADED, result.getState());
+    build = result.getNewBuildInSelectedChannel();
+    assertNotNull(build);
+    assertEquals("not-for-everyone", build.getMessage());
+  }
+
   private static class TestUpdateSettings implements UserUpdateSettings {
     private final ChannelStatus myChannelStatus;
     private final List<String> myIgnoredBuildNumbers;
