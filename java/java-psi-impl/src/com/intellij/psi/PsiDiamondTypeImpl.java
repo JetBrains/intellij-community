@@ -52,6 +52,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
   private final PsiTypeElement myTypeElement;
 
   public PsiDiamondTypeImpl(PsiManager manager, PsiTypeElement psiTypeElement) {
+    super(PsiAnnotation.EMPTY_ARRAY);
     myManager = manager;
     myTypeElement = psiTypeElement;
   }
