@@ -17,6 +17,7 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
@@ -30,6 +31,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Future;
 
+import static com.intellij.util.io.BaseOutputReaderTest.Runner.TEST_DATA_OUTPUT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -97,11 +99,31 @@ public class BaseOutputReaderTest {
     assertThat(StringUtil.join(lines, "")).isEqualTo(StringUtil.join(Arrays.asList(TEST_DATA), ""));
   }
 
-  // Stopping is not supported for an open stream in blocking mode
-  //@Test(timeout = 30000)
-  //public void testBlockingStop() throws Exception {
-  //  doStopTest(BaseDataReader.SleepingPolicy.BLOCKING);
-  //}
+  @Test(timeout = 30000)
+  public void testBlockingReadFully() throws Exception {
+    doTestReadFully(BaseDataReader.SleepingPolicy.BLOCKING);
+  }
+
+  @Test(timeout = 30000)
+  public void testNonBlockingReadFully() throws Exception {
+    doTestReadFully(BaseDataReader.SleepingPolicy.SIMPLE);
+  }
+
+  private void doTestReadFully(BaseDataReader.SleepingPolicy policy) throws Exception {
+    int numLines = 100000;
+    Process process = launchTest("times", String.valueOf(numLines));
+    TestOutputReader reader = new TestOutputReader(process.getInputStream(), BaseOutputReader.Options.withPolicy(policy));
+    process.waitFor();
+
+    reader.readFully();
+    ArrayList<String> lines = new ArrayList<>(reader.myLines);
+
+    StringBuilder expected = new StringBuilder();
+    for (int i = 0; i < numLines; i++) {
+      expected.append(TEST_DATA_OUTPUT + "\n");
+    }
+    assertThat(StringUtil.join(lines, "")).isEqualTo(expected.toString());
+  }
 
   @Test(timeout = 30000)
   public void testNonBlockingStop() throws Exception {
@@ -140,7 +162,7 @@ public class BaseOutputReaderTest {
     }
   }
 
-  private Process launchTest(String mode) throws Exception {
+  private Process launchTest(String... args) throws Exception {
     String java = System.getProperty("java.home") + (SystemInfo.isWindows ? "\\bin\\java.exe" : "/bin/java");
 
     String className = BaseOutputReaderTest.Runner.class.getName();
@@ -149,13 +171,16 @@ public class BaseOutputReaderTest {
     File dir = new File(url.toURI());
     for (int i = 0; i < StringUtil.countChars(className, '.') + 1; i++) dir = dir.getParentFile();
 
-    String[] cmd = {java, "-cp", dir.getPath(), className, mode};
+    String[] cmd = ArrayUtil.mergeArrays(new String[] {java, "-cp", dir.getPath(), className}, args);
+    
     return new ProcessBuilder(cmd).redirectErrorStream(true).start();
   }
 
   public static class Runner {
-    private static final String[] TEST_DATA =
+    public static final String[] TEST_DATA =
       {"first\n", "incomplete", "-continuation\n", new String(new char[16*1024]).replace('\0', 'x') + '\n', "last"};
+    
+    public static final String TEST_DATA_OUTPUT = "output";
 
     private static final int SEND_TIMEOUT = 500;
     private static final int SLEEP_TIMEOUT = 60000;
@@ -169,6 +194,11 @@ public class BaseOutputReaderTest {
         for (String line : TEST_DATA) {
           System.out.print(line);
           Thread.sleep(SEND_TIMEOUT);
+        }
+      }
+      else if (args.length > 1 && "times".equals(args[0])) {
+        for (int i = 0; i < Integer.valueOf(args[1]); i++) {
+          System.out.println(TEST_DATA_OUTPUT);
         }
       }
       else {
