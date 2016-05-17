@@ -245,8 +245,6 @@ class EventLogConsole {
     if (document.getTextLength() == 0 || !lastDate.equals(myLastDate)) {
       myLastDate = lastDate;
       append(document, lastDate + "\n");
-      editor.getMarkupModel().addLineHighlighter(document.getLineCount() - 2, HighlighterLayer.CARET_ROW + 1,
-                                                 new TextAttributes(null, null, null, null, Font.BOLD));
     }
 
     int startDateOffset = document.getTextLength();
@@ -293,7 +291,7 @@ class EventLogConsole {
     }
 
     if (notification.isImportant()) {
-      highlightNotification(notification, pair.status, startLine, startLine + 1);
+      highlightNotification(notification, pair.status, startLine, document.getLineCount() - 1);
     }
   }
 
@@ -327,13 +325,17 @@ class EventLogConsole {
     final MarkupModel markupModel = getConsoleEditor().getMarkupModel();
     TextAttributes bold = new TextAttributes(null, null, null, null, Font.BOLD);
     final List<RangeHighlighter> lineColors = new ArrayList<RangeHighlighter>();
+    boolean addStripe = true;
     for (int line = line1; line < line2; line++) {
       final RangeHighlighter lineHighlighter = markupModel.addLineHighlighter(line, HighlighterLayer.CARET_ROW + 1, bold);
-      Color color = notification.getType() == NotificationType.ERROR
-                    ? JBColor.RED
-                    : notification.getType() == NotificationType.WARNING ? JBColor.YELLOW : JBColor.GREEN;
-      lineHighlighter.setErrorStripeMarkColor(color);
-      lineHighlighter.setErrorStripeTooltip(message);
+      if (addStripe) {
+        Color color = notification.getType() == NotificationType.ERROR
+                      ? JBColor.RED
+                      : notification.getType() == NotificationType.WARNING ? JBColor.YELLOW : JBColor.GREEN;
+        lineHighlighter.setErrorStripeMarkColor(color);
+        lineHighlighter.setErrorStripeTooltip(message);
+        addStripe = false;
+      }
       lineColors.add(lineHighlighter);
     }
 
