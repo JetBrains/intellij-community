@@ -250,10 +250,6 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
     return 0;
   }
 
-  public FilePath[] getFilePathsUnder() {
-    return new FilePath[0];
-  }
-
   public void setAttributes(@NotNull SimpleTextAttributes attributes) {
     myAttributes = attributes;
   }
