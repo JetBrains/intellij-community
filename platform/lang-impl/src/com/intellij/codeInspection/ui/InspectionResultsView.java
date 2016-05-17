@@ -139,7 +139,8 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     myScope = globalInspectionContext.getCurrentScope();
     myGlobalInspectionContext = globalInspectionContext;
     myProvider = provider;
-    myExcludedInspectionTreeNodesManager = new ExcludedInspectionTreeNodesManager(provider instanceof OfflineInspectionRVContentProvider);
+    myExcludedInspectionTreeNodesManager = new ExcludedInspectionTreeNodesManager(provider instanceof OfflineInspectionRVContentProvider,
+                                                                                  globalInspectionContext.isSingleInspectionRun());
 
     myTree = new InspectionTree(myProject, globalInspectionContext, this);
     initTreeListeners();
