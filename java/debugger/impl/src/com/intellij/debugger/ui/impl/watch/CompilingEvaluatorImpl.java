@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.ui.impl.watch;
 
+import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -37,6 +38,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.extractMethodObject.ExtractLightMethodObjectHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.incremental.java.JavaBuilder;
+import org.jetbrains.jps.model.java.compiler.AnnotationProcessingConfiguration;
 
 import java.io.File;
 import java.io.IOException;
@@ -62,12 +65,13 @@ public class CompilingEvaluatorImpl extends CompilingEvaluator {
       }
     });
     final List<String> options = new ArrayList<>();
-    options.add("-proc:none"); // for our purposes annotation processing is not needed
     options.add("-encoding");
     options.add("UTF-8");
     final List<File> platformClasspath = new ArrayList<>();
     final List<File> classpath = new ArrayList<>();
+    AnnotationProcessingConfiguration profile = null;
     if (module != null) {
+      profile = CompilerConfiguration.getInstance(module.getProject()).getAnnotationProcessingConfiguration(module);
       final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
       for (String s : rootManager.orderEntries().compileOnly().recursively().exportedOnly().withoutSdk().getPathsList().getPathList()) {
         classpath.add(new File(s));
@@ -76,6 +80,7 @@ public class CompilingEvaluatorImpl extends CompilingEvaluator {
         platformClasspath.add(new File(s));
       }
     }
+    JavaBuilder.addAnnotationProcessingOptions(options, profile);
 
     final Pair<Sdk, JavaSdkVersion> runtime = BuildManager.getBuildProcessRuntimeSdk(myEvaluationContext.getProject());
     final JavaSdkVersion buildRuntimeVersion = runtime.getSecond();
