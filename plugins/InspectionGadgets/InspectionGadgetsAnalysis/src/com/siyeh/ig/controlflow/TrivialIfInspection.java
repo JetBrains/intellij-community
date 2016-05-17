@@ -95,7 +95,7 @@ public class TrivialIfInspection extends BaseInspection implements CleanupLocalI
       replaceSimplifiableAssignment(statement);
     }
     else if (isSimplifiableReturn(statement)) {
-      repaceSimplifiableReturn(statement);
+      replaceSimplifiableReturn(statement);
     }
     else if (isSimplifiableImplicitReturn(statement)) {
       replaceSimplifiableImplicitReturn(statement);
@@ -131,7 +131,7 @@ public class TrivialIfInspection extends BaseInspection implements CleanupLocalI
     nextStatement.delete();
   }
 
-  private static void repaceSimplifiableReturn(PsiIfStatement statement)
+  private static void replaceSimplifiableReturn(PsiIfStatement statement)
     throws IncorrectOperationException {
     final PsiExpression condition = statement.getCondition();
     if (condition == null) {
