@@ -85,67 +85,6 @@
               <text value="Tile"/>
             </properties>
           </component>
-          <component id="1eb66" class="com.intellij.ui.components.JBRadioButton" binding="myCenterRb">
-            <constraints>
-              <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <text value="Center"/>
-            </properties>
-          </component>
-          <component id="77b44" class="com.intellij.ui.components.JBRadioButton" default-binding="true">
-            <constraints>
-              <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <text value="Top-left"/>
-            </properties>
-          </component>
-          <component id="2830" class="com.intellij.ui.components.JBRadioButton" default-binding="true">
-            <constraints>
-              <grid row="7" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <text value="Top-center"/>
-            </properties>
-          </component>
-          <component id="683fb" class="com.intellij.ui.components.JBRadioButton" default-binding="true">
-            <constraints>
-              <grid row="8" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <text value="Top-right"/>
-            </properties>
-          </component>
-          <component id="961d9" class="com.intellij.ui.components.JBRadioButton" default-binding="true">
-            <constraints>
-              <grid row="9" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <text value="Bottom-left"/>
-            </properties>
-          </component>
-          <component id="b2175" class="com.intellij.ui.components.JBRadioButton" default-binding="true">
-            <constraints>
-              <grid row="10" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <text value="Bottom-center"/>
-            </properties>
-          </component>
-          <component id="f09c6" class="com.intellij.ui.components.JBRadioButton" default-binding="true">
-            <constraints>
-              <grid row="11" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <text value="Bottom-right"/>
-            </properties>
-          </component>
-          <vspacer id="f690c">
-            <constraints>
-              <grid row="12" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
-            </constraints>
-          </vspacer>
           <component id="adc3f" class="com.intellij.ui.components.JBRadioButton" default-binding="true">
             <constraints>
               <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
@@ -162,6 +101,67 @@
               <text value="Placement:"/>
             </properties>
           </component>
+          <component id="1eb66" class="com.intellij.ui.components.JBRadioButton" binding="myCenterRb">
+            <constraints>
+              <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text value="Center"/>
+            </properties>
+          </component>
+          <component id="f12cb" class="com.intellij.ui.components.JBRadioButton">
+            <constraints>
+              <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text value="Top-left"/>
+            </properties>
+          </component>
+          <component id="afbf3" class="com.intellij.ui.components.JBRadioButton">
+            <constraints>
+              <grid row="7" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text value="Top-center"/>
+            </properties>
+          </component>
+          <component id="e887a" class="com.intellij.ui.components.JBRadioButton">
+            <constraints>
+              <grid row="8" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text value="Top-right"/>
+            </properties>
+          </component>
+          <component id="f14df" class="com.intellij.ui.components.JBRadioButton">
+            <constraints>
+              <grid row="9" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text value="Bottom-left"/>
+            </properties>
+          </component>
+          <component id="c1a73" class="com.intellij.ui.components.JBRadioButton">
+            <constraints>
+              <grid row="10" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text value="Bottom-center"/>
+            </properties>
+          </component>
+          <component id="72548" class="com.intellij.ui.components.JBRadioButton">
+            <constraints>
+              <grid row="11" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text value="Bottom-right"/>
+            </properties>
+          </component>
+          <vspacer id="f690c">
+            <constraints>
+              <grid row="12" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+            </constraints>
+          </vspacer>
         </children>
       </grid>
       <component id="fe56c" class="javax.swing.JSlider" binding="myOpacitySlider">
@@ -204,14 +204,6 @@
     </children>
   </grid>
   <buttonGroups>
-    <group name="myTarget">
-      <member id="ac981"/>
-      <member id="ac981"/>
-      <member id="c72f5"/>
-    </group>
-    <group name="myType">
-      <member id="a8fd9"/>
-    </group>
     <group name="fillGroup">
       <member id="adc3f"/>
       <member id="adc3f"/>
@@ -219,14 +211,19 @@
       <member id="fc37b"/>
     </group>
     <group name="placeGroup">
-      <member id="b2175"/>
-      <member id="b2175"/>
-      <member id="77b44"/>
-      <member id="f09c6"/>
       <member id="1eb66"/>
-      <member id="961d9"/>
-      <member id="683fb"/>
-      <member id="2830"/>
+      <member id="1eb66"/>
+      <member id="f12cb"/>
+      <member id="afbf3"/>
+      <member id="e887a"/>
+      <member id="f14df"/>
+      <member id="c1a73"/>
+      <member id="72548"/>
+    </group>
+    <group name="targetGroup">
+      <member id="ac981"/>
+      <member id="ac981"/>
+      <member id="c72f5"/>
     </group>
   </buttonGroups>
 </form>
