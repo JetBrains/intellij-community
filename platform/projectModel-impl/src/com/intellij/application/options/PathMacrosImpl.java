@@ -130,7 +130,8 @@ public class PathMacrosImpl extends PathMacros implements PersistentStateCompone
     "SelectionEndLine",
     "SelectionStartColumn",
     "SelectionEndColumn",
-    "PyInterpreterDirectory"
+    "PyInterpreterDirectory",
+    "ExecutableByFileExt"
   );
 
   public PathMacrosImpl() {
