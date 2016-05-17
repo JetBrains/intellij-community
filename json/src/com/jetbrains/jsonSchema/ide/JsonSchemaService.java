@@ -24,7 +24,7 @@ public interface JsonSchemaService {
       return ServiceManager.getService(project, JsonSchemaService.class);
     }
     public static JsonSchemaServiceEx getEx(@NotNull Project project) {
-      return (JsonSchemaServiceEx) ServiceManager.getService(project, JsonSchemaService.class);
+      return (JsonSchemaServiceEx) get(project);
     }
   }
 
