@@ -21,10 +21,8 @@ import com.intellij.execution.TestStateStorage;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.containers.ContainerUtil;
 
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
@@ -122,32 +120,4 @@ public class RecentTestsListProvider {
     }
     return null;
   }
-}
-
-
-class TestComparators {
-
-  public static Comparator<TestInfo> BY_PATH_COMPARATOR = new Comparator<TestInfo>() {
-    @Override
-    public int compare(TestInfo o1, TestInfo o2) {
-      String path1 = VirtualFileManager.extractPath(o1.getUrl());
-      String path2 = VirtualFileManager.extractPath(o2.getUrl());
-      return path1.compareTo(path2);
-    }
-  };
-
-  public static Comparator<SuiteInfo> SUITE_BY_RECENT_COMPARATOR = new Comparator<SuiteInfo>() {
-    @Override
-    public int compare(SuiteInfo o1, SuiteInfo o2) {
-      return -o1.getMostRecentRunDate().compareTo(o2.getMostRecentRunDate());
-    }
-  };
-
-  public static Comparator<RecentTestsPopupEntry> TEST_BY_RECENT_COMPARATOR = new Comparator<RecentTestsPopupEntry>() {
-    @Override
-    public int compare(RecentTestsPopupEntry o1, RecentTestsPopupEntry o2) {
-      return -o1.getRunDate().compareTo(o2.getRunDate());
-    }
-  };
-  
 }

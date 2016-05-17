@@ -69,39 +69,11 @@ class RecentTestsData {
     return null
   }
 
-  
   fun getTestsToShow(): List<RecentTestsPopupEntry> {
     distributeUnmatchedTests()
     val packsByDate = suitePacks.values.sortedByDescending { it.runDate }
-    return packsByDate
+    return packsByDate.fold(listOf(), { list, pack -> list + pack.entriesToShow() })
   }
-  
-  private fun suiteToTestList(suite: SuiteInfo): List<RecentTestsPopupEntry> {
-    val result = ContainerUtil.newArrayList<RecentTestsPopupEntry>()
-
-    if (suite.canTrustSuiteMagnitude() && suite.isPassed) {
-      result.add(suite)
-      return result
-    }
-
-    val failedTests = suite.failedTests
-    //sortTestsByRecent(failedTests)
-
-    if (failedTests.size == suite.totalTestsCount) {
-      result.add(suite)
-    }
-    else if (failedTests.size < 3) {
-      result.addAll(failedTests)
-      result.add(suite)
-    }
-    else {
-      result.add(suite)
-      result.addAll(failedTests)
-    }
-
-    return result
-  }
-
 
   private fun distributeUnmatchedTests() {
     val noSuites = ContainerUtil.newSmartList<TestInfo>()
@@ -119,4 +91,24 @@ class RecentTestsData {
 
     testsWithoutSuites = noSuites
   }
+}
+
+fun SuitePackInfo.entriesToShow(): List<RecentTestsPopupEntry> {
+  if (suites.size == 1) {
+    return suites[0].entriesToShow()
+  }
+
+  val failedSuites = suites.filter { it.failedTests.size > 0 }
+  if (failedSuites.size == 0) {
+    return listOf(this)
+  }
+  return failedSuites + this
+}
+
+fun SuiteInfo.entriesToShow(): List<RecentTestsPopupEntry> {
+  val failed = failedTests
+  if (failed.size > 0) {
+    return failed.sortedByDescending { it.runDate } + this
+  }
+  return listOf(this)
 }

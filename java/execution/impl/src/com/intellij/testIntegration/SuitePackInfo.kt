@@ -36,64 +36,24 @@ open class TestInfo(val url: String, override val magnitude: TestStateInfo.Magni
   override val presentation = VirtualFileManager.extractPath(url)
   override val testsUrls = listOf(url)
 
-  override fun run(runner: RecentTestRunner) {
-    runner.run(url)
+  override fun run(runner: RecentTestRunner) { 
+    runner.run(url) 
   }
 }
 
 class SuiteInfo(url: String, magnitude: TestStateInfo.Magnitude, runDate: Date) : TestInfo(url, magnitude, runDate) {
 
-  private val tests = ContainerUtil.newHashSet<TestInfo>()
+  private val tests = hashSetOf<TestInfo>()
 
   override val testsUrls: List<String>
     get() = tests.fold(listOf<String>(), { acc, testEntry -> acc + testEntry.testsUrls })
-
   
   val suiteName = VirtualFileManager.extractPath(url)
-
-  val mostRecentRunDate: Date
-    get() {
-      var mostRecent = runDate
-      for (test in tests) {
-        val testDate = test.runDate
-        if (testDate.compareTo(mostRecent) > 0) {
-          mostRecent = testDate
-        }
-      }
-      return mostRecent
-    }
-
-
-  fun canTrustSuiteMagnitude(): Boolean {
-    val suiteRunDate = runDate
-    for (test in tests) {
-      if (test.runDate.time > suiteRunDate.time) {
-        return false
-      }
-    }
-    return true
-  }
-  
-  val isPassed: Boolean
-    get() = magnitude == IGNORED_INDEX || magnitude == PASSED_INDEX || magnitude == COMPLETE_INDEX
   
   val failedTests: List<TestInfo>
-    get() {
-      val failed = ContainerUtil.newSmartList<TestInfo>()
-      for (test in tests) {
-        if (test.magnitude == FAILED_INDEX || test.magnitude == ERROR_INDEX) {
-          failed.add(test)
-        }
-      }
-      return failed
-    }
-
-  fun addTest(info: TestInfo) {
-    tests.add(info)
-  }
-
-  val totalTestsCount: Int
-    get() = tests.size
+    get() = tests.filter { it.magnitude == FAILED_INDEX || it.magnitude == ERROR_INDEX }
+  
+  fun addTest(info: TestInfo) = tests.add(info)
 
   override val presentation = VirtualFileManager.extractPath(url)
 
