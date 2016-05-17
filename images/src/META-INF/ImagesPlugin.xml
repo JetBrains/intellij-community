@@ -41,9 +41,10 @@
             description="Show a chessboard on transparent image parts">
     </action>
     <action class="org.intellij.images.editor.actions.SetBackgroundImageAction"
-            id="Images.SetBackgroundImageAction"
+            id="Images.SetBackgroundImage"
             text="Set Background Image">
       <add-to-group group-id="ProjectViewPopupMenu"/>
+      <add-to-group group-id="EditorPopupMenu3"/>
     </action>
     <group id="Images.EditorToolbar">
       <reference id="Images.ToggleTransparencyChessboard"/>
@@ -81,7 +82,7 @@
       <separator/>
       <reference id="Images.EditorToolbar"/>
       <separator/>
-      <reference id="CloseEditor"/>
+      <reference id="Images.SetBackgroundImage"/>
       <separator/>
       <reference id="AddToFavorites"/>
       <separator/>
