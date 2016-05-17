@@ -16,6 +16,10 @@ public class RedundantMethodOverride extends S {
   public void m() {
     System.out.println();
   }
+
+  void n(int i) {
+    super.n(10);
+  }
 }
 class S {
 
@@ -30,17 +34,28 @@ class S {
   void m() {
     System.out.println();
   }
+
+  void n(int i) {
+    System.out.println(i);
+  }
 }
 class A {
   void f() {
     new X();
   }
 
+  void g() {}
+
   class X {}
 }
 class BB extends A {
   void f() {
     new X();
+  }
+
+  @Override
+  final void g() {
+    super.g();
   }
 
   class X {}
