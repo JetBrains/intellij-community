@@ -52,5 +52,6 @@
     <orderEntry type="module" module-name="xml-analysis-impl" />
     <orderEntry type="module" module-name="xml-psi-impl" />
     <orderEntry type="library" scope="TEST" name="KotlinTest" level="project" />
+    <orderEntry type="module" module-name="built-in-server-api" scope="TEST" />
   </component>
 </module>
