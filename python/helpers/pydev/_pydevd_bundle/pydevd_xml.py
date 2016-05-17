@@ -239,8 +239,8 @@ def var_to_xml(val, name, doTrim=True, additionalInXml=''):
     except:
         pass
 
-    if name.startswith("__pydevd_ret_val"):
-        name = name.split("__pydevd_ret_val")[1]
+    if name.startswith(RETURN_VALUES_PREFIX):
+        name = name.split(RETURN_VALUES_PREFIX)[1]
         xmlRetVal = ' isRetVal="True"'
     else:
         xmlRetVal = ''
