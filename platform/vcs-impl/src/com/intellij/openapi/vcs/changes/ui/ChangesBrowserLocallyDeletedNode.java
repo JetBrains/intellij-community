@@ -33,7 +33,9 @@ public class ChangesBrowserLocallyDeletedNode extends ChangesBrowserNode<Locally
   implements TreeLinkMouseListener.HaveTooltip {
   public ChangesBrowserLocallyDeletedNode(@NotNull LocallyDeletedChange userObject) {
     super(userObject);
-    myCount = 1;
+    if (!isDirectory()) {
+      myCount = 1;
+    }
   }
 
   public boolean canAcceptDrop(ChangeListDragBean dragBean) {
@@ -46,6 +48,11 @@ public class ChangesBrowserLocallyDeletedNode extends ChangesBrowserNode<Locally
   @Override
   protected FilePath getMyPath() {
     return getUserObject().getPath();
+  }
+
+  @Override
+  protected boolean isDirectory() {
+    return getUserObject().getPath().isDirectory();
   }
 
   @Override
