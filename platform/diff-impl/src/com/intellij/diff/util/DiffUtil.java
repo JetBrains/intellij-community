@@ -38,10 +38,12 @@ import com.intellij.diff.tools.util.base.HighlightPolicy;
 import com.intellij.diff.tools.util.base.IgnorePolicy;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.DataManager;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.CommandProcessor;
@@ -365,15 +367,6 @@ public class DiffUtil {
     return result.toString();
   }
 
-  public static void performAction(@NotNull AnAction action, @Nullable JComponent contextComponent) {
-    DataContext context = DataManager.getInstance().getDataContext(contextComponent);
-    AnActionEvent actionEvent = AnActionEvent.createFromAnAction(action, null, ActionPlaces.UNKNOWN, context);
-    action.update(actionEvent);
-    if (actionEvent.getPresentation().isEnabledAndVisible()) {
-      action.actionPerformed(actionEvent);
-    }
-  }
-
   public static void showSuccessPopup(@NotNull String message,
                                       @NotNull RelativePoint point,
                                       @NotNull Disposable disposable,
@@ -671,7 +664,7 @@ public class DiffUtil {
   }
 
   @NotNull
-  public static <T> int[] invertIndexes(@NotNull int[] indexes) {
+  public static int[] invertIndexes(@NotNull int[] indexes) {
     int[] inverted = new int[indexes.length];
     for (int i = 0; i < indexes.length; i++) {
       inverted[indexes[i]] = i;
@@ -1137,14 +1130,10 @@ public class DiffUtil {
     return null;
   }
 
-  public static void addNotification(@NotNull JComponent component, @NotNull UserDataHolder holder) {
-    List<JComponent> components = holder.getUserData(DiffUserDataKeys.NOTIFICATIONS);
-    if (components == null) {
-      holder.putUserData(DiffUserDataKeys.NOTIFICATIONS, Collections.singletonList(component));
-    }
-    else {
-      holder.putUserData(DiffUserDataKeys.NOTIFICATIONS, ContainerUtil.append(components, component));
-    }
+  public static void addNotification(@Nullable JComponent component, @NotNull UserDataHolder holder) {
+    if (component == null) return;
+    List<JComponent> oldComponents = ContainerUtil.notNullize(holder.getUserData(DiffUserDataKeys.NOTIFICATIONS));
+    holder.putUserData(DiffUserDataKeys.NOTIFICATIONS, ContainerUtil.append(oldComponents, component));
   }
 
   @NotNull

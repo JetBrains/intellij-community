@@ -1757,6 +1757,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   }
 
   private void doInvalidateIndicesForFile(@NotNull final VirtualFile file, boolean contentChanged) {
+    waitUntilIndicesAreInitialized();
     cleanProcessedFlag(file);
 
     final int fileId = Math.abs(getIdMaskingNonIdBasedFile(file));

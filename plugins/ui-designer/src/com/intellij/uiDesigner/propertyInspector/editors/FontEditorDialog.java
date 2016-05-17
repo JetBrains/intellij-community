@@ -92,7 +92,7 @@ public class FontEditorDialog extends DialogWrapper {
     });
     mySwingFontList.setListData(collectSwingFontDescriptors());
     mySwingFontList.setCellRenderer(new ColoredListCellRenderer() {
-      protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+      protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
         FontDescriptor descriptor = (FontDescriptor) value;
         clear();
         append(descriptor.getSwingFont(),

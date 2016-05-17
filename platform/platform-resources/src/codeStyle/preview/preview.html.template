@@ -12,12 +12,12 @@
 </head>
 
 <body class="resharperbg">
-<div id="container">
+<div id=container>
 
-   <div id="top">
-       <div id="logo"><a href="../index.html"><img src="../img/logo_bw.gif" width="124" height="44" alt="JetBrains home"/></a></div>
+   <div id='top'>
+       <div id='logo'><a href="../index.html"><img src="../img/logo_bw.gif" width="124" height="44" alt="JetBrains home"/></a></div>
 
-        <div id="nav">
+        <div id=nav>
             <ul id="topnav">
                 <li class="home"><a href="../index.html">Home</a></li>
                 <li class="act"><a href="../products.html">Products</a></li>
@@ -75,7 +75,7 @@
 
         <div id="quote">
                 <p class="text">&quot;If you are a C# developer you simply owe it to yourself to get this tool. It has
-                dramatically made my life better (SERIOUSLY!). I put it up there with amazing tools…&quot;</p>
+                dramatically made my life better (SERIOUSLY!). I put it up there with amazing toolsï¿½&quot;</p>
                 <p class="author"><a target="" href="http://agiledamon.blogspot.com/2004/09/my-latest-net-developers-best-friend.html">Damon Wilder Carr</a>, <br/>Chief Technologist and CEO,<br/> Agilerfactor</p>
         </div>
         <p class="spacer"></p>
@@ -121,7 +121,7 @@
                 <p>Refactoring can significantly improve your code design and efficiency. ReSharper's automated refactoring
                 support takes care of code consistency and compilability after even the most dramatic modifications.</p>
                 <p>ReSharper supports the following types of refactoring:</p>
-                <p><a href="features/refactoring.html">More about this feature…</a></p>
+                <p><a href="features/refactoring.html">More about this featureï¿½</a></p>
             </div>
 
             <p>To get the full story on ReSharper&#146;s feature set, please visit the <a href="features/index.html">Features</a> page.</p>
@@ -131,7 +131,7 @@
             handwork, giving you more time to focus on the task at hand. Its robust set of features for automatic error-checking
             and code correction cuts development time and increases  your  efficiency.  You'll find that ReSharper quickly
             pays back it's cost in increased developer productivity and improved code quality.</p>
-            <p>The wait is over… ReSharper is here and now C# developers can experience what we mean when we say
+            <p>The wait is overï¿½ ReSharper is here and now C# developers can experience what we mean when we say
             "Develop with pleasure!" <a href="download">Download a copy today</a>!</p>
         </div>
 

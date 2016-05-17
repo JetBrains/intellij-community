@@ -16,6 +16,7 @@
 package com.intellij.psi.codeStyle.arrangement;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingModel;
@@ -194,12 +195,14 @@ public abstract class AbstractRearrangerTest extends LightPlatformCodeInsightFix
       new StdArrangementExtendableSettings(groupingRules, sectionRules, aliases);
     settings.setArrangementSettings(arrangementSettings);
     ArrangementEngine engine = ServiceManager.getService(myFixture.getProject(), ArrangementEngine.class);
-    engine.arrange(myFixture.getEditor(), myFixture.getFile(), info.ranges);
+    CommandProcessor.getInstance().executeCommand(getProject(), ()-> {
+    engine.arrange(myFixture.getEditor(), myFixture.getFile(), info.ranges);}, null, null);
+
 
     // Check expectation.
-    info = parse(expected);
-    assertEquals(info.text, myFixture.getEditor().getDocument().getText());
-    for (FoldingInfo it : info.foldings) {
+    Info after = parse(expected);
+    assertEquals(after.text, myFixture.getEditor().getDocument().getText());
+    for (FoldingInfo it : after.foldings) {
       FoldRegion foldRegion = foldingModel.getCollapsedRegionAtOffset(it.start);
       assertNotNull("Expected to find fold region at offset " + it.start, foldRegion);
       assertEquals(it.end, foldRegion.getEndOffset());

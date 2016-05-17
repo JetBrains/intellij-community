@@ -19,14 +19,19 @@ import java.util.regex.Pattern
 target('default': 'Downloads custom JRE build from Teamcity server') {
   def buildId = new URL("$jreTeamcityUrl/buildTypes/id:$jreBuildTypeId/builds/tags:$jreBuildTag/id").text
   def buildNumber = new URL("$jreTeamcityUrl/builds/id:$buildId/number").text
-  java(jvm: "$workIdeaHome/jre/jre/bin/java", fork: "true", classname: "dummy", outputproperty: "jvmVersionOutput") {
+  java(jvm: jreArtifactPlatform == "mac" ? "$workIdeaHome/jre/jdk/Contents/Home/jre/bin/java" : "$workIdeaHome/jre/jre/bin/java",
+       fork: "true", classname: "dummy", outputproperty: "jvmVersionOutput") {
     jvmarg(value: "-version")
   }
-  if (hasProperty("jvmVersionOutput") &&
-      jvmVersionOutput =~ /\(build .*release-b${Pattern.quote(buildNumber)}\)/ &&
-      jvmVersionOutput =~ (jreArchitecture == "64" ? /OpenJDK 64-Bit Server VM/ : /OpenJDK Server VM/)) {
-    echo "Latest version of custom JRE is installed, no update is required"
-    return
+  try {
+    if (jvmVersionOutput =~ /\(build .*release-b${Pattern.quote(buildNumber)}\)/ &&
+        jvmVersionOutput =~ (jreArchitecture == "64" ? /OpenJDK 64-Bit Server VM/ : /OpenJDK Server VM/)) {
+      echo "Latest version of custom JRE is installed, no update is required"
+      return
+    }
+  }
+  catch (MissingPropertyException ignored) {
+    echo "Could'nt determine existing JRE version"
   }
   def files = new XmlSlurper().parse("$jreTeamcityUrl/builds/id:$buildId/artifacts/children/$jreArtifactPlatform")
   def artifact = files.children().collect { it.@name.text() }.find {

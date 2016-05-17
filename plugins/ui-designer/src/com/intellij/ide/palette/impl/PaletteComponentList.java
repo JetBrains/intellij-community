@@ -30,6 +30,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -264,7 +265,7 @@ public class PaletteComponentList extends JBList {
   }
 
   private static class ComponentCellRenderer extends ColoredListCellRenderer {
-    protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+    protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
       PaletteItem paletteItem = (PaletteItem) value;
       clear();
       paletteItem.customizeCellRenderer(this, selected, hasFocus);

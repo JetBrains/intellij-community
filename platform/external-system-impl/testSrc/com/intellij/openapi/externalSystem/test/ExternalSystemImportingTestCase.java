@@ -74,11 +74,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public abstract class ExternalSystemImportingTestCase extends ExternalSystemTestCase {
 
-  @Override
-  protected void setUpInWriteAction() throws Exception {
-    super.setUpInWriteAction();
-  }
-
   protected void assertModules(String... expectedNames) {
     Module[] actual = ModuleManager.getInstance(myProject).getModules();
     List<String> actualNames = new ArrayList<String>();

@@ -30,6 +30,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.fileEditor.impl.text.FileDropHandler;
@@ -101,7 +102,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
       public ActionGroup get() {
         return (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EDITOR_TAB_POPUP);
       }
-    }, ActionPlaces.EDITOR_TAB_POPUP, false).setNavigationActionsEnabled(false).addTabMouseListener(new TabMouseListener()).getPresentation()
+    }, ActionPlaces.EDITOR_TAB_POPUP, false).addTabMouseListener(new TabMouseListener()).getPresentation()
       .setTabDraggingEnabled(true).setUiDecorator(new UiDecorator() {
       @Override
       @NotNull
@@ -340,7 +341,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     TabInfo tab = myTabs.findInfo(file);
     if (tab != null) return;
 
-    tab = new TabInfo(comp).setText(calcTabTitle(myProject, file)).setIcon(icon).setTooltipText(tooltip).setObject(file)
+    tab = new TabInfo(comp).setText(calcTabTitle(myProject, file, true)).setIcon(icon).setTooltipText(tooltip).setObject(file)
       .setTabColor(calcTabColor(myProject, file)).setDragOutDelegate(myDragOutDelegate);
     tab.setTestableUi(new MyQueryable(tab));
 
@@ -384,6 +385,10 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
   }
 
   public static String calcTabTitle(final Project project, final VirtualFile file) {
+    return calcTabTitle(project, file, true);
+  }
+
+  public static String calcTabTitle(final Project project, final VirtualFile file, boolean skipNonOpenedFiles) {
     for (EditorTabTitleProvider provider : Extensions.getExtensions(EditorTabTitleProvider.EP_NAME)) {
       final String result = provider.getEditorTabTitle(project, file);
       if (result != null) {
@@ -392,6 +397,15 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     }
 
     return file.getPresentableName();
+  }
+  public static String calcFileName(final Project project,final  VirtualFile file) {
+    for (EditorTabTitleProvider provider : Extensions.getExtensions(EditorTabTitleProvider.EP_NAME)) {
+      final String result = provider.getEditorTabTitle(project, file);
+      if (result != null) {
+        return result;
+      }
+    }
+    return UniqueVFilePathBuilder.getInstance().getUniqueVirtualFilePath(project, file);
   }
 
   @Nullable
@@ -525,7 +539,15 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
         final TabInfo info = myTabs.findInfo(e);
         if (info != null) {
           IdeEventQueue.getInstance().blockNextEvents(e);
-          FileEditorManagerEx.getInstanceEx(myProject).closeFile((VirtualFile)info.getObject(), myWindow);
+          if (e.isAltDown() && e.getButton() == MouseEvent.BUTTON1) {//close others
+            List<TabInfo> allTabInfos = myTabs.getTabs();
+            for (TabInfo tabInfo : allTabInfos) {
+              if (tabInfo == info) continue;
+              FileEditorManagerEx.getInstanceEx(myProject).closeFile((VirtualFile)tabInfo.getObject(), myWindow);
+            }
+          } else {
+            FileEditorManagerEx.getInstanceEx(myProject).closeFile((VirtualFile)info.getObject(), myWindow);
+          }
         }
       }
     }

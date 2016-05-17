@@ -44,6 +44,7 @@ import com.intellij.util.SystemProperties;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
 import javax.swing.*;
 import java.awt.*;
@@ -178,9 +179,7 @@ public class ProjectUtil {
     }
 
     if (isRemotePath(path) && !RecentProjectsManager.getInstance().hasPath(path)) {
-      String msg = IdeBundle.message("warning.load.project.from.share", path);
-      String title = IdeBundle.message("title.load.project.from.share");
-      if (!confirmLoadingFromRemotePath(msg, title)) {
+      if (!confirmLoadingFromRemotePath(path, "warning.load.project.from.share", "title.load.project.from.share")) {
         return null;
       }
     }
@@ -207,14 +206,21 @@ public class ProjectUtil {
     return project;
   }
 
-  public static boolean confirmLoadingFromRemotePath(@NotNull String msg, @NotNull String title) {
+  public static boolean confirmLoadingFromRemotePath(@NotNull String path,
+                                                     @NotNull @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String msgKey,
+                                                     @NotNull @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String titleKey) {
+    return showYesNoDialog(IdeBundle.message(msgKey, path), titleKey);
+  }
+
+  public static boolean showYesNoDialog(@NotNull String message, @NotNull @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String titleKey) {
     final Window window = getActiveFrameOrWelcomeScreen();
     final Icon icon = Messages.getWarningIcon();
-    final int answer = window == null ? Messages.showYesNoDialog(msg, title, icon) : Messages.showYesNoDialog(window, msg, title, icon);
+    String title = IdeBundle.message(titleKey);
+    final int answer = window == null ? Messages.showYesNoDialog(message, title, icon) : Messages.showYesNoDialog(window, message, title, icon);
     return answer == Messages.YES;
   }
 
-  private static Window getActiveFrameOrWelcomeScreen() {
+  public static Window getActiveFrameOrWelcomeScreen() {
     Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
     if (window != null)  return window;
 

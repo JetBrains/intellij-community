@@ -11,6 +11,7 @@ class BuiltInServerConfigurableUi implements ConfigurableUi<BuiltInServerOptions
 
   private PortField builtInServerPort;
   private JCheckBox builtInServerAvailableExternallyCheckBox;
+  private JCheckBox allowUnsignedRequestsCheckBox;
 
   public BuiltInServerConfigurableUi() {
     builtInServerPort.setMin(1024);
@@ -25,12 +26,14 @@ class BuiltInServerConfigurableUi implements ConfigurableUi<BuiltInServerOptions
   @Override
   public boolean isModified(@NotNull BuiltInServerOptions settings) {
     return builtInServerPort.getNumber() != settings.builtInServerPort ||
-           builtInServerAvailableExternallyCheckBox.isSelected() != settings.builtInServerAvailableExternally;
+           builtInServerAvailableExternallyCheckBox.isSelected() != settings.builtInServerAvailableExternally ||
+           allowUnsignedRequestsCheckBox.isSelected() != settings.allowUnsignedRequests;
   }
 
   @Override
   public void apply(@NotNull BuiltInServerOptions settings) {
     boolean builtInServerPortChanged = settings.builtInServerPort != builtInServerPort.getNumber() || settings.builtInServerAvailableExternally != builtInServerAvailableExternallyCheckBox.isSelected();
+    settings.allowUnsignedRequests = allowUnsignedRequestsCheckBox.isSelected();
     if (builtInServerPortChanged) {
       settings.builtInServerPort = builtInServerPort.getNumber();
       settings.builtInServerAvailableExternally = builtInServerAvailableExternallyCheckBox.isSelected();
@@ -43,5 +46,6 @@ class BuiltInServerConfigurableUi implements ConfigurableUi<BuiltInServerOptions
   public void reset(@NotNull BuiltInServerOptions settings) {
     builtInServerPort.setNumber(settings.builtInServerPort);
     builtInServerAvailableExternallyCheckBox.setSelected(settings.builtInServerAvailableExternally);
+    allowUnsignedRequestsCheckBox.setSelected(settings.allowUnsignedRequests);
   }
 }

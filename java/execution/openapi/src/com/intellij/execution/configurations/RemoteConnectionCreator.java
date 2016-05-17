@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.util.treeView;
+package com.intellij.execution.configurations;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.execution.runners.ExecutionEnvironment;
 
-/**
- * @author Mike
- */
-public class XmlDoctypeNodeDescriptor  extends SmartElementDescriptor {
-  public XmlDoctypeNodeDescriptor(@NotNull Project project, NodeDescriptor parentDescriptor, PsiElement element) {
-    super(project, parentDescriptor, element);
-    //noinspection HardCodedStringLiteral
-    myName = "DOCTYPE";
-  }
+public interface RemoteConnectionCreator {
+  RemoteConnection createRemoteConnection(ExecutionEnvironment environment);
+
+  boolean isPollConnection();
 }

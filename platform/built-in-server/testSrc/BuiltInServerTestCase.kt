@@ -55,6 +55,7 @@ internal abstract class BuiltInServerTestCase {
 
 internal fun testUrl(url: String, expectedStatus: HttpResponseStatus): HttpURLConnection {
   val connection = URL(url).openConnection() as HttpURLConnection
+  BuiltInServerManager.getInstance().configureRequestToWebServer(connection)
   assertThat(HttpResponseStatus.valueOf(connection.responseCode)).isEqualTo(expectedStatus)
   return connection
 }

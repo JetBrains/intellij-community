@@ -73,6 +73,11 @@ public final class Urls {
   }
 
   @NotNull
+  public static Url newHttpUrl(@NotNull String authority, @Nullable String path, @Nullable String parameters) {
+    return new UrlImpl("http", authority, path, parameters);
+  }
+
+  @NotNull
   public static Url newUrl(@NotNull String scheme, @NotNull String authority, @Nullable String path) {
     return new UrlImpl(scheme, authority, path);
   }

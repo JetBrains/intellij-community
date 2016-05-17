@@ -172,7 +172,12 @@ public class _GroovyDocLexer implements FlexLexer {
   /** 
    * Translates characters to character classes
    */
-  private static final char [] ZZ_CMAP = zzUnpackCMap(ZZ_CMAP_PACKED);
+  private static final int ZZ_SX = 0x0700;
+  private static final int ZZ_MX = 0x10000;
+  private static final int ZZ_LX = 0x110000;
+  private static char [] ZZ_CMAP = zzUnpackCMap(ZZ_CMAP_PACKED, ZZ_SX);
+  private static class M { static final char [] MAP = zzUnpackCMap(ZZ_CMAP_PACKED, ZZ_MX); }
+  private static class L { static final char [] MAP = zzUnpackCMap(ZZ_CMAP_PACKED, ZZ_LX); }
 
   /** 
    * Translates DFA states to action switch labels.
@@ -394,14 +399,14 @@ public class _GroovyDocLexer implements FlexLexer {
    * @param packed   the packed character translation table
    * @return         the unpacked character translation table
    */
-  private static char [] zzUnpackCMap(String packed) {
-    char [] map = new char[0x110000];
+  private static char [] zzUnpackCMap(String packed, int limit) {
+    char [] map = new char[limit];
     int i = 0;  /* index in packed string  */
     int j = 0;  /* index in unpacked array */
-    while (i < 2152) {
+    while (i < 2152 && j < limit) {
       int  count = packed.charAt(i++);
       char value = packed.charAt(i++);
-      do map[j++] = value; while (--count > 0);
+      do map[j++] = value; while (--count > 0 && j < limit);
     }
     return map;
   }
@@ -529,18 +534,6 @@ public class _GroovyDocLexer implements FlexLexer {
 
 
   /**
-   * Contains user EOF-code, which will be executed exactly once,
-   * when the end of file is reached
-   */
-  private void zzDoEOF() {
-    if (!zzEOFDone) {
-      zzEOFDone = true;
-    
-    }
-  }
-
-
-  /**
    * Resumes scanning until the next regular expression is matched,
    * the end of input is encountered or an I/O-Error occurs.
    *
@@ -608,6 +601,7 @@ public class _GroovyDocLexer implements FlexLexer {
               zzCurrentPosL += Character.charCount(zzInput);
             }
           }
+          if (zzInput >= zzCMapL.length) ZZ_CMAP = zzCMapL = zzInput >= ZZ_MX ? L.MAP : M.MAP;
           int zzNext = zzTransL[ zzRowMapL[zzState] + zzCMapL[zzInput] ];
           if (zzNext == -1) break zzForAction;
           zzState = zzNext;
@@ -627,7 +621,6 @@ public class _GroovyDocLexer implements FlexLexer {
 
       if (zzInput == YYEOF && zzStartRead == zzCurrentPos) {
         zzAtEOF = true;
-        zzDoEOF();
         return null;
       }
       else {

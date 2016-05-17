@@ -121,7 +121,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
     }
 
     @Override
-    protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+    protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
       Color bgColor = UIUtil.getListBackground();
       Color color = list.getForeground();
       setPaintFocusBorder(hasFocus && UIUtil.isToUseDottedCellBorder() && myFocusBorderEnabled);

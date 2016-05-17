@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide;
+package com.siyeh.ig.threading;
 
-import com.intellij.openapi.extensions.AbstractExtensionPointBean;
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
+import junit.framework.TestCase;
+import org.jetbrains.annotations.Nullable;
 
-public class XmlRpcHandlerBean extends AbstractExtensionPointBean {
-  public static final ExtensionPointName<XmlRpcHandlerBean> EP_NAME = ExtensionPointName.create("com.intellij.xmlRpcHandler");
+/**
+ * @author Bas Leijdekkers
+ */
+public class SafeLockInspectionTest extends LightInspectionTestCase {
 
-  @Attribute("name")
-  public String name;
+  public void testSafeLock() {
+    doTest();
+  }
 
-  @Attribute("implementation")
-  public String implementation;
+  @Nullable
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    return new SafeLockInspection();
+  }
 }

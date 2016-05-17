@@ -96,7 +96,7 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
 
     myThisType = PsiImplUtil.getQualifierType(ref);
     myTypeArguments = ref.getTypeArguments();
-    if (kinds.contains(GroovyResolveKind.METHOD)) {
+    if (kinds.contains(GroovyResolveKind.METHOD) || myIsLValue) {
       myArgumentTypesNonErased = PsiUtil.getArgumentTypes(ref, false, myUpToArgument, false);
       myArgumentTypes = eraseTypes(myArgumentTypesNonErased);
     }
@@ -170,7 +170,8 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
 
       if (kind == GroovyResolveKind.METHOD || kind == GroovyResolveKind.PROPERTY) {
         final PsiMethod method = (PsiMethod)namedElement;
-        final boolean isApplicable = kind == GroovyResolveKind.PROPERTY || isApplicable(myArgumentTypes, method, null, myRef, true);
+        final boolean isApplicable = kind == GroovyResolveKind.PROPERTY && !myIsLValue
+                                     || isApplicable(myArgumentTypes, method, null, myRef, true);
 
         final NotNullComputable<PsiSubstitutor> substitutorComputer;
         if (kind == GroovyResolveKind.METHOD) {

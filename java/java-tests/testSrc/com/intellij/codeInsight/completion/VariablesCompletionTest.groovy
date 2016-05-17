@@ -177,6 +177,11 @@ public class VariablesCompletionTest extends LightFixtureCompletionTestCase {
     assertStringItems("preferencePolicy", "policy", "aPreferencePolicy");
   }
 
+  public void testSuggestVariablesInTypePosition() {
+    configure();
+    assertStringItems("myField", "myField2");
+  }
+
   public void configure() {
     configureByFile(FILE_PREFIX + getTestName(false) + ".java")
   }

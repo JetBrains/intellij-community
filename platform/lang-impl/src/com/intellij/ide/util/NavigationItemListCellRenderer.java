@@ -41,6 +41,7 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.text.Matcher;
 import com.intellij.util.text.MatcherHolder;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -124,7 +125,7 @@ public class NavigationItemListCellRenderer extends OpaquePanel implements ListC
 
     @Override
     protected void customizeCellRenderer(
-      JList list,
+      @NotNull JList list,
       Object value,
       int index,
       boolean selected,

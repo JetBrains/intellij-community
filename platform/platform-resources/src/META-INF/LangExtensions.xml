@@ -626,7 +626,7 @@
 
     <enterHandlerDelegate implementation="com.intellij.codeInsight.editorActions.enter.EnterInStringLiteralHandler"/>
     <enterHandlerDelegate implementation="com.intellij.codeInsight.editorActions.enter.EnterInLineCommentHandler"/>
-    <enterHandlerDelegate implementation="com.intellij.codeInsight.editorActions.enter.EnterAfterUnmatchedBraceHandler"/>
+    <enterHandlerDelegate implementation="com.intellij.codeInsight.editorActions.enter.EnterAfterUnmatchedBraceHandler" id="afterUnmatchedBrace"/>
     <enterHandlerDelegate implementation="com.intellij.codeInsight.editorActions.enter.EnterBetweenBracesHandler"
                           id="EnterBetweenBracesHandler"/>
     <enterHandlerDelegate implementation="com.intellij.codeInsight.editorActions.enter.EnterAfterJavadocTagHandler"/>

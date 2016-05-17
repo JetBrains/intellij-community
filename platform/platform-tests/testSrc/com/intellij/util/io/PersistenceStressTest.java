@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -112,7 +113,7 @@ public class PersistenceStressTest extends LightPlatformCodeInsightFixtureTestCa
       File file = FileUtil.createTempFile("", ".txt");
       VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
       assertNotNull(virtualFile);
-      VfsUtil.saveText(virtualFile, "foo bar");
+      PlatformTestCase.setFileText(virtualFile, "foo bar");
       files.add(virtualFile);
     }
 

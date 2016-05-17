@@ -289,10 +289,12 @@ public class PsiUtil {
         return getArgumentTypes(argList.getNamedArguments(), argList.getExpressionArguments(), GrClosableBlock.EMPTY_ARRAY, nullAsBottom, stopAt, byShape);
       }
     }
-    else if (parent instanceof GrBinaryExpression) {
-      GrExpression right = ((GrBinaryExpression)parent).getRightOperand();
+    else if (parent instanceof GrBinaryExpression || parent instanceof GrAssignmentExpression) {
+      GrExpression right = parent instanceof GrBinaryExpression
+                           ? ((GrBinaryExpression)parent).getRightOperand()
+                           : ((GrAssignmentExpression)parent).getRValue();
       PsiType type = right != null ? right.getType() : null;
-      return new PsiType[] {notNullizeType(type, nullAsBottom, parent)};
+      return new PsiType[]{notNullizeType(type, nullAsBottom, parent)};
     }
 
     return null;

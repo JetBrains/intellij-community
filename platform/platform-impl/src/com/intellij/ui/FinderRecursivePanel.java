@@ -395,7 +395,7 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
       }
 
       @Override
-      protected final void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+      protected final void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
       }
     };
   }

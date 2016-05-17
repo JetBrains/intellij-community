@@ -34,8 +34,6 @@ import com.intellij.psi.tree.IElementType;
 %unicode
 %function advance
 %type IElementType
-%eof{ return;
-%eof}
 
 %state COMMENT_DATA_START
 %state COMMENT_DATA

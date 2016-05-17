@@ -453,7 +453,7 @@ public class CreateResourceBundleDialogComponent {
   private static ColoredListCellRenderer<Locale> getLocaleRenderer() {
     return new ColoredListCellRenderer<Locale>() {
       @Override
-      protected void customizeCellRenderer(JList list, Locale locale, int index, boolean selected, boolean hasFocus) {
+      protected void customizeCellRenderer(@NotNull JList list, Locale locale, int index, boolean selected, boolean hasFocus) {
         if (PropertiesUtil.DEFAULT_LOCALE == locale) {
           append("Default locale");
         } else {

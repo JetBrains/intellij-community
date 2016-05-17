@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.impl.TextDrawingCallback;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
@@ -164,8 +165,16 @@ public interface EditorEx extends Editor {
 
   VirtualFile getVirtualFile();
 
+  /**
+   * @deprecated Use {@link #offsetToLogicalPosition(int)}
+   * or {@link EditorUtil#calcColumnNumber(Editor, CharSequence, int, int, int)} instead. To be removed in IDEA 2017.2.
+   */
   int calcColumnNumber(@NotNull CharSequence text, int start, int offset, int tabSize);
 
+  /**
+   * @deprecated Use {@link #offsetToLogicalPosition(int)}
+   * or {@link EditorUtil#calcColumnNumber(Editor, CharSequence, int, int, int)} instead. To be removed in IDEA 2017.2.
+   */
   int calcColumnNumber(int offset, int lineIndex);
 
   TextDrawingCallback getTextDrawingCallback();

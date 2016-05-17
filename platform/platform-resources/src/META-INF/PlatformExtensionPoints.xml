@@ -192,9 +192,6 @@
 
     <extensionPoint name="statistics.usagesCollector" interface="com.intellij.internal.statistic.UsagesCollector"/>
 
-    <!--suppress ExtensionPointBeanClass -->
-    <extensionPoint name="xmlRpcHandler" beanClass="com.intellij.ide.XmlRpcHandlerBean"/>
-
     <extensionPoint name="editorHighlighterProvider" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.openapi.fileTypes.EditorHighlighterProvider"/>
     </extensionPoint>
@@ -217,11 +214,11 @@
     <extensionPoint name="colorPickerListenerFactory" interface="com.intellij.ui.ColorPickerListenerFactory"/>
 
     <extensionPoint name="search.topHitProvider" interface="com.intellij.ide.SearchTopHitProvider"/>
-    
+
     <extensionPoint name="search.optionContributor" interface="com.intellij.ide.ui.search.SearchableOptionContributor"/>
 
     <extensionPoint name="ui.suitableFontProvider" interface="com.intellij.ui.SuitableFontProvider"/>
-    
+
     <extensionPoint name="schemeImporter" beanClass="com.intellij.openapi.options.SchemeImporterEP">
       <with attribute="schemeClass" implements="com.intellij.openapi.options.Scheme"/>
       <with attribute="implementationClass" implements="com.intellij.openapi.options.SchemeImporter"/>

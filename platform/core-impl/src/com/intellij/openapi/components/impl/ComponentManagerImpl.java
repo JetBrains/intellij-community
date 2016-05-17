@@ -139,7 +139,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return myComponentsCreated;
   }
 
-  protected synchronized final void disposeComponents() {
+  protected final synchronized void disposeComponents() {
     assert !myDisposeCompleted : "Already disposed!";
     myDisposed = true;
 
@@ -176,9 +176,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       // getComponent could be called during some component.dispose() call, in this case we don't attempt to instantiate component
       return (T)((ComponentConfigComponentAdapter)adapter).myInitializedComponentInstance;
     }
-    else {
-      return (T)adapter.getComponentInstance(getPicoContainer());
-    }
+    return (T)adapter.getComponentInstance(getPicoContainer());
   }
 
   @Override
@@ -269,7 +267,9 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   protected boolean isComponentSuitable(@Nullable Map<String, String> options) {
-    return options == null || (isComponentSuitableForOs(options.get("os")) && (!Boolean.parseBoolean(options.get("internal")) || ApplicationManager.getApplication().isInternal()));
+    return options == null ||
+           isComponentSuitableForOs(options.get("os")) &&
+           (!Boolean.parseBoolean(options.get("internal")) || ApplicationManager.getApplication().isInternal());
   }
 
   public static boolean isComponentSuitableForOs(@Nullable String os) {
@@ -378,7 +378,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   private ComponentConfigComponentAdapter getComponentAdapter(@NotNull Class<?> componentImplementation) {
     for (ComponentAdapter componentAdapter : ((DefaultPicoContainer)getPicoContainer()).getComponentAdapters()) {
       if (componentAdapter instanceof ComponentConfigComponentAdapter && componentAdapter.getComponentImplementation() == componentImplementation) {
-        return ((ComponentConfigComponentAdapter)componentAdapter);
+        return (ComponentConfigComponentAdapter)componentAdapter;
       }
     }
     return null;

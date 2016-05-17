@@ -454,7 +454,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
                     StringUtil.shortenTextWithEllipsis(details.getSubject(), 50, 0, "...") +
                     "\"</b> by " +
                     VcsUserUtil.getShortPresentation(details.getAuthor()) +
-                    DetailsPanel.formatDateTime(details.getAuthorTime());
+                    CommitPanel.formatDateTime(details.getAuthorTime());
     }
     return balloonText;
   }

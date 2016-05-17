@@ -5,7 +5,7 @@
 
     Note that it's a python script but it'll spawn a process to run as jython, ironpython and as python.
 '''
-from tests_python.debugger_unittest import get_free_port
+from tests_pydevd_python.debugger_unittest import get_free_port
 import threading
 
 
@@ -22,7 +22,7 @@ import unittest
 import os
 import sys
 import time
-from tests_python import debugger_unittest
+from tests_pydevd_python import debugger_unittest
 
 TEST_DJANGO = False
 if sys.version_info[:2] == (2, 7):

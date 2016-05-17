@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.wm.impl;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -26,6 +27,7 @@ import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter;
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
 import com.intellij.openapi.ui.AbstractPainter;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.Graphics2DDelegate;
 import com.intellij.ui.tabs.JBTabs;
@@ -49,7 +51,7 @@ import java.net.URL;
  */
 public class IdeBackgroundUtil {
 
-  public static final String BG_PROPERTY_PREFIX = "idea.wallpaper.";
+  public static final String BG_PROPERTY_PREFIX = "idea.background.";
 
   static {
     JBSwingUtilities.addGlobalCGTransform(new MyTransform());
@@ -140,6 +142,18 @@ public class IdeBackgroundUtil {
   public static Color getIdeBackgroundColor() {
     Color result = UIUtil.getSlightlyDarkerColor(UIUtil.getPanelBackground());
     return UIUtil.isUnderDarcula() ? new Color(40, 40, 41) : UIUtil.getSlightlyDarkerColor(UIUtil.getSlightlyDarkerColor(result));
+  }
+
+  public static void createTemporaryBackgroundTransform(JPanel root, String tmp, Disposable disposable) {
+    PaintersHelper paintersHelper = new PaintersHelper(root);
+    PaintersHelper.initWallpaperPainter(tmp, paintersHelper);
+    Disposer.register(disposable, JBSwingUtilities.addGlobalCGTransform(new PairFunction<JComponent, Graphics2D, Graphics2D>() {
+      @Override
+      public Graphics2D fun(JComponent t, Graphics2D v) {
+        if (!UIUtil.isAncestor(root, t)) return v;
+        return MyGraphics.wrap(v, paintersHelper, t);
+      }
+    }));
   }
 
   private static class MyGraphics extends Graphics2DDelegate {

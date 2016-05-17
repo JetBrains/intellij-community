@@ -44,6 +44,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.CacheOneStepIterator;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.Iterator;
@@ -134,7 +135,7 @@ class ShowDiffFromAnnotation extends DumbAwareAction implements UpToDateLineNumb
     }
   }
 
-  private static int findSelfInList(List<Change> changes, final FilePath filePath) {
+  private static int findSelfInList(@NotNull List<Change> changes, @NotNull FilePath filePath) {
     int idx = -1;
     for (int i = 0; i < changes.size(); i++) {
       final Change change = changes.get(i);
@@ -158,7 +159,10 @@ class ShowDiffFromAnnotation extends DumbAwareAction implements UpToDateLineNumb
     return idx;
   }
 
-  // for current line number
+  /*
+   * Locate line in annotated content, using lines that are known to be modified in this revision
+   */
+  @Nullable
   private DiffNavigationContext createDiffNavigationContext(int actualLine) {
     String annotatedContent = myFileAnnotation.getAnnotatedContent();
     if (StringUtil.isEmptyOrSpaces(annotatedContent)) return null;
@@ -177,7 +181,7 @@ class ShowDiffFromAnnotation extends DumbAwareAction implements UpToDateLineNumb
 
   private final static int ourVicinity = 5;
 
-  private int correctActualLineIfTextEmpty(final String[] contentsLines, final int actualLine) {
+  private int correctActualLineIfTextEmpty(@NotNull String[] contentsLines, final int actualLine) {
     final VcsRevisionNumber revision = myFileAnnotation.getLineRevisionNumber(actualLine);
     if (revision == null) return actualLine;
     if (!StringUtil.isEmptyOrSpaces(contentsLines[actualLine])) return actualLine;
@@ -203,15 +207,15 @@ class ShowDiffFromAnnotation extends DumbAwareAction implements UpToDateLineNumb
    * Slightly break the contract: can return null from next() while had claimed hasNext()
    */
   private static class ContextLineIterator implements Iterator<String> {
-    private final String[] myContentsLines;
+    @NotNull private final String[] myContentsLines;
 
     private final VcsRevisionNumber myRevisionNumber;
-    private final FileAnnotation myAnnotation;
+    @NotNull private final FileAnnotation myAnnotation;
     private final int myStopAtLine;
     // we assume file has at least one line ;)
     private int myCurrentLine;  // to start looking for next line with revision from
 
-    private ContextLineIterator(final String[] contentLines, final FileAnnotation annotation, final int stopAtLine) {
+    private ContextLineIterator(@NotNull String[] contentLines, @NotNull FileAnnotation annotation, int stopAtLine) {
       myAnnotation = annotation;
       myRevisionNumber = myAnnotation.originalRevision(stopAtLine);
       myStopAtLine = stopAtLine;

@@ -29,6 +29,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.ui.EnumComboBoxModel;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PlatformIcons;
@@ -68,6 +69,7 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
   private JBScrollPane myJBScrollPane;
   private JPanel myRightMarginPanel;
   private JComboBox myQuotesCombo;
+  private JBCheckBox myEnforceQuotesBox;
   private RightMarginForm myRightMarginForm;
 
   public CodeStyleHtmlPanel(CodeStyleSettings settings) {
@@ -91,7 +93,14 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     myInlineElementsTagNames.getTextField().setColumns(5);
     myDontBreakIfInlineContent.getTextField().setColumns(5);
 
-
+    myQuotesCombo.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        boolean quotesRequired = !CodeStyleSettings.QuoteStyle.None.equals(myQuotesCombo.getSelectedItem());
+        myEnforceQuotesBox.setEnabled(quotesRequired);
+        if (!quotesRequired) myEnforceQuotesBox.setSelected(false);
+      }
+    });
     addPanelToWatch(myPanel);
   }
 
@@ -166,6 +175,7 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     settings.HTML_KEEP_LINE_BREAKS = myShouldKeepBlankLines.isSelected();
     settings.HTML_KEEP_LINE_BREAKS_IN_TEXT = myShouldKeepLineBreaksInText.isSelected();
     settings.HTML_QUOTE_STYLE = (CodeStyleSettings.QuoteStyle)myQuotesCombo.getSelectedItem();
+    settings.HTML_ENFORCE_QUOTES = myEnforceQuotesBox.isSelected();
     myRightMarginForm.apply(settings);
   }
 
@@ -206,6 +216,7 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     myKeepWhiteSpacesTagNames.setText(settings.HTML_KEEP_WHITESPACES_INSIDE);
     myRightMarginForm.reset(settings);
     myQuotesCombo.setSelectedItem(settings.HTML_QUOTE_STYLE);
+    myEnforceQuotesBox.setSelected(settings.HTML_ENFORCE_QUOTES);
   }
 
   @Override
@@ -280,7 +291,8 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
       return true;
     }
 
-    return myRightMarginForm.isModified(settings);
+    return myRightMarginForm.isModified(settings) ||
+           myEnforceQuotesBox.isSelected() != settings.HTML_ENFORCE_QUOTES;
   }
 
   @Override

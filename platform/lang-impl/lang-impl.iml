@@ -30,5 +30,6 @@
     <orderEntry type="module" module-name="structure-view-impl" exported="" />
     <orderEntry type="library" name="commons-logging" level="project" />
     <orderEntry type="module" module-name="diff-impl" />
+    <orderEntry type="module" module-name="built-in-server-api" />
   </component>
 </module>

@@ -15,7 +15,9 @@
  */
 package com.intellij.openapi.wm.impl;
 
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.AbstractPainter;
@@ -157,11 +159,12 @@ final class PaintersHelper implements Painter.Listener {
   }
 
   public static void initWallpaperPainter(@NotNull String propertyName, @NotNull PaintersHelper painters) {
-    ImagePainter painter = (ImagePainter)newWallpaperPainter(propertyName);
+    ModalityState modalityState = ModalityState.stateForComponent(painters.myRootComponent);
+    ImagePainter painter = (ImagePainter)newWallpaperPainter(propertyName, modalityState);
     painters.addPainter(painter, null);
   }
 
-  private static AbstractPainter newWallpaperPainter(@NotNull final String propertyName) {
+  private static AbstractPainter newWallpaperPainter(@NotNull final String propertyName, @NotNull final ModalityState modalityState) {
     return new ImagePainter() {
       Image image;
       float alpha;
@@ -182,7 +185,8 @@ final class PaintersHelper implements Painter.Listener {
       }
 
       boolean ensureImageLoaded() {
-        String value = System.getProperty(propertyName);
+        String value = StringUtil.notNullize(PropertiesComponent.getInstance().getValue(propertyName),
+                                             System.getProperty(propertyName, ""));
         if (!Comparing.equal(value, current)) {
           current = value;
           loadImageAsync(value);
@@ -224,7 +228,7 @@ final class PaintersHelper implements Painter.Listener {
                 public void run() {
                   resetImage(propertyValue, m, newAlpha, newFillType);
                 }
-              });
+              }, modalityState);
             }
           });
         }

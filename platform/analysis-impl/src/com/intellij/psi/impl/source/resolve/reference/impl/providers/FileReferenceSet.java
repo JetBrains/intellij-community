@@ -199,12 +199,12 @@ public class FileReferenceSet {
     reparse();
   }
 
-
+  @NotNull
   public PsiElement getElement() {
     return myElement;
   }
 
-  void setElement(final PsiElement element) {
+  void setElement(@NotNull PsiElement element) {
     myElement = element;
   }
 
@@ -368,7 +368,7 @@ public class FileReferenceSet {
         }
         final PsiFile contextFile = contextProvider.getContextFile(file);
         if (contextFile != null) {
-          return Collections.<PsiFileSystemItem>singleton(contextFile.getParent());
+          return Collections.singleton(contextFile.getParent());
         }
       }
     }
@@ -398,7 +398,7 @@ public class FileReferenceSet {
       if (parent != null) {
         final PsiDirectory directory = file.getManager().findDirectory(parent);
         if (directory != null) {
-          return Collections.<PsiFileSystemItem>singleton(directory);
+          return Collections.singleton(directory);
         }
       }
     }

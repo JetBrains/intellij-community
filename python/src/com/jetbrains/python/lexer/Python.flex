@@ -13,8 +13,6 @@ import com.intellij.openapi.util.text.StringUtil;
 %unicode
 %function advance
 %type IElementType
-%eof{  return;
-%eof}
 
 DIGIT = [0-9]
 NONZERODIGIT = [1-9]

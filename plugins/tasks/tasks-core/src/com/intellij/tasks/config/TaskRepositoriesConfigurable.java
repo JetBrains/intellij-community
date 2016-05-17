@@ -165,7 +165,7 @@ public class TaskRepositoriesConfigurable extends BaseConfigurable implements Co
 
     myRepositoriesList.setCellRenderer(new ColoredListCellRenderer() {
       @Override
-      protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+      protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
         TaskRepository repository = (TaskRepository)value;
         setIcon(repository.getIcon());
         append(repository.getPresentableName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);

@@ -29,11 +29,6 @@ import java.util.Arrays;
 
 public class ResourceFilteringTest extends MavenCompilingTestCase {
 
-  @Override
-  protected boolean runInWriteAction() {
-    return false;
-  }
-
   public void testBasic() throws Exception {
     createProjectSubFile("resources/file.properties", "value=${project.version}\n" +
                                                       "value2=@project.version@\n" +

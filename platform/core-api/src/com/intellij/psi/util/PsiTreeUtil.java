@@ -378,6 +378,42 @@ public class PsiTreeUtil {
     return result;
   }
 
+  @Nullable
+  public static <T extends PsiElement> T getStubChildOfType(@Nullable PsiElement element, @NotNull Class<T> aClass) {
+    if (element == null) return null;
+    StubElement<?> stub = element instanceof StubBasedPsiElement ? ((StubBasedPsiElement)element).getStub() : null;
+    if (stub == null) {
+      return getChildOfType(element, aClass);
+    }
+    for (StubElement childStub : stub.getChildrenStubs()) {
+      PsiElement child = childStub.getPsi();
+      if (aClass.isInstance(child)) {
+        //noinspection unchecked
+        return (T)child;
+      }
+    }
+    return null;
+  }
+
+  @NotNull
+  public static <T extends PsiElement> List<T> getStubChildrenOfTypeAsList(@Nullable PsiElement element, @NotNull Class<T> aClass) {
+    if (element == null) return Collections.emptyList();
+    StubElement<?> stub = element instanceof StubBasedPsiElement ? ((StubBasedPsiElement)element).getStub() : null;
+    if (stub == null) {
+      return getChildrenOfTypeAsList(element, aClass);
+    }
+
+    List<T> result = new SmartList<T>();
+    for (StubElement childStub : stub.getChildrenStubs()) {
+      PsiElement child = childStub.getPsi();
+      if (aClass.isInstance(child)) {
+        //noinspection unchecked
+        result.add((T)child);
+      }
+    }
+    return result;
+  }
+
   public static boolean instanceOf(final Object object, final Class<?>... classes) {
     if (classes != null) {
       for (final Class<?> c : classes) {

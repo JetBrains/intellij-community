@@ -3215,6 +3215,24 @@ public class StringUtil extends StringUtilRt {
     return StringUtilRt.getShortName(fqName, separator);
   }
 
+  /**
+   * Strips class name from Object#toString if present.
+   * To be used as custom data type renderer for java.lang.Object.
+   * To activate just add <code>StringUtil.toShortString(this)</code>
+   * expression in <em>Settings | Debugger | Data Views</em>.
+   */
+  @Contract("null->null;!null->!null")
+  @SuppressWarnings("UnusedDeclaration")
+  static String toShortString(@Nullable Object o) {
+    if (o == null) return null;
+    if (o instanceof CharSequence) return o.toString();
+    String className = o.getClass().getName();
+    String s = o.toString();
+    if (!s.startsWith(className)) return s;
+    return s.length() > className.length() && !Character.isLetter(s.charAt(className.length())) ?
+           trimStart(s, className) : s;
+  }
+
   @NotNull
   @Contract(pure = true)
   public static CharSequence newBombedCharSequence(@NotNull CharSequence sequence, long delay) {

@@ -69,8 +69,11 @@ class CheckInitialized implements ElementFilter {
       if (next instanceof PsiAssignmentExpression && parent == ((PsiAssignmentExpression)next).getLExpression()) {
         return Collections.emptySet();
       }
-      if (parent instanceof PsiReferenceExpression && next instanceof PsiExpressionStatement) {
-        return Collections.emptySet();
+      if (parent instanceof PsiJavaCodeReferenceElement) {
+        PsiStatement psiStatement = PsiTreeUtil.getParentOfType(parent, PsiStatement.class);
+        if (psiStatement != null && psiStatement.getTextRange().getStartOffset() == parent.getTextRange().getStartOffset()) {
+          return Collections.emptySet();
+        }
       }
       parent = next;
     }

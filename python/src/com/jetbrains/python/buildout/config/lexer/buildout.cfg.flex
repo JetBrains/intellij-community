@@ -15,11 +15,6 @@ import com.jetbrains.python.buildout.config.BuildoutCfgTokenTypes;
 %function advance
 %type IElementType
 
-%eof{ return;
-%eof}
-
-
-
 CRLF= \n|\r|\r\n
 SPACE=[\ \t]
 NOTSPACE=[^\ \t]

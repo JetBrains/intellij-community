@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.impl.search;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -55,7 +54,6 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
    * and more advanced ways of searching become necessary: e.g. first searching for methods where the functional interface class is used
    * and then for their usages,
     */
-  @VisibleForTesting
   public static final int SMART_SEARCH_THRESHOLD = 5;
 
   @Override
@@ -65,6 +63,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
     final PsiClass aClass;
     final Project project;
     final int expectedFunExprParamsCount;
+    final boolean isVoid;
 
     AccessToken token = ReadAction.start();
     try {
@@ -77,9 +76,10 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
 
       useScope = convertToGlobalScope(project, queryParameters.getEffectiveSearchScope());
 
-      final MethodSignature functionalInterfaceMethod = LambdaUtil.getFunction(aClass);
+      final PsiMethod functionalInterfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(aClass);
       LOG.assertTrue(functionalInterfaceMethod != null);
-      expectedFunExprParamsCount = functionalInterfaceMethod.getParameterTypes().length;
+      expectedFunExprParamsCount = functionalInterfaceMethod.getParameterList().getParameters().length;
+      isVoid = PsiType.VOID.equals(functionalInterfaceMethod.getReturnType());
     } finally {
       token.finish();
     }
@@ -87,7 +87,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
     //collect all files with '::' and '->' in useScope
     Set<VirtualFile> candidateFiles = getFilesWithFunctionalExpressionsScope(project, new JavaSourceFilterScope(useScope));
     if (candidateFiles.size() < SMART_SEARCH_THRESHOLD) {
-      searchInFiles(aClass, consumer, candidateFiles, expectedFunExprParamsCount);
+      searchInFiles(aClass, consumer, candidateFiles, expectedFunExprParamsCount, isVoid);
       return;
     }
 
@@ -127,7 +127,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
     //search for functional expressions in non-call contexts
     collectFilesWithTypeOccurrencesAndFieldAssignments(aClass, candidateScope, filesToProcess);
 
-    searchInFiles(aClass, consumer, filesToProcess, expectedFunExprParamsCount);
+    searchInFiles(aClass, consumer, filesToProcess, expectedFunExprParamsCount, isVoid);
   }
 
   @NotNull
@@ -148,14 +148,14 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
   }
 
   private static void searchInFiles(final PsiClass aClass,
-                                       final Processor<PsiFunctionalExpression> consumer,
-                                       Set<VirtualFile> filesToProcess, final int expectedFunExprParamsCount) {
+                                    final Processor<PsiFunctionalExpression> consumer,
+                                    Set<VirtualFile> filesToProcess, final int expectedFunExprParamsCount, boolean isVoid) {
     LOG.info("#usage files: " + filesToProcess.size());
     process(filesToProcess, new ReadActionProcessor<VirtualFile>() {
       @Override
       public boolean processInReadAction(VirtualFile file) {
         //resolve functional expressions to ensure that functional expression type is appropriate
-        return processFileWithFunctionalInterfaces(aClass, expectedFunExprParamsCount, consumer, file);
+        return processFileWithFunctionalInterfaces(aClass, expectedFunExprParamsCount, isVoid, consumer, file);
       }
     });
   }
@@ -297,6 +297,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
 
   private static boolean processFileWithFunctionalInterfaces(final PsiClass aClass,
                                                              final int expectedParamCount,
+                                                             boolean isVoid,
                                                              final Processor<PsiFunctionalExpression> consumer,
                                                              VirtualFile file) {
     final PsiFile psiFile = aClass.getManager().findFile(file);
@@ -324,6 +325,15 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
         public void visitLambdaExpression(PsiLambdaExpression expression) {
           super.visitLambdaExpression(expression);
           if (expression.getParameterList().getParametersCount() == expectedParamCount) {
+            if (isVoid) {
+              final PsiElement body = expression.getBody();
+              if (body instanceof PsiCodeBlock) {
+                final PsiReturnStatement[] statements = PsiUtil.findReturnStatements((PsiCodeBlock)body);
+                for (PsiReturnStatement statement : statements) {
+                  if (statement.getReturnValue() != null) return;
+                }
+              }
+            }
             visitFunctionalExpression(expression);
           }
         }

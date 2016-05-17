@@ -81,12 +81,10 @@ public class GrTypeDefinitionMembersCache<T extends GrTypeDefinition> {
   }
 
   public PsiClass[] getInnerClasses() {
-    assert !TransformationUtilKt.isUnderTransformation(myDefinition);
     return getTransformationResult().getInnerClasses();
   }
 
   public PsiMethod[] getMethods() {
-    assert !TransformationUtilKt.isUnderTransformation(myDefinition);
     return getTransformationResult().getMethods();
   }
 
@@ -98,7 +96,6 @@ public class GrTypeDefinitionMembersCache<T extends GrTypeDefinition> {
   }
 
   public GrField[] getFields() {
-    assert !TransformationUtilKt.isUnderTransformation(myDefinition);
     return getTransformationResult().getFields();
   }
 
@@ -132,6 +129,7 @@ public class GrTypeDefinitionMembersCache<T extends GrTypeDefinition> {
 
   @NotNull
   private TransformationResult getTransformationResult() {
+    assert !TransformationUtilKt.isUnderTransformation(myDefinition);
     return CachedValuesManager.getCachedValue(myDefinition, () -> CachedValueProvider.Result.create(
       TransformationUtilKt.transformDefinition(myDefinition), myDependencies
     ));

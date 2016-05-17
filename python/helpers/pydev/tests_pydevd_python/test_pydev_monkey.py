@@ -23,7 +23,7 @@ connect(\\"127.0.0.1\\")
 "'''
             sys.original_argv = []
             self.assertEqual(
-                '"C:\\bin\\python.exe" "-u" "-c" "import sys; '
+                'C:\\bin\\python.exe -u -c "import sys; '
                 'sys.path.append(r\'%s\'); '
                 'import pydevd; pydevd.settrace(host=\'127.0.0.1\', port=0, suspend=False, '
                     'trace_only_current_thread=False, patch_multiprocessing=True); '

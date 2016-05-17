@@ -1,5 +1,7 @@
 package redundant_method_override;
 
+import java.util.ArrayList;
+
 public class RedundantMethodOverride extends S {
 
   @Override
@@ -67,5 +69,26 @@ class C extends B {
   @Override
   int <warning descr="Method 'some()' is identical to its super method">some</warning>() {
     return super.some();
+  }
+}
+class MyList extends ArrayList {
+  @Override
+  protected void removeRange(int fromIndex, int toIndex) {
+    super.removeRange(fromIndex, toIndex);
+  }
+}
+////////////////
+class Sup {
+  void overload1(int i) {}
+  void overload1(int i, boolean b) {}
+
+  protected void foox() {
+    overload1(0);
+  }
+}
+class Sub extends Sup {
+  @Override
+  protected void foox() { // not redundant
+    overload1(0, true);
   }
 }

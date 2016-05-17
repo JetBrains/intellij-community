@@ -17,23 +17,23 @@ package com.intellij.codeInspection.ui;
 
 
 import com.intellij.codeInspection.CommonProblemDescriptor;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.offlineViewer.OfflineProblemDescriptorNode;
-import com.intellij.codeInspection.offlineViewer.OfflineRefElementNode;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.util.containers.FactoryMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
+import javax.swing.tree.TreeNode;
 import java.util.Map;
 import java.util.Set;
 
 /**
  * @author Dmitry Batkovich
  */
+@SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
 public class ExcludedInspectionTreeNodesManager {
-  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
   private final Map<Class, Set<Object>> myExcludedNodeObjects = new FactoryMap<Class, Set<Object>>() {
     @Nullable
     @Override
@@ -42,30 +42,63 @@ public class ExcludedInspectionTreeNodesManager {
     }
   };
 
-  private final boolean myOffline;
+  private final Map<String, Set<Object>> myExcludedEntities = new FactoryMap<String, Set<Object>>() {
+    @Nullable
+    @Override
+    protected Set<Object> create(String key) {
+      return new THashSet<>();
+    }
+  };
 
-  public ExcludedInspectionTreeNodesManager(boolean offline) {
+  private final boolean myOffline;
+  private final boolean mySingleInspectionRun;
+
+  public ExcludedInspectionTreeNodesManager(boolean offline, boolean singleInspectionRun) {
     myOffline = offline;
+    mySingleInspectionRun = singleInspectionRun;
   }
 
   public synchronized boolean isExcluded(InspectionTreeNode node) {
-    final Set<?> excluded = myExcludedNodeObjects.get(node.getClass());
-    return excluded.contains(node.getUserObject());
+    if (!mySingleInspectionRun && node instanceof RefElementNode) {
+      return myExcludedEntities.get(findContainingToolName(node)).contains(node.getUserObject());
+    } else {
+      final Set<?> excluded = myExcludedNodeObjects.get(node.getClass());
+      return excluded.contains(node.getUserObject());
+    }
   }
 
   public synchronized void exclude(InspectionTreeNode node) {
-    myExcludedNodeObjects.get(node.getClass()).add(node.getUserObject());
+    if (!mySingleInspectionRun && node instanceof RefElementNode) {
+      myExcludedEntities.get(findContainingToolName(node)).add(node.getUserObject());
+    } else {
+      myExcludedNodeObjects.get(node.getClass()).add(node.getUserObject());
+    }
   }
 
   public synchronized void amnesty(InspectionTreeNode node) {
-    myExcludedNodeObjects.get(node.getClass()).remove(node.getUserObject());
+    if (!mySingleInspectionRun && node instanceof RefElementNode) {
+      myExcludedEntities.get(findContainingToolName(node)).remove(node.getUserObject());
+    }
+    else {
+      myExcludedNodeObjects.get(node.getClass()).remove(node.getUserObject());
+    }
   }
 
-  public synchronized boolean containsRefEntity(@NotNull RefEntity entity) {
-    return myExcludedNodeObjects.getOrDefault(myOffline ? OfflineRefElementNode.class : RefElementNode.class, Collections.emptySet()).contains(entity);
+  public synchronized boolean containsRefEntity(@NotNull RefEntity entity, @NotNull InspectionToolWrapper wrapper) {
+    return myExcludedEntities.get(wrapper.getShortName()).contains(entity);
   }
 
   public synchronized boolean containsProblemDescriptor(@NotNull CommonProblemDescriptor descriptor) {
-    return myExcludedNodeObjects.getOrDefault(myOffline ? OfflineProblemDescriptorNode.class : ProblemDescriptionNode.class, Collections.emptySet()).contains(descriptor);
+    return myExcludedNodeObjects.get(myOffline ? OfflineProblemDescriptorNode.class : ProblemDescriptionNode.class).contains(descriptor);
+  }
+
+  @NotNull
+  private static String findContainingToolName(@NotNull InspectionTreeNode node) {
+    TreeNode parent = node.getParent();
+    while (!(parent instanceof InspectionNode) && parent != null) {
+      parent = parent.getParent();
+    }
+    if (parent == null) return "";
+    return ((InspectionNode)parent).getToolWrapper().getShortName();
   }
 }
