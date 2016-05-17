@@ -57,6 +57,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
+import com.intellij.profile.Profile;
+import com.intellij.profile.ProfileChangeAdapter;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
@@ -192,6 +195,18 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     };
     createActionsToolbar();
     PsiManager.getInstance(myProject).addPsiTreeChangeListener(new InspectionViewPsiTreeChangeAdapter(this), this);
+
+    final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(myProject);
+    profileManager.addProfilesListener(new ProfileChangeAdapter() {
+      @Override
+      public void profileChanged(Profile profile) {
+        if (profile == profileManager.getProjectProfileImpl()) {
+          myTree.revalidate();
+          myTree.repaint();
+          syncRightPanel();
+        }
+      }
+    }, this);
   }
 
   private void initTreeListeners() {

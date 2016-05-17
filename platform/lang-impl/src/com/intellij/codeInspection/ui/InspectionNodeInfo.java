@@ -40,24 +40,18 @@ import java.awt.event.MouseEvent;
  */
 public class InspectionNodeInfo extends JPanel {
   private final static Logger LOG = Logger.getInstance(InspectionNodeInfo.class);
-  private final JButton myButton;
-  private final JBLabel myEnabledLabel;
-  private final HighlightDisplayKey myKey;
-  private final InspectionProfileImpl myCurrentProfile;
-  private final Project myProject;
-  @NotNull private final InspectionTree myTree;
 
   public InspectionNodeInfo(@NotNull final InspectionTree tree,
                             @NotNull final Project project) {
-    myTree = tree;
     setLayout(new GridBagLayout());
     setBorder(IdeBorderFactory.createEmptyBorder(11, 0, 0, 0));
     final InspectionToolWrapper toolWrapper = tree.getSelectedToolWrapper();
     LOG.assertTrue(toolWrapper != null);
-    myProject = project;
-    myCurrentProfile = (InspectionProfileImpl)InspectionProjectProfileManager.getInstance(project).getProjectProfileImpl();
-    myKey = HighlightDisplayKey.find(toolWrapper.getShortName());
-    myButton = new JButton();
+    InspectionProfileImpl currentProfile =
+      (InspectionProfileImpl)InspectionProjectProfileManager.getInstance(project).getProjectProfileImpl();
+    HighlightDisplayKey key = HighlightDisplayKey.find(toolWrapper.getShortName());
+    JButton button = new JButton();
+    boolean enabled = currentProfile.isToolEnabled(key);
 
     JPanel titlePanel = new JPanel();
     titlePanel.setLayout(new BoxLayout(titlePanel, BoxLayout.LINE_AXIS));
@@ -65,9 +59,9 @@ public class InspectionNodeInfo extends JPanel {
     label.setText(toolWrapper.getDisplayName() + " inspection");
     titlePanel.add(label);
     titlePanel.add(Box.createHorizontalStrut(JBUI.scale(16)));
-    myEnabledLabel = new JBLabel();
-    myEnabledLabel.setForeground(JBColor.GRAY);
-    titlePanel.add(myEnabledLabel);
+    JBLabel enabledLabel = new JBLabel();
+    enabledLabel.setForeground(JBColor.GRAY);
+    titlePanel.add(enabledLabel);
 
     add(titlePanel,
         new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new JBInsets(0, 12, 5, 16),
@@ -85,43 +79,25 @@ public class InspectionNodeInfo extends JPanel {
     add(pane,
         new GridBagConstraints(0, 1, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.VERTICAL,
                                new JBInsets(0, 10, 0, 0), getFontMetrics(UIUtil.getLabelFont()).charWidth('f') * 110 - pane.getMinimumSize().width, 0));
-    add(myButton,
+    add(button,
         new GridBagConstraints(0, 2, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
                                new JBInsets(15, 9, 9, 0), 0, 0));
-    updateEnableButtonText(false);
+    button.setText((enabled ? "Disable" : "Enable") + " inspection");
+    enabledLabel.setText(enabled ? "Enabled" : "Disabled");
 
     new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent event, int clickCount) {
-        updateEnableButtonText(true);
-        tree.revalidate();
-        tree.repaint();
+        DisableInspectionToolAction.modifyAndCommitProjectProfile(model -> {
+          if (enabled) {
+            model.disableTool(key.getID(), project);
+          }
+          else {
+            ((InspectionProfileImpl)model).enableTool(key.getID(), project);
+          }
+        }, project);
         return true;
       }
-    }.installOn(myButton);
-  }
-
-  private void updateEnableButtonText(boolean revert) {
-    boolean isEnabled = myCurrentProfile.isToolEnabled(myKey);
-    if (revert) {
-      final boolean isEnabledAsFinal = isEnabled;
-      DisableInspectionToolAction.modifyAndCommitProjectProfile(model -> {
-        if (isEnabledAsFinal) {
-          model.disableTool(myKey.getID(), myProject);
-        }
-        else {
-          ((InspectionProfileImpl)model).enableTool(myKey.getID(), myProject);
-        }
-      }, myProject);
-      isEnabled = !isEnabled;
-    }
-    myButton.setText((isEnabled ? "Disable" : "Enable") + " inspection");
-    myButton.revalidate();
-    myButton.repaint();
-    myEnabledLabel.setText(isEnabled ? "Enabled" : "Disabled");
-    myEnabledLabel.revalidate();
-    myEnabledLabel.repaint();
-    myTree.revalidate();
-    myTree.repaint();
+    }.installOn(button);
   }
 }
