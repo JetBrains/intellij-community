@@ -18,7 +18,6 @@ package com.intellij.openapi.ui;
 import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
@@ -1996,9 +1995,61 @@ public abstract class DialogWrapper {
   }
 
   /**
+   * @see Adapter
    * @see PropertyDoNotAskOption
    */
   public interface DoNotAskOption {
+
+    abstract class Adapter implements DoNotAskOption {
+
+      /**
+       * Save the state of the checkbox in the settings, or perform some other related action.
+       * This method is called right after the dialog is {@link #close(int) closed}.
+       * <br/>
+       * Note that this method won't be called in the case when the dialog is closed by {@link #CANCEL_EXIT_CODE Cancel}
+       * if {@link #shouldSaveOptionsOnCancel() saving the choice on cancel is disabled} (which is by default).
+       *
+       * @param isSelected true if user selected "don't show again".
+       * @param exitCode   the {@link #getExitCode() exit code} of the dialog.
+       * @see #shouldSaveOptionsOnCancel()
+       */
+      public abstract void rememberChoice(boolean isSelected, int exitCode);
+
+      /**
+       * Tells whether the checkbox should be selected by default or not.
+       *
+       * @return true if the checkbox should be selected by default.
+       */
+      public boolean isSelectedByDefault() {
+        return false;
+      }
+
+      @Override
+      public boolean shouldSaveOptionsOnCancel() {
+        return false;
+      }
+
+      @NotNull
+      @Override
+      public String getDoNotShowMessage() {
+        return CommonBundle.message("dialog.options.do.not.ask");
+      }
+
+      @Override
+      public final boolean isToBeShown() {
+        return !isSelectedByDefault();
+      }
+
+      @Override
+      public final void setToBeShown(boolean toBeShown, int exitCode) {
+        rememberChoice(!toBeShown, exitCode);
+      }
+
+      @Override
+      public final boolean canBeHidden() {
+        return true;
+      }
+    }
 
     /**
      * @return default selection state of checkbox (false -> checkbox selected)
@@ -2022,38 +2073,21 @@ public abstract class DialogWrapper {
     String getDoNotShowMessage();
   }
 
-  public static class PropertyDoNotAskOption implements DoNotAskOption {
-    @NotNull
-    private final String myProperty;
+  /**
+   * The implementation which saves the "don't show again" checkbox state to the {@link PropertiesComponent}.
+   */
+  public static class PropertyDoNotAskOption extends DoNotAskOption.Adapter {
+    @NotNull private final String myProperty;
 
     public PropertyDoNotAskOption(@NotNull String property) {
       myProperty = property;
     }
 
     @Override
-    public boolean isToBeShown() {
-      return PropertiesComponent.getInstance().getBoolean(myProperty);
-    }
-
-    @Override
-    public void setToBeShown(boolean value, int exitCode) {
-      PropertiesComponent.getInstance().setValue(myProperty, value);
-    }
-
-    @Override
-    public boolean canBeHidden() {
-      return false;
-    }
-
-    @Override
-    public boolean shouldSaveOptionsOnCancel() {
-      return false;
-    }
-
-    @NotNull
-    @Override
-    public String getDoNotShowMessage() {
-      return CommonBundle.message("dialog.options.do.not.ask");
+    public void rememberChoice(boolean isSelected, int exitCode) {
+      if (exitCode != CANCEL_EXIT_CODE) {
+        PropertiesComponent.getInstance().setValue(myProperty, isSelected);
+      }
     }
   }
 
