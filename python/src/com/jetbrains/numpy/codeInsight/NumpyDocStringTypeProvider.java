@@ -275,7 +275,7 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
     return null;
   }
 
-  private static boolean isInsideNumPy(@NotNull PsiElement element) {
+  public static boolean isInsideNumPy(@NotNull PsiElement element) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return true;
     final PsiFile file = element.getContainingFile();
 
@@ -376,7 +376,7 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
     return getPsiFacade(anchor).createUnionType(types);
   }
 
-  private static boolean isUfuncType(@NotNull PsiElement anchor, @NotNull final String typeString) {
+  public static boolean isUfuncType(@NotNull PsiElement anchor, @NotNull final String typeString) {
     for (String typeName : getNumpyUnionType(typeString)) {
       if (anchor instanceof PyFunction && isInsideNumPy(anchor) && NumpyUfuncs.isUFunc(((PyFunction)anchor).getName()) &&
           ("array_like".equals(typeName) || "ndarray".equals(typeName))) {
