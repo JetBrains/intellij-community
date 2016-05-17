@@ -140,7 +140,7 @@
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.service.project.data.ExternalProjectDataCache"/>
 
     <stepsBeforeRunProvider implementation="org.jetbrains.plugins.gradle.execution.GradleBeforeRunTaskProvider" />
-    <configurationProducer implementation="org.jetbrains.plugins.gradle.service.execution.GradleRuntimeConfigurationProducer"/>
+    <runConfigurationProducer implementation="org.jetbrains.plugins.gradle.service.execution.GradleRuntimeConfigurationProducer"/>
 
     <toolWindow id="Gradle" anchor="right" icon="GradleIcons.ToolWindowGradle"
                 factoryClass="org.jetbrains.plugins.gradle.ui.GradleToolWindowFactory"

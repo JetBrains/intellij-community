@@ -30,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
+ * @deprecated please use {@link AbstractExternalSystemRunConfigurationProducer} instead
  * @author Denis Zhdanov
  * @since 6/5/13 8:14 PM
  */
