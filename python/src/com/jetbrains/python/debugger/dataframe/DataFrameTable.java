@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.debugger.dataframe;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.debugger.*;
@@ -47,21 +46,8 @@ public class DataFrameTable extends NumericContainerViewTable implements TableCh
   @NotNull
   @Override
   protected NumericContainerRendererForm createForm(@NotNull Project project, KeyListener resliceCallback, KeyAdapter formatCallback) {
-    return new DataFrameTableForm(project, new KeyAdapter() {
-      @Override
-      public void keyPressed(KeyEvent e) {
-        if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-          doReslice();
-        }
-      }
-    }, new KeyAdapter() {
-      @Override
-      public void keyPressed(KeyEvent e) {
-        if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-          doApplyFormat();
-        }
-      }
-    });
+    return new DataFrameTableForm(project,resliceCallback,formatCallback);
+
   }
 
 

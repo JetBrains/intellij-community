@@ -25,11 +25,11 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Created by Yuli Fiterma on 4/26/2016.
+ * Created by Yuli Fiterman on 4/26/2016.
  */
 public class DataFrameTableModel extends AsyncArrayTableModel {
-  private final Map<Integer, String> rowLabels = Maps.newConcurrentMap();
-  private final Map<Integer, ArrayChunk.ColHeader> colHeaders = Maps.newConcurrentMap();
+  private final Map<Integer, String> myRowLabels = Maps.newConcurrentMap();
+  private final Map<Integer, ArrayChunk.ColHeader> myColHeaders = Maps.newConcurrentMap();
   public DataFrameTableModel(int rows, int columns, TableChunkDatasource provider) {
     super(rows, columns, provider);
   }
@@ -59,7 +59,7 @@ public class DataFrameTableModel extends AsyncArrayTableModel {
   }
 
   private TableValueDescriptor createValueWithDescriptor(int frameCol, Object value) {
-    ArrayChunk.ColHeader header = colHeaders.get(frameCol);
+    ArrayChunk.ColHeader header = myColHeaders.get(frameCol);
     if (header == null)
     {
        return null;
@@ -71,7 +71,7 @@ public class DataFrameTableModel extends AsyncArrayTableModel {
 
   private String getRowHeader(int row)
   {
-    String s = rowLabels.get(row);
+    String s = myRowLabels.get(row);
     return s == null ? String.valueOf(row) : s;
 
   }
@@ -91,7 +91,7 @@ public class DataFrameTableModel extends AsyncArrayTableModel {
     {
 
       int frameColumn = col - 1;
-      ArrayChunk.ColHeader header = colHeaders.get(frameColumn);
+      ArrayChunk.ColHeader header = myColHeaders.get(frameColumn);
       if (header != null && header.getLabel() != null)
       {
          return header.getLabel();
@@ -112,7 +112,7 @@ public class DataFrameTableModel extends AsyncArrayTableModel {
     {
       for (int i = 0; i < chunkRowLabels.size(); i++) {
         String label = chunkRowLabels.get(i);
-        String oldValue = rowLabels.put(i + rowOffset, label);
+        String oldValue = myRowLabels.put(i + rowOffset, label);
         if (oldValue == null)
         {
           final int updatedRow = i + rowOffset;
@@ -127,7 +127,7 @@ public class DataFrameTableModel extends AsyncArrayTableModel {
     {
       for (int i = 0; i < chunkColHeaders.size(); i++) {
         ArrayChunk.ColHeader header = chunkColHeaders.get(i);
-        hasNewCols |= (colHeaders.put(i + colOffset, header) == null);
+        hasNewCols |= (myColHeaders.put(i + colOffset, header) == null);
 
       }
     }

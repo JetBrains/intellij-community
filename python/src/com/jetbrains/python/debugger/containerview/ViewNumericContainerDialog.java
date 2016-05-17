@@ -26,14 +26,14 @@ import java.util.function.Function;
  * Created by Yuli Fiterman on 5/10/2016.
  */
 public class ViewNumericContainerDialog extends DialogWrapper {
-  private final JComponent mainPanel;
+  private final JComponent myMainPanel;
 
   ViewNumericContainerDialog(@NotNull Project project, Function<ViewNumericContainerDialog, JComponent> tableSupplier) {
     super(project, false);
     setModal(false);
     setCancelButtonText("Close");
     setCrossClosesWindow(true);
-    mainPanel = tableSupplier.apply(this);
+    myMainPanel = tableSupplier.apply(this);
     init();
   }
 
@@ -55,6 +55,6 @@ public class ViewNumericContainerDialog extends DialogWrapper {
 
   @Override
   protected JComponent createCenterPanel() {
-    return mainPanel;
+    return myMainPanel;
   }
 }

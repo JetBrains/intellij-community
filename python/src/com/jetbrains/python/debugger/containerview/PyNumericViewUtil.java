@@ -16,7 +16,6 @@
 package com.jetbrains.python.debugger.containerview;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
