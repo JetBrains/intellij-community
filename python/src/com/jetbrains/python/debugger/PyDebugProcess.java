@@ -387,10 +387,10 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     private final String myText;
 
     public WatchLastMethodReturnValueAction(@NotNull PyDebugProcess debugProcess) {
-      super("", "Enables watching last executed method return value", null);
+      super("", "Enables watching executed functions return values", null);
       myWatchesReturnValues = PyDebuggerSettings.getInstance().WATCH_RETURN_VALUES;
       myProcess = debugProcess;
-      myText = "Show Method Return Values";
+      myText = "Show Return Values";
     }
 
     @Override

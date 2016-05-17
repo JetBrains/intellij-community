@@ -209,10 +209,7 @@ public class PyDebugValue extends XNamedValue {
   }
 
   private Icon getValueIcon() {
-    if (myIsReturnedVal) {
-      return AllIcons.Debugger.WatchLastReturnValue;
-    }
-    else if (!myContainer) {
+    if (!myContainer) {
       return AllIcons.Debugger.Db_primitive;
     }
     else if ("list".equals(myType) || "tuple".equals(myType)) {
