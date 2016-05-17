@@ -25,6 +25,7 @@ subprojects {
   sourceSets {
     main {
       java.srcDir 'src'
+      kotlin.srcDirs 'src'
       resources.srcDir 'resources'
     }
     test {
