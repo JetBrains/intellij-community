@@ -173,7 +173,7 @@ public class EventLog {
       hasHtml |= parseHtmlContent(text, n, logDoc, showMore, links, lineSeparators);
     }
 
-    String status = getStatusText(logDoc, showMore, lineSeparators, hasHtml);
+    String status = getStatusText(logDoc, showMore, lineSeparators, indent, hasHtml);
 
     indentNewLines(logDoc, lineSeparators, afterTitle, hasHtml, indent);
 
@@ -259,7 +259,11 @@ public class EventLog {
     }
   }
 
-  private static String getStatusText(DocumentImpl logDoc, AtomicBoolean showMore, List<RangeMarker> lineSeparators, boolean hasHtml) {
+  private static String getStatusText(DocumentImpl logDoc,
+                                      AtomicBoolean showMore,
+                                      List<RangeMarker> lineSeparators,
+                                      String indent,
+                                      boolean hasHtml) {
     DocumentImpl statusDoc = new DocumentImpl(logDoc.getImmutableCharSequence(),true);
     List<RangeMarker> statusSeparators = new ArrayList<RangeMarker>();
     for (RangeMarker separator : lineSeparators) {
@@ -267,7 +271,7 @@ public class EventLog {
         statusSeparators.add(statusDoc.createRangeMarker(separator.getStartOffset(), separator.getEndOffset()));
       }
     }
-    removeJavaNewLines(statusDoc, statusSeparators, hasHtml);
+    removeJavaNewLines(statusDoc, statusSeparators, indent, hasHtml);
     insertNewLineSubstitutors(statusDoc, showMore, statusSeparators);
 
     return statusDoc.getText();
@@ -383,13 +387,17 @@ public class EventLog {
     }
   }
 
-  private static void removeJavaNewLines(Document document, List<RangeMarker> lineSeparators, boolean hasHtml) {
+  private static void removeJavaNewLines(Document document, List<RangeMarker> lineSeparators, String indent, boolean hasHtml) {
     CharSequence text = document.getCharsSequence();
     int i = 0;
     while (true) {
       i = StringUtil.indexOf(text, '\n', i);
       if (i < 0) break;
-      document.deleteString(i, i + 1);
+      int j = i + 1;
+      if (StringUtil.startsWith(text, j, indent)) {
+        j += indent.length();
+      }
+      document.deleteString(i, j);
       if (!hasHtml) {
         lineSeparators.add(document.createRangeMarker(TextRange.from(i, 0)));
       }

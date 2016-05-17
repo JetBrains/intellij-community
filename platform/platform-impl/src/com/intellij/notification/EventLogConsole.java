@@ -41,6 +41,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.EditorPopupHandler;
@@ -248,12 +249,16 @@ class EventLogConsole {
                                                  new TextAttributes(null, null, null, null, Font.BOLD));
     }
 
-    String date = DateFormatUtil.formatTime(notification.getTimestamp()) + "  ";
+    int startDateOffset = document.getTextLength();
+
+    String date = DateFormatUtil.formatTime(notification.getTimestamp()) + "\t";
     append(document, date);
+
+    int tabs = calculateTabs(editor, startDateOffset);
 
     int startLine = document.getLineCount() - 1;
 
-    EventLog.LogEntry pair = EventLog.formatForLog(notification, StringUtil.repeatSymbol(' ', date.length()));
+    EventLog.LogEntry pair = EventLog.formatForLog(notification, StringUtil.repeatSymbol('\t', tabs));
 
     final NotificationType type = notification.getType();
     TextAttributesKey key = type == NotificationType.ERROR
@@ -289,6 +294,30 @@ class EventLogConsole {
 
     if (notification.isImportant()) {
       highlightNotification(notification, pair.status, startLine, startLine + 1);
+    }
+  }
+
+  private static int calculateTabs(@NotNull Editor editor, int startDateOffset) {
+    Document document = editor.getDocument();
+    int startOffset = document.getTextLength();
+    Point dateStartPoint = editor.logicalPositionToXY(editor.offsetToLogicalPosition(startDateOffset));
+    Point dateEndPoint = editor.logicalPositionToXY(editor.offsetToLogicalPosition(startOffset));
+    int width = dateEndPoint.x - dateStartPoint.x;
+
+    document.insertString(startOffset, "\n");
+
+    Point startPoint = editor.logicalPositionToXY(editor.offsetToLogicalPosition(startOffset + 1));
+
+    for (int count = 1; ; count++) {
+      document.insertString(startOffset + count, "\t");
+
+      Point endPoint = editor.logicalPositionToXY(editor.offsetToLogicalPosition(document.getTextLength()));
+      int tabWidth = endPoint.x - startPoint.x;
+
+      if (width <= tabWidth) {
+        document.deleteString(startOffset, document.getTextLength());
+        return count;
+      }
     }
   }
 
@@ -381,8 +410,10 @@ class EventLogConsole {
         }
       }
 
+      //noinspection UseJBColor
+      TextAttributes attributes =
+        new TextAttributes(null, ColorUtil.mix(editor.getBackgroundColor(), new Color(0x808080), 0.1), null, EffectType.BOXED, Font.PLAIN);
       MarkupModelEx markupModel = editor.getMarkupModel();
-      TextAttributes attributes = new TextAttributes(null, new JBColor(0xF5F5F5, 0x262626), null, EffectType.BOXED, Font.PLAIN);
 
       for (Point range : ranges) {
         int start = document.getLineStartOffset(range.x);
