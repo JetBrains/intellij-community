@@ -1,9 +1,12 @@
 package com.intellij.application
 
+import com.intellij.ide.IdeEventQueue
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.impl.DebugUtil
 import com.intellij.testFramework.LightPlatformTestCase
@@ -74,12 +77,14 @@ class TransactionTest extends LightPlatformTestCase {
     assert log == ['1', '2', '3']
   }
 
-  private void assertWritingProhibited() {
+  private static void assertWritingProhibited() {
     boolean writeActionFailed = false
     def disposable = Disposer.newDisposable('assertWritingProhibited')
     LoggedErrorProcessor.instance.disableStderrDumping(disposable)
     try {
-      app.runWriteAction { log << 'writing' }
+      app.runWriteAction {
+        ProjectRootManagerEx.getInstanceEx(project).makeRootsChange(EmptyRunnable.instance, false, true)
+      }
     }
     catch (AssertionError ignore) {
       writeActionFailed = true
@@ -88,7 +93,7 @@ class TransactionTest extends LightPlatformTestCase {
       Disposer.dispose(disposable)
     }
     if (!writeActionFailed) {
-      fail('write action should fail')
+      fail('write action should fail ' + guard.toString())
     }
   }
 
@@ -189,9 +194,9 @@ class TransactionTest extends LightPlatformTestCase {
         guard.submitTransaction testRootDisposable, id, { log << '5' }
         def nestedId = guard.contextTransaction
         SwingUtilities.invokeLater {
-          String trace = null
+          String trace = guard.toString()
           guard.submitTransaction testRootDisposable, nestedId, {
-            trace = DebugUtil.currentStackTrace()
+            trace += "  " + IdeEventQueue.instance.trueCurrentEvent.toString() + "  " + DebugUtil.currentStackTrace()
             log << '3'
           }
           assert log == ['1', '2'] : log + " " + trace
@@ -244,7 +249,7 @@ class TransactionTest extends LightPlatformTestCase {
                         }, unsafeModality)
         app.invokeLater({
                           assertWritingProhibited()
-                          log << '3'
+                          app.runWriteAction { log << '3' }
                         }, ModalityState.any())
         app.invokeLater({ app.runWriteAction { log << '5' } }, ModalityState.NON_MODAL)
       }).get()

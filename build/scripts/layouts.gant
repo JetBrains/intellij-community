@@ -684,8 +684,9 @@ def setPluginVersionAndSince(String moduleName, String version) {
     def text = file.text
     if (!text.contains("<version>")) {
       def dotIndex = version.indexOf('.')
-      def untilBuild = dotIndex > 0 ? (Integer.parseInt(version.substring(0, dotIndex)) + 1).toString() + ".0" : version
-      file.text = text.replace("</id>", "</id>\n  <version>${version}</version>\n  <idea-version since-build=\"${version}\" until-build=\"${untilBuild}\"/>\n")
+      def untilBuild = dotIndex > 0 ? Integer.parseInt(version.substring(0, dotIndex)) + ".*" : version
+      def anchor = text.contains("</id>") ? "</id>" : "</name>"
+      file.text = text.replace(anchor, "${anchor}\n  <version>${version}</version>\n  <idea-version since-build=\"${version}\" until-build=\"${untilBuild}\"/>\n")
     }
   }
 }

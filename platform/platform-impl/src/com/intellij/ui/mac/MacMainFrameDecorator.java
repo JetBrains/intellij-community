@@ -39,7 +39,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.EventListener;
 import java.util.LinkedList;
@@ -358,48 +357,21 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
       }
     });
 
-    myFullscreenQueue.runOrEnqueue( new Runnable() {
+    myFullscreenQueue.runOrEnqueue(new Runnable() {
       @Override
       public void run() {
-        try {
-          requestToggleFullScreenMethod.invoke(Application.getApplication(),myFrame);
-        }
-        catch (IllegalAccessException e) {
-          LOG.error(e);
-        }
-        catch (InvocationTargetException e) {
-          LOG.error(e);
-        }
+        toggleFullScreenNow();
       }
     });
     return callback;
   }
 
-  @Override
-  public void dispose() {
-    UISettings.getInstance().removeUISettingsListener(this);
-    super.dispose();
-  }
-
-  public void exitFullScreenAndDispose() {
-
-    LOG.assertTrue(isInFullScreen());
+  public void toggleFullScreenNow() {
     try {
       requestToggleFullScreenMethod.invoke(Application.getApplication(), myFrame);
     }
-    catch (IllegalAccessException e) {
+    catch (Exception e) {
       LOG.error(e);
     }
-    catch (InvocationTargetException e) {
-      LOG.error(e);
-    }
-
-    myDispatcher.addListener(new FSAdapter() {
-      @Override
-      public void windowExitedFullScreen(AppEvent.FullScreenEvent event) {
-        myFrame.disposeImpl();
-        myDispatcher.removeListener(this);
-      }
-    });
   }
 }

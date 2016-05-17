@@ -990,27 +990,20 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     }
 
     private void processMouseEvent(MouseEvent me) {
-      if (me.isAltDown() && me.isControlDown()) {
-        switch (me.getID()) {
-          case MouseEvent.MOUSE_CLICKED:
-            if (me.getClickCount() == 1 && !me.isPopupTrigger()) {
-              Object source = me.getSource();
-              if (source instanceof Component) {
-                showInspector((Component)source);
-              }
-              else {
-                Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-                if (owner != null) {
-                  showInspector(owner);
-                }
-              }
-              me.consume();
-            }
+      if (!me.isAltDown() || !me.isControlDown()) return;
+      if (me.getClickCount() != 1 || me.isPopupTrigger()) return;
+      me.consume();
+      if (me.getID() != MouseEvent.MOUSE_RELEASED) return;
+      Component component = me.getComponent();
 
-            break;
-          default:
-            break;
-        }
+      if (component instanceof Container) {
+        component = ((Container)component).findComponentAt(me.getPoint());
+      }
+      else if (component == null) {
+        component = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+      }
+      if (component != null) {
+        showInspector(component);
       }
     }
 

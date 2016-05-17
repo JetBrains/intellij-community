@@ -29,9 +29,7 @@ import java.net.URL;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -119,7 +117,7 @@ public class UrlClassLoaderTest extends TestCase {
     int threadCount = 3;
     final int resourceCount = 20;
 
-    ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(threadCount, ConcurrencyUtil.newNamedThreadFactory("conc loading"));
+    ExecutorService executor = Executors.newFixedThreadPool(threadCount, ConcurrencyUtil.newNamedThreadFactory("conc loading"));
     try {
       final Random random = new Random();
       UrlClassLoader.CachePool pool = UrlClassLoader.createCachePool();

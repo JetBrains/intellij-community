@@ -15,10 +15,6 @@ import com.jetbrains.rest.RestTokenTypes;
 %function advance
 %type IElementType
 
-
-%eof{ return;
-%eof}
-
 CRLF= \n|\r|\r\n
 SPACE=[\ \t]
 
@@ -29,7 +25,7 @@ USUAL_TYPES="attention"|"caution"|"danger"|"error"|"hint"|"important"|"note"|"ti
 HIGHLIGHT_TYPES= "highlight" | "sourcecode" | "code-block"
 ANY_CHAR = [^\t`\ \n]
 NOT_BACKQUOTE = [^`]
-ANY= .|\n
+ANY=[^]
 
 %state IN_EXPLISIT_MARKUP
 %state IN_COMMENT

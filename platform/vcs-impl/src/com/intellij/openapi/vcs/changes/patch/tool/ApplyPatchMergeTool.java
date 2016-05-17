@@ -16,16 +16,20 @@
 package com.intellij.openapi.vcs.changes.patch.tool;
 
 import com.intellij.diff.DiffContext;
-import com.intellij.diff.FrameDiffTool;
 import com.intellij.diff.merge.*;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.util.BooleanGetter;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.diff.util.DiffUtil;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diff.DiffBundle;
+import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
+import java.awt.*;
+
+import static com.intellij.diff.merge.MergeUtil.createSimpleResolveAction;
 
 public class ApplyPatchMergeTool implements MergeTool {
   @NotNull
@@ -44,7 +48,7 @@ public class ApplyPatchMergeTool implements MergeTool {
     @NotNull private final ApplyPatchMergeRequest myMergeRequest;
 
     public MyApplyPatchViewer(@NotNull MergeContext context, @NotNull ApplyPatchMergeRequest request) {
-      super(createWrapperDiffContext(context), createWrapperDiffRequest(request), request.getDocument());
+      super(createWrapperDiffContext(context), request);
       myMergeContext = context;
       myMergeRequest = request;
     }
@@ -55,27 +59,15 @@ public class ApplyPatchMergeTool implements MergeTool {
     }
 
     @NotNull
-    private static ApplyPatchDiffRequest createWrapperDiffRequest(@NotNull ApplyPatchMergeRequest request) {
-      VirtualFile file = FileDocumentManager.getInstance().getFile(request.getDocument());
-      return new ApplyPatchDiffRequest(request.getPatch(), request.getLocalContent(), file, request.getTitle(),
-                                       request.getLocalTitle(), request.getResultTitle(), request.getPatchTitle());
-    }
-
-    @NotNull
     @Override
     public ToolbarComponents init() {
+      initPatchViewer();
+
       ToolbarComponents components = new ToolbarComponents();
+      components.statusPanel = getStatusPanel();
+      components.toolbarActions = createToolbarActions();
 
-      FrameDiffTool.ToolbarComponents init = super.doInit();
-      components.statusPanel = init.statusPanel;
-      components.toolbarActions = init.toolbarActions;
-
-      components.closeHandler = new BooleanGetter() {
-        @Override
-        public boolean get() {
-          return MergeUtil.showExitWithoutApplyingChangesDialog(MyApplyPatchViewer.this, myMergeRequest, myMergeContext);
-        }
-      };
+      components.closeHandler = () -> MergeUtil.showExitWithoutApplyingChangesDialog(this, myMergeRequest, myMergeContext);
       return components;
     }
 
@@ -83,18 +75,28 @@ public class ApplyPatchMergeTool implements MergeTool {
     @Override
     public Action getResolveAction(@NotNull final MergeResult result) {
       if (result == MergeResult.LEFT || result == MergeResult.RIGHT) return null;
+      return createSimpleResolveAction(result, myMergeRequest, myMergeContext, this);
+    }
 
-      String caption = MergeUtil.getResolveActionTitle(result, myMergeRequest, myMergeContext);
-      return new AbstractAction(caption) {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          if (result == MergeResult.CANCEL &&
-              !MergeUtil.showExitWithoutApplyingChangesDialog(MyApplyPatchViewer.this, myMergeRequest, myMergeContext)) {
-            return;
-          }
-          myMergeContext.finishMerge(result);
-        }
-      };
+    @Override
+    protected void onChangeResolved() {
+      super.onChangeResolved();
+
+      if (!ContainerUtil.exists(getModelChanges(), (c) -> !c.isResolved())) {
+        ApplicationManager.getApplication().invokeLater(() -> {
+          if (isDisposed()) return;
+
+          JComponent component = getComponent();
+          int yOffset = new RelativePoint(getResultEditor().getComponent(), new Point(0, JBUI.scale(5))).getPoint(component).y;
+          RelativePoint point = new RelativePoint(component, new Point(component.getWidth() / 2, yOffset));
+
+          String message = DiffBundle.message("apply.patch.all.changes.processed.message.text");
+          DiffUtil.showSuccessPopup(message, point, this, () -> {
+            if (isDisposed()) return;
+            myMergeContext.finishMerge(MergeResult.RESOLVED);
+          });
+        });
+      }
     }
   }
 }

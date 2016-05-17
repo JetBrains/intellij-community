@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,7 @@ import com.intellij.ui.EditorComboBox;
 import com.intellij.util.Function;
 import com.intellij.util.Functions;
 import com.intellij.util.VisibilityUtil;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -110,7 +111,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
   protected JComponent createCenterPanel() {
     final JPanel panel = new JPanel(new GridBagLayout());
     final GridBagConstraints gc = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 0, GridBagConstraints.NORTHWEST,
-                                                         GridBagConstraints.HORIZONTAL, new Insets(5, 5, 0, 0), 0, 0);
+                                                         GridBagConstraints.HORIZONTAL, JBUI.insets(5, 5, 0, 0), 0, 0);
     appendMigrationTypeEditor(panel, gc);
     LabeledComponent<ScopeChooserCombo> scopeChooserComponent = new LabeledComponent<ScopeChooserCombo>();
     scopeChooserComponent.setComponent(myScopeChooserCombo);

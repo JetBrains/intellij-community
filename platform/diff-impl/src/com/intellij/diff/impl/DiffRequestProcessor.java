@@ -521,10 +521,7 @@ public abstract class DiffRequestProcessor implements Disposable {
   }
 
   private class MyChangeDiffToolAction extends ComboBoxAction implements DumbAware {
-    public MyChangeDiffToolAction() {
-      // TODO: add icons for diff tools, show only icon in toolbar - to reduce jumping on change ?
-      setEnabledInModalContext(true);
-    }
+    // TODO: add icons for diff tools, show only icon in toolbar - to reduce jumping on change ?
 
     @Override
     public void update(AnActionEvent e) {
@@ -564,7 +561,6 @@ public abstract class DiffRequestProcessor implements Disposable {
 
     private DiffToolToggleAction(@NotNull DiffTool tool) {
       super(tool.getName());
-      setEnabledInModalContext(true);
       myDiffTool = tool;
     }
 

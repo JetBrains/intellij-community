@@ -17,6 +17,7 @@ package com.intellij.ui;
 
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
+import com.intellij.notification.EventLog;
 import com.intellij.notification.Notification;
 import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.Disposable;
@@ -39,10 +40,8 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 public class BalloonLayoutImpl implements BalloonLayout {
   protected final JLayeredPane myLayeredPane;
@@ -167,6 +166,7 @@ public class BalloonLayoutImpl implements BalloonLayout {
     }
     Disposer.register(balloon, new Disposable() {
       public void dispose() {
+        clearNMore(balloon);
         remove(balloon, false);
         queueRelayout();
       }
@@ -237,12 +237,17 @@ public class BalloonLayoutImpl implements BalloonLayout {
     fireRelayout();
   }
 
+  private void clearNMore(@NotNull Balloon balloon) {
+    BalloonLayoutData layoutData = myLayoutData.get(balloon);
+    if (layoutData != null && layoutData.mergeData != null) {
+      EventLog.clearNMore(layoutData.project, Collections.singleton(layoutData.groupId));
+    }
+  }
+
   private void remove(@NotNull Balloon balloon, boolean hide) {
     myBalloons.remove(balloon);
     BalloonLayoutData layoutData = myLayoutData.remove(balloon);
     if (layoutData != null) {
-      layoutData.groupId = null;
-      layoutData.id = null;
       layoutData.mergeData = null;
     }
     if (hide) {

@@ -826,7 +826,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
       .setHideOnKeyOutside(hideOnClickOutside)
       .setHideOnFrameResize(false)
       .setBorderColor(layoutData.borderColor)
-      .setBorderInsets(new Insets(0, 0, 0, 0));
+      .setBorderInsets(JBUI.emptyInsets());
 
     if (layoutData.fadeoutTime != 0) {
       builder.setFadeoutTime(layoutData.fadeoutTime);
@@ -1025,7 +1025,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
       new LinkListener<BalloonLayoutData>() {
         @Override
         public void linkSelected(LinkLabel aSource, BalloonLayoutData layoutData) {
-          EventLog.showNotification(layoutData.project, layoutData.groupId, layoutData.mergeData.linkId);
+          EventLog.showNotification(layoutData.project, layoutData.groupId, layoutData.getMergeIds());
         }
       }, layoutData) {
       @Override

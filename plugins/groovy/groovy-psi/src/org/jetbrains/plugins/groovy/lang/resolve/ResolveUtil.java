@@ -899,11 +899,24 @@ public class ResolveUtil {
   }
 
   public static boolean isScriptField(GrVariable var) {
-    PsiClass context = org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.getContextClass(var.getParent());
-    final GrModifierList modifierList = var.getModifierList();
-    return context instanceof GroovyScriptClass &&
-           modifierList != null &&
-           modifierList.findAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_FIELD) != null;
+    return findScriptField(var) != null;
+  }
+
+  @Nullable
+  public static GrScriptField findScriptField(@NotNull GrVariable var) {
+    return CachedValuesManager.getCachedValue(var, () -> {
+      PsiFile file = var.getContainingFile();
+      if (file instanceof GroovyFile && ((GroovyFile)file).isScript()) {
+        PsiClass scriptClass = ((GroovyFile)file).getScriptClass();
+        assert scriptClass != null;
+        for (PsiField field : scriptClass.getFields()) {
+          if (field instanceof GrScriptField) {
+            if (((GrScriptField)field).getOriginalVariable() == var) return CachedValueProvider.Result.create(((GrScriptField)field), var);
+          }
+        }
+      }
+      return CachedValueProvider.Result.create(null, var);
+    });
   }
 
   @Nullable
@@ -935,14 +948,16 @@ public class ResolveUtil {
     if (isScriptField(variable)) {
       final String name = variable.getName();
 
-      int count = 0;
       final GroovyScriptClass script = (GroovyScriptClass)((GroovyFile)variable.getContainingFile()).getScriptClass();
       assert script != null;
-      for (GrScriptField field : GrScriptField.getScriptFields(script)) {
-        if (name.equals(field.getName())) count++;
-      }
+      List<GrField> duplicates = ContainerUtil.filter(script.getFields(), (GrField f) -> {
+        if (!(f instanceof GrScriptField)) return false;
+        if (!name.equals(f.getName())) return false;
+        if (((GrScriptField)f).getOriginalVariable() == variable) return false;
+        return true;
+      });
 
-      return count > 1 ? GrScriptField.getScriptField(variable) : null;
+      return duplicates.size() > 0 ? duplicates.get(0) : null;
     }
     else {
       PsiNamedElement duplicate = resolveExistingElement(variable, new DuplicateVariablesProcessor(variable), GrVariable.class);

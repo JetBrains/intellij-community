@@ -17,13 +17,15 @@ package com.intellij.util;
 
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.TabbedContent;
 import com.intellij.ui.content.impl.TabbedContentImpl;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,11 +38,20 @@ import java.util.List;
  */
 public class ContentUtilEx extends ContentsUtil {
 
-  public static void addTabbedContent(ContentManager manager, JComponent contentComponent, String groupPrefix, String tabName, boolean select) {
+  public static void addTabbedContent(@NotNull ContentManager manager,
+                                      @NotNull JComponent contentComponent,
+                                      @NotNull String groupPrefix,
+                                      @NotNull String tabName,
+                                      boolean select) {
     addTabbedContent(manager, contentComponent, groupPrefix, tabName, select, null);
   }
 
-  public static void addTabbedContent(ContentManager manager, JComponent contentComponent, String groupPrefix, String tabName, boolean select, @Nullable Disposable childDisposable) {
+  public static void addTabbedContent(@NotNull ContentManager manager,
+                                      @NotNull JComponent contentComponent,
+                                      @NotNull String groupPrefix,
+                                      @NotNull String tabName,
+                                      boolean select,
+                                      @Nullable Disposable childDisposable) {
     if (PropertiesComponent.getInstance().getBoolean(TabbedContent.SPLIT_PROPERTY_PREFIX + groupPrefix)) {
       final Content content = ContentFactory.SERVICE.getInstance().createContent(contentComponent, getFullName(groupPrefix, tabName), true);
       content.putUserData(Content.TABBED_CONTENT_KEY, Boolean.TRUE);
@@ -70,7 +81,7 @@ public class ContentUtilEx extends ContentsUtil {
       Disposer.register(tabbedContent, disposable);
     }
     else {
-      for (Pair<String, JComponent> tab : new ArrayList<Pair<String, JComponent>>(tabbedContent.getTabs())) {
+      for (Pair<String, JComponent> tab : new ArrayList<>(tabbedContent.getTabs())) {
         if (Comparing.equal(tab.second, contentComponent)) {
           tabbedContent.removeContent(tab.second);
         }

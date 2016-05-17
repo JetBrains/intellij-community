@@ -30,6 +30,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.fileEditor.impl.text.FileDropHandler;
@@ -57,6 +58,7 @@ import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.util.BitUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.AwtVisitor;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TimedDeadzone;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -100,7 +102,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
       public ActionGroup get() {
         return (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EDITOR_TAB_POPUP);
       }
-    }, ActionPlaces.EDITOR_TAB_POPUP, false).setNavigationActionsEnabled(false).addTabMouseListener(new TabMouseListener()).getPresentation()
+    }, ActionPlaces.EDITOR_TAB_POPUP, false).addTabMouseListener(new TabMouseListener()).getPresentation()
       .setTabDraggingEnabled(true).setUiDecorator(new UiDecorator() {
       @Override
       @NotNull
@@ -206,7 +208,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
 
     String[] ids = mgr.getToolWindowIds();
 
-    Insets border = new Insets(0, 0, 0, 0);
+    Insets border = JBUI.emptyInsets();
 
     UISettings uiSettings = UISettings.getInstance();
 
@@ -255,7 +257,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     TabInfo toSelect = indexToSelect >= 0 && indexToSelect < myTabs.getTabCount() ? myTabs.getTabAt(indexToSelect) : null;
     final TabInfo info = myTabs.getTabAt(componentIndex);
     // removing hidden tab happens on end of drag-out, we've already selected the correct tab for this case in dragOutStarted
-    if (info.isHidden()) {
+    if (info.isHidden() || !myProject.isOpen()) {
       toSelect = null;
     }
     final ActionCallback callback = myTabs.removeTab(info, toSelect, transferFocus);
@@ -339,7 +341,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     TabInfo tab = myTabs.findInfo(file);
     if (tab != null) return;
 
-    tab = new TabInfo(comp).setText(calcTabTitle(myProject, file)).setIcon(icon).setTooltipText(tooltip).setObject(file)
+    tab = new TabInfo(comp).setText(calcTabTitle(myProject, file, true)).setIcon(icon).setTooltipText(tooltip).setObject(file)
       .setTabColor(calcTabColor(myProject, file)).setDragOutDelegate(myDragOutDelegate);
     tab.setTestableUi(new MyQueryable(tab));
 
@@ -383,6 +385,10 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
   }
 
   public static String calcTabTitle(final Project project, final VirtualFile file) {
+    return calcTabTitle(project, file, true);
+  }
+
+  public static String calcTabTitle(final Project project, final VirtualFile file, boolean skipNonOpenedFiles) {
     for (EditorTabTitleProvider provider : Extensions.getExtensions(EditorTabTitleProvider.EP_NAME)) {
       final String result = provider.getEditorTabTitle(project, file);
       if (result != null) {
@@ -391,6 +397,15 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     }
 
     return file.getPresentableName();
+  }
+  public static String calcFileName(final Project project,final  VirtualFile file) {
+    for (EditorTabTitleProvider provider : Extensions.getExtensions(EditorTabTitleProvider.EP_NAME)) {
+      final String result = provider.getEditorTabTitle(project, file);
+      if (result != null) {
+        return result;
+      }
+    }
+    return UniqueVFilePathBuilder.getInstance().getUniqueVirtualFilePath(project, file);
   }
 
   @Nullable
@@ -524,7 +539,15 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
         final TabInfo info = myTabs.findInfo(e);
         if (info != null) {
           IdeEventQueue.getInstance().blockNextEvents(e);
-          FileEditorManagerEx.getInstanceEx(myProject).closeFile((VirtualFile)info.getObject(), myWindow);
+          if (e.isAltDown()) {//close others
+            List<TabInfo> allTabInfos = myTabs.getTabs();
+            for (TabInfo tabInfo : allTabInfos) {
+              if (tabInfo == info) continue;
+              FileEditorManagerEx.getInstanceEx(myProject).closeFile((VirtualFile)tabInfo.getObject(), myWindow);
+            }
+          } else {
+            FileEditorManagerEx.getInstanceEx(myProject).closeFile((VirtualFile)info.getObject(), myWindow);
+          }
         }
       }
     }
@@ -553,7 +576,9 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
         final TabInfo info = myTabs.findInfo(e);
         if (info != null && info.getObject() != null) {
           final VirtualFile vFile = (VirtualFile)info.getObject();
-          ShowFilePathAction.show(vFile, e);
+          if (vFile != null) {
+            ShowFilePathAction.show(vFile, e);
+          }
         }
       }
     }
@@ -787,7 +812,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
 
     @Override
     public Insets getBorderInsets(Component component) {
-      return new Insets(0, 0, 0, 0);
+      return JBUI.emptyInsets();
     }
 
     @Override

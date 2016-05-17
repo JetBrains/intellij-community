@@ -1,7 +1,7 @@
 from _pydevd_bundle.pydevd_comm import CMD_SET_BREAK, CMD_ADD_EXCEPTION_BREAK
 import inspect
 from _pydevd_bundle.pydevd_constants import STATE_SUSPEND, get_thread_id, dict_contains, dict_iter_items, DJANGO_SUSPEND, IS_PY2
-from pydevd_file_utils import get_abs_path_real_path_and_base_from_file
+from pydevd_file_utils import get_abs_path_real_path_and_base_from_file, normcase
 from _pydevd_bundle.pydevd_breakpoints import LineBreakpoint, get_exception_name
 from _pydevd_bundle import pydevd_vars
 import traceback
@@ -221,7 +221,7 @@ def _get_template_file_name(frame):
                 context = frame.f_locals['context']
                 if hasattr(context, 'template') and hasattr(context.template, 'origin') and \
                         hasattr(context.template.origin, 'name'):
-                    return context.template.origin.name
+                    return normcase(context.template.origin.name)
             return None
 
         source = _get_source_django_18_or_lower(frame)

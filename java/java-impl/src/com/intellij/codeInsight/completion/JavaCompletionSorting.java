@@ -73,7 +73,7 @@ public class JavaCompletionSorting {
     }
 
     List<LookupElementWeigher> afterPrefix = ContainerUtil.newArrayList();
-    afterPrefix.add(new PreferByKindWeigher(type, position));
+    afterPrefix.add(new PreferByKindWeigher(type, position, expectedTypes));
     if (!smart) {
       ContainerUtil.addIfNotNull(afterPrefix, preferStatics(position, expectedTypes));
       if (!afterNew) {

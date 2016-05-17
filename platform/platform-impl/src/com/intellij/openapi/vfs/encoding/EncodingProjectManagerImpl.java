@@ -40,8 +40,6 @@ import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
@@ -69,19 +67,9 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
   private String myOldUTFGuessing;
   private boolean myNative2AsciiForPropertiesFilesWasSpecified;
 
-  public EncodingProjectManagerImpl(Project project, PsiDocumentManager documentManager, EncodingManager ideEncodingManager) {
+  public EncodingProjectManagerImpl(Project project, EncodingManager ideEncodingManager) {
     myProject = project;
     myIdeEncodingManager = (EncodingManagerImpl)ideEncodingManager;
-    documentManager.addListener(new PsiDocumentManager.Listener() {
-      @Override
-      public void documentCreated(@NotNull Document document, PsiFile psiFile) {
-        myIdeEncodingManager.queueUpdateEncodingFromContent(document);
-      }
-
-      @Override
-      public void fileCreated(@NotNull PsiFile file, @NotNull Document document) {
-      }
-    });
   }
 
   private final Map<VirtualFile, Charset> myMapping = ContainerUtil.newConcurrentMap();

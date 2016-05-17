@@ -20,10 +20,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
-import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
-import com.intellij.openapi.wm.impl.ToolWindowImpl;
-import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.ContentManagerEvent;
@@ -42,13 +41,13 @@ public class VcsLogTabsWatcher implements Disposable {
 
   @NotNull private final PostponableLogRefresher myRefresher;
 
-  @NotNull private final ToolWindowManagerImpl myToolWindowManager;
+  @NotNull private final ToolWindowManagerEx myToolWindowManager;
   @NotNull private final MyRefreshPostponedEventsListener myPostponedEventsListener;
-  @Nullable private ToolWindowImpl myToolWindow;
+  @Nullable private ToolWindow myToolWindow;
 
   public VcsLogTabsWatcher(@NotNull Project project, @NotNull PostponableLogRefresher refresher, @NotNull Disposable parentDisposable) {
     myRefresher = refresher;
-    myToolWindowManager = (ToolWindowManagerImpl)ToolWindowManager.getInstance(project);
+    myToolWindowManager = ToolWindowManagerEx.getInstanceEx(project);
 
     myPostponedEventsListener = new MyRefreshPostponedEventsListener();
     myToolWindowManager.addToolWindowManagerListener(myPostponedEventsListener);
@@ -59,7 +58,7 @@ public class VcsLogTabsWatcher implements Disposable {
 
   @Nullable
   private String getSelectedTabName() {
-    if (myToolWindowManager.isToolWindowRegistered(TOOLWINDOW_ID) && myToolWindow != null && myToolWindow.isVisible()) {
+    if (myToolWindow != null && myToolWindow.isVisible()) {
       Content content = myToolWindow.getContentManager().getSelectedContent();
       if (content != null) {
         return content.getTabName();
@@ -73,14 +72,25 @@ public class VcsLogTabsWatcher implements Disposable {
     return myRefresher.addLogWindow(new VcsLogTab(filterer, contentTabName));
   }
 
+  private void installContentListener() {
+    ToolWindow window = myToolWindowManager.getToolWindow(TOOLWINDOW_ID);
+    if (window != null) {
+      myToolWindow = window;
+      myToolWindow.getContentManager().addContentManagerListener(myPostponedEventsListener);
+    }
+  }
+
   @Override
   public void dispose() {
-    if (myToolWindow != null) myToolWindow.getContentManager().removeContentManagerListener(myPostponedEventsListener);
     myToolWindowManager.removeToolWindowManagerListener(myPostponedEventsListener);
 
-    for (Content content : myToolWindow.getContentManager().getContents()) {
-      if (content instanceof TabbedContent) {
-        content.removePropertyChangeListener(myPostponedEventsListener);
+    if (myToolWindow != null) {
+      myToolWindow.getContentManager().removeContentManagerListener(myPostponedEventsListener);
+
+      for (Content content : myToolWindow.getContentManager().getContents()) {
+        if (content instanceof TabbedContent) {
+          content.removePropertyChangeListener(myPostponedEventsListener);
+        }
       }
     }
   }
@@ -162,15 +172,6 @@ public class VcsLogTabsWatcher implements Disposable {
       if (evt.getPropertyName().equals(Content.PROP_COMPONENT)) {
         selectionChanged();
       }
-    }
-
-  }
-
-  private void installContentListener() {
-    ToolWindowImpl window = (ToolWindowImpl)myToolWindowManager.getToolWindow(TOOLWINDOW_ID);
-    if (window != null) {
-      myToolWindow = window;
-      myToolWindow.getContentManager().addContentManagerListener(myPostponedEventsListener);
     }
   }
 }

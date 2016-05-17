@@ -36,6 +36,7 @@ import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.Function;
 import com.intellij.util.ui.AbstractTableCellEditor;
+import com.intellij.util.ui.JBUI;
 import com.intellij.xdebugger.impl.XSourcePositionImpl;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.ui.XDebuggerExpressionEditor;
@@ -136,47 +137,47 @@ class CompoundRendererConfigurable extends JPanel {
     JPanel panel = new JPanel(new GridBagLayout());
     panel.add(new JLabel(DebuggerBundle.message("label.compound.renderer.configurable.apply.to")),
               new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
-                                     new Insets(0, 0, 0, 0), 0, 0));
+                                     JBUI.emptyInsets(), 0, 0));
     panel.add(myClassNameField, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST,
-                                                       GridBagConstraints.HORIZONTAL, new Insets(4, 0, 0, 0), 0, 0));
+                                                       GridBagConstraints.HORIZONTAL, JBUI.insetsTop(4), 0, 0));
 
     panel.add(new JLabel(DebuggerBundle.message("label.compound.renderer.configurable.when.rendering")),
               new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
-                                     new Insets(20, 0, 0, 0), 0, 0));
+                                     JBUI.insetsTop(20), 0, 0));
     panel.add(myShowTypeCheckBox,
               new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
-                                     new Insets(0, 7, 0, 0), 0, 0));
+                                     JBUI.insetsLeft(7), 0, 0));
     panel.add(myRbDefaultLabel,
               new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
-                                     new Insets(0, 10, 0, 0), 0, 0));
+                                     JBUI.insetsLeft(10), 0, 0));
     panel.add(myRbExpressionLabel,
               new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
-                                     new Insets(0, 10, 0, 0), 0, 0));
+                                     JBUI.insetsLeft(10), 0, 0));
     panel.add(myLabelEditor.getComponent(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST,
-                                                    GridBagConstraints.HORIZONTAL, new Insets(0, 30, 0, 0), 0, 0));
+                                                                   GridBagConstraints.HORIZONTAL, JBUI.insetsLeft(30), 0, 0));
 
     panel.add(new JLabel(DebuggerBundle.message("label.compound.renderer.configurable.when.expanding")),
               new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
-                                     new Insets(20, 0, 0, 0), 0, 0));
+                                     JBUI.insetsTop(20), 0, 0));
     panel.add(myRbDefaultChildrenRenderer,
               new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
-                                     new Insets(0, 10, 0, 0), 0, 0));
+                                     JBUI.insetsLeft(10), 0, 0));
     panel.add(myRbExpressionChildrenRenderer,
               new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
-                                     new Insets(0, 10, 0, 0), 0, 0));
+                                     JBUI.insetsLeft(10), 0, 0));
     panel.add(myChildrenEditor.getComponent(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST,
-                                                       GridBagConstraints.HORIZONTAL, new Insets(0, 30, 0, 0), 0, 0));
+                                                                      GridBagConstraints.HORIZONTAL, JBUI.insetsLeft(30), 0, 0));
     myExpandedLabel = new JLabel(DebuggerBundle.message("label.compound.renderer.configurable.test.can.expand"));
     panel.add(myExpandedLabel,
               new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
-                                     new Insets(4, 30, 0, 0), 0, 0));
+                                     JBUI.insets(4, 30, 0, 0), 0, 0));
     panel.add(myChildrenExpandedEditor.getComponent(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST,
-                                                               GridBagConstraints.HORIZONTAL, new Insets(0, 30, 0, 0), 0, 0));
+                                                                              GridBagConstraints.HORIZONTAL, JBUI.insetsLeft(30), 0, 0));
     panel.add(myRbListChildrenRenderer, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST,
-                                                               GridBagConstraints.HORIZONTAL, new Insets(0, 10, 0, 0), 0, 0));
+                                                               GridBagConstraints.HORIZONTAL, JBUI.insetsLeft(10), 0, 0));
     panel.add(myChildrenListEditor,
               new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
-                                     new Insets(4, 30, 0, 0), 0, 0));
+                                     JBUI.insets(4, 30, 0, 0), 0, 0));
     add(new JPanel(), EMPTY_PANEL_ID);
     add(panel, DATA_PANEL_ID);
   }

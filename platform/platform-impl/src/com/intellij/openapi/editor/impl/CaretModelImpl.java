@@ -267,10 +267,16 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   @Nullable
   @Override
   public Caret addCaret(@NotNull VisualPosition pos) {
+    return addCaret(pos, true);
+  }
+
+  @Nullable
+  @Override
+  public Caret addCaret(@NotNull VisualPosition pos, boolean makePrimary) {
     EditorImpl.assertIsDispatchThread();
     CaretImpl caret = new CaretImpl(myEditor);
     caret.moveToVisualPosition(pos, false);
-    if (addCaret(caret)) {
+    if (addCaret(caret, makePrimary)) {
       return caret;
     }
     else {
@@ -279,14 +285,19 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     }
   }
 
-  boolean addCaret(@NotNull CaretImpl caretToAdd) {
+  boolean addCaret(@NotNull CaretImpl caretToAdd, boolean makePrimary) {
     for (CaretImpl caret : myCarets) {
       if (caretsOverlap(caret, caretToAdd)) {
         return false;
       }
     }
     synchronized (myCarets) {
-      myCarets.add(caretToAdd);
+      if (makePrimary) {
+        myCarets.addLast(caretToAdd);
+      }
+      else {
+        myCarets.addFirst(caretToAdd);
+      }
     }
     fireCaretAdded(caretToAdd);
     return true;

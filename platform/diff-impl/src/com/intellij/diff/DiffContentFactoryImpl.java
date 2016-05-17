@@ -81,6 +81,20 @@ public class DiffContentFactoryImpl extends DiffContentFactory {
     return createImpl(text, highlightFile != null ? highlightFile.getFileType() : null, highlightFile, null, true, true);
   }
 
+  @NotNull
+  @Override
+  public DocumentContent create(@NotNull String text, @Nullable DocumentContent referent) {
+    if (referent == null) return create(text);
+    return createImpl(text, referent.getContentType(), referent.getHighlightFile(), null, false, true);
+  }
+
+  @NotNull
+  @Override
+  public DocumentContent create(@NotNull Document document, @Nullable DocumentContent referent) {
+    if (referent == null) return new DocumentContentImpl(document);
+    return new DocumentContentImpl(document, referent.getContentType(), referent.getHighlightFile(), null, null);
+  }
+
   @Override
   @NotNull
   public DocumentContent create(@Nullable Project project, @NotNull Document document) {

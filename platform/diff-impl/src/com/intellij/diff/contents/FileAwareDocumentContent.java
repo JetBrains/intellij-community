@@ -1,7 +1,7 @@
 package com.intellij.diff.contents;
 
 import com.intellij.diff.tools.util.DiffNotifications;
-import com.intellij.diff.util.DiffUserDataKeys;
+import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -21,8 +21,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
-import java.util.Collections;
-import java.util.List;
 
 public class FileAwareDocumentContent extends DocumentContentImpl {
   @Nullable private final Project myProject;
@@ -122,13 +120,12 @@ public class FileAwareDocumentContent extends DocumentContentImpl {
     }
 
     @Nullable
-    private List<JComponent> createNotifications() {
+    private JComponent createNotification() {
       if (!myMalformedContent) return null;
       assert mySuggestedCharset != null;
 
       String text = "Content was decoded with errors (using " + "'" + mySuggestedCharset.name() + "' charset)";
-      JComponent notification = DiffNotifications.createNotification(text, LightColors.RED);
-      return Collections.singletonList(notification);
+      return DiffNotifications.createNotification(text, LightColors.RED);
     }
 
     @NotNull
@@ -136,7 +133,7 @@ public class FileAwareDocumentContent extends DocumentContentImpl {
       if (FileTypes.UNKNOWN.equals(myFileType)) myFileType = PlainTextFileType.INSTANCE;
       FileAwareDocumentContent content
         = new FileAwareDocumentContent(myProject, myDocument, myFileType, myHighlightFile, mySeparator, myCharset);
-      content.putUserData(DiffUserDataKeys.NOTIFICATIONS, createNotifications());
+      DiffUtil.addNotification(createNotification(), content);
       return content;
     }
   }

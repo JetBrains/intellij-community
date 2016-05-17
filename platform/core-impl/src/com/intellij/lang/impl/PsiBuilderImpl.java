@@ -167,7 +167,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
                          @NotNull TokenSet comments,
                          @NotNull Lexer lexer,
                          CharTable charTable,
-                         @NotNull final CharSequence text,
+                         @NotNull CharSequence text,
                          @Nullable ASTNode originalTree,
                          @Nullable CharSequence lastCommittedText,
                          @Nullable MyTreeStructure parentLightTree,

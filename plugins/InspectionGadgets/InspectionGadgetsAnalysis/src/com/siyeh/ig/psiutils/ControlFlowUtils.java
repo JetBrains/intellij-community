@@ -297,9 +297,9 @@ public class ControlFlowUtils {
     return continueToAncestorFinder.continueToAncestorFound();
   }
 
-  public static boolean statementContainsReturn(@NotNull PsiStatement statement) {
+  public static boolean containsReturn(@NotNull PsiElement element) {
     final ReturnFinder returnFinder = new ReturnFinder();
-    statement.accept(returnFinder);
+    element.accept(returnFinder);
     return returnFinder.returnFound();
   }
 
@@ -309,9 +309,9 @@ public class ControlFlowUtils {
     return continueFinder.continueFound();
   }
 
-  public static boolean statementContainsSystemExit(@NotNull PsiStatement statement) {
+  public static boolean containsSystemExit(@NotNull PsiElement element) {
     final SystemExitFinder systemExitFinder = new SystemExitFinder();
-    statement.accept(systemExitFinder);
+    element.accept(systemExitFinder);
     return systemExitFinder.exitFound();
   }
 
@@ -362,7 +362,7 @@ public class ControlFlowUtils {
     return PsiTreeUtil.getParentOfType(expression, PsiReturnStatement.class) != null;
   }
 
-  private static boolean isInThrowStatementArgument(@NotNull PsiExpression expression) {
+  public static boolean isInThrowStatementArgument(@NotNull PsiExpression expression) {
     return PsiTreeUtil.getParentOfType(expression, PsiThrowStatement.class) != null;
   }
 
@@ -520,9 +520,19 @@ public class ControlFlowUtils {
     if (body == null) {
       return true;
     }
-    final ReturnFinder returnFinder = new ReturnFinder();
-    body.accept(returnFinder);
-    return !returnFinder.returnFound() && !codeBlockMayCompleteNormally(body);
+    return !containsReturn(body) && !codeBlockMayCompleteNormally(body);
+  }
+
+  public static boolean lambdaExpressionAlwaysThrowsException(PsiLambdaExpression expression) {
+    final PsiElement body = expression.getBody();
+    if (body instanceof PsiExpression) {
+      return false;
+    }
+    if (!(body instanceof PsiCodeBlock)) {
+      return true;
+    }
+    final PsiCodeBlock codeBlock = (PsiCodeBlock)body;
+    return !containsReturn(codeBlock) && !codeBlockMayCompleteNormally(codeBlock);
   }
 
   public static boolean statementContainsNakedBreak(PsiStatement statement) {

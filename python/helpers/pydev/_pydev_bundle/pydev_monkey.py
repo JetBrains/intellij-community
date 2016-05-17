@@ -66,8 +66,8 @@ def is_python(path):
 def remove_quotes_from_args(args):
     new_args = []
     for x in args:
-        if x.startswith('"') and x.endswith('"'):
-            x = x.strip('"')
+        if len(x) > 1 and x.startswith('"') and x.endswith('"'):
+            x = x[1:-1]
         new_args.append(x)
     return new_args
 

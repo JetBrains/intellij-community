@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,26 +51,22 @@ public class InfiniteLoopStatementInspection extends BaseInspection {
     return new InfiniteLoopStatementsVisitor();
   }
 
-  private static class InfiniteLoopStatementsVisitor
-    extends BaseInspectionVisitor {
+  private static class InfiniteLoopStatementsVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitForStatement(
-      @NotNull PsiForStatement statement) {
+    public void visitForStatement(@NotNull PsiForStatement statement) {
       super.visitForStatement(statement);
       checkStatement(statement);
     }
 
     @Override
-    public void visitWhileStatement(
-      @NotNull PsiWhileStatement statement) {
+    public void visitWhileStatement(@NotNull PsiWhileStatement statement) {
       super.visitWhileStatement(statement);
       checkStatement(statement);
     }
 
     @Override
-    public void visitDoWhileStatement(
-      @NotNull PsiDoWhileStatement statement) {
+    public void visitDoWhileStatement(@NotNull PsiDoWhileStatement statement) {
       super.visitDoWhileStatement(statement);
       checkStatement(statement);
     }
@@ -79,10 +75,10 @@ public class InfiniteLoopStatementInspection extends BaseInspection {
       if (ControlFlowUtils.statementMayCompleteNormally(statement)) {
         return;
       }
-      if (ControlFlowUtils.statementContainsReturn(statement)) {
+      if (ControlFlowUtils.containsReturn(statement)) {
         return;
       }
-      if (ControlFlowUtils.statementContainsSystemExit(statement)) {
+      if (ControlFlowUtils.containsSystemExit(statement)) {
         return;
       }
       registerStatementError(statement);

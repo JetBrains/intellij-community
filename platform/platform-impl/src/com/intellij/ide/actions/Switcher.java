@@ -656,6 +656,8 @@ public class Switcher extends AnAction implements DumbAware {
 
       addFocusTraversalKeys(popupFocusAncestor, KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, "RIGHT");
       addFocusTraversalKeys(popupFocusAncestor, KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS, "LEFT");
+      addFocusTraversalKeys(popupFocusAncestor, KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, "control RIGHT");
+      addFocusTraversalKeys(popupFocusAncestor, KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS, "control LEFT");
 
     }
 
@@ -733,6 +735,12 @@ public class Switcher extends AnAction implements DumbAware {
           break;
         case VK_ESCAPE:
           cancel();
+          break;
+        case VK_UP:
+        case VK_DOWN:
+          if (e.isControlDown()) {
+            go(e.getKeyCode() == VK_DOWN);
+          }
           break;
       }
     }
@@ -1231,8 +1239,8 @@ public class Switcher extends AnAction implements DumbAware {
 
     String getNameForRendering() {
       if (myNameForRendering == null) {
-        // calc name the same way editor tabs do this, i.e. including EPs
-        myNameForRendering = EditorTabbedContainer.calcTabTitle(myProject, first);
+        // Recently changed files would also be taken into account (not only open 'visible' files)
+        myNameForRendering = EditorTabbedContainer.calcFileName(myProject, first);
       }
       return myNameForRendering;
     }

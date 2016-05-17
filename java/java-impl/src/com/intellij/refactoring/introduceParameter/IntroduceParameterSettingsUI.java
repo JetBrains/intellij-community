@@ -25,6 +25,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.TypeSelectorManager;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.StateRestoringCheckBox;
+import com.intellij.util.ui.JBUI;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntProcedure;
 
@@ -111,7 +112,7 @@ public abstract class IntroduceParameterSettingsUI {
     JPanel radioButtonPanel = new JPanel(new GridBagLayout());
 
     GridBagConstraints gbConstraints = new GridBagConstraints();
-    gbConstraints.insets = new Insets(4, 8, 4, 8);
+    gbConstraints.insets = JBUI.insets(4, 8);
     gbConstraints.weighty = 1;
     gbConstraints.weightx = 1;
     gbConstraints.gridy = 0;
@@ -263,7 +264,7 @@ public abstract class IntroduceParameterSettingsUI {
       panel.add(myCbDeleteLocalVariable, gbConstraints);
       myCbDeleteLocalVariable.setSelected(settings.INTRODUCE_PARAMETER_DELETE_LOCAL_VARIABLE);
 
-      gbConstraints.insets = new Insets(0, 0, 4, 8);
+      gbConstraints.insets = JBUI.insets(0, 0, 4, 8);
       if(myHasInitializer) {
         myCbUseInitializer = new StateRestoringCheckBox();
         myCbUseInitializer.setText(RefactoringBundle.message("use.variable.initializer.to.initialize.parameter"));

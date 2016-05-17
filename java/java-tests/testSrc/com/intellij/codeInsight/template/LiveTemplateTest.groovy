@@ -86,6 +86,21 @@ public class LiveTemplateTest extends LightCodeInsightFixtureTestCase {
     checkResultByText(expected);
   }
 
+  public void testDependentSegmentsAtTheSamePosition() {
+    configureFromFileText("dummy.java", "class A { void test() { <caret> } }")
+    TemplateManager manager = TemplateManager.getInstance(getProject())
+    final Template template = manager.createTemplate("test_template", "user_group", '$A$$B$ then "$A$.$B$"')
+    template.addVariable("A", "", "", true)
+    template.addVariable("B", "", "", true)
+    startTemplate(template)
+    myFixture.type("HELLO")
+    myFixture.type("\t")
+    myFixture.type("THERE")
+    myFixture.type("\t")
+    assert state == null
+    checkResultByText("class A { void test() { HELLOTHERE then \"HELLO.THERE\" } }");
+  }
+
   public void testTemplateWithSegmentsAtTheSamePosition_1() {
     doTestTemplateWithThreeVariables("", "", "", "class A { void test() { for(TestValue1TestValue2TestValue3) {} } }")
   }
@@ -109,11 +124,8 @@ public class LiveTemplateTest extends LightCodeInsightFixtureTestCase {
     template.addVariable("TEST1", "", StringUtil.wrapWithDoubleQuote(firstDefaultValue), true)
     template.addVariable("TEST2", "", StringUtil.wrapWithDoubleQuote(secondDefaultValue), true)
     template.addVariable("TEST3", "", StringUtil.wrapWithDoubleQuote(thirdDefaultValue), true)
-    ((TemplateImpl)template).templateContext.setEnabled(contextType(JavaCodeContextType.class), true)
-    CodeInsightTestUtil.addTemplate(template, testRootDisposable)
+    startTemplate(template)
 
-    startTemplate(templateName, templateGroup)
-    UIUtil.dispatchAllInvocationEvents()
     if (firstDefaultValue.empty) myFixture.type("TestValue1")
     myFixture.type("\t")
     if (secondDefaultValue.empty) myFixture.type("TestValue2")

@@ -392,9 +392,4 @@ public class SyntaxInfoConstructionTest extends LightPlatformCodeInsightFixtureT
   private void verifySyntaxInfo(String info) {
     assertEquals(info, getSyntaxInfo());
   }
-
-  @Override
-  protected boolean isWriteActionRequired() {
-    return false;
-  }
 }

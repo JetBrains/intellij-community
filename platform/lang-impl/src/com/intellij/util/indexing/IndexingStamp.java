@@ -20,9 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.util.SmartList;
 import com.intellij.util.SystemProperties;
@@ -143,7 +141,7 @@ public class IndexingStamp {
     }
   }
 
-  static long getIndexCreationStamp(@NotNull ID<?, ?> indexName) {
+  public static long getIndexCreationStamp(@NotNull ID<?, ?> indexName) {
     Long version = ourIndexIdToCreationStamp.get(indexName);
     if (version != null) return version.longValue();
 
@@ -151,10 +149,6 @@ public class IndexingStamp {
     ourIndexIdToCreationStamp.putIfAbsent(indexName, stamp);
 
     return stamp;
-  }
-
-  public static boolean isFileIndexedStateCurrent(VirtualFile file, ID<?, ?> indexName) {
-    return file instanceof NewVirtualFile && isFileIndexedStateCurrent(((NewVirtualFile)file).getId(), indexName);
   }
 
   public static boolean isFileIndexedStateCurrent(int fileId, ID<?, ?> indexName) {
@@ -297,6 +291,9 @@ public class IndexingStamp {
     private void set(ID<?, ?> id, long tmst) {
       if (myIndexStamps == null) myIndexStamps = new TObjectLongHashMap<ID<?, ?>>(5, 0.98f);
 
+      if (tmst == INDEX_DATA_OUTDATED_STAMP && !myIndexStamps.contains(id)) {
+        return;
+      }
       long previous = myIndexStamps.put(id, tmst);
       if (previous != tmst) myIsDirty = true;
     }

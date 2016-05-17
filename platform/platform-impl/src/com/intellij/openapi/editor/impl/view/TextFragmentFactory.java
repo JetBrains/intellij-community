@@ -17,6 +17,7 @@ package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.editor.impl.FontInfo;
 import org.jetbrains.annotations.NotNull;
+import sun.swing.SwingUtilities2;
 
 import java.awt.font.FontRenderContext;
 
@@ -32,11 +33,7 @@ class TextFragmentFactory {
   }
 
   private static boolean isComplexText(char[] chars, int start, int end) {
-    for (int i = start; i < end; i++) {
-      // Unicode characters with code points below 0x0300 don't combine with each other on rendering, so they can be processed one-by-one  
-      if (chars[i] >= 0x0300) return true;
-    }
-    return false;
-    
+    // replace with Font.textRequiresLayout in Java 9
+    return SwingUtilities2.isComplexLayout(chars, start, end);
   }
 }

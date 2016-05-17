@@ -125,9 +125,4 @@ public class JavaFormatterPerformanceTest extends JavaFormatterTestCase {
   protected boolean doCheckDocumentUpdate() {
     return true;
   }
-
-  @Override
-  protected String getFileExtension() {
-    return "java";
-  }
 }

@@ -1,3 +1,5 @@
+import os
+
 from _pydev_bundle.pydev_imports import xmlrpclib, _queue, Exec
 import sys
 from _pydevd_bundle.pydevd_constants import IS_JYTHON
@@ -480,11 +482,19 @@ class BaseInterpreterInterface:
         else:
             return self.orig_find_frame(thread_id, frame_id)
 
-    def connectToDebugger(self, debuggerPort):
+    def connectToDebugger(self, debuggerPort, debugger_options=None):
         '''
         Used to show console with variables connection.
         Mainly, monkey-patches things in the debugger structure so that the debugger protocol works.
         '''
+
+        if debugger_options is None:
+            debugger_options = {}
+        env_key = "PYDEVD_EXTRA_ENVS"
+        if env_key in debugger_options:
+            for (env_name, value) in debugger_options[env_key].items():
+                os.environ[env_name] = value
+            del debugger_options[env_key]
         def do_connect_to_debugger():
             try:
                 # Try to import the packages needed to attach the debugger
@@ -504,6 +514,7 @@ class BaseInterpreterInterface:
 
             self.debugger = pydevd.PyDB()
             try:
+                pydevd.apply_debugger_options(debugger_options)
                 self.debugger.connect(pydev_localhost.get_localhost(), debuggerPort)
                 self.debugger.prepare_to_run()
                 from _pydevd_bundle import pydevd_tracing

@@ -51,7 +51,6 @@ import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.ui.*;
 import com.intellij.ui.mac.MacMainFrameDecorator;
 import com.intellij.util.Alarm;
-import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor;
 import org.jetbrains.annotations.NotNull;
@@ -468,14 +467,8 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
 
   public void dispose() {
     if (SystemInfo.isMac && isInFullScreen()) {
-      ((MacMainFrameDecorator)myFrameDecorator).exitFullScreenAndDispose();
+      ((MacMainFrameDecorator)myFrameDecorator).toggleFullScreenNow();
     }
-    else {
-      disposeImpl();
-    }
-  }
-
-  public void disposeImpl() {
     if (isTemporaryDisposed()) {
       super.dispose();
       return;

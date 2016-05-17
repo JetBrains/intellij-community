@@ -339,7 +339,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
           LOG.error(t);
         }
         finally {
-          //ReflectionUtil.resetThreadLocals();
           Thread.interrupted(); // reset interrupted status
           assert !isReadAccessAllowed(): describe(Thread.currentThread());
         }
@@ -364,7 +363,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
           LOG.error(t);
         }
         finally {
-          //ReflectionUtil.resetThreadLocals();
           Thread.interrupted(); // reset interrupted status
           assert !isReadAccessAllowed() : describe(Thread.currentThread());
         }
@@ -1104,9 +1102,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private void startWrite(@NotNull Class clazz) {
     assertIsDispatchThread("Write access is allowed from event dispatch thread only");
     HeavyProcessLatch.INSTANCE.stopThreadPrioritizing(); // let non-cancellable read actions complete faster, if present
-    if (!isDisposed() && !isDisposeInProgress()) {
-      ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
-    }
     boolean writeActionPending = myWriteActionPending;
     if (gatherWriteActionStatistics && myWriteActionsStack.isEmpty() && !writeActionPending) {
       writePauses.started();

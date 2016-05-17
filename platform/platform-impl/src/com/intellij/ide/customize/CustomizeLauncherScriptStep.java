@@ -27,7 +27,7 @@ import java.awt.*;
 
 public class CustomizeLauncherScriptStep extends AbstractCustomizeWizardStep {
   public static boolean isAvailable() {
-    return CreateLauncherScriptAction.isAvailable();
+    return System.getProperty("idea.skip.launcher.script.step") == null && CreateLauncherScriptAction.isAvailable();
   }
 
   private final JCheckBox myCreateScriptCheckBox = new JCheckBox(ActionsBundle.message("action.CreateLauncherScript.description"));

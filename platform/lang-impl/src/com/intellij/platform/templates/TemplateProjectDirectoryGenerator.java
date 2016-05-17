@@ -92,5 +92,9 @@ public class TemplateProjectDirectoryGenerator implements DirectoryProjectGenera
     for (WizardInputField field : myTemplate.getInputFields()) {
       field.addToSettings(settingsStep);
     }
+
+    if(myTemplate.getInputFields().isEmpty()){
+      settingsStep.addSettingsComponent(new JLabel());
+    }
   }
 }

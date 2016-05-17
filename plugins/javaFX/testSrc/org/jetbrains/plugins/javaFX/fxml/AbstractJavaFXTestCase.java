@@ -18,12 +18,14 @@ package org.jetbrains.plugins.javaFX.fxml;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.javaFX.packaging.JavaFxApplicationArtifactType;
 
 import java.io.File;
 
@@ -34,11 +36,12 @@ import java.io.File;
 public abstract class AbstractJavaFXTestCase extends LightCodeInsightFixtureTestCase {
   public static final DefaultLightProjectDescriptor JAVA_FX_DESCRIPTOR = new DefaultLightProjectDescriptor() {
     @Override
-       public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
-       addJavaFxJarAsLibrary(module, model);
-       super.configureModule(module, model, contentEntry);
-     }
-   };
+    public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
+      addJavaFxJarAsLibrary(module, model);
+      ArtifactManager.getInstance(model.getProject()).addArtifact("fake-javafx", JavaFxApplicationArtifactType.getInstance(), null);
+      super.configureModule(module, model, contentEntry);
+    }
+  };
 
   public static void addJavaFxJarAsLibrary(@NotNull Module module) {
     addJavaFxJarAsLibrary(module, null);

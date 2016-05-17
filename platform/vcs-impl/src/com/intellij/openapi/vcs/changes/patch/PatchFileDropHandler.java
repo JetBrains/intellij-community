@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.ide.dnd.FileCopyPasteUtil;
 import com.intellij.openapi.editor.CustomFileDropHandler;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,14 +28,14 @@ import java.util.List;
 public class PatchFileDropHandler extends CustomFileDropHandler {
 
   @Override
-  public boolean canHandle(@NotNull Transferable t) {
+  public boolean canHandle(@NotNull Transferable t, Editor editor) {
     List<File> list = FileCopyPasteUtil.getFileList(t);
     if (list == null || list.size() != 1) return false;
     return PatchFileType.isPatchFile(list.get(0));
   }
 
   @Override
-  public boolean handleDrop(@NotNull Transferable t, @NotNull final Project project) {
+  public boolean handleDrop(@NotNull Transferable t, Editor editor, @NotNull final Project project) {
     List<File> list = FileCopyPasteUtil.getFileList(t);
     if (list == null || list.size() != 1) return false;
     return ApplyPatchAction.showAndGetApplyPatch(project, list.get(0));

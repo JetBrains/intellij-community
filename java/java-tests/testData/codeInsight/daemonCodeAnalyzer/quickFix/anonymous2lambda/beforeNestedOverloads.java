@@ -21,7 +21,7 @@ class Ambiguous {
   }
 
   public void anonymousToLambda(HashSet<String> modules) {
-    setRoots(Ambiguous.concat(Ambiguous.map(modules, new Function<String, List<String>>() {
+    setRoots(Ambiguous.concat(Ambiguous.map(modules, new Fun<caret>ction<String, List<String>>() {
                                 @Override
                                 public List<String> apply(String s) {
                                   return null;

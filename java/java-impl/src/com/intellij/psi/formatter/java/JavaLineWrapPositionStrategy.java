@@ -28,8 +28,18 @@ public class JavaLineWrapPositionStrategy extends DefaultLineWrapPositionStrateg
     char charAtOffset = chars.charAt(offset);
 
     if (charAtOffset == '.') {
-      if (offset > 0 && chars.charAt(offset - 1) == '.' || offset + 1 < chars.length() && chars.charAt(offset + 1) == '.') {
-        return false;
+      if (offset > 0) {
+        char charBefore = chars.charAt(offset - 1);
+        if (charBefore == '.' || Character.isDigit(charBefore)) {
+          return false;
+        }
+      }
+
+      if (offset + 1 < chars.length()) {
+        char charAfter = chars.charAt(offset + 1);
+        if (charAfter == '.' || Character.isDigit(charAfter)) {
+          return false;
+        }
       }
     }
 

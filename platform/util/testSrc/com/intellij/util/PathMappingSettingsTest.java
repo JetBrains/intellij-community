@@ -40,6 +40,18 @@ public class PathMappingSettingsTest {
     }
   }
 
+  @Test
+  public void testOverlappingPaths() {
+    myMappingSettings.addMapping("V:/site-packages", "/usr/lib/python2.6/site-packages");
+    myMappingSettings.addMapping("V:/site-packages64", "/usr/lib64/python2.6/site-packages");
+    myMappingSettings.addMapping("V:/bfms/django_root", "/opt/bfms");
+    myMappingSettings.addMapping("V:/bfms", "/opt/bfms_trunk");
+
+    Assert.assertEquals("/usr/lib64/python2.6/site-packages/django", myMappingSettings.convertToRemote("V:\\site-packages64\\django"));
+    Assert.assertEquals("V:/site-packages64/django", myMappingSettings.convertToLocal("/usr/lib64/python2.6/site-packages/django"));
+    Assert.assertEquals("/opt/bfms/myapp", myMappingSettings.convertToRemote("V:/bfms/django_root/myapp"));
+    Assert.assertEquals("V:/bfms/django_root/myapp", myMappingSettings.convertToLocal("/opt/bfms/myapp"));
+  }
 
   @Test
   public void testConvertToLocalPathWithSeveralRemotePrefixInclusions() {

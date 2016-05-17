@@ -56,6 +56,7 @@ public class AutoCloseableResourceInspectionBase extends ResourceInspection {
       .add("java.io.Writer", "append")
       .add("com.google.common.base.Preconditions", "checkNotNull")
       .add("org.hibernate.Session", "close")
+      .add("java.io.PrintWriter", "printf")
       .finishDefault();
   }
 

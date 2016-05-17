@@ -15,7 +15,9 @@
  */
 package com.intellij.platform.templates;
 
+import com.intellij.ide.util.projectWizard.ProjectTemplateParameterFactory;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -88,6 +90,11 @@ public class SaveProjectAsTemplateDialog extends DialogWrapper {
         LOG.error(e);
       }
     }
+
+    boolean showReplaceParameters = Extensions.getExtensions(ProjectTemplateParameterFactory.EP_NAME).length > 0;
+    myReplaceParameters.setVisible(showReplaceParameters);
+    myReplaceParameters.setSelected(showReplaceParameters);
+
     init();
   }
 

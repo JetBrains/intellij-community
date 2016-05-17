@@ -294,6 +294,11 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
   }
 
   @Override
+  protected boolean canGoNext() {
+    return myDelegate != null ? myDelegate.canProceed() : super.canGoNext();
+  }
+
+  @Override
   public void doCancelAction() {
     final ModuleWizardStep step = getCurrentStepObject();
     step.onStepLeaving();

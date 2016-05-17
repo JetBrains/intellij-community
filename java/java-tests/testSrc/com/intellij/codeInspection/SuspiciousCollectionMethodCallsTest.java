@@ -24,6 +24,7 @@ public class SuspiciousCollectionMethodCallsTest extends LightCodeInsightFixture
   public void testSetList() throws Exception { doTest(); }
   public void testUseDfa() throws Exception { doTest(); }
   public void testWildcard() throws Exception { doTest(); }
+  public void testPolyConditionalExpressionPassedToMapGetCall() throws Exception { doTest(); }
   public void testIgnoreConvertible() throws Exception {
     myTool.REPORT_CONVERTIBLE_METHOD_CALLS = false;
     doTest();

@@ -138,7 +138,7 @@ public class SelectWordAtCaretAction extends TextComponentEditorAction implement
         int nonWhitespaceOffset = CharArrayUtil.shiftForward(chars, endOffset, " \t\n");
         HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(nonWhitespaceOffset);
         if (BraceMatchingUtil.isRBraceToken(iterator, chars, file.getFileType())) {
-          if (((EditorEx)editor).calcColumnNumber(iterator.getStart(), doc.getLineNumber(iterator.getStart())) == guide.indentLevel) {
+          if (editor.offsetToLogicalPosition(iterator.getStart()).column == guide.indentLevel) {
             endOffset = iterator.getEnd();
             endOffset = CharArrayUtil.shiftForward(chars, endOffset, " \t");
             if (endOffset < chars.length() && chars.charAt(endOffset) == '\n') endOffset++;

@@ -185,9 +185,7 @@ public class BlockSupportImpl extends BlockSupport {
       final FileElement holderElement = new DummyHolder(fileImpl.getManager(), null).getTreeElement();
       holderElement.rawAddChildren(fileImpl.createContentLeafElement(holderElement.getCharTable().intern(newFileText, 0, newFileText.length())));
       DiffLog diffLog = new DiffLog();
-      FileElement newNode = (FileElement)holderElement.getFirstChildNode();
-      parent.copyUserDataTo(newNode);
-      diffLog.appendReplaceFileElement(parent, newNode);
+      diffLog.appendReplaceFileElement(parent, (FileElement)holderElement.getFirstChildNode());
 
       return diffLog;
     }

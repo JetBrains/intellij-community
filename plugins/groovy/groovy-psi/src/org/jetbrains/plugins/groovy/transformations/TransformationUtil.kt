@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.groovy.transformations
 
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.util.RecursionManager
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiMethod
@@ -33,24 +32,20 @@ class TransformationResult(
 )
 
 private val ourTransformationContext = object : ThreadLocal<MutableMap<GrTypeDefinition, Boolean>>() {
-  override fun initialValue(): MutableMap<GrTypeDefinition, Boolean> {
-    return ContainerUtil.newHashMap()
-  }
+  override fun initialValue(): MutableMap<GrTypeDefinition, Boolean> = ContainerUtil.newHashMap()
 }
 
 fun transformDefinition(definition: GrTypeDefinition): TransformationResult {
   ourTransformationContext.get().put(definition, true)
   try {
-    return RecursionManager.doPreventingRecursion(definition, false) {
-      val transformationContext = TransformationContextImpl(definition)
-      if (definition.name != null) {
-        for (transformation in org.jetbrains.plugins.groovy.transformations.AstTransformationSupport.EP_NAME.extensions) {
-          ProgressManager.checkCanceled()
-          transformation.applyTransformation(transformationContext)
-        }
+    val transformationContext = TransformationContextImpl(definition)
+    if (definition.name != null) {
+      for (transformation in org.jetbrains.plugins.groovy.transformations.AstTransformationSupport.EP_NAME.extensions) {
+        ProgressManager.checkCanceled()
+        transformation.applyTransformation(transformationContext)
       }
-      transformationContext.transformationResult
-    }!!
+    }
+    return transformationContext.transformationResult
   }
   finally {
     ourTransformationContext.get().remove(definition)

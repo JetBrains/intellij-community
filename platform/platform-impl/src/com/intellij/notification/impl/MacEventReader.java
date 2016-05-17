@@ -29,7 +29,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 class MacEventReader {
   private static final int MAX_MESSAGE_LENGTH = 100;
@@ -90,7 +89,7 @@ class MacEventReader {
 
   private static synchronized ExecutorService getService() {
     if (ourService == null) {
-      ourService = Executors.newSingleThreadExecutor(ConcurrencyUtil.newNamedThreadFactory("Mac event reader"));
+      ourService = ConcurrencyUtil.newSingleThreadExecutor("Mac event reader");
     }
     return ourService;
   }

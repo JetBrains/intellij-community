@@ -198,7 +198,6 @@ public class TransferableFileEditorStateSupport {
     public ToggleSynchronousEditorStatesAction(@NotNull TransferableFileEditorStateSupport support) {
       super("Synchronize Editors Settings", AllIcons.Actions.SyncPanels);
       mySupport = support;
-      setEnabledInModalContext(true);
     }
 
     @Override

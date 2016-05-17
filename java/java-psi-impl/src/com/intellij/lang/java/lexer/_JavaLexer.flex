@@ -36,8 +36,7 @@ import com.intellij.lexer.FlexLexer;
 
   public void goTo(int offset) {
     zzCurrentPos = zzMarkedPos = zzStartRead = offset;
-    zzPushbackPos = 0;
-    zzAtEOF = offset < zzEndRead;
+    zzAtEOF = false;
   }
 %}
 
@@ -46,10 +45,6 @@ import com.intellij.lexer.FlexLexer;
 %implements FlexLexer
 %function advance
 %type IElementType
-
-%eof{
-  return;
-%eof}
 
 WHITE_SPACE_CHAR = [\ \n\r\t\f]
 
@@ -206,4 +201,4 @@ STRING_LITERAL = \" ([^\\\"\r\n] | {ESCAPE_SEQUENCE})* (\"|\\)?
 <YYINITIAL> "::" { return JavaTokenType.DOUBLE_COLON; }
 <YYINITIAL> "->" { return JavaTokenType.ARROW; }
 
-<YYINITIAL> . { return JavaTokenType.BAD_CHARACTER; }
+<YYINITIAL> [^]  { return JavaTokenType.BAD_CHARACTER; }
