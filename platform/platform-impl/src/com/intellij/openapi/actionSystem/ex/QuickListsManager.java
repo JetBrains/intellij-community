@@ -23,7 +23,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.options.NonLazySchemeProcessor;
 import com.intellij.openapi.options.SchemeManager;
-import com.intellij.openapi.options.SchemesManagerFactory;
+import com.intellij.openapi.options.SchemeManagerFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ThrowableConvertor;
 import gnu.trove.THashSet;
@@ -41,15 +41,16 @@ public class QuickListsManager implements ExportableApplicationComponent {
   private final ActionManager myActionManager;
   private final SchemeManager<QuickList> mySchemeManager;
 
-  public QuickListsManager(@NotNull ActionManager actionManager, @NotNull SchemesManagerFactory schemesManagerFactory) {
+  public QuickListsManager(@NotNull ActionManager actionManager, @NotNull SchemeManagerFactory schemeManagerFactory) {
     myActionManager = actionManager;
-    mySchemeManager = schemesManagerFactory.create("quicklists", new NonLazySchemeProcessor<QuickList>() {
+    mySchemeManager = schemeManagerFactory.create("quicklists", new NonLazySchemeProcessor<QuickList, QuickList>() {
       @NotNull
       @Override
       public QuickList readScheme(@NotNull Element element, boolean duringLoad) {
         return createItem(element);
       }
 
+      @NotNull
       @Override
       public Element writeScheme(@NotNull QuickList scheme) {
         Element element = new Element(LIST_TAG);

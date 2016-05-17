@@ -49,8 +49,8 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
 
   public static boolean ourKeymapManagerInitialized = false;
 
-  KeymapManagerImpl(@NotNull DefaultKeymap defaultKeymap, @NotNull SchemesManagerFactory factory) {
-    SchemeProcessor<KeymapImpl> schemeProcessor = new NonLazySchemeProcessor<KeymapImpl>() {
+  KeymapManagerImpl(@NotNull DefaultKeymap defaultKeymap, @NotNull SchemeManagerFactory factory) {
+    SchemeProcessor<Keymap, KeymapImpl> schemeProcessor = new NonLazySchemeProcessor<Keymap, KeymapImpl>() {
       @NotNull
       @Override
       public KeymapImpl readScheme(@NotNull Element element, boolean duringLoad) throws InvalidDataException {
@@ -59,6 +59,7 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
         return keymap;
       }
 
+      @NotNull
       @Override
       public Element writeScheme(@NotNull final KeymapImpl scheme) {
         return scheme.writeExternal();
@@ -66,8 +67,8 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
 
       @NotNull
       @Override
-      public State getState(@NotNull KeymapImpl scheme) {
-        return scheme.canModify() ? State.POSSIBLY_CHANGED : State.NON_PERSISTENT;
+      public SchemeState getState(@NotNull Keymap scheme) {
+        return scheme.canModify() ? SchemeState.POSSIBLY_CHANGED : SchemeState.NON_PERSISTENT;
       }
 
       @Override
@@ -78,7 +79,7 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
         }
       }
     };
-    mySchemeManager = factory.<Keymap>create(KEYMAPS_DIR_PATH, schemeProcessor);
+    mySchemeManager = factory.create(KEYMAPS_DIR_PATH, schemeProcessor);
 
     String systemDefaultKeymap = WelcomeWizardUtil.getWizardMacKeymap() != null
                                  ? WelcomeWizardUtil.getWizardMacKeymap()

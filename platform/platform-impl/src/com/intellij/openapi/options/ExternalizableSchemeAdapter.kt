@@ -29,21 +29,21 @@ interface SchemeDataHolder {
   fun read(): Element
 }
 
-abstract class LazySchemeProcessor<T : ExternalizableScheme> : SchemeProcessor<T>() {
-  abstract fun createScheme(dataHolder: SchemeDataHolder, attributeProvider: Function<String, String?>, duringLoad: Boolean): T
+abstract class LazySchemeProcessor<SCHEME : Scheme, MUTABLE_SCHEME : SCHEME> : SchemeProcessor<SCHEME, MUTABLE_SCHEME>() {
+  abstract fun createScheme(dataHolder: SchemeDataHolder, attributeProvider: Function<String, String?>, duringLoad: Boolean): MUTABLE_SCHEME
 }
 
-abstract class BaseSchemeProcessor<T : ExternalizableScheme> : NonLazySchemeProcessor<T>(), SchemeExtensionProvider {
+abstract class BaseSchemeProcessor<SCHEME : Scheme, MUTABLE_SCHEME : SCHEME> : NonLazySchemeProcessor<SCHEME, MUTABLE_SCHEME>(), SchemeExtensionProvider {
   override val isUpgradeNeeded = false
 
   override val schemeExtension = ".xml"
 }
 
-abstract class NonLazySchemeProcessor<T : ExternalizableScheme> : SchemeProcessor<T>() {
+abstract class NonLazySchemeProcessor<SCHEME : Scheme, MUTABLE_SCHEME : SCHEME> : SchemeProcessor<SCHEME, MUTABLE_SCHEME>() {
   /**
    * @param duringLoad If occurred during [SchemeManager.loadSchemes] call
    * * Returns null if element is not valid.
    */
   @Throws(Exception::class)
-  abstract fun readScheme(element: Element, duringLoad: Boolean): T?
+  abstract fun readScheme(element: Element, duringLoad: Boolean): MUTABLE_SCHEME?
 }

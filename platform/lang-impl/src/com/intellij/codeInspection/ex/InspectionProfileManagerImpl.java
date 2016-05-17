@@ -82,11 +82,11 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
     return (InspectionProfileManagerImpl)ServiceManager.getService(InspectionProfileManager.class);
   }
 
-  public InspectionProfileManagerImpl(@NotNull InspectionToolRegistrar registrar, @NotNull SchemesManagerFactory schemesManagerFactory, @NotNull MessageBus messageBus) {
+  public InspectionProfileManagerImpl(@NotNull InspectionToolRegistrar registrar, @NotNull SchemeManagerFactory schemeManagerFactory, @NotNull MessageBus messageBus) {
     myRegistrar = registrar;
     registerProvidedSeverities();
 
-    mySchemeManager = schemesManagerFactory.<Profile>create(INSPECTION_DIR, new LazySchemeProcessor<InspectionProfileImpl>() {
+    mySchemeManager = schemeManagerFactory.create(INSPECTION_DIR, new LazySchemeProcessor<Profile, InspectionProfileImpl>() {
       @NotNull
       public InspectionProfileImpl createScheme(@NotNull SchemeDataHolder dataHolder,
                                                 @NotNull Function<String, String> attributeProvider,
@@ -97,10 +97,11 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
 
       @NotNull
       @Override
-      public State getState(@NotNull InspectionProfileImpl scheme) {
-        return scheme.isProjectLevel() ? State.NON_PERSISTENT : scheme.wasInitialized() ? State.POSSIBLY_CHANGED : State.UNCHANGED;
+      public SchemeState getState(@NotNull Profile scheme) {
+        return !(scheme instanceof InspectionProfileImpl) || scheme.isProjectLevel() ? SchemeState.NON_PERSISTENT : ((InspectionProfileImpl)scheme).wasInitialized() ? SchemeState.POSSIBLY_CHANGED : SchemeState.UNCHANGED;
       }
 
+      @NotNull
       @Override
       public Element writeScheme(@NotNull InspectionProfileImpl scheme) {
         Element root = new Element("inspections");

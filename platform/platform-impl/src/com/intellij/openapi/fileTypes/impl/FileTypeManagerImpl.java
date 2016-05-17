@@ -34,7 +34,8 @@ import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.ex.*;
 import com.intellij.openapi.options.NonLazySchemeProcessor;
 import com.intellij.openapi.options.SchemeManager;
-import com.intellij.openapi.options.SchemesManagerFactory;
+import com.intellij.openapi.options.SchemeManagerFactory;
+import com.intellij.openapi.options.SchemeState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.ByteSequence;
@@ -161,13 +162,13 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   private final AtomicInteger counterAutoDetect = new AtomicInteger();
   private final AtomicLong elapsedAutoDetect = new AtomicLong();
 
-  public FileTypeManagerImpl(MessageBus bus, SchemesManagerFactory schemesManagerFactory, PropertiesComponent propertiesComponent) {
+  public FileTypeManagerImpl(MessageBus bus, SchemeManagerFactory schemeManagerFactory, PropertiesComponent propertiesComponent) {
     int fileTypeChangedCounter = StringUtilRt.parseInt(propertiesComponent.getValue("fileTypeChangedCounter"), 0);
     fileTypeChangedCount = new AtomicInteger(fileTypeChangedCounter);
     autoDetectedAttribute = new FileAttribute("AUTO_DETECTION_CACHE_ATTRIBUTE", fileTypeChangedCounter, true);
 
     myMessageBus = bus;
-    mySchemeManager = schemesManagerFactory.<FileType>create(FILE_SPEC, new NonLazySchemeProcessor<AbstractFileType>() {
+    mySchemeManager = schemeManagerFactory.create(FILE_SPEC, new NonLazySchemeProcessor<FileType, AbstractFileType>() {
       @NotNull
       @Override
       public AbstractFileType readScheme(@NotNull Element element, boolean duringLoad) {
@@ -183,16 +184,17 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
       @NotNull
       @Override
-      public State getState(@NotNull AbstractFileType fileType) {
-        if (!shouldSave(fileType)) {
-          return State.NON_PERSISTENT;
+      public SchemeState getState(@NotNull FileType fileType) {
+        if (!(fileType instanceof AbstractFileType) || !shouldSave(fileType)) {
+          return SchemeState.NON_PERSISTENT;
         }
         if (!myDefaultTypes.contains(fileType)) {
-          return State.POSSIBLY_CHANGED;
+          return SchemeState.POSSIBLY_CHANGED;
         }
-        return fileType.isModified() ? State.POSSIBLY_CHANGED : State.NON_PERSISTENT;
+        return ((AbstractFileType)fileType).isModified() ? SchemeState.POSSIBLY_CHANGED : SchemeState.NON_PERSISTENT;
       }
 
+      @NotNull
       @Override
       public Element writeScheme(@NotNull AbstractFileType fileType) {
         Element root = new Element(ELEMENT_FILETYPE);

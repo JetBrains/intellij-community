@@ -20,15 +20,15 @@ import com.intellij.openapi.options.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class MockSchemesManagerFactory extends SchemesManagerFactory {
+public class MockSchemeManagerFactory extends SchemeManagerFactory {
   private static final SchemeManager EMPTY = new EmptySchemesManager();
 
   @NotNull
   @Override
-  protected <T extends Scheme> SchemeManager<T> create(@NotNull String directoryName,
-                                                       @NotNull SchemeProcessor<T> processor,
-                                                       @Nullable String presentableName,
-                                                       @NotNull RoamingType roamingType) {
+  protected <SCHEME extends Scheme, MUTABLE_SCHEME extends SCHEME> SchemeManager<SCHEME> create(@NotNull String directoryName,
+                                                                                                @NotNull SchemeProcessor<SCHEME, MUTABLE_SCHEME> processor,
+                                                                                                @Nullable String presentableName,
+                                                                                                @NotNull RoamingType roamingType) {
     //noinspection unchecked
     return EMPTY;
   }

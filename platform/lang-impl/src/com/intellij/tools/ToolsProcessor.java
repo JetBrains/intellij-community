@@ -31,7 +31,7 @@ import java.io.File;
 import java.io.IOException;
 
 
-abstract public class ToolsProcessor<T extends Tool> extends NonLazySchemeProcessor<ToolsGroup<T>> {
+abstract public class ToolsProcessor<T extends Tool> extends NonLazySchemeProcessor<ToolsGroup<T>, ToolsGroup<T>> {
   @NonNls private static final String TOOL_SET = "toolSet";
   @NonNls private static final String TOOL = "tool";
   @NonNls private static final String ATTRIBUTE_NAME = "name";
@@ -128,6 +128,7 @@ abstract public class ToolsProcessor<T extends Tool> extends NonLazySchemeProces
 
   protected abstract T createTool();
 
+  @NotNull
   @Override
   public Element writeScheme(@NotNull final ToolsGroup<T> scheme) throws WriteExternalException {
     Element groupElement = new Element(TOOL_SET);

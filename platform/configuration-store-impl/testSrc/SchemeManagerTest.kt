@@ -17,7 +17,7 @@ package com.intellij.configurationStore
 
 import com.intellij.openapi.options.BaseSchemeProcessor
 import com.intellij.openapi.options.ExternalizableScheme
-import com.intellij.openapi.options.SchemesManagerFactory
+import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.PlatformTestUtil
@@ -295,16 +295,16 @@ internal class SchemeManagerTest {
   }
 
   @Test fun `path must not contains ROOT_CONFIG macro`() {
-    assertThatThrownBy({ SchemesManagerFactory.getInstance().create("\$ROOT_CONFIG$/foo", TestSchemesProcessor()) }).hasMessage("Path must not contains ROOT_CONFIG macro, corrected: foo")
+    assertThatThrownBy({ SchemeManagerFactory.getInstance().create("\$ROOT_CONFIG$/foo", TestSchemesProcessor()) }).hasMessage("Path must not contains ROOT_CONFIG macro, corrected: foo")
   }
 
   @Test fun `path must be system-independent`() {
-    assertThatThrownBy({SchemesManagerFactory.getInstance().create("foo\\bar", TestSchemesProcessor())}).hasMessage("Path must be system-independent, use forward slash instead of backslash")
+    assertThatThrownBy({ SchemeManagerFactory.getInstance().create("foo\\bar", TestSchemesProcessor())}).hasMessage("Path must be system-independent, use forward slash instead of backslash")
   }
 
   private fun createSchemeManager(dir: Path) = SchemeManagerImpl(FILE_SPEC, TestSchemesProcessor(), null, dir)
 
-  private fun createAndLoad(testData: String): SchemeManagerImpl<TestScheme> {
+  private fun createAndLoad(testData: String): SchemeManagerImpl<TestScheme, TestScheme> {
     createTempFiles(testData)
     return createAndLoad()
   }
@@ -321,7 +321,7 @@ internal class SchemeManagerTest {
     checkSchemes(localBaseDir!!, "", false)
   }
 
-  private fun createAndLoad(): SchemeManagerImpl<TestScheme> {
+  private fun createAndLoad(): SchemeManagerImpl<TestScheme, TestScheme> {
     val schemesManager = SchemeManagerImpl(FILE_SPEC, TestSchemesProcessor(), MockStreamProvider(remoteBaseDir!!.toFile()), localBaseDir!!)
     schemesManager.loadSchemes()
     return schemesManager
@@ -369,13 +369,13 @@ private fun checkSchemes(baseDir: Path, expected: String, ignoreDeleted: Boolean
 data class TestScheme(override @field:com.intellij.util.xmlb.annotations.Attribute var name: String = "", @field:com.intellij.util.xmlb.annotations.Attribute var data: String? = null) : ExternalizableScheme {
 }
 
-open class TestSchemesProcessor : BaseSchemeProcessor<TestScheme>() {
+open class TestSchemesProcessor : BaseSchemeProcessor<TestScheme, TestScheme>() {
   override fun readScheme(element: Element, duringLoad: Boolean) = XmlSerializer.deserialize(element, TestScheme::class.java)
 
   override fun writeScheme(scheme: TestScheme) = scheme.serialize()
 }
 
-fun SchemeManagerImpl<*>.save() {
+fun SchemeManagerImpl<*, *>.save() {
   val errors = SmartList<Throwable>()
   save(errors)
   CompoundRuntimeException.throwIfNotEmpty(errors)

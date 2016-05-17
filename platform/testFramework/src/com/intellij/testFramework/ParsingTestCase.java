@@ -30,7 +30,7 @@ import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileTypeFactory;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.options.SchemesManagerFactory;
+import com.intellij.openapi.options.SchemeManagerFactory;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
@@ -111,7 +111,7 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
     myFileFactory = new PsiFileFactoryImpl(myPsiManager);
     MutablePicoContainer appContainer = getApplication().getPicoContainer();
     registerComponentInstance(appContainer, MessageBus.class, getApplication().getMessageBus());
-    registerComponentInstance(appContainer, SchemesManagerFactory.class, new MockSchemesManagerFactory());
+    registerComponentInstance(appContainer, SchemeManagerFactory.class, new MockSchemeManagerFactory());
     final MockEditorFactory editorFactory = new MockEditorFactory();
     registerComponentInstance(appContainer, EditorFactory.class, editorFactory);
     registerComponentInstance(appContainer, FileDocumentManager.class, new MockFileDocumentManagerImpl(

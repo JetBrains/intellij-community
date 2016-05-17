@@ -15,10 +15,7 @@
  */
 package com.intellij.psi.impl.source.codeStyle;
 
-import com.intellij.openapi.options.LazySchemeProcessor;
-import com.intellij.openapi.options.SchemeDataHolder;
-import com.intellij.openapi.options.SchemeManager;
-import com.intellij.openapi.options.SchemesManagerFactory;
+import com.intellij.openapi.options.*;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
@@ -37,14 +34,15 @@ public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes {
 
   protected final SchemeManager<CodeStyleScheme> mySchemeManager;
 
-  public CodeStyleSchemesImpl(@NotNull SchemesManagerFactory schemesManagerFactory) {
-    mySchemeManager = schemesManagerFactory.<CodeStyleScheme>create(CODE_STYLES_DIR_PATH, new LazySchemeProcessor<CodeStyleSchemeImpl>() {
+  public CodeStyleSchemesImpl(@NotNull SchemeManagerFactory schemeManagerFactory) {
+    mySchemeManager = schemeManagerFactory.create(CODE_STYLES_DIR_PATH, new LazySchemeProcessor<CodeStyleScheme, CodeStyleSchemeImpl>() {
       @NotNull
       @Override
       public CodeStyleSchemeImpl createScheme(@NotNull SchemeDataHolder dataHolder, @NotNull Function<String, String> attributeProvider, boolean duringLoad) {
         return new CodeStyleSchemeImpl(attributeProvider.apply("name"), attributeProvider.apply("parent"), dataHolder);
       }
 
+      @NotNull
       @Override
       public Element writeScheme(@NotNull CodeStyleSchemeImpl scheme) throws WriteExternalException {
         return scheme.writeScheme();
@@ -52,12 +50,12 @@ public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes {
 
       @NotNull
       @Override
-      public State getState(@NotNull CodeStyleSchemeImpl scheme) {
-        if (scheme.isDefault()) {
-          return State.NON_PERSISTENT;
+      public SchemeState getState(@NotNull CodeStyleScheme scheme) {
+        if (scheme.isDefault() || !(scheme instanceof CodeStyleSchemeImpl)) {
+          return SchemeState.NON_PERSISTENT;
         }
         else {
-          return scheme.isInitialized() ? State.POSSIBLY_CHANGED : State.UNCHANGED;
+          return ((CodeStyleSchemeImpl)scheme).isInitialized() ? SchemeState.POSSIBLY_CHANGED : SchemeState.UNCHANGED;
         }
       }
     });

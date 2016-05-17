@@ -18,7 +18,9 @@ package com.intellij.openapi.options
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.WriteExternalException
 import org.jdom.Element
+import org.jdom.Parent
 
 interface Scheme {
   val name: String
@@ -49,20 +51,51 @@ interface SchemeDataHolder {
   fun read(): Element
 }
 
-abstract class SchemesManagerFactory {
+abstract class SchemeManagerFactory {
   companion object {
     @JvmStatic
-    fun getInstance() = ServiceManager.getService(SchemesManagerFactory::class.java)
+    fun getInstance() = ServiceManager.getService(SchemeManagerFactory::class.java)
 
     @JvmStatic
-    fun getInstance(project: Project) = ServiceManager.getService(project, SchemesManagerFactory::class.java)
+    fun getInstance(project: Project) = ServiceManager.getService(project, SchemeManagerFactory::class.java)
   }
 
   /**
    * directoryName — like "keymaps".
    */
   @JvmOverloads
-  fun <T : Scheme> create(directoryName: String, processor: SchemeProcessor<out T>, presentableName: String? = null): SchemeManager<T> = create(directoryName, processor, presentableName)
+  fun <SCHEME : Scheme, MUTABLE_SCHEME: SCHEME> create(directoryName: String, processor: SchemeProcessor<SCHEME, MUTABLE_SCHEME>, presentableName: String? = null): SchemeManager<SCHEME> = create(directoryName, processor, presentableName, RoamingType.DEFAULT)
 
-  protected abstract fun <T : Scheme> create(directoryName: String, processor: SchemeProcessor<T>, presentableName: String? = null, roamingType: RoamingType = RoamingType.DEFAULT): SchemeManager<T>
+  protected abstract fun <SCHEME : Scheme, MUTABLE_SCHEME: SCHEME> create(directoryName: String, processor: SchemeProcessor<SCHEME, MUTABLE_SCHEME>, presentableName: String? = null, roamingType: RoamingType = RoamingType.DEFAULT): SchemeManager<SCHEME>
+}
+
+enum class SchemeState {
+  UNCHANGED, NON_PERSISTENT, POSSIBLY_CHANGED
+}
+
+abstract class SchemeProcessor<SCHEME : Scheme, MUTABLE_SCHEME: SCHEME> {
+  open fun isExternalizable(scheme: SCHEME) = scheme is ExternalizableScheme
+
+  /**
+   * Element will not be modified, it is safe to return non-cloned instance.
+   */
+  @Throws(WriteExternalException::class)
+  abstract fun writeScheme(scheme: MUTABLE_SCHEME): Parent
+
+  open fun initScheme(scheme: MUTABLE_SCHEME) {
+  }
+
+  open fun onSchemeAdded(scheme: MUTABLE_SCHEME) {
+  }
+
+  open fun onSchemeDeleted(scheme: MUTABLE_SCHEME) {
+  }
+
+  /**
+   * Scheme switched.
+   */
+  open fun onCurrentSchemeChanged(oldScheme: Scheme?) {
+  }
+
+  open fun getState(scheme: SCHEME): SchemeState = SchemeState.POSSIBLY_CHANGED
 }

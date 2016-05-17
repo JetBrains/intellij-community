@@ -16,7 +16,7 @@
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.options.ExternalizableSchemeAdapter;
+import com.intellij.openapi.options.ExternalizableScheme;
 import com.intellij.openapi.options.SchemeDataHolder;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -26,7 +26,9 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class CodeStyleSchemeImpl extends ExternalizableSchemeAdapter implements CodeStyleScheme {
+public class CodeStyleSchemeImpl implements CodeStyleScheme, ExternalizableScheme {
+  private String myName;
+
   private static final Logger LOG = Logger.getInstance(CodeStyleSchemeImpl.class);
 
   private SchemeDataHolder myDataHolder;
@@ -45,6 +47,17 @@ public class CodeStyleSchemeImpl extends ExternalizableSchemeAdapter implements 
     setName(name);
     myIsDefault = isDefault;
     init(parentScheme, null);
+  }
+
+  @NotNull
+  @Override
+  public String getName() {
+    return myName;
+  }
+
+  @Override
+  public void setName(@NotNull String value) {
+    myName = value;
   }
 
   private void init(@Nullable CodeStyleScheme parentScheme, Element root) {

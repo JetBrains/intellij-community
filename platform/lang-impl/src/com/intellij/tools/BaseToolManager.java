@@ -17,8 +17,8 @@ package com.intellij.tools;
 
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.options.SchemeManager;
+import com.intellij.openapi.options.SchemeManagerFactory;
 import com.intellij.openapi.options.SchemeProcessor;
-import com.intellij.openapi.options.SchemesManagerFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
@@ -34,7 +34,7 @@ public abstract class BaseToolManager<T extends Tool> {
   @NotNull private final ActionManagerEx myActionManager;
   private final SchemeManager<ToolsGroup<T>> mySchemeManager;
 
-  public BaseToolManager(@NotNull ActionManagerEx actionManagerEx, @NotNull SchemesManagerFactory factory, @NotNull String schemePath, @NotNull String presentableName) {
+  public BaseToolManager(@NotNull ActionManagerEx actionManagerEx, @NotNull SchemeManagerFactory factory, @NotNull String schemePath, @NotNull String presentableName) {
     myActionManager = actionManagerEx;
 
     //noinspection AbstractMethodCallInConstructor
@@ -43,7 +43,7 @@ public abstract class BaseToolManager<T extends Tool> {
     registerActions();
   }
 
-  protected abstract SchemeProcessor<ToolsGroup<T>> createProcessor();
+  protected abstract SchemeProcessor<ToolsGroup<T>, ToolsGroup<T>> createProcessor();
 
   @Nullable
   public static String convertString(String s) {
