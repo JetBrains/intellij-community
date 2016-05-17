@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,13 @@ package com.intellij.execution.runners;
 
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.util.Key;
-import com.intellij.util.net.NetUtils;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 
@@ -95,7 +95,7 @@ class ProcessProxyImpl implements ProcessProxy {
     if (myWriter == null) {
       try {
         if (mySocket == null) {
-          mySocket = new Socket(NetUtils.getLoopbackAddress(), myPortNumber);
+          mySocket = new Socket(InetAddress.getLoopbackAddress(), myPortNumber);
         }
         myWriter = new PrintWriter(new BufferedWriter(new OutputStreamWriter(mySocket.getOutputStream())));
       }

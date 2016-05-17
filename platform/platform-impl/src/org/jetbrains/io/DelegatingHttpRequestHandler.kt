@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import io.netty.util.AttributeKey
 import org.apache.sanselan.ImageFormat
 import org.apache.sanselan.Sanselan
 import org.jetbrains.ide.HttpRequestHandler
-
 import java.awt.image.BufferedImage
 
 private val PREV_HANDLER = AttributeKey.valueOf<HttpRequestHandler>("DelegatingHttpRequestHandler.handler")
@@ -38,10 +37,14 @@ internal class DelegatingHttpRequestHandler : DelegatingHttpRequestHandlerBase()
   override fun process(context: ChannelHandlerContext,
                        request: FullHttpRequest,
                        urlDecoder: QueryStringDecoder): Boolean {
+    fun HttpRequestHandler.checkAndProcess(): Boolean {
+      return isSupported(request) && !request.isWriteFromBrowserWithoutOrigin() && isAccessible(request) && process(urlDecoder, request, context)
+    }
+
     val prevHandlerAttribute = context.attr(PREV_HANDLER)
     val connectedHandler = prevHandlerAttribute.get()
     if (connectedHandler != null) {
-      if (connectedHandler.isSupported(request) && connectedHandler.process(urlDecoder, request, context)) {
+      if (connectedHandler.checkAndProcess()) {
         return true
       }
       // prev cached connectedHandler is not suitable for this request, so, let's find it again
@@ -50,7 +53,7 @@ internal class DelegatingHttpRequestHandler : DelegatingHttpRequestHandlerBase()
 
     for (handler in HttpRequestHandler.EP_NAME.extensions) {
       try {
-        if (handler.isSupported(request) && handler.process(urlDecoder, request, context)) {
+        if (handler.checkAndProcess()) {
           prevHandlerAttribute.set(handler)
           return true
         }
@@ -58,7 +61,6 @@ internal class DelegatingHttpRequestHandler : DelegatingHttpRequestHandlerBase()
       catch (e: Throwable) {
         Logger.getInstance(BuiltInServer::class.java).error(e)
       }
-
     }
 
     if (urlDecoder.path() == "/favicon.ico") {
