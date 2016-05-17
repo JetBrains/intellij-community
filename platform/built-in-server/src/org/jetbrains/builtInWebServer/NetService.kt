@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Getter
 import com.intellij.openapi.util.Key
 import com.intellij.util.Consumer
 import com.intellij.util.net.NetUtils
@@ -112,7 +113,7 @@ abstract class NetService @JvmOverloads protected constructor(protected val proj
     }
 
     override fun processTerminated(event: ProcessEvent) {
-      if (processHandler.has() && processHandler.result == osProcessHandler) {
+      if (processHandler.has() && (processHandler.get(false) as Getter<*>).get() == osProcessHandler) {
         processHandler.reset()
       }
       print("${getConsoleToolWindowId()} terminated\n", ConsoleViewContentType.SYSTEM_OUTPUT)
