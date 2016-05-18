@@ -15,76 +15,62 @@
  */
 package com.intellij.application.options;
 
-import com.intellij.openapi.Disposable;
+import com.intellij.diff.comparison.ComparisonManager;
+import com.intellij.diff.comparison.ComparisonPolicy;
+import com.intellij.diff.comparison.DiffTooBigException;
+import com.intellij.diff.fragments.DiffFragment;
+import com.intellij.diff.fragments.LineFragment;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.DiffContent;
-import com.intellij.openapi.diff.actions.MergeOperations;
-import com.intellij.openapi.diff.impl.ComparisonPolicy;
-import com.intellij.openapi.diff.impl.fragments.Fragment;
-import com.intellij.openapi.diff.impl.fragments.FragmentHighlighterImpl;
-import com.intellij.openapi.diff.impl.fragments.LineFragment;
-import com.intellij.openapi.diff.impl.highlighting.DiffMarkup;
-import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
-import com.intellij.openapi.diff.impl.processing.TextCompareProcessor;
-import com.intellij.openapi.diff.impl.util.TextDiffType;
-import com.intellij.openapi.diff.impl.util.TextDiffTypeEnum;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.markup.GutterIconRenderer;
-import com.intellij.openapi.editor.markup.SeparatorPlacement;
-import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.progress.DumbProgressIndicator;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Allows to calculate difference between two versions of document (before and after code style setting value change).
- * <p/>
- * Not thread-safe.
- *
- * @author Denis Zhdanov
- * @since 10/14/10 2:44 PM
  */
-public class ChangesDiffCalculator implements Disposable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.ChangesDiffCalculator");
-  private final BaseMarkup myOldMarkup = new BaseMarkup(FragmentSide.SIDE1, this);
-  private final ChangesCollector myNewMarkup = new ChangesCollector(this);
-  private final TextCompareProcessor myCompareProcessor = new TextCompareProcessor(ComparisonPolicy.DEFAULT);
+public class ChangesDiffCalculator {
+  private static final Logger LOG = Logger.getInstance(ChangesDiffCalculator.class);
 
-  public Collection<TextRange> calculateDiff(@NotNull final Document beforeDocument, @NotNull final Document currentDocument) {
-    myNewMarkup.ranges.clear();
-    myOldMarkup.document = beforeDocument;
-    myNewMarkup.document = currentDocument;
+  public static List<TextRange> calculateDiff(@NotNull Document beforeDocument, @NotNull Document currentDocument) {
+    CharSequence beforeText = beforeDocument.getCharsSequence();
+    CharSequence currentText = currentDocument.getCharsSequence();
 
-    List<LineFragment> lineFragments;
     try {
-      lineFragments = myCompareProcessor.process(beforeDocument.getText(), currentDocument.getText());
+      ComparisonManager manager = ComparisonManager.getInstance();
+      List<LineFragment> lineFragments = manager.compareLinesInner(beforeText, currentText, ComparisonPolicy.DEFAULT,
+                                                                   DumbProgressIndicator.INSTANCE);
+
+      List<TextRange> modifiedRanges = new ArrayList<>();
+
+      for (LineFragment lineFragment : lineFragments) {
+        int fragmentStartOffset = lineFragment.getStartOffset2();
+        int fragmentEndOffset = lineFragment.getEndOffset2();
+
+        List<DiffFragment> innerFragments = lineFragment.getInnerFragments();
+        if (innerFragments != null) {
+          for (DiffFragment innerFragment : innerFragments) {
+            int innerFragmentStartOffset = fragmentStartOffset + innerFragment.getStartOffset2();
+            int innerFragmentEndOffset = fragmentStartOffset + innerFragment.getEndOffset2();
+            modifiedRanges.add(calculateChangeHighlightRange(currentText, innerFragmentStartOffset, innerFragmentEndOffset));
+          }
+        }
+        else {
+          modifiedRanges.add(calculateChangeHighlightRange(currentText, fragmentStartOffset, fragmentEndOffset));
+        }
+      }
+
+      return modifiedRanges;
     }
-    catch (FilesTooBigForDiffException e) {
+    catch (DiffTooBigException e) {
       LOG.info(e);
       return Collections.emptyList();
     }
-
-    final FragmentHighlighterImpl fragmentHighlighter = new FragmentHighlighterImpl(myOldMarkup, myNewMarkup);
-    for (Iterator<LineFragment> iterator = lineFragments.iterator(); iterator.hasNext();) {
-      LineFragment fragment = iterator.next();
-      fragmentHighlighter.setIsLast(!iterator.hasNext());
-      fragment.highlight(fragmentHighlighter);
-    }
-
-    List<TextRange> ranges = new ArrayList<>(myNewMarkup.ranges);
-    for (TextRange range : myNewMarkup.ranges) {
-      if (range.getStartOffset() >= currentDocument.getTextLength()) {
-        continue;
-      }
-      ranges.add(calculateChangeHighlightRange(currentDocument, range));
-    }
-
-    return ranges;
   }
 
   /**
@@ -93,12 +79,8 @@ public class ChangesDiffCalculator implements Disposable {
    * Thus, when comparing whitespace sequences of different length, we always highlight rightmost whitespaces
    * (while general algorithm gives no warranty on this case, and usually highlights leftmost whitespaces).
    */
-  private static TextRange calculateChangeHighlightRange(Document currentDocument, TextRange range) {
-    CharSequence text = currentDocument.getCharsSequence();
-
-    int startOffset = range.getStartOffset();
-    int endOffset = range.getEndOffset();
-
+  @NotNull
+  private static TextRange calculateChangeHighlightRange(@NotNull CharSequence text, int startOffset, int endOffset) {
     if (startOffset == endOffset) {
       while (startOffset < text.length() && text.charAt(startOffset) == ' ') {
         startOffset++;
@@ -115,81 +97,5 @@ public class ChangesDiffCalculator implements Disposable {
     }
 
     return new TextRange(startOffset, endOffset);
-  }
-
-  @Override
-  public void dispose() {
-  }
-
-  /**
-   * Base {@link DiffMarkup} implementation that does nothing.
-   */
-  @SuppressWarnings({"ConstantConditions"})
-  private static class BaseMarkup extends DiffMarkup {
-
-    public Document document;
-    private final FragmentSide mySide;
-
-    BaseMarkup(@NotNull FragmentSide side, @NotNull Disposable parentDisposable) {
-      super(null, parentDisposable);
-      mySide = side;
-    }
-
-    @Override
-    public FragmentSide getSide() {
-      return mySide;
-    }
-
-    @Override
-    public DiffContent getContent() {
-      return null;
-    }
-
-    @Override
-    public EditorEx getEditor() {
-      return null;
-    }
-
-    @Nullable
-    @Override
-    public Document getDocument() {
-      return document;
-    }
-
-    @Override
-    public void addLineMarker(int line, TextDiffType type, SeparatorPlacement separatorPlacement) {
-    }
-
-    @Override
-    public void addAction(MergeOperations.Operation operation, int lineStartOffset) {
-    }
-
-    @Override
-    public void highlightText(@NotNull Fragment fragment, GutterIconRenderer gutterIconRenderer) {
-    }
-
-
-    @Override
-    public FileEditor getFileEditor() {
-      return null;
-    }
-  }
-
-  private static class ChangesCollector extends BaseMarkup {
-    private static final Set<TextDiffTypeEnum> INTERESTED_DIFF_TYPES = EnumSet.of(TextDiffTypeEnum.INSERT, TextDiffTypeEnum.DELETED, TextDiffTypeEnum.CHANGED);
-
-    public final List<TextRange> ranges = new ArrayList<TextRange>();
-
-    ChangesCollector(@NotNull Disposable parentDisposable) {
-      super(FragmentSide.SIDE2, parentDisposable);
-    }
-
-    @Override
-    public void highlightText(@NotNull Fragment fragment, GutterIconRenderer gutterIconRenderer) {
-      TextRange currentRange = fragment.getRange(FragmentSide.SIDE2);
-      if (INTERESTED_DIFF_TYPES.contains(fragment.getType())) {
-        ranges.add(currentRange);
-      }
-    }
   }
 }

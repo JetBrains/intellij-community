@@ -35,7 +35,6 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.ui.OnePixelDivider;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -70,7 +69,6 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.CodeStyleXmlPanel");
 
-  private final ChangesDiffCalculator myDiffCalculator           = new ChangesDiffCalculator();
   private final List<TextRange>       myPreviewRangesToHighlight = new ArrayList<TextRange>();
 
   private final Editor myEditor;
@@ -99,7 +97,6 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
                                    @Nullable CodeStyleSettings currentSettings,
                                    @NotNull CodeStyleSettings settings)
   {
-    Disposer.register(this, myDiffCalculator);
     myCurrentSettings = currentSettings;
     mySettings = settings;
     myDefaultLanguage = defaultLanguage;
@@ -294,7 +291,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
     MarkupModel markupModel = myEditor.getMarkupModel();
     markupModel.removeAllHighlighters();
 
-    myPreviewRangesToHighlight.addAll(myDiffCalculator.calculateDiff(beforeReformat, myEditor.getDocument()));
+    myPreviewRangesToHighlight.addAll(ChangesDiffCalculator.calculateDiff(beforeReformat, myEditor.getDocument()));
 
     if (!myPreviewRangesToHighlight.isEmpty()) {
       myEndHighlightPreviewChangesTimeMillis = System.currentTimeMillis() + TIME_TO_HIGHLIGHT_PREVIEW_CHANGES_IN_MILLIS;
