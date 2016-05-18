@@ -160,8 +160,8 @@ public class NumpyArrayTable {
       final PyDebugValue value = getDebugValue();
       PyDebugValue parent = value.getParent();
       final PyDebugValue slicedValue =
-        new PyDebugValue(slice, value.getType(), null, value.getValue(), value.isContainer(), value.isErrorOnEval(),
-                         parent, value.getFrameAccessor());
+        new PyDebugValue(slice, value.getType(), null, value.getValue(), value.isContainer(), value.isReturnedVal(),
+                         value.isErrorOnEval(), parent, value.getFrameAccessor());
 
       final String format = getFormat().isEmpty() ? "%" : getFormat();
 
