@@ -51,4 +51,30 @@ class JavaConsumer {
     assert resolved instanceof LightElement
     assert (resolved as OriginInfoAwareElement).originInfo == BuilderAnnotationContributor.ORIGIN_INFO
   }
+
+  void 'test find class'() {
+    myFixture.addFileToProject 'sample/Bean.groovy', '''\
+package sample
+
+@groovy.transform.builder.Builder
+class Bean {
+    String prop1
+    Integer prop2
+}
+'''
+    myFixture.configureByText 'JavaConsumer.java', '''\
+import sample.Bean;
+
+class JavaConsumer {
+    void main() {
+        Bean b = Bean.builder().prop1("").prop2(1).build();
+    }
+}
+'''
+    myFixture.checkHighlighting()
+
+    def clazz = myFixture.findClass('sample.Bean.BeanBuilder')
+    assert clazz in LightElement
+    assert (clazz as OriginInfoAwareElement).originInfo == BuilderAnnotationContributor.ORIGIN_INFO
+  }
 }
