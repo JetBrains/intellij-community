@@ -76,6 +76,7 @@ public class PersistentHashMapValueStorage {
 
     @Override
     protected void disposeAccessor(DataOutputStream fileAccessor) throws IOException {
+      if (!useSingleFileDescriptor) IOUtil.syncStream(fileAccessor);
       fileAccessor.close();
     }
   };
