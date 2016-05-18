@@ -176,7 +176,9 @@ class DependencyResolverImpl implements DependencyResolver {
 
     // resolve compile dependencies
     def compileConfigurationName = sourceSet.compileConfigurationName
-    def compileConfiguration = myProject.configurations.findByName(compileConfigurationName)
+    def compileClasspathConfiguration = myProject.configurations.findByName(compileConfigurationName + 'Classpath')
+    def originCompileConfiguration = myProject.configurations.findByName(compileConfigurationName)
+    def compileConfiguration = compileClasspathConfiguration ?: originCompileConfiguration
 
     def compileScope = 'COMPILE'
     def (compileDependencies, resolvedCompileFileDependencies) = resolveDependencies(compileConfiguration, compileScope)
@@ -190,7 +192,18 @@ class DependencyResolverImpl implements DependencyResolver {
     def providedScope = 'PROVIDED'
 
     Multimap<Object, ExternalDependency> resolvedMap = ArrayListMultimap.create()
-    new DependencyTraverser(compileDependencies).each { resolvedMap.put(resolve(it), it) }
+
+    boolean checkCompileOnlyDeps = compileClasspathConfiguration && !originCompileConfiguration.resolvedConfiguration.hasError()
+    new DependencyTraverser(compileDependencies).each {
+      def resolvedObj = resolve(it)
+      resolvedMap.put(resolvedObj, it)
+
+      if (checkCompileOnlyDeps &&
+          (resolvedObj instanceof Collection ? !originCompileConfiguration.containsAll(((Collection)resolvedObj).toArray()) :
+           !originCompileConfiguration.contains(resolvedObj))) {
+        ((AbstractExternalDependency)it).scope = providedScope
+      }
+    }
 
     new DependencyTraverser(runtimeDependencies).each {
       Collection<ExternalDependency> dependencies = resolvedMap.get(resolve(it));
