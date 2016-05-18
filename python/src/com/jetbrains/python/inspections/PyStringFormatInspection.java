@@ -367,9 +367,7 @@ public class PyStringFormatInspection extends PyInspection {
       private void inspectFormat(@NotNull final PyStringLiteralExpression formatExpression) {
         final String value = formatExpression.getStringValue();
         final List<PyStringFormatParser.SubstitutionChunk> chunks = filterSubstitutions(parsePercentFormat(value));
-
-        // 1. The '%' character
-        //  Skip the first item in the sections, it's always empty
+        
         myExpectedArguments = chunks.size();
         myUsedMappingKeys.clear();
 
@@ -378,7 +376,7 @@ public class PyStringFormatInspection extends PyInspection {
         for (int i = 0; i < chunks.size(); ++i) {
           PyStringFormatParser.SubstitutionChunk chunk = chunks.get(i);
 
-          // 2. Mapping key
+          // Mapping key
           String mappingKey = Integer.toString(i + 1);
           if (mapping) {
             if (chunk.getMappingKey() == null || chunk.isUnclosedMapping()) {
@@ -389,13 +387,13 @@ public class PyStringFormatInspection extends PyInspection {
             myUsedMappingKeys.put(mappingKey, false);
           }
 
-          // 4. Minimum field width
+          // Minimum field width
           inspectWidth(formatExpression, chunk.getWidth());
 
-          // 5. Precision
+          // Precision
           inspectWidth(formatExpression, chunk.getPrecision());
 
-          // 7. Format specifier
+          // Format specifier
           final char conversionType = chunk.getConversionType();
           if (conversionType == 'b') {
             final LanguageLevel languageLevel = LanguageLevel.forElement(formatExpression);
