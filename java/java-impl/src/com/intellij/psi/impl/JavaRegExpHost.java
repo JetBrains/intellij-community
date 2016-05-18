@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.psi.PsiElement;
 import org.intellij.lang.regexp.DefaultRegExpPropertiesProvider;
 import org.intellij.lang.regexp.RegExpLanguageHost;
@@ -97,6 +98,10 @@ public class JavaRegExpHost implements RegExpLanguageHost {
       if (sdk != null && sdk.getSdkType() instanceof JavaSdk) {
         return JavaSdk.getInstance().getVersion(sdk);
       }
+    }
+    final Sdk sdk = ProjectRootManager.getInstance(element.getProject()).getProjectSdk();
+    if (sdk != null && sdk.getSdkType() instanceof JavaSdk) {
+      return JavaSdk.getInstance().getVersion(sdk);
     }
     return null;
   }
