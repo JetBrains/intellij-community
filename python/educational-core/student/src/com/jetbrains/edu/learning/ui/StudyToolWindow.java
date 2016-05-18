@@ -38,11 +38,12 @@ import com.intellij.ui.JBCardLayout;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import com.jetbrains.edu.learning.*;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Course;
-import com.jetbrains.edu.learning.stepic.EduAdaptiveStepicConnector;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.stepic.EduAdaptiveStepicConnector;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -78,7 +79,7 @@ public abstract class StudyToolWindow extends SimpleToolWindowPanel implements D
     if (course != null && course.isAdaptive()) {
       panel.add(createReactionPanel(), BorderLayout.NORTH);
     }
-    JComponent taskInfoPanel = createTaskInfoPanel(taskText, project);
+    JComponent taskInfoPanel = createTaskInfoPanel(project);
     panel.add(taskInfoPanel, BorderLayout.CENTER);
     myContentPanel.add(TASK_INFO_ID, panel);
     mySplitPane.setFirstComponent(myContentPanel);

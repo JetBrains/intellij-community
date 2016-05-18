@@ -17,6 +17,7 @@ package com.jetbrains.edu.coursecreator;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -68,7 +69,8 @@ public class CCRefactoringElementListenerProvider implements RefactoringElementL
 
     private static void tryToRenameTaskFile(PsiFile file, String oldName) {
       final PsiDirectory taskDir = file.getContainingDirectory();
-      Course course = StudyTaskManager.getInstance(file.getProject()).getCourse();
+      final Project project = file.getProject();
+      Course course = StudyTaskManager.getInstance(project).getCourse();
       if (course == null) {
         return;
       }
@@ -95,7 +97,7 @@ public class CCRefactoringElementListenerProvider implements RefactoringElementL
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         @Override
         public void run() {
-          VirtualFile patternFile = StudyUtils.getPatternFile(taskFile, oldName);
+          VirtualFile patternFile = StudyUtils.getPatternFile(project, taskFile, oldName);
           if (patternFile != null) {
             try {
               patternFile.delete(CCRefactoringElementListenerProvider.class);

@@ -85,7 +85,7 @@ public class CCAddAnswerPlaceholder extends CCAnswerPlaceholderAction {
   }
 
   private static void computeInitialState(Project project, PsiFile file, TaskFile taskFile, Document document) {
-    Document patternDocument = StudyUtils.getPatternDocument(taskFile, file.getName());
+    Document patternDocument = StudyUtils.getPatternDocument(project, taskFile, file.getName());
     if (patternDocument == null) {
       return;
     }
