@@ -207,8 +207,10 @@ public class AnalysisScope {
     return fileIndex;
   }
 
-  private static String displayProjectRelativePath(@NotNull VirtualFile virtualFile, @NotNull Project project) {
-    return ProjectUtilCore.displayUrlRelativeToProject(virtualFile, virtualFile.getPresentableUrl(), project, false, false);
+  private static String displayProjectRelativePath(@NotNull PsiFileSystemItem item) {
+    VirtualFile virtualFile = item.getVirtualFile();
+    LOG.assertTrue(virtualFile != null);
+    return ProjectUtilCore.displayUrlRelativeToProject(virtualFile, virtualFile.getPresentableUrl(), item.getProject(), true, false);
   }
 
   public boolean contains(@NotNull PsiElement psiElement) {
@@ -505,23 +507,15 @@ public class AnalysisScope {
         return AnalysisScopeBundle.message("scope.project", myProject.getName());
 
       case FILE:
-        return AnalysisScopeBundle.message("scope.file", getPresentableUrl((PsiFileSystemItem)myElement));
-
+        return AnalysisScopeBundle.message("scope.file", displayProjectRelativePath((PsiFileSystemItem)myElement));
       case DIRECTORY:
-        return AnalysisScopeBundle.message("scope.directory", getPresentableUrl((PsiFileSystemItem)myElement));
+        return AnalysisScopeBundle.message("scope.directory", displayProjectRelativePath((PsiFileSystemItem)myElement));
 
       case VIRTUAL_FILES:
         return AnalysisScopeBundle.message("scope.virtual.files");
     }
 
     return "";
-  }
-
-  @NotNull
-  private static String getPresentableUrl(@NotNull final PsiFileSystemItem element) {
-    final VirtualFile virtualFile = element.getVirtualFile();
-    assert virtualFile != null : element;
-    return virtualFile.getPresentableUrl();
   }
 
   @NotNull
@@ -564,7 +558,7 @@ public class AnalysisScope {
 
   @Nullable
   private String getRelativePath() {
-    final String relativePath = displayProjectRelativePath(((PsiFileSystemItem)myElement).getVirtualFile(), myElement.getProject());
+    final String relativePath = displayProjectRelativePath((PsiFileSystemItem)myElement);
     if (relativePath.length() > 100) {
       return null;
     }
