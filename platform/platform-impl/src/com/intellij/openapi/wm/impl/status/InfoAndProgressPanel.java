@@ -357,6 +357,8 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
   private void buildInInlineIndicator(@NotNull final InlineProgressIndicator inline) {
     removeAll();
     setLayout(new InlineLayout());
+    final JRootPane pane = getRootPane();
+    if (pane == null) return; // e.g. project frame is closed
     add(myRefreshAndInfoPanel);
 
     final JPanel inlinePanel = new JPanel(new BorderLayout());
@@ -377,8 +379,6 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
     myRefreshAndInfoPanel.revalidate();
     myRefreshAndInfoPanel.repaint();
 
-    final JRootPane pane = myInfoPanel.getRootPane();
-    assert pane != null;
     final PresentationModeProgressPanel panel = new PresentationModeProgressPanel(inline);
     MyInlineProgressIndicator delegate = new MyInlineProgressIndicator(true, inline.getInfo(), inline) {
       @Override

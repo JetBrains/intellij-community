@@ -15,6 +15,7 @@
  */
 package org.intellij.images.editor.actions;
 
+import com.intellij.CommonBundle;
 import com.intellij.application.options.colors.ColorAndFontOptions;
 import com.intellij.application.options.colors.SimpleEditorPreview;
 import com.intellij.ide.util.PropertiesComponent;
@@ -60,11 +61,12 @@ public class SetBackgroundImageDialog extends DialogWrapper {
   private final String myPropertyTmp;
   private JPanel myRoot;
   private JBRadioButton myEditorRb;
+  private JBRadioButton myScaleRb;
+  private JBRadioButton myCenterRb;
   private JSlider myOpacitySlider;
   private JSpinner myOpacitySpinner;
   private JPanel myPreviewPanel;
   private ComboboxWithBrowseButton myPathField;
-  private JBRadioButton myScaleRb;
 
   boolean myAdjusting;
   private String mySelectedPath;
@@ -191,10 +193,15 @@ public class SetBackgroundImageDialog extends DialogWrapper {
       button.setActionCommand(button.getText());
       button.addChangeListener(this::targetChanged);
     }
-    for (Enumeration<AbstractButton> e = getTypeRbGroup().getElements(); e.hasMoreElements();) {
+    for (Enumeration<AbstractButton> e = getFillRbGroup().getElements(); e.hasMoreElements();) {
       AbstractButton button = e.nextElement();
       button.setActionCommand(button.getText());
-      button.addChangeListener(this::fillTypeChanged);
+      button.addChangeListener(this::fillOrPlaceChanged);
+    }
+    for (Enumeration<AbstractButton> e = getPlaceRbGroup().getElements(); e.hasMoreElements();) {
+      AbstractButton button = e.nextElement();
+      button.setActionCommand(button.getText());
+      button.addChangeListener(this::fillOrPlaceChanged);
     }
     ChangeListener opacitySync = new ChangeListener() {
 
@@ -220,6 +227,7 @@ public class SetBackgroundImageDialog extends DialogWrapper {
     myOpacitySlider.setValue(15);
     myOpacitySpinner.setValue(15);
     myScaleRb.setSelected(true);
+    myCenterRb.setSelected(true);
     myEditorRb.setSelected(true);
     myAdjusting = false;
   }
@@ -232,7 +240,7 @@ public class SetBackgroundImageDialog extends DialogWrapper {
     updatePreview();
   }
 
-  private void fillTypeChanged(ChangeEvent event) {
+  private void fillOrPlaceChanged(ChangeEvent event) {
     updatePreview();
   }
 
@@ -252,7 +260,7 @@ public class SetBackgroundImageDialog extends DialogWrapper {
     mySelectedPath = path;
     if (StringUtil.isEmptyOrSpaces(path)) return;
     CollectionComboBoxModel<String> comboModel = getComboModel();
-    if (!comboModel.getItems().contains(path)) {
+    if (!comboModel.contains(path)) {
       comboModel.add(path);
     }
     comboModel.setSelectedItem(path);
@@ -264,20 +272,15 @@ public class SetBackgroundImageDialog extends DialogWrapper {
     String prop = getSystemProp();
     String value = StringUtil.notNullize(myResults.get(prop), getProperty(prop));
     String[] split = value.split(",");
+    int opacity = split.length > 1 ? StringUtil.parseInt(split[1], 15) : 15;
+    String fill = split.length > 2 ? split[2] : "scale";
+    String place = split.length > 3 ? split[3] : "center";
     setSelectedPath(split[0]);
     mySelectedPath = null;
-    int opacity = split.length > 1 ? StringUtil.parseInt(split[1], 15) : 15;
     myOpacitySlider.setValue(opacity);
     myOpacitySpinner.setValue(opacity);
-    String type = split.length > 2 ? split[2] : "scale";
-    for (Enumeration<AbstractButton> e = getTypeRbGroup().getElements(); e.hasMoreElements(); ) {
-      AbstractButton button = e.nextElement();
-      String s = button.getActionCommand().replace('-', '_');
-      if (s.equalsIgnoreCase(type)) {
-        button.setSelected(true);
-        break;
-      }
-    }
+    setSelected(getFillRbGroup(), fill);
+    setSelected(getPlaceRbGroup(), place);
     myAdjusting = false;
   }
 
@@ -294,7 +297,7 @@ public class SetBackgroundImageDialog extends DialogWrapper {
     String prop = getSystemProp();
     myResults.put(prop, value);
 
-    if (value.startsWith(",")) return;
+    if (value.startsWith(",")) value = null;
     PropertiesComponent.getInstance().setValue(prop, value);
 
     super.doOKAction();
@@ -319,9 +322,10 @@ public class SetBackgroundImageDialog extends DialogWrapper {
   private void restoreRecentImages() {
     String value = PropertiesComponent.getInstance().getValue(getRecentItemsKey());
     if (value == null) return;
+    CollectionComboBoxModel<String> model = getComboModel();
     for (String s : value.split("\n")) {
-      //noinspection unchecked
-      getComboModel().add(s);
+      if (StringUtil.isEmptyOrSpaces(s) || model.contains(s)) continue;
+      model.add(s);
     }
   }
 
@@ -335,25 +339,42 @@ public class SetBackgroundImageDialog extends DialogWrapper {
   }
 
   private void updatePreview() {
+    if (myAdjusting) return;
     String prop = getSystemProp();
     String value = calcNewValue();
     System.setProperty(myPropertyTmp, value);
     myResults.put(prop, value);
     myPreviewPanel.validate();
     myPreviewPanel.repaint();
+    boolean clear = value.startsWith(",");
+    getOKAction().putValue(Action.NAME, clear ? "Clear" : CommonBundle.getOkButtonText());
   }
 
   @NotNull
   private String calcNewValue() {
     String path = (String)myPathField.getComboBox().getEditor().getItem();
-    String type = getTypeRbGroup().getSelection().getActionCommand()
-      .replace('-', '_').toLowerCase(Locale.ENGLISH);
-
-    return path.trim() + "," + myOpacitySpinner.getValue() + "," + type;
+    String type = getFillRbGroup().getSelection().getActionCommand().replace('-', '_');
+    String place = getPlaceRbGroup().getSelection().getActionCommand().replace('-', '_');
+    return path.trim() + "," + myOpacitySpinner.getValue() + "," + (type + "," + place).toLowerCase(Locale.ENGLISH);
   }
 
-  private ButtonGroup getTypeRbGroup() {
+  private static void setSelected(ButtonGroup group, String fill) {
+    for (Enumeration<AbstractButton> e = group.getElements(); e.hasMoreElements(); ) {
+      AbstractButton button = e.nextElement();
+      String s = button.getActionCommand().replace('-', '_');
+      if (s.equalsIgnoreCase(fill)) {
+        button.setSelected(true);
+        break;
+      }
+    }
+  }
+
+  private ButtonGroup getFillRbGroup() {
     return ((DefaultButtonModel)myScaleRb.getModel()).getGroup();
+  }
+
+  private ButtonGroup getPlaceRbGroup() {
+    return ((DefaultButtonModel)myCenterRb.getModel()).getGroup();
   }
 
   private ButtonGroup getTargetRbGroup() {

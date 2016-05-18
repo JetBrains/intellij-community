@@ -21,6 +21,7 @@
     <orderEntry type="module" module-name="java-impl" />
     <orderEntry type="module" module-name="platform-impl" />
     <orderEntry type="module" module-name="util" />
+    <orderEntry type="module" module-name="jps-builders" />
   </component>
   <component name="copyright">
     <Base>

@@ -108,7 +108,7 @@ public class MethodEvaluator implements Evaluator {
         referenceType = ((ObjectReference)object).referenceType();
       }
       else if (isInvokableType(object)) {
-        referenceType = debugProcess.findClass(context, ((ReferenceType)object).name(), context.getClassLoader());
+        referenceType = (ReferenceType)object;
       }
       else {
         final String className = myClassName != null? myClassName.getName(debugProcess) : null;

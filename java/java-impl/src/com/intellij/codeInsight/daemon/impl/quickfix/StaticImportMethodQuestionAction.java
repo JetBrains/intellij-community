@@ -149,7 +149,7 @@ public class StaticImportMethodQuestionAction<T extends PsiMember> implements Qu
         @NotNull
         @Override
         public String getTextFor(T value) {
-          return ObjectUtils.assertNotNull(value.getName());
+          return getElementPresentableName(value);
         }
 
         @Override
@@ -164,9 +164,7 @@ public class StaticImportMethodQuestionAction<T extends PsiMember> implements Qu
       protected ListCellRenderer getListElementRenderer() {
         return new PsiElementListCellRenderer<T>() {
           public String getElementText(T element) {
-            final PsiClass aClass = element.getContainingClass();
-            LOG.assertTrue(aClass != null);
-            return ClassPresentationUtil.getNameForClass(aClass, false) + "." + element.getName();
+            return getElementPresentableName(element);
           }
 
           public String getContainerText(final T element, final String name) {
@@ -215,6 +213,12 @@ public class StaticImportMethodQuestionAction<T extends PsiMember> implements Qu
       }
     };
     popup.showInBestPositionFor(editor);
+  }
+
+  private String getElementPresentableName(T element) {
+    final PsiClass aClass = element.getContainingClass();
+    LOG.assertTrue(aClass != null);
+    return ClassPresentationUtil.getNameForClass(aClass, false) + "." + element.getName();
   }
 }
 

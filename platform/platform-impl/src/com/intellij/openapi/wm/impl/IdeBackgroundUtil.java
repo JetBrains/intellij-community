@@ -120,7 +120,7 @@ public class IdeBackgroundUtil {
     Image centerImage = url == null ? null : ImageLoader.loadFromUrl(url);
 
     if (centerImage != null) {
-      painters.addPainter(PaintersHelper.newImagePainter(centerImage, PaintersHelper.FillType.TOP_CENTER, 1.0f, JBUI.insets(10, 0, 0, 0)), null);
+      painters.addPainter(PaintersHelper.newImagePainter(centerImage, PaintersHelper.Fill.PLAIN, PaintersHelper.Place.TOP_CENTER, 1.0f, JBUI.insets(10, 0, 0, 0)), null);
     }
     painters.addPainter(new AbstractPainter() {
       EditorEmptyTextPainter p = ServiceManager.getService(EditorEmptyTextPainter.class);
