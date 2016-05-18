@@ -262,9 +262,9 @@ public class XDebuggerManagerImpl extends XDebuggerManager
     }
   }
 
-  void updateExecutionPoint(@Nullable XSourcePosition position, boolean useSelection, @Nullable GutterIconRenderer gutterIconRenderer) {
+  void updateExecutionPoint(@Nullable XSourcePosition position, boolean nonTopFrame, @Nullable GutterIconRenderer gutterIconRenderer) {
     if (position != null) {
-      myExecutionPointHighlighter.show(position, useSelection, gutterIconRenderer);
+      myExecutionPointHighlighter.show(position, nonTopFrame, gutterIconRenderer);
     }
     else {
       myExecutionPointHighlighter.hide();

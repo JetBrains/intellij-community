@@ -64,7 +64,7 @@ public interface ViewContext extends Disposable {
 
   Grid findGridFor(@NotNull Content content);
 
-  ActionCallback select(Content content, boolean requestFocus);
+  ActionCallback select(@NotNull Content content, boolean requestFocus);
 
   boolean isStateBeingRestored();
 

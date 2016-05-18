@@ -338,13 +338,24 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   public static void showWatchesView(@NotNull XDebugSessionImpl session) {
     XDebugSessionTab tab = session.getSessionTab();
     if (tab != null) {
+      showView(session, tab.getWatchesContentId());
+    }
+  }
+
+  public static void showFramesView(@NotNull XDebugSessionImpl session) {
+    showView(session, DebuggerContentInfo.FRAME_CONTENT);
+  }
+
+  private static void showView(@NotNull XDebugSessionImpl session, String viewId) {
+    XDebugSessionTab tab = session.getSessionTab();
+    if (tab != null) {
       tab.toFront(false, null);
       // restore watches tab if minimized
       JComponent component = tab.getUi().getComponent();
       if (component instanceof DataProvider) {
         RunnerContentUi ui = RunnerContentUi.KEY.getData(((DataProvider)component));
         if (ui != null) {
-          ui.restoreContent(tab.getWatchesContentId());
+          ui.restoreContent(viewId);
         }
       }
     }

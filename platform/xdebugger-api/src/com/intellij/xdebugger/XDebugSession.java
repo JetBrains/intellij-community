@@ -129,6 +129,13 @@ public interface XDebugSession extends AbstractDebuggerSession {
   void positionReached(@NotNull XSuspendContext suspendContext);
 
   /**
+   * Call this method when target is interrupted by an event, that is not triggered by a user (e.g. a signal or exception)
+   *
+   * @param suspendContext context
+   */
+  void sessionPaused(@NotNull XSuspendContext suspendContext);
+
+  /**
    * Call this method when session resumed because of some external event, e.g. from the debugger console
    */
   void sessionResumed();
