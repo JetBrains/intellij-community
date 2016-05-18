@@ -92,6 +92,10 @@ public class ExcludedInspectionTreeNodesManager {
     return myExcludedNodeObjects.get(myOffline ? OfflineProblemDescriptorNode.class : ProblemDescriptionNode.class).contains(descriptor);
   }
 
+  public synchronized boolean containsInspectionNode(@NotNull InspectionToolWrapper wrapper) {
+    return myExcludedNodeObjects.get(InspectionNode.class).contains(wrapper);
+  }
+
   @NotNull
   private static String findContainingToolName(@NotNull InspectionTreeNode node) {
     TreeNode parent = node.getParent();

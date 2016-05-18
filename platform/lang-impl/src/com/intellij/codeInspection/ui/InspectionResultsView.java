@@ -679,6 +679,9 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     boolean singleInspectionRun = myGlobalInspectionContext.isSingleInspectionRun();
     for (Tools currentTools : tools) {
       InspectionToolWrapper defaultToolWrapper = currentTools.getDefaultState().getTool();
+      if (myGlobalInspectionContext.getUIOptions().FILTER_RESOLVED_ITEMS && myExcludedInspectionTreeNodesManager.containsInspectionNode(defaultToolWrapper)) {
+        continue;
+      }
       final HighlightDisplayKey key = HighlightDisplayKey.find(defaultToolWrapper.getShortName());
       for (ScopeToolState state : myProvider.getTools(currentTools)) {
         InspectionToolWrapper toolWrapper = state.getTool();
