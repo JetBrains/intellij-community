@@ -52,7 +52,9 @@ public class OSProcessUtil {
     if (SystemInfo.isWindows) {
       try {
         if (process instanceof WinPtyProcess) {
-          return WinProcessManager.kill(((WinPtyProcess)process).getChildProcessId(), true);
+          boolean res = WinProcessManager.kill(((WinPtyProcess)process).getChildProcessId(), true);
+          process.destroy();
+          return res;
         }
         if (Registry.is("disable.winp")) {
           return WinProcessManager.kill(process, true);
