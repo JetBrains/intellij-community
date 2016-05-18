@@ -103,44 +103,41 @@ public abstract class CompilerTestCase extends ModuleTestCase {
     final String name = getTestName(true);
     final Ref<Throwable> error = Ref.create();
 
-    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-      @Override
-      public void run() {
-        //long start = System.currentTimeMillis();
-        try {
-          doSetup(name);
-          mySemaphore.down();
-          doCompile(new CompileStatusNotification() {
-            @Override
-            public void finished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {
-              try {
-                assertFalse("Code did not compile!", aborted);
-                if (errors > 0) {
-                  final CompilerMessage[] messages = compileContext.getMessages(CompilerMessageCategory.ERROR);
-                  StringBuilder errorBuilder = new StringBuilder();
-                  for(CompilerMessage message: messages) {
-                    errorBuilder.append(message.getMessage()).append("\n");
-                  }
-                  fail("Compiler errors occurred! " + errorBuilder.toString());
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      //long start = System.currentTimeMillis();
+      try {
+        doSetup(name);
+        mySemaphore.down();
+        doCompile(new CompileStatusNotification() {
+          @Override
+          public void finished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {
+            try {
+              assertFalse("Code did not compile!", aborted);
+              if (errors > 0) {
+                final CompilerMessage[] messages = compileContext.getMessages(CompilerMessageCategory.ERROR);
+                StringBuilder errorBuilder = new StringBuilder();
+                for(CompilerMessage message: messages) {
+                  errorBuilder.append(message.getMessage()).append("\n");
                 }
-              }
-              catch (Throwable t) {
-                error.set(t);
-              }
-              finally {
-                mySemaphore.up();
+                fail("Compiler errors occurred! " + errorBuilder.toString());
               }
             }
-          }, 1);
-        }
-        catch (Exception e) {
-          e.printStackTrace();
-        }
-        //finally {
-        //  long stop = System.currentTimeMillis();
-        //  System.out.println("FirstRunnable time:"+(((double)stop-(double)start)/1000.0) + "seconds");
-        //}
+            catch (Throwable t) {
+              error.set(t);
+            }
+            finally {
+              mySemaphore.up();
+            }
+          }
+        }, 1);
       }
+      catch (Exception e) {
+        e.printStackTrace();
+      }
+      //finally {
+      //  long stop = System.currentTimeMillis();
+      //  System.out.println("FirstRunnable time:"+(((double)stop-(double)start)/1000.0) + "seconds");
+      //}
     }, ModalityState.NON_MODAL);
 
     waitFor();
@@ -152,70 +149,64 @@ public abstract class CompilerTestCase extends ModuleTestCase {
     //System.out.println("\n\n=====================SECOND PASS===============================\n\n");
     final AtomicBoolean upToDateStatus = new AtomicBoolean(false);
 
-    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-      @Override
-      public void run() {
-        //long start = System.currentTimeMillis();
-        try {
-          final Exception[] ex = {null};
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              try {
-                copyTestProjectFiles(new NewFilesFilter());
-              }
-              catch (Exception e) {
-                ex[0] = e;
-              }
-            }
-          });
-          if (ex[0] != null) {
-            throw ex[0];
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      //long start = System.currentTimeMillis();
+      try {
+        final Exception[] ex = {null};
+        ApplicationManager.getApplication().runWriteAction(() -> {
+          try {
+            copyTestProjectFiles(new NewFilesFilter());
           }
-          mySemaphore.down();
-
-          final CompilerManager compilerManager = CompilerManager.getInstance(myProject);
-          final List<String> generated = new ArrayList<String>();
-          final CompilationStatusAdapter listener = new CompilationStatusAdapter() {
-            @Override
-            public void fileGenerated(String outputRoot, String relativePath) {
-              generated.add(relativePath);
-            }
-          };
-          compilerManager.addCompilationStatusListener(listener);
-          upToDateStatus.set(compilerManager.isUpToDate(compilerManager.createProjectCompileScope(myProject)));
-
-          doCompile(new CompileStatusNotification() {
-            @Override
-            public void finished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {
-              compilerManager.removeCompilationStatusListener(listener);
-              try {
-                String prefix = FileUtil.toSystemIndependentName(myModuleRoot.getPath());
-                if (!StringUtil.endsWithChar(prefix, '/')) {
-                  prefix += "/";
-                }
-                for (String p : getCompiledPathsToCheck()) {
-                  String path = FileUtil.toSystemIndependentName(p);
-                  if (FileUtil.startsWith(path, prefix)) {
-                    path = path.substring(prefix.length());
-                  }
-                  myRecompiledPaths.add(path);
-                }
-              }
-              finally {
-                mySemaphore.up();
-              }
-            }
-          }, 2);
+          catch (Exception e) {
+            ex[0] = e;
+          }
+        });
+        if (ex[0] != null) {
+          throw ex[0];
         }
-        catch (Exception e) {
-          e.printStackTrace();
-        }
-        //finally {
-        //  long stop = System.currentTimeMillis();
-        //  System.out.println("FirstRunnable time:"+(((double)stop-(double)start)/1000.0) + "seconds");
-        //}
+        mySemaphore.down();
+
+        final CompilerManager compilerManager = CompilerManager.getInstance(myProject);
+        final List<String> generated = new ArrayList<String>();
+        final CompilationStatusAdapter listener = new CompilationStatusAdapter() {
+          @Override
+          public void fileGenerated(String outputRoot, String relativePath) {
+            generated.add(relativePath);
+          }
+        };
+        compilerManager.addCompilationStatusListener(listener);
+        upToDateStatus.set(compilerManager.isUpToDate(compilerManager.createProjectCompileScope(myProject)));
+
+        doCompile(new CompileStatusNotification() {
+          @Override
+          public void finished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {
+            compilerManager.removeCompilationStatusListener(listener);
+            try {
+              String prefix = FileUtil.toSystemIndependentName(myModuleRoot.getPath());
+              if (!StringUtil.endsWithChar(prefix, '/')) {
+                prefix += "/";
+              }
+              for (String p : getCompiledPathsToCheck()) {
+                String path = FileUtil.toSystemIndependentName(p);
+                if (FileUtil.startsWith(path, prefix)) {
+                  path = path.substring(prefix.length());
+                }
+                myRecompiledPaths.add(path);
+              }
+            }
+            finally {
+              mySemaphore.up();
+            }
+          }
+        }, 2);
       }
+      catch (Exception e) {
+        e.printStackTrace();
+      }
+      //finally {
+      //  long stop = System.currentTimeMillis();
+      //  System.out.println("FirstRunnable time:"+(((double)stop-(double)start)/1000.0) + "seconds");
+      //}
     }, ModalityState.NON_MODAL);
 
     waitFor();

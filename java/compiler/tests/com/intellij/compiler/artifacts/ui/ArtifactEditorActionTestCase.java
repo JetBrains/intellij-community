@@ -33,12 +33,9 @@ public abstract class ArtifactEditorActionTestCase extends ArtifactEditorTestCas
 
   protected void perform(final boolean confirmationExpected) {
     assertEnabled();
-    runAction(new Runnable() {
-      @Override
-      public void run() {
-        final AnAction action = createAction(myArtifactEditor);
-        action.actionPerformed(createActionEvent(action));
-      }
+    runAction(() -> {
+      final AnAction action = createAction(myArtifactEditor);
+      action.actionPerformed(createActionEvent(action));
     }, confirmationExpected);
   }
 

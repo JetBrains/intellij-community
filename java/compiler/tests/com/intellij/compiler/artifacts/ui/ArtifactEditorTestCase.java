@@ -64,12 +64,9 @@ public abstract class ArtifactEditorTestCase extends PackagingElementsTestCase {
   }
 
   protected void applyChanges() {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        myArtifactEditor.apply();
-        ((MockArtifactsStructureConfigurableContext)myArtifactEditor.getContext().getParent()).commitModel();
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      myArtifactEditor.apply();
+      ((MockArtifactsStructureConfigurableContext)myArtifactEditor.getContext().getParent()).commitModel();
     });
   }
 

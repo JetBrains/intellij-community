@@ -53,11 +53,6 @@ public class AddNewElementActionTest extends ArtifactEditorTestCase {
   }
 
   private void addNewElement(final ProductionModuleOutputElementType elementType, final boolean confirmationExpected) {
-    runAction(new Runnable() {
-      @Override
-      public void run() {
-        myArtifactEditor.addNewPackagingElement(elementType);
-      }
-    }, confirmationExpected);
+    runAction(() -> myArtifactEditor.addNewPackagingElement(elementType), confirmationExpected);
   }
 }
