@@ -76,6 +76,8 @@ public class KeymapUtil {
       if (!acceleratorText.isEmpty()) {
         s += ", " + acceleratorText;
       }
+    } else if (shortcut instanceof PressureShortcut) {
+      s += shortcut.toString();
     }
     else if (shortcut instanceof MouseShortcut) {
       MouseShortcut mouseShortcut = (MouseShortcut)shortcut;

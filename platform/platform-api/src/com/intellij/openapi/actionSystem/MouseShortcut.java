@@ -26,7 +26,7 @@ import java.awt.event.MouseWheelEvent;
  * A mouse shortcut, which can consist of a specific mouse button, click count and modifier keys
  * (Shift, Ctrl or Alt).
  */
-public final class MouseShortcut extends Shortcut {
+public class MouseShortcut extends Shortcut {
   public static final int BUTTON_WHEEL_UP = 143;
   public static final int BUTTON_WHEEL_DOWN = 142;
   private final int myButton;
