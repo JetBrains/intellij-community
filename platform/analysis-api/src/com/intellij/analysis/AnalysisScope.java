@@ -542,12 +542,11 @@ public class AnalysisScope {
 
       case FILE:
         final String relativePath = getRelativePath();
-        return relativePath != null ? AnalysisScopeBundle.message("scope.file", relativePath) : "Current File";
+        return AnalysisScopeBundle.message("scope.file", relativePath);
 
       case DIRECTORY:
         final String relativeDirPath = getRelativePath();
-        return relativeDirPath != null ? AnalysisScopeBundle.message("scope.directory", relativeDirPath) : "Current Directory";
-
+        return AnalysisScopeBundle.message("scope.directory", relativeDirPath);
 
       case VIRTUAL_FILES:
         return AnalysisScopeBundle.message("scope.selected.files");
@@ -560,7 +559,7 @@ public class AnalysisScope {
   private String getRelativePath() {
     final String relativePath = displayProjectRelativePath((PsiFileSystemItem)myElement);
     if (relativePath.length() > 100) {
-      return null;
+      return ((PsiFileSystemItem)myElement).getName();
     }
     return relativePath;
   }
