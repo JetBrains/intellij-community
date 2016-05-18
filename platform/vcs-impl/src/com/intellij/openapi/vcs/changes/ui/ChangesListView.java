@@ -16,14 +16,13 @@
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.ide.CopyProvider;
-import com.intellij.ide.dnd.*;
+import com.intellij.ide.dnd.DnDAware;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileChooser.actions.VirtualFileDeleteProvider;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.BooleanGetter;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
@@ -32,13 +31,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SmartExpander;
 import com.intellij.ui.TreeSpeedSearch;
-import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.containers.Convertor;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NonNls;
@@ -46,11 +42,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.table.TableCellRenderer;
-import javax.swing.tree.*;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.awt.image.BufferedImage;
 import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -59,10 +55,8 @@ import java.util.stream.Stream;
 /**
  * @author max
  */
-public class ChangesListView extends Tree implements TypeSafeDataProvider, AdvancedDnDSource {
-  private ChangesListView.DropTarget myDropTarget;
-  private DnDManager myDndManager;
-  private ChangeListOwner myDragOwner;
+// TODO: Check if we could extend DnDAwareTree here instead of directly implementing DnDAware
+public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAware {
   private final Project myProject;
   private boolean myShowFlatten = false;
   private final CopyProvider myCopyProvider;
@@ -96,27 +90,6 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
   @Override
   public DefaultTreeModel getModel() {
     return (DefaultTreeModel)super.getModel();
-  }
-
-  public void installDndSupport(ChangeListOwner owner) {
-    myDragOwner = owner;
-    myDropTarget = new DropTarget();
-    myDndManager = DnDManager.getInstance();
-
-    myDndManager.registerSource(this);
-    myDndManager.registerTarget(myDropTarget, this);
-  }
-
-  @Override
-  public void dispose() {
-    if (myDropTarget != null) {
-      myDndManager.unregisterSource(this);
-      myDndManager.unregisterTarget(myDropTarget, this);
-
-      myDropTarget = null;
-      myDndManager = null;
-      myDragOwner = null;
-    }
   }
 
   public boolean isShowFlatten() {
@@ -424,229 +397,12 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
     PopupHandler.installPopupHandler(this, myMenuGroup, ActionPlaces.CHANGES_VIEW_POPUP, ActionManager.getInstance());
   }
 
-  @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
-  private static class DragImageFactory {
-    private static void drawSelection(JTable table, int column, Graphics g, final int width) {
-      int y = 0;
-      final int[] rows = table.getSelectedRows();
-      final int height = table.getRowHeight();
-      for (int row : rows) {
-        final TableCellRenderer renderer = table.getCellRenderer(row, column);
-        final Component component = renderer.getTableCellRendererComponent(table, table.getValueAt(row, column), false, false, row, column);
-        g.translate(0, y);
-        component.setBounds(0, 0, width, height);
-        boolean wasOpaque = false;
-        if (component instanceof JComponent) {
-          final JComponent j = (JComponent)component;
-          if (j.isOpaque()) wasOpaque = true;
-          j.setOpaque(false);
-        }
-        component.paint(g);
-        if (wasOpaque) {
-          ((JComponent)component).setOpaque(true);
-        }
-        y += height;
-        g.translate(0, -y);
-      }
-    }
-
-    private static void drawSelection(JTree tree, Graphics g, final int width) {
-      int y = 0;
-      final int[] rows = tree.getSelectionRows();
-      final int height = tree.getRowHeight();
-      for (int row : rows) {
-        final TreeCellRenderer renderer = tree.getCellRenderer();
-        final Object value = tree.getPathForRow(row).getLastPathComponent();
-        if (value == null) continue;
-        final Component component = renderer.getTreeCellRendererComponent(tree, value, false, false, false, row, false);
-        if (component.getFont() == null) {
-          component.setFont(tree.getFont());
-        }
-        g.translate(0, y);
-        component.setBounds(0, 0, width, height);
-        boolean wasOpaque = false;
-        if (component instanceof JComponent) {
-          final JComponent j = (JComponent)component;
-          if (j.isOpaque()) wasOpaque = true;
-          j.setOpaque(false);
-        }
-        component.paint(g);
-        if (wasOpaque) {
-          ((JComponent)component).setOpaque(true);
-        }
-        y += height;
-        g.translate(0, -y);
-      }
-    }
-
-    public static Image createImage(final JTable table, int column) {
-      final int height = Math.max(20, Math.min(100, table.getSelectedRowCount() * table.getRowHeight()));
-      final int width = table.getColumnModel().getColumn(column).getWidth();
-
-      final BufferedImage image = UIUtil.createImage(width, height, BufferedImage.TYPE_INT_ARGB);
-      Graphics2D g2 = (Graphics2D)image.getGraphics();
-
-      g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
-
-      drawSelection(table, column, g2, width);
-      return image;
-    }
-
-    public static Image createImage(final JTree tree) {
-      final TreeSelectionModel model = tree.getSelectionModel();
-      final TreePath[] paths = model.getSelectionPaths();
-
-      int count = 0;
-      final List<ChangesBrowserNode> nodes = new ArrayList<ChangesBrowserNode>();
-      for (final TreePath path : paths) {
-        final ChangesBrowserNode node = (ChangesBrowserNode)path.getLastPathComponent();
-        if (!node.isLeaf()) {
-          nodes.add(node);
-          count += node.getCount();
-        }
-      }
-
-      for (TreePath path : paths) {
-        final ChangesBrowserNode element = (ChangesBrowserNode)path.getLastPathComponent();
-        boolean child = false;
-        for (final ChangesBrowserNode node : nodes) {
-          if (node.isNodeChild(element)) {
-            child = true;
-            break;
-          }
-        }
-
-        if (!child) {
-          if (element.isLeaf()) count++;
-        } else if (!element.isLeaf()) {
-          count -= element.getCount();
-        }
-      }
-
-      final JLabel label = new JLabel(VcsBundle.message("changes.view.dnd.label", count));
-      label.setOpaque(true);
-      label.setForeground(tree.getForeground());
-      label.setBackground(tree.getBackground());
-      label.setFont(tree.getFont());
-      label.setSize(label.getPreferredSize());
-      final BufferedImage image = UIUtil.createImage(label.getWidth(), label.getHeight(), BufferedImage.TYPE_INT_ARGB);
-
-      Graphics2D g2 = (Graphics2D)image.getGraphics();
-      g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
-      label.paint(g2);
-      g2.dispose();
-
-      return image;
-    }
-
-
-  }
-
-  public class DropTarget implements DnDTarget {
-    @Override
-    public boolean update(DnDEvent aEvent) {
-      aEvent.hideHighlighter();
-      aEvent.setDropPossible(false, "");
-
-      Object attached = aEvent.getAttachedObject();
-      if (!(attached instanceof ChangeListDragBean)) return false;
-
-      final ChangeListDragBean dragBean = (ChangeListDragBean)attached;
-      if (dragBean.getSourceComponent() != ChangesListView.this) return false;
-      dragBean.setTargetNode(null);
-
-      RelativePoint dropPoint = aEvent.getRelativePoint();
-      Point onTree = dropPoint.getPoint(ChangesListView.this);
-      final TreePath dropPath = getPathForLocation(onTree.x, onTree.y);
-
-      if (dropPath == null) return false;
-
-      ChangesBrowserNode dropNode = (ChangesBrowserNode)dropPath.getLastPathComponent();
-      while(!((ChangesBrowserNode) dropNode.getParent()).isRoot()) {
-        dropNode = (ChangesBrowserNode)dropNode.getParent();
-      }
-
-      if (!dropNode.canAcceptDrop(dragBean)) {
-        return false;
-      }
-
-      final Rectangle tableCellRect = getPathBounds(new TreePath(dropNode.getPath()));
-      if (fitsInBounds(tableCellRect)) {
-        aEvent.setHighlighting(new RelativeRectangle(ChangesListView.this, tableCellRect), DnDEvent.DropTargetHighlightingType.RECTANGLE);
-      }
-
-      aEvent.setDropPossible(true);
-      dragBean.setTargetNode(dropNode);
-
-      return false;
-    }
-
-    @Override
-    public void drop(DnDEvent aEvent) {
-      Object attached = aEvent.getAttachedObject();
-      if (!(attached instanceof ChangeListDragBean)) return;
-
-      final ChangeListDragBean dragBean = (ChangeListDragBean)attached;
-      final ChangesBrowserNode changesBrowserNode = dragBean.getTargetNode();
-      if (changesBrowserNode != null) {
-        changesBrowserNode.acceptDrop(myDragOwner, dragBean);
-      }
-    }
-
-    @Override
-    public void cleanUpOnLeave() {
-    }
-
-    @Override
-    public void updateDraggedImage(Image image, Point dropPoint, Point imageOffset) {
-    }
-  }
-
-  private boolean fitsInBounds(final Rectangle rect) {
-    final Container container = getParent();
-    if (container instanceof JViewport) {
-      final Container scrollPane = container.getParent();
-      if (scrollPane instanceof JScrollPane) {
-        final Rectangle rectangle = SwingUtilities.convertRectangle(this, rect, scrollPane.getParent());
-        return scrollPane.getBounds().contains(rectangle);
-      }
-    }
-    return true;
-  }
-
   private static class NodeToTextConvertor implements Convertor<TreePath, String> {
     @Override
     public String convert(final TreePath path) {
       ChangesBrowserNode node = (ChangesBrowserNode)path.getLastPathComponent();
       return node.getTextPresentation();
     }
-  }
-
-  @Override
-  public boolean canStartDragging(DnDAction action, Point dragOrigin) {
-    return action == DnDAction.MOVE &&
-           (getSelectedChanges().length > 0 || !getSelectedUnversionedFiles().isEmpty() || !getSelectedIgnoredFiles().isEmpty());
-  }
-
-  @Override
-  public DnDDragStartBean startDragging(DnDAction action, Point dragOrigin) {
-    return new DnDDragStartBean(new ChangeListDragBean(this, getSelectedChanges(), getSelectedUnversionedFiles(),
-                                                       getSelectedIgnoredFiles()));
-  }
-
-  @Override
-  @Nullable
-  public Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin) {
-    final Image image = DragImageFactory.createImage(this);
-    return Pair.create(image, new Point(-image.getWidth(null), -image.getHeight(null)));
-  }
-
-  @Override
-  public void dragDropEnd() {
-  }
-
-  @Override
-  public void dropActionChanged(final int gestureModifiers) {
   }
 
   @Override

@@ -41,6 +41,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.actions.IgnoredSettingsAction;
+import com.intellij.openapi.vcs.changes.ui.ChangesDnDSupport;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder;
@@ -110,7 +111,6 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     myProject = project;
     myContentManager = contentManager;
     myView = new ChangesListView(project);
-    Disposer.register(project, myView);
     myRepaintAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
     myDiffDetails = new MyChangeProcessor(myProject);
     myTsl = new TreeSelectionListener() {
@@ -232,7 +232,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     content.add(myProgressLabel, BorderLayout.SOUTH);
     panel.setContent(content);
 
-    myView.installDndSupport(ChangeListManagerImpl.getInstanceImpl(myProject));
+    ChangesDnDSupport.install(myProject, myView);
     myView.addTreeSelectionListener(myTsl);
     return panel;
   }
