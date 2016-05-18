@@ -487,7 +487,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       final int problemCount = myTree.getSelectedProblemCount();
       JComponent previewPanel = null;
       final InspectionToolWrapper tool = myTree.getSelectedToolWrapper();
-      if (tool != null && refEntity != null && problemCount == 1 && refEntity.isValid()) {
+      if (tool != null && refEntity != null && refEntity.isValid()) {
         final InspectionToolPresentation presentation = myGlobalInspectionContext.getPresentation(tool);
         previewPanel = presentation.getCustomPreviewPanel(refEntity);
       }
