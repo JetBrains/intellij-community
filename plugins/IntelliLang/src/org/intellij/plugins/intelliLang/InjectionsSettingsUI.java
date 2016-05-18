@@ -834,12 +834,12 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
     public void reset() {
       injectionInfos.clear();
       for (BaseInjection injection : originalInjections) {
-        injectionInfos.add(new InjInfo(injection.copy(), this));
+        injectionInfos.add(new InjInfo(injection.copy(), this, bundledInjections.contains(injection)));
       }
     }
 
     public InjInfo addInjection(final BaseInjection injection) {
-      final InjInfo info = new InjInfo(injection, this);
+      final InjInfo info = new InjInfo(injection, this, false);
       injectionInfos.add(info);
       return info;
     }
@@ -856,7 +856,7 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
         if (originalInjections.contains(info.injection)) it.remove();
       }
       for (BaseInjection newInjection : newInjections) {
-        injectionInfos.add(new InjInfo(newInjection, this));
+        injectionInfos.add(new InjInfo(newInjection, this, false));
       }
     }
 
@@ -879,10 +879,10 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
     final CfgInfo cfgInfo;
     final boolean bundled;
 
-    private InjInfo(final BaseInjection injection, final CfgInfo cfgInfo) {
+    private InjInfo(BaseInjection injection, CfgInfo cfgInfo, boolean bundled) {
       this.injection = injection;
       this.cfgInfo = cfgInfo;
-      bundled = cfgInfo.bundledInjections.contains(injection);
+      this.bundled = bundled;
     }
   }
 
