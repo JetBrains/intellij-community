@@ -18,7 +18,9 @@ package git4idea.rebase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.EditorTextField;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -39,8 +41,8 @@ public class GitRebaseUnstructuredEditor extends DialogWrapper {
   @NotNull private final String myEncoding;
   @NotNull private final File myFile;
 
-  @NotNull private final JTextArea myTextArea;
   @NotNull private final JBLabel myRootLabel;
+  @NotNull private final EditorTextField myTextEditor;
 
   protected GitRebaseUnstructuredEditor(@NotNull Project project, @NotNull VirtualFile root, @NotNull String rebaseFilePath)
     throws IOException {
@@ -51,8 +53,11 @@ public class GitRebaseUnstructuredEditor extends DialogWrapper {
     myRootLabel = new JBLabel("Git Root: " + root.getPresentableUrl());
     myEncoding = GitConfigUtil.getCommitEncoding(project, root);
     myFile = new File(rebaseFilePath);
-    myTextArea = new JTextArea(FileUtil.loadFile(myFile, myEncoding));
-    myTextArea.setCaretPosition(0);
+    String text = FileUtil.loadFile(myFile, myEncoding);
+
+    myTextEditor = CommitMessage.createCommitTextEditor(project, false);
+    myTextEditor.setText(text);
+    myTextEditor.setCaretPosition(0);
     init();
   }
 
@@ -60,13 +65,13 @@ public class GitRebaseUnstructuredEditor extends DialogWrapper {
    * Save content to the file
    */
   public void save() throws IOException {
-    FileUtil.writeToFile(myFile, myTextArea.getText().getBytes(myEncoding));
+    FileUtil.writeToFile(myFile, myTextEditor.getText().getBytes(myEncoding));
   }
 
   protected JComponent createCenterPanel() {
     BorderLayoutPanel rootPanel = JBUI.Panels.simplePanel(UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP);
     rootPanel.addToTop(myRootLabel);
-    rootPanel.addToCenter(myTextArea);
+    rootPanel.addToCenter(myTextEditor.getComponent());
     return rootPanel;
   }
 
@@ -77,6 +82,6 @@ public class GitRebaseUnstructuredEditor extends DialogWrapper {
 
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return myTextArea;
+    return myTextEditor.getFocusTarget();
   }
 }
