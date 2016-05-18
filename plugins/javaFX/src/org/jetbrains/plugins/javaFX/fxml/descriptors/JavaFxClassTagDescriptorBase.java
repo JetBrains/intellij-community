@@ -4,6 +4,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.Validator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -311,24 +312,11 @@ public abstract class JavaFxClassTagDescriptorBase implements XmlElementDescript
         host.addMessage(attribute.getNameElement(), "fx:controller can only be applied to root element", ValidationHost.ErrorType.ERROR); //todo add delete/move to upper tag fix
       }
     }
-    PsiClass aClass = getPsiClass();
-    final XmlAttribute constAttr = context.getAttribute(FxmlConstants.FX_CONSTANT);
-    final XmlAttribute factoryAttr = context.getAttribute(FxmlConstants.FX_FACTORY);
-    if (constAttr != null && aClass != null) {
-      final PsiField constField = aClass.findFieldByName(constAttr.getValue(), true);
-      if (constField != null) {
-        final PsiType constType = constField.getType();
-        aClass = PsiUtil.resolveClassInClassTypeOnly(
-          constType instanceof PsiPrimitiveType ? ((PsiPrimitiveType)constType).getBoxedType(context) : constType);
-      }
-    } else {
-      if (factoryAttr != null) {
-        aClass = JavaFxPsiUtil.getFactoryProducedClass(aClass, factoryAttr.getValue());
-      }
-    }
+    final Pair<PsiClass, Boolean> replacement = JavaFxPsiUtil.getTagClassReplacement(context, getPsiClass());
+    final PsiClass aClass = replacement.getFirst();
     JavaFxPsiUtil.isClassAcceptable(parentTag, aClass, (errorMessage, errorType) ->
       host.addMessage(context.getNavigationElement(), errorMessage, errorType));
-    boolean needInstantiate = constAttr == null && factoryAttr == null;
+    boolean needInstantiate = !replacement.getSecond();
     if (needInstantiate && aClass != null && aClass.isValid()) {
       JavaFxPsiUtil.isAbleToInstantiate(aClass, errorMessage ->
         host.addMessage(context, errorMessage, ValidationHost.ErrorType.ERROR));

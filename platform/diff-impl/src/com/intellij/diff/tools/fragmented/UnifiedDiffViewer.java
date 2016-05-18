@@ -34,6 +34,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
@@ -52,7 +53,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolder;
@@ -258,11 +258,8 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
       final Document document1 = getContent1().getDocument();
       final Document document2 = getContent2().getDocument();
 
-      final CharSequence[] texts = ApplicationManager.getApplication().runReadAction(new Computable<CharSequence[]>() {
-        @Override
-        public CharSequence[] compute() {
-          return new CharSequence[]{document1.getImmutableCharSequence(), document2.getImmutableCharSequence()};
-        }
+      final CharSequence[] texts = ReadAction.compute(() -> {
+        return new CharSequence[]{document1.getImmutableCharSequence(), document2.getImmutableCharSequence()};
       });
 
       final List<LineFragment> fragments = DiffUtil.compare(myRequest, texts[0], texts[1], getDiffConfig(), indicator);
@@ -271,24 +268,21 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
       final DocumentContent content2 = getContent2();
 
       indicator.checkCanceled();
-      TwosideDocumentData data = ApplicationManager.getApplication().runReadAction(new Computable<TwosideDocumentData>() {
-        @Override
-        public TwosideDocumentData compute() {
-          indicator.checkCanceled();
-          UnifiedFragmentBuilder builder = new UnifiedFragmentBuilder(fragments, document1, document2, myMasterSide);
-          builder.exec();
+      TwosideDocumentData data = ReadAction.compute(() -> {
+        indicator.checkCanceled();
+        UnifiedFragmentBuilder builder = new UnifiedFragmentBuilder(fragments, document1, document2, myMasterSide);
+        builder.exec();
 
-          indicator.checkCanceled();
+        indicator.checkCanceled();
 
-          EditorHighlighter highlighter = buildHighlighter(myProject, content1, content2,
-                                                           texts[0], texts[1], builder.getRanges(),
-                                                           builder.getText().length());
+        EditorHighlighter highlighter = buildHighlighter(myProject, content1, content2,
+                                                         texts[0], texts[1], builder.getRanges(),
+                                                         builder.getText().length());
 
-          UnifiedEditorRangeHighlighter rangeHighlighter = new UnifiedEditorRangeHighlighter(myProject, document1, document2,
-                                                                                             builder.getRanges());
+        UnifiedEditorRangeHighlighter rangeHighlighter = new UnifiedEditorRangeHighlighter(myProject, document1, document2,
+                                                                                           builder.getRanges());
 
-          return new TwosideDocumentData(builder, highlighter, rangeHighlighter);
-        }
+        return new TwosideDocumentData(builder, highlighter, rangeHighlighter);
       });
       UnifiedFragmentBuilder builder = data.getBuilder();
 

@@ -92,11 +92,11 @@ public class SimplifiableConditionalExpressionInspection extends BaseInspection 
     final PsiExpression condition = expression.getCondition();
     assert thenExpression != null;
     assert elseExpression != null;
-    if (EquivalenceChecker.expressionsAreEquivalent(BoolUtils.getNegated(thenExpression), elseExpression)) {
+    if (EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(BoolUtils.getNegated(thenExpression), elseExpression)) {
         return ParenthesesUtils.getText(condition, ParenthesesUtils.EQUALITY_PRECEDENCE) + " != " +
                BoolUtils.getNegatedExpressionText(thenExpression, ParenthesesUtils.EQUALITY_PRECEDENCE);
     }
-    else if (EquivalenceChecker.expressionsAreEquivalent(thenExpression, BoolUtils.getNegated(elseExpression))) {
+    else if (EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(thenExpression, BoolUtils.getNegated(elseExpression))) {
       return ParenthesesUtils.getText(condition, ParenthesesUtils.EQUALITY_PRECEDENCE) + " == " +
              ParenthesesUtils.getText(thenExpression, ParenthesesUtils.EQUALITY_PRECEDENCE);
     }
@@ -142,8 +142,9 @@ public class SimplifiableConditionalExpressionInspection extends BaseInspection 
       final boolean thenConstant = BoolUtils.isFalse(thenExpression) || BoolUtils.isTrue(thenExpression);
       final boolean elseConstant = BoolUtils.isFalse(elseExpression) || BoolUtils.isTrue(elseExpression);
       if (thenConstant == elseConstant) {
-        if (EquivalenceChecker.expressionsAreEquivalent(BoolUtils.getNegated(thenExpression), elseExpression) ||
-            EquivalenceChecker.expressionsAreEquivalent(thenExpression, BoolUtils.getNegated(elseExpression))) {
+        if (EquivalenceChecker.getCanonicalPsiEquivalence()
+              .expressionsAreEquivalent(BoolUtils.getNegated(thenExpression), elseExpression) ||
+            EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(thenExpression, BoolUtils.getNegated(elseExpression))) {
           registerError(expression, expression);
         }
         return;

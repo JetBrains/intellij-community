@@ -24,7 +24,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
@@ -42,12 +41,7 @@ public abstract class ThreesideDiffChangeBase {
   public ThreesideDiffChangeBase(@NotNull MergeLineFragment fragment,
                                  @NotNull List<? extends EditorEx> editors,
                                  @NotNull ComparisonPolicy policy) {
-    List<Document> documents = ContainerUtil.map(editors, new Function<EditorEx, Document>() {
-      @Override
-      public Document fun(EditorEx editorEx) {
-        return editorEx.getDocument();
-      }
-    });
+    List<Document> documents = ContainerUtil.map(editors, Editor::getDocument);
     myType = calcType(fragment, documents, policy);
   }
 

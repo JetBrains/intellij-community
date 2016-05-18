@@ -441,10 +441,6 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     return new VcsTaskHandler.TaskInfo(next.getKey(), next.getValue());
   }
 
-  public void createBranch(LocalTask task, LocalTask previousActive, String name) {
-    createBranch(task, previousActive, name, null);
-  }
-
   public void createBranch(LocalTask task, LocalTask previousActive, String name, @Nullable VcsTaskHandler.TaskInfo branchFrom) {
     VcsTaskHandler[] handlers = VcsTaskHandler.getAllHandlers(myProject);
     for (VcsTaskHandler handler : handlers) {
@@ -470,7 +466,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     }
   }
 
-  private static void addBranches(LocalTask task, VcsTaskHandler.TaskInfo[] info, boolean original) {
+  public static void addBranches(LocalTask task, VcsTaskHandler.TaskInfo[] info, boolean original) {
     for (VcsTaskHandler.TaskInfo taskInfo : info) {
       List<BranchInfo> branchInfos = BranchInfo.fromTaskInfo(taskInfo, original);
       for (BranchInfo branchInfo : branchInfos) {
@@ -1033,6 +1029,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     public boolean clearContext = true;
     public boolean createChangelist = true;
     public boolean createBranch = true;
+    public boolean useBranch = false;
 
     // close task options
     public boolean commitChanges = true;

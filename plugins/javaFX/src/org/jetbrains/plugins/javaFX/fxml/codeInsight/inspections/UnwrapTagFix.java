@@ -49,7 +49,7 @@ public class UnwrapTagFix implements LocalQuickFix {
   @NotNull
   @Override
   public String getFamilyName() {
-    return getName();
+    return "Unwrap tag";
   }
 
   @Override
@@ -57,18 +57,19 @@ public class UnwrapTagFix implements LocalQuickFix {
     final PsiElement element = descriptor.getPsiElement();
     if (element != null) {
       final PsiFile containingFile = element.getContainingFile();
-      LOG.assertTrue(containingFile != null && JavaFxFileTypeFactory.isFxml(containingFile), containingFile == null ? "no containing file found" : "containing file: " + containingFile.getName());
-      final XmlTag xmlTag = PsiTreeUtil.getParentOfType(element, XmlTag.class);
+      LOG.assertTrue(containingFile != null && JavaFxFileTypeFactory.isFxml(containingFile),
+                     containingFile == null ? "no containing file found" : "containing file: " + containingFile.getName());
+      final XmlTag xmlTag = PsiTreeUtil.getParentOfType(element, XmlTag.class, false);
       if (xmlTag != null) {
         final XmlTag parentTag = xmlTag.getParentTag();
         final PsiElement[] children = PsiTreeUtil.getChildrenOfType(xmlTag, XmlTagChild.class);
-        if (children != null) {
-          if (!FileModificationService.getInstance().preparePsiElementsForWrite(element)) return;
-          if (children.length > 0) {
-            parentTag.addRange(children[0], children[children.length - 1]);
-          }
-          xmlTag.delete();
-          CodeStyleManager.getInstance(project).reformat(parentTag);
+        if (!FileModificationService.getInstance().preparePsiElementsForWrite(element)) return;
+        if (children != null && children.length > 0 && parentTag != null) {
+          parentTag.addRange(children[0], children[children.length - 1]);
+        }
+        xmlTag.delete();
+        if (parentTag != null) {
+          CodeStyleManager.getInstance(project).reformat(parentTag, true);
         }
       }
     }

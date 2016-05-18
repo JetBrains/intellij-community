@@ -525,7 +525,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
           result.add(DiffUtil.compareThreesideInner(chunkData.text, ComparisonPolicy.DEFAULT, indicator));
         }
 
-        ApplicationManager.getApplication().invokeAndWait(() -> {
+        ApplicationManager.getApplication().invokeLater(() -> {
           if (!myEnabled || indicator.isCanceled()) return;
           myProgress = null;
 

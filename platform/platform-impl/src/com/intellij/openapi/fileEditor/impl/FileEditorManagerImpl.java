@@ -70,7 +70,6 @@ import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.impl.DockManagerImpl;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
-import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
@@ -1498,18 +1497,21 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
         if (myProject.isDisposed()) return;
         setTabsMode(UISettings.getInstance().EDITOR_TAB_PLACEMENT != UISettings.TABS_NONE);
 
-        ToolWindowManager.getInstance(myProject).invokeLater(() -> CommandProcessor.getInstance().executeCommand(myProject, () -> {
-
-          ApplicationManager.getApplication().invokeLater(() -> {
-            long currentTime = System.nanoTime();
-            Long startTime = myProject.getUserData(ProjectImpl.CREATION_TIME);
-            if (startTime != null) {
-              LOG.info("Project opening took " + (currentTime - startTime.longValue()) / 1000000 + " ms");
-              PluginManagerCore.dumpPluginClassStatistics();
-            }
-          }, myProject.getDisposed());
-          // group 1
-        }, "", null));
+        ToolWindowManager.getInstance(myProject).invokeLater(() -> {
+          if (!myProject.isDisposed()) {
+            CommandProcessor.getInstance().executeCommand(myProject, () -> {
+              ApplicationManager.getApplication().invokeLater(() -> {
+                long currentTime = System.nanoTime();
+                Long startTime = myProject.getUserData(ProjectImpl.CREATION_TIME);
+                if (startTime != null) {
+                  LOG.info("Project opening took " + (currentTime - startTime.longValue()) / 1000000 + " ms");
+                  PluginManagerCore.dumpPluginClassStatistics();
+                }
+              }, myProject.getDisposed());
+              // group 1
+            }, "", null);
+          }
+        });
       }
     });
   }

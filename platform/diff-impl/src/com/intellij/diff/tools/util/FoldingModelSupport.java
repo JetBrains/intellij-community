@@ -21,6 +21,7 @@ import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.LineRange;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.event.DocumentAdapter;
@@ -31,7 +32,6 @@ import com.intellij.openapi.editor.ex.FoldingListener;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.util.BooleanGetter;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
@@ -484,15 +484,12 @@ public class FoldingModelSupport {
 
   @NotNull
   private FoldingCache getFoldingCache(@NotNull final Settings settings) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<FoldingCache>() {
-      @Override
-      public FoldingCache compute() {
-        List<FoldedRangeState>[] result = new List[myCount];
-        for (int i = 0; i < myCount; i++) {
-          result[i] = getFoldedRanges(i, settings);
-        }
-        return new FoldingCache(result, settings.defaultExpanded);
+    return ReadAction.compute(() -> {
+      List<FoldedRangeState>[] result = new List[myCount];
+      for (int i = 0; i < myCount; i++) {
+        result[i] = getFoldedRanges(i, settings);
       }
+      return new FoldingCache(result, settings.defaultExpanded);
     });
   }
 

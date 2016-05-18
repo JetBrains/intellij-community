@@ -16,6 +16,7 @@
 package com.intellij.util.lang;
 
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -31,9 +32,12 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.jar.Attributes;
+import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import static com.intellij.openapi.util.io.IoTestUtil.*;
 import static org.junit.Assert.*;
 
 /**
@@ -106,6 +110,28 @@ public class UrlClassLoaderTest {
     finally {
       executor.shutdownNow();
       executor.awaitTermination(1000, TimeUnit.SECONDS);
+    }
+  }
+
+  @Test
+  public void testInvalidJarsInClassPath() throws IOException {
+    File sadHill = createTestDir("testInvalidJarsInClassPath");
+    try {
+      File theGood = createTestJar(createTestFile(sadHill, "1_normal.jar"), "test_res_dir/test_res.txt", "-");
+      File theBad = createTestFile(sadHill, "2_broken.jar", new String(new char[1024]));
+
+      UrlClassLoader flat = UrlClassLoader.build().urls(theBad.toURI().toURL(), theGood.toURI().toURL()).get();
+      assertNotNull(findResource(flat, "/test_res_dir/test_res.txt", false));
+
+      String content = Attributes.Name.MANIFEST_VERSION + ": 1.0\n" +
+                       Attributes.Name.CLASS_PATH + ": " + theBad.toURI().toURL() + " " + theGood.toURI().toURL() + "\n\n";
+      File theUgly = createTestJar(createTestFile(sadHill, "3_classpath.jar"), JarFile.MANIFEST_NAME, content);
+
+      UrlClassLoader recursive = UrlClassLoader.build().urls(theUgly.toURI().toURL()).get();
+      assertNotNull(findResource(recursive, "/test_res_dir/test_res.txt", false));
+    }
+    finally {
+      FileUtil.delete(sadHill);
     }
   }
 
