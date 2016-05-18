@@ -29,6 +29,7 @@ import com.intellij.diff.tools.fragmented.LineNumberConvertor;
 import com.intellij.diff.tools.holders.TextEditorHolder;
 import com.intellij.diff.tools.util.*;
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder;
+import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.diff.tools.util.side.TwosideContentPanel;
 import com.intellij.diff.util.*;
@@ -58,6 +59,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.Iterator;
 import java.util.List;
 
 class ApplyPatchViewer implements DataProvider, Disposable {
@@ -80,6 +82,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
   @NotNull private final FocusTrackerSupport<Side> myFocusTrackerSupport;
   @NotNull private final MyPrevNextDifferenceIterable myPrevNextDifferenceIterable;
   @NotNull private final StatusPanel myStatusPanel;
+  @NotNull private final MyFoldingModel myFoldingModel;
 
   @NotNull private final SetEditorSettingsAction myEditorSettingsAction;
 
@@ -135,6 +138,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
     myFocusTrackerSupport.setCurrentSide(Side.LEFT);
     myPrevNextDifferenceIterable = new MyPrevNextDifferenceIterable();
     myStatusPanel = new MyStatusPanel();
+    myFoldingModel = new MyFoldingModel(myResultEditor, this);
 
 
     new MyFocusOppositePaneAction().install(myPanel);
@@ -142,8 +146,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
 
     new TextDiffViewerUtil.EditorFontSizeSynchronizer(editors).install(this);
 
-    TextDiffSettingsHolder.TextDiffSettings textSettings = TextDiffSettingsHolder.getInstance().getSettings("ApplyPatch");
-    myEditorSettingsAction = new SetEditorSettingsAction(textSettings, editors);
+    myEditorSettingsAction = new SetEditorSettingsAction(getTextSettings(), editors);
     myEditorSettingsAction.applyDefaults();
 
     if (!isReadOnly()) {
@@ -159,9 +162,11 @@ class ApplyPatchViewer implements DataProvider, Disposable {
     List<AnAction> group = new ArrayList<>();
 
     if (!isReadOnly()) {
+      group.add(new MyToggleExpandByDefaultAction());
+      group.add(myEditorSettingsAction);
+      group.add(Separator.getInstance());
       group.add(new ShowDiffWithLocalAction());
       group.add(new ApplyNonConflictsAction());
-      group.add(myEditorSettingsAction);
     }
 
     return group;
@@ -186,6 +191,8 @@ class ApplyPatchViewer implements DataProvider, Disposable {
   public void dispose() {
     if (myDisposed) return;
     myDisposed = true;
+
+    myFoldingModel.destroy();
 
     Disposer.dispose(myModel);
 
@@ -257,6 +264,17 @@ class ApplyPatchViewer implements DataProvider, Disposable {
     return null;
   }
 
+  @NotNull
+  public TextDiffSettings getTextSettings() {
+    return TextDiffSettings.getSettings("ApplyPatch");
+  }
+
+  @NotNull
+  public FoldingModelSupport.Settings getFoldingModelSettings() {
+    TextDiffSettings settings = getTextSettings();
+    return new FoldingModelSupport.Settings(settings.getContextRange(), settings.isExpandByDefault());
+  }
+
   //
   // Impl
   //
@@ -318,6 +336,8 @@ class ApplyPatchViewer implements DataProvider, Disposable {
     }
 
 
+    myFoldingModel.install(myResultChanges, getFoldingModelSettings());
+
     for (ApplyPatchChange change : myModelChanges) {
       change.reinstallHighlighters();
     }
@@ -331,6 +351,11 @@ class ApplyPatchViewer implements DataProvider, Disposable {
     myPatchEditor.getScrollingModel().addVisibleAreaListener(areaListener);
 
     myPatchEditor.getGutterComponentEx().revalidateMarkup();
+
+
+    if (myResultChanges.size() > 0) {
+      scrollToChange(myResultChanges.get(0), Side.LEFT, true);
+    }
   }
 
   public void scrollToChange(@NotNull ApplyPatchChange change, @NotNull Side masterSide, boolean forceScroll) {
@@ -615,6 +640,17 @@ class ApplyPatchViewer implements DataProvider, Disposable {
     }
   }
 
+  private class MyToggleExpandByDefaultAction extends TextDiffViewerUtil.ToggleExpandByDefaultAction {
+    public MyToggleExpandByDefaultAction() {
+      super(getTextSettings());
+    }
+
+    @Override
+    protected void expandAll(boolean expand) {
+      myFoldingModel.expandAll(expand);
+    }
+  }
+
   private class ShowDiffWithLocalAction extends DumbAwareAction {
     public ShowDiffWithLocalAction() {
       super("Compare with local content", null, AllIcons.Diff.Diff);
@@ -696,6 +732,24 @@ class ApplyPatchViewer implements DataProvider, Disposable {
         // do not abort - ranges are ordered in patch order, but they can be not ordered in terms of resultRange
         handler.process(resultRange.start, resultRange.end, patchRange.start, patchRange.end, color, change.isResolved());
       }
+    }
+  }
+
+  private static class MyFoldingModel extends FoldingModelSupport {
+    private final MyPaintable myPaintable = new MyPaintable(0, 1);
+
+    public MyFoldingModel(@NotNull EditorEx editor, @NotNull Disposable disposable) {
+      super(new EditorEx[]{editor}, disposable);
+    }
+
+    public void install(@Nullable List<ApplyPatchChange> changes,
+                        @NotNull FoldingModelSupport.Settings settings) {
+      //noinspection ConstantConditions
+      Iterator<int[]> it = map(changes, fragment -> new int[]{
+        fragment.getResultRange().start,
+        fragment.getResultRange().end
+      });
+      install(it, null, settings);
     }
   }
 
