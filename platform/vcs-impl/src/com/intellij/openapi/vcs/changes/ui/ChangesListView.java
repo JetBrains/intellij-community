@@ -268,6 +268,38 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
     return result;
   }
 
+  @NotNull
+  static Change[] getChanges(@NotNull Project project, @Nullable TreePath[] paths) {
+    Set<Change> changes = new LinkedHashSet<Change>();
+
+    if (paths == null) {
+      return new Change[0];
+    }
+
+    for (TreePath path : paths) {
+      ChangesBrowserNode<?> node = (ChangesBrowserNode)path.getLastPathComponent();
+      changes.addAll(node.getAllChangesUnder());
+    }
+
+    if (changes.isEmpty()) {
+      final List<VirtualFile> selectedModifiedWithoutEditing = getVirtualFiles(paths, ChangesBrowserNode.MODIFIED_WITHOUT_EDITING_TAG);
+      if (selectedModifiedWithoutEditing != null && !selectedModifiedWithoutEditing.isEmpty()) {
+        for (VirtualFile file : selectedModifiedWithoutEditing) {
+          AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(file);
+          if (vcs == null) continue;
+          final VcsCurrentRevisionProxy before =
+            VcsCurrentRevisionProxy.create(file, project, vcs.getKeyInstanceMethod());
+          if (before != null) {
+            ContentRevision afterRevision = new CurrentContentRevision(VcsUtil.getFilePath(file));
+            changes.add(new Change(before, afterRevision, FileStatus.HIJACKED));
+          }
+        }
+      }
+    }
+
+    return changes.toArray(new Change[changes.size()]);
+  }
+
   private List<LocallyDeletedChange> getSelectedLocallyDeletedChanges() {
     Set<LocallyDeletedChange> files = new HashSet<LocallyDeletedChange>();
     final TreePath[] paths = getSelectionPaths();
@@ -356,35 +388,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
 
   @NotNull
   public Change[] getSelectedChanges() {
-    Set<Change> changes = new LinkedHashSet<Change>();
-
-    final TreePath[] paths = getSelectionPaths();
-    if (paths == null) {
-      return new Change[0];
-    }
-
-    for (TreePath path : paths) {
-      ChangesBrowserNode<?> node = (ChangesBrowserNode)path.getLastPathComponent();
-      changes.addAll(node.getAllChangesUnder());
-    }
-
-    if (changes.isEmpty()) {
-      final List<VirtualFile> selectedModifiedWithoutEditing = getSelectedModifiedWithoutEditing();
-      if (selectedModifiedWithoutEditing != null && !selectedModifiedWithoutEditing.isEmpty()) {
-        for(VirtualFile file: selectedModifiedWithoutEditing) {
-          AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(file);
-          if (vcs == null) continue;
-          final VcsCurrentRevisionProxy before =
-            VcsCurrentRevisionProxy.create(file, myProject, vcs.getKeyInstanceMethod());
-          if (before != null) {
-            ContentRevision afterRevision = new CurrentContentRevision(VcsUtil.getFilePath(file));
-            changes.add(new Change(before, afterRevision, FileStatus.HIJACKED));
-          }
-        }
-      }
-    }
-
-    return changes.toArray(new Change[changes.size()]);
+    return getChanges(myProject, getSelectionPaths());
   }
 
   @NotNull
