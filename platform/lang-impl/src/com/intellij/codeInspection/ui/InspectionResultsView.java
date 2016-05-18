@@ -562,7 +562,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       if (problemCount == 0) {
         myPreviewEditor.getScrollingModel().scrollTo(myPreviewEditor.offsetToLogicalPosition(selectedElement.getTextOffset()), ScrollType.CENTER_UP);
       }
-      myPreviewEditor.getSettings().setFoldingOutlineShown(problemCount != 1);
+      myPreviewEditor.getSettings().setFoldingOutlineShown(problemCount > 1);
       myPreviewEditor.getComponent().setBorder(IdeBorderFactory.createEmptyBorder());
       return Pair.create(myPreviewEditor.getComponent(), myPreviewEditor);
     }
