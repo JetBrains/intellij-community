@@ -876,10 +876,7 @@ public class LambdaUtil {
 
     private boolean check(PsiTypeParameter check) {
       final PsiTypeParameterListOwner owner = check.getOwner();
-      if (owner == myMethod) {
-        return true;
-      }
-      else if (owner == myClass) {
+      if (owner == myMethod || owner == myClass) {
         return true;
       }
       return false;

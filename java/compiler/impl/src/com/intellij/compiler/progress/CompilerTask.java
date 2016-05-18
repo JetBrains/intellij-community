@@ -424,9 +424,6 @@ public class CompilerTask extends Task.Backgroundable {
   }
 
   private void updateProgressText() {
-    if (isHeadlessMode()) {
-      return;
-    }
   }
 
   // error tree view initialization must be invoked from event dispatch thread

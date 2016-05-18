@@ -349,7 +349,7 @@ public interface Application extends ComponentManager {
 
   /**
    * Requests pooled thread to execute the action.
-   * This pool is<ul>
+   * This pool is an<ul>
    * <li>Unbounded.</li>
    * <li>Application-wide, always active, non-shutdownable singleton.</li>
    * </ul>
