@@ -165,6 +165,6 @@ public class JUnitClasspathTest extends JavaCodeInsightFixtureTestCase {
   }
 
   private static String replace(String fileContent, String regex, String home) {
-    return fileContent.replaceAll(FileUtil.toSystemIndependentName(regex), home);
+    return fileContent.replaceAll(StringUtil.escapePattern(FileUtil.toSystemIndependentName(regex)), home);
   }
 }
