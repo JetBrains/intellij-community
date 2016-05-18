@@ -148,16 +148,23 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
   private static void annotateIdeaVersion(IdeaVersion ideaVersion, DomElementAnnotationHolder holder) {
     highlightNotUsedAnymore(ideaVersion.getMin(), holder);
     highlightNotUsedAnymore(ideaVersion.getMax(), holder);
-    highlightBigNumbersInUntilBuild(ideaVersion, holder);
+    highlightUntilBuild(ideaVersion, holder);
   }
 
-  private static void highlightBigNumbersInUntilBuild(IdeaVersion ideaVersion, DomElementAnnotationHolder holder) {
+  private static void highlightUntilBuild(IdeaVersion ideaVersion, DomElementAnnotationHolder holder) {
     String untilBuild = ideaVersion.getUntilBuild().getStringValue();
     if (untilBuild != null) {
       Matcher matcher = IdeaPluginDescriptorImpl.EXPLICIT_BIG_NUMBER_PATTERN.matcher(untilBuild);
       if (matcher.matches()) {
         holder.createProblem(ideaVersion.getUntilBuild(), "Don't use '" + matcher.group(2) + "' in 'until-build', use '*' instead",
                              new CorrectUntilBuildAttributeFix(IdeaPluginDescriptorImpl.convertExplicitBigNumberInUntilBuildToStar(untilBuild)));
+      }
+      if (untilBuild.matches("\\d+")) {
+        int branch = Integer.parseInt(untilBuild);
+        String corrected = (branch - 1) + ".*";
+        String message = "Plain numbers in 'until-build' attribute may be misleading. '" + untilBuild + "' means the same as '" + untilBuild
+                         + ".0', so the plugin won't be compatible with " + untilBuild + ".* builds. It's better to specify '" + corrected + " instead.";
+        holder.createProblem(ideaVersion.getUntilBuild(), message, new CorrectUntilBuildAttributeFix(corrected));
       }
     }
   }
