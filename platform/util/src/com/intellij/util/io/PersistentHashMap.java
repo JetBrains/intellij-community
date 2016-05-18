@@ -266,16 +266,20 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
            ((int)(myLiveAndGarbageKeysCounter & DEAD_KEY_NUMBER_MASK)) > 0;
   }
 
-  public void dropMemoryCaches() {
+  public final void dropMemoryCaches() {
     if(myDoTrace) LOG.info("Drop memory caches " + myStorageFile);
     synchronized (myEnumerator) {
-      myEnumerator.lockStorage();
-      try {
-        clearAppenderCaches();
-      }
-      finally {
-        myEnumerator.unlockStorage();
-      }
+      doDropMemoryCaches();
+    }
+  }
+
+  protected void doDropMemoryCaches() {
+    myEnumerator.lockStorage();
+    try {
+      clearAppenderCaches();
+    }
+    finally {
+      myEnumerator.unlockStorage();
     }
   }
 
