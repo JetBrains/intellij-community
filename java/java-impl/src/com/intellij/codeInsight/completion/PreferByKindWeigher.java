@@ -171,10 +171,11 @@ public class PreferByKindWeigher extends LookupElementWeigher {
 
     if (object instanceof PsiKeyword) {
       String keyword = ((PsiKeyword)object).getText();
-      if (PsiKeyword.RETURN.equals(keyword) &&
-          isLastStatement(PsiTreeUtil.getParentOfType(myPosition, PsiStatement.class)) &&
-          !isOnTopLevelInVoidMethod(myPosition)) {
-        return MyResult.probableKeyword;
+      if (PsiKeyword.RETURN.equals(keyword)) {
+        PsiStatement parentStatement = PsiTreeUtil.getParentOfType(myPosition, PsiStatement.class);
+        if (isLastStatement(parentStatement) && !isOnTopLevelInVoidMethod(parentStatement)) {
+          return MyResult.probableKeyword;
+        }
       }
       if (PsiKeyword.ELSE.equals(keyword) || PsiKeyword.FINALLY.equals(keyword)) {
         return MyResult.probableKeyword;
@@ -268,17 +269,16 @@ public class PreferByKindWeigher extends LookupElementWeigher {
     return MyResult.normal;
   }
 
-  private static boolean isOnTopLevelInVoidMethod(PsiElement position) {
-    PsiCodeBlock block = PsiTreeUtil.getParentOfType(position, PsiCodeBlock.class);
-    if (block != null) {
-      PsiElement parent = block.getParent();
-      if (parent instanceof PsiMethod) {
-        return ((PsiMethod)parent).isConstructor() || PsiType.VOID.equals(((PsiMethod)parent).getReturnType());
-      }
-      if (parent instanceof PsiLambdaExpression) {
-        PsiMethod method = LambdaUtil.getFunctionalInterfaceMethod(((PsiLambdaExpression)parent).getFunctionalInterfaceType());
-        return method != null && PsiType.VOID.equals(method.getReturnType());
-      }
+  private static boolean isOnTopLevelInVoidMethod(PsiStatement statement) {
+    if (!(statement.getParent() instanceof PsiCodeBlock)) return false;
+
+    PsiElement parent = statement.getParent().getParent();
+    if (parent instanceof PsiMethod) {
+      return ((PsiMethod)parent).isConstructor() || PsiType.VOID.equals(((PsiMethod)parent).getReturnType());
+    }
+    if (parent instanceof PsiLambdaExpression) {
+      PsiMethod method = LambdaUtil.getFunctionalInterfaceMethod(((PsiLambdaExpression)parent).getFunctionalInterfaceType());
+      return method != null && PsiType.VOID.equals(method.getReturnType());
     }
     return false;
   }
