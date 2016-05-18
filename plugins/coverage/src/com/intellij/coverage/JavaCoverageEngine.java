@@ -14,6 +14,7 @@ import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileStatusNotification;
 import com.intellij.openapi.compiler.CompilerManager;
@@ -183,7 +184,7 @@ public class JavaCoverageEngine extends CoverageEngine {
       } else {
         final List<PsiClass> classes = javaSuite.getCurrentSuiteClasses(project);
         for (PsiClass aClass : classes) {
-          final PsiFile containingFile = aClass.getContainingFile();
+          final PsiFile containingFile = ReadAction.compute(aClass::getContainingFile);
           if (psiFile.equals(containingFile)) {
             return true;
           }
