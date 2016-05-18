@@ -23,7 +23,9 @@ import com.intellij.openapi.fileChooser.actions.VirtualFileDeleteProvider;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.BooleanGetter;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -258,10 +260,8 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
       final List<VirtualFile> selectedModifiedWithoutEditing = getVirtualFiles(paths, ChangesBrowserNode.MODIFIED_WITHOUT_EDITING_TAG);
       if (selectedModifiedWithoutEditing != null && !selectedModifiedWithoutEditing.isEmpty()) {
         for (VirtualFile file : selectedModifiedWithoutEditing) {
-          AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(file);
-          if (vcs == null) continue;
-          final VcsCurrentRevisionProxy before =
-            VcsCurrentRevisionProxy.create(file, project, vcs.getKeyInstanceMethod());
+          VcsCurrentRevisionProxy before = VcsCurrentRevisionProxy.create(file, project);
+
           if (before != null) {
             ContentRevision afterRevision = new CurrentContentRevision(VcsUtil.getFilePath(file));
             changes.add(new Change(before, afterRevision, FileStatus.HIJACKED));
