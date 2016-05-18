@@ -84,6 +84,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testEqualsEnumConstant() throws Throwable { doTest(); }
   public void testSwitchEnumConstant() { doTest(); }
   public void testEnumConstantNotNull() throws Throwable { doTest(); }
+  public void testCheckEnumConstantConstructor() { doTest(); }
   public void testCompareToEnumConstant() throws Throwable { doTest(); }
   public void testEqualsConstant() throws Throwable { doTest(); }
   public void testDontSaveTypeValue() { doTest(); }
