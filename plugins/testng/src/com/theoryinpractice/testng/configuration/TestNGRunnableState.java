@@ -74,6 +74,7 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
     //TODO need to narrow this down a bit
     //setModulesToCompile(ModuleManager.getInstance(config.getProject()).getModules());
     client = new IDEARemoteTestRunnerClient();
+    setRemoteConnectionCreator(config.getRemoteConnectionCreator());
   }
 
   @NotNull

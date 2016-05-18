@@ -16,8 +16,10 @@
 package com.intellij.execution.configurations;
 
 import com.intellij.execution.runners.ExecutionEnvironment;
+import org.jetbrains.annotations.Nullable;
 
 public interface RemoteConnectionCreator {
+  @Nullable
   RemoteConnection createRemoteConnection(ExecutionEnvironment environment);
 
   boolean isPollConnection();
