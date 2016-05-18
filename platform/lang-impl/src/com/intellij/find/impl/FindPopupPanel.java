@@ -201,6 +201,7 @@ public class FindPopupPanel extends JBPanel {
       else {
         showPoint = JBPopupFactory.getInstance().guessBestPopupLocation(myDataContext);
       }
+      mySearchComponent.selectAll();
       myFindBalloon.show(showPoint);
       myFindBalloon.pack(true, true);
     }
