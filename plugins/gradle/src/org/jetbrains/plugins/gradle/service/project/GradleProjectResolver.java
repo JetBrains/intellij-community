@@ -28,6 +28,7 @@ import com.intellij.openapi.externalSystem.service.project.ExternalSystemProject
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemDebugEnvironment;
 import com.intellij.openapi.module.StdModuleTypes;
+import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.KeyValue;
@@ -456,7 +457,17 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
               if (moduleDependencyData.getInternalName().equals(node.getData().getInternalName())) {
                 moduleDependencyData.setModuleDependencyArtifacts(node.getData().getModuleDependencyArtifacts());
               }
-              return moduleDependencyData.equals(node.getData());
+
+              final boolean result;
+              // ignore provided scope during the search since it can be resolved incorrectly for file dependencies on a source set outputs
+              if(moduleDependencyData.getScope() == DependencyScope.PROVIDED) {
+                moduleDependencyData.setScope(node.getData().getScope());
+                result = moduleDependencyData.equals(node.getData());
+                moduleDependencyData.setScope(DependencyScope.PROVIDED);
+              } else {
+                result = moduleDependencyData.equals(node.getData());
+              }
+              return result;
             }
           });
 
