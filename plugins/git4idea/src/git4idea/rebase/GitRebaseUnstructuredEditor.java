@@ -19,6 +19,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.components.JBLabel;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import git4idea.config.GitConfigUtil;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
@@ -32,21 +36,22 @@ import java.io.IOException;
  * usually the commit message after choosing reword or squash interactive rebase actions.
  */
 public class GitRebaseUnstructuredEditor extends DialogWrapper {
-  private JTextArea myTextArea;
-  private JPanel myPanel;
-  private JLabel myGitRootLabel;
-  private final String myEncoding;
-  private final File myFile;
+  @NotNull private final String myEncoding;
+  @NotNull private final File myFile;
+
+  @NotNull private final JTextArea myTextArea;
+  @NotNull private final JBLabel myRootLabel;
 
   protected GitRebaseUnstructuredEditor(@NotNull Project project, @NotNull VirtualFile root, @NotNull String rebaseFilePath)
     throws IOException {
     super(project, true);
     setTitle(GitBundle.message("rebase.unstructured.editor.title"));
     setOKButtonText(GitBundle.message("rebase.unstructured.editor.button"));
-    myGitRootLabel.setText(root.getPresentableUrl());
+
+    myRootLabel = new JBLabel("Git Root: " + root.getPresentableUrl());
     myEncoding = GitConfigUtil.getCommitEncoding(project, root);
     myFile = new File(rebaseFilePath);
-    myTextArea.setText(FileUtil.loadFile(myFile, myEncoding));
+    myTextArea = new JTextArea(FileUtil.loadFile(myFile, myEncoding));
     myTextArea.setCaretPosition(0);
     init();
   }
@@ -59,7 +64,10 @@ public class GitRebaseUnstructuredEditor extends DialogWrapper {
   }
 
   protected JComponent createCenterPanel() {
-    return myPanel;
+    BorderLayoutPanel rootPanel = JBUI.Panels.simplePanel(UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP);
+    rootPanel.addToTop(myRootLabel);
+    rootPanel.addToCenter(myTextArea);
+    return rootPanel;
   }
 
   @Override
