@@ -28,25 +28,17 @@ public class StudyFillPlaceholdersAction extends AnAction {
       }
       final TaskFile taskFile = studyState.getTaskFile();
       final Document document = studyState.getEditor().getDocument();
-      CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
-        @Override
-        public void run() {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              for (AnswerPlaceholder placeholder : taskFile.getAnswerPlaceholders()) {
-                String answer = placeholder.getPossibleAnswer();
-                if (answer == null) {
-                  continue;
-                }
-                int offset = placeholder.getRealStartOffset(document);
-                document.deleteString(offset, offset + placeholder.getRealLength());
-                document.insertString(offset, answer);
-              }
-            }
-          });
+      CommandProcessor.getInstance().runUndoTransparentAction(() -> ApplicationManager.getApplication().runWriteAction(() -> {
+        for (AnswerPlaceholder placeholder : taskFile.getAnswerPlaceholders()) {
+          String answer = placeholder.getPossibleAnswer();
+          if (answer == null) {
+            continue;
+          }
+          int offset = placeholder.getRealStartOffset(document);
+          document.deleteString(offset, offset + placeholder.getRealLength());
+          document.insertString(offset, answer);
         }
-      });
+      }));
     }
   }
 

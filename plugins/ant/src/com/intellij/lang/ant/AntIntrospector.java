@@ -242,11 +242,9 @@ public final class AntIntrospector {
 
   private static void scheduleCacheCleaning() {
     ourCacheCleaner.cancelAllRequests();
-    ourCacheCleaner.addRequest(new Runnable() {
-      public void run() {
-        synchronized (ourCache) {
-          ourCache.clear();
-        }
+    ourCacheCleaner.addRequest(() -> {
+      synchronized (ourCache) {
+        ourCache.clear();
       }
     }, CACHE_CLEAN_TIMEOUT);
   }

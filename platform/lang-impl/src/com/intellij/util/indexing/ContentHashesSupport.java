@@ -43,18 +43,8 @@ class ContentHashesSupport {
       final File hashEnumeratorFile = new File(IndexInfrastructure.getPersistentIndexRoot(), "hashesWithFileType");
       try {
         hashEnumerator = new ContentHashesUtil.HashEnumerator(hashEnumeratorFile, null);
-        FlushingDaemon.everyFiveSeconds(new Runnable() {
-          @Override
-          public void run() {
-            flushContentHashes();
-          }
-        });
-        ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
-          @Override
-          public void run() {
-            flushContentHashes();
-          }
-        });
+        FlushingDaemon.everyFiveSeconds(() -> flushContentHashes());
+        ShutDownTracker.getInstance().registerShutdownTask(() -> flushContentHashes());
         ourHashesWithFileType = hashEnumerator;
       } catch (IOException ex) {
         IOUtil.deleteAllFilesStartingWith(hashEnumeratorFile);

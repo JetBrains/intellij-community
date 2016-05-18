@@ -66,39 +66,30 @@ public class BombedProgressIndicator extends AbstractProgressIndicatorBase {
 
     // ProgressManager invokes indicator.checkCanceled only when there's at least one canceled indicator. So we have to create a mock one
     // on an unrelated thread and cancel it immediately.
-    Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        final ProgressIndicatorBase mockIndicator = new ProgressIndicatorBase();
-        ProgressManager.getInstance().runProcess(new Runnable() {
-          @Override
-          public void run() {
-            mockIndicator.cancel();
-            canStart.up();
-            finished.waitFor();
-            try {
-              ProgressManager.checkCanceled();
-              TestCase.fail();
-            }
-            catch (ProcessCanceledException ignored) {
-            }
-          }
-        }, mockIndicator);
-      }
+    Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      final ProgressIndicatorBase mockIndicator = new ProgressIndicatorBase();
+      ProgressManager.getInstance().runProcess(() -> {
+        mockIndicator.cancel();
+        canStart.up();
+        finished.waitFor();
+        try {
+          ProgressManager.checkCanceled();
+          TestCase.fail();
+        }
+        catch (ProcessCanceledException ignored) {
+        }
+      }, mockIndicator);
     });
 
-    ProgressManager.getInstance().runProcess(new Runnable() {
-      @Override
-      public void run() {
-        canStart.waitFor();
-        try {
-          runnable.run();
-        }
-        catch (ProcessCanceledException ignore) {
-        }
-        finally {
-          finished.up();
-        }
+    ProgressManager.getInstance().runProcess(() -> {
+      canStart.waitFor();
+      try {
+        runnable.run();
+      }
+      catch (ProcessCanceledException ignore) {
+      }
+      finally {
+        finished.up();
       }
     }, this);
 

@@ -214,40 +214,32 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
             }
           })
           .withTitle("Choose File Containing Copyright Notice");
-        FileChooser.chooseFile(descriptor, myProject, null, new Consumer<VirtualFile>() {
-          @Override
-          public void consume(VirtualFile file) {
-            final List<CopyrightProfile> profiles = ExternalOptionHelper.loadOptions(VfsUtilCore.virtualToIoFile(file));
-            if (profiles == null) return;
-            if (!profiles.isEmpty()) {
-              if (profiles.size() == 1) {
-                importProfile(profiles.get(0));
-              }
-              else {
-                JBPopupFactory.getInstance()
-                  .createListPopup(new BaseListPopupStep<CopyrightProfile>("Choose profile to import", profiles) {
-                    @Override
-                    public PopupStep onChosen(final CopyrightProfile selectedValue, boolean finalChoice) {
-                      return doFinalStep(new Runnable() {
-                        @Override
-                        public void run() {
-                          importProfile(selectedValue);
-                        }
-                      });
-                    }
-
-                    @NotNull
-                    @Override
-                    public String getTextFor(CopyrightProfile value) {
-                      return value.getName();
-                    }
-                  })
-                  .showUnderneathOf(myNorthPanel);
-              }
+        FileChooser.chooseFile(descriptor, myProject, null, file -> {
+          final List<CopyrightProfile> profiles = ExternalOptionHelper.loadOptions(VfsUtilCore.virtualToIoFile(file));
+          if (profiles == null) return;
+          if (!profiles.isEmpty()) {
+            if (profiles.size() == 1) {
+              importProfile(profiles.get(0));
             }
             else {
-              Messages.showWarningDialog(myProject, "The selected file does not contain any copyright settings.", "Import Failure");
+              JBPopupFactory.getInstance()
+                .createListPopup(new BaseListPopupStep<CopyrightProfile>("Choose profile to import", profiles) {
+                  @Override
+                  public PopupStep onChosen(final CopyrightProfile selectedValue, boolean finalChoice) {
+                    return doFinalStep(() -> importProfile(selectedValue));
+                  }
+
+                  @NotNull
+                  @Override
+                  public String getTextFor(CopyrightProfile value) {
+                    return value.getName();
+                  }
+                })
+                .showUnderneathOf(myNorthPanel);
             }
+          }
+          else {
+            Messages.showWarningDialog(myProject, "The selected file does not contain any copyright settings.", "Import Failure");
           }
         });
       }

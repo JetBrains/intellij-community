@@ -54,12 +54,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
     myLock = new Object();
     myProject = project;
     myDefinitions = new JsonSchemaExportedDefinitions(
-      new Consumer<PairConsumer<VirtualFile, NullableLazyValue<JsonSchemaObject>>>() {
-                                                        @Override
-                                                        public void consume(PairConsumer<VirtualFile, NullableLazyValue<JsonSchemaObject>> consumer) {
-                                                          iterateSchemas(consumer);
-                                                        }
-                                                      });
+      consumer -> iterateSchemas(consumer));
     ApplicationManager
       .getApplication().getMessageBus().connect(project).subscribe(VirtualFileManager.VFS_CHANGES, new JsonSchemaVfsListener(project, this));
     ensureSchemaFiles(project);
@@ -159,12 +154,8 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
   public List<Pair<Boolean, String>> getMatchingSchemaDescriptors(@Nullable VirtualFile file) {
     final List<JsonSchemaObjectCodeInsightWrapper> wrappers = getWrappers(file);
     if (wrappers == null || wrappers.isEmpty()) return null;
-    return ContainerUtil.map(wrappers, new NotNullFunction<JsonSchemaObjectCodeInsightWrapper, Pair<Boolean, String>>() {
-      @NotNull
-      @Override
-      public Pair<Boolean, String> fun(JsonSchemaObjectCodeInsightWrapper wrapper) {
-        return Pair.create(wrapper.isUserSchema(), wrapper.getName());
-      }
+    return ContainerUtil.map(wrappers, (NotNullFunction<JsonSchemaObjectCodeInsightWrapper, Pair<Boolean, String>>)wrapper -> {
+      return Pair.create(wrapper.isUserSchema(), wrapper.getName());
     });
   }
 

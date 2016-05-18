@@ -106,12 +106,7 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
 
       @Override
       public void onCanceled(@NotNull ProgressIndicator indicator) {
-        DumbService.getInstance(myProject).runWhenSmart(new Runnable() {
-          @Override
-          public void run() {
-            handleConstantSearchTask(channel, sessionId, task);
-          }
-        });
+        DumbService.getInstance(myProject).runWhenSmart(() -> handleConstantSearchTask(channel, sessionId, task));
       }
     });
   }
@@ -152,22 +147,20 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
 
         try {
           if (isRemoved) {
-            ApplicationManager.getApplication().runReadAction(new Runnable() {
-              public void run() {
-                if (classes.length > 0) {
-                  for (PsiClass aClass : classes) {
-                    final boolean success = aClass.isValid() && performRemovedConstantSearch(aClass, fieldName, accessFlags, affectedPaths);
-                    if (!success) {
-                      isSuccess.set(Boolean.FALSE);
-                      break;
-                    }
+            ApplicationManager.getApplication().runReadAction(() -> {
+              if (classes.length > 0) {
+                for (PsiClass aClass : classes) {
+                  final boolean success = aClass.isValid() && performRemovedConstantSearch(aClass, fieldName, accessFlags, affectedPaths);
+                  if (!success) {
+                    isSuccess.set(Boolean.FALSE);
+                    break;
                   }
                 }
-                else {
-                  isSuccess.set(
-                    performRemovedConstantSearch(null, fieldName, accessFlags, affectedPaths)
-                  );
-                }
+              }
+              else {
+                isSuccess.set(
+                  performRemovedConstantSearch(null, fieldName, accessFlags, affectedPaths)
+                );
               }
             });
           }
@@ -329,25 +322,23 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
   }
 
   private void affectDirectUsages(final PsiField psiField, final int fieldAccessFlags, final boolean ignoreAccessScope, final Set<String> affectedPaths) throws ProcessCanceledException {
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        if (psiField.isValid()) {
-          final PsiFile fieldContainingFile = psiField.getContainingFile();
-          final Set<PsiFile> processedFiles = new HashSet<PsiFile>();
-          if (fieldContainingFile != null) {
-            processedFiles.add(fieldContainingFile);
-          }
-          // if field is invalid, the file might be changed, so next time it is compiled,
-          // the constant value change, if any, will be processed
-          final Collection<PsiReferenceExpression> references = doFindReferences(psiField, fieldAccessFlags, ignoreAccessScope);
-          for (final PsiReferenceExpression ref : references) {
-            final PsiElement usage = ref.getElement();
-            final PsiFile containingPsi = usage.getContainingFile();
-            if (containingPsi != null && processedFiles.add(containingPsi)) {
-              final VirtualFile vFile = containingPsi.getOriginalFile().getVirtualFile();
-              if (vFile != null) {
-                affectedPaths.add(vFile.getPath());
-              }
+    ApplicationManager.getApplication().runReadAction(() -> {
+      if (psiField.isValid()) {
+        final PsiFile fieldContainingFile = psiField.getContainingFile();
+        final Set<PsiFile> processedFiles = new HashSet<PsiFile>();
+        if (fieldContainingFile != null) {
+          processedFiles.add(fieldContainingFile);
+        }
+        // if field is invalid, the file might be changed, so next time it is compiled,
+        // the constant value change, if any, will be processed
+        final Collection<PsiReferenceExpression> references = doFindReferences(psiField, fieldAccessFlags, ignoreAccessScope);
+        for (final PsiReferenceExpression ref : references) {
+          final PsiElement usage = ref.getElement();
+          final PsiFile containingPsi = usage.getContainingFile();
+          if (containingPsi != null && processedFiles.add(containingPsi)) {
+            final VirtualFile vFile = containingPsi.getOriginalFile().getVirtualFile();
+            if (vFile != null) {
+              affectedPaths.add(vFile.getPath());
             }
           }
         }

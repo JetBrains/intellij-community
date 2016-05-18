@@ -272,27 +272,21 @@ public class IdeaGateway {
   }
 
   private void doCreateChildren(@NotNull DirectoryEntry parent, Iterable<VirtualFile> children, final boolean forDeletion) {
-    List<Entry> entries = ContainerUtil.mapNotNull(children, new NullableFunction<VirtualFile, Entry>() {
-      @Override
-      public Entry fun(@NotNull VirtualFile each) {
-        return doCreateEntry(each, forDeletion);
-      }
+    List<Entry> entries = ContainerUtil.mapNotNull(children, (NullableFunction<VirtualFile, Entry>)each -> {
+      return doCreateEntry(each, forDeletion);
     });
     parent.addChildren(entries);
   }
 
   public void registerUnsavedDocuments(@NotNull final LocalHistoryFacade vcs) {
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        vcs.beginChangeSet();
-        for (Document d : FileDocumentManager.getInstance().getUnsavedDocuments()) {
-          VirtualFile f = getFile(d);
-          if (!shouldRegisterDocument(f)) continue;
-          registerDocumentContents(vcs, f, d);
-        }
-        vcs.endChangeSet(null);
+    ApplicationManager.getApplication().runReadAction(() -> {
+      vcs.beginChangeSet();
+      for (Document d : FileDocumentManager.getInstance().getUnsavedDocuments()) {
+        VirtualFile f = getFile(d);
+        if (!shouldRegisterDocument(f)) continue;
+        registerDocumentContents(vcs, f, d);
       }
+      vcs.endChangeSet(null);
     });
   }
 

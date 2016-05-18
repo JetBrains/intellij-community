@@ -141,16 +141,13 @@ public class XFramesView extends XDebugView {
           context.computeExecutionStacks(new XSuspendContext.XExecutionStackContainer() {
             @Override
             public void addExecutionStack(@NotNull final List<? extends XExecutionStack> executionStacks, boolean last) {
-              ApplicationManager.getApplication().invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                  myThreadComboBox.removeItem(null);
-                  addExecutionStacks(executionStacks);
-                  ComboPopup popup = myThreadComboBox.getPopup();
-                  if (popup != null && popup.isVisible()) {
-                    popup.hide();
-                    popup.show();
-                  }
+              ApplicationManager.getApplication().invokeLater(() -> {
+                myThreadComboBox.removeItem(null);
+                addExecutionStacks(executionStacks);
+                ComboPopup popup = myThreadComboBox.getPopup();
+                if (popup != null && popup.isVisible()) {
+                  popup.hide();
+                  popup.show();
                 }
               });
             }
@@ -332,22 +329,19 @@ public class XFramesView extends XDebugView {
     @Override
     public void addStackFrames(@NotNull final List<? extends XStackFrame> stackFrames, final boolean last) {
       if (isObsolete()) return;
-      myLaterInvocator.offer(new Runnable() {
-        @Override
-        public void run() {
-          if (isObsolete()) return;
-          myStackFrames.addAll(stackFrames);
-          addFrameListElements(stackFrames, last);
-          selectCurrentFrame();
-          myNextFrameIndex += stackFrames.size();
-          myAllFramesLoaded = last;
-          if (last) {
-            if (myVisibleRect != null) {
-              myFramesList.scrollRectToVisible(myVisibleRect);
-            }
-            myRunning = false;
-            myListenersEnabled = true;
+      myLaterInvocator.offer(() -> {
+        if (isObsolete()) return;
+        myStackFrames.addAll(stackFrames);
+        addFrameListElements(stackFrames, last);
+        selectCurrentFrame();
+        myNextFrameIndex += stackFrames.size();
+        myAllFramesLoaded = last;
+        if (last) {
+          if (myVisibleRect != null) {
+            myFramesList.scrollRectToVisible(myVisibleRect);
           }
+          myRunning = false;
+          myListenersEnabled = true;
         }
       });
     }
@@ -355,16 +349,13 @@ public class XFramesView extends XDebugView {
     @Override
     public void errorOccurred(@NotNull final String errorMessage) {
       if (isObsolete()) return;
-      myLaterInvocator.offer(new Runnable() {
-        @Override
-        public void run() {
-          if (isObsolete()) return;
-          if (myErrorMessage == null) {
-            myErrorMessage = errorMessage;
-            addFrameListElements(Collections.singletonList(errorMessage), true);
-            myRunning = false;
-            myListenersEnabled = true;
-          }
+      myLaterInvocator.offer(() -> {
+        if (isObsolete()) return;
+        if (myErrorMessage == null) {
+          myErrorMessage = errorMessage;
+          addFrameListElements(Collections.singletonList(errorMessage), true);
+          myRunning = false;
+          myListenersEnabled = true;
         }
       });
     }

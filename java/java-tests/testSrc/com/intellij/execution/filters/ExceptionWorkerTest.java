@@ -55,12 +55,8 @@ public class ExceptionWorkerTest extends LightCodeInsightFixtureTestCase {
     final Document document = EditorFactory.getInstance().createDocument(testData);
     FilterMixin filter = (FilterMixin)new ExceptionExFilterFactory().create(GlobalSearchScope.projectScope(getProject()));
     final ArrayList<String> result = new ArrayList<String>();
-    filter.applyHeavyFilter(document, 0, 0, new Consumer<FilterMixin.AdditionalHighlight>() {
-      @Override
-      public void consume(FilterMixin.AdditionalHighlight highlight) {
-        result.add(new TextRange(highlight.getStart(), highlight.getEnd()-1).substring(testData));
-      }
-    });
+    filter.applyHeavyFilter(document, 0, 0,
+                            highlight -> result.add(new TextRange(highlight.getStart(), highlight.getEnd() - 1).substring(testData)));
     assertSameElements(result, "com.sample.RunningMain.func1", "com.sample.RunningMain.main");
   }
 }

@@ -155,23 +155,20 @@ public abstract class ClosureCompleter {
     TemplateEditingListener templateListener = new TemplateEditingAdapter() {
       @Override
       public void templateFinished(Template template, boolean brokenOff) {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            PsiDocumentManager.getInstance(project).commitDocument(document);
-            final CaretModel caretModel = editor.getCaretModel();
-            final int offset = caretModel.getOffset();
-            GrClosableBlock block = PsiTreeUtil.findElementOfClassAtOffset(file, offset - 1, GrClosableBlock.class, false);
-            if (block != null) {
-              final PsiElement arrow = block.getArrow();
-              if (arrow != null) {
-                caretModel.moveToOffset(arrow.getTextRange().getEndOffset());
-              }
-
-              // fix space before closure lbrace
-              final TextRange range = block.getTextRange();
-              CodeStyleManager.getInstance(project).reformatRange(block.getParent(), range.getStartOffset() - 1, range.getEndOffset(), true);
+        ApplicationManager.getApplication().runWriteAction(() -> {
+          PsiDocumentManager.getInstance(project).commitDocument(document);
+          final CaretModel caretModel = editor.getCaretModel();
+          final int offset = caretModel.getOffset();
+          GrClosableBlock block1 = PsiTreeUtil.findElementOfClassAtOffset(file, offset - 1, GrClosableBlock.class, false);
+          if (block1 != null) {
+            final PsiElement arrow = block1.getArrow();
+            if (arrow != null) {
+              caretModel.moveToOffset(arrow.getTextRange().getEndOffset());
             }
+
+            // fix space before closure lbrace
+            final TextRange range1 = block1.getTextRange();
+            CodeStyleManager.getInstance(project).reformatRange(block1.getParent(), range1.getStartOffset() - 1, range1.getEndOffset(), true);
           }
         });
       }

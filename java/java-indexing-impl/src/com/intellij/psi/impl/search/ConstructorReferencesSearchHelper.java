@@ -74,30 +74,27 @@ public class ConstructorReferencesSearchHelper {
     }
 
     // search usages like "new XXX(..)"
-    PairProcessor<PsiReference, SearchRequestCollector> processor1 = new PairProcessor<PsiReference, SearchRequestCollector>() {
-      @Override
-      public boolean process(PsiReference reference, SearchRequestCollector collector) {
-        PsiElement parent = reference.getElement().getParent();
-        if (parent instanceof PsiAnonymousClass) {
-          parent = parent.getParent();
-        }
-        if (parent instanceof PsiNewExpression) {
-          PsiMethod constructor1 = ((PsiNewExpression)parent).resolveConstructor();
-          if (constructor1 != null) {
-            if (isStrictSignatureSearch) {
-              if (myManager.areElementsEquivalent(constructor, constructor1)) {
-                return processor.process(reference);
-              }
+    PairProcessor<PsiReference, SearchRequestCollector> processor1 = (reference, collector1) -> {
+      PsiElement parent = reference.getElement().getParent();
+      if (parent instanceof PsiAnonymousClass) {
+        parent = parent.getParent();
+      }
+      if (parent instanceof PsiNewExpression) {
+        PsiMethod constructor1 = ((PsiNewExpression)parent).resolveConstructor();
+        if (constructor1 != null) {
+          if (isStrictSignatureSearch) {
+            if (myManager.areElementsEquivalent(constructor, constructor1)) {
+              return processor.process(reference);
             }
-            else {
-              if (myManager.areElementsEquivalent(containingClass, constructor1.getContainingClass())) {
-                return processor.process(reference);
-              }
+          }
+          else {
+            if (myManager.areElementsEquivalent(containingClass, constructor1.getContainingClass())) {
+              return processor.process(reference);
             }
           }
         }
-        return true;
       }
+      return true;
     };
 
     ReferencesSearch.searchOptimized(containingClass, searchScope, ignoreAccessScope, collector, true, processor1);
@@ -118,16 +115,13 @@ public class ConstructorReferencesSearchHelper {
     }
 
     // search usages like "super(..)"
-    Processor<PsiClass> processor2 = new Processor<PsiClass>() {
-      @Override
-      public boolean process(PsiClass inheritor) {
-        final PsiElement navigationElement = inheritor.getNavigationElement();
-        if (navigationElement instanceof PsiClass) {
-          return processSuperOrThis((PsiClass)navigationElement, constructor, constructorCanBeCalledImplicitly[0], searchScope, project,
-                                    isStrictSignatureSearch, PsiKeyword.SUPER, processor);
-        }
-        return true;
+    Processor<PsiClass> processor2 = inheritor -> {
+      final PsiElement navigationElement = inheritor.getNavigationElement();
+      if (navigationElement instanceof PsiClass) {
+        return processSuperOrThis((PsiClass)navigationElement, constructor, constructorCanBeCalledImplicitly[0], searchScope, project,
+                                  isStrictSignatureSearch, PsiKeyword.SUPER, processor);
       }
+      return true;
     };
 
     return ClassInheritorsSearch.search(containingClass, searchScope, false).forEach(processor2);
@@ -159,27 +153,24 @@ public class ConstructorReferencesSearchHelper {
                                                  @NotNull final PsiMethod constructor,
                                                  @NotNull final Project project,
                                                  @NotNull PsiClass aClass, SearchScope searchScope) {
-    return ReferencesSearch.search(aClass, searchScope).forEach(new Processor<PsiReference>() {
-      @Override
-      public boolean process(PsiReference reference) {
-        final PsiElement element = reference.getElement();
-        if (element != null) {
-          return MethodUsagesSearcher.resolveInReadAction(project, new Computable<Boolean>() {
-            @Override
-            public Boolean compute() {
-              final PsiElement parent = element.getParent();
-              if (parent instanceof PsiMethodReferenceExpression &&
-                  ((PsiMethodReferenceExpression)parent).getReferenceNameElement() instanceof PsiKeyword) {
-                if (((PsiMethodReferenceExpression)parent).isReferenceTo(constructor)) {
-                  if (!processor.process((PsiReference)parent)) return false;
-                }
+    return ReferencesSearch.search(aClass, searchScope).forEach(reference -> {
+      final PsiElement element = reference.getElement();
+      if (element != null) {
+        return MethodUsagesSearcher.resolveInReadAction(project, new Computable<Boolean>() {
+          @Override
+          public Boolean compute() {
+            final PsiElement parent = element.getParent();
+            if (parent instanceof PsiMethodReferenceExpression &&
+                ((PsiMethodReferenceExpression)parent).getReferenceNameElement() instanceof PsiKeyword) {
+              if (((PsiMethodReferenceExpression)parent).isReferenceTo(constructor)) {
+                if (!processor.process((PsiReference)parent)) return false;
               }
-              return true;
             }
-          });
-        }
-        return true;
+            return true;
+          }
+        });
       }
+      return true;
     });
   }
 

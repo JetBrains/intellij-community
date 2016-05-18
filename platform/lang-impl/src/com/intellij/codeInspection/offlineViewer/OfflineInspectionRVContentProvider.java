@@ -115,12 +115,7 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
     final Map<String, Set<OfflineProblemDescriptor>> filteredContent = getFilteredContent(context, toolWrapper);
     if (filteredContent != null && !filteredContent.values().isEmpty()) {
       final Function<OfflineProblemDescriptor, UserObjectContainer<OfflineProblemDescriptor>> computeContainer =
-        new Function<OfflineProblemDescriptor, UserObjectContainer<OfflineProblemDescriptor>>() {
-          @Override
-          public UserObjectContainer<OfflineProblemDescriptor> fun(final OfflineProblemDescriptor descriptor) {
-            return new OfflineProblemDescriptorContainer(descriptor);
-          }
-        };
+        descriptor -> new OfflineProblemDescriptorContainer(descriptor);
       parentNode.add(toolNode);
       buildTree(context, filteredContent, false, toolWrapper, computeContainer, showStructure, toolNode::add);
     }

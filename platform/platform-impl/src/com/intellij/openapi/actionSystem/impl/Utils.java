@@ -351,43 +351,37 @@ public class Utils{
 
     if (fixMacScreenMenu) {
       //noinspection SSBasedInspection
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          for (Component each : children) {
-            if (each.getParent() != null && each instanceof ActionMenuItem) {
-              ((ActionMenuItem)each).prepare();
-            }
+      SwingUtilities.invokeLater(() -> {
+        for (Component each : children) {
+          if (each.getParent() != null && each instanceof ActionMenuItem) {
+            ((ActionMenuItem)each).prepare();
           }
-          menuBuilt.setDone();
         }
+        menuBuilt.setDone();
       });
     }
     else {
       menuBuilt.setDone();
     }
 
-    menuBuilt.doWhenDone(new Runnable() {
-      public void run() {
-        if (!mayDataContextBeInvalid) return;
+    menuBuilt.doWhenDone(() -> {
+      if (!mayDataContextBeInvalid) return;
 
-        if (IdeFocusManager.getInstance(null).isFocusBeingTransferred()) {
-          IdeFocusManager.getInstance(null).doWhenFocusSettlesDown(new Runnable() {
-            public void run() {
-              if (!component.isShowing()) return;
+      if (IdeFocusManager.getInstance(null).isFocusBeingTransferred()) {
+        IdeFocusManager.getInstance(null).doWhenFocusSettlesDown(() -> {
+          if (!component.isShowing()) return;
 
-              DataContext context = DataManager.getInstance().getDataContext();
-              expandActionGroup(group, new ArrayList<AnAction>(), presentationFactory, context, place, ActionManager.getInstance());
+          DataContext context1 = DataManager.getInstance().getDataContext();
+          expandActionGroup(group, new ArrayList<AnAction>(), presentationFactory, context1, place, ActionManager.getInstance());
 
-              for (Component each : children) {
-                if (each instanceof ActionMenuItem) {
-                  ((ActionMenuItem)each).updateContext(context);
-                } else if (each instanceof ActionMenu) {
-                  ((ActionMenu)each).updateContext(context);
-                }
-              }
+          for (Component each : children) {
+            if (each instanceof ActionMenuItem) {
+              ((ActionMenuItem)each).updateContext(context1);
+            } else if (each instanceof ActionMenu) {
+              ((ActionMenu)each).updateContext(context1);
             }
-          });
-        }
+          }
+        });
       }
     });
 

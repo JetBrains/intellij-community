@@ -218,17 +218,7 @@ public class MasterDetailPopupBuilder implements MasterController {
     footerPanel.setBorder(JBUI.Borders.empty(4, 4, 4, SystemInfo.isMac ? 20 : 4));
     footerPanel.add(myPathLabel);
 
-    Runnable itemCallback = new Runnable() {
-      @Override
-      public void run() {
-        IdeFocusManager.getInstance(myProject).doWhenFocusSettlesDown(new Runnable() {
-          @Override
-          public void run() {
-            chooseItems(false);
-          }
-        });
-      }
-    };
+    Runnable itemCallback = () -> IdeFocusManager.getInstance(myProject).doWhenFocusSettlesDown(() -> chooseItems(false));
 
     JComponent toolBar = null;
     if (myActions != null) {
@@ -250,12 +240,7 @@ public class MasterDetailPopupBuilder implements MasterController {
       setSettingButton(toolBar).
       setSouthComponent(footerPanel).
       setItemChoosenCallback(itemCallback).
-      setFilteringEnabled(new Function<Object, String>() {
-        @Override
-        public String fun(Object o) {
-          return ((ItemWrapper)o).speedSearchText();
-        }
-      });
+      setFilteringEnabled(o -> ((ItemWrapper)o).speedSearchText());
 
     if (myPopupTuner != null) {
       myPopupTuner.consume(builder);

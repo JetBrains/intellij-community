@@ -194,39 +194,32 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
         myProcessHandler.removeProcessListener(myListener);
         return;
       }
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-        @Override
-        public void run() {
-          if (myProcessHandler.isProcessTerminated() || myProcessHandler.isProcessTerminating()) return;
-          List<ThreadState> threadStates = null;
-          final long start = System.currentTimeMillis();
-          while ((System.currentTimeMillis() - start) < 1000) {
-            final String stdout = myListener.getOutput().getStdout();
-            threadStates = ThreadDumpParser.parse(stdout);
-            if (threadStates == null || threadStates.isEmpty()) {
-              TimeoutUtil.sleep(50);
-              threadStates = null;
-              continue;
-            }
-            break;
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        if (myProcessHandler.isProcessTerminated() || myProcessHandler.isProcessTerminating()) return;
+        List<ThreadState> threadStates = null;
+        final long start = System.currentTimeMillis();
+        while ((System.currentTimeMillis() - start) < 1000) {
+          final String stdout = myListener.getOutput().getStdout();
+          threadStates = ThreadDumpParser.parse(stdout);
+          if (threadStates == null || threadStates.isEmpty()) {
+            TimeoutUtil.sleep(50);
+            threadStates = null;
+            continue;
           }
-          myProcessHandler.removeProcessListener(myListener);
-          if (threadStates != null && ! threadStates.isEmpty()) {
-            showThreadDump(myListener.getOutput().getStdout(), threadStates);
-          }
+          break;
         }
-
+        myProcessHandler.removeProcessListener(myListener);
+        if (threadStates != null && ! threadStates.isEmpty()) {
+          showThreadDump(myListener.getOutput().getStdout(), threadStates);
+        }
       });
     }
 
     private void showThreadDump(final String out, final List<ThreadState> threadStates) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          AnalyzeStacktraceUtil.addConsole(myProject, threadStates.size() > 1 ?
-                                                    new ThreadDumpConsoleFactory(myProject, threadStates) : null,
-                                           "<Stacktrace> " + DateFormatUtil.formatDateTime(System.currentTimeMillis()), out);
-        }
+      ApplicationManager.getApplication().invokeLater(() -> {
+        AnalyzeStacktraceUtil.addConsole(myProject, threadStates.size() > 1 ?
+                                                  new ThreadDumpConsoleFactory(myProject, threadStates) : null,
+                                         "<Stacktrace> " + DateFormatUtil.formatDateTime(System.currentTimeMillis()), out);
       }, ModalityState.NON_MODAL);
     }
   }

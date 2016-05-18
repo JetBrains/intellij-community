@@ -334,13 +334,10 @@ public class DebugProcessEvents extends DebugProcessImpl {
       myDebugProcessDispatcher.getMulticaster().processAttached(this);
 
       // breakpoints should be initialized after all processAttached listeners work
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        @Override
-        public void run() {
-          XDebugSession session = getSession().getXDebugSession();
-          if (session != null) {
-            session.initBreakpoints();
-          }
+      ApplicationManager.getApplication().runReadAction(() -> {
+        XDebugSession session = getSession().getXDebugSession();
+        if (session != null) {
+          session.initBreakpoints();
         }
       });
 
@@ -462,13 +459,10 @@ public class DebugProcessEvents extends DebugProcessImpl {
             LOG.debug(ex.getMessage());
           }
           final boolean[] considerRequestHit = new boolean[]{true};
-          DebuggerInvocationUtil.invokeAndWait(getProject(), new Runnable() {
-            @Override
-            public void run() {
-              final String displayName = requestor instanceof Breakpoint? ((Breakpoint)requestor).getDisplayName() : requestor.getClass().getSimpleName();
-              final String message = DebuggerBundle.message("error.evaluating.breakpoint.condition.or.action", displayName, ex.getMessage());
-              considerRequestHit[0] = Messages.showYesNoDialog(getProject(), message, ex.getTitle(), Messages.getQuestionIcon()) == Messages.YES;
-            }
+          DebuggerInvocationUtil.invokeAndWait(getProject(), () -> {
+            final String displayName = requestor instanceof Breakpoint? ((Breakpoint)requestor).getDisplayName() : requestor.getClass().getSimpleName();
+            final String message = DebuggerBundle.message("error.evaluating.breakpoint.condition.or.action", displayName, ex.getMessage());
+            considerRequestHit[0] = Messages.showYesNoDialog(getProject(), message, ex.getTitle(), Messages.getQuestionIcon()) == Messages.YES;
           }, ModalityState.NON_MODAL);
           requestHit = considerRequestHit[0];
           resumePreferred = !requestHit;
@@ -476,15 +470,12 @@ public class DebugProcessEvents extends DebugProcessImpl {
 
         if (requestHit && requestor instanceof Breakpoint) {
           // if requestor is a breakpoint and this breakpoint was hit, no matter its suspend policy
-          ApplicationManager.getApplication().runReadAction(new Runnable() {
-            @Override
-            public void run() {
-              XDebugSession session = getSession().getXDebugSession();
-              if (session != null) {
-                XBreakpoint breakpoint = ((Breakpoint)requestor).getXBreakpoint();
-                if (breakpoint != null) {
-                  ((XDebugSessionImpl)session).processDependencies(breakpoint);
-                }
+          ApplicationManager.getApplication().runReadAction(() -> {
+            XDebugSession session = getSession().getXDebugSession();
+            if (session != null) {
+              XBreakpoint breakpoint = ((Breakpoint)requestor).getXBreakpoint();
+              if (breakpoint != null) {
+                ((XDebugSessionImpl)session).processDependencies(breakpoint);
               }
             }
           });

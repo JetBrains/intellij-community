@@ -158,17 +158,14 @@ public class SelectWordHandler extends EditorActionHandler {
 
     final Ref<TextRange> minimumRange = new Ref<TextRange>(new TextRange(0, editor.getDocument().getTextLength()));
 
-    SelectWordUtil.processRanges(element, editor.getDocument().getCharsSequence(), caretOffset, editor, new Processor<TextRange>() {
-      @Override
-      public boolean process(@NotNull TextRange range) {
-        if (range.contains(selectionRange) && !range.equals(selectionRange)) {
-          if (minimumRange.get().contains(range)) {
-            minimumRange.set(range);
-            return true;
-          }
+    SelectWordUtil.processRanges(element, editor.getDocument().getCharsSequence(), caretOffset, editor, range -> {
+      if (range.contains(selectionRange) && !range.equals(selectionRange)) {
+        if (minimumRange.get().contains(range)) {
+          minimumRange.set(range);
+          return true;
         }
-        return false;
       }
+      return false;
     });
 
     return minimumRange.get();

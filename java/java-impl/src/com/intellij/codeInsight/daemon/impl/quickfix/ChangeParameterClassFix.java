@@ -71,11 +71,8 @@ public class ChangeParameterClassFix extends ExtendsListFix {
     final PsiClass myClass = (PsiClass)startElement;
     if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
     ApplicationManager.getApplication().runWriteAction(
-      new Runnable() {
-        @Override
-        public void run() {
-          invokeImpl(myClass);
-        }
+      () -> {
+        invokeImpl(myClass);
       }
     );
     final Editor editor1 = CodeInsightUtil.positionCursorAtLBrace(project, myClass.getContainingFile(), myClass);
@@ -84,18 +81,12 @@ public class ChangeParameterClassFix extends ExtendsListFix {
     if (!toImplement.isEmpty()) {
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         ApplicationManager.getApplication().runWriteAction(
-          new Runnable() {
-            @Override
-            public void run() {
-              Collection<PsiMethodMember> members =
-                ContainerUtil.map2List(toImplement, new Function<CandidateInfo, PsiMethodMember>() {
-                  @Override
-                  public PsiMethodMember fun(final CandidateInfo s) {
-                    return new PsiMethodMember(s);
-                  }
-                });
-              OverrideImplementUtil.overrideOrImplementMethodsInRightPlace(editor1, myClass, members, false);
-            }
+          () -> {
+            Collection<PsiMethodMember> members =
+              ContainerUtil.map2List(toImplement, s -> {
+                return new PsiMethodMember(s);
+              });
+            OverrideImplementUtil.overrideOrImplementMethodsInRightPlace(editor1, myClass, members, false);
           });
       }
       else {

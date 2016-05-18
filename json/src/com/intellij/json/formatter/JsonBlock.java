@@ -94,14 +94,11 @@ public class JsonBlock implements ASTBlock {
   @Override
   public List<Block> getSubBlocks() {
     if (mySubBlocks == null) {
-      mySubBlocks = ContainerUtil.mapNotNull(myNode.getChildren(null), new Function<ASTNode, Block>() {
-        @Override
-        public Block fun(ASTNode node) {
-          if (isWhitespaceOrEmpty(node)) {
-            return null;
-          }
-          return makeSubBlock(node);
+      mySubBlocks = ContainerUtil.mapNotNull(myNode.getChildren(null), node -> {
+        if (isWhitespaceOrEmpty(node)) {
+          return null;
         }
+        return makeSubBlock(node);
       });
     }
     return mySubBlocks;

@@ -99,11 +99,8 @@ public abstract class CreateFromTemplateActionBase extends AnAction {
     for (String variable : variables) {
       template.addVariable(variable, null, "\"" + variable + "\"", true);
     }
-    WriteCommandAction.runWriteCommandAction(project, new Runnable() {
-      @Override
-      public void run() {
-        editor.getDocument().setText(template.getTemplateText());
-      }
+    WriteCommandAction.runWriteCommandAction(project, () -> {
+      editor.getDocument().setText(template.getTemplateText());
     });
     TemplateManager.getInstance(project).startTemplate(editor, template);
   }

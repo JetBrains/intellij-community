@@ -64,20 +64,12 @@ class ClassObjectRenderer extends ToStringBasedRenderer implements FullValueEval
             if (res instanceof StringReference) {
               callback.evaluated("");
               final String line = ((StringReference)res).value();
-              ApplicationManager.getApplication().runReadAction(new Runnable() {
-                @Override
-                public void run() {
-                  final PsiClass psiClass = DebuggerUtils.findClass(line,
-                                                                    valueDescriptor.getProject(),
-                                                                    process.getSearchScope());
-                  if (psiClass != null) {
-                    DebuggerUIUtil.invokeLater(new Runnable() {
-                      @Override
-                      public void run() {
-                        psiClass.navigate(true);
-                      }
-                    });
-                  }
+              ApplicationManager.getApplication().runReadAction(() -> {
+                final PsiClass psiClass = DebuggerUtils.findClass(line,
+                                                                  valueDescriptor.getProject(),
+                                                                  process.getSearchScope());
+                if (psiClass != null) {
+                  DebuggerUIUtil.invokeLater(() -> psiClass.navigate(true));
                 }
               });
             }

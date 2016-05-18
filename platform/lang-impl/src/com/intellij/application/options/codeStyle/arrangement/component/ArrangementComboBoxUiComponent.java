@@ -42,12 +42,7 @@ public class ArrangementComboBoxUiComponent extends AbstractArrangementUiCompone
   public ArrangementComboBoxUiComponent(@NotNull List<ArrangementSettingsToken> tokens) {
     super(tokens);
     ArrangementSettingsToken[] tokensArray = tokens.toArray(new ArrangementSettingsToken[tokens.size()]);
-    Arrays.sort(tokensArray, new Comparator<ArrangementSettingsToken>() {
-      @Override
-      public int compare(ArrangementSettingsToken t1, ArrangementSettingsToken t2) {
-        return t1.getRepresentationValue().compareTo(t2.getRepresentationValue());
-      }
-    });
+    Arrays.sort(tokensArray, (t1, t2) -> t1.getRepresentationValue().compareTo(t2.getRepresentationValue()));
     myComboBox = new JComboBox(tokensArray);
     myComboBox.setRenderer(new ListCellRendererWrapper() {
       @Override

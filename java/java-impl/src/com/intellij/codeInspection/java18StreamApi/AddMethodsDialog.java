@@ -209,11 +209,8 @@ public class AddMethodsDialog extends DialogWrapper {
     final String fqn = aClass.getQualifiedName();
     LOG.assertTrue(fqn != null);
     final String parameters =
-      StringUtil.join(ContainerUtil.map(method.getParameterList().getParameters(), new Function<PsiParameter, String>() {
-        @Override
-        public String fun(PsiParameter parameter) {
-          return parameter.getName();
-        }
+      StringUtil.join(ContainerUtil.map(method.getParameterList().getParameters(), parameter -> {
+        return parameter.getName();
       }), ", ");
     final String expressionText = fqn + "." + method.getName() + "(" + parameters + ")";
     final PsiExpression psiExpression = JavaPsiFacade.getElementFactory(method.getProject())

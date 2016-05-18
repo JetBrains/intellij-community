@@ -69,12 +69,7 @@ public class ResolveScopeManagerImpl extends ResolveScopeManager {
     myManager = psiManager;
     myAdditionalIndexableFileSet = new AdditionalIndexableFileSet(project);
 
-    ((PsiManagerImpl) psiManager).registerRunnableToRunOnChange(new Runnable() {
-      @Override
-      public void run() {
-        myDefaultResolveScopesCache.clear();
-      }
-    });
+    ((PsiManagerImpl) psiManager).registerRunnableToRunOnChange(() -> myDefaultResolveScopesCache.clear());
 
   }
 

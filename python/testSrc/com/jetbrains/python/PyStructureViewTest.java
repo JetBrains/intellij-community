@@ -97,12 +97,9 @@ public class PyStructureViewTest extends PyTestCase {
   }
 
   private void doTest(final String expected, final boolean inherited) {
-    myFixture.testStructureView(new Consumer<StructureViewComponent>() {
-      @Override
-      public void consume(StructureViewComponent component) {
-        component.setActionActive("SHOW_INHERITED", !inherited);
-        assertTreeEqual(component.getTree(), expected);
-      }
+    myFixture.testStructureView(component -> {
+      component.setActionActive("SHOW_INHERITED", !inherited);
+      assertTreeEqual(component.getTree(), expected);
     });
   }
 }

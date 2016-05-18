@@ -300,12 +300,7 @@ public class ValidateXmlActionHandler {
   private static String[] getNamespaces(XmlFile file) {
     XmlTag rootTag = file.getRootTag();
     if (rootTag == null) return ArrayUtil.EMPTY_STRING_ARRAY;
-    return ContainerUtil.mapNotNull(rootTag.getAttributes(), new Function<XmlAttribute, String>() {
-      @Override
-      public String fun(XmlAttribute attribute) {
-        return attribute.getValue();
-      }
-    }, ArrayUtil.EMPTY_STRING_ARRAY);
+    return ContainerUtil.mapNotNull(rootTag.getAttributes(), attribute -> attribute.getValue(), ArrayUtil.EMPTY_STRING_ARRAY);
   }
 
   private static long calculateTimeStamp(final VirtualFile[] files, Project myProject) {

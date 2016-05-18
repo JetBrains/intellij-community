@@ -320,12 +320,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
   }
 
   protected Element getState(final Element element) {
-    Comparator<BaseInjection> comparator = new Comparator<BaseInjection>() {
-      @Override
-      public int compare(final BaseInjection o1, final BaseInjection o2) {
-        return Comparing.compare(o1.getDisplayName(), o2.getDisplayName());
-      }
-    };
+    Comparator<BaseInjection> comparator = (o1, o2) -> Comparing.compare(o1.getDisplayName(), o2.getDisplayName());
     List<String> injectorIds = new ArrayList<String>(myInjections.keySet());
     Collections.sort(injectorIds);
     for (String key : injectorIds) {
@@ -410,12 +405,9 @@ public class Configuration extends SimpleModificationTracker implements Persiste
       }
     }
     main: for (BaseInjection other : importingInjections) {
-      final List<BaseInjection> matchingInjections = ContainerUtil.concat(other.getInjectionPlaces(), new Function<InjectionPlace, Collection<? extends BaseInjection>>() {
-        @Override
-        public Collection<? extends BaseInjection> fun(final InjectionPlace o) {
-          final Collection<BaseInjection> collection = placeMap.get(o);
-          return collection == null? Collections.<BaseInjection>emptyList() : collection;
-        }
+      final List<BaseInjection> matchingInjections = ContainerUtil.concat(other.getInjectionPlaces(), o -> {
+        final Collection<BaseInjection> collection = placeMap.get(o);
+        return collection == null? Collections.<BaseInjection>emptyList() : collection;
       });
       if (matchingInjections.isEmpty()) {
         newInjections.add(other);
@@ -502,17 +494,13 @@ public class Configuration extends SimpleModificationTracker implements Persiste
                                 final List<? extends BaseInjection> originalInjections,
                                 final List<? extends PsiElement> psiElementsToRemove) {
     replaceInjectionsWithUndo(project, newInjections, originalInjections, psiElementsToRemove,
-                              new PairProcessor<List<? extends BaseInjection>, List<? extends BaseInjection>>() {
-                                @Override
-                                public boolean process(final List<? extends BaseInjection> add,
-                                                       final List<? extends BaseInjection> remove) {
-                                  replaceInjectionsWithUndoInner(add, remove);
-                                  if (ContainerUtil.find(add, LANGUAGE_INJECTION_CONDITION) != null || ContainerUtil.find(remove,
-                                                                                                                          LANGUAGE_INJECTION_CONDITION) != null) {
-                                    FileContentUtil.reparseOpenedFiles();
-                                  }
-                                  return true;
+                              (add, remove) -> {
+                                replaceInjectionsWithUndoInner(add, remove);
+                                if (ContainerUtil.find(add, LANGUAGE_INJECTION_CONDITION) != null || ContainerUtil.find(remove,
+                                                                                                                        LANGUAGE_INJECTION_CONDITION) != null) {
+                                  FileContentUtil.reparseOpenedFiles();
                                 }
+                                return true;
                               });
   }
 

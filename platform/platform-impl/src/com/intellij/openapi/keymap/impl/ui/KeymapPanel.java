@@ -203,12 +203,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
   @Override
   public Runnable enableSearch(final String option) {
-    return new Runnable() {
-      @Override
-      public void run() {
-        showOption(option);
-      }
-    };
+    return () -> showOption(option);
   }
 
   @Override
@@ -397,23 +392,20 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       @Override
       public void filter() {
         alarm.cancelAllRequests();
-        alarm.addRequest(new Runnable() {
-          @Override
-          public void run() {
-            if (!myFilterComponent.isShowing()) return;
-            myTreeExpansionMonitor.freeze();
-            myFilteringPanel.setShortcut(null);
-            final String filter = getFilter();
-            myActionsTree.filter(filter, myQuickLists);
-            final JTree tree = myActionsTree.getTree();
-            TreeUtil.expandAll(tree);
-            if (filter == null || filter.length() == 0) {
-              TreeUtil.collapseAll(tree, 0);
-              myTreeExpansionMonitor.restore();
-            }
-            else {
-              myTreeExpansionMonitor.unfreeze();
-            }
+        alarm.addRequest(() -> {
+          if (!myFilterComponent.isShowing()) return;
+          myTreeExpansionMonitor.freeze();
+          myFilteringPanel.setShortcut(null);
+          final String filter = getFilter();
+          myActionsTree.filter(filter, myQuickLists);
+          final JTree tree = myActionsTree.getTree();
+          TreeUtil.expandAll(tree);
+          if (filter == null || filter.length() == 0) {
+            TreeUtil.collapseAll(tree, 0);
+            myTreeExpansionMonitor.restore();
+          }
+          else {
+            myTreeExpansionMonitor.unfreeze();
           }
         }, 300);
       }

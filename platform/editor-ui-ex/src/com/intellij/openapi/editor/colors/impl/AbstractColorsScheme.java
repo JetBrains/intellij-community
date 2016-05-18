@@ -124,12 +124,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
 
   protected AbstractColorsScheme(EditorColorsScheme parentScheme) {
     myParentScheme = parentScheme;
-    myFontPreferences.setChangeListener(new Runnable() {
-      @Override
-      public void run() {
-        initFonts();
-      }
-    });
+    myFontPreferences.setChangeListener(() -> initFonts());
   }
 
   public AbstractColorsScheme() {

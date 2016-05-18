@@ -100,11 +100,8 @@ public class GroovyExpectedTypesProvider {
 
   public static List<PsiType> getDefaultExpectedTypes(@NotNull GrExpression element) {
     TypeConstraint[] constraints = calculateTypeConstraints(element);
-    return ContainerUtil.map(constraints, new Function<TypeConstraint, PsiType>() {
-      @Override
-      public PsiType fun(TypeConstraint constraint) {
-        return constraint.getDefaultType();
-      }
+    return ContainerUtil.map(constraints, constraint -> {
+      return constraint.getDefaultType();
     });
   }
 

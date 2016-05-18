@@ -128,16 +128,14 @@ public abstract class RenameJavaMemberProcessor extends RenamePsiElementProcesso
         conflict = aClass.findFieldByName(newName, false);
       }
       if (conflict == null) continue;
-      ReferencesSearch.search(conflict).forEach(new Processor<PsiReference>() {
-        public boolean process(final PsiReference reference) {
-          PsiElement refElement = reference.getElement();
-          if (refElement instanceof PsiReferenceExpression && ((PsiReferenceExpression)refElement).isQualified()) return true;
-          if (PsiTreeUtil.isAncestor(fieldClass, refElement, false)) {
-            MemberHidesOuterMemberUsageInfo info = new MemberHidesOuterMemberUsageInfo(refElement, member);
-            result.add(info);
-          }
-          return true;
+      ReferencesSearch.search(conflict).forEach(reference -> {
+        PsiElement refElement = reference.getElement();
+        if (refElement instanceof PsiReferenceExpression && ((PsiReferenceExpression)refElement).isQualified()) return true;
+        if (PsiTreeUtil.isAncestor(fieldClass, refElement, false)) {
+          MemberHidesOuterMemberUsageInfo info = new MemberHidesOuterMemberUsageInfo(refElement, member);
+          result.add(info);
         }
+        return true;
       });
     }
   }
@@ -184,11 +182,9 @@ public abstract class RenameJavaMemberProcessor extends RenamePsiElementProcesso
             }
 
             for (PsiMember member : importedMembers) {
-              ReferencesSearch.search(member, new LocalSearchScope(containingFile), true).forEach(new Processor<PsiReference>() {
-                public boolean process(final PsiReference psiReference) {
-                  potentialConflicts.add(psiReference);
-                  return true;
-                }
+              ReferencesSearch.search(member, new LocalSearchScope(containingFile), true).forEach(psiReference -> {
+                potentialConflicts.add(psiReference);
+                return true;
               });
             }
           }

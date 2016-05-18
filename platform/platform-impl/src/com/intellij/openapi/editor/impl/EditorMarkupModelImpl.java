@@ -255,16 +255,13 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   private void collectRangeHighlighters(@NotNull MarkupModelEx markupModel, final int visualLine, @NotNull final Collection<RangeHighlighterEx> highlighters) {
     final int startOffset = getOffset(fitLineToEditor(visualLine - myPreviewLines), true);
     final int endOffset = getOffset(fitLineToEditor(visualLine + myPreviewLines), false);
-    markupModel.processRangeHighlightersOverlappingWith(startOffset, endOffset, new Processor<RangeHighlighterEx>() {
-      @Override
-      public boolean process(@NotNull RangeHighlighterEx highlighter) {
-        if (highlighter.getErrorStripeMarkColor() != null) {
-          if (highlighter.getStartOffset() < endOffset && highlighter.getEndOffset() > startOffset) {
-            highlighters.add(highlighter);
-          }
+    markupModel.processRangeHighlightersOverlappingWith(startOffset, endOffset, highlighter -> {
+      if (highlighter.getErrorStripeMarkColor() != null) {
+        if (highlighter.getStartOffset() < endOffset && highlighter.getEndOffset() > startOffset) {
+          highlighters.add(highlighter);
         }
-        return true;
       }
+      return true;
     });
   }
 
@@ -291,18 +288,15 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
                                       @NotNull final Collection<RangeHighlighter> nearest) {
     int startOffset = yPositionToOffset(scrollBarY - myMinMarkHeight, true);
     int endOffset = yPositionToOffset(scrollBarY + myMinMarkHeight, false);
-    markupModel.processRangeHighlightersOverlappingWith(startOffset, endOffset, new Processor<RangeHighlighterEx>() {
-      @Override
-      public boolean process(@NotNull RangeHighlighterEx highlighter) {
-        if (highlighter.getErrorStripeMarkColor() != null) {
-          ProperTextRange range = offsetsToYPositions(highlighter.getStartOffset(), highlighter.getEndOffset());
-          if (scrollBarY >= range.getStartOffset() - myMinMarkHeight * 2 &&
-              scrollBarY <= range.getEndOffset() + myMinMarkHeight * 2) {
-            nearest.add(highlighter);
-          }
+    markupModel.processRangeHighlightersOverlappingWith(startOffset, endOffset, highlighter -> {
+      if (highlighter.getErrorStripeMarkColor() != null) {
+        ProperTextRange range = offsetsToYPositions(highlighter.getStartOffset(), highlighter.getEndOffset());
+        if (scrollBarY >= range.getStartOffset() - myMinMarkHeight * 2 &&
+            scrollBarY <= range.getEndOffset() + myMinMarkHeight * 2) {
+          nearest.add(highlighter);
         }
-        return true;
       }
+      return true;
     });
   }
 
@@ -723,18 +717,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
 
     private void drawMarkup(@NotNull final Graphics g, int startOffset, int endOffset, @NotNull MarkupModelEx markup1, @NotNull MarkupModelEx markup2) {
-      final Queue<PositionedStripe> thinEnds = new PriorityQueue<PositionedStripe>(5, new Comparator<PositionedStripe>() {
-        @Override
-        public int compare(@NotNull PositionedStripe o1, @NotNull PositionedStripe o2) {
-          return o1.yEnd - o2.yEnd;
-        }
-      });
-      final Queue<PositionedStripe> wideEnds = new PriorityQueue<PositionedStripe>(5, new Comparator<PositionedStripe>() {
-        @Override
-        public int compare(@NotNull PositionedStripe o1, @NotNull PositionedStripe o2) {
-          return o1.yEnd - o2.yEnd;
-        }
-      });
+      final Queue<PositionedStripe> thinEnds = new PriorityQueue<PositionedStripe>(5, (o1, o2) -> o1.yEnd - o2.yEnd);
+      final Queue<PositionedStripe> wideEnds = new PriorityQueue<PositionedStripe>(5, (o1, o2) -> o1.yEnd - o2.yEnd);
       // sorted by layer
       final List<PositionedStripe> thinStripes = new ArrayList<PositionedStripe>(); // layer desc
       final List<PositionedStripe> wideStripes = new ArrayList<PositionedStripe>(); // layer desc
@@ -746,70 +730,67 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       MarkupIterator<RangeHighlighterEx> iterator =
         IntervalTreeImpl.mergeIterators(iterator1, iterator2, RangeHighlighterEx.BY_AFFECTED_START_OFFSET);
       try {
-        ContainerUtil.process(iterator, new Processor<RangeHighlighterEx>() {
-          @Override
-          public boolean process(@NotNull RangeHighlighterEx highlighter) {
-            Color color = highlighter.getErrorStripeMarkColor();
-            if (color == null) return true;
-            boolean isThin = highlighter.isThinErrorStripeMark();
-            int[] yStart = isThin ? thinYStart : wideYStart;
-            List<PositionedStripe> stripes = isThin ? thinStripes : wideStripes;
-            Queue<PositionedStripe> ends = isThin ? thinEnds : wideEnds;
+        ContainerUtil.process(iterator, highlighter -> {
+          Color color = highlighter.getErrorStripeMarkColor();
+          if (color == null) return true;
+          boolean isThin = highlighter.isThinErrorStripeMark();
+          int[] yStart = isThin ? thinYStart : wideYStart;
+          List<PositionedStripe> stripes = isThin ? thinStripes : wideStripes;
+          Queue<PositionedStripe> ends = isThin ? thinEnds : wideEnds;
 
-            ProperTextRange range = offsetsToYPositions(highlighter.getStartOffset(), highlighter.getEndOffset());
-            final int ys = range.getStartOffset();
-            int ye = range.getEndOffset();
-            if (ye - ys < myMinMarkHeight) ye = ys + myMinMarkHeight;
+          ProperTextRange range = offsetsToYPositions(highlighter.getStartOffset(), highlighter.getEndOffset());
+          final int ys = range.getStartOffset();
+          int ye = range.getEndOffset();
+          if (ye - ys < myMinMarkHeight) ye = ys + myMinMarkHeight;
 
-            yStart[0] = drawStripesEndingBefore(ys, ends, stripes, g, yStart[0]);
+          yStart[0] = drawStripesEndingBefore(ys, ends, stripes, g, yStart[0]);
 
-            final int layer = highlighter.getLayer();
+          final int layer = highlighter.getLayer();
 
-            PositionedStripe stripe = null;
-            int i;
-            for (i = 0; i < stripes.size(); i++) {
-              PositionedStripe s = stripes.get(i);
-              if (s.layer == layer) {
-                stripe = s;
-                break;
-              }
-              if (s.layer < layer) {
-                break;
-              }
+          PositionedStripe stripe = null;
+          int i;
+          for (i = 0; i < stripes.size(); i++) {
+            PositionedStripe s = stripes.get(i);
+            if (s.layer == layer) {
+              stripe = s;
+              break;
             }
-            if (stripe == null) {
-              // started new stripe, draw previous above
-              if (i == 0 && yStart[0] != ys) {
-                if (!stripes.isEmpty()) {
-                  PositionedStripe top = stripes.get(0);
-                  drawSpot(g, top.thin, yStart[0], ys, top.color);
-                }
-                yStart[0] = ys;
+            if (s.layer < layer) {
+              break;
+            }
+          }
+          if (stripe == null) {
+            // started new stripe, draw previous above
+            if (i == 0 && yStart[0] != ys) {
+              if (!stripes.isEmpty()) {
+                PositionedStripe top = stripes.get(0);
+                drawSpot(g, top.thin, yStart[0], ys, top.color);
               }
-              stripe = new PositionedStripe(color, ye, isThin, layer);
-              stripes.add(i, stripe);
+              yStart[0] = ys;
+            }
+            stripe = new PositionedStripe(color, ye, isThin, layer);
+            stripes.add(i, stripe);
+            ends.offer(stripe);
+          }
+          else {
+            if (stripe.yEnd < ye) {
+              if (!color.equals(stripe.color)) {
+                // paint previous stripe on this layer
+                if (i == 0 && yStart[0] != ys) {
+                  drawSpot(g, stripe.thin, yStart[0], ys, stripe.color);
+                  yStart[0] = ys;
+                }
+                stripe.color = color;
+              }
+
+              // key changed, reinsert into queue
+              ends.remove(stripe);
+              stripe.yEnd = ye;
               ends.offer(stripe);
             }
-            else {
-              if (stripe.yEnd < ye) {
-                if (!color.equals(stripe.color)) {
-                  // paint previous stripe on this layer
-                  if (i == 0 && yStart[0] != ys) {
-                    drawSpot(g, stripe.thin, yStart[0], ys, stripe.color);
-                    yStart[0] = ys;
-                  }
-                  stripe.color = color;
-                }
-
-                // key changed, reinsert into queue
-                ends.remove(stripe);
-                stripe.yEnd = ye;
-                ends.offer(stripe);
-              }
-            }
-
-            return true;
           }
+
+          return true;
         });
       }
       finally {
@@ -864,12 +845,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     // mouse events
     @Override
     public void mouseClicked(@NotNull final MouseEvent e) {
-      CommandProcessor.getInstance().executeCommand(myEditor.getProject(), new Runnable() {
-        @Override
-        public void run() {
-          doMouseClicked(e);
-        }
-      },
+      CommandProcessor.getInstance().executeCommand(myEditor.getProject(), () -> doMouseClicked(e),
                                                     EditorBundle.message("move.caret.command.name"),
                                                     DocCommandGroupId.noneGroupId(getDocument()), UndoConfirmationPolicy.DEFAULT,
                                                     getDocument()
@@ -943,12 +919,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
     private void showTrafficLightTooltip(@NotNull MouseEvent e) {
       if (myTrafficTooltipRenderer == null) {
-        myTrafficTooltipRenderer = myTooltipRendererProvider.createTrafficTooltipRenderer(new Runnable() {
-          @Override
-          public void run() {
-            myTrafficTooltipRenderer = null;
-          }
-        }, myEditor);
+        myTrafficTooltipRenderer = myTooltipRendererProvider.createTrafficTooltipRenderer(() -> myTrafficTooltipRenderer = null, myEditor);
       }
       showTooltip(e, myTrafficTooltipRenderer, new HintHint(e).setAwtTooltip(true).setMayCenterPosition(true).setContentActive(false)
         .setPreferredPosition(Balloon.Position.atLeft));
@@ -1222,13 +1193,11 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       for (RangeHighlighterEx rangeHighlighter : rangeHighlighters) {
           myHighlighters.add(rangeHighlighter);
       }
-      Collections.sort(myHighlighters, new Comparator<RangeHighlighterEx>() {
-        public int compare(@NotNull RangeHighlighterEx ex1, @NotNull RangeHighlighterEx ex2) {
-          LogicalPosition startPos1 = myEditor.offsetToLogicalPosition(ex1.getAffectedAreaStartOffset());
-          LogicalPosition startPos2 = myEditor.offsetToLogicalPosition(ex2.getAffectedAreaStartOffset());
-          if (startPos1.line != startPos2.line) return 0;
-          return startPos1.column - startPos2.column;
-        }
+      Collections.sort(myHighlighters, (ex1, ex2) -> {
+        LogicalPosition startPos1 = myEditor.offsetToLogicalPosition(ex1.getAffectedAreaStartOffset());
+        LogicalPosition startPos2 = myEditor.offsetToLogicalPosition(ex2.getAffectedAreaStartOffset());
+        if (startPos1.line != startPos2.line) return 0;
+        return startPos1.column - startPos2.column;
       });
     }
 
@@ -1406,13 +1375,10 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       if (needDelay && !myShowInstantly) {
         myDelayed = true;
         Alarm alarm = new Alarm();
-        alarm.addRequest(new Runnable() {
-          @Override
-          public void run() {
-            if (myEditorPreviewHint == null || !myDelayed) return;
-            showEditorHint(hintManager, myPointHolder.get(), myHintHolder.get());
-            myDelayed = false;
-          }
+        alarm.addRequest(() -> {
+          if (myEditorPreviewHint == null || !myDelayed) return;
+          showEditorHint(hintManager, myPointHolder.get(), myHintHolder.get());
+          myDelayed = false;
         }, /*Registry.intValue("ide.tooltip.initialDelay")*/300);
       }
       else if (!myDelayed) {

@@ -100,31 +100,25 @@ public class HighlightImportedElementsHandler extends HighlightUsagesHandlerBase
     final ListCellRenderer renderer = new NavigationItemListCellRenderer();
     list.setCellRenderer(renderer);
     final PopupChooserBuilder builder = new PopupChooserBuilder(list);
-    builder.setFilteringEnabled(new Function<Object, String>() {
-      @Override
-      public String fun(Object o) {
-        if (o instanceof PsiMember) {
-          final PsiMember member = (PsiMember)o;
-          return member.getName();
-        }
-        return o.toString();
+    builder.setFilteringEnabled(o -> {
+      if (o instanceof PsiMember) {
+        final PsiMember member = (PsiMember)o;
+        return member.getName();
       }
+      return o.toString();
     });
     if (myImportStatic) {
       builder.setTitle(CodeInsightBundle.message("highlight.imported.members.chooser.title"));
     } else {
       builder.setTitle(CodeInsightBundle.message("highlight.imported.classes.chooser.title"));
     }
-    builder.setItemChoosenCallback(new Runnable() {
-      @Override
-      public void run() {
-        final int index= list.getSelectedIndex();
-        if (index == 0) {
-          selectionConsumer.consume(targets);
-        }
-        else {
-          selectionConsumer.consume(Collections.singletonList(targets.get(index - 1)));
-        }
+    builder.setItemChoosenCallback(() -> {
+      final int index= list.getSelectedIndex();
+      if (index == 0) {
+        selectionConsumer.consume(targets);
+      }
+      else {
+        selectionConsumer.consume(Collections.singletonList(targets.get(index - 1)));
       }
     });
     final JBPopup popup = builder.createPopup();

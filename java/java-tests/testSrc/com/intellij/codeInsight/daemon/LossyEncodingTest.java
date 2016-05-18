@@ -139,12 +139,9 @@ public class LossyEncodingTest extends DaemonAnalyzerTestCase {
     configureByText(FileTypes.PLAIN_TEXT, threeNotoriousRussianLetters);
     VirtualFile virtualFile = getFile().getVirtualFile();
     final Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
-    WriteCommandAction.runWriteCommandAction(getProject(), new Runnable() {
-      @Override
-      public void run() {
-        document.insertString(0, " ");
-        document.deleteString(0, 1);
-      }
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      document.insertString(0, " ");
+      document.deleteString(0, 1);
     });
 
 

@@ -120,25 +120,22 @@ public class ArtifactsGenerator {
   private Target createArtifactTarget(Artifact artifact) {
     final StringBuilder depends = new StringBuilder(INIT_ARTIFACTS_TARGET);
 
-    ArtifactUtil.processRecursivelySkippingIncludedArtifacts(artifact, new Processor<PackagingElement<?>>() {
-      @Override
-      public boolean process(@NotNull PackagingElement<?> packagingElement) {
-        if (packagingElement instanceof ArtifactPackagingElement) {
-          final Artifact included = ((ArtifactPackagingElement)packagingElement).findArtifact(myResolvingContext);
-          if (included != null) {
-            if (depends.length() > 0) depends.append(", ");
-            depends.append(myContext.getTargetName(included));
-          }
+    ArtifactUtil.processRecursivelySkippingIncludedArtifacts(artifact, packagingElement -> {
+      if (packagingElement instanceof ArtifactPackagingElement) {
+        final Artifact included = ((ArtifactPackagingElement)packagingElement).findArtifact(myResolvingContext);
+        if (included != null) {
+          if (depends.length() > 0) depends.append(", ");
+          depends.append(myContext.getTargetName(included));
         }
-        else if (packagingElement instanceof ModuleOutputPackagingElement) {
-          final Module module = ((ModuleOutputPackagingElement)packagingElement).findModule(myResolvingContext);
-          if (module != null) {
-            if (depends.length() > 0) depends.append(", ");
-            depends.append(BuildProperties.getCompileTargetName(module.getName()));
-          }
-        }
-        return true;
       }
+      else if (packagingElement instanceof ModuleOutputPackagingElement) {
+        final Module module = ((ModuleOutputPackagingElement)packagingElement).findModule(myResolvingContext);
+        if (module != null) {
+          if (depends.length() > 0) depends.append(", ");
+          depends.append(BuildProperties.getCompileTargetName(module.getName()));
+        }
+      }
+      return true;
     }, myResolvingContext);
 
     final Couple<String> xmlNs = getArtifactXmlNs(artifact.getArtifactType());

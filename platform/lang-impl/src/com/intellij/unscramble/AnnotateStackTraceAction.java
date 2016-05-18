@@ -174,23 +174,20 @@ public class AnnotateStackTraceAction extends AnAction implements DumbAware {
         final List<VirtualFile> files = new ArrayList<VirtualFile>();
         final HashMap<VirtualFile, List<Integer>> files2lines = new HashMap<VirtualFile, List<Integer>>();
 
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          @Override
-          public void run() {
-            for (int line = 0; line < myEditor.getDocument().getLineCount(); line++) {
-              indicator.checkCanceled();
-              VirtualFile file = getHyperlinkVirtualFile(myHyperlinks.findAllHyperlinksOnLine(line));
-              if (file == null) continue;
+        ApplicationManager.getApplication().runReadAction(() -> {
+          for (int line = 0; line < myEditor.getDocument().getLineCount(); line++) {
+            indicator.checkCanceled();
+            VirtualFile file = getHyperlinkVirtualFile(myHyperlinks.findAllHyperlinksOnLine(line));
+            if (file == null) continue;
 
-              if (files2lines.containsKey(file)) {
-                files2lines.get(file).add(line);
-              }
-              else {
-                final ArrayList<Integer> lines = new ArrayList<Integer>();
-                lines.add(line);
-                files2lines.put(file, lines);
-                files.add(file);
-              }
+            if (files2lines.containsKey(file)) {
+              files2lines.get(file).add(line);
+            }
+            else {
+              final ArrayList<Integer> lines = new ArrayList<Integer>();
+              lines.add(line);
+              files2lines.put(file, lines);
+              files.add(file);
             }
           }
         });
@@ -213,15 +210,12 @@ public class AnnotateStackTraceAction extends AnAction implements DumbAware {
             for (Integer line : lines) {
               cache.put(line, revision);
             }
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                if (!myGutterShowed) {
-                  showGutter();
-                }
-                else {
-                  ((EditorGutterComponentEx)myEditor.getGutter()).revalidateMarkup();
-                }
+            ApplicationManager.getApplication().invokeLater(() -> {
+              if (!myGutterShowed) {
+                showGutter();
+              }
+              else {
+                ((EditorGutterComponentEx)myEditor.getGutter()).revalidateMarkup();
               }
             });
           }

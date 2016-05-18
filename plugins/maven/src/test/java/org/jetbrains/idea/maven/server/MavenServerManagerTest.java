@@ -28,37 +28,31 @@ public class MavenServerManagerTest extends MavenTestCase {
     //make sure all components are initialized to prevent deadlocks
     MavenServerManager.getInstance().getOrCreateWrappee();
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        Future result = ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-          @Override
-          public void run() {
-            MavenServerManager.getInstance().shutdown(true);
-            try {
-              MavenServerManager.getInstance().getOrCreateWrappee();
-            }
-            catch (RemoteException e) {
-              throw new RuntimeException(e);
-            }
-          }
-        });
-
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      Future result = ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        MavenServerManager.getInstance().shutdown(true);
         try {
-          result.get(10, TimeUnit.SECONDS);
+          MavenServerManager.getInstance().getOrCreateWrappee();
         }
-        catch (InterruptedException e) {
+        catch (RemoteException e) {
           throw new RuntimeException(e);
         }
-        catch (java.util.concurrent.ExecutionException e) {
-          throw new RuntimeException(e);
-        }
-        catch (TimeoutException e) {
-          printThreadDump();
-          throw new RuntimeException(e);
-        }
-        result.cancel(true);
+      });
+
+      try {
+        result.get(10, TimeUnit.SECONDS);
       }
+      catch (InterruptedException e) {
+        throw new RuntimeException(e);
+      }
+      catch (java.util.concurrent.ExecutionException e) {
+        throw new RuntimeException(e);
+      }
+      catch (TimeoutException e) {
+        printThreadDump();
+        throw new RuntimeException(e);
+      }
+      result.cancel(true);
     });
   }
 }

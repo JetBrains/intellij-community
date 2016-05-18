@@ -92,24 +92,18 @@ public class ExtractInterfaceHandler implements RefactoringActionHandler, Elemen
     final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
     ExtractSuperClassUtil.checkSuperAccessible(dialog.getTargetDirectory(), conflicts, myClass);
     if (!ExtractSuperClassUtil.showConflicts(dialog, conflicts, myProject)) return;
-    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            myInterfaceName = dialog.getExtractedSuperName();
-            mySelectedMembers = ArrayUtil.toObjectArray(dialog.getSelectedMemberInfos(), MemberInfo.class);
-            myTargetDir = dialog.getTargetDirectory();
-            myJavaDocPolicy = new DocCommentPolicy(dialog.getDocCommentPolicy());
-            try {
-              doRefactoring();
-            }
-            catch (IncorrectOperationException e) {
-              LOG.error(e);
-            }
-          }
-        });
+    CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(() -> {
+      myInterfaceName = dialog.getExtractedSuperName();
+      mySelectedMembers = ArrayUtil.toObjectArray(dialog.getSelectedMemberInfos(), MemberInfo.class);
+      myTargetDir = dialog.getTargetDirectory();
+      myJavaDocPolicy = new DocCommentPolicy(dialog.getDocCommentPolicy());
+      try {
+        doRefactoring();
       }
-    }, REFACTORING_NAME, null);
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
+    }), REFACTORING_NAME, null);
   }
 
 
@@ -126,12 +120,7 @@ public class ExtractInterfaceHandler implements RefactoringActionHandler, Elemen
     if (anInterface != null) {
       final SmartPsiElementPointer<PsiClass> classPointer = SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(myClass);
       final SmartPsiElementPointer<PsiClass> interfacePointer = SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(anInterface);
-      final Runnable turnRefsToSuperRunnable = new Runnable() {
-        @Override
-        public void run() {
-          ExtractClassUtil.askAndTurnRefsToSuper(myProject, classPointer, interfacePointer);
-        }
-      };
+      final Runnable turnRefsToSuperRunnable = () -> ExtractClassUtil.askAndTurnRefsToSuper(myProject, classPointer, interfacePointer);
       SwingUtilities.invokeLater(turnRefsToSuperRunnable);
     }
   }

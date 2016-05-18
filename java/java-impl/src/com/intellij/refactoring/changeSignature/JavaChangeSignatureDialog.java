@@ -182,12 +182,9 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
       @Override
       public void actionPerformed(AnActionEvent e) {
         final Ref<JavaCallerChooser> chooser = new Ref<JavaCallerChooser>();
-        Consumer<Set<PsiMethod>> callback = new Consumer<Set<PsiMethod>>() {
-          @Override
-          public void consume(Set<PsiMethod> psiMethods) {
-            myMethodsToPropagateExceptions = psiMethods;
-            myExceptionPropagationTree = chooser.get().getTree();
-          }
+        Consumer<Set<PsiMethod>> callback = psiMethods -> {
+          myMethodsToPropagateExceptions = psiMethods;
+          myExceptionPropagationTree = chooser.get().getTree();
         };
         chooser.set(new JavaCallerChooser(myMethod.getMethod(),
                                           myProject,
@@ -455,12 +452,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
           animator.setStep(48);
           animator.addColumn(defaultValue, (t.getWidth() - 48) / 3);
           animator.addColumn(varArg, 48);
-          animator.startAndDoWhenDone(new Runnable() {
-            @Override
-            public void run() {
-              t.editCellAt(t.getRowCount() - 1, 0);
-            }
-          });
+          animator.startAndDoWhenDone(() -> t.editCellAt(t.getRowCount() - 1, 0));
           animator.start();
         }
       }

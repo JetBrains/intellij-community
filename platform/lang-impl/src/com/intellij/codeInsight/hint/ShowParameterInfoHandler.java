@@ -138,14 +138,11 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
     hint.setSelectingHint(true);
     final HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
     final Pair<Point, Short> pos = ShowParameterInfoContext.chooseBestHintPosition(project, editor, -1, -1, hint, true, HintManager.DEFAULT);
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (!editor.getComponent().isShowing()) return;
-        hintManager.showEditorHint(hint, editor, pos.getFirst(),
-                                   HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_LOOKUP_ITEM_CHANGE | HintManager.UPDATE_BY_SCROLLING,
-                                   0, false, pos.getSecond());
-      }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (!editor.getComponent().isShowing()) return;
+      hintManager.showEditorHint(hint, editor, pos.getFirst(),
+                                 HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_LOOKUP_ITEM_CHANGE | HintManager.UPDATE_BY_SCROLLING,
+                                 0, false, pos.getSecond());
     });
   }
 

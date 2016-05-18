@@ -197,13 +197,10 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
         }
         myContext.getDaemonAnalyzer().queueUpdate(LibraryProjectStructureElement.this);
         final ProjectStructureConfigurable structureConfigurable = ProjectStructureConfigurable.getInstance(myContext.getProject());
-        navigate().doWhenDone(new Runnable() {
-          @Override
-          public void run() {
-            final NamedConfigurable configurable = structureConfigurable.getConfigurableFor(myLibrary).getSelectedConfigurable();
-            if (configurable instanceof LibraryConfigurable) {
-              ((LibraryConfigurable)configurable).updateComponent();
-            }
+        navigate().doWhenDone(() -> {
+          final NamedConfigurable configurable = structureConfigurable.getConfigurableFor(myLibrary).getSelectedConfigurable();
+          if (configurable instanceof LibraryConfigurable) {
+            ((LibraryConfigurable)configurable).updateComponent();
           }
         });
       }

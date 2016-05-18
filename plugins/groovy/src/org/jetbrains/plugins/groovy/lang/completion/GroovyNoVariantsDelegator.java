@@ -83,16 +83,13 @@ public class GroovyNoVariantsDelegator extends CompletionContributor {
   }
 
   private static void suggestNonImportedClasses(CompletionParameters parameters, final CompletionResultSet result) {
-    GrMainCompletionProvider.addAllClasses(parameters, new Consumer<LookupElement>() {
-      @Override
-      public void consume(LookupElement element) {
-        JavaPsiClassReferenceElement classElement =
-          element.as(JavaPsiClassReferenceElement.CLASS_CONDITION_KEY);
-        if (classElement != null) {
-          classElement.setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
-        }
-        result.addElement(element);
+    GrMainCompletionProvider.addAllClasses(parameters, element -> {
+      JavaPsiClassReferenceElement classElement =
+        element.as(JavaPsiClassReferenceElement.CLASS_CONDITION_KEY);
+      if (classElement != null) {
+        classElement.setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
       }
+      result.addElement(element);
     }, new JavaCompletionSession(result), result.getPrefixMatcher());
   }
 

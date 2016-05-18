@@ -360,10 +360,8 @@ public class TypeEvaluator {
       if (types != null) {
         b.append(info.getElement()).append(" : ");
 
-        b.append(StringUtil.join(types, new Function<PsiType, String>() {
-          public String fun(final PsiType psiType) {
-            return psiType.getCanonicalText();
-          }
+        b.append(StringUtil.join(types, psiType -> {
+          return psiType.getCanonicalText();
         }, " "));
 
         b.append("\n");

@@ -75,14 +75,11 @@ public abstract class ClsGenericsHighlightingTest extends UsefulTestCase {
   }
 
   protected void addLibrary(@NotNull final String... libraryPath) {
-    ModuleRootModificationUtil.updateModel(myModule, new Consumer<ModifiableRootModel>() {
-      @Override
-      public void consume(ModifiableRootModel model) {
-        commitLibraryModel(model, myFixture.getTestDataPath(), libraryPath);
+    ModuleRootModificationUtil.updateModel(myModule, model -> {
+      commitLibraryModel(model, myFixture.getTestDataPath(), libraryPath);
 
-        String contentUrl = VfsUtilCore.pathToUrl(myFixture.getTempDirPath());
-        model.addContentEntry(contentUrl).addSourceFolder(contentUrl, false);
-      }
+      String contentUrl = VfsUtilCore.pathToUrl(myFixture.getTempDirPath());
+      model.addContentEntry(contentUrl).addSourceFolder(contentUrl, false);
     });
   }
 

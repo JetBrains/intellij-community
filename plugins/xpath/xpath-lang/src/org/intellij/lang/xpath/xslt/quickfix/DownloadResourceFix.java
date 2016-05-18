@@ -55,17 +55,15 @@ public class DownloadResourceFix implements LocalQuickFix {
     boolean tryAgain = true;
 
     final DownloadManager.DownloadException[] ex = new DownloadManager.DownloadException[1];
-    final Runnable runnable = new Runnable() {
-      public void run() {
-        final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
-        final DownloadManager downloadManager = new MyDownloadManager(project, progress);
+    final Runnable runnable = () -> {
+      final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
+      final DownloadManager downloadManager = new MyDownloadManager(project, progress);
 
-        try {
-          downloadManager.fetch(myLocation);
-        }
-        catch (DownloadManager.DownloadException e) {
-          ex[0] = e;
-        }
+      try {
+        downloadManager.fetch(myLocation);
+      }
+      catch (DownloadManager.DownloadException e) {
+        ex[0] = e;
       }
     };
 

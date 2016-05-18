@@ -141,17 +141,15 @@ public class CompositePrintable implements Printable, Disposable {
 
   public void printFromFrameworkOutputFile(final Printer console) {
     if (myFrameworkOutputFile != null) {
-      final Runnable runnable = new Runnable() {
-        public void run() {
-          final File inputFile = new File(myFrameworkOutputFile);
-          if (inputFile.exists()) {
-            try {
-              final String fileText = FileUtil.loadFile(inputFile);
-              console.print(fileText, ConsoleViewContentType.NORMAL_OUTPUT);
-            }
-            catch (IOException e) {
-              LOG.error(e);
-            }
+      final Runnable runnable = () -> {
+        final File inputFile = new File(myFrameworkOutputFile);
+        if (inputFile.exists()) {
+          try {
+            final String fileText = FileUtil.loadFile(inputFile);
+            console.print(fileText, ConsoleViewContentType.NORMAL_OUTPUT);
+          }
+          catch (IOException e) {
+            LOG.error(e);
           }
         }
       };
@@ -201,47 +199,44 @@ public class CompositePrintable implements Printable, Disposable {
       if (printables.isEmpty()) return;
       final ArrayList<Printable> currentPrintables = new ArrayList<Printable>(printables);
       //move out from AWT thread
-      final Runnable request = new Runnable() {
-        @Override
-        public void run() {
-          synchronized (myFileLock) {
-            for (final Printable printable : currentPrintables) {
-              printable.printOn(myPrinter);
-            }
-            myPrinter.close();
+      final Runnable request = () -> {
+        synchronized (myFileLock) {
+          for (final Printable printable : currentPrintables) {
+            printable.printOn(myPrinter);
           }
-          if (myOutputFile != null && new File(myOutputFile).exists()) {
+          myPrinter.close();
+        }
+        if (myOutputFile != null && new File(myOutputFile).exists()) {
+          try {
+            final PrintStream printStream = new PrintStream(new FileOutputStream(new File(myOutputFile), true));
             try {
-              final PrintStream printStream = new PrintStream(new FileOutputStream(new File(myOutputFile), true));
-              try {
-                for (Printable currentPrintable : currentPrintables) {
-                  currentPrintable.printOn(new Printer() {
-                    @Override
-                    public void print(String text, ConsoleViewContentType contentType) {
-                      if (contentType != ConsoleViewContentType.SYSTEM_OUTPUT) {
-                        printStream.print(text);
-                      }
-                    }
-  
-                    @Override
-                    public void printHyperlink(String text, HyperlinkInfo info) {
+              for (Printable currentPrintable : currentPrintables) {
+                currentPrintable.printOn(new Printer() {
+                  @Override
+                  public void print(String text, ConsoleViewContentType contentType) {
+                    if (contentType != ConsoleViewContentType.SYSTEM_OUTPUT) {
                       printStream.print(text);
                     }
-  
-                    @Override
-                    public void onNewAvailable(@NotNull Printable printable) {}
-                    @Override
-                    public void mark() {}
-                  });
-                }
-              }
-              finally {
-                printStream.close();
+                  }
+
+                  @Override
+                  public void printHyperlink(String text, HyperlinkInfo info) {
+                    printStream.print(text);
+                  }
+
+                  @Override
+                  public void onNewAvailable(@NotNull Printable printable) {}
+                  @Override
+                  public void mark() {}
+                });
               }
             }
-            catch (IOException e) {
-              LOG.error(e);
+            finally {
+              printStream.close();
             }
+          }
+          catch (IOException e) {
+            LOG.error(e);
           }
         }
       };
@@ -253,17 +248,14 @@ public class CompositePrintable implements Printable, Disposable {
     }
 
     public void printOn(final Printer console, final List<Printable> printables, final boolean skipFileContent) {
-      final Runnable request = new Runnable() {
-        @Override
-        public void run() {
-          if (skipFileContent) {
-            readFileContentAndPrint(console, null, printables);
-            return;
-          }
-          final File file = hasOutput() ? getFile() : null;
-          synchronized (myFileLock) {
-            readFileContentAndPrint(console, file, printables);
-          }
+      final Runnable request = () -> {
+        if (skipFileContent) {
+          readFileContentAndPrint(console, null, printables);
+          return;
+        }
+        final File file = hasOutput() ? getFile() : null;
+        synchronized (myFileLock) {
+          readFileContentAndPrint(console, file, printables);
         }
       };
       invokeInAlarm(request);

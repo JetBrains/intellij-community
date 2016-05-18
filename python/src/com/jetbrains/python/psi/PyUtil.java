@@ -491,13 +491,10 @@ public class PyUtil {
       File pycache = new File(file.getParentFile(), PyNames.PYCACHE);
       if (pycache.isDirectory()) {
         final String shortName = FileUtil.getNameWithoutExtension(file);
-        Collections.addAll(filesToDelete, pycache.listFiles(new FileFilter() {
-          @Override
-          public boolean accept(File pathname) {
-            if (!FileUtilRt.extensionEquals(pathname.getName(), "pyc")) return false;
-            String nameWithMagic = FileUtil.getNameWithoutExtension(pathname);
-            return FileUtil.getNameWithoutExtension(nameWithMagic).equals(shortName);
-          }
+        Collections.addAll(filesToDelete, pycache.listFiles(pathname -> {
+          if (!FileUtilRt.extensionEquals(pathname.getName(), "pyc")) return false;
+          String nameWithMagic = FileUtil.getNameWithoutExtension(pathname);
+          return FileUtil.getNameWithoutExtension(nameWithMagic).equals(shortName);
         }));
       }
       FileUtil.asyncDelete(filesToDelete);
@@ -831,17 +828,14 @@ public class PyUtil {
    * Force re-highlighting in all open editors that belong to specified project.
    */
   public static void rehighlightOpenEditors(final @NotNull Project project) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
+    ApplicationManager.getApplication().runWriteAction(() -> {
 
-        for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
-          if (editor instanceof EditorEx && editor.getProject() == project) {
-            final VirtualFile vFile = ((EditorEx)editor).getVirtualFile();
-            if (vFile != null) {
-              final EditorHighlighter highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(project, vFile);
-              ((EditorEx)editor).setHighlighter(highlighter);
-            }
+      for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
+        if (editor instanceof EditorEx && editor.getProject() == project) {
+          final VirtualFile vFile = ((EditorEx)editor).getVirtualFile();
+          if (vFile != null) {
+            final EditorHighlighter highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(project, vFile);
+            ((EditorEx)editor).setHighlighter(highlighter);
           }
         }
       }

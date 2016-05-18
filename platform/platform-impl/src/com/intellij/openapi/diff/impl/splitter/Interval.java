@@ -18,18 +18,14 @@ package com.intellij.openapi.diff.impl.splitter;
 import java.util.Comparator;
 
 public class Interval {
-  public static final Comparator START_COMPARATOR = new Comparator() {
-    public int compare(Object o1, Object o2) {
-      if (o1 instanceof Interval) return ((Interval) o1).compareToStart((Integer) o2);
-      return -((Interval) o2).compareToStart((Integer) o1);
-    }
+  public static final Comparator START_COMPARATOR = (o1, o2) -> {
+    if (o1 instanceof Interval) return ((Interval) o1).compareToStart((Integer) o2);
+    return -((Interval) o2).compareToStart((Integer) o1);
   };
 
-  public static final Comparator END_COMPARATOR = new Comparator() {
-    public int compare(Object o1, Object o2) {
-      if (o1 instanceof Interval) return ((Interval) o1).compareToEnd((Integer) o2);
-      return -((Interval)o2).compareToEnd((Integer) o1);
-    }
+  public static final Comparator END_COMPARATOR = (o1, o2) -> {
+    if (o1 instanceof Interval) return ((Interval) o1).compareToEnd((Integer) o2);
+    return -((Interval)o2).compareToEnd((Integer) o1);
   };
   private final int myStart;
   private final int myLength;

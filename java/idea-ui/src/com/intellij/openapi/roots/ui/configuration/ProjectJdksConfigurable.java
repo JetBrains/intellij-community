@@ -163,12 +163,9 @@ public class ProjectJdksConfigurable extends MasterDetailsComponent {
     final ArrayList<AnAction> actions = new ArrayList<AnAction>();
     DefaultActionGroup group = new DefaultActionGroup(ProjectBundle.message("add.new.jdk.text"), true);
     group.getTemplatePresentation().setIcon(IconUtil.getAddIcon());
-    myProjectJdksModel.createAddActions(group, myTree, new Consumer<Sdk>() {
-      @Override
-      public void consume(final Sdk projectJdk) {
-        addNode(new MyNode(new JdkConfigurable(((ProjectJdkImpl)projectJdk), myProjectJdksModel, TREE_UPDATER, myHistory, myProject), false), myRoot);
-        selectNodeInTree(findNodeByObject(myRoot, projectJdk));
-      }
+    myProjectJdksModel.createAddActions(group, myTree, projectJdk -> {
+      addNode(new MyNode(new JdkConfigurable(((ProjectJdkImpl)projectJdk), myProjectJdksModel, TREE_UPDATER, myHistory, myProject), false), myRoot);
+      selectNodeInTree(findNodeByObject(myRoot, projectJdk));
     });
     actions.add(new MyActionGroupWrapper(group));
     actions.add(new MyDeleteAction(Conditions.<Object[]>alwaysTrue()));

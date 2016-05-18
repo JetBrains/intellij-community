@@ -138,15 +138,12 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
     if (message != null) {
       final ArrayList<LocalQuickFix> fixes = new ArrayList<LocalQuickFix>();
       fixes.add(getFix(processor, needToDeleteHierarchy));
-      SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes(refMethod.getElement(), new Processor<String>() {
-        @Override
-        public boolean process(final String qualifiedName) {
-          fixes.add(SpecialAnnotationsUtilBase.createAddToSpecialAnnotationsListQuickFix(
-            QuickFixBundle.message("fix.add.special.annotation.text", qualifiedName),
-            QuickFixBundle.message("fix.add.special.annotation.family"),
-            EXCLUDE_ANNOS, qualifiedName, refMethod.getElement()));
-          return true;
-        }
+      SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes(refMethod.getElement(), qualifiedName -> {
+        fixes.add(SpecialAnnotationsUtilBase.createAddToSpecialAnnotationsListQuickFix(
+          QuickFixBundle.message("fix.add.special.annotation.text", qualifiedName),
+          QuickFixBundle.message("fix.add.special.annotation.family"),
+          EXCLUDE_ANNOS, qualifiedName, refMethod.getElement()));
+        return true;
       });
 
       final ProblemDescriptor descriptor = manager.createProblemDescriptor(refMethod.getElement().getNavigationElement(), message, false,
@@ -328,22 +325,16 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
         psiElements.add(psiMethod);
         if (Boolean.valueOf(myHint).booleanValue()) {
           final Query<Pair<PsiMethod, PsiMethod>> query = AllOverridingMethodsSearch.search(psiMethod.getContainingClass());
-          query.forEach(new Processor<Pair<PsiMethod, PsiMethod>>() {
-            @Override
-            public boolean process(final Pair<PsiMethod, PsiMethod> pair) {
-              if (pair.first == psiMethod) {
-                psiElements.add(pair.second);
-              }
-              return true;
+          query.forEach(pair -> {
+            if (pair.first == psiMethod) {
+              psiElements.add(pair.second);
             }
+            return true;
           });
         }
 
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            SafeDeleteHandler.invoke(project, PsiUtilCore.toPsiElementArray(psiElements), false);
-          }
+        ApplicationManager.getApplication().invokeLater(() -> {
+          SafeDeleteHandler.invoke(project, PsiUtilCore.toPsiElementArray(psiElements), false);
         }, project.getDisposed());
       }
     }
@@ -408,11 +399,8 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
           }
         }
       }
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          SafeDeleteHandler.invoke(project, PsiUtilCore.toPsiElementArray(psiElementsToIgnore), false, refreshViews);
-        }
+      ApplicationManager.getApplication().invokeLater(() -> {
+        SafeDeleteHandler.invoke(project, PsiUtilCore.toPsiElementArray(psiElementsToIgnore), false, refreshViews);
       }, project.getDisposed());
     }
   }

@@ -134,14 +134,11 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
     final FindModel copy = new FindModel();
     copy.copyFrom(findModel);
 
-    Runnable request = new Runnable() {
-      @Override
-      public void run() {
-        if (myDisposed) return;
-        Project project = mySearchResults.getProject();
-        if (project != null && project.isDisposed()) return;
-        mySearchResults.updateThreadSafe(copy, allowedToChangedEditorSelection, null, stamp);
-      }
+    Runnable request = () -> {
+      if (myDisposed) return;
+      Project project = mySearchResults.getProject();
+      if (project != null && project.isDisposed()) return;
+      mySearchResults.updateThreadSafe(copy, allowedToChangedEditorSelection, null, stamp);
     };
     if (unitTestMode) {
       request.run();

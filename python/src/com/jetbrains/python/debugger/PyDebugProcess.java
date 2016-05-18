@@ -257,12 +257,8 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
             myProcessHandler.destroyProcess();
           }
           if (!myClosing) {
-            invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                Messages.showErrorDialog("Unable to establish connection with debugger:\n" + e.getMessage(), getConnectionTitle());
-              }
-            });
+            invokeLater(
+              () -> Messages.showErrorDialog("Unable to establish connection with debugger:\n" + e.getMessage(), getConnectionTitle()));
           }
         }
       }
@@ -308,12 +304,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   public void showConsole(PyThreadInfo thread) {
     myConsoleContextFrame = new PyExecutionStack(this, thread).getTopFrame();
     if (myExecutionConsole instanceof PythonDebugLanguageConsoleView) {
-      UIUtil.invokeLaterIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          ((PythonDebugLanguageConsoleView)myExecutionConsole).enableConsole(false);
-        }
-      });
+      UIUtil.invokeLaterIfNeeded(() -> ((PythonDebugLanguageConsoleView)myExecutionConsole).enableConsole(false));
     }
   }
 

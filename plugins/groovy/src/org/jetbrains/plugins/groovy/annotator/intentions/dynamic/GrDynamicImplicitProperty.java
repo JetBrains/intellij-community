@@ -107,52 +107,49 @@ public class GrDynamicImplicitProperty extends GrImplicitVariableImpl implements
       super.navigate(requestFocus);
       return;
     }
-    DynamicToolWindowWrapper.getInstance(myProject).getToolWindow().activate(new Runnable() {
-      @Override
-      public void run() {
-        DynamicToolWindowWrapper toolWindowWrapper = DynamicToolWindowWrapper.getInstance(myProject);
-        final TreeTable treeTable = toolWindowWrapper.getTreeTable();
-        final ListTreeTableModelOnColumns model = toolWindowWrapper.getTreeTableModel();
+    DynamicToolWindowWrapper.getInstance(myProject).getToolWindow().activate(() -> {
+      DynamicToolWindowWrapper toolWindowWrapper = DynamicToolWindowWrapper.getInstance(myProject);
+      final TreeTable treeTable = toolWindowWrapper.getTreeTable();
+      final ListTreeTableModelOnColumns model = toolWindowWrapper.getTreeTableModel();
 
-        Object root = model.getRoot();
+      Object root = model.getRoot();
 
-        if (root == null || !(root instanceof DefaultMutableTreeNode)) return;
+      if (root == null || !(root instanceof DefaultMutableTreeNode)) return;
 
-        DefaultMutableTreeNode treeRoot = ((DefaultMutableTreeNode) root);
-        final PsiClass psiClass = getContainingClassElement();
-        if (psiClass == null) return;
+      DefaultMutableTreeNode treeRoot = ((DefaultMutableTreeNode) root);
+      final PsiClass psiClass = getContainingClassElement();
+      if (psiClass == null) return;
 
-        final DefaultMutableTreeNode desiredNode;
-        DPropertyElement dynamicProperty = null;
-        PsiClass trueSuper = null;
-        for (PsiClass aSuper : PsiUtil.iterateSupers(psiClass, true)) {
-          dynamicProperty = DynamicManager.getInstance(myProject).findConcreteDynamicProperty(aSuper.getQualifiedName(), getName());
+      final DefaultMutableTreeNode desiredNode;
+      DPropertyElement dynamicProperty = null;
+      PsiClass trueSuper = null;
+      for (PsiClass aSuper : PsiUtil.iterateSupers(psiClass, true)) {
+        dynamicProperty = DynamicManager.getInstance(myProject).findConcreteDynamicProperty(aSuper.getQualifiedName(), getName());
 
-          if (dynamicProperty != null) {
-            trueSuper = aSuper;
-            break;
-          }
+        if (dynamicProperty != null) {
+          trueSuper = aSuper;
+          break;
         }
-
-        if (trueSuper == null) return;
-
-        final DefaultMutableTreeNode classNode = TreeUtil.findNodeWithObject(treeRoot, new DClassElement(myProject, trueSuper.getQualifiedName()));
-        if (classNode == null) return;
-
-        desiredNode = TreeUtil.findNodeWithObject(classNode, dynamicProperty);
-
-        if (desiredNode == null) return;
-        final TreePath path = TreeUtil.getPathFromRoot(desiredNode);
-
-        treeTable.getTree().expandPath(path);
-        treeTable.getTree().setSelectionPath(path);
-        treeTable.getTree().fireTreeExpanded(path);
-
-        ToolWindowManager.getInstance(myProject).getFocusManager().requestFocus(treeTable, true);
-        treeTable.revalidate();
-        treeTable.repaint();
-
       }
+
+      if (trueSuper == null) return;
+
+      final DefaultMutableTreeNode classNode = TreeUtil.findNodeWithObject(treeRoot, new DClassElement(myProject, trueSuper.getQualifiedName()));
+      if (classNode == null) return;
+
+      desiredNode = TreeUtil.findNodeWithObject(classNode, dynamicProperty);
+
+      if (desiredNode == null) return;
+      final TreePath path = TreeUtil.getPathFromRoot(desiredNode);
+
+      treeTable.getTree().expandPath(path);
+      treeTable.getTree().setSelectionPath(path);
+      treeTable.getTree().fireTreeExpanded(path);
+
+      ToolWindowManager.getInstance(myProject).getFocusManager().requestFocus(treeTable, true);
+      treeTable.revalidate();
+      treeTable.repaint();
+
     }, true);
   }
 

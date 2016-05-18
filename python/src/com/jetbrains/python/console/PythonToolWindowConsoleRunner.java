@@ -49,10 +49,7 @@ public class PythonToolWindowConsoleRunner extends PydevConsoleRunner {
 
   @Override
   public void open() {
-    getToolWindow().activate(new Runnable() {
-      @Override
-      public void run() {
-      }
+    getToolWindow().activate(() -> {
     }, true);
   }
 

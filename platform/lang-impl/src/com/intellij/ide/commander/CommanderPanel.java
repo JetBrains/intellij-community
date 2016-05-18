@@ -576,20 +576,14 @@ public class CommanderPanel extends JPanel {
       if (!isDirectory) {
         EditorHelper.openInEditor(element);
       }
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          myBuilder.selectElement(element, PsiUtilCore.getVirtualFile(element));
-          if (!isDirectory) {
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                if (myMoveFocus) {
-                  ToolWindowManager.getInstance(myProject).activateEditorComponent();
-                }
-              }
-            });
-          }
+      ApplicationManager.getApplication().invokeLater(() -> {
+        myBuilder.selectElement(element, PsiUtilCore.getVirtualFile(element));
+        if (!isDirectory) {
+          ApplicationManager.getApplication().invokeLater(() -> {
+            if (myMoveFocus) {
+              ToolWindowManager.getInstance(myProject).activateEditorComponent();
+            }
+          });
         }
       }, ModalityState.NON_MODAL);
     }

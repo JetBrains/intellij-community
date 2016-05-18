@@ -179,23 +179,20 @@ public class PyDebugValue extends XNamedValue {
   @Override
   public void computeChildren(@NotNull final XCompositeNode node) {
     if (node.isObsolete()) return;
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        if (myFrameAccessor == null) return;
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      if (myFrameAccessor == null) return;
 
-        try {
-          final XValueChildrenList values = myFrameAccessor.loadVariable(PyDebugValue.this);
-          if (!node.isObsolete()) {
-            node.addChildren(values, true);
-          }
+      try {
+        final XValueChildrenList values = myFrameAccessor.loadVariable(PyDebugValue.this);
+        if (!node.isObsolete()) {
+          node.addChildren(values, true);
         }
-        catch (PyDebuggerException e) {
-          if (!node.isObsolete()) {
-            node.setErrorMessage("Unable to display children:" + e.getMessage());
-          }
-          LOG.warn(e);
+      }
+      catch (PyDebuggerException e) {
+        if (!node.isObsolete()) {
+          node.setErrorMessage("Unable to display children:" + e.getMessage());
         }
+        LOG.warn(e);
       }
     });
   }

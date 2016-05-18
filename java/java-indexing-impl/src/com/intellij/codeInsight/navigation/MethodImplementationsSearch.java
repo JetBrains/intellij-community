@@ -42,11 +42,8 @@ public class MethodImplementationsSearch implements QueryExecutor<PsiElement, De
 
   public static boolean processImplementations(final PsiMethod psiMethod, final Processor<PsiElement> consumer,
                                                final SearchScope searchScope) {
-    if (!FunctionalExpressionSearch.search(psiMethod, searchScope).forEach(new Processor<PsiFunctionalExpression>() {
-      @Override
-      public boolean process(PsiFunctionalExpression expression) {
-        return consumer.process(expression);
-      }
+    if (!FunctionalExpressionSearch.search(psiMethod, searchScope).forEach(expression -> {
+      return consumer.process(expression);
     })) {
       return false;
     }

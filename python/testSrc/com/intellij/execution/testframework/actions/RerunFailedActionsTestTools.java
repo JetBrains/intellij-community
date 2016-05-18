@@ -38,12 +38,7 @@ public final class RerunFailedActionsTestTools {
       return null;
     }
     final Ref<ExecutionEnvironment> stateRef = new Ref<ExecutionEnvironment>();
-    UsefulTestCase.edt(new Runnable() {
-      @Override
-      public void run() {
-        stateRef.set(ExecutionEnvironmentBuilder.create(DefaultRunExecutor.getRunExecutorInstance(), profile).build());
-      }
-    });
+    UsefulTestCase.edt(() -> stateRef.set(ExecutionEnvironmentBuilder.create(DefaultRunExecutor.getRunExecutorInstance(), profile).build()));
     return stateRef.get();
   }
 
@@ -61,15 +56,12 @@ public final class RerunFailedActionsTestTools {
       return null;
     }
     final Ref<RunProfileState> stateRef = new Ref<RunProfileState>();
-    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          stateRef.set(action.getState());
-        }
-        catch (final ExecutionException e) {
-          throw new IllegalStateException("Error obtaining execution state", e);
-        }
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      try {
+        stateRef.set(action.getState());
+      }
+      catch (final ExecutionException e) {
+        throw new IllegalStateException("Error obtaining execution state", e);
       }
     }, ModalityState.NON_MODAL);
 

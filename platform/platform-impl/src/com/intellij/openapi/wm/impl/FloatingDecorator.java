@@ -148,12 +148,7 @@ public final class FloatingDecorator extends JDialog {
       Disposer.dispose(myDisposable);
     } else {
       if (isShowing()) {
-        SwingUtilities.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          show();
-        }
-      });
+        SwingUtilities.invokeLater(() -> show());
       }
     }
     super.dispose();
@@ -176,16 +171,14 @@ public final class FloatingDecorator extends JDialog {
         myFrameTicker.addRequest(myAnimator,DELAY);
       }else{ // make window transparent
         myDelayAlarm.addRequest(
-          new Runnable(){
-            public void run(){
-              myFrameTicker.cancelAllRequests();
-              myStartRatio=getCurrentAlphaRatio();
-              if(myCurrentFrame>0){
-                myCurrentFrame=TOTAL_FRAME_COUNT-myCurrentFrame;
-              }
-              myEndRatio=uiSettings.ALPHA_MODE_RATIO;
-              myFrameTicker.addRequest(myAnimator,DELAY);
+          () -> {
+            myFrameTicker.cancelAllRequests();
+            myStartRatio=getCurrentAlphaRatio();
+            if(myCurrentFrame>0){
+              myCurrentFrame=TOTAL_FRAME_COUNT-myCurrentFrame;
             }
+            myEndRatio=uiSettings.ALPHA_MODE_RATIO;
+            myFrameTicker.addRequest(myAnimator,DELAY);
           },
           uiSettings.ALPHA_MODE_DELAY
         );

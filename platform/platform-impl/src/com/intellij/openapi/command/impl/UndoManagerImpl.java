@@ -163,12 +163,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
       runStartupActivity();
     }
     else {
-      myStartupManager.registerStartupActivity(new Runnable() {
-        @Override
-        public void run() {
-          runStartupActivity();
-        }
-      });
+      myStartupManager.registerStartupActivity(() -> runStartupActivity());
     }
   }
 
@@ -421,22 +416,19 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     myCurrentOperationState = isUndo ? UNDO : REDO;
 
     final RuntimeException[] exception = new RuntimeException[1];
-    Runnable executeUndoOrRedoAction = new Runnable() {
-      @Override
-      public void run() {
-        try {
-          if (myProject != null) {
-            PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-          }
-          CopyPasteManager.getInstance().stopKillRings();
-          myMerger.undoOrRedo(editor, isUndo);
+    Runnable executeUndoOrRedoAction = () -> {
+      try {
+        if (myProject != null) {
+          PsiDocumentManager.getInstance(myProject).commitAllDocuments();
         }
-        catch (RuntimeException ex) {
-          exception[0] = ex;
-        }
-        finally {
-          myCurrentOperationState = NONE;
-        }
+        CopyPasteManager.getInstance().stopKillRings();
+        myMerger.undoOrRedo(editor, isUndo);
+      }
+      catch (RuntimeException ex) {
+        exception[0] = ex;
+      }
+      finally {
+        myCurrentOperationState = NONE;
       }
     };
 
@@ -612,12 +604,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     if (refs.size() <= FREE_QUEUES_LIMIT) return;
 
     DocumentReference[] backSorted = refs.toArray(new DocumentReference[refs.size()]);
-    Arrays.sort(backSorted, new Comparator<DocumentReference>() {
-      @Override
-      public int compare(DocumentReference a, DocumentReference b) {
-        return getLastCommandTimestamp(a) - getLastCommandTimestamp(b);
-      }
-    });
+    Arrays.sort(backSorted, (a, b) -> getLastCommandTimestamp(a) - getLastCommandTimestamp(b));
 
     for (int i = 0; i < backSorted.length - FREE_QUEUES_LIMIT; i++) {
       DocumentReference each = backSorted[i];

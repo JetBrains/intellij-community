@@ -67,14 +67,11 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
       public void selectionChanged(@NotNull FileEditorManagerEvent event) {
         if (!isValid()) return;
 
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            if (myUndoHelper.isShowing() && !getComponent().isShowing()) {
-              deselectNotify();
-            } else if (!myUndoHelper.isShowing() && getComponent().isShowing()) {
-              selectNotify();
-            }
+        ApplicationManager.getApplication().invokeLater(() -> {
+          if (myUndoHelper.isShowing() && !getComponent().isShowing()) {
+            deselectNotify();
+          } else if (!myUndoHelper.isShowing() && getComponent().isShowing()) {
+            selectNotify();
           }
         });
 

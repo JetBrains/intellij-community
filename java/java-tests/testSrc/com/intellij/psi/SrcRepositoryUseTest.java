@@ -629,11 +629,8 @@ public class SrcRepositoryUseTest extends PsiTestCase{
     PsiClass aClass = myJavaFacade.findClass("pack.MyClass2", GlobalSearchScope.allScope(myProject));
     assertNotNull(aClass);
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        aClass.getNameIdentifier().replace(myJavaFacade.getElementFactory().createIdentifier("NewName"));
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      aClass.getNameIdentifier().replace(myJavaFacade.getElementFactory().createIdentifier("NewName"));
     });
 
     assertEquals("pack.NewName", aClass.getQualifiedName());
@@ -644,11 +641,8 @@ public class SrcRepositoryUseTest extends PsiTestCase{
     assertNotNull(aClass);
 
     PsiField field = aClass.getFields()[0];
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        aClass.getNameIdentifier().replace(myJavaFacade.getElementFactory().createIdentifier("NewName"));
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      aClass.getNameIdentifier().replace(myJavaFacade.getElementFactory().createIdentifier("NewName"));
     });
 
     assertTrue(field.isValid());
@@ -656,11 +650,8 @@ public class SrcRepositoryUseTest extends PsiTestCase{
 
   public void testModification2() throws Exception {
     PsiClass aClass = myJavaFacade.findClass("pack.MyClass2", GlobalSearchScope.allScope(myProject));
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        PsiUtil.setModifierProperty(aClass, PsiModifier.FINAL, true);
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      PsiUtil.setModifierProperty(aClass, PsiModifier.FINAL, true);
     });
 
 
@@ -675,19 +666,13 @@ public class SrcRepositoryUseTest extends PsiTestCase{
 
     BlockSupport blockSupport = ServiceManager.getService(myProject, BlockSupport.class);
     final PsiFile psiFile = aClass.getContainingFile();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        blockSupport.reparseRange(psiFile, classRange.getStartOffset(), classRange.getEndOffset(), "");
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      blockSupport.reparseRange(psiFile, classRange.getStartOffset(), classRange.getEndOffset(), "");
     });
 
     LOG.assertTrue(!aClass.isValid());
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        blockSupport.reparseRange(psiFile, classRange.getStartOffset(), classRange.getStartOffset(), text);
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      blockSupport.reparseRange(psiFile, classRange.getStartOffset(), classRange.getStartOffset(), text);
     });
 
 
@@ -748,27 +733,24 @@ public class SrcRepositoryUseTest extends PsiTestCase{
 
   private void replaceSourceRoot(final VirtualFile newSourceRoot) {
     ApplicationManager.getApplication().runWriteAction(
-        new Runnable() {
-          @Override
-          public void run() {
-            final ModifiableRootModel rootModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
-            final ContentEntry[] content = rootModel.getContentEntries();
-            boolean contentToChangeFound = false;
-            for (ContentEntry contentEntry : content) {
-              final SourceFolder[] sourceFolders = contentEntry.getSourceFolders();
-              for (SourceFolder sourceFolder : sourceFolders) {
-                contentEntry.removeSourceFolder(sourceFolder);
-              }
-              final VirtualFile contentRoot = contentEntry.getFile();
-              if (contentRoot != null && VfsUtilCore.isAncestor(contentRoot, newSourceRoot, false)) {
-                contentEntry.addSourceFolder(newSourceRoot, false);
-                contentToChangeFound = true;
-              }
-            }
-            assertTrue(contentToChangeFound);
-            rootModel.commit();
+      () -> {
+        final ModifiableRootModel rootModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
+        final ContentEntry[] content = rootModel.getContentEntries();
+        boolean contentToChangeFound = false;
+        for (ContentEntry contentEntry : content) {
+          final SourceFolder[] sourceFolders = contentEntry.getSourceFolders();
+          for (SourceFolder sourceFolder : sourceFolders) {
+            contentEntry.removeSourceFolder(sourceFolder);
+          }
+          final VirtualFile contentRoot = contentEntry.getFile();
+          if (contentRoot != null && VfsUtilCore.isAncestor(contentRoot, newSourceRoot, false)) {
+            contentEntry.addSourceFolder(newSourceRoot, false);
+            contentToChangeFound = true;
           }
         }
+        assertTrue(contentToChangeFound);
+        rootModel.commit();
+      }
     );
   }
 
@@ -782,11 +764,8 @@ public class SrcRepositoryUseTest extends PsiTestCase{
     PsiMethod[] methods = nonAnonClass.getMethods();
     assertEquals(1, methods.length);
     PsiTypeElement newType = myJavaFacade.getElementFactory().createTypeElement(PsiType.FLOAT);
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        methods[0].getReturnTypeElement().replace(newType);
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      methods[0].getReturnTypeElement().replace(newType);
     });
   }
 

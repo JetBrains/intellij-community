@@ -65,12 +65,7 @@ public class InvertBooleanProcessor extends BaseRefactoringProcessor {
       @NotNull
       @Override
       protected ConflictsDialog createConflictsDialog(@NotNull MultiMap<PsiElement, String> conflicts, @Nullable final UsageInfo[] usages) {
-        return new ConflictsDialog(myProject, conflicts, usages == null ? null : new Runnable() {
-          @Override
-          public void run() {
-            InvertBooleanProcessor.this.execute(usages);
-          }
-        }, false, true);
+        return new ConflictsDialog(myProject, conflicts, usages == null ? null : (Runnable)() -> InvertBooleanProcessor.this.execute(usages), false, true);
       }
 
       @Override

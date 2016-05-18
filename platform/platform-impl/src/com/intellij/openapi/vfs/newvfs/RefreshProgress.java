@@ -60,24 +60,22 @@ public class RefreshProgress extends ProgressIndicatorBase {
 
   private void updateIndicators(final boolean start) {
     // wrapping in invokeLater here reduces the number of events posted to EDT in case of multiple IDE frames
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      public void run() {
-        if (ApplicationManager.getApplication().isDisposed()) return;
+    UIUtil.invokeLaterIfNeeded(() -> {
+      if (ApplicationManager.getApplication().isDisposed()) return;
 
-        WindowManager windowManager = WindowManager.getInstance();
-        if (windowManager == null) return;
+      WindowManager windowManager = WindowManager.getInstance();
+      if (windowManager == null) return;
 
-        Project[] projects = ProjectManager.getInstance().getOpenProjects();
-        if (projects.length == 0) projects = NULL_ARRAY;
-        for (Project project : projects) {
-          StatusBarEx statusBar = (StatusBarEx)windowManager.getStatusBar(project);
-          if (statusBar != null) {
-            if (start) {
-              statusBar.startRefreshIndication(myMessage);
-            }
-            else {
-              statusBar.stopRefreshIndication();
-            }
+      Project[] projects = ProjectManager.getInstance().getOpenProjects();
+      if (projects.length == 0) projects = NULL_ARRAY;
+      for (Project project : projects) {
+        StatusBarEx statusBar = (StatusBarEx)windowManager.getStatusBar(project);
+        if (statusBar != null) {
+          if (start) {
+            statusBar.startRefreshIndication(myMessage);
+          }
+          else {
+            statusBar.stopRefreshIndication();
           }
         }
       }

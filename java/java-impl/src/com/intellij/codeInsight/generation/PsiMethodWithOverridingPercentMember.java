@@ -53,26 +53,23 @@ public class PsiMethodWithOverridingPercentMember extends PsiMethodMember {
     return myOverridingPercent;
   }
 
-  public static final Comparator<PsiMethodMember> COMPARATOR = new Comparator<PsiMethodMember>() {
-    @Override
-    public int compare(PsiMethodMember e1, PsiMethodMember e2) {
-      if (!(e1 instanceof PsiMethodWithOverridingPercentMember)) {
-        if (!(e2 instanceof PsiMethodWithOverridingPercentMember)) {
-          return e1.equals(e2) ? 0 : -1;
-        } else {
-          return -1;
-        }
-      }
-
-
+  public static final Comparator<PsiMethodMember> COMPARATOR = (e1, e2) -> {
+    if (!(e1 instanceof PsiMethodWithOverridingPercentMember)) {
       if (!(e2 instanceof PsiMethodWithOverridingPercentMember)) {
-        return 1;
+        return e1.equals(e2) ? 0 : -1;
+      } else {
+        return -1;
       }
-      int sub =
-        ((PsiMethodWithOverridingPercentMember)e2).myOverridingPercent - ((PsiMethodWithOverridingPercentMember)e1).myOverridingPercent;
-      if (sub != 0) return sub;
-      return String.CASE_INSENSITIVE_ORDER.compare(e1.getText(), e2.getText());
     }
+
+
+    if (!(e2 instanceof PsiMethodWithOverridingPercentMember)) {
+      return 1;
+    }
+    int sub =
+      ((PsiMethodWithOverridingPercentMember)e2).myOverridingPercent - ((PsiMethodWithOverridingPercentMember)e1).myOverridingPercent;
+    if (sub != 0) return sub;
+    return String.CASE_INSENSITIVE_ORDER.compare(e1.getText(), e2.getText());
   };
 
   @NotNull

@@ -116,21 +116,18 @@ public class PyStackFrame extends XStackFrame {
   @Override
   public void computeChildren(@NotNull final XCompositeNode node) {
     if (node.isObsolete()) return;
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          XValueChildrenList values = myDebugProcess.loadFrame();
-          if (!node.isObsolete()) {
-            addChildren(node, values);
-          }
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      try {
+        XValueChildrenList values = myDebugProcess.loadFrame();
+        if (!node.isObsolete()) {
+          addChildren(node, values);
         }
-        catch (PyDebuggerException e) {
-          if (!node.isObsolete()) {
-            node.setErrorMessage("Unable to display frame variables");
-          }
-          LOG.warn(e);
+      }
+      catch (PyDebuggerException e) {
+        if (!node.isObsolete()) {
+          node.setErrorMessage("Unable to display frame variables");
         }
+        LOG.warn(e);
       }
     });
   }

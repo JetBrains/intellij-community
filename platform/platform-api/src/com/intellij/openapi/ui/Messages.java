@@ -639,12 +639,7 @@ public class Messages {
                                                final int defaultOptionIndex, final int focusedOptionIndex, Icon icon) {
     return showCheckboxMessageDialog(message, title, new String[]{OK_BUTTON, CANCEL_BUTTON}, checkboxText, checked, defaultOptionIndex,
                                      focusedOptionIndex, icon,
-                                     new PairFunction<Integer, JCheckBox, Integer>() {
-                                       @Override
-                                       public Integer fun(final Integer exitCode, final JCheckBox cb) {
-                                         return exitCode == -1 ? CANCEL : exitCode + (cb.isSelected() ? 1 : 0);
-                                       }
-                                     });
+                                     (exitCode, cb) -> exitCode == -1 ? CANCEL : exitCode + (cb.isSelected() ? 1 : 0));
   }
 
   public static int showCheckboxMessageDialog(String message, @Nls(capitalization = Nls.Capitalization.Title) String title, @NotNull String[] options, String checkboxText, final boolean checked,
@@ -1221,12 +1216,9 @@ public class Messages {
       builder.setTitle(rawText);
       builder.addOkAction();
       builder.addCancelAction();
-      builder.setOkOperation(new Runnable() {
-        @Override
-        public void run() {
-          textField.setText(lineJoiner.fun(Arrays.asList(StringUtil.splitByLines(textArea.getText()))));
-          builder.getDialogWrapper().close(DialogWrapper.OK_EXIT_CODE);
-        }
+      builder.setOkOperation(() -> {
+        textField.setText(lineJoiner.fun(Arrays.asList(StringUtil.splitByLines(textArea.getText()))));
+        builder.getDialogWrapper().close(DialogWrapper.OK_EXIT_CODE);
       });
       builder.show();
     }

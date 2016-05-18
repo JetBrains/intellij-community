@@ -824,11 +824,8 @@ public class HighlightInfo implements Segment {
         else {
           SuppressQuickFix[] suppressFixes = wrappedTool.getBatchSuppressActions(element);
           if (suppressFixes.length > 0) {
-            ContainerUtil.addAll(newOptions, ContainerUtil.map(suppressFixes, new Function<SuppressQuickFix, IntentionAction>() {
-              @Override
-              public IntentionAction fun(SuppressQuickFix fix) {
-                return SuppressIntentionActionFromFix.convertBatchToSuppressIntentionAction(fix);
-              }
+            ContainerUtil.addAll(newOptions, ContainerUtil.map(suppressFixes, (Function<SuppressQuickFix, IntentionAction>)fix -> {
+              return SuppressIntentionActionFromFix.convertBatchToSuppressIntentionAction(fix);
             }));
           }
         }

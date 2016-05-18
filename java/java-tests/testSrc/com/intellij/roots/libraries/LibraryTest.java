@@ -112,11 +112,8 @@ public class LibraryTest extends ModuleRootManagerTestCase {
   }
 
   private static void commit(LibraryTable.ModifiableModel model) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        model.commit();
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      model.commit();
     });
   }
 

@@ -363,96 +363,93 @@ public class JavaCompletionContributor extends CompletionContributor {
     final boolean isAfterNew = JavaClassNameCompletionContributor.AFTER_NEW.accepts(position);
     final boolean pkgContext = JavaCompletionUtil.inSomePackage(position);
     final PsiType[] expectedTypes = ExpectedTypesGetter.getExpectedTypes(parameters.getPosition(), true);
-    LegacyCompletionContributor.processReferences(parameters, result, new PairConsumer<PsiReference, CompletionResultSet>() {
-      @Override
-      public void consume(final PsiReference reference, final CompletionResultSet result) {
-        if (reference instanceof PsiJavaReference) {
-          ElementFilter filter = getReferenceFilter(position);
-          if (filter != null) {
-            if (INSIDE_CONSTRUCTOR.accepts(position) &&
-                (parameters.getInvocationCount() <= 1 || CheckInitialized.isInsideConstructorCall(position))) {
-              filter = new AndFilter(filter, new CheckInitialized(position));
+    LegacyCompletionContributor.processReferences(parameters, result, (reference, result1) -> {
+      if (reference instanceof PsiJavaReference) {
+        ElementFilter filter = getReferenceFilter(position);
+        if (filter != null) {
+          if (INSIDE_CONSTRUCTOR.accepts(position) &&
+              (parameters.getInvocationCount() <= 1 || CheckInitialized.isInsideConstructorCall(position))) {
+            filter = new AndFilter(filter, new CheckInitialized(position));
+          }
+          final PsiFile originalFile = parameters.getOriginalFile();
+          JavaCompletionProcessor.Options options =
+            JavaCompletionProcessor.Options.DEFAULT_OPTIONS
+              .withCheckAccess(first)
+              .withFilterStaticAfterInstance(first)
+              .withShowInstanceInStaticContext(!first);
+          for (LookupElement element : JavaCompletionUtil.processJavaReference(position,
+                                                                               (PsiJavaReference)reference,
+                                                                               new ElementExtractorFilter(filter),
+                                                                               options,
+                                                                               result1.getPrefixMatcher(), parameters)) {
+            if (session.alreadyProcessed(element)) {
+              continue;
             }
-            final PsiFile originalFile = parameters.getOriginalFile();
-            JavaCompletionProcessor.Options options =
-              JavaCompletionProcessor.Options.DEFAULT_OPTIONS
-                .withCheckAccess(first)
-                .withFilterStaticAfterInstance(first)
-                .withShowInstanceInStaticContext(!first);
-            for (LookupElement element : JavaCompletionUtil.processJavaReference(position,
-                                                                                  (PsiJavaReference)reference,
-                                                                                  new ElementExtractorFilter(filter),
-                                                                                  options,
-                                                                                  result.getPrefixMatcher(), parameters)) {
-              if (session.alreadyProcessed(element)) {
-                continue;
-              }
 
-              if (isSwitchLabel) {
-                result.addElement(new IndentingDecorator(TailTypeDecorator.withTail(element, TailType.createSimpleTailType(':'))));
+            if (isSwitchLabel) {
+              result1.addElement(new IndentingDecorator(TailTypeDecorator.withTail(element, TailType.createSimpleTailType(':'))));
+            }
+            else {
+              final LookupItem item = element.as(LookupItem.CLASS_CONDITION_KEY);
+              if (originalFile instanceof PsiJavaCodeReferenceCodeFragment &&
+                  !((PsiJavaCodeReferenceCodeFragment)originalFile).isClassesAccepted() && item != null) {
+                item.setTailType(TailType.NONE);
               }
-              else {
-                final LookupItem item = element.as(LookupItem.CLASS_CONDITION_KEY);
-                if (originalFile instanceof PsiJavaCodeReferenceCodeFragment &&
-                    !((PsiJavaCodeReferenceCodeFragment)originalFile).isClassesAccepted() && item != null) {
-                  item.setTailType(TailType.NONE);
-                }
-                if (item instanceof JavaMethodCallElement) {
-                  JavaMethodCallElement call = (JavaMethodCallElement)item;
-                  final PsiMethod method = call.getObject();
-                  if (method.getTypeParameters().length > 0) {
-                    final PsiType returned = TypeConversionUtil.erasure(method.getReturnType());
-                    PsiType matchingExpectation = returned == null
-                                                  ? null
-                                                  : ContainerUtil.find(expectedTypes, type -> type.isAssignableFrom(returned));
-                    if (matchingExpectation != null) {
-                      call.setInferenceSubstitutor(SmartCompletionDecorator.calculateMethodReturnTypeSubstitutor(method, matchingExpectation), position);
-                    }
+              if (item instanceof JavaMethodCallElement) {
+                JavaMethodCallElement call = (JavaMethodCallElement)item;
+                final PsiMethod method = call.getObject();
+                if (method.getTypeParameters().length > 0) {
+                  final PsiType returned = TypeConversionUtil.erasure(method.getReturnType());
+                  PsiType matchingExpectation = returned == null
+                                                ? null
+                                                : ContainerUtil.find(expectedTypes, type -> type.isAssignableFrom(returned));
+                  if (matchingExpectation != null) {
+                    call.setInferenceSubstitutor(SmartCompletionDecorator.calculateMethodReturnTypeSubstitutor(method, matchingExpectation), position);
                   }
                 }
-
-                result.addElement(element);
               }
+
+              result1.addElement(element);
             }
           }
-          return;
         }
-        if (reference instanceof PsiLabelReference) {
-          LabelReferenceCompletion.processLabelReference(result, (PsiLabelReference)reference);
-          return;
-        }
+        return;
+      }
+      if (reference instanceof PsiLabelReference) {
+        LabelReferenceCompletion.processLabelReference(result1, (PsiLabelReference)reference);
+        return;
+      }
 
-        final Object[] variants = reference.getVariants();
-        //noinspection ConstantConditions
-        if (variants == null) {
-          LOG.error("Reference=" + reference);
+      final Object[] variants = reference.getVariants();
+      //noinspection ConstantConditions
+      if (variants == null) {
+        LOG.error("Reference=" + reference);
+      }
+      for (Object completion : variants) {
+        if (completion == null) {
+          LOG.error("Position=" + position + "\n;Reference=" + reference + "\n;variants=" + Arrays.toString(variants));
         }
-        for (Object completion : variants) {
-          if (completion == null) {
-            LOG.error("Position=" + position + "\n;Reference=" + reference + "\n;variants=" + Arrays.toString(variants));
+        if (completion instanceof LookupElement && !session.alreadyProcessed((LookupElement)completion)) {
+          usedWords.add(((LookupElement)completion).getLookupString());
+          result1.addElement((LookupElement)completion);
+        }
+        else if (completion instanceof PsiClass) {
+          Condition<PsiClass> condition = psiClass -> !session.alreadyProcessed(psiClass) &&
+                                                      JavaCompletionUtil.isSourceLevelAccessible(position, psiClass, pkgContext);
+          for (JavaPsiClassReferenceElement item : JavaClassNameCompletionContributor.createClassLookupItems((PsiClass)completion,
+                                                                                                             isAfterNew,
+                                                                                                             JavaClassNameInsertHandler.JAVA_CLASS_INSERT_HANDLER,
+                                                                                                             condition)) {
+            usedWords.add(item.getLookupString());
+            result1.addElement(item);
           }
-          if (completion instanceof LookupElement && !session.alreadyProcessed((LookupElement)completion)) {
-            usedWords.add(((LookupElement)completion).getLookupString());
-            result.addElement((LookupElement)completion);
-          }
-          else if (completion instanceof PsiClass) {
-            Condition<PsiClass> condition = psiClass -> !session.alreadyProcessed(psiClass) &&
-                                                        JavaCompletionUtil.isSourceLevelAccessible(position, psiClass, pkgContext);
-            for (JavaPsiClassReferenceElement item : JavaClassNameCompletionContributor.createClassLookupItems((PsiClass)completion,
-                                                                                                               isAfterNew,
-                                                                                                               JavaClassNameInsertHandler.JAVA_CLASS_INSERT_HANDLER,
-                                                                                                               condition)) {
-              usedWords.add(item.getLookupString());
-              result.addElement(item);
-            }
 
-          }
-          else {
-            //noinspection deprecation
-            LookupElement element = LookupItemUtil.objectToLookupItem(completion);
-            usedWords.add(element.getLookupString());
-            result.addElement(element);
-          }
+        }
+        else {
+          //noinspection deprecation
+          LookupElement element = LookupItemUtil.objectToLookupItem(completion);
+          usedWords.add(element.getLookupString());
+          result1.addElement(element);
         }
       }
     });

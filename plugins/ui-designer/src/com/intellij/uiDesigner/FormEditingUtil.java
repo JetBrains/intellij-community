@@ -528,41 +528,39 @@ public final class FormEditingUtil {
       return;
     }
 
-    Runnable runnable = new Runnable() {
-      public void run() {
-        if (!GridChangeUtil.canDeleteCells(container, cells, isRow)) {
-          Set<RadComponent> componentsInColumn = new HashSet<RadComponent>();
-          for (RadComponent component : container.getComponents()) {
-            GridConstraints c = component.getConstraints();
-            for (int cell : cells) {
-              if (c.contains(isRow, cell)) {
-                componentsInColumn.add(component);
-                break;
-              }
+    Runnable runnable = () -> {
+      if (!GridChangeUtil.canDeleteCells(container, cells, isRow)) {
+        Set<RadComponent> componentsInColumn = new HashSet<RadComponent>();
+        for (RadComponent component : container.getComponents()) {
+          GridConstraints c = component.getConstraints();
+          for (int cell : cells) {
+            if (c.contains(isRow, cell)) {
+              componentsInColumn.add(component);
+              break;
             }
-          }
-
-          if (componentsInColumn.size() > 0) {
-            String message = isRow
-                             ? UIDesignerBundle.message("delete.row.nonempty", componentsInColumn.size(), cells.length)
-                             : UIDesignerBundle.message("delete.column.nonempty", componentsInColumn.size(), cells.length);
-
-            final int rc = Messages.showYesNoDialog(editor, message,
-                                                    isRow ? UIDesignerBundle.message("delete.row.title")
-                                                          : UIDesignerBundle.message("delete.column.title"), Messages.getQuestionIcon());
-            if (rc != Messages.YES) {
-              return;
-            }
-
-            deleteComponents(componentsInColumn, false);
           }
         }
 
-        for (int cell : cells) {
-          container.getGridLayoutManager().deleteGridCells(container, cell, isRow);
+        if (componentsInColumn.size() > 0) {
+          String message = isRow
+                           ? UIDesignerBundle.message("delete.row.nonempty", componentsInColumn.size(), cells.length)
+                           : UIDesignerBundle.message("delete.column.nonempty", componentsInColumn.size(), cells.length);
+
+          final int rc = Messages.showYesNoDialog(editor, message,
+                                                  isRow ? UIDesignerBundle.message("delete.row.title")
+                                                        : UIDesignerBundle.message("delete.column.title"), Messages.getQuestionIcon());
+          if (rc != Messages.YES) {
+            return;
+          }
+
+          deleteComponents(componentsInColumn, false);
         }
-        editor.refreshAndSave(true);
       }
+
+      for (int cell : cells) {
+        container.getGridLayoutManager().deleteGridCells(container, cell, isRow);
+      }
+      editor.refreshAndSave(true);
     };
     CommandProcessor.getInstance().executeCommand(editor.getProject(), runnable,
                                                   isRow ? UIDesignerBundle.message("command.delete.row")

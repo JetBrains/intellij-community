@@ -220,16 +220,13 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
     // this is dirty hack since some bright minds decided to used different TreeUi every time, so selection may be followed
     // by rebuild on completely different instance of TreeUi
 
-    Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        if (!Comparing.equal(myFileEditor, fileEditor)) {
-          myFile = file;
-          rebuild();
-        }
-        if (myStructureView != null) {
-          myStructureView.navigateToSelectedElement(requestFocus);
-        }
+    Runnable runnable = () -> {
+      if (!Comparing.equal(myFileEditor, fileEditor)) {
+        myFile = file;
+        rebuild();
+      }
+      if (myStructureView != null) {
+        myStructureView.navigateToSelectedElement(requestFocus);
       }
     };
 

@@ -156,13 +156,10 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
 
   private static void clearScriptCache() {
     Application app = ApplicationManager.getApplication();
-    app.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-          project.putUserData(SCRIPTS_CACHE, null);
-          ((PsiModificationTrackerImpl)PsiManager.getInstance(project).getModificationTracker()).incCounter();
-        }
+    app.invokeLater(() -> {
+      for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+        project.putUserData(SCRIPTS_CACHE, null);
+        ((PsiModificationTrackerImpl)PsiManager.getInstance(project).getModificationTracker()).incCounter();
       }
     }, app.getDisposed());
   }
@@ -457,29 +454,26 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
                                       final String text) {
     final String fileUrl = vfile.getUrl();
 
-    final Runnable parseScript = new Runnable() {
-      @Override
-      public void run() {
-        GroovyDslExecutor executor = getCachedExecutor(vfile, stamp);
-        try {
-          if (executor == null && isActivated(vfile)) {
-            executor = createExecutor(text, vfile, project);
-            // executor is not only time-consuming to create, but also takes some PermGenSpace
-            // => we can't afford garbage-collecting it together with PsiFile
-            // => cache globally by file instance
-            vfile.putUserData(CACHED_EXECUTOR, Pair.create(executor, stamp));
-            if (executor != null) {
-              setStatusAndError(vfile, Status.ACTIVE, null);
-            }
+    final Runnable parseScript = () -> {
+      GroovyDslExecutor executor = getCachedExecutor(vfile, stamp);
+      try {
+        if (executor == null && isActivated(vfile)) {
+          executor = createExecutor(text, vfile, project);
+          // executor is not only time-consuming to create, but also takes some PermGenSpace
+          // => we can't afford garbage-collecting it together with PsiFile
+          // => cache globally by file instance
+          vfile.putUserData(CACHED_EXECUTOR, Pair.create(executor, stamp));
+          if (executor != null) {
+            setStatusAndError(vfile, Status.ACTIVE, null);
           }
         }
-        finally {
-          // access to our MultiMap should be synchronized
-          synchronized (filesInProcessing) {
-            // put evaluated executor to all queues
-            for (LinkedBlockingQueue<Pair<VirtualFile, GroovyDslExecutor>> queue : filesInProcessing.remove(fileUrl)) {
-              queue.offer(Pair.create(vfile, executor));
-            }
+      }
+      finally {
+        // access to our MultiMap should be synchronized
+        synchronized (filesInProcessing) {
+          // put evaluated executor to all queues
+          for (LinkedBlockingQueue<Pair<VirtualFile, GroovyDslExecutor>> queue1 : filesInProcessing.remove(fileUrl)) {
+            queue1.offer(Pair.create(vfile, executor));
           }
         }
       }

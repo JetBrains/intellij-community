@@ -494,12 +494,7 @@ final class Stripe extends JPanel {
     myManager.setSideToolAndAnchor(info.getId(), ToolWindowAnchor.get(myAnchor), myLastLayoutData.dragInsertPosition,
                                     myLastLayoutData.dragToSide);
 
-    myManager.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        resetDrop();
-      }
-    });
+    myManager.invokeLater(() -> resetDrop());
   }
 
   public void resetDrop() {

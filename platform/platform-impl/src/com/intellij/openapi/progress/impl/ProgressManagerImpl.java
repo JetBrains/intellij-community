@@ -138,11 +138,8 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
         final long time = end - start;
 
         if (canceled || progressIndicator.isCanceled()) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              task.onCancel();
-            }
+          ApplicationManager.getApplication().invokeLater(() -> {
+            task.onCancel();
           }, modalityState);
         }
         else {
@@ -153,11 +150,8 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
               systemNotify(notificationInfo);
             }
           }
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              task.onSuccess();
-            }
+          ApplicationManager.getApplication().invokeLater(() -> {
+            task.onSuccess();
           }, modalityState);
         }
       }

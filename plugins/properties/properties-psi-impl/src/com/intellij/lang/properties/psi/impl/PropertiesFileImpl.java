@@ -150,14 +150,11 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
         return null;
       }
       if (myAlphaSorted) {
-        final int insertIndex = Collections.binarySearch(myProperties, property, new Comparator<IProperty>() {
-          @Override
-          public int compare(IProperty p1, IProperty p2) {
-            final String k1 = p1.getKey();
-            final String k2 = p2.getKey();
-            LOG.assertTrue(k1 != null && k2 != null);
-            return String.CASE_INSENSITIVE_ORDER.compare(k1, k2);
-          }
+        final int insertIndex = Collections.binarySearch(myProperties, property, (p1, p2) -> {
+          final String k1 = p1.getKey();
+          final String k2 = p2.getKey();
+          LOG.assertTrue(k1 != null && k2 != null);
+          return String.CASE_INSENSITIVE_ORDER.compare(k1, k2);
         });
         return insertIndex == -1 ? null :myProperties.get(insertIndex < 0 ? - insertIndex - 2 : insertIndex);
       }

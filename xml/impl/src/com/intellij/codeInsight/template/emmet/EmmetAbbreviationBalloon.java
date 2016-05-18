@@ -131,12 +131,9 @@ public class EmmetAbbreviationBalloon {
     balloon.show(popupFactory.guessBestPopupLocation(customTemplateCallback.getEditor()), Balloon.Position.below);
 
     final IdeFocusManager focusManager = IdeFocusManager.getInstance(customTemplateCallback.getProject());
-    focusManager.doWhenFocusSettlesDown(new Runnable() {
-      @Override
-      public void run() {
-        focusManager.requestFocus(field, true);
-        field.selectText();
-      }
+    focusManager.doWhenFocusSettlesDown(() -> {
+      focusManager.requestFocus(field, true);
+      field.selectText();
     });
   }
 

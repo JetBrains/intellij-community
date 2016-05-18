@@ -35,12 +35,9 @@ public class ExpandRegionRecursivelyAction extends EditorAction {
         foldingManager.updateFoldRegions(editor);
 
         final List<FoldRegion> regions = getFoldRegionsForCaret(editor, caret, false);
-        editor.getFoldingModel().runBatchFoldingOperation(new Runnable() {
-          @Override
-          public void run() {
-            for (FoldRegion region : regions) {
-              region.setExpanded(true);
-            }
+        editor.getFoldingModel().runBatchFoldingOperation(() -> {
+          for (FoldRegion region : regions) {
+            region.setExpanded(true);
           }
         });
       }

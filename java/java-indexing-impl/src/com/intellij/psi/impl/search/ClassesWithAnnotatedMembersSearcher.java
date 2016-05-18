@@ -46,24 +46,21 @@ public class ClassesWithAnnotatedMembersSearcher extends QueryExecutorBase<PsiCl
     }
 
     final Set<PsiClass> processed = new HashSet<PsiClass>();
-    AnnotatedElementsSearch.searchPsiMembers(queryParameters.getAnnotationClass(), scope).forEach(new Processor<PsiMember>() {
-      @Override
-      public boolean process(PsiMember member) {
-        PsiClass psiClass;
-        AccessToken token = ReadAction.start();
-        try {
-          psiClass = member instanceof PsiClass ? (PsiClass)member : member.getContainingClass();
-        }
-        finally {
-          token.finish();
-        }
-
-        if (psiClass != null && processed.add(psiClass)) {
-          consumer.process(psiClass);
-        }
-
-        return true;
+    AnnotatedElementsSearch.searchPsiMembers(queryParameters.getAnnotationClass(), scope).forEach(member -> {
+      PsiClass psiClass;
+      AccessToken token = ReadAction.start();
+      try {
+        psiClass = member instanceof PsiClass ? (PsiClass)member : member.getContainingClass();
       }
+      finally {
+        token.finish();
+      }
+
+      if (psiClass != null && processed.add(psiClass)) {
+        consumer.process(psiClass);
+      }
+
+      return true;
     });
   }
 }

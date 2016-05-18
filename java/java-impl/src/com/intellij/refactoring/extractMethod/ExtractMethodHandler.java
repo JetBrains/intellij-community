@@ -165,28 +165,23 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
   }
 
   public static void run(@NotNull final Project project, final Editor editor, final ExtractMethodProcessor processor) {
-    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-      public void run() {
-        PostprocessReformattingAspect.getInstance(project).postponeFormattingInside(new Runnable() {
-          public void run() {
-            try {
-              final RefactoringEventData beforeData = new RefactoringEventData();
-              beforeData.addElements(processor.myElements);
-              project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringStarted("refactoring.extract.method", beforeData);
-              
-              processor.doRefactoring();
+    CommandProcessor.getInstance().executeCommand(project,
+                                                  () -> PostprocessReformattingAspect.getInstance(project).postponeFormattingInside(() -> {
+                                                    try {
+                                                      final RefactoringEventData beforeData = new RefactoringEventData();
+                                                      beforeData.addElements(processor.myElements);
+                                                      project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringStarted("refactoring.extract.method", beforeData);
 
-              final RefactoringEventData data = new RefactoringEventData();
-              data.addElement(processor.getExtractedMethod());
-              project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringDone("refactoring.extract.method", data);
-            }
-            catch (IncorrectOperationException e) {
-              LOG.error(e);
-            }
-          }
-        });
-      }
-    }, REFACTORING_NAME, null);
+                                                      processor.doRefactoring();
+
+                                                      final RefactoringEventData data = new RefactoringEventData();
+                                                      data.addElement(processor.getExtractedMethod());
+                                                      project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringDone("refactoring.extract.method", data);
+                                                    }
+                                                    catch (IncorrectOperationException e) {
+                                                      LOG.error(e);
+                                                    }
+                                                  }), REFACTORING_NAME, null);
   }
 
   @Nullable

@@ -498,11 +498,8 @@ public class GroovyBlockGenerator {
 
     GrStatement first = embedded ? inner : group.get(1);
     List<AlignmentProvider.Aligner> alignments = ContainerUtil
-      .map2List(getSpockTable(first), new Function<LeafPsiElement, AlignmentProvider.Aligner>() {
-        @Override
-        public AlignmentProvider.Aligner fun(LeafPsiElement leaf) {
-          return myAlignmentProvider.createAligner(leaf, true, Alignment.Anchor.RIGHT);
-        }
+      .map2List(getSpockTable(first), leaf -> {
+        return myAlignmentProvider.createAligner(leaf, true, Alignment.Anchor.RIGHT);
       });
 
     int second = embedded ? 1 : 2;

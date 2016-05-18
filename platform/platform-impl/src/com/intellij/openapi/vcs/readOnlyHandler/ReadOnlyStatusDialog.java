@@ -173,11 +173,8 @@ public class ReadOnlyStatusDialog extends OptionsDialog {
       super.doOKAction();
     }
     else {
-      String list = StringUtil.join(files, new Function<FileInfo, String>() {
-        @Override
-        public String fun(FileInfo info) {
-          return info.getFile().getPresentableUrl();
-        }
+      String list = StringUtil.join(files, info -> {
+        return info.getFile().getPresentableUrl();
       }, "<br>");
       String message = VcsBundle.message("handle.ro.file.status.failed", list);
       Messages.showErrorDialog(getRootPane(), message, VcsBundle.message("dialog.title.clear.read.only.file.status"));

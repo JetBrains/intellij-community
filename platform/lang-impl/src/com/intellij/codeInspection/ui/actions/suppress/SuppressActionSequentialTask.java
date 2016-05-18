@@ -71,17 +71,14 @@ public class SuppressActionSequentialTask implements SequentialTask {
       indicator.setFraction((double)myCount / myNodesToSuppress.length);
     }
 
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_MODAL, new Runnable() {
-      @Override
-      public void run() {
-        final Pair<PsiElement, CommonProblemDescriptor> content = node.getSuppressContent();
-        if (content.first != null) {
-          final PsiElement element = content.first;
-          RefEntity refEntity = node.getElement();
-          LOG.assertTrue(refEntity != null);
-          if (suppress(element, content.second, mySuppressAction, refEntity, myWrapper)) {
-            node.markAsSuppressedFromView();
-          }
+    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_MODAL, () -> {
+      final Pair<PsiElement, CommonProblemDescriptor> content = node.getSuppressContent();
+      if (content.first != null) {
+        final PsiElement element = content.first;
+        RefEntity refEntity = node.getElement();
+        LOG.assertTrue(refEntity != null);
+        if (suppress(element, content.second, mySuppressAction, refEntity, myWrapper)) {
+          node.markAsSuppressedFromView();
         }
       }
     });
@@ -115,37 +112,34 @@ public class SuppressActionSequentialTask implements SequentialTask {
     }
     final Project project = element.getProject();
     final PsiModificationTracker tracker = PsiManager.getInstance(project).getModificationTracker();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        PsiDocumentManager.getInstance(project).commitAllDocuments();
-        try {
-          final long startModificationCount = tracker.getModificationCount();
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      PsiDocumentManager.getInstance(project).commitAllDocuments();
+      try {
+        final long startModificationCount = tracker.getModificationCount();
 
-          PsiElement container = null;
-          if (action instanceof SuppressIntentionActionFromFix) {
-            container = ((SuppressIntentionActionFromFix)action).getContainer(element);
-          }
-          if (container == null) {
-            container = element;
-          }
+        PsiElement container = null;
+        if (action instanceof SuppressIntentionActionFromFix) {
+          container = ((SuppressIntentionActionFromFix)action).getContainer(element);
+        }
+        if (container == null) {
+          container = element;
+        }
 
-          if (action.isAvailable(project, null, element)) {
-            action.invoke(project, null, element);
-          }
-          if (startModificationCount != tracker.getModificationCount()) {
-            final Set<GlobalInspectionContextImpl> globalInspectionContexts = ((InspectionManagerEx)InspectionManager.getInstance(element.getProject())).getRunningContexts();
-            for (GlobalInspectionContextImpl context : globalInspectionContexts) {
-              context.ignoreElement(wrapper.getTool(), container);
-              if (descriptor != null) {
-                context.getPresentation(wrapper).ignoreCurrentElementProblem(refEntity, descriptor);
-              }
+        if (action.isAvailable(project, null, element)) {
+          action.invoke(project, null, element);
+        }
+        if (startModificationCount != tracker.getModificationCount()) {
+          final Set<GlobalInspectionContextImpl> globalInspectionContexts = ((InspectionManagerEx)InspectionManager.getInstance(element.getProject())).getRunningContexts();
+          for (GlobalInspectionContextImpl context : globalInspectionContexts) {
+            context.ignoreElement(wrapper.getTool(), container);
+            if (descriptor != null) {
+              context.getPresentation(wrapper).ignoreCurrentElementProblem(refEntity, descriptor);
             }
           }
         }
-        catch (IncorrectOperationException e1) {
-          LOG.error(e1);
-        }
+      }
+      catch (IncorrectOperationException e1) {
+        LOG.error(e1);
       }
     });
     return true;

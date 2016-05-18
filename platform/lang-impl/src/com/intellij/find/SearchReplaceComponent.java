@@ -315,12 +315,7 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
     mySearchTextComponent.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            searchFieldDocumentChanged();
-          }
-        });
+        ApplicationManager.getApplication().invokeLater(() -> searchFieldDocumentChanged());
       }
     });
 
@@ -338,12 +333,8 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
                                                  }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, SystemInfo.isMac ? InputEvent.META_DOWN_MASK : InputEvent.CTRL_DOWN_MASK),
                                                  JComponent.WHEN_FOCUSED);
     if (!wasNull) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          mySearchTextComponent.setCaretPosition(Math.min(oldCaretPosition, mySearchTextComponent.getText().length()));
-        }
-      });
+      ApplicationManager.getApplication().invokeLater(
+        () -> mySearchTextComponent.setCaretPosition(Math.min(oldCaretPosition, mySearchTextComponent.getText().length())));
     }
 
     new VariantsCompletionAction(mySearchTextComponent); // It registers a shortcut set automatically on construction
@@ -359,12 +350,7 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
     myReplaceTextComponent.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            replaceFieldDocumentChanged();
-          }
-        });
+        ApplicationManager.getApplication().invokeLater(() -> replaceFieldDocumentChanged());
       }
     });
 
@@ -373,12 +359,7 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
     }
 
     //myReplaceTextComponent.setText(myFindModel.getStringToReplace());
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        myReplaceTextComponent.setCaretPosition(oldCaretPosition);
-      }
-    });
+    ApplicationManager.getApplication().invokeLater(() -> myReplaceTextComponent.setCaretPosition(oldCaretPosition));
 
     new VariantsCompletionAction(myReplaceTextComponent);
     myReplaceFieldWrapper.revalidate();
@@ -471,12 +452,7 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
         public void actionPerformed(final ActionEvent e) {
           final String text = textComponent.getText();
           setMultilineInternal(true);
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              ObjectUtils.assertNotNull(wrapper.getTextComponent()).setText(text + "\n");
-            }
-          });
+          ApplicationManager.getApplication().invokeLater(() -> ObjectUtils.assertNotNull(wrapper.getTextComponent()).setText(text + "\n"));
         }
       }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.ALT_DOWN_MASK), JComponent.WHEN_FOCUSED);
       wrapper.setContent(searchTextField);

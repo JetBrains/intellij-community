@@ -51,17 +51,14 @@ public class TagNameReferenceCompletionProvider extends CompletionProvider<Compl
   protected void addCompletions(@NotNull CompletionParameters parameters,
                                 ProcessingContext context,
                                 @NotNull final CompletionResultSet result) {
-    LegacyCompletionContributor.processReferences(parameters, result, new PairConsumer<PsiReference, CompletionResultSet>() {
-      @Override
-      public void consume(PsiReference reference, CompletionResultSet set) {
-        if (reference instanceof TagNameReference) {
-          collectCompletionVariants((TagNameReference)reference, set);
-        }
-        else if (reference instanceof SchemaPrefixReference) {
-          TagNameReference tagNameReference = ((SchemaPrefixReference)reference).getTagNameReference();
-          if (tagNameReference != null && !tagNameReference.isStartTagFlag()) {
-            set.consume(createClosingTagLookupElement((XmlTag)tagNameReference.getElement(), true, tagNameReference.getNameElement()));
-          }
+    LegacyCompletionContributor.processReferences(parameters, result, (reference, set) -> {
+      if (reference instanceof TagNameReference) {
+        collectCompletionVariants((TagNameReference)reference, set);
+      }
+      else if (reference instanceof SchemaPrefixReference) {
+        TagNameReference tagNameReference = ((SchemaPrefixReference)reference).getTagNameReference();
+        if (tagNameReference != null && !tagNameReference.isStartTagFlag()) {
+          set.consume(createClosingTagLookupElement((XmlTag)tagNameReference.getElement(), true, tagNameReference.getNameElement()));
         }
       }
     });

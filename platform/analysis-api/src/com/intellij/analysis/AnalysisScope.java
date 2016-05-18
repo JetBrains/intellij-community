@@ -277,17 +277,14 @@ public class AnalysisScope {
     final boolean needReadAction = !ApplicationManager.getApplication().isReadAccessAllowed();
     final PsiManager psiManager = PsiManager.getInstance(myProject);
     final FileIndex fileIndex = getFileIndex();
-    accept(new Processor<VirtualFile>() {
-      @Override
-      public boolean process(VirtualFile file) {
-        if (file.isDirectory()) return true;
-        if (ProjectCoreUtil.isProjectOrWorkspaceFile(file)) return true;
-        if (fileIndex.isInContent(file) && !isFiltered(file, fileIndex)
-            && !GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(file, myProject)) {
-          return processFile(file, visitor, psiManager, needReadAction, clearResolveCache);
-        }
-        return true;
+    accept(file -> {
+      if (file.isDirectory()) return true;
+      if (ProjectCoreUtil.isProjectOrWorkspaceFile(file)) return true;
+      if (fileIndex.isInContent(file) && !isFiltered(file, fileIndex)
+          && !GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(file, myProject)) {
+        return processFile(file, visitor, psiManager, needReadAction, clearResolveCache);
       }
+      return true;
     });
   }
 
@@ -381,12 +378,7 @@ public class AnalysisScope {
                                      @NotNull final PsiManager psiManager,
                                      final boolean needReadAction, 
                                      final boolean clearResolveCache) {
-    final Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        doProcessFile(visitor, psiManager, vFile, clearResolveCache);
-      }
-    };
+    final Runnable runnable = () -> doProcessFile(visitor, psiManager, vFile, clearResolveCache);
     if (needReadAction && !ApplicationManager.getApplication().isDispatchThread()) {
       commitAndRunInSmartMode(runnable, psiManager.getProject());
     }
@@ -494,11 +486,8 @@ public class AnalysisScope {
         return AnalysisScopeBundle.message("scope.option.module", pathToName(myModule.getModuleFilePath()));
 
       case MODULES:
-        String modules = StringUtil.join(myModules, new Function<Module, String>() {
-          @Override
-          public String fun(@NotNull final Module module) {
-            return pathToName(module.getModuleFilePath());
-          }
+        String modules = StringUtil.join(myModules, module -> {
+          return pathToName(module.getModuleFilePath());
         }, ", ");
 
         return AnalysisScopeBundle.message("scope.module.list", modules, Integer.valueOf(myModules.size()));
@@ -528,12 +517,8 @@ public class AnalysisScope {
         return AnalysisScopeBundle.message("scope.option.module", myModule.getName());
 
       case MODULES:
-        String modules = StringUtil.join(myModules, new Function<Module, String>() {
-          @Override
-          @NotNull
-          public String fun(@NotNull final Module module) {
-            return module.getName();
-          }
+        String modules = StringUtil.join(myModules, module -> {
+          return module.getName();
         }, ", ");
         return AnalysisScopeBundle.message("scope.module.list", modules, Integer.valueOf(myModules.size()));
 

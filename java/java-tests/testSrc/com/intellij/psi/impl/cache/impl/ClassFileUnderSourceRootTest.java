@@ -42,12 +42,9 @@ public class ClassFileUnderSourceRootTest extends IdeaTestCase {
     FileUtil.writeToFile(new File(dir, "p/A.java"), "package p;\npublic class A { }");
     FileUtil.copy(new File(PathManagerEx.getTestDataPath() + "/psi/cls/repo/pack/MyClass.class"), new File(dir, "pack/MyClass.class"));
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        PsiTestUtil.addSourceRoot(myModule, root);
-        ModuleRootModificationUtil.addModuleLibrary(myModule, root.getUrl());
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      PsiTestUtil.addSourceRoot(myModule, root);
+      ModuleRootModificationUtil.addModuleLibrary(myModule, root.getUrl());
     });
   }
 

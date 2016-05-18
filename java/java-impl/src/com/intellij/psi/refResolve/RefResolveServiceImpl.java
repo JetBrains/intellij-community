@@ -124,12 +124,9 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
       }
       Disposer.register(this, storage);
       if (!application.isUnitTestMode()) {
-        startupManager.runWhenProjectIsInitialized(new Runnable() {
-          @Override
-          public void run() {
-            initListeners(messageBus, psiManager);
-            startThread();
-          }
+        startupManager.runWhenProjectIsInitialized(() -> {
+          initListeners(messageBus, psiManager);
+          startThread();
         });
       }
       Disposer.register(this, new Disposable() {
@@ -173,12 +170,9 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
   @NotNull
   private static String toVfString(@NotNull Collection<VirtualFile> list) {
     List<VirtualFile> sub = new ArrayList<VirtualFile>(list).subList(0, Math.min(list.size(), 100));
-    return list.size() + " files: " + StringUtil.join(sub, new Function<VirtualFile, String>() {
-      @Override
-      public String fun(VirtualFile file) {
-        return file.getName();
-      }
-    }, ", ")+(list.size()==sub.size() ? "" : "...");
+    return list.size() + " files: " + StringUtil.join(sub, file -> {
+      return file.getName();
+    }, ", ") + (list.size() == sub.size() ? "" : "...");
   }
 
   private void initListeners(@NotNull MessageBus messageBus, @NotNull PsiManager psiManager) {
@@ -434,35 +428,32 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
 
       upToDate = false;
 
-      myApplication.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          if (!resolveProcess.isDone()) return;
-          log("Started to resolve " + files.size() + " files");
+      myApplication.invokeLater(() -> {
+        if (!resolveProcess.isDone()) return;
+        log("Started to resolve " + files.size() + " files");
 
-          Task.Backgroundable backgroundable = new Task.Backgroundable(myProject, "Resolving files...", false) {
-            @Override
-            public void run(@NotNull final ProgressIndicator indicator) {
-              if (!myApplication.isDisposed()) {
-                try {
-                  processBatch(indicator, files);
-                }
-                catch (RuntimeInterruptedException ignore) {
-                  // see future.cancel() in disable()
-                }
+        Task.Backgroundable backgroundable = new Task.Backgroundable(myProject, "Resolving files...", false) {
+          @Override
+          public void run(@NotNull final ProgressIndicator indicator) {
+            if (!myApplication.isDisposed()) {
+              try {
+                processBatch(indicator, files);
+              }
+              catch (RuntimeInterruptedException ignore) {
+                // see future.cancel() in disable()
               }
             }
-          };
-          ProgressIndicator indicator;
-          if (files.size() > 1) {
-            //show progress
-            indicator = new BackgroundableProcessIndicator(backgroundable);
           }
-          else {
-            indicator = new MyProgress();
-          }
-          resolveProcess = ((ProgressManagerImpl)ProgressManager.getInstance()).runProcessWithProgressAsynchronously(backgroundable, indicator, null);
+        };
+        ProgressIndicator indicator;
+        if (files.size() > 1) {
+          //show progress
+          indicator = new BackgroundableProcessIndicator(backgroundable);
         }
+        else {
+          indicator = new MyProgress();
+        }
+        resolveProcess = ((ProgressManagerImpl)ProgressManager.getInstance()).runProcessWithProgressAsynchronously(backgroundable, indicator, null);
       }, myProject.getDisposed());
 
       flushLog();
@@ -479,31 +470,28 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
     indicator.setIndeterminate(false);
     ProgressIndicatorUtils.forceWriteActionPriority(indicator, (Disposable)indicator);
     long start = System.currentTimeMillis();
-    Processor<VirtualFile> processor = new Processor<VirtualFile>() {
-      @Override
-      public boolean process(VirtualFile file) {
-        double fraction = 1 - toProcess.size() * 1.0 / totalSize;
-        indicator.setFraction(fraction);
-        try {
-          if (!file.isDirectory() && toResolve(file, myProject)) {
-            int fileId = getAbsId(file);
-            int i = totalSize - toProcess.size();
-            indicator.setText(i + "/" + totalSize + ": Resolving " + file.getPresentableUrl());
-            int[] forwardIds = processFile(file, fileId, indicator);
-            if (forwardIds == null) {
-              //queueUpdate(file);
-              return false;
-            }
-            fileToForwardIds.put(fileId, forwardIds);
+    Processor<VirtualFile> processor = file -> {
+      double fraction = 1 - toProcess.size() * 1.0 / totalSize;
+      indicator.setFraction(fraction);
+      try {
+        if (!file.isDirectory() && toResolve(file, myProject)) {
+          int fileId = getAbsId(file);
+          int i = totalSize - toProcess.size();
+          indicator.setText(i + "/" + totalSize + ": Resolving " + file.getPresentableUrl());
+          int[] forwardIds = processFile(file, fileId, indicator);
+          if (forwardIds == null) {
+            //queueUpdate(file);
+            return false;
           }
-          toProcess.remove(file);
-          return true;
+          fileToForwardIds.put(fileId, forwardIds);
         }
-        catch (RuntimeException e) {
-          indicator.checkCanceled();
-        }
+        toProcess.remove(file);
         return true;
       }
+      catch (RuntimeException e) {
+        indicator.checkCanceled();
+      }
+      return true;
     };
     boolean success = true;
     try {
@@ -536,50 +524,38 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
     //return JobLauncher.getInstance().invokeConcurrentlyUnderProgress(fileList, indicator, false, false, processor);
 
     int parallelism = CacheUpdateRunner.indexingThreadCount();
-    final Callable<Boolean> processFileFromSet = new Callable<Boolean>() {
-      @Override
-      public Boolean call() throws Exception {
-        final boolean[] result = {true};
-        ProgressManager.getInstance().executeProcessUnderProgress(new Runnable() {
-          @Override
-          public void run() {
-            while (true) {
-              ProgressManager.checkCanceled();
-              VirtualFile file;
-              synchronized (fileList) {
-                file = fileList.isEmpty() ? null : fileList.remove(fileList.size() - 1);
-              }
-              if (file == null) {
-                break;
-              }
-              if (!processor.process(file)) {
-                result[0] = false;
-                break;
-              }
-            }
+    final Callable<Boolean> processFileFromSet = () -> {
+      final boolean[] result = {true};
+      ProgressManager.getInstance().executeProcessUnderProgress(() -> {
+        while (true) {
+          ProgressManager.checkCanceled();
+          VirtualFile file;
+          synchronized (fileList) {
+            file = fileList.isEmpty() ? null : fileList.remove(fileList.size() - 1);
           }
-        }, indicator);
-        return result[0];
-      }
+          if (file == null) {
+            break;
+          }
+          if (!processor.process(file)) {
+            result[0] = false;
+            break;
+          }
+        }
+      }, indicator);
+      return result[0];
     };
-    List<Future<Boolean>> futures = ContainerUtil.map(Collections.nCopies(parallelism, ""), new Function<String, Future<Boolean>>() {
-      @Override
-      public Future<Boolean> fun(String s) {
-        return myApplication.executeOnPooledThread(processFileFromSet);
-      }
+    List<Future<Boolean>> futures = ContainerUtil.map(Collections.nCopies(parallelism, ""), s -> {
+      return myApplication.executeOnPooledThread(processFileFromSet);
     });
 
-    List<Boolean> results = ContainerUtil.map(futures, new Function<Future<Boolean>, Boolean>() {
-      @Override
-      public Boolean fun(Future<Boolean> future) {
-        try {
-          return future.get();
-        }
-        catch (Exception e) {
-          LOG.error(e);
-        }
-        return false;
+    List<Boolean> results = ContainerUtil.map(futures, future -> {
+      try {
+        return future.get();
       }
+      catch (Exception e) {
+        LOG.error(e);
+      }
+      return false;
     });
 
     return !ContainerUtil.exists(results, new Condition<Boolean>() {
@@ -723,18 +699,15 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
     assert forwardSize == backwardSize;
 
     // wrap in read action so that sudden quit (in write action) would not interrupt us
-    myApplication.runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        if (!myApplication.isDisposed()) {
-          fileToBackwardIds.forEachEntry(new TIntObjectProcedure<TIntArrayList>() {
-            @Override
-            public boolean execute(int fileId, TIntArrayList backIds) {
-              storage.addAll(fileId, backIds.toNativeArray());
-              return true;
-            }
-          });
-        }
+    myApplication.runReadAction(() -> {
+      if (!myApplication.isDisposed()) {
+        fileToBackwardIds.forEachEntry(new TIntObjectProcedure<TIntArrayList>() {
+          @Override
+          public boolean execute(int fileId, TIntArrayList backIds) {
+            storage.addAll(fileId, backIds.toNativeArray());
+            return true;
+          }
+        });
       }
     });
   }

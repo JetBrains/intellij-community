@@ -57,14 +57,11 @@ public class DictionaryTest {
   @Test
   public void testDictionaryLoadedFully() {
     final Set<String> onDisk = new THashSet<String>();
-    getLoader(JETBRAINS_DIC).load(new Consumer<String>() {
-      @Override
-      public void consume(String s) {
-        assertNotNull(s);
-        String t = myTransformation.transform(s);
-        if (t != null) {
-          onDisk.add(t);
-        }
+    getLoader(JETBRAINS_DIC).load(s -> {
+      assertNotNull(s);
+      String t = myTransformation.transform(s);
+      if (t != null) {
+        onDisk.add(t);
       }
     });
 
@@ -76,12 +73,8 @@ public class DictionaryTest {
   private Dictionary loadDictionaryPerformanceTest(final String name, int time) {
     final Ref<Dictionary> ref = Ref.create();
 
-    PlatformTestUtil.startPerformanceTest("load dictionary", time, new ThrowableRunnable() {
-      @Override
-      public void run() {
-        ref.set(CompressedDictionary.create(getLoader(name), myTransformation));
-      }
-    }).cpuBound().useLegacyScaling().assertTiming();
+    PlatformTestUtil.startPerformanceTest("load dictionary", time,
+                                          () -> ref.set(CompressedDictionary.create(getLoader(name), myTransformation))).cpuBound().useLegacyScaling().assertTiming();
 
     assertFalse(ref.isNull());
     return ref.get();
@@ -91,12 +84,9 @@ public class DictionaryTest {
     if (PlatformTestUtil.COVERAGE_ENABLED_BUILD) return;
 
     final Set<String> wordsToCheck = createWordSets(dictionary, 50000, 1).first;
-    PlatformTestUtil.startPerformanceTest("contains word", time, new ThrowableRunnable() {
-      @Override
-      public void run() {
-        for (String s : wordsToCheck) {
-          assertEquals(Boolean.TRUE, dictionary.contains(s));
-        }
+    PlatformTestUtil.startPerformanceTest("contains word", time, () -> {
+      for (String s : wordsToCheck) {
+        assertEquals(Boolean.TRUE, dictionary.contains(s));
       }
     }).cpuBound().useLegacyScaling().assertTiming();
   }

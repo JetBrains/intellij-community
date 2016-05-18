@@ -53,11 +53,7 @@ public class RunHotswapDialog extends OptionsDialog {
     for (DebuggerSession session : sessions) {
       items.add(new SessionItem(session));
     }
-    Collections.sort(items, new Comparator<SessionItem>() {
-      public int compare(SessionItem debuggerSession, SessionItem debuggerSession1) {
-        return debuggerSession.getSession().getSessionName().compareTo(debuggerSession1.getSession().getSessionName());
-      }
-    });
+    Collections.sort(items, (debuggerSession, debuggerSession1) -> debuggerSession.getSession().getSessionName().compareTo(debuggerSession1.getSession().getSessionName()));
     myElementsChooser = new ElementsChooser<>(items, true);
     myPanel.setBorder(IdeBorderFactory.createEmptyBorder(10, 0, 5, 0));
     //myElementsChooser.setBorder(IdeBorderFactory.createEmptyBorder(5, 0, 0, 0));

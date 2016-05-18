@@ -94,12 +94,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
           .create(tags, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, tag.getContainingFile());
       }
     };
-  private static final Comparator<TextRange> RANGE_COMPARATOR = new Comparator<TextRange>() {
-    @Override
-    public int compare(TextRange range1, TextRange range2) {
-      return range1.getStartOffset() - range2.getStartOffset();
-    }
-  };
+  private static final Comparator<TextRange> RANGE_COMPARATOR = (range1, range2) -> range1.getStartOffset() - range2.getStartOffset();
   private final int myHC = ourHC++;
   private volatile String myName;
   private volatile String myLocalName;

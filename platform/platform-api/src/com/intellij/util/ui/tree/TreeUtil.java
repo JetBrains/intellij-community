@@ -506,19 +506,16 @@ public final class TreeUtil {
       }
     }
 
-    Runnable selectRunnable = new Runnable() {
-      @Override
-      public void run() {
-        if (!tree.isRowSelected(row)) {
-          if (addToSelection) {
-            tree.getSelectionModel().addSelectionPath(tree.getPathForRow(row));
-          } else {
-            tree.setSelectionRow(row);
-          }
-        } else if (resetSelection) {
-          if (!addToSelection) {
-            tree.setSelectionRow(row);
-          }
+    Runnable selectRunnable = () -> {
+      if (!tree.isRowSelected(row)) {
+        if (addToSelection) {
+          tree.getSelectionModel().addSelectionPath(tree.getPathForRow(row));
+        } else {
+          tree.setSelectionRow(row);
+        }
+      } else if (resetSelection) {
+        if (!addToSelection) {
+          tree.setSelectionRow(row);
         }
       }
     };
@@ -583,47 +580,36 @@ public final class TreeUtil {
       }
 
       final Rectangle b1 = bounds;
-      final Runnable runnable = new Runnable() {
-        @Override
-        public void run() {
-          if (scroll) {
-            AbstractTreeBuilder builder = AbstractTreeBuilder.getBuilderFor(tree);
-            if (builder != null) {
-              builder.getReady(TreeUtil.class).doWhenDone(new Runnable() {
-                @Override
-                public void run() {
-                  tree.scrollRectToVisible(b1);  
-                }
-              });  
-              callback.setDone();
-            } else {
-              tree.scrollRectToVisible(b1);
+      final Runnable runnable = () -> {
+        if (scroll) {
+          AbstractTreeBuilder builder = AbstractTreeBuilder.getBuilderFor(tree);
+          if (builder != null) {
+            builder.getReady(TreeUtil.class).doWhenDone(() -> tree.scrollRectToVisible(b1));
+            callback.setDone();
+          } else {
+            tree.scrollRectToVisible(b1);
 
-              Long ts = (Long)tree.getClientProperty(TREE_UTIL_SCROLL_TIME_STAMP);
-              if (ts == null) {
-                ts = 0L;
-              }
-              ts = ts.longValue() + 1;
-              tree.putClientProperty(TREE_UTIL_SCROLL_TIME_STAMP, ts);
-
-              final long targetValue = ts.longValue();
-
-              SwingUtilities.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                  Long actual = (Long)tree.getClientProperty(TREE_UTIL_SCROLL_TIME_STAMP);
-                  if (actual == null || targetValue < actual.longValue()) return;
-
-                  if (!tree.getVisibleRect().contains(b1)) {
-                    tree.scrollRectToVisible(b1);
-                  }
-                  callback.setDone();
-                }
-              });
+            Long ts = (Long)tree.getClientProperty(TREE_UTIL_SCROLL_TIME_STAMP);
+            if (ts == null) {
+              ts = 0L;
             }
+            ts = ts.longValue() + 1;
+            tree.putClientProperty(TREE_UTIL_SCROLL_TIME_STAMP, ts);
+
+            final long targetValue = ts.longValue();
+
+            SwingUtilities.invokeLater(() -> {
+              Long actual = (Long)tree.getClientProperty(TREE_UTIL_SCROLL_TIME_STAMP);
+              if (actual == null || targetValue < actual.longValue()) return;
+
+              if (!tree.getVisibleRect().contains(b1)) {
+                tree.scrollRectToVisible(b1);
+              }
+              callback.setDone();
+            });
           }
-          callback.setDone();
         }
+        callback.setDone();
       };
 
       runnable.run();
@@ -774,15 +760,12 @@ public final class TreeUtil {
 
   public static void expandRootChildIfOnlyOne(@Nullable final JTree tree) {
     if (tree == null) return;
-    final Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        final DefaultMutableTreeNode root = (DefaultMutableTreeNode)tree.getModel().getRoot();
-        tree.expandPath(new TreePath(new Object[]{root}));
-        if (root.getChildCount() == 1) {
-          TreeNode firstChild = root.getFirstChild();
-          tree.expandPath(new TreePath(new Object[]{root, firstChild}));
-        }
+    final Runnable runnable = () -> {
+      final DefaultMutableTreeNode root = (DefaultMutableTreeNode)tree.getModel().getRoot();
+      tree.expandPath(new TreePath(new Object[]{root}));
+      if (root.getChildCount() == 1) {
+        TreeNode firstChild = root.getFirstChild();
+        tree.expandPath(new TreePath(new Object[]{root, firstChild}));
       }
     };
     UIUtil.invokeLaterIfNeeded(runnable);
@@ -1015,11 +998,6 @@ public final class TreeUtil {
 
   @NotNull
   public static Comparator<TreePath> getDisplayOrderComparator(@NotNull final JTree tree) {
-    return new Comparator<TreePath>() {
-      @Override
-      public int compare(TreePath path1, TreePath path2) {
-        return tree.getRowForPath(path1) - tree.getRowForPath(path2);
-      }
-    };
+    return (path1, path2) -> tree.getRowForPath(path1) - tree.getRowForPath(path2);
   }
 }

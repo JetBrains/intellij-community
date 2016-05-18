@@ -59,12 +59,9 @@ public class SubtypesHierarchyTreeStructure extends HierarchyTreeStructure {
     for (PsiClass aClass : classes) {
       descriptors.add(new TypeHierarchyNodeDescriptor(myProject, descriptor, aClass, false));
     }
-    FunctionalExpressionSearch.search(psiClass, searchScope).forEach(new Processor<PsiFunctionalExpression>() {
-      @Override
-      public boolean process(PsiFunctionalExpression expression) {
-        descriptors.add(new TypeHierarchyNodeDescriptor(myProject, descriptor, expression, false));
-        return true;
-      }
+    FunctionalExpressionSearch.search(psiClass, searchScope).forEach(expression -> {
+      descriptors.add(new TypeHierarchyNodeDescriptor(myProject, descriptor, expression, false));
+      return true;
     });
     return descriptors.toArray(new HierarchyNodeDescriptor[descriptors.size()]);
   }

@@ -25,11 +25,8 @@ public class StubProcessingHelper extends StubProcessingHelperBase {
   protected void onInternalError(final VirtualFile file) {
     // requestReindex() may want to acquire write lock (for indices not requiring content loading)
     // thus, because here we are under read lock, need to use invoke later
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        myFileBasedIndex.requestReindex(file);
-      }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      myFileBasedIndex.requestReindex(file);
     }, ModalityState.NON_MODAL);
   }
 

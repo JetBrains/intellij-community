@@ -136,11 +136,9 @@ public class HotSwapProgressImpl extends HotSwapProgress{
     myUpdateQueue.queue(new Update("Text") {
       @Override
       public void run() {
-        DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
-          public void run() {
-            if (!myProgressWindow.isCanceled() && myProgressWindow.isRunning()) {
-              myProgressWindow.setText(text);
-            }
+        DebuggerInvocationUtil.invokeLater(getProject(), () -> {
+          if (!myProgressWindow.isCanceled() && myProgressWindow.isRunning()) {
+            myProgressWindow.setText(text);
           }
         }, myProgressWindow.getModalityState());
       }
@@ -148,22 +146,18 @@ public class HotSwapProgressImpl extends HotSwapProgress{
   }
 
   public void setTitle(final String text) {
-    DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
-      public void run() {
-        if (!myProgressWindow.isCanceled() && myProgressWindow.isRunning()) {
-        myProgressWindow.setTitle(text);
-        }
+    DebuggerInvocationUtil.invokeLater(getProject(), () -> {
+      if (!myProgressWindow.isCanceled() && myProgressWindow.isRunning()) {
+      myProgressWindow.setTitle(text);
       }
     }, myProgressWindow.getModalityState());
 
   }
 
   public void setFraction(final double v) {
-    DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
-      public void run() {
-        if (!myProgressWindow.isCanceled() && myProgressWindow.isRunning()) {
-        myProgressWindow.setFraction(v);
-        }
+    DebuggerInvocationUtil.invokeLater(getProject(), () -> {
+      if (!myProgressWindow.isCanceled() && myProgressWindow.isRunning()) {
+      myProgressWindow.setFraction(v);
       }
     }, myProgressWindow.getModalityState());
   }

@@ -78,23 +78,20 @@ public class IntentionManagerImpl extends IntentionManager {
   }
 
   private void registerIntentionFromBean(@NotNull final IntentionActionBean extension) {
-    final Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        final String descriptionDirectoryName = extension.getDescriptionDirectoryName();
-        final String[] categories = extension.getCategories();
-        final IntentionAction instance = createIntentionActionWrapper(extension, categories);
-        if (categories == null) {
+    final Runnable runnable = () -> {
+      final String descriptionDirectoryName = extension.getDescriptionDirectoryName();
+      final String[] categories = extension.getCategories();
+      final IntentionAction instance = createIntentionActionWrapper(extension, categories);
+      if (categories == null) {
+        addAction(instance);
+      }
+      else {
+        if (descriptionDirectoryName != null) {
           addAction(instance);
+          mySettings.registerIntentionMetaData(instance, categories, descriptionDirectoryName, extension.getMetadataClassLoader());
         }
         else {
-          if (descriptionDirectoryName != null) {
-            addAction(instance);
-            mySettings.registerIntentionMetaData(instance, categories, descriptionDirectoryName, extension.getMetadataClassLoader());
-          }
-          else {
-            registerIntentionAndMetaData(instance, categories);
-          }
+          registerIntentionAndMetaData(instance, categories);
         }
       }
     };

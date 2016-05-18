@@ -95,11 +95,8 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
       editor.getSelectionModel().setSelection(lineStartOffset, selectionModel.getSelectionEnd());
 
       if (StringUtil.isEmptyOrSpaces(line)) {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            document.deleteString(lineStartOffset, lineEndOffset);
-          }
+        ApplicationManager.getApplication().runWriteAction(() -> {
+          document.deleteString(lineStartOffset, lineEndOffset);
         });
       }
     }

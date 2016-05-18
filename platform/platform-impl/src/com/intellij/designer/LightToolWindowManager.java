@@ -66,12 +66,7 @@ public abstract class LightToolWindowManager implements ProjectComponent {
 
     @Override
     public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          bindToDesigner(getActiveDesigner());
-        }
-      });
+      ApplicationManager.getApplication().invokeLater(() -> bindToDesigner(getActiveDesigner()));
     }
 
     @Override
@@ -252,28 +247,16 @@ public abstract class LightToolWindowManager implements ProjectComponent {
     toolWindow.dispose();
   }
 
-  private final ParameterizedRunnable<DesignerEditorPanelFacade> myCreateAction = new ParameterizedRunnable<DesignerEditorPanelFacade>() {
-    @Override
-    public void run(DesignerEditorPanelFacade designer) {
-      designer.putClientProperty(getComponentName(), createContent(designer));
-    }
-  };
+  private final ParameterizedRunnable<DesignerEditorPanelFacade> myCreateAction =
+    designer -> designer.putClientProperty(getComponentName(), createContent(designer));
 
   private final ParameterizedRunnable<DesignerEditorPanelFacade> myUpdateAnchorAction =
-    new ParameterizedRunnable<DesignerEditorPanelFacade>() {
-      @Override
-      public void run(DesignerEditorPanelFacade designer) {
-        LightToolWindow toolWindow = (LightToolWindow)designer.getClientProperty(getComponentName());
-        toolWindow.updateAnchor(getEditorMode());
-      }
+    designer -> {
+      LightToolWindow toolWindow = (LightToolWindow)designer.getClientProperty(getComponentName());
+      toolWindow.updateAnchor(getEditorMode());
     };
 
-  private final ParameterizedRunnable<DesignerEditorPanelFacade> myDisposeAction = new ParameterizedRunnable<DesignerEditorPanelFacade>() {
-    @Override
-    public void run(DesignerEditorPanelFacade designer) {
-      disposeContent(designer);
-    }
-  };
+  private final ParameterizedRunnable<DesignerEditorPanelFacade> myDisposeAction = designer -> disposeContent(designer);
 
   private void runUpdateContent(ParameterizedRunnable<DesignerEditorPanelFacade> action) {
     for (FileEditor editor : myFileEditorManager.getAllEditors()) {

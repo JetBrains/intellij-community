@@ -68,14 +68,11 @@ public class ProjectStartupRunner implements StartupActivity, DumbAware {
   }
 
   private static Runnable createRequest(final Project project, final Alarm alarm) {
-    return new Runnable() {
-      @Override
-      public void run() {
-        if (! ((StartupManagerEx) StartupManager.getInstance(project)).postStartupActivityPassed() && !Registry.is("dumb.aware.run.configurations")) {
-          alarm.addRequest(createRequest(project, alarm), DELAY_MILLIS);
-        } else {
-          runActivities(project);
-        }
+    return () -> {
+      if (! ((StartupManagerEx) StartupManager.getInstance(project)).postStartupActivityPassed() && !Registry.is("dumb.aware.run.configurations")) {
+        alarm.addRequest(createRequest(project, alarm), DELAY_MILLIS);
+      } else {
+        runActivities(project);
       }
     };
   }
@@ -88,21 +85,18 @@ public class ProjectStartupRunner implements StartupActivity, DumbAware {
 
     final Executor executor = DefaultRunExecutor.getRunExecutorInstance();
     for (final RunnerAndConfigurationSettings configuration : configurations) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          if (! canBeRun(configuration)) {
-            ProjectStartupTaskManager.NOTIFICATION_GROUP
-              .createNotification(ProjectStartupTaskManager.PREFIX + " Run Configuration '" + configuration.getName() +
-                                  "' can not be started with 'Run' action.", MessageType.ERROR)
-              .notify(project);
-            return;
-          }
-          ProgramRunnerUtil.executeConfiguration(project, configuration, executor);
+      ApplicationManager.getApplication().invokeLater(() -> {
+        if (! canBeRun(configuration)) {
           ProjectStartupTaskManager.NOTIFICATION_GROUP
-            .createNotification(ProjectStartupTaskManager.PREFIX + " started '" + configuration.getName() + "'", MessageType.INFO)
+            .createNotification(ProjectStartupTaskManager.PREFIX + " Run Configuration '" + configuration.getName() +
+                                "' can not be started with 'Run' action.", MessageType.ERROR)
             .notify(project);
+          return;
         }
+        ProgramRunnerUtil.executeConfiguration(project, configuration, executor);
+        ProjectStartupTaskManager.NOTIFICATION_GROUP
+          .createNotification(ProjectStartupTaskManager.PREFIX + " started '" + configuration.getName() + "'", MessageType.INFO)
+          .notify(project);
       }, ModalityState.any());
     }
   }

@@ -296,12 +296,7 @@ public class PyQuickFixTest extends PyTestCase {
 
   // PY-2083
   public void testUnresolvedWith() {
-    runWithLanguageLevel(LanguageLevel.PYTHON25, new Runnable() {
-      @Override
-      public void run() {
-        doInspectionTest(PyUnresolvedReferencesInspection.class, PyBundle.message("QFIX.unresolved.reference.add.future"), true, true);
-      }
-    });
+    runWithLanguageLevel(LanguageLevel.PYTHON25, () -> doInspectionTest(PyUnresolvedReferencesInspection.class, PyBundle.message("QFIX.unresolved.reference.add.future"), true, true));
   }
 
   // PY-2092
@@ -434,12 +429,7 @@ public class PyQuickFixTest extends PyTestCase {
 
   // PY-3120
   public void testSetFunctionToLiteral() {
-    runWithLanguageLevel(LanguageLevel.PYTHON27, new Runnable() {
-      @Override
-      public void run() {
-        doInspectionTest(PySetFunctionToLiteralInspection.class, PyBundle.message("QFIX.replace.function.set.with.literal"), true, true);
-      }
-    });
+    runWithLanguageLevel(LanguageLevel.PYTHON27, () -> doInspectionTest(PySetFunctionToLiteralInspection.class, PyBundle.message("QFIX.replace.function.set.with.literal"), true, true));
   }
 
   public void testDictComprehensionToCall() {
@@ -449,119 +439,73 @@ public class PyQuickFixTest extends PyTestCase {
   // PY-3394
   public void testDocstringParams() {
     getIndentOptions().INDENT_SIZE = 2;
-    runWithDocStringFormat(DocStringFormat.EPYTEXT, new Runnable() {
-      public void run() {
-        doInspectionTest(PyIncorrectDocstringInspection.class, PyBundle.message("QFIX.docstring.add.$0", "b"), true, true);
-      }
-    });
+    runWithDocStringFormat(DocStringFormat.EPYTEXT,
+                           () -> doInspectionTest(PyIncorrectDocstringInspection.class, PyBundle.message("QFIX.docstring.add.$0", "b"), true, true));
   }
 
   public void testDocstringParams1() {
     getIndentOptions().INDENT_SIZE = 2;
-    runWithDocStringFormat(DocStringFormat.EPYTEXT, new Runnable() {
-      public void run() {
-        doInspectionTest(PyIncorrectDocstringInspection.class, PyBundle.message("QFIX.docstring.remove.$0", "c"), true, true);
-      }
-    });
+    runWithDocStringFormat(DocStringFormat.EPYTEXT,
+                           () -> doInspectionTest(PyIncorrectDocstringInspection.class, PyBundle.message("QFIX.docstring.remove.$0", "c"), true, true));
   }
 
   // PY-4964
   public void testDocstringParams2() {
-    runWithDocStringFormat(DocStringFormat.EPYTEXT, new Runnable() {
-      public void run() {
-        doInspectionTest(PyIncorrectDocstringInspection.class, PyBundle.message("QFIX.docstring.add.$0", "ham"), true, true);
-      }
-    });
+    runWithDocStringFormat(DocStringFormat.EPYTEXT,
+                           () -> doInspectionTest(PyIncorrectDocstringInspection.class, PyBundle.message("QFIX.docstring.add.$0", "ham"), true, true));
   }
 
   // PY-9795
   public void testGoogleDocStringAddParam() {
-    runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
-      @Override
-      public void run() {
-        doInspectionTest(PyIncorrectDocstringInspection.class, PyBundle.message("QFIX.docstring.add.$0", "b"), true, true);
-      }
-    });
+    runWithDocStringFormat(DocStringFormat.GOOGLE,
+                           () -> doInspectionTest(PyIncorrectDocstringInspection.class, PyBundle.message("QFIX.docstring.add.$0", "b"), true, true));
   }
 
   // PY-9795
   public void testGoogleDocStringRemoveParam() {
-    runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
-      @Override
-      public void run() {
-        doInspectionTest(PyIncorrectDocstringInspection.class, PyBundle.message("QFIX.docstring.remove.$0", "c"), true, true);
-      }
-    });
+    runWithDocStringFormat(DocStringFormat.GOOGLE,
+                           () -> doInspectionTest(PyIncorrectDocstringInspection.class, PyBundle.message("QFIX.docstring.remove.$0", "c"), true, true));
   }
 
   // PY-9795
   public void testGoogleDocStringRemoveParamWithSection() {
-    runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
-      @Override
-      public void run() {
-        doInspectionTest(PyIncorrectDocstringInspection.class, PyBundle.message("QFIX.docstring.remove.$0", "c"), true, true);
-      }
-    });
+    runWithDocStringFormat(DocStringFormat.GOOGLE,
+                           () -> doInspectionTest(PyIncorrectDocstringInspection.class, PyBundle.message("QFIX.docstring.remove.$0", "c"), true, true));
   }
 
   // PY-16761
   public void testGoogleDocStringRemovePositionalVararg() {
-    runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
-      @Override
-      public void run() {
-        doInspectionTest(PyIncorrectDocstringInspection.class, PyBundle.message("QFIX.docstring.remove.$0", "args"), true, true);
-      }
-    });
+    runWithDocStringFormat(DocStringFormat.GOOGLE,
+                           () -> doInspectionTest(PyIncorrectDocstringInspection.class, PyBundle.message("QFIX.docstring.remove.$0", "args"), true, true));
   }
 
   // PY-16761
   public void testGoogleDocStringRemoveKeywordVararg() {
-    runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
-      @Override
-      public void run() {
-        doInspectionTest(PyIncorrectDocstringInspection.class, PyBundle.message("QFIX.docstring.remove.$0", "kwargs"), true, true);
-      }
-    });
+    runWithDocStringFormat(DocStringFormat.GOOGLE, () -> doInspectionTest(PyIncorrectDocstringInspection.class, PyBundle.message("QFIX.docstring.remove.$0", "kwargs"), true, true));
   }
 
   // PY-16908
   public void testNumpyDocStringRemoveFirstOfCombinedParams() {
-    runWithDocStringFormat(DocStringFormat.NUMPY, new Runnable() {
-      @Override
-      public void run() {
-        doInspectionTest(PyIncorrectDocstringInspection.class, PyBundle.message("QFIX.docstring.remove.$0", "x"), true, true);
-      }
-    });
+    runWithDocStringFormat(DocStringFormat.NUMPY,
+                           () -> doInspectionTest(PyIncorrectDocstringInspection.class, PyBundle.message("QFIX.docstring.remove.$0", "x"), true, true));
   }
 
   // PY-16908
   public void testNumpyDocStringRemoveMidOfCombinedParams() {
-    runWithDocStringFormat(DocStringFormat.NUMPY, new Runnable() {
-      @Override
-      public void run() {
-        doInspectionTest(PyIncorrectDocstringInspection.class, PyBundle.message("QFIX.docstring.remove.$0", "y"), true, true);
-      }
-    });
+    runWithDocStringFormat(DocStringFormat.NUMPY,
+                           () -> doInspectionTest(PyIncorrectDocstringInspection.class, PyBundle.message("QFIX.docstring.remove.$0", "y"), true, true));
   }
   
   // PY-16908
   public void testNumpyDocStringRemoveLastOfCombinedParams() {
-    runWithDocStringFormat(DocStringFormat.NUMPY, new Runnable() {
-      @Override
-      public void run() {
-        doInspectionTest(PyIncorrectDocstringInspection.class, PyBundle.message("QFIX.docstring.remove.$0", "z"), true, true);
-      }
-    });
+    runWithDocStringFormat(DocStringFormat.NUMPY,
+                           () -> doInspectionTest(PyIncorrectDocstringInspection.class, PyBundle.message("QFIX.docstring.remove.$0", "z"), true, true));
   }
 
   // PY-16908
   public void testNumpyDocStringRemoveCombinedVarargParam() {
-    runWithDocStringFormat(DocStringFormat.NUMPY, new Runnable() {
-      @Override
-      public void run() {
-        doInspectionTest(PyIncorrectDocstringInspection.class, PyBundle.message("QFIX.docstring.remove.$0", "args"), true, true);
-      }
-    });
+    runWithDocStringFormat(DocStringFormat.NUMPY,
+                           () -> doInspectionTest(PyIncorrectDocstringInspection.class, PyBundle.message("QFIX.docstring.remove.$0", "args"), true, true));
   }
 
   public void testUnnecessaryBackslash() {

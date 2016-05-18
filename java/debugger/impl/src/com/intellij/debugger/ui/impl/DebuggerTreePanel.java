@@ -41,19 +41,16 @@ import java.awt.*;
 public abstract class DebuggerTreePanel extends UpdatableDebuggerView implements DataProvider, Disposable {
   public static final DataKey<DebuggerTreePanel> DATA_KEY = DataKey.create("DebuggerPanel");
   
-  private final SingleAlarm myRebuildAlarm = new SingleAlarm(new Runnable() {
-    @Override
-    public void run() {
-      try {
-        final DebuggerContextImpl context = getContext();
-        if(context.getDebuggerSession() != null) {
-          getTree().rebuild(context);
-        }
+  private final SingleAlarm myRebuildAlarm = new SingleAlarm(() -> {
+    try {
+      final DebuggerContextImpl context = getContext();
+      if(context.getDebuggerSession() != null) {
+        getTree().rebuild(context);
       }
-      catch (VMDisconnectedException ignored) {
-      }
-
     }
+    catch (VMDisconnectedException ignored) {
+    }
+
   }, 100);
 
   protected DebuggerTree myTree;

@@ -137,12 +137,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
       killProcessTreeSync(process);
     }
     else {
-      executeOnPooledThread(new Runnable() {
-        @Override
-        public void run() {
-          killProcessTreeSync(process);
-        }
-      });
+      executeOnPooledThread(() -> killProcessTreeSync(process));
     }
   }
 
@@ -150,23 +145,13 @@ public class OSProcessHandler extends BaseOSProcessHandler {
     LOG.debug("killing process tree");
     final boolean destroyed = OSProcessManager.getInstance().killProcessTree(process);
     if (!destroyed) {
-      if (isTerminated(process)) {
+      if (!process.isAlive()) {
         LOG.warn("Process has been already terminated: " + myCommandLine);
       }
       else {
         LOG.warn("Cannot kill process tree. Trying to destroy process using Java API. Cmdline:\n" + myCommandLine);
         process.destroy();
       }
-    }
-  }
-
-  private static boolean isTerminated(@NotNull Process process) {
-    try {
-      process.exitValue();
-      return true;
-    }
-    catch (IllegalThreadStateException e) {
-      return false;
     }
   }
 

@@ -338,14 +338,11 @@ public abstract class DialogWrapper {
 
     myErrorPainter.setValidationInfo(info);
     if (!myErrorText.isTextSet(info.message)) {
-      SwingUtilities.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          if (myDisposed) return;
-          setErrorText(info.message);
-          myPeer.getRootPane().getGlassPane().repaint();
-          getOKAction().setEnabled(false);
-        }
+      SwingUtilities.invokeLater(() -> {
+        if (myDisposed) return;
+        setErrorText(info.message);
+        myPeer.getRootPane().getGlassPane().repaint();
+        getOKAction().setEnabled(false);
       });
     }
   }
@@ -353,25 +350,17 @@ public abstract class DialogWrapper {
   private void installErrorPainter() {
     if (myErrorPainterInstalled) return;
     myErrorPainterInstalled = true;
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        IdeGlassPaneUtil.installPainter(getContentPanel(), myErrorPainter, myDisposable);
-      }
-    });
+    UIUtil.invokeLaterIfNeeded(() -> IdeGlassPaneUtil.installPainter(getContentPanel(), myErrorPainter, myDisposable));
   }
 
   private void clearProblems() {
     myErrorPainter.setValidationInfo(null);
     if (!myErrorText.isTextSet(null)) {
-      SwingUtilities.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          if (myDisposed) return;
-          setErrorText(null);
-          myPeer.getRootPane().getGlassPane().repaint();
-          getOKAction().setEnabled(true);
-        }
+      SwingUtilities.invokeLater(() -> {
+        if (myDisposed) return;
+        setErrorText(null);
+        myPeer.getRootPane().getGlassPane().repaint();
+        getOKAction().setEnabled(true);
       });
     }
   }
@@ -1339,34 +1328,28 @@ public abstract class DialogWrapper {
   }
 
   void startTrackingValidation() {
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (!myValidationStarted && !myDisposed) {
-          myValidationStarted = true;
-          initValidation();
-        }
+    SwingUtilities.invokeLater(() -> {
+      if (!myValidationStarted && !myDisposed) {
+        myValidationStarted = true;
+        initValidation();
       }
     });
   }
 
   protected final void initValidation() {
     myValidationAlarm.cancelAllRequests();
-    final Runnable validateRequest = new Runnable() {
-      @Override
-      public void run() {
-        if (myDisposed) return;
-        final ValidationInfo result = doValidate();
-        if (result == null) {
-          clearProblems();
-        }
-        else {
-          reportProblem(result);
-        }
+    final Runnable validateRequest = () -> {
+      if (myDisposed) return;
+      final ValidationInfo result = doValidate();
+      if (result == null) {
+        clearProblems();
+      }
+      else {
+        reportProblem(result);
+      }
 
-        if (!myDisposed) {
-          initValidation();
-        }
+      if (!myDisposed) {
+        initValidation();
       }
     };
 
@@ -1907,15 +1890,12 @@ public abstract class DialogWrapper {
     }
     myLastErrorText = text;
     myErrorTextAlarm.cancelAllRequests();
-    myErrorTextAlarm.addRequest(new Runnable() {
-      @Override
-      public void run() {
-        final String text = myLastErrorText;
-        if (myActualSize == null && !myErrorText.isVisible()) {
-          myActualSize = getSize();
-        }
-        myErrorText.setError(text);
+    myErrorTextAlarm.addRequest(() -> {
+      final String text1 = myLastErrorText;
+      if (myActualSize == null && !myErrorText.isVisible()) {
+        myActualSize = getSize();
       }
+      myErrorText.setError(text1);
     }, 300, null);
   }
 

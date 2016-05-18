@@ -176,12 +176,9 @@ public class TipManager implements Disposable, PopupMenuListener {
   private void tryTooltip(final InputEvent e, final boolean auto) {
     myShowAlarm.cancelAllRequests();
     myHideAlarm.cancelAllRequests();
-    myShowAlarm.addRequest(new Runnable() {
-      @Override
-      public void run() {
-        if (!myIsDisposed && !myPopupShown) {
-          showTooltip(e, auto);
-        }
+    myShowAlarm.addRequest(() -> {
+      if (!myIsDisposed && !myPopupShown) {
+        showTooltip(e, auto);
       }
     }, auto ? XDebuggerSettingsManager.getInstance().getDataViewSettings().getValueLookupDelay() : 10);
   }
@@ -248,12 +245,9 @@ public class TipManager implements Disposable, PopupMenuListener {
       myTipPopup = null;
       myCurrentTooltip = null;
     } else {
-      myHideAlarm.addRequest(new Runnable() {
-        @Override
-        public void run() {
-          if (myInsideComponent) {
-            hideTooltip(true);
-          }
+      myHideAlarm.addRequest(() -> {
+        if (myInsideComponent) {
+          hideTooltip(true);
         }
       }, 100);
     }

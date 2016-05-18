@@ -65,18 +65,10 @@ public class LogicalRootsManagerImpl extends LogicalRootsManager {
         bus.asyncPublisher(LOGICAL_ROOTS).logicalRootsChanged();
       }
     });
-    registerLogicalRootProvider(LogicalRootType.SOURCE_ROOT, new NotNullFunction<Module, List<VirtualFileLogicalRoot>>() {
-      @Override
-      @NotNull
-      public List<VirtualFileLogicalRoot> fun(final Module module) {
-        return ContainerUtil.map2List(ModuleRootManager.getInstance(module).getSourceRoots(), new Function<VirtualFile, VirtualFileLogicalRoot>() {
-          @Override
-          public VirtualFileLogicalRoot fun(final VirtualFile s) {
-            return new VirtualFileLogicalRoot(s);
-          }
-        });
-      }
-    });
+    registerLogicalRootProvider(LogicalRootType.SOURCE_ROOT,
+                                module -> ContainerUtil.map2List(ModuleRootManager.getInstance(module).getSourceRoots(), s -> {
+                                  return new VirtualFileLogicalRoot(s);
+                                }));
   }
 
   private synchronized void clear() {
@@ -124,11 +116,8 @@ public class LogicalRootsManagerImpl extends LogicalRootsManager {
 
   @Override
   public List<LogicalRoot> getLogicalRoots() {
-    return ContainerUtil.concat(myModuleManager.getModules(), new Function<Module, Collection<? extends LogicalRoot>>() {
-      @Override
-      public Collection<? extends LogicalRoot> fun(final Module module) {
-        return getLogicalRoots(module);
-      }
+    return ContainerUtil.concat(myModuleManager.getModules(), module -> {
+      return getLogicalRoots(module);
     });
   }
 

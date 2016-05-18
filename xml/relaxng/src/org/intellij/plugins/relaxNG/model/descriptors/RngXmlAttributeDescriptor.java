@@ -151,11 +151,8 @@ public class RngXmlAttributeDescriptor extends BasicXmlAttributeDescriptor {
   }
 
   public Collection<PsiElement> getDeclarations() {
-    return ContainerUtil.map2List(myDeclarations, new Function<Locator, PsiElement>() {
-      @Override
-      public PsiElement fun(Locator locator) {
-        return myElementDescriptor.getDeclaration(locator);
-      }
+    return ContainerUtil.map2List(myDeclarations, locator -> {
+      return myElementDescriptor.getDeclaration(locator);
     });
   }
   

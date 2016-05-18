@@ -100,41 +100,36 @@ public class StudyNewProjectPanel{
         final BaseListPopupStep<String> popupStep = new BaseListPopupStep<String>("", "Add local course", "Load private courses") {
           @Override
           public PopupStep onChosen(final String selectedValue, boolean finalChoice) {
-            return doFinalStep(new Runnable() {
-              public void run() {
-                if ("Add local course".equals(selectedValue)) {
+            return doFinalStep(() -> {
+              if ("Add local course".equals(selectedValue)) {
 
-                  Project[] projects = ProjectManager.getInstance().getOpenProjects();
-                  FileChooser.chooseFile(fileChooser, null, projects.length == 0 ? null : projects[0].getBaseDir(),
-                                         new Consumer<VirtualFile>() {
-                                           @Override
-                                           public void consume(VirtualFile file) {
-                                             String fileName = file.getPath();
-                                             int oldSize = myAvailableCourses.size();
-                                             CourseInfo courseInfo = myGenerator.addLocalCourse(fileName);
-                                             if (courseInfo != null) {
-                                               if (oldSize != myAvailableCourses.size()) {
-                                                 myCoursesComboBox.addItem(courseInfo);
-                                               }
-                                               myCoursesComboBox.setSelectedItem(courseInfo);
-                                               setOK();
-                                             }
-                                             else {
-                                               setError(INVALID_COURSE);
-                                               myCoursesComboBox.removeAllItems();
-                                               myCoursesComboBox.addItem(CourseInfo.INVALID_COURSE);
-                                               for (CourseInfo course : myAvailableCourses) {
-                                                 myCoursesComboBox.addItem(course);
-                                               }
-                                               myCoursesComboBox.setSelectedItem(CourseInfo.INVALID_COURSE);
-                                             }
+                Project[] projects = ProjectManager.getInstance().getOpenProjects();
+                FileChooser.chooseFile(fileChooser, null, projects.length == 0 ? null : projects[0].getBaseDir(),
+                                       file -> {
+                                         String fileName = file.getPath();
+                                         int oldSize = myAvailableCourses.size();
+                                         CourseInfo courseInfo = myGenerator.addLocalCourse(fileName);
+                                         if (courseInfo != null) {
+                                           if (oldSize != myAvailableCourses.size()) {
+                                             myCoursesComboBox.addItem(courseInfo);
                                            }
-                                         });
-                }
-                else if ("Load private courses".equals(selectedValue)) {
-                  final AddRemoteDialog dialog = new AddRemoteDialog();
-                  dialog.show();
-                }
+                                           myCoursesComboBox.setSelectedItem(courseInfo);
+                                           setOK();
+                                         }
+                                         else {
+                                           setError(INVALID_COURSE);
+                                           myCoursesComboBox.removeAllItems();
+                                           myCoursesComboBox.addItem(CourseInfo.INVALID_COURSE);
+                                           for (CourseInfo course : myAvailableCourses) {
+                                             myCoursesComboBox.addItem(course);
+                                           }
+                                           myCoursesComboBox.setSelectedItem(CourseInfo.INVALID_COURSE);
+                                         }
+                                       });
+              }
+              else if ("Load private courses".equals(selectedValue)) {
+                final AddRemoteDialog dialog = new AddRemoteDialog();
+                dialog.show();
               }
             });
           }

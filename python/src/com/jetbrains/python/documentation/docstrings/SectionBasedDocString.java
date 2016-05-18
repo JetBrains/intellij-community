@@ -307,11 +307,8 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
   @NotNull
   @Override
   public List<String> getParameters() {
-    return ContainerUtil.map(getParameterSubstrings(), new Function<Substring, String>() {
-      @Override
-      public String fun(Substring substring) {
-        return substring.toString();
-      }
+    return ContainerUtil.map(getParameterSubstrings(), substring -> {
+      return substring.toString();
     });
   }
 
@@ -470,11 +467,8 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
   @NotNull
   @Override
   public List<String> getRaisedExceptions() {
-    return ContainerUtil.mapNotNull(getExceptionFields(), new Function<SectionField, String>() {
-      @Override
-      public String fun(SectionField field) {
-        return StringUtil.nullize(field.getType());
-      }
+    return ContainerUtil.mapNotNull(getExceptionFields(), field -> {
+      return StringUtil.nullize(field.getType());
     });
   }
 
@@ -520,12 +514,8 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
 
   @NotNull
   public List<Section> getSectionsWithNormalizedTitle(@NotNull final String title) {
-    return ContainerUtil.mapNotNull(mySections, new Function<Section, Section>() {
-      @Override
-      public Section fun(Section section) {
-        return section.getNormalizedTitle().equals(getNormalizedSectionTitle(title)) ? section : null;
-      }
-    });
+    return ContainerUtil.mapNotNull(mySections,
+                                    section -> section.getNormalizedTitle().equals(getNormalizedSectionTitle(title)) ? section : null);
   }
 
   @Nullable
@@ -631,11 +621,8 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
 
     @NotNull
     public List<String> getNames() {
-      return ContainerUtil.map(myNames, new Function<Substring, String>() {
-        @Override
-        public String fun(Substring substring) {
-          return substring.toString();
-        }
+      return ContainerUtil.map(myNames, substring -> {
+        return substring.toString();
       });
     }
 

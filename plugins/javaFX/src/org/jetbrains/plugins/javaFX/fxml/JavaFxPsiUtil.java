@@ -523,16 +523,13 @@ public class JavaFxPsiUtil {
         if (builderClass != null) {
           final PsiMethod[] buildMethods = builderClass.findMethodsByName("build", false);
           if (buildMethods.length == 1 && buildMethods[0].getParameterList().getParametersCount() == 0) {
-            if (ClassInheritorsSearch.search(builderClass).forEach(new Processor<PsiClass>() {
-              @Override
-              public boolean process(PsiClass aClass) {
-                PsiType returnType = null;
-                final PsiMethod method = MethodSignatureUtil.findMethodBySuperMethod(aClass, buildMethods[0], false);
-                if (method != null) {
-                  returnType = method.getReturnType();
-                }
-                return !Comparing.equal(psiClass, PsiUtil.resolveClassInClassTypeOnly(returnType));
+            if (ClassInheritorsSearch.search(builderClass).forEach(aClass -> {
+              PsiType returnType = null;
+              final PsiMethod method = MethodSignatureUtil.findMethodBySuperMethod(aClass, buildMethods[0], false);
+              if (method != null) {
+                returnType = method.getReturnType();
               }
+              return !Comparing.equal(psiClass, PsiUtil.resolveClassInClassTypeOnly(returnType));
             })) {
               return Result.create(false, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
             }
@@ -1142,30 +1139,27 @@ public class JavaFxPsiUtil {
           };
           final GlobalSearchScope globalSearchScope = GlobalSearchScope
                       .notScope(GlobalSearchScope.getScopeRestrictedByFileTypes(myContainingFile.getResolveScope(), StdFileTypes.XML));
-          ReferencesSearch.search(myContainingFile, globalSearchScope).forEach(new Processor<PsiReference>() {
-            @Override
-            public boolean process(PsiReference reference) {
-              final PsiElement element = reference.getElement();
-              if (element instanceof PsiLiteralExpression) {
-                final PsiNewExpression expression = PsiTreeUtil.getParentOfType(element, PsiNewExpression.class);
-                if (expression != null) {
-                  final PsiType type = expression.getType();
-                  if (type != null && type.equalsToText(JavaFxCommonNames.JAVAFX_FXML_FXMLLOADER)) {
-                    final PsiElement parent = expression.getParent();
-                    if (parent instanceof PsiLocalVariable) {
-                      ReferencesSearch.search(parent).forEach(processor);
-                      final PsiClass controller = processor.getInjectedController();
-                      if (controller != null) {
-                        injectedController.set(controller);
-                        dep.set(processor.getContainingFile());
-                        return false;
-                      }
+          ReferencesSearch.search(myContainingFile, globalSearchScope).forEach(reference -> {
+            final PsiElement element = reference.getElement();
+            if (element instanceof PsiLiteralExpression) {
+              final PsiNewExpression expression = PsiTreeUtil.getParentOfType(element, PsiNewExpression.class);
+              if (expression != null) {
+                final PsiType type = expression.getType();
+                if (type != null && type.equalsToText(JavaFxCommonNames.JAVAFX_FXML_FXMLLOADER)) {
+                  final PsiElement parent = expression.getParent();
+                  if (parent instanceof PsiLocalVariable) {
+                    ReferencesSearch.search(parent).forEach(processor);
+                    final PsiClass controller = processor.getInjectedController();
+                    if (controller != null) {
+                      injectedController.set(controller);
+                      dep.set(processor.getContainingFile());
+                      return false;
                     }
                   }
                 }
               }
-              return true;
             }
+            return true;
           });
         }
       }

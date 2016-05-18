@@ -114,12 +114,8 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
     registerComponentInstance(appContainer, SchemesManagerFactory.class, new MockSchemesManagerFactory());
     final MockEditorFactory editorFactory = new MockEditorFactory();
     registerComponentInstance(appContainer, EditorFactory.class, editorFactory);
-    registerComponentInstance(appContainer, FileDocumentManager.class, new MockFileDocumentManagerImpl(new Function<CharSequence, Document>() {
-      @Override
-      public Document fun(CharSequence charSequence) {
-        return editorFactory.createDocument(charSequence);
-      }
-    }, FileDocumentManagerImpl.HARD_REF_TO_DOCUMENT_KEY));
+    registerComponentInstance(appContainer, FileDocumentManager.class, new MockFileDocumentManagerImpl(
+      charSequence -> editorFactory.createDocument(charSequence), FileDocumentManagerImpl.HARD_REF_TO_DOCUMENT_KEY));
     registerComponentInstance(appContainer, PsiDocumentManager.class, new MockPsiDocumentManager());
 
     registerApplicationService(PsiBuilderFactory.class, new PsiBuilderFactoryImpl());

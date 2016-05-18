@@ -151,11 +151,8 @@ public class SearchingForTestsTask extends SearchForTestsTask {
     if (TestType.GROUP.getType().equals(myData.TEST_OBJECT)) {
       String groupName = myData.getGroupName();
       if (!StringUtil.isEmptyOrSpaces(groupName)) {
-        final List<String> names = ContainerUtil.map(StringUtil.split(groupName, ","), new Function<String, String>() {
-          @Override
-          public String fun(String groupName) {
-            return groupName.trim();
-          }
+        final List<String> names = ContainerUtil.map(StringUtil.split(groupName, ","), groupName1 -> {
+          return groupName1.trim();
         });
         groupNames = new HashSet<String>(names);
       }

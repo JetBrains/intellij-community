@@ -622,13 +622,10 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     myText = text;
 
     //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        myEditorPane.scrollRectToVisible(viewRect); // if ref is defined but is not found in document, this provides a default location
-        if (ref != null) {
-          myEditorPane.scrollToReference(ref);
-        }
+    SwingUtilities.invokeLater(() -> {
+      myEditorPane.scrollRectToVisible(viewRect); // if ref is defined but is not found in document, this provides a default location
+      if (ref != null) {
+        myEditorPane.scrollToReference(ref);
       }
     });
   }
@@ -648,12 +645,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       StyleConstants.setFontFamily(myFontSizeStyle, scheme.getEditorFontName());
     }
 
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        styledDocument.setCharacterAttributes(0, styledDocument.getLength(), myFontSizeStyle, false);
-      }
-    });
+    ApplicationManager.getApplication().executeOnPooledThread(
+      () -> styledDocument.setCharacterAttributes(0, styledDocument.getLength(), myFontSizeStyle, false));
   }
 
   private void goBack() {

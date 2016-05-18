@@ -123,38 +123,36 @@ class UndoableGroup {
     // perform undo action by action, setting bulk update flag if possible
     // if multiple consecutive actions share a document, then set the bulk flag only once
     final Set<DocumentEx> bulkDocuments = new THashSet<DocumentEx>();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        try {
-          for (final UndoableAction action : isUndo ? ContainerUtil.iterateBackward(myActions) : myActions) {
-            if (wrapInBulkUpdate) {
-              DocumentEx newDocument = getDocumentToSetBulkMode(action);
-              if (newDocument == null) {
-                for (DocumentEx document : bulkDocuments) {
-                  document.setInBulkUpdate(false);
-                }
-                bulkDocuments.clear();
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      try {
+        for (final UndoableAction action : isUndo ? ContainerUtil.iterateBackward(myActions) : myActions) {
+          if (wrapInBulkUpdate) {
+            DocumentEx newDocument = getDocumentToSetBulkMode(action);
+            if (newDocument == null) {
+              for (DocumentEx document : bulkDocuments) {
+                document.setInBulkUpdate(false);
               }
-              else if (bulkDocuments.add(newDocument)) {
-                newDocument.setInBulkUpdate(true);
-              }
+              bulkDocuments.clear();
             }
+            else if (bulkDocuments.add(newDocument)) {
+              newDocument.setInBulkUpdate(true);
+            }
+          }
 
-            if (isUndo) {
-              action.undo();
-            }
-            else {
-              action.redo();
-            }
+          if (isUndo) {
+            action.undo();
+          }
+          else {
+            action.redo();
           }
         }
-        catch (UnexpectedUndoException e) {
-          reportUndoProblem(e, isUndo);
-        }
-        finally {
-          for (DocumentEx bulkDocument : bulkDocuments) {
-            bulkDocument.setInBulkUpdate(false);
-          }
+      }
+      catch (UnexpectedUndoException e) {
+        reportUndoProblem(e, isUndo);
+      }
+      finally {
+        for (DocumentEx bulkDocument : bulkDocuments) {
+          bulkDocument.setInBulkUpdate(false);
         }
       }
     });
@@ -357,12 +355,7 @@ class UndoableGroup {
 
     if (multiline) result.append("\n");
 
-    result.append(StringUtil.join(myActions, new Function<UndoableAction, String>() {
-      @Override
-      public String fun(UndoableAction each) {
-        return (multiline ? "  " : "") + each.toString();
-      }
-    }, ",\n"));
+    result.append(StringUtil.join(myActions, each -> (multiline ? "  " : "") + each.toString(), ",\n"));
 
     if (multiline) result.append("\n");
     result.append("]");

@@ -41,26 +41,20 @@ public class Py3UnresolvedReferencesInspectionTest extends PyTestCase {
   }
 
   private void doTest() {
-    runWithLanguageLevel(LanguageLevel.PYTHON33, new Runnable() {
-      @Override
-      public void run() {
-        myFixture.configureByFile(TEST_DIRECTORY + getTestName(true) + ".py");
-        myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
-        myFixture.checkHighlighting(true, false, false);
-      }
+    runWithLanguageLevel(LanguageLevel.PYTHON33, () -> {
+      myFixture.configureByFile(TEST_DIRECTORY + getTestName(true) + ".py");
+      myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
+      myFixture.checkHighlighting(true, false, false);
     });
   }
 
   private void doMultiFileTest(@NotNull final String filename) {
-    runWithLanguageLevel(LanguageLevel.PYTHON33, new Runnable() {
-      @Override
-      public void run() {
-        final String testName = getTestName(false);
-        myFixture.copyDirectoryToProject(TEST_DIRECTORY + testName, "");
-        myFixture.configureFromTempProjectFile(filename);
-        myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
-        myFixture.checkHighlighting(true, false, false);
-      }
+    runWithLanguageLevel(LanguageLevel.PYTHON33, () -> {
+      final String testName = getTestName(false);
+      myFixture.copyDirectoryToProject(TEST_DIRECTORY + testName, "");
+      myFixture.configureFromTempProjectFile(filename);
+      myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
+      myFixture.checkHighlighting(true, false, false);
     });
   }
 

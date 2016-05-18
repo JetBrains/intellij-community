@@ -73,13 +73,9 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
     }
     else {
       OrderEnumerator en = getOrderEnumeratorForOptions();
-      Collections.addAll(roots, en.roots(new NotNullFunction<OrderEntry, OrderRootType>() {
-        @NotNull
-        @Override
-        public OrderRootType fun(OrderEntry entry) {
-          if (entry instanceof ModuleOrderEntry || entry instanceof ModuleSourceOrderEntry) return OrderRootType.SOURCES;
-          return OrderRootType.CLASSES;
-        }
+      Collections.addAll(roots, en.roots(entry -> {
+        if (entry instanceof ModuleOrderEntry || entry instanceof ModuleSourceOrderEntry) return OrderRootType.SOURCES;
+        return OrderRootType.CLASSES;
       }).getRoots());
     }
 
@@ -111,17 +107,14 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
     // ordering the content roots, so use a LinkedHashSet
     final Set<Module> modules = ContainerUtil.newLinkedHashSet();
     OrderEnumerator en = getOrderEnumeratorForOptions();
-    en.forEach(new Processor<OrderEntry>() {
-      @Override
-      public boolean process(OrderEntry each) {
-        if (each instanceof ModuleOrderEntry) {
-          ContainerUtil.addIfNotNull(modules, ((ModuleOrderEntry)each).getModule());
-        }
-        else if (each instanceof ModuleSourceOrderEntry) {
-          ContainerUtil.addIfNotNull(modules, each.getOwnerModule());
-        }
-        return true;
+    en.forEach(each -> {
+      if (each instanceof ModuleOrderEntry) {
+        ContainerUtil.addIfNotNull(modules, ((ModuleOrderEntry)each).getModule());
       }
+      else if (each instanceof ModuleSourceOrderEntry) {
+        ContainerUtil.addIfNotNull(modules, each.getOwnerModule());
+      }
+      return true;
     });
     return modules;
   }
@@ -198,12 +191,7 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
   public Collection<VirtualFile> getRoots() {
     //noinspection unchecked
     List<VirtualFile> result = (List)ContainerUtil.newArrayList(myRoots.keys());
-    Collections.sort(result, new Comparator<VirtualFile>() {
-      @Override
-      public int compare(VirtualFile o1, VirtualFile o2) {
-        return myRoots.get(o1) - myRoots.get(o2);
-      }
-    });
+    Collections.sort(result, (o1, o2) -> myRoots.get(o1) - myRoots.get(o2));
     return result;
   }
 

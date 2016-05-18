@@ -107,15 +107,12 @@ public class VfsTestUtil {
   }
 
   public static void clearContent(@NotNull final VirtualFile file) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          VfsUtil.saveText(file, "");
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      try {
+        VfsUtil.saveText(file, "");
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
       }
     });
   }

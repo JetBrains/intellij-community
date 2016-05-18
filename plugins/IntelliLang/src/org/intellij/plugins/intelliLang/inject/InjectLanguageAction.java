@@ -112,17 +112,13 @@ public class InjectLanguageAction implements IntentionAction, LowPriorityAction 
   }
 
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-    doChooseLanguageToInject(editor, new Processor<Injectable>() {
-      public boolean process(final Injectable injectable) {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          public void run() {
-            if (!project.isDisposed()) {
-              invokeImpl(project, editor, file, injectable);
-            }
-          }
-        });
-        return false;
-      }
+    doChooseLanguageToInject(editor, injectable -> {
+      ApplicationManager.getApplication().runReadAction(() -> {
+        if (!project.isDisposed()) {
+          invokeImpl(project, editor, file, injectable);
+        }
+      });
+      return false;
     });
   }
 
@@ -195,20 +191,13 @@ public class InjectLanguageAction implements IntentionAction, LowPriorityAction 
     Dimension minSize = new JLabel(PlainTextLanguage.INSTANCE.getDisplayName(), EmptyIcon.ICON_16, SwingConstants.LEFT).getMinimumSize();
     minSize.height *= 4;
     list.setMinimumSize(minSize);
-    JBPopup popup = new PopupChooserBuilder(list).setItemChoosenCallback(new Runnable() {
-      public void run() {
-        Injectable value = (Injectable)list.getSelectedValue();
-        if (value != null) {
-          onChosen.process(value);
-          PropertiesComponent.getInstance().setValue(LAST_INJECTED_LANGUAGE, value.getId());
-        }
+    JBPopup popup = new PopupChooserBuilder(list).setItemChoosenCallback(() -> {
+      Injectable value = (Injectable)list.getSelectedValue();
+      if (value != null) {
+        onChosen.process(value);
+        PropertiesComponent.getInstance().setValue(LAST_INJECTED_LANGUAGE, value.getId());
       }
-    }).setFilteringEnabled(new Function<Object, String>() {
-      @Override
-      public String fun(Object language) {
-        return ((Injectable)language).getDisplayName();
-      }
-    }).setMinSize(minSize).createPopup();
+    }).setFilteringEnabled(language -> ((Injectable)language).getDisplayName()).setMinSize(minSize).createPopup();
     final String lastInjected = PropertiesComponent.getInstance().getValue(LAST_INJECTED_LANGUAGE);
     if (lastInjected != null) {
       Injectable injectable = ContainerUtil.find(injectables, new Condition<Injectable>() {

@@ -37,12 +37,10 @@ public abstract class AutomaticUsageRenamer<T> {
     myOldName = oldName;
     myNewName = newName;
     List<T> elements = new ArrayList<T>(renamedElements);
-    Collections.sort(elements, new Comparator<T>() {
-      public int compare(T o1, T o2) {
-        int i = StringUtil.compare(getSourceName(o1), getSourceName(o2), false);
-        if (i != 0) return i;
-        return getName(o1).compareTo(getName(o2));
-      }
+    Collections.sort(elements, (o1, o2) -> {
+      int i = StringUtil.compare(getSourceName(o1), getSourceName(o2), false);
+      if (i != 0) return i;
+      return getName(o1).compareTo(getName(o2));
     });
     for (T element : elements) {
       String suggestedNewName = suggestName(element);

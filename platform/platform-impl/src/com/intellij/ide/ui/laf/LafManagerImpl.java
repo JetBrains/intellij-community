@@ -165,13 +165,10 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       // do not sort LaFs on mac - the order is determined as Default, Darcula.
       // when we leave only system LaFs on other OSes, the order also should be determined as Default, Darcula
 
-      Arrays.sort(myLaFs, new Comparator<UIManager.LookAndFeelInfo>() {
-        @Override
-        public int compare(UIManager.LookAndFeelInfo obj1, UIManager.LookAndFeelInfo obj2) {
-          String name1 = obj1.getName();
-          String name2 = obj2.getName();
-          return name1.compareToIgnoreCase(name2);
-        }
+      Arrays.sort(myLaFs, (obj1, obj2) -> {
+        String name1 = obj1.getName();
+        String name2 = obj2.getName();
+        return name1.compareToIgnoreCase(name2);
       });
     }
 
@@ -236,12 +233,9 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
         @Override
         public void propertyChange(final PropertyChangeEvent evt) {
           //noinspection SSBasedInspection
-          SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              fixGtkPopupStyle();
-              patchGtkDefaults(UIManager.getLookAndFeelDefaults());
-            }
+          SwingUtilities.invokeLater(() -> {
+            fixGtkPopupStyle();
+            patchGtkDefaults(UIManager.getLookAndFeelDefaults());
           });
         }
       };

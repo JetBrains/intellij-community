@@ -33,12 +33,9 @@ import org.jetbrains.annotations.NotNull;
 public class MessageBusUtil {
 
   private static <T> Runnable createPublisherRunnable(final Project project, final Topic<T> topic, final Consumer<T> listener) {
-    return new Runnable() {
-      @Override
-      public void run() {
-        if (project.isDisposed()) throw new ProcessCanceledException();
-        listener.consume(project.getMessageBus().syncPublisher(topic));
-      }
+    return () -> {
+      if (project.isDisposed()) throw new ProcessCanceledException();
+      listener.consume(project.getMessageBus().syncPublisher(topic));
     };
   }
 

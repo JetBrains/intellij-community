@@ -23,18 +23,8 @@ import com.intellij.util.ReflectionUtil;
  * @author peter
  */
 public class NamedEnumUtil {
-  private static final Function<Enum, String> NAMED_SHOW = new Function<Enum, String>() {
-    @Override
-    public String fun(final Enum s) {
-      return ((NamedEnum) s).getValue();
-    }
-  };
-  private static final Function<Enum, String> SIMPLE_SHOW = new Function<Enum, String>() {
-    @Override
-    public String fun(final Enum s) {
-      return s.name();
-    }
-  };
+  private static final Function<Enum, String> NAMED_SHOW = s -> ((NamedEnum) s).getValue();
+  private static final Function<Enum, String> SIMPLE_SHOW = s -> s.name();
   
   public static <T extends Enum> T getEnumElementByValue(final Class<T> enumClass, final String value, Function<Enum, String> show) {
     for (final T t : enumClass.getEnumConstants()) {

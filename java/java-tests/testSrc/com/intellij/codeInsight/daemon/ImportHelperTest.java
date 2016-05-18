@@ -72,43 +72,35 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
     final PsiJavaFile file = (PsiJavaFile)configureByText(StdFileTypes.JAVA, text);
     assertEmpty(highlightErrors());
     CommandProcessor.getInstance().executeCommand(
-      getProject(), new Runnable() {
-      @Override
-      public void run() {
-        WriteCommandAction.runWriteCommandAction(null, new Runnable() {
-          @Override
-          public void run() {
-            try {
-              checkAddImport(file, CommonClassNames.JAVA_UTIL_LIST, CommonClassNames.JAVA_UTIL_LIST);
-              checkAddImport(file, "java.util.ArrayList", "java.util.ArrayList", CommonClassNames.JAVA_UTIL_LIST);
-              checkAddImport(file, "java.util.HashMap", "java.util.ArrayList","java.util.HashMap", CommonClassNames.JAVA_UTIL_LIST);
-              checkAddImport(file, "java.util.SortedMap", "java.util.ArrayList","java.util.HashMap", CommonClassNames.JAVA_UTIL_LIST,"java.util.SortedMap");
-              checkAddImport(file, CommonClassNames.JAVA_UTIL_MAP, "java.util.ArrayList","java.util.HashMap",
-                             CommonClassNames.JAVA_UTIL_LIST,
-                             CommonClassNames.JAVA_UTIL_MAP,"java.util.SortedMap");
-              checkAddImport(file, "java.util.AbstractList", "java.util.AbstractList","java.util.ArrayList","java.util.HashMap",
-                             CommonClassNames.JAVA_UTIL_LIST,
-                             CommonClassNames.JAVA_UTIL_MAP,"java.util.SortedMap");
-              checkAddImport(file, "java.util.AbstractList", "java.util.AbstractList","java.util.ArrayList","java.util.HashMap",
-                             CommonClassNames.JAVA_UTIL_LIST,
-                             CommonClassNames.JAVA_UTIL_MAP,"java.util.SortedMap");
-              checkAddImport(file, "java.util.TreeMap", "java.util.AbstractList","java.util.ArrayList","java.util.HashMap",
-                             CommonClassNames.JAVA_UTIL_LIST,
-                             CommonClassNames.JAVA_UTIL_MAP,"java.util.SortedMap", "java.util.TreeMap");
-              checkAddImport(file, "java.util.concurrent.atomic.AtomicBoolean", "java.util.AbstractList","java.util.ArrayList","java.util.HashMap",
-                             CommonClassNames.JAVA_UTIL_LIST,
-                             CommonClassNames.JAVA_UTIL_MAP,"java.util.SortedMap", "java.util.TreeMap", "java.util.concurrent.atomic.AtomicBoolean");
-              checkAddImport(file, "java.io.File", "java.io.File","java.util.AbstractList","java.util.ArrayList","java.util.HashMap",
-                             CommonClassNames.JAVA_UTIL_LIST,
-                             CommonClassNames.JAVA_UTIL_MAP,"java.util.SortedMap", "java.util.TreeMap", "java.util.concurrent.atomic.AtomicBoolean");
-            }
-            catch (Throwable e) {
-              LOG.error(e);
-            }
-          }
-        });
-      }
-    }, "", "");
+      getProject(), () -> WriteCommandAction.runWriteCommandAction(null, () -> {
+        try {
+          checkAddImport(file, CommonClassNames.JAVA_UTIL_LIST, CommonClassNames.JAVA_UTIL_LIST);
+          checkAddImport(file, "java.util.ArrayList", "java.util.ArrayList", CommonClassNames.JAVA_UTIL_LIST);
+          checkAddImport(file, "java.util.HashMap", "java.util.ArrayList","java.util.HashMap", CommonClassNames.JAVA_UTIL_LIST);
+          checkAddImport(file, "java.util.SortedMap", "java.util.ArrayList","java.util.HashMap", CommonClassNames.JAVA_UTIL_LIST,"java.util.SortedMap");
+          checkAddImport(file, CommonClassNames.JAVA_UTIL_MAP, "java.util.ArrayList","java.util.HashMap",
+                         CommonClassNames.JAVA_UTIL_LIST,
+                         CommonClassNames.JAVA_UTIL_MAP,"java.util.SortedMap");
+          checkAddImport(file, "java.util.AbstractList", "java.util.AbstractList","java.util.ArrayList","java.util.HashMap",
+                         CommonClassNames.JAVA_UTIL_LIST,
+                         CommonClassNames.JAVA_UTIL_MAP,"java.util.SortedMap");
+          checkAddImport(file, "java.util.AbstractList", "java.util.AbstractList","java.util.ArrayList","java.util.HashMap",
+                         CommonClassNames.JAVA_UTIL_LIST,
+                         CommonClassNames.JAVA_UTIL_MAP,"java.util.SortedMap");
+          checkAddImport(file, "java.util.TreeMap", "java.util.AbstractList","java.util.ArrayList","java.util.HashMap",
+                         CommonClassNames.JAVA_UTIL_LIST,
+                         CommonClassNames.JAVA_UTIL_MAP,"java.util.SortedMap", "java.util.TreeMap");
+          checkAddImport(file, "java.util.concurrent.atomic.AtomicBoolean", "java.util.AbstractList","java.util.ArrayList","java.util.HashMap",
+                         CommonClassNames.JAVA_UTIL_LIST,
+                         CommonClassNames.JAVA_UTIL_MAP,"java.util.SortedMap", "java.util.TreeMap", "java.util.concurrent.atomic.AtomicBoolean");
+          checkAddImport(file, "java.io.File", "java.io.File","java.util.AbstractList","java.util.ArrayList","java.util.HashMap",
+                         CommonClassNames.JAVA_UTIL_LIST,
+                         CommonClassNames.JAVA_UTIL_MAP,"java.util.SortedMap", "java.util.TreeMap", "java.util.concurrent.atomic.AtomicBoolean");
+        }
+        catch (Throwable e) {
+          LOG.error(e);
+        }
+      }), "", "");
   }
   @WrapInCommand
   public void testStaticImportsGrouping() throws Throwable {
@@ -127,45 +119,37 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
     final PsiJavaFile file = (PsiJavaFile)configureByText(StdFileTypes.JAVA, text);
     assertEmpty(highlightErrors());
     CommandProcessor.getInstance().executeCommand(
-      getProject(), new Runnable() {
-        @Override
-        public void run() {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              try {
+      getProject(), () -> ApplicationManager.getApplication().runWriteAction(() -> {
+        try {
 
-                CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).clone();
-                settings.LAYOUT_STATIC_IMPORTS_SEPARATELY = true;
-                PackageEntryTable table = new PackageEntryTable();
-                table.addEntry(PackageEntry.ALL_OTHER_IMPORTS_ENTRY);
-                table.addEntry(PackageEntry.BLANK_LINE_ENTRY);
-                table.addEntry(new PackageEntry(false, "javax", true));
-                table.addEntry(new PackageEntry(false, "java", true));
-                table.addEntry(PackageEntry.BLANK_LINE_ENTRY);
-                table.addEntry(new PackageEntry(true, "java", true));
-                table.addEntry(PackageEntry.BLANK_LINE_ENTRY);
-                table.addEntry(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY);
+          CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).clone();
+          settings.LAYOUT_STATIC_IMPORTS_SEPARATELY = true;
+          PackageEntryTable table = new PackageEntryTable();
+          table.addEntry(PackageEntry.ALL_OTHER_IMPORTS_ENTRY);
+          table.addEntry(PackageEntry.BLANK_LINE_ENTRY);
+          table.addEntry(new PackageEntry(false, "javax", true));
+          table.addEntry(new PackageEntry(false, "java", true));
+          table.addEntry(PackageEntry.BLANK_LINE_ENTRY);
+          table.addEntry(new PackageEntry(true, "java", true));
+          table.addEntry(PackageEntry.BLANK_LINE_ENTRY);
+          table.addEntry(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY);
 
-                settings.IMPORT_LAYOUT_TABLE.copyFrom(table);
-                CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(settings);
-                try {
-                  JavaCodeStyleManager.getInstance(getProject()).optimizeImports(file);
-                }
-                finally {
-                  CodeStyleSettingsManager.getInstance(getProject()).dropTemporarySettings();
-                }
+          settings.IMPORT_LAYOUT_TABLE.copyFrom(table);
+          CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(settings);
+          try {
+            JavaCodeStyleManager.getInstance(getProject()).optimizeImports(file);
+          }
+          finally {
+            CodeStyleSettingsManager.getInstance(getProject()).dropTemporarySettings();
+          }
 
-                assertOrder(file, "java.awt.*", CommonClassNames.JAVA_UTIL_MAP, "static java.lang.Math.max", "static java.lang.Math.min", "static javax.swing.SwingConstants.CENTER");
+          assertOrder(file, "java.awt.*", CommonClassNames.JAVA_UTIL_MAP, "static java.lang.Math.max", "static java.lang.Math.min", "static javax.swing.SwingConstants.CENTER");
 
-              }
-              catch (Throwable e) {
-                LOG.error(e);
-              }
-            }
-          });
         }
-      }, "", "");
+        catch (Throwable e) {
+          LOG.error(e);
+        }
+      }), "", "");
   }
 
   private void checkAddImport(PsiJavaFile file, String fqn, String... expectedOrder) {

@@ -37,11 +37,8 @@ public class ClassImplementationsSearch implements QueryExecutor<PsiElement, Def
   }
 
   public static boolean processImplementations(final PsiClass psiClass, final Processor<PsiElement> processor, SearchScope scope) {
-    if (!FunctionalExpressionSearch.search(psiClass, scope).forEach(new Processor<PsiFunctionalExpression>() {
-      @Override
-      public boolean process(PsiFunctionalExpression expression) {
-        return processor.process(expression);
-      }
+    if (!FunctionalExpressionSearch.search(psiClass, scope).forEach(expression -> {
+      return processor.process(expression);
     })) {
       return false;
     }

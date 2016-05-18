@@ -139,17 +139,14 @@ public final class SpeedSearchUtil {
     }
 
     final int[] lastOffset = {0};
-    ContainerUtil.process(searchTerms, new Processor<Pair<String, Integer>>() {
-      @Override
-      public boolean process(Pair<String, Integer> pair) {
-        if (pair.second > lastOffset[0]) {
-          simpleColoredComponent.append(text.substring(lastOffset[0], pair.second), plain);
-        }
-
-        simpleColoredComponent.append(text.substring(pair.second, pair.second + pair.first.length()), highlighted);
-        lastOffset[0] = pair.second + pair.first.length();
-        return true;
+    ContainerUtil.process(searchTerms, pair -> {
+      if (pair.second > lastOffset[0]) {
+        simpleColoredComponent.append(text.substring(lastOffset[0], pair.second), plain);
       }
+
+      simpleColoredComponent.append(text.substring(pair.second, pair.second + pair.first.length()), highlighted);
+      lastOffset[0] = pair.second + pair.first.length();
+      return true;
     });
 
     if (lastOffset[0] < text.length()) {

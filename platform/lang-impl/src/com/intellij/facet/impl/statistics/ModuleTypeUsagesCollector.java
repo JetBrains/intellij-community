@@ -46,11 +46,8 @@ public class ModuleTypeUsagesCollector extends AbstractApplicationUsagesCollecto
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       modulesTypes.add(ModuleType.get(module).getId());
     }
-    return ContainerUtil.map2Set(modulesTypes, new Function<String, UsageDescriptor>() {
-      @Override
-      public UsageDescriptor fun(String moduleType) {
-        return new UsageDescriptor(moduleType, 1);
-      }
+    return ContainerUtil.map2Set(modulesTypes, moduleType -> {
+      return new UsageDescriptor(moduleType, 1);
     });
   }
 }

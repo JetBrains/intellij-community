@@ -310,34 +310,29 @@ public class IconsReferencesContributor extends PsiReferenceContributor
         model.setCaseSensitive(true);
         model.setFindAll(true);
         model.setWholeWordsOnly(true);
-        FindInProjectUtil.findUsages(model, project, new Processor<UsageInfo>() {
-          @Override
-          public boolean process(final UsageInfo usage) {
-            ApplicationManager.getApplication().runReadAction(new Runnable() {
-              public void run() {
-                final PsiElement element = usage.getElement();
+        FindInProjectUtil.findUsages(model, project, usage -> {
+          ApplicationManager.getApplication().runReadAction(() -> {
+            final PsiElement element = usage.getElement();
 
-                final ProperTextRange textRange = usage.getRangeInElement();
-                if (element != null && textRange != null) {
-                  final PsiElement start = element.findElementAt(textRange.getStartOffset());
-                  final PsiElement end = element.findElementAt(textRange.getEndOffset());
-                  if (start != null && end != null) {
-                    PsiElement value = PsiTreeUtil.findCommonParent(start, end);
-                    if (value instanceof PsiJavaToken) {
-                      value = value.getParent();
-                    }
-                    if (value != null) {
-                      final PsiFileReference reference = FileReferenceUtil.findFileReference(value);
-                      if (reference != null) {
-                        consumer.process(reference);
-                      }
-                    }
+            final ProperTextRange textRange = usage.getRangeInElement();
+            if (element != null && textRange != null) {
+              final PsiElement start = element.findElementAt(textRange.getStartOffset());
+              final PsiElement end = element.findElementAt(textRange.getEndOffset());
+              if (start != null && end != null) {
+                PsiElement value = PsiTreeUtil.findCommonParent(start, end);
+                if (value instanceof PsiJavaToken) {
+                  value = value.getParent();
+                }
+                if (value != null) {
+                  final PsiFileReference reference = FileReferenceUtil.findFileReference(value);
+                  if (reference != null) {
+                    consumer.process(reference);
                   }
                 }
               }
-            });
-            return true;
-          }
+            }
+          });
+          return true;
         }, new FindUsagesProcessPresentation(new UsageViewPresentation()));
       }
     }

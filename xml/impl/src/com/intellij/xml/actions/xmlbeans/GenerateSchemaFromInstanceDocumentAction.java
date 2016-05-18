@@ -72,12 +72,7 @@ public class GenerateSchemaFromInstanceDocumentAction extends AnAction {
     final VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
 
     final GenerateSchemaFromInstanceDocumentDialog dialog = new GenerateSchemaFromInstanceDocumentDialog(project, file);
-    dialog.setOkAction(new Runnable() {
-      @Override
-      public void run() {
-        doAction(project, dialog);
-      }
-    });    
+    dialog.setOkAction(() -> doAction(project, dialog));
 
     dialog.show();
   }
@@ -129,13 +124,10 @@ public class GenerateSchemaFromInstanceDocumentAction extends AnAction {
     File xsd = new File(dirPath + File.separator + dialog.getTargetSchemaName());
     final VirtualFile xsdFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(xsd);
     if (xsdFile != null) {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            try {
-              xsdFile.delete(null);
-            } catch (IOException e) {//
-            }
+        ApplicationManager.getApplication().runWriteAction(() -> {
+          try {
+            xsdFile.delete(null);
+          } catch (IOException e) {//
           }
         });
     }

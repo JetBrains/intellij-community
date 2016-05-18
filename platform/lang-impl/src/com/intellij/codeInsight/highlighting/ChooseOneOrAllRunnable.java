@@ -69,30 +69,22 @@ public abstract class ChooseOneOrAllRunnable<T extends PsiElement> implements Ru
       final PopupChooserBuilder builder = new PopupChooserBuilder(myList);
       renderer.installSpeedSearch(builder);
 
-      final Runnable callback = new Runnable() {
-        @Override
-        public void run() {
-          int idx = myList.getSelectedIndex();
-          if (idx < 0) return;
-          if (idx > 0) {
-            selected((T[])ArrayUtil.toObjectArray(myClasses[idx-1].getClass(), myClasses[idx-1]));
-          }
-          else {
-            selected(myClasses);
-          }
+      final Runnable callback = () -> {
+        int idx = myList.getSelectedIndex();
+        if (idx < 0) return;
+        if (idx > 0) {
+          selected((T[])ArrayUtil.toObjectArray(myClasses[idx-1].getClass(), myClasses[idx-1]));
+        }
+        else {
+          selected(myClasses);
         }
       };
 
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          builder.
-            setTitle(myTitle).
-            setItemChoosenCallback(callback).
-            createPopup().
-            showInBestPositionFor(myEditor);
-        }
-      });
+      ApplicationManager.getApplication().invokeLater(() -> builder.
+        setTitle(myTitle).
+        setItemChoosenCallback(callback).
+        createPopup().
+        showInBestPositionFor(myEditor));
     }
   }
 

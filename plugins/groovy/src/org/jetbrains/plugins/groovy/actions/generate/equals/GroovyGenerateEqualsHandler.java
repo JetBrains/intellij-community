@@ -121,11 +121,8 @@ public class GroovyGenerateEqualsHandler extends GenerateMembersHandlerBase {
 
     GroovyGenerateEqualsHelper helper = new GroovyGenerateEqualsHelper(project, aClass, myEqualsFields, myHashCodeFields, myNonNullFields, useInstanceofToCheckParameterType);
     Collection<PsiMethod> methods = helper.generateMembers();
-    return ContainerUtil.map2List(methods, new Function<PsiMethod, PsiGenerationInfo<PsiMethod>>() {
-      @Override
-      public PsiGenerationInfo<PsiMethod> fun(final PsiMethod s) {
-        return new GroovyGenerationInfo<PsiMethod>(s);
-      }
+    return ContainerUtil.map2List(methods, (Function<PsiMethod, PsiGenerationInfo<PsiMethod>>)s -> {
+      return new GroovyGenerationInfo<PsiMethod>(s);
     });
   }
 

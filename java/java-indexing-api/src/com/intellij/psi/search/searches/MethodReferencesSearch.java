@@ -106,12 +106,7 @@ public class MethodReferencesSearch extends ExtensibleQueryFactory<PsiReference,
 
   public static void searchOptimized(final PsiMethod method, SearchScope scope, final boolean strictSignatureSearch,
                                      @NotNull SearchRequestCollector collector, final Processor<PsiReference> processor) {
-    searchOptimized(method, scope, strictSignatureSearch, collector, false, new PairProcessor<PsiReference, SearchRequestCollector>() {
-      @Override
-      public boolean process(PsiReference psiReference, SearchRequestCollector collector) {
-        return processor.process(psiReference);
-      }
-    });
+    searchOptimized(method, scope, strictSignatureSearch, collector, false, (psiReference, collector1) -> processor.process(psiReference));
   }
 
   public static void searchOptimized(final PsiMethod method, SearchScope scope, final boolean strictSignatureSearch,

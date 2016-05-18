@@ -34,12 +34,8 @@ import java.util.*;
 public class PathReferenceManagerImpl extends PathReferenceManager {
   private final StaticPathReferenceProvider myStaticProvider = new StaticPathReferenceProvider(null);
   private final PathReferenceProvider myGlobalPathsProvider = new GlobalPathReferenceProvider();
-  private static final Comparator<PsiReference> START_OFFSET_COMPARATOR = new Comparator<PsiReference>() {
-    @Override
-    public int compare(final PsiReference o1, final PsiReference o2) {
-      return o1.getRangeInElement().getStartOffset() - o2.getRangeInElement().getStartOffset();
-    }
-  };
+  private static final Comparator<PsiReference> START_OFFSET_COMPARATOR =
+    (o1, o2) -> o1.getRangeInElement().getStartOffset() - o2.getRangeInElement().getStartOffset();
 
   @Override
   @Nullable

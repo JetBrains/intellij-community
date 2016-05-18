@@ -380,20 +380,17 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     final VirtualFile[] file = new VirtualFile[1];
     final int[] offset = new int[1];
 
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        PsiElement psiElement = refElement.getElement();
-        if (psiElement != null) {
-          final PsiFile containingFile = psiElement.getContainingFile();
-          if (containingFile != null) {
-            file[0] = containingFile.getVirtualFile();
-            offset[0] = psiElement.getTextOffset();
-          }
+    ApplicationManager.getApplication().runReadAction(() -> {
+      PsiElement psiElement = refElement.getElement();
+      if (psiElement != null) {
+        final PsiFile containingFile = psiElement.getContainingFile();
+        if (containingFile != null) {
+          file[0] = containingFile.getVirtualFile();
+          offset[0] = psiElement.getTextOffset();
         }
-        else {
-          file[0] = null;
-        }
+      }
+      else {
+        file[0] = null;
       }
     });
 

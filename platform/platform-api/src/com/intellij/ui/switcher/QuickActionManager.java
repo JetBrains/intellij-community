@@ -94,11 +94,8 @@ public class QuickActionManager implements ProjectComponent {
           }
 
           JBPopupFactory.getInstance()
-            .createActionGroupPopup(null, group, context, JBPopupFactory.ActionSelectionAid.ALPHA_NUMBERING, true, new Runnable() {
-              public void run() {
-                myActiveProvider = null;
-              }
-            }, -1).showInFocusCenter();
+            .createActionGroupPopup(null, group, context, JBPopupFactory.ActionSelectionAid.ALPHA_NUMBERING, true,
+                                    () -> myActiveProvider = null, -1).showInFocusCenter();
         }
       }
     });

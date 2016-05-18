@@ -108,12 +108,7 @@ public class SphinxBaseCommand {
       new RunContentExecutor(project, process)
         .withFilter(new PythonTracebackFilter(project))
         .withTitle("reStructuredText")
-        .withRerun(new Runnable() {
-          @Override
-          public void run() {
-            execute(module);
-          }
-        })
+        .withRerun(() -> execute(module))
         .withAfterCompletion(getAfterTask(module))
         .run();
     }
@@ -124,11 +119,9 @@ public class SphinxBaseCommand {
 
   @Nullable
   protected Runnable getAfterTask(final Module module) {
-    return new Runnable() {
-      public void run() {
-        final ReSTService service = ReSTService.getInstance(module);
-        LocalFileSystem.getInstance().refreshAndFindFileByPath(service.getWorkdir());
-      }
+    return () -> {
+      final ReSTService service = ReSTService.getInstance(module);
+      LocalFileSystem.getInstance().refreshAndFindFileByPath(service.getWorkdir());
     };
   }
 

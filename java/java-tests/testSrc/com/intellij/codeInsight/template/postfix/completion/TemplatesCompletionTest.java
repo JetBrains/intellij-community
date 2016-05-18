@@ -237,12 +237,7 @@ public class TemplatesCompletionTest extends CompletionAutoPopupTestCase {
   }
 
   private void configureByFile() {
-    edt(new Runnable() {
-      @Override
-      public void run() {
-        myFixture.configureByFile(getTestName(true) + ".java");
-      }
-    });
+    edt(() -> myFixture.configureByFile(getTestName(true) + ".java"));
   }
 
   private void checkResultByFile() {

@@ -239,11 +239,8 @@ public abstract class RunManager {
 
   public String suggestUniqueName(@Nullable String name, @Nullable ConfigurationType type) {
     List<RunnerAndConfigurationSettings> settingsList = type != null ? getConfigurationSettingsList(type) : getAllSettings();
-    List<String> names = ContainerUtil.map(settingsList, new Function<RunnerAndConfigurationSettings, String>() {
-      @Override
-      public String fun(RunnerAndConfigurationSettings settings) {
-        return settings.getName();
-      }
+    List<String> names = ContainerUtil.map(settingsList, settings -> {
+      return settings.getName();
     });
     return suggestUniqueName(StringUtil.notNullize(name, UNNAMED), names);
   }

@@ -193,18 +193,11 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
         psiElements.add(psiElement);
       }
 
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          final Project project = getContext().getProject();
-          if (isDisposed() || project.isDisposed()) return;
-          SafeDeleteHandler.invoke(project, PsiUtilCore.toPsiElementArray(psiElements), false, new Runnable() {
-            @Override
-            public void run() {
-              removeElements(refElements, project, myToolWrapper);
-            }
-          });
-        }
+      ApplicationManager.getApplication().invokeLater(() -> {
+        final Project project = getContext().getProject();
+        if (isDisposed() || project.isDisposed()) return;
+        SafeDeleteHandler.invoke(project, PsiUtilCore.toPsiElementArray(psiElements), false,
+                                 () -> removeElements(refElements, project, myToolWrapper));
       });
 
       return false; //refresh after safe delete dialog is closed
@@ -478,13 +471,8 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     @Override
     public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
       if (myElement != null && myElement.isValid()) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            SafeDeleteHandler
-              .invoke(myElement.getProject(), new PsiElement[]{PsiTreeUtil.getParentOfType(myElement, PsiModifierListOwner.class)}, false);
-          }
-        });
+        ApplicationManager.getApplication().invokeLater(() -> SafeDeleteHandler
+          .invoke(myElement.getProject(), new PsiElement[]{PsiTreeUtil.getParentOfType(myElement, PsiModifierListOwner.class)}, false));
       }
     }
 

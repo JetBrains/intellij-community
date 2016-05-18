@@ -100,35 +100,29 @@ public class SuppressActionWrapper extends ActionGroup implements CompactActionG
 
     @Override
     protected void actionPerformed(@NotNull InspectionResultsView view, @NotNull HighlightDisplayKey key) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          Project project = view.getProject();
-          final String templatePresentationText = getTemplatePresentation().getText();
-          LOG.assertTrue(templatePresentationText != null);
-          final InspectionToolWrapper wrapper = view.getTree().getSelectedToolWrapper();
-          LOG.assertTrue(wrapper != null);
-          final Set<SuppressableInspectionTreeNode> nodesAsSet = getNodesToSuppress(view);
-          final SuppressableInspectionTreeNode[] nodes = nodesAsSet.toArray(new SuppressableInspectionTreeNode[nodesAsSet.size()]);
-          CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-            @Override
-            public void run() {
-              CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
-              final SequentialModalProgressTask progressTask =
-                new SequentialModalProgressTask(project, templatePresentationText, true);
-              progressTask.setMinIterationTime(200);
-              progressTask.setTask(new SuppressActionSequentialTask(nodes, mySuppressAction, wrapper, progressTask));
-              ProgressManager.getInstance().run(progressTask);
-            }
-          }, templatePresentationText, null);
+      ApplicationManager.getApplication().invokeLater(() -> {
+        Project project = view.getProject();
+        final String templatePresentationText = getTemplatePresentation().getText();
+        LOG.assertTrue(templatePresentationText != null);
+        final InspectionToolWrapper wrapper = view.getTree().getSelectedToolWrapper();
+        LOG.assertTrue(wrapper != null);
+        final Set<SuppressableInspectionTreeNode> nodesAsSet = getNodesToSuppress(view);
+        final SuppressableInspectionTreeNode[] nodes = nodesAsSet.toArray(new SuppressableInspectionTreeNode[nodesAsSet.size()]);
+        CommandProcessor.getInstance().executeCommand(project, () -> {
+          CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
+          final SequentialModalProgressTask progressTask =
+            new SequentialModalProgressTask(project, templatePresentationText, true);
+          progressTask.setMinIterationTime(200);
+          progressTask.setTask(new SuppressActionSequentialTask(nodes, mySuppressAction, wrapper, progressTask));
+          ProgressManager.getInstance().run(progressTask);
+        }, templatePresentationText, null);
 
-          final Set<GlobalInspectionContextImpl> globalInspectionContexts =
-            ((InspectionManagerEx)InspectionManager.getInstance(project)).getRunningContexts();
-          for (GlobalInspectionContextImpl context : globalInspectionContexts) {
-            context.refreshViews();
-          }
-          view.syncRightPanel();
+        final Set<GlobalInspectionContextImpl> globalInspectionContexts =
+          ((InspectionManagerEx)InspectionManager.getInstance(project)).getRunningContexts();
+        for (GlobalInspectionContextImpl context : globalInspectionContexts) {
+          context.refreshViews();
         }
+        view.syncRightPanel();
       });
     }
 

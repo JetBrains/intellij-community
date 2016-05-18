@@ -177,31 +177,29 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
             }
           }
         }
-        ControlFlowUtil.iteratePrev(startInstruction, instructions, new Function<Instruction, ControlFlowUtil.Operation>() {
-          public ControlFlowUtil.Operation fun(final Instruction inst) {
-            final PsiElement element = inst.getElement();
-            // Mark function as used
-            if (element instanceof PyFunction) {
-              if (name.equals(((PyFunction)element).getName())){
-                myUsedElements.add(element);
-                myUnusedElements.remove(element);
-                return ControlFlowUtil.Operation.CONTINUE;
-              }
+        ControlFlowUtil.iteratePrev(startInstruction, instructions, inst -> {
+          final PsiElement element1 = inst.getElement();
+          // Mark function as used
+          if (element1 instanceof PyFunction) {
+            if (name.equals(((PyFunction)element1).getName())){
+              myUsedElements.add(element1);
+              myUnusedElements.remove(element1);
+              return ControlFlowUtil.Operation.CONTINUE;
             }
-            // Mark write access as used
-            else if (inst instanceof ReadWriteInstruction) {
-              final ReadWriteInstruction rwInstruction = (ReadWriteInstruction)inst;
-              if (rwInstruction.getAccess().isWriteAccess() && name.equals(rwInstruction.getName())) {
-                // For elements in scope
-                if (element != null && PsiTreeUtil.isAncestor(owner, element, false)) {
-                  myUsedElements.add(element);
-                  myUnusedElements.remove(element);
-                }
-                return ControlFlowUtil.Operation.CONTINUE;
-              }
-            }
-            return ControlFlowUtil.Operation.NEXT;
           }
+          // Mark write access as used
+          else if (inst instanceof ReadWriteInstruction) {
+            final ReadWriteInstruction rwInstruction = (ReadWriteInstruction)inst;
+            if (rwInstruction.getAccess().isWriteAccess() && name.equals(rwInstruction.getName())) {
+              // For elements in scope
+              if (element1 != null && PsiTreeUtil.isAncestor(owner, element1, false)) {
+                myUsedElements.add(element1);
+                myUnusedElements.remove(element1);
+              }
+              return ControlFlowUtil.Operation.CONTINUE;
+            }
+          }
+          return ControlFlowUtil.Operation.NEXT;
         });
       }
     }
@@ -409,17 +407,11 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
                                                                                                              "for _ in tuples:\n  pass"
       );
       final PyExpression target = ((PyForStatement)pyFile.getStatements().get(0)).getForPart().getTarget();
-      CommandProcessor.getInstance().executeCommand(psiElement.getProject(), new Runnable() {
-        public void run() {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            public void run() {
-              if (target != null) {
-                psiElement.replace(target);
-              }
-            }
-          });
+      CommandProcessor.getInstance().executeCommand(psiElement.getProject(), () -> ApplicationManager.getApplication().runWriteAction(() -> {
+        if (target != null) {
+          psiElement.replace(target);
         }
-      }, getName(), null);
+      }), getName(), null);
     }
 
     @NotNull

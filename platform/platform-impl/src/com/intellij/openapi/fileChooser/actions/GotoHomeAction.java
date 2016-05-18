@@ -28,10 +28,8 @@ public final class GotoHomeAction extends FileChooserAction {
   protected void actionPerformed(final FileSystemTree fileSystemTree, final AnActionEvent e) {
     final VirtualFile userHomeDir = VfsUtil.getUserHomeDir();
     if (userHomeDir != null) {
-      fileSystemTree.select(userHomeDir, new Runnable() {
-        public void run() {
-          fileSystemTree.expand(userHomeDir, null);
-        }
+      fileSystemTree.select(userHomeDir, () -> {
+        fileSystemTree.expand(userHomeDir, null);
       });
     }
   }

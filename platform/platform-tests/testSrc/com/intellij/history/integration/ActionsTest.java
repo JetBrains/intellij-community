@@ -58,13 +58,10 @@ public class ActionsTest extends IntegrationTestCase {
     setContent(f, "file");
     setDocumentTextFor(f, "doc1");
 
-    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-      @Override
-      public void run() {
-        LocalHistoryAction a = LocalHistory.getInstance().startAction("action");
-        setDocumentTextFor(f, "doc2");
-        a.finish();
-      }
+    CommandProcessor.getInstance().executeCommand(myProject, () -> {
+      LocalHistoryAction a = LocalHistory.getInstance().startAction("action");
+      setDocumentTextFor(f, "doc2");
+      a.finish();
     }, "command", null);
 
     List<Revision> rr = getRevisionsFor(f);

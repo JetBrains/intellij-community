@@ -105,13 +105,10 @@ public abstract class FindJarFix<T extends PsiElement> implements IntentionActio
       JBPopupFactory.getInstance()
         .createListPopupBuilder(listOfFqns)
         .setTitle("Select Qualified Name")
-        .setItemChoosenCallback(new Runnable() {
-          @Override
-          public void run() {
-            final Object value = listOfFqns.getSelectedValue();
-            if (value instanceof String) {
-              findJarsForFqn(((String)value), editor);
-            }
+        .setItemChoosenCallback(() -> {
+          final Object value = listOfFqns.getSelectedValue();
+          if (value instanceof String) {
+            findJarsForFqn(((String)value), editor);
           }
         }).createPopup().showInBestPositionFor(editor);
     }
@@ -123,35 +120,33 @@ public abstract class FindJarFix<T extends PsiElement> implements IntentionActio
   private void findJarsForFqn(final String fqn, final Editor editor) {
     final Map<String, String> libs = new HashMap<String, String>();
 
-    final Runnable runnable = new Runnable() {
-      public void run() {
-        try {
-          final DOMParser parser = new DOMParser();
-          parser.parse(CLASS_ROOT_URL + fqn.replace('.', '/') + CLASS_PAGE_EXT);
-          final Document doc = parser.getDocument();
-          if (doc != null) {
-            final NodeList links = doc.getElementsByTagName(LINK_TAG_NAME);
-            for (int i = 0; i < links.getLength(); i++) {
-              final Node link = links.item(i);
-              final String libName = link.getTextContent();
-              final NamedNodeMap attributes = link.getAttributes();
-              if (attributes != null) {
-                final Node href = attributes.getNamedItem(LINK_ATTR_NAME);
-                if (href != null) {
-                  final String pathToJar = href.getTextContent();
-                  if (pathToJar != null && (pathToJar.startsWith("/jar/") || pathToJar.startsWith("/class/../"))) {
-                    libs.put(libName, SERVICE_URL + pathToJar);
-                  }
+    final Runnable runnable = () -> {
+      try {
+        final DOMParser parser = new DOMParser();
+        parser.parse(CLASS_ROOT_URL + fqn.replace('.', '/') + CLASS_PAGE_EXT);
+        final Document doc = parser.getDocument();
+        if (doc != null) {
+          final NodeList links = doc.getElementsByTagName(LINK_TAG_NAME);
+          for (int i = 0; i < links.getLength(); i++) {
+            final Node link = links.item(i);
+            final String libName = link.getTextContent();
+            final NamedNodeMap attributes = link.getAttributes();
+            if (attributes != null) {
+              final Node href = attributes.getNamedItem(LINK_ATTR_NAME);
+              if (href != null) {
+                final String pathToJar = href.getTextContent();
+                if (pathToJar != null && (pathToJar.startsWith("/jar/") || pathToJar.startsWith("/class/../"))) {
+                  libs.put(libName, SERVICE_URL + pathToJar);
                 }
               }
             }
           }
         }
-        catch (IOException ignore) {//
-        }
-        catch (Exception e) {//
-          LOG.warn(e);
-        }
+      }
+      catch (IOException ignore) {//
+      }
+      catch (Exception e) {//
+        LOG.warn(e);
       }
     };
 
@@ -169,20 +164,9 @@ public abstract class FindJarFix<T extends PsiElement> implements IntentionActio
           HintManager.getInstance().showInformationHint(editor, "No libraries found for '" + fqn + "'");
         } else {
           final ArrayList<String> variants = new ArrayList<String>(libs.keySet());
-          Collections.sort(variants, new Comparator<String>() {
-            @Override
-            public int compare(String o1, String o2) {
-              return o1.compareTo(o2);
-            }
-          });
+          Collections.sort(variants, (o1, o2) -> o1.compareTo(o2));
           final JBList libNames = new JBList(variants);
-          libNames.installCellRenderer(new NotNullFunction<Object, JComponent>() {
-            @NotNull
-            @Override
-            public JComponent fun(Object o) {
-              return new JLabel(o.toString(), PlatformIcons.JAR_ICON, SwingConstants.LEFT);
-            }
-          });
+          libNames.installCellRenderer(o -> new JLabel(o.toString(), PlatformIcons.JAR_ICON, SwingConstants.LEFT));
           if (libs.size() == 1) {
             final String jarName = libs.keySet().iterator().next();
             final String url = libs.get(jarName);
@@ -191,16 +175,13 @@ public abstract class FindJarFix<T extends PsiElement> implements IntentionActio
             JBPopupFactory.getInstance()
             .createListPopupBuilder(libNames)
             .setTitle("Select a JAR file")
-            .setItemChoosenCallback(new Runnable() {
-              @Override
-              public void run() {
-                final Object value = libNames.getSelectedValue();
-                if (value instanceof String) {
-                  final String jarName = (String)value;
-                  final String url = libs.get(jarName);
-                  if (url != null) {
-                    initiateDownload(url, jarName);
-                  }
+            .setItemChoosenCallback(() -> {
+              final Object value = libNames.getSelectedValue();
+              if (value instanceof String) {
+                final String jarName = (String)value;
+                final String url = libs.get(jarName);
+                if (url != null) {
+                  initiateDownload(url, jarName);
                 }
               }
             })

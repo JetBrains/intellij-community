@@ -36,17 +36,14 @@ public class DocutilsCommandLineState extends RestCommandLineState {
 
   @Override
   protected Runnable getAfterTask() {
-    return new Runnable() {
-      @Override
-      public void run() {
-        VirtualFile virtualFile = findOutput();
-        if (virtualFile != null) {
-          if (myConfiguration.openInBrowser()) {
-            BrowserUtil.browse(virtualFile);
-          }
-          else {
-            FileEditorManager.getInstance(myConfiguration.getProject()).openFile(virtualFile, true);
-          }
+    return () -> {
+      VirtualFile virtualFile = findOutput();
+      if (virtualFile != null) {
+        if (myConfiguration.openInBrowser()) {
+          BrowserUtil.browse(virtualFile);
+        }
+        else {
+          FileEditorManager.getInstance(myConfiguration.getProject()).openFile(virtualFile, true);
         }
       }
     };

@@ -60,15 +60,12 @@ public class NonThreadSafeLazyInitializationInspection extends NonThreadSafeLazy
       return false;
     }
     final int[] writeCount = new int[1];
-    return ReferencesSearch.search(field).forEach(new Processor<PsiReference>() {
-      @Override
-      public boolean process(PsiReference reference) {
-        final PsiElement element = reference.getElement();
-        if (!(element instanceof PsiExpression) || !PsiUtil.isAccessedForWriting((PsiExpression)element)) {
-          return true;
-        }
-        return ++writeCount[0] != 2;
+    return ReferencesSearch.search(field).forEach(reference -> {
+      final PsiElement element = reference.getElement();
+      if (!(element instanceof PsiExpression) || !PsiUtil.isAccessedForWriting((PsiExpression)element)) {
+        return true;
       }
+      return ++writeCount[0] != 2;
     });
   }
 

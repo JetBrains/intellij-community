@@ -73,15 +73,12 @@ public class HintUtil {
       label.myPane.addMouseListener(mouseListener);
     }
     if (updatedTextConsumer != null) {
-      updatedTextConsumer.set(new Consumer<String>() {
-        @Override
-        public void consume(String s) {
-          label.myPane.setText(s);
-          
-          // Force preferred size recalculation.
-          label.setPreferredSize(null);
-          label.myPane.setPreferredSize(null);
-        }
+      updatedTextConsumer.set(s -> {
+        label.myPane.setText(s);
+
+        // Force preferred size recalculation.
+        label.setPreferredSize(null);
+        label.myPane.setPreferredSize(null);
       });
     }
 

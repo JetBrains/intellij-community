@@ -72,12 +72,7 @@ public class TestLocationDataRule implements GetDataRule {
           final PsiSearchHelper searchHelper = PsiSearchHelper.SERVICE.getInstance(project);
           final List<String> words = StringUtil.getWordsIn(relativePath);
           // put longer strings first
-          Collections.sort(words, new Comparator<String>() {
-            @Override
-            public int compare(final String o1, final String o2) {
-              return o2.length() - o1.length();
-            }
-          });
+          Collections.sort(words, (o1, o2) -> o2.length() - o1.length());
 
           final GlobalSearchScope testScope = GlobalSearchScopesCore.projectTestScope(project);
           Set<PsiFile> resultFiles = null;

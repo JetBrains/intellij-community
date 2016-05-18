@@ -116,11 +116,8 @@ public abstract class ClashingTraitMethodsInspectionBase extends BaseInspection 
 
       @NotNull
       private String buildTraitString(@NotNull ClashingMethod entry) {
-        return StringUtil.join(entry.getSuperTraits(), new Function<GrTypeDefinition, String>() {
-          @Override
-          public String fun(GrTypeDefinition tr) {
-            return tr.getName();
-          }
+        return StringUtil.join(entry.getSuperTraits(), tr -> {
+          return tr.getName();
         }, ", ");
       }
     };

@@ -77,37 +77,31 @@ public class CopyrightManager extends AbstractProjectComponent implements Persis
           newFileTracker.clear();
         }
       });
-      startupManager.runWhenProjectIsInitialized(new Runnable() {
-        @Override
-        public void run() {
-          DocumentListener listener = new DocumentAdapter() {
-            @Override
-            public void documentChanged(DocumentEvent e) {
-              final Document document = e.getDocument();
-              final VirtualFile virtualFile = fileDocumentManager.getFile(document);
-              if (virtualFile == null) return;
-              final Module module = projectRootManager.getFileIndex().getModuleForFile(virtualFile);
-              if (module == null) return;
-              if (!newFileTracker.poll(virtualFile)) return;
-              if (!fileTypeUtil.isSupportedFile(virtualFile)) return;
-              if (psiManager.findFile(virtualFile) == null) return;
-              application.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                  if (!virtualFile.isValid()) return;
-                  final PsiFile file = psiManager.findFile(virtualFile);
-                  if (file != null && file.isWritable()) {
-                    final CopyrightProfile opts = getCopyrightOptions(file);
-                    if (opts != null) {
-                      new UpdateCopyrightProcessor(myProject, module, file).run();
-                    }
-                  }
+      startupManager.runWhenProjectIsInitialized(() -> {
+        DocumentListener listener = new DocumentAdapter() {
+          @Override
+          public void documentChanged(DocumentEvent e) {
+            final Document document = e.getDocument();
+            final VirtualFile virtualFile = fileDocumentManager.getFile(document);
+            if (virtualFile == null) return;
+            final Module module = projectRootManager.getFileIndex().getModuleForFile(virtualFile);
+            if (module == null) return;
+            if (!newFileTracker.poll(virtualFile)) return;
+            if (!fileTypeUtil.isSupportedFile(virtualFile)) return;
+            if (psiManager.findFile(virtualFile) == null) return;
+            application.invokeLater(() -> {
+              if (!virtualFile.isValid()) return;
+              final PsiFile file = psiManager.findFile(virtualFile);
+              if (file != null && file.isWritable()) {
+                final CopyrightProfile opts = getCopyrightOptions(file);
+                if (opts != null) {
+                  new UpdateCopyrightProcessor(myProject, module, file).run();
                 }
-              }, ModalityState.NON_MODAL, myProject.getDisposed());
-            }
-          };
-          editorFactory.getEventMulticaster().addDocumentListener(listener, myProject);
-        }
+              }
+            }, ModalityState.NON_MODAL, myProject.getDisposed());
+          }
+        };
+        editorFactory.getEventMulticaster().addDocumentListener(listener, myProject);
       });
     }
   }

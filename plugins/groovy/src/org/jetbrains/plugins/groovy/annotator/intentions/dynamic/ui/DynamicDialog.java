@@ -214,52 +214,49 @@ public abstract class DynamicDialog extends DialogWrapper {
 
     final Document document = PsiDocumentManager.getInstance(myProject).getDocument(myContext.getContainingFile());
 
-    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-      @Override
-      public void run() {
-        UndoManager.getInstance(myProject).undoableActionPerformed(new GlobalUndoableAction(document) {
-          @Override
-          public void undo() throws UnexpectedUndoException {
+    CommandProcessor.getInstance().executeCommand(myProject, () -> {
+      UndoManager.getInstance(myProject).undoableActionPerformed(new GlobalUndoableAction(document) {
+        @Override
+        public void undo() throws UnexpectedUndoException {
 
-            final DItemElement itemElement;
-            if (mySettings.isMethod()) {
-              final List<ParamInfo> myPairList = mySettings.getParams();
-              final String[] argumentsTypes = QuickfixUtil.getArgumentsTypes(myPairList);
-              itemElement =
-                myDynamicManager.findConcreteDynamicMethod(mySettings.getContainingClassName(), mySettings.getName(), argumentsTypes);
-            }
-            else {
-              itemElement = myDynamicManager.findConcreteDynamicProperty(mySettings.getContainingClassName(), mySettings.getName());
-            }
-
-            if (itemElement == null) {
-              Messages.showWarningDialog(myProject, GroovyInspectionBundle.message("Cannot.perform.undo.operation"),
-                                         GroovyInspectionBundle.message("Undo.disable"));
-              return;
-            }
-            final DClassElement classElement = myDynamicManager.getClassElementByItem(itemElement);
-
-            if (classElement == null) {
-              Messages.showWarningDialog(myProject, GroovyInspectionBundle.message("Cannot.perform.undo.operation"),
-                                         GroovyInspectionBundle.message("Undo.disable"));
-              return;
-            }
-
-            removeElement(itemElement);
-
-            if (classElement.getMethods().isEmpty() && classElement.getProperties().isEmpty()) {
-              myDynamicManager.removeClassElement(classElement);
-            }
+          final DItemElement itemElement;
+          if (mySettings.isMethod()) {
+            final List<ParamInfo> myPairList = mySettings.getParams();
+            final String[] argumentsTypes = QuickfixUtil.getArgumentsTypes(myPairList);
+            itemElement =
+              myDynamicManager.findConcreteDynamicMethod(mySettings.getContainingClassName(), mySettings.getName(), argumentsTypes);
+          }
+          else {
+            itemElement = myDynamicManager.findConcreteDynamicProperty(mySettings.getContainingClassName(), mySettings.getName());
           }
 
-          @Override
-          public void redo() throws UnexpectedUndoException {
-            addElement(mySettings);
+          if (itemElement == null) {
+            Messages.showWarningDialog(myProject, GroovyInspectionBundle.message("Cannot.perform.undo.operation"),
+                                       GroovyInspectionBundle.message("Undo.disable"));
+            return;
           }
-        });
+          final DClassElement classElement = myDynamicManager.getClassElementByItem(itemElement);
 
-        addElement(mySettings);
-      }
+          if (classElement == null) {
+            Messages.showWarningDialog(myProject, GroovyInspectionBundle.message("Cannot.perform.undo.operation"),
+                                       GroovyInspectionBundle.message("Undo.disable"));
+            return;
+          }
+
+          removeElement(itemElement);
+
+          if (classElement.getMethods().isEmpty() && classElement.getProperties().isEmpty()) {
+            myDynamicManager.removeClassElement(classElement);
+          }
+        }
+
+        @Override
+        public void redo() throws UnexpectedUndoException {
+          addElement(mySettings);
+        }
+      });
+
+      addElement(mySettings);
     }, "Add dynamic element", null);
   }
 

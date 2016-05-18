@@ -98,12 +98,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
 
   @Override
   public void expire(@NotNull final Notification notification) {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        EventLog.expireNotification(notification);
-      }
-    });
+    UIUtil.invokeLaterIfNeeded(() -> EventLog.expireNotification(notification));
   }
 
   @Override
@@ -157,11 +152,8 @@ public class NotificationsManagerImpl extends NotificationsManager {
   private static void showNotification(@NotNull final Notification notification, @Nullable final Project project) {
     Application application = ApplicationManager.getApplication();
     if (application instanceof ApplicationEx && !((ApplicationEx)application).isLoaded()) {
-      application.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          showNotification(notification, project);
-        }
+      application.invokeLater(() -> {
+        showNotification(notification, project);
       }, ModalityState.current());
       return;
     }
@@ -1244,22 +1236,12 @@ public class NotificationsManagerImpl extends NotificationsManager {
 
     @Override
     public Dimension preferredLayoutSize(Container parent) {
-      return layoutSize(new Function<Component, Dimension>() {
-        @Override
-        public Dimension fun(Component component) {
-          return component.getPreferredSize();
-        }
-      });
+      return layoutSize(component -> component.getPreferredSize());
     }
 
     @Override
     public Dimension minimumLayoutSize(Container parent) {
-      return layoutSize(new Function<Component, Dimension>() {
-        @Override
-        public Dimension fun(Component component) {
-          return component.getMinimumSize();
-        }
-      });
+      return layoutSize(component -> component.getMinimumSize());
     }
 
     private Dimension layoutSize(@NotNull Function<Component, Dimension> size) {

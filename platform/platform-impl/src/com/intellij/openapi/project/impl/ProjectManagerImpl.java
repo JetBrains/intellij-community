@@ -279,16 +279,13 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   public synchronized Project getDefaultProject() {
     LOG.assertTrue(!myDefaultProjectWasDisposed, "Default project has been already disposed!");
     if (myDefaultProject == null) {
-      ProgressManager.getInstance().executeNonCancelableSection(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            myDefaultProject = createProject(null, "", true);
-            initProject(myDefaultProject, null);
-          }
-          catch (Throwable t) {
-            PluginManager.processException(t);
-          }
+      ProgressManager.getInstance().executeNonCancelableSection(() -> {
+        try {
+          myDefaultProject = createProject(null, "", true);
+          initProject(myDefaultProject, null);
+        }
+        catch (Throwable t) {
+          PluginManager.processException(t);
         }
       });
     }
@@ -340,35 +337,29 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       })
     );
 
-    Runnable process = new Runnable() {
-      @Override
-      public void run() {
-        TransactionGuard.getInstance().submitTransactionAndWait(() -> fireProjectOpened(project));
+    Runnable process = () -> {
+      TransactionGuard.getInstance().submitTransactionAndWait(() -> fireProjectOpened(project));
 
-        StartupManagerImpl startupManager = (StartupManagerImpl)StartupManager.getInstance(project);
-        startupManager.runStartupActivities();
+      StartupManagerImpl startupManager = (StartupManagerImpl)StartupManager.getInstance(project);
+      startupManager.runStartupActivities();
 
-        // Startup activities (e.g. the one in FileBasedIndexProjectHandler) have scheduled dumb mode to begin "later"
-        // Now we schedule-and-wait to the same event queue to guarantee that the dumb mode really begins now:
-        // Post-startup activities should not ever see unindexed and at the same time non-dumb state
-        TransactionGuard.getInstance().submitTransactionAndWait(startupManager::startCacheUpdate);
+      // Startup activities (e.g. the one in FileBasedIndexProjectHandler) have scheduled dumb mode to begin "later"
+      // Now we schedule-and-wait to the same event queue to guarantee that the dumb mode really begins now:
+      // Post-startup activities should not ever see unindexed and at the same time non-dumb state
+      TransactionGuard.getInstance().submitTransactionAndWait(startupManager::startCacheUpdate);
 
-        startupManager.runPostStartupActivitiesFromExtensions();
+      startupManager.runPostStartupActivitiesFromExtensions();
 
-        GuiUtils.invokeLaterIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            if (!project.isDisposed()) {
-              startupManager.runPostStartupActivities();
+      GuiUtils.invokeLaterIfNeeded(() -> {
+        if (!project.isDisposed()) {
+          startupManager.runPostStartupActivities();
 
-              Application application = ApplicationManager.getApplication();
-              if (!(application.isHeadlessEnvironment() || application.isUnitTestMode())) {
-                StorageUtil.checkUnknownMacros(project, true);
-              }
-            }
+          Application application = ApplicationManager.getApplication();
+          if (!(application.isHeadlessEnvironment() || application.isUnitTestMode())) {
+            StorageUtil.checkUnknownMacros(project, true);
           }
-        }, ModalityState.NON_MODAL);
-      }
+        }
+      }, ModalityState.NON_MODAL);
     };
     if (myProgressManager.getProgressIndicator() != null) {
       process.run();
@@ -450,11 +441,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     }
     if (!project.isOpen()) {
       WelcomeFrame.showIfNoProjectOpened();
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          Disposer.dispose(project);
-        }
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        Disposer.dispose(project);
       });
     }
     return project;
@@ -489,12 +477,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     }
 
     if (!conversionResult.conversionNotNeeded()) {
-      StartupManager.getInstance(project).registerPostStartupActivity(new Runnable() {
-        @Override
-        public void run() {
-          conversionResult.postStartupActivity(project);
-        }
-      });
+      StartupManager.getInstance(project).registerPostStartupActivity(() -> conversionResult.postStartupActivity(project));
     }
     return project;
   }
@@ -560,26 +543,23 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   public static void doReloadProject(@NotNull Project project) {
     final Ref<Project> projectRef = Ref.create(project);
     ProjectReloadState.getInstance(project).onBeforeAutomaticProjectReload();
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        LOG.debug("Reloading project.");
-        Project project = projectRef.get();
-        // Let it go
-        projectRef.set(null);
+    ApplicationManager.getApplication().invokeLater(() -> {
+      LOG.debug("Reloading project.");
+      Project project1 = projectRef.get();
+      // Let it go
+      projectRef.set(null);
 
-        if (project.isDisposed()) {
-          return;
-        }
-
-        // must compute here, before project dispose
-        String presentableUrl = project.getPresentableUrl();
-        if (!ProjectUtil.closeAndDispose(project)) {
-          return;
-        }
-
-        ProjectUtil.openProject(presentableUrl, null, true);
+      if (project1.isDisposed()) {
+        return;
       }
+
+      // must compute here, before project dispose
+      String presentableUrl = project1.getPresentableUrl();
+      if (!ProjectUtil.closeAndDispose(project1)) {
+        return;
+      }
+
+      ProjectUtil.openProject(presentableUrl, null, true);
     }, ModalityState.NON_MODAL);
   }
 
@@ -616,16 +596,13 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
       fireProjectClosing(project); // somebody can start progress here, do not wrap in write action
 
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          removeFromOpened(project);
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        removeFromOpened(project);
 
-          fireProjectClosed(project);
+        fireProjectClosed(project);
 
-          if (dispose) {
-            Disposer.dispose(project);
-          }
+        if (dispose) {
+          Disposer.dispose(project);
         }
       });
     }

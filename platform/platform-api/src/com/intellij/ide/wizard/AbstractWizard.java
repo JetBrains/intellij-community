@@ -448,12 +448,9 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
   }
 
   private static void requestFocusTo(final JComponent component) {
-    UiNotifyConnector.doWhenFirstShown(component, new Runnable() {
-      @Override
-      public void run() {
-        final IdeFocusManager focusManager = IdeFocusManager.findInstanceByComponent(component);
-        focusManager.requestFocus(component, false);
-      }
+    UiNotifyConnector.doWhenFirstShown(component, () -> {
+      final IdeFocusManager focusManager = IdeFocusManager.findInstanceByComponent(component);
+      focusManager.requestFocus(component, false);
     });
   }
 

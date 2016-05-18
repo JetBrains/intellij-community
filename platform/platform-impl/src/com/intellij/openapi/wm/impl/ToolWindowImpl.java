@@ -204,20 +204,12 @@ public final class ToolWindowImpl implements ToolWindowEx {
 
     myToolWindowManager.activateToolWindow(myId, forced, autoFocusContents);
 
-    getActivation().doWhenDone(new Runnable() {
-      @Override
-      public void run() {
-        myToolWindowManager.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            if (runnable != null) {
-              runnable.run();
-            }
-            UiActivityMonitor.getInstance().removeActivity(myToolWindowManager.getProject(), activity);
-          }
-        });
+    getActivation().doWhenDone(() -> myToolWindowManager.invokeLater(() -> {
+      if (runnable != null) {
+        runnable.run();
       }
-    });
+      UiActivityMonitor.getInstance().removeActivity(myToolWindowManager.getProject(), activity);
+    }));
   }
 
   @Override
@@ -231,24 +223,18 @@ public final class ToolWindowImpl implements ToolWindowEx {
   @Override
   public ActionCallback getReady(@NotNull final Object requestor) {
     final ActionCallback result = new ActionCallback();
-    myShowing.getReady(this).doWhenDone(new Runnable() {
-      @Override
-      public void run() {
-        ArrayList<FinalizableCommand> cmd = new ArrayList<FinalizableCommand>();
-        cmd.add(new FinalizableCommand(null) {
-          @Override
-          public void run() {
-            IdeFocusManager.getInstance(myToolWindowManager.getProject()).doWhenFocusSettlesDown(new Runnable() {
-              @Override
-              public void run() {
-                if (myContentManager.isDisposed()) return;
-                myContentManager.getReady(requestor).notify(result);
-              }
-            });
-          }
-        });
-        myToolWindowManager.execute(cmd);
-      }
+    myShowing.getReady(this).doWhenDone(() -> {
+      ArrayList<FinalizableCommand> cmd = new ArrayList<FinalizableCommand>();
+      cmd.add(new FinalizableCommand(null) {
+        @Override
+        public void run() {
+          IdeFocusManager.getInstance(myToolWindowManager.getProject()).doWhenFocusSettlesDown(() -> {
+            if (myContentManager.isDisposed()) return;
+            myContentManager.getReady(requestor).notify(result);
+          });
+        }
+      });
+      myToolWindowManager.execute(cmd);
     });
     return result;
   }
@@ -258,12 +244,7 @@ public final class ToolWindowImpl implements ToolWindowEx {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myToolWindowManager.showToolWindow(myId);
     if (runnable != null) {
-      getActivation().doWhenDone(new Runnable() {
-        @Override
-        public void run() {
-          myToolWindowManager.invokeLater(runnable);
-        }
-      });
+      getActivation().doWhenDone(() -> myToolWindowManager.invokeLater(runnable));
     }
   }
 

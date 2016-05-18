@@ -191,12 +191,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
         Presentation presentation = editWatchAction.getTemplatePresentation().clone();
         DataContext context = DataManager.getInstance().getDataContext(watchTree);
         final AnActionEvent actionEvent = new AnActionEvent(null, context, "WATCH_TREE", presentation, ActionManager.getInstance(), 0);
-        Runnable runnable = new Runnable() {
-          @Override
-          public void run() {
-            editWatchAction.actionPerformed(actionEvent);
-          }
-        };
+        Runnable runnable = () -> editWatchAction.actionPerformed(actionEvent);
         if (editAlarm.isEmpty() && quitePeriod.isEmpty()) {
           editAlarm.addRequest(runnable, UIUtil.getMultiClickInterval());
         } else {
@@ -417,13 +412,10 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
     if (object instanceof XValueNodeImpl[]) {
       final XValueNodeImpl[] nodes = (XValueNodeImpl[])object;
       for (XValueNodeImpl node : nodes) {
-        node.getValueContainer().calculateEvaluationExpression().done(new Consumer<XExpression>() {
-          @Override
-          public void consume(XExpression expression) {
-            if (expression != null) {
-              //noinspection ConstantConditions
-              addWatchExpression(expression, -1, false);
-            }
+        node.getValueContainer().calculateEvaluationExpression().done(expression -> {
+          if (expression != null) {
+            //noinspection ConstantConditions
+            addWatchExpression(expression, -1, false);
           }
         });
       }

@@ -257,16 +257,14 @@ class ExtractedClassBuilder {
 
   private void outputFieldsAndInitializers(final StringBuffer out, boolean normalizeDeclaration) {
     if (hasEnumConstants()) {
-      out.append(StringUtil.join(enumConstantFields, new Function<PsiField, String>() {
-        public String fun(PsiField field) {
-          final StringBuffer fieldStr = new StringBuffer(field.getName() + "(");
-          final PsiExpression initializer = field.getInitializer();
-          if (initializer != null) {
-            initializer.accept(new Mutator(fieldStr));
-          }
-          fieldStr.append(")");
-          return fieldStr.toString();
+      out.append(StringUtil.join(enumConstantFields, field -> {
+        final StringBuffer fieldStr = new StringBuffer(field.getName() + "(");
+        final PsiExpression initializer = field.getInitializer();
+        if (initializer != null) {
+          initializer.accept(new Mutator(fieldStr));
         }
+        fieldStr.append(")");
+        return fieldStr.toString();
       }, ", "));
       out.append(";");
     }

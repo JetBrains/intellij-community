@@ -150,11 +150,8 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
   @Override
   public Task[] getIssues(@Nullable String query, int offset, int limit, boolean withClosed) throws Exception {
     List<RedmineIssue> issues = fetchIssues(query, offset, limit, withClosed);
-    List<Task> result = ContainerUtil.map(issues, new Function<RedmineIssue, Task>() {
-      @Override
-      public RedmineTask fun(RedmineIssue issue) {
-        return new RedmineTask(RedmineRepository.this, issue);
-      }
+    List<Task> result = ContainerUtil.map(issues, issue -> {
+      return new RedmineTask(RedmineRepository.this, issue);
     });
     if (query != null && ID_PATTERN.matcher(query).matches()) {
       LOG.debug("Query '" + query + "' looks like an issue ID. Requesting it explicitly from the server " + this);

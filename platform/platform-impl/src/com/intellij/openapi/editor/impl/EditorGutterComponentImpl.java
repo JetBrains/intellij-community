@@ -178,17 +178,14 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   @SuppressWarnings({"ConstantConditions"})
   private void installDnD() {
     DnDSupport.createBuilder(this)
-      .setBeanProvider(new Function<DnDActionInfo, DnDDragStartBean>() {
-        @Override
-        public DnDDragStartBean fun(DnDActionInfo info) {
-          final GutterMark renderer = getGutterRenderer(info.getPoint());
-          if (renderer instanceof GutterIconRenderer &&
-              ((GutterIconRenderer)renderer).getDraggableObject() != null &&
-              (info.isCopy() || info.isMove())) {
-            return new DnDDragStartBean(renderer);
-          }
-          return null;
+      .setBeanProvider(info -> {
+        final GutterMark renderer = getGutterRenderer(info.getPoint());
+        if (renderer instanceof GutterIconRenderer &&
+            ((GutterIconRenderer)renderer).getDraggableObject() != null &&
+            (info.isCopy() || info.isMove())) {
+          return new DnDDragStartBean(renderer);
         }
+        return null;
       })
       .setDropHandler(new DnDDropHandler() {
         @Override
@@ -238,12 +235,9 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
           return true;
         }
       })
-      .setImageProvider(new NullableFunction<DnDActionInfo, DnDImage>() {
-        @Override
-        public DnDImage fun(DnDActionInfo info) {
-          Image image = IconUtil.toImage(scaleIcon(getGutterRenderer(info.getPoint()).getIcon()));
-          return new DnDImage(image, new Point(image.getWidth(null) / 2, image.getHeight(null) / 2));
-        }
+      .setImageProvider((NullableFunction<DnDActionInfo, DnDImage>)info -> {
+        Image image = IconUtil.toImage(scaleIcon(getGutterRenderer(info.getPoint()).getIcon()));
+        return new DnDImage(image, new Point(image.getWidth(null) / 2, image.getHeight(null) / 2));
       })
       .enableAsNativeTarget() // required to accept dragging from editor (as editor component doesn't use DnDSupport to implement drag'n'drop)
       .install();

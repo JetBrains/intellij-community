@@ -63,16 +63,13 @@ public class ParameterInfoComponent extends JPanel {
     ImmutableMap.of(ParameterInfoUIContextEx.Flag.HIGHLIGHT, "b", ParameterInfoUIContextEx.Flag.DISABLE, "font color=gray",
                     ParameterInfoUIContextEx.Flag.STRIKEOUT, "strike");
 
-  private static final Comparator<TextRange> TEXT_RANGE_COMPARATOR = new Comparator<TextRange>() {
-    @Override
-    public int compare(TextRange o1, TextRange o2) {
-      if (o1.getStartOffset() == o2.getStartOffset()) {
-        return o1.getEndOffset() > o2.getEndOffset() ? 1 : -1;
-      }
-      if (o1.getStartOffset() > o2.getStartOffset()) return 1;
-      if (o1.getEndOffset() > o2.getEndOffset()) return 1;
-      return -1;
+  private static final Comparator<TextRange> TEXT_RANGE_COMPARATOR = (o1, o2) -> {
+    if (o1.getStartOffset() == o2.getStartOffset()) {
+      return o1.getEndOffset() > o2.getEndOffset() ? 1 : -1;
     }
+    if (o1.getStartOffset() > o2.getStartOffset()) return 1;
+    if (o1.getEndOffset() > o2.getEndOffset()) return 1;
+    return -1;
   };
   private boolean myRequestFocus;
 

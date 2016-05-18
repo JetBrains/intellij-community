@@ -409,12 +409,9 @@ public class CompleteReferenceExpression {
 
     protected CompleteReferenceProcessor() {
       super(null, EnumSet.allOf(DeclarationKind.class), myRefExpr, PsiType.EMPTY_ARRAY);
-      myConsumer = new Consumer<LookupElement>() {
-        @Override
-        public void consume(LookupElement element) {
-          myIsEmpty = false;
-          CompleteReferenceExpression.this.myConsumer.consume(element);
-        }
+      myConsumer = element -> {
+        myIsEmpty = false;
+        CompleteReferenceExpression.this.myConsumer.consume(element);
       };
       myPreferredFieldNames = addAllRestrictedProperties();
       mySkipPackages = shouldSkipPackages();

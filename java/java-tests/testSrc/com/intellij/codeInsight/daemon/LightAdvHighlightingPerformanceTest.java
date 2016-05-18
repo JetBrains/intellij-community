@@ -102,14 +102,11 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
     CodeInsightTestFixtureImpl.ensureIndexesUpToDate(getProject());
 
     final List<HighlightInfo> infos = new ArrayList<HighlightInfo>();
-    PlatformTestUtil.startPerformanceTest(getTestName(false), maxMillis, new ThrowableRunnable() {
-      @Override
-      public void run() throws Exception {
-        infos.clear();
-        DaemonCodeAnalyzer.getInstance(getProject()).restart();
-        List<HighlightInfo> h = doHighlighting();
-        infos.addAll(h);
-      }
+    PlatformTestUtil.startPerformanceTest(getTestName(false), maxMillis, () -> {
+      infos.clear();
+      DaemonCodeAnalyzer.getInstance(getProject()).restart();
+      List<HighlightInfo> h = doHighlighting();
+      infos.addAll(h);
     }).cpuBound().usesAllCPUCores().useLegacyScaling().assertTiming();
 
     return highlightErrors();

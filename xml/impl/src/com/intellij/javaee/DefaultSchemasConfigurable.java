@@ -123,15 +123,12 @@ public class DefaultSchemasConfigurable implements Configurable {
     else {
       myOtherRadioButton.setSelected(true);
       myDoctypeTextField.setEnabled(true);
-      UIUtil.invokeLaterIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            myDoctypeTextField.setText(doctype);
-          }
-          catch (Exception e) {
-            throw new RuntimeException(e);
-          }
+      UIUtil.invokeLaterIfNeeded(() -> {
+        try {
+          myDoctypeTextField.setText(doctype);
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
         }
       });
     }

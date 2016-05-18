@@ -75,30 +75,27 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
 
     final StartupManagerEx startupManager = (StartupManagerEx)StartupManager.getInstance(project);
     if (startupManager != null) {
-      startupManager.registerPreStartupActivity(new Runnable() {
-        @Override
-        public void run() {
-          PushedFilePropertiesUpdater.getInstance(project).initializeProperties();
+      startupManager.registerPreStartupActivity(() -> {
+        PushedFilePropertiesUpdater.getInstance(project).initializeProperties();
 
-          // schedule dumb mode start after the read action we're currently in
-          TransactionGuard.submitTransaction(project, () -> {
-            if (FileBasedIndex.getInstance() instanceof FileBasedIndexImpl) {
-              DumbService.getInstance(project).queueTask(new UnindexedFilesUpdater(project, true));
-            }
-          });
+        // schedule dumb mode start after the read action we're currently in
+        TransactionGuard.submitTransaction(project, () -> {
+          if (FileBasedIndex.getInstance() instanceof FileBasedIndexImpl) {
+            DumbService.getInstance(project).queueTask(new UnindexedFilesUpdater(project, true));
+          }
+        });
 
-          myIndex.registerIndexableSet(FileBasedIndexProjectHandler.this, project);
-          projectManager.addProjectManagerListener(project, new ProjectManagerAdapter() {
-            private boolean removed;
-            @Override
-            public void projectClosing(Project project) {
-              if (!removed) {
-                removed = true;
-                myIndex.removeIndexableSet(FileBasedIndexProjectHandler.this);
-              }
+        myIndex.registerIndexableSet(FileBasedIndexProjectHandler.this, project);
+        projectManager.addProjectManagerListener(project, new ProjectManagerAdapter() {
+          private boolean removed;
+          @Override
+          public void projectClosing(Project project1) {
+            if (!removed) {
+              removed = true;
+              myIndex.removeIndexableSet(FileBasedIndexProjectHandler.this);
             }
-          });
-        }
+          }
+        });
       });
     }
   }
@@ -159,11 +156,6 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
                                             Collection<VirtualFile> files,
                                             final Project project,
                                             final FileBasedIndexImpl index) {
-    CacheUpdateRunner.processFiles(indicator, true, files, project, new Consumer<FileContent>() {
-      @Override
-      public void consume(FileContent content) {
-        index.processRefreshedFile(project, content);
-      }
-    });
+    CacheUpdateRunner.processFiles(indicator, true, files, project, content -> index.processRefreshedFile(project, content));
   }
 }

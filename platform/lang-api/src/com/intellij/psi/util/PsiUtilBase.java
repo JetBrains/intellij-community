@@ -45,12 +45,7 @@ import java.util.Comparator;
 
 public class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.PsiUtilBase");
-  public static final Comparator<Language> LANGUAGE_COMPARATOR = new Comparator<Language>() {
-    @Override
-    public int compare(@NotNull Language o1, @NotNull Language o2) {
-      return o1.getID().compareTo(o2.getID());
-    }
-  };
+  public static final Comparator<Language> LANGUAGE_COMPARATOR = (o1, o2) -> o1.getID().compareTo(o2.getID());
 
   public static boolean isUnderPsiRoot(PsiFile root, PsiElement element) {
     PsiFile containingFile = element.getContainingFile();

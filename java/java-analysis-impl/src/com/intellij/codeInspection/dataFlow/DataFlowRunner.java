@@ -247,12 +247,9 @@ public class DataFlowRunner {
       }
     }
     // and still in queue
-    if (!queue.processAll(new Processor<DfaInstructionState>() {
-      @Override
-      public boolean process(DfaInstructionState state) {
-        Instruction instruction = state.getInstruction();
-        return !inSameLoop(prevInstruction, instruction, loopNumber);
-      }
+    if (!queue.processAll(state -> {
+      Instruction instruction = state.getInstruction();
+      return !inSameLoop(prevInstruction, instruction, loopNumber);
     })) return;
 
     // now remove obsolete memory states

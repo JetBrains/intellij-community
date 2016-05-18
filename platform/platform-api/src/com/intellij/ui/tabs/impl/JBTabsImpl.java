@@ -72,12 +72,7 @@ public class JBTabsImpl extends JComponent
   public static final int DEFAULT_MAX_TAB_WIDTH = JBUI.scale(300);
 
   public static final Color MAC_AQUA_BG_COLOR = Gray._200;
-  private static final Comparator<TabInfo> ABC_COMPARATOR = new Comparator<TabInfo>() {
-    @Override
-    public int compare(TabInfo o1, TabInfo o2) {
-      return StringUtil.naturalCompare(o1.getText(), o2.getText());
-    }
-  };
+  private static final Comparator<TabInfo> ABC_COMPARATOR = (o1, o2) -> StringUtil.naturalCompare(o1.getText(), o2.getText());
 
   @NotNull final ActionManager myActionManager;
   private final List<TabInfo> myVisibleInfos = new ArrayList<TabInfo>();
@@ -349,12 +344,7 @@ public class JBTabsImpl extends JComponent
         @Override
         public Iterator<JComponent> iterator() {
           return JBIterable.from(getVisibleInfos()).filter(Conditions.not(Conditions.is(mySelectedInfo))).transform(
-            new Function<TabInfo, JComponent>() {
-              @Override
-              public JComponent fun(TabInfo info) {
-                return info.getComponent();
-              }
-            }).iterator();
+            info -> info.getComponent()).iterator();
         }
       });
   }
@@ -923,15 +913,12 @@ public class JBTabsImpl extends JComponent
       final JComponent toFocus = getToFocus();
       if (myProject != null && toFocus != null) {
         final ActionCallback result = new ActionCallback();
-        requestFocus(toFocus).doWhenProcessed(new Runnable() {
-          @Override
-          public void run() {
-            if (myDisposed) {
-              result.setRejected();
-            }
-            else {
-              removeDeferred().notifyWhenDone(result);
-            }
+        requestFocus(toFocus).doWhenProcessed(() -> {
+          if (myDisposed) {
+            result.setRejected();
+          }
+          else {
+            removeDeferred().notifyWhenDone(result);
           }
         });
         return result;
@@ -1012,12 +999,9 @@ public class JBTabsImpl extends JComponent
           }
         }
       });
-      myDeferredFocusRequest = new Runnable() {
-        @Override
-        public void run() {
-          queued.set(true);
-          requestor.requestFocus(new FocusCommand.ByComponent(toFocus, new Exception()), true).notify(result);
-        }
+      myDeferredFocusRequest = () -> {
+        queued.set(true);
+        requestor.requestFocus(new FocusCommand.ByComponent(toFocus, new Exception()), true).notify(result);
       };
       return result;
     }
@@ -1032,15 +1016,12 @@ public class JBTabsImpl extends JComponent
 
     final long executionRequest = ++myRemoveDeferredRequest;
 
-    final Runnable onDone = new Runnable() {
-      @Override
-      public void run() {
-        if (myRemoveDeferredRequest == executionRequest) {
-          removeDeferredNow();
-        }
-
-        callback.setDone();
+    final Runnable onDone = () -> {
+      if (myRemoveDeferredRequest == executionRequest) {
+        removeDeferredNow();
       }
+
+      callback.setDone();
     };
 
     myFocusManager.doWhenFocusSettlesDown(onDone);
@@ -1404,12 +1385,7 @@ public class JBTabsImpl extends JComponent
 
   private void resetPopup() {
 //todo [kirillk] dirty hack, should rely on ActionManager to understand that menu item was either chosen on or cancelled
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        myPopupInfo = null;
-      }
-    });
+    SwingUtilities.invokeLater(() -> myPopupInfo = null);
   }
 
   @Override
@@ -2395,12 +2371,7 @@ public class JBTabsImpl extends JComponent
       return computeSizeBySelected(true);
     }
 
-    return computeSize(new Function<JComponent, Dimension>() {
-      @Override
-      public Dimension fun(JComponent component) {
-        return component.getMinimumSize();
-      }
-    }, 1);
+    return computeSize(component -> component.getMinimumSize(), 1);
   }
 
   @Override
@@ -2409,12 +2380,7 @@ public class JBTabsImpl extends JComponent
       return computeSizeBySelected(false);
     }
 
-    return computeSize(new Function<JComponent, Dimension>() {
-      @Override
-      public Dimension fun(JComponent component) {
-        return component.getPreferredSize();
-      }
-    }, 3);
+    return computeSize(component -> component.getPreferredSize(), 3);
   }
 
   @NotNull
@@ -2567,12 +2533,7 @@ public class JBTabsImpl extends JComponent
       if (clearSelection) {
         mySelectedInfo = info;
       }
-      _setSelected(toSelect, transferFocus).doWhenProcessed(new Runnable() {
-        @Override
-        public void run() {
-          removeDeferred().notifyWhenDone(result);
-        }
-      });
+      _setSelected(toSelect, transferFocus).doWhenProcessed(() -> removeDeferred().notifyWhenDone(result));
     }
     else {
       processRemove(info, true);
@@ -3131,13 +3092,10 @@ public class JBTabsImpl extends JComponent
   @Override
   public void updateUI() {
     super.updateUI();
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        applyDecoration();
+    SwingUtilities.invokeLater(() -> {
+      applyDecoration();
 
-        revalidateAndRepaint(false);
-      }
+      revalidateAndRepaint(false);
     });
   }
 

@@ -496,19 +496,16 @@ public class MavenProjectReader {
       MavenLog.LOG.info(e);
       MavenLog.printInTests(e); // print exception since we need to know if something wrong with our logic
 
-      return ContainerUtil.mapNotNull(files, new Function<VirtualFile, MavenProjectReaderResult>() {
-        @Override
-        public MavenProjectReaderResult fun(VirtualFile file) {
-          MavenProjectReaderResult result = readProject(generalSettings, file, explicitProfiles, locator);
-          String message = e.getMessage();
-          if (message != null) {
-            result.readingProblems.add(MavenProjectProblem.createStructureProblem(file.getPath(), message));
-          }
-          else {
-            result.readingProblems.add(MavenProjectProblem.createSyntaxProblem(file.getPath(), MavenProjectProblem.ProblemType.SYNTAX));
-          }
-          return result;
+      return ContainerUtil.mapNotNull(files, file -> {
+        MavenProjectReaderResult result = readProject(generalSettings, file, explicitProfiles, locator);
+        String message = e.getMessage();
+        if (message != null) {
+          result.readingProblems.add(MavenProjectProblem.createStructureProblem(file.getPath(), message));
         }
+        else {
+          result.readingProblems.add(MavenProjectProblem.createSyntaxProblem(file.getPath(), MavenProjectProblem.ProblemType.SYNTAX));
+        }
+        return result;
       });
     }
   }

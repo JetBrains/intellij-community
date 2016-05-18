@@ -99,11 +99,8 @@ public class CodeSamplesCorrectnessTest extends LightPlatformCodeInsightFixtureT
 
   @NotNull
   private static String formReport(@NotNull List<CodeErrorReport> errorReports) {
-    return StringUtil.join(errorReports, new Function<CodeErrorReport, String>() {
-      @Override
-      public String fun(CodeErrorReport report) {
-        return report.createReport();
-      }
+    return StringUtil.join(errorReports, report -> {
+      return report.createReport();
     }, "\n");
   }
 }

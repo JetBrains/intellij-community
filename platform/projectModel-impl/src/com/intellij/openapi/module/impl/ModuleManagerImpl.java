@@ -178,11 +178,8 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
 
       loadModules((ModuleModelImpl)model);
 
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          model.commit();
-        }
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        model.commit();
       });
     }
   }
@@ -314,12 +311,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
 
   protected void fireModulesRenamed(@NotNull List<Module> modules, @NotNull final Map<Module, String> oldNames) {
     if (!modules.isEmpty()) {
-      myMessageBus.syncPublisher(ProjectTopics.MODULES).modulesRenamed(myProject, modules, new Function<Module, String>() {
-        @Override
-        public String fun(Module module) {
-          return oldNames.get(module);
-        }
-      });
+      myMessageBus.syncPublisher(ProjectTopics.MODULES).modulesRenamed(myProject, modules, module -> oldNames.get(module));
     }
   }
 
@@ -331,11 +323,8 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
       final Module module = myModuleModel.getModuleByFilePath(FileUtil.toSystemIndependentName(error.getModulePath().getPath()));
       if (module != null) {
         myModuleModel.myModules.remove(module.getName());
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            Disposer.dispose(module);
-          }
+        ApplicationManager.getApplication().invokeLater(() -> {
+          Disposer.dispose(module);
         }, module.getDisposed());
       }
     }
@@ -459,12 +448,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     }
 
     if (!sorted.isEmpty()) {
-      Collections.sort(sorted, new Comparator<SaveItem>() {
-        @Override
-        public int compare(SaveItem item1, SaveItem item2) {
-          return item1.getModuleName().compareTo(item2.getModuleName());
-        }
-      });
+      Collections.sort(sorted, (item1, item2) -> item1.getModuleName().compareTo(item2.getModuleName()));
 
       Element modules = new Element(ELEMENT_MODULES);
       for (SaveItem saveItem : sorted) {
@@ -496,13 +480,10 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
 
   @Override
   public void disposeModule(@NotNull final Module module) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        final ModifiableModuleModel modifiableModel = getModifiableModel();
-        modifiableModel.disposeModule(module);
-        modifiableModel.commit();
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      final ModifiableModuleModel modifiableModel = getModifiableModel();
+      modifiableModel.disposeModule(module);
+      modifiableModel.commit();
     });
   }
 
@@ -590,12 +571,9 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
   }
 
   protected void fireModuleAddedInWriteAction(@NotNull final Module module) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        ((ModuleEx)module).moduleAdded();
-        fireModuleAdded(module);
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      ((ModuleEx)module).moduleAdded();
+      fireModuleAdded(module);
     });
   }
 
@@ -712,14 +690,11 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
       if (module == null) {
         module = createModule(filePath);
         final ModuleEx newModule = module;
-        initModule(module, filePath, new Runnable() {
-          @Override
-          public void run() {
-            newModule.setOption(Module.ELEMENT_TYPE, moduleTypeId);
-            if (options != null) {
-              for (Map.Entry<String, String> option : options.entrySet()) {
-                newModule.setOption(option.getKey(), option.getValue());
-              }
+        initModule(module, filePath, () -> {
+          newModule.setOption(Module.ELEMENT_TYPE, moduleTypeId);
+          if (options != null) {
+            for (Map.Entry<String, String> option : options.entrySet()) {
+              newModule.setOption(option.getKey(), option.getValue());
             }
           }
         });
@@ -773,12 +748,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
       String path = moduleFile.getPath();
       ModuleEx module = getModuleByFilePath(path);
       if (module == null) {
-        ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-          @Override
-          public void run() {
-            moduleFile.refresh(false, false);
-          }
-        }, ModalityState.any());
+        ApplicationManager.getApplication().invokeAndWait(() -> moduleFile.refresh(false, false), ModalityState.any());
         module = createAndLoadModule(path);
         initModule(module, path, null);
       }
@@ -947,59 +917,56 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     final List<Module> addedModules = new ArrayList<Module>(newModules);
     addedModules.removeAll(oldModules);
 
-    ProjectRootManagerEx.getInstanceEx(myProject).makeRootsChange(new Runnable() {
-      @Override
-      public void run() {
-        for (Module removedModule : removedModules) {
-          fireBeforeModuleRemoved(removedModule);
-          cleanCachedStuff();
-        }
-
-        List<Module> neverAddedModules = new ArrayList<Module>(moduleModel.myModulesToDispose);
-        neverAddedModules.removeAll(myModuleModel.myModules.values());
-        for (final Module neverAddedModule : neverAddedModules) {
-          neverAddedModule.putUserData(DISPOSED_MODULE_NAME, neverAddedModule.getName());
-          Disposer.dispose(neverAddedModule);
-        }
-
-        if (runnable != null) {
-          runnable.run();
-        }
-
-        final Map<Module, String> modulesToNewNamesMap = moduleModel.myModuleToNewName;
-        final Set<Module> modulesToBeRenamed = modulesToNewNamesMap.keySet();
-        modulesToBeRenamed.removeAll(moduleModel.myModulesToDispose);
-
-        List<Module> modules = new ArrayList<Module>();
-        Map<Module, String> oldNames = ContainerUtil.newHashMap();
-        for (final Module module : modulesToBeRenamed) {
-          oldNames.put(module, module.getName());
-          moduleModel.myModules.remove(module.getName());
-          modules.add(module);
-          ((ModuleEx)module).rename(modulesToNewNamesMap.get(module));
-          moduleModel.myModules.put(module.getName(), module);
-        }
-
-        moduleModel.myIsWritable = false;
-        myModuleModel = moduleModel;
-
-        for (Module module : removedModules) {
-          fireModuleRemoved(module);
-          cleanCachedStuff();
-          Disposer.dispose(module);
-          cleanCachedStuff();
-        }
-
-        for (Module addedModule : addedModules) {
-          ((ModuleEx)addedModule).moduleAdded();
-          cleanCachedStuff();
-          fireModuleAdded(addedModule);
-          cleanCachedStuff();
-        }
-        cleanCachedStuff();
-        fireModulesRenamed(modules, oldNames);
+    ProjectRootManagerEx.getInstanceEx(myProject).makeRootsChange(() -> {
+      for (Module removedModule : removedModules) {
+        fireBeforeModuleRemoved(removedModule);
         cleanCachedStuff();
       }
+
+      List<Module> neverAddedModules = new ArrayList<Module>(moduleModel.myModulesToDispose);
+      neverAddedModules.removeAll(myModuleModel.myModules.values());
+      for (final Module neverAddedModule : neverAddedModules) {
+        neverAddedModule.putUserData(DISPOSED_MODULE_NAME, neverAddedModule.getName());
+        Disposer.dispose(neverAddedModule);
+      }
+
+      if (runnable != null) {
+        runnable.run();
+      }
+
+      final Map<Module, String> modulesToNewNamesMap = moduleModel.myModuleToNewName;
+      final Set<Module> modulesToBeRenamed = modulesToNewNamesMap.keySet();
+      modulesToBeRenamed.removeAll(moduleModel.myModulesToDispose);
+
+      List<Module> modules = new ArrayList<Module>();
+      Map<Module, String> oldNames = ContainerUtil.newHashMap();
+      for (final Module module : modulesToBeRenamed) {
+        oldNames.put(module, module.getName());
+        moduleModel.myModules.remove(module.getName());
+        modules.add(module);
+        ((ModuleEx)module).rename(modulesToNewNamesMap.get(module));
+        moduleModel.myModules.put(module.getName(), module);
+      }
+
+      moduleModel.myIsWritable = false;
+      myModuleModel = moduleModel;
+
+      for (Module module : removedModules) {
+        fireModuleRemoved(module);
+        cleanCachedStuff();
+        Disposer.dispose(module);
+        cleanCachedStuff();
+      }
+
+      for (Module addedModule : addedModules) {
+        ((ModuleEx)addedModule).moduleAdded();
+        cleanCachedStuff();
+        fireModuleAdded(addedModule);
+        cleanCachedStuff();
+      }
+      cleanCachedStuff();
+      fireModulesRenamed(modules, oldNames);
+      cleanCachedStuff();
     }, false, true);
   }
 
@@ -1008,12 +975,8 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     LOG.assertTrue(moduleInMap == null || moduleInMap == module);
     myModuleModel.myModules.put(module.getName(), module);
 
-    ProjectRootManagerEx.getInstanceEx(myProject).makeRootsChange(new Runnable() {
-      @Override
-      public void run() {
-        fireModulesRenamed(Collections.singletonList(module), Collections.singletonMap(module, oldName));
-      }
-    }, false, true);
+    ProjectRootManagerEx.getInstanceEx(myProject).makeRootsChange(
+      () -> fireModulesRenamed(Collections.singletonList(module), Collections.singletonMap(module, oldName)), false, true);
   }
 
   @Override

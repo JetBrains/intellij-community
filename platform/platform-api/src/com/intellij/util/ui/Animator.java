@@ -105,12 +105,7 @@ public abstract class Animator implements Disposable {
   private void animationDone() {
     stopTicker();
 
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        paintCycleEnd();
-      }
-    });
+    SwingUtilities.invokeLater(() -> paintCycleEnd());
   }
 
   private void stopTicker() {

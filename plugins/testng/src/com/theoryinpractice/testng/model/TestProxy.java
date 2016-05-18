@@ -113,16 +113,14 @@ public class TestProxy extends AbstractTestProxy {
   public void setResultMessage(final TestResultMessage resultMessage) {
     //if we have a result, then our parent is a class, so we can look up our method
     //this is a bit fragile as it assumes parent is set first and correctly
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        PsiClass psiClass = (PsiClass)getParent().getPsiElement();
-        if (psiClass != null) {
-          PsiMethod[] methods = psiClass.getAllMethods();
-          for (PsiMethod method : methods) {
-            if (method.getName().equals(resultMessage.getMethod())) {
-              setPsiElement(method);
-              break;
-            }
+    ApplicationManager.getApplication().runReadAction(() -> {
+      PsiClass psiClass = (PsiClass)getParent().getPsiElement();
+      if (psiClass != null) {
+        PsiMethod[] methods = psiClass.getAllMethods();
+        for (PsiMethod method : methods) {
+          if (method.getName().equals(resultMessage.getMethod())) {
+            setPsiElement(method);
+            break;
           }
         }
       }

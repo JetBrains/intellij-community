@@ -90,12 +90,7 @@ public class CCVirtualFileListener extends VirtualFileAdapter {
       return;
     }
     VirtualFile courseDir = project.getBaseDir();
-    CCUtils.updateHigherElements(courseDir.getChildren(), new Function<VirtualFile, StudyItem>() {
-      @Override
-      public StudyItem fun(VirtualFile file) {
-        return course.getLesson(file.getName());
-      }
-    }, removedLesson.getIndex(), EduNames.LESSON, -1);
+    CCUtils.updateHigherElements(courseDir.getChildren(), file -> course.getLesson(file.getName()), removedLesson.getIndex(), EduNames.LESSON, -1);
     course.getLessons().remove(removedLesson);
   }
 
@@ -112,12 +107,7 @@ public class CCVirtualFileListener extends VirtualFileAdapter {
     if (task == null) {
       return;
     }
-    CCUtils.updateHigherElements(lessonDir.getChildren(), new Function<VirtualFile, StudyItem>() {
-      @Override
-      public StudyItem fun(VirtualFile file) {
-        return lesson.getTask(file.getName());
-      }
-    }, task.getIndex(), EduNames.TASK, -1);
+    CCUtils.updateHigherElements(lessonDir.getChildren(), file -> lesson.getTask(file.getName()), task.getIndex(), EduNames.TASK, -1);
     lesson.getTaskList().remove(task);
   }
 

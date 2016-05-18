@@ -607,7 +607,9 @@ public class ByWord {
     @NotNull
     public DiffIterable build() {
       for (Range range : myIterable.iterateChanges()) {
-        Range trimmed = trim(myText1, myText2, range);
+        // match spaces if we can, ignore them if we can't
+        Range expanded = expandW(myText1, myText2, range);
+        Range trimmed = trim(myText1, myText2, expanded);
 
         if (!trimmed.isEmpty()) {
           myChanges.add(trimmed);
@@ -644,7 +646,8 @@ public class ByWord {
     @NotNull
     public List<MergeRange> build() {
       for (MergeRange range : myIterable) {
-        MergeRange trimmed = trim(myText1, myText2, myText3, range);
+        MergeRange expanded = expandW(myText1, myText2, myText3, range);
+        MergeRange trimmed = trim(myText1, myText2, myText3, expanded);
 
         if (!trimmed.isEmpty()) {
           myChanges.add(trimmed);

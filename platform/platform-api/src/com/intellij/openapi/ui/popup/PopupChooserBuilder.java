@@ -212,12 +212,7 @@ public class PopupChooserBuilder {
     if (myChooserComponent instanceof JList) {
       list = (JList)myChooserComponent;
       myChooserComponent = ListWithFilter.wrap(list, new MyListWrapper(list), myItemsNamer);
-      keyEventHandler = new BooleanFunction<KeyEvent>() {
-        @Override
-        public boolean fun(KeyEvent keyEvent) {
-          return keyEvent.isConsumed();
-        }
-      };
+      keyEventHandler = keyEvent -> keyEvent.isConsumed();
     }
     else {
       list = null;

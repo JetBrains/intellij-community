@@ -151,12 +151,9 @@ public class MockDomElementsEditor {
 
   private <T extends DomElement> T createMockElement(final Class<T> aClass, final Module module) {
     final Project project = module.getProject();
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (myFileEditor.isInitialised()) {
-          myContents.reset();
-        }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (myFileEditor.isInitialised()) {
+        myContents.reset();
       }
     });
     final DomManager domManager = DomManager.getDomManager(project);

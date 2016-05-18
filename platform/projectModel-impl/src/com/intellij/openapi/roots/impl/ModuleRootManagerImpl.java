@@ -351,12 +351,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
       final RootModelImpl newModel = new RootModelImpl(object.getRootModelElement(), this, myProjectRootManager, myFilePointerManager, throwEvent);
 
       if (throwEvent) {
-        makeRootsChange(new Runnable() {
-          @Override
-          public void run() {
-            doCommit(newModel);
-          }
-        });
+        makeRootsChange(() -> doCommit(newModel));
       }
       else {
         myRootModel.dispose();

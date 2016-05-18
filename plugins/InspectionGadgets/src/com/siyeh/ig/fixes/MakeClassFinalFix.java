@@ -82,29 +82,19 @@ public class MakeClassFinalFix extends InspectionGadgetsFix {
     }
     final MultiMap<PsiElement, String> conflicts = new MultiMap();
     final Query<PsiClass> search = ClassInheritorsSearch.search(containingClass);
-    search.forEach(new Processor<PsiClass>() {
-      @Override
-      public boolean process(PsiClass aClass) {
-        conflicts.putValue(containingClass, InspectionGadgetsBundle
-          .message("0.will.no.longer.be.overridable.by.1", RefactoringUIUtil.getDescription(containingClass, false),
-                   RefactoringUIUtil.getDescription(aClass, false)));
-        return true;
-      }
+    search.forEach(aClass -> {
+      conflicts.putValue(containingClass, InspectionGadgetsBundle
+        .message("0.will.no.longer.be.overridable.by.1", RefactoringUIUtil.getDescription(containingClass, false),
+                 RefactoringUIUtil.getDescription(aClass, false)));
+      return true;
     });
     final boolean conflictsDialogOK;
     if (!conflicts.isEmpty()) {
-      final ConflictsDialog conflictsDialog = new ConflictsDialog(element.getProject(), conflicts, new Runnable() {
-        @Override
-        public void run() {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              modifierList.setModifierProperty(FINAL, true);
-              modifierList.setModifierProperty(ABSTRACT, false);
-            }
-          });
-        }
-      });
+      final ConflictsDialog conflictsDialog = new ConflictsDialog(element.getProject(), conflicts,
+                                                                  () -> ApplicationManager.getApplication().runWriteAction(() -> {
+                                                                    modifierList.setModifierProperty(FINAL, true);
+                                                                    modifierList.setModifierProperty(ABSTRACT, false);
+                                                                  }));
       conflictsDialogOK = conflictsDialog.showAndGet();
     } else {
       conflictsDialogOK = true;

@@ -172,17 +172,15 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     final VirtualFile file = FileChooserUtil.getFileToSelect(myChooserDescriptor, myProject, toSelect, lastOpenedFile);
 
     if (file != null && file.isValid()) {
-      myFileSystemTree.select(file, new Runnable() {
-        public void run() {
-          if (!file.equals(myFileSystemTree.getSelectedFile())) {
-            VirtualFile parent = file.getParent();
-            if (parent != null) {
-              myFileSystemTree.select(parent, null);
-            }
+      myFileSystemTree.select(file, () -> {
+        if (!file.equals(myFileSystemTree.getSelectedFile())) {
+          VirtualFile parent = file.getParent();
+          if (parent != null) {
+            myFileSystemTree.select(parent, null);
           }
-          else if (file.isDirectory()) {
-            myFileSystemTree.expand(file, null);
-          }
+        }
+        else if (file.isDirectory()) {
+          myFileSystemTree.expand(file, null);
         }
       });
     }
@@ -265,12 +263,8 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     });
     JBPopupFactory.getInstance()
       .createListPopupBuilder(files)
-      .setItemChoosenCallback(new Runnable() {
-        @Override
-        public void run() {
-          myPathTextField.getField().setText(files.getSelectedValue().toString());
-        }
-      }).createPopup().showUnderneathOf(myPathTextField.getField());
+      .setItemChoosenCallback(
+        () -> myPathTextField.getField().setText(files.getSelectedValue().toString())).createPopup().showUnderneathOf(myPathTextField.getField());
   }
 
 
@@ -367,12 +361,8 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
       .subscribe(ApplicationActivationListener.TOPIC, new ApplicationActivationListener.Adapter() {
         @Override
         public void applicationActivated(IdeFrame ideFrame) {
-          DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_MODAL, new Runnable() {
-            @Override
-            public void run() {
-              ((SaveAndSyncHandlerImpl)SaveAndSyncHandler.getInstance()).maybeRefresh(ModalityState.current());
-            }
-          });
+          DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_MODAL,
+                                                  () -> ((SaveAndSyncHandlerImpl)SaveAndSyncHandler.getInstance()).maybeRefresh(ModalityState.current()));
         }
       });
 
@@ -450,11 +440,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     internalTree.setShowsRootHandles(true);
     Disposer.register(myDisposable, myFileSystemTree);
 
-    myFileSystemTree.addOkAction(new Runnable() {
-      public void run() {
-        doOKAction();
-      }
-    });
+    myFileSystemTree.addOkAction(() -> doOKAction());
     JTree tree = myFileSystemTree.getTree();
     tree.setCellRenderer(new NodeRenderer());
     tree.getSelectionModel().addTreeSelectionListener(new FileTreeSelectionListener());
@@ -677,11 +663,9 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
       }
     }
 
-    myPathTextField.setText(text, now, new Runnable() {
-      public void run() {
-        myPathTextField.getField().selectAll();
-        setErrorText(null);
-      }
+    myPathTextField.setText(text, now, () -> {
+      myPathTextField.getField().selectAll();
+      setErrorText(null);
     });
   }
 
@@ -692,17 +676,15 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
 
     myUiUpdater.queue(new Update("treeFromPath.1") {
       public void run() {
-        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-          public void run() {
-            final LocalFsFinder.VfsFile toFind = (LocalFsFinder.VfsFile)myPathTextField.getFile();
-            if (toFind == null || !toFind.exists()) return;
+        ApplicationManager.getApplication().executeOnPooledThread(() -> {
+          final LocalFsFinder.VfsFile toFind = (LocalFsFinder.VfsFile)myPathTextField.getFile();
+          if (toFind == null || !toFind.exists()) return;
 
-            myUiUpdater.queue(new Update("treeFromPath.2") {
-              public void run() {
-                selectInTree(toFind.getFile(), text);
-              }
-            });
-          }
+          myUiUpdater.queue(new Update("treeFromPath.2") {
+            public void run() {
+              selectInTree(toFind.getFile(), text);
+            }
+          });
         });
       }
     });
@@ -723,24 +705,18 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     myTreeIsUpdating = true;
     final List<VirtualFile> fileList = Arrays.asList(array);
     if (!Arrays.asList(myFileSystemTree.getSelectedFiles()).containsAll(fileList)) {
-      myFileSystemTree.select(array, new Runnable() {
-        public void run() {
-          if (!myFileSystemTree.areHiddensShown() && !Arrays.asList(myFileSystemTree.getSelectedFiles()).containsAll(fileList)) {
-            myFileSystemTree.showHiddens(true);
-            selectInTree(array, requestFocus);
-            return;
-          }
+      myFileSystemTree.select(array, () -> {
+        if (!myFileSystemTree.areHiddensShown() && !Arrays.asList(myFileSystemTree.getSelectedFiles()).containsAll(fileList)) {
+          myFileSystemTree.showHiddens(true);
+          selectInTree(array, requestFocus);
+          return;
+        }
 
-          myTreeIsUpdating = false;
-          setErrorText(null);
-          if (requestFocus) {
-            //noinspection SSBasedInspection
-            SwingUtilities.invokeLater(new Runnable() {
-              public void run() {
-                myFileSystemTree.getTree().requestFocus();
-              }
-            });
-          }
+        myTreeIsUpdating = false;
+        setErrorText(null);
+        if (requestFocus) {
+          //noinspection SSBasedInspection
+          SwingUtilities.invokeLater(() -> myFileSystemTree.getTree().requestFocus());
         }
       });
     }

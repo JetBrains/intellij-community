@@ -86,13 +86,10 @@ public class TabbedContentTabLabel extends ContentTabLabel implements Disposable
       }
     });
     final JBPopup popup = JBPopupFactory.getInstance().createListPopupBuilder(list)
-      .setItemChoosenCallback(new Runnable() {
-        @Override
-        public void run() {
-          int index = list.getSelectedIndex();
-          if (index != -1) {
-            myContent.selectContent(index);
-          }
+      .setItemChoosenCallback(() -> {
+        int index = list.getSelectedIndex();
+        if (index != -1) {
+          myContent.selectContent(index);
         }
       }).createPopup();
     Disposer.register(this, popup);

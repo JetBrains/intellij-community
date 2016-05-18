@@ -57,15 +57,13 @@ public class MavenProjectsProcessorArtifactsDownloadingTask implements MavenProj
     if (myCallbackResult != null) myCallbackResult.setDone(result);
 
     // todo: hack to update all file pointers.
-    MavenUtil.invokeLater(project, new Runnable() {
-      public void run() {
-        AccessToken accessToken = WriteAction.start();
-        try {
-          ProjectRootManagerEx.getInstanceEx(project).makeRootsChange(EmptyRunnable.getInstance(), false, true);
-        }
-        finally {
-          accessToken.finish();
-        }
+    MavenUtil.invokeLater(project, () -> {
+      AccessToken accessToken = WriteAction.start();
+      try {
+        ProjectRootManagerEx.getInstanceEx(project).makeRootsChange(EmptyRunnable.getInstance(), false, true);
+      }
+      finally {
+        accessToken.finish();
       }
     });
   }

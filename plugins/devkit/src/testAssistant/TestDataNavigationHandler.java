@@ -132,16 +132,14 @@ public class TestDataNavigationHandler implements GutterIconNavigationHandler<Ps
       }
     });
     PopupChooserBuilder builder = new PopupChooserBuilder(list);
-    builder.setItemChoosenCallback(new Runnable() {
-      public void run() {
-        final int[] indices = list.getSelectedIndices();
-        if (ArrayUtil.indexOf(indices, fileNames.size()) >= 0) {
-          createMissingFiles(project, fileNames);
-        }
-        else {
-          for (int index : indices) {
-            openFileByIndex(project, fileNames, index);
-          }
+    builder.setItemChoosenCallback(() -> {
+      final int[] indices = list.getSelectedIndices();
+      if (ArrayUtil.indexOf(indices, fileNames.size()) >= 0) {
+        createMissingFiles(project, fileNames);
+      }
+      else {
+        for (int index : indices) {
+          openFileByIndex(project, fileNames, index);
         }
       }
     }).createPopup().show(point);

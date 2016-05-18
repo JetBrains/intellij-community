@@ -56,15 +56,12 @@ public class FrameworkLibraryValidatorImpl extends FrameworkLibraryValidator {
   public ValidationResult check() {
     final Set<? extends LibraryKind> libraryKinds = myLibraryDescription.getSuitableLibraryKinds();
     final Ref<Boolean> found = Ref.create(false);
-    myContext.getRootModel().orderEntries().using(myContext.getModulesProvider()).recursively().librariesOnly().forEachLibrary(new Processor<Library>() {
-      @Override
-      public boolean process(Library library) {
-        if (LibraryPresentationManager.getInstance().isLibraryOfKind(library, myContext.getLibrariesContainer(), libraryKinds)) {
-          found.set(true);
-          return false;
-        }
-        return true;
+    myContext.getRootModel().orderEntries().using(myContext.getModulesProvider()).recursively().librariesOnly().forEachLibrary(library -> {
+      if (LibraryPresentationManager.getInstance().isLibraryOfKind(library, myContext.getLibrariesContainer(), libraryKinds)) {
+        found.set(true);
+        return false;
       }
+      return true;
     });
     if (found.get()) return ValidationResult.OK;
 

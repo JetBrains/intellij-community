@@ -395,19 +395,11 @@ public class ActionMacroManager implements PersistentStateComponent<Element>, Di
     myIsPlaying = true;
 
     runner.run()
-      .doWhenDone(new Runnable() {
-        @Override
-        public void run() {
-          StatusBar statusBar = frame.getStatusBar();
-          statusBar.setInfo("Script execution finished");
-        }
+      .doWhenDone(() -> {
+        StatusBar statusBar = frame.getStatusBar();
+        statusBar.setInfo("Script execution finished");
       })
-      .doWhenProcessed(new Runnable() {
-        @Override
-        public void run() {
-          myIsPlaying = false;
-        }
-      });
+      .doWhenProcessed(() -> myIsPlaying = false);
   }
 
   public boolean isRecording() {
@@ -512,12 +504,7 @@ public class ActionMacroManager implements PersistentStateComponent<Element>, Di
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      IdeEventQueue.getInstance().doWhenReady(new Runnable() {
-        @Override
-        public void run() {
-          getInstance().playMacro(myMacro);
-        }
-      });
+      IdeEventQueue.getInstance().doWhenReady(() -> getInstance().playMacro(myMacro));
     }
 
     @Override

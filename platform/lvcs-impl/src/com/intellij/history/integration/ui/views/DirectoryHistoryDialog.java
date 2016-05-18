@@ -108,11 +108,9 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
     field.addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
-        scheduleRevisionsUpdate(new Consumer<DirectoryHistoryDialogModel>() {
-          public void consume(DirectoryHistoryDialogModel m) {
-            m.setFilter(field.getText());
-            field.addCurrentTextToHistory();
-          }
+        scheduleRevisionsUpdate(m -> {
+          m.setFilter(field.getText());
+          field.addCurrentTextToHistory();
         });
       }
     });
@@ -129,11 +127,7 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
 
   private void initChangesTree(JComponent root) {
     myChangesTree = createChangesTree();
-    myChangesTree.setDoubleClickHandler(new Runnable() {
-      public void run() {
-        new ShowDifferenceAction().performIfEnabled();
-      }
-    });
+    myChangesTree.setDoubleClickHandler(() -> new ShowDifferenceAction().performIfEnabled());
     myChangesTree.installPopupHandler(createChangesTreeActions(root));
   }
 
@@ -179,11 +173,7 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
   @Override
   protected Runnable doUpdateDiffs(DirectoryHistoryDialogModel model) {
     final List<Change> changes = model.getChanges();
-    return new Runnable() {
-      public void run() {
-        myChangesTree.setChangesToDisplay(changes);
-      }
-    };
+    return () -> myChangesTree.setChangesToDisplay(changes);
   }
 
   @Override

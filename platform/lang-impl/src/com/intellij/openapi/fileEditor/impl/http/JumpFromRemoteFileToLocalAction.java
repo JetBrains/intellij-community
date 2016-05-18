@@ -79,13 +79,10 @@ class JumpFromRemoteFileToLocalAction extends AnAction {
       new PopupChooserBuilder(list)
        .setTitle("Select Target File")
        .setMovable(true)
-       .setItemChoosenCallback(new Runnable() {
-         @Override
-         public void run() {
-           //noinspection deprecation
-           for (Object value : list.getSelectedValues()) {
-             navigateToFile(myProject, (VirtualFile)value);
-           }
+       .setItemChoosenCallback(() -> {
+         //noinspection deprecation
+         for (Object value : list.getSelectedValues()) {
+           navigateToFile(myProject, (VirtualFile)value);
          }
        }).createPopup().showUnderneathOf(e.getInputEvent().getComponent());
     }

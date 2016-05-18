@@ -54,12 +54,7 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
 
     if (lookup != null) {
       if (editor.getSelectionModel().hasSelection()) {
-        lookup.performGuardedChange(new Runnable() {
-          @Override
-          public void run() {
-            EditorModificationUtil.deleteSelectedText(editor);
-          }
-        });
+        lookup.performGuardedChange(() -> EditorModificationUtil.deleteSelectedText(editor));
       }
       return Result.STOP;
     }

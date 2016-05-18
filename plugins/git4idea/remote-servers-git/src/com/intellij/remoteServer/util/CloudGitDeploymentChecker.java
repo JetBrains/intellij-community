@@ -88,28 +88,24 @@ public class CloudGitDeploymentChecker<
     RuntimeConfigurationWarning warning =
       new RuntimeConfigurationWarning("Cloud Git URL found in repository, but it doesn't match the run configuration");
 
-    warning.setQuickFix(new Runnable() {
+    warning.setQuickFix(() -> {
+      CloudGitApplication application
+        = new CloudConnectionTask<CloudGitApplication, SC, T, SR>(project, "Searching for application", server) {
 
-      @Override
-      public void run() {
-        CloudGitApplication application
-          = new CloudConnectionTask<CloudGitApplication, SC, T, SR>(project, "Searching for application", server) {
-
-          @Override
-          protected CloudGitApplication run(SR serverRuntime) throws ServerRuntimeException {
-            CloudGitDeploymentRuntime deploymentRuntime
-              = (CloudGitDeploymentRuntime)serverRuntime.createDeploymentRuntime(deploymentSource, settings, project);
-            return deploymentRuntime.findApplication4Repository();
-          }
-        }.performSync();
-
-        if (application == null) {
-          Messages.showErrorDialog(project, "No application matching repository URL(s) found in account", server.getName());
+        @Override
+        protected CloudGitApplication run(SR serverRuntime) throws ServerRuntimeException {
+          CloudGitDeploymentRuntime deploymentRuntime
+            = (CloudGitDeploymentRuntime)serverRuntime.createDeploymentRuntime(deploymentSource, settings, project);
+          return deploymentRuntime.findApplication4Repository();
         }
-        else {
-          settings.setDefaultDeploymentName(false);
-          settings.setDeploymentName(application.getName());
-        }
+      }.performSync();
+
+      if (application == null) {
+        Messages.showErrorDialog(project, "No application matching repository URL(s) found in account", server.getName());
+      }
+      else {
+        settings.setDefaultDeploymentName(false);
+        settings.setDeploymentName(application.getName());
       }
     });
 

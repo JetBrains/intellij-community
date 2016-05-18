@@ -74,12 +74,10 @@ public class HotSwapManager extends AbstractProjectComponent {
     final Map<String, HotSwapFile> modifiedClasses = new HashMap<>();
 
     final List<File> outputRoots = new ArrayList<>();
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        final List<VirtualFile> allDirs = OrderEnumerator.orderEntries(myProject).withoutSdk().withoutLibraries().getPathsList().getRootDirs();
-        for (VirtualFile dir : allDirs) {
-          outputRoots.add(new File(dir.getPath()));
-        }
+    ApplicationManager.getApplication().runReadAction(() -> {
+      final List<VirtualFile> allDirs = OrderEnumerator.orderEntries(myProject).withoutSdk().withoutLibraries().getPathsList().getRootDirs();
+      for (VirtualFile dir : allDirs) {
+        outputRoots.add(new File(dir.getPath()));
       }
     });
     for (File root : outputRoots) {
@@ -168,11 +166,7 @@ public class HotSwapManager extends AbstractProjectComponent {
 
     final MultiProcessCommand scanClassesCommand = new MultiProcessCommand();
 
-    swapProgress.setCancelWorker(new Runnable() {
-      public void run() {
-        scanClassesCommand.cancel();
-      }
-    });
+    swapProgress.setCancelWorker(() -> scanClassesCommand.cancel());
 
     for (final DebuggerSession debuggerSession : sessions) {
       if (debuggerSession.isAttached()) {
@@ -204,11 +198,7 @@ public class HotSwapManager extends AbstractProjectComponent {
   public static void reloadModifiedClasses(final Map<DebuggerSession, Map<String, HotSwapFile>> modifiedClasses, final HotSwapProgress reloadClassesProgress) {
     final MultiProcessCommand reloadClassesCommand = new MultiProcessCommand();
 
-    reloadClassesProgress.setCancelWorker(new Runnable() {
-      public void run() {
-        reloadClassesCommand.cancel();
-      }
-    });
+    reloadClassesProgress.setCancelWorker(() -> reloadClassesCommand.cancel());
 
     for (final DebuggerSession debuggerSession : modifiedClasses.keySet()) {
       reloadClassesCommand.addCommand(debuggerSession.getProcess(), new DebuggerCommandImpl() {

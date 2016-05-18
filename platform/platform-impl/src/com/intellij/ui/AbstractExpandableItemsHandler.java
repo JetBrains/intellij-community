@@ -223,12 +223,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     if (!selected.equals(myKey)) {
       hideHint();
     }
-    myUpdateAlarm.addRequest(new Runnable() {
-      @Override
-      public void run() {
-        doHandleSelectionChange(selected, processIfUnfocused);
-      }
-    }, 10);
+    myUpdateAlarm.addRequest(() -> doHandleSelectionChange(selected, processIfUnfocused), 10);
   }
 
   private boolean isHandleSelectionEnabled(@NotNull KeyType selected, boolean processIfUnfocused) {

@@ -47,11 +47,8 @@ public class MethodContract {
 
   @Override
   public String toString() {
-    return StringUtil.join(arguments, new Function<ValueConstraint, String>() {
-      @Override
-      public String fun(ValueConstraint constraint) {
-        return constraint.toString();
-      }
+    return StringUtil.join(arguments, constraint -> {
+      return constraint.toString();
     }, ", ") + " -> " + returnValue;
   }
 

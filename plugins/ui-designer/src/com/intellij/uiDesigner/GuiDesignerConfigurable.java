@@ -203,24 +203,14 @@ public final class GuiDesignerConfigurable implements SearchableConfigurable, Co
      * Launches vanish/generate sources processes
      */
     private void applyImpl() {
-      CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-        public void run() {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            public void run() {
-              PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-              vanishGeneratedSources();
-            }
-          });
-        }
-      }, "", null);
+      CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(() -> {
+        PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+        vanishGeneratedSources();
+      }), "", null);
     }
 
     public void run() {
-      ProgressManager.getInstance().runProcess(new Runnable() {
-        public void run() {
-          applyImpl();
-        }
-      }, myProgressWindow);
+      ProgressManager.getInstance().runProcess(() -> applyImpl(), myProgressWindow);
     }
   }
 

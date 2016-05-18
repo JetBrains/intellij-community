@@ -517,23 +517,20 @@ public class ControlFlowUtils {
     }
     if (applicable.isEmpty()) return null;
 
-    Collections.sort(applicable, new Comparator<Instruction>() {
-      @Override
-      public int compare(Instruction o1, Instruction o2) {
-        PsiElement e1 = o1.getElement();
-        PsiElement e2 = o2.getElement();
-        LOG.assertTrue(e1 != null);
-        LOG.assertTrue(e2 != null);
-        final TextRange t1 = e1.getTextRange();
-        final TextRange t2 = e2.getTextRange();
-        final int s1 = t1.getStartOffset();
-        final int s2 = t2.getStartOffset();
+    Collections.sort(applicable, (o1, o2) -> {
+      PsiElement e1 = o1.getElement();
+      PsiElement e2 = o2.getElement();
+      LOG.assertTrue(e1 != null);
+      LOG.assertTrue(e2 != null);
+      final TextRange t1 = e1.getTextRange();
+      final TextRange t2 = e2.getTextRange();
+      final int s1 = t1.getStartOffset();
+      final int s2 = t2.getStartOffset();
 
-        if (s1 == s2) {
-          return t1.getEndOffset() - t2.getEndOffset();
-        }
-        return s2 - s1;
+      if (s1 == s2) {
+        return t1.getEndOffset() - t2.getEndOffset();
       }
+      return s2 - s1;
     });
 
     return applicable.get(0);

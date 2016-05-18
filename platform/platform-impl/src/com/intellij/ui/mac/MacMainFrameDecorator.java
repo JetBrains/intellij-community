@@ -156,22 +156,16 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
 
   private static AtomicInteger UNIQUE_COUNTER = new AtomicInteger(0);
 
-  public static final Runnable TOOLBAR_SETTER = new Runnable() {
-    @Override
-    public void run() {
-      final UISettings settings = UISettings.getInstance();
-      settings.SHOW_MAIN_TOOLBAR = SHOWN;
-      settings.fireUISettingsChanged();
-    }
+  public static final Runnable TOOLBAR_SETTER = () -> {
+    final UISettings settings = UISettings.getInstance();
+    settings.SHOW_MAIN_TOOLBAR = SHOWN;
+    settings.fireUISettingsChanged();
   };
 
-  public static final Runnable NAVBAR_SETTER = new Runnable() {
-    @Override
-    public void run() {
-      final UISettings settings = UISettings.getInstance();
-      settings.SHOW_NAVIGATION_BAR = SHOWN;
-      settings.fireUISettingsChanged();
-    }
+  public static final Runnable NAVBAR_SETTER = () -> {
+    final UISettings settings = UISettings.getInstance();
+    settings.SHOW_NAVIGATION_BAR = SHOWN;
+    settings.fireUISettingsChanged();
   };
 
   @SuppressWarnings("Convert2Lambda")
@@ -274,12 +268,9 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
         Foundation.addMethod(ownToolbar, Foundation.createSelector("setVisible:"), SET_VISIBLE_CALLBACK, "v*");
         Foundation.addMethod(ownToolbar, Foundation.createSelector("isVisible"), IS_VISIBLE, "B*");
 
-        Foundation.executeOnMainThread(new Runnable() {
-          @Override
-          public void run() {
-            invoke(window, "setToolbar:", toolbar);
-            invoke(window, "setShowsToolbarButton:", 1);
-          }
+        Foundation.executeOnMainThread(() -> {
+          invoke(window, "setToolbar:", toolbar);
+          invoke(window, "setShowsToolbarButton:", 1);
         }, true, true);
       }
     }
@@ -357,12 +348,7 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
       }
     });
 
-    myFullscreenQueue.runOrEnqueue(new Runnable() {
-      @Override
-      public void run() {
-        toggleFullScreenNow();
-      }
-    });
+    myFullscreenQueue.runOrEnqueue(() -> toggleFullScreenNow());
     return callback;
   }
 

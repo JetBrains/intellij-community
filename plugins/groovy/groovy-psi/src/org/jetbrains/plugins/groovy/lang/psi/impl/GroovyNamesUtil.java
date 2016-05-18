@@ -100,11 +100,8 @@ public class GroovyNamesUtil {
   }
 
   public static String camelToSnake(final String string) {
-    return StringUtil.join(camelizeString(string), new Function<String, String>() {
-      @Override
-      public String fun(final String s) {
-        return StringUtil.decapitalize(s);
-      }
+    return StringUtil.join(camelizeString(string), s -> {
+      return StringUtil.decapitalize(s);
     }, "-");
   }
 

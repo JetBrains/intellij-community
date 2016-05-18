@@ -325,11 +325,8 @@ abstract class OrderEnumeratorBase extends OrderEnumerator implements OrderEnume
 
   @Override
   public void forEach(@NotNull final Processor<OrderEntry> processor) {
-    forEach(new PairProcessor<OrderEntry, List<OrderEnumerationHandler>>() {
-      @Override
-      public boolean process(OrderEntry entry, List<OrderEnumerationHandler> handlers) {
-        return processor.process(entry);
-      }
+    forEach((entry, handlers) -> {
+      return processor.process(entry);
     });
   }
 
@@ -337,37 +334,31 @@ abstract class OrderEnumeratorBase extends OrderEnumerator implements OrderEnume
 
   @Override
   public void forEachLibrary(@NotNull final Processor<Library> processor) {
-    forEach(new PairProcessor<OrderEntry, List<OrderEnumerationHandler>>() {
-      @Override
-      public boolean process(OrderEntry entry, List<OrderEnumerationHandler> handlers) {
-        if (entry instanceof LibraryOrderEntry) {
-          final Library library = ((LibraryOrderEntry)entry).getLibrary();
-          if (library != null) {
-            return processor.process(library);
-          }
+    forEach((entry, handlers) -> {
+      if (entry instanceof LibraryOrderEntry) {
+        final Library library = ((LibraryOrderEntry)entry).getLibrary();
+        if (library != null) {
+          return processor.process(library);
         }
-        return true;
       }
+      return true;
     });
   }
 
   @Override
   public void forEachModule(@NotNull final Processor<Module> processor) {
-    forEach(new PairProcessor<OrderEntry, List<OrderEnumerationHandler>>() {
-      @Override
-      public boolean process(OrderEntry orderEntry, List<OrderEnumerationHandler> customHandlers) {
-        if (myRecursively && orderEntry instanceof ModuleSourceOrderEntry) {
-          final Module module = ((ModuleSourceOrderEntry)orderEntry).getRootModel().getModule();
+    forEach((orderEntry, customHandlers) -> {
+      if (myRecursively && orderEntry instanceof ModuleSourceOrderEntry) {
+        final Module module = ((ModuleSourceOrderEntry)orderEntry).getRootModel().getModule();
+        return processor.process(module);
+      }
+      if (orderEntry instanceof ModuleOrderEntry && (!myRecursively || !shouldProcessRecursively(customHandlers))) {
+        final Module module = ((ModuleOrderEntry)orderEntry).getModule();
+        if (module != null) {
           return processor.process(module);
         }
-        if (orderEntry instanceof ModuleOrderEntry && (!myRecursively || !shouldProcessRecursively(customHandlers))) {
-          final Module module = ((ModuleOrderEntry)orderEntry).getModule();
-          if (module != null) {
-            return processor.process(module);
-          }
-        }
-        return true;
       }
+      return true;
     });
   }
 

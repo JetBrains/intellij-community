@@ -165,14 +165,11 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
   @NotNull
   public String[] getSchemeNames() {
     List<MyColorScheme> schemes = new ArrayList<MyColorScheme>(mySchemes.values());
-    Collections.sort(schemes, new Comparator<MyColorScheme>() {
-      @Override
-      public int compare(@NotNull MyColorScheme o1, @NotNull MyColorScheme o2) {
-        if (isReadOnly(o1) && !isReadOnly(o2)) return -1;
-        if (!isReadOnly(o1) && isReadOnly(o2)) return 1;
+    Collections.sort(schemes, (o1, o2) -> {
+      if (isReadOnly(o1) && !isReadOnly(o2)) return -1;
+      if (!isReadOnly(o1) && isReadOnly(o2)) return 1;
 
-        return o1.getName().compareToIgnoreCase(o2.getName());
-      }
+      return o1.getName().compareToIgnoreCase(o2.getName());
     });
 
     List<String> names = new ArrayList<String>(schemes.size());
@@ -375,23 +372,20 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
       });
     }
     Collections.addAll(extensions, Extensions.getExtensions(ColorAndFontPanelFactory.EP_NAME));
-    Collections.sort(extensions, new Comparator<ColorAndFontPanelFactory>() {
-      @Override
-      public int compare(ColorAndFontPanelFactory f1, ColorAndFontPanelFactory f2) {
-        if (f1 instanceof DisplayPrioritySortable) {
-          if (f2 instanceof DisplayPrioritySortable) {
-            int result = ((DisplayPrioritySortable)f1).getPriority().compareTo(((DisplayPrioritySortable)f2).getPriority());
-            if (result != 0) return result;
-          }
-          else {
-            return 1;
-          }
+    Collections.sort(extensions, (f1, f2) -> {
+      if (f1 instanceof DisplayPrioritySortable) {
+        if (f2 instanceof DisplayPrioritySortable) {
+          int result1 = ((DisplayPrioritySortable)f1).getPriority().compareTo(((DisplayPrioritySortable)f2).getPriority());
+          if (result1 != 0) return result1;
         }
-        else if (f2 instanceof DisplayPrioritySortable) {
-          return -1;
+        else {
+          return 1;
         }
-        return f1.getPanelDisplayName().compareToIgnoreCase(f2.getPanelDisplayName());
       }
+      else if (f2 instanceof DisplayPrioritySortable) {
+        return -1;
+      }
+      return f1.getPanelDisplayName().compareToIgnoreCase(f2.getPanelDisplayName());
     });
     result.addAll(extensions);
 
@@ -535,12 +529,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
     List<Pair<NamedScope, NamedScopesHolder>> list = new ArrayList<Pair<NamedScope, NamedScopesHolder>>(namedScopes);
 
-    Collections.sort(list, new Comparator<Pair<NamedScope,NamedScopesHolder>>() {
-      @Override
-      public int compare(@NotNull final Pair<NamedScope,NamedScopesHolder> o1, @NotNull final Pair<NamedScope,NamedScopesHolder> o2) {
-        return o1.getFirst().getName().compareToIgnoreCase(o2.getFirst().getName());
-      }
-    });
+    Collections.sort(list, (o1, o2) -> o1.getFirst().getName().compareToIgnoreCase(o2.getFirst().getName()));
     for (Pair<NamedScope,NamedScopesHolder> pair : list) {
       NamedScope namedScope = pair.getFirst();
       String name = namedScope.getName();

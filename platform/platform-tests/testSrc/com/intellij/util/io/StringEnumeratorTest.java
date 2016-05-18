@@ -162,17 +162,14 @@ public class StringEnumeratorTest extends TestCase {
       }
     };
 
-    PlatformTestUtil.startPerformanceTest("PersistentStringEnumerator performance failed", 2500, new ThrowableRunnable() {
-      @Override
-      public void run() throws Exception {
-        stringCache.addDeletedPairsListener(listener);
-        for (int i = 0; i < 100000; ++i) {
-          final String string = createRandomString();
-          stringCache.cacheObject(myEnumerator.enumerate(string), string);
-        }
-        stringCache.removeDeletedPairsListener(listener);
-        stringCache.removeAll();
+    PlatformTestUtil.startPerformanceTest("PersistentStringEnumerator performance failed", 2500, () -> {
+      stringCache.addDeletedPairsListener(listener);
+      for (int i = 0; i < 100000; ++i) {
+        final String string = createRandomString();
+        stringCache.cacheObject(myEnumerator.enumerate(string), string);
       }
+      stringCache.removeDeletedPairsListener(listener);
+      stringCache.removeAll();
     }).cpuBound().useLegacyScaling().assertTiming();
     myEnumerator.close();
     System.out.printf("File size = %d bytes\n", myFile.length());

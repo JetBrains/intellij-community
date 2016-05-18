@@ -148,15 +148,12 @@ public class FocusDebugger implements UiDebuggerExtension, PropertyChangeListene
 
 
     myLogModel.addElement(new FocusElement(text, new Throwable()));
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (myLog != null && myLog.isShowing()) {
-          final int h = myLog.getFixedCellHeight();
-          myLog.scrollRectToVisible(new Rectangle(0, myLog.getPreferredSize().height - h, myLog.getWidth(), h));
-          if (myLog.getModel().getSize() > 0) {
-            myLog.setSelectedIndex(myLog.getModel().getSize() - 1);
-          }
+    SwingUtilities.invokeLater(() -> {
+      if (myLog != null && myLog.isShowing()) {
+        final int h = myLog.getFixedCellHeight();
+        myLog.scrollRectToVisible(new Rectangle(0, myLog.getPreferredSize().height - h, myLog.getWidth(), h));
+        if (myLog.getModel().getSize() > 0) {
+          myLog.setSelectedIndex(myLog.getModel().getSize() - 1);
         }
       }
     });

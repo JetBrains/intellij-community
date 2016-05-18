@@ -63,17 +63,14 @@ public class DefUseInspectionBase extends BaseJavaBatchLocalInspectionTool {
     List<DefUseUtil.Info> unusedDefs = DefUseUtil.getUnusedDefs(body, usedVariables);
 
     if (unusedDefs != null && !unusedDefs.isEmpty()) {
-      Collections.sort(unusedDefs, new Comparator<DefUseUtil.Info>() {
-        @Override
-        public int compare(DefUseUtil.Info o1, DefUseUtil.Info o2) {
-          int offset1 = o1.getContext().getTextOffset();
-          int offset2 = o2.getContext().getTextOffset();
+      Collections.sort(unusedDefs, (o1, o2) -> {
+        int offset1 = o1.getContext().getTextOffset();
+        int offset2 = o2.getContext().getTextOffset();
 
-          if (offset1 == offset2) return 0;
-          if (offset1 < offset2) return -1;
+        if (offset1 == offset2) return 0;
+        if (offset1 < offset2) return -1;
 
-          return 1;
-        }
+        return 1;
       });
 
       for (DefUseUtil.Info info : unusedDefs) {

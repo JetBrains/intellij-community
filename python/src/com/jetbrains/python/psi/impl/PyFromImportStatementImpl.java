@@ -96,11 +96,8 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
   public PyImportElement[] getImportElements() {
     final PyFromImportStatementStub stub = getStub();
     if (stub != null) {
-      return stub.getChildrenByType(PyElementTypes.IMPORT_ELEMENT, new ArrayFactory<PyImportElement>() {
-        @NotNull
-        public PyImportElement[] create(int count) {
-          return new PyImportElement[count];
-        }
+      return stub.getChildrenByType(PyElementTypes.IMPORT_ELEMENT, count -> {
+        return new PyImportElement[count];
       });
     }
     List<PyImportElement> result = new ArrayList<PyImportElement>();

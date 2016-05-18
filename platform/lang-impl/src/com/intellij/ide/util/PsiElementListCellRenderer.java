@@ -270,12 +270,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
   }
 
   public Comparator<T> getComparator() {
-    return new Comparator<T>() {
-      @Override
-      public int compare(T o1, T o2) {
-        return getComparingObject(o1).compareTo(getComparingObject(o2));
-      }
-    };
+    return (o1, o2) -> getComparingObject(o1).compareTo(getComparingObject(o2));
   }
 
   @NotNull
@@ -290,19 +285,16 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
   }
 
   public void installSpeedSearch(PopupChooserBuilder builder, final boolean includeContainerText) {
-    builder.setFilteringEnabled(new Function<Object, String>() {
-      @Override
-      public String fun(Object o) {
-        if (o instanceof PsiElement) {
-          final String elementText = getElementText((T)o);
-          if (includeContainerText) {
-            return elementText + " " + getContainerText((T)o, elementText);
-          }
-          return elementText;
+    builder.setFilteringEnabled(o -> {
+      if (o instanceof PsiElement) {
+        final String elementText = getElementText((T)o);
+        if (includeContainerText) {
+          return elementText + " " + getContainerText((T)o, elementText);
         }
-        else {
-          return o.toString();
-        }
+        return elementText;
+      }
+      else {
+        return o.toString();
       }
     });
   }

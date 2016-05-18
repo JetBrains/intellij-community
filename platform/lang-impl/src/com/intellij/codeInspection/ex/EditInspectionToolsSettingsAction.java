@@ -100,17 +100,9 @@ public class EditInspectionToolsSettingsAction implements IntentionAction, Icona
     else {
       errorsConfigurable = ErrorsConfigurable.SERVICE.createConfigurable(project);
     }
-    return settingsUtil.editConfigurable(project, errorsConfigurable, new Runnable() {
-      @Override
-      public void run() {
-        errorsConfigurable.selectProfile(inspectionProfile);
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            errorsConfigurable.selectInspectionTool(selectedToolShortName);
-          }
-        });
-      }
+    return settingsUtil.editConfigurable(project, errorsConfigurable, () -> {
+      errorsConfigurable.selectProfile(inspectionProfile);
+      SwingUtilities.invokeLater(() -> errorsConfigurable.selectInspectionTool(selectedToolShortName));
     });
 
   }

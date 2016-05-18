@@ -121,11 +121,8 @@ public class CCShowPreview extends DumbAwareAction {
       return;
     }
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        EduUtils.createStudentFileFromAnswer(project, generatedFilesFolder, taskDir.getVirtualFile(), virtualFile.getName(), taskFileCopy);
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      EduUtils.createStudentFileFromAnswer(project, generatedFilesFolder, taskDir.getVirtualFile(), virtualFile.getName(), taskFileCopy);
     });
 
     VirtualFile userFile = generatedFilesFolder.findChild(virtualFile.getName());

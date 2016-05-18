@@ -143,11 +143,7 @@ public abstract class SwingWorker {
   public SwingWorker() {
     myModalityState = ModalityState.current();
 
-    final Runnable doFinished = new Runnable() {
-      public void run() {
-        finished();
-      }
-    };
+    final Runnable doFinished = () -> finished();
 
     Runnable doConstruct = new Runnable() {
       public void run() {

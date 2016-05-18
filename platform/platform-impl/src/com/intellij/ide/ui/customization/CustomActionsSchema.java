@@ -211,14 +211,11 @@ public class CustomActionsSchema implements PersistentStateComponent<Element> {
       isFirstLoadState = false;
     }
 
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        initActionIcons();
+    ApplicationManager.getApplication().invokeLater(() -> {
+      initActionIcons();
 
-        if (reload) {
-          setCustomizationSchemaForCurrentProjects();
-        }
+      if (reload) {
+        setCustomizationSchemaForCurrentProjects();
       }
     });
   }

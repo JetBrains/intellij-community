@@ -182,28 +182,26 @@ public final class StringEditor extends PropertyEditor<StringDescriptor> {
 
       CommandProcessor.getInstance().executeCommand(
         myProject,
-        new Runnable() {
-          public void run() {
-            if (!guiEditor.ensureEditable()) {
-              return;
-            }
-            if (!dialog.showAndGet()) {
-              return;
-            }
-
-            // 2. Apply new value
-            final StringDescriptor descriptor = dialog.getDescriptor();
-            if (descriptor == null) {
-              return;
-            }
-            setValue(descriptor);
-            fireValueCommitted(true, false);
-            if (myProperty != null) {
-              myProperty.refreshValue(myComponent);
-            }
-            guiEditor.refreshAndSave(false);
+        () -> {
+          if (!guiEditor.ensureEditable()) {
+            return;
           }
-        }, UIDesignerBundle.message("command.edit.string.property"), null); 
+          if (!dialog.showAndGet()) {
+            return;
+          }
+
+          // 2. Apply new value
+          final StringDescriptor descriptor = dialog.getDescriptor();
+          if (descriptor == null) {
+            return;
+          }
+          setValue(descriptor);
+          fireValueCommitted(true, false);
+          if (myProperty != null) {
+            myProperty.refreshValue(myComponent);
+          }
+          guiEditor.refreshAndSave(false);
+        }, UIDesignerBundle.message("command.edit.string.property"), null);
     }
   }
 }

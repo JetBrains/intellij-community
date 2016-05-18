@@ -131,19 +131,16 @@ public class EditorHyperlinkSupport {
     if (range != null) {
       final HyperlinkInfo hyperlinkInfo = getHyperlinkInfo(range);
       if (hyperlinkInfo != null) {
-        return new Runnable() {
-          @Override
-          public void run() {
-            if (hyperlinkInfo instanceof HyperlinkInfoBase) {
-              final Point point = myEditor.logicalPositionToXY(logical);
-              final MouseEvent event = new MouseEvent(myEditor.getContentComponent(), 0, 0, 0, point.x, point.y, 1, false);
-              ((HyperlinkInfoBase)hyperlinkInfo).navigate(myProject, new RelativePoint(event));
-            }
-            else {
-              hyperlinkInfo.navigate(myProject);
-            }
-            linkFollowed(myEditor, getHyperlinks(0, myEditor.getDocument().getTextLength(),myEditor), range);
+        return () -> {
+          if (hyperlinkInfo instanceof HyperlinkInfoBase) {
+            final Point point = myEditor.logicalPositionToXY(logical);
+            final MouseEvent event = new MouseEvent(myEditor.getContentComponent(), 0, 0, 0, point.x, point.y, 1, false);
+            ((HyperlinkInfoBase)hyperlinkInfo).navigate(myProject, new RelativePoint(event));
           }
+          else {
+            hyperlinkInfo.navigate(myProject);
+          }
+          linkFollowed(myEditor, getHyperlinks(0, myEditor.getDocument().getTextLength(),myEditor), range);
         };
       }
     }

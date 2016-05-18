@@ -171,12 +171,9 @@ public abstract class BaseOpenInBrowserAction extends DumbAwareAction {
       Collection<Url> urls = WebBrowserService.getInstance().getUrlsToOpen(request, preferLocalUrl);
       if (!urls.isEmpty()) {
         chooseUrl(urls)
-          .done(new Consumer<Url>() {
-            @Override
-            public void consume(Url url) {
-              ApplicationManager.getApplication().saveAll();
-              BrowserLauncher.getInstance().browse(url.toExternalForm(), browser, request.getProject());
-            }
+          .done(url -> {
+            ApplicationManager.getApplication().saveAll();
+            BrowserLauncher.getInstance().browse(url.toExternalForm(), browser, request.getProject());
           });
       }
     }
@@ -208,16 +205,13 @@ public abstract class BaseOpenInBrowserAction extends DumbAwareAction {
     JBPopupFactory.getInstance()
       .createListPopupBuilder(list)
       .setTitle("Choose Url")
-      .setItemChoosenCallback(new Runnable() {
-        @Override
-        public void run() {
-          Url value = (Url)list.getSelectedValue();
-          if (value == null) {
-            result.setError("selected value is null");
-          }
-          else {
-            result.setResult(value);
-          }
+      .setItemChoosenCallback(() -> {
+        Url value = (Url)list.getSelectedValue();
+        if (value == null) {
+          result.setError("selected value is null");
+        }
+        else {
+          result.setResult(value);
         }
       })
       .createPopup()

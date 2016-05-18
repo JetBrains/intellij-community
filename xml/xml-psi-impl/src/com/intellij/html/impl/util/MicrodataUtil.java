@@ -81,13 +81,9 @@ public class MicrodataUtil {
             super.visitXmlTag(tag);
             XmlAttribute refAttr = tag.getAttribute(ITEM_REF);
             if (refAttr != null && tag.getAttribute(ITEM_SCOPE) != null) {
-              getReferencesForAttributeValue(refAttr.getValueElement(), new PairFunction<String, Integer, PsiReference>() {
-                @Nullable
-                @Override
-                public PsiReference fun(String t, Integer v) {
-                  result.put(t, tag);
-                  return null;
-                }
+              getReferencesForAttributeValue(refAttr.getValueElement(), (t, v) -> {
+                result.put(t, tag);
+                return null;
               });
             }
           }
@@ -124,17 +120,13 @@ public class MicrodataUtil {
   }
 
   public static PsiReference[] getUrlReferencesForAttributeValue(final XmlAttributeValue element) {
-    return getReferencesForAttributeValue(element, new PairFunction<String, Integer, PsiReference>() {
-      @Nullable
-      @Override
-      public PsiReference fun(String token, Integer offset) {
-        if (HtmlUtil.hasHtmlPrefix(token)) {
-          final TextRange range = TextRange.from(offset, token.length());
-          final URLReference urlReference = new URLReference(element, range, true);
-          return new DependentNSReference(element, range, urlReference, true);
-        }
-        return null;
+    return getReferencesForAttributeValue(element, (token, offset) -> {
+      if (HtmlUtil.hasHtmlPrefix(token)) {
+        final TextRange range = TextRange.from(offset, token.length());
+        final URLReference urlReference = new URLReference(element, range, true);
+        return new DependentNSReference(element, range, urlReference, true);
       }
+      return null;
     });
   }
 

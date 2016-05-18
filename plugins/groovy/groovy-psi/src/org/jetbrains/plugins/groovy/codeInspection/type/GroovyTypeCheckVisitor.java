@@ -919,11 +919,8 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
     GrParameter[] parameters = parameterList.getParameters();
     if (parameters.length > 0) {
       List<PsiType[]> signatures = ClosureParamsEnhancer.findFittingSignatures((GrClosableBlock)parent);
-      final List<PsiType> paramTypes = ContainerUtil.map(parameters, new Function<GrParameter, PsiType>() {
-        @Override
-        public PsiType fun(GrParameter parameter) {
-          return parameter.getType();
-        }
+      final List<PsiType> paramTypes = ContainerUtil.map(parameters, parameter -> {
+        return parameter.getType();
       });
 
       if (signatures.size() > 1) {

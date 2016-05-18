@@ -233,12 +233,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
   @Override
   public void show() {
     super.show();
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        setFocusableWindowState(true);
-      }
-    });
+    SwingUtilities.invokeLater(() -> setFocusableWindowState(true));
   }
 
   /**
@@ -413,15 +408,12 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
     super.setVisible(b);
 
     if (b && myRestoreFullScreen) {
-      SwingUtilities.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          toggleFullScreen(true);
-          if (SystemInfo.isMacOSLion) {
-            setBounds(ScreenUtil.getScreenRectangle(getLocationOnScreen()));
-          }
-          myRestoreFullScreen = false;
+      SwingUtilities.invokeLater(() -> {
+        toggleFullScreen(true);
+        if (SystemInfo.isMacOSLion) {
+          setBounds(ScreenUtil.getScreenRectangle(getLocationOnScreen()));
         }
+        myRestoreFullScreen = false;
       });
     }
   }

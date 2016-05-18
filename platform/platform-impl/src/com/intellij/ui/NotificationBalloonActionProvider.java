@@ -69,18 +69,12 @@ public class NotificationBalloonActionProvider implements BalloonImpl.ActionProv
       mySettingButton = myBalloon.new ActionButton(
         AllIcons.Ide.Notification.Gear, AllIcons.Ide.Notification.GearHover,
         "Configure Notification",
-        new Consumer<MouseEvent>() {
-          @Override
-          public void consume(MouseEvent event) {
-            final NotificationsConfigurable configurable = new NotificationsConfigurable();
-            ShowSettingsUtil.getInstance().editConfigurable(myLayoutData.project, configurable, new Runnable() {
-              @Override
-              public void run() {
-                //noinspection ConstantConditions
-                configurable.enableSearch(myDisplayGroupId).run();
-              }
-            });
-          }
+        event -> {
+          final NotificationsConfigurable configurable = new NotificationsConfigurable();
+          ShowSettingsUtil.getInstance().editConfigurable(myLayoutData.project, configurable, () -> {
+            //noinspection ConstantConditions
+            configurable.enableSearch(myDisplayGroupId).run();
+          });
         }) {
         @Override
         public void repaint() {
@@ -110,23 +104,17 @@ public class NotificationBalloonActionProvider implements BalloonImpl.ActionProv
     myCloseButton = myBalloon.new ActionButton(
       AllIcons.Ide.Notification.Close, AllIcons.Ide.Notification.CloseHover,
       "Close Notification (Alt-Click close all notifications)",
-      new Consumer<MouseEvent>() {
-        @Override
-        public void consume(MouseEvent event) {
-          final int modifiers = event.getModifiers();
-          //noinspection SSBasedInspection
-          SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              if ((modifiers & InputEvent.ALT_MASK) != 0) {
-                myLayoutData.closeAll.run();
-              }
-              else {
-                myBalloon.hide();
-              }
-            }
-          });
-        }
+      event -> {
+        final int modifiers = event.getModifiers();
+        //noinspection SSBasedInspection
+        SwingUtilities.invokeLater(() -> {
+          if ((modifiers & InputEvent.ALT_MASK) != 0) {
+            myLayoutData.closeAll.run();
+          }
+          else {
+            myBalloon.hide();
+          }
+        });
       }) {
       @Override
       protected void paintIcon(@NotNull Graphics g, @NotNull Icon icon) {

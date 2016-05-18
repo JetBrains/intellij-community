@@ -103,14 +103,11 @@ public abstract class AbstractConvertLineSeparatorsAction extends AnAction {
     for (VirtualFile file : virtualFiles) {
       VfsUtilCore.processFilesRecursively(
         file,
-        new Processor<VirtualFile>() {
-          @Override
-          public boolean process(VirtualFile file) {
-            if (shouldProcess(file, project)) {
-              changeLineSeparators(project, file, mySeparator);
-            }
-            return true;
+        file1 -> {
+          if (shouldProcess(file1, project)) {
+            changeLineSeparators(project, file1, mySeparator);
           }
+          return true;
         },
         new Convertor<VirtualFile, Boolean>() {
           @Override

@@ -74,11 +74,8 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     init();
 
     if (incompatiblePlugins != null && !incompatiblePlugins.isEmpty()) {
-      String list = StringUtil.join(incompatiblePlugins, new Function<IdeaPluginDescriptor, String>() {
-        @Override
-        public String fun(IdeaPluginDescriptor downloader) {
-          return downloader.getName();
-        }
+      String list = StringUtil.join(incompatiblePlugins, downloader -> {
+        return downloader.getName();
       }, "<br/>");
       setErrorText(IdeBundle.message("updates.incompatible.plugins.found", incompatiblePlugins.size(), list));
     }

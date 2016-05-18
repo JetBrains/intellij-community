@@ -324,10 +324,8 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
     //look up the psiclass now
     if (owner.getPsiElement() == null) {
       final TestProxy finalOwner = owner;
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        public void run() {
-          finalOwner.setPsiElement(ClassUtil.findPsiClass(PsiManager.getInstance(project), result.getTestClass()));
-        }
+      ApplicationManager.getApplication().runReadAction(() -> {
+        finalOwner.setPsiElement(ClassUtil.findPsiClass(PsiManager.getInstance(project), result.getTestClass()));
       });
     }
     return owner;
@@ -369,34 +367,32 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
     }
     LvcsHelper.addLabel(this);
 
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        animator.stopMovie();
-        updateStatusLine();
-        if (total > count || myStatus == MessageHelper.SKIPPED_TEST) {
-          myStatusLine.setStatusColor(ColorProgressBar.YELLOW);
+    SwingUtilities.invokeLater(() -> {
+      animator.stopMovie();
+      updateStatusLine();
+      if (total > count || myStatus == MessageHelper.SKIPPED_TEST) {
+        myStatusLine.setStatusColor(ColorProgressBar.YELLOW);
+      }
+      else if (myStatus == MessageHelper.FAILED_TEST) {
+        myStatusLine.setStatusColor(ColorProgressBar.RED);
+      }
+      else {
+        myStatusLine.setStatusColor(ColorProgressBar.GREEN);
+      }
+      rootNode.setInProgress(false);
+      if (TestNGConsoleProperties.SELECT_FIRST_DEFECT.value(myProperties)) {
+        selectTest(rootNode.getFirstDefect());
+      }
+      else {
+        final DefaultMutableTreeNode node = treeBuilder.getNodeForElement(rootNode);
+        if (node != null && myLastSelected == null) {
+          tree.getSelectionModel().setSelectionPath(new TreePath(node));
         }
-        else if (myStatus == MessageHelper.FAILED_TEST) {
-          myStatusLine.setStatusColor(ColorProgressBar.RED);
-        }
-        else {
-          myStatusLine.setStatusColor(ColorProgressBar.GREEN);
-        }
-        rootNode.setInProgress(false);
-        if (TestNGConsoleProperties.SELECT_FIRST_DEFECT.value(myProperties)) {
-          selectTest(rootNode.getFirstDefect());
-        }
-        else {
-          final DefaultMutableTreeNode node = treeBuilder.getNodeForElement(rootNode);
-          if (node != null && myLastSelected == null) {
-            tree.getSelectionModel().setSelectionPath(new TreePath(node));
-          }
-        }
-        tree.repaint();
-        if (total > 0 ||
-            !ResetConfigurationModuleAdapter.tryWithAnotherModule(configuration, getProperties().isDebug())) {
-          TestsUIUtil.notifyByBalloon(project, started, rootNode, getProperties(), "in " + getTime());
-        }
+      }
+      tree.repaint();
+      if (total > 0 ||
+          !ResetConfigurationModuleAdapter.tryWithAnotherModule(configuration, getProperties().isDebug())) {
+        TestsUIUtil.notifyByBalloon(project, started, rootNode, getProperties(), "in " + getTime());
       }
     });
   }

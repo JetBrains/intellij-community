@@ -124,18 +124,15 @@ class MoverWrapper {
     // Swap fold regions status if necessary.
     if (topRegion != null && bottomRegion != null) {
       CodeFoldingManager.getInstance(project).updateFoldRegions(editor);
-      editor.getFoldingModel().runBatchFoldingOperation(new Runnable() {
-        @Override
-        public void run() {
-          FoldRegion newTopRegion = findTopLevelRegionInRange(editor, myInfo.range1);
-          if (newTopRegion != null) {
-            newTopRegion.setExpanded(bottomRegion.isExpanded());
-          }
+      editor.getFoldingModel().runBatchFoldingOperation(() -> {
+        FoldRegion newTopRegion = findTopLevelRegionInRange(editor, myInfo.range1);
+        if (newTopRegion != null) {
+          newTopRegion.setExpanded(bottomRegion.isExpanded());
+        }
 
-          FoldRegion newBottomRegion = findTopLevelRegionInRange(editor, myInfo.range2);
-          if (newBottomRegion != null) {
-            newBottomRegion.setExpanded(topRegion.isExpanded());
-          }
+        FoldRegion newBottomRegion = findTopLevelRegionInRange(editor, myInfo.range2);
+        if (newBottomRegion != null) {
+          newBottomRegion.setExpanded(topRegion.isExpanded());
         }
       });
     }

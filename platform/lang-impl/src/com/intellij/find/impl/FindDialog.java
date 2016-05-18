@@ -161,11 +161,8 @@ public class FindDialog extends DialogWrapper {
     validateFindButton();
 
     if (haveResultsPreview()) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          scheduleResultsUpdate();
-        }
+      ApplicationManager.getApplication().invokeLater(() -> {
+        scheduleResultsUpdate();
       }, ModalityState.any());
     }
   }
@@ -350,13 +347,10 @@ public class FindDialog extends DialogWrapper {
         comboBox,
         KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0),
         "choosePrevious",
-        new Runnable() {
-          @Override
-          public void run() {
-            int row = myResultsPreviewTable.getSelectedRow();
-            if (row > 0) myResultsPreviewTable.setRowSelectionInterval(row - 1, row - 1);
-            TableUtil.scrollSelectionToVisible(myResultsPreviewTable);
-          }
+        () -> {
+          int row = myResultsPreviewTable.getSelectedRow();
+          if (row > 0) myResultsPreviewTable.setRowSelectionInterval(row - 1, row - 1);
+          TableUtil.scrollSelectionToVisible(myResultsPreviewTable);
         }
       );
 
@@ -364,14 +358,11 @@ public class FindDialog extends DialogWrapper {
         comboBox,
         KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0),
         "chooseNext",
-        new Runnable() {
-          @Override
-          public void run() {
-            int row = myResultsPreviewTable.getSelectedRow();
-            if (row >= -1 && row + 1 < myResultsPreviewTable.getRowCount()) {
-              myResultsPreviewTable.setRowSelectionInterval(row + 1, row + 1);
-              TableUtil.scrollSelectionToVisible(myResultsPreviewTable);
-            }
+        () -> {
+          int row = myResultsPreviewTable.getSelectedRow();
+          if (row >= -1 && row + 1 < myResultsPreviewTable.getRowCount()) {
+            myResultsPreviewTable.setRowSelectionInterval(row + 1, row + 1);
+            TableUtil.scrollSelectionToVisible(myResultsPreviewTable);
           }
         }
       );
@@ -502,33 +493,24 @@ public class FindDialog extends DialogWrapper {
           final FindUsagesProcessPresentation processPresentation =
             FindInProjectUtil.setupProcessPresentation(myProject, showPanelIfOnlyOneUsage, presentation);
 
-          FindInProjectUtil.findUsages(findModel, myProject, new Processor<UsageInfo>() {
-            @Override
-            public boolean process(final UsageInfo info) {
-              final Usage usage = UsageInfo2UsageAdapter.CONVERTER.fun(info);
-              usage.getPresentation().getIcon(); // cache icon
-              ApplicationManager.getApplication().invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                  model.addRow(new Object[]{usage});
-                  if (model.getRowCount() == 1 && myResultsPreviewTable.getModel() == model && isResultsPreviewTabActive()) {
-                    myResultsPreviewTable.setRowSelectionInterval(0, 0);
-                  }
-                }
-              }, state);
-              return resultsCount.incrementAndGet() < ShowUsagesAction.USAGES_PAGE_SIZE;
-            }
+          FindInProjectUtil.findUsages(findModel, myProject, info -> {
+            final Usage usage = UsageInfo2UsageAdapter.CONVERTER.fun(info);
+            usage.getPresentation().getIcon(); // cache icon
+            ApplicationManager.getApplication().invokeLater(() -> {
+              model.addRow(new Object[]{usage});
+              if (model.getRowCount() == 1 && myResultsPreviewTable.getModel() == model && isResultsPreviewTabActive()) {
+                myResultsPreviewTable.setRowSelectionInterval(0, 0);
+              }
+            }, state);
+            return resultsCount.incrementAndGet() < ShowUsagesAction.USAGES_PAGE_SIZE;
           }, processPresentation, filesToScanInitially);
           boolean succeeded = !progressIndicatorWhenSearchStarted.isCanceled();
           if (succeeded) {
-            return new Continuation(new Runnable() {
-              @Override
-              public void run() {
-                if (progressIndicatorWhenSearchStarted == myResultsPreviewSearchProgress && !myResultsPreviewSearchProgress.isCanceled()) {
-                  int occurrences = resultsCount.get();
-                  if (occurrences == 0) myResultsPreviewTable.getEmptyText().setText(UIBundle.message("message.nothingToShow"));
-                  myContent.setTitleAt(RESULTS_PREVIEW_TAB_INDEX, PREVIEW_TITLE + " (" + (occurrences != ShowUsagesAction.USAGES_PAGE_SIZE ? Integer.valueOf(occurrences): occurrences + "+") +")");
-                }
+            return new Continuation(() -> {
+              if (progressIndicatorWhenSearchStarted == myResultsPreviewSearchProgress && !myResultsPreviewSearchProgress.isCanceled()) {
+                int occurrences = resultsCount.get();
+                if (occurrences == 0) myResultsPreviewTable.getEmptyText().setText(UIBundle.message("message.nothingToShow"));
+                myContent.setTitleAt(RESULTS_PREVIEW_TAB_INDEX, PREVIEW_TITLE + " (" + (occurrences != ShowUsagesAction.USAGES_PAGE_SIZE ? Integer.valueOf(occurrences): occurrences + "+") +")");
               }
             }, state);
           }
@@ -1322,11 +1304,8 @@ public class FindDialog extends DialogWrapper {
       @Override
       public void actionPerformed(ActionEvent e) {
         FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-        FileChooser.chooseFiles(descriptor, myProject, null, new Consumer<List<VirtualFile>>() {
-          @Override
-          public void consume(final List<VirtualFile> files) {
-            myDirectoryComboBox.setSelectedItem(files.get(0).getPresentableUrl());
-          }
+        FileChooser.chooseFiles(descriptor, myProject, null, files -> {
+          myDirectoryComboBox.setSelectedItem(files.get(0).getPresentableUrl());
         });
       }
     });

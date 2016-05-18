@@ -86,36 +86,33 @@ public class LambdaRefactoringUtil {
     final Map<PsiParameter, String> map = new HashMap<PsiParameter, String>();
     final UniqueNameGenerator nameGenerator = new UniqueNameGenerator();
     final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(referenceExpression.getProject());
-    final String paramsString = StringUtil.join(parameters, new Function<PsiParameter, String>() {
-      @Override
-      public String fun(PsiParameter parameter) {
-        final int parameterIndex = parameterList.getParameterIndex(parameter);
-        String baseName;
-        if (isReceiver && parameterIndex == 0) {
-          final SuggestedNameInfo
-            nameInfo = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, null, null, psiSubstitutor.substitute(parameter.getType()));
-          baseName = nameInfo.names.length > 0 ? nameInfo.names[0] : parameter.getName();
+    final String paramsString = StringUtil.join(parameters, parameter -> {
+      final int parameterIndex = parameterList.getParameterIndex(parameter);
+      String baseName;
+      if (isReceiver && parameterIndex == 0) {
+        final SuggestedNameInfo
+          nameInfo = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, null, null, psiSubstitutor.substitute(parameter.getType()));
+        baseName = nameInfo.names.length > 0 ? nameInfo.names[0] : parameter.getName();
+      }
+      else {
+        final String initialName;
+        if (psiParameters != null) {
+          final int idx = parameterIndex - (isReceiver ? 1 : 0);
+          initialName = psiParameters.length > 0 ? psiParameters[idx < psiParameters.length ? idx : psiParameters.length - 1].getName()
+                                                 : parameter.getName();
         }
         else {
-          final String initialName;
-          if (psiParameters != null) {
-            final int idx = parameterIndex - (isReceiver ? 1 : 0);
-            initialName = psiParameters.length > 0 ? psiParameters[idx < psiParameters.length ? idx : psiParameters.length - 1].getName()
-                                                   : parameter.getName();
-          }
-          else {
-            initialName = parameter.getName();
-          }
-          baseName = codeStyleManager.variableNameToPropertyName(initialName, VariableKind.PARAMETER);
+          initialName = parameter.getName();
         }
-
-        if (baseName != null) {
-          String parameterName = nameGenerator.generateUniqueName(codeStyleManager.suggestUniqueVariableName(baseName, referenceExpression, true));
-          map.put(parameter, parameterName);
-          return parameterName;
-        }
-        return "";
+        baseName = codeStyleManager.variableNameToPropertyName(initialName, VariableKind.PARAMETER);
       }
+
+      if (baseName != null) {
+        String parameterName = nameGenerator.generateUniqueName(codeStyleManager.suggestUniqueVariableName(baseName, referenceExpression, true));
+        map.put(parameter, parameterName);
+        return parameterName;
+      }
+      return "";
     }, ", ");
     buf.append(paramsString);
     buf.append(") -> ");
@@ -186,13 +183,10 @@ public class LambdaRefactoringUtil {
 
           LOG.assertTrue(containingClass != null);
           if (containingClass.hasTypeParameters() && !PsiUtil.isRawSubstitutor(containingClass, substitutor)) {
-            buf.append("<").append(StringUtil.join(containingClass.getTypeParameters(), new Function<PsiTypeParameter, String>() {
-              @Override
-              public String fun(PsiTypeParameter parameter) {
-                final PsiType psiType = substitutor.substitute(parameter);
-                LOG.assertTrue(psiType != null);
-                return psiType.getCanonicalText();
-              }
+            buf.append("<").append(StringUtil.join(containingClass.getTypeParameters(), parameter -> {
+              final PsiType psiType = substitutor.substitute(parameter);
+              LOG.assertTrue(psiType != null);
+              return psiType.getCanonicalText();
             }, ", ")).append(">");
           }
         }

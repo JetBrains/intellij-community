@@ -184,36 +184,34 @@ public class MavenArtifactDownloader {
 
         for (final DownloadElement eachElement : data.classifiersWithExtensions) {
           final int finalTotal = total;
-          futures.add(EXECUTOR.submit(new Runnable() {
-            public void run() {
-              try {
-                if (myProject.isDisposed()) return;
+          futures.add(EXECUTOR.submit(() -> {
+            try {
+              if (myProject.isDisposed()) return;
 
-                myProgress.checkCanceled();
-                myProgress.setFraction(((double)downloaded.getAndIncrement()) / finalTotal);
+              myProgress.checkCanceled();
+              myProgress.setFraction(((double)downloaded.getAndIncrement()) / finalTotal);
 
-                MavenArtifact a = myEmbedder.resolve(new MavenArtifactInfo(id, eachElement.extension, eachElement.classifier),
-                                                     new ArrayList<MavenRemoteRepository>(data.repositories));
-                File file = a.getFile();
-                if (file.exists()) {
-                  synchronized (downloadedFiles) {
-                    downloadedFiles.add(file);
+              MavenArtifact a = myEmbedder.resolve(new MavenArtifactInfo(id, eachElement.extension, eachElement.classifier),
+                                                   new ArrayList<MavenRemoteRepository>(data.repositories));
+              File file = a.getFile();
+              if (file.exists()) {
+                synchronized (downloadedFiles) {
+                  downloadedFiles.add(file);
 
-                    switch (eachElement.type) {
-                      case SOURCES:
-                        result.resolvedSources.add(id);
-                        result.unresolvedSources.remove(id);
-                        break;
-                      case DOCS:
-                        result.resolvedDocs.add(id);
-                        result.unresolvedDocs.remove(id);
-                        break;
-                    }
+                  switch (eachElement.type) {
+                    case SOURCES:
+                      result.resolvedSources.add(id);
+                      result.unresolvedSources.remove(id);
+                      break;
+                    case DOCS:
+                      result.resolvedDocs.add(id);
+                      result.unresolvedDocs.remove(id);
+                      break;
                   }
                 }
               }
-              catch (MavenProcessCanceledException ignore) {
-              }
+            }
+            catch (MavenProcessCanceledException ignore) {
             }
           }));
         }

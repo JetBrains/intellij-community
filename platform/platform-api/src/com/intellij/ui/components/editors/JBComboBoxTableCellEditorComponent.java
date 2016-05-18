@@ -149,19 +149,16 @@ public class JBComboBoxTableCellEditorComponent extends JBLabel {
     final boolean surrendersFocusOnKeystrokeOldValue = myTable instanceof JBTable ? ((JBTable)myTable).surrendersFocusOnKeyStroke() : myTable.getSurrendersFocusOnKeystroke();
     final JBPopup popup = JBPopupFactory.getInstance()
       .createListPopupBuilder(myList)
-      .setItemChoosenCallback(new Runnable() {
-        @Override
-        public void run() {
-          myValue = myList.getSelectedValue();
-          final ActionEvent event = new ActionEvent(myList, ActionEvent.ACTION_PERFORMED, "elementChosen");
-          for (ActionListener listener : myListeners) {
-            listener.actionPerformed(event);
-          }
-          TableUtil.stopEditing(myTable);
-
-          myTable.setValueAt(myValue, myRow, myColumn); // on Mac getCellEditorValue() called before myValue is set.
-          myTable.tableChanged(new TableModelEvent(myTable.getModel(), myRow));  // force repaint
+      .setItemChoosenCallback(() -> {
+        myValue = myList.getSelectedValue();
+        final ActionEvent event = new ActionEvent(myList, ActionEvent.ACTION_PERFORMED, "elementChosen");
+        for (ActionListener listener : myListeners) {
+          listener.actionPerformed(event);
         }
+        TableUtil.stopEditing(myTable);
+
+        myTable.setValueAt(myValue, myRow, myColumn); // on Mac getCellEditorValue() called before myValue is set.
+        myTable.tableChanged(new TableModelEvent(myTable.getModel(), myRow));  // force repaint
       })
       .setCancelCallback(new Computable<Boolean>() {
         @Override

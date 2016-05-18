@@ -75,14 +75,11 @@ public class JsonSchemaExportedDefinitions {
   private void ensureInitialized() {
     synchronized (myLock) {
       if (myInitialized && !myDirty) return;
-      mySchemasIterator.consume(new PairConsumer<VirtualFile, NullableLazyValue<JsonSchemaObject>>() {
-        @Override
-        public void consume(VirtualFile key, NullableLazyValue<JsonSchemaObject> value) {
-          if (!myInitialized || !myId2Key.containsValue(key)) {
-            final JsonSchemaObject object = value.getValue();
-            if (object != null) {
-              JsonSchemaReader.registerObjectsExportedDefinitions(key, JsonSchemaExportedDefinitions.this, object);
-            }
+      mySchemasIterator.consume((key, value) -> {
+        if (!myInitialized || !myId2Key.containsValue(key)) {
+          final JsonSchemaObject object = value.getValue();
+          if (object != null) {
+            JsonSchemaReader.registerObjectsExportedDefinitions(key, JsonSchemaExportedDefinitions.this, object);
           }
         }
       });

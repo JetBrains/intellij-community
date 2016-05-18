@@ -583,13 +583,10 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
     @Override
     public void processTerminated(ProcessEvent event) {
       if (myProject.isDisposed()) return;
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          RunnerLayoutUi ui = myDescriptor.getRunnerLayoutUi();
-          if (ui != null && !ui.isDisposed()) {
-            ui.updateActionsNow();
-          }
+      ApplicationManager.getApplication().invokeLater(() -> {
+        RunnerLayoutUi ui = myDescriptor.getRunnerLayoutUi();
+        if (ui != null && !ui.isDisposed()) {
+          ui.updateActionsNow();
         }
       }, ModalityState.any());
 

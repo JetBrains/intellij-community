@@ -54,11 +54,8 @@ public class TaskSearchSupport {
 
   public static List<Task> filterTasks(final String pattern, final List<Task> tasks) {
     final Matcher matcher = getMatcher(pattern);
-    return ContainerUtil.mapNotNull(tasks, new NullableFunction<Task, Task>() {
-      public Task fun(Task task) {
-        return matcher.matches(task.getPresentableId()) || matcher.matches(task.getSummary()) ? task : null;
-      }
-    });
+    return ContainerUtil.mapNotNull(tasks,
+                                    (NullableFunction<Task, Task>)task -> matcher.matches(task.getPresentableId()) || matcher.matches(task.getSummary()) ? task : null);
   }
 
   public static List<Task> getRepositoriesTasks(final TaskManager myManager,

@@ -129,12 +129,7 @@ public class XDebuggerFramesList extends DebuggerFramesList {
   @Override
   protected void onFrameChanged(final Object selectedValue) {
     if (mySelectedFrame != selectedValue) {
-      SwingUtilities.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          repaint();
-        }
-      });
+      SwingUtilities.invokeLater(() -> repaint());
       if (selectedValue instanceof XStackFrame) {
         mySelectedFrame = (XStackFrame)selectedValue;
       }

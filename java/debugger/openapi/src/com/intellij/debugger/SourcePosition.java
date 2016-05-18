@@ -87,14 +87,11 @@ public abstract class SourcePosition implements Navigatable{
 
     @Override
     public void navigate(final boolean requestFocus) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          if (!canNavigate()) {
-            return;
-          }
-          openEditor(requestFocus);
+      ApplicationManager.getApplication().invokeLater(() -> {
+        if (!canNavigate()) {
+          return;
         }
+        openEditor(requestFocus);
       });
     }
 

@@ -95,12 +95,8 @@ public class PyConsoleUtil {
   }
 
   public static void scrollDown(final Editor currentEditor) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        currentEditor.getCaretModel().moveToOffset(currentEditor.getDocument().getTextLength());
-      }
-    });
+    ApplicationManager.getApplication().invokeLater(
+      () -> currentEditor.getCaretModel().moveToOffset(currentEditor.getDocument().getTextLength()));
   }
 
   public static boolean isSingleQuoteMultilineStarts(String line) {

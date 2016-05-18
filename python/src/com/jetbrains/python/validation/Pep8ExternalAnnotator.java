@@ -412,13 +412,10 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
 
     @Override
     public void invoke(@NotNull Project project, Editor editor, final PsiFile file) throws IncorrectOperationException {
-      InspectionProjectProfileManager.getInstance(project).getInspectionProfile(file).modifyProfile(new Consumer<ModifiableModel>() {
-        @Override
-        public void consume(ModifiableModel model) {
-          PyPep8Inspection tool = (PyPep8Inspection)model.getUnwrappedTool(PyPep8Inspection.INSPECTION_SHORT_NAME, file);
-          if (!tool.ignoredErrors.contains(myCode)) {
-            tool.ignoredErrors.add(myCode);
-          }
+      InspectionProjectProfileManager.getInstance(project).getInspectionProfile(file).modifyProfile(model -> {
+        PyPep8Inspection tool = (PyPep8Inspection)model.getUnwrappedTool(PyPep8Inspection.INSPECTION_SHORT_NAME, file);
+        if (!tool.ignoredErrors.contains(myCode)) {
+          tool.ignoredErrors.add(myCode);
         }
       });
     }

@@ -202,11 +202,8 @@ public class JavaTestGenerator implements TestGenerator {
     final Template template = TestIntegrationUtils.createTestMethodTemplate(TestIntegrationUtils.MethodKind.TEST, descriptor,
                                                                             targetClass, sourceClass, null, true, existingNames);
     final String prefix = JavaPsiFacade.getElementFactory(targetClass.getProject()).createMethodFromText(template.getTemplateText(), targetClass).getName();
-    existingNames.addAll(ContainerUtil.map(targetClass.getMethods(), new Function<PsiMethod, String>() {
-      @Override
-      public String fun(PsiMethod method) {
-        return StringUtil.decapitalize(StringUtil.trimStart(method.getName(), prefix));
-      }
+    existingNames.addAll(ContainerUtil.map(targetClass.getMethods(), method -> {
+      return StringUtil.decapitalize(StringUtil.trimStart(method.getName(), prefix));
     }));
 
     for (MemberInfo m : methods) {
@@ -215,13 +212,9 @@ public class JavaTestGenerator implements TestGenerator {
   }
 
   private static void showErrorLater(final Project project, final String targetClassName) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        Messages.showErrorDialog(project,
-                                 CodeInsightBundle.message("intention.error.cannot.create.class.message", targetClassName),
-                                 CodeInsightBundle.message("intention.error.cannot.create.class.title"));
-      }
-    });
+    ApplicationManager.getApplication().invokeLater(() -> Messages.showErrorDialog(project,
+                                                                               CodeInsightBundle.message("intention.error.cannot.create.class.message", targetClassName),
+                                                                               CodeInsightBundle.message("intention.error.cannot.create.class.title")));
   }
 
   private static PsiMethod generateMethod(@NotNull TestIntegrationUtils.MethodKind methodKind,

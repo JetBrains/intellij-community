@@ -89,13 +89,8 @@ public class CompilerConfigurable implements SearchableConfigurable.Parent, Conf
   public Configurable[] getConfigurables() {
     if (myKids == null) {
       final CompilerSettingsFactory[] factories = Extensions.getExtensions(CompilerSettingsFactory.EP_NAME, myProject);
-      myKids = ContainerUtil.mapNotNull(factories, new NullableFunction<CompilerSettingsFactory, Configurable>() {
-        @Nullable
-        @Override
-        public Configurable fun(CompilerSettingsFactory factory) {
-            return factory.create(myProject);
-        }
-      }, new Configurable[0]);
+      myKids = ContainerUtil.mapNotNull(factories,
+                                        (NullableFunction<CompilerSettingsFactory, Configurable>)factory -> factory.create(myProject), new Configurable[0]);
     }
 
     return myKids;

@@ -83,11 +83,8 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
     if (!isAvailable()) return;
     final PsiExpression expression = getSubExpression();
     if (!FileModificationService.getInstance().preparePsiElementForWrite(expression)) return;
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        simplifyExpression(project, expression, mySubExpressionValue);
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      simplifyExpression(project, expression, mySubExpressionValue);
     });
   }
 
@@ -296,11 +293,8 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
         if (expressions.isEmpty()) {
           resultExpression = negate ? trueExpression : falseExpression;
         } else {
-          String simplifiedText = StringUtil.join(expressions, new Function<PsiExpression, String>() {
-            @Override
-            public String fun(PsiExpression expression) {
-              return expression.getText();
-            }
+          String simplifiedText = StringUtil.join(expressions, expression1 -> {
+            return expression1.getText();
           }, " ^ ");
           if (negate) {
             if (expressions.size() > 1) {

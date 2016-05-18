@@ -116,12 +116,7 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
           }
           else {
             final int selectedRow = table.getSelectedRow();
-            mutator = new Function<T, T>() {
-              @Override
-              public T fun(T item) {
-                return helper.getMutable(item, selectedRow);
-              }
-            };
+            mutator = item12 -> helper.getMutable(item12, selectedRow);
           }
           ((DialogItemEditor<T>)itemEditor).edit(item, mutator, false);
           table.requestFocus();
@@ -140,12 +135,9 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
         @Override
         public void run(AnActionButton button) {
           T item = createElement();
-          ((DialogItemEditor<T>)itemEditor).edit(item, new Function<T, T>() {
-            @Override
-            public T fun(T item) {
-              model.addRow(item);
-              return item;
-            }
+          ((DialogItemEditor<T>)itemEditor).edit(item, item1 -> {
+            model.addRow(item1);
+            return item1;
           }, true);
         }
       });

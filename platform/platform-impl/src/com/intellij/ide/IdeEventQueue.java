@@ -188,12 +188,9 @@ public class IdeEventQueue extends EventQueue {
 
     myIdleTimeCounterAlarm.cancelAllRequests();
     myLastActiveTime = System.currentTimeMillis();
-    myIdleTimeCounterAlarm.addRequest(new Runnable() {
-      @Override
-      public void run() {
-        myIdleTime += System.currentTimeMillis() - myLastActiveTime;
-        addIdleTimeCounterRequest();
-      }
+    myIdleTimeCounterAlarm.addRequest(() -> {
+      myIdleTime += System.currentTimeMillis() - myLastActiveTime;
+      addIdleTimeCounterRequest();
     }, 20000, ModalityState.NON_MODAL);
   }
 
@@ -244,12 +241,7 @@ public class IdeEventQueue extends EventQueue {
       myIdleListeners.add(runnable);
       final MyFireIdleRequest request = new MyFireIdleRequest(runnable, timeout);
       myListener2Request.put(runnable, request);
-      UIUtil.invokeLaterIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          myIdleRequestsAlarm.addRequest(request, timeout);
-        }
-      });
+      UIUtil.invokeLaterIfNeeded(() -> myIdleRequestsAlarm.addRequest(request, timeout));
     }
   }
 
@@ -655,12 +647,7 @@ public class IdeEventQueue extends EventQueue {
           new MouseEvent(me.getComponent(), me.getID(), System.currentTimeMillis(), me.getModifiers(), me.getX(), me.getY(), 1,
                          me.isPopupTrigger(), me.getButton());
         //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            dispatchEvent(toDispatch);
-          }
-        });
+        SwingUtilities.invokeLater(() -> dispatchEvent(toDispatch));
       }
       if (!myMouseEventDispatcher.dispatchMouseEvent(me)) {
         defaultDispatchEvent(e);
@@ -1041,12 +1028,9 @@ public class IdeEventQueue extends EventQueue {
     }
     else {
       //noinspection SSBasedInspection
-      SwingUtilities.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          myReady.add(runnable);
-          maybeReady();
-        }
+      SwingUtilities.invokeLater(() -> {
+        myReady.add(runnable);
+        maybeReady();
       });
     }
   }
@@ -1088,24 +1072,21 @@ public class IdeEventQueue extends EventQueue {
             }
             else if (component != null) {
               //noinspection SSBasedInspection
-              SwingUtilities.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                  try {
-                    final Window window = UIUtil.getWindow(component);
-                    if (window == null || !window.isActive()) {
-                      return;
-                    }
-                    myWaitingForAltRelease = true;
-                    if (myRobot == null) {
-                      myRobot = new Robot();
-                    }
-                    myRobot.keyPress(KeyEvent.VK_ALT);
-                    myRobot.keyRelease(KeyEvent.VK_ALT);
+              SwingUtilities.invokeLater(() -> {
+                try {
+                  final Window window = UIUtil.getWindow(component);
+                  if (window == null || !window.isActive()) {
+                    return;
                   }
-                  catch (AWTException e1) {
-                    LOG.debug(e1);
+                  myWaitingForAltRelease = true;
+                  if (myRobot == null) {
+                    myRobot = new Robot();
                   }
+                  myRobot.keyPress(KeyEvent.VK_ALT);
+                  myRobot.keyRelease(KeyEvent.VK_ALT);
+                }
+                catch (AWTException e1) {
+                  LOG.debug(e1);
                 }
               });
             }

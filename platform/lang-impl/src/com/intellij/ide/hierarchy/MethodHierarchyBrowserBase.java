@@ -113,12 +113,7 @@ public abstract class MethodHierarchyBrowserBase extends HierarchyBrowserBaseEx 
       HierarchyBrowserManager.getInstance(myProject).getState().HIDE_CLASSES_WHERE_METHOD_NOT_IMPLEMENTED = flag;
 
       // invokeLater is called to update state of button before long tree building operation
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          doRefresh(true);
-        }
-      });
+      ApplicationManager.getApplication().invokeLater(() -> doRefresh(true));
     }
 
     @Override

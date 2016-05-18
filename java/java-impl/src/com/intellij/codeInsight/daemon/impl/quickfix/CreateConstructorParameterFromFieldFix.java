@@ -103,11 +103,8 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
     PsiMethod[] constructors = myClass.getConstructors();
     if (constructors.length == 0) {
       final AddDefaultConstructorFix defaultConstructorFix = new AddDefaultConstructorFix(myClass);
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          defaultConstructorFix.invoke(project, editor, file);
-        }
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        defaultConstructorFix.invoke(project, editor, file);
       });
       constructors = myClass.getConstructors();
     }
@@ -292,12 +289,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
   }
 
   private static String createDummyMethod(PsiMethod constructor, ParameterInfoImpl[] newParamInfos) {
-    return constructor.getName() + "(" + StringUtil.join(newParamInfos, new Function<ParameterInfoImpl, String>() {
-      @Override
-      public String fun(ParameterInfoImpl info) {
-        return info.getTypeText() + " " + info.getName();
-      }
-    }, ", ") + "){}";
+    return constructor.getName() + "(" + StringUtil.join(newParamInfos, info -> info.getTypeText() + " " + info.getName(), ", ") + "){}";
   }
 
   private static String getUniqueParameterName(PsiParameter[] parameters, PsiVariable variable, Map<PsiField, String> usedNames) {

@@ -65,12 +65,7 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
                                 boolean everywhere,
                                 @NotNull ProgressIndicator cancelled,
                                 @NotNull final Processor<Object> consumer) {
-    return filterElements(pattern, everywhere, new Processor<MatchedValue>() {
-      @Override
-      public boolean process(MatchedValue value) {
-        return consumer.process(value);
-      }
-    });
+    return filterElements(pattern, everywhere, value -> consumer.process(value));
   }
 
   public boolean filterElements(String pattern, boolean everywhere, Processor<MatchedValue> consumer) {
@@ -93,17 +88,14 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
       AnAction action = myActionManager.getAction(actionId);
       wrappers.add(new ActionWrapper(action, myModel.myActionGroups.get(action), MatchMode.NAME, context));
     }
-    return ContainerUtil.process(ContainerUtil.map(wrappers, new Function<ActionWrapper, MatchedValue>() {
-      @Override
-      public MatchedValue fun(@NotNull ActionWrapper w) {
-        return new MatchedValue(w, pattern) {
-          @Nullable
-          @Override
-          public String getValueText() {
-            return pattern;
-          }
-        };
-      }
+    return ContainerUtil.process(ContainerUtil.map(wrappers, (Function<ActionWrapper, MatchedValue>)w -> {
+      return new MatchedValue(w, pattern) {
+        @Nullable
+        @Override
+        public String getValueText() {
+          return pattern;
+        }
+      };
     }), consumer);
   }
 

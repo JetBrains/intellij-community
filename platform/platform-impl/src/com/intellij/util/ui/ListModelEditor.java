@@ -88,12 +88,9 @@ public class ListModelEditor<T> extends ListModelEditorBase<T> {
 
     // todo should we really do this?
     //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (!model.isEmpty()) {
-          list.setSelectedIndex(0);
-        }
+    SwingUtilities.invokeLater(() -> {
+      if (!model.isEmpty()) {
+        list.setSelectedIndex(0);
       }
     });
   }

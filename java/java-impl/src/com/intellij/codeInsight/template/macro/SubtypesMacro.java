@@ -69,12 +69,8 @@ public class SubtypesMacro extends Macro {
 
       final Set<LookupElement> set = new LinkedHashSet<LookupElement>();
       JavaTemplateUtil.addTypeLookupItem(set, type);
-      CodeInsightUtil.processSubTypes(type, element, false, PrefixMatcher.ALWAYS_TRUE, new Consumer<PsiType>() {
-        @Override
-        public void consume(PsiType psiType) {
-          JavaTemplateUtil.addTypeLookupItem(set, psiType);
-        }
-      });
+      CodeInsightUtil.processSubTypes(type, element, false, PrefixMatcher.ALWAYS_TRUE,
+                                      psiType -> JavaTemplateUtil.addTypeLookupItem(set, psiType));
       return set.toArray(new LookupElement[set.size()]);
     }
     return LookupElement.EMPTY_ARRAY;

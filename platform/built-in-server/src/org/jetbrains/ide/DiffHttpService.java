@@ -116,14 +116,11 @@ final class DiffHttpService extends RestService {
     final boolean finalFocused = focused;
     final String finalWindowTitle = windowTitle;
     final Project finalProject = project;
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (finalFocused) {
-          ProjectUtil.focusProjectWindow(finalProject, true);
-        }
-        DiffManager.getInstance().showDiff(finalProject, new SimpleDiffRequest(StringUtil.notNullize(finalWindowTitle, "Diff Service"), contents, titles));
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (finalFocused) {
+        ProjectUtil.focusProjectWindow(finalProject, true);
       }
+      DiffManager.getInstance().showDiff(finalProject, new SimpleDiffRequest(StringUtil.notNullize(finalWindowTitle, "Diff Service"), contents, titles));
     }, project.getDisposed());
 
     sendOk(request, context);

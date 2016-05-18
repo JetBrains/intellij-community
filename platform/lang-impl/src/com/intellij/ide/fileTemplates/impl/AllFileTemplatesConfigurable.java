@@ -102,11 +102,8 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
     myProject = project;
     myManager = getInstance(project);
     myScheme = myManager.getCurrentScheme();
-    myInternalTemplateNames = ContainerUtil.map2Set(myManager.getInternalTemplates(), new Function<FileTemplate, String>() {
-      @Override
-      public String fun(FileTemplate template) {
-        return template.getName();
-      }
+    myInternalTemplateNames = ContainerUtil.map2Set(myManager.getInternalTemplates(), template -> {
+      return template.getName();
     });
   }
 
@@ -228,11 +225,8 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
         @Override
         protected FileTemplateNode initModel() {
           SortedSet<FileTemplateGroupDescriptor> categories =
-            new TreeSet<FileTemplateGroupDescriptor>(new Comparator<FileTemplateGroupDescriptor>() {
-              @Override
-              public int compare(FileTemplateGroupDescriptor o1, FileTemplateGroupDescriptor o2) {
-                return o1.getTitle().compareTo(o2.getTitle());
-              }
+            new TreeSet<FileTemplateGroupDescriptor>((o1, o2) -> {
+              return o1.getTitle().compareTo(o2.getTitle());
             });
 
 
@@ -242,11 +236,8 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
 
           //noinspection HardCodedStringLiteral
           return new FileTemplateNode("ROOT", null,
-                                      ContainerUtil.map2List(categories, new Function<FileTemplateGroupDescriptor, FileTemplateNode>() {
-                                        @Override
-                                        public FileTemplateNode fun(FileTemplateGroupDescriptor s) {
-                                          return new FileTemplateNode(s);
-                                        }
+                                      ContainerUtil.map2List(categories, s -> {
+                                        return new FileTemplateNode(s);
                                       }));
         }
       };
@@ -553,15 +544,12 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
       myTabbedPane.setSelectedIndex(Arrays.asList(myTabs).indexOf(list));
       selectTemplate(itemWithError);
       list.selectTemplate(itemWithError);
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          if (_errorInName) {
-            myEditor.focusToNameField();
-          }
-          else {
-            myEditor.focusToExtensionField();
-          }
+      ApplicationManager.getApplication().invokeLater(() -> {
+        if (_errorInName) {
+          myEditor.focusToNameField();
+        }
+        else {
+          myEditor.focusToExtensionField();
         }
       });
       throw new ConfigurationException(errorString);
@@ -681,15 +669,12 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
   public static void editCodeTemplate(@NotNull final String templateId, Project project) {
     final ShowSettingsUtil util = ShowSettingsUtil.getInstance();
     final AllFileTemplatesConfigurable configurable = new AllFileTemplatesConfigurable(project);
-    util.editConfigurable(project, configurable, new Runnable() {
-      @Override
-      public void run() {
-        configurable.myTabbedPane.setSelectedIndex(ArrayUtil.indexOf(configurable.myTabs, configurable.myCodeTemplatesList));
-        for (FileTemplate template : configurable.myCodeTemplatesList.getTemplates()) {
-          if (Comparing.equal(templateId, template.getName())) {
-            configurable.myCodeTemplatesList.selectTemplate(template);
-            break;
-          }
+    util.editConfigurable(project, configurable, () -> {
+      configurable.myTabbedPane.setSelectedIndex(ArrayUtil.indexOf(configurable.myTabs, configurable.myCodeTemplatesList));
+      for (FileTemplate template : configurable.myCodeTemplatesList.getTemplates()) {
+        if (Comparing.equal(templateId, template.getName())) {
+          configurable.myCodeTemplatesList.selectTemplate(template);
+          break;
         }
       }
     });

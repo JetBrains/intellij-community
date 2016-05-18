@@ -99,17 +99,14 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
   }
 
   private static void deletePycFiles(@NotNull final File directory) {
-    FileUtil.processFilesRecursively(directory, new Processor<File>() {
-      @Override
-      public boolean process(File file) {
-        if (file.getParentFile().getName().equals(PyNames.PYCACHE) ||
-            FileUtilRt.extensionEquals(file.getName(), "pyc") ||
-            FileUtilRt.extensionEquals(file.getName(), "pyo") ||
-            file.getName().endsWith("$py.class")) {
-          FileUtil.delete(file);
-        }
-        return true;
+    FileUtil.processFilesRecursively(directory, file -> {
+      if (file.getParentFile().getName().equals(PyNames.PYCACHE) ||
+          FileUtilRt.extensionEquals(file.getName(), "pyc") ||
+          FileUtilRt.extensionEquals(file.getName(), "pyo") ||
+          file.getName().endsWith("$py.class")) {
+        FileUtil.delete(file);
       }
+      return true;
     });
   }
 

@@ -49,13 +49,7 @@ public class FileReferenceSet {
     new CustomizableReferenceProvider.CustomizationKey<Function<PsiFile, Collection<PsiFileSystemItem>>>(
       PsiBundle.message("default.path.evaluator.option"));
   public static final Function<PsiFile, Collection<PsiFileSystemItem>> ABSOLUTE_TOP_LEVEL =
-    new Function<PsiFile, Collection<PsiFileSystemItem>>() {
-      @Override
-      @Nullable
-      public Collection<PsiFileSystemItem> fun(final PsiFile file) {
-        return getAbsoluteTopLevelDirLocations(file);
-      }
-    };
+    file -> getAbsoluteTopLevelDirLocations(file);
 
   public static final Condition<PsiFileSystemItem> FILE_FILTER = new Condition<PsiFileSystemItem>() {
     @Override
@@ -464,12 +458,7 @@ public class FileReferenceSet {
   @NotNull
   protected Collection<PsiFileSystemItem> toFileSystemItems(@NotNull Collection<VirtualFile> files) {
     final PsiManager manager = getElement().getManager();
-    return ContainerUtil.mapNotNull(files, new NullableFunction<VirtualFile, PsiFileSystemItem>() {
-      @Override
-      public PsiFileSystemItem fun(VirtualFile file) {
-        return file != null ? manager.findDirectory(file) : null;
-      }
-    });
+    return ContainerUtil.mapNotNull(files, (NullableFunction<VirtualFile, PsiFileSystemItem>)file -> file != null ? manager.findDirectory(file) : null);
   }
 
   protected Condition<PsiFileSystemItem> getReferenceCompletionFilter() {

@@ -58,17 +58,14 @@ public class GotoCustomRegionAction extends AnAction implements DumbAware, Popup
       CommandProcessor processor = CommandProcessor.getInstance();
       processor.executeCommand(
         project,
-        new Runnable() {
-          @Override
-          public void run() {
-            Collection<FoldingDescriptor> foldingDescriptors = getCustomFoldingDescriptors(editor, project);
-            if (foldingDescriptors.size() > 0) {
-              CustomFoldingRegionsPopup regionsPopup = new CustomFoldingRegionsPopup(foldingDescriptors, editor, project);
-              regionsPopup.show();
-            }
-            else {
-              notifyCustomRegionsUnavailable(editor, project);
-            }
+        () -> {
+          Collection<FoldingDescriptor> foldingDescriptors = getCustomFoldingDescriptors(editor, project);
+          if (foldingDescriptors.size() > 0) {
+            CustomFoldingRegionsPopup regionsPopup = new CustomFoldingRegionsPopup(foldingDescriptors, editor, project);
+            regionsPopup.show();
+          }
+          else {
+            notifyCustomRegionsUnavailable(editor, project);
           }
         },
         IdeBundle.message("goto.custom.region.command"),

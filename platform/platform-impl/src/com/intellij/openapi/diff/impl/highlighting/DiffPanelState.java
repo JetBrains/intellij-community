@@ -38,11 +38,9 @@ public class DiffPanelState extends SimpleDiffPanelState {
   }
 
   public void setContents(final DiffContent content1, final DiffContent content2) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        myAppender1.setContent(content1);
-        myAppender2.setContent(content2);
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      myAppender1.setContent(content1);
+      myAppender2.setContent(content2);
     });
   }
 

@@ -147,11 +147,8 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
       button.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(@NotNull ActionEvent e) {
-          importHandler.performImport(button, new Consumer<EditorColorsScheme>() {
-            @Override
-            public void consume(EditorColorsScheme scheme) {
-              if (scheme != null) myOptions.addImportedScheme(scheme);
-            }
+          importHandler.performImport(button, scheme -> {
+            if (scheme != null) myOptions.addImportedScheme(scheme);
           });
         }
       });
