@@ -58,11 +58,13 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor;
-import com.intellij.util.ui.accessibility.AccessibleContextUtil;
+import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleRole;
 import javax.swing.*;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
@@ -272,6 +274,8 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, AccessibleCont
         Presentation presentation = e.getPresentation();
         if (presentation.isEnabled()) {
           ActionLink registerLink = new ActionLink("Register", register);
+          // Don't allow focus, as the containing panel is going to focusable.
+          registerLink.setFocusable(false);
           registerLink.setNormalColor(getLinkNormalColor());
           NonOpaquePanel button = new NonOpaquePanel(new BorderLayout());
           button.setBorder(JBUI.Borders.empty(4, 10));
@@ -357,13 +361,12 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, AccessibleCont
     private JComponent createActionLink(String text, Icon icon, Ref<ActionLink> ref, AnAction action) {
       ActionLink link = new ActionLink(text, icon, action);
       ref.set(link);
+      // Don't allow focus, as the containing panel is going to focusable.
+      link.setFocusable(false);
       link.setPaintUnderline(false);
       link.setNormalColor(getLinkNormalColor());
-      NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
+      JActionLinkPanel panel = new JActionLinkPanel(link);
       panel.setBorder(JBUI.Borders.empty(4, 6, 4, 6));
-      panel.add(link);
-      AccessibleContextUtil.setName(panel, link);
-      AccessibleContextUtil.setDescription(panel, link);
       panel.add(createArrow(link), BorderLayout.EAST);
       return panel;
     }
@@ -378,9 +381,6 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, AccessibleCont
       collectAllActions(group, quickStart);
 
       for (AnAction action : group.getChildren(null)) {
-        JPanel button = new JPanel(new BorderLayout());
-        button.setOpaque(false);
-        button.setBorder(JBUI.Borders.empty(8, 20));
         AnActionEvent e =
           AnActionEvent.createFromAnAction(action, null, ActionPlaces.WELCOME_SCREEN, DataManager.getInstance().getDataContext(this));
         action.update(e);
@@ -396,11 +396,12 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, AccessibleCont
           }
           action = wrapGroups(action);
           ActionLink link = new ActionLink(text, icon, action, createUsageTracker(action));
+          // Don't allow focus, as the containing panel is going to focusable.
+          link.setFocusable(false);
           link.setPaintUnderline(false);
           link.setNormalColor(getLinkNormalColor());
-          button.add(link);
-          AccessibleContextUtil.setName(button, link);
-          AccessibleContextUtil.setDescription(button, link);
+          JActionLinkPanel button = new JActionLinkPanel(link);
+          button.setBorder(JBUI.Borders.empty(8, 20));
           if (action instanceof WelcomePopupAction) {
             button.add(createArrow(link), BorderLayout.EAST);
           }
@@ -412,6 +413,47 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, AccessibleCont
       WelcomeScreenActionsPanel panel = new WelcomeScreenActionsPanel();
       panel.actions.add(actions);
       return panel.root;
+    }
+
+    /**
+     * Wraps an {@link ActionLink} component and delegates accessibility support to it.
+     */
+    protected class JActionLinkPanel extends JPanel {
+      @NotNull private ActionLink myActionLink;
+
+      public JActionLinkPanel(@NotNull ActionLink actionLink) {
+        super(new BorderLayout());
+        myActionLink = actionLink;
+        add(myActionLink);
+        NonOpaquePanel.setTransparent(this);
+      }
+
+      @Override
+      public AccessibleContext getAccessibleContext() {
+        if (accessibleContext == null) {
+          accessibleContext = new AccessibleJActionLinkPanel(myActionLink.getAccessibleContext());
+        }
+        return accessibleContext;
+      }
+
+      protected class AccessibleJActionLinkPanel extends AccessibleContextDelegate {
+        public AccessibleJActionLinkPanel(AccessibleContext context) {
+          super(context);
+        }
+
+        @Override
+        public Accessible getAccessibleParent() {
+          if (getParent() instanceof Accessible) {
+            return (Accessible)getParent();
+          }
+          return super.getAccessibleParent();
+        }
+
+        @Override
+        public AccessibleRole getAccessibleRole() {
+          return AccessibleRole.PUSH_BUTTON;
+        }
+      }
     }
 
     private AnAction wrapGroups(AnAction action) {
@@ -529,7 +571,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, AccessibleCont
         @Override
         public void keyPressed(KeyEvent e) {
           final JList list = UIUtil.findComponentOfType(FlatWelcomeFrame.this.getComponent(), JList.class);
-          if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+          if (e.getKeyCode() == KeyEvent.VK_ENTER || e.getKeyCode() == KeyEvent.VK_SPACE) {
             InputEvent event = e;
             if (e.getComponent() instanceof JComponent) {
               ActionLink link = UIUtil.findComponentOfType((JComponent)e.getComponent(), ActionLink.class);

@@ -84,10 +84,15 @@ public class ParameterInfoComponent extends JPanel {
     infoComponent.setCurrentParameterIndex(currentParameterIndex);
     infoComponent.setParameterOwner(parameterOwner);
     return infoComponent.new MyParameterContext();
-  } 
-  
+  }
+
   ParameterInfoComponent(Object[] objects, Editor editor, @NotNull ParameterInfoHandler handler) {
+    this(objects, editor, handler, false);
+  }
+
+  ParameterInfoComponent(Object[] objects, Editor editor, @NotNull ParameterInfoHandler handler, boolean requestFocus) {
     super(new BorderLayout());
+    myRequestFocus = requestFocus;
 
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       JComponent editorComponent = editor.getComponent();

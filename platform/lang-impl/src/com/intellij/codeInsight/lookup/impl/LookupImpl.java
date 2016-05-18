@@ -57,6 +57,7 @@ import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
+import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
@@ -143,6 +144,11 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
     myList.setFocusable(false);
     myList.setFixedCellWidth(50);
+
+    // a new top level frame just got the focus. This is important to prevent screen readers
+    // from announcing the title of the top level frame when the list is shown (or hidden),
+    // as they usually do when a new top-level frame receives the focus.
+    AccessibleContextUtil.setParent(myList, myEditor.getContentComponent());
 
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myList.setBackground(LookupCellRenderer.BACKGROUND_COLOR);
