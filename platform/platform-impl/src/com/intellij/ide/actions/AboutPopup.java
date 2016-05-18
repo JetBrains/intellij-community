@@ -432,12 +432,27 @@ public class AboutPopup {
       private void renderWord(final String s, final int indentX) throws OverflowException {
         for (int j = 0; j != s.length(); ++j) {
           final char c = s.charAt(j);
-          final int cW = fontmetrics.charWidth(c);
-          if (x + cW >= w) {
-            lineFeed(indentX, s);
+          Font f = null;
+          FontMetrics fm = null;
+          try {
+            if (!g2.getFont().canDisplay(c)) {
+              f = g2.getFont();
+              fm = fontmetrics;
+              g2.setFont(new Font("Monospaced", f.getStyle(), f.getSize()));
+              fontmetrics = g2.getFontMetrics();
+            }
+            final int cW = fontmetrics.charWidth(c);
+            if (x + cW >= w) {
+              lineFeed(indentX, s);
+            }
+            g2.drawChars(new char[]{c}, 0, 1, xBase + x, yBase + y);
+            x += cW;
+          } finally {
+            if (f != null) {
+              g2.setFont(f);
+              fontmetrics = fm;
+            }
           }
-          g2.drawChars(new char[]{c}, 0, 1, xBase + x, yBase + y);
-          x += cW;
         }
       }
 
