@@ -272,11 +272,11 @@ class PyDBFrame: # No longer cdef because object was dying when only a reference
                     name = frame.f_code.co_name
                     if hasattr(frame, "f_back") and hasattr(frame.f_back, "f_locals"):
                         frame.f_back.f_locals[RETURN_VALUES_PREFIX + name] = arg
-            elif main_debugger.remove_return_values_flag:
+            if main_debugger.remove_return_values_flag:
                 # show return values was turned off, we should remove them from locals dict
                 for var_name in dict_keys(frame.f_locals):
                     if var_name.startswith(RETURN_VALUES_PREFIX):
-                        dict_pop(frame.f_back.f_locals, var_name)
+                        dict_pop(frame.f_locals, var_name)
                 if hasattr(frame, "f_back") and hasattr(frame.f_back, "f_locals"):
                     for var_name in dict_keys(frame.f_back.f_locals):
                         if var_name.startswith(RETURN_VALUES_PREFIX):
@@ -503,7 +503,8 @@ class PyDBFrame: # No longer cdef because object was dying when only a reference
                             # ignore library files while stepping
                             return self.trace_dispatch
 
-                self.manage_return_values(main_debugger, frame, event, arg)
+                if main_debugger.show_return_values or main_debugger.remove_return_values_flag:
+                    self.manage_return_values(main_debugger, frame, event, arg)
 
                 if stop:
                     self.set_suspend(thread, CMD_SET_BREAK)
