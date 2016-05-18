@@ -37,7 +37,6 @@ import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.ui.OnePixelDivider;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
@@ -59,8 +58,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 public abstract class CodeStyleAbstractPanel implements Disposable {
@@ -289,23 +290,13 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
   }
 
   private void highlightChanges(Document beforeReformat) {
-
     myPreviewRangesToHighlight.clear();
     MarkupModel markupModel = myEditor.getMarkupModel();
     markupModel.removeAllHighlighters();
-    int textLength = myEditor.getDocument().getTextLength();
-    boolean highlightPreview = false;
-    Collection<TextRange> ranges = myDiffCalculator.calculateDiff(beforeReformat, myEditor.getDocument());
-    for (TextRange range : ranges) {
-      if (range.getStartOffset() >= textLength) {
-        continue;
-      }
-      highlightPreview = true;
-      TextRange rangeToUse = calculateChangeHighlightRange(range);
-      myPreviewRangesToHighlight.add(rangeToUse);
-    }
 
-    if (highlightPreview) {
+    myPreviewRangesToHighlight.addAll(myDiffCalculator.calculateDiff(beforeReformat, myEditor.getDocument()));
+
+    if (!myPreviewRangesToHighlight.isEmpty()) {
       myEndHighlightPreviewChangesTimeMillis = System.currentTimeMillis() + TIME_TO_HIGHLIGHT_PREVIEW_CHANGES_IN_MILLIS;
       myShowsPreviewHighlighters = true;
     }
@@ -324,43 +315,6 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
   private static boolean isWithinBounds(VisualPosition targetPosition, VisualPosition startPosition, VisualPosition endPosition) {
     return targetPosition.line >= startPosition.line && targetPosition.line <= endPosition.line
            && targetPosition.column >= startPosition.column && targetPosition.column <= endPosition.column;
-  }
-
-  /**
-   * We want to highlight document formatting changes introduced by particular formatting property value change.
-   * However, there is a possible effect that white space region is removed. We still want to highlight that, hence, it's necessary
-   * to highlight neighbour region.
-   * <p/>
-   * This method encapsulates logic of adjusting preview highlight change if necessary.
-   *
-   * @param range   initial range to highlight
-   * @return        resulting range to highlight
-   */
-  private TextRange calculateChangeHighlightRange(TextRange range) {
-    CharSequence text = myEditor.getDocument().getCharsSequence();
-
-    if (range.getLength() <= 0) {
-      int offset = range.getStartOffset();
-      while (offset < text.length() && text.charAt(offset) == ' ') {
-        offset++;
-      }
-      return offset > range.getStartOffset() ? new TextRange(offset, offset) : range;
-    }
-
-    int startOffset = range.getStartOffset() + 1;
-    int endOffset = range.getEndOffset() + 1;
-    boolean useSameRange = true;
-    while (endOffset <= text.length()
-           && StringUtil.equals(text.subSequence(range.getStartOffset(), range.getEndOffset()), text.subSequence(startOffset, endOffset)))
-    {
-      useSameRange = false;
-      startOffset++;
-      endOffset++;
-    }
-    startOffset--;
-    endOffset--;
-
-    return useSameRange ? range : new TextRange(startOffset, endOffset);
   }
 
   private void updatePreviewHighlighter(final EditorEx editor) {

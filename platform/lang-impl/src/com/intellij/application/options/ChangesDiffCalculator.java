@@ -34,6 +34,7 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.SeparatorPlacement;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -75,7 +76,52 @@ public class ChangesDiffCalculator implements Disposable {
       fragment.highlight(fragmentHighlighter);
     }
 
-    return new ArrayList<TextRange>(myNewMarkup.ranges);
+    List<TextRange> ranges = new ArrayList<>(myNewMarkup.ranges);
+    for (TextRange range : myNewMarkup.ranges) {
+      if (range.getStartOffset() >= currentDocument.getTextLength()) {
+        continue;
+      }
+      ranges.add(calculateChangeHighlightRange(currentDocument, range));
+    }
+
+    return ranges;
+  }
+
+  /**
+   * We want to highlight document formatting changes introduced by particular formatting property value change.
+   * However, there is a possible effect that white space region is removed. We still want to highlight that, hence, it's necessary
+   * to highlight neighbour region.
+   * <p/>
+   * This method encapsulates logic of adjusting preview highlight change if necessary.
+   *
+   * @param range   initial range to highlight
+   * @return        resulting range to highlight
+   */
+  private static TextRange calculateChangeHighlightRange(Document currentDocument, TextRange range) {
+    CharSequence text = currentDocument.getCharsSequence();
+
+    if (range.getLength() <= 0) {
+      int offset = range.getStartOffset();
+      while (offset < text.length() && text.charAt(offset) == ' ') {
+        offset++;
+      }
+      return offset > range.getStartOffset() ? new TextRange(offset, offset) : range;
+    }
+
+    int startOffset = range.getStartOffset() + 1;
+    int endOffset = range.getEndOffset() + 1;
+    boolean useSameRange = true;
+    while (endOffset <= text.length()
+           && StringUtil.equals(text.subSequence(range.getStartOffset(), range.getEndOffset()), text.subSequence(startOffset, endOffset)))
+    {
+      useSameRange = false;
+      startOffset++;
+      endOffset++;
+    }
+    startOffset--;
+    endOffset--;
+
+    return useSameRange ? range : new TextRange(startOffset, endOffset);
   }
 
   @Override
