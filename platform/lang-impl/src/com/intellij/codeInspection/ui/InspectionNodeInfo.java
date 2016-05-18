@@ -74,6 +74,7 @@ public class InspectionNodeInfo extends JPanel {
     description.setContentType(UIUtil.HTML_MIME);
     description.setEditable(false);
     description.setOpaque(false);
+    description.setBackground(UIUtil.getLabelBackground());
     description.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
     final String toolDescription = toolWrapper.loadDescription();
     SingleInspectionProfilePanel.readHTML(description, SingleInspectionProfilePanel.toHTML(description, toolDescription == null ? "" : toolDescription, false));
