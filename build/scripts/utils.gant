@@ -253,8 +253,8 @@ binding.setVariable("commonJvmArgsForTests", {
     "-Xbootclasspath/p:${projectBuilder.moduleOutput(findModule("boot"))}",
     "-XX:+HeapDumpOnOutOfMemoryError",
     "-Didea.home.path=$home",
-    "-Didea.config.path=${p("teamcity.build.tempDir")}/config",
-    "-Didea.system.path=${p("teamcity.build.tempDir")}/system",
+    "-Didea.config.path=${p("teamcity.build.tempDir", p("java.io.tmpdir"))}/config",
+    "-Didea.system.path=${p("teamcity.build.tempDir", p("java.io.tmpdir"))}/system",
     "-Xdebug",
     jdwp
   ]
