@@ -110,9 +110,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
     Application application = ApplicationManager.getApplication();
     application.assertIsDispatchThread();
     if (project != null && project.isDisposed()) {
-      if (application.isUnitTestMode()) {
-        CommandLog.LOG.error("Project "+project+" already disposed");
-      }
+      CommandLog.LOG.error("Project "+project+" already disposed");
       return;
     }
 
