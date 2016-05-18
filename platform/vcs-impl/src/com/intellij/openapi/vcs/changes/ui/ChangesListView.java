@@ -34,6 +34,7 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SmartExpander;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.containers.Convertor;
@@ -103,13 +104,13 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
   }
 
   public void updateModel(@NotNull DefaultTreeModel model) {
-    TreeState state = TreeState.createOn(this, (ChangesBrowserNode)getModel().getRoot());
+    TreeState state = TreeState.createOn(this, getRoot());
     state.setScrollToSelection(false);
     DefaultTreeModel oldModel = getModel();
     setModel(model);
     ChangesBrowserNode root = (ChangesBrowserNode)model.getRoot();
     expandPath(new TreePath(root.getPath()));
-    state.applyTo(this, (ChangesBrowserNode)getModel().getRoot());
+    state.applyTo(this, getRoot());
     expandDefaultChangeList(oldModel, root);
   }
 
@@ -345,18 +346,13 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
   }
 
   @NotNull
+  public ChangesBrowserNode<?> getRoot() {
+    return (ChangesBrowserNode<?>)getModel().getRoot();
+  }
+
+  @NotNull
   public Change[] getChanges() {
-    final Set<Change> changes = new LinkedHashSet<Change>();
-
-    TreeUtil.traverse((ChangesBrowserNode)getModel().getRoot(), new TreeUtil.Traverse() {
-      @Override
-      public boolean accept(Object node) {
-        changes.addAll(((ChangesBrowserNode)node).getAllChangesUnder());
-        return true;
-      }
-    });
-
-    return changes.toArray(new Change[changes.size()]);
+    return ArrayUtil.toObjectArray(getRoot().getAllChangesUnder(), Change.class);
   }
 
   @NotNull
