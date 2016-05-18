@@ -87,13 +87,14 @@ public class TestStateStorage implements Disposable {
 
     File versionFile = new File(directoryPath + "/version");
     dropMapFileIfOutdated(versionFile);
-    
+
     try {
       myMap = initializeMap();
     } catch (IOException e) {
       LOG.error(e);
     }
-    myMapFlusher = FlushingDaemon.everyFiveSeconds(() -> flushMap());
+    myMapFlusher = FlushingDaemon.everyFiveSeconds(this::flushMap);
+  }
 
   private void dropMapFileIfOutdated(File versionFile) {
     if (myFile.exists() && myFile.length() > 0 

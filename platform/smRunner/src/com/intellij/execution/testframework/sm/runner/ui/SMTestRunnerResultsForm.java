@@ -850,7 +850,8 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
           if (url != null) {
             ProcessHandler handler = myRoot.getHandler();
             String configurationName = handler.getUserData(TestStateStorage.STRING_KEY);
-            storage.writeState(url, new TestStateStorage.Record(proxy.getMagnitude(), new Date(),
+            storage.writeState(url, new TestStateStorage.Record(proxy.getMagnitude(), new Date(), 
+                                                                configurationName == null ? 0 : configurationName.hashCode()));
           }
         }
       });
