@@ -20,6 +20,7 @@ import com.intellij.execution.process.impl.ProcessListUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.pty4j.windows.WinPtyProcess;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jvnet.winp.WinProcess;
@@ -50,6 +51,9 @@ public class OSProcessUtil {
   public static boolean killProcessTree(@NotNull Process process) {
     if (SystemInfo.isWindows) {
       try {
+        if (process instanceof WinPtyProcess) {
+          return WinProcessManager.kill(((WinPtyProcess)process).getChildProcessId(), true);
+        }
         if (Registry.is("disable.winp")) {
           return WinProcessManager.kill(process, true);
         }
