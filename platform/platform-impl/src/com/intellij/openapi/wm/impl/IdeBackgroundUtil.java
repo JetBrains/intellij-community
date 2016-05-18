@@ -147,12 +147,9 @@ public class IdeBackgroundUtil {
   public static void createTemporaryBackgroundTransform(JPanel root, String tmp, Disposable disposable) {
     PaintersHelper paintersHelper = new PaintersHelper(root);
     PaintersHelper.initWallpaperPainter(tmp, paintersHelper);
-    Disposer.register(disposable, JBSwingUtilities.addGlobalCGTransform(new PairFunction<JComponent, Graphics2D, Graphics2D>() {
-      @Override
-      public Graphics2D fun(JComponent t, Graphics2D v) {
-        if (!UIUtil.isAncestor(root, t)) return v;
-        return MyGraphics.wrap(v, paintersHelper, t);
-      }
+    Disposer.register(disposable, JBSwingUtilities.addGlobalCGTransform((t, v) -> {
+      if (!UIUtil.isAncestor(root, t)) return v;
+      return MyGraphics.wrap(v, paintersHelper, t);
     }));
   }
 

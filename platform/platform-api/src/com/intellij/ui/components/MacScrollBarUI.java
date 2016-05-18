@@ -117,12 +117,7 @@ final class MacScrollBarUI extends DefaultScrollBarUI {
       myThumbAnimator.rewind(true);
       myAlarm.cancelAllRequests();
       if (!myTrackHovered) {
-        myAlarm.addRequest(new Runnable() {
-          @Override
-          public void run() {
-            myThumbAnimator.start(false);
-          }
-        }, 700);
+        myAlarm.addRequest(() -> myThumbAnimator.start(false), 700);
       }
     }
   }
@@ -259,20 +254,14 @@ final class MacScrollBarUI extends DefaultScrollBarUI {
         return 1 == behavior.intValue() ? JumpToSpot : NextPage;
       }
     };
-    private static final Producer<ID> INIT = new Producer<ID>() {
-      @Nullable
-      @Override
-      public ID produce() {
-        return invoke(invoke("NSDistributedNotificationCenter", "defaultCenter"),
-                      "addObserver:selector:name:object:",
-                      createDelegate("JBScrollBarBehaviorObserver", createSelector("handleBehaviorChanged:"), CURRENT),
-                      createSelector("handleBehaviorChanged:"),
-                      nsString("AppleNoRedisplayAppearancePreferenceChanged"),
-                      ID.NIL,
-                      2 // NSNotificationSuspensionBehaviorCoalesce
-        );
-      }
-    };
+    private static final Producer<ID> INIT = () -> invoke(invoke("NSDistributedNotificationCenter", "defaultCenter"),
+                                                      "addObserver:selector:name:object:",
+                                                      createDelegate("JBScrollBarBehaviorObserver", createSelector("handleBehaviorChanged:"), CURRENT),
+                                                      createSelector("handleBehaviorChanged:"),
+                                                      nsString("AppleNoRedisplayAppearancePreferenceChanged"),
+                                                      ID.NIL,
+                                                      2 // NSNotificationSuspensionBehaviorCoalesce
+    );
   }
 
   private enum Style {
@@ -300,19 +289,13 @@ final class MacScrollBarUI extends DefaultScrollBarUI {
         return 1 == style.intValue() ? Overlay : Legacy;
       }
     };
-    private static final Producer<ID> INIT = new Producer<ID>() {
-      @Nullable
-      @Override
-      public ID produce() {
-        return invoke(invoke("NSNotificationCenter", "defaultCenter"),
-                      "addObserver:selector:name:object:",
-                      createDelegate("JBScrollBarStyleObserver", createSelector("handleScrollerStyleChanged:"), CURRENT),
-                      createSelector("handleScrollerStyleChanged:"),
-                      nsString("NSPreferredScrollerStyleDidChangeNotification"),
-                      ID.NIL
-        );
-      }
-    };
+    private static final Producer<ID> INIT = () -> invoke(invoke("NSNotificationCenter", "defaultCenter"),
+                                                      "addObserver:selector:name:object:",
+                                                      createDelegate("JBScrollBarStyleObserver", createSelector("handleScrollerStyleChanged:"), CURRENT),
+                                                      createSelector("handleScrollerStyleChanged:"),
+                                                      nsString("NSPreferredScrollerStyleDidChangeNotification"),
+                                                      ID.NIL
+    );
   }
 
   private static abstract class Native<T> implements Callback, Runnable, Producer<T> {

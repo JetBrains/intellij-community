@@ -147,19 +147,16 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
       @Override
       public void actionPerformed(ActionEvent e) {
         DefaultActionGroup group = new DefaultActionGroup();
-        jdksModel.createAddActions(group, JdkComboBox.this, new Consumer<Sdk>() {
-          @Override
-          public void consume(final Sdk jdk) {
-            if (project != null) {
-              final JdkListConfigurable configurable = JdkListConfigurable.getInstance(project);
-              configurable.addJdkNode(jdk, false);
-            }
-            reloadModel(new JdkComboBoxItem(jdk), project);
-            setSelectedJdk(jdk); //restore selection
-            if (additionalSetup != null) {
-              if (additionalSetup.value(jdk)) { //leave old selection
-                setSelectedJdk(firstItem.getJdk());
-              }
+        jdksModel.createAddActions(group, JdkComboBox.this, jdk -> {
+          if (project != null) {
+            final JdkListConfigurable configurable = JdkListConfigurable.getInstance(project);
+            configurable.addJdkNode(jdk, false);
+          }
+          reloadModel(new JdkComboBoxItem(jdk), project);
+          setSelectedJdk(jdk); //restore selection
+          if (additionalSetup != null) {
+            if (additionalSetup.value(jdk)) { //leave old selection
+              setSelectedJdk(firstItem.getJdk());
             }
           }
         }, myCreationFilter);
@@ -279,12 +276,7 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
     if (myFilter != null) {
       projectJdks = ContainerUtil.filter(projectJdks, getSdkFilter(myFilter));
     }
-    Collections.sort(projectJdks, new Comparator<Sdk>() {
-      @Override
-      public int compare(final Sdk o1, final Sdk o2) {
-        return o1.getName().compareToIgnoreCase(o2.getName());
-      }
-    });
+    Collections.sort(projectJdks, (o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()));
     for (Sdk projectJdk : projectJdks) {
       model.addElement(new JdkComboBox.JdkComboBoxItem(projectJdk));
     }
@@ -297,12 +289,7 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
         final List<Sdk> filtered = ContainerUtil.filter(jdks, sdkFilter);
         jdks = filtered.toArray(new Sdk[filtered.size()]); 
       }
-      Arrays.sort(jdks, new Comparator<Sdk>() {
-        @Override
-        public int compare(final Sdk s1, final Sdk s2) {
-          return s1.getName().compareToIgnoreCase(s2.getName());
-        }
-      });
+      Arrays.sort(jdks, (s1, s2) -> s1.getName().compareToIgnoreCase(s2.getName()));
       for (Sdk jdk : jdks) {
         addElement(new JdkComboBoxItem(jdk));
       }

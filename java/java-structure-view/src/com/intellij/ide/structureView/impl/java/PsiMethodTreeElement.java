@@ -135,12 +135,9 @@ public class PsiMethodTreeElement extends JavaClassTreeElementBase<PsiMethod> im
   public String getAlphaSortKey() {
     final PsiMethod method = getElement();
     if (method != null) {
-      return method.getName() + " " + StringUtil.join(method.getParameterList().getParameters(), new Function<PsiParameter, String>() {
-        @Override
-        public String fun(PsiParameter psiParameter) {
-          PsiTypeElement typeElement = psiParameter.getTypeElement();
-          return typeElement != null ? typeElement.getText() : "";
-        }
+      return method.getName() + " " + StringUtil.join(method.getParameterList().getParameters(), psiParameter -> {
+        PsiTypeElement typeElement = psiParameter.getTypeElement();
+        return typeElement != null ? typeElement.getText() : "";
       }, " ");
     }
     return "";

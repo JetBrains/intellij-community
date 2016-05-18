@@ -54,15 +54,12 @@ class JUnitStatusLine extends TestStatusLine {
       @Override
       public void processTerminated(ProcessEvent event) {
         process.removeProcessListener(this);
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            myStateInfo.setTerminated(myState);
-            if (!myTestsBuilt && myProgressBar.getValue() == 0) {
-              setStatusColor(ColorProgressBar.RED);
-              setFraction(1.0);
-              myState.append(ExecutionBundle.message("junit.running.info.failed.to.start.error.message"));
-            }
+        ApplicationManager.getApplication().invokeLater(() -> {
+          myStateInfo.setTerminated(myState);
+          if (!myTestsBuilt && myProgressBar.getValue() == 0) {
+            setStatusColor(ColorProgressBar.RED);
+            setFraction(1.0);
+            myState.append(ExecutionBundle.message("junit.running.info.failed.to.start.error.message"));
           }
         });
       }

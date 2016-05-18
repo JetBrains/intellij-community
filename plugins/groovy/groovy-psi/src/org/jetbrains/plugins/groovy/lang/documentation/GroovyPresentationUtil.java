@@ -64,39 +64,36 @@ public class GroovyPresentationUtil {
     else {
       builder.append(parameter.getName());
       final Set<String> structural = Collections.synchronizedSet(new LinkedHashSet<String>());
-      ReferencesSearch.search(parameter, parameter.getUseScope()).forEach(new Processor<PsiReference>() {
-        @Override
-        public boolean process(PsiReference ref) {
-          PsiElement parent = ref.getElement().getParent();
-          if (parent instanceof GrReferenceExpression) {
+      ReferencesSearch.search(parameter, parameter.getUseScope()).forEach(ref -> {
+        PsiElement parent = ref.getElement().getParent();
+        if (parent instanceof GrReferenceExpression) {
 
-            if (structural.size() >= CONSTRAINTS_NUMBER) { //handle too many constraints
-              structural.add("...");
-              return false;
-            }
-
-            StringBuilder builder1 = new StringBuilder();
-            builder1.append(((GrReferenceElement)parent).getReferenceName());
-            PsiType[] argTypes = PsiUtil.getArgumentTypes(parent, true);
-            if (argTypes != null) {
-              builder1.append("(");
-              if (argTypes.length > 0) {
-                builder1.append(argTypes.length);
-                if (argTypes.length == 1) {
-                  builder1.append(" arg");
-                }
-                else {
-                  builder1.append(" args");
-                }
-              }
-              builder1.append(')');
-            }
-
-            structural.add(builder1.toString());
+          if (structural.size() >= CONSTRAINTS_NUMBER) { //handle too many constraints
+            structural.add("...");
+            return false;
           }
 
-          return true;
+          StringBuilder builder1 = new StringBuilder();
+          builder1.append(((GrReferenceElement)parent).getReferenceName());
+          PsiType[] argTypes = PsiUtil.getArgumentTypes(parent, true);
+          if (argTypes != null) {
+            builder1.append("(");
+            if (argTypes.length > 0) {
+              builder1.append(argTypes.length);
+              if (argTypes.length == 1) {
+                builder1.append(" arg");
+              }
+              else {
+                builder1.append(" args");
+              }
+            }
+            builder1.append(')');
+          }
+
+          structural.add(builder1.toString());
         }
+
+        return true;
       });
 
       if (!structural.isEmpty()) {

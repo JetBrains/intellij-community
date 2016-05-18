@@ -137,34 +137,24 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
 
   @Override
   public void saveChanges(final String content) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        if (mySceneBuilder != null) {
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (mySceneBuilder != null) {
 
-          if (!myDocument.isWritable() && ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(myFile).hasReadonlyFiles()) {
-            return;
-          }
+        if (!myDocument.isWritable() && ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(myFile).hasReadonlyFiles()) {
+          return;
+        }
 
-          try {
-            myChangeListener.setRunState(false);
+        try {
+          myChangeListener.setRunState(false);
 
-            // XXX: strange behavior with undo/redo
+          // XXX: strange behavior with undo/redo
 
-            ApplicationManager.getApplication().runWriteAction(new Runnable() {
-              @Override
-              public void run() {
-                CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-                  @Override
-                  public void run() {
-                    myDocument.setText(content);
-                  }
-                }, "JavaFX Scene Builder edit operation", null);
-              }
-            });
-          }
-          finally {
-            myChangeListener.setRunState(true);
-          }
+          ApplicationManager.getApplication().runWriteAction(() -> {
+            CommandProcessor.getInstance().executeCommand(myProject, () -> myDocument.setText(content), "JavaFX Scene Builder edit operation", null);
+          });
+        }
+        finally {
+          myChangeListener.setRunState(true);
         }
       }
     });
@@ -172,11 +162,7 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
 
   @Override
   public void handleError(final Throwable e) {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      public void run() {
-        showErrorPage(e);
-      }
-    });
+    UIUtil.invokeLaterIfNeeded(() -> showErrorPage(e));
   }
 
   private void updateState() {

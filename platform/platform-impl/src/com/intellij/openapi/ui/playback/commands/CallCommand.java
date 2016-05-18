@@ -98,12 +98,9 @@ public class CallCommand extends AbstractCommand {
           }
           cmdResult.setDone();
         }
-      }).doWhenRejected(new Consumer<String>() {
-        @Override
-        public void consume(String s) {
-          context.error(s, getLine());
-          cmdResult.setRejected();
-        }
+      }).doWhenRejected(s -> {
+        context.error(s, getLine());
+        cmdResult.setRejected();
       });
     }
     catch (InvocationTargetException ignored) {

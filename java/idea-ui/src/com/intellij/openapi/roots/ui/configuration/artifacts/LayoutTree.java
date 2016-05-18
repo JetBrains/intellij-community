@@ -220,12 +220,7 @@ public class LayoutTree extends SimpleDnDAwareTree implements AdvancedDnDSource 
       final boolean stopped = super.stopCellEditing();
       if (stopped && currentElement != null) {
         final RenameablePackagingElement finalCurrentElement = currentElement;
-        myArtifactsEditor.getLayoutTreeComponent().editLayout(new Runnable() {
-          @Override
-          public void run() {
-            finalCurrentElement.rename(newValue);
-          }
-        });
+        myArtifactsEditor.getLayoutTreeComponent().editLayout(() -> finalCurrentElement.rename(newValue));
         myArtifactsEditor.queueValidation();
         myArtifactsEditor.getLayoutTreeComponent().updatePropertiesPanel(true);
         addSubtreeToUpdate((DefaultMutableTreeNode)path.getLastPathComponent());

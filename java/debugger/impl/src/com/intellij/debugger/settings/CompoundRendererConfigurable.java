@@ -198,17 +198,14 @@ class CompoundRendererConfigurable extends JPanel {
   }
 
   private void updateContext(final String qName) {
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        final Project project = myProject;
-        final PsiClass psiClass = project != null ? DebuggerUtils.findClass(qName, project, GlobalSearchScope.allScope(project)) : null;
-        XSourcePositionImpl position = XSourcePositionImpl.createByElement(psiClass);
-        myLabelEditor.setSourcePosition(position);
-        myChildrenEditor.setSourcePosition(position);
-        myChildrenExpandedEditor.setSourcePosition(position);
-        myListChildrenEditor.setSourcePosition(position);
-      }
+    ApplicationManager.getApplication().runReadAction(() -> {
+      final Project project = myProject;
+      final PsiClass psiClass = project != null ? DebuggerUtils.findClass(qName, project, GlobalSearchScope.allScope(project)) : null;
+      XSourcePositionImpl position = XSourcePositionImpl.createByElement(psiClass);
+      myLabelEditor.setSourcePosition(position);
+      myChildrenEditor.setSourcePosition(position);
+      myChildrenExpandedEditor.setSourcePosition(position);
+      myListChildrenEditor.setSourcePosition(position);
     });
   }
 
@@ -515,15 +512,12 @@ class CompoundRendererConfigurable extends JPanel {
   private static class ClassNameEditorWithBrowseButton extends ReferenceEditorWithBrowseButton {
     private ClassNameEditorWithBrowseButton(ActionListener browseActionListener, final Project project) {
       super(browseActionListener, project,
-            new Function<String, Document>() {
-              @Override
-              public Document fun(String s) {
-                PsiPackage defaultPackage = JavaPsiFacade.getInstance(project).findPackage("");
-                final JavaCodeFragment fragment =
-                  JavaCodeFragmentFactory.getInstance(project).createReferenceCodeFragment(s, defaultPackage, true, true);
-                fragment.setVisibilityChecker(JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
-                return PsiDocumentManager.getInstance(project).getDocument(fragment);
-              }
+            s -> {
+              PsiPackage defaultPackage = JavaPsiFacade.getInstance(project).findPackage("");
+              final JavaCodeFragment fragment =
+                JavaCodeFragmentFactory.getInstance(project).createReferenceCodeFragment(s, defaultPackage, true, true);
+              fragment.setVisibilityChecker(JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
+              return PsiDocumentManager.getInstance(project).getDocument(fragment);
             }, "");
     }
   }

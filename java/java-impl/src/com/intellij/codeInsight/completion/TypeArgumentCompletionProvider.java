@@ -143,15 +143,12 @@ class TypeArgumentCompletionProvider extends CompletionProvider<CompletionParame
                                     final int parameterIndex) {
     final List<PsiClassType> typeList = Collections.singletonList((PsiClassType)TypeConversionUtil.typeParameterErasure(
       referencedClass.getTypeParameters()[parameterIndex]));
-    JavaInheritorsGetter.processInheritors(parameters, typeList, resultSet.getPrefixMatcher(), new Consumer<PsiType>() {
-      @Override
-      public void consume(final PsiType type) {
-        final PsiClass psiClass = PsiUtil.resolveClassInType(type);
-        if (psiClass == null) return;
+    JavaInheritorsGetter.processInheritors(parameters, typeList, resultSet.getPrefixMatcher(), type -> {
+      final PsiClass psiClass = PsiUtil.resolveClassInType(type);
+      if (psiClass == null) return;
 
-        resultSet.addElement(TailTypeDecorator.withTail(new JavaPsiClassReferenceElement(psiClass),
-                                                        getTail(parameterIndex == referencedClass.getTypeParameters().length - 1)));
-      }
+      resultSet.addElement(TailTypeDecorator.withTail(new JavaPsiClassReferenceElement(psiClass),
+                                                      getTail(parameterIndex == referencedClass.getTypeParameters().length - 1)));
     });
   }
 
@@ -202,11 +199,8 @@ class TypeArgumentCompletionProvider extends CompletionProvider<CompletionParame
       myTypeItems = typeItems;
       myGlobalTail = globalTail;
       myHasParameters = hasParameters;
-      myLookupString = StringUtil.join(myTypeItems, new Function<PsiTypeLookupItem, String>() {
-        @Override
-        public String fun(PsiTypeLookupItem item) {
-          return item.getType().getPresentableText();
-        }
+      myLookupString = StringUtil.join(myTypeItems, item -> {
+        return item.getType().getPresentableText();
       }, ", ");
     }
 

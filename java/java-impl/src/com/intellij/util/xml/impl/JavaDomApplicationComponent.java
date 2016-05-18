@@ -45,21 +45,10 @@ public class JavaDomApplicationComponent implements Consumer<DomUIFactory> {
 
   @Override
   public void consume(DomUIFactory factory) {
-    factory.registerCustomControl(PsiClass.class, new Function<DomWrapper<String>, BaseControl>() {
-      public BaseControl fun(final DomWrapper<String> wrapper) {
-        return new PsiClassControl(wrapper, false);
-      }
-    });
-    factory.registerCustomControl(PsiType.class, new Function<DomWrapper<String>, BaseControl>() {
-      public BaseControl fun(final DomWrapper<String> wrapper) {
-        return new PsiTypeControl(wrapper, false);
-      }
-    });
+    factory.registerCustomControl(PsiClass.class, wrapper -> new PsiClassControl(wrapper, false));
+    factory.registerCustomControl(PsiType.class, wrapper -> new PsiTypeControl(wrapper, false));
 
-    factory.registerCustomCellEditor(PsiClass.class, new Function<DomElement, TableCellEditor>() {
-      public TableCellEditor fun(final DomElement element) {
-        return new PsiClassTableCellEditor(element.getManager().getProject(), element.getResolveScope());
-      }
-    });
+    factory.registerCustomCellEditor(PsiClass.class,
+                                     element -> new PsiClassTableCellEditor(element.getManager().getProject(), element.getResolveScope()));
   }
 }

@@ -156,13 +156,10 @@ public class ApplicationStatisticsPersistenceComponent extends ApplicationStatis
 
   private static String joinUsages(@NotNull Set<UsageDescriptor> usages) {
     // for instance, usage can be: "_foo"(equals "_foo=1") or "_foo=2"
-    return StringUtil.join(usages, new Function<UsageDescriptor, String>() {
-      @Override
-      public String fun(UsageDescriptor usageDescriptor) {
-        final String key = usageDescriptor.getKey();
-        final int value = usageDescriptor.getValue();
-        return value != 1 ? key + "=" + value : key;
-      }
+    return StringUtil.join(usages, usageDescriptor -> {
+      final String key = usageDescriptor.getKey();
+      final int value = usageDescriptor.getValue();
+      return value != 1 ? key + "=" + value : key;
     }, TOKENIZER);
   }
 
@@ -196,12 +193,9 @@ public class ApplicationStatisticsPersistenceComponent extends ApplicationStatis
   }
 
   private void persistPeriodically() {
-    myAlarm.addRequest(new Runnable() {
-      @Override
-      public void run() {
-        persistOpenedProjects();
-        persistPeriodically();
-      }
+    myAlarm.addRequest(() -> {
+      persistOpenedProjects();
+      persistPeriodically();
     }, PERSIST_PERIOD);
   }
 

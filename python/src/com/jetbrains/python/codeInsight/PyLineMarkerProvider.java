@@ -62,44 +62,36 @@ public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparator
     }
   }
 
-  private static final Function<PyClass, String> ourSubclassTooltipProvider = new Function<PyClass, String>() {
-    public String fun(PyClass pyClass) {
-      final StringBuilder builder = new StringBuilder("<html>Is subclassed by:");
-      final AtomicInteger count = new AtomicInteger();
-      PyClassInheritorsSearch.search(pyClass, true).forEach(new Processor<PyClass>() {
-        public boolean process(PyClass pyClass) {
-          if (count.incrementAndGet() >= 10) {
-            builder.setLength(0);
-            builder.append("Has subclasses");
-            return false;
-          }
-          builder.append("<br>&nbsp;&nbsp;").append(pyClass.getName());
-          return true;
-        }
-      });
-      return builder.toString();
-    }
+  private static final Function<PyClass, String> ourSubclassTooltipProvider = pyClass -> {
+    final StringBuilder builder = new StringBuilder("<html>Is subclassed by:");
+    final AtomicInteger count = new AtomicInteger();
+    PyClassInheritorsSearch.search(pyClass, true).forEach(pyClass1 -> {
+      if (count.incrementAndGet() >= 10) {
+        builder.setLength(0);
+        builder.append("Has subclasses");
+        return false;
+      }
+      builder.append("<br>&nbsp;&nbsp;").append(pyClass1.getName());
+      return true;
+    });
+    return builder.toString();
   };
 
-  private static final Function<PyFunction, String> ourOverridingMethodTooltipProvider = new Function<PyFunction, String>() {
-    public String fun(final PyFunction pyFunction) {
-      final StringBuilder builder = new StringBuilder("<html>Is overridden in:");
-      final AtomicInteger count = new AtomicInteger();
-      PyClassInheritorsSearch.search(pyFunction.getContainingClass(), true).forEach(new Processor<PyClass>() {
-        public boolean process(PyClass pyClass) {
-          if (count.incrementAndGet() >= 10) {
-            builder.setLength(0);
-            builder.append("Has overridden methods");
-            return false;
-          }
-          if (pyClass.findMethodByName(pyFunction.getName(), false, null) != null) {
-            builder.append("<br>&nbsp;&nbsp;").append(pyClass.getName());
-          }
-          return true;
-        }
-      });
-      return builder.toString();
-    }
+  private static final Function<PyFunction, String> ourOverridingMethodTooltipProvider = pyFunction -> {
+    final StringBuilder builder = new StringBuilder("<html>Is overridden in:");
+    final AtomicInteger count = new AtomicInteger();
+    PyClassInheritorsSearch.search(pyFunction.getContainingClass(), true).forEach(pyClass -> {
+      if (count.incrementAndGet() >= 10) {
+        builder.setLength(0);
+        builder.append("Has overridden methods");
+        return false;
+      }
+      if (pyClass.findMethodByName(pyFunction.getName(), false, null) != null) {
+        builder.append("<br>&nbsp;&nbsp;").append(pyClass.getName());
+      }
+      return true;
+    });
+    return builder.toString();
   };
 
   private static final PyLineMarkerNavigator<PsiElement> ourSuperMethodNavigator = new PyLineMarkerNavigator<PsiElement>() {
@@ -249,17 +241,15 @@ public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparator
     }
     final Set<PyFunction> overridden = new HashSet<PyFunction>();
     for (final PyClass pyClass : classes) {
-      PyClassInheritorsSearch.search(pyClass, true).forEach(new Processor<PyClass>() {
-        public boolean process(final PyClass inheritor) {
-          for (Iterator<PyFunction> it = candidates.get(pyClass).iterator(); it.hasNext(); ) {
-            PyFunction func = it.next();
-            if (inheritor.findMethodByName(func.getName(), false, null) != null) {
-              overridden.add(func);
-              it.remove();
-            }
+      PyClassInheritorsSearch.search(pyClass, true).forEach(inheritor -> {
+        for (Iterator<PyFunction> it = candidates.get(pyClass).iterator(); it.hasNext(); ) {
+          PyFunction func = it.next();
+          if (inheritor.findMethodByName(func.getName(), false, null) != null) {
+            overridden.add(func);
+            it.remove();
           }
-          return !candidates.isEmpty();
         }
+        return !candidates.isEmpty();
       });
       if (candidates.isEmpty()) break;
     }

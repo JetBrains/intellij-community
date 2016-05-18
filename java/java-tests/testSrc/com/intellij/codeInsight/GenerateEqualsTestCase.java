@@ -21,21 +21,12 @@ public abstract class GenerateEqualsTestCase extends LightCodeInsightTestCase {
                         final int[] hashCode,
                         final int[] nonNull,
                         boolean insertOverride) throws Exception {
-    doTest(new Function<PsiField[], PsiField[]>() {
-      @Override
-      public PsiField[] fun(PsiField[] fields) {
-        return getIndexed(fields, equals);
-      }
-    }, new Function<PsiField[], PsiField[]>() {
-      @Override
-      public PsiField[] fun(PsiField[] fields) {
-        return getIndexed(fields, hashCode);
-      }
-    }, new Function<PsiField[], PsiField[]>() {
-      @Override
-      public PsiField[] fun(PsiField[] fields) {
-        return getIndexed(fields, nonNull);
-      }
+    doTest(fields -> {
+      return getIndexed(fields, equals);
+    }, fields -> {
+      return getIndexed(fields, hashCode);
+    }, fields -> {
+      return getIndexed(fields, nonNull);
     }, insertOverride);
   }
 

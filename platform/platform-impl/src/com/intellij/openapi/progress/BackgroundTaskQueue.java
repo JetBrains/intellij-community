@@ -130,13 +130,10 @@ public class BackgroundTaskQueue {
       final ProgressIndicator[] pi = new ProgressIndicator[1];
       final boolean taskTitleIsEmpty = StringUtil.isEmptyOrSpaces(backgroundable.getTitle());
 
-      final Runnable wrappedTask = new Runnable() {
-        @Override
-        public void run() {
-          // calls task's run and onCancel() or onSuccess(); call continuation after task.run()
-          RunBackgroundable.runIfBackgroundThread(backgroundable,
-            pi[0] == null ? ProgressManager.getInstance().getProgressIndicator() : pi[0], runnable);
-        }
+      final Runnable wrappedTask = () -> {
+        // calls task's run and onCancel() or onSuccess(); call continuation after task.run()
+        RunBackgroundable.runIfBackgroundThread(backgroundable,
+          pi[0] == null ? ProgressManager.getInstance().getProgressIndicator() : pi[0], runnable);
       };
 
       final ProgressManager pm = ProgressManager.getInstance();

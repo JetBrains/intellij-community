@@ -76,23 +76,20 @@ public class CreateConstructorFromCallFix extends CreateFromUsageBaseFix {
       startTemplate(editor, template, project, new TemplateEditingAdapter() {
         @Override
         public void templateFinished(Template template, boolean brokenOff) {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              try {
-                PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
-                final int offset = editor.getCaretModel().getOffset();
-                PsiMethod constructor = PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiMethod.class, false);
-                if (superConstructor == null) {
-                  CreateFromUsageUtils.setupMethodBody(constructor);
-                } else {
-                  OverrideImplementUtil.setupMethodBody(constructor, superConstructor, targetClass);
-                }
-                CreateFromUsageUtils.setupEditor(constructor, editor);
+          ApplicationManager.getApplication().runWriteAction(() -> {
+            try {
+              PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+              final int offset = editor.getCaretModel().getOffset();
+              PsiMethod constructor1 = PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiMethod.class, false);
+              if (superConstructor == null) {
+                CreateFromUsageUtils.setupMethodBody(constructor1);
+              } else {
+                OverrideImplementUtil.setupMethodBody(constructor1, superConstructor, targetClass);
               }
-              catch (IncorrectOperationException e) {
-                LOG.error(e);
-              }
+              CreateFromUsageUtils.setupEditor(constructor1, editor);
+            }
+            catch (IncorrectOperationException e) {
+              LOG.error(e);
             }
           });
         }

@@ -121,13 +121,10 @@ class AddModuleDependencyFix extends OrderEntryFix {
         .setMovable(false)
         .setResizable(false)
         .setRequestFocus(true)
-        .setItemChoosenCallback(new Runnable() {
-          @Override
-          public void run() {
-            final Object value = list.getSelectedValue();
-            if (value instanceof Module) {
-              addDependencyOnModule(project, editor, (Module)value);
-            }
+        .setItemChoosenCallback(() -> {
+          final Object value = list.getSelectedValue();
+          if (value instanceof Module) {
+            addDependencyOnModule(project, editor, (Module)value);
           }
         }).createPopup();
       if (editor != null) {
@@ -139,22 +136,19 @@ class AddModuleDependencyFix extends OrderEntryFix {
   }
 
   private void addDependencyOnModule(final Project project, final Editor editor, final Module module) {
-    final Runnable doit = new Runnable() {
-      @Override
-      public void run() {
-        final boolean test = ModuleRootManager.getInstance(myCurrentModule).getFileIndex().isInTestSourceContent(myClassVFile);
-        JavaProjectModelModificationService.getInstance(project).addDependency(myCurrentModule, module,
-                                                                           test ? DependencyScope.TEST : DependencyScope.COMPILE);
-        if (editor != null) {
-          final List<PsiClass> targetClasses = new ArrayList<PsiClass>();
-          for (PsiClass psiClass : myClasses) {
-            if (ModuleUtilCore.findModuleForPsiElement(psiClass) == module) {
-              targetClasses.add(psiClass);
-            }
+    final Runnable doit = () -> {
+      final boolean test = ModuleRootManager.getInstance(myCurrentModule).getFileIndex().isInTestSourceContent(myClassVFile);
+      JavaProjectModelModificationService.getInstance(project).addDependency(myCurrentModule, module,
+                                                                         test ? DependencyScope.TEST : DependencyScope.COMPILE);
+      if (editor != null) {
+        final List<PsiClass> targetClasses = new ArrayList<PsiClass>();
+        for (PsiClass psiClass : myClasses) {
+          if (ModuleUtilCore.findModuleForPsiElement(psiClass) == module) {
+            targetClasses.add(psiClass);
           }
-          if (!DumbService.isDumb(project)) {
-            new AddImportAction(project, myReference, editor, targetClasses.toArray(new PsiClass[targetClasses.size()])).execute();
-          }
+        }
+        if (!DumbService.isDumb(project)) {
+          new AddImportAction(project, myReference, editor, targetClasses.toArray(new PsiClass[targetClasses.size()])).execute();
         }
       }
     };

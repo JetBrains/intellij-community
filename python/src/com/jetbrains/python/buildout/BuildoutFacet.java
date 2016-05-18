@@ -355,15 +355,12 @@ public class BuildoutFacet extends Facet<BuildoutFacetConfiguration> implements 
       }
     }
     if (rootPath != null) {
-      final File[] scripts = new File(rootPath, "bin").listFiles(new FilenameFilter() {
-        @Override
-        public boolean accept(File dir, String name) {
-          if (SystemInfo.isWindows) {
-            return name.endsWith("-script.py");
-          }
-          String ext = FileUtilRt.getExtension(name);
-          return ext.length() == 0 || FileUtil.namesEqual(ext, "py");
+      final File[] scripts = new File(rootPath, "bin").listFiles((dir, name) -> {
+        if (SystemInfo.isWindows) {
+          return name.endsWith("-script.py");
         }
+        String ext = FileUtilRt.getExtension(name);
+        return ext.length() == 0 || FileUtil.namesEqual(ext, "py");
       });
       if (scripts != null) {
         return Arrays.asList(scripts);

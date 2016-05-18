@@ -115,42 +115,34 @@ public final class SocketLock {
   public ActivateStatus lock(@NotNull final String[] args) throws Exception {
     log("enter: lock(config=%s system=%s)", myConfigPath, mySystemPath);
 
-    return underLocks(new Callable<ActivateStatus>() {
-      @Override
-      public ActivateStatus call() throws Exception {
-        File portMarkerC = new File(myConfigPath, PORT_FILE);
-        File portMarkerS = new File(mySystemPath, PORT_FILE);
+    return underLocks(() -> {
+      File portMarkerC = new File(myConfigPath, PORT_FILE);
+      File portMarkerS = new File(mySystemPath, PORT_FILE);
 
-        MultiMap<Integer, String> portToPath = MultiMap.createSmart();
-        addExistingPort(portMarkerC, myConfigPath, portToPath);
-        addExistingPort(portMarkerS, mySystemPath, portToPath);
-        if (!portToPath.isEmpty()) {
-          for (Map.Entry<Integer, Collection<String>> entry : portToPath.entrySet()) {
-            ActivateStatus status = tryActivate(entry.getKey(), entry.getValue(), args);
-            if (status != ActivateStatus.NO_INSTANCE) {
-              return status;
-            }
+      MultiMap<Integer, String> portToPath = MultiMap.createSmart();
+      addExistingPort(portMarkerC, myConfigPath, portToPath);
+      addExistingPort(portMarkerS, mySystemPath, portToPath);
+      if (!portToPath.isEmpty()) {
+        for (Map.Entry<Integer, Collection<String>> entry : portToPath.entrySet()) {
+          ActivateStatus status = tryActivate(entry.getKey(), entry.getValue(), args);
+          if (status != ActivateStatus.NO_INSTANCE) {
+            return status;
           }
         }
-
-        if (isShutdownCommand()) {
-          System.exit(0);
-        }
-        final String[] lockedPaths = {myConfigPath, mySystemPath};
-        int workerCount = PlatformUtils.isIdeaCommunity() || PlatformUtils.isDatabaseIDE() || PlatformUtils.isCidr() ? 1 : 2;
-        myServer = BuiltInServer.startNioOrOio(workerCount, 6942, 50, false, new NotNullProducer<ChannelHandler>() {
-          @NotNull
-          @Override
-          public ChannelHandler produce() {
-            return new MyChannelInboundHandler(lockedPaths, myActivateListener);
-          }
-        });
-        byte[] portBytes = Integer.toString(myServer.getPort()).getBytes(CharsetToolkit.UTF8_CHARSET);
-        FileUtil.writeToFile(portMarkerC, portBytes);
-        FileUtil.writeToFile(portMarkerS, portBytes);
-        log("exit: lock(): succeed");
-        return ActivateStatus.NO_INSTANCE;
       }
+
+      if (isShutdownCommand()) {
+        System.exit(0);
+      }
+      final String[] lockedPaths = {myConfigPath, mySystemPath};
+      int workerCount = PlatformUtils.isIdeaCommunity() || PlatformUtils.isDatabaseIDE() || PlatformUtils.isCidr() ? 1 : 2;
+      myServer = BuiltInServer.startNioOrOio(workerCount, 6942, 50, false,
+                                             () -> new MyChannelInboundHandler(lockedPaths, myActivateListener));
+      byte[] portBytes = Integer.toString(myServer.getPort()).getBytes(CharsetToolkit.UTF8_CHARSET);
+      FileUtil.writeToFile(portMarkerC, portBytes);
+      FileUtil.writeToFile(portMarkerS, portBytes);
+      log("exit: lock(): succeed");
+      return ActivateStatus.NO_INSTANCE;
     });
   }
 

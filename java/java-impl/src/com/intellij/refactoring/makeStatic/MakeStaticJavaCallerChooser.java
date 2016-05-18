@@ -95,12 +95,7 @@ abstract class MakeStaticJavaCallerChooser extends JavaCallerChooser {
     protected List<PsiMethod> computeCallers() {
       if (getTopMethod().equals(getMethod())) {
         final ArrayList<UsageInfo> items = getTopLevelItems();
-        return ContainerUtil.map(items, new Function<UsageInfo, PsiMethod>() {
-          @Override
-          public PsiMethod fun(UsageInfo info) {
-            return (PsiMethod)info.getElement();
-          }
-        });
+        return ContainerUtil.map(items, info -> (PsiMethod)info.getElement());
       }
       return super.computeCallers();
     }

@@ -187,19 +187,16 @@ public class RenameProcessor extends BaseRefactoringProcessor {
           assertNonCompileElement(element);
         }
         myAllRenames.putAll(renames);
-        final Runnable runnable = new Runnable() {
-          @Override
-          public void run() {
-            for (final Map.Entry<PsiElement, String> entry : renames.entrySet()) {
-              final UsageInfo[] usages =
-                ApplicationManager.getApplication().runReadAction(new Computable<UsageInfo[]>() {
-                  @Override
-                  public UsageInfo[] compute() {
-                    return RenameUtil.findUsages(entry.getKey(), entry.getValue(), mySearchInComments, mySearchTextOccurrences, myAllRenames);
-                  }
-                });
-              Collections.addAll(variableUsages, usages);
-            }
+        final Runnable runnable = () -> {
+          for (final Map.Entry<PsiElement, String> entry : renames.entrySet()) {
+            final UsageInfo[] usages =
+              ApplicationManager.getApplication().runReadAction(new Computable<UsageInfo[]>() {
+                @Override
+                public UsageInfo[] compute() {
+                  return RenameUtil.findUsages(entry.getKey(), entry.getValue(), mySearchInComments, mySearchTextOccurrences, myAllRenames);
+                }
+              });
+            Collections.addAll(variableUsages, usages);
           }
         };
         if (!ProgressManager.getInstance()
@@ -238,19 +235,11 @@ public class RenameProcessor extends BaseRefactoringProcessor {
       }
     }
 
-    final Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          @Override
-          public void run() {
-            for (final AutomaticRenamer renamer : myRenamers) {
-              renamer.findUsages(variableUsages, mySearchInComments, mySearchTextOccurrences, mySkippedUsages, myAllRenames);
-            }
-          }
-        });
+    final Runnable runnable = () -> ApplicationManager.getApplication().runReadAction(() -> {
+      for (final AutomaticRenamer renamer : myRenamers) {
+        renamer.findUsages(variableUsages, mySearchInComments, mySearchTextOccurrences, mySkippedUsages, myAllRenames);
       }
-    };
+    });
 
     return ProgressManager.getInstance()
       .runProcessWithProgressSynchronously(runnable, RefactoringBundle.message("searching.for.variables"), true, myProject);
@@ -434,29 +423,23 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     myNonCodeUsages = nonCodeUsages.toArray(new NonCodeUsageInfo[nonCodeUsages.size()]);
     if (!mySkippedUsages.isEmpty()) {
       if (!ApplicationManager.getApplication().isUnitTestMode() && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            final IdeFrame ideFrame = WindowManager.getInstance().getIdeFrame(myProject);
-            if (ideFrame != null) {
+        ApplicationManager.getApplication().invokeLater(() -> {
+          final IdeFrame ideFrame = WindowManager.getInstance().getIdeFrame(myProject);
+          if (ideFrame != null) {
 
-              StatusBarEx statusBar = (StatusBarEx)ideFrame.getStatusBar();
-              HyperlinkListener listener = new HyperlinkListener() {
-                @Override
-                public void hyperlinkUpdate(HyperlinkEvent e) {
-                  if (e.getEventType() != HyperlinkEvent.EventType.ACTIVATED) return;
-                  Messages.showMessageDialog("<html>Following usages were safely skipped:<br>" +
-                                             StringUtil.join(mySkippedUsages, new Function<UnresolvableCollisionUsageInfo, String>() {
-                                               @Override
-                                               public String fun(UnresolvableCollisionUsageInfo unresolvableCollisionUsageInfo) {
-                                                 return unresolvableCollisionUsageInfo.getDescription();
-                                               }
-                                             }, "<br>") +
-                                             "</html>", "Not All Usages Were Renamed", null);
-                }
-              };
-              statusBar.notifyProgressByBalloon(MessageType.WARNING, "<html><body>Unable to rename certain usages. <a href=\"\">Browse</a></body></html>", null, listener);
-            }
+            StatusBarEx statusBar = (StatusBarEx)ideFrame.getStatusBar();
+            HyperlinkListener listener = new HyperlinkListener() {
+              @Override
+              public void hyperlinkUpdate(HyperlinkEvent e) {
+                if (e.getEventType() != HyperlinkEvent.EventType.ACTIVATED) return;
+                Messages.showMessageDialog("<html>Following usages were safely skipped:<br>" +
+                                           StringUtil.join(mySkippedUsages, unresolvableCollisionUsageInfo -> {
+                                             return unresolvableCollisionUsageInfo.getDescription();
+                                           }, "<br>") +
+                                           "</html>", "Not All Usages Were Renamed", null);
+              }
+            };
+            statusBar.notifyProgressByBalloon(MessageType.WARNING, "<html><body>Unable to rename certain usages. <a href=\"\">Browse</a></body></html>", null, listener);
           }
         }, ModalityState.NON_MODAL);
       }

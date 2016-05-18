@@ -61,12 +61,8 @@ public class DGMCompletionContributor extends CompletionContributor {
                PsiElement position = parameters.getPosition();
                if (!DGMUtil.isInDGMFile(position)) return;
 
-               AllClassesGetter.processJavaClasses(parameters, result.getPrefixMatcher(), true, new Consumer<PsiClass>() {
-                 @Override
-                 public void consume(PsiClass aClass) {
-                   result.addElement(GroovyCompletionUtil.createClassLookupItem(aClass));
-                 }
-               });
+               AllClassesGetter.processJavaClasses(parameters, result.getPrefixMatcher(), true,
+                                                   aClass -> result.addElement(GroovyCompletionUtil.createClassLookupItem(aClass)));
              }
            });
   }

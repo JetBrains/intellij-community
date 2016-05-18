@@ -253,13 +253,7 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
 
   private static <T> T runOnEdt(final Computable<T> computable) {
     final Ref<T> result = new Ref<T>();
-    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-
-      @Override
-      public void run() {
-        result.set(computable.compute());
-      }
-    }, ModalityState.any());
+    ApplicationManager.getApplication().invokeAndWait(() -> result.set(computable.compute()), ModalityState.any());
     return result.get();
   }
 
@@ -474,13 +468,7 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
   }
 
   protected void refreshContentRoot() {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-
-      @Override
-      public void run() {
-        getRepositoryRoot().refresh(false, true);
-      }
-    });
+    ApplicationManager.getApplication().invokeLater(() -> getRepositoryRoot().refresh(false, true));
   }
 
   public void fetchAndRefresh() throws ServerRuntimeException {

@@ -251,13 +251,11 @@ public class XmlUtil {
     final List<IndexedRelevantResource<String, XsdNamespaceBuilder>>
       resources = XmlNamespaceIndex.getResourcesByNamespace(namespace, project, module);
     final PsiManager psiManager = PsiManager.getInstance(project);
-    return ContainerUtil.mapNotNull(resources, new NullableFunction<IndexedRelevantResource<String, XsdNamespaceBuilder>, XmlFile>() {
-      @Override
-      public XmlFile fun(IndexedRelevantResource<String, XsdNamespaceBuilder> resource) {
-        PsiFile file = psiManager.findFile(resource.getFile());
-        return file instanceof XmlFile ? (XmlFile)file : null;
-      }
-    });
+    return ContainerUtil.mapNotNull(resources,
+                                    (NullableFunction<IndexedRelevantResource<String, XsdNamespaceBuilder>, XmlFile>)resource -> {
+                                      PsiFile file = psiManager.findFile(resource.getFile());
+                                      return file instanceof XmlFile ? (XmlFile)file : null;
+                                    });
   }
 
   @Nullable
@@ -817,12 +815,7 @@ public class XmlUtil {
     else {
       final XmlAttribute[] attributes = tag.getAttributes();
       ContainerUtil.sort(list);
-      Arrays.sort(attributes, new Comparator<XmlAttribute>() {
-        @Override
-        public int compare(XmlAttribute attr1, XmlAttribute attr2) {
-          return attr1.getName().compareTo(attr2.getName());
-        }
-      });
+      Arrays.sort(attributes, (attr1, attr2) -> attr1.getName().compareTo(attr2.getName()));
 
       final Iterator<MyAttributeInfo> iter = list.iterator();
       list = new ArrayList<MyAttributeInfo>();
@@ -924,12 +917,9 @@ public class XmlUtil {
   }
 
   public static boolean collectEnumerationValues(final XmlTag element, final HashSet<String> variants) {
-    return processEnumerationValues(element, new Processor<XmlTag>() {
-      @Override
-      public boolean process(XmlTag xmlTag) {
-        variants.add(xmlTag.getAttributeValue(VALUE_ATTR_NAME));
-        return true;
-      }
+    return processEnumerationValues(element, xmlTag -> {
+      variants.add(xmlTag.getAttributeValue(VALUE_ATTR_NAME));
+      return true;
     });
   }
 

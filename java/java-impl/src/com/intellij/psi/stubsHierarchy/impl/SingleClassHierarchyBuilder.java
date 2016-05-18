@@ -104,11 +104,8 @@ public class SingleClassHierarchyBuilder {
       // 1. entering classes
       LOG.info("read classes start");
       indicator.setText("Reading classes");
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        @Override
-        public void run() {
-          StubIndex.getInstance().processAllKeys(JavaStubIndexKeys.UNITS, myProject, processor);
-        }
+      ApplicationManager.getApplication().runReadAction(() -> {
+        StubIndex.getInstance().processAllKeys(JavaStubIndexKeys.UNITS, myProject, processor);
       });
       indicator.setFraction(classes);
       testMemory("0");
@@ -124,11 +121,8 @@ public class SingleClassHierarchyBuilder {
       LOG.info("read sources start");
       indicator.setText("Reading sources");
       processor.isInSourceMode = true;
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        @Override
-        public void run() {
-          StubIndex.getInstance().processAllKeys(JavaStubIndexKeys.UNITS, myProject, processor);
-        }
+      ApplicationManager.getApplication().runReadAction(() -> {
+        StubIndex.getInstance().processAllKeys(JavaStubIndexKeys.UNITS, myProject, processor);
       });
       indicator.setFraction(classes + completeClasses + sources);
 

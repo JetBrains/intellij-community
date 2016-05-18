@@ -115,18 +115,8 @@ public class EditorSearchSession implements SearchSession,
       .addReplaceFieldActions(new PrevOccurrenceAction(false),
                               new NextOccurrenceAction(false))
       .withDataProvider(this)
-      .withCloseAction(new Runnable() {
-        @Override
-        public void run() {
-          close();
-        }
-      })
-      .withReplaceAction(new Runnable() {
-        @Override
-        public void run() {
-          replaceCurrent();
-        }
-      })
+      .withCloseAction(() -> close())
+      .withReplaceAction(() -> replaceCurrent())
       .withSecondarySearchActionsIsModifiedGetter(new BooleanGetter() {
         @Override
         public boolean get() {

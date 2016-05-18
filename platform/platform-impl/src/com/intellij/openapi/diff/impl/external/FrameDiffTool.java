@@ -52,12 +52,9 @@ public class FrameDiffTool implements DiffTool {
       }
       final Runnable onOkRunnable = request.getOnOkRunnable();
       if (onOkRunnable != null){
-        builder.setOkOperation(new Runnable() {
-          @Override
-          public void run() {
-            builder.getDialogWrapper().close(0);
-            onOkRunnable.run();
-          }
+        builder.setOkOperation(() -> {
+          builder.getDialogWrapper().close(0);
+          onOkRunnable.run();
         });
       } else {
         builder.removeAllActions();

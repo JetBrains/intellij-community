@@ -216,13 +216,11 @@ public class ExtractManagedDependenciesAction extends BaseRefactoringAction {
 
     private static Function<MavenDomProjectModel, Set<MavenDomDependency>> getOccurencesFunction(final MavenDomDependency dependency) {
 
-      return new Function<MavenDomProjectModel, Set<MavenDomDependency>>() {
-        public Set<MavenDomDependency> fun(MavenDomProjectModel model) {
-          DependencyConflictId dependencyId = DependencyConflictId.create(dependency);
-          if (dependencyId == null) return Collections.emptySet();
+      return model -> {
+        DependencyConflictId dependencyId = DependencyConflictId.create(dependency);
+        if (dependencyId == null) return Collections.emptySet();
 
-          return MavenDomProjectProcessorUtils.searchDependencyUsages(model, dependencyId, Collections.singleton(dependency));
-        }
+        return MavenDomProjectProcessorUtils.searchDependencyUsages(model, dependencyId, Collections.singleton(dependency));
       };
     }
 

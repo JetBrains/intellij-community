@@ -246,12 +246,7 @@ public class MoveGroovyMemberHandler implements MoveMemberHandler {
         });
       }
       if (!referencedFields.isEmpty()) {
-        Collections.sort(referencedFields, new Comparator<PsiField>() {
-          @Override
-          public int compare(final PsiField o1, final PsiField o2) {
-            return -PsiUtilCore.compareElementsByPosition(o1, o2);
-          }
-        });
+        Collections.sort(referencedFields, (o1, o2) -> -PsiUtilCore.compareElementsByPosition(o1, o2));
         return referencedFields.get(0);
       }
     }

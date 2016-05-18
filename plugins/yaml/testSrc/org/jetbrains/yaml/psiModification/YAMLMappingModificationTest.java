@@ -70,11 +70,8 @@ public class YAMLMappingModificationTest extends LightPlatformCodeInsightFixture
     final YAMLKeyValue dummyKV = YAMLElementGenerator.getInstance(myFixture.getProject()).createYamlKeyValue("foo", valueText);
     assertNotNull(dummyKV.getValue());
     
-    WriteCommandAction.runWriteCommandAction(myFixture.getProject(), new Runnable() {
-      @Override
-      public void run() {
-        keyValue.setValue(dummyKV.getValue());
-      }
+    WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> {
+      keyValue.setValue(dummyKV.getValue());
     });
 
     assertSameLinesWithFile(getTestDataPath() + getTestName(true) + ".txt", myFixture.getFile().getText(), false);
@@ -101,11 +98,8 @@ public class YAMLMappingModificationTest extends LightPlatformCodeInsightFixture
       final YAMLKeyValue dummyKeyValue = YAMLElementGenerator.getInstance(myFixture.getProject()).createYamlKeyValue(key, content);
       assertNotNull(dummyKeyValue);
 
-      WriteCommandAction.runWriteCommandAction(myFixture.getProject(), new Runnable() {
-        @Override
-        public void run() {
-          mapping.putKeyValue(dummyKeyValue);
-        }
+      WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> {
+        mapping.putKeyValue(dummyKeyValue);
       });
     }
 

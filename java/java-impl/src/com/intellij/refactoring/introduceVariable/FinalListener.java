@@ -30,17 +30,15 @@ public class FinalListener {
     LOG.assertTrue(modifierList != null);
     final int textOffset = modifierList.getTextOffset();
 
-    final Runnable runnable = new Runnable() {
-      public void run() {
-        if (generateFinal) {
-          final PsiTypeElement typeElement = variable.getTypeElement();
-          final int typeOffset = typeElement != null ? typeElement.getTextOffset() : textOffset;
-          document.insertString(typeOffset, modifier + " ");
-        }
-        else {
-          final int idx = modifierList.getText().indexOf(modifier);
-          document.deleteString(textOffset + idx, textOffset + idx + modifier.length() + 1);
-        }
+    final Runnable runnable = () -> {
+      if (generateFinal) {
+        final PsiTypeElement typeElement = variable.getTypeElement();
+        final int typeOffset = typeElement != null ? typeElement.getTextOffset() : textOffset;
+        document.insertString(typeOffset, modifier + " ");
+      }
+      else {
+        final int idx = modifierList.getText().indexOf(modifier);
+        document.deleteString(textOffset + idx, textOffset + idx + modifier.length() + 1);
       }
     };
     final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(myEditor);

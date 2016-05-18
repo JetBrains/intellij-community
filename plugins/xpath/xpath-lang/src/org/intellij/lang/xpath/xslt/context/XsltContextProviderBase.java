@@ -150,12 +150,7 @@ public abstract class XsltContextProviderBase extends ContextProvider {
           }
         } catch (StopProcessingException e1) {
           Logger.getInstance(XsltContextProviderBase.class).error("Maximum recursion depth reached. Missing equals()/hashCode() implementation?", StringUtil
-            .join(history, new Function<XmlElementDescriptor, String>() {
-              @Override
-              public String fun(XmlElementDescriptor descriptor) {
-                return descriptor.getClass().getName() + "[" + descriptor.getQualifiedName() + "]";
-              }
-            }, ", "));
+            .join(history, descriptor -> descriptor.getClass().getName() + "[" + descriptor.getQualifiedName() + "]", ", "));
         }
       }
       names.validateNames = names.elementNames.size() > noSchemaNamespaces;

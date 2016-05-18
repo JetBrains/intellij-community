@@ -211,19 +211,16 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
 
     super.loadState(element);
     final NamedScope[] scopes = getEditableScopes();
-    Arrays.sort(scopes, new Comparator<NamedScope>() {
-      @Override
-      public int compare(NamedScope s1, NamedScope s2) {
-        final String name1 = s1.getName();
-        final String name2 = s2.getName();
-        if (Comparing.equal(name1, name2)){
-          return 0;
-        }
-        final List<String> order = myNamedScopeManager.myOrderState.myOrder;
-        final int i1 = order.indexOf(name1);
-        final int i2 = order.indexOf(name2);
-        return i1 > i2 ? 1 : -1;
+    Arrays.sort(scopes, (s1, s2) -> {
+      final String name1 = s1.getName();
+      final String name2 = s2.getName();
+      if (Comparing.equal(name1, name2)){
+        return 0;
       }
+      final List<String> order = myNamedScopeManager.myOrderState.myOrder;
+      final int i1 = order.indexOf(name1);
+      final int i2 = order.indexOf(name2);
+      return i1 > i2 ? 1 : -1;
     });
     super.setScopes(scopes);
     myUnnamedScopes.clear();
@@ -346,17 +343,14 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
   private final List<Pair<NamedScope, NamedScopesHolder>> myScopePairs = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private void reloadScopes() {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        if (getProject().isDisposed()) return;
-        List<Pair<NamedScope, NamedScopesHolder>> scopeList = new ArrayList<Pair<NamedScope, NamedScopesHolder>>();
-        addScopesToList(scopeList, DependencyValidationManagerImpl.this);
-        addScopesToList(scopeList, myNamedScopeManager);
-        myScopePairs.clear();
-        myScopePairs.addAll(scopeList);
-        reloadRules();
-      }
+    UIUtil.invokeLaterIfNeeded(() -> {
+      if (getProject().isDisposed()) return;
+      List<Pair<NamedScope, NamedScopesHolder>> scopeList = new ArrayList<Pair<NamedScope, NamedScopesHolder>>();
+      addScopesToList(scopeList, DependencyValidationManagerImpl.this);
+      addScopesToList(scopeList, myNamedScopeManager);
+      myScopePairs.clear();
+      myScopePairs.addAll(scopeList);
+      reloadRules();
     });
   }
 

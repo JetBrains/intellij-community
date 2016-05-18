@@ -544,14 +544,11 @@ public class ArtifactUtil {
     final Set<Module> modules = new THashSet<Module>();
     final PackagingElementResolvingContext resolvingContext = ArtifactManager.getInstance(project).getResolvingContext();
     for (Artifact artifact : artifacts) {
-      processPackagingElements(artifact, null, new Processor<PackagingElement<?>>() {
-        @Override
-        public boolean process(PackagingElement<?> element) {
-          if (element instanceof ModuleOutputPackagingElement) {
-            ContainerUtil.addIfNotNull(modules, ((ModuleOutputPackagingElement)element).findModule(resolvingContext));
-          }
-          return true;
+      processPackagingElements(artifact, null, element -> {
+        if (element instanceof ModuleOutputPackagingElement) {
+          ContainerUtil.addIfNotNull(modules, ((ModuleOutputPackagingElement)element).findModule(resolvingContext));
         }
+        return true;
       }, resolvingContext, true);
     }
     return modules;
@@ -561,18 +558,15 @@ public class ArtifactUtil {
     ArtifactManager artifactManager = ArtifactManager.getInstance(module.getProject());
     final PackagingElementResolvingContext context = artifactManager.getResolvingContext();
     final Set<Artifact> result = new HashSet<Artifact>();
-    Processor<PackagingElement<?>> processor = new Processor<PackagingElement<?>>() {
-      @Override
-      public boolean process(@NotNull PackagingElement<?> element) {
-        if (element instanceof ProductionModuleOutputPackagingElement
-            && module.equals(((ProductionModuleOutputPackagingElement)element).findModule(context))) {
-          return false;
-        }
-        if (element instanceof ArtifactPackagingElement && result.contains(((ArtifactPackagingElement)element).findArtifact(context))) {
-          return false;
-        }
-        return true;
+    Processor<PackagingElement<?>> processor = element -> {
+      if (element instanceof ProductionModuleOutputPackagingElement
+          && module.equals(((ProductionModuleOutputPackagingElement)element).findModule(context))) {
+        return false;
       }
+      if (element instanceof ArtifactPackagingElement && result.contains(((ArtifactPackagingElement)element).findArtifact(context))) {
+        return false;
+      }
+      return true;
     };
     for (Artifact artifact : artifactManager.getSortedArtifacts()) {
       boolean contains = !processPackagingElements(artifact, null, processor, context, true);

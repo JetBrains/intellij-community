@@ -101,11 +101,7 @@ public class AntHectorConfigurable extends HectorComponentPanel {
     }
 
     final List<String> paths = new ArrayList<String>(myPathToFileMap.keySet());
-    Collections.sort(paths, new Comparator<String>() {
-      public int compare(final String o1, final String o2) {
-        return o1.compareTo(o2);
-      }
-    });
+    Collections.sort(paths, (o1, o2) -> o1.compareTo(o2));
 
     myCombo.addItem(NONE);
     for (String path : paths) {

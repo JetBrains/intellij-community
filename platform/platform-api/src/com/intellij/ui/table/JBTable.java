@@ -381,12 +381,9 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       else {
         myBusyIcon.suspend();
         //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            if (myBusyIcon != null) {
-              repaint();
-            }
+        SwingUtilities.invokeLater(() -> {
+          if (myBusyIcon != null) {
+            repaint();
           }
         });
       }
@@ -454,12 +451,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
         // this replaces focus request in JTable.processKeyBinding
         final IdeFocusManager focusManager = IdeFocusManager.findInstanceByComponent(this);
         focusManager.setTypeaheadEnabled(false);
-        focusManager.requestFocus(editorComp, true).doWhenProcessed(new Runnable() {
-          @Override
-          public void run() {
-            focusManager.setTypeaheadEnabled(true);
-          }
-        });
+        focusManager.requestFocus(editorComp, true).doWhenProcessed(() -> focusManager.setTypeaheadEnabled(true));
       }
 
       setCellEditor(editor);
@@ -809,12 +801,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       tableSize.width += newWidth - column.getWidth();
       JBTable.this.setSize(tableSize);
       // let the table update it's layout with resizing column set
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          setResizingColumn(null);
-        }
-      });
+      ApplicationManager.getApplication().invokeLater(() -> setResizingColumn(null));
     }
 
     private int getColumnToPack(Point p) {

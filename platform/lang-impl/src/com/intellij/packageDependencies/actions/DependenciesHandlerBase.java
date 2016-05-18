@@ -117,17 +117,14 @@ public abstract class DependenciesHandlerBase {
 
   private void onSuccess(final List<DependenciesBuilder> builders) {
     //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (shouldShowDependenciesPanel(builders)) {
-          final String displayName = getPanelDisplayName(builders);
-          DependenciesPanel panel = new DependenciesPanel(myProject, builders, myExcluded);
-          Content content = ContentFactory.SERVICE.getInstance().createContent(panel, displayName, false);
-          content.setDisposer(panel);
-          panel.setContent(content);
-          DependenciesToolWindow.getInstance(myProject).addContent(content);
-        }
+    SwingUtilities.invokeLater(() -> {
+      if (shouldShowDependenciesPanel(builders)) {
+        final String displayName = getPanelDisplayName(builders);
+        DependenciesPanel panel = new DependenciesPanel(myProject, builders, myExcluded);
+        Content content = ContentFactory.SERVICE.getInstance().createContent(panel, displayName, false);
+        content.setDisposer(panel);
+        panel.setContent(content);
+        DependenciesToolWindow.getInstance(myProject).addContent(content);
       }
     });
   }

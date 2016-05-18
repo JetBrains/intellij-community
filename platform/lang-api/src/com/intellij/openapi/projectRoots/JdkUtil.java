@@ -123,13 +123,10 @@ public class JdkUtil {
     File binPath = new File(homePath, "bin");
     if (!binPath.exists()) return false;
 
-    FileFilter fileFilter = new FileFilter() {
-      @Override
-      public boolean accept(@NotNull File f) {
-        if (f.isDirectory()) return false;
-        String name = FileUtil.getNameWithoutExtension(f);
-        return "javac".equals(name) || "javah".equals(name);
-      }
+    FileFilter fileFilter = f -> {
+      if (f.isDirectory()) return false;
+      String name = FileUtil.getNameWithoutExtension(f);
+      return "javac".equals(name) || "javah".equals(name);
     };
     File[] children = binPath.listFiles(fileFilter);
 
@@ -145,12 +142,7 @@ public class JdkUtil {
     File binPath = new File(homePath, "bin");
     if (!binPath.exists()) return false;
 
-    FileFilter fileFilter = new FileFilter() {
-      @Override
-      public boolean accept(@NotNull File f) {
-        return !f.isDirectory() && "java".equals(FileUtil.getNameWithoutExtension(f));
-      }
-    };
+    FileFilter fileFilter = f -> !f.isDirectory() && "java".equals(FileUtil.getNameWithoutExtension(f));
     File[] children = binPath.listFiles(fileFilter);
 
     return children != null && children.length >= 1 &&

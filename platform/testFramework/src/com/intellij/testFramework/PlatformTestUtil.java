@@ -259,22 +259,7 @@ public class PlatformTestUtil {
 
     final AtomicBoolean invoked = new AtomicBoolean();
     final Alarm alarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-    alarm.addRequest(new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            alarm.addRequest(new Runnable() {
-              @Override
-              public void run() {
-                invoked.set(true);
-              }
-            }, delay);
-          }
-        });
-      }
-    }, delay);
+    alarm.addRequest(() -> ApplicationManager.getApplication().invokeLater(() -> alarm.addRequest(() -> invoked.set(true), delay)), delay);
 
     UIUtil.dispatchAllInvocationEvents();
 
@@ -802,12 +787,9 @@ public class PlatformTestUtil {
     Assert.assertNotNull(tempDirectory1.toString(), dirAfter);
     final VirtualFile dirBefore = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory2);
     Assert.assertNotNull(tempDirectory2.toString(), dirBefore);
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        dirAfter.refresh(false, true);
-        dirBefore.refresh(false, true);
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      dirAfter.refresh(false, true);
+      dirBefore.refresh(false, true);
     });
     assertDirectoriesEqual(dirAfter, dirBefore);
   }
@@ -847,13 +829,10 @@ public class PlatformTestUtil {
 
 
   public static Comparator<AbstractTreeNode> createComparator(final Queryable.PrintInfo printInfo) {
-    return new Comparator<AbstractTreeNode>() {
-      @Override
-      public int compare(final AbstractTreeNode o1, final AbstractTreeNode o2) {
-        String displayText1 = o1.toTestString(printInfo);
-        String displayText2 = o2.toTestString(printInfo);
-        return Comparing.compare(displayText1, displayText2);
-      }
+    return (o1, o2) -> {
+      String displayText1 = o1.toTestString(printInfo);
+      String displayText2 = o2.toTestString(printInfo);
+      return Comparing.compare(displayText1, displayText2);
     };
   }
 

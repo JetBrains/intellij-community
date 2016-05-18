@@ -52,20 +52,12 @@ public class StudyRefreshAnswerPlaceholder extends DumbAwareAction {
     AnswerPlaceholder.MyInitialState initialState = answerPlaceholder.getInitialState();
     int startOffset = patternDocument.getLineStartOffset(initialState.myLine) + initialState.myStart;
     final String text = patternDocument.getText(new TextRange(startOffset, startOffset + initialState.myLength));
-    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            Document document = studyState.getEditor().getDocument();
-            int offset = answerPlaceholder.getRealStartOffset(document);
-            document.deleteString(offset, offset + answerPlaceholder.getRealLength());
-            document.insertString(offset, text);
-          }
-        });
-      }
-    }, NAME, null);
+    CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> {
+      Document document = studyState.getEditor().getDocument();
+      int offset = answerPlaceholder.getRealStartOffset(document);
+      document.deleteString(offset, offset + answerPlaceholder.getRealLength());
+      document.insertString(offset, text);
+    }), NAME, null);
   }
 
   @Override

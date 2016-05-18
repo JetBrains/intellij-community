@@ -77,33 +77,29 @@ public class InvokeTemplateAction extends AnAction {
       ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(file);
     }
 
-    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-      public void run() {
-        myEditor.getCaretModel().runForEachCaret(new CaretAction() {
-          public void perform(Caret caret) {
-            // adjust the selection so that it starts with a non-whitespace character (to make sure that the template is inserted
-            // at a meaningful position rather than at indent 0)
-            if (myEditor.getSelectionModel().hasSelection() && myTemplate.isToReformat()) {
-              int offset = myEditor.getSelectionModel().getSelectionStart();
-              int selectionEnd = myEditor.getSelectionModel().getSelectionEnd();
-              int lineEnd = document.getLineEndOffset(document.getLineNumber(offset));
-              while (offset < lineEnd && offset < selectionEnd &&
-                     (document.getCharsSequence().charAt(offset) == ' ' || document.getCharsSequence().charAt(offset) == '\t')) {
-                offset++;
-              }
-              // avoid extra line break after $SELECTION$ in case when selection ends with a complete line
-              if (selectionEnd == document.getLineStartOffset(document.getLineNumber(selectionEnd))) {
-                selectionEnd--;
-              }
-              if (offset < lineEnd && offset < selectionEnd) {  // found non-WS character in first line of selection
-                myEditor.getSelectionModel().setSelection(offset, selectionEnd);
-              }
-            }
-            String selectionString = myEditor.getSelectionModel().getSelectedText();
-            TemplateManager.getInstance(myProject).startTemplate(myEditor, selectionString, myTemplate);
+    CommandProcessor.getInstance().executeCommand(myProject, () -> myEditor.getCaretModel().runForEachCaret(new CaretAction() {
+      public void perform(Caret caret) {
+        // adjust the selection so that it starts with a non-whitespace character (to make sure that the template is inserted
+        // at a meaningful position rather than at indent 0)
+        if (myEditor.getSelectionModel().hasSelection() && myTemplate.isToReformat()) {
+          int offset = myEditor.getSelectionModel().getSelectionStart();
+          int selectionEnd = myEditor.getSelectionModel().getSelectionEnd();
+          int lineEnd = document.getLineEndOffset(document.getLineNumber(offset));
+          while (offset < lineEnd && offset < selectionEnd &&
+                 (document.getCharsSequence().charAt(offset) == ' ' || document.getCharsSequence().charAt(offset) == '\t')) {
+            offset++;
           }
-        });
+          // avoid extra line break after $SELECTION$ in case when selection ends with a complete line
+          if (selectionEnd == document.getLineStartOffset(document.getLineNumber(selectionEnd))) {
+            selectionEnd--;
+          }
+          if (offset < lineEnd && offset < selectionEnd) {  // found non-WS character in first line of selection
+            myEditor.getSelectionModel().setSelection(offset, selectionEnd);
+          }
+        }
+        String selectionString = myEditor.getSelectionModel().getSelectedText();
+        TemplateManager.getInstance(myProject).startTemplate(myEditor, selectionString, myTemplate);
       }
-    }, "Wrap with template", "Wrap with template " + myTemplate.getKey());
+    }), "Wrap with template", "Wrap with template " + myTemplate.getKey());
   }
 }

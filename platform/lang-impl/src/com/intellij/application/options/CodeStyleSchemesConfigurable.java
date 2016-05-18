@@ -206,18 +206,15 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
 
     final List<CodeStyleSettingsProvider> providers =
       Arrays.asList(Extensions.getExtensions(CodeStyleSettingsProvider.EXTENSION_POINT_NAME));
-    Collections.sort(providers, new Comparator<CodeStyleSettingsProvider>() {
-      @Override
-      public int compare(CodeStyleSettingsProvider p1, CodeStyleSettingsProvider p2) {
-        if (!p1.getPriority().equals(p2.getPriority())) {
-          return p1.getPriority().compareTo(p2.getPriority());
-        }
-        String name1 = p1.getConfigurableDisplayName();
-        if (name1 == null) name1 = "";
-        String name2 = p2.getConfigurableDisplayName();
-        if (name2 == null) name2 = "";
-        return name1.compareToIgnoreCase(name2);
+    Collections.sort(providers, (p1, p2) -> {
+      if (!p1.getPriority().equals(p2.getPriority())) {
+        return p1.getPriority().compareTo(p2.getPriority());
       }
+      String name1 = p1.getConfigurableDisplayName();
+      if (name1 == null) name1 = "";
+      String name2 = p2.getConfigurableDisplayName();
+      if (name2 == null) name2 = "";
+      return name1.compareToIgnoreCase(name2);
     });
 
     for (final CodeStyleSettingsProvider provider : providers) {

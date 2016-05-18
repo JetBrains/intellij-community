@@ -212,15 +212,13 @@ public class JavadocGeneratorRunProfile implements ModuleRunProfile {
         try {
           final Collection<String> packages = new HashSet<String>();
           final Collection<String> sources = new HashSet<String>();
-          final Runnable findRunnable = new Runnable() {
-            public void run() {
-              final int scopeType = myGenerationOptions.getScopeType();
-              final boolean usePackageNotation = scopeType == AnalysisScope.MODULE ||
-                                                 scopeType == AnalysisScope.MODULES ||
-                                                 scopeType == AnalysisScope.PROJECT ||
-                                                 scopeType == AnalysisScope.DIRECTORY;
-              myGenerationOptions.accept(new MyContentIterator(myProject, packages, sources, modules, usePackageNotation));
-            }
+          final Runnable findRunnable = () -> {
+            final int scopeType = myGenerationOptions.getScopeType();
+            final boolean usePackageNotation = scopeType == AnalysisScope.MODULE ||
+                                               scopeType == AnalysisScope.MODULES ||
+                                               scopeType == AnalysisScope.PROJECT ||
+                                               scopeType == AnalysisScope.DIRECTORY;
+            myGenerationOptions.accept(new MyContentIterator(myProject, packages, sources, modules, usePackageNotation));
           };
           if (!ProgressManager
             .getInstance()

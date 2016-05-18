@@ -50,11 +50,8 @@ public class LibraryOrderTest extends PsiTestCase {
     order[length - 2] = lib2;
     rootModel.rearrangeOrderEntries(order);
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        rootModel.commit();
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      rootModel.commit();
     }
     );
 

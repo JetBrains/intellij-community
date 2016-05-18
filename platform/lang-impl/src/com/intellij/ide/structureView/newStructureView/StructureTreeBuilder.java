@@ -197,24 +197,18 @@ public class StructureTreeBuilder extends AbstractTreeBuilder {
 
   private void setupUpdateAlarm() {
     myUpdateAlarm.cancelAllRequests();
-    myUpdateAlarm.addRequest(new Runnable() {
-      @Override
-      public void run() {
-        if (!isDisposed() && !myProject.isDisposed()) {
-          addRootToUpdate();
-        }
+    myUpdateAlarm.addRequest(() -> {
+      if (!isDisposed() && !myProject.isDisposed()) {
+        addRootToUpdate();
       }
     }, 300, ModalityState.stateForComponent(getTree()));
   }
 
   final void addRootToUpdate() {
     final AbstractTreeStructure structure = getTreeStructure();
-    structure.asyncCommit().doWhenDone(new Runnable() {
-      @Override
-      public void run() {
-        ((SmartTreeStructure)structure).rebuildTree();
-        getUpdater().addSubtreeToUpdate(getRootNode());
-      }
+    structure.asyncCommit().doWhenDone(() -> {
+      ((SmartTreeStructure)structure).rebuildTree();
+      getUpdater().addSubtreeToUpdate(getRootNode());
     });
   }
 

@@ -80,19 +80,16 @@ public abstract class GroovyRefactoringUtil {
 
   public static PsiElement[] getExpressionOccurrences(@NotNull PsiElement expr, @NotNull PsiElement scope) {
     ArrayList<PsiElement> occurrences = new ArrayList<PsiElement>();
-    Comparator<PsiElement> comparator = new Comparator<PsiElement>() {
-      @Override
-      public int compare(PsiElement element1, PsiElement element2) {
-        if (element1 != null && element1.equals(element2)) return 0;
+    Comparator<PsiElement> comparator = (element1, element2) -> {
+      if (element1 != null && element1.equals(element2)) return 0;
 
-        if (element1 instanceof GrParameter &&
-            element2 instanceof GrParameter) {
-          final String name1 = ((GrParameter) element1).getName();
-          final String name2 = ((GrParameter) element2).getName();
-          return name1.compareTo(name2);
-        }
-        return 1;
+      if (element1 instanceof GrParameter &&
+          element2 instanceof GrParameter) {
+        final String name1 = ((GrParameter) element1).getName();
+        final String name2 = ((GrParameter) element2).getName();
+        return name1.compareTo(name2);
       }
+      return 1;
     };
 
     if (scope instanceof GrLoopStatement) {
@@ -136,13 +133,10 @@ public abstract class GroovyRefactoringUtil {
   }
 
   public static void sortOccurrences(PsiElement[] occurrences) {
-    Arrays.sort(occurrences, new Comparator<PsiElement>() {
-      @Override
-      public int compare(PsiElement elem1, PsiElement elem2) {
-        final int offset1 = elem1.getTextRange().getStartOffset();
-        final int offset2 = elem2.getTextRange().getStartOffset();
-        return offset1 - offset2;
-      }
+    Arrays.sort(occurrences, (elem1, elem2) -> {
+      final int offset1 = elem1.getTextRange().getStartOffset();
+      final int offset2 = elem2.getTextRange().getStartOffset();
+      return offset1 - offset2;
     });
   }
 

@@ -71,11 +71,8 @@ public abstract class ResolveTestCase extends PsiTestCase {
         myDocument = FileDocumentManager.getInstance().getDocument(existing);
         assertNotNull(myDocument);
         final String finalFileText = fileText;
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            myDocument.setText(finalFileText);
-          }
+        ApplicationManager.getApplication().runWriteAction(() -> {
+          myDocument.setText(finalFileText);
         });
 
         myFile = PsiManager.getInstance(getProject()).findFile(existing);

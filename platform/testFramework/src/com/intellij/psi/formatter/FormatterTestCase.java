@@ -155,20 +155,11 @@ public abstract class FormatterTestCase extends LightPlatformTestCase {
 
   @SuppressWarnings({"UNUSED_SYMBOL"})
   private void restoreFileContent(final PsiFile file, final String text) {
-    CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            final Document document = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-            document.replaceString(0, document.getTextLength(), text);
-            PsiDocumentManager.getInstance(getProject()).commitDocument(document);
-          }
-        });
-
-      }
-    }, "test", null);
+    CommandProcessor.getInstance().executeCommand(getProject(), () -> ApplicationManager.getApplication().runWriteAction(() -> {
+      final Document document = PsiDocumentManager.getInstance(getProject()).getDocument(file);
+      document.replaceString(0, document.getTextLength(), text);
+      PsiDocumentManager.getInstance(getProject()).commitDocument(document);
+    }), "test", null);
   }
 
   protected boolean doCheckDocumentUpdate() {
@@ -192,29 +183,26 @@ public abstract class FormatterTestCase extends LightPlatformTestCase {
       editor = null;
     }
 
-    WriteCommandAction.runWriteCommandAction(getProject(), new Runnable() {
-      @Override
-      public void run() {
-        document.replaceString(0, document.getTextLength(), text);
-        PsiDocumentManager.getInstance(getProject()).commitDocument(document);
-        assertEquals(file.getText(), document.getText());
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      document.replaceString(0, document.getTextLength(), text);
+      PsiDocumentManager.getInstance(getProject()).commitDocument(document);
+      assertEquals(file.getText(), document.getText());
 
-        try {
-          if (doReformatRangeTest) {
-            CodeStyleManager.getInstance(getProject())
-              .reformatRange(file, file.getTextRange().getStartOffset(), file.getTextRange().getEndOffset());
-          }
-          else if (myTextRange != null) {
-            CodeStyleManager.getInstance(getProject()).reformatText(file, myTextRange.getStartOffset(), myTextRange.getEndOffset());
-          }
-          else {
-            CodeStyleManager.getInstance(getProject())
-              .reformatText(file, file.getTextRange().getStartOffset(), file.getTextRange().getEndOffset());
-          }
+      try {
+        if (doReformatRangeTest) {
+          CodeStyleManager.getInstance(getProject())
+            .reformatRange(file, file.getTextRange().getStartOffset(), file.getTextRange().getEndOffset());
         }
-        catch (IncorrectOperationException e) {
-          fail();
+        else if (myTextRange != null) {
+          CodeStyleManager.getInstance(getProject()).reformatText(file, myTextRange.getStartOffset(), myTextRange.getEndOffset());
         }
+        else {
+          CodeStyleManager.getInstance(getProject())
+            .reformatText(file, file.getTextRange().getStartOffset(), file.getTextRange().getEndOffset());
+        }
+      }
+      catch (IncorrectOperationException e) {
+        fail();
       }
     });
 
@@ -225,17 +213,9 @@ public abstract class FormatterTestCase extends LightPlatformTestCase {
 
   @SuppressWarnings({"UNUSED_SYMBOL"})
   private void checkPsi(final PsiFile file, String textAfter) {
-    CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            performFormatting(file);
-          }
-        });
-      }
-    }, "", "");
+    CommandProcessor.getInstance().executeCommand(getProject(), () -> ApplicationManager.getApplication().runWriteAction(() -> {
+      performFormatting(file);
+    }), "", "");
 
 
     String fileText = file.getText();
@@ -381,31 +361,23 @@ public abstract class FormatterTestCase extends LightPlatformTestCase {
       final PsiFile file = PsiFileFactory.getInstance(getProject()).createFileFromText(fileName, getFileType(fileName), StringUtil.convertLineSeparators(text), LocalTimeCounter.currentTime(), true);
 
       try {
-        CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
-          @Override
-          public void run() {
-            ApplicationManager.getApplication().runWriteAction(new Runnable() {
-              @Override
-              public void run() {
-                try {
-                  if (formatWithPsi) {
-                    performFormatting(file);
-                  }
-                  else {
-                    performFormattingWithDocument(file);
-                  }
-                }
-                catch (Throwable e) {
-                  //noinspection CallToPrintStackTrace
-                  e.printStackTrace();
-                  failedFiles.add(subFile);
-                }
-                //noinspection UseOfSystemOutOrSystemErr
-                System.out.println(subFile.getPath() + ": finished");
-              }
-            });
+        CommandProcessor.getInstance().executeCommand(getProject(), () -> ApplicationManager.getApplication().runWriteAction(() -> {
+          try {
+            if (formatWithPsi) {
+              performFormatting(file);
+            }
+            else {
+              performFormattingWithDocument(file);
+            }
           }
-        }, "", null);
+          catch (Throwable e) {
+            //noinspection CallToPrintStackTrace
+            e.printStackTrace();
+            failedFiles.add(subFile);
+          }
+          //noinspection UseOfSystemOutOrSystemErr
+          System.out.println(subFile.getPath() + ": finished");
+        }), "", null);
       }
       finally {
         final VirtualFile virtualFile = file.getVirtualFile();

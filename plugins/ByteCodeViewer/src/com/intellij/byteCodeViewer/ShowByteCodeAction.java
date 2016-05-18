@@ -126,13 +126,10 @@ public class ShowByteCodeAction extends AnAction {
           }
           final ByteCodeViewerComponent component = new ByteCodeViewerComponent(project, null);
           component.setText(myByteCode, targetElement);
-          Processor<JBPopup> pinCallback = new Processor<JBPopup>() {
-            @Override
-            public boolean process(JBPopup popup) {
-              codeViewerManager.recreateToolWindow(targetElement, targetElement);
-              popup.cancel();
-              return false;
-            }
+          Processor<JBPopup> pinCallback = popup -> {
+            codeViewerManager.recreateToolWindow(targetElement, targetElement);
+            popup.cancel();
+            return false;
           };
 
           final JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(component, null)

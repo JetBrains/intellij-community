@@ -170,10 +170,8 @@ public abstract class StringMatcher<T> {
 
     protected MatcherSet(Set<StringMatcher> target) {
       super(target);
-      myPattern = StringUtil.join(target, new Function<StringMatcher, String>() {
-        public String fun(StringMatcher s) {
-          return s.getPattern();
-        }
+      myPattern = StringUtil.join(target, s -> {
+        return s.getPattern();
       }, "|");
     }
 

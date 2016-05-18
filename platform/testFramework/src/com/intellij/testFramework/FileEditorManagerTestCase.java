@@ -102,12 +102,7 @@ public abstract class FileEditorManagerTestCase extends LightPlatformCodeInsight
 
     myManager.loadState(rootElement);
 
-    Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        myManager.getMainSplitters().openFiles();
-      }
-    });
+    Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> myManager.getMainSplitters().openFiles());
     while (true) {
       try {
         future.get(100, TimeUnit.MILLISECONDS);

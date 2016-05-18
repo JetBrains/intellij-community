@@ -113,20 +113,10 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
     init();
     if (initialFile != null) {
       // dialog does not exist yet
-      SwingUtilities.invokeLater(new Runnable(){
-        @Override
-        public void run() {
-          selectFile(initialFile);
-        }
-      });
+      SwingUtilities.invokeLater(() -> selectFile(initialFile));
     }
 
-    SwingUtilities.invokeLater(new Runnable(){
-      @Override
-      public void run() {
-        handleSelectionChanged();
-      }
-    });
+    SwingUtilities.invokeLater(() -> handleSelectionChanged());
   }
 
   @Override
@@ -264,12 +254,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
     myTabbedPane.addTab(IdeBundle.message("tab.chooser.project"), scrollPane);
     myTabbedPane.addTab(IdeBundle.message("tab.chooser.search.by.name"), dummyPanel);
 
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        myGotoByNamePanel.invoke(new MyCallback(), ModalityState.stateForComponent(getRootPane()), false);
-      }
-    });
+    SwingUtilities.invokeLater(() -> myGotoByNamePanel.invoke(new MyCallback(), ModalityState.stateForComponent(getRootPane()), false));
 
     myTabbedPane.addChangeListener(
       new ChangeListener() {
@@ -313,12 +298,9 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
   @Override
   public void selectFile(@NotNull final PsiFile file) {
     // Select element in the tree
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (myBuilder != null) {
-          myBuilder.select(file, file.getVirtualFile(), true);
-        }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (myBuilder != null) {
+        myBuilder.select(file, file.getVirtualFile(), true);
       }
     }, ModalityState.stateForComponent(getWindow()));
   }
@@ -424,11 +406,8 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
       if (myFileType != null && myProject != null) {
         GlobalSearchScope scope = myShowLibraryContents ? GlobalSearchScope.allScope(myProject) : GlobalSearchScope.projectScope(myProject);
         Collection<VirtualFile> virtualFiles = FileTypeIndex.getFiles(myFileType, scope);
-        fileNames = ContainerUtil.map2Array(virtualFiles, String.class, new Function<VirtualFile, String>() {
-          @Override
-          public String fun(VirtualFile file) {
-            return file.getName();
-          }
+        fileNames = ContainerUtil.map2Array(virtualFiles, String.class, file -> {
+          return file.getName();
         });
       }
       else {

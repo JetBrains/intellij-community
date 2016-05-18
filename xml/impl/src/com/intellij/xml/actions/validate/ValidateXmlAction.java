@@ -39,12 +39,7 @@ public class ValidateXmlAction extends AnAction {
     ValidateXmlActionHandler handler = new ValidateXmlActionHandler(true);
     handler.setErrorReporter(
       new StdErrorReporter(handler, file.getProject(),
-        new Runnable() {
-          @Override
-          public void run() {
-            doRunAction(file);
-          }
-        }
+                           () -> doRunAction(file)
       )
     );
     return handler;
@@ -60,28 +55,22 @@ public class ValidateXmlAction extends AnAction {
 
   private void doRunAction(final @NotNull PsiFile psiFile) {
 
-    CommandProcessor.getInstance().executeCommand(psiFile.getProject(), new Runnable(){
-        @Override
-        public void run(){
-          final Runnable action = new Runnable() {
-            @Override
-            public void run() {
-              try {
-                psiFile.putUserData(runningValidationKey, "");
-                PsiDocumentManager.getInstance(psiFile.getProject()).commitAllDocuments();
+    CommandProcessor.getInstance().executeCommand(psiFile.getProject(), () -> {
+      final Runnable action = () -> {
+        try {
+          psiFile.putUserData(runningValidationKey, "");
+          PsiDocumentManager.getInstance(psiFile.getProject()).commitAllDocuments();
 
-                getHandler(psiFile).doValidate((XmlFile)psiFile);
-              }
-              finally {
-                psiFile.putUserData(runningValidationKey, null);
-              }
-            }
-          };
-          ApplicationManager.getApplication().runWriteAction(action);
+          getHandler(psiFile).doValidate((XmlFile)psiFile);
         }
-      },
-      getCommandName(),
-      null
+        finally {
+          psiFile.putUserData(runningValidationKey, null);
+        }
+      };
+      ApplicationManager.getApplication().runWriteAction(action);
+    },
+                                                  getCommandName(),
+                                                  null
     );
   }
 

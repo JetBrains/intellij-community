@@ -226,11 +226,7 @@ public class DiffPanelOuterComponent extends JPanel implements DataProvider {
 
     public void deferScroll(final DiffPanelOuterComponent outer) {
       if (!outer.isDisplayable()) return;
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          outer.performScroll();
-        }
-      });
+      SwingUtilities.invokeLater(() -> outer.performScroll());
     }
   };
 

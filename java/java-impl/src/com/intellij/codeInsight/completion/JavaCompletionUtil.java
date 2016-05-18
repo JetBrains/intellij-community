@@ -112,11 +112,8 @@ public class JavaCompletionUtil {
   }
 
   public static void putAllMethods(LookupElement item, List<PsiMethod> methods) {
-    item.putUserData(ALL_METHODS_ATTRIBUTE, ContainerUtil.map(methods, new Function<PsiMethod, SmartPsiElementPointer<PsiMethod>>() {
-      @Override
-      public SmartPsiElementPointer<PsiMethod> fun(PsiMethod method) {
-        return SmartPointerManager.getInstance(method.getProject()).createSmartPsiElementPointer(method);
-      }
+    item.putUserData(ALL_METHODS_ATTRIBUTE, ContainerUtil.map(methods, method -> {
+      return SmartPointerManager.getInstance(method.getProject()).createSmartPsiElementPointer(method);
     }));
   }
 
@@ -124,11 +121,8 @@ public class JavaCompletionUtil {
     List<SmartPsiElementPointer<PsiMethod>> pointers = item.getUserData(ALL_METHODS_ATTRIBUTE);
     if (pointers == null) return null;
 
-    return ContainerUtil.mapNotNull(pointers, new Function<SmartPsiElementPointer<PsiMethod>, PsiMethod>() {
-      @Override
-      public PsiMethod fun(SmartPsiElementPointer<PsiMethod> pointer) {
-        return pointer.getElement();
-      }
+    return ContainerUtil.mapNotNull(pointers, pointer -> {
+      return pointer.getElement();
     });
   }
 
@@ -338,12 +332,9 @@ public class JavaCompletionUtil {
       PsiElement refQualifier = ((PsiJavaCodeReferenceElement)javaReference).getQualifier();
       if (refQualifier == null) {
         final StaticMemberProcessor memberProcessor = new JavaStaticMemberProcessor(parameters);
-        memberProcessor.processMembersOfRegisteredClasses(matcher, new PairConsumer<PsiMember, PsiClass>() {
-          @Override
-          public void consume(PsiMember member, PsiClass psiClass) {
-            if (!mentioned.contains(member) && processor.satisfies(member, ResolveState.initial())) {
-              set.add(memberProcessor.createLookupElement(member, psiClass, true));
-            }
+        memberProcessor.processMembersOfRegisteredClasses(matcher, (member, psiClass) -> {
+          if (!mentioned.contains(member) && processor.satisfies(member, ResolveState.initial())) {
+            set.add(memberProcessor.createLookupElement(member, psiClass, true));
           }
         });
       }

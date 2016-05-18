@@ -81,24 +81,16 @@ public class RepositoryUtils {
     }
     final String localRepositoryPath =
       FileUtil.toSystemIndependentName(MavenProjectsManager.getInstance(project).getLocalRepository().getPath());
-    List<String> roots = JBIterable.of(urls).transform(new Function<String, String>() {
-      @Override
-      public String fun(String urlWithPrefix) {
-        String url = StringUtil.trimStart(urlWithPrefix, JarFileSystem.PROTOCOL_PREFIX);
-        return url.startsWith(localRepositoryPath) ? null : FileUtil.toSystemDependentName(PathUtil.getParentPath(url));
-      }
+    List<String> roots = JBIterable.of(urls).transform(urlWithPrefix -> {
+      String url = StringUtil.trimStart(urlWithPrefix, JarFileSystem.PROTOCOL_PREFIX);
+      return url.startsWith(localRepositoryPath) ? null : FileUtil.toSystemDependentName(PathUtil.getParentPath(url));
     }).toList();
     Map<String, Integer> counts = new HashMap<String, Integer>();
     for (String root : roots) {
       int count = counts.get(root) != null ? counts.get(root) : 0;
       counts.put(root, count + 1);
     }
-    return Collections.max(counts.entrySet(), new Comparator<Map.Entry<String, Integer>>() {
-      @Override
-      public int compare(Map.Entry<String, Integer> o1, Map.Entry<String, Integer> o2) {
-        return o1.getValue().compareTo(o2.getValue());
-      }
-    }).getKey();
+    return Collections.max(counts.entrySet(), (o1, o2) -> o1.getValue().compareTo(o2.getValue())).getKey();
   }
 
   public static String resolveEffectiveVersion(@NotNull Project project, @NotNull RepositoryLibraryProperties properties) {
@@ -145,33 +137,26 @@ public class RepositoryUtils {
           @Override
           public void process(final @Nullable List<OrderRoot> roots) {
             if (roots == null || roots.isEmpty()) {
-              ApplicationManager.getApplication().invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                  Messages.showErrorDialog(project, ProjectBundle.message("maven.downloading.failed", properties.getMavenId()),
-                                           CommonBundle.getErrorTitle());
-                }
-              });
+              ApplicationManager.getApplication().invokeLater(
+                () -> Messages.showErrorDialog(project, ProjectBundle.message("maven.downloading.failed", properties.getMavenId()),
+                                             CommonBundle.getErrorTitle()));
               return;
             }
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                if (library.isDisposed()) {
-                  return;
-                }
-                AccessToken token = WriteAction.start();
-                try {
-                  final NewLibraryEditor editor = new NewLibraryEditor(null, properties);
-                  editor.removeAllRoots();
-                  editor.addRoots(roots);
-                  final Library.ModifiableModel model = library.getModifiableModel();
-                  editor.applyTo((LibraryEx.ModifiableModelEx)model);
-                  model.commit();
-                }
-                finally {
-                  token.finish();
-                }
+            ApplicationManager.getApplication().invokeLater(() -> {
+              if (library.isDisposed()) {
+                return;
+              }
+              AccessToken token = WriteAction.start();
+              try {
+                final NewLibraryEditor editor = new NewLibraryEditor(null, properties);
+                editor.removeAllRoots();
+                editor.addRoots(roots);
+                final Library.ModifiableModel model = library.getModifiableModel();
+                editor.applyTo((LibraryEx.ModifiableModelEx)model);
+                model.commit();
+              }
+              finally {
+                token.finish();
               }
             });
           }

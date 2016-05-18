@@ -46,14 +46,10 @@ public class SendStatisticsAction extends AnAction {
         StatisticsService service = StatisticsUploadAssistant.getStatisticsService();
         final StatisticsResult result = service.send();
 
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            Messages.showMultilineInputDialog(project, "Result: " + result.getCode(), "Statistics Result",
-                                              StringUtil.replace(result.getDescription(), ";", "\n"),
-                                              null, null);
-          }
-        }, ModalityState.NON_MODAL, project.getDisposed());
+        ApplicationManager.getApplication().invokeLater(
+          () -> Messages.showMultilineInputDialog(project, "Result: " + result.getCode(), "Statistics Result",
+                                                StringUtil.replace(result.getDescription(), ";", "\n"),
+                                                null, null), ModalityState.NON_MODAL, project.getDisposed());
       }
     });
   }

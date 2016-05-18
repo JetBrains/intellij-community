@@ -46,12 +46,7 @@ class SequentialCleanupTask implements SequentialTask {
       PsiFile file = entry.getKey();
       List<HighlightInfo> infos = entry.getValue();
       // sort from bottom to top
-      Collections.sort(infos, new Comparator<HighlightInfo>() {
-        @Override
-        public int compare(HighlightInfo info1, HighlightInfo info2) {
-          return info2.getStartOffset() - info1.getStartOffset();
-        }
-      });
+      Collections.sort(infos, (info1, info2) -> info2.getStartOffset() - info1.getStartOffset());
       for (HighlightInfo info : infos) {
         myResults.add(Pair.create(file, info));
       }

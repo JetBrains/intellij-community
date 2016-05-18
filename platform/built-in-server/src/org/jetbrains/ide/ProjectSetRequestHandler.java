@@ -65,12 +65,9 @@ public class ProjectSetRequestHandler extends RestService {
   @Override
   public String execute(@NotNull QueryStringDecoder urlDecoder, @NotNull FullHttpRequest request, @NotNull ChannelHandlerContext context) throws IOException {
     final JsonObject descriptor = new JsonParser().parse(createJsonReader(request)).getAsJsonObject();
-    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-      @Override
-      public void run() {
-        new ProjectSetReader().readDescriptor(descriptor, null);
-        activateLastFocusedFrame();
-      }
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      new ProjectSetReader().readDescriptor(descriptor, null);
+      activateLastFocusedFrame();
     }, ModalityState.defaultModalityState());
     sendOk(request, context);
     return null;

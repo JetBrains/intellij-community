@@ -35,12 +35,8 @@ public class ColorOptionsTree extends Tree {
 
   public final static String NAME_SEPARATOR = "//";
 
-  private static final Comparator<EditorSchemeAttributeDescriptor> ATTR_COMPARATOR = new Comparator<EditorSchemeAttributeDescriptor>() {
-    @Override
-    public int compare(EditorSchemeAttributeDescriptor o1, EditorSchemeAttributeDescriptor o2) {
-      return StringUtil.naturalCompare(o1.toString(), o2.toString());
-    }
-  };
+  private static final Comparator<EditorSchemeAttributeDescriptor> ATTR_COMPARATOR =
+    (o1, o2) -> StringUtil.naturalCompare(o1.toString(), o2.toString());
 
   public ColorOptionsTree(@NotNull String categoryName) {
     super(createTreeModel());

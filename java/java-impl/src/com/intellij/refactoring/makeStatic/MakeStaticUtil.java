@@ -158,11 +158,7 @@ public class MakeStaticUtil {
     }
 
     final ArrayList<PsiField> psiFields = new ArrayList<PsiField>(reported);
-    Collections.sort(psiFields, new Comparator<PsiField>() {
-      public int compare(PsiField psiField, PsiField psiField1) {
-        return psiField.getName().compareTo(psiField1.getName());
-      }
-    });
+    Collections.sort(psiFields, (psiField, psiField1) -> psiField.getName().compareTo(psiField1.getName()));
     for (final PsiField field : psiFields) {
       if (accessedForWriting.contains(field)) continue;
       VariableData data = new VariableData(field);

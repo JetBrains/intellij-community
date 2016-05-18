@@ -151,11 +151,8 @@ public class SelectPluginsStep extends WizardStep<StartupWizardModel> {
         requiresBuffer.append("   (");
       }
       requiresBuffer.append("required by ");
-      requiresBuffer.append(StringUtil.join(requiredBy, new Function<IdeaPluginDescriptor, String>() {
-        @Override
-        public String fun(IdeaPluginDescriptor ideaPluginDescriptor) {
-          return getAbbreviatedName(ideaPluginDescriptor);
-        }
+      requiresBuffer.append(StringUtil.join(requiredBy, ideaPluginDescriptor -> {
+        return getAbbreviatedName(ideaPluginDescriptor);
       }, ", "));
     }
     if (requiresBuffer.length() > 0) {
@@ -228,11 +225,7 @@ public class SelectPluginsStep extends WizardStep<StartupWizardModel> {
   }
 
   public void fillPlugins() {
-    Collections.sort(myPlugins, new Comparator<IdeaPluginDescriptor>() {
-      public int compare(final IdeaPluginDescriptor o1, final IdeaPluginDescriptor o2) {
-        return StringUtil.compare(o1.getName(), o2.getName(), true);
-      }
-    });
+    Collections.sort(myPlugins, (o1, o2) -> StringUtil.compare(o1.getName(), o2.getName(), true));
     myPluginsList.setModel(new CollectionListModel(myPlugins));
     myPluginsList.setSelectedIndex(0);
   }

@@ -80,12 +80,7 @@ public abstract class AutoScrollFromSourceHandler implements Disposable {
         final FileEditor editor = event.getNewEditor();
         if (editor != null && myComponent.isShowing() && isAutoScrollEnabled()) {
           myAlarm.cancelAllRequests();
-          myAlarm.addRequest(new Runnable() {
-            @Override
-            public void run() {
-              selectElementFromEditor(editor);
-            }
-          }, getAlarmDelay(), getModalityState());
+          myAlarm.addRequest(() -> selectElementFromEditor(editor), getAlarmDelay(), getModalityState());
         }
       }
     });

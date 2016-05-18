@@ -147,40 +147,34 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       }
     });
 
-    final Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        int[] ids = list.getSelectedIndices();
-        if (ids == null || ids.length == 0) return;
-        Object[] selectedElements = list.getSelectedValues();
-        for (Object element : selectedElements) {
-          if (element instanceof AdditionalAction) {
-            ((AdditionalAction)element).execute();
+    final Runnable runnable = () -> {
+      int[] ids = list.getSelectedIndices();
+      if (ids == null || ids.length == 0) return;
+      Object[] selectedElements = list.getSelectedValues();
+      for (Object element : selectedElements) {
+        if (element instanceof AdditionalAction) {
+          ((AdditionalAction)element).execute();
+        }
+        else {
+          Navigatable nav = element instanceof Navigatable ? (Navigatable)element : EditSourceUtil.getDescriptor((PsiElement)element);
+          try {
+            if (nav != null && nav.canNavigate()) {
+              navigateToElement(nav);
+            }
           }
-          else {
-            Navigatable nav = element instanceof Navigatable ? (Navigatable)element : EditSourceUtil.getDescriptor((PsiElement)element);
-            try {
-              if (nav != null && nav.canNavigate()) {
-                navigateToElement(nav);
-              }
-            }
-            catch (IndexNotReadyException e) {
-              DumbService.getInstance(project).showDumbModeNotification("Navigation is not available while indexing");
-            }
+          catch (IndexNotReadyException e) {
+            DumbService.getInstance(project).showDumbModeNotification("Navigation is not available while indexing");
           }
         }
       }
     };
 
     final PopupChooserBuilder builder = new PopupChooserBuilder(list);
-    builder.setFilteringEnabled(new Function<Object, String>() {
-      @Override
-      public String fun(Object o) {
-        if (o instanceof AdditionalAction) {
-          return ((AdditionalAction)o).getText();
-        }
-        return getRenderer(o, gotoData.renderers, gotoData).getElementText((PsiElement)o);
+    builder.setFilteringEnabled(o -> {
+      if (o instanceof AdditionalAction) {
+        return ((AdditionalAction)o).getText();
       }
+      return getRenderer(o, gotoData.renderers, gotoData).getElementText((PsiElement)o);
     });
 
     final Ref<UsageView> usageView = new Ref<UsageView>();
@@ -195,13 +189,10 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
           return true;
         }
       }).
-      setCouldPin(new Processor<JBPopup>() {
-        @Override
-        public boolean process(JBPopup popup) {
-          usageView.set(FindUtil.showInUsageView(gotoData.source, gotoData.targets, getFindUsagesTitle(gotoData.source, name, gotoData.targets.length), project));
-          popup.cancel();
-          return false;
-        }
+      setCouldPin(popup1 -> {
+        usageView.set(FindUtil.showInUsageView(gotoData.source, gotoData.targets, getFindUsagesTitle(gotoData.source, name, gotoData.targets.length), project));
+        popup1.cancel();
+        return false;
       }).
       setAdText(getAdText(gotoData.source, targets.length)).
       createPopup();

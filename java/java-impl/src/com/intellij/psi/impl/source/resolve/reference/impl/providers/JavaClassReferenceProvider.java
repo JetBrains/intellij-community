@@ -147,13 +147,10 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
   }
 
   private static Collection<PsiPackage> getSubPackages(final PsiPackage defaultPackage) {
-    return ContainerUtil.mapNotNull(defaultPackage.getSubPackages(), new NullableFunction<PsiPackage, PsiPackage>() {
-      @Override
-      public PsiPackage fun(final PsiPackage psiPackage) {
-        final String packageName = psiPackage.getName();
-        return PsiNameHelper.getInstance(psiPackage.getProject())
-                 .isIdentifier(packageName, PsiUtil.getLanguageLevel(psiPackage)) ? psiPackage : null;
-      }
+    return ContainerUtil.mapNotNull(defaultPackage.getSubPackages(), (NullableFunction<PsiPackage, PsiPackage>)psiPackage -> {
+      final String packageName = psiPackage.getName();
+      return PsiNameHelper.getInstance(psiPackage.getProject())
+               .isIdentifier(packageName, PsiUtil.getLanguageLevel(psiPackage)) ? psiPackage : null;
     });
   }
 

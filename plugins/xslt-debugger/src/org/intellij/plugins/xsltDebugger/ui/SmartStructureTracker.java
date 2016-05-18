@@ -48,11 +48,9 @@ public class SmartStructureTracker extends TreeModelAdapter {
     final Object child = e.getChildren()[0];
     if (path != null && child != null) {
       myAlarm.cancelAllRequests();
-      final Runnable runnable = new Runnable() {
-        public void run() {
-          myEventTree.expandPath(path);
-          TreeUtil.showRowCentered(myEventTree, myEventTree.getRowForPath(TreeUtil.getPathFromRoot((TreeNode)child)), false);
-        }
+      final Runnable runnable = () -> {
+        myEventTree.expandPath(path);
+        TreeUtil.showRowCentered(myEventTree, myEventTree.getRowForPath(TreeUtil.getPathFromRoot((TreeNode)child)), false);
       };
       myAlarm.addRequest(runnable, 300);
     }
@@ -63,13 +61,12 @@ public class SmartStructureTracker extends TreeModelAdapter {
     final TreePath p = e.getTreePath();
     if (p != null) {
       if (p.getPathCount() > 1) {
-        final Runnable runnable = new Runnable() {
-          public void run() {
-            DefaultMutableTreeNode last = (DefaultMutableTreeNode)p.getLastPathComponent();
-            if (last.getChildCount() > 0) {
-              DefaultMutableTreeNode next = (DefaultMutableTreeNode)last.getFirstChild();
-              while (next != null) {
-                boolean collapse = true;
+        final Runnable runnable = () -> {
+          DefaultMutableTreeNode last = (DefaultMutableTreeNode)p.getLastPathComponent();
+          if (last.getChildCount() > 0) {
+            DefaultMutableTreeNode next = (DefaultMutableTreeNode)last.getFirstChild();
+            while (next != null) {
+              boolean collapse = true;
 //                                final int count = next.getChildCount();
 //                                if (count > 0) {
 //                                    for (int i = 0; i < count; i++) {
@@ -81,11 +78,10 @@ public class SmartStructureTracker extends TreeModelAdapter {
 //                                        }
 //                                    }
 //                                }
-                if (collapse) {
-                  myEventTree.collapsePath(TreeUtil.getPathFromRoot(next));
-                }
-                next = next.getNextSibling();
+              if (collapse) {
+                myEventTree.collapsePath(TreeUtil.getPathFromRoot(next));
               }
+              next = next.getNextSibling();
             }
           }
         };

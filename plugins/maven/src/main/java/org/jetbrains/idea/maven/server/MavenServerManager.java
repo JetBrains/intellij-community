@@ -444,11 +444,8 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
   private static void addMavenLibs(List<File> classpath, File mavenHome) {
     addDir(classpath, new File(mavenHome, "lib"));
     File bootFolder = new File(mavenHome, "boot");
-    File[] classworldsJars = bootFolder.listFiles(new FilenameFilter() {
-      @Override
-      public boolean accept(File dir, String name) {
-        return StringUtil.contains(name, "classworlds");
-      }
+    File[] classworldsJars = bootFolder.listFiles((dir, name) -> {
+      return StringUtil.contains(name, "classworlds");
     });
     if (classworldsJars != null) {
       Collections.addAll(classpath, classworldsJars);

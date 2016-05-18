@@ -300,12 +300,7 @@ public abstract class LanguagePerFileConfigurable<T> implements SearchableConfig
         group.add(createChooseAction(myVirtualFile, null));
       }
       final List<T> values = new ArrayList<T>(myMappings.getAvailableValues(myVirtualFile));
-      Collections.sort(values, new Comparator<T>() {
-        @Override
-        public int compare(final T o1, final T o2) {
-          return visualize(o1).compareTo(visualize(o2));
-        }
-      });
+      Collections.sort(values, (o1, o2) -> visualize(o1).compareTo(visualize(o2)));
       for (T t : values) {
         if (myMappings.isSelectable(t)) {
           group.add(createChooseAction(myVirtualFile, t));

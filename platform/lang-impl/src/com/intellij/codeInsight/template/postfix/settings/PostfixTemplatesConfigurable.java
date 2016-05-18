@@ -47,12 +47,7 @@ import java.util.List;
 
 public class PostfixTemplatesConfigurable implements SearchableConfigurable, EditorOptionsProvider, Configurable.NoScroll {
 
-  public static final Comparator<PostfixTemplate> TEMPLATE_COMPARATOR = new Comparator<PostfixTemplate>() {
-    @Override
-    public int compare(PostfixTemplate o1, PostfixTemplate o2) {
-      return o1.getKey().compareTo(o2.getKey());
-    }
-  };
+  public static final Comparator<PostfixTemplate> TEMPLATE_COMPARATOR = (o1, o2) -> o1.getKey().compareTo(o2.getKey());
 
   @Nullable
   private PostfixTemplatesCheckboxTree myCheckboxTree;

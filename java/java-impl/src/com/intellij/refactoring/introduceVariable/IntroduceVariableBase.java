@@ -700,41 +700,39 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
 
         CommandProcessor.getInstance().executeCommand(
           project,
-          new Runnable() {
-            public void run() {
-              final Editor topLevelEditor ;
-              if (!InjectedLanguageManager.getInstance(project).isInjectedFragment(anchorStatement.getContainingFile())) {
-                topLevelEditor = InjectedLanguageUtil.getTopLevelEditor(editor);
-              } else {
-                topLevelEditor = editor;
+          () -> {
+            final Editor topLevelEditor ;
+            if (!InjectedLanguageManager.getInstance(project).isInjectedFragment(anchorStatement.getContainingFile())) {
+              topLevelEditor = InjectedLanguageUtil.getTopLevelEditor(editor);
+            } else {
+              topLevelEditor = editor;
+            }
+
+            PsiVariable variable = null;
+            try {
+              final IntroduceVariableSettings settings =
+                getSettings(project, topLevelEditor, expr, occurrences, typeSelectorManager, inFinalContext, hasWriteAccess, validator, anchorStatement, choice);
+              if (!settings.isOK()) {
+                wasSucceed[0] = false;
+                return;
               }
 
-              PsiVariable variable = null;
-              try {
-                final IntroduceVariableSettings settings =
-                  getSettings(project, topLevelEditor, expr, occurrences, typeSelectorManager, inFinalContext, hasWriteAccess, validator, anchorStatement, choice);
-                if (!settings.isOK()) {
-                  wasSucceed[0] = false;
-                  return;
-                }
+              final RefactoringEventData beforeData = new RefactoringEventData();
+              beforeData.addElement(expr);
+              project.getMessageBus()
+                .syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringStarted(REFACTORING_ID, beforeData);
 
-                final RefactoringEventData beforeData = new RefactoringEventData();
-                beforeData.addElement(expr);
-                project.getMessageBus()
-                  .syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringStarted(REFACTORING_ID, beforeData);
+              final PsiElement chosenAnchor =
+                chooseAnchor(settings.isReplaceAllOccurrences(), hasWriteAccess, nonWrite, anchorStatementIfAll, anchorStatement);
 
-                final PsiElement chosenAnchor =
-                  chooseAnchor(settings.isReplaceAllOccurrences(), hasWriteAccess, nonWrite, anchorStatementIfAll, anchorStatement);
-
-                variable = ApplicationManager.getApplication().runWriteAction(
-                  introduce(project, expr, topLevelEditor, chosenAnchor, occurrences, settings));
-              }
-              finally {
-                final RefactoringEventData afterData = new RefactoringEventData();
-                afterData.addElement(variable);
-                project.getMessageBus()
-                  .syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringDone(REFACTORING_ID, afterData);
-              }
+              variable = ApplicationManager.getApplication().runWriteAction(
+                introduce(project, expr, topLevelEditor, chosenAnchor, occurrences, settings));
+            }
+            finally {
+              final RefactoringEventData afterData = new RefactoringEventData();
+              afterData.addElement(variable);
+              project.getMessageBus()
+                .syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringDone(REFACTORING_ID, afterData);
             }
           }, REFACTORING_NAME, null);
       }

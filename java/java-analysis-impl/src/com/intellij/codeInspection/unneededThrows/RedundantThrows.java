@@ -301,14 +301,11 @@ public class RedundantThrows extends GlobalJavaBatchInspectionTool {
         }
       } else {
         final Query<Pair<PsiMethod,PsiMethod>> query = AllOverridingMethodsSearch.search(psiMethod.getContainingClass());
-        query.forEach(new Processor<Pair<PsiMethod, PsiMethod>>(){
-          @Override
-          public boolean process(final Pair<PsiMethod, PsiMethod> pair) {
-            if (pair.first == psiMethod) {
-              removeException(null, exceptionType, refsToDelete, pair.second);
-            }
-            return true;
+        query.forEach(pair -> {
+          if (pair.first == psiMethod) {
+            removeException(null, exceptionType, refsToDelete, pair.second);
           }
+          return true;
         });
       }
     }

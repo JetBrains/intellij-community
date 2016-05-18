@@ -122,11 +122,8 @@ public abstract class MavenEmbedderWrapper extends RemoteObjectWrapper<MavenServ
     return perform(new RetriableCancelable<Collection<MavenServerExecutionResult>>() {
       @Override
       public Collection<MavenServerExecutionResult> execute() throws RemoteException, MavenServerProcessCanceledException {
-        final List<File> ioFiles = ContainerUtil.map(files, new Function<VirtualFile, File>() {
-          @Override
-          public File fun(VirtualFile file) {
-            return new File(file.getPath());
-          }
+        final List<File> ioFiles = ContainerUtil.map(files, file -> {
+          return new File(file.getPath());
         });
         return getOrCreateWrappee().resolveProject(ioFiles, activeProfiles, inactiveProfiles);
       }

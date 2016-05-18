@@ -392,12 +392,7 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
 
     container.add(content, new RelativePoint(target.getLocation()));
 
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        window.myUiContainer.setPreferredSize(null);
-      }
-    });
+    SwingUtilities.invokeLater(() -> window.myUiContainer.setPreferredSize(null));
   }
 
   @NotNull
@@ -412,12 +407,7 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
     final Pair<FileEditor[], FileEditorProvider[]> result = fileEditorManager.openFileImpl2(editorWindow, file, true);
     container.add(EditorTabbedContainer.createDockableEditor(myProject, null, file, new Presentation(file.getName()), editorWindow), null);
 
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        window.myUiContainer.setPreferredSize(null);
-      }
-    });
+    SwingUtilities.invokeLater(() -> window.myUiContainer.setPreferredSize(null));
     return result;
   }
 
@@ -477,12 +467,9 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
       myContainer.addListener(new DockContainer.Listener.Adapter() {
         @Override
         public void contentRemoved(Object key) {
-          getReady().doWhenDone(new Runnable() {
-            @Override
-            public void run() {
-              if (myContainer.isEmpty()) {
-                close();
-              }
+          getReady().doWhenDone(() -> {
+            if (myContainer.isEmpty()) {
+              close();
             }
           });
         }
@@ -649,12 +636,7 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
       register(container);
 
       final DockWindow window = createWindowFor(eachId, container);
-      UIUtil.invokeLaterIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          window.show();
-        }
-      });
+      UIUtil.invokeLaterIfNeeded(() -> window.show());
     }
   }
 }

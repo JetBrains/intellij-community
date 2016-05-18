@@ -231,24 +231,16 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
       if (editor != null) {
         editor.putUserData(QuickEditAction.QUICK_EDIT_HANDLER, this);
         final FoldingModel foldingModel = editor.getFoldingModel();
-        foldingModel.runBatchFoldingOperation(new Runnable() {
-          @Override
-          public void run() {
-            for (RangeMarker o : ContainerUtil.reverse(((DocumentEx)myNewDocument).getGuardedBlocks())) {
-              String replacement = o.getUserData(REPLACEMENT_KEY);
-              if (StringUtil.isEmpty(replacement)) continue;
-              FoldRegion region = foldingModel.addFoldRegion(o.getStartOffset(), o.getEndOffset(), replacement);
-              if (region != null) region.setExpanded(false);
-            }
+        foldingModel.runBatchFoldingOperation(() -> {
+          for (RangeMarker o : ContainerUtil.reverse(((DocumentEx)myNewDocument).getGuardedBlocks())) {
+            String replacement = o.getUserData(REPLACEMENT_KEY);
+            if (StringUtil.isEmpty(replacement)) continue;
+            FoldRegion region = foldingModel.addFoldRegion(o.getStartOffset(), o.getEndOffset(), replacement);
+            if (region != null) region.setExpanded(false);
           }
         });
       }
-      SwingUtilities.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
-        }
-      });
+      SwingUtilities.invokeLater(() -> myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE));
 
     }
   }
@@ -262,12 +254,9 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
       // and check it after action is completed
       if (e.getDocument() == myOrigDocument) {
         //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            if (myOrigCreationStamp > myOrigDocument.getModificationStamp()) {
-              closeEditor();
-            }
+        SwingUtilities.invokeLater(() -> {
+          if (myOrigCreationStamp > myOrigDocument.getModificationStamp()) {
+            closeEditor();
           }
         });
       }
@@ -275,21 +264,15 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
     else if (e.getDocument() == myNewDocument) {
       commitToOriginal(e);
       if (!isValid()) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            closeEditor();
-          }
+        ApplicationManager.getApplication().invokeLater(() -> {
+          closeEditor();
         }, myProject.getDisposed());
       }
     }
     else if (e.getDocument() == myOrigDocument) {
       if (myCommittingToOriginal || myAltFullRange != null && myAltFullRange.isValid()) return;
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          closeEditor();
-        }
+      ApplicationManager.getApplication().invokeLater(() -> {
+        closeEditor();
       }, myProject.getDisposed());
     }
   }
@@ -365,15 +348,12 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
     myCommittingToOriginal = true;
     try {
       if (origVirtualFile == null || !ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(origVirtualFile).hasReadonlyFiles()) {
-        PostprocessReformattingAspect.getInstance(myProject).disablePostprocessFormattingInside(new Runnable() {
-          @Override
-          public void run() {
-            if (myAltFullRange != null) {
-              altCommitToOriginal(e);
-              return;
-            }
-            commitToOriginalInner();
+        PostprocessReformattingAspect.getInstance(myProject).disablePostprocessFormattingInside(() -> {
+          if (myAltFullRange != null) {
+            altCommitToOriginal(e);
+            return;
           }
+          commitToOriginalInner();
         });
         PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(myOrigDocument);
       }
@@ -452,16 +432,13 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
 
     // reformat
     PsiDocumentManager.getInstance(myProject).commitDocument(myOrigDocument);
-    Runnable task = new Runnable() {
-      @Override
-      public void run() {
-        try {
-          CodeStyleManager.getInstance(myProject).reformatRange(
-            origPsiFile, hostStartOffset, myAltFullRange.getEndOffset(), true);
-        }
-        catch (IncorrectOperationException e) {
-          //LOG.error(e);
-        }
+    Runnable task = () -> {
+      try {
+        CodeStyleManager.getInstance(myProject).reformatRange(
+          origPsiFile, hostStartOffset, myAltFullRange.getEndOffset(), true);
+      }
+      catch (IncorrectOperationException e1) {
+        //LOG.error(e);
       }
     };
     DocumentUtil.executeInBulk(myOrigDocument, true, task);

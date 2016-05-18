@@ -146,13 +146,10 @@ public class JavaFieldBreakpointType extends JavaLineBreakpointTypeBase<JavaFiel
             PsiField field = psiClass.findFieldByName(fieldName, true);
             if(field != null) {
               final int line = document.getLineNumber(field.getTextOffset());
-              ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                @Override
-                public void run() {
-                  XLineBreakpoint<JavaFieldBreakpointProperties> fieldBreakpoint = XDebuggerManager.getInstance(project).getBreakpointManager()
-                    .addLineBreakpoint(JavaFieldBreakpointType.this, psiFile.getVirtualFile().getUrl(), line, new JavaFieldBreakpointProperties(fieldName, className));
-                  result.set(fieldBreakpoint);
-                }
+              ApplicationManager.getApplication().runWriteAction(() -> {
+                XLineBreakpoint<JavaFieldBreakpointProperties> fieldBreakpoint = XDebuggerManager.getInstance(project).getBreakpointManager()
+                  .addLineBreakpoint(JavaFieldBreakpointType.this, psiFile.getVirtualFile().getUrl(), line, new JavaFieldBreakpointProperties(fieldName, className));
+                result.set(fieldBreakpoint);
               });
               return true;
             }

@@ -76,16 +76,13 @@ public abstract class JavaTestFrameworkDebuggerRunner extends GenericDebuggerRun
                   if (process == null) break;
                   final RemoteConnection connection = new RemoteConnection(true, "127.0.0.1", String.valueOf(read), true);
                   final DebugEnvironment env = new DefaultDebugEnvironment(environment, state, connection, true);
-                  SwingUtilities.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                      try {
-                        ((DebugProcessImpl)process).reattach(env);
-                        accept.getOutputStream().write(0);
-                      }
-                      catch (Exception e) {
-                        e.printStackTrace();
-                      }
+                  SwingUtilities.invokeLater(() -> {
+                    try {
+                      ((DebugProcessImpl)process).reattach(env);
+                      accept.getOutputStream().write(0);
+                    }
+                    catch (Exception e) {
+                      e.printStackTrace();
                     }
                   });
                   read = stream.readInt();

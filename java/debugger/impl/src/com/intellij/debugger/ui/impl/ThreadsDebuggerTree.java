@@ -172,13 +172,11 @@ public class ThreadsDebuggerTree extends DebuggerTree {
         groups = Collections.emptyList();
       }
 
-      DebuggerInvocationUtil.swingInvokeLater(getProject(), new Runnable() {
-        public void run() {
-          getMutableModel().setRoot(root);
-          treeChanged();
-          if (hasThreadToSelect) {
-            selectThread(groups, suspendContextThread, true);
-          }
+      DebuggerInvocationUtil.swingInvokeLater(getProject(), () -> {
+        getMutableModel().setRoot(root);
+        treeChanged();
+        if (hasThreadToSelect) {
+          selectThread(groups, suspendContextThread, true);
         }
       });
     }
@@ -214,11 +212,7 @@ public class ThreadsDebuggerTree extends DebuggerTree {
 
         private void removeListener() {
           final TreeModelAdapter listener = this;
-          SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-              getModel().removeTreeModelListener(listener);
-            }
-          });
+          SwingUtilities.invokeLater(() -> getModel().removeTreeModelListener(listener));
         }
 
         public void treeStructureChanged(TreeModelEvent event) {

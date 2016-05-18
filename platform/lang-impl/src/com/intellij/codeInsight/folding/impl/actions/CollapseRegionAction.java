@@ -35,21 +35,18 @@ public class CollapseRegionAction extends EditorAction {
 
         final int line = editor.getCaretModel().getLogicalPosition().line;
 
-        Runnable processor = new Runnable() {
-          @Override
-          public void run() {
-            FoldRegion region = FoldingUtil.findFoldRegionStartingAtLine(editor, line);
-            if (region != null && region.isExpanded()){
-              region.setExpanded(false);
-            }
-            else {
-              int offset = editor.getCaretModel().getOffset();
-              FoldRegion[] regions = FoldingUtil.getFoldRegionsAtOffset(editor, offset);
-              for (FoldRegion region1 : regions) {
-                if (region1.isExpanded()) {
-                  region1.setExpanded(false);
-                  break;
-                }
+        Runnable processor = () -> {
+          FoldRegion region = FoldingUtil.findFoldRegionStartingAtLine(editor, line);
+          if (region != null && region.isExpanded()){
+            region.setExpanded(false);
+          }
+          else {
+            int offset = editor.getCaretModel().getOffset();
+            FoldRegion[] regions = FoldingUtil.getFoldRegionsAtOffset(editor, offset);
+            for (FoldRegion region1 : regions) {
+              if (region1.isExpanded()) {
+                region1.setExpanded(false);
+                break;
               }
             }
           }

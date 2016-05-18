@@ -123,14 +123,11 @@ public class IntroduceTargetChooser {
       .setMovable(false)
       .setResizable(false)
       .setRequestFocus(true)
-      .setItemChoosenCallback(new Runnable() {
-        @Override
-        public void run() {
-          SmartPsiElementPointer<T> value = (SmartPsiElementPointer<T>)list.getSelectedValue();
-          T expr = value != null ? value.getElement() : null;
-          if (expr != null) {
-            callback.pass(expr);
-          }
+      .setItemChoosenCallback(() -> {
+        SmartPsiElementPointer<T> value = (SmartPsiElementPointer<T>)list.getSelectedValue();
+        T expr = value != null ? value.getElement() : null;
+        if (expr != null) {
+          callback.pass(expr);
         }
       })
       .addListener(new JBPopupAdapter() {

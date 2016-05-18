@@ -400,12 +400,7 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
         PsiType type = typeIterator.next();
         mappings.put(element, type);
       }
-      return new Function<PsiElement, PsiType>() {
-        @Override
-        public PsiType fun(PsiElement element) {
-          return mappings.get(element);
-        }
-      };
+      return element -> mappings.get(element);
     }
   }
 }

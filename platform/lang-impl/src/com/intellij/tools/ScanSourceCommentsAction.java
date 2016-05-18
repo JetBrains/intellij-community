@@ -57,32 +57,29 @@ public class ScanSourceCommentsAction extends AnAction {
       final PrintStream stream = new PrintStream(file);
       stream.println("Comments in " + p.getName());
 
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-        @Override
-        public void run() {
-          final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-          ProjectRootManager.getInstance(p).getFileIndex().iterateContent(new ContentIterator() {
-            @Override
-            public boolean processFile(VirtualFile fileOrDir) {
-              if (fileOrDir.isDirectory()) {
-                indicator.setText("Extracting comments");
-                indicator.setText2(fileOrDir.getPresentableUrl());
-              }
-              scanCommentsInFile(p, fileOrDir);
-              return true;
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+        final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+        ProjectRootManager.getInstance(p).getFileIndex().iterateContent(new ContentIterator() {
+          @Override
+          public boolean processFile(VirtualFile fileOrDir) {
+            if (fileOrDir.isDirectory()) {
+              indicator.setText("Extracting comments");
+              indicator.setText2(fileOrDir.getPresentableUrl());
             }
-          });
-
-          indicator.setText2("");
-          int count = 1;
-          for (CommentDescriptor descriptor : myComments.values()) {
-            stream.println("#" + count + " ---------------------------------------------------------------");
-            descriptor.print(stream);
-            stream.println();
-            count++;
+            scanCommentsInFile(p, fileOrDir);
+            return true;
           }
+        });
 
+        indicator.setText2("");
+        int count = 1;
+        for (CommentDescriptor descriptor : myComments.values()) {
+          stream.println("#" + count + " ---------------------------------------------------------------");
+          descriptor.print(stream);
+          stream.println();
+          count++;
         }
+
       }, "Generating Comments", true, p);
 
 
@@ -109,20 +106,17 @@ public class ScanSourceCommentsAction extends AnAction {
 
   private void scanCommentsInFile(final Project project, final VirtualFile vFile) {
     if (!vFile.isDirectory() && vFile.getFileType() instanceof LanguageFileType) {
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        @Override
-        public void run() {
-          PsiFile psiFile = PsiManager.getInstance(project).findFile(vFile);
-          if (psiFile == null) return;
+      ApplicationManager.getApplication().runReadAction(() -> {
+        PsiFile psiFile = PsiManager.getInstance(project).findFile(vFile);
+        if (psiFile == null) return;
 
-          for (PsiFile root : psiFile.getViewProvider().getAllFiles()) {
-            root.accept(new PsiRecursiveElementWalkingVisitor() {
-              @Override
-              public void visitComment(PsiComment comment) {
-                commentFound(vFile, comment.getText());
-              }
-            });
-          }
+        for (PsiFile root : psiFile.getViewProvider().getAllFiles()) {
+          root.accept(new PsiRecursiveElementWalkingVisitor() {
+            @Override
+            public void visitComment(PsiComment comment) {
+              commentFound(vFile, comment.getText());
+            }
+          });
         }
       });
     }

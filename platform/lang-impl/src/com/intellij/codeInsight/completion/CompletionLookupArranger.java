@@ -54,13 +54,10 @@ public class CompletionLookupArranger extends LookupArranger {
   private static final Alarm ourStatsAlarm = new Alarm(ApplicationManager.getApplication());
   private static final Key<String> GLOBAL_PRESENTATION_INVARIANT = Key.create("PRESENTATION_INVARIANT");
   private final Key<String> PRESENTATION_INVARIANT = Key.create("PRESENTATION_INVARIANT");
-  private final Comparator<LookupElement> BY_PRESENTATION_COMPARATOR = new Comparator<LookupElement>() {
-    @Override
-    public int compare(LookupElement o1, LookupElement o2) {
-      String invariant = PRESENTATION_INVARIANT.get(o1);
-      assert invariant != null;
-      return StringUtil.naturalCompare(invariant, PRESENTATION_INVARIANT.get(o2));
-    }
+  private final Comparator<LookupElement> BY_PRESENTATION_COMPARATOR = (o1, o2) -> {
+    String invariant = PRESENTATION_INVARIANT.get(o1);
+    assert invariant != null;
+    return StringUtil.naturalCompare(invariant, PRESENTATION_INVARIANT.get(o2));
   };
   static final int MAX_PREFERRED_COUNT = 5;
   public static final Key<WeighingContext> WEIGHING_CONTEXT = Key.create("WEIGHING_CONTEXT");
@@ -502,12 +499,9 @@ public class CompletionLookupArranger extends LookupArranger {
       }
     };
 
-    ourStatsAlarm.addRequest(new Runnable() {
-      @Override
-      public void run() {
-        if (ourPendingUpdate == update) {
-          applyLastCompletionStatisticsUpdate();
-        }
+    ourStatsAlarm.addRequest(() -> {
+      if (ourPendingUpdate == update) {
+        applyLastCompletionStatisticsUpdate();
       }
     }, 20 * 1000);
 

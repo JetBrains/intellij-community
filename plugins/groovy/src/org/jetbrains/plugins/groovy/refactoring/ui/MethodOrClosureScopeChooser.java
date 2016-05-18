@@ -151,12 +151,7 @@ public class MethodOrClosureScopeChooser {
           else {
             toSearchFor = superMethod.isEnabled() && superMethod.isSelected() ? ToSearchIn.getParent() : null;
           }
-          IdeFocusManager.findInstance().doWhenFocusSettlesDown(new Runnable() {
-            @Override
-            public void run() {
-              callback.fun(ToSearchIn, toSearchFor);
-            }
-          });
+          IdeFocusManager.findInstance().doWhenFocusSettlesDown(() -> callback.fun(ToSearchIn, toSearchFor));
         }
       }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)));
 

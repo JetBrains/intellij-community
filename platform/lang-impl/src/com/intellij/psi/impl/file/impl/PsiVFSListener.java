@@ -103,19 +103,16 @@ public class PsiVFSListener extends VirtualFileAdapter {
 
     myConnection = project.getMessageBus().connect(project);
 
-    StartupManager.getInstance(project).registerPreStartupActivity(new Runnable() {
-      @Override
-      public void run() {
-        myConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new MyModuleRootListener());
-        myConnection.subscribe(FileTypeManager.TOPIC, new FileTypeListener.Adapter() {
-          @Override
-          public void fileTypesChanged(@NotNull FileTypeEvent e) {
-            myFileManager.processFileTypesChanged();
-          }
-        });
-        myConnection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new MyFileDocumentManagerAdapter());
-        myFileManager.markInitialized();
-      }
+    StartupManager.getInstance(project).registerPreStartupActivity(() -> {
+      myConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new MyModuleRootListener());
+      myConnection.subscribe(FileTypeManager.TOPIC, new FileTypeListener.Adapter() {
+        @Override
+        public void fileTypesChanged(@NotNull FileTypeEvent e) {
+          myFileManager.processFileTypesChanged();
+        }
+      });
+      myConnection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new MyFileDocumentManagerAdapter());
+      myFileManager.markInitialized();
     });
   }
 

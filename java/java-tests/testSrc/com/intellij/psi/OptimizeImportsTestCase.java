@@ -27,31 +27,23 @@ import com.intellij.testFramework.PsiTestCase;
 public abstract class OptimizeImportsTestCase extends PsiTestCase {
   protected void doTest(final String extension) throws Exception {
     CommandProcessor.getInstance().executeCommand(
-      getProject(), new Runnable() {
-      @Override
-      public void run() {
-        WriteCommandAction.runWriteCommandAction(null, new Runnable() {
-          @Override
-          public void run() {
-            String fileName = getTestName(false) + extension;
-            try {
-              String text = loadFile(fileName);
-              PsiFile file = createFile(fileName, text);
+      getProject(), () -> WriteCommandAction.runWriteCommandAction(null, () -> {
+        String fileName = getTestName(false) + extension;
+        try {
+          String text = loadFile(fileName);
+          PsiFile file = createFile(fileName, text);
 
-              JavaCodeStyleManager.getInstance(myProject).optimizeImports(file);
-              PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
-              PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-              String textAfter = loadFile(getTestName(false) + "_after" + extension);
-              String fileText = file.getText();
-              assertEquals(textAfter, fileText);
-            }
-            catch (Exception e) {
-              LOG.error(e);
-            }
-          }
-        });
-      }
-    }, "", "");
+          JavaCodeStyleManager.getInstance(myProject).optimizeImports(file);
+          PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
+          PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+          String textAfter = loadFile(getTestName(false) + "_after" + extension);
+          String fileText = file.getText();
+          assertEquals(textAfter, fileText);
+        }
+        catch (Exception e) {
+          LOG.error(e);
+        }
+      }), "", "");
 
   }
 }

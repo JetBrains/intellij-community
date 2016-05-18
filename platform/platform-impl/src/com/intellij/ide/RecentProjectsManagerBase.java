@@ -339,19 +339,16 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
 
     if (!isDuplicatesCacheUpdating) {
       isDuplicatesCacheUpdating = true; //assuming that this check happens only on EDT. So, no synchronised block or double-checked locking needed
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-        @Override
-        public void run() {
-          Set<String> names = ContainerUtil.newHashSet();
-          final HashSet<String> duplicates = ContainerUtil.newHashSet();
-          for (String path : ContainerUtil.concat(openedPaths, recentPaths)) {
-            if (!names.add(getProjectName(path))) {
-              duplicates.add(path);
-            }
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        Set<String> names = ContainerUtil.newHashSet();
+        final HashSet<String> duplicates = ContainerUtil.newHashSet();
+        for (String path : ContainerUtil.concat(openedPaths, recentPaths)) {
+          if (!names.add(getProjectName(path))) {
+            duplicates.add(path);
           }
-          myDuplicatesCache = duplicates;
-          isDuplicatesCacheUpdating = false;
         }
+        myDuplicatesCache = duplicates;
+        isDuplicatesCacheUpdating = false;
       });
     }
     return ContainerUtil.newHashSet();
@@ -541,14 +538,11 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
     synchronized (myNamesToResolve) {
       myNamesToResolve.add(path);
     }
-    myNamesResolver.addRequest(new Runnable() {
-      @Override
-      public void run() {
-        final Set<String> paths = Collections.synchronizedSet(myNamesToResolve);
-        synchronized (myNamesToResolve) {myNamesToResolve.clear();}
-        for (String p : paths) {
-          myNameCache.put(p, readProjectName(p));
-        }
+    myNamesResolver.addRequest(() -> {
+      final Set<String> paths = Collections.synchronizedSet(myNamesToResolve);
+      synchronized (myNamesToResolve) {myNamesToResolve.clear();}
+      for (String p : paths) {
+        myNameCache.put(p, readProjectName(p));
       }
     }, 50);
     return FileUtilRt.getNameWithoutExtension(new File(path).getName());

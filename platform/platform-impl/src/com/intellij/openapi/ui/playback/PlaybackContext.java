@@ -89,12 +89,9 @@ public abstract class PlaybackContext  {
 
   public void flushAwtAndRunInEdt(final Runnable runnable) {
     if (EventQueue.isDispatchThread()) {
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-        @Override
-        public void run() {
-          getRobot().waitForIdle();
-          SwingUtilities.invokeLater(runnable);
-        }
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        getRobot().waitForIdle();
+        SwingUtilities.invokeLater(runnable);
       });
     } else {
       getRobot().waitForIdle();
@@ -103,17 +100,14 @@ public abstract class PlaybackContext  {
   }
 
   public void delayAndRunInEdt(final Runnable runnable, final long delay) {
-    runPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          Thread.currentThread().sleep(delay);
-        }
-        catch (InterruptedException e) {
-
-        }
-        SwingUtilities.invokeLater(runnable);
+    runPooledThread(() -> {
+      try {
+        Thread.currentThread().sleep(delay);
       }
+      catch (InterruptedException e) {
+
+      }
+      SwingUtilities.invokeLater(runnable);
     });
   }
   

@@ -94,11 +94,8 @@ public abstract class PyMultiFileResolveTestCase extends PyResolveTestCase {
     final PsiFile psiFile = prepareFile();
     final PsiReference ref = PyResolveTestCase.findReferenceByMarker(psiFile);
     if (ref instanceof PsiPolyVariantReference) {
-      return ContainerUtil.map(((PsiPolyVariantReference)ref).multiResolve(false), new Function<ResolveResult, PsiElement>() {
-        @Override
-        public PsiElement fun(ResolveResult result) {
-          return result.getElement();
-        }
+      return ContainerUtil.map(((PsiPolyVariantReference)ref).multiResolve(false), result -> {
+        return result.getElement();
       });
     }
     return Collections.singletonList(ref.resolve());

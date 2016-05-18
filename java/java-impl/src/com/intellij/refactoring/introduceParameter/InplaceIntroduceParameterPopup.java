@@ -204,28 +204,21 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
                                       isGenerateDelegate(),
                                       getType(),
                                       parametersToRemove);
-    final Runnable runnable = new Runnable() {
-      public void run() {
-        final Runnable performRefactoring = new Runnable() {
-          public void run() {
-            processor.setPrepareSuccessfulSwingThreadCallback(new Runnable() {
-              @Override
-              public void run() {
-              }
-            });
-            processor.run();
-            normalizeParameterIdxAccordingToRemovedParams(parametersToRemove);
-            final PsiParameter parameter = getParameter();
-            if (parameter != null) {
-              InplaceIntroduceParameterPopup.super.saveSettings(parameter);
-            }
-          }
-        };
-        if (ApplicationManager.getApplication().isUnitTestMode()) {
-          performRefactoring.run();
-        } else {
-          ApplicationManager.getApplication().invokeLater(performRefactoring);
+    final Runnable runnable = () -> {
+      final Runnable performRefactoring = () -> {
+        processor.setPrepareSuccessfulSwingThreadCallback(() -> {
+        });
+        processor.run();
+        normalizeParameterIdxAccordingToRemovedParams(parametersToRemove);
+        final PsiParameter parameter = getParameter();
+        if (parameter != null) {
+          InplaceIntroduceParameterPopup.super.saveSettings(parameter);
         }
+      };
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        performRefactoring.run();
+      } else {
+        ApplicationManager.getApplication().invokeLater(performRefactoring);
       }
     };
     CommandProcessor.getInstance().executeCommand(myProject, runnable, getCommandName(), null);

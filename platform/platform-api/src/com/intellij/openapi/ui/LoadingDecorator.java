@@ -98,16 +98,10 @@ public class LoadingDecorator {
 
     myStartRequest = true;
     if (myDelay > 0) {
-      myStartAlarm.addRequest(new Runnable() {
-        public void run() {
-          UIUtil.invokeLaterIfNeeded(new Runnable() {
-            public void run() {
-              if (!myStartRequest) return;
-              _startLoading(takeSnapshot);
-            }
-          });
-        }
-      }, myDelay);
+      myStartAlarm.addRequest(() -> UIUtil.invokeLaterIfNeeded(() -> {
+        if (!myStartRequest) return;
+        _startLoading(takeSnapshot);
+      }), myDelay);
     }
     else {
       _startLoading(takeSnapshot);

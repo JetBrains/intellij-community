@@ -67,30 +67,27 @@ public class PyDefUseUtil {
                                                        final boolean acceptTypeAssertions, final boolean acceptImplicitImports) {
     final Collection<Instruction> result = new LinkedHashSet<Instruction>();
     ControlFlowUtil.iteratePrev(instr, instructions,
-                                new Function<Instruction, ControlFlowUtil.Operation>() {
-                                  @Override
-                                  public ControlFlowUtil.Operation fun(Instruction instruction) {
-                                    final PsiElement element = instruction.getElement();
-                                    final PyImplicitImportNameDefiner implicit = PyUtil.as(element, PyImplicitImportNameDefiner.class);
-                                    if (instruction instanceof ReadWriteInstruction) {
-                                      final ReadWriteInstruction rwInstruction = (ReadWriteInstruction)instruction;
-                                      final ReadWriteInstruction.ACCESS access = rwInstruction.getAccess();
-                                      if (access.isWriteAccess() || acceptTypeAssertions && access.isAssertTypeAccess()) {
-                                        final String name = elementName(element);
-                                        if (Comparing.strEqual(name, varName)) {
-                                          result.add(rwInstruction);
-                                          return ControlFlowUtil.Operation.CONTINUE;
-                                        }
-                                      }
-                                    }
-                                    else if (acceptImplicitImports && implicit != null) {
-                                      if (!implicit.multiResolveName(varName).isEmpty()) {
-                                        result.add(instruction);
+                                instruction -> {
+                                  final PsiElement element = instruction.getElement();
+                                  final PyImplicitImportNameDefiner implicit = PyUtil.as(element, PyImplicitImportNameDefiner.class);
+                                  if (instruction instanceof ReadWriteInstruction) {
+                                    final ReadWriteInstruction rwInstruction = (ReadWriteInstruction)instruction;
+                                    final ReadWriteInstruction.ACCESS access = rwInstruction.getAccess();
+                                    if (access.isWriteAccess() || acceptTypeAssertions && access.isAssertTypeAccess()) {
+                                      final String name = elementName(element);
+                                      if (Comparing.strEqual(name, varName)) {
+                                        result.add(rwInstruction);
                                         return ControlFlowUtil.Operation.CONTINUE;
                                       }
                                     }
-                                    return ControlFlowUtil.Operation.NEXT;
                                   }
+                                  else if (acceptImplicitImports && implicit != null) {
+                                    if (!implicit.multiResolveName(varName).isEmpty()) {
+                                      result.add(instruction);
+                                      return ControlFlowUtil.Operation.CONTINUE;
+                                    }
+                                  }
+                                  return ControlFlowUtil.Operation.NEXT;
                                 });
     return result;
   }

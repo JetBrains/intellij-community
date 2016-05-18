@@ -70,12 +70,7 @@ abstract class LightDirectoryIndex<T> {
 
   public void reinitRoots() {
     myInfoCache.clear();
-    collectRoots(new PairConsumer<VirtualFile, T>() {
-      @Override
-      public void consume(VirtualFile file, T info) {
-        cacheInfo(file, info);
-      }
-    });
+    collectRoots((file, info) -> cacheInfo(file, info));
   }
 
   protected abstract void collectRoots(@NotNull PairConsumer<VirtualFile, T> consumer);

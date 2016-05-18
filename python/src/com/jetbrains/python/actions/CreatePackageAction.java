@@ -63,13 +63,10 @@ public class CreatePackageAction extends DumbAwareAction {
         }
       }
     };
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
-      public void run() {
-        Messages.showInputDialog(project, IdeBundle.message("prompt.enter.new.package.name"),
-                                          IdeBundle.message("title.new.package"),
-                                          Messages.getQuestionIcon(), "", validator);
-      }
-    });
+    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND,
+                                            () -> Messages.showInputDialog(project, IdeBundle.message("prompt.enter.new.package.name"),
+                                                                                                               IdeBundle.message("title.new.package"),
+                                                                                                               Messages.getQuestionIcon(), "", validator));
     final PsiFileSystemItem result = validator.getCreatedElement();
     if (result != null) {
       view.selectElement(result);

@@ -106,14 +106,11 @@ class SkeletonTestTask extends PyExecutionFixtureTestTask {
       assert skeletonFile.delete() : "Failed to delete file " + skeletonFile;
     }
 
-    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-      @Override
-      public void run() {
-        myFixture.copyFileToProject("dotNet/" + mySourceFileToRunGenerationOn, mySourceFileToRunGenerationOn); // File that uses CLR library
-        myFixture.copyFileToProject("dotNet/PythonLibs.dll", "PythonLibs.dll"); // Library itself
-        myFixture.copyFileToProject("dotNet/SingleNameSpace.dll", "SingleNameSpace.dll"); // Another library
-        myFixture.configureByFile(mySourceFileToRunGenerationOn);
-      }
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      myFixture.copyFileToProject("dotNet/" + mySourceFileToRunGenerationOn, mySourceFileToRunGenerationOn); // File that uses CLR library
+      myFixture.copyFileToProject("dotNet/PythonLibs.dll", "PythonLibs.dll"); // Library itself
+      myFixture.copyFileToProject("dotNet/SingleNameSpace.dll", "SingleNameSpace.dll"); // Another library
+      myFixture.configureByFile(mySourceFileToRunGenerationOn);
     }, ModalityState.NON_MODAL);
     myFixture.enableInspections(PyUnresolvedReferencesInspection.class); // This inspection should suggest us to generate stubs
 

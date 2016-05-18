@@ -115,18 +115,15 @@ public class SingleClassHierarchy {
     // compacting
     result = Arrays.copyOf(result, i);
 
-    Arrays.sort(result, new Comparator<SmartClassAnchor>() {
-      @Override
-      public int compare(SmartClassAnchor o1, SmartClassAnchor o2) {
-        int i1 = o1.myFileId;
-        int i2 = o2.myFileId;
-        if (i1 < i2) {
-          return -1;
-        } else if (i1 > i2) {
-          return +1;
-        } else {
-          return 0;
-        }
+    Arrays.sort(result, (o1, o2) -> {
+      int i1 = o1.myFileId;
+      int i2 = o2.myFileId;
+      if (i1 < i2) {
+        return -1;
+      } else if (i1 > i2) {
+        return +1;
+      } else {
+        return 0;
       }
     });
     return result;

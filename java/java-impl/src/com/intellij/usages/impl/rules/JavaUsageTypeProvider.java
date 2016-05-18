@@ -121,12 +121,9 @@ public class JavaUsageTypeProvider implements UsageTypeProviderEx {
       if ((me1 = supers1Q.poll()) != null) {
         if (supers2.contains(me1)) return true;
         supers1.add(me1);
-        PsiSuperMethodImplUtil.processDirectSuperMethodsSmart(me1, new Processor<PsiMethod>() {
-          @Override
-          public boolean process(PsiMethod psiMethod) {
-            supers1Q.add(psiMethod);
-            return true;
-          }
+        PsiSuperMethodImplUtil.processDirectSuperMethodsSmart(me1, psiMethod -> {
+          supers1Q.add(psiMethod);
+          return true;
         });
       }
 
@@ -134,12 +131,9 @@ public class JavaUsageTypeProvider implements UsageTypeProviderEx {
       if ((me2 = supers2Q.poll()) != null) {
         if (supers1.contains(me2)) return true;
         supers2.add(me2);
-        PsiSuperMethodImplUtil.processDirectSuperMethodsSmart(me2, new Processor<PsiMethod>() {
-          @Override
-          public boolean process(PsiMethod psiMethod) {
-            supers2Q.add(psiMethod);
-            return true;
-          }
+        PsiSuperMethodImplUtil.processDirectSuperMethodsSmart(me2, psiMethod -> {
+          supers2Q.add(psiMethod);
+          return true;
         });
       }
       if (me1 == null && me2 == null) break;

@@ -76,13 +76,9 @@ public class GutterIconsConfigurable implements Configurable, Configurable.NoScr
     @SuppressWarnings("unchecked")
     LanguageExtensionPoint<LineMarkerProvider>[] extensions = (LanguageExtensionPoint<LineMarkerProvider>[])point.getExtensions();
     NullableFunction<LanguageExtensionPoint<LineMarkerProvider>, PluginDescriptor> function =
-      new NullableFunction<LanguageExtensionPoint<LineMarkerProvider>, PluginDescriptor>() {
-        @Nullable
-        @Override
-        public PluginDescriptor fun(LanguageExtensionPoint<LineMarkerProvider> point) {
-          LineMarkerProvider instance = point.getInstance();
-          return instance instanceof LineMarkerProviderDescriptor && ((LineMarkerProviderDescriptor)instance).getName() != null ? point.getPluginDescriptor() : null;
-        }
+      point1 -> {
+        LineMarkerProvider instance = point1.getInstance();
+        return instance instanceof LineMarkerProviderDescriptor && ((LineMarkerProviderDescriptor)instance).getName() != null ? point1.getPluginDescriptor() : null;
       };
     MultiMap<PluginDescriptor, LanguageExtensionPoint<LineMarkerProvider>> map = ContainerUtil.groupBy(Arrays.asList(extensions), function);
     Map<GutterIconDescriptor, PluginDescriptor> pluginDescriptorMap = ContainerUtil.newHashMap();
@@ -119,12 +115,9 @@ public class GutterIconsConfigurable implements Configurable, Configurable.NoScr
     }
     myDescriptors.addAll(options);
     */
-    myDescriptors.sort(new Comparator<GutterIconDescriptor>() {
-      @Override
-      public int compare(GutterIconDescriptor o1, GutterIconDescriptor o2) {
-        if (pluginDescriptorMap.get(o1) != pluginDescriptorMap.get(o2)) return 0;
-        return Comparing.compare(o1.getName(), o2.getName());
-      }
+    myDescriptors.sort((o1, o2) -> {
+      if (pluginDescriptorMap.get(o1) != pluginDescriptorMap.get(o2)) return 0;
+      return Comparing.compare(o1.getName(), o2.getName());
     });
     PluginDescriptor current = null;
     for (GutterIconDescriptor descriptor : myDescriptors) {
@@ -135,12 +128,7 @@ public class GutterIconsConfigurable implements Configurable, Configurable.NoScr
       }
     }
 
-    myList.setItems(myDescriptors, new Function<GutterIconDescriptor, String>() {
-      @Override
-      public String fun(GutterIconDescriptor descriptor) {
-        return descriptor.getName();
-      }
-    });
+    myList.setItems(myDescriptors, descriptor -> descriptor.getName());
     myShowGutterIconsJBCheckBox.addChangeListener(e -> myList.setEnabled(myShowGutterIconsJBCheckBox.isSelected()));
     return myPanel;
   }

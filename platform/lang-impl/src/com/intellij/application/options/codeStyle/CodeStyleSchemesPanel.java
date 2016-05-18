@@ -50,12 +50,7 @@ public class CodeStyleSchemesPanel {
       @Override
       public void actionPerformed(@NotNull ActionEvent e) {
         if (!myIsReset) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                  onCombo();
-                }
-              });
+          ApplicationManager.getApplication().invokeLater(() -> onCombo());
         }
       }
     });

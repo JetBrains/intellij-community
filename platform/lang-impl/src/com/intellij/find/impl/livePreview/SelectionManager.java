@@ -46,20 +46,17 @@ public class SelectionManager {
         FoldingModel foldingModel = editor.getFoldingModel();
         final FoldRegion[] allRegions = editor.getFoldingModel().getAllFoldRegions();
 
-        foldingModel.runBatchFoldingOperation(new Runnable() {
-          @Override
-          public void run() {
-            for (FoldRegion region : myRegionsToRestore) {
-              if (region.isValid()) region.setExpanded(false);
-            }
-            myRegionsToRestore.clear();
-            for (FoldRegion region : allRegions) {
-              if (!region.isValid()) continue;
-              if (cursor.intersects(TextRange.create(region))) {
-                if (!region.isExpanded()) {
-                  region.setExpanded(true);
-                  myRegionsToRestore.add(region);
-                }
+        foldingModel.runBatchFoldingOperation(() -> {
+          for (FoldRegion region : myRegionsToRestore) {
+            if (region.isValid()) region.setExpanded(false);
+          }
+          myRegionsToRestore.clear();
+          for (FoldRegion region : allRegions) {
+            if (!region.isValid()) continue;
+            if (cursor.intersects(TextRange.create(region))) {
+              if (!region.isExpanded()) {
+                region.setExpanded(true);
+                myRegionsToRestore.add(region);
               }
             }
           }

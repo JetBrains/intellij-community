@@ -130,12 +130,9 @@ public abstract class ArchivedProjectTemplate implements ProjectTemplate {
   private static List<WizardInputField> getFields(Element templateElement) {
     //noinspection unchecked
     return ContainerUtil
-      .mapNotNull(templateElement.getChildren(INPUT_FIELD), new Function<Element, WizardInputField>() {
-        @Override
-        public WizardInputField fun(Element element) {
-          ProjectTemplateParameterFactory factory = WizardInputField.getFactoryById(element.getText());
-          return factory == null ? null : factory.createField(element.getAttributeValue(INPUT_DEFAULT));
-        }
+      .mapNotNull(templateElement.getChildren(INPUT_FIELD), element -> {
+        ProjectTemplateParameterFactory factory = WizardInputField.getFactoryById(element.getText());
+        return factory == null ? null : factory.createField(element.getAttributeValue(INPUT_DEFAULT));
       });
   }
 

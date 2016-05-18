@@ -82,15 +82,13 @@ public class ContextTest extends TaskManagerTestCase {
 
     final XsltBreakpointType type = XBreakpointType.EXTENSION_POINT_NAME.findExtension(XsltBreakpointType.class);
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        XLineBreakpointImpl<XBreakpointProperties> breakpoint =
-          (XLineBreakpointImpl<XBreakpointProperties>)breakpointManager.addLineBreakpoint(type, "foo", 0, null);
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      XLineBreakpointImpl<XBreakpointProperties> breakpoint =
+        (XLineBreakpointImpl<XBreakpointProperties>)breakpointManager.addLineBreakpoint(type, "foo", 0, null);
 
-        final String name = "foo";
-        manager.saveContext(name, null);
-        breakpointManager.removeBreakpoint(breakpoint);
-      }
+      final String name = "foo";
+      manager.saveContext(name, null);
+      breakpointManager.removeBreakpoint(breakpoint);
     });
     manager.loadContext("foo");
     Collection<? extends XLineBreakpoint<XBreakpointProperties>> breakpoints = breakpointManager.getBreakpoints(type);

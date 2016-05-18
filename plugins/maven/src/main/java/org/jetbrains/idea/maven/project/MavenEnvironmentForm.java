@@ -66,23 +66,17 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
     DocumentAdapter listener = new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
-        UIUtil.invokeLaterIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            if (isUpdating) return;
-            if (!panel.isShowing()) return;
+        UIUtil.invokeLaterIfNeeded(() -> {
+          if (isUpdating) return;
+          if (!panel.isShowing()) return;
 
-            myUpdateAlarm.cancelAllRequests();
-            myUpdateAlarm.addRequest(new Runnable() {
-                @Override
-                public void run() {
-                  isUpdating = true;
-                  userSettingsFileOverrider.updateDefault();
-                  localRepositoryOverrider.updateDefault();
-                  isUpdating = false;
-                }
-              }, 100);
-          }
+          myUpdateAlarm.cancelAllRequests();
+          myUpdateAlarm.addRequest(() -> {
+            isUpdating = true;
+            userSettingsFileOverrider.updateDefault();
+            localRepositoryOverrider.updateDefault();
+            isUpdating = false;
+          }, 100);
         });
       }
     };

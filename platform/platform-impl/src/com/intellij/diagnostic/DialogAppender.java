@@ -58,15 +58,12 @@ public class DialogAppender extends AppenderSkeleton {
     else {
       // Note, we MUST avoid SYNCHRONOUS invokeAndWait to prevent deadlocks
       //noinspection SSBasedInspection
-      SwingUtilities.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            appendToLoggers(event, new ErrorLogger[]{ DEFAULT_LOGGER });
-          }
-          finally {
-            myPendingAppendCounts.decrementAndGet();
-          }
+      SwingUtilities.invokeLater(() -> {
+        try {
+          appendToLoggers(event, new ErrorLogger[]{ DEFAULT_LOGGER });
+        }
+        finally {
+          myPendingAppendCounts.decrementAndGet();
         }
       });
     }
@@ -94,15 +91,12 @@ public class DialogAppender extends AppenderSkeleton {
       if (!logger.canHandle(ideaEvent)) {
         continue;
       }
-      myDialogRunnable = new Runnable() {
-        @Override
-        public void run() {
-          try {
-            logger.handle(ideaEvent);
-          }
-          finally {
-            myDialogRunnable = null;
-          }
+      myDialogRunnable = () -> {
+        try {
+          logger.handle(ideaEvent);
+        }
+        finally {
+          myDialogRunnable = null;
         }
       };
 

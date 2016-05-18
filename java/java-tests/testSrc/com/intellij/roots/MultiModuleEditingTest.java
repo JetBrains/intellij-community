@@ -170,11 +170,8 @@ public class MultiModuleEditingTest extends ModuleTestCase {
       assertSame(moduleA, moduleManager.findModuleByName("a"));
       assertEquals("c", moduleModel.getNewName(moduleA));
       assertSame(moduleA, moduleModel.getModuleToBeRenamed("c"));
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          moduleModel.commit();
-        }
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        moduleModel.commit();
       });
     }
 

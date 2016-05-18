@@ -85,35 +85,32 @@ public class PyPackageManagerUI {
       final Map<String, Set<PyPackage>> dependentPackages = collectDependents(packages, mySdk);
       final int[] warning = {0};
       if (!dependentPackages.isEmpty()) {
-        ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-          @Override
-          public void run() {
-            if (dependentPackages.size() == 1) {
-              String message = "You are attempting to uninstall ";
-              List<String> dep = new ArrayList<String>();
-              int size = 1;
-              for (Map.Entry<String, Set<PyPackage>> entry : dependentPackages.entrySet()) {
-                final Set<PyPackage> value = entry.getValue();
-                size = value.size();
-                dep.add(entry.getKey() + " package which is required for " + StringUtil.join(value, ", "));
-              }
-              message += StringUtil.join(dep, "\n");
-              message += size == 1 ? " package" : " packages";
-              message += "\n\nDo you want to proceed?";
-              warning[0] = Messages.showYesNoDialog(message, "Warning",
-                                                    AllIcons.General.BalloonWarning);
+        ApplicationManager.getApplication().invokeAndWait(() -> {
+          if (dependentPackages.size() == 1) {
+            String message = "You are attempting to uninstall ";
+            List<String> dep = new ArrayList<String>();
+            int size = 1;
+            for (Map.Entry<String, Set<PyPackage>> entry : dependentPackages.entrySet()) {
+              final Set<PyPackage> value = entry.getValue();
+              size = value.size();
+              dep.add(entry.getKey() + " package which is required for " + StringUtil.join(value, ", "));
             }
-            else {
-              String message = "You are attempting to uninstall packages which are required for another packages.\n\n";
-              List<String> dep = new ArrayList<String>();
-              for (Map.Entry<String, Set<PyPackage>> entry : dependentPackages.entrySet()) {
-                dep.add(entry.getKey() + " -> " + StringUtil.join(entry.getValue(), ", "));
-              }
-              message += StringUtil.join(dep, "\n");
-              message += "\n\nDo you want to proceed?";
-              warning[0] = Messages.showYesNoDialog(message, "Warning",
-                                                    AllIcons.General.BalloonWarning);
+            message += StringUtil.join(dep, "\n");
+            message += size == 1 ? " package" : " packages";
+            message += "\n\nDo you want to proceed?";
+            warning[0] = Messages.showYesNoDialog(message, "Warning",
+                                                  AllIcons.General.BalloonWarning);
+          }
+          else {
+            String message = "You are attempting to uninstall packages which are required for another packages.\n\n";
+            List<String> dep = new ArrayList<String>();
+            for (Map.Entry<String, Set<PyPackage>> entry : dependentPackages.entrySet()) {
+              dep.add(entry.getKey() + " -> " + StringUtil.join(entry.getValue(), ", "));
             }
+            message += StringUtil.join(dep, "\n");
+            message += "\n\nDo you want to proceed?";
+            warning[0] = Messages.showYesNoDialog(message, "Warning",
+                                                  AllIcons.General.BalloonWarning);
           }
         }, ModalityState.current());
       }
@@ -179,12 +176,7 @@ public class PyPackageManagerUI {
       }
       indicator.setText(getTitle() + "...");
       if (myListener != null) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            myListener.started();
-          }
-        });
+        ApplicationManager.getApplication().invokeLater(() -> myListener.started());
       }
     }
 
@@ -211,16 +203,13 @@ public class PyPackageManagerUI {
                                                NotificationType.ERROR, listener));
         }
       }
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          if (myListener != null) {
-            myListener.finished(exceptions);
-          }
-          final Notification notification = notificationRef.get();
-          if (notification != null) {
-            notification.notify(myProject);
-          }
+      ApplicationManager.getApplication().invokeLater(() -> {
+        if (myListener != null) {
+          myListener.finished(exceptions);
+        }
+        final Notification notification = notificationRef.get();
+        if (notification != null) {
+          notification.notify(myProject);
         }
       });
     }
@@ -369,12 +358,7 @@ public class PyPackageManagerUI {
     @NotNull
     @Override
     protected String getSuccessDescription() {
-      final String packagesString = StringUtil.join(myPackages, new Function<PyPackage, String>() {
-        @Override
-        public String fun(PyPackage pkg) {
-          return "'" + pkg.getName() + "'";
-        }
-      }, ", ");
+      final String packagesString = StringUtil.join(myPackages, pkg -> "'" + pkg.getName() + "'", ", ");
       return "Uninstalled packages: " + packagesString;
     }
 

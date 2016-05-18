@@ -154,13 +154,10 @@ public class ContentEntryTreeEditor {
       myDescriptor.setTitle(FileUtil.toSystemDependentName(path));
     }
 
-    final Runnable init = new Runnable() {
-      @Override
-      public void run() {
-        //noinspection ConstantConditions
-        myFileSystemTree.updateTree();
-        myFileSystemTree.select(file, null);
-      }
+    final Runnable init = () -> {
+      //noinspection ConstantConditions
+      myFileSystemTree.updateTree();
+      myFileSystemTree.select(file, null);
     };
 
     myFileSystemTree = new FileSystemTreeImpl(myProject, myDescriptor, myTree, getContentEntryCellRenderer(), init, null) {

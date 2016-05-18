@@ -100,14 +100,11 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
       new SequentialModalProgressTask(project, templatePresentationText, true);
     final boolean isBatch = BatchQuickFix.class.isAssignableFrom(myQuickfixClass);
     final AbstractPerformFixesTask fixesTask = createTask(project, descriptions.toArray(new ProblemDescriptor[descriptions.size()]), progressTask, isBatch);
-    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-      @Override
-      public void run() {
-        CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
-        progressTask.setMinIterationTime(200);
-        progressTask.setTask(fixesTask);
-        ProgressManager.getInstance().run(progressTask);
-      }
+    CommandProcessor.getInstance().executeCommand(project, () -> {
+      CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
+      progressTask.setMinIterationTime(200);
+      progressTask.setTask(fixesTask);
+      ProgressManager.getInstance().run(progressTask);
     }, templatePresentationText, null);
 
     if (!fixesTask.isApplicableFixFound()) {

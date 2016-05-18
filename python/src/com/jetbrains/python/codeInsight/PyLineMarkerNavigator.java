@@ -48,13 +48,11 @@ abstract class PyLineMarkerNavigator<T extends PsiElement> implements GutterIcon
     if (elementQuery == null) {
       return;
     }
-    elementQuery.forEach(new Processor<T>() {
-      public boolean process(final T psiElement) {
-        if (psiElement instanceof NavigatablePsiElement) {
-          navElements.add((NavigatablePsiElement)psiElement);
-        }
-        return true;
+    elementQuery.forEach(psiElement -> {
+      if (psiElement instanceof NavigatablePsiElement) {
+        navElements.add((NavigatablePsiElement)psiElement);
       }
+      return true;
     });
     /**
      * For test purposes, we should be able to access list of methods to check em.

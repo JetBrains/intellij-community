@@ -42,11 +42,7 @@ public class Digester {
         if (!each.isDirectory()) sorted.add(each);
       }
 
-      Collections.sort(sorted, new Comparator<ZipEntry>() {
-        public int compare(ZipEntry o1, ZipEntry o2) {
-          return o1.getName().compareTo(o2.getName());
-        }
-      });
+      Collections.sort(sorted, (o1, o2) -> o1.getName().compareTo(o2.getName()));
 
       CRC32 crc = new CRC32();
       for (ZipEntry each : sorted) {

@@ -87,12 +87,7 @@ public class ConvertStringToMultilineIntention extends Intention {
           invokeImpl(selectedValue, project, editor);
         }
       };
-      final Function<GrExpression, String> renderer = new Function<GrExpression, String>() {
-        @Override
-        public String fun(@NotNull GrExpression grExpression) {
-          return grExpression.getText();
-        }
-      };
+      final Function<GrExpression, String> renderer = grExpression -> grExpression.getText();
       IntroduceTargetChooser.showChooser(editor, expressions, callback, renderer);
     }
   }
@@ -162,44 +157,36 @@ public class ConvertStringToMultilineIntention extends Intention {
 
     final StringBuilder buffer = prepareNewLiteralText(literals);
 
-    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            try {
-              final int offset = editor.getCaretModel().getOffset();
-              final TextRange range = element.getTextRange();
-              int shift;
-              if (editor.getSelectionModel().hasSelection()) {
-                shift = 0;
-              }
-              else if (range.getStartOffset() == offset) {
-                shift = 0;
-              }
-              else if (range.getEndOffset() == offset + 1) {
-                shift = -2;
-              }
-              else {
-                shift = 2;
-              }
+    CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> {
+      try {
+        final int offset = editor.getCaretModel().getOffset();
+        final TextRange range = element.getTextRange();
+        int shift;
+        if (editor.getSelectionModel().hasSelection()) {
+          shift = 0;
+        }
+        else if (range.getStartOffset() == offset) {
+          shift = 0;
+        }
+        else if (range.getEndOffset() == offset + 1) {
+          shift = -2;
+        }
+        else {
+          shift = 2;
+        }
 
-              final GrExpression newLiteral = GroovyPsiElementFactory.getInstance(project).createExpressionFromText(buffer.toString());
+        final GrExpression newLiteral = GroovyPsiElementFactory.getInstance(project).createExpressionFromText(buffer.toString());
 
-              element.replaceWithExpression(newLiteral, true);
+        element.replaceWithExpression(newLiteral, true);
 
-              if (shift != 0) {
-                editor.getCaretModel().moveToOffset(editor.getCaretModel().getOffset() + shift);
-              }
-            }
-            catch (IncorrectOperationException e) {
-              LOG.error(e);
-            }
-          }
-        });
+        if (shift != 0) {
+          editor.getCaretModel().moveToOffset(editor.getCaretModel().getOffset() + shift);
+        }
       }
-    }, getText(), null);
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
+    }), getText(), null);
   }
 
   private static StringBuilder prepareNewLiteralText(List<GrLiteral> literals) {

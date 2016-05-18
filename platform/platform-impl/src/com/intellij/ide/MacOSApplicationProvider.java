@@ -58,13 +58,10 @@ public class MacOSApplicationProvider implements ApplicationComponent {
     @SuppressWarnings("unused")
     public void callback(ID self, String selector) {
       //noinspection SSBasedInspection
-      SwingUtilities.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          ActionManagerEx am = ActionManagerEx.getInstanceEx();
-          MouseEvent me = new MouseEvent(JOptionPane.getRootFrame(), MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(), 0, 0, 0, 1, false);
-          am.tryToExecute(am.getAction("CheckForUpdate"), me, null, null, false);
-        }
+      SwingUtilities.invokeLater(() -> {
+        ActionManagerEx am = ActionManagerEx.getInstanceEx();
+        MouseEvent me = new MouseEvent(JOptionPane.getRootFrame(), MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(), 0, 0, 0, 1, false);
+        am.tryToExecute(am.getAction("CheckForUpdate"), me, null, null, false);
       });
     }
   };

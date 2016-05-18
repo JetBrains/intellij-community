@@ -67,14 +67,11 @@ public class GrMethodMayBeStaticInspection extends BaseInspection {
       @Override
       public void visitMethod(GrMethod method) {
         if (checkMethod(method)) {
-          final GrModifierFix modifierFix = new GrModifierFix(method, PsiModifier.STATIC, false, true, new Function<ProblemDescriptor, PsiModifierList>() {
-            @Override
-            public PsiModifierList fun(ProblemDescriptor descriptor) {
-              final PsiElement element = descriptor.getPsiElement();
-              final PsiElement parent = element.getParent();
-              assert parent instanceof GrMethod : "element: " + element + ", parent:" + parent;
-              return ((GrMethod)parent).getModifierList();
-            }
+          final GrModifierFix modifierFix = new GrModifierFix(method, PsiModifier.STATIC, false, true, descriptor -> {
+            final PsiElement element = descriptor.getPsiElement();
+            final PsiElement parent = element.getParent();
+            assert parent instanceof GrMethod : "element: " + element + ", parent:" + parent;
+            return ((GrMethod)parent).getModifierList();
           });
           registerError(method.getNameIdentifierGroovy(), message("method.may.be.static"), new LocalQuickFix[]{modifierFix}, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
         }

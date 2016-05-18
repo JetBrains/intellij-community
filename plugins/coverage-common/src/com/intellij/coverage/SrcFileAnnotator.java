@@ -107,12 +107,7 @@ public class SrcFileAnnotator implements Disposable {
     final List<RangeHighlighter> highlighters = myEditor.getUserData(COVERAGE_HIGHLIGHTERS);
     if (highlighters != null) {
       for (final RangeHighlighter highlighter : highlighters) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            highlighter.dispose();
-          }
-        });
+        ApplicationManager.getApplication().invokeLater(() -> highlighter.dispose());
       }
       myEditor.putUserData(COVERAGE_HIGHLIGHTERS, null);
     }
@@ -146,16 +141,14 @@ public class SrcFileAnnotator implements Disposable {
 
   @NotNull private static String[] getUpToDateLines(final Document document) {
     final Ref<String[]> linesRef = new Ref<String[]>();
-    final Runnable runnable = new Runnable() {
-      public void run() {
-        final int lineCount = document.getLineCount();
-        final String[] lines = new String[lineCount];
-        final CharSequence chars = document.getCharsSequence();
-        for (int i = 0; i < lineCount; i++) {
-          lines[i] = chars.subSequence(document.getLineStartOffset(i), document.getLineEndOffset(i)).toString();
-        }
-        linesRef.set(lines);
+    final Runnable runnable = () -> {
+      final int lineCount = document.getLineCount();
+      final String[] lines = new String[lineCount];
+      final CharSequence chars = document.getCharsSequence();
+      for (int i = 0; i < lineCount; i++) {
+        lines[i] = chars.subSequence(document.getLineStartOffset(i), document.getLineEndOffset(i)).toString();
       }
+      linesRef.set(lines);
     };
     ApplicationManager.getApplication().runReadAction(runnable);
 
@@ -345,11 +338,7 @@ public class SrcFileAnnotator implements Disposable {
       }
     });
     if (module != null) {
-      if (engine.recompileProjectAndRerunAction(module, suite, new Runnable() {
-        public void run() {
-          CoverageDataManager.getInstance(myProject).chooseSuitesBundle(suite);
-        }
-      })) {
+      if (engine.recompileProjectAndRerunAction(module, suite, () -> CoverageDataManager.getInstance(myProject).chooseSuitesBundle(suite))) {
         return;
       }
     }
@@ -392,14 +381,12 @@ public class SrcFileAnnotator implements Disposable {
                 classLines.put(line, postProcessedLines);
                 classNames.put(line, qualifiedName);
   
-                ApplicationManager.getApplication().invokeLater(new Runnable() {
-                  public void run() {
-                    if (lineNumberInCurrent >= document.getLineCount()) return;
-                    final RangeHighlighter highlighter =
-                      createRangeHighlighter(suite.getLastCoverageTimeStamp(), markupModel, coverageByTestApplicable, executableLines,
-                                             qualifiedName, line, lineNumberInCurrent, suite, postProcessedLines);
-                    highlighters.add(highlighter);
-                  }
+                ApplicationManager.getApplication().invokeLater(() -> {
+                  if (lineNumberInCurrent >= document.getLineCount()) return;
+                  final RangeHighlighter highlighter =
+                    createRangeHighlighter(suite.getLastCoverageTimeStamp(), markupModel, coverageByTestApplicable, executableLines,
+                                           qualifiedName, line, lineNumberInCurrent, suite, postProcessedLines);
+                  highlighters.add(highlighter);
                 });
               }
             }
@@ -427,11 +414,9 @@ public class SrcFileAnnotator implements Disposable {
         collector.collect(null, qName);
       }
     }
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        if (myEditor != null && highlighters.size() > 0) {
-          editor.putUserData(COVERAGE_HIGHLIGHTERS, highlighters);
-        }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (myEditor != null && highlighters.size() > 0) {
+        editor.putUserData(COVERAGE_HIGHLIGHTERS, highlighters);
       }
     });
 
@@ -457,29 +442,24 @@ public class SrcFileAnnotator implements Disposable {
         final List<RangeHighlighter> highlighters = rangeHighlighters;
         myUpdateAlarm.cancelAllRequests();
         if (!myUpdateAlarm.isDisposed()) {
-          myUpdateAlarm.addRequest(new Runnable() {
-            @Override
-            public void run() {
-              final TIntIntHashMap newToOldLineMapping = getNewToOldLineMapping(suite.getLastCoverageTimeStamp());
-              if (newToOldLineMapping != null) {
-                ApplicationManager.getApplication().invokeLater(new Runnable() {
-                  public void run() {
-                    if (editor.isDisposed()) return;
-                    for (int line = lineNumber; line <= lastLineNumber; line++) {
-                      final int oldLineNumber = newToOldLineMapping.get(line);
-                      final LineData lineData = executableLines.get(oldLineNumber);
-                      if (lineData != null) {
-                        RangeHighlighter rangeHighlighter =
-                          createRangeHighlighter(suite.getLastCoverageTimeStamp(), markupModel, coverageByTestApplicable, executableLines,
-                                                 classNames.get(oldLineNumber), oldLineNumber, line, suite,
-                                                 classLines.get(oldLineNumber));
-                        highlighters.add(rangeHighlighter);
-                      }
-                    }
-                    editor.putUserData(COVERAGE_HIGHLIGHTERS, highlighters.size() > 0 ? highlighters : null);
+          myUpdateAlarm.addRequest(() -> {
+            final TIntIntHashMap newToOldLineMapping = getNewToOldLineMapping(suite.getLastCoverageTimeStamp());
+            if (newToOldLineMapping != null) {
+              ApplicationManager.getApplication().invokeLater(() -> {
+                if (editor.isDisposed()) return;
+                for (int line = lineNumber; line <= lastLineNumber; line++) {
+                  final int oldLineNumber = newToOldLineMapping.get(line);
+                  final LineData lineData = executableLines.get(oldLineNumber);
+                  if (lineData != null) {
+                    RangeHighlighter rangeHighlighter =
+                      createRangeHighlighter(suite.getLastCoverageTimeStamp(), markupModel, coverageByTestApplicable, executableLines,
+                                             classNames.get(oldLineNumber), oldLineNumber, line, suite,
+                                             classLines.get(oldLineNumber));
+                    highlighters.add(rangeHighlighter);
                   }
-                });
-              }
+                }
+                editor.putUserData(COVERAGE_HIGHLIGHTERS, highlighters.size() > 0 ? highlighters : null);
+              });
             }
           }, 100);
         }
@@ -514,19 +494,15 @@ public class SrcFileAnnotator implements Disposable {
     final int endOffset = myDocument.getLineEndOffset(lineNumberInCurrent);
     final RangeHighlighter highlighter =
       markupModel.addRangeHighlighter(startOffset, endOffset, HighlighterLayer.SELECTION - 1, textAttributes, HighlighterTargetArea.LINES_IN_RANGE);
-    final Function<Integer, Integer> newToOldConverter = new Function<Integer, Integer>() {
-      public Integer fun(final Integer newLine) {
-        if (myEditor == null) return -1;
-        final TIntIntHashMap oldLineMapping = getNewToOldLineMapping(date);
-        return oldLineMapping != null ? oldLineMapping.get(newLine.intValue()) : newLine.intValue();
-      }
+    final Function<Integer, Integer> newToOldConverter = newLine -> {
+      if (myEditor == null) return -1;
+      final TIntIntHashMap oldLineMapping = getNewToOldLineMapping(date);
+      return oldLineMapping != null ? oldLineMapping.get(newLine.intValue()) : newLine.intValue();
     };
-    final Function<Integer, Integer> oldToNewConverter = new Function<Integer, Integer>() {
-      public Integer fun(final Integer newLine) {
-        if (myEditor == null) return -1;
-        final TIntIntHashMap newLineMapping = getOldToNewLineMapping(date);
-        return newLineMapping != null ? newLineMapping.get(newLine.intValue()) : newLine.intValue();
-      }
+    final Function<Integer, Integer> oldToNewConverter = newLine -> {
+      if (myEditor == null) return -1;
+      final TIntIntHashMap newLineMapping = getOldToNewLineMapping(date);
+      return newLineMapping != null ? newLineMapping.get(newLine.intValue()) : newLine.intValue();
     };
     final CoverageLineMarkerRenderer markerRenderer = coverageSuite.getCoverageEngine()
       .getLineMarkerRenderer(line, className, executableLines, coverageByTestApplicable, coverageSuite, newToOldConverter,
@@ -544,37 +520,32 @@ public class SrcFileAnnotator implements Disposable {
   }
 
   private void showEditorWarningMessage(final String message) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        if (myEditor == null) return;
-        final FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
-        final VirtualFile vFile = myFile.getVirtualFile();
-        assert vFile != null;
-        Map<FileEditor, EditorNotificationPanel> map = myFile.getCopyableUserData(NOTIFICATION_PANELS);
-        if (map == null) {
-          map = new HashMap<FileEditor, EditorNotificationPanel>();
-          myFile.putCopyableUserData(NOTIFICATION_PANELS, map);
-        }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (myEditor == null) return;
+      final FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
+      final VirtualFile vFile = myFile.getVirtualFile();
+      assert vFile != null;
+      Map<FileEditor, EditorNotificationPanel> map = myFile.getCopyableUserData(NOTIFICATION_PANELS);
+      if (map == null) {
+        map = new HashMap<FileEditor, EditorNotificationPanel>();
+        myFile.putCopyableUserData(NOTIFICATION_PANELS, map);
+      }
 
-        final FileEditor[] editors = fileEditorManager.getAllEditors(vFile);
-        for (final FileEditor editor : editors) {
-          if (isCurrentEditor(editor)) {
-            final EditorNotificationPanel panel = new EditorNotificationPanel() {
-              {
-                myLabel.setIcon(AllIcons.General.ExclMark);
-                myLabel.setText(message);
-              }
-            };
-            panel.createActionLabel("Close", new Runnable() {
-              @Override
-              public void run() {
-                fileEditorManager.removeTopComponent(editor, panel);
-              }
-            });
-            map.put(editor, panel);
-            fileEditorManager.addTopComponent(editor, panel);
-            break;
-          }
+      final FileEditor[] editors = fileEditorManager.getAllEditors(vFile);
+      for (final FileEditor editor : editors) {
+        if (isCurrentEditor(editor)) {
+          final EditorNotificationPanel panel = new EditorNotificationPanel() {
+            {
+              myLabel.setIcon(AllIcons.General.ExclMark);
+              myLabel.setText(message);
+            }
+          };
+          panel.createActionLabel("Close", () -> {
+            fileEditorManager.removeTopComponent(editor, panel);
+          });
+          map.put(editor, panel);
+          fileEditorManager.addTopComponent(editor, panel);
+          break;
         }
       }
     });
@@ -632,14 +603,12 @@ public class SrcFileAnnotator implements Disposable {
                               final int lineNumber,
                               final int updatedLineNumber) {
     executableLines.put(updatedLineNumber, null);
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        if (myEditor == null) return;
-        final RangeHighlighter highlighter =
-          createRangeHighlighter(outputFile.lastModified(), markupModel, coverageByTestApplicable, executableLines, null, lineNumber,
-                                 updatedLineNumber, coverageSuite, null);
-        highlighters.add(highlighter);
-      }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (myEditor == null) return;
+      final RangeHighlighter highlighter =
+        createRangeHighlighter(outputFile.lastModified(), markupModel, coverageByTestApplicable, executableLines, null, lineNumber,
+                               updatedLineNumber, coverageSuite, null);
+      highlighters.add(highlighter);
     });
   }
 

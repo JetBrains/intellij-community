@@ -48,12 +48,7 @@ public class StatisticsNotificationManager {
           mySettings.setShowNotification(false);
           notification.expire();
 
-          ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-            @Override
-            public void run() {
-               myStatisticsService.send();
-            }
-          });
+          ApplicationManager.getApplication().executeOnPooledThread((Runnable)() -> myStatisticsService.send());
         }
         else if ("decline".equals(description)) {
           mySettings.setAllowed(false);

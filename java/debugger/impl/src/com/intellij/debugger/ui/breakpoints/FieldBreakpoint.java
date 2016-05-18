@@ -345,16 +345,13 @@ public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpoi
     int line = document.getLineNumber(offset);
     if(field == null) {
       final PsiField[] fld = {null};
-      XDebuggerUtil.getInstance().iterateLine(project, document, line, new Processor<PsiElement>() {
-        @Override
-        public boolean process(PsiElement element) {
-          PsiField field = PsiTreeUtil.getParentOfType(element, PsiField.class, false);
-          if(field != null) {
-            fld[0] = field;
-            return false;
-          }
-          return true;
+      XDebuggerUtil.getInstance().iterateLine(project, document, line, element1 -> {
+        PsiField field1 = PsiTreeUtil.getParentOfType(element1, PsiField.class, false);
+        if(field1 != null) {
+          fld[0] = field1;
+          return false;
         }
+        return true;
       });
       field = fld[0];
     }

@@ -36,20 +36,17 @@ public class RefactoringCompletionContributor extends CompletionContributor {
       return;
     }
     
-    resultSet.runRemainingContributors(parameters, new Consumer<CompletionResult>() {
-      @Override
-      public void consume(CompletionResult result) {
-        LookupElement element = result.getLookupElement();
-        Object object = element.getObject();
-        if (object instanceof PsiClass) {
-          Module module = ModuleUtil.findModuleForPsiElement((PsiClass)object);
-          if (module != null) {
-            resultSet.consume(LookupElementDecorator.withRenderer(element, new AppendModuleName(module)));
-            return;
-          }
+    resultSet.runRemainingContributors(parameters, result -> {
+      LookupElement element = result.getLookupElement();
+      Object object = element.getObject();
+      if (object instanceof PsiClass) {
+        Module module = ModuleUtil.findModuleForPsiElement((PsiClass)object);
+        if (module != null) {
+          resultSet.consume(LookupElementDecorator.withRenderer(element, new AppendModuleName(module)));
+          return;
         }
-        resultSet.passResult(result);
       }
+      resultSet.passResult(result);
     });
   }
 

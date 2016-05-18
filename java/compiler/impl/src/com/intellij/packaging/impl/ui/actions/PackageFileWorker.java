@@ -69,12 +69,8 @@ public class PackageFileWorker {
   }
 
   public static void startPackagingFiles(Project project, List<VirtualFile> files, Artifact[] artifacts, final @NotNull Runnable onFinishedInAwt) {
-    startPackagingFiles(project, files, artifacts, true).doWhenProcessed(new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().invokeLater(onFinishedInAwt);
-      }
-    });
+    startPackagingFiles(project, files, artifacts, true).doWhenProcessed(
+      () -> ApplicationManager.getApplication().invokeLater(onFinishedInAwt));
   }
 
   public static ActionCallback startPackagingFiles(final Project project, final List<VirtualFile> files,

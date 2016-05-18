@@ -129,23 +129,20 @@ public class URLReference implements PsiReference, EmptyResolveMessageProvider {
       }
 
       final PsiElement[] result = new PsiElement[1];
-      processWsdlSchemas(rootTag,new Processor<XmlTag>() {
-        @Override
-        public boolean process(final XmlTag t) {
-          if (canonicalText.equals(t.getAttributeValue(TARGET_NAMESPACE_ATTR_NAME))) {
-            result[0] = t;
-            return false;
-          }
-          for (XmlTag anImport : t.findSubTags("import", t.getNamespace())) {
-            if (canonicalText.equals(anImport.getAttributeValue("namespace"))) {
-              final XmlAttribute location = anImport.getAttribute("schemaLocation");
-              if (location != null) {
-                result[0] = FileReferenceUtil.findFile(location.getValueElement());
-              }
+      processWsdlSchemas(rootTag, t -> {
+        if (canonicalText.equals(t.getAttributeValue(TARGET_NAMESPACE_ATTR_NAME))) {
+          result[0] = t;
+          return false;
+        }
+        for (XmlTag anImport : t.findSubTags("import", t.getNamespace())) {
+          if (canonicalText.equals(anImport.getAttributeValue("namespace"))) {
+            final XmlAttribute location = anImport.getAttribute("schemaLocation");
+            if (location != null) {
+              result[0] = FileReferenceUtil.findFile(location.getValueElement());
             }
           }
-          return true;
         }
+        return true;
       });
 
       return result[0];

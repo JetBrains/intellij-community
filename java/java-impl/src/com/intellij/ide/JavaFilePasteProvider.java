@@ -88,24 +88,22 @@ public class JavaFilePasteProvider implements PasteProvider {
     final Project project = javaFile.getProject();
     if ((oldStatement != null && !oldStatement.getPackageName().equals(aPackage.getQualifiedName()) ||
         (oldStatement == null && aPackage.getQualifiedName().length() > 0))) {
-      CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-        public void run() {
-          try {
-            PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
-            final PsiPackageStatement newStatement = factory.createPackageStatement(aPackage.getQualifiedName());
-            if (oldStatement != null) {
-              oldStatement.replace(newStatement);
-            }
-            else {
-              final PsiElement addedStatement = javaFile.addAfter(newStatement, null);
-              final TextRange textRange = addedStatement.getTextRange();
-              // ensure line break is added after the statement
-              CodeStyleManager.getInstance(project).reformatRange(javaFile, textRange.getStartOffset(), textRange.getEndOffset()+1);
-            }
+      CommandProcessor.getInstance().executeCommand(project, () -> {
+        try {
+          PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+          final PsiPackageStatement newStatement = factory.createPackageStatement(aPackage.getQualifiedName());
+          if (oldStatement != null) {
+            oldStatement.replace(newStatement);
           }
-          catch (IncorrectOperationException e) {
-            // ignore
+          else {
+            final PsiElement addedStatement = javaFile.addAfter(newStatement, null);
+            final TextRange textRange = addedStatement.getTextRange();
+            // ensure line break is added after the statement
+            CodeStyleManager.getInstance(project).reformatRange(javaFile, textRange.getStartOffset(), textRange.getEndOffset()+1);
           }
+        }
+        catch (IncorrectOperationException e) {
+          // ignore
         }
       }, "Updating package statement", null);
     }

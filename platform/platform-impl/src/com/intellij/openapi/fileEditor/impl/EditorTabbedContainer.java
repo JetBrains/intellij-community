@@ -136,12 +136,9 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
       @Override
       public ActionCallback execute(TabInfo info, boolean requestFocus, @NotNull final ActiveRunnable doChangeSelection) {
         final ActionCallback result = new ActionCallback();
-        CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-          @Override
-          public void run() {
-            ((IdeDocumentHistoryImpl)IdeDocumentHistory.getInstance(myProject)).onSelectionChanged();
-            result.notify(doChangeSelection.run());
-          }
+        CommandProcessor.getInstance().executeCommand(myProject, () -> {
+          ((IdeDocumentHistoryImpl)IdeDocumentHistory.getInstance(myProject)).onSelectionChanged();
+          result.notify(doChangeSelection.run());
         }, "EditorChange", null);
         return result;
       }

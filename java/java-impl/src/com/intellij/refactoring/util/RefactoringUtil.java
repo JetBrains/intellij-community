@@ -1321,11 +1321,7 @@ public class RefactoringUtil {
 
     PsiTypeParameter[] typeParameters = used.toArray(new PsiTypeParameter[used.size()]);
 
-    Arrays.sort(typeParameters, new Comparator<PsiTypeParameter>() {
-      public int compare(final PsiTypeParameter tp1, final PsiTypeParameter tp2) {
-        return tp1.getTextRange().getStartOffset() - tp2.getTextRange().getStartOffset();
-      }
-    });
+    Arrays.sort(typeParameters, (tp1, tp2) -> tp1.getTextRange().getStartOffset() - tp2.getTextRange().getStartOffset());
 
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(elements[0].getProject()).getElementFactory();
     try {

@@ -232,11 +232,7 @@ public class JetBrainsEmitter implements Emitter {
       if (fields.length == 0) {
         Util.logwarn("no fields in: " + td.xsName);
       }
-      Arrays.sort(fields, new Comparator<FieldDesc>() {
-        public int compare(FieldDesc o1, FieldDesc o2) {
-          return o1.realIndex - o2.realIndex;
-        }
-      });
+      Arrays.sort(fields, (o1, o2) -> o1.realIndex - o2.realIndex);
       out.println("");
       for (FieldDesc field : fields) {
         String tagName = field.tagName;
@@ -562,11 +558,7 @@ public class JetBrainsEmitter implements Emitter {
 
       for (TypeDesc td : jtList) {
         ArrayList<FieldDesc> fields = new ArrayList<FieldDesc>(td.fdMap.values());
-        Collections.sort(fields, new Comparator<FieldDesc>() {
-          public int compare(FieldDesc o1, FieldDesc o2) {
-            return o1.realIndex - o2.realIndex;
-          }
-        });
+        Collections.sort(fields, (o1, o2) -> o1.realIndex - o2.realIndex);
         int guessPriority = 0;
         FieldDesc guessedField = null;
         for (FieldDesc fd : fields) {

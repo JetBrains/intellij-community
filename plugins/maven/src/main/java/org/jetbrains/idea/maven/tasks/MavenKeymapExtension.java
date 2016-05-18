@@ -61,11 +61,7 @@ public class MavenKeymapExtension implements ExternalSystemKeymapExtension.Actio
     );
     if (project == null) return result;
 
-    Comparator<MavenProject> projectComparator = new Comparator<MavenProject>() {
-      public int compare(MavenProject o1, MavenProject o2) {
-        return o1.getDisplayName().compareToIgnoreCase(o2.getDisplayName());
-      }
-    };
+    Comparator<MavenProject> projectComparator = (o1, o2) -> o1.getDisplayName().compareToIgnoreCase(o2.getDisplayName());
     Map<MavenProject, Set<Pair<String, String>>> projectToActionsMapping
       = new TreeMap<MavenProject, Set<Pair<String, String>>>(projectComparator);
 
@@ -82,15 +78,13 @@ public class MavenKeymapExtension implements ExternalSystemKeymapExtension.Actio
       Set<Pair<String, String>> actions = projectToActionsMapping.get(mavenProject);
       if (actions == null) {
         final List<String> projectGoals = collectGoals(mavenProject);
-        actions = new TreeSet<Pair<String, String>>(new Comparator<Pair<String, String>>() {
-          public int compare(Pair<String, String> o1, Pair<String, String> o2) {
-            String goal1 = o1.getFirst();
-            String goal2 = o2.getFirst();
-            int index1 = projectGoals.indexOf(goal1);
-            int index2 = projectGoals.indexOf(goal2);
-            if (index1 == index2) return goal1.compareToIgnoreCase(goal2);
-            return (index1 < index2 ? -1 : 1);
-          }
+        actions = new TreeSet<Pair<String, String>>((o1, o2) -> {
+          String goal1 = o1.getFirst();
+          String goal2 = o2.getFirst();
+          int index1 = projectGoals.indexOf(goal1);
+          int index2 = projectGoals.indexOf(goal2);
+          if (index1 == index2) return goal1.compareToIgnoreCase(goal2);
+          return (index1 < index2 ? -1 : 1);
         });
         projectToActionsMapping.put(mavenProject, actions);
       }

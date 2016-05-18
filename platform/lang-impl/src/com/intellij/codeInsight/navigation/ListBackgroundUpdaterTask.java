@@ -35,12 +35,7 @@ public abstract class ListBackgroundUpdaterTask extends BackgroundUpdaterTask<JB
 
   @Override
   protected void paintBusy(final boolean paintBusy) {
-    final Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        myComponent.setPaintBusy(paintBusy);
-      }
-    };
+    final Runnable runnable = () -> myComponent.setPaintBusy(paintBusy);
     //ensure start/end order 
     SwingUtilities.invokeLater(runnable);
   }

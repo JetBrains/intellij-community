@@ -57,11 +57,7 @@ public class ControlBinder {
     final Pair<ControlValueAccessor, BeanValueAccessor> binding = Pair.create(controlAccessor, beanAccessor);
     myBindings.add(binding);
     if (instant) {
-      controlAccessor.addChangeListener(new Runnable() {
-        public void run() {
-          apply(binding);
-        }
-      });
+      controlAccessor.addChangeListener(() -> apply(binding));
     }
   }
 

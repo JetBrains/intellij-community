@@ -79,12 +79,7 @@ public class RegisterExtensionFix implements IntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, final Editor editor, PsiFile file) throws IncorrectOperationException {
-    PluginDescriptorChooser.show(project, editor, file, new Consumer<DomFileElement<IdeaPlugin>>() {
-      @Override
-      public void consume(DomFileElement<IdeaPlugin> element) {
-        doFix(editor, element);
-      }
-    });
+    PluginDescriptorChooser.show(project, editor, file, element -> doFix(editor, element));
   }
 
   private void doFix(Editor editor, final DomFileElement<IdeaPlugin> element) {

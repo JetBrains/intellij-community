@@ -132,14 +132,11 @@ public class NumpyArrayTable {
     myTableCellRenderer.setMin(Double.MAX_VALUE);
     myTableCellRenderer.setMax(Double.MIN_VALUE);
     myTableCellRenderer.setColored(false);
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        myComponent.getColoredCheckbox().setSelected(false);
-        myComponent.getColoredCheckbox().setEnabled(false);
-        if (myTable.getColumnCount() > 0) {
-          myTable.setDefaultRenderer(myTable.getColumnClass(0), myTableCellRenderer);
-        }
+    UIUtil.invokeLaterIfNeeded(() -> {
+      myComponent.getColoredCheckbox().setSelected(false);
+      myComponent.getColoredCheckbox().setEnabled(false);
+      if (myTable.getColumnCount() > 0) {
+        myTable.setDefaultRenderer(myTable.getColumnClass(0), myTableCellRenderer);
       }
     });
   }
@@ -159,24 +156,21 @@ public class NumpyArrayTable {
   public void init(final String slice, final boolean inPlace) {
     initComponent();
 
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        final PyDebugValue value = getDebugValue();
-        PyDebugValue parent = value.getParent();
-        final PyDebugValue slicedValue =
-          new PyDebugValue(slice, value.getType(), null, value.getValue(), value.isContainer(), value.isErrorOnEval(),
-                           parent, value.getFrameAccessor());
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      final PyDebugValue value = getDebugValue();
+      PyDebugValue parent = value.getParent();
+      final PyDebugValue slicedValue =
+        new PyDebugValue(slice, value.getType(), null, value.getValue(), value.isContainer(), value.isErrorOnEval(),
+                         parent, value.getFrameAccessor());
 
-        final String format = getFormat().isEmpty() ? "%" : getFormat();
+      final String format = getFormat().isEmpty() ? "%" : getFormat();
 
-        try {
-          initUi(value.getFrameAccessor()
-                   .getArrayItems(slicedValue, 0, 0, -1, -1, format), inPlace);
-        }
-        catch (PyDebuggerException e) {
-          showError(e.getMessage());
-        }
+      try {
+        initUi(value.getFrameAccessor()
+                 .getArrayItems(slicedValue, 0, 0, -1, -1, format), inPlace);
+      }
+      catch (PyDebuggerException e) {
+        showError(e.getMessage());
       }
     });
   }
@@ -187,32 +181,29 @@ public class NumpyArrayTable {
       myPagingModel.addToCache(chunk);
       myDtypeKind = chunk.getType();
 
-      UIUtil.invokeLaterIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          myTable.setModel(myPagingModel);
-          myComponent.getSliceTextField().setText(chunk.getSlicePresentation());
-          myComponent.getFormatTextField().setText(chunk.getFormat());
-          myDialog.setTitle(getTitlePresentation(chunk.getSlicePresentation()));
-          myTableCellRenderer = new ArrayTableCellRenderer(Double.MIN_VALUE, Double.MIN_VALUE, chunk.getType());
-          fillColorRange(chunk.getMin(), chunk.getMax());
-          if (!isNumeric()) {
-            disableColor();
-          }
-          else {
-            myComponent.getColoredCheckbox().setEnabled(true);
-          }
+      UIUtil.invokeLaterIfNeeded(() -> {
+        myTable.setModel(myPagingModel);
+        myComponent.getSliceTextField().setText(chunk.getSlicePresentation());
+        myComponent.getFormatTextField().setText(chunk.getFormat());
+        myDialog.setTitle(getTitlePresentation(chunk.getSlicePresentation()));
+        myTableCellRenderer = new ArrayTableCellRenderer(Double.MIN_VALUE, Double.MIN_VALUE, chunk.getType());
+        fillColorRange(chunk.getMin(), chunk.getMax());
+        if (!isNumeric()) {
+          disableColor();
+        }
+        else {
+          myComponent.getColoredCheckbox().setEnabled(true);
+        }
 
-          if (!inPlace) {
-            myComponent.getScrollPane().getViewport().setViewPosition(new Point(0, 0));
-            JBTableWithRowHeaders.RowHeaderTable rowTable = ((JBTableWithRowHeaders)myTable).getRowHeaderTable();
-            rowTable.setRowShift(0);
-          }
-          ((AsyncArrayTableModel)myTable.getModel()).fireTableDataChanged();
-          ((AsyncArrayTableModel)myTable.getModel()).fireTableCellUpdated(0, 0);
-          if (myTable.getColumnCount() > 0) {
-            myTable.setDefaultRenderer(myTable.getColumnClass(0), myTableCellRenderer);
-          }
+        if (!inPlace) {
+          myComponent.getScrollPane().getViewport().setViewPosition(new Point(0, 0));
+          JBTableWithRowHeaders.RowHeaderTable rowTable = ((JBTableWithRowHeaders)myTable).getRowHeaderTable();
+          rowTable.setRowShift(0);
+        }
+        ((AsyncArrayTableModel)myTable.getModel()).fireTableDataChanged();
+        ((AsyncArrayTableModel)myTable.getModel()).fireTableCellUpdated(0, 0);
+        if (myTable.getColumnCount() > 0) {
+          myTable.setDefaultRenderer(myTable.getColumnClass(0), myTableCellRenderer);
         }
       });
   }
@@ -257,20 +248,17 @@ public class NumpyArrayTable {
   private void initTableModel(final boolean inPlace) {
     myPagingModel = new AsyncArrayTableModel(myPagingModel.getRowCount(), myPagingModel.getColumnCount(), this);
 
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        myTable.setModel(myPagingModel);
-        if (!inPlace) {
-          myComponent.getScrollPane().getViewport().setViewPosition(new Point(0, 0));
-          JBTableWithRowHeaders.RowHeaderTable rowTable = ((JBTableWithRowHeaders)myTable).getRowHeaderTable();
-          rowTable.setRowShift(0);
-        }
-        ((AsyncArrayTableModel)myTable.getModel()).fireTableDataChanged();
-        ((AsyncArrayTableModel)myTable.getModel()).fireTableCellUpdated(0, 0);
-        if (myTable.getColumnCount() > 0) {
-          myTable.setDefaultRenderer(myTable.getColumnClass(0), myTableCellRenderer);
-        }
+    UIUtil.invokeLaterIfNeeded(() -> {
+      myTable.setModel(myPagingModel);
+      if (!inPlace) {
+        myComponent.getScrollPane().getViewport().setViewPosition(new Point(0, 0));
+        JBTableWithRowHeaders.RowHeaderTable rowTable = ((JBTableWithRowHeaders)myTable).getRowHeaderTable();
+        rowTable.setRowShift(0);
+      }
+      ((AsyncArrayTableModel)myTable.getModel()).fireTableDataChanged();
+      ((AsyncArrayTableModel)myTable.getModel()).fireTableCellUpdated(0, 0);
+      if (myTable.getColumnCount() > 0) {
+        myTable.setDefaultRenderer(myTable.getColumnClass(0), myTableCellRenderer);
       }
     });
   }
@@ -300,12 +288,9 @@ public class NumpyArrayTable {
   }
 
   public void showInfoHint(final String message) {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        if (myComponent.getSliceTextField().getEditor() != null) {
-          HintManager.getInstance().showInformationHint(myComponent.getSliceTextField().getEditor(), message);
-        }
+    UIUtil.invokeLaterIfNeeded(() -> {
+      if (myComponent.getSliceTextField().getEditor() != null) {
+        HintManager.getInstance().showInformationHint(myComponent.getSliceTextField().getEditor(), message);
       }
     });
   }

@@ -26,11 +26,8 @@ public class FacetDependentToolWindow extends ToolWindowEP {
   }
 
   public List<FacetType> getFacetTypes() {
-    return ContainerUtil.mapNotNull(getFacetIds(), new NullableFunction<String, FacetType>() {
-      @Override
-      public FacetType fun(String facetId) {
-        return FacetTypeRegistry.getInstance().findFacetType(facetId);
-      }
+    return ContainerUtil.mapNotNull(getFacetIds(), (NullableFunction<String, FacetType>)facetId -> {
+      return FacetTypeRegistry.getInstance().findFacetType(facetId);
     });
   }
 }

@@ -101,23 +101,21 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
 
     //find all usages of method candidates in files with functional expressions
     for (final PsiMethod psiMethod : methodCandidates) {
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        public void run() {
-          if (!psiMethod.isValid()) return;
-          final int parametersCount = psiMethod.getParameterList().getParametersCount();
-          final boolean varArgs = psiMethod.isVarArgs();
-          final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
-          final GlobalSearchScope methodUseScope = convertToGlobalScope(project, psiMethod.getUseScope());
-          final LinkedHashMap<VirtualFile, Set<JavaFunctionalExpressionIndex.IndexHolder>> holders = new LinkedHashMap<VirtualFile, Set<JavaFunctionalExpressionIndex.IndexHolder>>();
-          //functional expressions checker: number and type of parameters at call site should correspond to candidate method currently check
-          final SuitableFilesProcessor processor = new SuitableFilesProcessor(holders, expectedFunExprParamsCount, parametersCount, varArgs, parameters);
-          fileBasedIndex.processValues(JavaFunctionalExpressionIndex.JAVA_FUNCTIONAL_EXPRESSION_INDEX_ID, psiMethod.getName(), null, processor, useScope.intersectWith(methodUseScope));
-          for (Map.Entry<VirtualFile, Set<JavaFunctionalExpressionIndex.IndexHolder>> entry : holders.entrySet()) {
-            for (JavaFunctionalExpressionIndex.IndexHolder holder : entry.getValue()) {
-              if (processor.canBeFunctional(holder)) {
-                filesToProcess.add(entry.getKey());
-                break;
-              }
+      ApplicationManager.getApplication().runReadAction(() -> {
+        if (!psiMethod.isValid()) return;
+        final int parametersCount = psiMethod.getParameterList().getParametersCount();
+        final boolean varArgs = psiMethod.isVarArgs();
+        final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
+        final GlobalSearchScope methodUseScope = convertToGlobalScope(project, psiMethod.getUseScope());
+        final LinkedHashMap<VirtualFile, Set<JavaFunctionalExpressionIndex.IndexHolder>> holders = new LinkedHashMap<VirtualFile, Set<JavaFunctionalExpressionIndex.IndexHolder>>();
+        //functional expressions checker: number and type of parameters at call site should correspond to candidate method currently check
+        final SuitableFilesProcessor processor = new SuitableFilesProcessor(holders, expectedFunExprParamsCount, parametersCount, varArgs, parameters);
+        fileBasedIndex.processValues(JavaFunctionalExpressionIndex.JAVA_FUNCTIONAL_EXPRESSION_INDEX_ID, psiMethod.getName(), null, processor, useScope.intersectWith(methodUseScope));
+        for (Map.Entry<VirtualFile, Set<JavaFunctionalExpressionIndex.IndexHolder>> entry : holders.entrySet()) {
+          for (JavaFunctionalExpressionIndex.IndexHolder holder : entry.getValue()) {
+            if (processor.canBeFunctional(holder)) {
+              filesToProcess.add(entry.getKey());
+              break;
             }
           }
         }
@@ -177,14 +175,11 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
                                                       Processors.cancelableCollectProcessor(usedMethodNames), candidateScope, null);
 
           final LinkedHashSet<PsiMethod> methods = newLinkedHashSet();
-          Processor<PsiMethod> methodProcessor = new Processor<PsiMethod>() {
-            @Override
-            public boolean process(PsiMethod method) {
-              if (usedMethodNames.contains(method.getName())) {
-                methods.add(method);
-              }
-              return true;
+          Processor<PsiMethod> methodProcessor = method -> {
+            if (usedMethodNames.contains(method.getName())) {
+              methods.add(method);
             }
+            return true;
           };
 
           StubIndexKey<String, PsiMethod> key = JavaMethodParameterTypesIndex.getInstance().getKey();
@@ -225,11 +220,8 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
     }
     else if (useScope instanceof LocalSearchScope) {
       final Set<VirtualFile> files = new HashSet<VirtualFile>();
-      addAllNotNull(files, map(((LocalSearchScope)useScope).getScope(), new Function<PsiElement, VirtualFile>() {
-        @Override
-        public VirtualFile fun(PsiElement element) {
-          return PsiUtilCore.getVirtualFile(element);
-        }
+      addAllNotNull(files, map(((LocalSearchScope)useScope).getScope(), element -> {
+        return PsiUtilCore.getVirtualFile(element);
       }));
       scope = GlobalSearchScope.filesScope(project, files);
     }
@@ -260,20 +252,17 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
                                                                          final LinkedHashSet<VirtualFile> usageFiles) {
     final Set<PsiField> fields = new LinkedHashSet<PsiField>();
     for (final PsiReference reference : ReferencesSearch.search(aClass, filesScope)) {
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        @Override
-        public void run() {
-          final PsiElement element = reference.getElement();
-          if (element != null) {
-            addIfNotNull(usageFiles, PsiUtilCore.getVirtualFile(element));
-            final PsiElement parent = element.getParent();
-            if (parent instanceof PsiTypeElement) {
-              final PsiElement gParent = parent.getParent();
-              if (gParent instanceof PsiField &&
-                  !((PsiField)gParent).hasModifierProperty(PsiModifier.PRIVATE) &&
-                  !((PsiField)gParent).hasModifierProperty(PsiModifier.FINAL)) {
-                fields.add((PsiField)gParent);
-              }
+      ApplicationManager.getApplication().runReadAction(() -> {
+        final PsiElement element = reference.getElement();
+        if (element != null) {
+          addIfNotNull(usageFiles, PsiUtilCore.getVirtualFile(element));
+          final PsiElement parent = element.getParent();
+          if (parent instanceof PsiTypeElement) {
+            final PsiElement gParent = parent.getParent();
+            if (gParent instanceof PsiField &&
+                !((PsiField)gParent).hasModifierProperty(PsiModifier.PRIVATE) &&
+                !((PsiField)gParent).hasModifierProperty(PsiModifier.FINAL)) {
+              fields.add((PsiField)gParent);
             }
           }
         }

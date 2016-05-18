@@ -858,12 +858,9 @@ public final class EditorUtil {
     if (startFoldRegion != null || endFoldRegion != null) {
       final FoldRegion finalStartFoldRegion = startFoldRegion;
       final FoldRegion finalEndFoldRegion = endFoldRegion;
-      foldingModel.runBatchFoldingOperation(new Runnable() {
-        @Override
-        public void run() {
-          if (finalStartFoldRegion != null) finalStartFoldRegion.setExpanded(true);
-          if (finalEndFoldRegion != null) finalEndFoldRegion.setExpanded(true);
-        }
+      foldingModel.runBatchFoldingOperation(() -> {
+        if (finalStartFoldRegion != null) finalStartFoldRegion.setExpanded(true);
+        if (finalEndFoldRegion != null) finalEndFoldRegion.setExpanded(true);
       });
     }
     editor.getSelectionModel().setSelection(startOffset, endOffset);

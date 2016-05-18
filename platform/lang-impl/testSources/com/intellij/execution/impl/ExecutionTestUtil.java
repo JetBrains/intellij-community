@@ -54,17 +54,14 @@ public class ExecutionTestUtil {
 
   @NotNull
   private static String stringifyDescriptors(@NotNull List<RunContentDescriptor> descriptors) {
-    return "Actual descriptors: " + StringUtil.join(descriptors, new Function<RunContentDescriptor, String>() {
-      @Override
-      public String fun(RunContentDescriptor descriptor) {
-        if (descriptor == null) {
-          return "null";
-        }
-        ProcessHandler processHandler = descriptor.getProcessHandler();
-        return String.format("[%s, %s]",
-                             descriptor.getDisplayName(),
-                             processHandler != null ? processHandler.getClass().getName() : null);
+    return "Actual descriptors: " + StringUtil.join(descriptors, descriptor -> {
+      if (descriptor == null) {
+        return "null";
       }
+      ProcessHandler processHandler = descriptor.getProcessHandler();
+      return String.format("[%s, %s]",
+                           descriptor.getDisplayName(),
+                           processHandler != null ? processHandler.getClass().getName() : null);
     }, ", ");
   }
 }

@@ -205,11 +205,8 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
     final Collection<TreeItem<Pair<AbstractUrl, String>>> list = getFavoritesListRootUrls(name);
 
     final HashSet<AbstractUrl> set =
-      new HashSet<AbstractUrl>(ContainerUtil.map(list, new Function<TreeItem<Pair<AbstractUrl,String>>, AbstractUrl>() {
-        @Override
-        public AbstractUrl fun(TreeItem<Pair<AbstractUrl, String>> item) {
-          return item.getData().getFirst();
-        }
+      new HashSet<AbstractUrl>(ContainerUtil.map(list, item -> {
+        return item.getData().getFirst();
       }));
     for (AbstractTreeNode node : nodes) {
       final Pair<AbstractUrl, String> pair = createPairForNode(node);
@@ -229,11 +226,8 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
     final Collection<TreeItem<Pair<AbstractUrl, String>>> list = getFavoritesListRootUrls(name);
 
     final HashSet<AbstractUrl> set =
-      new HashSet<AbstractUrl>(ContainerUtil.map(list, new Function<TreeItem<Pair<AbstractUrl,String>>, AbstractUrl>() {
-        @Override
-        public AbstractUrl fun(TreeItem<Pair<AbstractUrl, String>> item) {
-          return item.getData().getFirst();
-        }
+      new HashSet<AbstractUrl>(ContainerUtil.map(list, item -> {
+        return item.getData().getFirst();
       }));
     for (AbstractTreeNode node : nodes) {
       final Pair<AbstractUrl, String> pair = createPairForNode(node);
@@ -690,22 +684,19 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
         for (String listName : myName2FavoritesRoots.keySet()) {
           final List<TreeItem<Pair<AbstractUrl, String>>> roots = myName2FavoritesRoots.get(listName);
           final AbstractUrl finalChildUrl = childUrl;
-          iterateTreeItems(roots, new Consumer<TreeItem<Pair<AbstractUrl, String>>>() {
-            @Override
-            public void consume(TreeItem<Pair<AbstractUrl, String>> item) {
-              final Pair<AbstractUrl, String> root = item.getData();
-              final Object[] path = root.first.createPath(myProject);
-              if (path == null || path.length < 1 || path[0] == null) {
-                return;
-              }
-              final Object element = path[path.length - 1];
-              if (element == child && finalChildUrl != null) {
-                item.setData(Pair.create(finalChildUrl, root.second));
-              }
-              else {
-                if (element == oldParent) {
-                  item.setData(Pair.create(root.first.createUrlByElement(newParent), root.second));
-                }
+          iterateTreeItems(roots, item -> {
+            final Pair<AbstractUrl, String> root = item.getData();
+            final Object[] path = root.first.createPath(myProject);
+            if (path == null || path.length < 1 || path[0] == null) {
+              return;
+            }
+            final Object element = path[path.length - 1];
+            if (element == child && finalChildUrl != null) {
+              item.setData(Pair.create(finalChildUrl, root.second));
+            }
+            else {
+              if (element == oldParent) {
+                item.setData(Pair.create(root.first.createUrlByElement(newParent), root.second));
               }
             }
           });
@@ -726,21 +717,18 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
 
           for (String listName : myName2FavoritesRoots.keySet()) {
             final List<TreeItem<Pair<AbstractUrl, String>>> roots = myName2FavoritesRoots.get(listName);
-            iterateTreeItems(roots, new Consumer<TreeItem<Pair<AbstractUrl, String>>>() {
-              @Override
-              public void consume(TreeItem<Pair<AbstractUrl, String>> item) {
-                final Pair<AbstractUrl, String> root = item.getData();
-                final Object[] path = root.first.createPath(myProject);
-                if (path == null || path.length < 1 || path[0] == null) {
-                  return;
-                }
-                final Object element = path[path.length - 1];
-                if (element == psiElement && psiElement instanceof PsiFile) {
-                  item.setData(Pair.create(childUrl, root.second));
-                }
-                else {
-                  item.setData(root);
-                }
+            iterateTreeItems(roots, item -> {
+              final Pair<AbstractUrl, String> root = item.getData();
+              final Object[] path = root.first.createPath(myProject);
+              if (path == null || path.length < 1 || path[0] == null) {
+                return;
+              }
+              final Object element = path[path.length - 1];
+              if (element == psiElement && psiElement instanceof PsiFile) {
+                item.setData(Pair.create(childUrl, root.second));
+              }
+              else {
+                item.setData(root);
               }
             });
           }

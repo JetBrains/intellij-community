@@ -57,12 +57,7 @@ public abstract class CompletionTestBase extends JavaCodeInsightFixtureTestCase 
             }
           });
         }
-        Collections.sort(items, new Comparator<LookupElement>() {
-          @Override
-          public int compare(LookupElement o1, LookupElement o2) {
-            return o1.getLookupString().compareTo(o2.getLookupString());
-          }
-        });
+        Collections.sort(items, (o1, o2) -> o1.getLookupString().compareTo(o2.getLookupString()));
         result = "";
         for (LookupElement item : items) {
           result = result + "\n" + item.getLookupString();

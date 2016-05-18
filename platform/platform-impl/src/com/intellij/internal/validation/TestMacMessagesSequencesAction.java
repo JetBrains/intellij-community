@@ -29,11 +29,8 @@ public class TestMacMessagesSequencesAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     for (int i=0;i<10;i++){
       final int k = i;
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          Messages.showDialog("Message # " + k, "Title of " + k, new String[] { "Option one", "Option two" }, 0, Messages.getQuestionIcon());
-        }
-      });
+      ApplicationManager.getApplication().invokeLater(
+        () -> Messages.showDialog("Message # " + k, "Title of " + k, new String[] { "Option one", "Option two" }, 0, Messages.getQuestionIcon()));
     }
   }
 

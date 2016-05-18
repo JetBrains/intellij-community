@@ -99,21 +99,14 @@ public abstract class JavaFxClassTagDescriptorBase implements XmlElementDescript
 
   static void collectStaticAttributesDescriptors(@Nullable XmlTag context, List<XmlAttributeDescriptor> simpleAttrs) {
     if (context == null) return;
-    collectParentStaticProperties(context.getParentTag(), simpleAttrs, new Function<PsiMethod, XmlAttributeDescriptor>() {
-      @Override
-      public XmlAttributeDescriptor fun(PsiMethod method) {
-        return new JavaFxSetterAttributeDescriptor(method, method.getContainingClass());
-      }
-    });
+    collectParentStaticProperties(context.getParentTag(), simpleAttrs,
+                                  method -> new JavaFxSetterAttributeDescriptor(method, method.getContainingClass()));
   }
 
   protected static void collectStaticElementDescriptors(XmlTag context, List<XmlElementDescriptor> children) {
-    collectParentStaticProperties(context, children, new Function<PsiMethod, XmlElementDescriptor>() {
-      @Override
-      public XmlElementDescriptor fun(PsiMethod method) {
-        final PsiClass aClass = method.getContainingClass();
-        return new JavaFxPropertyTagDescriptor(aClass, PropertyUtil.getPropertyName(method.getName()), true);
-      }
+    collectParentStaticProperties(context, children, method -> {
+      final PsiClass aClass = method.getContainingClass();
+      return new JavaFxPropertyTagDescriptor(aClass, PropertyUtil.getPropertyName(method.getName()), true);
     });
   }
 

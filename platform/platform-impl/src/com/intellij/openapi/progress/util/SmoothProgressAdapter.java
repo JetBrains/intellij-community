@@ -150,15 +150,12 @@ public class SmoothProgressAdapter extends AbstractProgressIndicatorExBase imple
     semaphore.down();
 
     SwingUtilities.invokeLater(
-      new Runnable() {
-        @Override
-        public void run() {
-          semaphore.waitFor();
-          if (myDialog != null){
-            //System.out.println("myDialog.destroyProcess()");
-            myDialog.close(DialogWrapper.OK_EXIT_CODE);
-            myDialog = null;
-          }
+      () -> {
+        semaphore.waitFor();
+        if (myDialog != null){
+          //System.out.println("myDialog.destroyProcess()");
+          myDialog.close(DialogWrapper.OK_EXIT_CODE);
+          myDialog = null;
         }
       }
     );

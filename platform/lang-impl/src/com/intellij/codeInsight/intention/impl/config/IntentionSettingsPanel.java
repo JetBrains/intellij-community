@@ -50,16 +50,13 @@ public class IntentionSettingsPanel implements MasterDetails {
       protected void selectionChanged(Object selected) {
         if (selected instanceof IntentionActionMetaData) {
           final IntentionActionMetaData actionMetaData = (IntentionActionMetaData)selected;
-          final Runnable runnable = new Runnable() {
-            @Override
-            public void run() {
-              intentionSelected(actionMetaData);
-              if (myDetailsComponent != null) {
-                String[] text = new String[actionMetaData.myCategory.length + 1];
-                System.arraycopy(actionMetaData.myCategory, 0, text,0,actionMetaData.myCategory.length);
-                text[text.length - 1] = actionMetaData.getFamily();
-                myDetailsComponent.setText(text);
-              }
+          final Runnable runnable = () -> {
+            intentionSelected(actionMetaData);
+            if (myDetailsComponent != null) {
+              String[] text = new String[actionMetaData.myCategory.length + 1];
+              System.arraycopy(actionMetaData.myCategory, 0, text,0,actionMetaData.myCategory.length);
+              text[text.length - 1] = actionMetaData.getFamily();
+              myDetailsComponent.setText(text);
             }
           };
           myResetAlarm.cancelAllRequests();
@@ -113,12 +110,7 @@ public class IntentionSettingsPanel implements MasterDetails {
 
   public void reset() {
     myIntentionSettingsTree.reset();
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        myIntentionDescriptionPanel.init(myPanel.getWidth() / 2);
-      }
-    });
+    SwingUtilities.invokeLater(() -> myIntentionDescriptionPanel.init(myPanel.getWidth() / 2));
   }
 
   @Override
@@ -212,12 +204,9 @@ public class IntentionSettingsPanel implements MasterDetails {
   }
 
   public Runnable showOption(final String option) {
-    return new Runnable() {
-      @Override
-      public void run() {
-        myIntentionSettingsTree.filter(myIntentionSettingsTree.filterModel(option, true));
-        myIntentionSettingsTree.setFilter(option);
-      }
+    return () -> {
+      myIntentionSettingsTree.filter(myIntentionSettingsTree.filterModel(option, true));
+      myIntentionSettingsTree.setFilter(option);
     };
   }
 }

@@ -111,31 +111,28 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
 
     if (currentCommand != null) {
       final Alarm alarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
-      alarm.addRequest(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            if (currentCommand == myEvents.getCurrentEvent()) {
-              // if current command is still in progress, cancel it
-              getCurrentRequest().requestStop();
-              try {
-                getCurrentRequest().join();
-              }
-              catch (InterruptedException ignored) {
-              }
-              catch (Exception e) {
-                throw new RuntimeException(e);
-              }
-              finally {
-                if (!myDisposed) {
-                  startNewWorkerThread();
-                }
+      alarm.addRequest(() -> {
+        try {
+          if (currentCommand == myEvents.getCurrentEvent()) {
+            // if current command is still in progress, cancel it
+            getCurrentRequest().requestStop();
+            try {
+              getCurrentRequest().join();
+            }
+            catch (InterruptedException ignored) {
+            }
+            catch (Exception e) {
+              throw new RuntimeException(e);
+            }
+            finally {
+              if (!myDisposed) {
+                startNewWorkerThread();
               }
             }
           }
-          finally {
-            Disposer.dispose(alarm);
-          }
+        }
+        finally {
+          Disposer.dispose(alarm);
         }
       }, terminateTimeout);
     }
@@ -175,17 +172,8 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
       }
     });
 
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        ProgressManager.getInstance().runProcess(new Runnable() {
-          @Override
-          public void run() {
-            invokeAndWait(command);
-          }
-        }, progressWindow);
-      }
-    });
+    ApplicationManager.getApplication().executeOnPooledThread(
+      () -> ProgressManager.getInstance().runProcess(() -> invokeAndWait(command), progressWindow));
   }
 
 

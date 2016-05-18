@@ -108,14 +108,12 @@ public class ImportFromExistingAction implements QuestionAction {
     final JList list = new JBList(items);
     list.setCellRenderer(new CellRenderer(myName));
 
-    final Runnable runnable = new Runnable() {
-      public void run() {
-        final Object selected = list.getSelectedValue();
-        if (selected instanceof ImportCandidateHolder) {
-          final ImportCandidateHolder item = (ImportCandidateHolder)selected;
-          PsiDocumentManager.getInstance(myTarget.getProject()).commitAllDocuments();
-          doWriteAction(item);
-        }
+    final Runnable runnable = () -> {
+      final Object selected = list.getSelectedValue();
+      if (selected instanceof ImportCandidateHolder) {
+        final ImportCandidateHolder item = (ImportCandidateHolder)selected;
+        PsiDocumentManager.getInstance(myTarget.getProject()).commitAllDocuments();
+        doWriteAction(item);
       }
     };
 
@@ -125,12 +123,7 @@ public class ImportFromExistingAction implements QuestionAction {
         new PopupChooserBuilder(list)
           .setTitle(myUseQualifiedImport? PyBundle.message("ACT.qualify.with.module") : PyBundle.message("ACT.from.some.module.import"))
           .setItemChoosenCallback(runnable)
-          .setFilteringEnabled(new Function<Object, String>() {
-            @Override
-            public String fun(Object o) {
-              return ((ImportCandidateHolder) o).getPresentableText(myName);
-            }
-          })
+          .setFilteringEnabled(o -> ((ImportCandidateHolder) o).getPresentableText(myName))
           .createPopup()
           .showInBestPositionFor(dataContext);
       }

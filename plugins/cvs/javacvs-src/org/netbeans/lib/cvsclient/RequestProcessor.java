@@ -183,27 +183,25 @@ public final class RequestProcessor implements IRequestProcessor {
                                    final IConnectionStreams connectionStreams,
                                    final IRequestsProgressHandler communicationProgressHandler)
       throws CommandException, IOCommandException {
-      final Runnable runnable = new Runnable() {
-        public void run() {
-          try {
-            checkCanceled();
-            sendRequests(requests, connectionStreams, communicationProgressHandler);
-            checkCanceled();
+      final Runnable runnable = () -> {
+        try {
+          checkCanceled();
+          sendRequests(requests, connectionStreams, communicationProgressHandler);
+          checkCanceled();
 
-            sendRequest(requests.getResponseExpectingRequest(), connectionStreams);
-            connectionStreams.flushForReading();
+          sendRequest(requests.getResponseExpectingRequest(), connectionStreams);
+          connectionStreams.flushForReading();
 
-            myResult = handleResponses(connectionStreams, new DefaultResponseHandler());
-          }
-          catch (IOException e) {
-            myIOException = e;
-          }
-          catch (CommandException e) {
-            myCommandException = e;
-          }
-          finally {
-            afterInRunnable();
-          }
+          myResult = handleResponses(connectionStreams, new DefaultResponseHandler());
+        }
+        catch (IOException e) {
+          myIOException = e;
+        }
+        catch (CommandException e) {
+          myCommandException = e;
+        }
+        finally {
+          afterInRunnable();
         }
       };
 

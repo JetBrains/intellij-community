@@ -248,12 +248,7 @@ class EditorSizeManager implements PrioritizedDocumentListener, Disposable, Fold
       int width = myLineWidths.get(visualLine);
       if (width == UNKNOWN_WIDTH) {
         final Ref<Boolean> approximateValue = new Ref<Boolean>(Boolean.FALSE);
-        width = getVisualLineWidth(iterator, new Runnable() {
-          @Override
-          public void run() {
-            approximateValue.set(Boolean.TRUE);
-          }
-        });
+        width = getVisualLineWidth(iterator, () -> approximateValue.set(Boolean.TRUE));
         if (approximateValue.get()) width = -width;
         myLineWidths.set(visualLine, width);
       }

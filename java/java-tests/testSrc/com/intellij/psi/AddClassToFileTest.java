@@ -39,11 +39,8 @@ public class AddClassToFileTest extends PsiTestCase{
       }
     });
     PsiClass aClass = myJavaFacade.getElementFactory().createClass("AAA");
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        file.add(aClass);
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      file.add(aClass);
     });
 
 

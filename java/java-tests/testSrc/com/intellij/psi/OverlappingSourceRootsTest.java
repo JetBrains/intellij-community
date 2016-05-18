@@ -45,35 +45,32 @@ public class OverlappingSourceRootsTest extends PsiTestCase {
     super.setUp();
 
     ApplicationManager.getApplication().runWriteAction(
-            new Runnable() {
-              @Override
-              public void run() {
+      () -> {
 
-                try {
-                  File dir = createTempDirectory();
+        try {
+          File dir = createTempDirectory();
 
-                  myProjectRoot = LocalFileSystem.getInstance().refreshAndFindFileByPath(dir.getPath().replace(File.separatorChar, '/'));
+          myProjectRoot = LocalFileSystem.getInstance().refreshAndFindFileByPath(dir.getPath().replace(File.separatorChar, '/'));
 
-                  mySourceRoot1 = createChildDirectory(myProjectRoot, "root1");
-                  mySourceRoot2 = createChildDirectory(myProjectRoot, "root2");
-                  mySourceRoot11 = createChildDirectory(mySourceRoot1, "root11");
-                  mySourceRoot21 = createChildDirectory(mySourceRoot2, "root21");
+          mySourceRoot1 = createChildDirectory(myProjectRoot, "root1");
+          mySourceRoot2 = createChildDirectory(myProjectRoot, "root2");
+          mySourceRoot11 = createChildDirectory(mySourceRoot1, "root11");
+          mySourceRoot21 = createChildDirectory(mySourceRoot2, "root21");
 
-                  PsiTestUtil.addContentRoot(myModule, myProjectRoot);
-                  PsiTestUtil.addSourceRoot(myModule, mySourceRoot21);
-                  PsiTestUtil.addSourceRoot(myModule, mySourceRoot1);
-                  PsiTestUtil.addSourceRoot(myModule, mySourceRoot2);
-                  PsiTestUtil.addSourceRoot(myModule, mySourceRoot11);
+          PsiTestUtil.addContentRoot(myModule, myProjectRoot);
+          PsiTestUtil.addSourceRoot(myModule, mySourceRoot21);
+          PsiTestUtil.addSourceRoot(myModule, mySourceRoot1);
+          PsiTestUtil.addSourceRoot(myModule, mySourceRoot2);
+          PsiTestUtil.addSourceRoot(myModule, mySourceRoot11);
 
-                  myFile1 = createChildData(mySourceRoot1, "File1.java");
-                  myFile2 = createChildData(mySourceRoot2, "File2.java");
-                  myFile11 = createChildData(mySourceRoot11, "File11.java");
-                  myFile21 = createChildData(mySourceRoot21, "File21.java");
-                } catch (IOException e) {
-                  LOG.error(e);
-                }
-              }
-            }
+          myFile1 = createChildData(mySourceRoot1, "File1.java");
+          myFile2 = createChildData(mySourceRoot2, "File2.java");
+          myFile11 = createChildData(mySourceRoot11, "File11.java");
+          myFile21 = createChildData(mySourceRoot21, "File21.java");
+        } catch (IOException e) {
+          LOG.error(e);
+        }
+      }
     );
   }
 

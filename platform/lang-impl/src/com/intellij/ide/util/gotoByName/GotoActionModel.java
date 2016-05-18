@@ -235,13 +235,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
 
   @Override
   public ListCellRenderer getListCellRenderer() {
-    return new GotoActionListCellRenderer(new Function<OptionDescription, String>() {
-      @NotNull
-      @Override
-      public String fun(@NotNull OptionDescription description) {
-        return getGroupName(description);
-      }
-    });
+    return new GotoActionListCellRenderer(description -> getGroupName(description));
   }
 
   protected String getActionId(@NotNull AnAction anAction) {

@@ -172,16 +172,13 @@ class EventLogConsole {
       return;
     }
     int offset = editor.logicalPositionToOffset(position);
-    editor.getMarkupModel().processRangeHighlightersOverlappingWith(offset, offset, new Processor<RangeHighlighterEx>() {
-      @Override
-      public boolean process(RangeHighlighterEx rangeHighlighter) {
-        String groupId = GROUP_ID.get(rangeHighlighter);
-        if (groupId != null) {
-          addConfigureNotificationAction(actions, groupId);
-          return false;
-        }
-        return true;
+    editor.getMarkupModel().processRangeHighlightersOverlappingWith(offset, offset, rangeHighlighter -> {
+      String groupId = GROUP_ID.get(rangeHighlighter);
+      if (groupId != null) {
+        addConfigureNotificationAction(actions, groupId);
+        return false;
       }
+      return true;
     });
   }
 
@@ -341,27 +338,24 @@ class EventLogConsole {
 
     final Document document = getConsoleEditor().getDocument();
 
-    final Runnable removeHandler = new Runnable() {
-      @Override
-      public void run() {
-        TextAttributes expired =
-          EditorColorsManager.getInstance().getGlobalScheme().getAttributes(ConsoleViewContentType.LOG_EXPIRED_ENTRY);
-        TextAttributes italic = new TextAttributes(null, null, null, null, Font.ITALIC);
-        for (RangeHighlighter colorHighlighter : lineColors) {
-          if (colorHighlighter.isValid()) {
-            int line = document.getLineNumber(colorHighlighter.getStartOffset());
+    final Runnable removeHandler = () -> {
+      TextAttributes expired =
+        EditorColorsManager.getInstance().getGlobalScheme().getAttributes(ConsoleViewContentType.LOG_EXPIRED_ENTRY);
+      TextAttributes italic = new TextAttributes(null, null, null, null, Font.ITALIC);
+      for (RangeHighlighter colorHighlighter : lineColors) {
+        if (colorHighlighter.isValid()) {
+          int line = document.getLineNumber(colorHighlighter.getStartOffset());
 
-            markupModel.addLineHighlighter(line, HighlighterLayer.CARET_ROW + 1, expired);
+          markupModel.addLineHighlighter(line, HighlighterLayer.CARET_ROW + 1, expired);
 
-            for (RangeHighlighter highlighter : myHyperlinkSupport.getValue().findAllHyperlinksOnLine(line)) {
-              markupModel
-                .addRangeHighlighter(highlighter.getStartOffset(), highlighter.getEndOffset(), HighlighterLayer.CARET_ROW + 2, italic,
-                                     HighlighterTargetArea.EXACT_RANGE);
-              myHyperlinkSupport.getValue().removeHyperlink(highlighter);
-            }
+          for (RangeHighlighter highlighter : myHyperlinkSupport.getValue().findAllHyperlinksOnLine(line)) {
+            markupModel
+              .addRangeHighlighter(highlighter.getStartOffset(), highlighter.getEndOffset(), HighlighterLayer.CARET_ROW + 2, italic,
+                                   HighlighterTargetArea.EXACT_RANGE);
+            myHyperlinkSupport.getValue().removeHyperlink(highlighter);
           }
-          markupModel.removeHighlighter(colorHighlighter);
         }
+        markupModel.removeHighlighter(colorHighlighter);
       }
     };
     if (!notification.isExpired()) {
@@ -432,15 +426,12 @@ class EventLogConsole {
     final Ref<RangeHighlighterEx> highlighter = new Ref<>();
 
     editor.getMarkupModel()
-      .processRangeHighlightersOverlappingWith(0, editor.getDocument().getTextLength(), new Processor<RangeHighlighterEx>() {
-        @Override
-        public boolean process(RangeHighlighterEx rangeHighlighter) {
-          if (id.equals(NOTIFICATION_ID.get(rangeHighlighter))) {
-            highlighter.set(rangeHighlighter);
-            return false;
-          }
-          return true;
+      .processRangeHighlightersOverlappingWith(0, editor.getDocument().getTextLength(), rangeHighlighter -> {
+        if (id.equals(NOTIFICATION_ID.get(rangeHighlighter))) {
+          highlighter.set(rangeHighlighter);
+          return false;
         }
+        return true;
       });
 
     return highlighter.get();

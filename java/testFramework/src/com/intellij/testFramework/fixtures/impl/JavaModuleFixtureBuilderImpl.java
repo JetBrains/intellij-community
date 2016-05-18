@@ -118,57 +118,54 @@ abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> extends Mod
   protected void initModule(final Module module) {
     super.initModule(module);
 
-    ModuleRootModificationUtil.updateModel(module, new Consumer<ModifiableRootModel>() {
-      @Override
-      public void consume(ModifiableRootModel model) {
-        LibraryTable libraryTable = model.getModuleLibraryTable();
-        for (Lib lib : myLibraries) {
-          Library library = libraryTable.createLibrary(lib.getName());
-          Library.ModifiableModel libraryModel = library.getModifiableModel();
-          boolean success = false;
-          try {
-            for (OrderRootType rootType : OrderRootType.getAllTypes()) {
-              for (String root : lib.getRoots(rootType)) {
-                VirtualFile vRoot = LocalFileSystem.getInstance().refreshAndFindFileByPath(root);
-                if (vRoot != null && OrderRootType.CLASSES.equals(rootType) && !vRoot.isDirectory()) {
-                  VirtualFile jar = JarFileSystem.getInstance().refreshAndFindFileByPath(root + "!/");
-                  if (jar != null) {
-                    vRoot = jar;
-                  }
-                }
-                if (vRoot != null) {
-                  libraryModel.addRoot(vRoot, rootType);
+    ModuleRootModificationUtil.updateModel(module, model -> {
+      LibraryTable libraryTable = model.getModuleLibraryTable();
+      for (Lib lib : myLibraries) {
+        Library library = libraryTable.createLibrary(lib.getName());
+        Library.ModifiableModel libraryModel = library.getModifiableModel();
+        boolean success = false;
+        try {
+          for (OrderRootType rootType : OrderRootType.getAllTypes()) {
+            for (String root : lib.getRoots(rootType)) {
+              VirtualFile vRoot = LocalFileSystem.getInstance().refreshAndFindFileByPath(root);
+              if (vRoot != null && OrderRootType.CLASSES.equals(rootType) && !vRoot.isDirectory()) {
+                VirtualFile jar = JarFileSystem.getInstance().refreshAndFindFileByPath(root + "!/");
+                if (jar != null) {
+                  vRoot = jar;
                 }
               }
-            }
-            success = true;
-          }
-          finally {
-            if (!success) {
-              Disposer.dispose(libraryModel);
+              if (vRoot != null) {
+                libraryModel.addRoot(vRoot, rootType);
+              }
             }
           }
-
-          libraryModel.commit();
+          success = true;
+        }
+        finally {
+          if (!success) {
+            Disposer.dispose(libraryModel);
+          }
         }
 
-        final Sdk jdk;
-        if (myJdk != null) {
-          VfsRootAccess.allowRootAccess(module, myJdk);
-          jdk = JavaSdk.getInstance().createJdk(module.getName() + "_jdk", myJdk, false);
-          ((ProjectJdkImpl)jdk).setVersionString(StringUtil.notNullize(IdeaTestUtil.getMockJdkVersion(myJdk), "java 1.5"));
-        }
-        else {
-          jdk = IdeaTestUtil.getMockJdk17();
-        }
-        model.setSdk(new MockJdkWrapper(CompilerConfigurationImpl.getTestsExternalCompilerHome(), jdk));
+        libraryModel.commit();
+      }
 
-        if (myLanguageLevel != null) {
-          model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(myLanguageLevel);
-        }
-        else if (myMockJdkLevel == MockJdkLevel.jdk15) {
-          model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(LanguageLevel.JDK_1_5);
-        }
+      final Sdk jdk;
+      if (myJdk != null) {
+        VfsRootAccess.allowRootAccess(module, myJdk);
+        jdk = JavaSdk.getInstance().createJdk(module.getName() + "_jdk", myJdk, false);
+        ((ProjectJdkImpl)jdk).setVersionString(StringUtil.notNullize(IdeaTestUtil.getMockJdkVersion(myJdk), "java 1.5"));
+      }
+      else {
+        jdk = IdeaTestUtil.getMockJdk17();
+      }
+      model.setSdk(new MockJdkWrapper(CompilerConfigurationImpl.getTestsExternalCompilerHome(), jdk));
+
+      if (myLanguageLevel != null) {
+        model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(myLanguageLevel);
+      }
+      else if (myMockJdkLevel == MockJdkLevel.jdk15) {
+        model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(LanguageLevel.JDK_1_5);
       }
     });
 

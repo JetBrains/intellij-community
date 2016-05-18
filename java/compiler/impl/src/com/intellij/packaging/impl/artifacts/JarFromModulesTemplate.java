@@ -113,17 +113,14 @@ public class JarFromModulesTemplate extends ArtifactTemplate {
     final ModulesProvider modulesProvider = myContext.getModulesProvider();
     final OrderEnumerator enumerator = orderEnumerator.using(modulesProvider).withoutSdk().runtimeOnly().recursively();
     enumerator.forEachLibrary(new CommonProcessors.CollectProcessor<Library>(libraries));
-    enumerator.forEachModule(new Processor<Module>() {
-      @Override
-      public boolean process(Module module) {
-        if (ProductionModuleOutputElementType.ELEMENT_TYPE.isSuitableModule(modulesProvider, module)) {
-          archive.addOrFindChild(factory.createModuleOutput(module));
-        }
-        if (includeTests && TestModuleOutputElementType.ELEMENT_TYPE.isSuitableModule(modulesProvider, module)) {
-          archive.addOrFindChild(factory.createTestModuleOutput(module));
-        }
-        return true;
+    enumerator.forEachModule(module -> {
+      if (ProductionModuleOutputElementType.ELEMENT_TYPE.isSuitableModule(modulesProvider, module)) {
+        archive.addOrFindChild(factory.createModuleOutput(module));
       }
+      if (includeTests && TestModuleOutputElementType.ELEMENT_TYPE.isSuitableModule(modulesProvider, module)) {
+        archive.addOrFindChild(factory.createTestModuleOutput(module));
+      }
+      return true;
     });
 
     final JarArtifactType jarArtifactType = JarArtifactType.getInstance();

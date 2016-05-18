@@ -84,12 +84,7 @@ public class AutoTestManager implements PersistentStateComponent<AutoTestManager
 
   @NotNull
   private DelayedDocumentWatcher createWatcher() {
-    return new DelayedDocumentWatcher(myProject, myDelayMillis, new Consumer<Integer>() {
-      @Override
-      public void consume(Integer modificationStamp) {
-        restartAllAutoTests(modificationStamp);
-      }
-    }, new Condition<VirtualFile>() {
+    return new DelayedDocumentWatcher(myProject, myDelayMillis, modificationStamp -> restartAllAutoTests(modificationStamp), new Condition<VirtualFile>() {
       @Override
       public boolean value(VirtualFile file) {
         if (ScratchFileService.getInstance().getRootType(file) != null) {
@@ -199,12 +194,9 @@ public class AutoTestManager implements PersistentStateComponent<AutoTestManager
       @Override
       public void processTerminated(ProcessEvent event) {
         clearRestarterListener(processHandler);
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            if (isAutoTestEnabledForDescriptor(descriptor) && documentWatcher.isUpToDate(modificationStamp)) {
-              restart(descriptor);
-            }
+        ApplicationManager.getApplication().invokeLater(() -> {
+          if (isAutoTestEnabledForDescriptor(descriptor) && documentWatcher.isUpToDate(modificationStamp)) {
+            restart(descriptor);
           }
         }, ModalityState.any());
       }

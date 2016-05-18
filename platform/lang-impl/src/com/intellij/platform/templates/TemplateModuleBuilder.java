@@ -97,37 +97,26 @@ public class TemplateModuleBuilder extends ModuleBuilder {
       final Module[] modules = ModuleManager.getInstance(project).getModules();
       if (modules.length > 0) {
         final Module module = modules[0];
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            try {
-              setupModule(module);
-            }
-            catch (ConfigurationException e) {
-              LOG.error(e);
-            }
+        ApplicationManager.getApplication().runWriteAction(() -> {
+          try {
+            setupModule(module);
+          }
+          catch (ConfigurationException e) {
+            LOG.error(e);
           }
         });
 
-        StartupManager.getInstance(project).registerPostStartupActivity(new Runnable() {
-          @Override
-          public void run() {
-            ApplicationManager.getApplication().runWriteAction(new Runnable() {
-              @Override
-              public void run() {
-                try {
-                  ModifiableModuleModel modifiableModuleModel = ModuleManager.getInstance(project).getModifiableModel();
-                  modifiableModuleModel.renameModule(module, module.getProject().getName());
-                  modifiableModuleModel.commit();
-                  fixModuleName(module);
-                }
-                catch (ModuleWithNameAlreadyExists exists) {
-                  // do nothing
-                }
-              }
-            });
+        StartupManager.getInstance(project).registerPostStartupActivity(() -> ApplicationManager.getApplication().runWriteAction(() -> {
+          try {
+            ModifiableModuleModel modifiableModuleModel = ModuleManager.getInstance(project).getModifiableModel();
+            modifiableModuleModel.renameModule(module, module.getProject().getName());
+            modifiableModuleModel.commit();
+            fixModuleName(module);
           }
-        });
+          catch (ModuleWithNameAlreadyExists exists) {
+            // do nothing
+          }
+        }));
         return module;
       }
       return null;
@@ -200,16 +189,12 @@ public class TemplateModuleBuilder extends ModuleBuilder {
   private void unzip(final @Nullable String projectName, String path, final boolean moduleMode) {
     final WizardInputField basePackage = getBasePackageField();
     try {
-      final NullableFunction<String, String> pathConvertor = new NullableFunction<String, String>() {
-        @Nullable
-        @Override
-        public String fun(String path) {
-          if (moduleMode && path.contains(Project.DIRECTORY_STORE_FOLDER)) return null;
-          if (basePackage != null) {
-            return path.replace(getPathFragment(basePackage.getDefaultValue()), getPathFragment(basePackage.getValue()));
-          }
-          return path;
+      final NullableFunction<String, String> pathConvertor = path1 -> {
+        if (moduleMode && path1.contains(Project.DIRECTORY_STORE_FOLDER)) return null;
+        if (basePackage != null) {
+          return path1.replace(getPathFragment(basePackage.getDefaultValue()), getPathFragment(basePackage.getValue()));
         }
+        return path1;
       };
 
       final File dir = new File(path);

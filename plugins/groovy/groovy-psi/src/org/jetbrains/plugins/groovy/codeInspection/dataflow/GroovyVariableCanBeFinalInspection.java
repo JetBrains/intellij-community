@@ -44,13 +44,10 @@ import java.util.List;
 public class GroovyVariableCanBeFinalInspection extends GroovyLocalInspectionBase {
 
   private static final Function<ProblemDescriptor, PsiModifierList> ID_MODIFIER_LIST_PROVIDER =
-    new Function<ProblemDescriptor, PsiModifierList>() {
-      @Override
-      public PsiModifierList fun(ProblemDescriptor descriptor) {
-        final PsiElement identifier = descriptor.getPsiElement();
-        final PsiVariable variable = PsiTreeUtil.getParentOfType(identifier, PsiVariable.class);
-        return variable == null ? null : variable.getModifierList();
-      }
+    descriptor -> {
+      final PsiElement identifier = descriptor.getPsiElement();
+      final PsiVariable variable = PsiTreeUtil.getParentOfType(identifier, PsiVariable.class);
+      return variable == null ? null : variable.getModifierList();
     };
 
   private static void process(@NotNull GrControlFlowOwner owner, @NotNull GrVariable variable, @NotNull ProblemsHolder problemsHolder) {

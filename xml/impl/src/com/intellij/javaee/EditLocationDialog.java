@@ -98,11 +98,8 @@ public class EditLocationDialog extends DialogWrapper {
         @Override
         public void actionPerformed(ActionEvent ignored) {
           FileChooserDescriptor descriptor = getChooserDescriptor();
-          FileChooser.chooseFile(descriptor, myProject, null, new Consumer<VirtualFile>() {
-            @Override
-            public void consume(VirtualFile file) {
-              myTfPath.setText(file.getPath().replace('/', File.separatorChar));
-            }
+          FileChooser.chooseFile(descriptor, myProject, null, file -> {
+            myTfPath.setText(file.getPath().replace('/', File.separatorChar));
           });
         }
       });

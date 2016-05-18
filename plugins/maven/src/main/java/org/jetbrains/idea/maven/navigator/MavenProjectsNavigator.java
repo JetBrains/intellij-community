@@ -202,59 +202,34 @@ public class MavenProjectsNavigator extends MavenSimpleProjectComponent implemen
     myShortcutsManager.addListener(new MavenShortcutsManager.Listener() {
       @Override
       public void shortcutsUpdated() {
-        scheduleStructureRequest(new Runnable() {
-          @Override
-          public void run() {
-            myStructure.updateGoals();
-          }
-        });
+        scheduleStructureRequest(() -> myStructure.updateGoals());
       }
     });
 
     myTasksManager.addListener(new MavenTasksManager.Listener() {
       @Override
       public void compileTasksChanged() {
-        scheduleStructureRequest(new Runnable() {
-          @Override
-          public void run() {
-            myStructure.updateGoals();
-          }
-        });
+        scheduleStructureRequest(() -> myStructure.updateGoals());
       }
     });
 
     RunManagerEx.getInstanceEx(myProject).addRunManagerListener(new RunManagerAdapter() {
       @Override
       public void beforeRunTasksChanged() {
-        scheduleStructureRequest(new Runnable() {
-          @Override
-          public void run() {
-            myStructure.updateGoals();
-          }
-        });
+        scheduleStructureRequest(() -> myStructure.updateGoals());
       }
     });
 
     MavenRunner.getInstance(myProject).getSettings().addListener(new MavenRunnerSettings.Listener() {
       @Override
       public void skipTestsChanged() {
-        scheduleStructureRequest(new Runnable() {
-          @Override
-          public void run() {
-            myStructure.updateGoals();
-          }
-        });
+        scheduleStructureRequest(() -> myStructure.updateGoals());
       }
     });
 
     ((RunManagerEx)RunManager.getInstance(myProject)).addRunManagerListener(new RunManagerAdapter() {
       private void changed() {
-        scheduleStructureRequest(new Runnable() {
-          @Override
-          public void run() {
-            myStructure.updateRunConfigurations();
-          }
-        });
+        scheduleStructureRequest(() -> myStructure.updateRunConfigurations());
       }
 
       @Override
@@ -359,12 +334,7 @@ public class MavenProjectsNavigator extends MavenSimpleProjectComponent implemen
   }
 
   public void selectInTree(final MavenProject project) {
-    scheduleStructureRequest(new Runnable() {
-      @Override
-      public void run() {
-        myStructure.select(project);
-      }
-    });
+    scheduleStructureRequest(() -> myStructure.select(project));
   }
 
   private void scheduleStructureRequest(final Runnable r) {
@@ -376,28 +346,25 @@ public class MavenProjectsNavigator extends MavenSimpleProjectComponent implemen
     }
 
     if (myToolWindow == null) return;
-    MavenUtil.invokeLater(myProject, new Runnable() {
-      @Override
-      public void run() {
-        if (!myToolWindow.isVisible()) return;
+    MavenUtil.invokeLater(myProject, () -> {
+      if (!myToolWindow.isVisible()) return;
 
-        boolean shouldCreate = myStructure == null;
-        if (shouldCreate) {
-          initStructure();
-        }
+      boolean shouldCreate = myStructure == null;
+      if (shouldCreate) {
+        initStructure();
+      }
 
-        r.run();
+      r.run();
 
-        if (shouldCreate) {
-          if (myState.treeState != null) {
-            TreeState treeState = new TreeState();
-            try {
-              treeState.readExternal(myState.treeState);
-              treeState.applyTo(myTree);
-            }
-            catch (InvalidDataException e) {
-              MavenLog.LOG.info(e);
-            }
+      if (shouldCreate) {
+        if (myState.treeState != null) {
+          TreeState treeState = new TreeState();
+          try {
+            treeState.readExternal(myState.treeState);
+            treeState.applyTo(myTree);
+          }
+          catch (InvalidDataException e) {
+            MavenLog.LOG.info(e);
           }
         }
       }
@@ -409,12 +376,7 @@ public class MavenProjectsNavigator extends MavenSimpleProjectComponent implemen
   }
 
   private void scheduleStructureUpdate() {
-    scheduleStructureRequest(new Runnable() {
-      @Override
-      public void run() {
-        myStructure.update();
-      }
-    });
+    scheduleStructureRequest(() -> myStructure.update());
   }
 
   private class MyProjectsListener extends MavenProjectsTree.ListenerAdapter implements MavenProjectsManager.Listener {
@@ -433,22 +395,12 @@ public class MavenProjectsNavigator extends MavenSimpleProjectComponent implemen
 
     @Override
     public void projectsIgnoredStateChanged(final List<MavenProject> ignored, final List<MavenProject> unignored, boolean fromImport) {
-      scheduleStructureRequest(new Runnable() {
-        @Override
-        public void run() {
-          myStructure.updateIgnored(ContainerUtil.concat(ignored, unignored));
-        }
-      });
+      scheduleStructureRequest(() -> myStructure.updateIgnored(ContainerUtil.concat(ignored, unignored)));
     }
 
     @Override
     public void profilesChanged() {
-      scheduleStructureRequest(new Runnable() {
-        @Override
-        public void run() {
-          myStructure.updateProfiles();
-        }
-      });
+      scheduleStructureRequest(() -> myStructure.updateProfiles());
     }
 
     @Override
@@ -468,12 +420,7 @@ public class MavenProjectsNavigator extends MavenSimpleProjectComponent implemen
     }
 
     private void scheduleUpdateProjects(final List<MavenProject> projects, final List<MavenProject> deleted) {
-      scheduleStructureRequest(new Runnable() {
-        @Override
-        public void run() {
-          myStructure.updateProjects(projects, deleted);
-        }
-      });
+      scheduleStructureRequest(() -> myStructure.updateProjects(projects, deleted));
     }
   }
 }

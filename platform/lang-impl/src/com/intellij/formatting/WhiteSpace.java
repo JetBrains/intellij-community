@@ -293,13 +293,10 @@ public class WhiteSpace {
    * @param indent      new value for the {@link #getIndentSpaces()}  indentSpaces} property
    */
   public void setSpaces(final int spaces, final int indent) {
-    performModification(new Runnable() {
-      @Override
-      public void run() {
-        if (!isKeepFirstColumn() || getFlag(CONTAINS_SPACES_INITIALLY_MASK)) {
-          mySpaces = spaces;
-          myIndentSpaces = indent;
-        }
+    performModification(() -> {
+      if (!isKeepFirstColumn() || getFlag(CONTAINS_SPACES_INITIALLY_MASK)) {
+        mySpaces = spaces;
+        myIndentSpaces = indent;
       }
     });
   }
@@ -373,17 +370,14 @@ public class WhiteSpace {
    * @param spaceProperty     spacing settings holder
    */
   public void arrangeSpaces(final SpacingImpl spaceProperty) {
-    performModification(new Runnable() {
-      @Override
-      public void run() {
-        if (spaceProperty != null) {
-          if (getLineFeeds() == 0) {
-            if (spaceProperty.getMinSpaces() >= 0 && getTotalSpaces() < spaceProperty.getMinSpaces()) {
-              setSpaces(spaceProperty.getMinSpaces(), 0);
-            }
-            if (spaceProperty.getMaxSpaces() >= 0 && getTotalSpaces() > spaceProperty.getMaxSpaces()) {
-              setSpaces(spaceProperty.getMaxSpaces(), 0);
-            }
+    performModification(() -> {
+      if (spaceProperty != null) {
+        if (getLineFeeds() == 0) {
+          if (spaceProperty.getMinSpaces() >= 0 && getTotalSpaces() < spaceProperty.getMinSpaces()) {
+            setSpaces(spaceProperty.getMinSpaces(), 0);
+          }
+          if (spaceProperty.getMaxSpaces() >= 0 && getTotalSpaces() > spaceProperty.getMaxSpaces()) {
+            setSpaces(spaceProperty.getMaxSpaces(), 0);
           }
         }
       }
@@ -395,45 +389,42 @@ public class WhiteSpace {
    * defined at the given spacing property.
    */
   public void arrangeLineFeeds(final SpacingImpl spaceProperty, final BlockRangesMap helper) {
-    performModification(new Runnable() {
-      @Override
-      public void run() {
-        if (spaceProperty != null) {
-          spaceProperty.refresh(helper);
+    performModification(() -> {
+      if (spaceProperty != null) {
+        spaceProperty.refresh(helper);
 
-          if (spaceProperty.getMinLineFeeds() >= 0 && getLineFeeds() < spaceProperty.getMinLineFeeds()) {
-            setLineFeeds(spaceProperty.getMinLineFeeds());
-          }
-          if (getLineFeeds() > 0) {
-            if (spaceProperty.getKeepBlankLines() > 0) {
-              if (getLineFeeds() >= spaceProperty.getKeepBlankLines() + 1) {
-                setLineFeeds(spaceProperty.getKeepBlankLines() + 1);
-              }
-            }
-            else {
-              if (getLineFeeds() > spaceProperty.getMinLineFeeds()) {
-                if (spaceProperty.shouldKeepLineFeeds()) {
-                  setLineFeeds(Math.max(spaceProperty.getMinLineFeeds(), 1));
-                }
-                else {
-                  setLineFeeds(spaceProperty.getMinLineFeeds());
-                  if (getLineFeeds() == 0) mySpaces = 0;
-                }
-              }
-            }
-            if (getLineFeeds() == 1 && !spaceProperty.shouldKeepLineFeeds() && spaceProperty.getMinLineFeeds() == 0) {
-              setLineFeeds(0);
-              mySpaces = 0;
-            }
-
-            if (getLineFeeds() > 0 && getLineFeeds() < spaceProperty.getPrefLineFeeds()) {
-              setLineFeeds(spaceProperty.getPrefLineFeeds());
-            }
-          }
-        } else if (isFirst()) {
-          setLineFeeds(0);
-          mySpaces = 0;
+        if (spaceProperty.getMinLineFeeds() >= 0 && getLineFeeds() < spaceProperty.getMinLineFeeds()) {
+          setLineFeeds(spaceProperty.getMinLineFeeds());
         }
+        if (getLineFeeds() > 0) {
+          if (spaceProperty.getKeepBlankLines() > 0) {
+            if (getLineFeeds() >= spaceProperty.getKeepBlankLines() + 1) {
+              setLineFeeds(spaceProperty.getKeepBlankLines() + 1);
+            }
+          }
+          else {
+            if (getLineFeeds() > spaceProperty.getMinLineFeeds()) {
+              if (spaceProperty.shouldKeepLineFeeds()) {
+                setLineFeeds(Math.max(spaceProperty.getMinLineFeeds(), 1));
+              }
+              else {
+                setLineFeeds(spaceProperty.getMinLineFeeds());
+                if (getLineFeeds() == 0) mySpaces = 0;
+              }
+            }
+          }
+          if (getLineFeeds() == 1 && !spaceProperty.shouldKeepLineFeeds() && spaceProperty.getMinLineFeeds() == 0) {
+            setLineFeeds(0);
+            mySpaces = 0;
+          }
+
+          if (getLineFeeds() > 0 && getLineFeeds() < spaceProperty.getPrefLineFeeds()) {
+            setLineFeeds(spaceProperty.getPrefLineFeeds());
+          }
+        }
+      } else if (isFirst()) {
+        setLineFeeds(0);
+        mySpaces = 0;
       }
     });
 
@@ -480,13 +471,10 @@ public class WhiteSpace {
    * Tries to ensure that current {@link WhiteSpace} object contains at least one line feed.
    */
   public void ensureLineFeed() {
-    performModification(new Runnable() {
-      @Override
-      public void run() {
-        if (!containsLineFeeds()) {
-          setLineFeeds(1);
-          mySpaces = 0;
-        }
+    performModification(() -> {
+      if (!containsLineFeeds()) {
+        setLineFeeds(1);
+        mySpaces = 0;
       }
     });
   }
@@ -541,13 +529,10 @@ public class WhiteSpace {
    * {@link #arrangeSpaces(SpacingImpl)}.
    */
   public void removeLineFeeds(final SpacingImpl spacing, final BlockRangesMap helper) {
-    performModification(new Runnable() {
-      @Override
-      public void run() {
-        setLineFeeds(0);
-        mySpaces = 0;
-        myIndentSpaces = 0;
-      }
+    performModification(() -> {
+      setLineFeeds(0);
+      mySpaces = 0;
+      myIndentSpaces = 0;
     });
     arrangeLineFeeds(spacing, helper);
     arrangeSpaces(spacing);

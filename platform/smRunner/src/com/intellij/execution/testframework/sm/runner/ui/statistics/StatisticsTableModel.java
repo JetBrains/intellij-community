@@ -47,11 +47,7 @@ public class StatisticsTableModel extends ListTableModel<SMTestProxy> {
       myCurrentSuite = newCurrentSuite;
     }
     // update model to show new items in it
-    SMRunnerUtil.addToInvokeLater(new Runnable() {
-      public void run() {
-        updateModel();
-      }
-    });
+    SMRunnerUtil.addToInvokeLater(() -> updateModel());
   }
 
   @Nullable

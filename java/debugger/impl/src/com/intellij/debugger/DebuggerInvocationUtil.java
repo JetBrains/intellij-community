@@ -32,12 +32,9 @@ public class DebuggerInvocationUtil {
       return;
     }
 
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (!project.isDisposed()) {
-          runnable.run();
-        }
+    SwingUtilities.invokeLater(() -> {
+      if (!project.isDisposed()) {
+        runnable.run();
       }
     });
   }
@@ -56,12 +53,9 @@ public class DebuggerInvocationUtil {
 
   public static void invokeAndWait(final Project project, @NotNull final Runnable runnable, ModalityState state) {
     if (project != null) {
-      ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-        @Override
-        public void run() {
-          if (!project.isDisposed()) {
-            runnable.run();
-          }
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        if (!project.isDisposed()) {
+          runnable.run();
         }
       }, state);
     }

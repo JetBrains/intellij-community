@@ -116,13 +116,7 @@ public class CloudGitChooseAccountStepImpl extends CloudGitChooseAccountStepBase
             @Override
             public void moduleAdded(@NotNull Project project, @NotNull Module addedModule) {
               if (addedModule == module) {
-                StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
-
-                  @Override
-                  public void run() {
-                    onModuleAdded(module);
-                  }
-                });
+                StartupManager.getInstance(project).runWhenProjectIsInitialized(() -> onModuleAdded(module));
                 connection.disconnect();
               }
             }

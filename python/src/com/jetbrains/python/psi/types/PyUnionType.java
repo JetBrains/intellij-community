@@ -69,11 +69,7 @@ public class PyUnionType implements PyType {
   }
 
   public String getName() {
-    return StringUtil.join(myMembers, new NullableFunction<PyType, String>() {
-      public String fun(PyType type) {
-        return type != null ? type.getName() : null;
-      }
-    }, " | ");
+    return StringUtil.join(myMembers, (NullableFunction<PyType, String>)type -> type != null ? type.getName() : null, " | ");
   }
 
   /**

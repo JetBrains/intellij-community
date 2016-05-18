@@ -157,10 +157,8 @@ public class FormReferenceProvider extends PsiReferenceProvider {
     }
 
     final PsiReference finalClassReference = classReference;
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        processReferences(rootTag, finalClassReference, file, processor);
-      }
+    ApplicationManager.getApplication().runReadAction(() -> {
+      processReferences(rootTag, finalClassReference, file, processor);
     });
   }
 

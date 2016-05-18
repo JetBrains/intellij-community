@@ -213,12 +213,8 @@ public class UnusedDefInspection extends GroovyLocalInspectionBase {
         }
       }
 
-      return ReferencesSearch.search(var, var.getUseScope()).forEach(new Processor<PsiReference>() {
-        @Override
-        public boolean process(PsiReference ref) {
-          return ControlFlowUtils.findControlFlowOwner(ref.getElement()) == scope;
-        }
-      });
+      return ReferencesSearch.search(var, var.getUseScope()).forEach(
+        ref -> ControlFlowUtils.findControlFlowOwner(ref.getElement()) == scope);
     }
 
     return true;

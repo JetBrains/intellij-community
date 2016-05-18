@@ -259,48 +259,39 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
   }
 
   private static Runnable createOverrideRunnable(final Editor editor, final PsiFile file, final Project project) {
-    return new Runnable() {
-      @Override
-      public void run() {
-        PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
-        final PsiAnonymousClass
-          aClass = PsiTreeUtil.findElementOfClassAtOffset(file, editor.getCaretModel().getOffset(), PsiAnonymousClass.class, false);
-        if (aClass == null) return;
-        CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-          @Override
-          public void run() {
-            final Collection<CandidateInfo> candidatesToImplement = OverrideImplementExploreUtil.getMethodsToOverrideImplement(aClass, true);
-            for (Iterator<CandidateInfo> iterator = candidatesToImplement.iterator(); iterator.hasNext(); ) {
-              final CandidateInfo candidate = iterator.next();
-              final PsiElement element = candidate.getElement();
-              if (element instanceof PsiMethod && ((PsiMethod)element).hasModifierProperty(PsiModifier.DEFAULT)) {
-                iterator.remove();
-              }
-            }
-            boolean invokeOverride = candidatesToImplement.isEmpty();
-            if (invokeOverride) {
-              OverrideImplementUtil.chooseAndOverrideOrImplementMethods(project, editor, aClass, false);
-            }
-            else {
-              ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                @Override
-                public void run() {
-                  try {
-                    List<PsiMethod> methods = OverrideImplementUtil.overrideOrImplementMethodCandidates(aClass, candidatesToImplement, false);
-                    List<PsiGenerationInfo<PsiMethod>> prototypes = OverrideImplementUtil.convert2GenerationInfos(methods);
-                    List<PsiGenerationInfo<PsiMethod>> resultMembers =
-                      GenerateMembersUtil.insertMembersBeforeAnchor(aClass, null, prototypes);
-                    resultMembers.get(0).positionCaret(editor, true);
-                  }
-                  catch (IncorrectOperationException ioe) {
-                    LOG.error(ioe);
-                  }
-                }
-              });
-            }
+    return () -> {
+      PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+      final PsiAnonymousClass
+        aClass = PsiTreeUtil.findElementOfClassAtOffset(file, editor.getCaretModel().getOffset(), PsiAnonymousClass.class, false);
+      if (aClass == null) return;
+      CommandProcessor.getInstance().executeCommand(project, () -> {
+        final Collection<CandidateInfo> candidatesToImplement = OverrideImplementExploreUtil.getMethodsToOverrideImplement(aClass, true);
+        for (Iterator<CandidateInfo> iterator = candidatesToImplement.iterator(); iterator.hasNext(); ) {
+          final CandidateInfo candidate = iterator.next();
+          final PsiElement element = candidate.getElement();
+          if (element instanceof PsiMethod && ((PsiMethod)element).hasModifierProperty(PsiModifier.DEFAULT)) {
+            iterator.remove();
           }
-        }, getCommandName(), getCommandName(), UndoConfirmationPolicy.DEFAULT, editor.getDocument());
-      }
+        }
+        boolean invokeOverride = candidatesToImplement.isEmpty();
+        if (invokeOverride) {
+          OverrideImplementUtil.chooseAndOverrideOrImplementMethods(project, editor, aClass, false);
+        }
+        else {
+          ApplicationManager.getApplication().runWriteAction(() -> {
+            try {
+              List<PsiMethod> methods = OverrideImplementUtil.overrideOrImplementMethodCandidates(aClass, candidatesToImplement, false);
+              List<PsiGenerationInfo<PsiMethod>> prototypes = OverrideImplementUtil.convert2GenerationInfos(methods);
+              List<PsiGenerationInfo<PsiMethod>> resultMembers =
+                GenerateMembersUtil.insertMembersBeforeAnchor(aClass, null, prototypes);
+              resultMembers.get(0).positionCaret(editor, true);
+            }
+            catch (IncorrectOperationException ioe) {
+              LOG.error(ioe);
+            }
+          });
+        }
+      }, getCommandName(), getCommandName(), UndoConfirmationPolicy.DEFAULT, editor.getDocument());
     };
   }
 

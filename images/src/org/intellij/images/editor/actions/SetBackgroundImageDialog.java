@@ -82,12 +82,7 @@ public class SetBackgroundImageDialog extends DialogWrapper {
     myEditorPreview = createEditorPreview();
     myIdePreview = createIdePreview();
     myPropertyTmp = IdeBackgroundUtil.BG_PROPERTY_PREFIX + project.getLocationHash();
-    UiNotifyConnector.doWhenFirstShown(myRoot, new Runnable() {
-      @Override
-      public void run() {
-        IdeBackgroundUtil.createTemporaryBackgroundTransform(myPreviewPanel, myPropertyTmp, getDisposable());
-      }
-    });
+    UiNotifyConnector.doWhenFirstShown(myRoot, () -> IdeBackgroundUtil.createTemporaryBackgroundTransform(myPreviewPanel, myPropertyTmp, getDisposable()));
     setupComponents();
     restoreRecentImages();
     setSelectedPath(mySelectedPath);

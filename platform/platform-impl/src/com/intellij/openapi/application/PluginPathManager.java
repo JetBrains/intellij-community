@@ -50,21 +50,11 @@ public class PluginPathManager {
 
     @NotNull
     private static File[] getSortedGitRoots(@NotNull File dir) {
-      File[] gitRoots = dir.listFiles(new FileFilter() {
-        @Override
-        public boolean accept(File child) {
-          return child.isDirectory() && new File(child, ".git").exists();
-        }
-      });
+      File[] gitRoots = dir.listFiles(child -> child.isDirectory() && new File(child, ".git").exists());
       if (gitRoots == null) {
         return new File[0];
       }
-      Arrays.sort(gitRoots, new Comparator<File>() {
-        @Override
-        public int compare(File file, File file2) {
-          return FileUtil.compareFiles(file, file2);
-        }
-      });
+      Arrays.sort(gitRoots, (file, file2) -> FileUtil.compareFiles(file, file2));
       return gitRoots;
     }
   }

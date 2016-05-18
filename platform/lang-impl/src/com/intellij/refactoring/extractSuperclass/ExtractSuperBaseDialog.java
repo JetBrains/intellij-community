@@ -242,20 +242,17 @@ public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, Membe
         myExtractedSuperNameField.requestFocusInWindow();
       }
       else {
-        CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-          @Override
-          public void run() {
-            try {
-              preparePackage();
-            }
-            catch (IncorrectOperationException e) {
-              errorString[0] = e.getMessage();
-              myPackageNameField.requestFocusInWindow();
-            }
-            catch (OperationFailedException e) {
-              errorString[0] = e.getMessage();
-              myPackageNameField.requestFocusInWindow();
-            }
+        CommandProcessor.getInstance().executeCommand(myProject, () -> {
+          try {
+            preparePackage();
+          }
+          catch (IncorrectOperationException e) {
+            errorString[0] = e.getMessage();
+            myPackageNameField.requestFocusInWindow();
+          }
+          catch (OperationFailedException e) {
+            errorString[0] = e.getMessage();
+            myPackageNameField.requestFocusInWindow();
           }
         }, RefactoringBundle.message("create.directory"), null);
       }

@@ -58,42 +58,38 @@ import java.util.*;
  * @author Max Medvedev
  */
 public class GroovyMarkerTypes {
-  static final MarkerType OVERRIDING_PROPERTY_TYPE = new MarkerType("OVERRIDING_PROPERTY_TYPE",new Function<PsiElement, String>() {
-    @Nullable
-    @Override
-    public String fun(PsiElement psiElement) {
-      final PsiElement parent = psiElement.getParent();
-      if (!(parent instanceof GrField)) return null;
-      final GrField field = (GrField)parent;
+  static final MarkerType OVERRIDING_PROPERTY_TYPE = new MarkerType("OVERRIDING_PROPERTY_TYPE", psiElement -> {
+    final PsiElement parent = psiElement.getParent();
+    if (!(parent instanceof GrField)) return null;
+    final GrField field = (GrField)parent;
 
-      final List<GrAccessorMethod> accessors = GroovyPropertyUtils.getFieldAccessors(field);
-      StringBuilder builder = new StringBuilder();
-      builder.append("<html><body>");
-      int count = 0;
-      String sep = "";
-      for (GrAccessorMethod method : accessors) {
-        PsiMethod[] superMethods = method.findSuperMethods(false);
-        count += superMethods.length;
-        if (superMethods.length == 0) continue;
-        PsiMethod superMethod = superMethods[0];
-        boolean isAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
-        boolean isSuperAbstract = superMethod.hasModifierProperty(PsiModifier.ABSTRACT);
+    final List<GrAccessorMethod> accessors = GroovyPropertyUtils.getFieldAccessors(field);
+    StringBuilder builder = new StringBuilder();
+    builder.append("<html><body>");
+    int count = 0;
+    String sep = "";
+    for (GrAccessorMethod method : accessors) {
+      PsiMethod[] superMethods = method.findSuperMethods(false);
+      count += superMethods.length;
+      if (superMethods.length == 0) continue;
+      PsiMethod superMethod = superMethods[0];
+      boolean isAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
+      boolean isSuperAbstract = superMethod.hasModifierProperty(PsiModifier.ABSTRACT);
 
-        @NonNls final String key;
-        if (isSuperAbstract && !isAbstract) {
-          key = "method.implements.in";
-        }
-        else {
-          key = "method.overrides.in";
-        }
-        builder.append(sep);
-        sep = "<br>";
-        composeText(superMethods, DaemonBundle.message(key), builder);
+      @NonNls final String key;
+      if (isSuperAbstract && !isAbstract) {
+        key = "method.implements.in";
       }
-      if (count == 0) return null;
-      builder.append("</html></body>");
-      return builder.toString();
+      else {
+        key = "method.overrides.in";
+      }
+      builder.append(sep);
+      sep = "<br>";
+      composeText(superMethods, DaemonBundle.message(key), builder);
     }
+    if (count == 0) return null;
+    builder.append("</html></body>");
+    return builder.toString();
   }, new LineMarkerNavigator() {
     @Override
     public void browse(MouseEvent e, PsiElement element) {
@@ -114,33 +110,29 @@ public class GroovyMarkerTypes {
                                           new MethodCellRenderer(showMethodNames));
     }
   });
-  static final MarkerType OVERRIDEN_PROPERTY_TYPE = new MarkerType("OVERRIDEN_PROPERTY_TYPE",new Function<PsiElement, String>() {
-    @Nullable
-    @Override
-    public String fun(PsiElement element) {
-      PsiElement parent = element.getParent();
-      if (!(parent instanceof GrField)) return null;
-      final List<GrAccessorMethod> accessors = GroovyPropertyUtils.getFieldAccessors((GrField)parent);
+  static final MarkerType OVERRIDEN_PROPERTY_TYPE = new MarkerType("OVERRIDEN_PROPERTY_TYPE", element -> {
+    PsiElement parent = element.getParent();
+    if (!(parent instanceof GrField)) return null;
+    final List<GrAccessorMethod> accessors = GroovyPropertyUtils.getFieldAccessors((GrField)parent);
 
-      PsiElementProcessor.CollectElementsWithLimit<PsiMethod> processor = new PsiElementProcessor.CollectElementsWithLimit<PsiMethod>(5);
+    PsiElementProcessor.CollectElementsWithLimit<PsiMethod> processor = new PsiElementProcessor.CollectElementsWithLimit<PsiMethod>(5);
 
-      for (GrAccessorMethod method : accessors) {
-        OverridingMethodsSearch.search(method).forEach(new PsiElementProcessorAdapter<PsiMethod>(processor));
-      }
-      if (processor.isOverflow()) {
-        return DaemonBundle.message("method.is.overridden.too.many");
-      }
-
-      PsiMethod[] overridings = processor.toArray(new PsiMethod[processor.getCollection().size()]);
-      if (overridings.length == 0) return null;
-
-      Comparator<PsiMethod> comparator = new MethodCellRenderer(false).getComparator();
-      Arrays.sort(overridings, comparator);
-
-      String start = DaemonBundle.message("method.is.overriden.header");
-      @NonNls String pattern = "&nbsp;&nbsp;&nbsp;&nbsp;{1}";
-      return GutterIconTooltipHelper.composeText(overridings, start, pattern);
+    for (GrAccessorMethod method : accessors) {
+      OverridingMethodsSearch.search(method).forEach(new PsiElementProcessorAdapter<PsiMethod>(processor));
     }
+    if (processor.isOverflow()) {
+      return DaemonBundle.message("method.is.overridden.too.many");
+    }
+
+    PsiMethod[] overridings = processor.toArray(new PsiMethod[processor.getCollection().size()]);
+    if (overridings.length == 0) return null;
+
+    Comparator<PsiMethod> comparator = new MethodCellRenderer(false).getComparator();
+    Arrays.sort(overridings, comparator);
+
+    String start = DaemonBundle.message("method.is.overriden.header");
+    @NonNls String pattern = "&nbsp;&nbsp;&nbsp;&nbsp;{1}";
+    return GutterIconTooltipHelper.composeText(overridings, start, pattern);
   }, new LineMarkerNavigator() {
     @Override
     public void browse(MouseEvent e, PsiElement element) {
@@ -156,19 +148,11 @@ public class GroovyMarkerTypes {
 
       Set<PsiMethod> result = new THashSet<>();
       Processor<PsiMethod> collectProcessor = Processors.cancelableCollectProcessor(result);
-      if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-        @Override
-        public void run() {
-          ApplicationManager.getApplication().runReadAction(new Runnable() {
-            @Override
-            public void run() {
-              for (GrAccessorMethod method : GroovyPropertyUtils.getFieldAccessors(field)) {
-                OverridingMethodsSearch.search(method).forEach(collectProcessor);
-              }
-            }
-          });
+      if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> {
+        for (GrAccessorMethod method : GroovyPropertyUtils.getFieldAccessors(field)) {
+          OverridingMethodsSearch.search(method).forEach(collectProcessor);
         }
-      }, "Searching for overriding methods", true, field.getProject(), (JComponent)e.getComponent())) {
+      }), "Searching for overriding methods", true, field.getProject(), (JComponent)e.getComponent())) {
         return;
       }
 
@@ -182,31 +166,29 @@ public class GroovyMarkerTypes {
     }
   }
   );
-  public static final MarkerType GR_OVERRIDING_METHOD = new MarkerType("GR_OVERRIDING_METHOD", new NullableFunction<PsiElement, String>() {
-      @Override
-      public String fun(PsiElement element) {
-        PsiElement parent = element.getParent();
-        if (!(parent instanceof GrMethod)) return null;
-        GrMethod method = (GrMethod)parent;
+  public static final MarkerType GR_OVERRIDING_METHOD = new MarkerType("GR_OVERRIDING_METHOD",
+                                                                       (NullableFunction<PsiElement, String>)element -> {
+                                                                         PsiElement parent = element.getParent();
+                                                                         if (!(parent instanceof GrMethod)) return null;
+                                                                         GrMethod method = (GrMethod)parent;
 
-        Set<PsiMethod> superMethods = collectSuperMethods(method);
-        if (superMethods.isEmpty()) return null;
+                                                                         Set<PsiMethod> superMethods = collectSuperMethods(method);
+                                                                         if (superMethods.isEmpty()) return null;
 
-        PsiMethod superMethod = superMethods.iterator().next();
-        boolean isAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
-        boolean isSuperAbstract = superMethod.hasModifierProperty(PsiModifier.ABSTRACT);
+                                                                         PsiMethod superMethod = superMethods.iterator().next();
+                                                                         boolean isAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
+                                                                         boolean isSuperAbstract = superMethod.hasModifierProperty(PsiModifier.ABSTRACT);
 
-        final boolean sameSignature = superMethod.getSignature(PsiSubstitutor.EMPTY).equals(method.getSignature(PsiSubstitutor.EMPTY));
-        @NonNls final String key;
-        if (isSuperAbstract && !isAbstract){
-          key = sameSignature ? "method.implements" : "method.implements.in";
-        }
-        else{
-          key = sameSignature ? "method.overrides" : "method.overrides.in";
-        }
-        return GutterIconTooltipHelper.composeText(superMethods, "", DaemonBundle.message(key));
-      }
-    }, new LineMarkerNavigator(){
+                                                                         final boolean sameSignature = superMethod.getSignature(PsiSubstitutor.EMPTY).equals(method.getSignature(PsiSubstitutor.EMPTY));
+                                                                         @NonNls final String key;
+                                                                         if (isSuperAbstract && !isAbstract){
+                                                                           key = sameSignature ? "method.implements" : "method.implements.in";
+                                                                         }
+                                                                         else{
+                                                                           key = sameSignature ? "method.overrides" : "method.overrides.in";
+                                                                         }
+                                                                         return GutterIconTooltipHelper.composeText(superMethods, "", DaemonBundle.message(key));
+                                                                       }, new LineMarkerNavigator(){
       @Override
       public void browse(MouseEvent e, PsiElement element) {
         PsiElement parent = element.getParent();
@@ -222,44 +204,42 @@ public class GroovyMarkerTypes {
 
       }
     });
-  public static final MarkerType GR_OVERRIDEN_METHOD = new MarkerType("GR_OVERRIDEN_METHOD",new NullableFunction<PsiElement, String>() {
-      @Override
-      public String fun(PsiElement element) {
-        PsiElement parent = element.getParent();
-        if (!(parent instanceof GrMethod)) return null;
-        GrMethod method = (GrMethod)parent;
+  public static final MarkerType GR_OVERRIDEN_METHOD = new MarkerType("GR_OVERRIDEN_METHOD",
+                                                                      (NullableFunction<PsiElement, String>)element -> {
+                                                                        PsiElement parent = element.getParent();
+                                                                        if (!(parent instanceof GrMethod)) return null;
+                                                                        GrMethod method = (GrMethod)parent;
 
-        final PsiElementProcessor.CollectElementsWithLimit<PsiMethod> processor = new PsiElementProcessor.CollectElementsWithLimit<PsiMethod>(5);
+                                                                        final PsiElementProcessor.CollectElementsWithLimit<PsiMethod> processor = new PsiElementProcessor.CollectElementsWithLimit<PsiMethod>(5);
 
-        for (GrMethod m : PsiImplUtil.getMethodOrReflectedMethods(method)) {
-          OverridingMethodsSearch.search(m).forEach(new ReadActionProcessor<PsiMethod>() {
-            @Override
-            public boolean processInReadAction(PsiMethod method) {
-              if (method instanceof GrTraitMethod) {
-                return true;
-              }
-              return processor.execute(method);
-            }
-          });
-        }
+                                                                        for (GrMethod m : PsiImplUtil.getMethodOrReflectedMethods(method)) {
+                                                                          OverridingMethodsSearch.search(m).forEach(new ReadActionProcessor<PsiMethod>() {
+                                                                            @Override
+                                                                            public boolean processInReadAction(PsiMethod method) {
+                                                                              if (method instanceof GrTraitMethod) {
+                                                                                return true;
+                                                                              }
+                                                                              return processor.execute(method);
+                                                                            }
+                                                                          });
+                                                                        }
 
-        boolean isAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
+                                                                        boolean isAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
 
-        if (processor.isOverflow()){
-          return isAbstract ? DaemonBundle.message("method.is.implemented.too.many") : DaemonBundle.message("method.is.overridden.too.many");
-        }
+                                                                        if (processor.isOverflow()){
+                                                                          return isAbstract ? DaemonBundle.message("method.is.implemented.too.many") : DaemonBundle.message("method.is.overridden.too.many");
+                                                                        }
 
-        PsiMethod[] overridings = processor.toArray(new PsiMethod[processor.getCollection().size()]);
-        if (overridings.length == 0) return null;
+                                                                        PsiMethod[] overridings = processor.toArray(new PsiMethod[processor.getCollection().size()]);
+                                                                        if (overridings.length == 0) return null;
 
-        Comparator<PsiMethod> comparator = new MethodCellRenderer(false).getComparator();
-        Arrays.sort(overridings, comparator);
+                                                                        Comparator<PsiMethod> comparator = new MethodCellRenderer(false).getComparator();
+                                                                        Arrays.sort(overridings, comparator);
 
-        String start = isAbstract ? DaemonBundle.message("method.is.implemented.header") : DaemonBundle.message("method.is.overriden.header");
-        @NonNls String pattern = "&nbsp;&nbsp;&nbsp;&nbsp;{1}";
-        return GutterIconTooltipHelper.composeText(overridings, start, pattern);
-      }
-    }, new LineMarkerNavigator(){
+                                                                        String start = isAbstract ? DaemonBundle.message("method.is.implemented.header") : DaemonBundle.message("method.is.overriden.header");
+                                                                        @NonNls String pattern = "&nbsp;&nbsp;&nbsp;&nbsp;{1}";
+                                                                        return GutterIconTooltipHelper.composeText(overridings, start, pattern);
+                                                                      }, new LineMarkerNavigator(){
       @Override
       public void browse(MouseEvent e, PsiElement element) {
         PsiElement parent = element.getParent();
@@ -274,27 +254,19 @@ public class GroovyMarkerTypes {
         final GrMethod method = (GrMethod)parent;
         final PsiElementProcessor.CollectElementsWithLimit<PsiMethod> collectProcessor =
           new PsiElementProcessor.CollectElementsWithLimit<PsiMethod>(2, new THashSet<PsiMethod>());
-        if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-          @Override
-          public void run() {
-            ApplicationManager.getApplication().runReadAction(new Runnable() {
+        if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> {
+          for (GrMethod m : PsiImplUtil.getMethodOrReflectedMethods(method)) {
+            OverridingMethodsSearch.search(m).forEach(new ReadActionProcessor<PsiMethod>() {
               @Override
-              public void run() {
-                for (GrMethod m : PsiImplUtil.getMethodOrReflectedMethods(method)) {
-                  OverridingMethodsSearch.search(m).forEach(new ReadActionProcessor<PsiMethod>() {
-                    @Override
-                    public boolean processInReadAction(PsiMethod psiMethod) {
-                      if (psiMethod instanceof GrReflectedMethod) {
-                        psiMethod = ((GrReflectedMethod)psiMethod).getBaseMethod();
-                      }
-                      return collectProcessor.execute(psiMethod);
-                    }
-                  });
+              public boolean processInReadAction(PsiMethod psiMethod) {
+                if (psiMethod instanceof GrReflectedMethod) {
+                  psiMethod = ((GrReflectedMethod)psiMethod).getBaseMethod();
                 }
+                return collectProcessor.execute(psiMethod);
               }
             });
           }
-        }, MarkerType.SEARCHING_FOR_OVERRIDING_METHODS, true, method.getProject(), (JComponent)e.getComponent())) {
+        }), MarkerType.SEARCHING_FOR_OVERRIDING_METHODS, true, method.getProject(), (JComponent)e.getComponent())) {
           return;
         }
 

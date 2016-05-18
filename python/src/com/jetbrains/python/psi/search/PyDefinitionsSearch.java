@@ -34,10 +34,8 @@ public class PyDefinitionsSearch implements QueryExecutor<PsiElement, PsiElement
   public boolean execute(@NotNull final PsiElement queryParameters, @NotNull final Processor<PsiElement> consumer) {
     if (queryParameters instanceof PyClass) {
       final Query<PyClass> query = PyClassInheritorsSearch.search((PyClass)queryParameters, true);
-      return query.forEach(new Processor<PyClass>() {
-        public boolean process(final PyClass pyClass) {
-          return consumer.process(pyClass);
-        }
+      return query.forEach(pyClass -> {
+        return consumer.process(pyClass);
       });
     }
     else if (queryParameters instanceof PyFunction) {
@@ -51,10 +49,8 @@ public class PyDefinitionsSearch implements QueryExecutor<PsiElement, PsiElement
       );
 
       return query.forEach(
-        new Processor<PyFunction>() {
-          public boolean process(final PyFunction pyFunction) {
-            return consumer.process(pyFunction);
-          }
+        pyFunction -> {
+          return consumer.process(pyFunction);
         }
       );
     }

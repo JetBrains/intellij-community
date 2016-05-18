@@ -353,15 +353,12 @@ public class JavaDocCompletionContributor extends CompletionContributor {
       if ("see".equals(tagName)) {
         PsiMember member = PsiTreeUtil.getParentOfType(comment, PsiMember.class);
         if (member instanceof PsiClass) {
-          InheritanceUtil.processSupers((PsiClass)member, false, new Processor<PsiClass>() {
-            @Override
-            public boolean process(PsiClass psiClass) {
-              String name = psiClass.getQualifiedName();
-              if (StringUtil.isNotEmpty(name) && !CommonClassNames.JAVA_LANG_OBJECT.equals(name)) {
-                result.add("see " + name);
-              }
-              return true;
+          InheritanceUtil.processSupers((PsiClass)member, false, psiClass -> {
+            String name = psiClass.getQualifiedName();
+            if (StringUtil.isNotEmpty(name) && !CommonClassNames.JAVA_LANG_OBJECT.equals(name)) {
+              result.add("see " + name);
             }
+            return true;
           });
         }
       }

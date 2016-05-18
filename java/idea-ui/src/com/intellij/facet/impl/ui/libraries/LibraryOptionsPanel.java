@@ -138,13 +138,10 @@ public class LibraryOptionsPanel implements Disposable {
         @Override
         public void onSuccess(@NotNull final List<? extends FrameworkLibraryVersion> versions) {
           //noinspection SSBasedInspection
-          SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              if (!myDisposed) {
-                showSettingsPanel(libraryDescription, pathProvider, versionFilter, showDoNotCreateOption, versions);
-                onVersionChanged(getPresentableVersion());
-              }
+          SwingUtilities.invokeLater(() -> {
+            if (!myDisposed) {
+              showSettingsPanel(libraryDescription, pathProvider, versionFilter, showDoNotCreateOption, versions);
+              onVersionChanged(getPresentableVersion());
             }
           });
         }
@@ -217,13 +214,10 @@ public class LibraryOptionsPanel implements Disposable {
     });
 
     myDoNotCreateRadioButton.setVisible(showDoNotCreateOption);
-    myLibraryComboBoxModel = new SortedComboBoxModel<LibraryEditor>(new Comparator<LibraryEditor>() {
-      @Override
-      public int compare(LibraryEditor o1, LibraryEditor o2) {
-        final String name1 = o1.getName();
-        final String name2 = o2.getName();
-        return -StringUtil.notNullize(name1).compareToIgnoreCase(StringUtil.notNullize(name2));
-      }
+    myLibraryComboBoxModel = new SortedComboBoxModel<LibraryEditor>((o1, o2) -> {
+      final String name1 = o1.getName();
+      final String name2 = o2.getName();
+      return -StringUtil.notNullize(name1).compareToIgnoreCase(StringUtil.notNullize(name2));
     });
 
     for (Library library : libraries) {
@@ -303,12 +297,7 @@ public class LibraryOptionsPanel implements Disposable {
     });
     myConfigureButton.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
-        DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
-          @Override
-          public void run() {
-            doConfigure();
-          }
-        });
+        DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, () -> doConfigure());
       }
     });
     updateState();

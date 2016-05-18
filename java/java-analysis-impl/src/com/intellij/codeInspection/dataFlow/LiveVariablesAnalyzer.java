@@ -156,41 +156,38 @@ public class LiveVariablesAnalyzer {
   private Map<FinishElementInstruction, BitSet> findLiveVars() {
     final Map<FinishElementInstruction, BitSet> result = ContainerUtil.newHashMap();
 
-    boolean ok = runDfa(false, new PairFunction<Instruction, BitSet, BitSet>() {
-      @Override
-      public BitSet fun(Instruction instruction, BitSet liveVars) {
-        if (instruction instanceof FinishElementInstruction) {
-          BitSet set = result.get(instruction);
-          if (set != null) {
-            set.or(liveVars);
-            return set;
-          } else {
-            result.put((FinishElementInstruction)instruction, liveVars);
-          }
-        }
-
-        DfaVariableValue written = getWrittenVariable(instruction);
-        if (written != null) {
-          liveVars = (BitSet)liveVars.clone();
-          liveVars.clear(written.getID());
-          for (DfaVariableValue var : myFactory.getVarFactory().getAllQualifiedBy(written)) {
-            liveVars.clear(var.getID());
-          }
+    boolean ok = runDfa(false, (instruction, liveVars) -> {
+      if (instruction instanceof FinishElementInstruction) {
+        BitSet set = result.get(instruction);
+        if (set != null) {
+          set.or(liveVars);
+          return set;
         } else {
-          boolean cloned = false;
-          for (DfaVariableValue value : getReadVariables(instruction)) {
-            if (!liveVars.get(value.getID())) {
-              if (!cloned) {
-                liveVars = (BitSet)liveVars.clone();
-                cloned = true;
-              }
-              liveVars.set(value.getID());
+          result.put((FinishElementInstruction)instruction, liveVars);
+        }
+      }
+
+      DfaVariableValue written = getWrittenVariable(instruction);
+      if (written != null) {
+        liveVars = (BitSet)liveVars.clone();
+        liveVars.clear(written.getID());
+        for (DfaVariableValue var : myFactory.getVarFactory().getAllQualifiedBy(written)) {
+          liveVars.clear(var.getID());
+        }
+      } else {
+        boolean cloned = false;
+        for (DfaVariableValue value : getReadVariables(instruction)) {
+          if (!liveVars.get(value.getID())) {
+            if (!cloned) {
+              liveVars = (BitSet)liveVars.clone();
+              cloned = true;
             }
+            liveVars.set(value.getID());
           }
         }
-
-        return liveVars;
       }
+
+      return liveVars;
     });
     return ok ? result : null;
   }
@@ -201,29 +198,25 @@ public class LiveVariablesAnalyzer {
 
     final MultiMap<FinishElementInstruction, DfaVariableValue> toFlush = MultiMap.createSet();
 
-    boolean ok = runDfa(true, new PairFunction<Instruction, BitSet, BitSet>() {
-      @Override
-      @NotNull
-      public BitSet fun(Instruction instruction, @NotNull BitSet prevLiveVars) {
-        if (instruction instanceof FinishElementInstruction) {
-          BitSet currentlyLive = liveVars.get(instruction);
-          if (currentlyLive == null) {
-            return new BitSet(); // an instruction unreachable from the end?
-          }
-          int index = 0;
-          while (true) {
-            int setBit = prevLiveVars.nextSetBit(index);
-            if (setBit < 0) break;
-            if (!currentlyLive.get(setBit)) {
-              toFlush.putValue((FinishElementInstruction)instruction, (DfaVariableValue)myFactory.getValue(setBit));
-            }
-            index = setBit + 1;
-          }
-          return currentlyLive;
+    boolean ok = runDfa(true, (instruction, prevLiveVars) -> {
+      if (instruction instanceof FinishElementInstruction) {
+        BitSet currentlyLive = liveVars.get(instruction);
+        if (currentlyLive == null) {
+          return new BitSet(); // an instruction unreachable from the end?
         }
-
-        return prevLiveVars;
+        int index = 0;
+        while (true) {
+          int setBit = prevLiveVars.nextSetBit(index);
+          if (setBit < 0) break;
+          if (!currentlyLive.get(setBit)) {
+            toFlush.putValue((FinishElementInstruction)instruction, (DfaVariableValue)myFactory.getValue(setBit));
+          }
+          index = setBit + 1;
+        }
+        return currentlyLive;
       }
+
+      return prevLiveVars;
     });
 
     if (ok) {

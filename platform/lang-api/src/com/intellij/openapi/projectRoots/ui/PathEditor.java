@@ -297,12 +297,7 @@ public class PathEditor {
     final Object[] selectedItems = getSelectedRoots();
     if (selectedItems != null) {
       //noinspection SSBasedInspection
-      SwingUtilities.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          setSelectedRoots(selectedItems);
-        }
-      });
+      SwingUtilities.invokeLater(() -> setSelectedRoots(selectedItems));
     }
   }
 

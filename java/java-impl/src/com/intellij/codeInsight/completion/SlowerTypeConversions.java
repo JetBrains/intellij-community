@@ -67,28 +67,18 @@ class SlowerTypeConversions implements Runnable {
   public void run() {
     final Set<Pair<LookupElement, String>> processedChains = ContainerUtil.newHashSet();
     for (final LookupElement item : myBase) {
-      addSecondCompletionVariants(myElement, myReference, item, myParameters, new Consumer<LookupElement>() {
-        @Override
-        public void consume(LookupElement lookupElement) {
-          ContainerUtil.addIfNotNull(processedChains, chainInfo(lookupElement));
-          myResult.consume(lookupElement);
-        }
+      addSecondCompletionVariants(myElement, myReference, item, myParameters, lookupElement -> {
+        ContainerUtil.addIfNotNull(processedChains, chainInfo(lookupElement));
+        myResult.consume(lookupElement);
       });
     }
     if (!psiElement().afterLeaf(".").accepts(myElement)) {
-      BasicExpressionCompletionContributor.processDataflowExpressionTypes(myElement, null, TRUE_MATCHER, new Consumer<LookupElement>() {
-        @Override
-        public void consume(LookupElement baseItem) {
-          addSecondCompletionVariants(myElement, myReference, baseItem, myParameters, new Consumer<LookupElement>() {
-            @Override
-            public void consume(LookupElement lookupElement) {
-              if (!processedChains.contains(chainInfo(lookupElement))) {
-                myResult.consume(lookupElement);
-              }
-            }
-          });
-        }
-      });
+      BasicExpressionCompletionContributor.processDataflowExpressionTypes(myElement, null, TRUE_MATCHER,
+                                                                          baseItem -> addSecondCompletionVariants(myElement, myReference, baseItem, myParameters, lookupElement -> {
+                                                                            if (!processedChains.contains(chainInfo(lookupElement))) {
+                                                                              myResult.consume(lookupElement);
+                                                                            }
+                                                                          }));
     }
   }
 

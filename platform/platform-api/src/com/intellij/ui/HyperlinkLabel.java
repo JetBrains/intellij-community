@@ -48,13 +48,9 @@ import java.util.List;
  * @author Eugene Belyaev
  */
 public class HyperlinkLabel extends HighlightableComponent {
-  private static final TextAttributes BOLD_ATTRIBUTES = new TextAttributes(new JBColor(new NotNullProducer<Color>() {
-    @NotNull
-    @Override
-    public Color produce() {
-      final Color foreground = UIUtil.getLabelTextForeground();
-      return foreground == null ? UIUtil.getLabelForeground() : foreground;
-    }
+  private static final TextAttributes BOLD_ATTRIBUTES = new TextAttributes(new JBColor(() -> {
+    final Color foreground1 = UIUtil.getLabelTextForeground();
+    return foreground1 == null ? UIUtil.getLabelForeground() : foreground1;
   }), null, null, null, Font.BOLD);
 
   private static final Logger LOG = Logger.getInstance(HyperlinkLabel.class.getName());

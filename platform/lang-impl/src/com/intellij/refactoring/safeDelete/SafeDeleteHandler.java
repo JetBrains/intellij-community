@@ -121,14 +121,11 @@ public class SafeDeleteHandler implements RefactoringActionHandler {
       final SafeDeleteDialog.Callback callback = new SafeDeleteDialog.Callback() {
         @Override
         public void run(final SafeDeleteDialog dialog) {
-          SafeDeleteProcessor.createInstance(project, new Runnable() {
-            @Override
-            public void run() {
-              if (successRunnable != null) {
-                successRunnable.run();
-              }
-              dialog.close(DialogWrapper.CANCEL_EXIT_CODE);
+          SafeDeleteProcessor.createInstance(project, () -> {
+            if (successRunnable != null) {
+              successRunnable.run();
             }
+            dialog.close(DialogWrapper.CANCEL_EXIT_CODE);
           }, elementsToDelete, dialog.isSearchInComments(), dialog.isSearchForTextOccurences(), true).run();
         }
 

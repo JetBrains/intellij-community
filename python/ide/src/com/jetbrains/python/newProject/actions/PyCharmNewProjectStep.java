@@ -67,13 +67,10 @@ public class PyCharmNewProjectStep extends AbstractNewProjectStep {
     protected DirectoryProjectGenerator[] getProjectGenerators() {
       DirectoryProjectGenerator[] generators = super.getProjectGenerators();
 
-      Arrays.sort(generators, new Comparator<DirectoryProjectGenerator>() {
-        @Override
-        public int compare(DirectoryProjectGenerator o1, DirectoryProjectGenerator o2) {
-          if (o1 instanceof PyFrameworkProjectGenerator && !(o2 instanceof PyFrameworkProjectGenerator)) return -1;
-          if (!(o1 instanceof PyFrameworkProjectGenerator) && o2 instanceof PyFrameworkProjectGenerator) return 1;
-          return o1.getName().compareTo(o2.getName());
-        }
+      Arrays.sort(generators, (o1, o2) -> {
+        if (o1 instanceof PyFrameworkProjectGenerator && !(o2 instanceof PyFrameworkProjectGenerator)) return -1;
+        if (!(o1 instanceof PyFrameworkProjectGenerator) && o2 instanceof PyFrameworkProjectGenerator) return 1;
+        return o1.getName().compareTo(o2.getName());
       });
       return generators;
     }

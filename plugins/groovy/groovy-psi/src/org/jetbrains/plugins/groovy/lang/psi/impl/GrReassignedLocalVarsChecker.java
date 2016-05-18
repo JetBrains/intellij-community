@@ -122,12 +122,7 @@ public class GrReassignedLocalVarsChecker {
 
     assert resolved instanceof GrVariable;
 
-    return TypeInferenceHelper.getCurrentContext().getExpressionType(((GrVariable)resolved), new Function<GrVariable, PsiType>() {
-      @Override
-      public PsiType fun(GrVariable variable) {
-        return getLeastUpperBoundByVar(variable);
-      }
-    });
+    return TypeInferenceHelper.getCurrentContext().getExpressionType(((GrVariable)resolved), variable -> getLeastUpperBoundByVar(variable));
   }
 
   @Nullable

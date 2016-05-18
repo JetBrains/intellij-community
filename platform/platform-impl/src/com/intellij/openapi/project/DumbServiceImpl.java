@@ -185,71 +185,62 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       return;
     }
 
-    Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        if (myProject.isDisposed()) {
-          return;
+    Runnable runnable = () -> {
+      if (myProject.isDisposed()) {
+        return;
+      }
+
+      final DumbModePermission permission = schedulerPermission != null ? schedulerPermission : getEdtPermission();
+
+      myProgresses.put(task, new ProgressIndicatorBase());
+      Disposer.register(task, new Disposable() {
+        @Override
+        public void dispose() {
+          application.assertIsDispatchThread();
+          myProgresses.remove(task);
+        }
+      });
+      myUpdatesQueue.addLast(task);
+      // ok to test and set the flag like this, because the change is always done from dispatch thread
+      if (!myDumb) {
+        if (permission == null) {
+          LOG.info("Dumb mode not permitted in modal environment; see DumbService.allowStartingDumbModeInside documentation", trace);
+        }
+        else if (permission == DumbModePermission.MAY_START_MODAL) {
+          LOG.debug("Starting modal dumb mode, caused by the following trace", trace);
         }
 
-        final DumbModePermission permission = schedulerPermission != null ? schedulerPermission : getEdtPermission();
-
-        myProgresses.put(task, new ProgressIndicatorBase());
-        Disposer.register(task, new Disposable() {
-          @Override
-          public void dispose() {
-            application.assertIsDispatchThread();
-            myProgresses.remove(task);
+        // always change dumb status inside write action.
+        // This will ensure all active read actions are completed before the app goes dumb
+        application.runWriteAction(() -> {
+          synchronized (myRunWhenSmartQueue) {
+            myDumb = true;
+          }
+          myDumbStart = trace;
+          myDumbStartTransaction = contextTransaction;
+          myModificationCount++;
+          if (!myUpdateFinishedQueued) {
+            try {
+              myPublisher.enteredDumbMode();
+            }
+            catch (Throwable e) {
+              LOG.error(e);
+            }
           }
         });
-        myUpdatesQueue.addLast(task);
-        // ok to test and set the flag like this, because the change is always done from dispatch thread
-        if (!myDumb) {
-          if (permission == null) {
-            LOG.info("Dumb mode not permitted in modal environment; see DumbService.allowStartingDumbModeInside documentation", trace);
-          }
-          else if (permission == DumbModePermission.MAY_START_MODAL) {
-            LOG.debug("Starting modal dumb mode, caused by the following trace", trace);
-          }
 
-          // always change dumb status inside write action.
-          // This will ensure all active read actions are completed before the app goes dumb
-          application.runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              synchronized (myRunWhenSmartQueue) {
-                myDumb = true;
-              }
-              myDumbStart = trace;
-              myDumbStartTransaction = contextTransaction;
-              myModificationCount++;
-              if (!myUpdateFinishedQueued) {
-                try {
-                  myPublisher.enteredDumbMode();
-                }
-                catch (Throwable e) {
-                  LOG.error(e);
-                }
-              }
-            }
-          });
-
-          // later because we're likely in a write action and can't start a modal progress immediately
-          // and for a background progress, it doesn't matter if it starts several milliseconds later; dumb mode is already on
-          application.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              boolean modal = permission != DumbModePermission.MAY_START_BACKGROUND;
-              try {
-                startBackgroundProcess(modal);
-              }
-              catch (Throwable e) {
-                queueUpdateFinished(modal);
-                LOG.error("Failed to start background index update task", e);
-              }
-            }
-          }, ModalityState.any(), myProject.getDisposed());
-        }
+        // later because we're likely in a write action and can't start a modal progress immediately
+        // and for a background progress, it doesn't matter if it starts several milliseconds later; dumb mode is already on
+        application.invokeLater(() -> {
+          boolean modal = permission != DumbModePermission.MAY_START_BACKGROUND;
+          try {
+            startBackgroundProcess(modal);
+          }
+          catch (Throwable e) {
+            queueUpdateFinished(modal);
+            LOG.error("Failed to start background index update task", e);
+          }
+        }, ModalityState.any(), myProject.getDisposed());
       }
     };
     if (application.isDispatchThread()) {
@@ -312,11 +303,8 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
     // some listeners might start yet another dumb mode
     // allow that whatever the current modality is, because it won't harm anyone
-    allowStartingDumbModeInside(modal ? DumbModePermission.MAY_START_MODAL : DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
-      public void run() {
-        notifyUpdateFinished();
-      }
-    });
+    allowStartingDumbModeInside(modal ? DumbModePermission.MAY_START_MODAL : DumbModePermission.MAY_START_BACKGROUND,
+                                () -> notifyUpdateFinished());
   }
 
   private void notifyUpdateFinished() {
@@ -350,14 +338,11 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   @Override
   public void showDumbModeNotification(@NotNull final String message) {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        final IdeFrame ideFrame = WindowManager.getInstance().getIdeFrame(myProject);
-        if (ideFrame != null) {
-          StatusBarEx statusBar = (StatusBarEx)ideFrame.getStatusBar();
-          statusBar.notifyProgressByBalloon(MessageType.WARNING, message, null, null);
-        }
+    UIUtil.invokeLaterIfNeeded(() -> {
+      final IdeFrame ideFrame = WindowManager.getInstance().getIdeFrame(myProject);
+      if (ideFrame != null) {
+        StatusBarEx statusBar = (StatusBarEx)ideFrame.getStatusBar();
+        statusBar.notifyProgressByBalloon(MessageType.WARNING, message, null, null);
       }
     });
   }
@@ -375,12 +360,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
-    runWhenSmart(new Runnable() {
-      @Override
-      public void run() {
-        semaphore.up();
-      }
-    });
+    runWhenSmart(() -> semaphore.up());
     while (true) {
       if (semaphore.waitFor(50)) {
         return;
@@ -483,52 +463,46 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     if (ApplicationManager.getApplication().isInternal()) LOG.info("Running dumb mode task: " + task);
     
     // nested runProcess is needed for taskIndicator to be honored in ProgressManager.checkCanceled calls deep inside tasks 
-    ProgressManager.getInstance().runProcess(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          taskIndicator.checkCanceled();
+    ProgressManager.getInstance().runProcess(() -> {
+      try {
+        taskIndicator.checkCanceled();
 
-          taskIndicator.setIndeterminate(true);
-          taskIndicator.setText(IdeBundle.message("progress.indexing.scanning"));
+        taskIndicator.setIndeterminate(true);
+        taskIndicator.setText(IdeBundle.message("progress.indexing.scanning"));
 
-          task.performInDumbMode(taskIndicator);
-        }
-        catch (ProcessCanceledException ignored) {
-        }
-        catch (Throwable unexpected) {
-          LOG.error(unexpected);
-        }
+        task.performInDumbMode(taskIndicator);
+      }
+      catch (ProcessCanceledException ignored) {
+      }
+      catch (Throwable unexpected) {
+        LOG.error(unexpected);
       }
     }, taskIndicator);
   }
 
   @Nullable private Pair<DumbModeTask, ProgressIndicatorEx> getNextTask(@Nullable final DumbModeTask prevTask, final boolean modal) {
     final Ref<Pair<DumbModeTask, ProgressIndicatorEx>> result = Ref.create();
-    invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        if (myProject.isDisposed()) return;
-        if (prevTask != null) {
-          Disposer.dispose(prevTask);
-        }
+    invokeAndWaitIfNeeded(() -> {
+      if (myProject.isDisposed()) return;
+      if (prevTask != null) {
+        Disposer.dispose(prevTask);
+      }
 
-        while (true) {
-          if (myUpdatesQueue.isEmpty()) {
-            queueUpdateFinished(modal);
-            return;
-          }
-
-          DumbModeTask queuedTask = myUpdatesQueue.pullFirst();
-          ProgressIndicatorEx indicator = myProgresses.get(queuedTask);
-          if (indicator.isCanceled()) {
-            Disposer.dispose(queuedTask);
-            continue;
-          }
-          
-          result.set(Pair.create(queuedTask, indicator));
+      while (true) {
+        if (myUpdatesQueue.isEmpty()) {
+          queueUpdateFinished(modal);
           return;
         }
+
+        DumbModeTask queuedTask = myUpdatesQueue.pullFirst();
+        ProgressIndicatorEx indicator = myProgresses.get(queuedTask);
+        if (indicator.isCanceled()) {
+          Disposer.dispose(queuedTask);
+          continue;
+        }
+
+        result.set(Pair.create(queuedTask, indicator));
+        return;
       }
     });
     return result.get();
@@ -577,25 +551,18 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     public void setFraction(final double fraction) {
       if (fraction - lastFraction < 0.01d) return;
       lastFraction = fraction;
-      UIUtil.invokeLaterIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          AppIcon.getInstance().setProgress(myProject, "indexUpdate", AppIconScheme.Progress.INDEXING, fraction, true);
-        }
-      });
+      UIUtil.invokeLaterIfNeeded(
+        () -> AppIcon.getInstance().setProgress(myProject, "indexUpdate", AppIconScheme.Progress.INDEXING, fraction, true));
     }
 
     @Override
     public void finish(@NotNull TaskInfo task) {
       if (lastFraction != 0) { // we should call setProgress at least once before
-        UIUtil.invokeLaterIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            AppIcon appIcon = AppIcon.getInstance();
-            if (appIcon.hideProgress(myProject, "indexUpdate")) {
-              appIcon.requestAttention(myProject, false);
-              appIcon.setOkBadge(myProject, true);
-            }
+        UIUtil.invokeLaterIfNeeded(() -> {
+          AppIcon appIcon = AppIcon.getInstance();
+          if (appIcon.hideProgress(myProject, "indexUpdate")) {
+            appIcon.requestAttention(myProject, false);
+            appIcon.setOkBadge(myProject, true);
           }
         });
       }

@@ -48,17 +48,7 @@ public class UpdateCheckerComponent implements ApplicationComponent {
   private static final long CHECK_INTERVAL = DateFormatUtil.DAY;
 
   private final Alarm myCheckForUpdatesAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-  private final Runnable myCheckRunnable = new Runnable() {
-    @Override
-    public void run() {
-      UpdateChecker.updateAndShowResult().doWhenDone(new Runnable() {
-        @Override
-        public void run() {
-          queueNextCheck(CHECK_INTERVAL);
-        }
-      });
-    }
-  };
+  private final Runnable myCheckRunnable = () -> UpdateChecker.updateAndShowResult().doWhenDone(() -> queueNextCheck(CHECK_INTERVAL));
   private final UpdateSettings mySettings;
 
   public UpdateCheckerComponent(@NotNull Application app, @NotNull UpdateSettings settings) {
@@ -99,11 +89,8 @@ public class UpdateCheckerComponent implements ApplicationComponent {
           @Override
           protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
             notification.expire();
-            app.invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                ShowSettingsUtil.getInstance().showSettingsDialog(null, UpdateSettingsConfigurable.class);
-              }
+            app.invokeLater(() -> {
+              ShowSettingsUtil.getInstance().showSettingsDialog(null, UpdateSettingsConfigurable.class);
             }, ModalityState.NON_MODAL);
           }
         }).notify(null);

@@ -47,11 +47,7 @@ public class ExcludingTraversalPolicy extends FocusTraversalPolicy {
     try {
       if (!myRecursionGuard.add("getComponentAfter")) return null;
 
-      return traverse(aContainer, aComponent, new Function<Pair<Container, Component>, Component>() {
-        public Component fun(Pair<Container, Component> param) {
-          return myWrappee.getComponentAfter(param.first, param.second);
-        }
-      });
+      return traverse(aContainer, aComponent, param -> myWrappee.getComponentAfter(param.first, param.second));
     }
     finally {
       myRecursionGuard.clear();
@@ -63,11 +59,7 @@ public class ExcludingTraversalPolicy extends FocusTraversalPolicy {
     try {
       if (!myRecursionGuard.add("getComponentBefore")) return null;
 
-      return traverse(aContainer, aComponent, new Function<Pair<Container, Component>, Component>() {
-        public Component fun(Pair<Container, Component> param) {
-          return myWrappee.getComponentBefore(param.first, param.second);
-        }
-      });
+      return traverse(aContainer, aComponent, param -> myWrappee.getComponentBefore(param.first, param.second));
     }
     finally {
       myRecursionGuard.clear();

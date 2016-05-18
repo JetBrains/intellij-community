@@ -161,29 +161,26 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     Timer timer = UIUtil.createNamedTimer("Progress window timer",myDelayInMillis, new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            if (isRunning()) {
-              if (myDialog != null) {
-                final DialogWrapper popup = myDialog.myPopup;
-                if (popup != null) {
-                  myFocusTrackback.registerFocusComponent(new FocusTrackback.ComponentQuery() {
-                    @Override
-                    public Component getComponent() {
-                      return popup.getPreferredFocusedComponent();
-                    }
-                  });
-                  if (popup.isShowing()) {
-                    myDialog.myWasShown = true;
+        ApplicationManager.getApplication().invokeLater(() -> {
+          if (isRunning()) {
+            if (myDialog != null) {
+              final DialogWrapper popup = myDialog.myPopup;
+              if (popup != null) {
+                myFocusTrackback.registerFocusComponent(new FocusTrackback.ComponentQuery() {
+                  @Override
+                  public Component getComponent() {
+                    return popup.getPreferredFocusedComponent();
                   }
+                });
+                if (popup.isShowing()) {
+                  myDialog.myWasShown = true;
                 }
               }
-              showDialog();
             }
-            else {
-              Disposer.dispose(ProgressWindow.this);
-            }
+            showDialog();
+          }
+          else {
+            Disposer.dispose(ProgressWindow.this);
           }
         }, getModalityState());
       }
@@ -215,12 +212,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
             object.getID() == KeyEvent.KEY_PRESSED &&
             ((KeyEvent)object).getKeyCode() == KeyEvent.VK_ESCAPE &&
             ((KeyEvent)object).getModifiers() == 0) {
-          SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              cancel();
-            }
-          });
+          SwingUtilities.invokeLater(() -> cancel());
         }
         return isStarted() && !isRunning();
       }
@@ -283,29 +275,26 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
       }
     }
 
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        boolean wasShowing = isDialogShowing();
-        if (myDialog != null) {
-          myDialog.hide();
-        }
-
-        if (myFocusTrackback != null) {
-          if (wasShowing) {
-            myFocusTrackback.restoreFocus();
-          }
-          else {
-            myFocusTrackback.consume();
-          }
-        }
-
-        synchronized (ProgressWindow.this) {
-          myStoppedAlready = true;
-        }
-
-        Disposer.dispose(ProgressWindow.this);
+    UIUtil.invokeLaterIfNeeded(() -> {
+      boolean wasShowing = isDialogShowing();
+      if (myDialog != null) {
+        myDialog.hide();
       }
+
+      if (myFocusTrackback != null) {
+        if (wasShowing) {
+          myFocusTrackback.restoreFocus();
+        }
+        else {
+          myFocusTrackback.consume();
+        }
+      }
+
+      synchronized (ProgressWindow.this) {
+        myStoppedAlready = true;
+      }
+
+      Disposer.dispose(ProgressWindow.this);
     });
 
     SwingUtilities.invokeLater(EmptyRunnable.INSTANCE); // Just to give blocking dispatching a chance to go out.

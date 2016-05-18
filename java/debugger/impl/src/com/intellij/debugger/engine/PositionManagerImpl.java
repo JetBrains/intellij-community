@@ -194,15 +194,12 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     int lambdaOrdinal = -1;
     if (LambdaMethodFilter.isLambdaName(method.name())) {
       Set<Method> lambdas =
-        ContainerUtil.map2SetNotNull(locationsOfLine(location.declaringType(), sourcePosition), new Function<Location, Method>() {
-          @Override
-          public Method fun(Location location) {
-            Method method = location.method();
-            if (LambdaMethodFilter.isLambdaName(method.name())) {
-              return method;
-            }
-            return null;
+        ContainerUtil.map2SetNotNull(locationsOfLine(location.declaringType(), sourcePosition), location1 -> {
+          Method method1 = location1.method();
+          if (LambdaMethodFilter.isLambdaName(method1.name())) {
+            return method1;
           }
+          return null;
         });
       if (lambdas.size() > 1) {
         ArrayList<Method> lambdasList = new ArrayList<>(lambdas);
@@ -417,35 +414,30 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     final Ref<PsiClass> classAtPositionRef = new Ref<>(null);
     final Ref<Boolean> isLocalOrAnonymous = new Ref<>(Boolean.FALSE);
     final Ref<Integer> requiredDepth = new Ref<>(0);
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        classAtPositionRef.set(psiClass);
-        String className = JVMNameUtil.getNonAnonymousClassName(psiClass);
-        if (className == null) {
-          isLocalOrAnonymous.set(Boolean.TRUE);
-          final PsiClass topLevelClass = JVMNameUtil.getTopLevelParentClass(psiClass);
-          if (topLevelClass != null) {
-            final String parentClassName = JVMNameUtil.getNonAnonymousClassName(topLevelClass);
-            if (parentClassName != null) {
-              requiredDepth.set(getNestingDepth(psiClass));
-              baseClassNameRef.set(parentClassName);
-            }
-          }
-          else {
-            final StringBuilder sb = new StringBuilder();
-            PsiTreeUtil.treeWalkUp(psiClass, null, new PairProcessor<PsiElement, PsiElement>() {
-              @Override
-              public boolean process(PsiElement element, PsiElement element2) {
-                sb.append('\n').append(element);
-                return true;
-              }
-            });
-            LOG.info("Local or anonymous class " + psiClass + " has no non-local parent, parents:" + sb);
+    ApplicationManager.getApplication().runReadAction(() -> {
+      classAtPositionRef.set(psiClass);
+      String className = JVMNameUtil.getNonAnonymousClassName(psiClass);
+      if (className == null) {
+        isLocalOrAnonymous.set(Boolean.TRUE);
+        final PsiClass topLevelClass = JVMNameUtil.getTopLevelParentClass(psiClass);
+        if (topLevelClass != null) {
+          final String parentClassName = JVMNameUtil.getNonAnonymousClassName(topLevelClass);
+          if (parentClassName != null) {
+            requiredDepth.set(getNestingDepth(psiClass));
+            baseClassNameRef.set(parentClassName);
           }
         }
         else {
-          baseClassNameRef.set(className);
+          final StringBuilder sb = new StringBuilder();
+          PsiTreeUtil.treeWalkUp(psiClass, null, (element, element2) -> {
+            sb.append('\n').append(element);
+            return true;
+          });
+          LOG.info("Local or anonymous class " + psiClass + " has no non-local parent, parents:" + sb);
         }
+      }
+      else {
+        baseClassNameRef.set(className);
       }
     });
 

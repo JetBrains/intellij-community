@@ -128,12 +128,9 @@ public class UnwrapHandler implements CodeInsightActionHandler {
         .setMovable(false)
         .setResizable(false)
         .setRequestFocus(true)
-        .setItemChoosenCallback(new Runnable() {
-          @Override
-          public void run() {
-            MyUnwrapAction a = (MyUnwrapAction)options.get(list.getSelectedIndex());
-            a.actionPerformed(null);
-          }
+        .setItemChoosenCallback(() -> {
+          MyUnwrapAction a = (MyUnwrapAction)options.get(list.getSelectedIndex());
+          a.actionPerformed(null);
         })
         .addListener(new JBPopupAdapter() {
           @Override
@@ -172,31 +169,23 @@ public class UnwrapHandler implements CodeInsightActionHandler {
       final PsiFile file = myElement.getContainingFile();
       if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
 
-      CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-        @Override
-        public void run() {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              try {
-                UnwrapDescriptor d = getUnwrapDescription(file);
-                if (d.shouldTryToRestoreCaretPosition()) saveCaretPosition(file);
-                int scrollOffset = myEditor.getScrollingModel().getVerticalScrollOffset();
+      CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(() -> {
+        try {
+          UnwrapDescriptor d = getUnwrapDescription(file);
+          if (d.shouldTryToRestoreCaretPosition()) saveCaretPosition(file);
+          int scrollOffset = myEditor.getScrollingModel().getVerticalScrollOffset();
 
-                List<PsiElement> extractedElements = myUnwrapper.unwrap(myEditor, myElement);
+          List<PsiElement> extractedElements = myUnwrapper.unwrap(myEditor, myElement);
 
-                if (d.shouldTryToRestoreCaretPosition()) restoreCaretPosition(file);
-                myEditor.getScrollingModel().scrollVertically(scrollOffset);
+          if (d.shouldTryToRestoreCaretPosition()) restoreCaretPosition(file);
+          myEditor.getScrollingModel().scrollVertically(scrollOffset);
 
-                highlightExtractedElements(extractedElements);
-              }
-              catch (IncorrectOperationException ex) {
-                throw new RuntimeException(ex);
-              }
-            }
-          });
+          highlightExtractedElements(extractedElements);
         }
-      }, null, myEditor.getDocument());
+        catch (IncorrectOperationException ex) {
+          throw new RuntimeException(ex);
+        }
+      }), null, myEditor.getDocument());
     }
 
     private void saveCaretPosition(PsiFile file) {

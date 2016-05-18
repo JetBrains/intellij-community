@@ -60,12 +60,7 @@ class CodeStyleSchemeExporterUI {
       new BaseListPopupStep<String>(ApplicationBundle.message("scheme.exporter.ui.export.as.title"), enumExporters()) {
         @Override
         public PopupStep onChosen(final String selectedValue, boolean finalChoice) {
-          return doFinalStep(new Runnable() {
-            @Override
-            public void run() {
-              exportSchemeUsing(selectedValue);
-            }
-          });
+          return doFinalStep(() -> exportSchemeUsing(selectedValue));
         }
       });
     popup.showInCenterOf(myParentComponent);

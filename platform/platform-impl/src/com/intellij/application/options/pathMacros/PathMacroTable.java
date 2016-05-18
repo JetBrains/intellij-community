@@ -45,11 +45,7 @@ public class PathMacroTable extends Table {
   private static final int VALUE_COLUMN = 1;
 
   private final List<Couple<String>> myMacros = new ArrayList<Couple<String>>();
-  private static final Comparator<Couple<String>> MACRO_COMPARATOR = new Comparator<Couple<String>>() {
-    public int compare(Couple<String> pair, Couple<String> pair1) {
-      return pair.getFirst().compareTo(pair1.getFirst());
-    }
-  };
+  private static final Comparator<Couple<String>> MACRO_COMPARATOR = (pair, pair1) -> pair.getFirst().compareTo(pair1.getFirst());
 
   private final Collection<String> myUndefinedMacroNames;
 

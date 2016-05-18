@@ -249,28 +249,25 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
         // Guess the type from file-local calls
         if (context.allowCallContext(this)) {
           final List<PyType> types = new ArrayList<PyType>();
-          processLocalCalls(func, new Processor<PyCallExpression>() {
-            @Override
-            public boolean process(@NotNull PyCallExpression call) {
-              final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
-              final PyArgumentList argumentList = call.getArgumentList();
-              if (argumentList != null) {
-                final PyCallExpression.PyArgumentsMapping mapping = call.mapArguments(resolveContext);
-                for (Map.Entry<PyExpression, PyNamedParameter> entry : mapping.getMappedParameters().entrySet()) {
-                  if (entry.getValue() == PyNamedParameterImpl.this) {
-                    final PyExpression argument = entry.getKey();
-                    if (argument != null) {
-                      final PyType type = context.getType(argument);
-                      if (type != null) {
-                        types.add(type);
-                        return true;
-                      }
+          processLocalCalls(func, call -> {
+            final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+            final PyArgumentList argumentList = call.getArgumentList();
+            if (argumentList != null) {
+              final PyCallExpression.PyArgumentsMapping mapping = call.mapArguments(resolveContext);
+              for (Map.Entry<PyExpression, PyNamedParameter> entry : mapping.getMappedParameters().entrySet()) {
+                if (entry.getValue() == PyNamedParameterImpl.this) {
+                  final PyExpression argument = entry.getKey();
+                  if (argument != null) {
+                    final PyType type = context.getType(argument);
+                    if (type != null) {
+                      types.add(type);
+                      return true;
                     }
                   }
                 }
               }
-              return true;
             }
+            return true;
           });
           if (!types.isEmpty()) {
             return PyUnionType.createWeakType(PyUnionType.union(types));

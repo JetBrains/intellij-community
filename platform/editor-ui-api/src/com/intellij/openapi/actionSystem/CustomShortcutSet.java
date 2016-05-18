@@ -50,12 +50,7 @@ public final class CustomShortcutSet implements ShortcutSet {
   }
 
   public CustomShortcutSet(Integer... keyCodes) {
-    myShortcuts = ContainerUtil.map(keyCodes, new Function<Integer, Shortcut>() {
-      @Override
-      public Shortcut fun(Integer integer) {
-        return new KeyboardShortcut(KeyStroke.getKeyStroke(integer, 0), null);
-      }
-    }, Shortcut.EMPTY_ARRAY);
+    myShortcuts = ContainerUtil.map(keyCodes, integer -> new KeyboardShortcut(KeyStroke.getKeyStroke(integer, 0), null), Shortcut.EMPTY_ARRAY);
   }
 
   @Override

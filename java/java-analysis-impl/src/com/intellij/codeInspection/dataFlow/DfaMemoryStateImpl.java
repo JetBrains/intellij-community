@@ -991,11 +991,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   @Override
   public void flushVariable(@NotNull final DfaVariableValue variable) {
-    List<DfaValue> updatedStack = ContainerUtil.map(myStack, new Function<DfaValue, DfaValue>() {
-      @Override
-      public DfaValue fun(DfaValue value) {
-        return handleFlush(variable, value);
-      }
+    List<DfaValue> updatedStack = ContainerUtil.map(myStack, value -> {
+      return handleFlush(variable, value);
     });
     myStack.clear();
     for (DfaValue value : updatedStack) {

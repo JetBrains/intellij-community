@@ -99,12 +99,7 @@ public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
       if (flag) {
 //        setWaitCursor();
         // invokeLater is called to update state of button before long tree building operation
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            changeView(myTypeName);
-          }
-        });
+        ApplicationManager.getApplication().invokeLater(() -> changeView(myTypeName));
       }
     }
 

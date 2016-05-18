@@ -105,63 +105,49 @@ public class ViewOfflineResultsAction extends AnAction {
     final Map<String, Map<String, Set<OfflineProblemDescriptor>>> resMap =
       new HashMap<String, Map<String, Set<OfflineProblemDescriptor>>>();
     final String [] profileName = new String[1];
-    final Runnable process = new Runnable() {
-      @Override
-      public void run() {
-        final VirtualFile[] files = virtualFile.getChildren();
-        try {
-          for (final VirtualFile inspectionFile : files) {
-            if (inspectionFile.isDirectory()) continue;
-            final String shortName = inspectionFile.getNameWithoutExtension();
-            final String extension = inspectionFile.getExtension();
-            if (shortName.equals(InspectionApplication.DESCRIPTIONS)) {
-              profileName[0] = ApplicationManager.getApplication().runReadAction(
-                  new Computable<String>() {
-                    @Override
-                    @Nullable
-                    public String compute() {
-                      return OfflineViewParseUtil.parseProfileName(LoadTextUtil.loadText(inspectionFile).toString());
-                    }
+    final Runnable process = () -> {
+      final VirtualFile[] files = virtualFile.getChildren();
+      try {
+        for (final VirtualFile inspectionFile : files) {
+          if (inspectionFile.isDirectory()) continue;
+          final String shortName = inspectionFile.getNameWithoutExtension();
+          final String extension = inspectionFile.getExtension();
+          if (shortName.equals(InspectionApplication.DESCRIPTIONS)) {
+            profileName[0] = ApplicationManager.getApplication().runReadAction(
+                new Computable<String>() {
+                  @Override
+                  @Nullable
+                  public String compute() {
+                    return OfflineViewParseUtil.parseProfileName(LoadTextUtil.loadText(inspectionFile).toString());
                   }
-              );
-            }
-            else if (XML_EXTENSION.equals(extension)) {
-              resMap.put(shortName, ApplicationManager.getApplication().runReadAction(
-                  new Computable<Map<String, Set<OfflineProblemDescriptor>>>() {
-                    @Override
-                    public Map<String, Set<OfflineProblemDescriptor>> compute() {
-                      return OfflineViewParseUtil.parse(LoadTextUtil.loadText(inspectionFile).toString());
-                    }
+                }
+            );
+          }
+          else if (XML_EXTENSION.equals(extension)) {
+            resMap.put(shortName, ApplicationManager.getApplication().runReadAction(
+                new Computable<Map<String, Set<OfflineProblemDescriptor>>>() {
+                  @Override
+                  public Map<String, Set<OfflineProblemDescriptor>> compute() {
+                    return OfflineViewParseUtil.parse(LoadTextUtil.loadText(inspectionFile).toString());
                   }
-              ));
-            }
+                }
+            ));
           }
         }
-        catch (final Exception e) {  //all parse exceptions
-          SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              Messages.showInfoMessage(e.getMessage(), InspectionsBundle.message("offline.view.parse.exception.title"));
-            }
-          });
-          throw new ProcessCanceledException(); //cancel process
-        }
+      }
+      catch (final Exception e) {  //all parse exceptions
+        SwingUtilities.invokeLater(
+          () -> Messages.showInfoMessage(e.getMessage(), InspectionsBundle.message("offline.view.parse.exception.title")));
+        throw new ProcessCanceledException(); //cancel process
       }
     };
-    ProgressManager.getInstance().runProcessWithProgressAsynchronously(project, InspectionsBundle.message("parsing.inspections.dump.progress.title"), process, new Runnable() {
-      @Override
-      public void run() {
-        SwingUtilities.invokeLater(new Runnable(){
-          @Override
-          public void run() {
-            final String name = profileName[0];
-            showOfflineView(project, name, resMap,
-                            InspectionsBundle.message("offline.view.title") +
-                            " (" + (name != null ? name : InspectionsBundle.message("offline.view.editor.settings.title")) +")");
-          }
-        });
-      }
-    }, null, new PerformAnalysisInBackgroundOption(project));
+    ProgressManager.getInstance().runProcessWithProgressAsynchronously(project, InspectionsBundle.message("parsing.inspections.dump.progress.title"), process,
+                                                                       () -> SwingUtilities.invokeLater(() -> {
+                                                                         final String name = profileName[0];
+                                                                         showOfflineView(project, name, resMap,
+                                                                                         InspectionsBundle.message("offline.view.title") +
+                                                                                         " (" + (name != null ? name : InspectionsBundle.message("offline.view.editor.settings.title")) +")");
+                                                                       }), null, new PerformAnalysisInBackgroundOption(project));
   }
 
   @SuppressWarnings({"WeakerAccess", "UnusedReturnValue"}) //used in TeamCity

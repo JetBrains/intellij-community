@@ -157,30 +157,18 @@ public class AppEngineUploader {
   }
 
   private void compileAndUpload() {
-    final Runnable startUploading = new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            startUploadingProcess();
-          }
-        });
-      }
-    };
+    final Runnable startUploading = () -> ApplicationManager.getApplication().invokeLater(() -> startUploadingProcess());
 
     final CompilerManager compilerManager = CompilerManager.getInstance(myProject);
     final CompileScope moduleScope = compilerManager.createModuleCompileScope(myAppEngineFacet.getModule(), true);
     final CompileScope compileScope = ArtifactCompileScope.createScopeWithArtifacts(moduleScope, Collections.singletonList(myArtifact));
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        compilerManager.make(compileScope, new CompileStatusNotification() {
-          public void finished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
-            if (!aborted && errors == 0) {
-              startUploading.run();
-            }
-          }
-        });
+    ApplicationManager.getApplication().invokeLater(() -> compilerManager.make(compileScope, new CompileStatusNotification() {
+      public void finished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
+        if (!aborted && errors == 0) {
+          startUploading.run();
+        }
       }
-    });
+    }));
   }
 
   private void startUploadingProcess() {

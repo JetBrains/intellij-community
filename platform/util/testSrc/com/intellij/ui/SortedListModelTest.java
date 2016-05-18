@@ -26,12 +26,7 @@ import java.util.Comparator;
 import java.util.Iterator;
 
 public class SortedListModelTest extends TestCase {
-  private final SortedListModel myModel = new SortedListModel(new Comparator() {
-    @Override
-    public int compare(final Object o1, final Object o2) {
-      return ((Comparable) o1).compareTo((Comparable) o2);
-    }
-  }
+  private final SortedListModel myModel = new SortedListModel((o1, o2) -> ((Comparable) o1).compareTo((Comparable) o2)
   );
   private final Assertion CHECK = new Assertion();
 

@@ -42,12 +42,9 @@ public class FacetUtil {
   public static <F extends Facet> F addFacet(Module module, FacetType<F, ?> type) {
     final ModifiableFacetModel model = FacetManager.getInstance(module).createModifiableModel();
     final F facet = createFacet(module, type);
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        model.addFacet(facet);
-        model.commit();
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      model.addFacet(facet);
+      model.commit();
     });
     return facet;
   }

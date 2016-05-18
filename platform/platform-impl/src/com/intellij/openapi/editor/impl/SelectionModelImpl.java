@@ -68,11 +68,9 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
   @Override
   public void documentChanged(DocumentEvent event) {
     if (myEditor.getDocument().isInBulkUpdate()) return;
-    myEditor.getCaretModel().doWithCaretMerging(new Runnable() {
-      public void run() {
-        for (Caret caret : myEditor.getCaretModel().getAllCarets()) {
-          ((CaretImpl)caret).documentChanged();
-        }
+    myEditor.getCaretModel().doWithCaretMerging(() -> {
+      for (Caret caret : myEditor.getCaretModel().getAllCarets()) {
+        ((CaretImpl)caret).documentChanged();
       }
     });
   }

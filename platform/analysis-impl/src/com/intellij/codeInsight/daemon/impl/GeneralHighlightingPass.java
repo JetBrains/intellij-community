@@ -80,13 +80,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   protected volatile boolean myHasErrorElement;
   private volatile boolean myErrorFound;
   protected final EditorColorsScheme myGlobalScheme;
-  private volatile NotNullProducer<HighlightVisitor[]> myHighlightVisitorProducer = new NotNullProducer<HighlightVisitor[]>() {
-    @NotNull
-    @Override
-    public HighlightVisitor[] produce() {
-      return cloneHighlightVisitors();
-    }
-  };
+  private volatile NotNullProducer<HighlightVisitor[]> myHighlightVisitorProducer = () -> cloneHighlightVisitors();
 
   public GeneralHighlightingPass(@NotNull Project project,
                                  @NotNull PsiFile file,
@@ -275,16 +269,13 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
     final int chunkSize = Math.max(1, (elements1.size()+elements2.size()) / 100); // one percent precision is enough
 
-    boolean success = analyzeByVisitors(visitors, holder, 0, new Runnable() {
-      @Override
-      public void run() {
-        runVisitors(elements1, ranges1, chunkSize, progress, skipParentsSet, holder, insideResult, outsideResult, forceHighlightParents, visitors);
-        final TextRange priorityIntersection = myPriorityRange.intersection(myRestrictRange);
-        if ((!elements1.isEmpty() || !insideResult.isEmpty()) && priorityIntersection != null) { // do not apply when there were no elements to highlight
-          myHighlightInfoProcessor.highlightsInsideVisiblePartAreProduced(myHighlightingSession, insideResult, myPriorityRange, myRestrictRange, getId());
-        }
-        runVisitors(elements2, ranges2, chunkSize, progress, skipParentsSet, holder, insideResult, outsideResult, forceHighlightParents, visitors);
+    boolean success = analyzeByVisitors(visitors, holder, 0, () -> {
+      runVisitors(elements1, ranges1, chunkSize, progress, skipParentsSet, holder, insideResult, outsideResult, forceHighlightParents, visitors);
+      final TextRange priorityIntersection = myPriorityRange.intersection(myRestrictRange);
+      if ((!elements1.isEmpty() || !insideResult.isEmpty()) && priorityIntersection != null) { // do not apply when there were no elements to highlight
+        myHighlightInfoProcessor.highlightsInsideVisiblePartAreProduced(myHighlightingSession, insideResult, myPriorityRange, myRestrictRange, getId());
       }
+      runVisitors(elements2, ranges2, chunkSize, progress, skipParentsSet, holder, insideResult, outsideResult, forceHighlightParents, visitors);
     });
     List<HighlightInfo> postInfos = new ArrayList<HighlightInfo>(holder.size());
     // there can be extra highlights generated in PostHighlightVisitor
@@ -306,12 +297,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       action.run();
     }
     else {
-      if (!visitors[i].analyze(getFile(), myUpdateAll, holder, new Runnable() {
-        @Override
-        public void run() {
-          success[0] = analyzeByVisitors(visitors, holder, i + 1, action);
-        }
-      })) {
+      if (!visitors[i].analyze(getFile(), myUpdateAll, holder, () -> success[0] = analyzeByVisitors(visitors, holder, i + 1, action))) {
         success[0] = false;
       }
     }

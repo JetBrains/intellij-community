@@ -257,11 +257,8 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
         }
       }
 
-      FileChooser.chooseFile(fileChooserDescriptor, getProject(), getInitialFile(), new Consumer<VirtualFile>() {
-        @Override
-        public void consume(VirtualFile file) {
-          onFileChosen(file);
-        }
+      FileChooser.chooseFile(fileChooserDescriptor, getProject(), getInitialFile(), file -> {
+        onFileChosen(file);
       });
     }
 

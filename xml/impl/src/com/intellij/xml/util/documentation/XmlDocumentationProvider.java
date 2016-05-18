@@ -182,14 +182,11 @@ public class XmlDocumentationProvider implements DocumentationProvider {
   private static XmlTag findEnumerationValue(final String text, XmlTag tag) {
     final Ref<XmlTag> enumerationTag = new Ref<XmlTag>();
 
-    Processor<XmlTag> processor = new Processor<XmlTag>() {
-      @Override
-      public boolean process(XmlTag xmlTag) {
-        if (text.equals(xmlTag.getAttributeValue(XmlUtil.VALUE_ATTR_NAME))) {
-          enumerationTag.set(xmlTag);
-        }
-        return true;
+    Processor<XmlTag> processor = xmlTag -> {
+      if (text.equals(xmlTag.getAttributeValue(XmlUtil.VALUE_ATTR_NAME))) {
+        enumerationTag.set(xmlTag);
       }
+      return true;
     };
     XmlUtil.processEnumerationValues(tag, processor);
 

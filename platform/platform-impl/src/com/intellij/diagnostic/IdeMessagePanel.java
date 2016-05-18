@@ -152,12 +152,7 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
 
   private void updateState(final IdeFatalErrorsIcon.State state) {
     myIdeFatal.setState(state);
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        setVisible(state != IdeFatalErrorsIcon.State.NoErrors);
-      }
-    });
+    UIUtil.invokeLaterIfNeeded(() -> setVisible(state != IdeFatalErrorsIcon.State.NoErrors));
   }
 
   private void disposeDialog(final IdeErrorsDialog listDialog) {
@@ -223,24 +218,22 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
       myNotificationPopupAlreadyShown = false;
     }
     else if (state == IdeFatalErrorsIcon.State.UnreadErrors && !myNotificationPopupAlreadyShown) {
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          String notificationText = tryGetFromMessages(myMessagePool.getFatalErrors(false, false));
-          if (NotificationsManagerImpl.newEnabled()) {
-            showErrorNotification(notificationText);
-            return;
-          }
-          if (notificationText == null) {
-            notificationText = INTERNAL_ERROR_NOTICE;
-          }
-          final JLabel label = new JLabel(notificationText);
-          label.setIcon(AllIcons.Ide.FatalError);
-          new NotificationPopup(IdeMessagePanel.this, label, LightColors.RED, false, new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-              _openFatals(null);
-            }
-          }, true);
+      SwingUtilities.invokeLater(() -> {
+        String notificationText = tryGetFromMessages(myMessagePool.getFatalErrors(false, false));
+        if (NotificationsManagerImpl.newEnabled()) {
+          showErrorNotification(notificationText);
+          return;
         }
+        if (notificationText == null) {
+          notificationText = INTERNAL_ERROR_NOTICE;
+        }
+        final JLabel label = new JLabel(notificationText);
+        label.setIcon(AllIcons.Ide.FatalError);
+        new NotificationPopup(IdeMessagePanel.this, label, LightColors.RED, false, new ActionListener() {
+          public void actionPerformed(ActionEvent e) {
+            _openFatals(null);
+          }
+        }, true);
       });
       myNotificationPopupAlreadyShown = true;
     }

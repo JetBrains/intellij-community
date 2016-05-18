@@ -461,18 +461,15 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
 
         assert shreds.isValid();
         if (!oldFile.textMatches(injectedPsi)) {
-          oldViewProvider.performNonPhysically(new Runnable() {
-            @Override
-            public void run() {
-              DebugUtil.startPsiModification("injected tree diff");
-              try {
-                final DiffLog diffLog = BlockSupportImpl.mergeTrees(oldFile, oldFileNode, injectedNode, new DaemonProgressIndicator(),
-                                                                    oldFileNode.getText());
-                DocumentCommitThread.doActualPsiChange(oldFile, diffLog);
-              }
-              finally {
-                DebugUtil.finishPsiModification();
-              }
+          oldViewProvider.performNonPhysically(() -> {
+            DebugUtil.startPsiModification("injected tree diff");
+            try {
+              final DiffLog diffLog = BlockSupportImpl.mergeTrees(oldFile, oldFileNode, injectedNode, new DaemonProgressIndicator(),
+                                                                  oldFileNode.getText());
+              DocumentCommitThread.doActualPsiChange(oldFile, diffLog);
+            }
+            finally {
+              DebugUtil.finishPsiModification();
             }
           });
         }
@@ -578,11 +575,8 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
     Place shreds = window.getShreds();
     Project project = shreds.getHostPointer().getProject();
     DocumentEx delegate = ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(project)).getLastCommittedDocument(window.getDelegate());
-    Place place = new Place(ContainerUtil.map(shreds, new Function<PsiLanguageInjectionHost.Shred, PsiLanguageInjectionHost.Shred>() {
-      @Override
-      public PsiLanguageInjectionHost.Shred fun(final PsiLanguageInjectionHost.Shred shred) {
-        return ((ShredImpl) shred).withPsiRange();
-      }
+    Place place = new Place(ContainerUtil.map(shreds, shred -> {
+      return ((ShredImpl) shred).withPsiRange();
     }));
     return new DocumentWindowImpl(delegate, window.isOneLine(), place);
   }

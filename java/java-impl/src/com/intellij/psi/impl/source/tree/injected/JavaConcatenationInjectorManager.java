@@ -54,11 +54,8 @@ public class JavaConcatenationInjectorManager extends SimpleModificationTracker 
         unregisterConcatenationInjector(injector);
       }
     });
-    psiManagerEx.registerRunnableToRunOnAnyChange(new Runnable() {
-      @Override
-      public void run() {
-        incModificationCount(); // clear caches even on non-physical changes
-      }
+    psiManagerEx.registerRunnableToRunOnAnyChange(() -> {
+      incModificationCount(); // clear caches even on non-physical changes
     });
   }
 

@@ -133,16 +133,13 @@ public class ResolveUtil {
                                      @NotNull final ResolveState state) {
     final GrClosableBlock maxScope = nonCodeProcessor != null ? PsiTreeUtil.getParentOfType(place, GrClosableBlock.class, true, PsiFile.class) : null;
 
-    return PsiTreeUtil.treeWalkUp(place, maxScope, new PairProcessor<PsiElement, PsiElement>() {
-      @Override
-      public boolean process(PsiElement scope, PsiElement lastParent) {
-        ProgressManager.checkCanceled();
-        if (!doProcessDeclarations(originalPlace, lastParent, scope, substituteProcessor(processor, scope), nonCodeProcessor, state)) {
-          return false;
-        }
-        issueLevelChangeEvents(processor, scope);
-        return true;
+    return PsiTreeUtil.treeWalkUp(place, maxScope, (scope, lastParent) -> {
+      ProgressManager.checkCanceled();
+      if (!doProcessDeclarations(originalPlace, lastParent, scope, substituteProcessor(processor, scope), nonCodeProcessor, state)) {
+        return false;
       }
+      issueLevelChangeEvents(processor, scope);
+      return true;
     });
   }
 

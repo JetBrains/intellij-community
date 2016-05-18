@@ -153,27 +153,24 @@ public class InspectionValidatorWrapper implements Validator {
 
           final ArrayList<ProcessingItem> items = new ArrayList<ProcessingItem>();
 
-          final Processor<VirtualFile> processor = new Processor<VirtualFile>() {
-            @Override
-            public boolean process(VirtualFile file) {
-              if (!file.isValid()) {
-                return true;
-              }
-
-              if (myCompilerManager.isExcludedFromCompilation(file) ||
-                  excludesConfiguration.isExcluded(file)) {
-                return true;
-              }
-
-              final Module module = context.getModuleByFile(file);
-              if (module != null) {
-                final PsiFile psiFile = myPsiManager.findFile(file);
-                if (psiFile != null) {
-                  items.add(new MyValidatorProcessingItem(psiFile));
-                }
-              }
+          final Processor<VirtualFile> processor = file -> {
+            if (!file.isValid()) {
               return true;
             }
+
+            if (myCompilerManager.isExcludedFromCompilation(file) ||
+                excludesConfiguration.isExcluded(file)) {
+              return true;
+            }
+
+            final Module module = context.getModuleByFile(file);
+            if (module != null) {
+              final PsiFile psiFile = myPsiManager.findFile(file);
+              if (psiFile != null) {
+                items.add(new MyValidatorProcessingItem(psiFile));
+              }
+            }
+            return true;
           };
           ContainerUtil.process(myValidator.getFilesToProcess(myPsiManager.getProject(), context), processor);
           return items;

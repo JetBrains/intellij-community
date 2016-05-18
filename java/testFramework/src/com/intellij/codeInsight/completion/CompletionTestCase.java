@@ -114,11 +114,8 @@ public abstract class CompletionTestCase extends DaemonAnalyzerTestCase {
 
   protected void assertStringItems(String... strings) {
     assertNotNull(myItems);
-    List<String> actual = ContainerUtil.map(myItems, new Function<LookupElement, String>() {
-      @Override
-      public String fun(LookupElement element) {
-        return element.getLookupString();
-      }
+    List<String> actual = ContainerUtil.map(myItems, element -> {
+      return element.getLookupString();
     });
     assertOrderedEquals(actual, strings);
   }

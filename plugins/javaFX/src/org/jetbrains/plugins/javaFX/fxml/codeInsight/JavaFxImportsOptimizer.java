@@ -67,12 +67,7 @@ public class JavaFxImportsOptimizer implements ImportOptimizer {
     final List<Pair<String, Boolean>> names = new ArrayList<Pair<String, Boolean>>();
     final Set<String> demandedForNested = new HashSet<>();
     collectNamesToImport(names, demandedForNested, (XmlFile)file);
-    Collections.sort(names, new Comparator<Pair<String, Boolean>>() {
-      @Override
-      public int compare(Pair<String, Boolean> o1, Pair<String, Boolean> o2) {
-        return StringUtil.compare(o1.first, o2.first, true);
-      }
-    });
+    Collections.sort(names, (o1, o2) -> StringUtil.compare(o1.first, o2.first, true));
     final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
     final List<Pair<String, Boolean>> sortedNames = ImportHelper.sortItemsAccordingToSettings(names, settings);
     final HashSet<String> onDemand = new HashSet<String>();
@@ -100,24 +95,21 @@ public class JavaFxImportsOptimizer implements ImportOptimizer {
     final XmlDocument document = dummyFile.getDocument();
     final XmlProlog newImportList = document != null ? document.getProlog() : null;
     if (newImportList == null) return EmptyRunnable.getInstance();
-    return new Runnable() {
-      @Override
-      public void run() {
-        final XmlDocument xmlDocument = ((XmlFile)file).getDocument();
-        final XmlProlog prolog = xmlDocument != null ? xmlDocument.getProlog() : null;
-        if (prolog != null) {
-          final Collection<XmlProcessingInstruction> instructions = PsiTreeUtil.findChildrenOfType(prolog, XmlProcessingInstruction.class);
-          for (final XmlProcessingInstruction instruction : instructions) {
-            final ASTNode node = instruction.getNode();
-            final ASTNode nameNode = node.findChildByType(XmlTokenType.XML_NAME);
-            if (nameNode != null && nameNode.getText().equals("import")) {
-              instruction.delete();
-            }
+    return () -> {
+      final XmlDocument xmlDocument = ((XmlFile)file).getDocument();
+      final XmlProlog prolog = xmlDocument != null ? xmlDocument.getProlog() : null;
+      if (prolog != null) {
+        final Collection<XmlProcessingInstruction> instructions = PsiTreeUtil.findChildrenOfType(prolog, XmlProcessingInstruction.class);
+        for (final XmlProcessingInstruction instruction : instructions) {
+          final ASTNode node = instruction.getNode();
+          final ASTNode nameNode = node.findChildByType(XmlTokenType.XML_NAME);
+          if (nameNode != null && nameNode.getText().equals("import")) {
+            instruction.delete();
           }
-          prolog.add(newImportList);
-        } else {
-          document.addBefore(newImportList, document.getRootTag());
         }
+        prolog.add(newImportList);
+      } else {
+        document.addBefore(newImportList, document.getRootTag());
       }
     };
   }

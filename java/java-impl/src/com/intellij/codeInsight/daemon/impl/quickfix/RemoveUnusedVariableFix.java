@@ -98,15 +98,12 @@ public class RemoveUnusedVariableFix implements IntentionAction {
     final RemoveUnusedVariableUtil.RemoveMode
       deleteMode = showSideEffectsWarning(sideEffects, myVariable, editor, canCopeWithSideEffects[0]);
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          RemoveUnusedVariableUtil.deleteReferences(myVariable, references, deleteMode);
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      try {
+        RemoveUnusedVariableUtil.deleteReferences(myVariable, references, deleteMode);
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
       }
     });
   }

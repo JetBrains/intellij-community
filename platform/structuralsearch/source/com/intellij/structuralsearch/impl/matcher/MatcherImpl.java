@@ -180,17 +180,14 @@ public class MatcherImpl {
       final MatchOptions matchOptions = configuration.getMatchOptions();
       matchContext.setOptions(matchOptions);
 
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            final CompiledPattern compiledPattern = PatternCompiler.compilePattern(project, matchOptions);
-            matchContext.setPattern(compiledPattern);
-            out.put(configuration, matchContext);
-          }
-          catch (UnsupportedPatternException ignored) {}
-          catch (MalformedPatternException ignored) {}
+      ApplicationManager.getApplication().runReadAction(() -> {
+        try {
+          final CompiledPattern compiledPattern = PatternCompiler.compilePattern(project, matchOptions);
+          matchContext.setPattern(compiledPattern);
+          out.put(configuration, matchContext);
         }
+        catch (UnsupportedPatternException ignored) {}
+        catch (MalformedPatternException ignored) {}
       });
     }
   }
@@ -236,12 +233,7 @@ public class MatcherImpl {
 
     if (scheduler.getTaskQueueEndAction()==null) {
       scheduler.setTaskQueueEndAction(
-        new Runnable() {
-          @Override
-          public void run() {
-            matchContext.getSink().matchingFinished();
-          }
-        }
+        () -> matchContext.getSink().matchingFinished()
       );
     }
 
@@ -267,11 +259,8 @@ public class MatcherImpl {
         }
       };
 
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        @Override
-        public void run() {
-          FileBasedIndex.getInstance().iterateIndexableFiles(ci, project, progress);
-        }
+      ApplicationManager.getApplication().runReadAction(() -> {
+        FileBasedIndex.getInstance().iterateIndexableFiles(ci, project, progress);
       });
       progress.setText2("");
     }
@@ -524,17 +513,14 @@ public class MatcherImpl {
           matchContext.getSink().processFile((PsiFile)file);
         }
 
-        myDumbService.runReadActionInSmartMode(new Runnable() {
-            @Override
-            public void run() {
-              if (!file.isValid()) return;
-              final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByLanguage(file.getLanguage());
-              if (profile == null) {
-                return;
-              }
-              match(profile.extendMatchOnePsiFile(file), patternLanguage);
-            }
+        myDumbService.runReadActionInSmartMode(() -> {
+          if (!file.isValid()) return;
+          final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByLanguage(file.getLanguage());
+          if (profile == null) {
+            return;
           }
+          match(profile.extendMatchOnePsiFile(file), patternLanguage);
+        }
         );
       }
     }

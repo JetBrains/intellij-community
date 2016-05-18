@@ -170,13 +170,10 @@ public abstract class DesignerEditorPanel extends JPanel
     createErrorCard();
     createProgressPanel();
 
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        DesignerEditorPanel designer = DesignerEditorPanel.this;
-        getDesignerWindowManager().bind(designer);
-        getPaletteWindowManager().bind(designer);
-      }
+    UIUtil.invokeLaterIfNeeded(() -> {
+      DesignerEditorPanel designer = DesignerEditorPanel.this;
+      getDesignerWindowManager().bind(designer);
+      getPaletteWindowManager().bind(designer);
     });
   }
 
@@ -981,32 +978,21 @@ public abstract class DesignerEditorPanel extends JPanel
     public boolean execute(final ThrowableRunnable<Exception> operation, String command, final boolean updateProperties) {
       myLastExecuteCommand = command;
       final Ref<Boolean> result = Ref.create(Boolean.TRUE);
-      CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
-        public void run() {
-          result.set(DesignerEditorPanel.this.execute(operation, updateProperties));
-        }
-      }, command, null);
+      CommandProcessor.getInstance().executeCommand(getProject(),
+                                                    () -> result.set(DesignerEditorPanel.this.execute(operation, updateProperties)), command, null);
       return result.get();
     }
 
     @Override
     public void executeWithReparse(final ThrowableRunnable<Exception> operation, String command) {
       myLastExecuteCommand = command;
-      CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
-        public void run() {
-          DesignerEditorPanel.this.executeWithReparse(operation);
-        }
-      }, command, null);
+      CommandProcessor.getInstance().executeCommand(getProject(), () -> DesignerEditorPanel.this.executeWithReparse(operation), command, null);
     }
 
     @Override
     public void execute(final List<EditOperation> operations, String command) {
       myLastExecuteCommand = command;
-      CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
-        public void run() {
-          DesignerEditorPanel.this.execute(operations);
-        }
-      }, command, null);
+      CommandProcessor.getInstance().executeCommand(getProject(), () -> DesignerEditorPanel.this.execute(operations), command, null);
     }
 
     @Override

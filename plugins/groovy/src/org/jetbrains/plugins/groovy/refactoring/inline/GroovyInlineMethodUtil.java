@@ -604,12 +604,8 @@ public class GroovyInlineMethodUtil {
           final boolean isFinal = ((GrVariable)resolved).hasModifierProperty(PsiModifier.FINAL);
           if (!isFinal) {
             final PsiReference lastRef =
-              Collections.max(ReferencesSearch.search(resolved).findAll(), new Comparator<PsiReference>() {
-                @Override
-                public int compare(PsiReference o1, PsiReference o2) {
-                  return o1.getElement().getTextRange().getStartOffset() - o2.getElement().getTextRange().getStartOffset();
-                }
-              });
+              Collections.max(ReferencesSearch.search(resolved).findAll(),
+                              (o1, o2) -> o1.getElement().getTextRange().getStartOffset() - o2.getElement().getTextRange().getStartOffset());
             return lastRef.getElement() == expression;
           }
         }

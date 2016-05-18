@@ -465,35 +465,22 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
     final AsyncResult<AbstractTreeNode> result = new AsyncResult<AbstractTreeNode>();
     final AbstractTreeNode toExpand = pathToElement.get(pathToElement.size() - 1);
-    myAbstractTreeBuilder.expand(toExpand, new Runnable() {
-      @Override
-      public void run() {
-        result.setDone(toExpand);
-      }
-    });
+    myAbstractTreeBuilder.expand(toExpand, () -> result.setDone(toExpand));
 
     return result;
   }
 
   public boolean select(final Object element, final boolean requestFocus) {
-    myAbstractTreeBuilder.getReady(this).doWhenDone(new Runnable() {
+    myAbstractTreeBuilder.getReady(this).doWhenDone(() -> expandPathToElement(element).doWhenDone(new Consumer<AbstractTreeNode>() {
       @Override
-      public void run() {
-        expandPathToElement(element).doWhenDone(new Consumer<AbstractTreeNode>() {
-          @Override
-          public void consume(AbstractTreeNode abstractTreeNode) {
-            myAbstractTreeBuilder.select(abstractTreeNode, new Runnable() {
-              @Override
-              public void run() {
-                if (requestFocus) {
-                  IdeFocusManager.getInstance(myProject).requestFocus(myAbstractTreeBuilder.getTree(), false);
-                }
-              }
-            });
+      public void consume(AbstractTreeNode abstractTreeNode) {
+        myAbstractTreeBuilder.select(abstractTreeNode, () -> {
+          if (requestFocus) {
+            IdeFocusManager.getInstance(myProject).requestFocus(myAbstractTreeBuilder.getTree(), false);
           }
         });
       }
-    });
+    }));
     return true;
   }
 
@@ -543,13 +530,10 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
     myAutoscrollAlarm.cancelAllRequests();
     myAutoscrollAlarm.addRequest(
-        new Runnable() {
-        @Override
-        public void run() {
-          if (myAbstractTreeBuilder == null) return;
-          if (UIUtil.isFocusAncestor(StructureViewComponent.this)) return;
-          scrollToSelectedElementInner();
-        }
+      () -> {
+        if (myAbstractTreeBuilder == null) return;
+        if (UIUtil.isFocusAncestor(StructureViewComponent.this)) return;
+        scrollToSelectedElementInner();
       }, 1000);
   }
 
@@ -947,12 +931,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     _setRefSize(size);
 
     if (size != null) {
-      myAbstractTreeBuilder.getReady(this).doWhenDone(new Runnable() {
-        @Override
-        public void run() {
-          _setRefSize(null);
-        }
-      });
+      myAbstractTreeBuilder.getReady(this).doWhenDone(() -> _setRefSize(null));
     }
   }
 

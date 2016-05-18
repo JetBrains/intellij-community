@@ -442,18 +442,15 @@ public class EventLog {
   }
 
   private static void activate(@NotNull ToolWindow eventLog, @Nullable final String groupId, @Nullable final Runnable r) {
-    eventLog.activate(new Runnable() {
-      @Override
-      public void run() {
-        if (groupId == null) return;
-        String contentName = getContentName(groupId);
-        Content content = eventLog.getContentManager().findContent(contentName);
-        if (content != null) {
-          eventLog.getContentManager().setSelectedContent(content);
-        }
-        if (r != null) {
-          r.run();
-        }
+    eventLog.activate(() -> {
+      if (groupId == null) return;
+      String contentName = getContentName(groupId);
+      Content content = eventLog.getContentManager().findContent(contentName);
+      if (content != null) {
+        eventLog.getContentManager().setSelectedContent(content);
+      }
+      if (r != null) {
+        r.run();
       }
     }, true);
   }
@@ -519,10 +516,8 @@ public class EventLog {
         @Override
         public void run() {
           if (!ShutDownTracker.isShutdownHookRunning() && !myProject.isDisposed()) {
-            ApplicationManager.getApplication().runReadAction(new Runnable() {
-              public void run() {
-                console.doPrintNotification(notification);
-              }
+            ApplicationManager.getApplication().runReadAction(() -> {
+              console.doPrintNotification(notification);
             });
           }
         }
@@ -532,13 +527,10 @@ public class EventLog {
     private void showNotification(@NotNull final String groupId, @NotNull final List<String> ids) {
       ToolWindow eventLog = getEventLog(myProject);
       if (eventLog != null) {
-        activate(eventLog, groupId, new Runnable() {
-          @Override
-          public void run() {
-            EventLogConsole console = getConsole(groupId);
-            if (console != null) {
-              console.showNotification(ids);
-            }
+        activate(eventLog, groupId, () -> {
+          EventLogConsole console = getConsole(groupId);
+          if (console != null) {
+            console.showNotification(ids);
           }
         });
       }

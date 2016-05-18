@@ -170,18 +170,10 @@ public class AnalyzeStacktraceUtil {
     }
 
     public final void setText(@NotNull final String text) {
-      Runnable runnable = new Runnable() {
-        @Override
-        public void run() {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              final Document document = myEditor.getDocument();
-              document.replaceString(0, document.getTextLength(), StringUtil.convertLineSeparators(text));
-            }
-          });
-        }
-      };
+      Runnable runnable = () -> ApplicationManager.getApplication().runWriteAction(() -> {
+        final Document document = myEditor.getDocument();
+        document.replaceString(0, document.getTextLength(), StringUtil.convertLineSeparators(text));
+      });
       CommandProcessor.getInstance().executeCommand(myProject, runnable, "", this);
     }
 

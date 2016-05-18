@@ -154,14 +154,9 @@ public class GroovyTestGenerator implements TestGenerator {
   }
 
   private static void showErrorLater(final Project project, final String targetClassName) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        Messages.showErrorDialog(project,
-                                 CodeInsightBundle.message("intention.error.cannot.create.class.message", targetClassName),
-                                 CodeInsightBundle.message("intention.error.cannot.create.class.title"));
-      }
-    });
+    ApplicationManager.getApplication().invokeLater(() -> Messages.showErrorDialog(project,
+                                                                               CodeInsightBundle.message("intention.error.cannot.create.class.message", targetClassName),
+                                                                               CodeInsightBundle.message("intention.error.cannot.create.class.title")));
   }
 
   private static void generateMethod(@NotNull TestIntegrationUtils.MethodKind methodKind,

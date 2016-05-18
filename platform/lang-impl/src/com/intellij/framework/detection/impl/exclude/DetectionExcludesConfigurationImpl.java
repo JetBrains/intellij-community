@@ -190,12 +190,8 @@ public class DetectionExcludesConfigurationImpl extends DetectionExcludesConfigu
         state.getFiles().add(new ExcludedFileState(url, typeId));
       }
     }
-    Collections.sort(state.getFiles(), new Comparator<ExcludedFileState>() {
-      @Override
-      public int compare(ExcludedFileState o1, ExcludedFileState o2) {
-        return StringUtil.comparePairs(o1.getFrameworkType(), o1.getUrl(), o2.getFrameworkType(), o2.getUrl(), true);
-      }
-    });
+    Collections.sort(state.getFiles(),
+                     (o1, o2) -> StringUtil.comparePairs(o1.getFrameworkType(), o1.getUrl(), o2.getFrameworkType(), o2.getUrl(), true));
     return state;
   }
 

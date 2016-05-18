@@ -62,29 +62,25 @@ public class LoadAllContentsAction extends AnAction implements DumbAware {
 
     count.set(0);
     totalSize.set(0);
-    ApplicationManagerEx.getApplicationEx().runProcessWithProgressSynchronously(new Runnable() {
-      @Override
-      public void run() {
-        ProjectRootManager.getInstance(project).getFileIndex().iterateContent(new ContentIterator() {
-          @Override
-          public boolean processFile(VirtualFile fileOrDir) {
-            if (fileOrDir.isDirectory() || fileOrDir.is(VFileProperty.SPECIAL)) {
-              return true;
-            }
-            try {
-              count.incrementAndGet();
-              byte[] bytes = FileUtil.loadFileBytes(new File(fileOrDir.getPath()));
-              totalSize.addAndGet(bytes.length);
-              ProgressManager.getInstance().getProgressIndicator().setText(fileOrDir.getPresentableUrl());
-            }
-            catch (IOException e1) {
-              LOG.error(e1);
-            }
+    ApplicationManagerEx.getApplicationEx().runProcessWithProgressSynchronously(
+      () -> ProjectRootManager.getInstance(project).getFileIndex().iterateContent(new ContentIterator() {
+        @Override
+        public boolean processFile(VirtualFile fileOrDir) {
+          if (fileOrDir.isDirectory() || fileOrDir.is(VFileProperty.SPECIAL)) {
             return true;
           }
-        });
-       }
-    }, "Loading", false, project);
+          try {
+            count.incrementAndGet();
+            byte[] bytes = FileUtil.loadFileBytes(new File(fileOrDir.getPath()));
+            totalSize.addAndGet(bytes.length);
+            ProgressManager.getInstance().getProgressIndicator().setText(fileOrDir.getPresentableUrl());
+          }
+          catch (IOException e1) {
+            LOG.error(e1);
+          }
+          return true;
+        }
+      }), "Loading", false, project);
 
     long end = System.currentTimeMillis();
     String message = "Finished loading content of " + count + " files. " +

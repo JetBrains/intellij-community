@@ -104,17 +104,14 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
       //  }
       //});
     }, () -> {
-      Processor<SliceUsage> processor = new Processor<SliceUsage>() {
-        @Override
-        public boolean process(SliceUsage sliceUsage) {
-          progress.checkCanceled();
-          SliceNode node = new SliceNode(myProject, sliceUsage, targetEqualUsages);
-          synchronized (children) {
-            node.index = children.size();
-            children.add(node);
-          }
-          return true;
+      Processor<SliceUsage> processor = sliceUsage -> {
+        progress.checkCanceled();
+        SliceNode node = new SliceNode(myProject, sliceUsage, targetEqualUsages);
+        synchronized (children) {
+          node.index = children.size();
+          children.add(node);
         }
+        return true;
       };
 
       getValue().processChildren(processor);

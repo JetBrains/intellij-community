@@ -46,14 +46,11 @@ public class ActionOrGroupResolveConverter extends ResolvingConverter<ActionOrGr
   @Override
   public Collection<? extends ActionOrGroup> getVariants(ConvertContext context) {
     final List<ActionOrGroup> variants = new ArrayList<ActionOrGroup>();
-    PairProcessor<String, ActionOrGroup> collectProcessor = new PairProcessor<String, ActionOrGroup>() {
-      @Override
-      public boolean process(String s, ActionOrGroup actionOrGroup) {
-        if (isRelevant(actionOrGroup)) {
-          variants.add(actionOrGroup);
-        }
-        return true;
+    PairProcessor<String, ActionOrGroup> collectProcessor = (s, actionOrGroup) -> {
+      if (isRelevant(actionOrGroup)) {
+        variants.add(actionOrGroup);
       }
+      return true;
     };
     processActionOrGroup(context, collectProcessor);
     return variants;
@@ -65,16 +62,13 @@ public class ActionOrGroupResolveConverter extends ResolvingConverter<ActionOrGr
     if (StringUtil.isEmptyOrSpaces(value)) return null;
 
     final ActionOrGroup[] result = {null};
-    PairProcessor<String, ActionOrGroup> findProcessor = new PairProcessor<String, ActionOrGroup>() {
-      @Override
-      public boolean process(String s, ActionOrGroup actionOrGroup) {
-        if (isRelevant(actionOrGroup) &&
-            Comparing.strEqual(value, s)) {
-          result[0] = actionOrGroup;
-          return false;
-        }
-        return true;
+    PairProcessor<String, ActionOrGroup> findProcessor = (s, actionOrGroup) -> {
+      if (isRelevant(actionOrGroup) &&
+          Comparing.strEqual(value, s)) {
+        result[0] = actionOrGroup;
+        return false;
       }
+      return true;
     };
     processActionOrGroup(context, findProcessor);
     return result[0];
@@ -156,13 +150,10 @@ public class ActionOrGroupResolveConverter extends ResolvingConverter<ActionOrGr
       return processPlugins(plugins, processor);
     }
 
-    return ModuleUtilCore.visitMeAndDependentModules(module, new ModuleUtilCore.ModuleVisitor() {
-      @Override
-      public boolean visit(@NotNull Module module) {
-        final Collection<IdeaPlugin> dependenciesAndLibs =
-          IdeaPluginConverter.getPlugins(project, module.getModuleRuntimeScope(false));
-        return processPlugins(dependenciesAndLibs, processor);
-      }
+    return ModuleUtilCore.visitMeAndDependentModules(module, module1 -> {
+      final Collection<IdeaPlugin> dependenciesAndLibs =
+        IdeaPluginConverter.getPlugins(project, module1.getModuleRuntimeScope(false));
+      return processPlugins(dependenciesAndLibs, processor);
     });
   }
 

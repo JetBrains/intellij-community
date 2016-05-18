@@ -27,13 +27,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface XmlAttributeDescriptor extends PsiMetaData {
   XmlAttributeDescriptor[] EMPTY = new XmlAttributeDescriptor[0];
-  ArrayFactory<XmlAttributeDescriptor> ARRAY_FACTORY = new ArrayFactory<XmlAttributeDescriptor>() {
-    @NotNull
-    @Override
-    public XmlAttributeDescriptor[] create(int count) {
-      return new XmlAttributeDescriptor[count];
-    }
-  };
+  ArrayFactory<XmlAttributeDescriptor> ARRAY_FACTORY = count -> new XmlAttributeDescriptor[count];
 
   boolean isRequired();
   boolean isFixed();

@@ -76,22 +76,14 @@ public final class BrowserLauncherImpl extends BrowserLauncherAppless {
                            @Nullable final Project project,
                            final String title,
                            @Nullable final Runnable launchTask) {
-    AppUIUtil.invokeOnEdt(new Runnable() {
-      @Override
-      public void run() {
-        if (Messages.showYesNoDialog(project, StringUtil.notNullize(error, "Unknown error"),
-                                     title == null ? IdeBundle.message("browser.error") : title, Messages.OK_BUTTON,
-                                     IdeBundle.message("button.fix"), null) == Messages.NO) {
-          final BrowserSettings browserSettings = new BrowserSettings();
-          if (ShowSettingsUtil.getInstance().editConfigurable(project, browserSettings, browser == null ? null : new Runnable() {
-            @Override
-            public void run() {
-              browserSettings.selectBrowser(browser);
-            }
-          })) {
-            if (launchTask != null) {
-              launchTask.run();
-            }
+    AppUIUtil.invokeOnEdt(() -> {
+      if (Messages.showYesNoDialog(project, StringUtil.notNullize(error, "Unknown error"),
+                                   title == null ? IdeBundle.message("browser.error") : title, Messages.OK_BUTTON,
+                                   IdeBundle.message("button.fix"), null) == Messages.NO) {
+        final BrowserSettings browserSettings = new BrowserSettings();
+        if (ShowSettingsUtil.getInstance().editConfigurable(project, browserSettings, browser == null ? null : (Runnable)() -> browserSettings.selectBrowser(browser))) {
+          if (launchTask != null) {
+            launchTask.run();
           }
         }
       }
@@ -105,25 +97,17 @@ public final class BrowserLauncherImpl extends BrowserLauncherAppless {
                                      @NotNull final Process process,
                                      @Nullable final Runnable launchTask) {
     if (isOpenCommandUsed(commandLine)) {
-      final Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            if (process.waitFor() == 1) {
-              showError(ExecUtil.readFirstLine(process.getErrorStream(), null), browser, project, null, launchTask);
-            }
+      final Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        try {
+          if (process.waitFor() == 1) {
+            showError(ExecUtil.readFirstLine(process.getErrorStream(), null), browser, project, null, launchTask);
           }
-          catch (InterruptedException ignored) {
-          }
+        }
+        catch (InterruptedException ignored) {
         }
       });
       // 10 seconds is enough to start
-      JobScheduler.getScheduler().schedule(new Runnable() {
-        @Override
-        public void run() {
-          future.cancel(true);
-        }
-      }, 10, TimeUnit.SECONDS);
+      JobScheduler.getScheduler().schedule((Runnable)() -> future.cancel(true), 10, TimeUnit.SECONDS);
     }
   }
 }

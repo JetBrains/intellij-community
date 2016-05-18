@@ -189,12 +189,7 @@ public class IndexInfrastructure {
                                                                    CacheUpdateRunner.indexingThreadCount());
 
         for (ThrowableRunnable callable : myNestedInitializationTasks) {
-          taskExecutor.submit(new Runnable() {
-            @Override
-            public void run() {
-              executeNestedInitializationTask(callable, proceedLatch);
-            }
-          });
+          taskExecutor.submit(() -> executeNestedInitializationTask(callable, proceedLatch));
         }
 
         proceedLatch.await();

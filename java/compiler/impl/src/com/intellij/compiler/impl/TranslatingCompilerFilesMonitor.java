@@ -201,18 +201,14 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
   }
 
   
-  private static final Function<Collection<File>, Void> NOTIFY_CHANGED = new Function<Collection<File>, Void>() {
-    public Void fun(Collection<File> files) {
-      notifyFilesChanged(files);
-      return null;
-    }
+  private static final Function<Collection<File>, Void> NOTIFY_CHANGED = files -> {
+    notifyFilesChanged(files);
+    return null;
   };
 
-  private static final Function<Collection<File>, Void> NOTIFY_DELETED = new Function<Collection<File>, Void>() {
-    public Void fun(Collection<File> files) {
-      notifyFilesDeleted(files);
-      return null;
-    }
+  private static final Function<Collection<File>, Void> NOTIFY_DELETED = files -> {
+    notifyFilesDeleted(files);
+    return null;
   };
   
   private static void collectPathsAndNotify(final VirtualFile file, final Function<Collection<File>, Void> notification) {

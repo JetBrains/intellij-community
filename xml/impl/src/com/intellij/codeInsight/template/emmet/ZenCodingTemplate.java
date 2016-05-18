@@ -316,39 +316,31 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
   public static void doWrap(@NotNull final String abbreviation, @NotNull final CustomTemplateCallback callback) {
     final ZenCodingGenerator defaultGenerator = findApplicableDefaultGenerator(callback.getContext(), true);
     assert defaultGenerator != null;
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        CommandProcessor.getInstance().executeCommand(callback.getProject(), new Runnable() {
-          @Override
-          public void run() {
-            callback.getEditor().getCaretModel().runForEachCaret(new CaretAction() {
-              @Override
-              public void perform(Caret caret) {
-                String selectedText = callback.getEditor().getSelectionModel().getSelectedText();
-                if (selectedText != null) {
-                  String selection = selectedText.trim();
-                  ZenCodingNode node = parse(abbreviation, callback, defaultGenerator, selection);
-                  assert node != null;
-                  PsiElement context = callback.getContext();
-                  ZenCodingGenerator generator = findApplicableGenerator(node, context, true);
-                  List<ZenCodingFilter> filters = getFilters(node, context);
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      CommandProcessor.getInstance().executeCommand(callback.getProject(), () -> callback.getEditor().getCaretModel().runForEachCaret(new CaretAction() {
+        @Override
+        public void perform(Caret caret) {
+          String selectedText = callback.getEditor().getSelectionModel().getSelectedText();
+          if (selectedText != null) {
+            String selection = selectedText.trim();
+            ZenCodingNode node = parse(abbreviation, callback, defaultGenerator, selection);
+            assert node != null;
+            PsiElement context = callback.getContext();
+            ZenCodingGenerator generator = findApplicableGenerator(node, context, true);
+            List<ZenCodingFilter> filters = getFilters(node, context);
 
-                  EditorModificationUtil.deleteSelectedText(callback.getEditor());
-                  PsiDocumentManager.getInstance(callback.getProject()).commitAllDocuments();
+            EditorModificationUtil.deleteSelectedText(callback.getEditor());
+            PsiDocumentManager.getInstance(callback.getProject()).commitAllDocuments();
 
-                  try {
-                    expand(node, generator, filters, selection, callback, true, Registry.intValue("emmet.segments.limit"));
-                  }
-                  catch (EmmetException e) {
-                    CommonRefactoringUtil.showErrorHint(callback.getProject(), callback.getEditor(), e.getMessage(), "Emmet error", "");
-                  }
-                }
-              }
-            });
+            try {
+              expand(node, generator, filters, selection, callback, true, Registry.intValue("emmet.segments.limit"));
+            }
+            catch (EmmetException e) {
+              CommonRefactoringUtil.showErrorHint(callback.getProject(), callback.getEditor(), e.getMessage(), "Emmet error", "");
+            }
           }
-        }, CodeInsightBundle.message("insert.code.template.command"), null);
-      }
+        }
+      }), CodeInsightBundle.message("insert.code.template.command"), null);
     });
   }
 

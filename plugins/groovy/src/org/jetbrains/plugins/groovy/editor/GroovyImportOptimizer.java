@@ -44,22 +44,19 @@ import java.util.*;
 public class GroovyImportOptimizer implements ImportOptimizer {
 
   public static Comparator<GrImportStatement> getComparator(final GroovyCodeStyleSettings settings) {
-    return new Comparator<GrImportStatement>() {
-      @Override
-      public int compare(GrImportStatement statement1, GrImportStatement statement2) {
-        if (settings.LAYOUT_STATIC_IMPORTS_SEPARATELY) {
-          if (statement1.isStatic() && !statement2.isStatic()) return 1;
-          if (statement2.isStatic() && !statement1.isStatic()) return -1;
-        }
-
-        final GrCodeReferenceElement ref1 = statement1.getImportReference();
-        final GrCodeReferenceElement ref2 = statement2.getImportReference();
-        String name1 = ref1 != null ? PsiUtil.getQualifiedReferenceText(ref1) : null;
-        String name2 = ref2 != null ? PsiUtil.getQualifiedReferenceText(ref2) : null;
-        if (name1 == null) return name2 == null ? 0 : -1;
-        if (name2 == null) return 1;
-        return name1.compareTo(name2);
+    return (statement1, statement2) -> {
+      if (settings.LAYOUT_STATIC_IMPORTS_SEPARATELY) {
+        if (statement1.isStatic() && !statement2.isStatic()) return 1;
+        if (statement2.isStatic() && !statement1.isStatic()) return -1;
       }
+
+      final GrCodeReferenceElement ref1 = statement1.getImportReference();
+      final GrCodeReferenceElement ref2 = statement2.getImportReference();
+      String name1 = ref1 != null ? PsiUtil.getQualifiedReferenceText(ref1) : null;
+      String name2 = ref2 != null ? PsiUtil.getQualifiedReferenceText(ref2) : null;
+      if (name1 == null) return name2 == null ? 0 : -1;
+      if (name2 == null) return 1;
+      return name1.compareTo(name2);
     };
   }
 

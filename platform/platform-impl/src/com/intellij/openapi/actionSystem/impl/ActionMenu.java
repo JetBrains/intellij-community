@@ -364,26 +364,20 @@ public final class ActionMenu extends JMenu {
     private SingleAlarm myCheckAlarm;
 
     private UsabilityHelper(Component component) {
-      myCallbackAlarm = new SingleAlarm(new Runnable() {
-        @Override
-        public void run() {
-          Disposer.dispose(myCallbackAlarm);
-          myCallbackAlarm = null;
-          if (myEventToRedispatch != null) {
-            IdeEventQueue.getInstance().dispatchEvent(myEventToRedispatch);
-          }
+      myCallbackAlarm = new SingleAlarm(() -> {
+        Disposer.dispose(myCallbackAlarm);
+        myCallbackAlarm = null;
+        if (myEventToRedispatch != null) {
+          IdeEventQueue.getInstance().dispatchEvent(myEventToRedispatch);
         }
       }, 50, this);
-      myCheckAlarm = new SingleAlarm(new Runnable() {
-        @Override
-        public void run() {
-          if (myLastEventTime > 0 && System.currentTimeMillis() - myLastEventTime > 1500) {
-            if (!myInBounds && myCallbackAlarm != null && !myCallbackAlarm.isDisposed()) {
-              myCallbackAlarm.request();
-            }
+      myCheckAlarm = new SingleAlarm(() -> {
+        if (myLastEventTime > 0 && System.currentTimeMillis() - myLastEventTime > 1500) {
+          if (!myInBounds && myCallbackAlarm != null && !myCallbackAlarm.isDisposed()) {
+            myCallbackAlarm.request();
           }
-          myCheckAlarm.request();
         }
+        myCheckAlarm.request();
       }, 100, this);
       myComponent = component;
       PointerInfo info = MouseInfo.getPointerInfo();

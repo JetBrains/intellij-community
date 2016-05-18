@@ -78,12 +78,7 @@ public class AsyncProcessIcon extends AnimatedIcon {
       setBounds(newBounds);
       // painting problems with scrollpane
       // repaint shouldn't be called from paint method
-      SwingUtilities.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          container.repaint();
-        }
-      });
+      SwingUtilities.invokeLater(() -> container.repaint());
     }
   }
 
