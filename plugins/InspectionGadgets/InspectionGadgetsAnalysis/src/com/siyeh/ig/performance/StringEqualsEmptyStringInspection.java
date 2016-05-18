@@ -186,10 +186,11 @@ public class StringEqualsEmptyStringInspection extends BaseInspection {
         if (rhs == null) {
           continue;
         }
-        if (PsiType.NULL.equals(lhs.getType()) && EquivalenceChecker.expressionsAreEquivalent(expression, rhs)) {
+        if (PsiType.NULL.equals(lhs.getType()) && EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(expression, rhs)) {
           return true;
         }
-        else if (PsiType.NULL.equals(rhs.getType()) && EquivalenceChecker.expressionsAreEquivalent(expression, lhs)) {
+        else if (PsiType.NULL.equals(rhs.getType()) && EquivalenceChecker.getCanonicalPsiEquivalence()
+          .expressionsAreEquivalent(expression, lhs)) {
           return true;
         }
       }

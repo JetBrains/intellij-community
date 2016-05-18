@@ -189,8 +189,8 @@ public class DoubleCheckedLockingInspection extends BaseInspection {
       }
       final PsiIfStatement innerIf = (PsiIfStatement)firstStatement;
       final PsiExpression innerCondition = innerIf.getCondition();
-      if (!EquivalenceChecker.expressionsAreEquivalent(innerCondition,
-                                                       outerCondition)) {
+      if (!EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(innerCondition,
+                                                                                    outerCondition)) {
         return;
       }
       final PsiField field;

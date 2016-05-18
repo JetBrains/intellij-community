@@ -92,3 +92,15 @@ class Sub extends Sup {
     overload1(0, true);
   }
 }
+///////////////////////////////
+class Params {
+  int fooy(int param1, Object param2) {
+    return param1 + param2.hashCode();
+  }
+}
+class ComplexParameterEquivalent extends Params {
+  @Override
+  int <warning descr="Method 'fooy()' is identical to its super method">fooy</warning>(int p1, Object p2) {
+    return ((p1) + p2.hashCode());
+  }
+}

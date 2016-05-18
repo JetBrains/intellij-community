@@ -416,7 +416,7 @@ public class TrivialIfInspection extends BaseInspection implements CleanupLocalI
       }
       final PsiExpression thenLhs = thenExpression.getLExpression();
       final PsiExpression elseLhs = elseExpression.getLExpression();
-      return EquivalenceChecker.expressionsAreEquivalent(thenLhs, elseLhs);
+      return EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(thenLhs, elseLhs);
     }
     else {
       return false;

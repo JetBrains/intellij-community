@@ -86,7 +86,6 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
   }
 
   private static class RedundantMethodOverrideVisitor extends BaseInspectionVisitor {
-
     @Override
     public void visitMethod(PsiMethod method) {
       super.visitMethod(method);
@@ -112,8 +111,50 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
         return;  // method overridden and made final - not redundant
       }
       final PsiCodeBlock superBody = superMethod.getBody();
-      if (EquivalenceChecker.codeBlocksAreEquivalent(body, superBody) || isSuperCallWithSameArguments(body, method, superMethod)) {
+
+      EquivalenceChecker checker = new ParameterEquivalenceChecker(method, superMethod);
+      if (checker.codeBlocksAreEquivalent(body, superBody) || isSuperCallWithSameArguments(body, method, superMethod)) {
         registerMethodError(method);
+      }
+    }
+
+    private static class ParameterEquivalenceChecker extends EquivalenceChecker {
+      private final PsiMethod myMethod;
+      private final PsiMethod mySuperMethod;
+
+      ParameterEquivalenceChecker(@NotNull PsiMethod method, @NotNull PsiMethod superMethod) {
+        myMethod = method;
+        mySuperMethod = superMethod;
+      }
+
+      @Override
+      protected Decision referenceExpressionsAreEquivalentDecision(PsiReferenceExpression referenceExpression1,
+                                                                   PsiReferenceExpression referenceExpression2) {
+        if (areSameParameters(referenceExpression1, referenceExpression2)) {
+          return EXACTLY_MATCHES;
+        }
+        return super.referenceExpressionsAreEquivalentDecision(referenceExpression1, referenceExpression2);
+      }
+
+      private boolean areSameParameters(PsiReferenceExpression referenceExpression1, PsiReferenceExpression referenceExpression2) {
+        // parameters of super method and overridden method should be considered the same
+        PsiElement resolved1 = referenceExpression1.resolve();
+        PsiElement resolved2 = referenceExpression2.resolve();
+        if (!(resolved1 instanceof PsiParameter) || !(resolved2 instanceof PsiParameter)) return false;
+        PsiElement scope1 = ((PsiParameter)resolved1).getDeclarationScope();
+        PsiElement scope2 = ((PsiParameter)resolved2).getDeclarationScope();
+        if (scope1 == scope2 || scope1 != myMethod && scope1 != mySuperMethod || scope2 != myMethod && scope2 != mySuperMethod) {
+          return false;
+        }
+        PsiElement parent1 = resolved1.getParent();
+        PsiElement parent2 = resolved2.getParent();
+        if (!(parent1 instanceof PsiParameterList) || !(parent2 instanceof PsiParameterList)) {
+          return false;
+        }
+        int index1 = ((PsiParameterList)parent1).getParameterIndex((PsiParameter)resolved1);
+        int index2 = ((PsiParameterList)parent2).getParameterIndex((PsiParameter)resolved2);
+
+        return index1 == index2;
       }
     }
 

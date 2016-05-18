@@ -230,7 +230,7 @@ public class ReplaceAssignmentWithOperatorAssignmentInspection extends BaseInspe
           return;
         }
       }
-      if (!EquivalenceChecker.expressionsAreEquivalent(lhs, operands[0])) {
+      if (!EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(lhs, operands[0])) {
         return;
       }
       registerError(assignment, lhs, polyadicExpression);

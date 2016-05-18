@@ -144,11 +144,11 @@ public class BooleanExpressionMayBeConditionalInspection extends BaseInspection 
           ParenthesesUtils.stripParentheses(rBinaryExpression.getROperand()) == null) {
         return;
       }
-      if (EquivalenceChecker.expressionsAreEquivalent(BoolUtils.getNegated(expression1), expression2) &&
+      if (EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(BoolUtils.getNegated(expression1), expression2) &&
           !SideEffectChecker.mayHaveSideEffects(expression2)) {
         registerError(expression);
       }
-      else if (EquivalenceChecker.expressionsAreEquivalent(expression1, BoolUtils.getNegated(expression2)) &&
+      else if (EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(expression1, BoolUtils.getNegated(expression2)) &&
                !SideEffectChecker.mayHaveSideEffects(expression1)) {
         registerError(expression);
       }
