@@ -64,7 +64,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   private boolean myUpdateFinishedQueued;
   private final DumbModeListener myPublisher;
   private long myModificationCount;
-  private final Queue<DumbModeTask> myUpdatesQueue = new Queue<DumbModeTask>(5);
+  private final Queue<DumbModeTask> myUpdatesQueue = new Queue<>(5);
 
   /**
    * Per-task progress indicators. Modified from EDT only.
@@ -72,16 +72,16 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
    */
   private final Map<DumbModeTask, ProgressIndicatorEx> myProgresses = ContainerUtil.newConcurrentMap();
   
-  private final Queue<Runnable> myRunWhenSmartQueue = new Queue<Runnable>(5);
+  private final Queue<Runnable> myRunWhenSmartQueue = new Queue<>(5);
   private final Project myProject;
-  private final ThreadLocal<Integer> myAlternativeResolution = new ThreadLocal<Integer>();
+  private final ThreadLocal<Integer> myAlternativeResolution = new ThreadLocal<>();
 
   public DumbServiceImpl(Project project) {
     myProject = project;
     myPublisher = project.getMessageBus().syncPublisher(DUMB_MODE);
   }
 
-  @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass"})
+  @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static DumbServiceImpl getInstance(@NotNull Project project) {
     return (DumbServiceImpl)DumbService.getInstance(project);
   }
@@ -100,7 +100,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     ApplicationManager.getApplication().assertIsDispatchThread();
     myUpdatesQueue.clear();
     myRunWhenSmartQueue.clear();
-    for (DumbModeTask task : new ArrayList<DumbModeTask>(myProgresses.keySet())) {
+    for (DumbModeTask task : new ArrayList<>(myProgresses.keySet())) {
       cancelTask(task);
       Disposer.dispose(task);
     }
@@ -193,12 +193,9 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       final DumbModePermission permission = schedulerPermission != null ? schedulerPermission : getEdtPermission();
 
       myProgresses.put(task, new ProgressIndicatorBase());
-      Disposer.register(task, new Disposable() {
-        @Override
-        public void dispose() {
-          application.assertIsDispatchThread();
-          myProgresses.remove(task);
-        }
+      Disposer.register(task, () -> {
+        application.assertIsDispatchThread();
+        myProgresses.remove(task);
       });
       myUpdatesQueue.addLast(task);
       // ok to test and set the flag like this, because the change is always done from dispatch thread
@@ -304,7 +301,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     // some listeners might start yet another dumb mode
     // allow that whatever the current modality is, because it won't harm anyone
     allowStartingDumbModeInside(modal ? DumbModePermission.MAY_START_MODAL : DumbModePermission.MAY_START_BACKGROUND,
-                                () -> notifyUpdateFinished());
+                                this::notifyUpdateFinished);
   }
 
   private void notifyUpdateFinished() {
@@ -360,7 +357,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
-    runWhenSmart(() -> semaphore.up());
+    runWhenSmart(semaphore::up);
     while (true) {
       if (semaphore.waitFor(50)) {
         return;
@@ -448,6 +445,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
         }
       }
 
+      @Override
       public boolean isConditionalModal() {
         return modal;
       }
