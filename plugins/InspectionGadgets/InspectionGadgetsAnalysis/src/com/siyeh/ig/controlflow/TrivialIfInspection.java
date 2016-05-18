@@ -22,7 +22,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -95,7 +94,7 @@ public class TrivialIfInspection extends BaseInspection implements CleanupLocalI
       replaceSimplifiableAssignment(statement);
     }
     else if (isSimplifiableReturn(statement)) {
-      repaceSimplifiableReturn(statement);
+      replaceSimplifiableReturn(statement);
     }
     else if (isSimplifiableImplicitReturn(statement)) {
       replaceSimplifiableImplicitReturn(statement);
@@ -131,7 +130,7 @@ public class TrivialIfInspection extends BaseInspection implements CleanupLocalI
     nextStatement.delete();
   }
 
-  private static void repaceSimplifiableReturn(PsiIfStatement statement)
+  private static void replaceSimplifiableReturn(PsiIfStatement statement)
     throws IncorrectOperationException {
     final PsiExpression condition = statement.getCondition();
     if (condition == null) {
