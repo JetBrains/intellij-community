@@ -52,7 +52,6 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 
@@ -148,8 +147,7 @@ public class NewProjectUtil {
       final boolean need2OpenProjectStructure = projectBuilder == null || projectBuilder.isOpenProjectSettingsAfter();
       StartupManager.getInstance(newProject).registerPostStartupActivity(() -> {
         // ensure the dialog is shown after all startup activities are done
-        //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(() -> {
+        ApplicationManager.getApplication().invokeLater(() -> {
           if (newProject.isDisposed() || ApplicationManager.getApplication().isUnitTestMode()) return;
           if (need2OpenProjectStructure) {
             ModulesConfigurator.showDialog(newProject, null, null);
@@ -161,7 +159,7 @@ public class NewProjectUtil {
               toolWindow.activate(null);
             }
           }, ModalityState.NON_MODAL);
-        });
+        }, ModalityState.NON_MODAL);
       });
 
       if (newProject != projectToClose) {
