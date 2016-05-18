@@ -21,75 +21,47 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.config.GitConfigUtil;
 import git4idea.i18n.GitBundle;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 
 /**
- * The dialog used for the unstructured information from git rebase.
+ * The dialog used for the unstructured information from git rebase,
+ * usually the commit message after choosing reword or squash interactive rebase actions.
  */
 public class GitRebaseUnstructuredEditor extends DialogWrapper {
-  /**
-   * The text with information from the GIT
-   */
   private JTextArea myTextArea;
-  /**
-   * The root panel of the dialog
-   */
   private JPanel myPanel;
-  /**
-   * The label that contains the git root path
-   */
   private JLabel myGitRootLabel;
-  /**
-   * The file encoding
-   */
-  private final String encoding;
-  /**
-   * The file being edited
-   */
+  private final String myEncoding;
   private final File myFile;
 
-  /**
-   * The constructor
-   *
-   * @param project the context project
-   * @param root    the Git root
-   * @param path    the path to edit
-   * @throws IOException if there is an IO problem
-   */
-  protected GitRebaseUnstructuredEditor(Project project, VirtualFile root, String path) throws IOException {
+  protected GitRebaseUnstructuredEditor(@NotNull Project project, @NotNull VirtualFile root, @NotNull String rebaseFilePath)
+    throws IOException {
     super(project, true);
     setTitle(GitBundle.message("rebase.unstructured.editor.title"));
     setOKButtonText(GitBundle.message("rebase.unstructured.editor.button"));
     myGitRootLabel.setText(root.getPresentableUrl());
-    encoding = GitConfigUtil.getCommitEncoding(project, root);
-    myFile = new File(path);
-    myTextArea.setText(FileUtil.loadFile(myFile, encoding));
+    myEncoding = GitConfigUtil.getCommitEncoding(project, root);
+    myFile = new File(rebaseFilePath);
+    myTextArea.setText(FileUtil.loadFile(myFile, myEncoding));
     myTextArea.setCaretPosition(0);
     init();
   }
 
   /**
    * Save content to the file
-   *
-   * @throws IOException if there is an IO problem
    */
   public void save() throws IOException {
-    FileUtil.writeToFile(myFile, myTextArea.getText().getBytes(encoding));
+    FileUtil.writeToFile(myFile, myTextArea.getText().getBytes(myEncoding));
   }
 
-  /**
-   * {@inheritDoc}
-   */
   protected JComponent createCenterPanel() {
     return myPanel;
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   protected String getDimensionServiceKey() {
     return getClass().getName();
