@@ -108,18 +108,16 @@ public class ChangesDiffCalculator implements Disposable {
       return offset > range.getStartOffset() ? new TextRange(offset, offset) : range;
     }
 
-    int startOffset = range.getStartOffset() + 1;
-    int endOffset = range.getEndOffset() + 1;
+    int startOffset = range.getStartOffset();
+    int endOffset = range.getEndOffset();
     boolean useSameRange = true;
-    while (endOffset <= text.length()
-           && StringUtil.equals(text.subSequence(range.getStartOffset(), range.getEndOffset()), text.subSequence(startOffset, endOffset)))
-    {
+    while (endOffset < text.length() &&
+           StringUtil.equals(text.subSequence(range.getStartOffset(), range.getEndOffset()),
+                             text.subSequence(startOffset + 1, endOffset + 1))) {
       useSameRange = false;
       startOffset++;
       endOffset++;
     }
-    startOffset--;
-    endOffset--;
 
     return useSameRange ? range : new TextRange(startOffset, endOffset);
   }
