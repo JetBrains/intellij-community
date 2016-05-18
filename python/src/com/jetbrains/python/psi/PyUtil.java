@@ -38,6 +38,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -1107,6 +1108,20 @@ public class PyUtil {
   public static List<String> strListValue(PyExpression value) {
     while (value instanceof PyParenthesizedExpression) {
       value = ((PyParenthesizedExpression)value).getContainedExpression();
+    }
+    // Don't allow the ``getReference()`` call before the actual full analysis
+    // engine is up and running, otherwise it will throw IndexNotReadyException
+    final boolean isDumb = null == value || DumbService.isDumb(value.getProject());
+    if ( !isDumb && value instanceof PyReferenceExpression) {
+      PyReferenceExpression refExpr = (PyReferenceExpression)value;
+      PsiElement deref = refExpr.getReference().resolve();
+      if (deref instanceof PyTargetExpression) {
+        PyTargetExpression te = (PyTargetExpression)deref;
+        PyExpression assignedValue = te.findAssignedValue();
+        if (assignedValue instanceof PySequenceExpression) {
+          value = assignedValue;
+        }
+      }
     }
     if (value instanceof PySequenceExpression) {
       final PyExpression[] elements = ((PySequenceExpression)value).getElements();
