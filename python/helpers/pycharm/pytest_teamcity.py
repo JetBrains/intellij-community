@@ -43,6 +43,9 @@ if PYVERSION > [1, 4, 0]:
   current_file = None
   current_file_suite = None
 
+  def pytest_collection_finish(session):
+    messages.testCount(len(session.items))
+
   def pytest_runtest_logstart(nodeid, location):
     path = "file://" + os.path.realpath(os.path.join(CURRENT_DIR_NAME, location[0]))
     if location[1]:
