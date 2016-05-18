@@ -52,28 +52,21 @@ public class BalloonLayoutImpl implements BalloonLayout {
   private Integer myWidth;
 
   private final Alarm myRelayoutAlarm = new Alarm();
-  private final Runnable myRelayoutRunnable = new Runnable() {
-    public void run() {
-      relayout();
-      fireRelayout();
-    }
+  private final Runnable myRelayoutRunnable = () -> {
+    relayout();
+    fireRelayout();
   };
   private final JRootPane myParent;
 
-  private final Runnable myCloseAll = new Runnable() {
-    @Override
-    public void run() {
-      for (Balloon balloon : new ArrayList<Balloon>(myBalloons)) {
-        remove(balloon, true);
-      }
+  private final Runnable myCloseAll = () -> {
+    for (Balloon balloon : new ArrayList<Balloon>(myBalloons)) {
+      remove(balloon, true);
     }
   };
-  private final Runnable myLayoutRunnable = new Runnable() {
-    public void run() {
-      calculateSize();
-      relayout();
-      fireRelayout();
-    }
+  private final Runnable myLayoutRunnable = () -> {
+    calculateSize();
+    relayout();
+    fireRelayout();
   };
 
   private LafManagerListener myLafListener;

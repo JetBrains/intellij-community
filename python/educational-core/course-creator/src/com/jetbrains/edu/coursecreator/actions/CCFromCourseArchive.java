@@ -92,11 +92,8 @@ public class CCFromCourseArchive extends DumbAwareAction {
           task.setLesson(lesson);
           if (taskDir == null) continue;
           for (final Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
-            ApplicationManager.getApplication().runWriteAction(new Runnable() {
-              @Override
-              public void run() {
-                createAnswerFile(project, taskDir, entry);
-              }
+            ApplicationManager.getApplication().runWriteAction(() -> {
+              createAnswerFile(project, taskDir, entry);
             });
           }
           taskIndex += 1;
@@ -142,17 +139,9 @@ public class CCFromCourseArchive extends DumbAwareAction {
     final Document document = FileDocumentManager.getInstance().getDocument(file);
     if (document == null) return;
 
-    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            document.replaceString(0, document.getTextLength(), originDocument.getCharsSequence());
-          }
-        });
-      }
-    }, "Create answer document", "Create answer document");
+    CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> {
+      document.replaceString(0, document.getTextLength(), originDocument.getCharsSequence());
+    }), "Create answer document", "Create answer document");
     EduDocumentListener listener = new EduDocumentListener(taskFile, false);
     document.addDocumentListener(listener);
     taskFile.sortAnswerPlaceholders();
@@ -160,17 +149,9 @@ public class CCFromCourseArchive extends DumbAwareAction {
       final AnswerPlaceholder answerPlaceholder = taskFile.getAnswerPlaceholders().get(i);
       replaceAnswerPlaceholder(project, document, answerPlaceholder);
     }
-    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            FileDocumentManager.getInstance().saveDocument(document);
-          }
-        });
-      }
-    }, "x", "qwe");
+    CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> {
+      FileDocumentManager.getInstance().saveDocument(document);
+    }), "x", "qwe");
     document.removeDocumentListener(listener);
   }
 
@@ -178,34 +159,26 @@ public class CCFromCourseArchive extends DumbAwareAction {
                                                @NotNull final Document document,
                                                @NotNull final AnswerPlaceholder answerPlaceholder) {
     final int offset = answerPlaceholder.getRealStartOffset(document);
-    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            final String text = document.getText(TextRange.create(offset, offset + answerPlaceholder.getRealLength()));
-            answerPlaceholder.setTaskText(text);
-            answerPlaceholder.init();
-            final VirtualFile hints = project.getBaseDir().findChild(EduNames.HINTS);
-            if (hints != null) {
-              final String hintFile = answerPlaceholder.getHint();
-              final VirtualFile virtualFile = hints.findChild(hintFile);
-              if (virtualFile != null) {
-                final Document hintDocument = FileDocumentManager.getInstance().getDocument(virtualFile);
-                if (hintDocument != null) {
-                  final String hintText = hintDocument.getText();
-                  answerPlaceholder.setHint(hintText);
-                }
-              }
-            }
-
-            document.replaceString(offset, offset + answerPlaceholder.getRealLength(), answerPlaceholder.getPossibleAnswer());
-            FileDocumentManager.getInstance().saveDocument(document);
+    CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> {
+      final String text = document.getText(TextRange.create(offset, offset + answerPlaceholder.getRealLength()));
+      answerPlaceholder.setTaskText(text);
+      answerPlaceholder.init();
+      final VirtualFile hints = project.getBaseDir().findChild(EduNames.HINTS);
+      if (hints != null) {
+        final String hintFile = answerPlaceholder.getHint();
+        final VirtualFile virtualFile = hints.findChild(hintFile);
+        if (virtualFile != null) {
+          final Document hintDocument = FileDocumentManager.getInstance().getDocument(virtualFile);
+          if (hintDocument != null) {
+            final String hintText = hintDocument.getText();
+            answerPlaceholder.setHint(hintText);
           }
-        });
+        }
       }
-    }, "x", "qwe");
+
+      document.replaceString(offset, offset + answerPlaceholder.getRealLength(), answerPlaceholder.getPossibleAnswer());
+      FileDocumentManager.getInstance().saveDocument(document);
+    }), "x", "qwe");
   }
 
   private static void synchronize(@NotNull final Project project) {

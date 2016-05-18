@@ -54,50 +54,38 @@ public class BindToElementTest extends CodeInsightTestCase {
   }
 
   public void testSingleClassImport() throws Exception {
-    doTest(new Runnable() {
-      @Override
-      public void run() {
-        PsiElement element = myFile.findElementAt(myEditor.getCaretModel().getOffset());
-        final PsiJavaCodeReferenceElement referenceElement = PsiTreeUtil.getParentOfType(element, PsiJavaCodeReferenceElement.class);
-        final PsiClass aClassA = JavaPsiFacade.getInstance(myProject).findClass("p2.A", GlobalSearchScope.moduleScope(myModule));
-        assertNotNull(aClassA);
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            try {
-              referenceElement.bindToElement(aClassA);
-            }
-            catch (IncorrectOperationException e) {
-              LOG.error(e);
-            }
-          }
-        });
-      }
+    doTest(() -> {
+      PsiElement element = myFile.findElementAt(myEditor.getCaretModel().getOffset());
+      final PsiJavaCodeReferenceElement referenceElement = PsiTreeUtil.getParentOfType(element, PsiJavaCodeReferenceElement.class);
+      final PsiClass aClassA = JavaPsiFacade.getInstance(myProject).findClass("p2.A", GlobalSearchScope.moduleScope(myModule));
+      assertNotNull(aClassA);
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        try {
+          referenceElement.bindToElement(aClassA);
+        }
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
+        }
+      });
     });
   }
 
   public void testReplacingType() throws Exception {
-    doTest(new Runnable() {
-      @Override
-      public void run() {
-        final PsiElement elementAt = myFile.findElementAt(myEditor.getCaretModel().getOffset());
-        final PsiTypeElement typeElement = PsiTreeUtil.getParentOfType(elementAt, PsiTypeElement.class);
-        final PsiClass aClassA = JavaPsiFacade.getInstance(myProject).findClass("p2.A", GlobalSearchScope.moduleScope(myModule));
-        assertNotNull(aClassA);
-        final PsiElementFactory factory = myJavaFacade.getElementFactory();
-        final PsiClassType type = factory.createType(aClassA);
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            try {
-              typeElement.replace(factory.createTypeElement(type));
-            }
-            catch (IncorrectOperationException e) {
-              LOG.error(e);
-            }
-          }
-        });
-      }
+    doTest(() -> {
+      final PsiElement elementAt = myFile.findElementAt(myEditor.getCaretModel().getOffset());
+      final PsiTypeElement typeElement = PsiTreeUtil.getParentOfType(elementAt, PsiTypeElement.class);
+      final PsiClass aClassA = JavaPsiFacade.getInstance(myProject).findClass("p2.A", GlobalSearchScope.moduleScope(myModule));
+      assertNotNull(aClassA);
+      final PsiElementFactory factory = myJavaFacade.getElementFactory();
+      final PsiClassType type = factory.createType(aClassA);
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        try {
+          typeElement.replace(factory.createTypeElement(type));
+        }
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
+        }
+      });
     });
   }
 

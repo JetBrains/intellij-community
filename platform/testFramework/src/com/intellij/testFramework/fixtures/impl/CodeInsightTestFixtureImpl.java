@@ -128,12 +128,7 @@ import java.util.*;
  */
 @SuppressWarnings({"TestMethodWithIncorrectSignature", "JUnitTestCaseWithNoTests", "JUnitTestClassNamingConvention", "TestOnlyProblems"})
 public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsightTestFixture {
-  private static final Function<IntentionAction, String> INTENTION_NAME_FUN = new Function<IntentionAction, String>() {
-    @Override
-    public String fun(final IntentionAction intentionAction) {
-      return "\"" + intentionAction.getText() + "\"";
-    }
-  };
+  private static final Function<IntentionAction, String> INTENTION_NAME_FUN = intentionAction -> "\"" + intentionAction.getText() + "\"";
 
   private static final String START_FOLD = "<fold\\stext=\'[^\']*\'(\\sexpand=\'[^\']*\')*>";
   private static final String END_FOLD = "</fold>";
@@ -242,12 +237,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   private static void removeDuplicatedRangesForInjected(@NotNull List<HighlightInfo> infos) {
-    Collections.sort(infos, new Comparator<HighlightInfo>() {
-      @Override
-      public int compare(@NotNull HighlightInfo o1, @NotNull HighlightInfo o2) {
-        final int i = o2.startOffset - o1.startOffset;
-        return i != 0 ? i : o1.getSeverity().myVal - o2.getSeverity().myVal;
-      }
+    Collections.sort(infos, (o1, o2) -> {
+      final int i = o2.startOffset - o1.startOffset;
+      return i != 0 ? i : o1.getSeverity().myVal - o2.getSeverity().myVal;
     });
     HighlightInfo prevInfo = null;
     for (Iterator<HighlightInfo> it = infos.iterator(); it.hasNext();) {
@@ -538,17 +530,14 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
                                             final boolean checkWeakWarnings,
                                             @NotNull VirtualFile[] files) {
     final List<Trinity<PsiFile, Editor, ExpectedHighlightingData>> datas =
-      ContainerUtil.map2List(files, new Function<VirtualFile, Trinity<PsiFile, Editor, ExpectedHighlightingData>>() {
-        @Override
-        public Trinity<PsiFile, Editor, ExpectedHighlightingData> fun(final VirtualFile file) {
-          final PsiFile psiFile = myPsiManager.findFile(file);
-          Assert.assertNotNull(psiFile);
-          final Document document = PsiDocumentManager.getInstance(getProject()).getDocument(psiFile);
-          Assert.assertNotNull(document);
-          ExpectedHighlightingData data = new ExpectedHighlightingData(document, checkWarnings, checkWeakWarnings, checkInfos, psiFile);
-          data.init();
-          return Trinity.create(psiFile, createEditor(file), data);
-        }
+      ContainerUtil.map2List(files, file -> {
+        final PsiFile psiFile = myPsiManager.findFile(file);
+        Assert.assertNotNull(psiFile);
+        final Document document = PsiDocumentManager.getInstance(getProject()).getDocument(psiFile);
+        Assert.assertNotNull(document);
+        ExpectedHighlightingData data = new ExpectedHighlightingData(document, checkWarnings, checkWeakWarnings, checkInfos, psiFile);
+        data.init();
+        return Trinity.create(psiFile, createEditor(file), data);
       });
     long elapsed = 0;
     for (Trinity<PsiFile, Editor, ExpectedHighlightingData> trinity : datas) {
@@ -723,11 +712,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     List<IntentionAction> intentions = getAvailableIntentions(filePaths);
     IntentionAction action = CodeInsightTestUtil.findIntentionByText(intentions, intentionName);
     if (action == null) {
-      System.out.println(intentionName + " not found among " + StringUtil.join(intentions, new Function<IntentionAction, String>() {
-        @Override
-        public String fun(IntentionAction action) {
-          return action.getText();
-        }
+      System.out.println(intentionName + " not found among " + StringUtil.join(intentions, action1 -> {
+        return action1.getText();
       }, ","));
     }
     return action;
@@ -800,22 +786,15 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     final LookupElement[] elements = getLookupElements();
     if (elements == null) return null;
 
-    return ContainerUtil.map(elements, new Function<LookupElement, String>() {
-      @Override
-      public String fun(final LookupElement lookupItem) {
-        return lookupItem.getLookupString();
-      }
+    return ContainerUtil.map(elements, lookupItem -> {
+      return lookupItem.getLookupString();
     });
   }
 
   @Override
   public void finishLookup(final char completionChar) {
-    CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
-      @Override
-      public void run() {
-        ((LookupImpl)LookupManager.getActiveLookup(getEditor())).finishLookup(completionChar);
-      }
-    }, null, null);
+    CommandProcessor.getInstance().executeCommand(getProject(),
+                                                  () -> ((LookupImpl)LookupManager.getActiveLookup(getEditor())).finishLookup(completionChar), null, null);
   }
 
   @Override
@@ -940,13 +919,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
           }
         }
 
-        CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
-          @Override
-          public void run() {
-            CommandProcessor.getInstance().setCurrentCommandGroupId(myEditor.getDocument());
-            ActionManagerEx.getInstanceEx().fireBeforeEditorTyping(c, getEditorDataContext());
-            actionManager.getTypedAction().actionPerformed(getEditor(), c, getEditorDataContext());
-          }
+        CommandProcessor.getInstance().executeCommand(getProject(), () -> {
+          CommandProcessor.getInstance().setCurrentCommandGroupId(myEditor.getDocument());
+          ActionManagerEx.getInstanceEx().fireBeforeEditorTyping(c, getEditorDataContext());
+          actionManager.getTypedAction().actionPerformed(getEditor(), c, getEditorDataContext());
         }, null, DocCommandGroupId.noneGroupId(myEditor.getDocument()));
       }
     });

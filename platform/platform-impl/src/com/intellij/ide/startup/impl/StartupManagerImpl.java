@@ -112,42 +112,35 @@ public class StartupManagerImpl extends StartupManagerEx {
   }
 
   public void runStartupActivities() {
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      @SuppressWarnings("SynchronizeOnThis")
-      public void run() {
-        AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Running Startup Activities");
-        try {
-          runActivities(myPreStartupActivities);
+    ApplicationManager.getApplication().runReadAction(() -> {
+      AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Running Startup Activities");
+      try {
+        runActivities(myPreStartupActivities);
 
-          // to avoid atomicity issues if runWhenProjectIsInitialized() is run at the same time
-          synchronized (StartupManagerImpl.this) {
-            myPreStartupActivitiesPassed = true;
-            myStartupActivitiesRunning = true;
-          }
-
-          runActivities(myStartupActivities);
-
-          synchronized (StartupManagerImpl.this) {
-            myStartupActivitiesRunning = false;
-            myStartupActivitiesPassed = true;
-          }
+        // to avoid atomicity issues if runWhenProjectIsInitialized() is run at the same time
+        synchronized (StartupManagerImpl.this) {
+          myPreStartupActivitiesPassed = true;
+          myStartupActivitiesRunning = true;
         }
-        finally {
-          token.finish();
+
+        runActivities(myStartupActivities);
+
+        synchronized (StartupManagerImpl.this) {
+          myStartupActivitiesRunning = false;
+          myStartupActivitiesPassed = true;
         }
+      }
+      finally {
+        token.finish();
       }
     });
   }
 
   public void runPostStartupActivitiesFromExtensions() {
     for (final StartupActivity extension : Extensions.getExtensions(StartupActivity.POST_STARTUP_ACTIVITY)) {
-      final Runnable runnable = new Runnable() {
-        @Override
-        public void run() {
-          if (!myProject.isDisposed()) {
-            extension.runActivity(myProject);
-          }
+      final Runnable runnable = () -> {
+        if (!myProject.isDisposed()) {
+          extension.runActivity(myProject);
         }
       };
       if (extension instanceof DumbAware) {
@@ -161,12 +154,7 @@ public class StartupManagerImpl extends StartupManagerEx {
 
   // queue each activity in smart mode separately so that if one of them starts dumb mode, the next ones just wait for it to finish
   private void queueSmartModeActivity(final Runnable activity) {
-    DumbService.getInstance(myProject).runWhenSmart(new Runnable() {
-      @Override
-      public void run() {
-        runActivity(activity);
-      }
-    });
+    DumbService.getInstance(myProject).runWhenSmart(() -> runActivity(activity));
   }
 
   public void runPostStartupActivities() {
@@ -210,30 +198,27 @@ public class StartupManagerImpl extends StartupManagerEx {
   }
 
   public void scheduleInitialVfsRefresh() {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        if (myProject.isDisposed()) return;
+    UIUtil.invokeLaterIfNeeded(() -> {
+      if (myProject.isDisposed()) return;
 
-        markContentRootsForRefresh();
+      markContentRootsForRefresh();
 
-        Application app = ApplicationManager.getApplication();
-        if (!app.isHeadlessEnvironment()) {
-          final long sessionId = VirtualFileManager.getInstance().asyncRefresh(null);
-          final MessageBusConnection connection = app.getMessageBus().connect();
-          connection.subscribe(ProjectLifecycleListener.TOPIC, new ProjectLifecycleListener.Adapter() {
-            @Override
-            public void afterProjectClosed(@NotNull Project project) {
-              if (project != myProject) return;
+      Application app = ApplicationManager.getApplication();
+      if (!app.isHeadlessEnvironment()) {
+        final long sessionId = VirtualFileManager.getInstance().asyncRefresh(null);
+        final MessageBusConnection connection = app.getMessageBus().connect();
+        connection.subscribe(ProjectLifecycleListener.TOPIC, new ProjectLifecycleListener.Adapter() {
+          @Override
+          public void afterProjectClosed(@NotNull Project project) {
+            if (project != myProject) return;
 
-              RefreshQueue.getInstance().cancelSession(sessionId);
-              connection.disconnect();
-            }
-          });
-        }
-        else {
-          VirtualFileManager.getInstance().syncRefresh();
-        }
+            RefreshQueue.getInstance().cancelSession(sessionId);
+            connection.disconnect();
+          }
+        });
+      }
+      else {
+        VirtualFileManager.getInstance().syncRefresh();
       }
     });
   }
@@ -367,12 +352,9 @@ public class StartupManagerImpl extends StartupManagerEx {
       }
     }
 
-    Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        if (!myProject.isDisposed()) {
-          action.run();
-        }
+    Runnable runnable = () -> {
+      if (!myProject.isDisposed()) {
+        action.run();
       }
     };
     if (application.isDispatchThread() && ModalityState.current() == ModalityState.NON_MODAL) {

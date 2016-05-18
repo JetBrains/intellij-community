@@ -196,12 +196,7 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
       if (argTypes == null) return;
 
       String[] types = new String[argTypes.length];
-      ContainerUtil.map(argTypes, new Function<PsiType, Object>() {
-        @Override
-        public Object fun(PsiType type) {
-          return type.getCanonicalText();
-        }
-      }, types);
+      ContainerUtil.map(argTypes, (Function<PsiType, Object>)type -> type.getCanonicalText(), types);
 
       generator.setDelegate(this);
 

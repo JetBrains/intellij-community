@@ -111,14 +111,11 @@ public final class IdeKeyEventDispatcher implements Disposable {
   private final IdeEventQueue myQueue;
 
   private final Alarm mySecondStrokeTimeout = new Alarm();
-  private final Runnable mySecondStrokeTimeoutRunnable = new Runnable() {
-    @Override
-    public void run() {
-      if (myState == KeyState.STATE_WAIT_FOR_SECOND_KEYSTROKE) {
-        resetState();
-        final DataContext dataContext = myContext.getDataContext();
-        StatusBar.Info.set(null, dataContext == null ? null : CommonDataKeys.PROJECT.getData(dataContext));
-      }
+  private final Runnable mySecondStrokeTimeoutRunnable = () -> {
+    if (myState == KeyState.STATE_WAIT_FOR_SECOND_KEYSTROKE) {
+      resetState();
+      final DataContext dataContext = myContext.getDataContext();
+      StatusBar.Info.set(null, dataContext == null ? null : CommonDataKeys.PROJECT.getData(dataContext));
     }
   };
 
@@ -469,13 +466,10 @@ public final class IdeKeyEventDispatcher implements Disposable {
         mySecondKeystrokePopupTimeout.cancelAllRequests();
         if (secondKeyStrokes.size() > 1) {
           final DataContext oldContext = myContext.getDataContext();
-          mySecondKeystrokePopupTimeout.addRequest(new Runnable() {
-            @Override
-            public void run() {
-              if (myState == KeyState.STATE_WAIT_FOR_SECOND_KEYSTROKE) {
-                StatusBar.Info.set(null, CommonDataKeys.PROJECT.getData(oldContext));
-                new SecondaryKeystrokePopup(myFirstKeyStroke, secondKeyStrokes, oldContext).showInBestPositionFor(oldContext);
-              }
+          mySecondKeystrokePopupTimeout.addRequest(() -> {
+            if (myState == KeyState.STATE_WAIT_FOR_SECOND_KEYSTROKE) {
+              StatusBar.Info.set(null, CommonDataKeys.PROJECT.getData(oldContext));
+              new SecondaryKeystrokePopup(myFirstKeyStroke, secondKeyStrokes, oldContext).showInBestPositionFor(oldContext);
             }
           }, Registry.intValue("actionSystem.secondKeystrokePopupTimeout"));
         }
@@ -598,12 +592,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
       }
 
       if (Registry.is("actionSystem.fixLostTyping")) {
-        IdeEventQueue.getInstance().doWhenReady(new Runnable() {
-          @Override
-          public void run() {
-            IdeEventQueue.getInstance().getKeyEventDispatcher().resetState();
-          }
-        });
+        IdeEventQueue.getInstance().doWhenReady(() -> IdeEventQueue.getInstance().getKeyEventDispatcher().resetState());
       }
     }
   };
@@ -659,13 +648,10 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
   private static void showDumbModeWarningLaterIfNobodyConsumesEvent(final InputEvent e, final AnActionEvent... actionEvents) {
     if (ModalityState.current() == ModalityState.NON_MODAL) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            if (e.isConsumed()) return;
+        ApplicationManager.getApplication().invokeLater(() -> {
+          if (e.isConsumed()) return;
 
-            ActionUtil.showDumbModeWarning(actionEvents);
-          }
+          ActionUtil.showDumbModeWarning(actionEvents);
         });
       }
   }
@@ -840,34 +826,31 @@ public final class IdeKeyEventDispatcher implements Disposable {
     }
 
     private void registerActions(@NotNull final KeyStroke firstKeyStroke, @NotNull final List<Pair<AnAction, KeyStroke>> actions, final DataContext ctx) {
-      ContainerUtil.process(actions, new Processor<Pair<AnAction, KeyStroke>>() {
-        @Override
-        public boolean process(final Pair<AnAction, KeyStroke> pair) {
-          final String actionText = pair.getFirst().getTemplatePresentation().getText();
-          final AbstractAction a = new AbstractAction() {
-            @Override
-            public void actionPerformed(final ActionEvent e) {
-              cancel();
-              invokeAction(pair.getFirst(), ctx);
-            }
-          };
-
-          final KeyStroke keyStroke = pair.getSecond();
-          if (keyStroke != null) {
-            registerAction(actionText, keyStroke, a);
-
-            if (keyStroke.getModifiers() == 0) {
-              // do a little trick here, so if I will press Command+R and the second keystroke is just 'R',
-              // I want to be able to hold the Command while pressing 'R'
-
-              final KeyStroke additionalKeyStroke = KeyStroke.getKeyStroke(keyStroke.getKeyCode(), firstKeyStroke.getModifiers());
-              final String _existing = getActionForKeyStroke(additionalKeyStroke);
-              if (_existing == null) registerAction("__additional__" + actionText, additionalKeyStroke, a);
-            }
+      ContainerUtil.process(actions, pair -> {
+        final String actionText = pair.getFirst().getTemplatePresentation().getText();
+        final AbstractAction a = new AbstractAction() {
+          @Override
+          public void actionPerformed(final ActionEvent e) {
+            cancel();
+            invokeAction(pair.getFirst(), ctx);
           }
+        };
 
-          return true;
+        final KeyStroke keyStroke = pair.getSecond();
+        if (keyStroke != null) {
+          registerAction(actionText, keyStroke, a);
+
+          if (keyStroke.getModifiers() == 0) {
+            // do a little trick here, so if I will press Command+R and the second keystroke is just 'R',
+            // I want to be able to hold the Command while pressing 'R'
+
+            final KeyStroke additionalKeyStroke = KeyStroke.getKeyStroke(keyStroke.getKeyCode(), firstKeyStroke.getModifiers());
+            final String _existing = getActionForKeyStroke(additionalKeyStroke);
+            if (_existing == null) registerAction("__additional__" + actionText, additionalKeyStroke, a);
+          }
         }
+
+        return true;
       });
     }
 

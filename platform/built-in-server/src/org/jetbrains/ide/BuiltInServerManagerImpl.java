@@ -92,31 +92,28 @@ public class BuiltInServerManagerImpl extends BuiltInServerManager {
       return null;
     }
 
-    return ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          BuiltInServer mainServer = StartupUtil.getServer();
-          if (mainServer == null || mainServer.getEventLoopGroup() instanceof OioEventLoopGroup) {
-            server = BuiltInServer.start(1, getDefaultPort(), PORTS_COUNT, false, null);
-          }
-          else {
-            server = BuiltInServer.start(mainServer.getEventLoopGroup(), false, getDefaultPort(), PORTS_COUNT, true, null);
-          }
-          bindCustomPorts(server);
+    return ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      try {
+        BuiltInServer mainServer = StartupUtil.getServer();
+        if (mainServer == null || mainServer.getEventLoopGroup() instanceof OioEventLoopGroup) {
+          server = BuiltInServer.start(1, getDefaultPort(), PORTS_COUNT, false, null);
         }
-        catch (Throwable e) {
-          LOG.info(e);
-          NOTIFICATION_GROUP.getValue().createNotification("Cannot start internal HTTP server. Git integration, JavaScript debugger and LiveEdit may operate with errors. " +
-                                                           "Please check your firewall settings and restart " + ApplicationNamesInfo.getInstance().getFullProductName(),
-                                                           NotificationType.ERROR).notify(null);
-          return;
+        else {
+          server = BuiltInServer.start(mainServer.getEventLoopGroup(), false, getDefaultPort(), PORTS_COUNT, true, null);
         }
-
-        LOG.info("built-in server started, port " + server.getPort());
-
-        Disposer.register(ApplicationManager.getApplication(), server);
+        bindCustomPorts(server);
       }
+      catch (Throwable e) {
+        LOG.info(e);
+        NOTIFICATION_GROUP.getValue().createNotification("Cannot start internal HTTP server. Git integration, JavaScript debugger and LiveEdit may operate with errors. " +
+                                                         "Please check your firewall settings and restart " + ApplicationNamesInfo.getInstance().getFullProductName(),
+                                                         NotificationType.ERROR).notify(null);
+        return;
+      }
+
+      LOG.info("built-in server started, port " + server.getPort());
+
+      Disposer.register(ApplicationManager.getApplication(), server);
     });
   }
 

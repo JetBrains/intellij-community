@@ -58,43 +58,39 @@ class ReplaceUsageViewContext extends UsageViewContext {
 
   @Override
   protected void configureActions() {
-    final Runnable replaceRunnable = new Runnable() {
-      public void run() {
-        LocalHistoryAction labelAction = LocalHistory.getInstance().startAction(SSRBundle.message("structural.replace.title"));
+    final Runnable replaceRunnable = () -> {
+      LocalHistoryAction labelAction = LocalHistory.getInstance().startAction(SSRBundle.message("structural.replace.title"));
 
-        doReplace();
-        myUsageView.close();
+      doReplace();
+      myUsageView.close();
 
-        labelAction.finish();
-      }
+      labelAction.finish();
     };
 
     //noinspection HardCodedStringLiteral
     myUsageView.addPerformOperationAction(replaceRunnable, "Replace All", null, SSRBundle.message("do.replace.all.button"));
 
-    final Runnable replaceSelected = new Runnable() {
-      public void run() {
-        final Set<Usage> infos = myUsageView.getSelectedUsages();
-        if (infos == null || infos.isEmpty()) return;
+    final Runnable replaceSelected = () -> {
+      final Set<Usage> infos = myUsageView.getSelectedUsages();
+      if (infos == null || infos.isEmpty()) return;
 
-        LocalHistoryAction labelAction = LocalHistory.getInstance().startAction(SSRBundle.message("structural.replace.title"));
+      LocalHistoryAction labelAction = LocalHistory.getInstance().startAction(SSRBundle.message("structural.replace.title"));
 
-        for (final Usage info : infos) {
-          final UsageInfo2UsageAdapter usage = (UsageInfo2UsageAdapter)info;
+      for (final Usage info : infos) {
+        final UsageInfo2UsageAdapter usage = (UsageInfo2UsageAdapter)info;
 
-          if (isValid(usage)) {
-            replaceOne(usage, false);
-          }
+        if (isValid(usage)) {
+          replaceOne(usage, false);
         }
+      }
 
-        labelAction.finish();
+      labelAction.finish();
 
-        if (myUsageView.getUsagesCount() > 0) {
-          for (Usage usage : myUsageView.getSortedUsages()) {
-            if (!isExcluded(usage)) {
-              myUsageView.selectUsages(new Usage[]{usage});
-              return;
-            }
+      if (myUsageView.getUsagesCount() > 0) {
+        for (Usage usage : myUsageView.getSortedUsages()) {
+          if (!isExcluded(usage)) {
+            myUsageView.selectUsages(new Usage[]{usage});
+            return;
           }
         }
       }
@@ -102,16 +98,14 @@ class ReplaceUsageViewContext extends UsageViewContext {
 
     myUsageView.addButtonToLowerPane(replaceSelected, SSRBundle.message("replace.selected.button"));
 
-    final Runnable previewReplacement = new Runnable() {
-      public void run() {
-        Set<Usage> selection = myUsageView.getSelectedUsages();
+    final Runnable previewReplacement = () -> {
+      Set<Usage> selection = myUsageView.getSelectedUsages();
 
-        if (selection != null && !selection.isEmpty()) {
-          UsageInfo2UsageAdapter usage = (UsageInfo2UsageAdapter)selection.iterator().next();
+      if (selection != null && !selection.isEmpty()) {
+        UsageInfo2UsageAdapter usage = (UsageInfo2UsageAdapter)selection.iterator().next();
 
-          if (isValid(usage)) {
-            replaceOne(usage, true);
-          }
+        if (isValid(usage)) {
+          replaceOne(usage, true);
         }
       }
     };

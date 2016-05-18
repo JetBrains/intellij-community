@@ -129,12 +129,7 @@ public abstract class FindUsagesHandler {
 
     if (searchText) {
       if (options.fastTrack != null) {
-        options.fastTrack.searchCustom(new Processor<Processor<PsiReference>>() {
-          @Override
-          public boolean process(Processor<PsiReference> consumer) {
-            return processUsagesInText(element, processor, (GlobalSearchScope)scope);
-          }
-        });
+        options.fastTrack.searchCustom(consumer -> processUsagesInText(element, processor, (GlobalSearchScope)scope));
       }
       else {
         return processUsagesInText(element, processor, (GlobalSearchScope)scope);

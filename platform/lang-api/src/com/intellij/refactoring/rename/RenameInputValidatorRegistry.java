@@ -60,17 +60,14 @@ public class RenameInputValidatorRegistry {
       }
     }
 
-    return acceptedValidators.isEmpty() ? null : new Function<String, String>() {
-      @Override
-      public String fun(String newName) {
-        for (RenameInputValidatorEx validator : acceptedValidators.keySet()) {
-          final String message = validator.getErrorMessage(newName, element.getProject());
-          if (message != null) {
-            return message;
-          }
+    return acceptedValidators.isEmpty() ? null : (Function<String, String>)newName -> {
+      for (RenameInputValidatorEx validator : acceptedValidators.keySet()) {
+        final String message = validator.getErrorMessage(newName, element.getProject());
+        if (message != null) {
+          return message;
         }
-        return null;
       }
+      return null;
     };
   }
 }

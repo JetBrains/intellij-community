@@ -27,12 +27,7 @@ import java.util.Arrays;
  * @author peter
  */
 public class JavaNameStrategy extends DomNameStrategy {
-  public static final Function<String,String> DECAPITALIZE_FUNCTION = new Function<String, String>() {
-    @Override
-    public String fun(final String s) {
-      return StringUtil.decapitalize(s);
-    }
-  };
+  public static final Function<String,String> DECAPITALIZE_FUNCTION = s -> StringUtil.decapitalize(s);
 
   @Override
   public final String convertName(String propertyName) {

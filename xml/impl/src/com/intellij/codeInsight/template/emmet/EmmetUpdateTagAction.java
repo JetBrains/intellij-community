@@ -98,37 +98,34 @@ public class EmmetUpdateTagAction extends BaseCodeInsightAction implements DumbA
       }
       final Map<String, String> attributes = ContainerUtil.newLinkedHashMap();
       final Ref<String> newTagName = Ref.create();
-      processTags(file.getProject(), templateText, new PairProcessor<XmlTag, Boolean>() {
-        @Override
-        public boolean process(XmlTag tag, Boolean firstTag) {
-          if (firstTag && !abbreviation.isEmpty() && StringUtil.isJavaIdentifierPart(abbreviation.charAt(0))) {
-            newTagName.set(tag.getName());
-          }
-          
-          for (String clazz : StringUtil.tokenize(StringUtil.notNullize(tag.getAttributeValue(HtmlUtil.CLASS_ATTRIBUTE_NAME)), " \t")) {
-            if (StringUtil.startsWithChar(clazz, '+')) {
-              classNames.add(clazz.substring(1));
-            }
-            else if (StringUtil.startsWithChar(clazz, '-')) {
-              classNames.remove(clazz.substring(1));
-            }
-            else {
-              classNames.clear();
-              classNames.add(clazz);
-            }
-          }
-
-          if (!firstTag) {
-            classNames.add(tag.getName());
-          }
-
-          for (XmlAttribute xmlAttribute : tag.getAttributes()) {
-            if (!HtmlUtil.CLASS_ATTRIBUTE_NAME.equalsIgnoreCase(xmlAttribute.getName())) {
-              attributes.put(xmlAttribute.getName(), StringUtil.notNullize(xmlAttribute.getValue()));
-            }
-          }
-          return true;
+      processTags(file.getProject(), templateText, (tag1, firstTag) -> {
+        if (firstTag && !abbreviation.isEmpty() && StringUtil.isJavaIdentifierPart(abbreviation.charAt(0))) {
+          newTagName.set(tag1.getName());
         }
+
+        for (String clazz : StringUtil.tokenize(StringUtil.notNullize(tag1.getAttributeValue(HtmlUtil.CLASS_ATTRIBUTE_NAME)), " \t")) {
+          if (StringUtil.startsWithChar(clazz, '+')) {
+            classNames.add(clazz.substring(1));
+          }
+          else if (StringUtil.startsWithChar(clazz, '-')) {
+            classNames.remove(clazz.substring(1));
+          }
+          else {
+            classNames.clear();
+            classNames.add(clazz);
+          }
+        }
+
+        if (!firstTag) {
+          classNames.add(tag1.getName());
+        }
+
+        for (XmlAttribute xmlAttribute : tag1.getAttributes()) {
+          if (!HtmlUtil.CLASS_ATTRIBUTE_NAME.equalsIgnoreCase(xmlAttribute.getName())) {
+            attributes.put(xmlAttribute.getName(), StringUtil.notNullize(xmlAttribute.getValue()));
+          }
+        }
+        return true;
       });
 
       doUpdateTagAttributes(tag, file, newTagName.get(), classNames, attributes).execute();

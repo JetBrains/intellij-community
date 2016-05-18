@@ -68,11 +68,31 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfiguration<JavaRunConfigurationModule> & CommonJavaRunConfigurationParameters & SMRunnerConsolePropertiesProvider> extends JavaCommandLineState {
+public abstract class JavaTestFrameworkRunnableState<T extends
+  ModuleBasedConfiguration<JavaRunConfigurationModule>
+  & CommonJavaRunConfigurationParameters
+  & SMRunnerConsolePropertiesProvider> extends JavaCommandLineState implements RemoteConnectionCreator {
   private static final Logger LOG = Logger.getInstance("#" + JavaTestFrameworkRunnableState.class.getName());
   protected ServerSocket myServerSocket;
   protected File myTempFile;
   protected File myWorkingDirsFile = null;
+
+  private RemoteConnectionCreator remoteConnectionCreator;
+
+  public void setRemoteConnectionCreator(RemoteConnectionCreator remoteConnectionCreator) {
+    this.remoteConnectionCreator = remoteConnectionCreator;
+  }
+
+  @Nullable
+  @Override
+  public RemoteConnection createRemoteConnection(ExecutionEnvironment environment) {
+    return remoteConnectionCreator == null ? null : remoteConnectionCreator.createRemoteConnection(environment);
+  }
+
+  @Override
+  public boolean isPollConnection() {
+    return remoteConnectionCreator != null && remoteConnectionCreator.isPollConnection();
+  }
 
   public JavaTestFrameworkRunnableState(ExecutionEnvironment environment) {
     super(environment);
@@ -132,12 +152,10 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
 
       @Override
       public void processTerminated(ProcessEvent event) {
-        Runnable runnable = new Runnable() {
-          public void run() {
-            root.flush();
-            deleteTempFiles();
-            clear();
-          }
+        Runnable runnable = () -> {
+          root.flush();
+          deleteTempFiles();
+          clear();
         };
         UIUtil.invokeLaterIfNeeded(runnable);
         handler.removeProcessListener(this);

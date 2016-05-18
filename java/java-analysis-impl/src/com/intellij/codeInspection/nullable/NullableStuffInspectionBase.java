@@ -387,11 +387,8 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
     Annotated annotated = check(method, holder, method.getReturnType());
 
     List<PsiMethod> superMethods = ContainerUtil.map(
-      method.findSuperMethodSignaturesIncludingStatic(true), new Function<MethodSignatureBackedByPsiMethod, PsiMethod>() {
-        @Override
-        public PsiMethod fun(MethodSignatureBackedByPsiMethod signature) {
-          return signature.getMethod();
-        }
+      method.findSuperMethodSignaturesIncludingStatic(true), signature -> {
+        return signature.getMethod();
       });
 
     final NullableNotNullManager nullableManager = NullableNotNullManager.getInstance(holder.getProject());

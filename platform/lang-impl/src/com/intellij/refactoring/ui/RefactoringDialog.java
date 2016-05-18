@@ -178,12 +178,7 @@ public abstract class RefactoringDialog extends DialogWrapper {
   }
 
   protected void invokeRefactoring(BaseRefactoringProcessor processor) {
-    final Runnable prepareSuccessfulCallback = new Runnable() {
-      @Override
-      public void run() {
-        close(DialogWrapper.OK_EXIT_CODE);
-      }
-    };
+    final Runnable prepareSuccessfulCallback = () -> close(DialogWrapper.OK_EXIT_CODE);
     processor.setPrepareSuccessfulSwingThreadCallback(prepareSuccessfulCallback);
     processor.setPreviewUsages(isPreviewUsages());
     processor.run();

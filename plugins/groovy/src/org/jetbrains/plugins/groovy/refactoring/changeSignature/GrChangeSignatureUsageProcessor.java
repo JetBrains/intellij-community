@@ -719,18 +719,14 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     }
     else if (context instanceof GrTryCatchStatement) {
       final GrCatchClause[] catchClauses = ((GrTryCatchStatement)context).getCatchClauses();
-      List<PsiClassType> referencedTypes = ContainerUtil.map(catchClauses, new Function<GrCatchClause, PsiClassType>() {
-        @Override
-        @Nullable
-        public PsiClassType fun(GrCatchClause grCatchClause) {
-          final GrParameter grParameter = grCatchClause.getParameter();
-          final PsiType type = grParameter != null ? grParameter.getType() : null;
-          if (type instanceof PsiClassType) {
-            return (PsiClassType)type;
-          }
-          else {
-            return null;
-          }
+      List<PsiClassType> referencedTypes = ContainerUtil.map(catchClauses, grCatchClause -> {
+        final GrParameter grParameter = grCatchClause.getParameter();
+        final PsiType type = grParameter != null ? grParameter.getType() : null;
+        if (type instanceof PsiClassType) {
+          return (PsiClassType)type;
+        }
+        else {
+          return null;
         }
       });
 
@@ -762,13 +758,9 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(tryCatch.getProject());
 
     final GrCatchClause[] clauses = tryCatch.getCatchClauses();
-    List<String> restricted = ContainerUtil.map(clauses, new Function<GrCatchClause, String>() {
-      @Override
-      @Nullable
-      public String fun(GrCatchClause grCatchClause) {
-        final GrParameter grParameter = grCatchClause.getParameter();
-        return grParameter != null ? grParameter.getName() : null;
-      }
+    List<String> restricted = ContainerUtil.map(clauses, grCatchClause -> {
+      final GrParameter grParameter = grCatchClause.getParameter();
+      return grParameter != null ? grParameter.getName() : null;
     });
 
     restricted = ContainerUtil.skipNulls(restricted);
@@ -802,13 +794,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
   }
 
   private static PsiClassType[] getExceptions(ThrownExceptionInfo[] infos, final PsiElement context, final PsiManager manager) {
-    return ContainerUtil.map(infos, new Function<ThrownExceptionInfo, PsiClassType>() {
-      @Override
-      @Nullable
-      public PsiClassType fun(ThrownExceptionInfo thrownExceptionInfo) {
-        return (PsiClassType)thrownExceptionInfo.createType(context, manager);
-      }
-    }, new PsiClassType[infos.length]);
+    return ContainerUtil.map(infos, thrownExceptionInfo -> (PsiClassType)thrownExceptionInfo.createType(context, manager), new PsiClassType[infos.length]);
   }
 
   private static boolean isParameterOptional(JavaParameterInfo parameterInfo) {

@@ -201,18 +201,16 @@ public class IntroducePropertyDialog extends DialogWrapper {
     List<MavenDomProjectModel> projects = getProjects();
 
     ComboBoxUtil
-      .setModel(myMavenProjectsComboBox, new DefaultComboBoxModel(), projects, new Function<MavenDomProjectModel, Pair<String, ?>>() {
-        public Pair<String, ?> fun(MavenDomProjectModel model) {
-          String projectName = model.getName().getStringValue();
-          MavenProject mavenProject = MavenDomUtil.findProject(model);
-          if (mavenProject != null) {
-            projectName = mavenProject.getDisplayName();
-          }
-          if (StringUtil.isEmptyOrSpaces(projectName)) {
-            projectName = "pom.xml";
-          }
-          return Pair.create(projectName, model);
+      .setModel(myMavenProjectsComboBox, new DefaultComboBoxModel(), projects, model -> {
+        String projectName = model.getName().getStringValue();
+        MavenProject mavenProject = MavenDomUtil.findProject(model);
+        if (mavenProject != null) {
+          projectName = mavenProject.getDisplayName();
         }
+        if (StringUtil.isEmptyOrSpaces(projectName)) {
+          projectName = "pom.xml";
+        }
+        return Pair.create(projectName, model);
       });
 
     myMavenProjectsComboBox.setSelectedItem(myMavenDomProjectModel);

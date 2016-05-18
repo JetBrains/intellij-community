@@ -178,12 +178,8 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.quickFix");
     ((FeatureUsageTrackerImpl)FeatureUsageTracker.getInstance()).getFixesStats().registerInvocation();
 
-    final Pair<PsiFile, Editor> pair = hostEditor != null ? chooseBetweenHostAndInjected(hostFile, hostEditor, new PairProcessor<PsiFile, Editor>() {
-      @Override
-      public boolean process(PsiFile psiFile, Editor editor) {
-        return availableFor(psiFile, editor, action);
-      }
-    }) : Pair.<PsiFile, Editor>create(hostFile, null);
+    final Pair<PsiFile, Editor> pair = hostEditor != null ? chooseBetweenHostAndInjected(hostFile, hostEditor,
+                                                                                         (psiFile, editor) -> availableFor(psiFile, editor, action)) : Pair.<PsiFile, Editor>create(hostFile, null);
     if (pair == null) return false;
 
     CommandProcessor.getInstance().executeCommand(project, () -> {

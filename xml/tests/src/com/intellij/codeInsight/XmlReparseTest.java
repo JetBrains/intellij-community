@@ -171,11 +171,8 @@ public class XmlReparseTest extends AbstractReparseTestCase {
   private static void removeGarbage(Document document) {
     int i = document.getText().indexOf(marker);
     if (i==-1) return;
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        document.replaceString(i, i + marker.length(), "");
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      document.replaceString(i, i + marker.length(), "");
     });
 
     removeGarbage(document);

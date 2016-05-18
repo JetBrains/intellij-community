@@ -50,15 +50,11 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
 
     final CreateDirectoryOrPackageHandler validator = new CreateDirectoryOrPackageHandler(project, directory, isDirectory,
                                                                                    isDirectory ? "\\/" : ".");
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
-      public void run() {
-        Messages.showInputDialog(project, isDirectory
-                                          ? IdeBundle.message("prompt.enter.new.directory.name")
-                                          : IdeBundle.message("prompt.enter.new.package.name"),
-                                          isDirectory ? IdeBundle.message("title.new.directory") : IdeBundle.message("title.new.package"),
-                                          Messages.getQuestionIcon(), "", validator);
-      }
-    });
+    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, () -> Messages.showInputDialog(project, isDirectory
+                                      ? IdeBundle.message("prompt.enter.new.directory.name")
+                                      : IdeBundle.message("prompt.enter.new.package.name"),
+                                      isDirectory ? IdeBundle.message("title.new.directory") : IdeBundle.message("title.new.package"),
+                                                                                                                Messages.getQuestionIcon(), "", validator));
 
     final PsiElement result = validator.getCreatedElement();
     if (result != null) {

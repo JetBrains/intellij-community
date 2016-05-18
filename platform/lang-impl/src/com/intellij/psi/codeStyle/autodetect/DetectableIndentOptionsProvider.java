@@ -103,35 +103,22 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider i
 
     ActionLabelData okAction = new ActionLabelData(
       ApplicationBundle.message("code.style.indents.detector.accept"),
-      new Runnable() {
-        @Override
-        public void run() {
-          setAccepted(file);
-        }
-      }
+      () -> setAccepted(file)
     );
 
     ActionLabelData disableForSingleFile = new ActionLabelData(
       labels.revertToOldSettingsLabel,
-      new Runnable() {
-        @Override
-        public void run() {
-          disableForFile(file);
-          if (editor instanceof EditorEx) {
-            ((EditorEx)editor).reinitSettings();
-          }
+      () -> {
+        disableForFile(file);
+        if (editor instanceof EditorEx) {
+          ((EditorEx)editor).reinitSettings();
         }
       }
     );
 
     ActionLabelData showSettings = new ActionLabelData(
       ApplicationBundle.message("code.style.indents.detector.show.settings"),
-      new Runnable() {
-        @Override
-        public void run() {
-          ShowSettingsUtilImpl.showSettingsDialog(project, "preferences.sourceCode", "detect indent");
-        }
-      }
+      () -> ShowSettingsUtilImpl.showSettingsDialog(project, "preferences.sourceCode", "detect indent")
     );
 
     final List<ActionLabelData> actions = ContainerUtil.newArrayList(okAction, disableForSingleFile, showSettings);

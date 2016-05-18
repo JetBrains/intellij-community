@@ -87,11 +87,9 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   private static final Logger LOG = Logger.getInstance("#com.intellij.tasks.impl.TaskManagerImpl");
 
   private static final DecimalFormat LOCAL_TASK_ID_FORMAT = new DecimalFormat("LOCAL-00000");
-  public static final Comparator<Task> TASK_UPDATE_COMPARATOR = new Comparator<Task>() {
-    public int compare(@NotNull Task o1, @NotNull Task o2) {
-      int i = Comparing.compare(o2.getUpdated(), o1.getUpdated());
-      return i == 0 ? Comparing.compare(o2.getCreated(), o1.getCreated()) : i;
-    }
+  public static final Comparator<Task> TASK_UPDATE_COMPARATOR = (o1, o2) -> {
+    int i = Comparing.compare(o2.getUpdated(), o1.getUpdated());
+    return i == 0 ? Comparing.compare(o2.getCreated(), o1.getCreated()) : i;
   };
   private static final Convertor<Task, String> KEY_CONVERTOR = new Convertor<Task, String>() {
     @Override
@@ -113,12 +111,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
       LocalTask result = super.put(key, task);
       if (size() > myConfig.taskHistoryLength) {
         ArrayList<Map.Entry<String, LocalTask>> list = new ArrayList<Map.Entry<String,LocalTask>>(entrySet());
-        Collections.sort(list, new Comparator<Map.Entry<String, LocalTask>>() {
-          @Override
-          public int compare(@NotNull Map.Entry<String, LocalTask> o1, @NotNull Map.Entry<String, LocalTask> o2) {
-            return TASK_UPDATE_COMPARATOR.compare(o2.getValue(), o1.getValue());
-          }
-        });
+        Collections.sort(list, (o1, o2) -> TASK_UPDATE_COMPARATOR.compare(o2.getValue(), o1.getValue()));
         for (Map.Entry<String, LocalTask> oldest : list) {
           if (!oldest.getValue().isDefault()) {
             remove(oldest.getKey());
@@ -166,10 +159,8 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
       public void defaultListChanged(ChangeList oldDefaultList, ChangeList newDefaultList) {
         final LocalTask associatedTask = getAssociatedTask((LocalChangeList)newDefaultList);
         if (associatedTask != null && !getActiveTask().equals(associatedTask)) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            public void run() {
-              activateTask(associatedTask, true);
-            }
+          ApplicationManager.getApplication().invokeLater(() -> {
+            activateTask(associatedTask, true);
           }, myProject.getDisposed());
         }
       }
@@ -502,16 +493,13 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     task.setActive(true);
     addTask(task);
     if (task.isIssue()) {
-      StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new Runnable() {
-        public void run() {
-          ProgressManager.getInstance().run(new com.intellij.openapi.progress.Task.Backgroundable(myProject, "Updating " + task.getPresentableId()) {
+      StartupManager.getInstance(myProject).runWhenProjectIsInitialized(
+        () -> ProgressManager.getInstance().run(new com.intellij.openapi.progress.Task.Backgroundable(myProject, "Updating " + task.getPresentableId()) {
 
-            public void run(@NotNull ProgressIndicator indicator) {
-              updateIssue(task.getId());
-            }
-          });
-        }
-      });
+          public void run(@NotNull ProgressIndicator indicator) {
+            updateIssue(task.getId());
+          }
+        }));
     }
     LocalTask oldActiveTask = myActiveTask;
     boolean isChanged = !task.equals(oldActiveTask);
@@ -717,11 +705,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
         }
       });
       myCacheRefreshTimer.setInitialDelay(0);
-      StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
-        public void run() {
-          myCacheRefreshTimer.start();
-        }
-      });
+      StartupManager.getInstance(myProject).registerPostStartupActivity(() -> myCacheRefreshTimer.start());
     }
 
     // make sure that the default task is exist
@@ -787,11 +771,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
       doUpdate(onComplete);
     }
     else {
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-        public void run() {
-          doUpdate(onComplete);
-        }
-      });
+      ApplicationManager.getApplication().executeOnPooledThread(() -> doUpdate(onComplete));
     }
   }
 

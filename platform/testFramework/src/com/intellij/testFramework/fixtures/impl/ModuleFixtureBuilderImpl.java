@@ -111,12 +111,9 @@ public abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implemen
   Module buildModule() {
     final Module[] module = {null};
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        module[0] = createModule();
-        initModule(module[0]);
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      module[0] = createModule();
+      initModule(module[0]);
     });
 
     return module[0];

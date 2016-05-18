@@ -91,12 +91,7 @@ public class NewRunConfigurationPopup {
 
       private ListPopupStep getSupStep(final ConfigurationType type) {
         final ConfigurationFactory[] factories = type.getConfigurationFactories();
-        Arrays.sort(factories, new Comparator<ConfigurationFactory>() {
-          @Override
-          public int compare(final ConfigurationFactory factory1, final ConfigurationFactory factory2) {
-            return factory1.getName().compareToIgnoreCase(factory2.getName());
-          }
-        });
+        Arrays.sort(factories, (factory1, factory2) -> factory1.getName().compareToIgnoreCase(factory2.getName()));
         return new BaseListPopupStep<ConfigurationFactory>(
           ExecutionBundle.message("add.new.run.configuration.action.name", type.getDisplayName()), factories) {
 

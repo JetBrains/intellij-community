@@ -73,17 +73,14 @@ public class ExtractArtifactAction extends LayoutTreeActionBase {
     final Project project = myArtifactEditor.getContext().getProject();
     final ModifiableArtifactModel model = myArtifactEditor.getContext().getOrCreateModifiableArtifactModel();
     final ModifiableArtifact artifact = model.addArtifact(dialog.getArtifactName(), dialog.getArtifactType());
-    treeComponent.editLayout(new Runnable() {
-      @Override
-      public void run() {
-        for (PackagingElement<?> element : selectedElements) {
-          artifact.getRootElement().addOrFindChild(ArtifactUtil.copyWithChildren(element, project));
-        }
-        for (PackagingElement element : selectedElements) {
-          parent.removeChild(element);
-        }
-        parent.addOrFindChild(new ArtifactPackagingElement(project, ArtifactPointerManager.getInstance(project).createPointer(artifact, myArtifactEditor.getContext().getArtifactModel())));
+    treeComponent.editLayout(() -> {
+      for (PackagingElement<?> element : selectedElements) {
+        artifact.getRootElement().addOrFindChild(ArtifactUtil.copyWithChildren(element, project));
       }
+      for (PackagingElement element : selectedElements) {
+        parent.removeChild(element);
+      }
+      parent.addOrFindChild(new ArtifactPackagingElement(project, ArtifactPointerManager.getInstance(project).createPointer(artifact, myArtifactEditor.getContext().getArtifactModel())));
     });
     treeComponent.rebuildTree();
   }

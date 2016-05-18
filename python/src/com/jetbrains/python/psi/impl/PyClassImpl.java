@@ -367,11 +367,9 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
         final PyExpression[] superClassExpressions = getSuperClassExpressions();
         if (superClassExpressions.length > 0) {
           result.append("(");
-          result.append(join(Arrays.asList(superClassExpressions), new Function<PyExpression, String>() {
-            public String fun(PyExpression expr) {
-              String name = expr.getText();
-              return notNullize(name, PyNames.UNNAMED_ELEMENT);
-            }
+          result.append(join(Arrays.asList(superClassExpressions), expr -> {
+            String name = expr.getText();
+            return notNullize(name, PyNames.UNNAMED_ELEMENT);
           }, ", "));
           result.append(")");
         }
@@ -737,12 +735,9 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
 
   private Map<String, Property> initializePropertyCache() {
     final Map<String, Property> result = new HashMap<String, Property>();
-    processProperties(null, new Processor<Property>() {
-      @Override
-      public boolean process(Property property) {
-        result.put(property.getName(), property);
-        return false;
-      }
+    processProperties(null, property -> {
+      result.put(property.getName(), property);
+      return false;
     }, false);
     return result;
   }

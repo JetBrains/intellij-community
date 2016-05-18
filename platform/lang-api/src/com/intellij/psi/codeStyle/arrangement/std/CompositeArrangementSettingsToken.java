@@ -32,12 +32,7 @@ import java.util.List;
 public class CompositeArrangementSettingsToken {
 
   private static final Function<ArrangementSettingsToken, CompositeArrangementSettingsToken> WRAPPER =
-    new Function<ArrangementSettingsToken, CompositeArrangementSettingsToken>() {
-      @Override
-      public CompositeArrangementSettingsToken fun(ArrangementSettingsToken token) {
-        return new CompositeArrangementSettingsToken(token, deduceRole(token), Collections.<CompositeArrangementSettingsToken>emptyList());
-      }
-    };
+    token -> new CompositeArrangementSettingsToken(token, deduceRole(token), Collections.<CompositeArrangementSettingsToken>emptyList());
 
   @NotNull private final List<CompositeArrangementSettingsToken> myChildren = ContainerUtilRt.newArrayList();
 

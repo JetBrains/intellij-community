@@ -111,24 +111,21 @@ public class DefinitionReference extends PsiReferenceBase.Poly<XmlAttributeValue
     final Map<String, Set<Define>> map = DefinitionResolver.getAllVariants(scope);
     if (map == null || map.size() == 0) return ArrayUtil.EMPTY_OBJECT_ARRAY;
 
-    return ContainerUtil.mapNotNull(map.values(), new Function<Set<Define>, Object>() {
-      @Override
-      public Object fun(Set<Define> defines) {
-        final Define define = defines.iterator().next();
-        if (defines.size() == 0) {
-          return null;
-        } else {
-          final PsiElement element = define.getPsiElement();
-          if (element != null) {
-            final PsiPresentableMetaData data = (PsiPresentableMetaData)((PsiMetaOwner)element).getMetaData();
-            if (data != null) {
-              return LookupValueFactory.createLookupValue(data.getName(), data.getIcon());
-            } else {
-              return define.getName();
-            }
+    return ContainerUtil.mapNotNull(map.values(), defines -> {
+      final Define define = defines.iterator().next();
+      if (defines.size() == 0) {
+        return null;
+      } else {
+        final PsiElement element = define.getPsiElement();
+        if (element != null) {
+          final PsiPresentableMetaData data = (PsiPresentableMetaData)((PsiMetaOwner)element).getMetaData();
+          if (data != null) {
+            return LookupValueFactory.createLookupValue(data.getName(), data.getIcon());
           } else {
             return define.getName();
           }
+        } else {
+          return define.getName();
         }
       }
     }).toArray();

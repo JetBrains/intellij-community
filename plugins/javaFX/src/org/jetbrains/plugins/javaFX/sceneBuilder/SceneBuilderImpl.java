@@ -283,23 +283,17 @@ public class SceneBuilderImpl implements SceneBuilder {
   }
 
   private void startChangeListener() {
-    myListener = new ChangeListener<Number>() {
-      @Override
-      public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
-        if (!mySkipChanges) {
-          myEditorCallback.saveChanges(myEditorController.getFxmlText());
-          UsageTrigger.trigger("scene-builder.edit");
-        }
+    myListener = (observable, oldValue, newValue) -> {
+      if (!mySkipChanges) {
+        myEditorCallback.saveChanges(myEditorController.getFxmlText());
+        UsageTrigger.trigger("scene-builder.edit");
       }
     };
-    mySelectionListener = new ChangeListener<Number>() {
-      @Override
-      public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
-        if (!mySkipChanges) {
-          int[][] state = getSelectionState();
-          if (state != null) {
-            mySelectionState.put(myEditorController.getFxmlText(), state);
-          }
+    mySelectionListener = (observable, oldValue, newValue) -> {
+      if (!mySkipChanges) {
+        int[][] state = getSelectionState();
+        if (state != null) {
+          mySelectionState.put(myEditorController.getFxmlText(), state);
         }
       }
     };

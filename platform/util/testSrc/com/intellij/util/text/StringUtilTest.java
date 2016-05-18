@@ -130,12 +130,7 @@ public class StringUtilTest {
     assertEquals(1, StringUtil.naturalCompare("test10a", "test010"));
     final List<String> strings = new ArrayList<String>(Arrays.asList("Test99", "tes0", "test0", "testing", "test", "test99", "test011", "test1",
                                                              "test 3", "test2", "test10a", "test10", "1.2.10.5", "1.2.9.1"));
-    final Comparator<String> c = new Comparator<String>() {
-      @Override
-      public int compare(String o1, String o2) {
-        return StringUtil.naturalCompare(o1, o2);
-      }
-    };
+    final Comparator<String> c = (o1, o2) -> StringUtil.naturalCompare(o1, o2);
     Collections.sort(strings, c);
     assertEquals(Arrays.asList("1.2.9.1", "1.2.10.5", "tes0", "test", "test0", "test1", "test2", "test 3", "test10", "test10a",
                                "test011", "Test99", "test99", "testing"), strings);

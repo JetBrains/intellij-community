@@ -139,17 +139,14 @@ public class RemoteFilePanel {
 
   private void switchEditor() {
     LOG.debug("Switching editor...");
-    AppUIUtil.invokeOnEdt(new Runnable() {
-      @Override
-      public void run() {
-        TextEditor textEditor = (TextEditor)TextEditorProvider.getInstance().createEditor(myProject, myVirtualFile);
-        textEditor.addPropertyChangeListener(myPropertyChangeListener);
-        myEditorPanel.removeAll();
-        myEditorPanel.add(textEditor.getComponent(), BorderLayout.CENTER);
-        myFileEditor = textEditor;
-        showCard(EDITOR_CARD);
-        LOG.debug("Editor for downloaded file opened.");
-      }
+    AppUIUtil.invokeOnEdt(() -> {
+      TextEditor textEditor = (TextEditor)TextEditorProvider.getInstance().createEditor(myProject, myVirtualFile);
+      textEditor.addPropertyChangeListener(myPropertyChangeListener);
+      myEditorPanel.removeAll();
+      myEditorPanel.add(textEditor.getComponent(), BorderLayout.CENTER);
+      myFileEditor = textEditor;
+      showCard(EDITOR_CARD);
+      LOG.debug("Editor for downloaded file opened.");
     }, myProject.getDisposed());
   }
 
@@ -163,25 +160,19 @@ public class RemoteFilePanel {
   }
 
   public void selectNotify() {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        myProgressUpdatesQueue.showNotify();
-        if (myFileEditor != null) {
-          myFileEditor.selectNotify();
-        }
+    UIUtil.invokeLaterIfNeeded(() -> {
+      myProgressUpdatesQueue.showNotify();
+      if (myFileEditor != null) {
+        myFileEditor.selectNotify();
       }
     });
   }
 
   public void deselectNotify() {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        myProgressUpdatesQueue.hideNotify();
-        if (myFileEditor != null) {
-          myFileEditor.deselectNotify();
-        }
+    UIUtil.invokeLaterIfNeeded(() -> {
+      myProgressUpdatesQueue.hideNotify();
+      if (myFileEditor != null) {
+        myFileEditor.deselectNotify();
       }
     });
   }
@@ -202,38 +193,27 @@ public class RemoteFilePanel {
 
     @Override
     public void downloadingCancelled() {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          if (myFileEditor != null) {
-            showCard(EDITOR_CARD);
-          }
-          else {
-            myErrorLabel.setText("Downloading cancelled");
-            showCard(ERROR_CARD);
-          }
+      ApplicationManager.getApplication().invokeLater(() -> {
+        if (myFileEditor != null) {
+          showCard(EDITOR_CARD);
+        }
+        else {
+          myErrorLabel.setText("Downloading cancelled");
+          showCard(ERROR_CARD);
         }
       });
     }
 
     @Override
     public void downloadingStarted() {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          showCard(DOWNLOADING_CARD);
-        }
-      });
+      ApplicationManager.getApplication().invokeLater(() -> showCard(DOWNLOADING_CARD));
     }
 
     @Override
     public void errorOccurred(@NotNull final String errorMessage) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          myErrorLabel.setText(errorMessage);
-          showCard(ERROR_CARD);
-        }
+      ApplicationManager.getApplication().invokeLater(() -> {
+        myErrorLabel.setText(errorMessage);
+        showCard(ERROR_CARD);
       });
     }
 

@@ -242,22 +242,19 @@ public class ResolveClassTest extends ResolveTestCase {
 
   @SuppressWarnings({"ConstantConditions"})
   private void configureDependency() {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        ModifiableModuleModel modifiableModel = ModuleManager.getInstance(getProject()).getModifiableModel();
-        Module module = modifiableModel.newModule("a.iml", StdModuleTypes.JAVA.getId());
-        modifiableModel.commit();
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      ModifiableModuleModel modifiableModel = ModuleManager.getInstance(getProject()).getModifiableModel();
+      Module module = modifiableModel.newModule("a.iml", StdModuleTypes.JAVA.getId());
+      modifiableModel.commit();
 
-        VirtualFile root = LocalFileSystem.getInstance().refreshAndFindFileByPath(getTestDataPath() + "/class/dependentModule");
-        assert root != null;
+      VirtualFile root = LocalFileSystem.getInstance().refreshAndFindFileByPath(getTestDataPath() + "/class/dependentModule");
+      assert root != null;
 
-        PsiTestUtil.addContentRoot(module, root);
-        PsiTestUtil.addSourceRoot(module, root.findChild("src"));
-        PsiTestUtil.addSourceRoot(module, root.findChild("test"), true);
+      PsiTestUtil.addContentRoot(module, root);
+      PsiTestUtil.addSourceRoot(module, root.findChild("src"));
+      PsiTestUtil.addSourceRoot(module, root.findChild("test"), true);
 
-        ModuleRootModificationUtil.addDependency(getModule(), module);
-      }
+      ModuleRootModificationUtil.addDependency(getModule(), module);
     });
   }
 

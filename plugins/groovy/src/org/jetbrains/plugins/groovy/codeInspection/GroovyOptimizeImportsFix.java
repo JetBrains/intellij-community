@@ -116,14 +116,11 @@ public class GroovyOptimizeImportsFix implements IntentionAction {
     }
 
     return !DaemonCodeAnalyzerEx
-      .processHighlights(myDocument, myFile.getProject(), HighlightSeverity.ERROR, 0, myDocument.getTextLength(), new Processor<HighlightInfo>() {
-        @Override
-        public boolean process(HighlightInfo error) {
-          int infoStart = error.getActualStartOffset();
-          int infoEnd = error.getActualEndOffset();
+      .processHighlights(myDocument, myFile.getProject(), HighlightSeverity.ERROR, 0, myDocument.getTextLength(), error -> {
+        int infoStart = error.getActualStartOffset();
+        int infoEnd = error.getActualEndOffset();
 
-          return ignoreRange.containsRange(infoStart, infoEnd) && error.type.equals(HighlightInfoType.WRONG_REF);
-        }
+        return ignoreRange.containsRange(infoStart, infoEnd) && error.type.equals(HighlightInfoType.WRONG_REF);
       });
   }
 
@@ -132,23 +129,20 @@ public class GroovyOptimizeImportsFix implements IntentionAction {
                                                    @NotNull final Editor editor) {
     final long stamp = editor.getDocument().getModificationStamp();
     Project project = file.getProject();
-    TransactionGuard.submitTransaction(project, new Runnable() {
-      @Override
-      public void run() {
-        if (editor.isDisposed() || editor.getDocument().getModificationStamp() != stamp) return;
-        //no need to optimize imports on the fly during undo/redo
-        final UndoManager undoManager = UndoManager.getInstance(project);
-        if (undoManager.isUndoInProgress() || undoManager.isRedoInProgress()) return;
-        PsiDocumentManager.getInstance(project).commitAllDocuments();
-        String beforeText = file.getText();
-        final long oldStamp = editor.getDocument().getModificationStamp();
-        DocumentUtil.writeInRunUndoTransparentAction(runnable);
-        if (oldStamp != editor.getDocument().getModificationStamp()) {
-          String afterText = file.getText();
-          if (Comparing.strEqual(beforeText, afterText)) {
-            String path = file.getViewProvider().getVirtualFile().getPath();
-            LOG.error("Import optimizer  hasn't optimized any imports", new Attachment(path, afterText));
-          }
+    TransactionGuard.submitTransaction(project, () -> {
+      if (editor.isDisposed() || editor.getDocument().getModificationStamp() != stamp) return;
+      //no need to optimize imports on the fly during undo/redo
+      final UndoManager undoManager = UndoManager.getInstance(project);
+      if (undoManager.isUndoInProgress() || undoManager.isRedoInProgress()) return;
+      PsiDocumentManager.getInstance(project).commitAllDocuments();
+      String beforeText = file.getText();
+      final long oldStamp = editor.getDocument().getModificationStamp();
+      DocumentUtil.writeInRunUndoTransparentAction(runnable);
+      if (oldStamp != editor.getDocument().getModificationStamp()) {
+        String afterText = file.getText();
+        if (Comparing.strEqual(beforeText, afterText)) {
+          String path = file.getViewProvider().getVirtualFile().getPath();
+          LOG.error("Import optimizer  hasn't optimized any imports", new Attachment(path, afterText));
         }
       }
     });

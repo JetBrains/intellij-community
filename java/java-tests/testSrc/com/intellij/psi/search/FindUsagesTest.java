@@ -154,18 +154,15 @@ public class FindUsagesTest extends PsiTestCase{
       PsiClass bar = myJavaFacade.findClass("com.Foo.Bar", scope);
 
       final int[] count = {0};
-      Processor<UsageInfo> processor = new Processor<UsageInfo>() {
-        @Override
-        public boolean process(UsageInfo usageInfo) {
-          int navigationOffset = usageInfo.getNavigationOffset();
-          assertTrue(navigationOffset > 0);
-          String textAfter = usageInfo.getFile().getText().substring(navigationOffset);
-          assertTrue(textAfter, textAfter.startsWith("Foo") || textAfter.startsWith("Bar") ||
-                                textAfter.startsWith("com.Foo.Bar") // sorry, can't get references with dollar-dot mismatch to work now
-          );
-          count[0]++;
-          return true;
-        }
+      Processor<UsageInfo> processor = usageInfo -> {
+        int navigationOffset = usageInfo.getNavigationOffset();
+        assertTrue(navigationOffset > 0);
+        String textAfter = usageInfo.getFile().getText().substring(navigationOffset);
+        assertTrue(textAfter, textAfter.startsWith("Foo") || textAfter.startsWith("Bar") ||
+                              textAfter.startsWith("com.Foo.Bar") // sorry, can't get references with dollar-dot mismatch to work now
+        );
+        count[0]++;
+        return true;
       };
       JavaFindUsagesHandler handler = new JavaFindUsagesHandler(bar, JavaFindUsagesHandlerFactory.getInstance(getProject()));
 

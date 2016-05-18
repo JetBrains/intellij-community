@@ -324,26 +324,23 @@ public class FSRecords implements Forceable {
           }
         }
         catch (final IOException e1) {
-          final Runnable warnAndShutdown = new Runnable() {
-            @Override
-            public void run() {
-              if (ApplicationManager.getApplication().isUnitTestMode()) {
-                //noinspection CallToPrintStackTrace
-                e1.printStackTrace();
+          final Runnable warnAndShutdown = () -> {
+            if (ApplicationManager.getApplication().isUnitTestMode()) {
+              //noinspection CallToPrintStackTrace
+              e1.printStackTrace();
+            }
+            else {
+              final String message = "Files in " + basePath.getPath() + " are locked.\n" +
+                                     ApplicationNamesInfo.getInstance().getProductName() + " will not be able to start up.";
+              if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+                JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), message, "Fatal Error", JOptionPane.ERROR_MESSAGE);
               }
               else {
-                final String message = "Files in " + basePath.getPath() + " are locked.\n" +
-                                       ApplicationNamesInfo.getInstance().getProductName() + " will not be able to start up.";
-                if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
-                  JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), message, "Fatal Error", JOptionPane.ERROR_MESSAGE);
-                }
-                else {
-                  //noinspection UseOfSystemOutOrSystemErr
-                  System.err.println(message);
-                }
+                //noinspection UseOfSystemOutOrSystemErr
+                System.err.println(message);
               }
-              Runtime.getRuntime().halt(1);
             }
+            Runtime.getRuntime().halt(1);
           };
 
           if (EventQueue.isDispatchThread()) {

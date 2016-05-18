@@ -42,11 +42,8 @@ public enum DocStringFormat {
 
   @NotNull
   private static List<String> getAllNames() {
-    return Collections.unmodifiableList(ContainerUtil.map(values(), new Function<DocStringFormat, String>() {
-      @Override
-      public String fun(DocStringFormat format) {
-        return format.getName();
-      }
+    return Collections.unmodifiableList(ContainerUtil.map(values(), format -> {
+      return format.getName();
     }));
   }
 
@@ -54,12 +51,7 @@ public enum DocStringFormat {
 
   @NotNull
   private static List<String> getAllNamesButPlain() {
-    return Collections.unmodifiableList(ContainerUtil.mapNotNull(values(), new Function<DocStringFormat, String>() {
-      @Override
-      public String fun(DocStringFormat format) {
-        return format == PLAIN ? null : format.getName();
-      }
-    }));
+    return Collections.unmodifiableList(ContainerUtil.mapNotNull(values(), format -> format == PLAIN ? null : format.getName()));
   }
 
   @Nullable

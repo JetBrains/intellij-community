@@ -163,17 +163,14 @@ public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRoot
       read(element, type);
     }
 
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        myFiles = new HashMap<OrderRootType, VirtualFile[]>();
-        for (OrderRootType rootType : myRoots.keySet()) {
-          CompositeProjectRoot root = myRoots.get(rootType);
-          if (myNoCopyJars) {
-            setNoCopyJars(root);
-          }
-          myFiles.put(rootType, root.getVirtualFiles());
+    ApplicationManager.getApplication().runReadAction(() -> {
+      myFiles = new HashMap<OrderRootType, VirtualFile[]>();
+      for (OrderRootType rootType : myRoots.keySet()) {
+        CompositeProjectRoot root = myRoots.get(rootType);
+        if (myNoCopyJars) {
+          setNoCopyJars(root);
         }
+        myFiles.put(rootType, root.getVirtualFiles());
       }
     });
 

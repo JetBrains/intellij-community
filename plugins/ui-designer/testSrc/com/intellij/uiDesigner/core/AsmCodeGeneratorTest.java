@@ -129,12 +129,7 @@ public class AsmCodeGeneratorTest extends TestCase {
     finally {
       classStream.close();
       FileUtil.delete(classFile);
-      final File[] inners = new File(tmpPath).listFiles(new FilenameFilter() {
-        @Override
-        public boolean accept(File dir, String name) {
-          return name.startsWith(className + "$") && name.endsWith(".class");
-        }
-      });
+      final File[] inners = new File(tmpPath).listFiles((dir, name) -> name.startsWith(className + "$") && name.endsWith(".class"));
       if (inners != null) {
         for (File file : inners) FileUtil.delete(file);
       }

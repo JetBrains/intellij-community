@@ -435,15 +435,12 @@ public class CommentByLineCommentHandler extends MultiCaretCodeInsightActionHand
   public void doDefaultCommenting(final Block block) {
     final Document document = block.editor.getDocument();
     DocumentUtil.executeInBulk(
-      document, block.endLine - block.startLine >= Registry.intValue("comment.by.line.bulk.lines.trigger"), new Runnable() {
-      @Override
-      public void run() {
+      document, block.endLine - block.startLine >= Registry.intValue("comment.by.line.bulk.lines.trigger"), () -> {
         for (int line = block.endLine; line >= block.startLine; line--) {
           int offset = document.getLineStartOffset(line);
           commentLine(block, line, offset);
         }
-      }
-    });
+      });
   }
 
   private void doIndentCommenting(final Block block) {
@@ -453,29 +450,26 @@ public class CommentByLineCommentHandler extends MultiCaretCodeInsightActionHand
     final Indent minIndent = computeMinIndent(block.editor, block.psiFile, block.startLine, block.endLine, fileType);
 
     DocumentUtil.executeInBulk(
-      document, block.endLine - block.startLine > Registry.intValue("comment.by.line.bulk.lines.trigger"), new Runnable() {
-        @Override
-        public void run() {
-          for (int line = block.endLine; line >= block.startLine; line--) {
-            int lineStart = document.getLineStartOffset(line);
-            int offset = lineStart;
-            final StringBuilder buffer = new StringBuilder();
-            while (true) {
-              String space = buffer.toString();
-              Indent indent = myCodeStyleManager.getIndent(space, fileType);
-              if (indent.isGreaterThan(minIndent) || indent.equals(minIndent)) break;
-              char c = chars.charAt(offset);
-              if (c != ' ' && c != '\t') {
-                String newSpace = myCodeStyleManager.fillIndent(minIndent, fileType);
-                document.replaceString(lineStart, offset, newSpace);
-                offset = lineStart + newSpace.length();
-                break;
-              }
-              buffer.append(c);
-              offset++;
+      document, block.endLine - block.startLine > Registry.intValue("comment.by.line.bulk.lines.trigger"), () -> {
+        for (int line = block.endLine; line >= block.startLine; line--) {
+          int lineStart = document.getLineStartOffset(line);
+          int offset = lineStart;
+          final StringBuilder buffer = new StringBuilder();
+          while (true) {
+            String space = buffer.toString();
+            Indent indent = myCodeStyleManager.getIndent(space, fileType);
+            if (indent.isGreaterThan(minIndent) || indent.equals(minIndent)) break;
+            char c = chars.charAt(offset);
+            if (c != ' ' && c != '\t') {
+              String newSpace = myCodeStyleManager.fillIndent(minIndent, fileType);
+              document.replaceString(lineStart, offset, newSpace);
+              offset = lineStart + newSpace.length();
+              break;
             }
-            commentLine(block, line, offset);
+            buffer.append(c);
+            offset++;
           }
+          commentLine(block, line, offset);
         }
       });
   }

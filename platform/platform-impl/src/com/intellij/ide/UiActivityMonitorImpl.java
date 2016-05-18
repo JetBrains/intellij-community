@@ -83,12 +83,7 @@ public class UiActivityMonitorImpl extends UiActivityMonitor implements Modality
 
   @Override
   public void beforeModalityStateChanged(boolean entering) {
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        maybeReady();
-      }
-    });
+    SwingUtilities.invokeLater(() -> maybeReady());
   }
 
   public void maybeReady() {
@@ -125,24 +120,14 @@ public class UiActivityMonitorImpl extends UiActivityMonitor implements Modality
     if (!isActive()) return;
 
 
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        getBusyContainer(project).addActivity(activity, effectiveModalityState);
-      }
-    });
+    UIUtil.invokeLaterIfNeeded(() -> getBusyContainer(project).addActivity(activity, effectiveModalityState));
   }
 
   @Override
   public void removeActivity(@NotNull final Project project, @NotNull final UiActivity activity) {
     if (!isActive()) return;
 
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        _getBusy(project).removeActivity(activity);
-      }
-    });
+    UIUtil.invokeLaterIfNeeded(() -> _getBusy(project).removeActivity(activity));
   }
 
   @Override
@@ -158,24 +143,14 @@ public class UiActivityMonitorImpl extends UiActivityMonitor implements Modality
   public void addActivity(@NotNull final UiActivity activity, @NotNull final ModalityState effectiveModalityState) {
     if (!isActive()) return;
 
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        getBusyContainer(null).addActivity(activity, effectiveModalityState);
-      }
-    });
+    UIUtil.invokeLaterIfNeeded(() -> getBusyContainer(null).addActivity(activity, effectiveModalityState));
   }
 
   @Override
   public void removeActivity(@NotNull final UiActivity activity) {
     if (!isActive()) return;
 
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        _getBusy(null).removeActivity(activity);
-      }
-    });
+    UIUtil.invokeLaterIfNeeded(() -> _getBusy(null).removeActivity(activity));
   }
 
   @NotNull
@@ -308,17 +283,14 @@ public class UiActivityMonitorImpl extends UiActivityMonitor implements Modality
 
       myQueuedToRemove.add(activity);
 
-      Runnable runnable = new Runnable() {
-        @Override
-        public void run() {
-          if (!myQueuedToRemove.contains(activity)) return;
+      Runnable runnable = () -> {
+        if (!myQueuedToRemove.contains(activity)) return;
 
-          myQueuedToRemove.remove(activity);
-          myActivities.remove(activity);
-          myContainer.onActivityRemoved(BusyImpl.this, activity);
-          
-          onReady();
-        }
+        myQueuedToRemove.remove(activity);
+        myActivities.remove(activity);
+        myContainer.onActivityRemoved(BusyImpl.this, activity);
+
+        onReady();
       };
       SwingUtilities.invokeLater(runnable);
     }

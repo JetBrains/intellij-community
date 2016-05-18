@@ -58,15 +58,13 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
   private final JList myDependenciesList;
   private final ModuleInsight myInsight;
   
-  private final Comparator<T> COMPARATOR = new Comparator<T>() {
-    public int compare(final T o1, final T o2) {
-      final int w1 = getWeight(o1);
-      final int w2 = getWeight(o2);
-      if (w1 != w2) {
-        return w1 - w2;
-      }
-      return getElementText(o1).compareToIgnoreCase(getElementText(o2));
+  private final Comparator<T> COMPARATOR = (o1, o2) -> {
+    final int w1 = getWeight(o1);
+    final int w2 = getWeight(o2);
+    if (w1 != w2) {
+      return w1 - w2;
     }
+    return getElementText(o1).compareToIgnoreCase(getElementText(o2));
   };
 
   public ProjectLayoutPanel(final ModuleInsight insight) {

@@ -682,13 +682,11 @@ public class LambdaUtil {
   @Nullable
   public static PsiType getLambdaParameterFromType(PsiType functionalInterfaceType, int parameterIndex) {
     final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
-    if (resolveResult != null) {
-      final PsiMethod method = getFunctionalInterfaceMethod(functionalInterfaceType);
-      if (method != null) {
-        final PsiParameter[] parameters = method.getParameterList().getParameters();
-        if (parameterIndex < parameters.length) {
-          return getSubstitutor(method, resolveResult).substitute(parameters[parameterIndex].getType());
-        }
+    final PsiMethod method = getFunctionalInterfaceMethod(functionalInterfaceType);
+    if (method != null) {
+      final PsiParameter[] parameters = method.getParameterList().getParameters();
+      if (parameterIndex < parameters.length) {
+        return getSubstitutor(method, resolveResult).substitute(parameters[parameterIndex].getType());
       }
     }
     return null;

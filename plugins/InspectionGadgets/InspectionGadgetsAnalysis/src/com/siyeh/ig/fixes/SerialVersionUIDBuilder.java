@@ -51,31 +51,28 @@ public class SerialVersionUIDBuilder extends JavaRecursiveElementVisitor {
   private final Map<PsiElement, String> memberMap = new HashMap<PsiElement, String>();
 
   private static final Comparator<PsiClass> INTERFACE_COMPARATOR =
-    new Comparator<PsiClass>() {
-      @Override
-      public int compare(PsiClass object1, PsiClass object2) {
-        if (object1 == null && object2 == null) {
-          return 0;
-        }
-        if (object1 == null) {
-          return 1;
-        }
-        if (object2 == null) {
-          return -1;
-        }
-        final String name1 = object1.getQualifiedName();
-        final String name2 = object2.getQualifiedName();
-        if (name1 == null && name2 == null) {
-          return 0;
-        }
-        if (name1 == null) {
-          return 1;
-        }
-        if (name2 == null) {
-          return -1;
-        }
-        return name1.compareTo(name2);
+    (object1, object2) -> {
+      if (object1 == null && object2 == null) {
+        return 0;
       }
+      if (object1 == null) {
+        return 1;
+      }
+      if (object2 == null) {
+        return -1;
+      }
+      final String name1 = object1.getQualifiedName();
+      final String name2 = object2.getQualifiedName();
+      if (name1 == null && name2 == null) {
+        return 0;
+      }
+      if (name1 == null) {
+        return 1;
+      }
+      if (name2 == null) {
+        return -1;
+      }
+      return name1.compareTo(name2);
     };
 
   private SerialVersionUIDBuilder(PsiClass clazz) {
@@ -86,14 +83,11 @@ public class SerialVersionUIDBuilder extends JavaRecursiveElementVisitor {
       if (!method.isConstructor() && !method.hasModifierProperty(PsiModifier.PRIVATE)) {
         final MemberSignature methodSignature = new MemberSignature(method);
         nonPrivateMethods.add(methodSignature);
-        SuperMethodsSearch.search(method, null, true, false).forEach(new Processor<MethodSignatureBackedByPsiMethod>() {
-          @Override
-          public boolean process(MethodSignatureBackedByPsiMethod method) {
-            final MemberSignature superSignature = new MemberSignature(methodSignature.getName(), methodSignature.getModifiers(),
-                                                                       MemberSignature.createMethodSignature(method.getMethod()));
-            nonPrivateMethods.add(superSignature);
-            return true;
-          }
+        SuperMethodsSearch.search(method, null, true, false).forEach(method1 -> {
+          final MemberSignature superSignature = new MemberSignature(methodSignature.getName(), methodSignature.getModifiers(),
+                                                                     MemberSignature.createMethodSignature(method1.getMethod()));
+          nonPrivateMethods.add(superSignature);
+          return true;
         });
       }
     }

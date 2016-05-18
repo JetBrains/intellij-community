@@ -75,12 +75,7 @@ class GroovyConfigSlurperCompletionProvider extends CompletionProvider<Completio
     if (ref == null) return;
 
     final Map<String, Boolean> variants = new HashMap<String, Boolean>();
-    collectVariants(new PairConsumer<String, Boolean>() {
-                      @Override
-                      public void consume(String s, Boolean isFinal) {
-                        variants.put(s, isFinal);
-                      }
-                    }, ref, groovyFile);
+    collectVariants((s, isFinal) -> variants.put(s, isFinal), ref, groovyFile);
 
     if (variants.isEmpty()) return;
 

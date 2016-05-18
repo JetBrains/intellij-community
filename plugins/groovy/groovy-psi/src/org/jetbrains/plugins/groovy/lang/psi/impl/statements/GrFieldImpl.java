@@ -143,17 +143,14 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
 
   @Override
   public PsiType getTypeGroovy() {
-    PsiType type = TypeInferenceHelper.getCurrentContext().getExpressionType(this, new Function<GrFieldImpl, PsiType>() {
-      @Override
-      public PsiType fun(GrFieldImpl field) {
-        if (getDeclaredType() == null && getInitializerGroovy() == null) {
-          final PsiType type = GrVariableEnhancer.getEnhancedType(field);
-          if (type != null) {
-            return type;
-          }
+    PsiType type = TypeInferenceHelper.getCurrentContext().getExpressionType(this, field -> {
+      if (getDeclaredType() == null && getInitializerGroovy() == null) {
+        final PsiType type1 = GrVariableEnhancer.getEnhancedType(field);
+        if (type1 != null) {
+          return type1;
         }
-        return null;
       }
+      return null;
     });
 
     if (type != null) {

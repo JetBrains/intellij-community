@@ -87,37 +87,35 @@ public class InlineParameterHandler extends JavaInlineActionHandler {
     final List<PsiReference> occurrences = Collections.synchronizedList(new ArrayList<PsiReference>());
     final Collection<PsiFile> containingFiles = Collections.synchronizedSet(new HashSet<PsiFile>());
     containingFiles.add(psiParameter.getContainingFile());
-    boolean result = ReferencesSearch.search(method).forEach(new Processor<PsiReference>() {
-      public boolean process(final PsiReference psiReference) {
-        PsiElement element = psiReference.getElement();
-        final PsiElement parent = element.getParent();
-        if (parent instanceof PsiCallExpression) {
-          final PsiCallExpression methodCall = (PsiCallExpression)parent;
-          occurrences.add(psiReference);
-          containingFiles.add(element.getContainingFile());
-          final PsiExpression[] expressions = methodCall.getArgumentList().getExpressions();
-          if (expressions.length <= index) return false;
-          PsiExpression argument = expressions[index];
-          if (!refInitializer.isNull()) {
-            return argument != null
-                   && PsiEquivalenceUtil.areElementsEquivalent(refInitializer.get(), argument)
-                   && PsiEquivalenceUtil.areElementsEquivalent(refMethodCall.get(), methodCall);
-          }
-          if (InlineToAnonymousConstructorProcessor.isConstant(argument) || getReferencedFinalField(argument) != null) {
-            if (refConstantInitializer.isNull()) {
-              refConstantInitializer.set(argument);
-            }
-            else if (!isSameConstant(argument, refConstantInitializer.get())) {
-              return false;
-            }
-          } else if (!isRecursiveReferencedParameter(argument, psiParameter)) {
-            if (!refConstantInitializer.isNull()) return false;
-            refInitializer.set(argument);
-            refMethodCall.set(methodCall);
-          }
+    boolean result = ReferencesSearch.search(method).forEach(psiReference -> {
+      PsiElement element = psiReference.getElement();
+      final PsiElement parent = element.getParent();
+      if (parent instanceof PsiCallExpression) {
+        final PsiCallExpression methodCall = (PsiCallExpression)parent;
+        occurrences.add(psiReference);
+        containingFiles.add(element.getContainingFile());
+        final PsiExpression[] expressions = methodCall.getArgumentList().getExpressions();
+        if (expressions.length <= index) return false;
+        PsiExpression argument = expressions[index];
+        if (!refInitializer.isNull()) {
+          return argument != null
+                 && PsiEquivalenceUtil.areElementsEquivalent(refInitializer.get(), argument)
+                 && PsiEquivalenceUtil.areElementsEquivalent(refMethodCall.get(), methodCall);
         }
-        return true;
+        if (InlineToAnonymousConstructorProcessor.isConstant(argument) || getReferencedFinalField(argument) != null) {
+          if (refConstantInitializer.isNull()) {
+            refConstantInitializer.set(argument);
+          }
+          else if (!isSameConstant(argument, refConstantInitializer.get())) {
+            return false;
+          }
+        } else if (!isRecursiveReferencedParameter(argument, psiParameter)) {
+          if (!refConstantInitializer.isNull()) return false;
+          refInitializer.set(argument);
+          refMethodCall.set(methodCall);
+        }
       }
+      return true;
     });
     final PsiReference reference = TargetElementUtil.findReference(editor);
     final PsiReferenceExpression refExpr = reference instanceof PsiReferenceExpression ? ((PsiReferenceExpression)reference) : null;
@@ -223,13 +221,10 @@ public class InlineParameterHandler extends JavaInlineActionHandler {
     final RefactoringEventData data = new RefactoringEventData();
     data.addElement(psiElement.copy());
 
-    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-      @Override
-      public void run() {
-        project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringStarted(REFACTORING_ID, data);
-        SameParameterValueInspection.InlineParameterValueFix.inlineSameParameterValue(method, psiParameter, constantExpression);
-        project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringDone(REFACTORING_ID, null);
-      }
+    CommandProcessor.getInstance().executeCommand(project, () -> {
+      project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringStarted(REFACTORING_ID, data);
+      SameParameterValueInspection.InlineParameterValueFix.inlineSameParameterValue(method, psiParameter, constantExpression);
+      project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringDone(REFACTORING_ID, null);
     }, REFACTORING_NAME, null);
   }
 

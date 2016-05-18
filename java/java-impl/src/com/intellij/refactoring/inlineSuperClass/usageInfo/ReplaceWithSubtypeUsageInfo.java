@@ -42,10 +42,8 @@ public class ReplaceWithSubtypeUsageInfo extends FixableUsageInfo {
     myTargetClassType = classType;
     myOriginalType = myTypeElement.getType();
     if (targetClasses.length > 1) {
-      myConflict = typeElement.getText() + " can be replaced with any of " + StringUtil.join(targetClasses, new Function<PsiClass, String>() {
-        public String fun(final PsiClass psiClass) {
-          return psiClass.getQualifiedName();
-        }
+      myConflict = typeElement.getText() + " can be replaced with any of " + StringUtil.join(targetClasses, psiClass -> {
+        return psiClass.getQualifiedName();
       }, ", ") ;
     }
   }

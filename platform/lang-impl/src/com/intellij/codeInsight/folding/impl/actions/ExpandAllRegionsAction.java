@@ -42,26 +42,23 @@ public class ExpandAllRegionsAction extends EditorAction {
         CodeFoldingManager.getInstance(project).updateFoldRegions(editor);
 
         final List<FoldRegion> regions = getFoldRegionsForSelection(editor, caret);
-        editor.getFoldingModel().runBatchFoldingOperation(new Runnable() {
-          @Override
-          public void run() {
-            boolean anythingDone = false;
-            for (FoldRegion region : regions) {
-              // try to restore to default state at first
-              PsiElement element = EditorFoldingInfo.get(editor).getPsiElement(region);
-              if (!region.isExpanded() && (element == null || !FoldingPolicy.isCollapseByDefault(element))) {
-                region.setExpanded(true);
-                anythingDone = true;
-              }
+        editor.getFoldingModel().runBatchFoldingOperation(() -> {
+          boolean anythingDone = false;
+          for (FoldRegion region : regions) {
+            // try to restore to default state at first
+            PsiElement element = EditorFoldingInfo.get(editor).getPsiElement(region);
+            if (!region.isExpanded() && (element == null || !FoldingPolicy.isCollapseByDefault(element))) {
+              region.setExpanded(true);
+              anythingDone = true;
             }
-
-            if (!anythingDone){
-              for (FoldRegion region : regions) {
-                region.setExpanded(true);
-              }
-            }
-
           }
+
+          if (!anythingDone){
+            for (FoldRegion region : regions) {
+              region.setExpanded(true);
+            }
+          }
+
         });
       }
     });

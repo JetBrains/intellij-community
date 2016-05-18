@@ -42,21 +42,13 @@ public class PlatformProjectViewOpener implements DirectoryProjectConfigurator {
       @Override
       public void run() {
         // ensure the dialog is shown after all startup activities are done
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                if (project.isDisposed()) return;
-                final ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.PROJECT_VIEW);
-                if (toolWindow != null && toolWindow.getType() != ToolWindowType.SLIDING) {
-                  toolWindow.activate(null);
-                }
-              }
-            }, ModalityState.NON_MODAL);
+        SwingUtilities.invokeLater(() -> ApplicationManager.getApplication().invokeLater(() -> {
+          if (project.isDisposed()) return;
+          final ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.PROJECT_VIEW);
+          if (toolWindow != null && toolWindow.getType() != ToolWindowType.SLIDING) {
+            toolWindow.activate(null);
           }
-        });
+        }, ModalityState.NON_MODAL));
       }
     });
   }

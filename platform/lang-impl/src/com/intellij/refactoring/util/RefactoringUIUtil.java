@@ -59,12 +59,8 @@ public class RefactoringUIUtil {
     }
 
     final String s = message;
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        Messages.showMessageDialog(project, s, RefactoringBundle.message("error.title"), Messages.getErrorIcon());
-      }
-    });
+    ApplicationManager.getApplication().invokeLater(
+      () -> Messages.showMessageDialog(project, s, RefactoringBundle.message("error.title"), Messages.getErrorIcon()));
   }
 
   public static String calculatePsiElementDescriptionList(PsiElement[] elements) {

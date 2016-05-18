@@ -120,74 +120,57 @@ public class ITNReporter extends ErrorReportSubmitter {
       password = "guest";
     }
 
-    ITNProxy.sendError(project, login, password, errorBean, new Consumer<Integer>() {
-      @Override
-      public void consume(Integer threadId) {
-        updatePreviousThreadId(threadId);
-        String url = ITNProxy.getBrowseUrl(threadId);
-        String linkText = String.valueOf(threadId);
-        final SubmittedReportInfo reportInfo = new SubmittedReportInfo(url, linkText, SubmittedReportInfo.SubmissionStatus.NEW_ISSUE);
-        callback.consume(reportInfo);
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            StringBuilder text = new StringBuilder();
-            IdeErrorsDialog.appendSubmissionInformation(reportInfo, text);
-            text.append('.').append("<br/>").append(DiagnosticBundle.message("error.report.gratitude"));
-            String content = XmlStringUtil.wrapInHtml(text);
-            ReportMessages.GROUP
-              .createNotification(ReportMessages.ERROR_REPORT, content, NotificationType.INFORMATION, NotificationListener.URL_OPENING_LISTENER)
-              .setImportant(false)
-              .notify(project);
-          }
-        });
-      }
-    }, new Consumer<Exception>() {
-      @Override
-      public void consume(final Exception e) {
-        Logger.getInstance(ITNReporter.class).info("reporting failed: " + e);
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            String msg;
-            if (e instanceof NoSuchEAPUserException) {
-              msg = DiagnosticBundle.message("error.report.authentication.failed");
-            }
-            else if (e instanceof InternalEAPException) {
-              msg = DiagnosticBundle.message("error.report.posting.failed", e.getMessage());
-            }
-            else {
-              msg = DiagnosticBundle.message("error.report.sending.failure");
-            }
-            if (e instanceof UpdateAvailableException) {
-              String message = DiagnosticBundle.message("error.report.new.eap.build.message", e.getMessage());
-              showMessageDialog(parentComponent, project, message, CommonBundle.getWarningTitle(), Messages.getWarningIcon());
-              callback.consume(new SubmittedReportInfo(SubmittedReportInfo.SubmissionStatus.FAILED));
-            }
-            else if (showYesNoDialog(parentComponent, project, msg, ReportMessages.ERROR_REPORT, Messages.getErrorIcon()) != Messages.YES) {
-              callback.consume(new SubmittedReportInfo(SubmittedReportInfo.SubmissionStatus.FAILED));
+    ITNProxy.sendError(project, login, password, errorBean, threadId -> {
+      updatePreviousThreadId(threadId);
+      String url = ITNProxy.getBrowseUrl(threadId);
+      String linkText = String.valueOf(threadId);
+      final SubmittedReportInfo reportInfo = new SubmittedReportInfo(url, linkText, SubmittedReportInfo.SubmissionStatus.NEW_ISSUE);
+      callback.consume(reportInfo);
+      ApplicationManager.getApplication().invokeLater(() -> {
+        StringBuilder text = new StringBuilder();
+        IdeErrorsDialog.appendSubmissionInformation(reportInfo, text);
+        text.append('.').append("<br/>").append(DiagnosticBundle.message("error.report.gratitude"));
+        String content = XmlStringUtil.wrapInHtml(text);
+        ReportMessages.GROUP
+          .createNotification(ReportMessages.ERROR_REPORT, content, NotificationType.INFORMATION, NotificationListener.URL_OPENING_LISTENER)
+          .setImportant(false)
+          .notify(project);
+      });
+    }, e -> {
+      Logger.getInstance(ITNReporter.class).info("reporting failed: " + e);
+      ApplicationManager.getApplication().invokeLater(() -> {
+        String msg;
+        if (e instanceof NoSuchEAPUserException) {
+          msg = DiagnosticBundle.message("error.report.authentication.failed");
+        }
+        else if (e instanceof InternalEAPException) {
+          msg = DiagnosticBundle.message("error.report.posting.failed", e.getMessage());
+        }
+        else {
+          msg = DiagnosticBundle.message("error.report.sending.failure");
+        }
+        if (e instanceof UpdateAvailableException) {
+          String message = DiagnosticBundle.message("error.report.new.eap.build.message", e.getMessage());
+          showMessageDialog(parentComponent, project, message, CommonBundle.getWarningTitle(), Messages.getWarningIcon());
+          callback.consume(new SubmittedReportInfo(SubmittedReportInfo.SubmissionStatus.FAILED));
+        }
+        else if (showYesNoDialog(parentComponent, project, msg, ReportMessages.ERROR_REPORT, Messages.getErrorIcon()) != Messages.YES) {
+          callback.consume(new SubmittedReportInfo(SubmittedReportInfo.SubmissionStatus.FAILED));
+        }
+        else {
+          if (e instanceof NoSuchEAPUserException) {
+            final JetBrainsAccountDialog dialog;
+            if (parentComponent.isShowing()) {
+              dialog = new JetBrainsAccountDialog(parentComponent);
             }
             else {
-              if (e instanceof NoSuchEAPUserException) {
-                final JetBrainsAccountDialog dialog;
-                if (parentComponent.isShowing()) {
-                  dialog = new JetBrainsAccountDialog(parentComponent);
-                }
-                else {
-                  dialog = new JetBrainsAccountDialog(project);
-                }
-                dialog.show();
-              }
-              ApplicationManager.getApplication().invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                  doSubmit(event, parentComponent, callback, errorBean, description);
-                }
-              });
+              dialog = new JetBrainsAccountDialog(project);
             }
+            dialog.show();
           }
-        });
-      }
+          ApplicationManager.getApplication().invokeLater(() -> doSubmit(event, parentComponent, callback, errorBean, description));
+        }
+      });
     });
     return true;
   }

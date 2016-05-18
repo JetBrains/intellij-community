@@ -169,11 +169,8 @@ public class JavaFormatterInEditorTest extends LightPlatformCodeInsightTestCase 
 
   public void doTest(@NotNull String before, @NotNull String after) throws IOException {
     configureFromFileText(getTestName(false) + ".java", before);
-    WriteCommandAction.runWriteCommandAction(getProject(), new Runnable() {
-      @Override
-      public void run() {
-        CodeStyleManager.getInstance(getProject()).reformatText(getFile(), 0, getEditor().getDocument().getTextLength());
-      }
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      CodeStyleManager.getInstance(getProject()).reformatText(getFile(), 0, getEditor().getDocument().getTextLength());
     });
 
     checkResultByText(after);

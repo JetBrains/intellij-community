@@ -698,14 +698,11 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     protected void prepare() {
       boolean forceClean = Boolean.TRUE == ourForcedClean.getAndSet(Boolean.FALSE);
       for (StubIndexExtension extension : myExtensions) {
-        addNestedInitializationTask(new ThrowableRunnable<IOException>() {
-          @Override
-          public void run() throws IOException {
-            @SuppressWarnings("unchecked") boolean rebuildRequested = registerIndexer(extension, forceClean, state);
-            if (rebuildRequested) {
-              synchronized (updated) {
-                updated.append(extension).append(' ');
-              }
+        addNestedInitializationTask(() -> {
+          @SuppressWarnings("unchecked") boolean rebuildRequested = registerIndexer(extension, forceClean, state);
+          if (rebuildRequested) {
+            synchronized (updated) {
+              updated.append(extension).append(' ');
             }
           }
         });
@@ -722,11 +719,8 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
       if (updated.length() > 0) {
         final Throwable e = new Throwable(updated.toString());
         // avoid direct forceRebuild as it produces dependency cycle (IDEA-105485)
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            forceRebuild(e);
-          }
+        ApplicationManager.getApplication().invokeLater(() -> {
+          forceRebuild(e);
         }, ModalityState.NON_MODAL);
       }
       dropUnregisteredIndices(state);

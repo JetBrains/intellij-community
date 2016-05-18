@@ -38,13 +38,10 @@ public class XmlElementContentGroupImpl  extends XmlElementImpl implements XmlEl
     @NotNull
     @Override
     protected XmlContentParticle[] compute() {
-      return ContainerUtil.map(getChildren(TokenSet.create(XML_ELEMENT_CONTENT_GROUP, XML_NAME)), new Function<ASTNode, XmlContentParticle>() {
-        @Override
-        public XmlContentParticle fun(ASTNode astNode) {
-          PsiElement element = astNode.getPsi();
-          assert element != null;
-          return element instanceof XmlToken ? new XmlContentParticleImpl((XmlToken)element) : (XmlContentParticle)element;
-        }
+      return ContainerUtil.map(getChildren(TokenSet.create(XML_ELEMENT_CONTENT_GROUP, XML_NAME)), astNode -> {
+        PsiElement element = astNode.getPsi();
+        assert element != null;
+        return element instanceof XmlToken ? new XmlContentParticleImpl((XmlToken)element) : (XmlContentParticle)element;
       }, new XmlContentParticle[0]);
     }
   };

@@ -192,14 +192,11 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
       revalidate();
       repaint();
       //noinspection SSBasedInspection
-      SwingUtilities.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          JMenu menu = getMenu(getSelectionModel().getSelectedIndex());
-          if (menu.isPopupMenuVisible()) {
-            menu.setPopupMenuVisible(false);
-            menu.setPopupMenuVisible(true);
-          }
+      SwingUtilities.invokeLater(() -> {
+        JMenu menu = getMenu(getSelectionModel().getSelectedIndex());
+        if (menu.isPopupMenuVisible()) {
+          menu.setPopupMenuVisible(false);
+          menu.setPopupMenuVisible(true);
         }
       });
     }
@@ -574,11 +571,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
   public static void installAppMenuIfNeeded(@NotNull final JFrame frame) {
     if (SystemInfo.isLinux && Registry.is("linux.native.menu") && "Unity".equals(System.getenv("XDG_CURRENT_DESKTOP"))) {
       //noinspection SSBasedInspection
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          ApplicationMenu.tryInstall(frame);
-        }
-      });
+      SwingUtilities.invokeLater(() -> ApplicationMenu.tryInstall(frame));
     }
   }
 

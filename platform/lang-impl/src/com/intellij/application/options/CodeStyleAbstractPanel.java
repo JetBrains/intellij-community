@@ -186,12 +186,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
     int currOffs = myEditor.getScrollingModel().getVerticalScrollOffset();
 
     final Project finalProject = ProjectUtil.guessCurrentProject(getPanel());
-    CommandProcessor.getInstance().executeCommand(finalProject, new Runnable() {
-      @Override
-      public void run() {
-        replaceText(finalProject);
-      }
-    }, null, null);
+    CommandProcessor.getInstance().executeCommand(finalProject, () -> replaceText(finalProject), null, null);
 
     myEditor.getSettings().setRightMargin(getAdjustedRightMargin());
     myLastDocumentModificationStamp = myEditor.getDocument().getModificationStamp();
@@ -206,43 +201,40 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
   protected abstract int getRightMargin();
 
   private void replaceText(final Project project) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      try {
+        Document beforeReformat = null;
+        beforeReformat = collectChangesBeforeCurrentSettingsAppliance(project);
+
+        //important not mark as generated not to get the classes before setting language level
+        PsiFile psiFile = createFileFromText(project, myTextToReformat);
+        prepareForReformat(psiFile);
+
         try {
-          Document beforeReformat = null;
-          beforeReformat = collectChangesBeforeCurrentSettingsAppliance(project);
-
-          //important not mark as generated not to get the classes before setting language level
-          PsiFile psiFile = createFileFromText(project, myTextToReformat);
-          prepareForReformat(psiFile);
-
-          try {
-            apply(mySettings);
-          }
-          catch (ConfigurationException ignore) {
-          }
-          CodeStyleSettings clone = mySettings.clone();
-          clone.setRightMargin(getDefaultLanguage(), getAdjustedRightMargin());
-          CodeStyleSettingsManager.getInstance(project).setTemporarySettings(clone);
-          PsiFile formatted;
-          try {
-            formatted = doReformat(project, psiFile);
-          }
-          finally {
-            CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
-          }
-
-          myEditor.getSettings().setTabSize(clone.getTabSize(getFileType()));
-          Document document = myEditor.getDocument();
-          document.replaceString(0, document.getTextLength(), formatted.getText());
-          if (document != null && beforeReformat != null) {
-            highlightChanges(beforeReformat);
-          }
+          apply(mySettings);
         }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
+        catch (ConfigurationException ignore) {
         }
+        CodeStyleSettings clone = mySettings.clone();
+        clone.setRightMargin(getDefaultLanguage(), getAdjustedRightMargin());
+        CodeStyleSettingsManager.getInstance(project).setTemporarySettings(clone);
+        PsiFile formatted;
+        try {
+          formatted = doReformat(project, psiFile);
+        }
+        finally {
+          CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
+        }
+
+        myEditor.getSettings().setTabSize(clone.getTabSize(getFileType()));
+        Document document = myEditor.getDocument();
+        document.replaceString(0, document.getTextLength(), formatted.getText());
+        if (document != null && beforeReformat != null) {
+          highlightChanges(beforeReformat);
+        }
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
       }
     });
   }
@@ -493,12 +485,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
         updateEditor(true);
       }
       else {
-        UiNotifyConnector.doWhenFirstShown(myEditor.getComponent(), new Runnable() {
-          @Override
-          public void run() {
-            addUpdatePreviewRequest();
-          }
-        });
+        UiNotifyConnector.doWhenFirstShown(myEditor.getComponent(), () -> addUpdatePreviewRequest());
       }
     }
   }

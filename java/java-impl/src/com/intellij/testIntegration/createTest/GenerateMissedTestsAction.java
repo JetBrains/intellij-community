@@ -87,12 +87,7 @@ public class GenerateMissedTestsAction extends PsiElementBaseIntentionAction {
     final JBList list = new JBList(testClasses);
     list.setCellRenderer(new PsiClassListCellRenderer());
     JBPopupFactory.getInstance().createListPopupBuilder(list)
-      .setItemChoosenCallback(new Runnable() {
-      @Override
-      public void run() {
-        generateMissedTests((PsiClass)list.getSelectedValue(), srcClass, editor);
-      }
-    })
+      .setItemChoosenCallback(() -> generateMissedTests((PsiClass)list.getSelectedValue(), srcClass, editor))
       .setTitle("Choose Test")
       .createPopup().showInBestPositionFor(editor);
   }
@@ -106,11 +101,8 @@ public class GenerateMissedTestsAction extends PsiElementBaseIntentionAction {
         if (!FileModificationService.getInstance().preparePsiElementsForWrite(testClass)) return;
         final MissedTestsDialog dialog = new MissedTestsDialog(project, srcClass, testClass, framework);
         if (dialog.showAndGet()) {
-          WriteCommandAction.runWriteCommandAction(project, new Runnable() {
-            @Override
-            public void run() {
-              JavaTestGenerator.addTestMethods(editor, testClass, srcClass, framework, dialog.getSelectedMethods(), false, false);
-            }
+          WriteCommandAction.runWriteCommandAction(project, () -> {
+            JavaTestGenerator.addTestMethods(editor, testClass, srcClass, framework, dialog.getSelectedMethods(), false, false);
           });
         }
       }

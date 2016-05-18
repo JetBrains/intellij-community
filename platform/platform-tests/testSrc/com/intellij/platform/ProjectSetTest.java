@@ -95,12 +95,7 @@ public class ProjectSetTest extends LightPlatformTestCase {
     context.directoryName = "newDir";
     context.directory = getSourceRoot();
     readDescriptor(new File(getTestDataPath() + "vcs.json"), context);
-    Collections.sort(pairs, new Comparator<Pair<String, String>>() {
-      @Override
-      public int compare(@NotNull Pair<String, String> o1, @NotNull Pair<String, String> o2) {
-        return o2.first.compareTo(o1.first);
-      }
-    });
+    Collections.sort(pairs, (o1, o2) -> o2.first.compareTo(o1.first));
     assertEquals(Pair.create("schema://foo.bar/path", "test"), pairs.get(1));
     assertEquals(Pair.create("schema://foo.bar1/path1", "test/custom"), pairs.get(0));
   }

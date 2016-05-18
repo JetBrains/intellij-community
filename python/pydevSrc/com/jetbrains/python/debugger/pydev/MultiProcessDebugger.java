@@ -65,16 +65,13 @@ public class MultiProcessDebugger implements ProcessDebugger {
       //noinspection SocketOpenedButNotSafelyClosed
       final Socket socket = myServerSocket.accept();
 
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            //do we need any synchronization here with myMainDebugger.waitForConnect() ??? TODO
-            sendDebuggerPort(socket, myDebugServerSocket, myDebugProcess);
-          }
-          catch (Exception e) {
-            throw new RuntimeException(e);
-          }
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        try {
+          //do we need any synchronization here with myMainDebugger.waitForConnect() ??? TODO
+          sendDebuggerPort(socket, myDebugServerSocket, myDebugProcess);
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
         }
       });
 

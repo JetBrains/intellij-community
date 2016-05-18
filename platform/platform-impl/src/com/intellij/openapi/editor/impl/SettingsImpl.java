@@ -350,12 +350,8 @@ public class SettingsImpl implements EditorSettings {
     CommonCodeStyleSettings.IndentOptions options = settings.getIndentOptionsByFile(file);
 
     if (CodeStyleSettings.isRecalculateForCommittedDocument(options)) {
-      PsiDocumentManager.getInstance(project).performForCommittedDocument(document, new Runnable() {
-        @Override
-        public void run() {
-          CodeStyleSettingsManager.updateDocumentIndentOptions(project, document);
-        }
-      });
+      PsiDocumentManager.getInstance(project).performForCommittedDocument(document,
+                                                                          () -> CodeStyleSettingsManager.updateDocumentIndentOptions(project, document));
     }
     else {
       CodeStyleSettingsManager.updateDocumentIndentOptions(project, document);

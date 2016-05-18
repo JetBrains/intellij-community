@@ -236,15 +236,12 @@ public abstract class ContextProvider {
           // Another (possibly perferred) solution might be to make org.intellij.lang.xpath.xslt.impl.XsltImplicitUsagesProvider run
           // unconditionally or - even better - pull its functionality into the platform.
           if (flag == null) {
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                if (file.getUserData(XML_FILE_WITH_XPATH_INJECTTION) == null) {
-                  file.putUserData(XML_FILE_WITH_XPATH_INJECTTION, Boolean.TRUE);
-                  // TODO workaround for highlighting tests
-                  if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
-                    DaemonCodeAnalyzer.getInstance(file.getProject()).restart(file);
-                  }
+            ApplicationManager.getApplication().invokeLater(() -> {
+              if (file.getUserData(XML_FILE_WITH_XPATH_INJECTTION) == null) {
+                file.putUserData(XML_FILE_WITH_XPATH_INJECTTION, Boolean.TRUE);
+                // TODO workaround for highlighting tests
+                if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+                  DaemonCodeAnalyzer.getInstance(file.getProject()).restart(file);
                 }
               }
             });

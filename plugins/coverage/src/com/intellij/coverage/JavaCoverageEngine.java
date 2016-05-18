@@ -204,26 +204,22 @@ public class JavaCoverageEngine extends CoverageEngine {
       final Project project = module.getProject();
       if (suite.isModuleChecked(module)) return false;
       suite.checkModule(module);
-      final Runnable runnable = new Runnable() {
-        public void run() {
-          if (Messages.showOkCancelDialog(
-            "Project class files are out of date. Would you like to recompile? The refusal to do it will result in incomplete coverage information",
-            "Project is out of date", Messages.getWarningIcon()) == Messages.OK) {
-            final CompilerManager compilerManager = CompilerManager.getInstance(project);
-            compilerManager.make(compilerManager.createProjectCompileScope(project), new CompileStatusNotification() {
-              public void finished(final boolean aborted, final int errors, final int warnings, final CompileContext compileContext) {
-                if (aborted || errors != 0) return;
-                ApplicationManager.getApplication().invokeLater(new Runnable() {
-                  public void run() {
-                    if (project.isDisposed()) return;
-                    CoverageDataManager.getInstance(project).chooseSuitesBundle(suite);
-                  }
-                });
-              }
-            });
-          } else if (!project.isDisposed()) {
-            CoverageDataManager.getInstance(project).chooseSuitesBundle(null);
-          }
+      final Runnable runnable = () -> {
+        if (Messages.showOkCancelDialog(
+          "Project class files are out of date. Would you like to recompile? The refusal to do it will result in incomplete coverage information",
+          "Project is out of date", Messages.getWarningIcon()) == Messages.OK) {
+          final CompilerManager compilerManager = CompilerManager.getInstance(project);
+          compilerManager.make(compilerManager.createProjectCompileScope(project), new CompileStatusNotification() {
+            public void finished(final boolean aborted, final int errors, final int warnings, final CompileContext compileContext) {
+              if (aborted || errors != 0) return;
+              ApplicationManager.getApplication().invokeLater(() -> {
+                if (project.isDisposed()) return;
+                CoverageDataManager.getInstance(project).chooseSuitesBundle(suite);
+              });
+            }
+          });
+        } else if (!project.isDisposed()) {
+          CoverageDataManager.getInstance(project).chooseSuitesBundle(null);
         }
       };
       ApplicationManager.getApplication().invokeLater(runnable);

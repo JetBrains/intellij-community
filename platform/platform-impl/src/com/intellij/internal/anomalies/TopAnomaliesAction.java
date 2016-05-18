@@ -36,23 +36,20 @@ import java.util.TreeSet;
  * User: Vassiliy.Kudryashov
  */
 public class TopAnomaliesAction extends ActionGroup {
-  private static final Comparator<Pair<?, Integer>> COMPARATOR = new Comparator<Pair<?, Integer>>() {
-    @Override
-    public int compare(Pair<?, Integer> o1, Pair<?, Integer> o2) {
-      int i = o2.getSecond() - o1.getSecond();
-      if (i != 0) {
-        return i;
-      }
-      int h1 = o1.hashCode();
-      int h2 = o2.hashCode();
-      if (h1 > h2) {
-        return 1;
-      }
-      if (h1 < h2) {
-        return -1;
-      }
-      return 0;
+  private static final Comparator<Pair<?, Integer>> COMPARATOR = (o1, o2) -> {
+    int i = o2.getSecond() - o1.getSecond();
+    if (i != 0) {
+      return i;
     }
+    int h1 = o1.hashCode();
+    int h2 = o2.hashCode();
+    if (h1 > h2) {
+      return 1;
+    }
+    if (h1 < h2) {
+      return -1;
+    }
+    return 0;
   };
   private static final int LIMIT = 10;
 

@@ -641,12 +641,7 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
 
       @Override
       public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-        invokeOnTheFlyImportOptimizer(new Runnable() {
-          @Override
-          public void run() {
-            fix.invoke(project, editor, file);
-          }
-        }, file);
+        invokeOnTheFlyImportOptimizer(() -> fix.invoke(project, editor, file), file);
       }
 
       @Override
@@ -730,24 +725,21 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
     final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
     if (document == null) return;
     final long stamp = document.getModificationStamp();
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (project.isDisposed() || document.getModificationStamp() != stamp) return;
-        //no need to optimize imports on the fly during undo/redo
-        final UndoManager undoManager = UndoManager.getInstance(project);
-        if (undoManager.isUndoInProgress() || undoManager.isRedoInProgress()) return;
-        PsiDocumentManager.getInstance(project).commitAllDocuments();
-        String beforeText = file.getText();
-        final long oldStamp = document.getModificationStamp();
-        DocumentUtil.writeInRunUndoTransparentAction(runnable);
-        if (oldStamp != document.getModificationStamp()) {
-          String afterText = file.getText();
-          if (Comparing.strEqual(beforeText, afterText)) {
-            LOG.error(
-              LogMessageEx.createEvent("Import optimizer  hasn't optimized any imports", file.getViewProvider().getVirtualFile().getPath(),
-                                       AttachmentFactory.createAttachment(file.getViewProvider().getVirtualFile())));
-          }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (project.isDisposed() || document.getModificationStamp() != stamp) return;
+      //no need to optimize imports on the fly during undo/redo
+      final UndoManager undoManager = UndoManager.getInstance(project);
+      if (undoManager.isUndoInProgress() || undoManager.isRedoInProgress()) return;
+      PsiDocumentManager.getInstance(project).commitAllDocuments();
+      String beforeText = file.getText();
+      final long oldStamp = document.getModificationStamp();
+      DocumentUtil.writeInRunUndoTransparentAction(runnable);
+      if (oldStamp != document.getModificationStamp()) {
+        String afterText = file.getText();
+        if (Comparing.strEqual(beforeText, afterText)) {
+          LOG.error(
+            LogMessageEx.createEvent("Import optimizer  hasn't optimized any imports", file.getViewProvider().getVirtualFile().getPath(),
+                                     AttachmentFactory.createAttachment(file.getViewProvider().getVirtualFile())));
         }
       }
     });
@@ -806,14 +798,11 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
     PsiImportList importList = ((PsiJavaFile)file).getImportList();
     final TextRange importsRange = importList == null ? TextRange.EMPTY_RANGE : importList.getTextRange();
     boolean hasErrorsExceptUnresolvedImports = !DaemonCodeAnalyzerEx
-      .processHighlights(document, file.getProject(), HighlightSeverity.ERROR, 0, document.getTextLength(), new Processor<HighlightInfo>() {
-        @Override
-        public boolean process(HighlightInfo error) {
-          int infoStart = error.getActualStartOffset();
-          int infoEnd = error.getActualEndOffset();
+      .processHighlights(document, file.getProject(), HighlightSeverity.ERROR, 0, document.getTextLength(), error -> {
+        int infoStart = error.getActualStartOffset();
+        int infoEnd = error.getActualEndOffset();
 
-          return importsRange.containsRange(infoStart, infoEnd) && error.type.equals(HighlightInfoType.WRONG_REF);
-        }
+        return importsRange.containsRange(infoStart, infoEnd) && error.type.equals(HighlightInfoType.WRONG_REF);
       });
 
     return hasErrorsExceptUnresolvedImports;

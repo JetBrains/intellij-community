@@ -169,28 +169,22 @@ public abstract class AbstractAttachSourceProvider implements AttachSourcesProvi
           }
           catch (IOException e) {
             LOG.warn(e);
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                String message = "Failed to download sources: " + myUrl;
-                new Notification(myMessageGroupId, "Downloading failed", message, NotificationType.ERROR).notify(getProject());
-                callback.setDone();
-              }
+            ApplicationManager.getApplication().invokeLater(() -> {
+              String message = "Failed to download sources: " + myUrl;
+              new Notification(myMessageGroupId, "Downloading failed", message, NotificationType.ERROR).notify(getProject());
+              callback.setDone();
             });
             return;
           }
 
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              AccessToken accessToken = WriteAction.start();
-              try {
-                storeFile(bytes);
-              }
-              finally {
-                accessToken.finish();
-                callback.setDone();
-              }
+          ApplicationManager.getApplication().invokeLater(() -> {
+            AccessToken accessToken = WriteAction.start();
+            try {
+              storeFile(bytes);
+            }
+            finally {
+              accessToken.finish();
+              callback.setDone();
             }
           });
         }

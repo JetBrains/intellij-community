@@ -96,12 +96,9 @@ public class ExtractMethodSignatureSuggester {
       if (ApplicationManager.getApplication().isUnitTestMode() || 
           new PreviewDialog(method, myExtractedMethod, methodCall, myMethodCall, duplicates.size()).showAndGet()) {
         PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-        WriteCommandAction.runWriteCommandAction(myProject, new Runnable() {
-          @Override
-          public void run() {
-            myMethodCall = (PsiMethodCallExpression)methodCall.replace(myMethodCall);
-            myExtractedMethod = (PsiMethod)method.replace(myExtractedMethod);
-          }
+        WriteCommandAction.runWriteCommandAction(myProject, () -> {
+          myMethodCall = (PsiMethodCallExpression)methodCall.replace(myMethodCall);
+          myExtractedMethod = (PsiMethod)method.replace(myExtractedMethod);
         });
 
         final DuplicatesFinder finder = MethodDuplicatesHandler.createDuplicatesFinder(myExtractedMethod);

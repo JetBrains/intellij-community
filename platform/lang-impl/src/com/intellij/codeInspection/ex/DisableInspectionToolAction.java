@@ -69,12 +69,7 @@ public class DisableInspectionToolAction extends IntentionAndQuickFixAction impl
 
   @Override
   public void applyFix(@NotNull Project project, final PsiFile file, @Nullable Editor editor) {
-    modifyAndCommitProjectProfile(new Consumer<ModifiableModel>() {
-      @Override
-      public void consume(ModifiableModel modifiableModel) {
-        modifiableModel.disableTool(myToolId, file);
-      }
-    }, project);
+    modifyAndCommitProjectProfile(modifiableModel -> modifiableModel.disableTool(myToolId, file), project);
     DaemonCodeAnalyzer.getInstance(project).restart();
   }
 

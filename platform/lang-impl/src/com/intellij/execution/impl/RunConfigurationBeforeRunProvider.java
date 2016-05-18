@@ -239,16 +239,13 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
       });
 
       try {
-        ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-          @Override
-          public void run() {
-            try {
-              environment.getRunner().execute(environment);
-            }
-            catch (ExecutionException e) {
-              targetDone.up();
-              LOG.error(e);
-            }
+        ApplicationManager.getApplication().invokeAndWait(() -> {
+          try {
+            environment.getRunner().execute(environment);
+          }
+          catch (ExecutionException e) {
+            targetDone.up();
+            LOG.error(e);
           }
         }, ModalityState.NON_MODAL);
       }

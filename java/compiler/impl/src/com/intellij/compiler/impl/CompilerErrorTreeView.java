@@ -80,20 +80,14 @@ public class CompilerErrorTreeView extends NewErrorTreeViewPanel {
       final OpenFileDescriptor navigatable = (OpenFileDescriptor)messageElement.getNavigatable();
       final PsiFile file = PsiManager.getInstance(project).findFile(navigatable.getFile());
       assert file != null;
-      CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-        public void run() {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            public void run() {
-              try {
-                suppressInspectionFix.invoke(project, file.findElementAt(navigatable.getOffset()));
-              }
-              catch (IncorrectOperationException e1) {
-                LOG.error(e1);
-              }
-            }
-          });
+      CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> {
+        try {
+          suppressInspectionFix.invoke(project, file.findElementAt(navigatable.getOffset()));
         }
-      }, suppressInspectionFix.getText(), null);
+        catch (IncorrectOperationException e1) {
+          LOG.error(e1);
+        }
+      }), suppressInspectionFix.getText(), null);
     }
 
     @Override

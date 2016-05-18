@@ -112,12 +112,7 @@ public class CheckRegExpForm {
           public void documentChanged(DocumentEvent e) {
             updater.cancelAllRequests();
             if (!updater.isDisposed()) {
-              updater.addRequest(new Runnable() {
-                @Override
-                public void run() {
-                  updateBalloon();
-                }
-              }, 200);
+              updater.addRequest(() -> updateBalloon(), 200);
             }
           }
         };
@@ -150,12 +145,10 @@ public class CheckRegExpForm {
   private void updateBalloon() {
     final Boolean correct = isMatchingText(myRegexpFile, mySampleText.getText());
 
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        mySampleText.setBackground(correct != null && correct ? BACKGROUND_COLOR_MATCH : BACKGROUND_COLOR_NOMATCH);
-        myMessage.setText(correct == null ? "Pattern is too complex" : correct ? "Matches!" : "No match");
-        myRootPanel.revalidate();
-      }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      mySampleText.setBackground(correct != null && correct ? BACKGROUND_COLOR_MATCH : BACKGROUND_COLOR_NOMATCH);
+      myMessage.setText(correct == null ? "Pattern is too complex" : correct ? "Matches!" : "No match");
+      myRootPanel.revalidate();
     }, new Condition() {
       @Override
       public boolean value(Object o) {

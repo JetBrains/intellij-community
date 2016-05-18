@@ -52,12 +52,7 @@ class GrMethodSignatureImpl implements GrClosureSignature {
   @Override
   public GrClosureParameter[] getParameters() {
     PsiParameter[] parameters = myMethod.getParameterList().getParameters();
-    return ContainerUtil.map(parameters, new Function<PsiParameter, GrClosureParameter>() {
-      @Override
-      public GrClosureParameter fun(PsiParameter parameter) {
-        return createClosureParameter(parameter);
-      }
-    }, new GrClosureParameter[parameters.length]);
+    return ContainerUtil.map(parameters, parameter -> createClosureParameter(parameter), new GrClosureParameter[parameters.length]);
   }
 
   @NotNull

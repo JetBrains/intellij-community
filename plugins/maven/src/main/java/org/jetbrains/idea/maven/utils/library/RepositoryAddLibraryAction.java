@@ -57,11 +57,8 @@ public class RepositoryAddLibraryAction extends IntentionAndQuickFixAction {
         module,
         modifiableModel,
         modifiableModelsProvider);
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          modifiableModel.commit();
-        }
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        modifiableModel.commit();
       });
   }
 }

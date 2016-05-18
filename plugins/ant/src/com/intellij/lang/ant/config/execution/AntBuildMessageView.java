@@ -799,67 +799,55 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
           final AntBuildFileBase buildFile = myBuildFile;
           final boolean isBackground = buildFile != null && buildFile.isRunInBackground();
           final boolean shouldActivate = !isBackground || getErrorCount() > 0;
-          UIUtil.invokeLaterIfNeeded(new Runnable() {
-            public void run() {
-              final Runnable finishRunnable = new Runnable() {
-                public void run() {
-                  final int errorCount = getErrorCount();
-                  try {
-                    final AntBuildFileBase buildFile = myBuildFile;
-                    if (buildFile != null) {
-                      if (errorCount == 0 && buildFile.isViewClosedWhenNoErrors()) {
-                        close();
-                      }
-                      else if (errorCount > 0) {
-                        myTreeView.scrollToFirstError();
-                      }
-                      else {
-                        myTreeView.scrollToStatus();
-                      }
-                    }
-                    else {
-                      myTreeView.scrollToLastMessage();
-                    }
+          UIUtil.invokeLaterIfNeeded(() -> {
+            final Runnable finishRunnable = () -> {
+              final int errorCount = getErrorCount();
+              try {
+                final AntBuildFileBase buildFile1 = myBuildFile;
+                if (buildFile1 != null) {
+                  if (errorCount == 0 && buildFile1.isViewClosedWhenNoErrors()) {
+                    close();
                   }
-                  finally {
-                    VirtualFileManager.getInstance().asyncRefresh(new Runnable() {
-                      public void run() {
-                        antBuildListener.buildFinished(aborted ? AntBuildListener.ABORTED : AntBuildListener.FINISHED_SUCCESSFULLY, errorCount);
-                      }
-                    });
+                  else if (errorCount > 0) {
+                    myTreeView.scrollToFirstError();
                   }
-                }
-              };
-              if (shouldActivate) {
-                final ToolWindow toolWindow = !myProject.isDisposed() ? ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.MESSAGES_WINDOW) : null;
-                if (toolWindow != null) { // can be null if project is closed
-                  toolWindow.activate(finishRunnable, false);
+                  else {
+                    myTreeView.scrollToStatus();
+                  }
                 }
                 else {
-                  finishRunnable.run();
+                  myTreeView.scrollToLastMessage();
                 }
+              }
+              finally {
+                VirtualFileManager.getInstance().asyncRefresh(
+                  () -> antBuildListener.buildFinished(aborted ? AntBuildListener.ABORTED : AntBuildListener.FINISHED_SUCCESSFULLY, errorCount));
+              }
+            };
+            if (shouldActivate) {
+              final ToolWindow toolWindow = !myProject.isDisposed() ? ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.MESSAGES_WINDOW) : null;
+              if (toolWindow != null) { // can be null if project is closed
+                toolWindow.activate(finishRunnable, false);
               }
               else {
                 finishRunnable.run();
               }
+            }
+            else {
+              finishRunnable.run();
             }
           });
         }
       }
     });
     //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        if (!myProject.isDisposed()) {
-          DumbService.getInstance(myProject).runWhenSmart(new Runnable() {
-            @Override
-            public void run() {
-              if (!myIsOutputPaused) {
-                new OutputFlusher().doFlush();
-              }
-            }
-          });
-        }
+    SwingUtilities.invokeLater(() -> {
+      if (!myProject.isDisposed()) {
+        DumbService.getInstance(myProject).runWhenSmart(() -> {
+          if (!myIsOutputPaused) {
+            new OutputFlusher().doFlush();
+          }
+        });
       }
     });
   }

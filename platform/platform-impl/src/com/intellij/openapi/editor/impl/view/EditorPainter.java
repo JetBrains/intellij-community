@@ -279,15 +279,12 @@ class EditorPainter implements TextDrawingCallback {
   }
 
   private void paintCustomRenderers(final Graphics2D g, final int startOffset, final int endOffset) {
-    myEditor.getMarkupModel().processRangeHighlightersOverlappingWith(startOffset, endOffset, new Processor<RangeHighlighterEx>() {
-      @Override
-      public boolean process(RangeHighlighterEx highlighter) {
-        CustomHighlighterRenderer customRenderer = highlighter.getCustomRenderer();
-        if (customRenderer != null && startOffset < highlighter.getEndOffset() && highlighter.getStartOffset() < endOffset) {
-          customRenderer.paint(myEditor, highlighter, g);
-        }
-        return true;
+    myEditor.getMarkupModel().processRangeHighlightersOverlappingWith(startOffset, endOffset, highlighter -> {
+      CustomHighlighterRenderer customRenderer = highlighter.getCustomRenderer();
+      if (customRenderer != null && startOffset < highlighter.getEndOffset() && highlighter.getStartOffset() < endOffset) {
+        customRenderer.paint(myEditor, highlighter, g);
       }
+      return true;
     });
   }
 
@@ -296,12 +293,9 @@ class EditorPainter implements TextDrawingCallback {
                                           MarkupModelEx markupModel,
                                           int startOffset,
                                           int endOffset) {
-    markupModel.processRangeHighlightersOverlappingWith(startOffset, endOffset, new Processor<RangeHighlighterEx>() {
-      @Override
-      public boolean process(RangeHighlighterEx highlighter) {
-        paintLineMarkerSeparator(highlighter, clip, g);
-        return true;
-      }
+    markupModel.processRangeHighlightersOverlappingWith(startOffset, endOffset, highlighter -> {
+      paintLineMarkerSeparator(highlighter, clip, g);
+      return true;
     });
   }
 
@@ -526,14 +520,11 @@ class EditorPainter implements TextDrawingCallback {
                                                MarkupModelEx markupModel,
                                                final int startOffset,
                                                int endOffset) {
-    markupModel.processRangeHighlightersOverlappingWith(startOffset, endOffset, new Processor<RangeHighlighterEx>() {
-      @Override
-      public boolean process(RangeHighlighterEx highlighter) {
-        if (highlighter.getStartOffset() >= startOffset) {
-          paintHighlighterAfterEndOfLine(g, highlighter);
-        }
-        return true;
+    markupModel.processRangeHighlightersOverlappingWith(startOffset, endOffset, highlighter -> {
+      if (highlighter.getStartOffset() >= startOffset) {
+        paintHighlighterAfterEndOfLine(g, highlighter);
       }
+      return true;
     });
   }
 
@@ -575,16 +566,13 @@ class EditorPainter implements TextDrawingCallback {
                                  MarkupModelEx markupModel,
                                  int clipStartOffset,
                                  int clipEndOffset) {
-    markupModel.processRangeHighlightersOverlappingWith(clipStartOffset, clipEndOffset, new Processor<RangeHighlighterEx>() {
-      @Override
-      public boolean process(RangeHighlighterEx rangeHighlighter) {
-        TextAttributes attributes = rangeHighlighter.getTextAttributes();
-        if (isBorder(attributes)) {
-          paintBorderEffect(g, clipDetector, rangeHighlighter.getAffectedAreaStartOffset(), rangeHighlighter.getAffectedAreaEndOffset(),
-                            attributes);
-        }
-        return true;
+    markupModel.processRangeHighlightersOverlappingWith(clipStartOffset, clipEndOffset, rangeHighlighter -> {
+      TextAttributes attributes = rangeHighlighter.getTextAttributes();
+      if (isBorder(attributes)) {
+        paintBorderEffect(g, clipDetector, rangeHighlighter.getAffectedAreaStartOffset(), rangeHighlighter.getAffectedAreaEndOffset(),
+                          attributes);
       }
+      return true;
     });
   }
 

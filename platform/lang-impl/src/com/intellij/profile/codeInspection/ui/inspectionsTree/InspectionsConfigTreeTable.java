@@ -158,13 +158,8 @@ public class InspectionsConfigTreeTable extends TreeTable {
       protected Transferable createTransferable(JComponent c) {
         final TreePath path = getTree().getPathForRow(getTree().getLeadSelectionRow());
         if (path != null) {
-          return new TextTransferable(StringUtil.join(ContainerUtil.mapNotNull(path.getPath(), new NullableFunction<Object, String>() {
-            @Nullable
-            @Override
-            public String fun(Object o) {
-              return o == path.getPath()[0] ? null : o.toString();
-            }
-          }), " | "));
+          return new TextTransferable(StringUtil.join(ContainerUtil.mapNotNull(path.getPath(),
+                                                                               (NullableFunction<Object, String>)o -> o == path.getPath()[0] ? null : o.toString()), " | "));
         }
         return null;
       }
@@ -221,11 +216,9 @@ public class InspectionsConfigTreeTable extends TreeTable {
     public InspectionsConfigTreeTableModel(final InspectionsConfigTreeTableSettings settings, Disposable parentDisposable) {
       super(settings.getRoot());
       mySettings = settings;
-      myUpdateRunnable = new Runnable() {
-        public void run() {
-          settings.updateRightPanel();
-          ((AbstractTableModel)myTreeTable.getModel()).fireTableDataChanged();
-        }
+      myUpdateRunnable = () -> {
+        settings.updateRightPanel();
+        ((AbstractTableModel)myTreeTable.getModel()).fireTableDataChanged();
       };
       myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, parentDisposable);
     }

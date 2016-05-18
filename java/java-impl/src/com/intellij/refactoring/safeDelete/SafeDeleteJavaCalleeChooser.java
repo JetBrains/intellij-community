@@ -38,17 +38,9 @@ abstract class SafeDeleteJavaCalleeChooser extends JavaCallerChooser {
   private final Project myProject;
 
   public SafeDeleteJavaCalleeChooser(final PsiMethod method, Project project, final ArrayList<UsageInfo> result) {
-    super(method, project, "Select Methods To Cascade Safe Delete", null, new Consumer<Set<PsiMethod>>() {
-      @Override
-      public void consume(Set<PsiMethod> methods) {
-        result.addAll(ContainerUtil.map(methods, new Function<PsiMethod, SafeDeleteReferenceJavaDeleteUsageInfo>() {
-          @Override
-          public SafeDeleteReferenceJavaDeleteUsageInfo fun(PsiMethod m) {
-            return new SafeDeleteReferenceJavaDeleteUsageInfo(m, m, true);
-          }
-        }));
-      }
-    });
+    super(method, project, "Select Methods To Cascade Safe Delete", null, methods -> result.addAll(ContainerUtil.map(methods, m -> {
+      return new SafeDeleteReferenceJavaDeleteUsageInfo(m, m, true);
+    })));
     myProject = project;
   }
 
@@ -130,11 +122,8 @@ abstract class SafeDeleteJavaCalleeChooser extends JavaCallerChooser {
     @Override
     protected List<PsiMethod> computeCallers() {
       if (getTopMethod().equals(getMethod())) {
-        return ContainerUtil.map(getTopLevelItems(), new Function<SafeDeleteMethodCalleeUsageInfo, PsiMethod>() {
-          @Override
-          public PsiMethod fun(SafeDeleteMethodCalleeUsageInfo info) {
-            return info.getCalledMethod();
-          }
+        return ContainerUtil.map(getTopLevelItems(), info -> {
+          return info.getCalledMethod();
         });
       }
 

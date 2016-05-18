@@ -41,9 +41,7 @@ public class HackSearch<T,S,Z> {
     myTZConvertor = TZConvertor;
     mySZConvertor = SZConvertor;
     myZComparator = zComparator;
-    myComparator = new Comparator<S>() {
-    @Override
-    public int compare(S o1, S o2) {
+    myComparator = (o1, o2) -> {
       Z z1 = mySZConvertor.convert(o1);
       Z z2 = mySZConvertor.convert(o2);
       if (o1 == myFake) {
@@ -52,8 +50,7 @@ public class HackSearch<T,S,Z> {
         z2 = myFakeConverted;
       }
       return myZComparator.compare(z1, z2);
-    }
-  };
+    };
   }
 
   public int search(final List<S> list, final T item) {

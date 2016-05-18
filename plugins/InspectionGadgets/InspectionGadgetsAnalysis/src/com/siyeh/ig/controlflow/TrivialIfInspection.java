@@ -154,12 +154,7 @@ public class TrivialIfInspection extends BaseInspection implements CleanupLocalI
       return;
     }
     final Collection<PsiComment> comments = ContainerUtil.map(PsiTreeUtil.findChildrenOfType(statement, PsiComment.class),
-                                                              new Function<PsiComment, PsiComment>() {
-                                                                @Override
-                                                                public PsiComment fun(PsiComment comment) {
-                                                                  return (PsiComment)comment.copy();
-                                                                }
-                                                              });
+                                                              comment -> (PsiComment)comment.copy());
     final String conditionText = condition.getText();
     final PsiStatement thenBranch = statement.getThenBranch();
     final PsiExpressionStatement assignmentStatement = (PsiExpressionStatement)ControlFlowUtils.stripBraces(thenBranch);

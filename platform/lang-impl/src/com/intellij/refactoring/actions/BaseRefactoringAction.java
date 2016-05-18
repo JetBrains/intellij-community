@@ -112,12 +112,7 @@ public abstract class BaseRefactoringAction extends AnAction {
     if (InplaceRefactoring.getActiveInplaceRenamer(editor) == null) {
       final LookupEx lookup = LookupManager.getActiveLookup(editor);
       if (lookup instanceof LookupImpl) {
-        Runnable command = new Runnable() {
-          @Override
-          public void run() {
-            ((LookupImpl)lookup).finishLookup(Lookup.NORMAL_SELECT_CHAR);
-          }
-        };
+        Runnable command = () -> ((LookupImpl)lookup).finishLookup(Lookup.NORMAL_SELECT_CHAR);
         assert editor != null;
         Document doc = editor.getDocument();
         DocCommandGroupId group = DocCommandGroupId.noneGroupId(doc);

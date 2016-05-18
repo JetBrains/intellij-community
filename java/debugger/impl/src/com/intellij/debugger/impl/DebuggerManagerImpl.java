@@ -279,12 +279,9 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
             // if processWillTerminate() is called from AWT thread debugProcess.waitFor() will block it and the whole app will hang
             if (!DebuggerManagerThreadImpl.isManagerThread()) {
               if (SwingUtilities.isEventDispatchThread()) {
-                ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-                  @Override
-                  public void run() {
-                    ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
-                    debugProcess.waitFor(10000);
-                  }
+                ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+                  ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
+                  debugProcess.waitFor(10000);
                 }, "Waiting For Debugger Response", false, debugProcess.getProject());
               }
               else {
@@ -514,43 +511,39 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
     }
     final String _debuggeeRunProperties = debuggeeRunProperties;
 
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      @SuppressWarnings({"HardCodedStringLiteral"})
-      public void run() {
-        JavaSdkUtil.addRtJar(parameters.getClassPath());
+    ApplicationManager.getApplication().runReadAction(() -> {
+      JavaSdkUtil.addRtJar(parameters.getClassPath());
 
-        final Sdk jdk = parameters.getJdk();
-        final boolean forceClassicVM = shouldForceClassicVM(jdk);
-        final boolean forceNoJIT = shouldForceNoJIT(jdk);
-        final String debugKey = System.getProperty(DEBUG_KEY_NAME, "-Xdebug");
-        final boolean needDebugKey = shouldAddXdebugKey(jdk) || !"-Xdebug".equals(debugKey) /*the key is non-standard*/;
+      final Sdk jdk = parameters.getJdk();
+      final boolean forceClassicVM = shouldForceClassicVM(jdk);
+      final boolean forceNoJIT = shouldForceNoJIT(jdk);
+      final String debugKey = System.getProperty(DEBUG_KEY_NAME, "-Xdebug");
+      final boolean needDebugKey = shouldAddXdebugKey(jdk) || !"-Xdebug".equals(debugKey) /*the key is non-standard*/;
 
-        if (forceClassicVM || forceNoJIT || needDebugKey || !isJVMTIAvailable(jdk)) {
-          parameters.getVMParametersList().replaceOrPrepend("-Xrunjdwp:", "-Xrunjdwp:" + _debuggeeRunProperties);
-        }
-        else {
-          // use newer JVMTI if available
-          parameters.getVMParametersList().replaceOrPrepend("-Xrunjdwp:", "");
-          parameters.getVMParametersList().replaceOrPrepend("-agentlib:jdwp=", "-agentlib:jdwp=" + _debuggeeRunProperties);
-        }
-
-        if (forceNoJIT) {
-          parameters.getVMParametersList().replaceOrPrepend("-Djava.compiler=", "-Djava.compiler=NONE");
-          parameters.getVMParametersList().replaceOrPrepend("-Xnoagent", "-Xnoagent");
-        }
-
-        if (needDebugKey) {
-          parameters.getVMParametersList().replaceOrPrepend(debugKey, debugKey);
-        }
-        else {
-          // deliberately skip outdated parameter because it can disable full-speed debugging for some jdk builds
-          // see http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6272174
-          parameters.getVMParametersList().replaceOrPrepend("-Xdebug", "");
-        }
-
-        parameters.getVMParametersList().replaceOrPrepend("-classic", forceClassicVM ? "-classic" : "");
+      if (forceClassicVM || forceNoJIT || needDebugKey || !isJVMTIAvailable(jdk)) {
+        parameters.getVMParametersList().replaceOrPrepend("-Xrunjdwp:", "-Xrunjdwp:" + _debuggeeRunProperties);
       }
+      else {
+        // use newer JVMTI if available
+        parameters.getVMParametersList().replaceOrPrepend("-Xrunjdwp:", "");
+        parameters.getVMParametersList().replaceOrPrepend("-agentlib:jdwp=", "-agentlib:jdwp=" + _debuggeeRunProperties);
+      }
+
+      if (forceNoJIT) {
+        parameters.getVMParametersList().replaceOrPrepend("-Djava.compiler=", "-Djava.compiler=NONE");
+        parameters.getVMParametersList().replaceOrPrepend("-Xnoagent", "-Xnoagent");
+      }
+
+      if (needDebugKey) {
+        parameters.getVMParametersList().replaceOrPrepend(debugKey, debugKey);
+      }
+      else {
+        // deliberately skip outdated parameter because it can disable full-speed debugging for some jdk builds
+        // see http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6272174
+        parameters.getVMParametersList().replaceOrPrepend("-Xdebug", "");
+      }
+
+      parameters.getVMParametersList().replaceOrPrepend("-classic", forceClassicVM ? "-classic" : "");
     });
 
     return new RemoteConnection(useSockets, "127.0.0.1", address, debuggerInServerMode);

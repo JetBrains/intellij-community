@@ -305,11 +305,8 @@ public class GrChangeSignatureDialog extends ChangeSignatureDialogBase<GrParamet
 
     final List<GrParameterInfo> infos = getParameters();
     if (!infos.isEmpty()) {
-      final List<String> paramsText = ContainerUtil.map(infos, new Function<GrParameterInfo, String>() {
-        @Override
-        public String fun(GrParameterInfo info) {
-          return generateParameterText(info);
-        }
+      final List<String> paramsText = ContainerUtil.map(infos, info -> {
+        return generateParameterText(info);
       });
       builder.append("\n").append(INDENT);
       builder.append(StringUtil.join(paramsText, ",\n" + INDENT));
@@ -320,11 +317,8 @@ public class GrChangeSignatureDialog extends ChangeSignatureDialogBase<GrParamet
     final PsiTypeCodeFragment[] exceptions = myExceptionsModel.getTypeCodeFragments();
     if (exceptions.length > 0) {
       builder.append("\nthrows\n");
-      final List<String> exceptionNames = ContainerUtil.map(exceptions, new Function<PsiTypeCodeFragment, String>() {
-        @Override
-        public String fun(PsiTypeCodeFragment fragment) {
-          return fragment.getText();
-        }
+      final List<String> exceptionNames = ContainerUtil.map(exceptions, fragment -> {
+        return fragment.getText();
       });
 
       builder.append(INDENT).append(StringUtil.join(exceptionNames, ",\n" + INDENT));

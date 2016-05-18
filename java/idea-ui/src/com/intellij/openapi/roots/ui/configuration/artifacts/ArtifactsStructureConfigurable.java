@@ -128,20 +128,17 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
                                               }, myPackagingEditorContext, false, artifact.getArtifactType())) {
       return;
     }
-    myPackagingEditorContext.editLayout(artifact, new Runnable() {
-      @Override
-      public void run() {
-        final ModifiableArtifact modifiableArtifact = myPackagingEditorContext.getOrCreateModifiableArtifactModel().getOrCreateModifiableArtifact(artifact);
-        ArtifactUtil.processPackagingElements(modifiableArtifact, LibraryElementType.LIBRARY_ELEMENT_TYPE, new PackagingElementProcessor<LibraryPackagingElement>() {
-          @Override
-          public boolean process(@NotNull LibraryPackagingElement element, @NotNull PackagingElementPath path) {
-            if (isResolvedToLibrary(element, library, oldName)) {
-              element.setLibraryName(newName);
-            }
-            return true;
+    myPackagingEditorContext.editLayout(artifact, () -> {
+      final ModifiableArtifact modifiableArtifact = myPackagingEditorContext.getOrCreateModifiableArtifactModel().getOrCreateModifiableArtifact(artifact);
+      ArtifactUtil.processPackagingElements(modifiableArtifact, LibraryElementType.LIBRARY_ELEMENT_TYPE, new PackagingElementProcessor<LibraryPackagingElement>() {
+        @Override
+        public boolean process(@NotNull LibraryPackagingElement element, @NotNull PackagingElementPath path) {
+          if (isResolvedToLibrary(element, library, oldName)) {
+            element.setLibraryName(newName);
           }
-        }, myPackagingEditorContext, false);
-      }
+          return true;
+        }
+      }, myPackagingEditorContext, false);
     });
     final ArtifactEditorImpl artifactEditor = myPackagingEditorContext.getArtifactEditor(artifact);
     if (artifactEditor != null) {

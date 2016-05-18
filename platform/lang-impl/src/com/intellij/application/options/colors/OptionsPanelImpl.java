@@ -159,12 +159,7 @@ public class OptionsPanelImpl extends JPanel implements OptionsPanel {
 
   @Override
   public Runnable showOption(final String attributeDisplayName) {
-    return new Runnable() {
-      @Override
-      public void run() {
-        myOptionsTree.selectOptionByName(attributeDisplayName);
-      }
-    };
+    return () -> myOptionsTree.selectOptionByName(attributeDisplayName);
   }
 
   @Override

@@ -56,17 +56,14 @@ public class FormEnumUsageTest extends PsiTestCase {
 
   public void testEnumUsage() throws IncorrectOperationException {
     LanguageLevelProjectExtension.getInstance(myJavaFacade.getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
-    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-      @Override
-      public void run() {
-        try {
-          createFile(myModule, myTestProjectRoot, "PropEnum.java", "public enum PropEnum { valueA, valueB }");
-          createFile(myModule, myTestProjectRoot, "CustomComponent.java",
-                     "public class CustomComponent extends JLabel { private PropEnum e; public PropEnum getE() { return e; } public void setE(E newE) { e = newE; } }");
-        }
-        catch (Exception e) {
-          fail(e.getMessage());
-        }
+    CommandProcessor.getInstance().executeCommand(myProject, () -> {
+      try {
+        createFile(myModule, myTestProjectRoot, "PropEnum.java", "public enum PropEnum { valueA, valueB }");
+        createFile(myModule, myTestProjectRoot, "CustomComponent.java",
+                   "public class CustomComponent extends JLabel { private PropEnum e; public PropEnum getE() { return e; } public void setE(E newE) { e = newE; } }");
+      }
+      catch (Exception e) {
+        fail(e.getMessage());
       }
     }, "", null);
 

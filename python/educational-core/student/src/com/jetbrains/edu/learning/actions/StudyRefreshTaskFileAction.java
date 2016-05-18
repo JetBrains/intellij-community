@@ -48,24 +48,15 @@ public class StudyRefreshTaskFileAction extends StudyActionWithShortcut {
   }
 
   public static void refresh(@NotNull final Project project) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-          @Override
-          public void run() {
-            StudyEditor studyEditor = StudyUtils.getSelectedStudyEditor(project);
-            StudyState studyState = new StudyState(studyEditor);
-            if (studyEditor == null || !studyState.isValid()) {
-              LOG.info("RefreshTaskFileAction was invoked outside of Study Editor");
-              return;
-            }
-            refreshFile(studyState, project);
-          }
-        });
+    ApplicationManager.getApplication().invokeLater(() -> ApplicationManager.getApplication().runWriteAction(() -> {
+      StudyEditor studyEditor = StudyUtils.getSelectedStudyEditor(project);
+      StudyState studyState = new StudyState(studyEditor);
+      if (studyEditor == null || !studyState.isValid()) {
+        LOG.info("RefreshTaskFileAction was invoked outside of Study Editor");
+        return;
       }
-    });
+      refreshFile(studyState, project);
+    }));
   }
 
   private static void refreshFile(@NotNull final StudyState studyState, @NotNull final Project project) {
@@ -79,12 +70,8 @@ public class StudyRefreshTaskFileAction extends StudyActionWithShortcut {
     taskFile.setHighlightErrors(false);
     StudyUtils.drawAllWindows(editor, taskFile);
     EduAnswerPlaceholderPainter.createGuardedBlocks(editor, taskFile);
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        IdeFocusManager.getInstance(project).requestFocus(editor.getContentComponent(), true);
-      }
-    });
+    ApplicationManager.getApplication().invokeLater(
+      () -> IdeFocusManager.getInstance(project).requestFocus(editor.getContentComponent(), true));
 
     StudyNavigator.navigateToFirstAnswerPlaceholder(editor, taskFile);
     showBalloon(project, "You can start again now", MessageType.INFO);
@@ -141,12 +128,7 @@ public class StudyRefreshTaskFileAction extends StudyActionWithShortcut {
   private static void clearDocument(@NotNull final Document document) {
     final int lineCount = document.getLineCount();
     if (lineCount != 0) {
-      CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
-        @Override
-        public void run() {
-          document.deleteString(0, document.getLineEndOffset(lineCount - 1));
-        }
-      });
+      CommandProcessor.getInstance().runUndoTransparentAction(() -> document.deleteString(0, document.getLineEndOffset(lineCount - 1)));
     }
   }
 

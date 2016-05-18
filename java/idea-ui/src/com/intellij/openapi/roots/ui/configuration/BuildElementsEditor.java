@@ -196,27 +196,24 @@ public class BuildElementsEditor extends ModuleElementsEditor {
     outputPathsChooserDescriptor.setHideIgnored(false);
     InsertPathAction.addTo(textField, outputPathsChooserDescriptor);
     FileChooserFactory.getInstance().installFileCompletion(textField, outputPathsChooserDescriptor, true, null);
-    final Runnable commitRunnable = new Runnable() {
-      @Override
-      public void run() {
-        if (!getModel().isWritable()) {
-          return;
+    final Runnable commitRunnable = () -> {
+      if (!getModel().isWritable()) {
+        return;
+      }
+      final String path = textField.getText().trim();
+      if (path.length() == 0) {
+        commitPathRunnable.saveUrl(null);
+      }
+      else {
+        // should set only absolute paths
+        String canonicalPath;
+        try {
+          canonicalPath = FileUtil.resolveShortWindowsName(path);
         }
-        final String path = textField.getText().trim();
-        if (path.length() == 0) {
-          commitPathRunnable.saveUrl(null);
+        catch (IOException e) {
+          canonicalPath = path;
         }
-        else {
-          // should set only absolute paths
-          String canonicalPath;
-          try {
-            canonicalPath = FileUtil.resolveShortWindowsName(path);
-          }
-          catch (IOException e) {
-            canonicalPath = path;
-          }
-          commitPathRunnable.saveUrl(VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(canonicalPath)));
-        }
+        commitPathRunnable.saveUrl(VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(canonicalPath)));
       }
     };
 

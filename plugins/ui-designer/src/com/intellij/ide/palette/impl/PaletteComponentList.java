@@ -93,20 +93,18 @@ public class PaletteComponentList extends JBList {
     addMouseListener(new PopupHandler() {
       public void invokePopup(final Component comp, final int x, final int y) {
         requestFocusInWindow();
-        SwingUtilities.invokeLater(new Runnable() {
-          public void run() {
-            int index = locationToIndex(new Point(x, y));
-            PaletteItem[] items = myGroup.getItems();
-            if (index >= 0 && index < items.length) {
-              if (getSelectedIndex() != index) {
-                addSelectionInterval(index, index);
-              }
-              PaletteItem item = items [index];
-              ActionGroup group = item.getPopupActionGroup();
-              if (group != null) {
-                ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group);
-                popupMenu.getComponent().show(comp, x, y);
-              }
+        SwingUtilities.invokeLater(() -> {
+          int index = locationToIndex(new Point(x, y));
+          PaletteItem[] items = myGroup.getItems();
+          if (index >= 0 && index < items.length) {
+            if (getSelectedIndex() != index) {
+              addSelectionInterval(index, index);
+            }
+            PaletteItem item = items [index];
+            ActionGroup group1 = item.getPopupActionGroup();
+            if (group1 != null) {
+              ActionPopupMenu popupMenu1 = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group1);
+              popupMenu1.getComponent().show(comp, x, y);
             }
           }
         });

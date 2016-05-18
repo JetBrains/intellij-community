@@ -17,7 +17,10 @@
 package com.intellij.execution.junit;
 
 import com.intellij.execution.*;
-import com.intellij.execution.configurations.*;
+import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.execution.configurations.ParametersList;
+import com.intellij.execution.configurations.RunnerSettings;
+import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.junit2.TestProxy;
 import com.intellij.execution.junit2.segments.DeferredActionsQueue;
 import com.intellij.execution.junit2.segments.DeferredActionsQueueImpl;
@@ -68,7 +71,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitConfiguration> implements RemoteConnectionCreator {
+public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitConfiguration> {
   protected static final Logger LOG = Logger.getInstance(TestObject.class);
 
   private static final String MESSAGE = ExecutionBundle.message("configuration.not.speficied.message");
@@ -76,22 +79,6 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
 
   private final JUnitConfiguration myConfiguration;
   protected File myListenersFile;
-  private RemoteConnectionCreator remoteConnectionCreator;
-
-  public void setRemoteConnectionCreator(RemoteConnectionCreator remoteConnectionCreator) {
-    this.remoteConnectionCreator = remoteConnectionCreator;
-  }
-
-  @Override
-  public RemoteConnection createRemoteConnection(ExecutionEnvironment environment) {
-    return remoteConnectionCreator == null ? null : remoteConnectionCreator.createRemoteConnection(environment);
-  }
-
-  @Override
-  public boolean isPollConnection() {
-    return remoteConnectionCreator != null && remoteConnectionCreator.isPollConnection();
-  }
-
   public static TestObject fromString(final String id,
                                       final JUnitConfiguration configuration,
                                       @NotNull ExecutionEnvironment environment) {
@@ -254,14 +241,11 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
       public void processTerminated(ProcessEvent event) {
         handler.removeProcessListener(this);
         deleteTempFiles();
-        final Runnable runnable = new Runnable() {
-          @Override
-          public void run() {
-            unboundOutputRoot.flush();
-            packetsReceiver.checkTerminated();
-            final JUnitRunningModel model = packetsReceiver.getModel();
-            notifyByBalloon(model, myStarted, consoleProperties);
-          }
+        final Runnable runnable = () -> {
+          unboundOutputRoot.flush();
+          packetsReceiver.checkTerminated();
+          final JUnitRunningModel model = packetsReceiver.getModel();
+          notifyByBalloon(model, myStarted, consoleProperties);
         };
         handler.getOut().addRequest(runnable, queue);
       }
@@ -361,11 +345,8 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
         createTempFiles(javaParameters);
       }
 
-      final Map<Module, List<String>> perModule = forkPerModule() ? new TreeMap<Module, List<String>>(new Comparator<Module>() {
-        @Override
-        public int compare(Module o1, Module o2) {
-          return StringUtil.compare(o1.getName(), o2.getName(), true);
-        }
+      final Map<Module, List<String>> perModule = forkPerModule() ? new TreeMap<Module, List<String>>((o1, o2) -> {
+        return StringUtil.compare(o1.getName(), o2.getName(), true);
       }) : null;
 
       final List<String> testNames = new ArrayList<String>();

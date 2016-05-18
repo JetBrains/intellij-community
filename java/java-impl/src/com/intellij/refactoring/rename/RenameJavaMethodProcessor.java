@@ -277,26 +277,24 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
   @Override
   public void prepareRenaming(PsiElement element, final String newName, final Map<PsiElement, String> allRenames, SearchScope scope) {
     final PsiMethod method = (PsiMethod) element;
-    OverridingMethodsSearch.search(method, scope, true).forEach(new Processor<PsiMethod>() {
-      public boolean process(PsiMethod overrider) {
-        if (overrider instanceof PsiMirrorElement) {
-          final PsiElement prototype = ((PsiMirrorElement)overrider).getPrototype();
-          if (prototype instanceof PsiMethod) {
-            overrider = (PsiMethod)prototype;
-          }
+    OverridingMethodsSearch.search(method, scope, true).forEach(overrider -> {
+      if (overrider instanceof PsiMirrorElement) {
+        final PsiElement prototype = ((PsiMirrorElement)overrider).getPrototype();
+        if (prototype instanceof PsiMethod) {
+          overrider = (PsiMethod)prototype;
         }
-
-        if (overrider instanceof SyntheticElement) return true;
-
-        final String overriderName = overrider.getName();
-        final String baseName = method.getName();
-        final String newOverriderName = RefactoringUtil.suggestNewOverriderName(overriderName, baseName, newName);
-        if (newOverriderName != null) {
-          RenameProcessor.assertNonCompileElement(overrider);
-          allRenames.put(overrider, newOverriderName);
-        }
-        return true;
       }
+
+      if (overrider instanceof SyntheticElement) return true;
+
+      final String overriderName = overrider.getName();
+      final String baseName = method.getName();
+      final String newOverriderName = RefactoringUtil.suggestNewOverriderName(overriderName, baseName, newName);
+      if (newOverriderName != null) {
+        RenameProcessor.assertNonCompileElement(overrider);
+        allRenames.put(overrider, newOverriderName);
+      }
+      return true;
     });
   }
 

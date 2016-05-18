@@ -221,11 +221,8 @@ public class FindPopupPanel extends JBPanel {
     initByModel();
     updateReplaceVisibility();
 
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        FindPopupPanel.this.scheduleResultsUpdate();
-      }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      FindPopupPanel.this.scheduleResultsUpdate();
     }, ModalityState.any());
   }
 
@@ -414,12 +411,8 @@ public class FindPopupPanel extends JBPanel {
       @Override
       public void actionPerformed(ActionEvent e) {
         FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-        FileChooser.chooseFiles(descriptor, myProject, FindPopupPanel.this, null, new Consumer<java.util.List<VirtualFile>>() {
-          @Override
-          public void consume(final java.util.List<VirtualFile> files) {
-            myDirectoryComboBox.setSelectedItem(files.get(0).getPresentableUrl());
-          }
-        });
+        FileChooser.chooseFiles(descriptor, myProject, FindPopupPanel.this, null,
+                                files -> myDirectoryComboBox.setSelectedItem(files.get(0).getPresentableUrl()));
       }
     });
 
@@ -578,12 +571,7 @@ public class FindPopupPanel extends JBPanel {
     boolean later = myUpdateResultsPopupBoundsAlarm.getActiveRequestCount() > 0;
 
     myUpdateResultsPopupBoundsAlarm.cancelAllRequests();
-    myUpdateResultsPopupBoundsAlarm.addRequest(new Runnable() {
-      @Override
-      public void run() {
-        updateResultsPopupBounds();
-      }
-    }, later? 50 : 0);
+    myUpdateResultsPopupBoundsAlarm.addRequest(() -> updateResultsPopupBounds(), later ? 50 : 0);
   }
 
   private void updateResultsPopupBounds() {
@@ -787,12 +775,7 @@ public class FindPopupPanel extends JBPanel {
     if (myFindBalloon == null || !myFindBalloon.isVisible()) return;
     if (mySearchRescheduleOnCancellationsAlarm == null || mySearchRescheduleOnCancellationsAlarm.isDisposed()) return;
     mySearchRescheduleOnCancellationsAlarm.cancelAllRequests();
-    mySearchRescheduleOnCancellationsAlarm.addRequest(new Runnable() {
-      @Override
-      public void run() {
-        findSettingsChanged();
-      }
-    }, 100);
+    mySearchRescheduleOnCancellationsAlarm.addRequest(() -> findSettingsChanged(), 100);
   }
 
   private void finishPreviousPreviewSearch() {
@@ -853,45 +836,36 @@ public class FindPopupPanel extends JBPanel {
 
         final FindUsagesProcessPresentation processPresentation =
           FindInProjectUtil.setupProcessPresentation(myProject, showPanelIfOnlyOneUsage, presentation);
-        FindInProjectUtil.findUsages(myModel.clone(), myProject, new Processor<UsageInfo>() {
-          @Override
-          public boolean process(final UsageInfo info) {
-            final Usage usage = UsageInfo2UsageAdapter.CONVERTER.fun(info);
-            usage.getPresentation().getIcon(); // cache icon
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                model.addRow(new Object[]{usage});
-                myCodePreviewComponent.setVisible(true);
-                if (model.getRowCount() == 1 && myResultsPreviewTable.getModel() == model) {
-                  myResultsPreviewTable.setRowSelectionInterval(0, 0);
-                }
-                scheduleUpdateResultsPopupBounds();
-              }
-            }, state);
-            return resultsCount.incrementAndGet() < ShowUsagesAction.USAGES_PAGE_SIZE;
-          }
+        FindInProjectUtil.findUsages(myModel.clone(), myProject, info -> {
+          final Usage usage = UsageInfo2UsageAdapter.CONVERTER.fun(info);
+          usage.getPresentation().getIcon(); // cache icon
+          ApplicationManager.getApplication().invokeLater(() -> {
+            model.addRow(new Object[]{usage});
+            myCodePreviewComponent.setVisible(true);
+            if (model.getRowCount() == 1 && myResultsPreviewTable.getModel() == model) {
+              myResultsPreviewTable.setRowSelectionInterval(0, 0);
+            }
+            scheduleUpdateResultsPopupBounds();
+          }, state);
+          return resultsCount.incrementAndGet() < ShowUsagesAction.USAGES_PAGE_SIZE;
         }, processPresentation);
         boolean succeeded = !progressIndicatorWhenSearchStarted.isCanceled();
         if (succeeded) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              if (progressIndicatorWhenSearchStarted == myResultsPreviewSearchProgress && !myResultsPreviewSearchProgress.isCanceled()) {
-                int occurrences = resultsCount.get();
-                if (occurrences == 0) myResultsPreviewTable.getEmptyText().setText(UIBundle.message("message.nothingToShow"));
-                myCodePreviewComponent.setVisible(occurrences > 0);
-                StringBuilder info = new StringBuilder();
-                if (occurrences > 0) {
-                  info.append(Math.min(ShowUsagesAction.USAGES_PAGE_SIZE, occurrences));
-                  if (occurrences >= ShowUsagesAction.USAGES_PAGE_SIZE) {
-                    info.append("+");
-                  }
-                  info.append(UIBundle.message("message.matches", occurrences));
+          ApplicationManager.getApplication().invokeLater(() -> {
+            if (progressIndicatorWhenSearchStarted == myResultsPreviewSearchProgress && !myResultsPreviewSearchProgress.isCanceled()) {
+              int occurrences = resultsCount.get();
+              if (occurrences == 0) myResultsPreviewTable.getEmptyText().setText(UIBundle.message("message.nothingToShow"));
+              myCodePreviewComponent.setVisible(occurrences > 0);
+              StringBuilder info = new StringBuilder();
+              if (occurrences > 0) {
+                info.append(Math.min(ShowUsagesAction.USAGES_PAGE_SIZE, occurrences));
+                if (occurrences >= ShowUsagesAction.USAGES_PAGE_SIZE) {
+                  info.append("+");
                 }
-                mySearchTextArea.setInfoText(info.toString());
-                scheduleUpdateResultsPopupBounds();
+                info.append(UIBundle.message("message.matches", occurrences));
               }
+              mySearchTextArea.setInfoText(info.toString());
+              scheduleUpdateResultsPopupBounds();
             }
           }, state);
         }
@@ -958,31 +932,25 @@ public class FindPopupPanel extends JBPanel {
                 if (activeWindow == balloonWindow || (activeWindow != null && activeWindow.getParent() == balloonWindow)) {
                   return Boolean.FALSE;
                 }
-                ApplicationManager.getApplication().invokeLater(new Runnable() {
-                  @Override
-                  public void run() {
-                    if (myFindBalloon != null) {
-                      Disposer.dispose(myFindBalloon);
-                      myFindBalloon = null;
-                    }
+                ApplicationManager.getApplication().invokeLater(() -> {
+                  if (myFindBalloon != null) {
+                    Disposer.dispose(myFindBalloon);
+                    myFindBalloon = null;
                   }
                 });
                 return Boolean.TRUE;
               }
             })
-            .setKeyEventHandler(new BooleanFunction<KeyEvent>() {
-              @Override
-              public boolean fun(KeyEvent event) {
-                if (AbstractPopup.isCloseRequest(event)) {
-                  canClose.set(true);
-                  myResultsPopup.cancel(event);
-                  if (myFindBalloon != null && myFindBalloon.isVisible()) {
-                    myFindBalloon.cancel();
-                  }
-                  return true;
+            .setKeyEventHandler(event -> {
+              if (AbstractPopup.isCloseRequest(event)) {
+                canClose.set(true);
+                myResultsPopup.cancel(event);
+                if (myFindBalloon != null && myFindBalloon.isVisible()) {
+                  myFindBalloon.cancel();
                 }
-                return false;
+                return true;
               }
+              return false;
             })
             .createPopup();
           RelativePoint point = new RelativePoint(FindPopupPanel.this, new Point(0, FindPopupPanel.this.getHeight()));

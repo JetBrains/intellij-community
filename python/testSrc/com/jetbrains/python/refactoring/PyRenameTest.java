@@ -293,11 +293,7 @@ public class PyRenameTest extends PyTestCase {
   }
   
   private void renameWithDocStringFormat(DocStringFormat format, final String newName) {
-    runWithDocStringFormat(format, new Runnable() {
-      public void run() {
-        doTest(newName);
-      }
-    });
+    runWithDocStringFormat(format, () -> doTest(newName));
   }
 
   private void doUnsupportedOperationTest() {

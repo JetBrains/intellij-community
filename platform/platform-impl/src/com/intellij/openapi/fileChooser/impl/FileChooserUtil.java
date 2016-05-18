@@ -90,11 +90,6 @@ public final class FileChooserUtil {
   @NotNull
   public static List<VirtualFile> getChosenFiles(@NotNull final FileChooserDescriptor descriptor,
                                                  @NotNull final List<VirtualFile> selectedFiles) {
-    return ContainerUtil.mapNotNull(selectedFiles, new NullableFunction<VirtualFile, VirtualFile>() {
-      @Override
-      public VirtualFile fun(final VirtualFile file) {
-        return file != null && file.isValid() ? descriptor.getFileToSelect(file) : null;
-      }
-    });
+    return ContainerUtil.mapNotNull(selectedFiles, (NullableFunction<VirtualFile, VirtualFile>)file -> file != null && file.isValid() ? descriptor.getFileToSelect(file) : null);
   }
 }

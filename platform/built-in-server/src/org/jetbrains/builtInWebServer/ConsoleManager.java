@@ -33,25 +33,22 @@ public final class ConsoleManager {
     netService.configureConsole(consoleBuilder);
     console = consoleBuilder.getConsole();
 
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        ActionGroup actionGroup = netService.getConsoleToolWindowActions();
-        ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actionGroup, false);
+    ApplicationManager.getApplication().invokeLater(() -> {
+      ActionGroup actionGroup = netService.getConsoleToolWindowActions();
+      ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actionGroup, false);
 
-        SimpleToolWindowPanel toolWindowPanel = new SimpleToolWindowPanel(false, true);
-        toolWindowPanel.setContent(console.getComponent());
-        toolWindowPanel.setToolbar(toolbar.getComponent());
+      SimpleToolWindowPanel toolWindowPanel = new SimpleToolWindowPanel(false, true);
+      toolWindowPanel.setContent(console.getComponent());
+      toolWindowPanel.setToolbar(toolbar.getComponent());
 
-        ToolWindow toolWindow = ToolWindowManager.getInstance(netService.getProject())
-          .registerToolWindow(netService.getConsoleToolWindowId(), false, ToolWindowAnchor.BOTTOM, netService.getProject(), true);
-        toolWindow.setIcon(netService.getConsoleToolWindowIcon());
+      ToolWindow toolWindow = ToolWindowManager.getInstance(netService.getProject())
+        .registerToolWindow(netService.getConsoleToolWindowId(), false, ToolWindowAnchor.BOTTOM, netService.getProject(), true);
+      toolWindow.setIcon(netService.getConsoleToolWindowIcon());
 
-        Content content = ContentFactory.SERVICE.getInstance().createContent(toolWindowPanel, "", false);
-        Disposer.register(content, console);
+      Content content = ContentFactory.SERVICE.getInstance().createContent(toolWindowPanel, "", false);
+      Disposer.register(content, console);
 
-        toolWindow.getContentManager().addContent(content);
-      }
+      toolWindow.getContentManager().addContent(content);
     }, netService.getProject().getDisposed());
   }
 }

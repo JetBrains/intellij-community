@@ -42,22 +42,14 @@ public class ReloadFromDiskAction extends AnAction implements DumbAware {
     int res = Messages.showOkCancelDialog(project, message, IdeBundle.message("title.reload.file"), Messages.getWarningIcon());
     if (res != Messages.OK) return;
 
-    Runnable command = new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(
-          new Runnable() {
-            @Override
-            public void run() {
-              if (!project.isDisposed()) {
-                file.getVirtualFile().refresh(false, false);
-                PsiManager.getInstance(project).reloadFromDisk(file);
-              }
-            }
-          }
-        );
+    Runnable command = () -> ApplicationManager.getApplication().runWriteAction(
+      () -> {
+        if (!project.isDisposed()) {
+          file.getVirtualFile().refresh(false, false);
+          PsiManager.getInstance(project).reloadFromDisk(file);
+        }
       }
-    };
+    );
     CommandProcessor.getInstance().executeCommand(project, command, IdeBundle.message("command.reload.from.disk"), null);
   }
 

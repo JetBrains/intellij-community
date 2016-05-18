@@ -81,23 +81,13 @@ public class Extractor implements Disposable {
     myEventsDispatcher = new OutputPacketProcessor() {
       @Override
       public void processPacket(final String packet) {
-        myFulfilledWorkGate.addLast(new Runnable() {
-          @Override
-          public void run() {
-            packetProcessor.processPacket(packet);
-          }
-        });
+        myFulfilledWorkGate.addLast(() -> packetProcessor.processPacket(packet));
       }
 
       @Override
       public void processOutput(final Printable printable) {
         LOG.assertTrue(packetProcessor instanceof OutputPacketProcessor);
-        myFulfilledWorkGate.addLast(new Runnable() {
-          @Override
-          public void run() {
-            ((OutputPacketProcessor)packetProcessor).processOutput(printable);
-          }
-        });
+        myFulfilledWorkGate.addLast(() -> ((OutputPacketProcessor)packetProcessor).processOutput(printable));
       }
     };
     myStream.setEventsDispatcher(myEventsDispatcher);
@@ -105,29 +95,25 @@ public class Extractor implements Disposable {
 
   private void scheduleTask(final DeferredActionsQueue queue, final Runnable task) {
     myTaskQueue.add(task);
-    myExecutor.execute(new Runnable() {
-      public void run() {
-        final List<Runnable> currentTasks = new ArrayList<Runnable>(MAX_TASKS_TO_PROCESS_AT_ONCE);
-        if (myTaskQueue.drainTo(currentTasks, MAX_TASKS_TO_PROCESS_AT_ONCE) > 0) {
-          // there is a requirement that these activities must be run from the swing thread
-          // will be blocking one of pooled threads here, which is ok
-          try {
-            SwingUtilities.invokeAndWait(new Runnable() {
-              public void run() {
-                for (Runnable task : currentTasks) {
-                  try {
-                    queue.addLast(task);
-                  }
-                  catch (Throwable e) {
-                    LOG.info(e);
-                  }
-                }
+    myExecutor.execute(() -> {
+      final List<Runnable> currentTasks = new ArrayList<Runnable>(MAX_TASKS_TO_PROCESS_AT_ONCE);
+      if (myTaskQueue.drainTo(currentTasks, MAX_TASKS_TO_PROCESS_AT_ONCE) > 0) {
+        // there is a requirement that these activities must be run from the swing thread
+        // will be blocking one of pooled threads here, which is ok
+        try {
+          SwingUtilities.invokeAndWait(() -> {
+            for (Runnable task1 : currentTasks) {
+              try {
+                queue.addLast(task1);
               }
-            });
-          }
-          catch (Throwable e) {
-            LOG.info("Task rejected: " + currentTasks, e);
-          }
+              catch (Throwable e) {
+                LOG.info(e);
+              }
+            }
+          });
+        }
+        catch (Throwable e) {
+          LOG.info("Task rejected: " + currentTasks, e);
         }
       }
     });

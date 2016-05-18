@@ -70,13 +70,10 @@ public class AddTypeArgumentsConditionalFix implements IntentionAction {
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final PsiTypeParameter[] typeParameters = myMethod.getTypeParameters();
-    final String typeArguments = "<" + StringUtil.join(typeParameters, new Function<PsiTypeParameter, String>() {
-      @Override
-      public String fun(PsiTypeParameter parameter) {
-        final PsiType substituteTypeParam = mySubstitutor.substitute(parameter);
-        LOG.assertTrue(substituteTypeParam != null);
-        return GenericsUtil.eliminateWildcards(substituteTypeParam).getCanonicalText();
-      }
+    final String typeArguments = "<" + StringUtil.join(typeParameters, parameter -> {
+      final PsiType substituteTypeParam = mySubstitutor.substitute(parameter);
+      LOG.assertTrue(substituteTypeParam != null);
+      return GenericsUtil.eliminateWildcards(substituteTypeParam).getCanonicalText();
     }, ", ") + ">";
     final PsiExpression expression = myExpression.getMethodExpression().getQualifierExpression();
     String withTypeArgsText;

@@ -291,12 +291,9 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider {
     private boolean myUpdateScheduled;
 
     public MyDocumentListener() {
-      myUpdateRunnable = new Runnable() {
-        @Override
-        public void run() {
-          myUpdateScheduled = false;
-          updateModifiedProperty();
-        }
+      myUpdateRunnable = () -> {
+        myUpdateScheduled = false;
+        updateModifiedProperty();
       };
     }
 

@@ -206,15 +206,12 @@ public class VfsImplUtil {
         ourHandlers.put(localPath, record);
 
         final String finalRootPath = localPath;
-        forEachDirectoryComponent(localPath, new Consumer<String>() {
-          @Override
-          public void consume(String containingDirectoryPath) {
-            Set<String> handlers = ourDominatorsMap.get(containingDirectoryPath);
-            if (handlers == null) {
-              ourDominatorsMap.put(containingDirectoryPath, handlers = ContainerUtil.newTroveSet());
-            }
-            handlers.add(finalRootPath);
+        forEachDirectoryComponent(localPath, containingDirectoryPath -> {
+          Set<String> handlers = ourDominatorsMap.get(containingDirectoryPath);
+          if (handlers == null) {
+            ourDominatorsMap.put(containingDirectoryPath, handlers = ContainerUtil.newTroveSet());
           }
+          handlers.add(finalRootPath);
         });
       }
       handler = record.second;
@@ -290,13 +287,10 @@ public class VfsImplUtil {
       Pair<ArchiveFileSystem, ArchiveHandler> handlerPair = ourHandlers.remove(path);
       if (handlerPair != null) {
         handlerPair.second.dispose();
-        forEachDirectoryComponent(path, new Consumer<String>() {
-          @Override
-          public void consume(String containingDirectoryPath) {
-            Set<String> handlers = ourDominatorsMap.get(containingDirectoryPath);
-            if (handlers != null && handlers.remove(path) && handlers.isEmpty()) {
-              ourDominatorsMap.remove(containingDirectoryPath);
-            }
+        forEachDirectoryComponent(path, containingDirectoryPath -> {
+          Set<String> handlers = ourDominatorsMap.get(containingDirectoryPath);
+          if (handlers != null && handlers.remove(path) && handlers.isEmpty()) {
+            ourDominatorsMap.remove(containingDirectoryPath);
           }
         });
 

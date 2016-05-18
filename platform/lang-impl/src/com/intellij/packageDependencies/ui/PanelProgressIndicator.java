@@ -82,24 +82,18 @@ public class PanelProgressIndicator extends ProgressIndicatorBase {
     if (myPaintInQueue) return;
     checkCanceled();
     myPaintInQueue = true;
-    myAlarm.addRequest(new Runnable() {
-      @Override
-      public void run() {
-        myAlarm.cancelAllRequests();
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            myPaintInQueue = false;
-            myProgressPanel.myTextLabel.setText(scanningPackagesMessage);
-            int fraction = (int)(ffraction * 99 + 0.5);
-            myProgressPanel.myFractionLabel.setText(fraction + "%");
-            if (fraction != -1) {
-              myProgressPanel.myFractionProgress.setValue(fraction);
-            }
-            myProgressPanel.myFractionProgress.setIndeterminate(indeterminate);
-          }
-        });
-      }
+    myAlarm.addRequest(() -> {
+      myAlarm.cancelAllRequests();
+      SwingUtilities.invokeLater(() -> {
+        myPaintInQueue = false;
+        myProgressPanel.myTextLabel.setText(scanningPackagesMessage);
+        int fraction = (int)(ffraction * 99 + 0.5);
+        myProgressPanel.myFractionLabel.setText(fraction + "%");
+        if (fraction != -1) {
+          myProgressPanel.myFractionProgress.setValue(fraction);
+        }
+        myProgressPanel.myFractionProgress.setIndeterminate(indeterminate);
+      });
     }, 10);
   }
 

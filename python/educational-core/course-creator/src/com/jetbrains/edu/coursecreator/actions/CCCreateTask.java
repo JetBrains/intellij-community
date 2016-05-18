@@ -75,14 +75,11 @@ public class CCCreateTask extends CCCreateStudyItemActionBase {
 
   @Override
   protected Function<VirtualFile, ? extends StudyItem> getStudyOrderable(@NotNull final StudyItem item) {
-    return new Function<VirtualFile, StudyItem>() {
-      @Override
-      public StudyItem fun(VirtualFile file) {
-        if (item instanceof Task) {
-          return ((Task)item).getLesson().getTask(file.getName());
-        }
-        return null;
+    return (Function<VirtualFile, StudyItem>)file -> {
+      if (item instanceof Task) {
+        return ((Task)item).getLesson().getTask(file.getName());
       }
+      return null;
     };
   }
 
@@ -93,23 +90,20 @@ public class CCCreateTask extends CCCreateStudyItemActionBase {
                                      @NotNull final Course course) {
 
     final Ref<PsiDirectory> taskDirectory = new Ref<>();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        String taskDirName = EduNames.TASK + item.getIndex();
-        taskDirectory.set(DirectoryUtil.createSubdirectories(taskDirName, parentDirectory, "\\/"));
-        if (taskDirectory.get() != null) {
-          CCLanguageManager manager = CCUtils.getStudyLanguageManager(course);
-          if (manager == null) {
-            return;
-          }
-          createFromTemplate(taskDirectory.get(), manager.getTestsTemplate(project), view, false);
-          createFromTemplate(taskDirectory.get(), FileTemplateManager.getInstance(project).getInternalTemplate(EduNames.TASK_HTML), view, false);
-          String defaultExtension = manager.getDefaultTaskFileExtension();
-          if (defaultExtension != null) {
-            FileTemplate taskFileTemplate = manager.getTaskFileTemplateForExtension(project, defaultExtension);
-            createFromTemplate(taskDirectory.get(), taskFileTemplate, view, true);
-          }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      String taskDirName = EduNames.TASK + item.getIndex();
+      taskDirectory.set(DirectoryUtil.createSubdirectories(taskDirName, parentDirectory, "\\/"));
+      if (taskDirectory.get() != null) {
+        CCLanguageManager manager = CCUtils.getStudyLanguageManager(course);
+        if (manager == null) {
+          return;
+        }
+        createFromTemplate(taskDirectory.get(), manager.getTestsTemplate(project), view, false);
+        createFromTemplate(taskDirectory.get(), FileTemplateManager.getInstance(project).getInternalTemplate(EduNames.TASK_HTML), view, false);
+        String defaultExtension = manager.getDefaultTaskFileExtension();
+        if (defaultExtension != null) {
+          FileTemplate taskFileTemplate = manager.getTaskFileTemplateForExtension(project, defaultExtension);
+          createFromTemplate(taskDirectory.get(), taskFileTemplate, view, true);
         }
       }
     });

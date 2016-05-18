@@ -161,19 +161,17 @@ public class ChooseActionsDialog extends DialogWrapper {
     myFilterComponent = new FilterComponent("KEYMAP_IN_QUICK_LISTS", 5) {
       public void filter() {
         alarm.cancelAllRequests();
-        alarm.addRequest(new Runnable() {
-          public void run() {
-            if (!myFilterComponent.isShowing()) return;
-            if (!myTreeExpansionMonitor.isFreeze()) myTreeExpansionMonitor.freeze();
-            myFilteringPanel.setShortcut(null);
-            final String filter = getFilter();
-            myActionsTree.filter(filter, myQuicklists);
-            final JTree tree = myActionsTree.getTree();
-            TreeUtil.expandAll(tree);
-            if (filter == null || filter.length() == 0) {
-              TreeUtil.collapseAll(tree, 0);
-              myTreeExpansionMonitor.restore();
-            }
+        alarm.addRequest(() -> {
+          if (!myFilterComponent.isShowing()) return;
+          if (!myTreeExpansionMonitor.isFreeze()) myTreeExpansionMonitor.freeze();
+          myFilteringPanel.setShortcut(null);
+          final String filter = getFilter();
+          myActionsTree.filter(filter, myQuicklists);
+          final JTree tree = myActionsTree.getTree();
+          TreeUtil.expandAll(tree);
+          if (filter == null || filter.length() == 0) {
+            TreeUtil.collapseAll(tree, 0);
+            myTreeExpansionMonitor.restore();
           }
         }, 300);
       }

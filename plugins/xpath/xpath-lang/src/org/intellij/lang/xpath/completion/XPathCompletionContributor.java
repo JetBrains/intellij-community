@@ -92,11 +92,8 @@ public class XPathCompletionContributor extends CompletionContributor {
         if (namespaceContext != null) {
           final String prefixForURI = namespaceContext.getPrefixForURI(XPath2Type.XMLSCHEMA_NS, parent.getXPathContext().getContextElement());
           if (prefixForURI != null && prefixForURI.length() > 0) {
-            addResult(result, ContainerUtil.map(XPath2Type.SchemaType.listSchemaTypes(), new Function<XPath2Type, Lookup>() {
-              @Override
-              public Lookup fun(XPath2Type type) {
-                return new MyLookup(prefixForURI + ":" + type.getQName().getLocalPart());
-              }
+            addResult(result, ContainerUtil.map(XPath2Type.SchemaType.listSchemaTypes(), type -> {
+              return new MyLookup(prefixForURI + ":" + type.getQName().getLocalPart());
             }), parameters.getPosition(), parameters.getOffset());
           }
         }
@@ -109,11 +106,8 @@ public class XPathCompletionContributor extends CompletionContributor {
 
         final QName qName = parent.getXPathContext().getQName(parent);
         if (qName != null && qName.getNamespaceURI().equals(XPath2Type.XMLSCHEMA_NS)) {
-          addResult(result, ContainerUtil.map(XPath2Type.SchemaType.listSchemaTypes(), new Function<XPath2Type, Lookup>() {
-            @Override
-            public Lookup fun(XPath2Type type) {
-              return new MyLookup(type.getQName().getLocalPart());
-            }
+          addResult(result, ContainerUtil.map(XPath2Type.SchemaType.listSchemaTypes(), type -> {
+            return new MyLookup(type.getQName().getLocalPart());
           }), parameters.getPosition(), parameters.getOffset());
         }
       }

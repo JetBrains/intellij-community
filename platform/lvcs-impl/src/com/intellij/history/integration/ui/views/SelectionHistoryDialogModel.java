@@ -66,12 +66,7 @@ public class SelectionHistoryDialogModel extends FileHistoryDialogModel {
       List<Revision> revisionList = new ArrayList<Revision>();
       revisionList.add(getCurrentRevision());
       
-      revisionList.addAll(ContainerUtil.map(getRevisions(), new Function<RevisionItem, Revision>() {
-        @Override
-        public Revision fun(RevisionItem revisionItem) {
-          return revisionItem.revision;
-        }
-      }));
+      revisionList.addAll(ContainerUtil.map(getRevisions(), revisionItem -> revisionItem.revision));
       myCalculatorCache = new SelectionCalculator(myGateway, revisionList, myFrom, myTo);
     }
     return myCalculatorCache;

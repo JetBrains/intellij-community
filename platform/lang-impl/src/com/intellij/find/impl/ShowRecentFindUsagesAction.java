@@ -85,12 +85,9 @@ public class ShowRecentFindUsagesAction extends AnAction {
 
         @Override
         public PopupStep onChosen(final ConfigurableUsageTarget selectedValue, final boolean finalChoice) {
-          return doFinalStep(new Runnable() {
-            @Override
-            public void run() {
-              if (selectedValue != null) {
-                findUsagesManager.rerunAndRecallFromHistory(selectedValue);
-              }
+          return doFinalStep(() -> {
+            if (selectedValue != null) {
+              findUsagesManager.rerunAndRecallFromHistory(selectedValue);
             }
           });
         }

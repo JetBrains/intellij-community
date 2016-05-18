@@ -93,11 +93,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, AccessibleCont
       public void addNotify() {
         super.addNotify();
         //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(new Runnable() {
-          public void run() {
-            JBProtocolCommand.handleCurrentCommand();
-          }
-        });
+        SwingUtilities.invokeLater(() -> JBProtocolCommand.handleCurrentCommand());
       }
     };
 
@@ -312,26 +308,23 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, AccessibleCont
         }
       });
       panel.setVisible(false);
-      myEventListener = new ParameterizedRunnable<List<NotificationType>>() {
-        @Override
-        public void run(List<NotificationType> types) {
-          NotificationType type = null;
-          for (NotificationType t : types) {
-            if (NotificationType.ERROR == t) {
-              type = NotificationType.ERROR;
-              break;
-            }
-            if (NotificationType.WARNING == t) {
-              type = NotificationType.WARNING;
-            }
-            else if (type == null && NotificationType.INFORMATION == t) {
-              type = NotificationType.INFORMATION;
-            }
+      myEventListener = types -> {
+        NotificationType type1 = null;
+        for (NotificationType t : types) {
+          if (NotificationType.ERROR == t) {
+            type1 = NotificationType.ERROR;
+            break;
           }
-
-          actionLinkRef.get().setIcon(IdeNotificationArea.createIconWithNotificationCount(actionLinkRef.get(), type, types.size()));
-          panel.setVisible(true);
+          if (NotificationType.WARNING == t) {
+            type1 = NotificationType.WARNING;
+          }
+          else if (type1 == null && NotificationType.INFORMATION == t) {
+            type1 = NotificationType.INFORMATION;
+          }
         }
+
+        actionLinkRef.get().setIcon(IdeNotificationArea.createIconWithNotificationCount(actionLinkRef.get(), type1, types.size()));
+        panel.setVisible(true);
       };
       myEventLocation = new Computable<Point>() {
         @Override
@@ -423,27 +416,19 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, AccessibleCont
 
     private AnAction wrapGroups(AnAction action) {
       if (action instanceof ActionGroup && ((ActionGroup)action).isPopup()) {
-        final Pair<JPanel, JBList> panel = createActionGroupPanel((ActionGroup)action, mySlidingPanel, new Runnable() {
-          @Override
-          public void run() {
-            goBack();
-          }
-        });
-        final Runnable onDone = new Runnable() {
-          @Override
-          public void run() {
-            setTitle("New Project");
-            final JBList list = panel.second;
-            ScrollingUtil.ensureSelectionExists(list);
-            final ListSelectionListener[] listeners =
-              ((DefaultListSelectionModel)list.getSelectionModel()).getListeners(ListSelectionListener.class);
+        final Pair<JPanel, JBList> panel = createActionGroupPanel((ActionGroup)action, mySlidingPanel, () -> goBack());
+        final Runnable onDone = () -> {
+          setTitle("New Project");
+          final JBList list = panel.second;
+          ScrollingUtil.ensureSelectionExists(list);
+          final ListSelectionListener[] listeners =
+            ((DefaultListSelectionModel)list.getSelectionModel()).getListeners(ListSelectionListener.class);
 
-            //avoid component cashing. This helps in case of LaF change
-            for (ListSelectionListener listener : listeners) {
-              listener.valueChanged(new ListSelectionEvent(list, list.getSelectedIndex(), list.getSelectedIndex(), true));
-            }
-            list.requestFocus();
+          //avoid component cashing. This helps in case of LaF change
+          for (ListSelectionListener listener : listeners) {
+            listener.valueChanged(new ListSelectionEvent(list, list.getSelectedIndex(), list.getSelectedIndex(), true));
           }
+          list.requestFocus();
         };
         final String name = action.getClass().getName();
         mySlidingPanel.add(name, panel.first);
@@ -459,12 +444,9 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, AccessibleCont
     }
 
     protected void goBack() {
-      mySlidingPanel.swipe("root", JBCardLayout.SwipeDirection.BACKWARD).doWhenDone(new Runnable() {
-        @Override
-        public void run() {
-          mySlidingPanel.getRootPane().setDefaultButton(null);
-          setTitle(getWelcomeFrameTitle());
-        }
+      mySlidingPanel.swipe("root", JBCardLayout.SwipeDirection.BACKWARD).doWhenDone(() -> {
+        mySlidingPanel.getRootPane().setDefaultButton(null);
+        setTitle(getWelcomeFrameTitle());
       });
     }
 
@@ -678,12 +660,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, AccessibleCont
   }
 
   private static Runnable createUsageTracker(final AnAction action) {
-    return new Runnable() {
-      @Override
-      public void run() {
-        UsageTrigger.trigger("welcome.screen." + ActionManager.getInstance().getId(action));
-      }
-    };
+    return () -> UsageTrigger.trigger("welcome.screen." + ActionManager.getInstance().getId(action));
   }
 
   private static JLabel createArrow(final ActionLink link) {

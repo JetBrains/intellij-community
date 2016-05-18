@@ -41,13 +41,9 @@ public abstract class DelayedRunner implements Disposable {
     if (myAlarm.isDisposed()) {
       return;
     }
-    myAlarm.addRequest(new Runnable() {
-
-      @Override
-      public void run() {
-        checkChanges();
-        queueChangesCheck();
-      }
+    myAlarm.addRequest(() -> {
+      checkChanges();
+      queueChangesCheck();
     }, CHANGES_CHECK_TIME, ModalityState.any());
   }
 

@@ -136,12 +136,9 @@ public class PropertiesCompletionContributor extends CompletionContributor {
   }
 
   public static LookupElement[] getVariants(Set<Object> variants) {
-    List<LookupElement> elements = ContainerUtil.mapNotNull(variants, new NullableFunction<Object, LookupElement>() {
-      @Override
-      public LookupElement fun(Object o) {
-        if (o instanceof String) return LookupElementBuilder.create((String)o).withIcon(PlatformIcons.PROPERTY_ICON);
-        return createVariant((IProperty)o);
-      }
+    List<LookupElement> elements = ContainerUtil.mapNotNull(variants, (NullableFunction<Object, LookupElement>)o -> {
+      if (o instanceof String) return LookupElementBuilder.create((String)o).withIcon(PlatformIcons.PROPERTY_ICON);
+      return createVariant((IProperty)o);
     });
     return elements.toArray(new LookupElement[elements.size()]);
   }

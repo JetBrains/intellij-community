@@ -47,12 +47,8 @@ public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider 
   private final List<Content> myContents = new ArrayList<Content>();
   private final Map<Content, GridCellImpl> myContent2Cell = new HashMap<Content, GridCellImpl>();
 
-  private final Comparator<Content> myContentComparator = new Comparator<Content>() {
-    @Override
-    public int compare(final Content o1, final Content o2) {
-      return getCellFor(o1).getPlaceInGrid().compareTo(getCellFor(o2).getPlaceInGrid());
-    }
-  };
+  private final Comparator<Content> myContentComparator =
+    (o1, o2) -> getCellFor(o1).getPlaceInGrid().compareTo(getCellFor(o2).getPlaceInGrid());
 
   private final ViewContextEx myViewContext;
 

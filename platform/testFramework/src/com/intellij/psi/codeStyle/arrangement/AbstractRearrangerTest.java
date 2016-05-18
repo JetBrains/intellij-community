@@ -116,11 +116,8 @@ public abstract class AbstractRearrangerTest extends LightPlatformCodeInsightFix
 
   @NotNull
   protected static StdArrangementMatchRule rule(@NotNull ArrangementSettingsToken... conditions) {
-    return rule(ContainerUtil.map(conditions, new Function<ArrangementSettingsToken, ArrangementAtomMatchCondition>() {
-      @Override
-      public ArrangementAtomMatchCondition fun(ArrangementSettingsToken it) {
-        return atom(it);
-      }
+    return rule(ContainerUtil.map(conditions, it -> {
+      return atom(it);
     }));
   }
 
@@ -171,12 +168,9 @@ public abstract class AbstractRearrangerTest extends LightPlatformCodeInsightFix
 
     final FoldingModel foldingModel = myFixture.getEditor().getFoldingModel();
     for (final FoldingInfo foldingInfo : info.foldings) {
-      foldingModel.runBatchFoldingOperation(new Runnable() {
-        @Override
-        public void run() {
-          FoldRegion region = foldingModel.addFoldRegion(foldingInfo.start, foldingInfo.end, foldingInfo.placeholder);
-          if (region != null) region.setExpanded(false);
-        }
+      foldingModel.runBatchFoldingOperation(() -> {
+        FoldRegion region = foldingModel.addFoldRegion(foldingInfo.start, foldingInfo.end, foldingInfo.placeholder);
+        if (region != null) region.setExpanded(false);
       });
     }
 

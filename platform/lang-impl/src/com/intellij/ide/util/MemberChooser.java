@@ -158,11 +158,8 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     myElementToNodeMap.clear();
     myContainerNodes.clear();
 
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        myTreeModel = buildModel();
-      }
+    ApplicationManager.getApplication().runReadAction(() -> {
+      myTreeModel = buildModel();
     });
 
     myTree.setModel(myTreeModel);

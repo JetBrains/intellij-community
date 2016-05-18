@@ -89,48 +89,43 @@ public class BackwardDependenciesBuilder extends DependenciesBuilder {
       final int fileCount = getScope().getFileCount();
       final boolean includeTestSource = getScope().isIncludeTestSource();
       final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(getProject()).getFileIndex();
-      getScope().accept(new Processor<VirtualFile>() {
-        @Override
-        public boolean process(final VirtualFile virtualFile) {
-          if (!includeTestSource && fileIndex.isInTestSourceContent(virtualFile)) {
-            return true;
-          }
-          ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-          if (indicator != null) {
-            if (indicator.isCanceled()) {
-              throw new ProcessCanceledException();
-            }
-            indicator.setText(AnalysisScopeBundle.message("package.dependencies.progress.text"));
-            indicator.setText2(getRelativeToProjectPath(virtualFile));
-            if (fileCount > 0) {
-              indicator.setFraction(((double)++myFileCount) / myTotalFileCount);
-            }
-          }
-          ApplicationManager.getApplication().runReadAction(new Runnable() {
-            public void run() {
-              PsiFile file = psiManager.findFile(virtualFile);
-              if (file != null) {
-                final PsiElement navigationElement = file.getNavigationElement();
-                if (navigationElement instanceof PsiFile) {
-                  file = (PsiFile)navigationElement;
-                }
-                final Map<PsiFile, Set<PsiFile>> dependencies = builder.getDependencies();
-                for (final PsiFile psiFile : dependencies.keySet()) {
-                  if (dependencies.get(psiFile).contains(file)) {
-                    Set<PsiFile> fileDeps = getDependencies().get(file);
-                    if (fileDeps == null) {
-                      fileDeps = new HashSet<PsiFile>();
-                      getDependencies().put(file, fileDeps);
-                    }
-                    fileDeps.add(psiFile);
-                  }
-                }
-                psiManager.dropResolveCaches();
-              }
-            }
-          });
+      getScope().accept(virtualFile -> {
+        if (!includeTestSource && fileIndex.isInTestSourceContent(virtualFile)) {
           return true;
         }
+        ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+        if (indicator != null) {
+          if (indicator.isCanceled()) {
+            throw new ProcessCanceledException();
+          }
+          indicator.setText(AnalysisScopeBundle.message("package.dependencies.progress.text"));
+          indicator.setText2(getRelativeToProjectPath(virtualFile));
+          if (fileCount > 0) {
+            indicator.setFraction(((double)++myFileCount) / myTotalFileCount);
+          }
+        }
+        ApplicationManager.getApplication().runReadAction(() -> {
+          PsiFile file = psiManager.findFile(virtualFile);
+          if (file != null) {
+            final PsiElement navigationElement = file.getNavigationElement();
+            if (navigationElement instanceof PsiFile) {
+              file = (PsiFile)navigationElement;
+            }
+            final Map<PsiFile, Set<PsiFile>> dependencies = builder.getDependencies();
+            for (final PsiFile psiFile : dependencies.keySet()) {
+              if (dependencies.get(psiFile).contains(file)) {
+                Set<PsiFile> fileDeps = getDependencies().get(file);
+                if (fileDeps == null) {
+                  fileDeps = new HashSet<PsiFile>();
+                  getDependencies().put(file, fileDeps);
+                }
+                fileDeps.add(psiFile);
+              }
+            }
+            psiManager.dropResolveCaches();
+          }
+        });
+        return true;
       });
     }
     finally {

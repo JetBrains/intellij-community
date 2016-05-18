@@ -132,24 +132,16 @@ public class I18nizeQuickFix implements LocalQuickFix, I18nQuickFixHandler {
           !FileModificationService.getInstance().prepareFileForWrite(file.getContainingFile())) return;
     }
 
-    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            try {
-              performI18nization(psiFile, PsiUtilBase.findEditor(psiFile), dialog.getLiteralExpression(), propertiesFiles, dialog.getKey(),
-                                 dialog.getValue(), dialog.getI18nizedText(), dialog.getParameters(),
-                                 dialog.getPropertyCreationHandler());
-            }
-            catch (IncorrectOperationException e) {
-              LOG.error(e);
-            }
-          }
-        });
+    CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> {
+      try {
+        performI18nization(psiFile, PsiUtilBase.findEditor(psiFile), dialog.getLiteralExpression(), propertiesFiles, dialog.getKey(),
+                           dialog.getValue(), dialog.getI18nizedText(), dialog.getParameters(),
+                           dialog.getPropertyCreationHandler());
       }
-    }, CodeInsightBundle.message("quickfix.i18n.command.name"), project);
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
+    }), CodeInsightBundle.message("quickfix.i18n.command.name"), project);
   }
 
   protected PsiElement doReplacementInJava(@NotNull final PsiFile psiFile,

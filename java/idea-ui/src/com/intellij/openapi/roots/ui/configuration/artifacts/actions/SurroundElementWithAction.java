@@ -101,17 +101,14 @@ public class SurroundElementWithAction extends LayoutTreeActionBase {
     final String baseName = PathUtil.suggestFileName(elementName);
     final CompositePackagingElement<?> newParent = type.createComposite(parent, baseName, myArtifactEditor.getContext());
     if (newParent != null) {
-      treeComponent.editLayout(new Runnable() {
-        @Override
-        public void run() {
-          for (PackagingElement<?> element : selected) {
-            newParent.addOrFindChild(ArtifactUtil.copyWithChildren(element, project));
-          }
-          for (PackagingElement<?> element : selected) {
-            parent.removeChild(element);
-          }
-          parent.addOrFindChild(newParent);
+      treeComponent.editLayout(() -> {
+        for (PackagingElement<?> element : selected) {
+          newParent.addOrFindChild(ArtifactUtil.copyWithChildren(element, project));
         }
+        for (PackagingElement<?> element : selected) {
+          parent.removeChild(element);
+        }
+        parent.addOrFindChild(newParent);
       });
       treeComponent.rebuildTree();
     }

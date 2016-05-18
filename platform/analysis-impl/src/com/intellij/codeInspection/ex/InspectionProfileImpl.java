@@ -411,13 +411,10 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   public <T extends InspectionProfileEntry> void modifyToolSettings(@NotNull final Key<T> shortNameKey,
                                                                     @NotNull final PsiElement psiElement,
                                                                     @NotNull final Consumer<T> toolConsumer) {
-    modifyProfile(new Consumer<ModifiableModel>() {
-      @Override
-      public void consume(@NotNull ModifiableModel model) {
-        InspectionProfileEntry tool = model.getUnwrappedTool(shortNameKey.toString(), psiElement);
-        //noinspection unchecked
-        toolConsumer.consume((T) tool);
-      }
+    modifyProfile(model -> {
+      InspectionProfileEntry tool = model.getUnwrappedTool(shortNameKey.toString(), psiElement);
+      //noinspection unchecked
+      toolConsumer.consume((T) tool);
     });
   }
 
@@ -659,12 +656,8 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   @NotNull
   private List<InspectionToolWrapper> createTools(Project project) {
     if (mySource != null) {
-      return ContainerUtil.map(mySource.getDefaultStates(project), new Function<ScopeToolState, InspectionToolWrapper>() {
-        @NotNull
-        @Override
-        public InspectionToolWrapper fun(@NotNull ScopeToolState state) {
-          return state.getTool();
-        }
+      return ContainerUtil.map(mySource.getDefaultStates(project), state -> {
+        return state.getTool();
       });
     }
     return myRegistrar.createTools();

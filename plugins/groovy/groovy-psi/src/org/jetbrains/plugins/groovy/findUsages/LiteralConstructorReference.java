@@ -180,11 +180,8 @@ public class LiteralConstructorReference extends PsiReferenceBase.Poly<GrListOrM
   @NotNull
   private PsiType[] getCallArgumentTypes() {
     final GrExpression[] arguments = getCallArguments();
-    return ContainerUtil.map2Array(arguments, PsiType.class, new NullableFunction<GrExpression, PsiType>() {
-      @Override
-      public PsiType fun(GrExpression grExpression) {
-        return grExpression.getType();
-      }
+    return ContainerUtil.map2Array(arguments, PsiType.class, (NullableFunction<GrExpression, PsiType>)grExpression -> {
+      return grExpression.getType();
     });
   }
 

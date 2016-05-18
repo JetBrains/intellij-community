@@ -57,12 +57,9 @@ public class PySmartStepIntoHandler extends XSmartStepIntoHandler<PySmartStepInt
     final Set<PyCallExpression> visitedCalls = Sets.newHashSet();
 
     final int line = position.getLine();
-    XDebuggerUtil.getInstance().iterateLine(mySession.getProject(), document, line, new Processor<PsiElement>() {
-      @Override
-      public boolean process(PsiElement psiElement) {
-        addVariants(document, line, psiElement, variants, visitedCalls);
-        return true;
-      }
+    XDebuggerUtil.getInstance().iterateLine(mySession.getProject(), document, line, psiElement -> {
+      addVariants(document, line, psiElement, variants, visitedCalls);
+      return true;
     });
 
     return variants;

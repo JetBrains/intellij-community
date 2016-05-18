@@ -126,12 +126,7 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
             artifactState.getPropertiesList().add(propertiesState);
           }
         }
-        Collections.sort(artifactState.getPropertiesList(), new Comparator<ArtifactPropertiesState>() {
-          @Override
-          public int compare(@NotNull ArtifactPropertiesState o1, @NotNull ArtifactPropertiesState o2) {
-            return o1.getId().compareTo(o2.getId());
-          }
-        });
+        Collections.sort(artifactState.getPropertiesList(), (o1, o2) -> o1.getId().compareTo(o2.getId()));
       }
       state.getArtifacts().add(artifactState);
     }
@@ -369,19 +364,16 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
       myModificationTracker.incModificationCount();
       final ArtifactListener publisher = myProject.getMessageBus().syncPublisher(TOPIC);
       hasChanges = !removed.isEmpty() || !added.isEmpty() || !changed.isEmpty();
-      ProjectRootManagerEx.getInstanceEx(myProject).mergeRootsChangesDuring(new Runnable() {
-        @Override
-        public void run() {
-          for (ArtifactImpl artifact : removed) {
-            publisher.artifactRemoved(artifact);
-          }
-          //it's important to send 'removed' events before 'added'. Otherwise when artifacts are reloaded from xml artifact pointers will be damaged
-          for (ArtifactImpl artifact : added) {
-            publisher.artifactAdded(artifact);
-          }
-          for (Pair<ArtifactImpl, String> pair : changed) {
-            publisher.artifactChanged(pair.getFirst(), pair.getSecond());
-          }
+      ProjectRootManagerEx.getInstanceEx(myProject).mergeRootsChangesDuring(() -> {
+        for (ArtifactImpl artifact : removed) {
+          publisher.artifactRemoved(artifact);
+        }
+        //it's important to send 'removed' events before 'added'. Otherwise when artifacts are reloaded from xml artifact pointers will be damaged
+        for (ArtifactImpl artifact : added) {
+          publisher.artifactAdded(artifact);
+        }
+        for (Pair<ArtifactImpl, String> pair : changed) {
+          publisher.artifactChanged(pair.getFirst(), pair.getSecond());
         }
       });
     }

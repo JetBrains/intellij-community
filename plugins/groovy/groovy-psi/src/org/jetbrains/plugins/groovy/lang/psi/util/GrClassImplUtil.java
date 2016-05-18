@@ -605,12 +605,7 @@ public class GrClassImplUtil {
 
   public static PsiField[] getAllFields(GrTypeDefinition grType) {
     Map<String, CandidateInfo> fieldsMap = CollectClassMembersUtil.getAllFields(grType);
-    return ContainerUtil.map2Array(fieldsMap.values(), PsiField.class, new Function<CandidateInfo, PsiField>() {
-      @Override
-      public PsiField fun(CandidateInfo entry) {
-        return (PsiField)entry.getElement();
-      }
-    });
+    return ContainerUtil.map2Array(fieldsMap.values(), PsiField.class, entry -> (PsiField)entry.getElement());
   }
 
   public static boolean isClassEquivalentTo(GrTypeDefinitionImpl definition, PsiElement another) {

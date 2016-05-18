@@ -113,12 +113,7 @@ public class JsonBySchemaCompletionTest extends CompletionTestCase {
     Assert.assertNotNull(schemaObject);
 
     final List<LookupElement> foundVariants = JsonBySchemaObjectCompletionContributor.getCompletionVariants(schemaObject, element);
-    Collections.sort(foundVariants, new Comparator<LookupElement>() {
-      @Override
-      public int compare(LookupElement o1, LookupElement o2) {
-        return o1.getLookupString().compareTo(o2.getLookupString());
-      }
-    });
+    Collections.sort(foundVariants, (o1, o2) -> o1.getLookupString().compareTo(o2.getLookupString()));
     myItems = foundVariants.toArray(new LookupElement[foundVariants.size()]);
     assertStringItems(variants);
   }

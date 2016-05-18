@@ -128,14 +128,11 @@ public class InspectionProjectProfileManagerImpl extends InspectionProjectProfil
         profiles.addAll(getProfiles());
         profiles.addAll(InspectionProfileManager.getInstance().getProfiles());
         final Application app = ApplicationManager.getApplication();
-        Runnable initInspectionProfilesRunnable = new Runnable() {
-          @Override
-          public void run() {
-            for (Profile profile : profiles) {
-              initProfileWrapper(profile);
-            }
-            fireProfilesInitialized();
+        Runnable initInspectionProfilesRunnable = () -> {
+          for (Profile profile : profiles) {
+            initProfileWrapper(profile);
           }
+          fireProfilesInitialized();
         };
         if (app.isUnitTestMode() || app.isHeadlessEnvironment()) {
           initInspectionProfilesRunnable.run();
@@ -181,17 +178,14 @@ public class InspectionProjectProfileManagerImpl extends InspectionProjectProfil
   @Override
   public void projectClosed() {
     final Application app = ApplicationManager.getApplication();
-    Runnable cleanupInspectionProfilesRunnable = new Runnable() {
-      @Override
-      public void run() {
-        for (InspectionProfileWrapper wrapper : myName2Profile.values()) {
-          wrapper.cleanup(myProject);
-        }
-        for (InspectionProfileWrapper wrapper : myAppName2Profile.values()) {
-          wrapper.cleanup(myProject);
-        }
-        fireProfilesShutdown();
+    Runnable cleanupInspectionProfilesRunnable = () -> {
+      for (InspectionProfileWrapper wrapper : myName2Profile.values()) {
+        wrapper.cleanup(myProject);
       }
+      for (InspectionProfileWrapper wrapper : myAppName2Profile.values()) {
+        wrapper.cleanup(myProject);
+      }
+      fireProfilesShutdown();
     };
     if (app.isUnitTestMode() || app.isHeadlessEnvironment()) {
       cleanupInspectionProfilesRunnable.run();

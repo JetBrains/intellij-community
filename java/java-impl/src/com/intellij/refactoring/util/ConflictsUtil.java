@@ -99,15 +99,13 @@ public class ConflictsUtil {
       }
     }
     if (aClass != null && prototype.hasModifierProperty(PsiModifier.PRIVATE)) {
-      ClassInheritorsSearch.search(aClass).forEach(new Processor<PsiClass>() {
-        @Override
-        public boolean process(PsiClass aClass) {
-          final PsiMethod[] methods = aClass.findMethodsBySignature(prototype, false);
-          for (PsiMethod method : methods) {
-            conflicts.putValue(method, "Method " + RefactoringUIUtil.getDescription(method, true) + " will override method of the base class " + RefactoringUIUtil.getDescription(aClass, false));
-          }
-          return true;
+      ClassInheritorsSearch.search(aClass).forEach(aClass1 -> {
+        final PsiMethod[] methods = aClass1.findMethodsBySignature(prototype, false);
+        for (PsiMethod method1 : methods) {
+          conflicts.putValue(method1, "Method " + RefactoringUIUtil.getDescription(method1, true) + " will override method of the base class " + RefactoringUIUtil.getDescription(
+            aClass1, false));
         }
+        return true;
       });
     }
   }

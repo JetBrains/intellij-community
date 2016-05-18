@@ -140,12 +140,7 @@ class LookupUi {
       @Override
       public void adjustmentValueChanged(AdjustmentEvent e) {
         if (myLookup.myUpdating || myLookup.isLookupDisposed()) return;
-        alarm.addRequest(new Runnable() {
-          @Override
-          public void run() {
-            myLookup.refreshUi(false, false);
-          }
-        }, 300, myModalityState);
+        alarm.addRequest(() -> myLookup.refreshUi(false, false), 300, myModalityState);
       }
     });
   }
@@ -173,17 +168,14 @@ class LookupUi {
 
     final Collection<LookupElementAction> actions = myLookup.getActionsFor(item);
     if (!actions.isEmpty()) {
-      myHintAlarm.addRequest(new Runnable() {
-        @Override
-        public void run() {
-          if (!ShowHideIntentionIconLookupAction.shouldShowLookupHint() ||
-              ((CompletionExtender)myList.getExpandableItemsHandler()).isShowing()) {
-            return;
-          }
-          myElementHint = new LookupHint();
-          myLayeredPane.add(myElementHint, 20, 0);
-          myLayeredPane.layoutHint();
+      myHintAlarm.addRequest(() -> {
+        if (!ShowHideIntentionIconLookupAction.shouldShowLookupHint() ||
+            ((CompletionExtender)myList.getExpandableItemsHandler()).isShowing()) {
+          return;
         }
+        myElementHint = new LookupHint();
+        myLayeredPane.add(myElementHint, 20, 0);
+        myLayeredPane.layoutHint();
       }, 500, myModalityState);
     }
   }
@@ -196,12 +188,9 @@ class LookupUi {
       public void focusGained(FocusEvent e) {
         final ActionCallback done = IdeFocusManager.getInstance(myProject).requestFocus(myLookup.getTopLevelEditor().getContentComponent(), true);
         IdeFocusManager.getInstance(myProject).typeAheadUntil(done);
-        new Alarm(myLookup).addRequest(new Runnable() {
-          @Override
-          public void run() {
-            if (!done.isDone()) {
-              done.setDone();
-            }
+        new Alarm(myLookup).addRequest(() -> {
+          if (!done.isDone()) {
+            done.setDone();
           }
         }, 300, myModalityState);
       }
@@ -209,12 +198,7 @@ class LookupUi {
   }
 
   void setCalculating(final boolean calculating) {
-    Runnable setVisible = new Runnable() {
-      @Override
-      public void run() {
-        myIconPanel.setVisible(myLookup.isCalculating());
-      }
-    };
+    Runnable setVisible = () -> myIconPanel.setVisible(myLookup.isCalculating());
     if (myLookup.isCalculating()) {
       new Alarm(myLookup).addRequest(setVisible, 100, myModalityState);
     } else {

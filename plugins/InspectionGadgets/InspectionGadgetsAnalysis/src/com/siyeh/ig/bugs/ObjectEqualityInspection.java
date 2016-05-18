@@ -142,12 +142,8 @@ public class ObjectEqualityInspection extends BaseInspection {
       final GlobalSearchScope scope = GlobalSearchScope.allScope(aClass.getProject());
       final PsiElementProcessor.CollectElementsWithLimit<PsiClass> processor = new PsiElementProcessor.CollectElementsWithLimit(6);
       final ProgressManager progressManager = ProgressManager.getInstance();
-      progressManager.runProcess(new Runnable() {
-        @Override
-        public void run() {
-          ClassInheritorsSearch.search(aClass, scope, true).forEach(new PsiElementProcessorAdapter<PsiClass>(processor));
-        }
-      }, null);
+      progressManager.runProcess(
+        (Runnable)() -> ClassInheritorsSearch.search(aClass, scope, true).forEach(new PsiElementProcessorAdapter<PsiClass>(processor)), null);
       if (processor.isOverflow()) {
         return false;
       }

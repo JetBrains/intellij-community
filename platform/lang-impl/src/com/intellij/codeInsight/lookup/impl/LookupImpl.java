@@ -85,12 +85,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     protected void processKeyEvent(@NotNull final KeyEvent e) {
       final char keyChar = e.getKeyChar();
       if (keyChar == KeyEvent.VK_ENTER || keyChar == KeyEvent.VK_TAB) {
-        IdeFocusManager.getInstance(myProject).requestFocus(myEditor.getContentComponent(), true).doWhenDone(new Runnable() {
-          @Override
-          public void run() {
-            IdeEventQueue.getInstance().getKeyEventDispatcher().dispatchKeyEvent(e);
-          }
-        });
+        IdeFocusManager.getInstance(myProject).requestFocus(myEditor.getContentComponent(), true).doWhenDone(
+          () -> IdeEventQueue.getInstance().getKeyEventDispatcher().dispatchKeyEvent(e));
         return;
       }
 
@@ -492,15 +488,13 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     }
 
     myFinishing = true;
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        myEditor.getDocument().startGuardedBlockChecking();
-        try {
-          insertLookupString(item, getPrefixLength(item));
-        }
-        finally {
-          myEditor.getDocument().stopGuardedBlockChecking();
-        }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      myEditor.getDocument().startGuardedBlockChecking();
+      try {
+        insertLookupString(item, getPrefixLength(item));
+      }
+      finally {
+        myEditor.getDocument().stopGuardedBlockChecking();
       }
     });
 
@@ -749,12 +743,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
         markSelectionTouched();
 
         if (clickCount == 2){
-          CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-            @Override
-            public void run() {
-              finishLookup(NORMAL_SELECT_CHAR);
-            }
-          }, "", null);
+          CommandProcessor.getInstance().executeCommand(myProject, () -> finishLookup(NORMAL_SELECT_CHAR), "", null);
         }
         return true;
       }

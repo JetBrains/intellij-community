@@ -38,17 +38,14 @@ public class BuildIcons {
     walk(root, dimToPath, root);
 
     ArrayList<Couple<Integer>> keys = new ArrayList<Couple<Integer>>(dimToPath.keySet());
-    Collections.sort(keys, new Comparator<Couple<Integer>>() {
-      @Override
-      public int compare(Couple<Integer> o1, Couple<Integer> o2) {
-        int d0 = dimToPath.get(o2).size() - dimToPath.get(o1).size();
-        if (d0 != 0) return d0;
-        int d1 = o1.first - o2.first;
-        if (d1 != 0) {
-          return d1;
-        }
-        return o1.second - o2.second;
+    Collections.sort(keys, (o1, o2) -> {
+      int d0 = dimToPath.get(o2).size() - dimToPath.get(o1).size();
+      if (d0 != 0) return d0;
+      int d1 = o1.first - o2.first;
+      if (d1 != 0) {
+        return d1;
       }
+      return o1.second - o2.second;
     });
 
     int total = 0;

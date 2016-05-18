@@ -186,12 +186,7 @@ class FindInProjectTask {
     }
 
     List<String> extensions = ContainerUtil.newArrayList(stats.elementSet());
-    Collections.sort(extensions, new Comparator<String>() {
-      @Override
-      public int compare(String o1, String o2) {
-        return stats.count(o2) - stats.count(o1);
-      }
-    });
+    Collections.sort(extensions, (o1, o2) -> stats.count(o2) - stats.count(o1));
 
     String message = "Search in " + otherFiles.size() + " files with unknown types took " + time + "ms.\n" +
                      "Mapping their extensions to an existing file type (e.g. Plain Text) might speed up the search.\n" +
@@ -240,21 +235,13 @@ class FindInProjectTask {
       });
       if (psiFile == null) continue;
 
-      int countInFile = FindInProjectUtil.processUsagesInFile(psiFile, myFindModel, new Processor<UsageInfo>() {
-        @Override
-        public boolean process(UsageInfo info) {
-          return skipProjectFile || consumer.process(info);
-        }
-      });
+      int countInFile = FindInProjectUtil.processUsagesInFile(psiFile, myFindModel, info -> skipProjectFile || consumer.process(info));
 
       if (countInFile > 0 && skipProjectFile) {
-        processPresentation.projectFileUsagesFound(new Runnable() {
-          @Override
-          public void run() {
-            FindModel model = myFindModel.clone();
-            model.setSearchInProjectFiles(true);
-            FindInProjectManager.getInstance(myProject).startFindInProject(model);
-          }
+        processPresentation.projectFileUsagesFound(() -> {
+          FindModel model = myFindModel.clone();
+          model.setSearchInProjectFiles(true);
+          FindInProjectManager.getInstance(myProject).startFindInProject(model);
         });
         continue;
       }
@@ -473,11 +460,8 @@ class FindInProjectTask {
 
       if (!keys.isEmpty()) {
         final List<VirtualFile> hits = new ArrayList<VirtualFile>();
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          @Override
-          public void run() {
-            FileBasedIndex.getInstance().getFilesWithKey(TrigramIndex.INDEX_ID, keys, Processors.cancelableCollectProcessor(hits), scope);
-          }
+        ApplicationManager.getApplication().runReadAction(() -> {
+          FileBasedIndex.getInstance().getFilesWithKey(TrigramIndex.INDEX_ID, keys, Processors.cancelableCollectProcessor(hits), scope);
         });
 
         for (VirtualFile hit : hits) {
@@ -491,14 +475,11 @@ class FindInProjectTask {
     }
 
     PsiSearchHelperImpl helper = (PsiSearchHelperImpl)PsiSearchHelper.SERVICE.getInstance(myProject);
-    helper.processFilesWithText(scope, UsageSearchContext.ANY, myFindModel.isCaseSensitive(), stringToFind, new Processor<VirtualFile>() {
-      @Override
-      public boolean process(VirtualFile file) {
-        if (myFileMask.value(file)) {
-          ContainerUtil.addIfNotNull(resultFiles, file);
-        }
-        return true;
+    helper.processFilesWithText(scope, UsageSearchContext.ANY, myFindModel.isCaseSensitive(), stringToFind, file -> {
+      if (myFileMask.value(file)) {
+        ContainerUtil.addIfNotNull(resultFiles, file);
       }
+      return true;
     });
 
     // in case our word splitting is incorrect

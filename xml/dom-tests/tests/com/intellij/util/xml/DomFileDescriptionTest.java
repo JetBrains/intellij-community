@@ -126,11 +126,8 @@ public class DomFileDescriptionTest extends DomHardCoreTestCase {
     final XmlFile file = (XmlFile)createFile("a.xml", "<b>42</b>");
 
     getDomManager().registerFileDescription(new MockDomFileDescription<MyElement>(MyElement.class, "b", file), myDisposable);
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        file.setName("b.xml");
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      file.setName("b.xml");
     });
 
     assertTrue(getDomManager().isDomFile(file));

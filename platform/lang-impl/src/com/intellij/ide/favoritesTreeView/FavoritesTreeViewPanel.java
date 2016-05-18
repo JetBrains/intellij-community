@@ -122,24 +122,21 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
     ToolTipManager.sharedInstance().registerComponent(myTree);
     final FavoritesComparator favoritesComparator =
       new FavoritesComparator(ProjectView.getInstance(project), FavoritesProjectViewPane.ID);
-    myBuilder.setNodeDescriptorComparator(new Comparator<NodeDescriptor>() {
-      @Override
-      public int compare(NodeDescriptor o1, NodeDescriptor o2) {
-        if (o1 instanceof FavoritesTreeNodeDescriptor && o2 instanceof FavoritesTreeNodeDescriptor) {
-          final FavoritesListNode listNode1 = FavoritesTreeUtil.extractParentList((FavoritesTreeNodeDescriptor)o1);
-          final FavoritesListNode listNode2 = FavoritesTreeUtil.extractParentList((FavoritesTreeNodeDescriptor)o2);
-          if (listNode1.equals(listNode2)) {
-            final Comparator<FavoritesTreeNodeDescriptor> comparator = myFavoritesManager.getCustomComparator(listNode1.getName());
-            if (comparator != null) {
-              return comparator.compare((FavoritesTreeNodeDescriptor)o1, (FavoritesTreeNodeDescriptor)o2);
-            }
-            else {
-              return favoritesComparator.compare(o1, o2);
-            }
+    myBuilder.setNodeDescriptorComparator((o1, o2) -> {
+      if (o1 instanceof FavoritesTreeNodeDescriptor && o2 instanceof FavoritesTreeNodeDescriptor) {
+        final FavoritesListNode listNode1 = FavoritesTreeUtil.extractParentList((FavoritesTreeNodeDescriptor)o1);
+        final FavoritesListNode listNode2 = FavoritesTreeUtil.extractParentList((FavoritesTreeNodeDescriptor)o2);
+        if (listNode1.equals(listNode2)) {
+          final Comparator<FavoritesTreeNodeDescriptor> comparator = myFavoritesManager.getCustomComparator(listNode1.getName());
+          if (comparator != null) {
+            return comparator.compare((FavoritesTreeNodeDescriptor)o1, (FavoritesTreeNodeDescriptor)o2);
+          }
+          else {
+            return favoritesComparator.compare(o1, o2);
           }
         }
-        return o1.getIndex() - o2.getIndex();
       }
+      return o1.getIndex() - o2.getIndex();
     });
     myTree.setCellRenderer(new NodeRenderer() {
       @Override

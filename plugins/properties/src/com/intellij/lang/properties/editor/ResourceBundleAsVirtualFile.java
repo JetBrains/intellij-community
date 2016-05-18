@@ -177,11 +177,8 @@ public class ResourceBundleAsVirtualFile extends VirtualFile {
 
   @Override
   public void refresh(boolean asynchronous, boolean recursive, Runnable postRunnable) {
-    List<VirtualFile> files = ContainerUtil.mapNotNull(myResourceBundle.getPropertiesFiles(), new Function<PropertiesFile, VirtualFile>() {
-      @Override
-      public VirtualFile fun(PropertiesFile file) {
-        return file.getVirtualFile();
-      }
+    List<VirtualFile> files = ContainerUtil.mapNotNull(myResourceBundle.getPropertiesFiles(), file -> {
+      return file.getVirtualFile();
     });
     if (!files.isEmpty()) {
       RefreshQueue.getInstance().refresh(false, false, postRunnable, files);

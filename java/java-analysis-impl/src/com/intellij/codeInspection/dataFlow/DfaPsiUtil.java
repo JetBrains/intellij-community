@@ -289,36 +289,33 @@ public class DfaPsiUtil {
     final int placeOffset = codeBlock != null? place.getTextRange().getStartOffset() : 0;
     List<PsiExpression> list = ContainerUtil.mapNotNull(
       ReferencesSearch.search(psiVariable, new LocalSearchScope(new PsiElement[] {psiVariable.getContainingFile()}, null, true)).findAll(),
-      new NullableFunction<PsiReference, PsiExpression>() {
-        @Override
-        public PsiExpression fun(final PsiReference psiReference) {
-          if (modificationRef.get()) return null;
-          final PsiElement parent = psiReference.getElement().getParent();
-          if (parent instanceof PsiAssignmentExpression) {
-            final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
-            final IElementType operation = assignmentExpression.getOperationTokenType();
-            if (assignmentExpression.getLExpression() == psiReference) {
-              if (JavaTokenType.EQ.equals(operation)) {
-                final PsiExpression rValue = assignmentExpression.getRExpression();
-                if (!literalsOnly || allOperandsAreLiterals(rValue)) {
-                  // if there's a codeBlock omit the values assigned later
-                  if (codeBlock != null && PsiTreeUtil.isAncestor(codeBlock, parent, true)
-                      && placeOffset < parent.getTextRange().getStartOffset()) {
-                    return null;
-                  }
-                  return rValue;
+      (NullableFunction<PsiReference, PsiExpression>)psiReference -> {
+        if (modificationRef.get()) return null;
+        final PsiElement parent = psiReference.getElement().getParent();
+        if (parent instanceof PsiAssignmentExpression) {
+          final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
+          final IElementType operation = assignmentExpression.getOperationTokenType();
+          if (assignmentExpression.getLExpression() == psiReference) {
+            if (JavaTokenType.EQ.equals(operation)) {
+              final PsiExpression rValue = assignmentExpression.getRExpression();
+              if (!literalsOnly || allOperandsAreLiterals(rValue)) {
+                // if there's a codeBlock omit the values assigned later
+                if (codeBlock != null && PsiTreeUtil.isAncestor(codeBlock, parent, true)
+                    && placeOffset < parent.getTextRange().getStartOffset()) {
+                  return null;
                 }
-                else {
-                  modificationRef.set(Boolean.TRUE);
-                }
+                return rValue;
               }
-              else if (JavaTokenType.PLUSEQ.equals(operation)) {
+              else {
                 modificationRef.set(Boolean.TRUE);
               }
             }
+            else if (JavaTokenType.PLUSEQ.equals(operation)) {
+              modificationRef.set(Boolean.TRUE);
+            }
           }
-          return null;
         }
+        return null;
       });
     if (modificationRef.get()) return Collections.emptyList();
     PsiExpression initializer = psiVariable.getInitializer();

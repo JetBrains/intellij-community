@@ -70,15 +70,12 @@ public class SuppressExternalTest extends UsefulTestCase {
 
   private void addAnnotationsModuleRoot() throws IOException {
     myFixture.copyDirectoryToProject("content/anno/suppressed", "content/anno/suppressed");
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        final Module module = myFixture.getModule();
-        final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-        final String url = VfsUtilCore.pathToUrl(myFixture.getTempDirPath() + "/content/anno");
-        model.getModuleExtension(JavaModuleExternalPaths.class).setExternalAnnotationUrls(new String[]{url});
-        model.commit();
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      final Module module = myFixture.getModule();
+      final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
+      final String url = VfsUtilCore.pathToUrl(myFixture.getTempDirPath() + "/content/anno");
+      model.getModuleExtension(JavaModuleExternalPaths.class).setExternalAnnotationUrls(new String[]{url});
+      model.commit();
     });
   }
 

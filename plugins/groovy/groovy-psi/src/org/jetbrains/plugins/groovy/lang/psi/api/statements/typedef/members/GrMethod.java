@@ -43,13 +43,7 @@ import java.util.Map;
 public interface GrMethod extends GrMembersDeclaration, GrNamedElement, PsiMethod, GrMember,
         GrParametersOwner, GrTopLevelDefinition, GrTypeParameterListOwner, GrDocCommentOwner {
   GrMethod[] EMPTY_ARRAY = new GrMethod[0];
-  ArrayFactory<GrMethod> ARRAY_FACTORY = new ArrayFactory<GrMethod>() {
-    @NotNull
-    @Override
-    public GrMethod[] create(int count) {
-      return new GrMethod[count];
-    }
-  };
+  ArrayFactory<GrMethod> ARRAY_FACTORY = count -> new GrMethod[count];
 
   @Nullable
   GrOpenBlock getBlock();

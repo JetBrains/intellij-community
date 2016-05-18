@@ -75,12 +75,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
   private final AbstractAction myApplyAction = new AbstractAction(CommonBundle.getApplyButtonText()) {
     @Override
     public void actionPerformed(ActionEvent event) {
-      DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
-        @Override
-        public void run() {
-          apply();
-        }
-      });
+      DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, () -> apply());
     }
   };
   private final AbstractAction myResetAction = new AbstractAction(RESET_NAME) {
@@ -247,12 +242,9 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
   final ActionCallback select(final Configurable configurable) {
     assert !myDisposed : "Already disposed";
     ActionCallback callback = myCardPanel.select(configurable, false);
-    callback.doWhenDone(new Runnable() {
-      @Override
-      public void run() {
-        myConfigurable = configurable;
-        updateCurrent(configurable, false);
-      }
+    callback.doWhenDone(() -> {
+      myConfigurable = configurable;
+      updateCurrent(configurable, false);
     });
     return callback;
   }

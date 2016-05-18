@@ -83,21 +83,18 @@ public class GroupByWordPrefixes implements Grouper, Sorter {
       List<String> words = StringUtil.split(text, mySeparator);
       keys.add(new Key(words, element));
     }
-    Collections.sort(keys, new Comparator<Key>() {
-      @Override
-      public int compare(final Key k1, final Key k2) {
-        List<String> o1 = k1.words;
-        List<String> o2 = k2.words;
-        for (int i = 0; i < Math.max(o1.size(), o2.size()); i++) {
-          if (i == o1.size()) return 1;
-          if (i == o2.size()) return -1;
-          String s1 = o1.get(i);
-          String s2 = o2.get(i);
-          int res = s1.compareTo(s2);
-          if (res != 0) return res;
-        }
-        return 0;
+    Collections.sort(keys, (k1, k2) -> {
+      List<String> o1 = k1.words;
+      List<String> o2 = k2.words;
+      for (int i = 0; i < Math.max(o1.size(), o2.size()); i++) {
+        if (i == o1.size()) return 1;
+        if (i == o2.size()) return -1;
+        String s1 = o1.get(i);
+        String s2 = o2.get(i);
+        int res = s1.compareTo(s2);
+        if (res != 0) return res;
       }
+      return 0;
     });
     List<Group> groups = new ArrayList<Group>();
     int groupStart = 0;

@@ -58,11 +58,8 @@ public final class CommanderSelectInTarget extends SelectInTargetPsiWrapper {
 
     final PsiElement _element = element.getOriginalElement();
 
-    selectElementInCommander(new Runnable() {
-      public void run() {
-        Commander.getInstance(myProject).selectElementInLeftPanel(_element, PsiUtilBase.getVirtualFile(_element));
-      }
-    }, requestFocus);
+    selectElementInCommander(
+      () -> Commander.getInstance(myProject).selectElementInLeftPanel(_element, PsiUtilBase.getVirtualFile(_element)), requestFocus);
   }
 
   private void selectElementInCommander(final Runnable runnable, final boolean requestFocus) {
@@ -76,11 +73,9 @@ public final class CommanderSelectInTarget extends SelectInTargetPsiWrapper {
   }
 
   protected void select(final Object selector, final VirtualFile virtualFile, final boolean requestFocus) {
-    selectElementInCommander(new Runnable() {
-      public void run() {
-        final Commander commander = Commander.getInstance(myProject);
-        commander.selectElementInLeftPanel(selector, virtualFile);
-      }
+    selectElementInCommander(() -> {
+      final Commander commander = Commander.getInstance(myProject);
+      commander.selectElementInLeftPanel(selector, virtualFile);
     }, requestFocus);
 
   }

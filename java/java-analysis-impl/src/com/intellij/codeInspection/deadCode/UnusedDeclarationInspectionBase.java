@@ -100,12 +100,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
         LOG.error(e);
       }
     }
-    Collections.sort(deadCodeAddIns, new Comparator<EntryPoint>() {
-      @Override
-      public int compare(final EntryPoint o1, final EntryPoint o2) {
-        return o1.getDisplayName().compareToIgnoreCase(o2.getDisplayName());
-      }
-    });
+    Collections.sort(deadCodeAddIns, (o1, o2) -> o1.getDisplayName().compareToIgnoreCase(o2.getDisplayName()));
     myExtensions.addAll(deadCodeAddIns);
     myEnabledInEditor = enabledInEditor;
   }

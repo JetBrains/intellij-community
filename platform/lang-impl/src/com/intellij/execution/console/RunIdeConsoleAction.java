@@ -86,17 +86,13 @@ public class RunIdeConsoleAction extends DumbAwareAction {
     }
 
     DefaultActionGroup actions = new DefaultActionGroup(
-      ContainerUtil.map(languages, new NotNullFunction<String, AnAction>() {
-        @NotNull
-        @Override
-        public AnAction fun(final String language) {
-          return new DumbAwareAction(language) {
-            @Override
-            public void actionPerformed(@NotNull AnActionEvent e) {
-              runConsole(e, language);
-            }
-          };
-        }
+      ContainerUtil.map(languages, (NotNullFunction<String, AnAction>)language -> {
+        return new DumbAwareAction(language) {
+          @Override
+          public void actionPerformed(@NotNull AnActionEvent e1) {
+            runConsole(e1, language);
+          }
+        };
       })
     );
     JBPopupFactory.getInstance().createActionGroupPopup("Script Engine", actions, e.getDataContext(), JBPopupFactory.ActionSelectionAid.NUMBERING, false).

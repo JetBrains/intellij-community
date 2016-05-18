@@ -85,12 +85,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
 
   void addNode(@NotNull final DefaultMutableTreeNode node, @NotNull Consumer<Runnable> edtQueue) {
     if (!getBuilder().isDetachedMode()) {
-      edtQueue.consume(new Runnable() {
-        @Override
-        public void run() {
-          myTreeModel.insertNodeInto(node, GroupNode.this, getNodeInsertionIndex(node));
-        }
-      });
+      edtQueue.consume(() -> myTreeModel.insertNodeInto(node, GroupNode.this, getNodeInsertionIndex(node)));
     }
   }
 
@@ -205,12 +200,9 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
     }
 
     if (!getBuilder().isDetachedMode()) {
-      edtQueue.consume(new Runnable() {
-        @Override
-        public void run() {
-          myTreeModel.insertNodeInto(node, GroupNode.this, getNodeIndex(node));
-          incrementUsageCount();
-        }
+      edtQueue.consume(() -> {
+        myTreeModel.insertNodeInto(node, GroupNode.this, getNodeIndex(node));
+        incrementUsageCount();
       });
     }
     return node;

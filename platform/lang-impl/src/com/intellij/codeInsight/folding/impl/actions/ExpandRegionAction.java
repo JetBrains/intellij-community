@@ -48,21 +48,18 @@ public class ExpandRegionAction extends EditorAction {
     foldingManager.updateFoldRegions(editor);
 
     final int line = editor.getDocument().getLineNumber(offset);
-    Runnable processor = new Runnable() {
-      @Override
-      public void run() {
-        FoldRegion region = FoldingUtil.findFoldRegionStartingAtLine(editor, line);
-        if (region != null && !region.isExpanded()){
-          region.setExpanded(true);
-        }
-        else{
-          FoldRegion[] regions = FoldingUtil.getFoldRegionsAtOffset(editor, offset);
-          for(int i = regions.length - 1; i >= 0; i--){
-            region = regions[i];
-            if (!region.isExpanded()){
-              region.setExpanded(true);
-              break;
-            }
+    Runnable processor = () -> {
+      FoldRegion region = FoldingUtil.findFoldRegionStartingAtLine(editor, line);
+      if (region != null && !region.isExpanded()){
+        region.setExpanded(true);
+      }
+      else{
+        FoldRegion[] regions = FoldingUtil.getFoldRegionsAtOffset(editor, offset);
+        for(int i = regions.length - 1; i >= 0; i--){
+          region = regions[i];
+          if (!region.isExpanded()){
+            region.setExpanded(true);
+            break;
           }
         }
       }

@@ -163,15 +163,12 @@ public class JavaScratchCompilationSupport implements ProjectComponent, CompileT
         }
       };
 
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        @Override
-        public void run() {
-          for (String s : orderEnumerator.compute().compileOnly().recursively().exportedOnly().withoutSdk().getPathsList().getPathList()) {
-            cp.add(new File(s));
-          }
-          for (String s : orderEnumerator.compute().compileOnly().sdkOnly().getPathsList().getPathList()) {
-            platformCp.add(new File(s));
-          }
+      ApplicationManager.getApplication().runReadAction(() -> {
+        for (String s : orderEnumerator.compute().compileOnly().recursively().exportedOnly().withoutSdk().getPathsList().getPathList()) {
+          cp.add(new File(s));
+        }
+        for (String s : orderEnumerator.compute().compileOnly().sdkOnly().getPathsList().getPathList()) {
+          platformCp.add(new File(s));
         }
       });
 

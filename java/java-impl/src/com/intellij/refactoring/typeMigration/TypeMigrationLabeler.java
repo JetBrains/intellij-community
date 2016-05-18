@@ -128,12 +128,7 @@ public class TypeMigrationLabeler {
 
   public UsageInfo[] getFailedUsages(final TypeMigrationUsageInfo root) {
     return map2Usages(ContainerUtil.mapNotNull(myFailedConversions.entrySet(),
-                                               new Function<Map.Entry<Pair<SmartPsiElementPointer<PsiExpression>, PsiType>, TypeMigrationUsageInfo>, Pair<SmartPsiElementPointer<PsiExpression>, PsiType>>() {
-                                                 @Override
-                                                 public Pair<SmartPsiElementPointer<PsiExpression>, PsiType> fun(Map.Entry<Pair<SmartPsiElementPointer<PsiExpression>, PsiType>, TypeMigrationUsageInfo> entry) {
-                                                   return entry.getValue().equals(root) ? entry.getKey() : null;
-                                                 }
-                                               }));
+                                               entry -> entry.getValue().equals(root) ? entry.getKey() : null));
   }
 
   public UsageInfo[] getFailedUsages() {
@@ -143,9 +138,7 @@ public class TypeMigrationLabeler {
   @NotNull
   private static UsageInfo[] map2Usages(Collection<Pair<SmartPsiElementPointer<PsiExpression>, PsiType>> usages) {
     return ContainerUtil
-      .map2Array(usages, new UsageInfo[usages.size()], new Function<Pair<SmartPsiElementPointer<PsiExpression>, PsiType>, UsageInfo>() {
-      @Override
-      public UsageInfo fun(final Pair<SmartPsiElementPointer<PsiExpression>, PsiType> pair) {
+      .map2Array(usages, new UsageInfo[usages.size()], pair -> {
         final PsiExpression expr = pair.getFirst().getElement();
         LOG.assertTrue(expr != null);
         return new UsageInfo(expr) {
@@ -157,8 +150,7 @@ public class TypeMigrationLabeler {
                    type.getCanonicalText() + " to " + pair.getSecond().getCanonicalText();
           }
         };
-      }
-    });
+      });
   }
 
   public TypeMigrationUsageInfo[] getMigratedUsages() {
@@ -216,11 +208,8 @@ public class TypeMigrationLabeler {
           final Set<TypeMigrationUsageInfo> infos = new HashSet<TypeMigrationUsageInfo>();
           for (Map.Entry<TypeMigrationUsageInfo, HashSet<Pair<TypeMigrationUsageInfo, PsiType>>> entry : myRootsTree.entrySet()) {
             infos.add(entry.getKey());
-            infos.addAll(ContainerUtil.map(entry.getValue(), new Function<Pair<TypeMigrationUsageInfo, PsiType>, TypeMigrationUsageInfo>() {
-              @Override
-              public TypeMigrationUsageInfo fun(Pair<TypeMigrationUsageInfo, PsiType> pair) {
-                return pair.getFirst();
-              }
+            infos.addAll(ContainerUtil.map(entry.getValue(), pair -> {
+              return pair.getFirst();
             }));
           }
           return infos;
@@ -233,49 +222,43 @@ public class TypeMigrationLabeler {
             return Collections.<TypeMigrationUsageInfo>emptyList().iterator();
           }
           final List<TypeMigrationUsageInfo> in =
-            ContainerUtil.map(rawNodes, new Function<Pair<TypeMigrationUsageInfo, PsiType>, TypeMigrationUsageInfo>() {
-              @Override
-              public TypeMigrationUsageInfo fun(Pair<TypeMigrationUsageInfo, PsiType> pair) {
-                return pair.getFirst();
-              }
+            ContainerUtil.map(rawNodes, pair -> {
+              return pair.getFirst();
             });
           return in.iterator();
         }
       }));
     final Comparator<TypeMigrationUsageInfo> cmp = builder.comparator();
 
-    Arrays.sort(infos, new Comparator<TypeMigrationUsageInfo>() {
-      @Override
-      public int compare(final TypeMigrationUsageInfo info1, final TypeMigrationUsageInfo info2) {
-        final TypeMigrationUsageInfo i1 = info1.getOwnerRoot();
-        final TypeMigrationUsageInfo i2 = info2.getOwnerRoot();
-        if (i1 == null && i2 == null) {
-          return 0;
-        }
-        if (i1 == null) {
-          return 1;
-        }
-        if (i2 == null) {
-          return -1;
-        }
-        final PsiElement element1 = info1.getElement();
-        final PsiElement element2 = info2.getElement();
-        LOG.assertTrue(element1 != null && element2 != null);
-        final TextRange range1 = element1.getTextRange();
-        final TextRange range2 = element2.getTextRange();
-        if (range1.contains(range2)) {
-          return 1;
-        }
-        if (range2.contains(range1)) {
-          return -1;
-        }
-
-        final int res = cmp.compare(i1, i2);
-        if (res != 0) {
-          return res;
-        }
-        return range2.getStartOffset() - range1.getStartOffset();
+    Arrays.sort(infos, (info1, info2) -> {
+      final TypeMigrationUsageInfo i1 = info1.getOwnerRoot();
+      final TypeMigrationUsageInfo i2 = info2.getOwnerRoot();
+      if (i1 == null && i2 == null) {
+        return 0;
       }
+      if (i1 == null) {
+        return 1;
+      }
+      if (i2 == null) {
+        return -1;
+      }
+      final PsiElement element1 = info1.getElement();
+      final PsiElement element2 = info2.getElement();
+      LOG.assertTrue(element1 != null && element2 != null);
+      final TextRange range1 = element1.getTextRange();
+      final TextRange range2 = element2.getTextRange();
+      if (range1.contains(range2)) {
+        return 1;
+      }
+      if (range2.contains(range1)) {
+        return -1;
+      }
+
+      final int res = cmp.compare(i1, i2);
+      if (res != 0) {
+        return res;
+      }
+      return range2.getStartOffset() - range1.getStartOffset();
     });
 
     return infos;
@@ -760,14 +743,12 @@ public class TypeMigrationLabeler {
       myShowWarning = false;
       myDialogSemaphore.down();
       try {
-        final Runnable checkTimeToStopRunnable = new Runnable() {
-          public void run() {
-            if (Messages.showYesNoCancelDialog("Found more than 10 roots to migrate. Do you want to preview?", "Type Migration",
-                                               Messages.getWarningIcon()) == Messages.YES) {
-              myException = new MigrateException();
-            }
-            myDialogSemaphore.up();
+        final Runnable checkTimeToStopRunnable = () -> {
+          if (Messages.showYesNoCancelDialog("Found more than 10 roots to migrate. Do you want to preview?", "Type Migration",
+                                             Messages.getWarningIcon()) == Messages.YES) {
+            myException = new MigrateException();
           }
+          myDialogSemaphore.up();
         };
         SwingUtilities.invokeLater(checkTimeToStopRunnable);
       }
@@ -877,11 +858,7 @@ public class TypeMigrationLabeler {
       }
     }
 
-    Collections.sort(validReferences, new Comparator<PsiReference>() {
-      public int compare(final PsiReference o1, final PsiReference o2) {
-        return o1.getElement().getTextOffset() - o2.getElement().getTextOffset();
-      }
-    });
+    Collections.sort(validReferences, (o1, o2) -> o1.getElement().getTextOffset() - o2.getElement().getTextOffset());
 
     return validReferences.toArray(new PsiReference[validReferences.size()]);
   }
@@ -1098,11 +1075,7 @@ public class TypeMigrationLabeler {
       }
     }
 
-    Arrays.sort(conversions, new Comparator<String>() {
-      public int compare(String x, String y) {
-        return x.compareTo(y);
-      }
-    });
+    Arrays.sort(conversions, (x, y) -> x.compareTo(y));
 
     for (String conversion : conversions) {
       buffer.append(conversion);
@@ -1118,11 +1091,7 @@ public class TypeMigrationLabeler {
       newChanges[k++] = (element != null ? element.getText() : entry.getKey()) + " -> " + entry.getValue().getCanonicalText() + "\n";
     }
 
-    Arrays.sort(newChanges, new Comparator<String>() {
-      public int compare(String x, String y) {
-        return x.compareTo(y);
-      }
-    });
+    Arrays.sort(newChanges, (x, y) -> x.compareTo(y));
 
     for (String change : newChanges) {
       buffer.append(change);
@@ -1132,13 +1101,11 @@ public class TypeMigrationLabeler {
 
     final ArrayList<Pair<SmartPsiElementPointer<PsiExpression>, PsiType>>
       failsList = new ArrayList<Pair<SmartPsiElementPointer<PsiExpression>, PsiType>>(myFailedConversions.keySet());
-    Collections.sort(failsList, new Comparator<Pair<SmartPsiElementPointer<PsiExpression>, PsiType>>() {
-      public int compare(final Pair<SmartPsiElementPointer<PsiExpression>, PsiType> o1, final Pair<SmartPsiElementPointer<PsiExpression>, PsiType> o2) {
-        final PsiElement element1 = o1.getFirst().getElement();
-        final PsiElement element2 = o2.getFirst().getElement();
-        if (element1 == null || element2 == null) return 0;
-        return element1.getText().compareTo(element2.getText());
-      }
+    Collections.sort(failsList, (o1, o2) -> {
+      final PsiElement element1 = o1.getFirst().getElement();
+      final PsiElement element2 = o2.getFirst().getElement();
+      if (element1 == null || element2 == null) return 0;
+      return element1.getText().compareTo(element2.getText());
     });
 
     for (final Pair<SmartPsiElementPointer<PsiExpression>, PsiType> p : failsList) {

@@ -50,12 +50,10 @@ public abstract class AbstractGuiEditorAction extends AnAction implements DumbAw
       if (myModifying) {
         if (!editor.ensureEditable()) return;
       }
-      Runnable runnable = new Runnable() {
-        public void run() {
-          actionPerformed(editor, selection, e);
-          if (myModifying) {
-            editor.refreshAndSave(true);
-          }
+      Runnable runnable = () -> {
+        actionPerformed(editor, selection, e);
+        if (myModifying) {
+          editor.refreshAndSave(true);
         }
       };
       if (getCommandName() != null) {

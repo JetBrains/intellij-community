@@ -260,15 +260,12 @@ public class JUnitUtil {
       assert containingClass != null : psiMethod + "; " + psiMethod.getClass() + "; " + psiMethod.getParent();
       if (containingClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
         final boolean[] foundNonAbstractInheritor = new boolean[1];
-        ClassInheritorsSearch.search(containingClass).forEach(new Processor<PsiClass>() {
-          @Override
-          public boolean process(PsiClass psiClass) {
-            if (!psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
-              foundNonAbstractInheritor[0] = true;
-              return false;
-            }
-            return true;
+        ClassInheritorsSearch.search(containingClass).forEach(psiClass -> {
+          if (!psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+            foundNonAbstractInheritor[0] = true;
+            return false;
           }
+          return true;
         });
         if (foundNonAbstractInheritor[0]) {
           return true;

@@ -45,12 +45,7 @@ public class PluginsAdvertiserDialog extends DialogWrapper {
   PluginsAdvertiserDialog(@Nullable Project project, PluginDownloader[] plugins, List<PluginId> allPlugins) {
     super(project);
     myProject = project;
-    Arrays.sort(plugins, new Comparator<PluginDownloader>() {
-      @Override
-      public int compare(PluginDownloader o1, PluginDownloader o2) {
-        return o1.getPluginName().compareToIgnoreCase(o2.getPluginName());
-      }
-    });
+    Arrays.sort(plugins, (o1, o2) -> o1.getPluginName().compareToIgnoreCase(o2.getPluginName()));
     myUploadedPlugins = plugins;
     myAllPlugins = allPlugins;
     setTitle("Choose Plugins to Install or Enable");
@@ -93,12 +88,7 @@ public class PluginsAdvertiserDialog extends DialogWrapper {
 
     PluginManagerMain.suggestToEnableInstalledDependantPlugins(pluginHelper, nodes);
 
-    final Runnable notifyRunnable = new Runnable() {
-      @Override
-      public void run() {
-        PluginManagerMain.notifyPluginsUpdated(myProject);
-      }
-    };
+    final Runnable notifyRunnable = () -> PluginManagerMain.notifyPluginsUpdated(myProject);
     for (String pluginId : pluginsToEnable) {
       PluginManagerCore.enablePlugin(pluginId);
     }

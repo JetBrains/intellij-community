@@ -86,20 +86,17 @@ public class JsonSchemaReadTest {
     final AtomicReference<IOException> error = new AtomicReference<>();
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
-    final Thread thread = new Thread(new Runnable() {
-      @Override
-      public void run() {
-        final JsonSchemaReader reader = new JsonSchemaReader(null);
-        try {
-          reader.read(new FileReader(file), null);
-          done.set(true);
-        }
-        catch (IOException e) {
-          error.set(e);
-        }
-        finally {
-          semaphore.up();
-        }
+    final Thread thread = new Thread(() -> {
+      final JsonSchemaReader reader = new JsonSchemaReader(null);
+      try {
+        reader.read(new FileReader(file), null);
+        done.set(true);
+      }
+      catch (IOException e) {
+        error.set(e);
+      }
+      finally {
+        semaphore.up();
       }
     }, getClass().getName() + ": read test json schema " + file.getName());
     thread.setDaemon(true);

@@ -36,12 +36,7 @@ public class MoveProjectToGroupActionGroup extends DefaultActionGroup implements
   public void update(AnActionEvent e) {
     removeAll();
     final List<ProjectGroup> groups = new ArrayList<ProjectGroup>(RecentProjectsManager.getInstance().getGroups());
-    Collections.sort(groups, new Comparator<ProjectGroup>() {
-      @Override
-      public int compare(ProjectGroup o1, ProjectGroup o2) {
-        return StringUtil.naturalCompare(o1.getName(), o2.getName());
-      }
-    });
+    Collections.sort(groups, (o1, o2) -> StringUtil.naturalCompare(o1.getName(), o2.getName()));
     for (ProjectGroup group : groups) {
       add(new MoveProjectToGroupAction(group));
     }

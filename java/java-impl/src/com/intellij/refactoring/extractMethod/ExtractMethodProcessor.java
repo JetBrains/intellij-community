@@ -462,20 +462,18 @@ public class ExtractMethodProcessor implements MatchProvider {
       final boolean classExtracted = isExtractedElement(localClass);
       final List<PsiElement> extractedReferences = Collections.synchronizedList(new ArrayList<PsiElement>());
       final List<PsiElement> remainingReferences = Collections.synchronizedList(new ArrayList<PsiElement>());
-      ReferencesSearch.search(localClass).forEach(new Processor<PsiReference>() {
-        public boolean process(final PsiReference psiReference) {
-          final PsiElement element = psiReference.getElement();
-          final boolean elementExtracted = isExtractedElement(element);
-          if (elementExtracted && !classExtracted) {
-            extractedReferences.add(element);
-            return false;
-          }
-          if (!elementExtracted && classExtracted) {
-            remainingReferences.add(element);
-            return false;
-          }
-          return true;
+      ReferencesSearch.search(localClass).forEach(psiReference -> {
+        final PsiElement element = psiReference.getElement();
+        final boolean elementExtracted = isExtractedElement(element);
+        if (elementExtracted && !classExtracted) {
+          extractedReferences.add(element);
+          return false;
         }
+        if (!elementExtracted && classExtracted) {
+          remainingReferences.add(element);
+          return false;
+        }
+        return true;
       });
       if (!extractedReferences.isEmpty()) {
         throw new PrepareFailedException("Cannot extract method because the selected code fragment uses local classes defined outside of the fragment", extractedReferences.get(0));
@@ -620,11 +618,8 @@ public class ExtractMethodProcessor implements MatchProvider {
         return statement instanceof PsiReturnStatement && ((PsiReturnStatement)statement).getReturnValue() != null;
       }
     });
-    final List<PsiExpression> map = ContainerUtil.map(filter, new Function<PsiStatement, PsiExpression>() {
-      @Override
-      public PsiExpression fun(PsiStatement statement) {
-        return ((PsiReturnStatement)statement).getReturnValue();
-      }
+    final List<PsiExpression> map = ContainerUtil.map(filter, statement -> {
+      return ((PsiReturnStatement)statement).getReturnValue();
     });
     return map.toArray(new PsiExpression[map.size()]);
   }
@@ -672,16 +667,13 @@ public class ExtractMethodProcessor implements MatchProvider {
 
       final String nameByComment = getNameByComment();
       final PsiField field = JavaPsiFacade.getElementFactory(myProject).createField("fieldNameToReplace", myReturnType instanceof PsiEllipsisType ? ((PsiEllipsisType)myReturnType).toArrayType() : myReturnType);
-      final List<String> getters = new ArrayList<String>(ContainerUtil.map(initialMethodNames, new Function<String, String>() {
-        @Override
-        public String fun(String propertyName) {
-          if (!PsiNameHelper.getInstance(myProject).isIdentifier(propertyName)) {
-            LOG.info(propertyName + "; " + myExpression);
-            return null;
-          }
-          field.setName(propertyName);
-          return GenerateMembersUtil.suggestGetterName(field);
+      final List<String> getters = new ArrayList<String>(ContainerUtil.map(initialMethodNames, propertyName -> {
+        if (!PsiNameHelper.getInstance(myProject).isIdentifier(propertyName)) {
+          LOG.info(propertyName + "; " + myExpression);
+          return null;
         }
+        field.setName(propertyName);
+        return GenerateMembersUtil.suggestGetterName(field);
       }));
       ContainerUtil.addIfNotNull(nameByComment, getters);
       return ArrayUtil.toStringArray(getters);
@@ -790,22 +782,14 @@ public class ExtractMethodProcessor implements MatchProvider {
                                         GlobalSearchScope.projectScope(myProject);
 
     final Map<PsiMethodCallExpression, PsiMethod> overloadsResolveMap = new HashMap<PsiMethodCallExpression, PsiMethod>();
-    final Runnable collectOverloads = new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          public void run() {
-            Map<PsiMethodCallExpression, PsiMethod> overloads =
-              ExtractMethodUtil.encodeOverloadTargets(myTargetClass, processConflictsScope, myMethodName, myCodeFragmentMember);
-            overloadsResolveMap.putAll(overloads);
-          }
-        });
-      }
-    };
-    final Runnable extract = new Runnable() {
-      public void run() {
-        doExtract();
-        ExtractMethodUtil.decodeOverloadTargets(overloadsResolveMap, myExtractedMethod, myCodeFragmentMember);
-      }
+    final Runnable collectOverloads = () -> ApplicationManager.getApplication().runReadAction(() -> {
+      Map<PsiMethodCallExpression, PsiMethod> overloads =
+        ExtractMethodUtil.encodeOverloadTargets(myTargetClass, processConflictsScope, myMethodName, myCodeFragmentMember);
+      overloadsResolveMap.putAll(overloads);
+    });
+    final Runnable extract = () -> {
+      doExtract();
+      ExtractMethodUtil.decodeOverloadTargets(overloadsResolveMap, myExtractedMethod, myCodeFragmentMember);
     };
     if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
       collectOverloads.run();

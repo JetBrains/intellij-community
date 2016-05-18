@@ -44,12 +44,9 @@ public class StudyCoursesUpdater implements StartupActivity {
       return;
     }
     if (checkNeeded()) {
-      application.executeOnPooledThread(new Runnable() {
-        @Override
-        public void run() {
-          final List<CourseInfo> courses = EduStepicConnector.getCourses();
-          StudyProjectGenerator.flushCache(courses);
-        }
+      application.executeOnPooledThread(() -> {
+        final List<CourseInfo> courses = EduStepicConnector.getCourses();
+        StudyProjectGenerator.flushCache(courses);
       });
     }
   }

@@ -111,17 +111,9 @@ public class ExtractSuperclassHandler implements RefactoringActionHandler, Extra
       return;
     }
 
-    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-      @Override
-      public void run() {
-        final Runnable action = new Runnable() {
-          @Override
-          public void run() {
-            doRefactoring(project, mySubclass, dialog);
-          }
-        };
-        ApplicationManager.getApplication().runWriteAction(action);
-      }
+    CommandProcessor.getInstance().executeCommand(myProject, () -> {
+      final Runnable action = () -> doRefactoring(project, mySubclass, dialog);
+      ApplicationManager.getApplication().runWriteAction(action);
     }, REFACTORING_NAME, null);
   }
 
@@ -137,20 +129,12 @@ public class ExtractSuperclassHandler implements RefactoringActionHandler, Extra
       targetPackage = null;
     }
     final MultiMap<PsiElement,String> conflicts = new MultiMap<PsiElement, String>();
-    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          @Override
-          public void run() {
-            final PsiClass superClass =
-              mySubclass.getExtendsListTypes().length > 0 || mySubclass instanceof PsiAnonymousClass ? mySubclass.getSuperClass() : null;
-            conflicts.putAllValues(PullUpConflictsUtil.checkConflicts(infos, mySubclass, superClass, targetPackage, targetDirectory,
-                                                                      dialog.getContainmentVerifier(), false));
-          }
-        });
-      }
-    }, RefactoringBundle.message("detecting.possible.conflicts"), true, myProject)) return false;
+    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> {
+      final PsiClass superClass =
+        mySubclass.getExtendsListTypes().length > 0 || mySubclass instanceof PsiAnonymousClass ? mySubclass.getSuperClass() : null;
+      conflicts.putAllValues(PullUpConflictsUtil.checkConflicts(infos, mySubclass, superClass, targetPackage, targetDirectory,
+                                                                dialog.getContainmentVerifier(), false));
+    }), RefactoringBundle.message("detecting.possible.conflicts"), true, myProject)) return false;
     ExtractSuperClassUtil.checkSuperAccessible(targetDirectory, conflicts, mySubclass);
     return ExtractSuperClassUtil.showConflicts(dialog, conflicts, myProject);
   }
@@ -177,12 +161,7 @@ public class ExtractSuperclassHandler implements RefactoringActionHandler, Extra
       if (superclass != null) {
         final SmartPsiElementPointer<PsiClass> classPointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(subclass);
         final SmartPsiElementPointer<PsiClass> interfacePointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(superclass);
-        final Runnable turnRefsToSuperRunnable = new Runnable() {
-          @Override
-          public void run() {
-            ExtractClassUtil.askAndTurnRefsToSuper(project, classPointer, interfacePointer);
-          }
-        };
+        final Runnable turnRefsToSuperRunnable = () -> ExtractClassUtil.askAndTurnRefsToSuper(project, classPointer, interfacePointer);
         SwingUtilities.invokeLater(turnRefsToSuperRunnable);
       }
     }

@@ -87,12 +87,7 @@ class FTManager {
     List<FileTemplateBase> sorted = mySortedTemplates;
     if (sorted == null) {
       sorted = new ArrayList<FileTemplateBase>(getTemplates().values());
-      Collections.sort(sorted, new Comparator<FileTemplateBase>() {
-        @Override
-        public int compare(FileTemplateBase t1, FileTemplateBase t2) {
-          return t1.getName().compareToIgnoreCase(t2.getName());
-        }
-      });
+      Collections.sort(sorted, (t1, t2) -> t1.getName().compareToIgnoreCase(t2.getName()));
       mySortedTemplates = sorted;
     }
 

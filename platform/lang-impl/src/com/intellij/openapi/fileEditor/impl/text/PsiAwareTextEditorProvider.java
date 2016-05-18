@@ -93,12 +93,9 @@ public class PsiAwareTextEditorProvider extends TextEditorProvider implements As
     if (child != null) {
       if (document == null) {
         final Element detachedStateCopy = child.clone();
-        state.setDelayedFoldState(new Producer<CodeFoldingState>() {
-          @Override
-          public CodeFoldingState produce() {
-            Document document = FileDocumentManager.getInstance().getCachedDocument(file);
-            return document == null ? null : CodeFoldingManager.getInstance(project).readFoldingState(detachedStateCopy, document);
-          }
+        state.setDelayedFoldState(() -> {
+          Document document1 = FileDocumentManager.getInstance().getCachedDocument(file);
+          return document1 == null ? null : CodeFoldingManager.getInstance(project).readFoldingState(detachedStateCopy, document1);
         });
       }
       else {

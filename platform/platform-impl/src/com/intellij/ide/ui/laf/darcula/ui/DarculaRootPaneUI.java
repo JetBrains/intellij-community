@@ -190,11 +190,9 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
             || (parent.getClass().getName().compareTo("javax.swing.Popup$HeavyWeightWindow") == 0)) {
 
           //noinspection SSBasedInspection
-          SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-              root.removeHierarchyListener(myHierarchyListener);
-              myHierarchyListener = null;
-            }
+          SwingUtilities.invokeLater(() -> {
+            root.removeHierarchyListener(myHierarchyListener);
+            myHierarchyListener = null;
           });
         }
 
@@ -212,13 +210,11 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
             @Override
             public void windowClosed(WindowEvent e) {
               //noinspection SSBasedInspection
-              SwingUtilities.invokeLater(new Runnable() {
-                public void run() {
-                  Frame[] frames = Frame.getFrames();
-                  for (Frame frame : frames) {
-                    if (frame.isDisplayable()) {
-                      return;
-                    }
+              SwingUtilities.invokeLater(() -> {
+                Frame[] frames = Frame.getFrames();
+                for (Frame frame : frames) {
+                  if (frame.isDisplayable()) {
+                    return;
                   }
                 }
               });
@@ -242,35 +238,33 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
 
             private void processNewPosition() {
               //noinspection SSBasedInspection
-              SwingUtilities.invokeLater(new Runnable() {
-                public void run() {
-                  if (myWindow == null) {
-                    return;
-                  }
+              SwingUtilities.invokeLater(() -> {
+                if (myWindow == null) {
+                  return;
+                }
 
-                  if (!myWindow.isShowing() || !myWindow.isDisplayable()) {
-                    currentRootPaneGC = null;
-                    return;
-                  }
+                if (!myWindow.isShowing() || !myWindow.isDisplayable()) {
+                  currentRootPaneGC = null;
+                  return;
+                }
 
-                  GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-                  GraphicsDevice[] gds = ge.getScreenDevices();
-                  if (gds.length == 1) {
-                    return;
-                  }
-                  Point midLoc = new Point(myWindow.getLocationOnScreen().x + myWindow.getWidth() / 2,
-                                           myWindow.getLocationOnScreen().y + myWindow.getHeight() / 2);
+                GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+                GraphicsDevice[] gds = ge.getScreenDevices();
+                if (gds.length == 1) {
+                  return;
+                }
+                Point midLoc = new Point(myWindow.getLocationOnScreen().x + myWindow.getWidth() / 2,
+                                         myWindow.getLocationOnScreen().y + myWindow.getHeight() / 2);
 
-                  for (GraphicsDevice gd : gds) {
-                    GraphicsConfiguration gc = gd.getDefaultConfiguration();
-                    Rectangle bounds = gc.getBounds();
-                    if (bounds.contains(midLoc)) {
-                      if (gc != currentRootPaneGC) {
-                        currentRootPaneGC = gc;
-                        setMaximized();
-                      }
-                      break;
+                for (GraphicsDevice gd : gds) {
+                  GraphicsConfiguration gc = gd.getDefaultConfiguration();
+                  Rectangle bounds = gc.getBounds();
+                  if (bounds.contains(midLoc)) {
+                    if (gc != currentRootPaneGC) {
+                      currentRootPaneGC = gc;
+                      setMaximized();
                     }
+                    break;
                   }
                 }
               });

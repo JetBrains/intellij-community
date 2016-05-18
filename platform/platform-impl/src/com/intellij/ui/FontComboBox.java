@@ -86,18 +86,12 @@ public final class FontComboBox extends ComboBox {
         setFonts(FontInfo.getAll(withAllStyles));
       }
       else {
-        application.executeOnPooledThread(new Runnable() {
-          @Override
-          public void run() {
-            List<FontInfo> allFonts = FontInfo.getAll(withAllStyles);
-            application.invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                setFonts(allFonts);
-                updateSelectedItem();
-              }
-            }, application.getAnyModalityState());
-          }
+        application.executeOnPooledThread(() -> {
+          List<FontInfo> allFonts = FontInfo.getAll(withAllStyles);
+          application.invokeLater(() -> {
+            setFonts(allFonts);
+            updateSelectedItem();
+          }, application.getAnyModalityState());
         });
       }
     }

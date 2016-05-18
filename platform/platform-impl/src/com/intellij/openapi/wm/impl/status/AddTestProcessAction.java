@@ -127,11 +127,7 @@ public class AddTestProcessAction extends AnAction implements DumbAware {
 //    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
 //    task.run(indicator != null ? indicator : new EmptyProgressIndicator());
 
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        task.queue();
-      }
-    });
+    SwingUtilities.invokeLater(() -> task.queue());
   }
 
   private void countTo(int top, Count count) {

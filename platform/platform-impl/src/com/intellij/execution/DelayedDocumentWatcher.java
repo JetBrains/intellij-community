@@ -87,11 +87,8 @@ public class DelayedDocumentWatcher {
         @Override
         public void beforeAllDocumentsSaving() {
           myDocumentSavingInProgress = true;
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              myDocumentSavingInProgress = false;
-            }
+          ApplicationManager.getApplication().invokeLater(() -> {
+            myDocumentSavingInProgress = false;
           }, ModalityState.any());
         }
       });
@@ -149,49 +146,40 @@ public class DelayedDocumentWatcher {
     @Override
     public void run() {
       final int oldModificationStamp = myModificationStamp;
-      asyncCheckErrors(myChangedFiles, new Consumer<Boolean>() {
-        @Override
-        public void consume(Boolean errorsFound) {
-          if (myModificationStamp != oldModificationStamp) {
-            // 'documentChanged' event was raised during async checking files for errors
-            // Do nothing in that case, this method will be invoked subsequently.
-            return;
-          }
-          if (errorsFound) {
-            // Do nothing, if some changed file has syntax errors.
-            // This method will be invoked subsequently, when syntax errors are fixed.
-            return;
-          }
-          myChangedFiles.clear();
-          myModificationStampConsumer.consume(myModificationStamp);
+      asyncCheckErrors(myChangedFiles, errorsFound -> {
+        if (myModificationStamp != oldModificationStamp) {
+          // 'documentChanged' event was raised during async checking files for errors
+          // Do nothing in that case, this method will be invoked subsequently.
+          return;
         }
+        if (errorsFound) {
+          // Do nothing, if some changed file has syntax errors.
+          // This method will be invoked subsequently, when syntax errors are fixed.
+          return;
+        }
+        myChangedFiles.clear();
+        myModificationStampConsumer.consume(myModificationStamp);
       });
     }
   }
 
   private void asyncCheckErrors(@NotNull final Collection<VirtualFile> files,
                                 @NotNull final Consumer<Boolean> errorsFoundConsumer) {
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        final boolean errorsFound = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-          @Override
-          public Boolean compute() {
-            for (VirtualFile file : files) {
-              if (PsiErrorElementUtil.hasErrors(myProject, file)) {
-                return true;
-              }
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      final boolean errorsFound = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+        @Override
+        public Boolean compute() {
+          for (VirtualFile file : files) {
+            if (PsiErrorElementUtil.hasErrors(myProject, file)) {
+              return true;
             }
-            return false;
           }
-        });
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            errorsFoundConsumer.consume(errorsFound);
-          }
-        }, ModalityState.any());
-      }
+          return false;
+        }
+      });
+      ApplicationManager.getApplication().invokeLater(() -> {
+        errorsFoundConsumer.consume(errorsFound);
+      }, ModalityState.any());
     });
   }
 }

@@ -83,12 +83,8 @@ public class AddMissingRequiredAnnotationParametersFix implements IntentionActio
 
     final TObjectIntHashMap<String> annotationsOrderMap = getAnnotationsOrderMap();
     final SortedSet<Pair<String, PsiAnnotationMemberValue>>
-      newParameters = new TreeSet<Pair<String, PsiAnnotationMemberValue>>(new Comparator<Pair<String, PsiAnnotationMemberValue>>() {
-      @Override
-      public int compare(final Pair<String, PsiAnnotationMemberValue> o1, final Pair<String, PsiAnnotationMemberValue> o2) {
-        return annotationsOrderMap.get(o1.getFirst()) - annotationsOrderMap.get(o2.getFirst());
-      }
-    });
+      newParameters = new TreeSet<Pair<String, PsiAnnotationMemberValue>>(
+      (o1, o2) -> annotationsOrderMap.get(o1.getFirst()) - annotationsOrderMap.get(o2.getFirst()));
     final boolean order = isAlreadyAddedOrdered(annotationsOrderMap, addedParameters);
     if (order) {
       if (addedParameters.length != 0) {

@@ -168,12 +168,7 @@ public class PyCompatibilityInspectionTest extends PyTestCase {
   }
 
   private void doTest(@NotNull LanguageLevel level) {
-    runWithLanguageLevel(level, new Runnable() {
-      @Override
-      public void run() {
-        doTest();
-      }
-    });
+    runWithLanguageLevel(level, () -> doTest());
   }
 
   private void doTest() {

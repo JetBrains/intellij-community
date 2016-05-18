@@ -138,33 +138,29 @@ public class SwingUpdaterUI implements UpdaterUI {
   }
 
   private void startRequestDispatching() {
-    new Thread(new Runnable() {
-      public void run() {
-        while (true) {
-          try {
-            Thread.sleep(100);
-          }
-          catch (InterruptedException e) {
-            Runner.printStackTrace(e);
-            return;
-          }
-
-          final List<UpdateRequest> pendingRequests = new ArrayList<UpdateRequest>();
-          UpdateRequest request;
-          while ((request = myQueue.poll()) != null) {
-            pendingRequests.add(request);
-          }
-
-          SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-              for (UpdateRequest each : pendingRequests) {
-                each.perform();
-              }
-            }
-          });
+    new Thread(() -> {
+      while (true) {
+        try {
+          Thread.sleep(100);
         }
+        catch (InterruptedException e) {
+          Runner.printStackTrace(e);
+          return;
+        }
+
+        final List<UpdateRequest> pendingRequests = new ArrayList<UpdateRequest>();
+        UpdateRequest request;
+        while ((request = myQueue.poll()) != null) {
+          pendingRequests.add(request);
+        }
+
+        SwingUtilities.invokeLater(() -> {
+          for (UpdateRequest each : pendingRequests) {
+            each.perform();
+          }
+        });
       }
-    },"swing updater dispatch").start();
+    }, "swing updater dispatch").start();
   }
 
   private void doCancel() {
@@ -185,32 +181,30 @@ public class SwingUpdaterUI implements UpdaterUI {
   private void doPerform() {
     isRunning.set(true);
 
-    new Thread(new Runnable() {
-      public void run() {
-        try {
-          myApplied = myOperation.execute(SwingUpdaterUI.this);
-        }
-        catch (OperationCancelledException ignore) {
-          Runner.printStackTrace(ignore);
-        }
-        catch(Throwable e) {
-          Runner.printStackTrace(e);
-          showError(e);
-        }
-        finally {
-          isRunning.set(false);
+    new Thread(() -> {
+      try {
+        myApplied = myOperation.execute(SwingUpdaterUI.this);
+      }
+      catch (OperationCancelledException ignore) {
+        Runner.printStackTrace(ignore);
+      }
+      catch(Throwable e) {
+        Runner.printStackTrace(e);
+        showError(e);
+      }
+      finally {
+        isRunning.set(false);
 
-          if (hasError.get()) {
-            startProcess("Failed to apply patch");
-            setProgress(100);
-            myCancelButton.setText(EXIT_BUTTON_TITLE);
-            myCancelButton.setEnabled(true);
-          } else {
-            exit();
-          }
+        if (hasError.get()) {
+          startProcess("Failed to apply patch");
+          setProgress(100);
+          myCancelButton.setText(EXIT_BUTTON_TITLE);
+          myCancelButton.setEnabled(true);
+        } else {
+          exit();
         }
       }
-    },"swing updater").start();
+    }, "swing updater").start();
   }
 
   private void exit() {
@@ -222,86 +216,84 @@ public class SwingUpdaterUI implements UpdaterUI {
 
     final Map<String, ValidationResult.Option> result = new HashMap<String, ValidationResult.Option>();
     try {
-      SwingUtilities.invokeAndWait(new Runnable() {
-        public void run() {
-          boolean proceed = true;
-          for (ValidationResult result : validationResults) {
-            if (result.options.contains(ValidationResult.Option.NONE)) {
-              proceed = false;
-              break;
-            }
+      SwingUtilities.invokeAndWait(() -> {
+        boolean proceed = true;
+        for (ValidationResult result1 : validationResults) {
+          if (result1.options.contains(ValidationResult.Option.NONE)) {
+            proceed = false;
+            break;
           }
+        }
 
-          final JDialog dialog = new JDialog(myFrame, TITLE, true);
-          dialog.setLayout(new BorderLayout());
-          dialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+        final JDialog dialog = new JDialog(myFrame, TITLE, true);
+        dialog.setLayout(new BorderLayout());
+        dialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
 
-          JPanel buttonsPanel = new JPanel();
-          buttonsPanel.setBorder(BUTTONS_BORDER);
-          buttonsPanel.setLayout(new BoxLayout(buttonsPanel, BoxLayout.X_AXIS));
-          buttonsPanel.add(Box.createHorizontalGlue());
+        JPanel buttonsPanel = new JPanel();
+        buttonsPanel.setBorder(BUTTONS_BORDER);
+        buttonsPanel.setLayout(new BoxLayout(buttonsPanel, BoxLayout.X_AXIS));
+        buttonsPanel.add(Box.createHorizontalGlue());
 
-          JButton cancelButton = new JButton(CANCEL_BUTTON_TITLE);
-          cancelButton.addActionListener(new ActionListener() {
+        JButton cancelButton = new JButton(CANCEL_BUTTON_TITLE);
+        cancelButton.addActionListener(new ActionListener() {
+          public void actionPerformed(ActionEvent e) {
+            isCancelled.set(true);
+            myCancelButton.setEnabled(false);
+            dialog.setVisible(false);
+          }
+        });
+        buttonsPanel.add(cancelButton);
+
+        if (proceed) {
+          JButton proceedButton = new JButton(PROCEED_BUTTON_TITLE);
+          proceedButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-              isCancelled.set(true);
-              myCancelButton.setEnabled(false);
               dialog.setVisible(false);
             }
           });
-          buttonsPanel.add(cancelButton);
-
-          if (proceed) {
-            JButton proceedButton = new JButton(PROCEED_BUTTON_TITLE);
-            proceedButton.addActionListener(new ActionListener() {
-              public void actionPerformed(ActionEvent e) {
-                dialog.setVisible(false);
-              }
-            });
-            buttonsPanel.add(proceedButton);
-            dialog.getRootPane().setDefaultButton(proceedButton);
-          } else {
-            dialog.getRootPane().setDefaultButton(cancelButton);
-          }
-
-          JTable table = new JTable();
-
-          table.setCellSelectionEnabled(true);
-          table.setDefaultEditor(ValidationResult.Option.class, new MyCellEditor());
-          table.setDefaultRenderer(Object.class, new MyCellRenderer());
-          MyTableModel model = new MyTableModel(validationResults);
-          table.setModel(model);
-
-          for (int i = 0; i < table.getColumnModel().getColumnCount(); i++) {
-            TableColumn each = table.getColumnModel().getColumn(i);
-            each.setPreferredWidth(MyTableModel.getColumnWidth(i, new Dimension(600, 400).width));
-          }
-
-          String message = "<html>Some conflicts were found in the installation area.<br><br>";
-
-          if (proceed) {
-            message += "Please select desired solutions from the " + MyTableModel.COLUMNS[MyTableModel.OPTIONS_COLUMN_INDEX] +
-                       " column and press " + PROCEED_BUTTON_TITLE + ".<br>" +
-                       "If you do not want to proceed with the update, please press " + CANCEL_BUTTON_TITLE + ".</html>";
-          } else {
-            message += "Some of the conflicts below do not have a solution, so the patch cannot be applied.<br>" +
-                       "Press " + CANCEL_BUTTON_TITLE + " to exit.</html>";
-          }
-
-          JLabel label = new JLabel(message);
-          label.setBorder(LABEL_BORDER);
-          dialog.add(label, BorderLayout.NORTH);
-          dialog.add(new JScrollPane(table), BorderLayout.CENTER);
-          dialog.add(buttonsPanel, BorderLayout.SOUTH);
-
-          dialog.getRootPane().setBorder(FRAME_BORDER);
-
-          dialog.setSize(new Dimension(600, 400));
-          dialog.setLocationRelativeTo(null);
-          dialog.setVisible(true);
-
-          result.putAll(model.getResult());
+          buttonsPanel.add(proceedButton);
+          dialog.getRootPane().setDefaultButton(proceedButton);
+        } else {
+          dialog.getRootPane().setDefaultButton(cancelButton);
         }
+
+        JTable table = new JTable();
+
+        table.setCellSelectionEnabled(true);
+        table.setDefaultEditor(ValidationResult.Option.class, new MyCellEditor());
+        table.setDefaultRenderer(Object.class, new MyCellRenderer());
+        MyTableModel model = new MyTableModel(validationResults);
+        table.setModel(model);
+
+        for (int i = 0; i < table.getColumnModel().getColumnCount(); i++) {
+          TableColumn each = table.getColumnModel().getColumn(i);
+          each.setPreferredWidth(MyTableModel.getColumnWidth(i, new Dimension(600, 400).width));
+        }
+
+        String message = "<html>Some conflicts were found in the installation area.<br><br>";
+
+        if (proceed) {
+          message += "Please select desired solutions from the " + MyTableModel.COLUMNS[MyTableModel.OPTIONS_COLUMN_INDEX] +
+                     " column and press " + PROCEED_BUTTON_TITLE + ".<br>" +
+                     "If you do not want to proceed with the update, please press " + CANCEL_BUTTON_TITLE + ".</html>";
+        } else {
+          message += "Some of the conflicts below do not have a solution, so the patch cannot be applied.<br>" +
+                     "Press " + CANCEL_BUTTON_TITLE + " to exit.</html>";
+        }
+
+        JLabel label = new JLabel(message);
+        label.setBorder(LABEL_BORDER);
+        dialog.add(label, BorderLayout.NORTH);
+        dialog.add(new JScrollPane(table), BorderLayout.CENTER);
+        dialog.add(buttonsPanel, BorderLayout.SOUTH);
+
+        dialog.getRootPane().setBorder(FRAME_BORDER);
+
+        dialog.setSize(new Dimension(600, 400));
+        dialog.setLocationRelativeTo(null);
+        dialog.setVisible(true);
+
+        result.putAll(model.getResult());
       });
     }
     catch (InterruptedException e) {

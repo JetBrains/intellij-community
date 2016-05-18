@@ -149,11 +149,6 @@ public class Advertiser {
   }
 
   public List<String> getAdvertisements() {
-    return ContainerUtil.map(myTexts, new Function<Pair<String, Color>, String>() {
-      @Override
-      public String fun(Pair<String, Color> pair) {
-        return pair.first;
-      }
-    });
+    return ContainerUtil.map(myTexts, pair -> pair.first);
   }
 }

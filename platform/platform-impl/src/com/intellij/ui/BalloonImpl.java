@@ -550,12 +550,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     myLayeredPane.repaint();
 
     if (mnemonicsFix) {
-      proxyFocusRequest.get().doWhenDone(new Runnable() {
-        @Override
-        public void run() {
-          myFocusManager.requestFocus(originalFocusOwner.get(), true);
-        }
-      });
+      proxyFocusRequest.get().doWhenDone(() -> myFocusManager.requestFocus(originalFocusOwner.get(), true));
     }
 
     Toolkit.getDefaultToolkit().addAWTEventListener(
@@ -668,17 +663,9 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
                                               myShowPointer ? myPosition.createBorder(this) : getPointlessBorder());
 
     if (myActionProvider == null) {
-      final Consumer<MouseEvent> listener = new Consumer<MouseEvent>() {
-        @Override
-        public void consume(MouseEvent event) {
-          //noinspection SSBasedInspection
-          SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              hide();
-            }
-          });
-        }
+      final Consumer<MouseEvent> listener = event -> {
+        //noinspection SSBasedInspection
+        SwingUtilities.invokeLater(() -> hide());
       };
 
       myActionProvider = new ActionProvider() {
@@ -863,12 +850,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
       myFadeoutAlarm.cancelAllRequests();
       myFadeoutRequestMillis = System.currentTimeMillis();
       myFadeoutRequestDelay = fadeoutDelay;
-      myFadeoutAlarm.addRequest(new Runnable() {
-        @Override
-        public void run() {
-          hide();
-        }
-      }, fadeoutDelay, null);
+      myFadeoutAlarm.addRequest(() -> hide(), fadeoutDelay, null);
     }
   }
 
@@ -938,23 +920,20 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     myDisposed = true;
     hideComboBoxPopups();
 
-    final Runnable disposeRunnable = new Runnable() {
-      @Override
-      public void run() {
-        myFadedOut = true;
-        if (myRequestFocus) {
-          if (myOriginalFocusOwner != null) {
-            myFocusManager.requestFocus(myOriginalFocusOwner, false);
-          }
+    final Runnable disposeRunnable = () -> {
+      myFadedOut = true;
+      if (myRequestFocus) {
+        if (myOriginalFocusOwner != null) {
+          myFocusManager.requestFocus(myOriginalFocusOwner, false);
         }
-
-        for (JBPopupListener each : myListeners) {
-          each.onClosed(new LightweightWindowEvent(BalloonImpl.this, ok));
-        }
-
-        Disposer.dispose(BalloonImpl.this);
-        onDisposed();
       }
+
+      for (JBPopupListener each : myListeners) {
+        each.onClosed(new LightweightWindowEvent(BalloonImpl.this, ok));
+      }
+
+      Disposer.dispose(BalloonImpl.this);
+      onDisposed();
     };
 
     Toolkit.getDefaultToolkit().removeAWTEventListener(myAwtActivityListener);
@@ -1735,12 +1714,9 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
       myActionButtons = null;
       if (buttons != null) {
         //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            for (ActionButton button : buttons) {
-              disposeButton(button);
-            }
+        SwingUtilities.invokeLater(() -> {
+          for (ActionButton button : buttons) {
+            disposeButton(button);
           }
         });
       }

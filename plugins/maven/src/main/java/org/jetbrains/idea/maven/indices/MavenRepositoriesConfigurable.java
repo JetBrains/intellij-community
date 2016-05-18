@@ -160,24 +160,21 @@ public class MavenRepositoriesConfigurable extends BaseConfigurable implements S
 
   private void testServiceConnection(String url) {
     myTestButton.setEnabled(false);
-    RepositoryAttachHandler.searchRepositories(myProject, Collections.singletonList(url), new Processor<Collection<MavenRepositoryInfo>>() {
-      @Override
-      public boolean process(Collection<MavenRepositoryInfo> infos) {
-        myTestButton.setEnabled(true);
-        if (infos.isEmpty()) {
-          Messages.showMessageDialog("No repositories found", "Service Connection Failed", Messages.getWarningIcon());
-        }
-        else {
-          final StringBuilder sb = new StringBuilder();
-          sb.append(infos.size()).append(infos.size() == 1 ? "repository" : " repositories").append(" found");
-          //for (MavenRepositoryInfo info : infos) {
-          //  sb.append("\n  ");
-          //  sb.append(info.getId()).append(" (").append(info.getName()).append(")").append(": ").append(info.getUrl());
-          //}
-          Messages.showMessageDialog(sb.toString(), "Service Connection Successful", Messages.getInformationIcon());
-        }
-        return true;
+    RepositoryAttachHandler.searchRepositories(myProject, Collections.singletonList(url), infos -> {
+      myTestButton.setEnabled(true);
+      if (infos.isEmpty()) {
+        Messages.showMessageDialog("No repositories found", "Service Connection Failed", Messages.getWarningIcon());
       }
+      else {
+        final StringBuilder sb = new StringBuilder();
+        sb.append(infos.size()).append(infos.size() == 1 ? "repository" : " repositories").append(" found");
+        //for (MavenRepositoryInfo info : infos) {
+        //  sb.append("\n  ");
+        //  sb.append(info.getId()).append(" (").append(info.getName()).append(")").append(": ").append(info.getUrl());
+        //}
+        Messages.showMessageDialog(sb.toString(), "Service Connection Successful", Messages.getInformationIcon());
+      }
+      return true;
     });
   }
 

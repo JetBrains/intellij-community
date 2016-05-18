@@ -420,11 +420,7 @@ public abstract class ModuleInsight {
     myProgress.setText2(file.getName());
     try {
       final char[] chars = FileUtil.loadFileText(file);
-      scanSourceFileForImportedPackages(StringFactory.createShared(chars), new Consumer<String>() {
-        public void consume(final String s) {
-          usedPackages.add(myInterner.intern(s));
-        }
-      });
+      scanSourceFileForImportedPackages(StringFactory.createShared(chars), s -> usedPackages.add(myInterner.intern(s)));
     }
     catch (IOException e) {
       LOG.info(e);
@@ -454,11 +450,9 @@ public abstract class ModuleInsight {
               myProgress.pushState();
               myProgress.setText2(file.getName());
               try {
-                scanLibraryForDeclaredPackages(file, new Consumer<String>() {
-                  public void consume(final String s) {
-                    if (!libraryPackages.contains(s)) {
-                      libraryPackages.add(myInterner.intern(s));
-                    }
+                scanLibraryForDeclaredPackages(file, s -> {
+                  if (!libraryPackages.contains(s)) {
+                    libraryPackages.add(myInterner.intern(s));
                   }
                 });
               }

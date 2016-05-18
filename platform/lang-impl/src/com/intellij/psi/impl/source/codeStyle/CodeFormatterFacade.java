@@ -443,16 +443,13 @@ public class CodeFormatterFacade {
     }
     try {
       final Editor editorToUse = editor;
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          final CaretModel caretModel = editorToUse.getCaretModel();
-          final int caretOffset = caretModel.getOffset();
-          final RangeMarker caretMarker = editorToUse.getDocument().createRangeMarker(caretOffset, caretOffset);
-          doWrapLongLinesIfNecessary(editorToUse, file.getProject(), editorToUse.getDocument(), startOffset, endOffset);
-          if (caretMarker.isValid() && caretModel.getOffset() != caretMarker.getStartOffset()) {
-            caretModel.moveToOffset(caretMarker.getStartOffset());
-          }
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        final CaretModel caretModel = editorToUse.getCaretModel();
+        final int caretOffset = caretModel.getOffset();
+        final RangeMarker caretMarker = editorToUse.getDocument().createRangeMarker(caretOffset, caretOffset);
+        doWrapLongLinesIfNecessary(editorToUse, file.getProject(), editorToUse.getDocument(), startOffset, endOffset);
+        if (caretMarker.isValid() && caretModel.getOffset() != caretMarker.getStartOffset()) {
+          caretModel.moveToOffset(caretMarker.getStartOffset());
         }
       });
     }
@@ -557,12 +554,8 @@ public class CodeFormatterFacade {
     DataManager.getInstance().saveInDataContext(dataContext, WRAP_LONG_LINE_DURING_FORMATTING_IN_PROGRESS_KEY, true);
     CommandProcessor commandProcessor = CommandProcessor.getInstance();
     try {
-      Runnable command = new Runnable() {
-        @Override
-        public void run() {
-          EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_ENTER).execute(editor, dataContext);
-        }
-      };
+      Runnable command =
+        () -> EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_ENTER).execute(editor, dataContext);
       if (commandProcessor.getCurrentCommand() == null) {
         commandProcessor.executeCommand(editor.getProject(), command, WRAP_LINE_COMMAND_NAME, null);
       }

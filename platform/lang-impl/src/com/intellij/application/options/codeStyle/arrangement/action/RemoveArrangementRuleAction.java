@@ -57,13 +57,10 @@ public class RemoveArrangementRuleAction extends AbstractArrangementRuleAction i
     }
 
     final ArrangementMatchingRulesModel model = control.getModel();
-    control.runOperationIgnoreSelectionChange(new Runnable() {
-      @Override
-      public void run() {
-        for (int i = 0; i < rowsToRemove.size(); i++) {
-          int row = rowsToRemove.get(i);
-          model.removeRow(row);
-        } 
+    control.runOperationIgnoreSelectionChange(() -> {
+      for (int i = 0; i < rowsToRemove.size(); i++) {
+        int row = rowsToRemove.get(i);
+        model.removeRow(row);
       }
     });
   }

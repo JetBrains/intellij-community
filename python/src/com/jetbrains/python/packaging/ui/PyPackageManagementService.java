@@ -143,12 +143,7 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
     try {
       packages = PyPackageManager.getInstance(mySdk).getPackages(false);
       if (packages != null) {
-        Collections.sort(packages, new Comparator<PyPackage>() {
-          @Override
-          public int compare(@NotNull PyPackage pkg1, @NotNull PyPackage pkg2) {
-            return pkg1.getName().compareTo(pkg2.getName());
-          }
-        });
+        Collections.sort(packages, (pkg1, pkg2) -> pkg1.getName().compareTo(pkg2.getName()));
       }
     }
     catch (ExecutionException e) {

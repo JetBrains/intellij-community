@@ -72,15 +72,12 @@ public class ReassignVariableUtil {
           final PsiVariable variable = proc.getResult(i);
           PsiElement outerCodeBlock = PsiUtil.getVariableCodeBlock(variable, null);
           if (outerCodeBlock == null) continue;
-          if (ReferencesSearch.search(variable, new LocalSearchScope(outerCodeBlock)).forEach(new Processor<PsiReference>() {
-            @Override
-            public boolean process(PsiReference reference) {
-              final PsiElement element = reference.getElement();
-              if (element != null) {
-                return HighlightControlFlowUtil.getInnerClassVariableReferencedFrom(variable, element) == null;
-              }
-              return true;
+          if (ReferencesSearch.search(variable, new LocalSearchScope(outerCodeBlock)).forEach(reference -> {
+            final PsiElement element = reference.getElement();
+            if (element != null) {
+              return HighlightControlFlowUtil.getInnerClassVariableReferencedFrom(variable, element) == null;
             }
+            return true;
           })) {
             vars.add(variable);
           }
@@ -116,11 +113,7 @@ public class ReassignVariableUtil {
         JBPopupFactory.getInstance().createListPopupBuilder(list)
           .setTitle("Choose variable to reassign")
           .setRequestFocus(true)
-          .setItemChoosenCallback(new Runnable() {
-            public void run() {
-              replaceWithAssignment(declaration, (PsiVariable)list.getSelectedValue(), editor);
-            }
-          }).createPopup().show(new RelativePoint(editor.getContentComponent(), point));
+          .setItemChoosenCallback(() -> replaceWithAssignment(declaration, (PsiVariable)list.getSelectedValue(), editor)).createPopup().show(new RelativePoint(editor.getContentComponent(), point));
       }
 
       return true;

@@ -124,22 +124,16 @@ public class BraceHighlighter implements StartupActivity {
     final Document document = editor.getDocument();
     if (document instanceof DocumentEx && ((DocumentEx)document).isInBulkUpdate()) return;
 
-    BraceHighlightingHandler.lookForInjectedAndMatchBracesInOtherThread(editor, alarm, new Processor<BraceHighlightingHandler>() {
-      @Override
-      public boolean process(final BraceHighlightingHandler handler) {
-        handler.updateBraces();
-        return false;
-      }
+    BraceHighlightingHandler.lookForInjectedAndMatchBracesInOtherThread(editor, alarm, handler -> {
+      handler.updateBraces();
+      return false;
     });
   }
 
   private void clearBraces(@NotNull final Editor editor) {
-    BraceHighlightingHandler.lookForInjectedAndMatchBracesInOtherThread(editor, myAlarm, new Processor<BraceHighlightingHandler>() {
-      @Override
-      public boolean process(final BraceHighlightingHandler handler) {
-        handler.clearBraceHighlighters();
-        return false;
-      }
+    BraceHighlightingHandler.lookForInjectedAndMatchBracesInOtherThread(editor, myAlarm, handler -> {
+      handler.clearBraceHighlighters();
+      return false;
     });
   }
 }

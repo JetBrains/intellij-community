@@ -164,20 +164,15 @@ public class MavenProjectsManagerWatcher {
               myChangedDocuments.clear();
             }
 
-            MavenUtil.invokeLater(myProject, new Runnable() {
+            MavenUtil.invokeLater(myProject, () -> new WriteAction() {
               @Override
-              public void run() {
-                new WriteAction() {
-                  @Override
-                  protected void run(@NotNull Result result) throws Throwable {
-                    for (Document each : copy) {
-                      PsiDocumentManager.getInstance(myProject).commitDocument(each);
-                      ((FileDocumentManagerImpl)FileDocumentManager.getInstance()).saveDocument(each, false);
-                    }
-                  }
-                }.execute();
+              protected void run(@NotNull Result result) throws Throwable {
+                for (Document each : copy) {
+                  PsiDocumentManager.getInstance(myProject).commitDocument(each);
+                  ((FileDocumentManagerImpl)FileDocumentManager.getInstance()).saveDocument(each, false);
+                }
               }
-            });
+            }.execute());
           }
         });
       }
@@ -301,27 +296,19 @@ public class MavenProjectsManagerWatcher {
 
   @NotNull
   private Runnable createScheduleImportAction(final boolean forceImportAndResolve, final AsyncPromise<Void> promise) {
-    return new Runnable() {
-        @Override
-        public void run() {
-          if (myProject.isDisposed()) {
-            promise.setError("Project disposed");
-            return;
-          }
+    return () -> {
+      if (myProject.isDisposed()) {
+        promise.setError("Project disposed");
+        return;
+      }
 
-          if (forceImportAndResolve || myManager.getImportingSettings().isImportAutomatically()) {
-            myManager.scheduleImportAndResolve().done(new Consumer<List<Module>>() {
-              @Override
-              public void consume(List<Module> modules) {
-                promise.setResult(null);
-              }
-            });
-          }
-          else {
-            promise.setResult(null);
-          }
-        }
-      };
+      if (forceImportAndResolve || myManager.getImportingSettings().isImportAutomatically()) {
+        myManager.scheduleImportAndResolve().done(modules -> promise.setResult(null));
+      }
+      else {
+        promise.setResult(null);
+      }
+    };
   }
 
   private void onSettingsChange() {

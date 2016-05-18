@@ -87,12 +87,10 @@ public final class PlainTextView implements AntOutputView {
       try {
 
         if (file != null) {
-          ApplicationManager.getApplication().runReadAction(new Runnable() {
-            public void run() {
-              String presentableUrl = file.getPresentableUrl();
-              builder.append(presentableUrl);
-              builder.append(' ');
-            }
+          ApplicationManager.getApplication().runReadAction(() -> {
+            String presentableUrl = file.getPresentableUrl();
+            builder.append(presentableUrl);
+            builder.append(' ');
           });
         }
         else if (url != null) {

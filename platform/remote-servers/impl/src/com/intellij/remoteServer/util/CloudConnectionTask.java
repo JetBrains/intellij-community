@@ -68,13 +68,7 @@ public abstract class CloudConnectionTask<
           run((SR)serverRuntimeInstance, semaphore, result);
         }
         finally {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-
-            @Override
-            public void run() {
-              connection.disconnect();
-            }
-          });
+          ApplicationManager.getApplication().invokeLater(() -> connection.disconnect());
         }
       }
 

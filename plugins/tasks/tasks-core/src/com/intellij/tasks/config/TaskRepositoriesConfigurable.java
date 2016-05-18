@@ -172,11 +172,7 @@ public class TaskRepositoriesConfigurable extends BaseConfigurable implements Co
       }
     });
 
-    myChangeListener = new Consumer<TaskRepository>() {
-      public void consume(TaskRepository repository) {
-        ((CollectionListModel)myRepositoriesList.getModel()).contentsChanged(repository);
-      }
-    };
+    myChangeListener = repository -> ((CollectionListModel)myRepositoriesList.getModel()).contentsChanged(repository);
   }
 
   private void addRepository(TaskRepository repository) {
@@ -223,10 +219,8 @@ public class TaskRepositoriesConfigurable extends BaseConfigurable implements Co
   }
 
   public void apply() throws ConfigurationException {
-    List<TaskRepository> newRepositories = ContainerUtil.map(myRepositories, new Function<TaskRepository, TaskRepository>() {
-      public TaskRepository fun(TaskRepository taskRepository) {
-        return taskRepository.clone();
-      }
+    List<TaskRepository> newRepositories = ContainerUtil.map(myRepositories, taskRepository -> {
+      return taskRepository.clone();
     });
     myManager.setRepositories(newRepositories);
     myManager.updateIssues(null);

@@ -54,14 +54,11 @@ public class RootVisitorHost {
     if (skipSdk) {
       enumerator = enumerator.withoutSdk();
     }
-    enumerator.forEach(new Processor<OrderEntry>() {
-      @Override
-      public boolean process(OrderEntry orderEntry) {
-        if (orderEntry instanceof ModuleSourceOrderEntry) {
-          return visitModuleContentEntries(((ModuleSourceOrderEntry)orderEntry).getRootModel(), visitor);
-        }
-        return visitOrderEntryRoots(visitor, orderEntry);
+    enumerator.forEach(orderEntry -> {
+      if (orderEntry instanceof ModuleSourceOrderEntry) {
+        return visitModuleContentEntries(((ModuleSourceOrderEntry)orderEntry).getRootModel(), visitor);
       }
+      return visitOrderEntryRoots(visitor, orderEntry);
     });
   }
 

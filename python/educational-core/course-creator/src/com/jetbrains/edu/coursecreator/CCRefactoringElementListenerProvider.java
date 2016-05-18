@@ -92,17 +92,14 @@ public class CCRefactoringElementListenerProvider implements RefactoringElementL
       if (taskFile == null) {
         return;
       }
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          VirtualFile patternFile = StudyUtils.getPatternFile(taskFile, oldName);
-          if (patternFile != null) {
-            try {
-              patternFile.delete(CCRefactoringElementListenerProvider.class);
-            }
-            catch (IOException e) {
-              LOG.info(e);
-            }
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        VirtualFile patternFile = StudyUtils.getPatternFile(taskFile, oldName);
+        if (patternFile != null) {
+          try {
+            patternFile.delete(CCRefactoringElementListenerProvider.class);
+          }
+          catch (IOException e) {
+            LOG.info(e);
           }
         }
       });

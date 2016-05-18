@@ -34,14 +34,11 @@ import java.util.TreeSet;
  * @author peter
  */
 class ImplementationClassCache {
-  private static final Comparator<Class> CLASS_COMPARATOR = new Comparator<Class>() {
-    @Override
-    public int compare(final Class o1, final Class o2) {
-      if (o1.isAssignableFrom(o2)) return 1;
-      if (o2.isAssignableFrom(o1)) return -1;
-      if (o1.equals(o2)) return 0;
-      throw new AssertionError("Incompatible implementation classes: " + o1 + " & " + o2);
-    }
+  private static final Comparator<Class> CLASS_COMPARATOR = (o1, o2) -> {
+    if (o1.isAssignableFrom(o2)) return 1;
+    if (o2.isAssignableFrom(o1)) return -1;
+    if (o1.equals(o2)) return 0;
+    throw new AssertionError("Incompatible implementation classes: " + o1 + " & " + o2);
   };
 
 

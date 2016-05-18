@@ -54,15 +54,10 @@ public class AsyncArrayTableModel extends AbstractTableModel {
           new PyDebugValue(myProvider.getSliceText(), value.getType(), value.getTypeQualifier(), value.getValue(), value.isContainer(), value.isErrorOnEval(),
                            value.getParent(), value.getFrameAccessor());
 
-        ListenableFutureTask<ArrayChunk> task = ListenableFutureTask.create(new Callable<ArrayChunk>() {
-          @Override
-          public ArrayChunk call() throws Exception {
-            return value.getFrameAccessor()
-              .getArrayItems(slicedValue, key.first, key.second, Math.min(CHUNK_ROW_SIZE, getRowCount() - key.first),
-                             Math.min(CHUNK_COL_SIZE, getColumnCount() - key.second),
-                             myProvider.getFormat());
-          }
-        });
+        ListenableFutureTask<ArrayChunk> task = ListenableFutureTask.create(() -> value.getFrameAccessor()
+          .getArrayItems(slicedValue, key.first, key.second, Math.min(CHUNK_ROW_SIZE, getRowCount() - key.first),
+                         Math.min(CHUNK_COL_SIZE, getColumnCount() - key.second),
+                         myProvider.getFormat()));
 
         myExecutorService.execute(task);
 
@@ -107,17 +102,7 @@ public class AsyncArrayTableModel extends AbstractTableModel {
         }
       }
       else {
-        chunk.addListener(new Runnable() {
-          @Override
-          public void run() {
-            UIUtil.invokeLaterIfNeeded(new Runnable() {
-              @Override
-              public void run() {
-                fireTableCellUpdated(row, col);
-              }
-            });
-          }
-        }, myExecutorService);
+        chunk.addListener(() -> UIUtil.invokeLaterIfNeeded(() -> fireTableCellUpdated(row, col)), myExecutorService);
       }
       return EMPTY_CELL_VALUE;
     }

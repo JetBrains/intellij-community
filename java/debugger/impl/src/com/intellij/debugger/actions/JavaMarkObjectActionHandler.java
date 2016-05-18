@@ -94,12 +94,10 @@ public class JavaMarkObjectActionHandler extends MarkObjectActionHandler {
             final Ref<Pair<ValueMarkup,Boolean>> result = new Ref<>(null);
             try {
               final boolean suggestAdditionalMarkup = canSuggestAdditionalMarkup(debugProcess, valueDescriptor.getValue());
-              SwingUtilities.invokeAndWait(new Runnable() {
-                public void run() {
-                  ObjectMarkupPropertiesDialog dialog = new ObjectMarkupPropertiesDialog(parent, defaultText, suggestAdditionalMarkup);
-                  if (dialog.showAndGet()) {
-                    result.set(Pair.create(dialog.getConfiguredMarkup(), dialog.isMarkAdditionalFields()));
-                  }
+              SwingUtilities.invokeAndWait(() -> {
+                ObjectMarkupPropertiesDialog dialog = new ObjectMarkupPropertiesDialog(parent, defaultText, suggestAdditionalMarkup);
+                if (dialog.showAndGet()) {
+                  result.set(Pair.create(dialog.getConfiguredMarkup(), dialog.isMarkAdditionalFields()));
                 }
               });
             }

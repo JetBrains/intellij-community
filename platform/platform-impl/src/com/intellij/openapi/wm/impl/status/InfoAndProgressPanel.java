@@ -357,6 +357,8 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
   private void buildInInlineIndicator(@NotNull final InlineProgressIndicator inline) {
     removeAll();
     setLayout(new InlineLayout());
+    final JRootPane pane = getRootPane();
+    if (pane == null) return; // e.g. project frame is closed
     add(myRefreshAndInfoPanel);
 
     final JPanel inlinePanel = new JPanel(new BorderLayout());
@@ -377,8 +379,6 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
     myRefreshAndInfoPanel.revalidate();
     myRefreshAndInfoPanel.repaint();
 
-    final JRootPane pane = myInfoPanel.getRootPane();
-    assert pane != null;
     final PresentationModeProgressPanel panel = new PresentationModeProgressPanel(inline);
     MyInlineProgressIndicator delegate = new MyInlineProgressIndicator(true, inline.getInfo(), inline) {
       @Override
@@ -476,24 +476,18 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
   }
 
   public void setRefreshVisible(final boolean visible) {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        myRefreshAlarm.cancelAllRequests();
-        myRefreshAlarm.addRequest(new Runnable() {
-          @Override
-          public void run() {
-            if (visible) {
-              myRefreshIcon.resume();
-            }
-            else {
-              myRefreshIcon.suspend();
-            }
-            myRefreshIcon.revalidate();
-            myRefreshIcon.repaint();
-          }
-        }, visible ? 100 : 300);
-      }
+    UIUtil.invokeLaterIfNeeded(() -> {
+      myRefreshAlarm.cancelAllRequests();
+      myRefreshAlarm.addRequest(() -> {
+        if (visible) {
+          myRefreshIcon.resume();
+        }
+        else {
+          myRefreshIcon.suspend();
+        }
+        myRefreshIcon.revalidate();
+        myRefreshIcon.repaint();
+      }, visible ? 100 : 300);
     });
   }
 
@@ -508,23 +502,20 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
       type.getPopupBackground(),
       listener).createBalloon();
 
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        Component comp = InfoAndProgressPanel.this;
-        if (comp.isShowing()) {
-          int offset = comp.getHeight() / 2;
-          Point point = new Point(comp.getWidth() - offset, comp.getHeight() - offset);
-          balloon.show(new RelativePoint(comp, point), Balloon.Position.above);
-        } else {
-          final JRootPane rootPane = SwingUtilities.getRootPane(comp);
-          if (rootPane != null && rootPane.isShowing()) {
-            final Container contentPane = rootPane.getContentPane();
-            final Rectangle bounds = contentPane.getBounds();
-            final Point target = UIUtil.getCenterPoint(bounds, JBUI.size(1, 1));
-            target.y = bounds.height - 3;
-            balloon.show(new RelativePoint(contentPane, target), Balloon.Position.above);
-          }
+    SwingUtilities.invokeLater(() -> {
+      Component comp = InfoAndProgressPanel.this;
+      if (comp.isShowing()) {
+        int offset = comp.getHeight() / 2;
+        Point point = new Point(comp.getWidth() - offset, comp.getHeight() - offset);
+        balloon.show(new RelativePoint(comp, point), Balloon.Position.above);
+      } else {
+        final JRootPane rootPane = SwingUtilities.getRootPane(comp);
+        if (rootPane != null && rootPane.isShowing()) {
+          final Container contentPane = rootPane.getContentPane();
+          final Rectangle bounds = contentPane.getBounds();
+          final Point target = UIUtil.getCenterPoint(bounds, JBUI.size(1, 1));
+          target.y = bounds.height - 3;
+          balloon.show(new RelativePoint(contentPane, target), Balloon.Position.above);
         }
       }
     });
@@ -532,12 +523,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
     return new BalloonHandler() {
       @Override
       public void hide() {
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            balloon.hide();
-          }
-        });
+        SwingUtilities.invokeLater(() -> balloon.hide());
       }
     };
   }
@@ -689,12 +675,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
     @Override
     public void finish(@NotNull final TaskInfo task) {
       super.finish(task);
-      queueRunningUpdate(new Runnable() {
-        @Override
-        public void run() {
-          removeProgress(MyInlineProgressIndicator.this);
-        }
-      });
+      queueRunningUpdate(() -> removeProgress(MyInlineProgressIndicator.this));
     }
 
     @Override
@@ -737,12 +718,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
       each.updateProgress();
     }
     myQueryAlarm.cancelAllRequests();
-    myQueryAlarm.addRequest(new Runnable() {
-      @Override
-      public void run() {
-        runQuery();
-      }
-    }, 2000);
+    myQueryAlarm.addRequest(() -> runQuery(), 2000);
   }
 
   @NotNull

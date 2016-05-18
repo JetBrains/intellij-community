@@ -206,12 +206,7 @@ public abstract class CompletionPhase implements Disposable {
     @Override
     public int newCompletionStarted(int time, boolean repeated) {
       indicator.closeAndFinish(false);
-      indicator.restorePrefix(new Runnable() {
-        @Override
-        public void run() {
-          indicator.getLookup().restorePrefix();
-        }
-      });
+      indicator.restorePrefix(() -> indicator.getLookup().restorePrefix());
       return indicator.nextInvocationCount(time, repeated);
     }
 

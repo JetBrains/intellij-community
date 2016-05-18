@@ -67,13 +67,10 @@ public class MavenVersionsRemoteManager
         repositoryLibraryDescription.getGroupId(),
         repositoryLibraryDescription.getArtifactId(),
         remoteRepositories);
-      Collections.sort(versions, new Comparator<String>() {
-        @Override
-        public int compare(String o1, String o2) {
-          MavenVersionComparable v1 = new MavenVersionComparable(o1);
-          MavenVersionComparable v2 = new MavenVersionComparable(o2);
-          return v2.compareTo(v1);
-        }
+      Collections.sort(versions, (o1, o2) -> {
+        MavenVersionComparable v1 = new MavenVersionComparable(o1);
+        MavenVersionComparable v2 = new MavenVersionComparable(o2);
+        return v2.compareTo(v1);
       });
       return versions;
     }

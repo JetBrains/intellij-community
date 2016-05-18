@@ -376,12 +376,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
       }
     }
 
-    auxNotifyCompleted(new ThrowableConsumer<LocalFileOperationsHandler, IOException>() {
-      @Override
-      public void consume(LocalFileOperationsHandler handler) throws IOException {
-        handler.createDirectory(parent, dir);
-      }
-    });
+    auxNotifyCompleted(handler -> handler.createDirectory(parent, dir));
 
     return new FakeVirtualFile(parent, dir);
   }
@@ -412,12 +407,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
       }
     }
 
-    auxNotifyCompleted(new ThrowableConsumer<LocalFileOperationsHandler, IOException>() {
-      @Override
-      public void consume(LocalFileOperationsHandler handler) throws IOException {
-        handler.createFile(parent, file);
-      }
-    });
+    auxNotifyCompleted(handler -> handler.createFile(parent, file));
 
     return new FakeVirtualFile(parent, file);
   }
@@ -435,12 +425,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
       }
     }
 
-    auxNotifyCompleted(new ThrowableConsumer<LocalFileOperationsHandler, IOException>() {
-      @Override
-      public void consume(LocalFileOperationsHandler handler) throws IOException {
-        handler.delete(file);
-      }
-    });
+    auxNotifyCompleted(handler -> handler.delete(file));
   }
 
   @Override
@@ -553,12 +538,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
       }
     }
 
-    auxNotifyCompleted(new ThrowableConsumer<LocalFileOperationsHandler, IOException>() {
-      @Override
-      public void consume(LocalFileOperationsHandler handler) throws IOException {
-        handler.move(file, newParent);
-      }
-    });
+    auxNotifyCompleted(handler -> handler.move(file, newParent));
   }
 
   @Override
@@ -595,12 +575,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
       }
     }
 
-    auxNotifyCompleted(new ThrowableConsumer<LocalFileOperationsHandler, IOException>() {
-      @Override
-      public void consume(LocalFileOperationsHandler handler) throws IOException {
-        handler.rename(file, newName);
-      }
-    });
+    auxNotifyCompleted(handler -> handler.rename(file, newName));
   }
 
   @NotNull
@@ -650,12 +625,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
       }
     }
 
-    auxNotifyCompleted(new ThrowableConsumer<LocalFileOperationsHandler, IOException>() {
-      @Override
-      public void consume(LocalFileOperationsHandler handler) throws IOException {
-        handler.copy(file, newParent, copyName);
-      }
-    });
+    auxNotifyCompleted(handler -> handler.copy(file, newParent, copyName));
 
     return new FakeVirtualFile(newParent, copyName);
   }

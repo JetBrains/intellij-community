@@ -36,27 +36,22 @@ import org.jetbrains.annotations.NotNull;
 public class XmlParser implements PsiParser {
   // tries to match an old and new XmlTag by name
   private static final TripleFunction<ASTNode,LighterASTNode,FlyweightCapableTreeStructure<LighterASTNode>,ThreeState>
-    REPARSE_XML_TAG_BY_NAME = new TripleFunction<ASTNode, LighterASTNode, FlyweightCapableTreeStructure<LighterASTNode>, ThreeState>() {
-      @Override
-      public ThreeState fun(ASTNode oldNode,
-                            LighterASTNode newNode,
-                            FlyweightCapableTreeStructure<LighterASTNode> structure) {
-        if (oldNode instanceof XmlTag && newNode.getTokenType() == XmlElementType.XML_TAG) {
-          String oldName = ((XmlTag)oldNode).getName();
-          Ref<LighterASTNode[]> childrenRef = Ref.create(null);
-          int count = structure.getChildren(newNode, childrenRef);
-          if (count < 3) return ThreeState.UNSURE;
-          LighterASTNode[] children = childrenRef.get();
-          if (children[0].getTokenType() != XmlTokenType.XML_START_TAG_START) return ThreeState.UNSURE;
-          if (children[1].getTokenType() != XmlTokenType.XML_NAME) return ThreeState.UNSURE;
-          if (children[2].getTokenType() != XmlTokenType.XML_TAG_END) return ThreeState.UNSURE;
-          LighterASTTokenNode name = (LighterASTTokenNode)children[1];
-          CharSequence newName = name.getText();
-          if (!Comparing.equal(oldName, newName)) return ThreeState.NO;
-        }
-
-        return ThreeState.UNSURE;
+    REPARSE_XML_TAG_BY_NAME = (oldNode, newNode, structure) -> {
+      if (oldNode instanceof XmlTag && newNode.getTokenType() == XmlElementType.XML_TAG) {
+        String oldName = ((XmlTag)oldNode).getName();
+        Ref<LighterASTNode[]> childrenRef = Ref.create(null);
+        int count = structure.getChildren(newNode, childrenRef);
+        if (count < 3) return ThreeState.UNSURE;
+        LighterASTNode[] children = childrenRef.get();
+        if (children[0].getTokenType() != XmlTokenType.XML_START_TAG_START) return ThreeState.UNSURE;
+        if (children[1].getTokenType() != XmlTokenType.XML_NAME) return ThreeState.UNSURE;
+        if (children[2].getTokenType() != XmlTokenType.XML_TAG_END) return ThreeState.UNSURE;
+        LighterASTTokenNode name = (LighterASTTokenNode)children[1];
+        CharSequence newName = name.getText();
+        if (!Comparing.equal(oldName, newName)) return ThreeState.NO;
       }
+
+      return ThreeState.UNSURE;
     };
 
   @Override

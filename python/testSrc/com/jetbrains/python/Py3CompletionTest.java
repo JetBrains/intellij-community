@@ -144,12 +144,7 @@ public class Py3CompletionTest extends PyTestCase {
 
   // PY-15390
   public void testMatMul() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, new Runnable() {
-      @Override
-      public void run() {
-        doTest();
-      }
-    });
+    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> doTest());
   }
 
   // PY-11214
@@ -158,21 +153,11 @@ public class Py3CompletionTest extends PyTestCase {
   }
 
   public void testAsync() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, new Runnable() {
-      @Override
-      public void run() {
-        doTest();
-      }
-    });
+    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> doTest());
   }
 
   public void testAwait() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, new Runnable() {
-      @Override
-      public void run() {
-        doTest();
-      }
-    });
+    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> doTest());
   }
 
   @Override

@@ -146,12 +146,7 @@ public class LibraryScopeCache {
       }
     }
 
-    Comparator<Module> comparator = new Comparator<Module>() {
-      @Override
-      public int compare(@NotNull Module o1, @NotNull Module o2) {
-        return o1.getName().compareTo(o2.getName());
-      }
-    };
+    Comparator<Module> comparator = (o1, o2) -> o1.getName().compareTo(o2.getName());
     Collections.sort(modulesLibraryUsedIn, comparator);
     List<Module> uniquesList = ContainerUtil.removeDuplicatesFromSorted(modulesLibraryUsedIn, comparator);
     Module[] uniques = uniquesList.toArray(new Module[uniquesList.size()]);

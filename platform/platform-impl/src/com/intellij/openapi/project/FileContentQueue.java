@@ -76,19 +76,16 @@ public class FileContentQueue {
 
     for (int i = 0; i < ourTasksNumber; ++i) {
       ourContentLoadingQueues.addLast(this);
-      Runnable task = new Runnable() {
-        @Override
-        public void run() {
-          FileContentQueue contentQueue = ourContentLoadingQueues.pollFirst();
-          while (contentQueue != null) {
-            if (contentQueue.loadNextContent()) {
-              ourContentLoadingQueues.addLast(contentQueue);
-            }
-            if (myContentsToLoad.get() == 0) {
-              return;
-            }
-            contentQueue = ourContentLoadingQueues.pollFirst();
+      Runnable task = () -> {
+        FileContentQueue contentQueue = ourContentLoadingQueues.pollFirst();
+        while (contentQueue != null) {
+          if (contentQueue.loadNextContent()) {
+            ourContentLoadingQueues.addLast(contentQueue);
           }
+          if (myContentsToLoad.get() == 0) {
+            return;
+          }
+          contentQueue = ourContentLoadingQueues.pollFirst();
         }
       };
       ourExecutor.submit(task);

@@ -96,12 +96,9 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
       public void extensionRemoved(@NotNull EntryPoint extension, @Nullable PluginDescriptor pluginDescriptor) {
         if (ADDITIONAL_ANNOS != null) {
           ADDITIONAL_ANNOS = null;
-          UIUtil.invokeLaterIfNeeded(new Runnable() {
-            @Override
-            public void run() {
-              if (ApplicationManager.getApplication().isDisposed()) return;
-              InspectionProfileManager.getInstance().fireProfileChanged(null);
-            }
+          UIUtil.invokeLaterIfNeeded(() -> {
+            if (ApplicationManager.getApplication().isDisposed()) return;
+            InspectionProfileManager.getInstance().fireProfileChanged(null);
           });
         }
         DaemonCodeAnalyzer.getInstance(project).restart(); // annotations changed
@@ -172,15 +169,12 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
       cleanup();
       validateEntryPoints();
 
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        @Override
-        public void run() {
-          for (SmartRefElementPointer entryPoint : myPersistentEntryPoints.values()) {
-            if (entryPoint.resolve(manager)) {
-              RefEntity refElement = entryPoint.getRefElement();
-              ((RefElementImpl)refElement).setEntry(true);
-              ((RefElementImpl)refElement).setPermanentEntry(entryPoint.isPersistent());
-            }
+      ApplicationManager.getApplication().runReadAction(() -> {
+        for (SmartRefElementPointer entryPoint : myPersistentEntryPoints.values()) {
+          if (entryPoint.resolve(manager)) {
+            RefEntity refElement = entryPoint.getRefElement();
+            ((RefElementImpl)refElement).setEntry(true);
+            ((RefElementImpl)refElement).setPermanentEntry(entryPoint.isPersistent());
           }
         }
       });

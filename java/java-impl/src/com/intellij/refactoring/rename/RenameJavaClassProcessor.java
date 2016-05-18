@@ -234,14 +234,12 @@ public class RenameJavaClassProcessor extends RenamePsiElementProcessor {
           PsiClass[] inners = superClass.getInnerClasses();
           for (final PsiClass inner : inners) {
             if (newName.equals(inner.getName())) {
-              ReferencesSearch.search(inner).forEach(new Processor<PsiReference>() {
-                public boolean process(final PsiReference reference) {
-                  PsiElement refElement = reference.getElement();
-                  if (refElement instanceof PsiReferenceExpression && ((PsiReferenceExpression)refElement).isQualified()) return true;
-                  MemberHidesOuterMemberUsageInfo info = new MemberHidesOuterMemberUsageInfo(refElement, aClass);
-                  result.add(info);
-                  return true;
-                }
+              ReferencesSearch.search(inner).forEach(reference -> {
+                PsiElement refElement = reference.getElement();
+                if (refElement instanceof PsiReferenceExpression && ((PsiReferenceExpression)refElement).isQualified()) return true;
+                MemberHidesOuterMemberUsageInfo info = new MemberHidesOuterMemberUsageInfo(refElement, aClass);
+                result.add(info);
+                return true;
               });
             }
           }

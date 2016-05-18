@@ -123,11 +123,7 @@ public class TreeTableModelAdapter extends AbstractTableModel {
    * processed. SwingUtilities.invokeLater is used to handle this.
    */
   protected void delayedFireTableDataChanged() {
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        fireTableDataChanged();
-      }
-    });
+    SwingUtilities.invokeLater(() -> fireTableDataChanged());
   }
 
   public void fireTableDataChanged() {

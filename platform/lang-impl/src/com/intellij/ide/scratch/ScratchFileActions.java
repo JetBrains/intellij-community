@@ -72,12 +72,7 @@ public class ScratchFileActions {
 
       final String text = StringUtil.notNullize(getSelectionText(editor));
       Language language = text.isEmpty() ? null : detectLanguageFromSelection(project, editor, file, text);
-      Consumer<Language> consumer = new Consumer<Language>() {
-        @Override
-        public void consume(Language language) {
-          doCreateNewScratch(project, false, language, text);
-        }
-      };
+      Consumer<Language> consumer = language1 -> doCreateNewScratch(project, false, language1, text);
       if (language != null) {
         consumer.consume(language);
       }

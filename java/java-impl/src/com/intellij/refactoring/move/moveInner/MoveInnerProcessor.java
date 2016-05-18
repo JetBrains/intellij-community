@@ -373,11 +373,8 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
       if (containerSet.size() == 1) {
         placesDescription = RefactoringUIUtil.getDescription(resolved, true);
       } else {
-        placesDescription = "<ol><li>" + StringUtil.join(containerSet, new Function<PsiElement, String>() {
-          @Override
-          public String fun(PsiElement element) {
-            return RefactoringUIUtil.getDescription(element, true);
-          }
+        placesDescription = "<ol><li>" + StringUtil.join(containerSet, element -> {
+          return RefactoringUIUtil.getDescription(element, true);
         }, "</li><li>") + "</li></ol>";
       }
       String message = RefactoringBundle.message("0.will.become.inaccessible.from.1",

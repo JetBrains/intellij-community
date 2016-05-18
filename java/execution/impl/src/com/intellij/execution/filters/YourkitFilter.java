@@ -97,16 +97,14 @@ public class YourkitFilter implements Filter{
       final PopupChooserBuilder builder = new PopupChooserBuilder(list);
       renderer.installSpeedSearch(builder);
 
-      final Runnable runnable = new Runnable() {
-        public void run() {
-          int[] ids = list.getSelectedIndices();
-          if (ids == null || ids.length == 0) return;
-          Object[] selectedElements = list.getSelectedValues();
-          for (Object element : selectedElements) {
-            Navigatable descriptor = EditSourceUtil.getDescriptor((PsiElement)element);
-            if (descriptor != null && descriptor.canNavigate()) {
-              descriptor.navigate(true);
-            }
+      final Runnable runnable = () -> {
+        int[] ids = list.getSelectedIndices();
+        if (ids == null || ids.length == 0) return;
+        Object[] selectedElements = list.getSelectedValues();
+        for (Object element : selectedElements) {
+          Navigatable descriptor = EditSourceUtil.getDescriptor((PsiElement)element);
+          if (descriptor != null && descriptor.canNavigate()) {
+            descriptor.navigate(true);
           }
         }
       };

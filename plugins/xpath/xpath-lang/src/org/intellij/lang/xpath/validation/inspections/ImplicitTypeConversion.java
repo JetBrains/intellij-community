@@ -229,14 +229,12 @@ public class ImplicitTypeConversion extends XPathInspection {
 
         public void setEnabled(final boolean enabled) {
             super.setEnabled(enabled);
-            new Alarm().addRequest(new Runnable() {
-                public void run() {
-                    for (int i = 0; i < matrix.length; i++) {
-                        JCheckBox[] row = matrix[i];
-                        for (int j = 0; j < row.length; j++) {
-                            JCheckBox to = row[j];
-                            to.setEnabled(enabled && j != i + 1);
-                        }
+            new Alarm().addRequest(() -> {
+                for (int i = 0; i < matrix.length; i++) {
+                    JCheckBox[] row = matrix[i];
+                    for (int j = 0; j < row.length; j++) {
+                        JCheckBox to = row[j];
+                        to.setEnabled(enabled && j != i + 1);
                     }
                 }
             }, 200);

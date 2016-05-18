@@ -79,21 +79,18 @@ public class PluginManager extends PluginManagerCore {
       }
     };
 
-    Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        try {
-          ClassUtilCore.clearJarURLCache();
+    Runnable runnable = () -> {
+      try {
+        ClassUtilCore.clearJarURLCache();
 
-          Class<?> aClass = Class.forName(mainClass);
-          Method method = aClass.getDeclaredMethod(methodName, ArrayUtil.EMPTY_STRING_ARRAY.getClass());
-          method.setAccessible(true);
-          Object[] argsArray = {args};
-          method.invoke(null, argsArray);
-        }
-        catch (Throwable t) {
-          throw new StartupAbortedException(t);
-        }
+        Class<?> aClass = Class.forName(mainClass);
+        Method method = aClass.getDeclaredMethod(methodName, ArrayUtil.EMPTY_STRING_ARRAY.getClass());
+        method.setAccessible(true);
+        Object[] argsArray = {args};
+        method.invoke(null, argsArray);
+      }
+      catch (Throwable t) {
+        throw new StartupAbortedException(t);
       }
     };
 
@@ -155,12 +152,7 @@ public class PluginManager extends PluginManagerCore {
     return null;
   }
 
-  private static Thread.UncaughtExceptionHandler HANDLER = new Thread.UncaughtExceptionHandler() {
-    @Override
-    public void uncaughtException(Thread t, Throwable e) {
-      processException(e);
-    }
-  };
+  private static Thread.UncaughtExceptionHandler HANDLER = (t, e) -> processException(e);
 
   public static void installExceptionHandler() {
     Thread.currentThread().setUncaughtExceptionHandler(HANDLER);

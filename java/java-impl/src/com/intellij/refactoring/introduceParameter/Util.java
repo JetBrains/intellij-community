@@ -144,27 +144,25 @@ public class Util {
         PsiParameter[] psiParameters = psiMethod.getParameterList().getParameters();
         if (paramNum >= psiParameters.length) continue;
         PsiParameter parameter = psiParameters[paramNum];
-        if (!ReferencesSearch.search(parameter, parameter.getResolveScope(), false).forEach(new Processor<PsiReference>() {
-          public boolean process(final PsiReference reference) {
-            PsiElement element = reference.getElement();
-            boolean stillCanBeRemoved = false;
-            if (element != null) {
-              stillCanBeRemoved = isAncestor(expr, element, false) || PsiUtil.isInsideJavadocComment(getPhysical(element));
-              if (!stillCanBeRemoved && occurences != null) {
-                for (PsiExpression occurence : occurences) {
-                  if (isAncestor(occurence, element, false)) {
-                    stillCanBeRemoved = true;
-                    break;
-                  }
+        if (!ReferencesSearch.search(parameter, parameter.getResolveScope(), false).forEach(reference -> {
+          PsiElement element = reference.getElement();
+          boolean stillCanBeRemoved = false;
+          if (element != null) {
+            stillCanBeRemoved = isAncestor(expr, element, false) || PsiUtil.isInsideJavadocComment(getPhysical(element));
+            if (!stillCanBeRemoved && occurences != null) {
+              for (PsiExpression occurence : occurences) {
+                if (isAncestor(occurence, element, false)) {
+                  stillCanBeRemoved = true;
+                  break;
                 }
               }
             }
-            if (!stillCanBeRemoved) {
-              iterator.remove();
-              return false;
-            }
-           return true;
           }
+          if (!stillCanBeRemoved) {
+            iterator.remove();
+            return false;
+          }
+         return true;
         })) break;
       }
     }

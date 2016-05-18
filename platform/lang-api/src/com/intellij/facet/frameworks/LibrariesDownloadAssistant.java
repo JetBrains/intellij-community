@@ -136,20 +136,17 @@ public class LibrariesDownloadAssistant {
 
   @NotNull
   private static List<LibraryInfo> convert(final String urlPrefix, @NotNull ArtifactItem[] jars) {
-    return ContainerUtil.mapNotNull(jars, new Function<ArtifactItem, LibraryInfo>() {
-      @Override
-      public LibraryInfo fun(ArtifactItem artifactItem) {
-        String downloadUrl = artifactItem.getUrl();
-        if (urlPrefix != null) {
-          if (downloadUrl == null) {
-            downloadUrl = artifactItem.getName();
-          }
-          if (!downloadUrl.startsWith("http://")) {
-            downloadUrl = urlPrefix + downloadUrl;
-          }
+    return ContainerUtil.mapNotNull(jars, artifactItem -> {
+      String downloadUrl = artifactItem.getUrl();
+      if (urlPrefix != null) {
+        if (downloadUrl == null) {
+          downloadUrl = artifactItem.getName();
         }
-        return new LibraryInfo(artifactItem.getName(), downloadUrl, downloadUrl, artifactItem.getMD5(), artifactItem.getRequiredClasses());
+        if (!downloadUrl.startsWith("http://")) {
+          downloadUrl = urlPrefix + downloadUrl;
+        }
       }
+      return new LibraryInfo(artifactItem.getName(), downloadUrl, downloadUrl, artifactItem.getMD5(), artifactItem.getRequiredClasses());
     });
   }
 }

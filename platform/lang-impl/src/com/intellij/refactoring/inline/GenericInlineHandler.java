@@ -66,12 +66,7 @@ public class GenericInlineHandler {
     }
     else {
       final Ref<Collection<? extends PsiReference>> usagesRef = new Ref<Collection<? extends PsiReference>>();
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-        @Override
-        public void run() {
-          usagesRef.set(ReferencesSearch.search(element).findAll());
-        }
-      }, "Find Usages", false, element.getProject());
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> usagesRef.set(ReferencesSearch.search(element).findAll()), "Find Usages", false, element.getProject());
       allReferences = usagesRef.get();
     }
 
@@ -109,32 +104,26 @@ public class GenericInlineHandler {
     if (!CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, elements, true)) {
       return true;
     }
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        final String subj = element instanceof PsiNamedElement ? ((PsiNamedElement)element).getName() : "element";
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      final String subj = element instanceof PsiNamedElement ? ((PsiNamedElement)element).getName() : "element";
 
-        CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-          @Override
-          public void run() {
-            final PsiReference[] references = sortDepthFirstRightLeftOrder(allReferences);
+      CommandProcessor.getInstance().executeCommand(project, () -> {
+        final PsiReference[] references = sortDepthFirstRightLeftOrder(allReferences);
 
 
-            final UsageInfo[] usages = new UsageInfo[references.length];
-            for (int i = 0; i < references.length; i++) {
-              usages[i] = new UsageInfo(references[i]);
-            }
+        final UsageInfo[] usages = new UsageInfo[references.length];
+        for (int i = 0; i < references.length; i++) {
+          usages[i] = new UsageInfo(references[i]);
+        }
 
-            for (UsageInfo usage : usages) {
-              inlineReference(usage, element, inliners);
-            }
+        for (UsageInfo usage : usages) {
+          inlineReference(usage, element, inliners);
+        }
 
-            if (!settings.isOnlyOneReferenceToInline()) {
-              languageSpecific.removeDefinition(element, settings);
-            }
-          }
-        }, RefactoringBundle.message("inline.command", StringUtil.notNullize(subj, "<nameless>")), null);
-      }
+        if (!settings.isOnlyOneReferenceToInline()) {
+          languageSpecific.removeDefinition(element, settings);
+        }
+      }, RefactoringBundle.message("inline.command", StringUtil.notNullize(subj, "<nameless>")), null);
     });
     return true;
   }
@@ -202,14 +191,11 @@ public class GenericInlineHandler {
   //order of usages across different files is irrelevant
   public static PsiReference[] sortDepthFirstRightLeftOrder(final Collection<? extends PsiReference> allReferences) {
     final PsiReference[] usages = allReferences.toArray(new PsiReference[allReferences.size()]);
-    Arrays.sort(usages, new Comparator<PsiReference>() {
-      @Override
-      public int compare(final PsiReference usage1, final PsiReference usage2) {
-        final PsiElement element1 = usage1.getElement();
-        final PsiElement element2 = usage2.getElement();
-        if (element1 == null || element2 == null) return 0;
-        return element2.getTextRange().getStartOffset() - element1.getTextRange().getStartOffset();
-      }
+    Arrays.sort(usages, (usage1, usage2) -> {
+      final PsiElement element1 = usage1.getElement();
+      final PsiElement element2 = usage2.getElement();
+      if (element1 == null || element2 == null) return 0;
+      return element2.getTextRange().getStartOffset() - element1.getTextRange().getStartOffset();
     });
     return usages;
   }

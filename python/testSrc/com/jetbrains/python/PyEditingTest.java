@@ -124,12 +124,9 @@ public class PyEditingTest extends PyTestCase {
   public void testUncommentWithSpace() throws Exception {   // PY-980
     myFixture.configureByFile("/editing/uncommentWithSpace.before.py");
     myFixture.getEditor().getCaretModel().moveToLogicalPosition(new LogicalPosition(0, 1));
-    CommandProcessor.getInstance().executeCommand(myFixture.getProject(), new Runnable() {
-      @Override
-      public void run() {
-        CommentByLineCommentAction action = new CommentByLineCommentAction();
-        action.actionPerformed(AnActionEvent.createFromAnAction(action, null, "", DataManager.getInstance().getDataContext()));
-      }
+    CommandProcessor.getInstance().executeCommand(myFixture.getProject(), () -> {
+      CommentByLineCommentAction action = new CommentByLineCommentAction();
+      action.actionPerformed(AnActionEvent.createFromAnAction(action, null, "", DataManager.getInstance().getDataContext()));
     }, "", null);
     myFixture.checkResultByFile("/editing/uncommentWithSpace.after.py", true);
   }
@@ -210,14 +207,10 @@ public class PyEditingTest extends PyTestCase {
   }
 
   public void testEnterStubInDocstring() {  // CR-PY-144
-    runWithDocStringFormat(DocStringFormat.PLAIN, new Runnable() {
-      public void run() {
-        doTestEnter("def foo():\n  \"\"\"<caret>", "def foo():\n" +
-                                                   "  \"\"\"\n" +
-                                                   "  \n" +
-                                                   "  \"\"\"");
-      }
-    });
+    runWithDocStringFormat(DocStringFormat.PLAIN, () -> doTestEnter("def foo():\n  \"\"\"<caret>", "def foo():\n" +
+                                                                                               "  \"\"\"\n" +
+                                                                                               "  \n" +
+                                                                                               "  \"\"\""));
   }
 
   // PY-18486
@@ -432,42 +425,29 @@ public class PyEditingTest extends PyTestCase {
 
   // PY-15469
   public void testEnterBeforeArrowInFunction() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, new Runnable() {
-      public void run() {
-        doTestEnter("def func() <caret>-> int:\n" +
-                    "    pass",
-                    "def func() \\\n" +
-                    "        -> int:\n" +
-                    "    pass");
-      }
-    });
+    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> doTestEnter("def func() <caret>-> int:\n" +
+                                                               "    pass",
+                "def func() \\\n" +
+                "        -> int:\n" +
+                "    pass"));
   }
 
   // PY-15469
   public void testEnterAfterArrowInFunction() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, new Runnable() {
-      public void run() {
-        doTestEnter("def func() -><caret> int:\n" +
-                    "    pass",
-                    "def func() ->\\\n" +
-                    "        int:\n" +
-                    "    pass");
-      }
-    });
+    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> doTestEnter("def func() -><caret> int:\n" +
+                                                               "    pass",
+                "def func() ->\\\n" +
+                "        int:\n" +
+                "    pass"));
   }
 
   // PY-15469
   public void testEnterDoesNotInsertSlashInsideArrow() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, new Runnable() {
-      @Override
-      public void run() {
-        doTestEnter("def func() -<caret>> int:\n" +
-                    "    pass",
-                    "def func() -\n" +
-                    "> int:\n" +
-                    "    pass");
-      }
-    });
+    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> doTestEnter("def func() -<caret>> int:\n" +
+                                                               "    pass",
+                "def func() -\n" +
+                "> int:\n" +
+                "    pass"));
   }
 
   private void doTestEnter(String before, final String after) {
@@ -505,33 +485,22 @@ public class PyEditingTest extends PyTestCase {
   }
 
   private void doDocStringTypingTest(final String text, @NotNull DocStringFormat format) {
-    runWithDocStringFormat(format, new Runnable() {
-      @Override
-      public void run() {
-        doTypingTest(text);
-      }
-    });
+    runWithDocStringFormat(format, () -> doTypingTest(text));
   }
 
   private void doTyping(final char character) {
     final int offset = myFixture.getEditor().getCaretModel().getOffset();
-    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
-      @Override
-      public void run() {
-        myFixture.getEditor().getCaretModel().moveToOffset(offset);
-        myFixture.type(character);
-      }
+    WriteCommandAction.runWriteCommandAction(null, () -> {
+      myFixture.getEditor().getCaretModel().moveToOffset(offset);
+      myFixture.type(character);
     });
   }
   
   private void doTyping(final String text) {
     final int offset = myFixture.getEditor().getCaretModel().getOffset();
-    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
-      @Override
-      public void run() {
-        myFixture.getEditor().getCaretModel().moveToOffset(offset);
-        myFixture.type(text);
-      }
+    WriteCommandAction.runWriteCommandAction(null, () -> {
+      myFixture.getEditor().getCaretModel().moveToOffset(offset);
+      myFixture.type(text);
     });
   }
 

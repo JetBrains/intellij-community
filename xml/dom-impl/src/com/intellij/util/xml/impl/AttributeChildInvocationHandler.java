@@ -123,16 +123,13 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler<Attrib
   public final void undefineInternal() {
     final XmlTag tag = getXmlTag();
     if (tag != null) {
-      getManager().runChange(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            setXmlElement(null);
-            tag.setAttribute(getXmlElementName(), getXmlApiCompatibleNamespace(getParentHandler()), null);
-          }
-          catch (IncorrectOperationException e) {
-            LOG.error(e);
-          }
+      getManager().runChange(() -> {
+        try {
+          setXmlElement(null);
+          tag.setAttribute(getXmlElementName(), getXmlApiCompatibleNamespace(getParentHandler()), null);
+        }
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
         }
       });
       fireUndefinedEvent();
@@ -178,17 +175,14 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler<Attrib
     final String newValue = XmlStringUtil.escapeString(value);
     if (Comparing.equal(oldValue, newValue, true)) return;
 
-    getManager().runChange(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          XmlAttribute attribute = tag.setAttribute(attributeName, namespace, newValue);
-          setXmlElement(attribute);
-          getManager().cacheHandler(DomManagerImpl.DOM_ATTRIBUTE_HANDLER_KEY, attribute, AttributeChildInvocationHandler.this);
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
+    getManager().runChange(() -> {
+      try {
+        XmlAttribute attribute = tag.setAttribute(attributeName, namespace, newValue);
+        setXmlElement(attribute);
+        getManager().cacheHandler(DomManagerImpl.DOM_ATTRIBUTE_HANDLER_KEY, attribute, AttributeChildInvocationHandler.this);
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
       }
     });
     final DomElement proxy = getProxy();

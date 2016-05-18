@@ -84,16 +84,13 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
 
   @Override
   public void init(@NotNull final String path, @Nullable final Runnable beforeComponentCreation) {
-    init(ProgressManager.getInstance().getProgressIndicator(), new Runnable() {
-      @Override
-      public void run() {
-        // create ServiceManagerImpl at first to force extension classes registration
-        getPicoContainer().getComponentInstance(ModuleServiceManagerImpl.class);
-        ServiceKt.getStateStore(ModuleImpl.this).setPath(path);
+    init(ProgressManager.getInstance().getProgressIndicator(), () -> {
+      // create ServiceManagerImpl at first to force extension classes registration
+      getPicoContainer().getComponentInstance(ModuleServiceManagerImpl.class);
+      ServiceKt.getStateStore(ModuleImpl.this).setPath(path);
 
-        if (beforeComponentCreation != null) {
-          beforeComponentCreation.run();
-        }
+      if (beforeComponentCreation != null) {
+        beforeComponentCreation.run();
       }
     });
   }

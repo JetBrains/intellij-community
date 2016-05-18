@@ -209,17 +209,14 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
 
     final VirtualFile file = StringUtil.isEmpty(path) ? null : LocalFileSystem.getInstance().findFileByPath(path);
     if (file != null) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          AccessToken at = ApplicationManager.getApplication().acquireReadActionLock();
+      ApplicationManager.getApplication().invokeLater(() -> {
+        AccessToken at = ApplicationManager.getApplication().acquireReadActionLock();
 
-          try {
-            FileEditorManager.getInstance(myProject).openFile(file, true);
-          }
-          finally {
-            at.finish();
-          }
+        try {
+          FileEditorManager.getInstance(myProject).openFile(file, true);
+        }
+        finally {
+          at.finish();
         }
       });
 
@@ -416,35 +413,32 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
 
 
       //busy loop waiting for the answer (or having the console die).
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-        @Override
-        public void run() {
-          final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-          progressIndicator.setText("Waiting for REPL response with " + (int)(TIMEOUT / 10e8) + "s timeout");
-          final long startTime = System.nanoTime();
-          while (nextResponse == null) {
-            if (progressIndicator.isCanceled()) {
-              LOG.debug("Canceled");
-              nextResponse = new InterpreterResponse(false, false);
-            }
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+        final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+        progressIndicator.setText("Waiting for REPL response with " + (int)(TIMEOUT / 10e8) + "s timeout");
+        final long startTime = System.nanoTime();
+        while (nextResponse == null) {
+          if (progressIndicator.isCanceled()) {
+            LOG.debug("Canceled");
+            nextResponse = new InterpreterResponse(false, false);
+          }
 
-            final long time = System.nanoTime() - startTime;
-            progressIndicator.setFraction(((double)time) / TIMEOUT);
-            if (time > TIMEOUT) {
-              LOG.debug("Timeout exceeded");
-              nextResponse = new InterpreterResponse(false, false);
+          final long time = System.nanoTime() - startTime;
+          progressIndicator.setFraction(((double)time) / TIMEOUT);
+          if (time > TIMEOUT) {
+            LOG.debug("Timeout exceeded");
+            nextResponse = new InterpreterResponse(false, false);
+          }
+          synchronized (lock2) {
+            try {
+              lock2.wait(20);
             }
-            synchronized (lock2) {
-              try {
-                lock2.wait(20);
-              }
-              catch (InterruptedException e) {
-                LOG.error(e);
-              }
+            catch (InterruptedException e) {
+              LOG.error(e);
             }
           }
-          onResponseReceived.fun(nextResponse);
         }
+        onResponseReceived.fun(nextResponse);
       }, "Waiting for REPL response", true, myProject);
     }
   }

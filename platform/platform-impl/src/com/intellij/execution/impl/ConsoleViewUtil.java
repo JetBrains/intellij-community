@@ -66,31 +66,28 @@ public class ConsoleViewUtil {
   }
 
   public static void setupConsoleEditor(@NotNull final EditorEx editor, final boolean foldingOutlineShown, final boolean lineMarkerAreaShown) {
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        editor.setSoftWrapAppliancePlace(SoftWrapAppliancePlaces.CONSOLE);
+    ApplicationManager.getApplication().runReadAction(() -> {
+      editor.setSoftWrapAppliancePlace(SoftWrapAppliancePlaces.CONSOLE);
 
-        final EditorSettings editorSettings = editor.getSettings();
-        editorSettings.setLineMarkerAreaShown(lineMarkerAreaShown);
-        editorSettings.setIndentGuidesShown(false);
-        editorSettings.setLineNumbersShown(false);
-        editorSettings.setFoldingOutlineShown(foldingOutlineShown);
-        editorSettings.setAdditionalPageAtBottom(false);
-        editorSettings.setAdditionalColumnsCount(0);
-        editorSettings.setAdditionalLinesCount(0);
-        editorSettings.setRightMarginShown(false);
-        editorSettings.setCaretRowShown(false);
-        editor.getGutterComponentEx().setPaintBackground(false);
+      final EditorSettings editorSettings = editor.getSettings();
+      editorSettings.setLineMarkerAreaShown(lineMarkerAreaShown);
+      editorSettings.setIndentGuidesShown(false);
+      editorSettings.setLineNumbersShown(false);
+      editorSettings.setFoldingOutlineShown(foldingOutlineShown);
+      editorSettings.setAdditionalPageAtBottom(false);
+      editorSettings.setAdditionalColumnsCount(0);
+      editorSettings.setAdditionalLinesCount(0);
+      editorSettings.setRightMarginShown(false);
+      editorSettings.setCaretRowShown(false);
+      editor.getGutterComponentEx().setPaintBackground(false);
 
-        editor.putUserData(EDITOR_IS_CONSOLE_VIEW, true);
+      editor.putUserData(EDITOR_IS_CONSOLE_VIEW, true);
 
-        final DelegateColorScheme scheme = updateConsoleColorScheme(editor.getColorsScheme());
-        if (UISettings.getInstance().PRESENTATION_MODE) {
-          scheme.setEditorFontSize(UISettings.getInstance().PRESENTATION_MODE_FONT_SIZE);
-        }
-        editor.setColorsScheme(scheme);
+      final DelegateColorScheme scheme = updateConsoleColorScheme(editor.getColorsScheme());
+      if (UISettings.getInstance().PRESENTATION_MODE) {
+        scheme.setEditorFontSize(UISettings.getInstance().PRESENTATION_MODE_FONT_SIZE);
       }
+      editor.setColorsScheme(scheme);
     });
   }
 

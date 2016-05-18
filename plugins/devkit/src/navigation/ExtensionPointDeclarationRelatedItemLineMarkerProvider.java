@@ -39,22 +39,10 @@ import java.util.List;
 public class ExtensionPointDeclarationRelatedItemLineMarkerProvider extends DevkitRelatedLineMarkerProviderBase {
 
   private static final NotNullFunction<ExtensionPointCandidate, Collection<? extends PsiElement>> CONVERTER =
-    new NotNullFunction<ExtensionPointCandidate, Collection<? extends PsiElement>>() {
-      @NotNull
-      @Override
-      public Collection<? extends PsiElement> fun(ExtensionPointCandidate candidate) {
-        return Collections.singleton(candidate.pointer.getElement());
-      }
-    };
+    candidate -> Collections.singleton(candidate.pointer.getElement());
 
   private static final NotNullFunction<ExtensionPointCandidate, Collection<? extends GotoRelatedItem>> RELATED_ITEM_PROVIDER =
-    new NotNullFunction<ExtensionPointCandidate, Collection<? extends GotoRelatedItem>>() {
-      @NotNull
-      @Override
-      public Collection<? extends GotoRelatedItem> fun(ExtensionPointCandidate candidate) {
-        return GotoRelatedItem.createItems(Collections.singleton(candidate.pointer.getElement()), "DevKit");
-      }
-    };
+    candidate -> GotoRelatedItem.createItems(Collections.singleton(candidate.pointer.getElement()), "DevKit");
 
   @Override
   protected void collectNavigationMarkers(@NotNull PsiElement element, Collection<? super RelatedItemLineMarkerInfo> result) {

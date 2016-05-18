@@ -179,21 +179,18 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
       synchronized (myFilesToRefresh) {
         if (myFilesToRefresh.add(fileToRefresh)) {
           myUpdateProblemAlarm.cancelAllRequests();
-          myUpdateProblemAlarm.addRequest(new Runnable() {
-            @Override
-            public void run() {
-              if (!myProject.isOpen()) return;
-              Set<VirtualFile> filesToRefresh;
-              synchronized (myFilesToRefresh) {
-                filesToRefresh = new THashSet<VirtualFile>(myFilesToRefresh);
-              }
-              final DefaultMutableTreeNode rootNode = getRootNode();
-              if (rootNode != null) {
-                updateNodesContaining(filesToRefresh, rootNode);
-              }
-              synchronized (myFilesToRefresh) {
-                myFilesToRefresh.removeAll(filesToRefresh);
-              }
+          myUpdateProblemAlarm.addRequest(() -> {
+            if (!myProject.isOpen()) return;
+            Set<VirtualFile> filesToRefresh;
+            synchronized (myFilesToRefresh) {
+              filesToRefresh = new THashSet<VirtualFile>(myFilesToRefresh);
+            }
+            final DefaultMutableTreeNode rootNode = getRootNode();
+            if (rootNode != null) {
+              updateNodesContaining(filesToRefresh, rootNode);
+            }
+            synchronized (myFilesToRefresh) {
+              myFilesToRefresh.removeAll(filesToRefresh);
             }
           }, 200, ModalityState.NON_MODAL);
         }

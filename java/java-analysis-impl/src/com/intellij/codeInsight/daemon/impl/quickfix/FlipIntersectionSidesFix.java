@@ -78,11 +78,8 @@ public class FlipIntersectionSidesFix implements IntentionAction {
     myConjuncts.remove(myConjunct);
     myConjuncts.add(0, myConjunct);
 
-    final String intersectionTypeText = StringUtil.join(myConjuncts, new Function<PsiTypeElement, String>() {
-      @Override
-      public String fun(PsiTypeElement element) {
-        return element.getText();
-      }
+    final String intersectionTypeText = StringUtil.join(myConjuncts, element -> {
+      return element.getText();
     }, " & ");
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
     final PsiTypeCastExpression fixedCast =

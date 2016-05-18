@@ -168,13 +168,10 @@ public class JsonSchemaCrossReferencesTest extends CompletionTestCase {
     int start = document.getText().indexOf(str);
     Assert.assertTrue(start > 0);
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        document.replaceString(start, start + str.length(), "\"enum\": [\"one1\", \"two1\"]");
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      document.replaceString(start, start + str.length(), "\"enum\": [\"one1\", \"two1\"]");
 
-        fileDocumentManager.saveAllDocuments();
-      }
+      fileDocumentManager.saveAllDocuments();
     });
     LookupImpl lookup = getActiveLookup();
     if (lookup != null) lookup.hide();
@@ -220,11 +217,8 @@ public class JsonSchemaCrossReferencesTest extends CompletionTestCase {
     instance.addSchema(inherited);
 
     try {
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          myFileTypeManager.associatePattern(JsonSchemaFileType.INSTANCE, "*Schema.json");
-        }
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        myFileTypeManager.associatePattern(JsonSchemaFileType.INSTANCE, "*Schema.json");
       });
       int offset = myEditor.getCaretModel().getPrimaryCaret().getOffset();
       final PsiReference referenceAt = myFile.findReferenceAt(offset);
@@ -233,11 +227,8 @@ public class JsonSchemaCrossReferencesTest extends CompletionTestCase {
       Assert.assertNotNull(resolve);
       Assert.assertEquals("\"baseEnum\"", resolve.getText());
 
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          myFileTypeManager.removeAssociatedExtension(JsonSchemaFileType.INSTANCE, "*Schema.json");
-        }
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        myFileTypeManager.removeAssociatedExtension(JsonSchemaFileType.INSTANCE, "*Schema.json");
       });
     } finally {
       container.unregisterComponent(key);
@@ -275,11 +266,8 @@ public class JsonSchemaCrossReferencesTest extends CompletionTestCase {
     instance.addSchema(inherited);
 
     try {
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          myFileTypeManager.associatePattern(JsonSchemaFileType.INSTANCE, "*Schema.json");
-        }
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        myFileTypeManager.associatePattern(JsonSchemaFileType.INSTANCE, "*Schema.json");
       });
       int offset = myEditor.getCaretModel().getPrimaryCaret().getOffset();
       final PsiReference referenceAt = myFile.findReferenceAt(offset);
@@ -288,11 +276,8 @@ public class JsonSchemaCrossReferencesTest extends CompletionTestCase {
       Assert.assertNotNull(resolve);
       Assert.assertEquals("\"enum\"", resolve.getText());
 
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          myFileTypeManager.removeAssociatedExtension(JsonSchemaFileType.INSTANCE, "*Schema.json");
-        }
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        myFileTypeManager.removeAssociatedExtension(JsonSchemaFileType.INSTANCE, "*Schema.json");
       });
     } finally {
       container.unregisterComponent(key);

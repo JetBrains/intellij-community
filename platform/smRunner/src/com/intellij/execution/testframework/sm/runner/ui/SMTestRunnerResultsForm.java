@@ -160,11 +160,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     if (Registry.is("tests.view.old.statistics.panel")) {
       final KeyStroke shiftEnterKey = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_MASK);
       SMRunnerUtil.registerAsAction(shiftEnterKey, "show-statistics-for-test-proxy",
-                                    new Runnable() {
-                                      public void run() {
-                                        showStatisticsForSelectedProxy();
-                                      }
-                                    },
+                                    () -> showStatisticsForSelectedProxy(),
                                     myTreeView);
     }
   }
@@ -314,14 +310,11 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     LvcsHelper.addLabel(this);
 
 
-    final Runnable onDone = new Runnable() {
-      @Override
-      public void run() {
-        myTestsRunning = false;
-        final boolean sortByDuration = TestConsoleProperties.SORT_BY_DURATION.value(myProperties);
-        if (sortByDuration) {
-          myTreeBuilder.setStatisticsComparator(myProperties, sortByDuration);
-        }
+    final Runnable onDone = () -> {
+      myTestsRunning = false;
+      final boolean sortByDuration = TestConsoleProperties.SORT_BY_DURATION.value(myProperties);
+      if (sortByDuration) {
+        myTreeBuilder.setStatisticsComparator(myProperties, sortByDuration);
       }
     };
     if (myLastSelected == null) {
@@ -656,13 +649,11 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
       return;
     }
 
-    SMRunnerUtil.runInEventDispatchThread(new Runnable() {
-      public void run() {
-        if (myTreeBuilder.isDisposed()) {
-          return;
-        }
-        myTreeBuilder.select(testProxy, onDone);
+    SMRunnerUtil.runInEventDispatchThread(() -> {
+      if (myTreeBuilder.isDisposed()) {
+        return;
       }
+      myTreeBuilder.select(testProxy, onDone);
     }, ModalityState.NON_MODAL);
   }
 
@@ -724,15 +715,13 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     return new PropagateSelectionHandler() {
       public void handlePropagateSelectionRequest(@Nullable final SMTestProxy selectedTestProxy, @NotNull final Object sender,
                                                   final boolean requestFocus) {
-        SMRunnerUtil.addToInvokeLater(new Runnable() {
-          public void run() {
-            selectWithoutNotify(selectedTestProxy, null);
+        SMRunnerUtil.addToInvokeLater(() -> {
+          selectWithoutNotify(selectedTestProxy, null);
 
-            // Request focus if necessary
-            if (requestFocus) {
-              //myTreeView.requestFocusInWindow();
-              IdeFocusManager.getInstance(myProject).requestFocus(myTreeView, true);
-            }
+          // Request focus if necessary
+          if (requestFocus) {
+            //myTreeView.requestFocusInWindow();
+            IdeFocusManager.getInstance(myProject).requestFocus(myTreeView, true);
           }
         });
       }
@@ -850,18 +839,15 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
     private void writeState() {
       // read action to prevent project (and storage) from being disposed
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        @Override
-        public void run() {
-          Project project = getProject();
-          if (project.isDisposed()) return;
-          TestStateStorage storage = TestStateStorage.getInstance(project);
-          List<SMTestProxy> tests = myRoot.getAllTests();
-          for (SMTestProxy proxy : tests) {
-            String url = proxy instanceof SMTestProxy.SMRootTestProxy ? ((SMTestProxy.SMRootTestProxy)proxy).getRootLocation() : proxy.getLocationUrl();
-            if (url != null) {
-              storage.writeState(url, new TestStateStorage.Record(proxy.getMagnitude(), new Date()));
-            }
+      ApplicationManager.getApplication().runReadAction(() -> {
+        Project project = getProject();
+        if (project.isDisposed()) return;
+        TestStateStorage storage = TestStateStorage.getInstance(project);
+        List<SMTestProxy> tests = myRoot.getAllTests();
+        for (SMTestProxy proxy : tests) {
+          String url = proxy instanceof SMTestProxy.SMRootTestProxy ? ((SMTestProxy.SMRootTestProxy)proxy).getRootLocation() : proxy.getLocationUrl();
+          if (url != null) {
+            storage.writeState(url, new TestStateStorage.Record(proxy.getMagnitude(), new Date()));
           }
         }
       });

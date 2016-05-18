@@ -264,16 +264,14 @@ public class ControlFlowWrapper {
       myInputVariables = inputVariableList;
     }
     //varargs variables go last, otherwise order is induced by original ordering
-    Collections.sort(myInputVariables, new Comparator<PsiVariable>() {
-      public int compare(final PsiVariable v1, final PsiVariable v2) {
-        if (v1.getType() instanceof PsiEllipsisType) {
-          return 1;
-        }
-        if (v2.getType() instanceof PsiEllipsisType) {
-          return -1;
-        }
-        return v1.getTextOffset() - v2.getTextOffset();
+    Collections.sort(myInputVariables, (v1, v2) -> {
+      if (v1.getType() instanceof PsiEllipsisType) {
+        return 1;
       }
+      if (v2.getType() instanceof PsiEllipsisType) {
+        return -1;
+      }
+      return v1.getTextOffset() - v2.getTextOffset();
     });
     return myInputVariables;
   }

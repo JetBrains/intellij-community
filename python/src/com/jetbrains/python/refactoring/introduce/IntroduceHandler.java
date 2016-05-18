@@ -390,11 +390,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
           operation.setElement(pyExpression);
           performActionOnElement(operation);
         }
-      }, new Function<PyExpression, String>() {
-        public String fun(PyExpression pyExpression) {
-          return pyExpression.getText();
-        }
-      });
+      }, pyExpression -> pyExpression.getText());
       return true;
     }
     return false;

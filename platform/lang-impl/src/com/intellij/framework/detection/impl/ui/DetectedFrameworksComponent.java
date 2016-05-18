@@ -98,12 +98,7 @@ public class DetectedFrameworksComponent {
   }
 
   public void processUncheckedNodes(final DetectionExcludesConfiguration excludesConfiguration) {
-    getTree().processUncheckedNodes(new Consumer<DetectedFrameworkTreeNodeBase>() {
-      @Override
-      public void consume(DetectedFrameworkTreeNodeBase node) {
-        node.disableDetection(excludesConfiguration);
-      }
-    });
+    getTree().processUncheckedNodes(node -> node.disableDetection(excludesConfiguration));
   }
 
   public enum GroupByOption { TYPE, DIRECTORY }

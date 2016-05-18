@@ -68,13 +68,8 @@ public abstract class XBreakpointsTestCase extends XDebuggerTestCase {
         result.add(breakpoint);
       }
     }
-    Collections.sort(result, new Comparator<XBreakpoint<?>>() {
-      @Override
-      public int compare(XBreakpoint<?> o1, XBreakpoint<?> o2) {
-        return StringUtil.compare(((MyBreakpointProperties)o1.getProperties()).myOption,
-                                  ((MyBreakpointProperties)o2.getProperties()).myOption, true);
-      }
-    });
+    Collections.sort(result, (o1, o2) -> StringUtil.compare(((MyBreakpointProperties)o1.getProperties()).myOption,
+                                                        ((MyBreakpointProperties)o2.getProperties()).myOption, true));
     return result;
   }
 }

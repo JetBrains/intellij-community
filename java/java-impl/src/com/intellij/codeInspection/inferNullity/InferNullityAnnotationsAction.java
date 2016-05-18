@@ -88,37 +88,32 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
     final JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(project);
     final String defaultNullable = NullableNotNullManager.getInstance(project).getDefaultNullable();
     final int[] fileCount = new int[] {0};
-    if (!progressManager.runProcessWithProgressSynchronously(new Runnable() {
-      @Override
-      public void run() {
-        scope.accept(new PsiElementVisitor() {
-          final private Set<Module> processed = new HashSet<Module>();
+    if (!progressManager.runProcessWithProgressSynchronously(() -> scope.accept(new PsiElementVisitor() {
+      final private Set<Module> processed = new HashSet<Module>();
 
-          @Override
-          public void visitFile(PsiFile file) {
-            fileCount[0]++;
-            final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-            if (progressIndicator != null) {
-              final VirtualFile virtualFile = file.getVirtualFile();
-              if (virtualFile != null) {
-                progressIndicator.setText2(ProjectUtil.calcRelativeToProjectPath(virtualFile, project));
-              }
-              progressIndicator.setText(AnalysisScopeBundle.message("scanning.scope.progress.title"));
-            }
-            if (!(file instanceof PsiJavaFile)) return;
-            final Module module = ModuleUtilCore.findModuleForPsiElement(file);
-            if (module != null && processed.add(module)) {
-              if (PsiUtil.getLanguageLevel(file).compareTo(LanguageLevel.JDK_1_5) < 0) {
-                modulesWithLL.add(module);
-              }
-              else if (javaPsiFacade.findClass(defaultNullable, GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module)) == null) {
-                modulesWithoutAnnotations.add(module);
-              }
-            }
+      @Override
+      public void visitFile(PsiFile file) {
+        fileCount[0]++;
+        final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+        if (progressIndicator != null) {
+          final VirtualFile virtualFile = file.getVirtualFile();
+          if (virtualFile != null) {
+            progressIndicator.setText2(ProjectUtil.calcRelativeToProjectPath(virtualFile, project));
           }
-        });
+          progressIndicator.setText(AnalysisScopeBundle.message("scanning.scope.progress.title"));
+        }
+        if (!(file instanceof PsiJavaFile)) return;
+        final Module module = ModuleUtilCore.findModuleForPsiElement(file);
+        if (module != null && processed.add(module)) {
+          if (PsiUtil.getLanguageLevel(file).compareTo(LanguageLevel.JDK_1_5) < 0) {
+            modulesWithLL.add(module);
+          }
+          else if (javaPsiFacade.findClass(defaultNullable, GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module)) == null) {
+            modulesWithoutAnnotations.add(module);
+          }
+        }
       }
-    }, "Check Applicability...", true, project)) {
+    }), "Check Applicability...", true, project)) {
       return;
     }
     if (!modulesWithLL.isEmpty()) {
@@ -161,12 +156,9 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
                  "' library with IntelliJ IDEA nullity annotations. Would you like to add the dependenc";
       message += (modulesWithoutAnnotations.size() == 1 ? "y" : "ies") + " now?";
       if (Messages.showOkCancelDialog(project, message, title, Messages.getErrorIcon()) == Messages.OK) {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            for (Module module : modulesWithoutAnnotations) {
-              ModuleRootModificationUtil.addDependency(module, annotationsLib);
-            }
+        ApplicationManager.getApplication().runWriteAction(() -> {
+          for (Module module : modulesWithoutAnnotations) {
+            ModuleRootModificationUtil.addDependency(module, annotationsLib);
           }
         });
         return true;
@@ -193,31 +185,26 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
                                  final int fileCount) {
     final NullityInferrer inferrer = new NullityInferrer(isAnnotateLocalVariables(), project);
     final PsiManager psiManager = PsiManager.getInstance(project);
-    final Runnable searchForUsages = new Runnable() {
-      @Override
-      public void run() {
-        scope.accept(new PsiElementVisitor() {
-          int myFileCount;
+    final Runnable searchForUsages = () -> scope.accept(new PsiElementVisitor() {
+      int myFileCount;
 
-          @Override
-          public void visitFile(final PsiFile file) {
-            myFileCount++;
-            final VirtualFile virtualFile = file.getVirtualFile();
-            final FileViewProvider viewProvider = psiManager.findViewProvider(virtualFile);
-            final Document document = viewProvider == null ? null : viewProvider.getDocument();
-            if (document == null || virtualFile.getFileType().isBinary()) return; //do not inspect binary files
-            final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-            if (progressIndicator != null) {
-              progressIndicator.setText2(ProjectUtil.calcRelativeToProjectPath(virtualFile, project));
-              progressIndicator.setFraction(((double)myFileCount) / fileCount);
-            }
-            if (file instanceof PsiJavaFile) {
-              inferrer.collect(file);
-            }
-          }
-        });
+      @Override
+      public void visitFile(final PsiFile file) {
+        myFileCount++;
+        final VirtualFile virtualFile = file.getVirtualFile();
+        final FileViewProvider viewProvider = psiManager.findViewProvider(virtualFile);
+        final Document document = viewProvider == null ? null : viewProvider.getDocument();
+        if (document == null || virtualFile.getFileType().isBinary()) return; //do not inspect binary files
+        final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+        if (progressIndicator != null) {
+          progressIndicator.setText2(ProjectUtil.calcRelativeToProjectPath(virtualFile, project));
+          progressIndicator.setFraction(((double)myFileCount) / fileCount);
+        }
+        if (file instanceof PsiJavaFile) {
+          inferrer.collect(file);
+        }
       }
-    };
+    });
     if (ApplicationManager.getApplication().isDispatchThread()) {
       if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(searchForUsages, INFER_NULLITY_ANNOTATIONS, true, project)) {
         return null;
@@ -236,39 +223,36 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
   }
 
   private static Runnable applyRunnable(final Project project, final Computable<UsageInfo[]> computable) {
-    return new Runnable() {
-      @Override
-      public void run() {
-        final LocalHistoryAction action = LocalHistory.getInstance().startAction(INFER_NULLITY_ANNOTATIONS);
-        try {
-          new WriteCommandAction(project, INFER_NULLITY_ANNOTATIONS) {
-            @Override
-            protected void run(@NotNull Result result) throws Throwable {
-              final UsageInfo[] infos = computable.compute();
-              if (infos.length > 0) {
+    return () -> {
+      final LocalHistoryAction action = LocalHistory.getInstance().startAction(INFER_NULLITY_ANNOTATIONS);
+      try {
+        new WriteCommandAction(project, INFER_NULLITY_ANNOTATIONS) {
+          @Override
+          protected void run(@NotNull Result result) throws Throwable {
+            final UsageInfo[] infos = computable.compute();
+            if (infos.length > 0) {
 
-                final Set<PsiElement> elements = new LinkedHashSet<PsiElement>();
-                for (UsageInfo info : infos) {
-                  final PsiElement element = info.getElement();
-                  if (element != null) {
-                    ContainerUtil.addIfNotNull(elements, element.getContainingFile());
-                  }
+              final Set<PsiElement> elements = new LinkedHashSet<PsiElement>();
+              for (UsageInfo info : infos) {
+                final PsiElement element = info.getElement();
+                if (element != null) {
+                  ContainerUtil.addIfNotNull(elements, element.getContainingFile());
                 }
-                if (!FileModificationService.getInstance().preparePsiElementsForWrite(elements)) return;
-
-                final SequentialModalProgressTask progressTask = new SequentialModalProgressTask(project, INFER_NULLITY_ANNOTATIONS, false);
-                progressTask.setMinIterationTime(200);
-                progressTask.setTask(new AnnotateTask(project, progressTask, infos));
-                ProgressManager.getInstance().run(progressTask);
-              } else {
-                NullityInferrer.nothingFoundMessage(project);
               }
+              if (!FileModificationService.getInstance().preparePsiElementsForWrite(elements)) return;
+
+              final SequentialModalProgressTask progressTask = new SequentialModalProgressTask(project, INFER_NULLITY_ANNOTATIONS, false);
+              progressTask.setMinIterationTime(200);
+              progressTask.setTask(new AnnotateTask(project, progressTask, infos));
+              ProgressManager.getInstance().run(progressTask);
+            } else {
+              NullityInferrer.nothingFoundMessage(project);
             }
-          }.execute();
-        }
-        finally {
-          action.finish();
-        }
+          }
+        }.execute();
+      }
+      finally {
+        action.finish();
       }
     };
   }
@@ -289,17 +273,9 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
   private void showUsageView(@NotNull Project project, final UsageInfo[] usageInfos, @NotNull AnalysisScope scope) {
     final UsageTarget[] targets = UsageTarget.EMPTY_ARRAY;
     final Ref<Usage[]> convertUsagesRef = new Ref<Usage[]>();
-    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          @Override
-          public void run() {
-            convertUsagesRef.set(UsageInfo2UsageAdapter.convert(usageInfos));
-          }
-        });
-      }
-    }, "Preprocess Usages", true, project)) return;
+    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> {
+      convertUsagesRef.set(UsageInfo2UsageAdapter.convert(usageInfos));
+    }), "Preprocess Usages", true, project)) return;
 
     if (convertUsagesRef.isNull()) return;
     final Usage[] usages = convertUsagesRef.get();

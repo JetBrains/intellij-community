@@ -208,11 +208,9 @@ class DesignDropTargetListener implements DropTargetListener {
       final DraggedComponentList dcl = DraggedComponentList.fromTransferable(dtde.getTransferable());
       if (dcl != null) {
         CommandProcessor.getInstance().executeCommand(myEditor.getProject(),
-                                                      new Runnable() {
-                                                        public void run() {
-                                                          if (processDrop(dcl, dtde.getLocation(), dtde.getDropAction())) {
-                                                            myEditor.refreshAndSave(true);
-                                                          }
+                                                      () -> {
+                                                        if (processDrop(dcl, dtde.getLocation(), dtde.getDropAction())) {
+                                                          myEditor.refreshAndSave(true);
                                                         }
                                                       }, UIDesignerBundle.message("command.drop.components"), null);
       }
@@ -221,14 +219,12 @@ class DesignDropTargetListener implements DropTargetListener {
         if (componentItem != null) {
           myEditor.getMainProcessor().setInsertFeedbackEnabled(false);
           new InsertComponentProcessor(myEditor).processComponentInsert(dtde.getLocation(), componentItem);
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            public void run() {
-              PaletteToolWindowManager.getInstance(myEditor).clearActiveItem();
-              myEditor.getActiveDecorationLayer().removeFeedback();
-              myEditor.getLayeredPane().setCursor(null);
-              myEditor.getGlassLayer().requestFocus();
-              myEditor.getMainProcessor().setInsertFeedbackEnabled(true);
-            }
+          ApplicationManager.getApplication().invokeLater(() -> {
+            PaletteToolWindowManager.getInstance(myEditor).clearActiveItem();
+            myEditor.getActiveDecorationLayer().removeFeedback();
+            myEditor.getLayeredPane().setCursor(null);
+            myEditor.getGlassLayer().requestFocus();
+            myEditor.getMainProcessor().setInsertFeedbackEnabled(true);
           });
         }
       }

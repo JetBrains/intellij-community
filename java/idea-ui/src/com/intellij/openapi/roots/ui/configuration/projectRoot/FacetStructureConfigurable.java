@@ -147,16 +147,13 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
 
   @Override
   protected Comparator<MyNode> getNodeComparator() {
-    return new Comparator<MyNode>() {
-      @Override
-      public int compare(MyNode node1, MyNode node2) {
-        final NamedConfigurable c1 = node1.getConfigurable();
-        final NamedConfigurable c2 = node2.getConfigurable();
-        if (c1 instanceof FrameworkDetectionConfigurable && !(c2 instanceof FrameworkDetectionConfigurable)) return 1;
-        if (!(c1 instanceof FrameworkDetectionConfigurable) && c2 instanceof FrameworkDetectionConfigurable) return -1;
+    return (node1, node2) -> {
+      final NamedConfigurable c1 = node1.getConfigurable();
+      final NamedConfigurable c2 = node2.getConfigurable();
+      if (c1 instanceof FrameworkDetectionConfigurable && !(c2 instanceof FrameworkDetectionConfigurable)) return 1;
+      if (!(c1 instanceof FrameworkDetectionConfigurable) && c2 instanceof FrameworkDetectionConfigurable) return -1;
 
-        return StringUtil.naturalCompare(node1.getDisplayName(), node2.getDisplayName());
-      }
+      return StringUtil.naturalCompare(node1.getDisplayName(), node2.getDisplayName());
     };
   }
 

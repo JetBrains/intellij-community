@@ -122,11 +122,7 @@ public class MergeOperations {
   private static Runnable replaceModification(TextRange range, Document document,
                                        final TextRange otherRange, final Document otherDocument) {
     final String replacement = getSubstring(document, range);
-    return new Runnable() {
-      public void run() {
-        otherDocument.replaceString(otherRange.getStartOffset(), otherRange.getEndOffset(), replacement);
-      }
-    };
+    return () -> otherDocument.replaceString(otherRange.getStartOffset(), otherRange.getEndOffset(), replacement);
   }
 
   private static Operation insertOperation(TextRange range, int offset, Document document, Document otherDocument, FragmentSide base) {
@@ -139,11 +135,7 @@ public class MergeOperations {
   private static Runnable insertModification(TextRange range, Document document,
                                       final int offset, final Document otherDocument) {
     final String insertion = getSubstring(document, range);
-    return new Runnable(){
-      public void run() {
-        otherDocument.insertString(offset, insertion);
-      }
-    };
+    return () -> otherDocument.insertString(offset, insertion);
   }
 
   private static String getSubstring(Document document, TextRange range) {
@@ -162,11 +154,7 @@ public class MergeOperations {
   }
 
   private static Runnable removeModification(final TextRange range, final Document document) {
-    return new Runnable(){
-      public void run() {
-        document.deleteString(range.getStartOffset(), range.getEndOffset());
-      }
-    };
+    return () -> document.deleteString(range.getStartOffset(), range.getEndOffset());
   }
 
   private Document getDocument() {
@@ -209,10 +197,8 @@ public class MergeOperations {
         final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(file);
         if (status.hasReadonlyFiles()) return;
       }
-      ApplicationManager.getApplication().runWriteAction(new Runnable(){
-        public void run() {
-          CommandProcessor.getInstance().executeCommand(project, myModification, getName(), null);
-        }
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        CommandProcessor.getInstance().executeCommand(project, myModification, getName(), null);
       });
     }
   }

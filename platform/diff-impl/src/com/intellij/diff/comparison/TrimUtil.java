@@ -343,6 +343,11 @@ public class TrimUtil {
   }
 
   @NotNull
+  public static Range expandW(@NotNull CharSequence text1, @NotNull CharSequence text2, @NotNull Range range) {
+    return expandW(text1, text2, range.start1, range.start2, range.end1, range.end2);
+  }
+
+  @NotNull
   public static Range trim(@NotNull CharSequence text1, @NotNull CharSequence text2, @NotNull Range range) {
     return trim(text1, text2, range.start1, range.start2, range.end1, range.end2);
   }

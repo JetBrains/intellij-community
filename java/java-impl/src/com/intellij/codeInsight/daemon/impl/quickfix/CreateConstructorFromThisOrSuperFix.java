@@ -113,21 +113,18 @@ public abstract class CreateConstructorFromThisOrSuperFix extends CreateFromUsag
       startTemplate(editor, template, project, new TemplateEditingAdapter() {
         @Override
         public void templateFinished(Template template, boolean brokenOff) {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              try {
-                PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
-                final int offset = editor.getCaretModel().getOffset();
-                PsiMethod constructor = PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiMethod.class, false);
-                CreateFromUsageUtils.setupMethodBody(constructor);
-                CreateFromUsageUtils.setupEditor(constructor, editor);
+          ApplicationManager.getApplication().runWriteAction(() -> {
+            try {
+              PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+              final int offset = editor.getCaretModel().getOffset();
+              PsiMethod constructor1 = PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiMethod.class, false);
+              CreateFromUsageUtils.setupMethodBody(constructor1);
+              CreateFromUsageUtils.setupEditor(constructor1, editor);
 
-                UndoUtil.markPsiFileForUndo(callSite);
-              }
-              catch (IncorrectOperationException e) {
-                LOG.error(e);
-              }
+              UndoUtil.markPsiFileForUndo(callSite);
+            }
+            catch (IncorrectOperationException e) {
+              LOG.error(e);
             }
           });
         }

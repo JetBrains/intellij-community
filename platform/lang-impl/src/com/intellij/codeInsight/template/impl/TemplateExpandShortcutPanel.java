@@ -123,11 +123,7 @@ public class TemplateExpandShortcutPanel extends JPanel {
         final KeymapPanel keymapPanel = allSettings == null ? new KeymapPanel() : allSettings.find(KeymapPanel.class);
         if (keymapPanel == null) return;
 
-        Runnable selectAction = new Runnable() {
-          public void run() {
-            keymapPanel.selectAction(IdeActions.ACTION_EXPAND_LIVE_TEMPLATE_CUSTOM);
-          }
-        };
+        Runnable selectAction = () -> keymapPanel.selectAction(IdeActions.ACTION_EXPAND_LIVE_TEMPLATE_CUSTOM);
         if (allSettings != null) {
           allSettings.select(keymapPanel).doWhenDone(selectAction);
         }

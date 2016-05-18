@@ -110,13 +110,9 @@ public class ConfigFileFactoryImpl extends ConfigFileFactory {
     }
     catch (final IOException e) {
       LOG.info(e);
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          Messages.showErrorDialog(IdeBundle.message("message.text.error.creating.deployment.descriptor", e.getLocalizedMessage()),
-                                   IdeBundle.message("message.text.creating.deployment.descriptor"));
-        }
-      });
+      ApplicationManager.getApplication().invokeLater(
+        () -> Messages.showErrorDialog(IdeBundle.message("message.text.error.creating.deployment.descriptor", e.getLocalizedMessage()),
+                                     IdeBundle.message("message.text.creating.deployment.descriptor")));
     }
     return null;
   }

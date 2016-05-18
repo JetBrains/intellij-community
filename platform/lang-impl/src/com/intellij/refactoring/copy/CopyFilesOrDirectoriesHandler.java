@@ -233,30 +233,17 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
             CopyHandler.updateSelectionInActiveProjectView(firstFile, getProject(), doClone);
             if (!(firstFile instanceof PsiBinaryFile)) {
               EditorHelper.openInEditor(firstFile);
-              ApplicationManager.getApplication().invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                  ToolWindowManager.getInstance(getProject()).activateEditorComponent();
-                }
-              });
+              ApplicationManager.getApplication().invokeLater(() -> ToolWindowManager.getInstance(getProject()).activateEditorComponent());
             }
           }
         }
         catch (final IncorrectOperationException ex) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              Messages.showErrorDialog(getProject(), ex.getMessage(), RefactoringBundle.message("error.title"));
-            }
-          });
+          ApplicationManager.getApplication().invokeLater(
+            () -> Messages.showErrorDialog(getProject(), ex.getMessage(), RefactoringBundle.message("error.title")));
         }
         catch (final IOException ex) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              Messages.showErrorDialog(getProject(), ex.getMessage(), RefactoringBundle.message("error.title"));
-            }
-          });
+          ApplicationManager.getApplication().invokeLater(
+            () -> Messages.showErrorDialog(getProject(), ex.getMessage(), RefactoringBundle.message("error.title")));
         }
       }
     }.execute();

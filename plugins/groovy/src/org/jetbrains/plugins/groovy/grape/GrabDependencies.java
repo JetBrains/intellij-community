@@ -124,18 +124,15 @@ public class GrabDependencies implements IntentionAction {
         PsiClass grab = JavaPsiFacade.getInstance(file.getProject()).findClass(GrabAnnos.GRAB_ANNO, file.getResolveScope());
         final Ref<PsiAnnotation> result = Ref.create();
         if (grab != null) {
-          ReferencesSearch.search(grab, new LocalSearchScope(file)).forEach(new Processor<PsiReference>() {
-            @Override
-            public boolean process(PsiReference reference) {
-              if (reference instanceof GrCodeReferenceElement) {
-                PsiElement parent = ((GrCodeReferenceElement)reference).getParent();
-                if (parent instanceof PsiAnnotation) {
-                  result.set((PsiAnnotation)parent);
-                  return false;
-                }
+          ReferencesSearch.search(grab, new LocalSearchScope(file)).forEach(reference -> {
+            if (reference instanceof GrCodeReferenceElement) {
+              PsiElement parent = ((GrCodeReferenceElement)reference).getParent();
+              if (parent instanceof PsiAnnotation) {
+                result.set((PsiAnnotation)parent);
+                return false;
               }
-              return true;
             }
+            return true;
           });
         }
         return Result.create(result.get(), file);
@@ -255,12 +252,7 @@ public class GrabDependencies implements IntentionAction {
       }
     });
 
-    Function<GrAnnotation, String> mapper = new Function<GrAnnotation, String>() {
-      @Override
-      public String fun(GrAnnotation grAnnotation) {
-        return grAnnotation.getText();
-      }
-    };
+    Function<GrAnnotation, String> mapper = grAnnotation -> grAnnotation.getText();
     String common = StringUtil.join(excludes, mapper, " ") + " " + StringUtil.join(resolvers, mapper, " ");
     LinkedHashMap<String, String> result = new LinkedHashMap<String, String>();
     for (GrAnnotation grab : grabs) {

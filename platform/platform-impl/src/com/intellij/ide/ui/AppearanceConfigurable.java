@@ -251,14 +251,11 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
         final boolean wasDarcula = UIUtil.isUnderDarcula();
         lafManager.setCurrentLookAndFeel(lafInfo);
         //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            if (UIUtil.isUnderDarcula()) {
-              DarculaInstaller.install();
-            } else if (wasDarcula) {
-              DarculaInstaller.uninstall();
-            }
+        SwingUtilities.invokeLater(() -> {
+          if (UIUtil.isUnderDarcula()) {
+            DarculaInstaller.install();
+          } else if (wasDarcula) {
+            DarculaInstaller.uninstall();
           }
         });
       }

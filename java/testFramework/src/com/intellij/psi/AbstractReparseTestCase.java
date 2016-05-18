@@ -24,26 +24,18 @@ public abstract class AbstractReparseTestCase extends PsiTestCase {
   }
 
   protected void insert(@NonNls final String s) throws IncorrectOperationException {
-    CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            String oldText = myDummyFile.getText();
-            String expectedNewText = oldText.substring(0, myInsertOffset) + s + oldText.substring(myInsertOffset);
+    CommandProcessor.getInstance().executeCommand(getProject(), () -> ApplicationManager.getApplication().runWriteAction(() -> {
+      String oldText = myDummyFile.getText();
+      String expectedNewText = oldText.substring(0, myInsertOffset) + s + oldText.substring(myInsertOffset);
 
-            try {
-              doReparseAndCheck(s, expectedNewText, 0);
-            }
-            catch (IncorrectOperationException e) {
-              LOG.error(e);
-            }
-            myInsertOffset += s.length();
-          }
-        });
+      try {
+        doReparseAndCheck(s, expectedNewText, 0);
       }
-    }, "asd", null);
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
+      myInsertOffset += s.length();
+    }), "asd", null);
   }
 
   protected void moveEditPointLeft(int count) {
@@ -83,23 +75,15 @@ public abstract class AbstractReparseTestCase extends PsiTestCase {
   }
 
   protected void doReparse(final String s, final int length) {
-    CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            BlockSupport blockSupport = ServiceManager.getService(myProject, BlockSupport.class);
-            try {
-              blockSupport.reparseRange(myDummyFile, myInsertOffset - length, myInsertOffset, s);
-            }
-            catch (IncorrectOperationException e) {
-              LOG.error(e);
-            }
-          }
-        });
+    CommandProcessor.getInstance().executeCommand(getProject(), () -> ApplicationManager.getApplication().runWriteAction(() -> {
+      BlockSupport blockSupport = ServiceManager.getService(myProject, BlockSupport.class);
+      try {
+        blockSupport.reparseRange(myDummyFile, myInsertOffset - length, myInsertOffset, s);
       }
-    }, "asd", null);
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
+    }), "asd", null);
   }
 
   protected void prepareFile(@NonNls String prefix, @NonNls String suffix) throws IncorrectOperationException {

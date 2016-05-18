@@ -43,11 +43,7 @@ public class FileSeparatorProvider {
       }
     }
 
-    Collections.sort(result, new Comparator<LineMarkerInfo>() {
-      public int compare(final LineMarkerInfo i1, final LineMarkerInfo i2) {
-        return getDisplayLine(i1, document) - getDisplayLine(i2, document);
-      }
-    });
+    Collections.sort(result, (i1, i2) -> getDisplayLine(i1, document) - getDisplayLine(i2, document));
     return result;
   }
 

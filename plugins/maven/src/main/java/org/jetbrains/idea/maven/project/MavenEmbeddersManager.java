@@ -54,11 +54,9 @@ public class MavenEmbeddersManager {
   }
 
   public synchronized void clearCaches() {
-    forEachPooled(false, new Function<MavenEmbedderWrapper, Object>() {
-      public Object fun(MavenEmbedderWrapper each) {
-        each.clearCaches();
-        return null;
-      }
+    forEachPooled(false, each -> {
+      each.clearCaches();
+      return null;
     });
     myEmbeddersToClear.addAll(myEmbeddersInUse);
   }
@@ -111,11 +109,9 @@ public class MavenEmbeddersManager {
   }
 
   private synchronized void releasePooledEmbedders(boolean force) {
-    forEachPooled(force, new Function<MavenEmbedderWrapper, Object>() {
-      public Object fun(MavenEmbedderWrapper each) {
-        each.release();
-        return null;
-      }
+    forEachPooled(force, each -> {
+      each.release();
+      return null;
     });
     myPool.clear();
     myEmbeddersInUse.clear();

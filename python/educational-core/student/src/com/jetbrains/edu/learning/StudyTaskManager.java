@@ -218,12 +218,9 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
     if (oldCourseElement != null) {
       myOldCourse = XmlSerializer.deserialize(oldCourseElement, OldCourse.class);
       if (myOldCourse != null) {
-        myCourse = EduUtils.transformOldCourse(myOldCourse, new Function<Pair<AnswerPlaceholder, StudyStatus>, Void>() {
-          @Override
-          public Void fun(Pair<AnswerPlaceholder, StudyStatus> pair) {
-            setStatus(pair.first, pair.second);
-            return null;
-          }
+        myCourse = EduUtils.transformOldCourse(myOldCourse, pair -> {
+          setStatus(pair.first, pair.second);
+          return null;
         });
         myOldCourse = null;
       }

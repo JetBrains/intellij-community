@@ -231,12 +231,9 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
 
       final Project project = psiDirectory.getProject();
       final boolean[] result = {false};
-      DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
-        @Override
-        public void run() {
-          final FileType type = FileTypeChooser.getKnownFileTypeOrAssociate(psiDirectory.getVirtualFile(), getFileName(inputString), project);
-          result[0] = type != null && MyValidator.super.canClose(getFileName(inputString));
-        }
+      DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, () -> {
+        final FileType type = FileTypeChooser.getKnownFileTypeOrAssociate(psiDirectory.getVirtualFile(), getFileName(inputString), project);
+        result[0] = type != null && MyValidator.super.canClose(getFileName(inputString));
       });
       return result[0];
     }

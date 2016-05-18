@@ -784,37 +784,31 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
         final FragmentList fragmentList = getFragments();
 
         final Application application = ApplicationManager.getApplication();
-        application.executeOnPooledThread(new Runnable() {
-          @Override
-          public void run() {
-            final ChangedLinesIterator changedLinesIterator = new ChangedLinesIterator(fragmentList.iterator(), document, false);
-            final CacheOneStepIterator<Pair<Integer, String>> cacheOneStepIterator =
-              new CacheOneStepIterator<Pair<Integer, String>>(changedLinesIterator);
-            final NavigationContextChecker checker = new NavigationContextChecker(cacheOneStepIterator, scrollContext);
-            int line = checker.contextMatchCheck();
-            if (line < 0) {
-              // this will work for the case, when spaces changes are ignored, and corresponding fragments are not reported as changed
-              // just try to find target line  -> +-
-              final ChangedLinesIterator changedLinesIterator2 = new ChangedLinesIterator(fragmentList.iterator(), document, true);
-              final CacheOneStepIterator<Pair<Integer, String>> cacheOneStepIterator2 =
-                new CacheOneStepIterator<Pair<Integer, String>>(changedLinesIterator2);
-              final NavigationContextChecker checker2 = new NavigationContextChecker(cacheOneStepIterator2, scrollContext);
-              line = checker2.contextMatchCheck();
-            }
-            final int finalLine = line;
-            final ModalityState modalityState = myOwnerWindow == null ? ModalityState.NON_MODAL : ModalityState.stateForComponent(myOwnerWindow);
-            application.invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                if (finalLine >= 0) {
-                  final int line = myLineBlocks.transform(myRightSide.getSide(), finalLine);
-                  myLeftSide.scrollToFirstDiff(line);
-                } else {
-                  scrollCurrentToFirstDiff();
-                }
-              }
-            }, modalityState);
+        application.executeOnPooledThread(() -> {
+          final ChangedLinesIterator changedLinesIterator = new ChangedLinesIterator(fragmentList.iterator(), document, false);
+          final CacheOneStepIterator<Pair<Integer, String>> cacheOneStepIterator =
+            new CacheOneStepIterator<Pair<Integer, String>>(changedLinesIterator);
+          final NavigationContextChecker checker = new NavigationContextChecker(cacheOneStepIterator, scrollContext);
+          int line = checker.contextMatchCheck();
+          if (line < 0) {
+            // this will work for the case, when spaces changes are ignored, and corresponding fragments are not reported as changed
+            // just try to find target line  -> +-
+            final ChangedLinesIterator changedLinesIterator2 = new ChangedLinesIterator(fragmentList.iterator(), document, true);
+            final CacheOneStepIterator<Pair<Integer, String>> cacheOneStepIterator2 =
+              new CacheOneStepIterator<Pair<Integer, String>>(changedLinesIterator2);
+            final NavigationContextChecker checker2 = new NavigationContextChecker(cacheOneStepIterator2, scrollContext);
+            line = checker2.contextMatchCheck();
           }
+          final int finalLine = line;
+          final ModalityState modalityState = myOwnerWindow == null ? ModalityState.NON_MODAL : ModalityState.stateForComponent(myOwnerWindow);
+          application.invokeLater(() -> {
+            if (finalLine >= 0) {
+              final int line1 = myLineBlocks.transform(myRightSide.getSide(), finalLine);
+              myLeftSide.scrollToFirstDiff(line1);
+            } else {
+              scrollCurrentToFirstDiff();
+            }
+          }, modalityState);
         });
       }
     }
@@ -859,22 +853,19 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
       if (fragment == null) return null;
 
       final TextRange textRange = fragment.getRange(FragmentSide.SIDE2);
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        @Override
-        public void run() {
-          final int startLine = myDocument.getLineNumber(textRange.getStartOffset());
-          final int endFragmentOffset = textRange.getEndOffset();
-          final int endLine = myDocument.getLineNumber(endFragmentOffset);
-          for (int i = startLine; i <= endLine; i++) {
-            int lineEndOffset = myDocument.getLineEndOffset(i);
-            final int lineStartOffset = myDocument.getLineStartOffset(i);
-            if (lineEndOffset > endFragmentOffset && endFragmentOffset == lineStartOffset) {
-              lineEndOffset = endFragmentOffset;
-            }
-            if (lineStartOffset > lineEndOffset) continue;
-            String text = myDocument.getText().substring(lineStartOffset, lineEndOffset);
-            myBuffer.add(new Pair<Integer, String>(i, text));
+      ApplicationManager.getApplication().runReadAction(() -> {
+        final int startLine = myDocument.getLineNumber(textRange.getStartOffset());
+        final int endFragmentOffset = textRange.getEndOffset();
+        final int endLine = myDocument.getLineNumber(endFragmentOffset);
+        for (int i = startLine; i <= endLine; i++) {
+          int lineEndOffset = myDocument.getLineEndOffset(i);
+          final int lineStartOffset = myDocument.getLineStartOffset(i);
+          if (lineEndOffset > endFragmentOffset && endFragmentOffset == lineStartOffset) {
+            lineEndOffset = endFragmentOffset;
           }
+          if (lineStartOffset > lineEndOffset) continue;
+          String text = myDocument.getText().substring(lineStartOffset, lineEndOffset);
+          myBuffer.add(new Pair<Integer, String>(i, text));
         }
       });
       if (myBuffer.isEmpty()) return null;

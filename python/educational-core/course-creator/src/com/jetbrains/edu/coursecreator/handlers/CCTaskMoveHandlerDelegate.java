@@ -147,23 +147,13 @@ public class CCTaskMoveHandlerDelegate extends MoveHandlerDelegate {
     if (sourceLessonDir == null) {
       return;
     }
-    CCUtils.updateHigherElements(sourceLessonDir.getChildren(), new Function<VirtualFile, StudyItem>() {
-      @Override
-      public StudyItem fun(VirtualFile file) {
-        return taskToMove.getLesson().getTask(file.getName());
-      }
-    }, taskToMove.getIndex(), EduNames.TASK, -1);
+    CCUtils.updateHigherElements(sourceLessonDir.getChildren(), file -> taskToMove.getLesson().getTask(file.getName()), taskToMove.getIndex(), EduNames.TASK, -1);
 
     final int newItemIndex = targetTask != null ? targetTask.getIndex() + indexDelta : 1;
     taskToMove.setIndex(-1);
     taskToMove.getLesson().getTaskList().remove(taskToMove);
     final Lesson finalTargetLesson = targetLesson;
-    CCUtils.updateHigherElements(targetDirectory.getChildren(), new Function<VirtualFile, StudyItem>() {
-                                   @Override
-                                   public StudyItem fun(VirtualFile file) {
-                                     return finalTargetLesson.getTask(file.getName());
-                                   }
-                                 },
+    CCUtils.updateHigherElements(targetDirectory.getChildren(), file -> finalTargetLesson.getTask(file.getName()),
                                  newItemIndex - 1, EduNames.TASK, 1);
 
     taskToMove.setIndex(newItemIndex);

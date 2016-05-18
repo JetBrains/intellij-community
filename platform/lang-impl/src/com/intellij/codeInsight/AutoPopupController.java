@@ -86,12 +86,7 @@ public class AutoPopupController implements Disposable {
       }
     }, this);
 
-    IdeEventQueue.getInstance().addActivityListener(new Runnable() {
-      @Override
-      public void run() {
-        cancelAllRequest();
-      }
-    }, this);
+    IdeEventQueue.getInstance().addActivityListener(() -> cancelAllRequest(), this);
   }
 
   public void autoPopupMemberLookup(final Editor editor, @Nullable final Condition<PsiFile> condition){
@@ -142,12 +137,7 @@ public class AutoPopupController implements Disposable {
   }
 
   private void addRequest(final Runnable request, final int delay) {
-    Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        myAlarm.addRequest(request, delay);
-      }
-    };
+    Runnable runnable = () -> myAlarm.addRequest(request, delay);
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       runnable.run();
     } else {

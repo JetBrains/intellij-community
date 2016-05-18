@@ -141,19 +141,15 @@ public class PropertiesPrefixGroup implements Group, ResourceBundleEditorViewEle
   @NotNull
   @Override
   public IProperty[] getProperties() {
-    final List<IProperty> elements = ContainerUtil.mapNotNull(getChildren(), new NullableFunction<TreeElement, IProperty>() {
-      @Nullable
-      @Override
-      public IProperty fun(final TreeElement treeElement) {
-        if (treeElement instanceof PropertiesStructureViewElement) {
-          PropertiesStructureViewElement propertiesElement = (PropertiesStructureViewElement)treeElement;
-          return propertiesElement.getValue();
-        }
-        else if (treeElement instanceof ResourceBundlePropertyStructureViewElement) {
-          return ((ResourceBundlePropertyStructureViewElement)treeElement).getProperties()[0];
-        }
-        return null;
+    final List<IProperty> elements = ContainerUtil.mapNotNull(getChildren(), (NullableFunction<TreeElement, IProperty>)treeElement -> {
+      if (treeElement instanceof PropertiesStructureViewElement) {
+        PropertiesStructureViewElement propertiesElement = (PropertiesStructureViewElement)treeElement;
+        return propertiesElement.getValue();
       }
+      else if (treeElement instanceof ResourceBundlePropertyStructureViewElement) {
+        return ((ResourceBundlePropertyStructureViewElement)treeElement).getProperties()[0];
+      }
+      return null;
     });
     return elements.toArray(new IProperty[elements.size()]);
   }

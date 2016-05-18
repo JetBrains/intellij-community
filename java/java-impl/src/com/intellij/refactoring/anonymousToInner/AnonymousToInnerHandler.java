@@ -118,39 +118,32 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
     collectUsedVariables(variableInfoMap, myAnonClass);
     final VariableInfo[] infos = variableInfoMap.values().toArray(new VariableInfo[variableInfoMap.values().size()]);
     myVariableInfos = infos;
-    Arrays.sort(myVariableInfos, new Comparator<VariableInfo>() {
-      @Override
-      public int compare(VariableInfo o1, VariableInfo o2) {
-        final PsiType type1 = o1.variable.getType();
-        final PsiType type2 = o2.variable.getType();
-        if (type1 instanceof PsiEllipsisType) {
-          return 1;
-        }
-        if (type2 instanceof PsiEllipsisType) {
-          return -1;
-        }
-        return ArrayUtil.find(infos, o1) > ArrayUtil.find(infos, o2) ? 1 : -1;
+    Arrays.sort(myVariableInfos, (o1, o2) -> {
+      final PsiType type1 = o1.variable.getType();
+      final PsiType type2 = o2.variable.getType();
+      if (type1 instanceof PsiEllipsisType) {
+        return 1;
       }
+      if (type2 instanceof PsiEllipsisType) {
+        return -1;
+      }
+      return ArrayUtil.find(infos, o1) > ArrayUtil.find(infos, o2) ? 1 : -1;
     });
     if (!showRefactoringDialog()) return;
 
     CommandProcessor.getInstance().executeCommand(
-        myProject, new Runnable() {
-              public void run() {
-                final Runnable action = new Runnable() {
-                  public void run() {
-                    try {
-                      doRefactoring();
-                    } catch (IncorrectOperationException e) {
-                      LOG.error(e);
-                    }
-                  }
-                };
-                ApplicationManager.getApplication().runWriteAction(action);
-              }
-            },
-        REFACTORING_NAME,
-        null
+      myProject, () -> {
+        final Runnable action = () -> {
+          try {
+            doRefactoring();
+          } catch (IncorrectOperationException e) {
+            LOG.error(e);
+          }
+        };
+        ApplicationManager.getApplication().runWriteAction(action);
+      },
+      REFACTORING_NAME,
+      null
     );
 
   }
@@ -408,11 +401,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
       }
     }
 
-    Collections.sort(toAdd, new Comparator<PsiElement>() {
-      public int compare(PsiElement e1, PsiElement e2) {
-        return e1.getTextRange().getStartOffset() - e2.getTextRange().getStartOffset();
-      }
-    });
+    Collections.sort(toAdd, (e1, e2) -> e1.getTextRange().getStartOffset() - e2.getTextRange().getStartOffset());
 
     for (PsiElement element : toAdd) {
       if (element instanceof PsiClassInitializer) {

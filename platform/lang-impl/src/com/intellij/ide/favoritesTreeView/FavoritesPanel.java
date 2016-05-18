@@ -69,32 +69,29 @@ public class FavoritesPanel {
 
   private void setupDnD() {
     DnDSupport.createBuilder(myTree)
-      .setBeanProvider(new Function<DnDActionInfo, DnDDragStartBean>() {
-        @Override
-        public DnDDragStartBean fun(DnDActionInfo info) {
-          final TreePath path = myTree.getPathForLocation(info.getPoint().x, info.getPoint().y);
-          if (path != null && path.getPathCount() == 3) {
-            Object o = path.getLastPathComponent();
-            if (o instanceof DefaultMutableTreeNode) {
-              o = ((DefaultMutableTreeNode)o).getUserObject();
-              if (o instanceof FavoritesTreeNodeDescriptor) {
-                FavoritesTreeNodeDescriptor root = ((FavoritesTreeNodeDescriptor)o).getFavoritesRoot();
-                if (root != null && root != o) {
-                  o = root.getElement();
-                  if (o instanceof FavoritesListNode && ((FavoritesListNode)o).getProvider() == null) {
-                    return new DnDDragStartBean(path);
-                  }
+      .setBeanProvider(info -> {
+        final TreePath path = myTree.getPathForLocation(info.getPoint().x, info.getPoint().y);
+        if (path != null && path.getPathCount() == 3) {
+          Object o = path.getLastPathComponent();
+          if (o instanceof DefaultMutableTreeNode) {
+            o = ((DefaultMutableTreeNode)o).getUserObject();
+            if (o instanceof FavoritesTreeNodeDescriptor) {
+              FavoritesTreeNodeDescriptor root = ((FavoritesTreeNodeDescriptor)o).getFavoritesRoot();
+              if (root != null && root != o) {
+                o = root.getElement();
+                if (o instanceof FavoritesListNode && ((FavoritesListNode)o).getProvider() == null) {
+                  return new DnDDragStartBean(path);
                 }
               }
             }
           }
-          return new DnDDragStartBean("") {
-            @Override
-            public boolean isEmpty() {
-              return true;
-            }
-          };
         }
+        return new DnDDragStartBean("") {
+          @Override
+          public boolean isEmpty() {
+            return true;
+          }
+        };
       })
         // todo process drag-and-drop here for tasks
       .setTargetChecker(new DnDTargetChecker() {
@@ -159,12 +156,8 @@ public class FavoritesPanel {
           }
         }
       })
-      .setImageProvider(new Function<DnDActionInfo, DnDImage>() {
-        @Override
-        public DnDImage fun(DnDActionInfo info) {
-          return new DnDImage(myFavoritesImage, new Point(-myFavoritesImage.getWidth(null) / 2, -myFavoritesImage.getHeight(null) / 2));
-        }
-      })
+      .setImageProvider(
+        info -> new DnDImage(myFavoritesImage, new Point(-myFavoritesImage.getWidth(null) / 2, -myFavoritesImage.getHeight(null) / 2)))
       .enableAsNativeTarget()
       .setDisposableParent(myProject)
       .install();

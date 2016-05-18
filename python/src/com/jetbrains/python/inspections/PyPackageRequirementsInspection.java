@@ -237,11 +237,8 @@ public class PyPackageRequirementsInspection extends PyInspection {
 
   @NotNull
   private static String requirementsToString(@NotNull List<PyRequirement> requirements) {
-    return StringUtil.join(requirements, new Function<PyRequirement, String>() {
-      @Override
-      public String fun(PyRequirement requirement) {
-        return String.format("'%s'", requirement.toString());
-      }
+    return StringUtil.join(requirements, requirement -> {
+      return String.format("'%s'", requirement.toString());
     }, ", ");
   }
 
@@ -407,18 +404,10 @@ public class PyPackageRequirementsInspection extends PyInspection {
             final PyElement element = myNode.getElement();
             if (element == null) return;
 
-            CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-              @Override
-              public void run() {
-                ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                  @Override
-                  public void run() {
-                    AddImportHelper.addImportStatement(element.getContainingFile(), myPackageName, myAsName,
-                                                       AddImportHelper.ImportPriority.THIRD_PARTY, element);
-                  }
-                });
-              }
-            }, "Add import", "Add import");
+            CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> {
+              AddImportHelper.addImportStatement(element.getContainingFile(), myPackageName, myAsName,
+                                                 AddImportHelper.ImportPriority.THIRD_PARTY, element);
+            }), "Add import", "Add import");
           }
         }
       });
@@ -539,60 +528,55 @@ public class PyPackageRequirementsInspection extends PyInspection {
     public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
       final VirtualFile requirementsTxt = PyPackageUtil.findRequirementsTxt(myModule);
       final PyListLiteralExpression setupPyRequires = PyPackageUtil.findSetupPyRequires(myModule);
-      CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+      CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(new Runnable() {
         @Override
         public void run() {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              if (requirementsTxt != null) {
-                if (requirementsTxt.isWritable()) {
-                  final Document document = FileDocumentManager.getInstance().getDocument(requirementsTxt);
-                  if (document != null) {
-                    document.insertString(0, myPackageName + "\n");
-                  }
-                }
-              }
-              else {
-                final PyElementGenerator generator = PyElementGenerator.getInstance(project);
-                final PyArgumentList argumentList = findSetupArgumentList();
-                if (setupPyRequires != null) {
-                  if (setupPyRequires.getContainingFile().isWritable()) {
-                    final String text = String.format("'%s'", myPackageName);
-                    final PyExpression generated = generator.createExpressionFromText(myLanguageLevel, text);
-                    setupPyRequires.add(generated);
-                  }
-                }
-                else if (argumentList != null) {
-                  final PyKeywordArgument requiresArg = generateRequiresKwarg(generator);
-                  if (requiresArg != null) {
-                    argumentList.addArgument(requiresArg);
-                  }
-                }
+          if (requirementsTxt != null) {
+            if (requirementsTxt.isWritable()) {
+              final Document document = FileDocumentManager.getInstance().getDocument(requirementsTxt);
+              if (document != null) {
+                document.insertString(0, myPackageName + "\n");
               }
             }
-
-            @Nullable
-            private PyKeywordArgument generateRequiresKwarg(PyElementGenerator generator) {
-              final String text = String.format("foo(requires=['%s'])", myPackageName);
-              final PyExpression generated = generator.createExpressionFromText(myLanguageLevel, text);
-              PyKeywordArgument installRequiresArg = null;
-              if (generated instanceof PyCallExpression) {
-                final PyCallExpression foo = (PyCallExpression)generated;
-                for (PyExpression arg : foo.getArguments()) {
-                  if (arg instanceof PyKeywordArgument) {
-                    final PyKeywordArgument kwarg = (PyKeywordArgument)arg;
-                    if ("requires".equals(kwarg.getKeyword())) {
-                      installRequiresArg = kwarg;
-                    }
-                  }
-                }
+          }
+          else {
+            final PyElementGenerator generator = PyElementGenerator.getInstance(project);
+            final PyArgumentList argumentList = findSetupArgumentList();
+            if (setupPyRequires != null) {
+              if (setupPyRequires.getContainingFile().isWritable()) {
+                final String text = String.format("'%s'", myPackageName);
+                final PyExpression generated = generator.createExpressionFromText(myLanguageLevel, text);
+                setupPyRequires.add(generated);
               }
-              return installRequiresArg;
             }
-          });
+            else if (argumentList != null) {
+              final PyKeywordArgument requiresArg = generateRequiresKwarg(generator);
+              if (requiresArg != null) {
+                argumentList.addArgument(requiresArg);
+              }
+            }
+          }
         }
-      }, getName(), null);
+
+        @Nullable
+        private PyKeywordArgument generateRequiresKwarg(PyElementGenerator generator) {
+          final String text = String.format("foo(requires=['%s'])", myPackageName);
+          final PyExpression generated = generator.createExpressionFromText(myLanguageLevel, text);
+          PyKeywordArgument installRequiresArg = null;
+          if (generated instanceof PyCallExpression) {
+            final PyCallExpression foo = (PyCallExpression)generated;
+            for (PyExpression arg : foo.getArguments()) {
+              if (arg instanceof PyKeywordArgument) {
+                final PyKeywordArgument kwarg = (PyKeywordArgument)arg;
+                if ("requires".equals(kwarg.getKeyword())) {
+                  installRequiresArg = kwarg;
+                }
+              }
+            }
+          }
+          return installRequiresArg;
+        }
+      }), getName(), null);
     }
   }
 }

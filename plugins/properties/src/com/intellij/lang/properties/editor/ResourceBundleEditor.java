@@ -292,12 +292,9 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
         return;
       }
       mySelectionChangeAlarm.cancelAllRequests();
-      mySelectionChangeAlarm.addRequest(new Runnable() {
-        @Override
-        public void run() {
-          mySelectionChangeAlarm.cancelAllRequests();
-          setStructureViewSelection(propertyName);
-        }
+      mySelectionChangeAlarm.addRequest(() -> {
+        mySelectionChangeAlarm.cancelAllRequests();
+        setStructureViewSelection(propertyName);
       }, 500);
       return;
     }
@@ -371,28 +368,22 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
       return;
     }
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        WriteCommandAction.runWriteCommandAction(myProject, new Runnable() {
-          @Override
-          public void run() {
-            try {
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      WriteCommandAction.runWriteCommandAction(myProject, () -> {
+        try {
 
-              if (currentValue.isEmpty() &&
-                  ResourceBundleEditorKeepEmptyValueToggleAction.keepEmptyProperties() &&
-                  propertiesFile.equals(myResourceBundle.getDefaultPropertiesFile().getVirtualFile())) {
-                myPropertiesInsertDeleteManager.deletePropertyIfExist(currentSelectedProperty, PropertiesImplUtil.getPropertiesFile(propertiesFile, myProject));
-              } else {
-                myPropertiesInsertDeleteManager.insertOrUpdateTranslation(currentSelectedProperty, currentValue, PropertiesImplUtil.getPropertiesFile(propertiesFile, myProject));
-              }
-            }
-            catch (final IncorrectOperationException e) {
-              LOG.error(e);
-            }
+          if (currentValue.isEmpty() &&
+              ResourceBundleEditorKeepEmptyValueToggleAction.keepEmptyProperties() &&
+              propertiesFile.equals(myResourceBundle.getDefaultPropertiesFile().getVirtualFile())) {
+            myPropertiesInsertDeleteManager.deletePropertyIfExist(currentSelectedProperty, PropertiesImplUtil.getPropertiesFile(propertiesFile, myProject));
+          } else {
+            myPropertiesInsertDeleteManager.insertOrUpdateTranslation(currentSelectedProperty, currentValue, PropertiesImplUtil.getPropertiesFile(propertiesFile, myProject));
           }
-        });
-      }
+        }
+        catch (final IncorrectOperationException e) {
+          LOG.error(e);
+        }
+      });
     });
   }
 
@@ -526,21 +517,13 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
       if (editor == null) continue;
       final IProperty property = propertiesFile.findPropertyByKey(propertyName);
       final Document document = editor.getDocument();
-      CommandProcessor.getInstance().executeCommand(null, new Runnable() {
-        @Override
-        public void run() {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              if (!checkIsUnderUndoRedoAction ||
-                  !undoManager.isActive() ||
-                  !(undoManager.isRedoInProgress() || undoManager.isUndoInProgress())) {
-                updateDocumentFromPropertyValue(getPropertyEditorValue(property), document,  propertiesFile.getVirtualFile());
-              }
-            }
-          });
+      CommandProcessor.getInstance().executeCommand(null, () -> ApplicationManager.getApplication().runWriteAction(() -> {
+        if (!checkIsUnderUndoRedoAction ||
+            !undoManager.isActive() ||
+            !(undoManager.isRedoInProgress() || undoManager.isUndoInProgress())) {
+          updateDocumentFromPropertyValue(getPropertyEditorValue(property), document,  propertiesFile.getVirtualFile());
         }
-      }, "", this);
+      }), "", this);
       JPanel titledPanel = myTitledPanels.get(propertiesFile.getVirtualFile());
       ((TitledBorder)titledPanel.getBorder()).setTitleColor(property == null ? JBColor.RED : UIUtil.getLabelTextForeground());
       titledPanel.repaint();
@@ -590,14 +573,11 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
   }
   private void selectionChanged() {
     myBackSlashPressed.clear();
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        updateEditorsFromProperties(true);
-        final StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
-        if (statusBar != null) {
-          statusBar.setInfo("Selected property: " + getSelectedPropertyName());
-        }
+    UIUtil.invokeLaterIfNeeded(() -> {
+      updateEditorsFromProperties(true);
+      final StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
+      if (statusBar != null) {
+        statusBar.setInfo("Selected property: " + getSelectedPropertyName());
       }
     });
   }
@@ -623,12 +603,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
     if (tree == null) return Collections.emptyList();
     TreePath[] selected = tree.getSelectionModel().getSelectionPaths();
     if (selected == null || selected.length == 0) return Collections.emptyList();
-    return ContainerUtil.map(selected, new Function<TreePath, DefaultMutableTreeNode>() {
-      @Override
-      public DefaultMutableTreeNode fun(TreePath treePath) {
-        return (DefaultMutableTreeNode)treePath.getLastPathComponent();
-      }
-    });
+    return ContainerUtil.map(selected, treePath -> (DefaultMutableTreeNode)treePath.getLastPathComponent());
   }
 
   @Nullable
@@ -651,16 +626,13 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
   @NotNull
   public Collection<ResourceBundleEditorViewElement> getSelectedElements() {
     final Collection<DefaultMutableTreeNode> selectedNodes = getSelectedNodes();
-    return ContainerUtil.mapNotNull(selectedNodes, new NullableFunction<DefaultMutableTreeNode, ResourceBundleEditorViewElement>() {
-      @Nullable
-      @Override
-      public ResourceBundleEditorViewElement fun(DefaultMutableTreeNode selectedNode) {
-        Object userObject = selectedNode.getUserObject();
-        if (!(userObject instanceof AbstractTreeNode)) return null;
-        Object value = ((AbstractTreeNode)userObject).getValue();
-        return value instanceof ResourceBundleEditorViewElement ? (ResourceBundleEditorViewElement) value : null;
-      }
-    });
+    return ContainerUtil.mapNotNull(selectedNodes,
+                                    (NullableFunction<DefaultMutableTreeNode, ResourceBundleEditorViewElement>)selectedNode -> {
+                                      Object userObject = selectedNode.getUserObject();
+                                      if (!(userObject instanceof AbstractTreeNode)) return null;
+                                      Object value = ((AbstractTreeNode)userObject).getValue();
+                                      return value instanceof ResourceBundleEditorViewElement ? (ResourceBundleEditorViewElement) value : null;
+                                    });
   }
 
   @Nullable
@@ -884,11 +856,8 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
 
   @Override
   public Document[] getDocuments() {
-    return ContainerUtil.map2Array(myEditors.keySet(), new Document[myEditors.size()], new Function<VirtualFile, Document>() {
-      @Override
-      public Document fun(VirtualFile propertiesFile) {
-        return FileDocumentManager.getInstance().getDocument(propertiesFile);
-      }
+    return ContainerUtil.map2Array(myEditors.keySet(), new Document[myEditors.size()], propertiesFile -> {
+      return FileDocumentManager.getInstance().getDocument(propertiesFile);
     });
   }
 
@@ -956,28 +925,22 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
                   if (currentSelectedProperty == null) {
                     return;
                   }
-                  ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                    @Override
-                    public void run() {
-                      WriteCommandAction.runWriteCommandAction(myProject, new Runnable() {
-                        @Override
-                        public void run() {
-                          try {
-                            for (Map.Entry<VirtualFile, EditorEx> entry : myEditors.entrySet()) {
-                              final Editor translationEditor = entry.getValue();
-                              if (translationEditor != editor) {
-                                final VirtualFile propertiesFile = entry.getKey();
-                                myPropertiesInsertDeleteManager.insertOrUpdateTranslation(currentSelectedProperty, valueToPropagate, PropertiesImplUtil.getPropertiesFile(propertiesFile, myProject));
-                                translationEditor.getDocument().setText(valueToPropagate);
-                              }
-                            }
-                          }
-                          catch (final IncorrectOperationException e) {
-                            LOG.error(e);
+                  ApplicationManager.getApplication().runWriteAction(() -> {
+                    WriteCommandAction.runWriteCommandAction(myProject, () -> {
+                      try {
+                        for (Map.Entry<VirtualFile, EditorEx> entry : myEditors.entrySet()) {
+                          final Editor translationEditor = entry.getValue();
+                          if (translationEditor != editor) {
+                            final VirtualFile propertiesFile = entry.getKey();
+                            myPropertiesInsertDeleteManager.insertOrUpdateTranslation(currentSelectedProperty, valueToPropagate, PropertiesImplUtil.getPropertiesFile(propertiesFile, myProject));
+                            translationEditor.getDocument().setText(valueToPropagate);
                           }
                         }
-                      });
-                    }
+                      }
+                      catch (final IncorrectOperationException e1) {
+                        LOG.error(e1);
+                      }
+                    });
                   });
                 }
               });

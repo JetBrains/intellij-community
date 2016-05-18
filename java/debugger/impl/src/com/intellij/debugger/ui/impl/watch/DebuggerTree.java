@@ -432,15 +432,12 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
     }
 
     protected void updateUI(final boolean scrollToVisible) {
-      DebuggerInvocationUtil.swingInvokeLater(getProject(), new Runnable() {
-        @Override
-        public void run() {
-          myNode.removeAllChildren();
-          for (DebuggerTreeNodeImpl debuggerTreeNode : myChildren) {
-            myNode.add(debuggerTreeNode);
-          }
-          myNode.childrenChanged(scrollToVisible);
+      DebuggerInvocationUtil.swingInvokeLater(getProject(), () -> {
+        myNode.removeAllChildren();
+        for (DebuggerTreeNodeImpl debuggerTreeNode : myChildren) {
+          myNode.add(debuggerTreeNode);
         }
+        myNode.childrenChanged(scrollToVisible);
       });
     }
   }
@@ -567,15 +564,12 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
       }
       catch (ObjectCollectedException e) {
         final String message = e.getMessage();
-        DebuggerInvocationUtil.swingInvokeLater(getProject(), new Runnable() {
-          @Override
-          public void run() {
-            node.removeAllChildren();
-            node.add(getNodeFactory().createMessageNode(
-              new MessageDescriptor(DebuggerBundle.message("error.cannot.build.node.children.object.collected", message)))
-            );
-            node.childrenChanged(false);
-          }
+        DebuggerInvocationUtil.swingInvokeLater(getProject(), () -> {
+          node.removeAllChildren();
+          node.add(getNodeFactory().createMessageNode(
+            new MessageDescriptor(DebuggerBundle.message("error.cannot.build.node.children.object.collected", message)))
+          );
+          node.childrenChanged(false);
         });
       }
     }
@@ -734,15 +728,12 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
     }
 
     protected void updateUI(final boolean scrollToVisible) {
-      DebuggerInvocationUtil.swingInvokeLater(getProject(), new Runnable() {
-        @Override
-        public void run() {
-          myNode.removeAllChildren();
-          for (DebuggerTreeNodeImpl debuggerTreeNode : myChildren) {
-            myNode.add(debuggerTreeNode);
-          }
-          myNode.childrenChanged(scrollToVisible);
+      DebuggerInvocationUtil.swingInvokeLater(getProject(), () -> {
+        myNode.removeAllChildren();
+        for (DebuggerTreeNodeImpl debuggerTreeNode : myChildren) {
+          myNode.add(debuggerTreeNode);
         }
+        myNode.childrenChanged(scrollToVisible);
       });
     }
   }

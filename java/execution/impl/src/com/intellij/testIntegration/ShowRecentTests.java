@@ -65,11 +65,8 @@ public class ShowRecentTests extends AnAction {
     final Map<String, TestStateStorage.Record> records = testStorage.getRecentTests(TEST_LIMIT, getSinceDate());
     RecentTestsListProvider listProvider = new RecentTestsListProvider(records);
     List<String> urls = listProvider.getUrlsToShowFromHistory();
-    Map<String, Icon> icons = ContainerUtil.map2Map(urls, new Function<String, Pair<String, Icon>>() {
-      @Override
-      public Pair<String, Icon> fun(String url) {
-        return Pair.create(url, getIconFor(url, records));
-      }
+    Map<String, Icon> icons = ContainerUtil.map2Map(urls, url -> {
+      return Pair.create(url, getIconFor(url, records));
     });
     SelectTestStep selectStepTest = new SelectTestStep(urls, icons, testRunner, testLocator);
 

@@ -32,13 +32,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumConsta
  */
 public interface GrEnumConstant extends GrField, GrConstructorCall, PsiEnumConstant {
   GrEnumConstant[] EMPTY_ARRAY = new GrEnumConstant[0];
-  ArrayFactory<GrEnumConstant> ARRAY_FACTORY = new ArrayFactory<GrEnumConstant>() {
-    @NotNull
-    @Override
-    public GrEnumConstant[] create(int count) {
-      return new GrEnumConstant[count];
-    }
-  };
+  ArrayFactory<GrEnumConstant> ARRAY_FACTORY = count -> new GrEnumConstant[count];
 
   @Override
   @Nullable

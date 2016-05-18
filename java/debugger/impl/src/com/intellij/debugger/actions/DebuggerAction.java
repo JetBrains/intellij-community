@@ -153,11 +153,9 @@ public abstract class DebuggerAction extends AnAction {
   }
 
   public static void enableAction(final AnActionEvent event, final boolean enable) {
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        event.getPresentation().setEnabled(enable);
-        event.getPresentation().setVisible(true);
-      }
+    SwingUtilities.invokeLater(() -> {
+      event.getPresentation().setEnabled(enable);
+      event.getPresentation().setVisible(true);
     });
   }
 

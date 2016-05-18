@@ -162,27 +162,24 @@ public class PsiCopyPasteManager {
     public PsiElement[] getElements() {
       if (myElements == null) return PsiElement.EMPTY_ARRAY;
 
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        @Override
-        public void run() {
-          int validElementsCount = 0;
+      ApplicationManager.getApplication().runReadAction(() -> {
+        int validElementsCount = 0;
+        for (PsiElement element : myElements) {
+          if (element.isValid()) {
+            validElementsCount++;
+          }
+        }
+
+        if (validElementsCount != myElements.length) {
+          PsiElement[] validElements = new PsiElement[validElementsCount];
+          int j = 0;
           for (PsiElement element : myElements) {
             if (element.isValid()) {
-              validElementsCount++;
+              validElements[j++] = element;
             }
           }
 
-          if (validElementsCount != myElements.length) {
-            PsiElement[] validElements = new PsiElement[validElementsCount];
-            int j = 0;
-            for (PsiElement element : myElements) {
-              if (element.isValid()) {
-                validElements[j++] = element;
-              }
-            }
-
-            myElements = validElements;
-          }
+          myElements = validElements;
         }
       });
 

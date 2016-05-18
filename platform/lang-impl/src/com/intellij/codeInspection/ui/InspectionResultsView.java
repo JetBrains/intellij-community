@@ -380,20 +380,17 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     final VirtualFile[] file = new VirtualFile[1];
     final int[] offset = new int[1];
 
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        PsiElement psiElement = refElement.getElement();
-        if (psiElement != null) {
-          final PsiFile containingFile = psiElement.getContainingFile();
-          if (containingFile != null) {
-            file[0] = containingFile.getVirtualFile();
-            offset[0] = psiElement.getTextOffset();
-          }
+    ApplicationManager.getApplication().runReadAction(() -> {
+      PsiElement psiElement = refElement.getElement();
+      if (psiElement != null) {
+        final PsiFile containingFile = psiElement.getContainingFile();
+        if (containingFile != null) {
+          file[0] = containingFile.getVirtualFile();
+          offset[0] = psiElement.getTextOffset();
         }
-        else {
-          file[0] = null;
-        }
+      }
+      else {
+        file[0] = null;
       }
     });
 
@@ -562,7 +559,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       if (problemCount == 0) {
         myPreviewEditor.getScrollingModel().scrollTo(myPreviewEditor.offsetToLogicalPosition(selectedElement.getTextOffset()), ScrollType.CENTER_UP);
       }
-      myPreviewEditor.getSettings().setFoldingOutlineShown(problemCount != 1);
+      myPreviewEditor.getSettings().setFoldingOutlineShown(problemCount > 1);
       myPreviewEditor.getComponent().setBorder(IdeBorderFactory.createEmptyBorder());
       return Pair.create(myPreviewEditor.getComponent(), myPreviewEditor);
     }
@@ -679,6 +676,9 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     boolean singleInspectionRun = myGlobalInspectionContext.isSingleInspectionRun();
     for (Tools currentTools : tools) {
       InspectionToolWrapper defaultToolWrapper = currentTools.getDefaultState().getTool();
+      if (myGlobalInspectionContext.getUIOptions().FILTER_RESOLVED_ITEMS && myExcludedInspectionTreeNodesManager.containsInspectionNode(defaultToolWrapper)) {
+        continue;
+      }
       final HighlightDisplayKey key = HighlightDisplayKey.find(defaultToolWrapper.getShortName());
       for (ScopeToolState state : myProvider.getTools(currentTools)) {
         InspectionToolWrapper toolWrapper = state.getTool();

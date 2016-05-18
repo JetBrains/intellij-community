@@ -313,13 +313,10 @@ public class SingleInspectionProfilePanel extends JPanel {
       @Override
       public void stateChanged() {
         //invoke after all other listeners
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            if (mySelectedProfile == null) return; //panel was disposed
-            updateProperSettingsForSelection();
-            wereToolSettingsModified();
-          }
+        SwingUtilities.invokeLater(() -> {
+          if (mySelectedProfile == null) return; //panel was disposed
+          updateProperSettingsForSelection();
+          wereToolSettingsModified();
         });
       }
     });
@@ -403,12 +400,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     Element newConfig = Descriptor.createConfigElement(state.getTool());
     if (!JDOMUtil.areElementsEqual(oldConfig, newConfig)) {
       myAlarm.cancelAllRequests();
-      myAlarm.addRequest(new Runnable() {
-        @Override
-        public void run() {
-          myTreeTable.repaint();
-        }
-      }, 300);
+      myAlarm.addRequest(() -> myTreeTable.repaint(), 300);
       myModified = true;
       return true;
     }
@@ -424,12 +416,7 @@ public class SingleInspectionProfilePanel extends JPanel {
         final boolean properSetting = mySelectedProfile.isProperSetting(descriptor.getKey().toString());
         if (node.isProperSetting() != properSetting) {
           myAlarm.cancelAllRequests();
-          myAlarm.addRequest(new Runnable() {
-            @Override
-            public void run() {
-              myTreeTable.repaint();
-            }
-          }, 300);
+          myAlarm.addRequest(() -> myTreeTable.repaint(), 300);
           node.dropCache();
           updateUpHierarchy((InspectionConfigTreeNode)node.getParent());
         }
@@ -856,19 +843,13 @@ public class SingleInspectionProfilePanel extends JPanel {
             }
           };
         final HighlightSeverity severity =
-          ScopesAndSeveritiesTable.getSeverity(ContainerUtil.map(nodes, new Function<InspectionConfigTreeNode, ScopeToolState>() {
-            @Override
-            public ScopeToolState fun(InspectionConfigTreeNode node) {
-              return node.getDefaultDescriptor().getState();
-            }
+          ScopesAndSeveritiesTable.getSeverity(ContainerUtil.map(nodes, node -> {
+            return node.getDefaultDescriptor().getState();
           }));
         severityLevelChooser.setChosen(severity);
 
-        final ScopesChooser scopesChooser = new ScopesChooser(ContainerUtil.map(nodes, new Function<InspectionConfigTreeNode, Descriptor>() {
-          @Override
-          public Descriptor fun(final InspectionConfigTreeNode node) {
-            return node.getDefaultDescriptor();
-          }
+        final ScopesChooser scopesChooser = new ScopesChooser(ContainerUtil.map(nodes, node -> {
+          return node.getDefaultDescriptor();
         }), mySelectedProfile, project, null) {
           @Override
           protected void onScopesOrderChanged() {
