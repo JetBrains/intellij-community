@@ -88,38 +88,33 @@ public class ChangesDiffCalculator implements Disposable {
   }
 
   /**
-   * We want to highlight document formatting changes introduced by particular formatting property value change.
-   * However, there is a possible effect that white space region is removed. We still want to highlight that, hence, it's necessary
-   * to highlight neighbour region.
-   * <p/>
-   * This method encapsulates logic of adjusting preview highlight change if necessary.
+   * This method shifts changed range to the rightmost possible offset.
    *
-   * @param range   initial range to highlight
-   * @return        resulting range to highlight
+   * Thus, when comparing whitespace sequences of different length, we always highlight rightmost whitespaces
+   * (while general algorithm gives no warranty on this case, and usually highlights leftmost whitespaces).
    */
   private static TextRange calculateChangeHighlightRange(Document currentDocument, TextRange range) {
     CharSequence text = currentDocument.getCharsSequence();
 
-    if (range.getLength() <= 0) {
-      int offset = range.getStartOffset();
-      while (offset < text.length() && text.charAt(offset) == ' ') {
-        offset++;
-      }
-      return offset > range.getStartOffset() ? new TextRange(offset, offset) : range;
-    }
-
     int startOffset = range.getStartOffset();
     int endOffset = range.getEndOffset();
-    boolean useSameRange = true;
+
+    if (startOffset == endOffset) {
+      while (startOffset < text.length() && text.charAt(startOffset) == ' ') {
+        startOffset++;
+      }
+      return new TextRange(startOffset, startOffset);
+    }
+
+    CharSequence originalSequence = text.subSequence(startOffset, endOffset);
+
     while (endOffset < text.length() &&
-           StringUtil.equals(text.subSequence(range.getStartOffset(), range.getEndOffset()),
-                             text.subSequence(startOffset + 1, endOffset + 1))) {
-      useSameRange = false;
+           StringUtil.equals(originalSequence, text.subSequence(startOffset + 1, endOffset + 1))) {
       startOffset++;
       endOffset++;
     }
 
-    return useSameRange ? range : new TextRange(startOffset, endOffset);
+    return new TextRange(startOffset, endOffset);
   }
 
   @Override
