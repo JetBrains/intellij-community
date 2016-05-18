@@ -81,7 +81,7 @@ public class StudyRefreshTaskFileAction extends StudyActionWithShortcut {
                                        @NotNull final Project project,
                                        TaskFile taskFile,
                                        String name) {
-    if (!resetDocument(project, document, taskFile, name)) {
+    if (!resetDocument(document, taskFile, name)) {
       return false;
     }
     taskFile.getTask().setStatus(StudyStatus.Unchecked);
